@@ -184,20 +184,15 @@ public sealed class @this : IAsyncDisposable
 
         if (channel is channel.stream.@this sc)
         {
-            try
+            // Serializer returns Data<T> already with its own Success/Error —
+            // forward as-is; no extra try/catch needed because parse failures
+            // travel through Data.Error now instead of throwing.
+            return await Serializers.DeserializeAsync<T>(new DeserializeOptions
             {
-                var result = await Serializers.DeserializeAsync<T>(new DeserializeOptions
-                {
-                    Stream = sc.Stream,
-                    ContentType = sc.Mime,
-                    CancellationToken = cancellationToken
-                });
-                return global::app.data.@this.Ok(result);
-            }
-            catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
-            {
-                return global::app.data.@this.FromError(new ServiceError($"Failed to read from channel '{channelName}': {ex.Message}", "ReadError") { Exception = ex });
-            }
+                Stream = sc.Stream,
+                ContentType = sc.Mime,
+                CancellationToken = cancellationToken
+            });
         }
 
         return await channel!.ReadAsync(cancellationToken);

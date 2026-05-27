@@ -50,14 +50,14 @@ public sealed class @this : global::app.channels.channel.session.@this
 
         try
         {
-            await Channels!.Serializers.SerializeAsync(new SerializeOptions
+            var serResult = await Channels!.Serializers.SerializeAsync(new SerializeOptions
             {
                 Stream = Stream,
                 Data = data.Value,
                 ContentType = Mime,
                 CancellationToken = ct
             });
-            return global::app.data.@this.Ok();
+            return serResult;
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {

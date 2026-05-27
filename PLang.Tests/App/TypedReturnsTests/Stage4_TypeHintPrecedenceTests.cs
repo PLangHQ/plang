@@ -48,12 +48,12 @@ public class Stage4_TypeHintPrecedenceTests
     {
         public string ContentType { get; init; } = "";
         public string FileExtension { get; init; } = "";
-        public Task SerializeAsync(System.IO.Stream s, object? v, System.Type? t = null, System.Threading.CancellationToken ct = default) => Task.CompletedTask;
-        public Task<object?> DeserializeAsync(System.IO.Stream s, System.Type t, System.Threading.CancellationToken ct = default) => Task.FromResult<object?>(null);
-        public Task<T?> DeserializeAsync<T>(System.IO.Stream s, System.Threading.CancellationToken ct = default) => Task.FromResult(default(T));
-        public string Serialize(object? v, System.Type? t = null) => "";
-        public object? Deserialize(string d, System.Type t) => null;
-        public T? Deserialize<T>(string d) => default;
+        public Task<Data> SerializeAsync(System.IO.Stream s, object? v, System.Type? t = null, System.Threading.CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        public Task<Data> DeserializeAsync(System.IO.Stream s, System.Type t, System.Threading.CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        public Task<global::app.data.@this<T>> DeserializeAsync<T>(System.IO.Stream s, System.Threading.CancellationToken ct = default) => Task.FromResult(global::app.data.@this<T>.Ok(default!));
+        public global::app.data.@this<string> Serialize(object? v, System.Type? t = null) => global::app.data.@this<string>.Ok("");
+        public Data Deserialize(string d, System.Type t) => Data.Ok();
+        public global::app.data.@this<T> Deserialize<T>(string d) => global::app.data.@this<T>.Ok(default!);
     }
 
     [Test]

@@ -141,7 +141,7 @@ public sealed class @this
     /// <summary>
     /// Deserializes content using the appropriate serializer, chosen by extension or contentType.
     /// </summary>
-    public T? Deserialize<T>(DeserializeOptions options)
+    public data.@this<T> Deserialize<T>(DeserializeOptions options)
     {
         var serializer = ResolveSerializer(options.ContentType, options.Extension);
 
@@ -149,15 +149,15 @@ public sealed class @this
             return serializer.Deserialize<T>(str);
 
         if (options.Value is T typed)
-            return typed;
+            return data.@this<T>.Ok(typed);
 
-        return default;
+        return data.@this<T>.Ok(default!);
     }
 
     /// <summary>
     /// Serializes data to a stream using the appropriate serializer.
     /// </summary>
-    public Task SerializeAsync(SerializeOptions options)
+    public Task<data.@this> SerializeAsync(SerializeOptions options)
     {
         var serializer = ResolveSerializer(options.ContentType, options.Extension);
         return serializer.SerializeAsync(options.Stream, options.Data, cancellationToken: options.CancellationToken);
@@ -166,7 +166,7 @@ public sealed class @this
     /// <summary>
     /// Deserializes data from a stream using the appropriate serializer.
     /// </summary>
-    public Task<T?> DeserializeAsync<T>(DeserializeOptions options)
+    public Task<data.@this<T>> DeserializeAsync<T>(DeserializeOptions options)
     {
         if (options.Stream == null)
             throw new ArgumentException("Stream is required for async deserialization", nameof(options));
