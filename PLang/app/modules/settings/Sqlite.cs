@@ -112,8 +112,9 @@ public sealed class Sqlite : IStore
             if (result == null || result == DBNull.Value)
                 return Task.FromResult(app.data.@this.Ok(null));
 
-            var data = _serializer.Deserialize<data.@this>(result.ToString()!);
-            return Task.FromResult(data ?? app.data.@this.Ok(null));
+            var deserResult = _serializer.Deserialize<data.@this>(result.ToString()!);
+            if (!deserResult.Success) return Task.FromResult(app.data.@this.FromError(deserResult.Error!));
+            return Task.FromResult(deserResult.Value ?? app.data.@this.Ok(null));
         }
         catch (Exception ex)
         {
@@ -137,9 +138,11 @@ public sealed class Sqlite : IStore
             if (result == null || result == DBNull.Value)
                 return Task.FromResult(app.data.@this.Ok(null));
 
-            var data = _serializer.Deserialize<T>(result.ToString()!);
-            if (data != null) RehydrateValue(data);
-            return Task.FromResult((data.@this?)data ?? app.data.@this.Ok(null));
+            var deserResult = _serializer.Deserialize<T>(result.ToString()!);
+            if (!deserResult.Success) return Task.FromResult(app.data.@this.FromError(deserResult.Error!));
+            var typed = deserResult.Value;
+            if (typed != null) RehydrateValue(typed);
+            return Task.FromResult((data.@this?)typed ?? app.data.@this.Ok(null));
         }
         catch (Exception ex)
         {
@@ -165,8 +168,8 @@ public sealed class Sqlite : IStore
                 var raw = reader.IsDBNull(1) ? null : reader.GetString(1);
                 if (raw != null)
                 {
-                    var data = _serializer.Deserialize<data.@this>(raw);
-                    if (data != null) items.Add(data);
+                    var deserResult = _serializer.Deserialize<data.@this>(raw);
+                    if (deserResult.Success && deserResult.Value != null) items.Add(deserResult.Value);
                 }
             }
             return Task.FromResult(app.data.@this.Ok((object)items));
@@ -195,11 +198,11 @@ public sealed class Sqlite : IStore
                 var raw = reader.IsDBNull(1) ? null : reader.GetString(1);
                 if (raw != null)
                 {
-                    var data = _serializer.Deserialize<T>(raw);
-                    if (data != null)
+                    var deserResult = _serializer.Deserialize<T>(raw);
+                    if (deserResult.Success && deserResult.Value != null)
                     {
-                        RehydrateValue(data);
-                        list.Add(data);
+                        RehydrateValue(deserResult.Value);
+                        list.Add(deserResult.Value);
                     }
                 }
             }
@@ -224,7 +227,9 @@ public sealed class Sqlite : IStore
             cmd.CommandText = $@"INSERT INTO [{sanitized}] (key, data) VALUES (@key, @data)
                                  ON CONFLICT(key) DO UPDATE SET data = @data;";
             cmd.Parameters.AddWithValue("@key", key);
-            cmd.Parameters.AddWithValue("@data", _serializer.Serialize(data));
+            var serialized = _serializer.Serialize(data);
+            if (!serialized.Success) return Task.FromResult(app.data.@this.FromError(serialized.Error!));
+            cmd.Parameters.AddWithValue("@data", serialized.Value);
             cmd.ExecuteNonQuery();
 
             return Task.FromResult(app.data.@this.Ok());

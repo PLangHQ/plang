@@ -65,57 +65,97 @@ public sealed class Json : ISerializer
         });
     }
 
-    public async Task SerializeAsync(Stream stream, object? value, Type? type = null, CancellationToken cancellationToken = default)
+    public async Task<data.@this> SerializeAsync(Stream stream, object? value, Type? type = null, CancellationToken cancellationToken = default)
     {
-        if (value == null)
+        try
         {
-            await stream.WriteAsync("null"u8.ToArray(), cancellationToken);
-            return;
+            if (value == null)
+            {
+                await stream.WriteAsync("null"u8.ToArray(), cancellationToken);
+                return data.@this.Ok();
+            }
+            await JsonSerializer.SerializeAsync(stream, value, type ?? value.GetType(), _options, cancellationToken);
+            await stream.WriteAsync(Encoding.UTF8.GetBytes(Environment.NewLine), cancellationToken);
+            return data.@this.Ok();
         }
-
-        await JsonSerializer.SerializeAsync(stream, value, type ?? value.GetType(), _options, cancellationToken);
-        await stream.WriteAsync(Encoding.UTF8.GetBytes(Environment.NewLine), cancellationToken);
+        catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
+        {
+            return data.@this.FromError(new errors.ServiceError(
+                $"JSON serialize failed: {ex.Message}", "JsonSerializeError", 400) { Exception = ex });
+        }
     }
 
-    public async Task<object?> DeserializeAsync(Stream stream, Type type, CancellationToken cancellationToken = default)
+    public async Task<data.@this> DeserializeAsync(Stream stream, Type type, CancellationToken cancellationToken = default)
     {
-        if (stream.Length == 0)
-            return null;
-
-        return await JsonSerializer.DeserializeAsync(stream, type, _options, cancellationToken);
+        try
+        {
+            if (stream.Length == 0) return data.@this.Ok();
+            var v = await JsonSerializer.DeserializeAsync(stream, type, _options, cancellationToken);
+            return data.@this.Ok(v);
+        }
+        catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
+        {
+            return data.@this.FromError(new errors.ServiceError(
+                $"JSON deserialize failed: {ex.Message}", "JsonDeserializeError", 400) { Exception = ex });
+        }
     }
 
-    public async Task<T?> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default)
+    public async Task<data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default)
     {
-        if (stream.Length == 0)
-            return default;
-
-        return await JsonSerializer.DeserializeAsync<T>(stream, _options, cancellationToken);
+        try
+        {
+            if (stream.Length == 0) return data.@this<T>.Ok(default!);
+            var v = await JsonSerializer.DeserializeAsync<T>(stream, _options, cancellationToken);
+            return data.@this<T>.Ok(v!);
+        }
+        catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
+        {
+            return data.@this<T>.FromError(new errors.ServiceError(
+                $"JSON deserialize failed: {ex.Message}", "JsonDeserializeError", 400) { Exception = ex });
+        }
     }
 
-    public string Serialize(object? value, Type? type = null)
+    public data.@this<string> Serialize(object? value, Type? type = null)
     {
-        if (value == null)
-            return "null";
-
-        type ??= value.GetType();
-        return JsonSerializer.Serialize(value, type, _options);
+        try
+        {
+            if (value == null) return data.@this<string>.Ok("null");
+            type ??= value.GetType();
+            return data.@this<string>.Ok(JsonSerializer.Serialize(value, type, _options));
+        }
+        catch (Exception ex) when (ex is JsonException or NotSupportedException)
+        {
+            return data.@this<string>.FromError(new errors.ServiceError(
+                $"JSON serialize failed: {ex.Message}", "JsonSerializeError", 400) { Exception = ex });
+        }
     }
 
-    public object? Deserialize(string data, Type type)
+    public data.@this Deserialize(string data, Type type)
     {
-        if (string.IsNullOrEmpty(data) || data == "null")
-            return null;
-
-        return JsonSerializer.Deserialize(data, type, _options);
+        try
+        {
+            if (string.IsNullOrEmpty(data) || data == "null") return global::app.data.@this.Ok();
+            return global::app.data.@this.Ok(JsonSerializer.Deserialize(data, type, _options));
+        }
+        catch (Exception ex) when (ex is JsonException or NotSupportedException)
+        {
+            return global::app.data.@this.FromError(new errors.ServiceError(
+                $"JSON deserialize failed: {ex.Message}", "JsonDeserializeError", 400) { Exception = ex });
+        }
     }
 
-    public T? Deserialize<T>(string data)
+    public data.@this<T> Deserialize<T>(string data)
     {
-        if (string.IsNullOrEmpty(data) || data == "null")
-            return default;
-
-        return JsonSerializer.Deserialize<T>(data, _options);
+        try
+        {
+            if (string.IsNullOrEmpty(data) || data == "null") return global::app.data.@this<T>.Ok(default!);
+            return global::app.data.@this<T>.Ok(JsonSerializer.Deserialize<T>(data, _options)!);
+        }
+        catch (Exception ex) when (ex is JsonException or NotSupportedException)
+        {
+            return global::app.data.@this<T>.FromError(new errors.ServiceError(
+                $"JSON deserialize failed: {ex.Message}", "JsonDeserializeError", 400) { Exception = ex });
+        }
     }
 
     /// <summary>

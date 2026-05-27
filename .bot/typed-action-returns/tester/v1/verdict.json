@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "Suites all green (3124+221), but 2 confirmed false-greens: FileRead BuildWarning channel-only check, and Stage 2 plang *AnnotatesAs* goals using static reflection where runtime double-wrap footgun is the real risk." }

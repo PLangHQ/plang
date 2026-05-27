@@ -1,5 +1,4 @@
 using app.Utils;
-using app.Attributes;
 
 namespace app.types.path;
 
@@ -8,10 +7,11 @@ namespace app.types.path;
 /// NOT a Data subclass — wrapped in Data&lt;Path&gt; by handlers.
 /// Implements IContext for runtime graph access (FileSystem, etc.).
 /// </summary>
-[PlangType("path",
-    Example = "/some/file.json")]
 public abstract partial class @this : modules.IContext, global::app.data.IBooleanResolvable
 {
+    /// <summary>Catalog example — read via reflection by the schema builder.</summary>
+    public static string Example => "/some/file.json";
+
     /// <summary>
     /// Scheme name for this path (e.g. "file", "http", "https"). Subclasses
     /// implement. Used by Permission canonical-form and diagnostic surfaces.

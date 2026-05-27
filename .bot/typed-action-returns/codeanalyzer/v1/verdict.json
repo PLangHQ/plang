@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "NEEDS WORK — LOW-severity polish only: [PlangType] AllowMultiple=false contradicts Registry's multi-attr loop+doc; 5 minor cleanups; SetAction-default design call. No blocker." }

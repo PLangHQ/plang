@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "NEEDS WORK (low) — 11 findings, none block ship: 2 deferrals (Run.File rename, hint precedence), 4 polish (mock action naming, http leaf-Data, ReadLimited duplication, file.read bare-catch), 5 readability/info (Ask ToString leakage, plang transport carve-out, Stage0 err discard carried, two stale docstrings)." }

@@ -1,0 +1,186 @@
+{
+  "name": "TestOutputAskDownstreamVariableAnnotatesAsAsk",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "builder.goals from \u0027probes/ask/\u0027, write to %goals%",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": "output.ask write-target annotates as (ask) downstream \u2014 its reflected\nreturn type is Data\u003CAsk\u003E. Ask.ToString() returns the Answer string so\ndownstream code can still interpolate %answer% as text, but the type\nidentity in the snapshot stays \u0022ask\u0022. (Test-designer\u0027s original spec\nsaid \u0022string\u0022; reconfirmed with Ingi 2026-05-27 \u2014 match reflected type\nfor consistency with every other action.)",
+      "actions": [
+        {
+          "module": "builder",
+          "action": "goals",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "probes/ask/",
+              "type": "path"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goals%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "list\u003Cgoal\u003E"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "builder.goals(Path=\u0027probes/ask/\u0027) | variable.set(Name=%goals%, Value=%!data%, Type=object)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "goal.getTypes %goals[0]%, write to %snapshot%",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "getTypes",
+          "parameters": [
+            {
+              "name": "Goal",
+              "value": "%goals[0]%",
+              "type": "goal"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%snapshot%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "goal.getTypes(Goal=%goals[0]%), variable.set(Name=%snapshot%, Value=%!data%, Type=object)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %annot% = %snapshot[1].answer%",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%annot%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%snapshot[1].answer%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%annot%, Value=%snapshot[1].answer%, Type=object)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert.equals expected=\u0027ask\u0027, actual=%annot%",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "ask",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%annot%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022ask\u0022, Actual=%annot%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/TestModule/TypedReturns/Stage2/TestOutputAskDownstreamVariableAnnotatesAsAsk.test.goal",
+  "prPath": "/TestModule/TypedReturns/Stage2/.build/testoutputaskdownstreamvariableannotatesasask.test.pr",
+  "hash": "141a045df4d17430f0ccd72fe0dd4483c58fa1a84de70f3add0e2d60166a0d16",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

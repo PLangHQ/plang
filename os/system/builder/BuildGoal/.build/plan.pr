@@ -280,7 +280,7 @@
                 "name": "QueryAndValidatePlan",
                 "parallel": false,
                 "parameters": null,
-                "prPath": "/builder/BuildGoal/.build/plan.pr"
+                "prPath": "/system/builder/BuildGoal/.build/plan.pr"
               },
               "type": "goal.call"
             }
@@ -620,8 +620,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/builder/BuildGoal/Plan.goal",
-      "prPath": "/builder/BuildGoal/.build/plan.pr",
+      "path": "/system/builder/BuildGoal/Plan.goal",
+      "prPath": "/system/builder/BuildGoal/.build/plan.pr",
       "hash": "76cf718fc7f3eb55127df40a90401e7410db6ddee9d31a3e6cca3b28033fb92f",
       "builderVersion": null,
       "isSetup": false,
@@ -632,8 +632,8 @@
     }
   ],
   "visibility": 1,
-  "path": "/builder/BuildGoal/Plan.goal",
-  "prPath": "/builder/BuildGoal/.build/plan.pr",
+  "path": "/system/builder/BuildGoal/Plan.goal",
+  "prPath": "/system/builder/BuildGoal/.build/plan.pr",
   "hash": "d0a0114f61ac57a74a4b39b5b16ff50f862f0ef873ab6cadcff6492457d14024",
   "builderVersion": null,
   "isSetup": false,

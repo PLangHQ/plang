@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "Coder v1 follow-up addresses both tester v1 critical false-greens — mutation-tested green: the FileRead BuildWarning test and the RuntimeDoubleWrap sweep both turn red when production code is deliberately broken. Minor-coverage fixes also assert behavior, not just success." }

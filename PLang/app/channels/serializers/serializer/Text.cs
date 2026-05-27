@@ -21,46 +21,59 @@ public sealed class Text : ISerializer
         _jsonFallback = jsonFallback ?? new global::app.channels.serializers.serializer.Json();
     }
 
-    public async Task SerializeAsync(Stream stream, object? value, Type? type = null, CancellationToken cancellationToken = default)
+    public async Task<data.@this> SerializeAsync(Stream stream, object? value, Type? type = null, CancellationToken cancellationToken = default)
     {
-        if (!IsSimpleType(value))
+        try
         {
-            await _jsonFallback.SerializeAsync(stream, value, type, cancellationToken);
-            return;
+            if (!IsSimpleType(value))
+                return await _jsonFallback.SerializeAsync(stream, value, type, cancellationToken);
+
+            var bytes = _encoding.GetBytes((value?.ToString() ?? "") + Environment.NewLine);
+            await stream.WriteAsync(bytes, cancellationToken);
+            return data.@this.Ok();
         }
-
-        var bytes = _encoding.GetBytes((value?.ToString() ?? "") + Environment.NewLine);
-        await stream.WriteAsync(bytes, cancellationToken);
+        catch (Exception ex) when (ex is IOException)
+        {
+            return data.@this.FromError(new errors.ServiceError(
+                $"Text serialize failed: {ex.Message}", "TextSerializeError", 400) { Exception = ex });
+        }
     }
 
-    public async Task<object?> DeserializeAsync(Stream stream, Type type, CancellationToken cancellationToken = default)
+    public async Task<data.@this> DeserializeAsync(Stream stream, Type type, CancellationToken cancellationToken = default)
     {
-        using var reader = new StreamReader(stream, _encoding, leaveOpen: true);
-        var text = await reader.ReadToEndAsync(cancellationToken);
-        return ConvertFromString(text, type);
+        try
+        {
+            using var reader = new StreamReader(stream, _encoding, leaveOpen: true);
+            var text = await reader.ReadToEndAsync(cancellationToken);
+            return data.@this.Ok(ConvertFromString(text, type));
+        }
+        catch (Exception ex) when (ex is IOException)
+        {
+            return data.@this.FromError(new errors.ServiceError(
+                $"Text deserialize failed: {ex.Message}", "TextDeserializeError", 400) { Exception = ex });
+        }
     }
 
-    public async Task<T?> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default)
+    public async Task<data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default)
     {
         var result = await DeserializeAsync(stream, typeof(T), cancellationToken);
-        return result is T typed ? typed : default;
+        if (!result.Success) return data.@this<T>.From(result);
+        return data.@this<T>.Ok(result.Value is T typed ? typed : default!);
     }
 
-    public string Serialize(object? value, Type? type = null)
+    public data.@this<string> Serialize(object? value, Type? type = null)
     {
-        if (IsSimpleType(value)) return value?.ToString() ?? "";
+        if (IsSimpleType(value)) return data.@this<string>.Ok(value?.ToString() ?? "");
         return _jsonFallback.Serialize(value, type);
     }
 
-    public object? Deserialize(string data, Type type)
-    {
-        return ConvertFromString(data, type);
-    }
+    public data.@this Deserialize(string data, Type type)
+        => global::app.data.@this.Ok(ConvertFromString(data, type));
 
-    public T? Deserialize<T>(string data)
+    public data.@this<T> Deserialize<T>(string data)
     {
         var result = ConvertFromString(data, typeof(T));
-        return result is T typed ? typed : default;
+        return global::app.data.@this<T>.Ok(result is T typed ? typed : default!);
     }
 
     private static bool IsSimpleType(object? value)

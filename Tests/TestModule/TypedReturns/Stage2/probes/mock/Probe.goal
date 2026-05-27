@@ -1,0 +1,3 @@
+MockProbe
+- mock.intercept pattern="some.action", return="mocked", write to %m%
+- write out "ok"

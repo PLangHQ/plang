@@ -52,7 +52,7 @@ public class ReportActionTests
             Hash = "deadbeef",
             BuilderVersion = "v1"
         };
-        var run = new global::app.tester.Run(new global::app.tester.File { Goal = goal });
+        var run = new global::app.tester.Run(new global::app.tester.Test.@this { Goal = goal });
         run.Complete(status, error);
         if (output != null) run.Output = output;
         return run;
@@ -229,7 +229,7 @@ public class ReportActionTests
     {
         _app.Tester.Format = "junit";
         var run = NewRun("Filtered", global::app.tester.Status.Skipped);
-        run.File.StatusReason = "excluded by tag";
+        run.Test.StatusReason = "excluded by tag";
         _app.Tester.Results.Add(run);
 
         await Report();
@@ -249,7 +249,7 @@ public class ReportActionTests
     {
         _app.Tester.Format = "junit";
         var run = NewRun("StaleTest", global::app.tester.Status.Stale);
-        run.File.StatusReason = "goal hash changed since build";
+        run.Test.StatusReason = "goal hash changed since build";
         _app.Tester.Results.Add(run);
 
         await Report();

@@ -9,7 +9,7 @@ namespace app.modules.test;
 
 /// <summary>
 /// Main test-runner loop. C# handler — NOT a PLang foreach, immune to the silent-skip
-/// bug that motivated this module. For each Ready global::app.tester.File, spins up a fresh App
+/// bug that motivated this module. For each Ready global::app.tester.Test.@this, spins up a fresh App
 /// instance (file boundary = App boundary), subscribes AfterAction for coverage,
 /// runs the test's entry goal under a timeout CancellationToken, records a global::app.tester.Run,
 /// merges the child's Coverage into the parent, then releases the App.
@@ -29,21 +29,21 @@ public partial class run : IContext
     internal static event Action<app.@this>? ChildAppCreated;
 
     [IsNotNull]
-    public partial data.@this<List<global::app.tester.File>> Tests { get; init; }
+    public partial data.@this<List<global::app.tester.Test.@this>> Tests { get; init; }
 
     public partial data.@this<int>? Parallel { get; init; }
     public partial data.@this<int>? Timeout { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this<global::app.tester.Results>> Run()
     {
-        var tests = Tests.Value ?? new List<global::app.tester.File>();
+        var tests = Tests.Value ?? new List<global::app.tester.Test.@this>();
         var parentApp = Context.App!;
         var parallel = Parallel?.Value ?? parentApp.Tester.Parallel;
         var timeoutSeconds = Timeout?.Value ?? parentApp.Tester.TimeoutSeconds;
         var timeout = TimeSpan.FromSeconds(timeoutSeconds);
 
         if (tests.Count == 0)
-            return app.data.@this.Ok(parentApp.Tester.Results);
+            return data.@this<global::app.tester.Results>.Ok(parentApp.Tester.Results);
 
         if (parallel < 1) parallel = 1;
 
@@ -56,10 +56,10 @@ public partial class run : IContext
         });
 
         await Task.WhenAll(tasks);
-        return app.data.@this.Ok(parentApp.Tester.Results);
+        return data.@this<global::app.tester.Results>.Ok(parentApp.Tester.Results);
     }
 
-    private async Task RunSingleAsync(global::app.tester.File test, TimeSpan timeout, app.@this parentApp)
+    private async Task RunSingleAsync(global::app.tester.Test.@this test, TimeSpan timeout, app.@this parentApp)
     {
         // Non-ready tests (Stale, Skipped, etc.) are recorded but not executed —
         // the report surfaces them with their discovery-time status. Hiding them
@@ -74,7 +74,7 @@ public partial class run : IContext
 
         // Child App roots at the PARENT'S root — same convention the .pr
         // files were built under. Root-relative paths (Goal.Path, GoalCall
-        // PrPath, test.File.Path / PrPath — all "/Modules/..." shaped) then
+        // PrPath, test.Goal.Path / PrPath — all "/Modules/..." shaped) then
         // resolve correctly. Rooting at test.Directory would deepen the
         // anchor and double-prefix every stored root-relative path.
         await using var childApp = new app.@this(parentApp.AbsolutePath);

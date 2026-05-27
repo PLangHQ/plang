@@ -50,7 +50,7 @@ public class TestMetadataTests
             Hash = goalHash,
             BuilderVersion = builderVersion
         };
-        var run = new global::app.tester.Run(new global::app.tester.File { Goal = goal });
+        var run = new global::app.tester.Run(new global::app.tester.Test.@this { Goal = goal });
         run.Complete(global::app.tester.Status.Pass);
         return run;
     }
@@ -62,7 +62,7 @@ public class TestMetadataTests
     public async Task Metadata_TestRun_CapturesBuilderVersionFromPr()
     {
         var run = NewRun("T", builderVersion: "v1.2.3");
-        await Assert.That(run.File.Goal.BuilderVersion).IsEqualTo("v1.2.3");
+        await Assert.That(run.Test.Goal.BuilderVersion).IsEqualTo("v1.2.3");
     }
 
     // global::app.tester.Run captures Goal.Hash (Name + Steps.Text SHA-256) from the .pr.
@@ -72,7 +72,7 @@ public class TestMetadataTests
     public async Task Metadata_TestRun_CapturesGoalHashFromPr()
     {
         var run = NewRun("T", goalHash: "abc123");
-        await Assert.That(run.File.Goal.Hash).IsEqualTo("abc123");
+        await Assert.That(run.Test.Goal.Hash).IsEqualTo("abc123");
     }
 
     // results.json exposes the builder version per test run entry. Tooling can

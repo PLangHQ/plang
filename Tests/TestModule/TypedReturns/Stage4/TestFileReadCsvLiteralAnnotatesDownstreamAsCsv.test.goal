@@ -1,0 +1,8 @@
+TestFileReadCsvLiteralAnnotatesDownstreamAsCsv
+/ file.read.Build() infers "csv" from the literal '.csv' extension and
+/ stamps it on the terminal variable.set's Type slot. The downstream
+/ step's "Variables in scope" snapshot must read %x%(csv), not (object).
+- builder.goals from 'probes/csv/', write to %goals%
+- goal.getTypes %goals[0]%, write to %snapshot%
+- set %annot% = %snapshot[1].x%
+- assert.equals expected='csv', actual=%annot%

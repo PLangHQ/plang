@@ -2,7 +2,7 @@ using app.Attributes;
 
 namespace app;
 
-[PlangType("info")]
+[PlangType]
 public sealed class Info
 {
     [LlmBuilder] public string Key { get; init; } = "";

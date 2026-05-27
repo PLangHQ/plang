@@ -1,0 +1,4 @@
+RunProbe
+- test.discover tests in 'x/' recursive, pattern='*.test.goal', write to %t%
+- test.run %t%, write to %r%
+- list.count %r%, write to %n%

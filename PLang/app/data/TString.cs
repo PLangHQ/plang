@@ -8,11 +8,12 @@ namespace app.data;
 /// Resolves %var% placeholders via a resolver function.
 /// Translation lookup is deferred to Phase 6+.
 /// </summary>
-[PlangType("tstring",
-    Example = "Hello %name%")]
-[PlangType("translatable")]
+[PlangType]
 public sealed class TString
 {
+    /// <summary>Catalog example — read via reflection by the schema builder.</summary>
+    public static string Example => "Hello %name%";
+
     /// <summary>The raw template string with %var% placeholders.</summary>
     public string Value { get; }
 

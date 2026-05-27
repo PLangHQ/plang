@@ -35,7 +35,7 @@ public static class @this
 
             namespace {{info.Namespace}};
 
-            partial class {{info.ClassName}} : global::app.modules.ICodeGenerated
+            partial class {{info.ClassName}} : global::app.modules.ICodeGenerated, global::app.modules.IClass
             {
 
             """);
@@ -45,6 +45,7 @@ public static class @this
         EmitProperties(sb, info);
         EmitDataAndErrorHelpers(sb, info);
         EmitExecuteAsync(sb, info);
+        EmitSetAction(sb, info);
         EmitSnapshotPublic(sb);
         EmitLegacyHelpers(sb);
         EmitSnapshotInternal(sb, info);
@@ -285,6 +286,54 @@ public static class @this
                     var orig = err.Error;
                     var msg = $"{__action.Module}.{__action.ActionName}: {orig.Message}";
                     return global::app.data.@this.FromError(new global::app.errors.ActionError(msg, orig.Key ?? "ActionError", orig.StatusCode));
+                }
+
+            """);
+    }
+
+    /// <summary>
+    /// SetAction prepares the handler for <c>Build()</c> invocation from the validate pass:
+    /// stamps __action/__app so the lazy property getters can resolve, and clears any
+    /// cached backing fields from a prior call. Mirrors ExecuteAsync's setup minus the
+    /// runtime-only steps (Channel resolve, IEvent wiring, [Code] eager, IsNotNull,
+    /// Run try/catch). Build() reads its own parameters via the generated property
+    /// getters exactly the same way Run() does.
+    /// </summary>
+    private static void EmitSetAction(StringBuilder sb, ActionClassInfo info)
+    {
+        sb.Append("""
+                public void SetAction(
+                    global::app.goals.goal.steps.step.actions.action.@this action,
+                    global::app.actor.context.@this context)
+                {
+                    __action = action;
+                    __app = context.App;
+                    __resolutionError = null;
+                    if (action != null)
+                    {
+
+            """);
+
+        foreach (var prop in info.Properties)
+        {
+            if (prop is CodeProperty) continue;
+            sb.Append($$"""
+                                __{{prop.Name}}_backing = default;
+                                __{{prop.Name}}_set = false;
+
+                    """);
+        }
+
+        sb.Append("""
+                    }
+
+            """);
+
+        if (info.ImplementsIContext) sb.AppendLine("        Context = context;");
+        if (info.ImplementsIAction) sb.AppendLine("        Action = action!;");
+        if (info.ImplementsIStep) sb.AppendLine("        Step = action?.Step!;");
+
+        sb.Append("""
                 }
 
             """);

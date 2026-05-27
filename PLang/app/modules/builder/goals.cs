@@ -1,5 +1,6 @@
 using app.variables;
 using app.modules.builder.code;
+using Goal = app.goals.goal.@this;
 
 namespace app.modules.builder;
 
@@ -11,5 +12,9 @@ public partial class goals : IContext
     [Code]
     public partial IBuilder Builder { get; }
 
-    public async Task<data.@this> Run() => await Builder.Goals(this);
+    public async Task<data.@this<List<Goal>>> Run()
+    {
+        var result = await Builder.Goals(this);
+        return data.@this<List<Goal>>.From(result);
+    }
 }

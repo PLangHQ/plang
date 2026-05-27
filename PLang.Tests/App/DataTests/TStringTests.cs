@@ -145,10 +145,14 @@ public class TStringTests
     }
 
     [Test]
-    public async Task TypeMapping_ResolvesTranslatable()
+    public async Task TypeMapping_ResolvesTranslatable_AliasDropped()
     {
+        // The "translatable" alias was dropped on `typed-action-returns`: TString's
+        // catalog name is just "tstring" (derived from class name lowercased).
+        // Documented here so the removal is intentional and visible to anyone
+        // following the change.
         var type = TypeMapping.GetType("translatable");
-        await Assert.That(type).IsEqualTo(typeof(R2.TString));
+        await Assert.That(type).IsNull();
     }
 
     [Test]

@@ -1,0 +1,10 @@
+TestHttpRequestJsonBodyAccessibleAsDeepProperty
+/ Mock http.request to return a Response-shaped value whose Body is a
+/ deep dict. Asserts %resp.Body.a.b% reads through to 42, proving Data
+/ Properties navigation works on the typed Response result.
+/ (The actual Content-Type → Body parsing pipeline is covered end-to-end
+/ in C# by Stage3_HttpContentTypeDispatchTests.cs; this PLang test
+/ validates the user-visible navigation half.)
+- mock.intercept pattern="http.request", return={statusCode:200, headers:{}, body:{a:{b:42}}, duration:"00:00:00"}, write to %m%
+- http.request 'https://example.invalid/api', write to %resp%
+- assert.equals expected=42, actual=%resp.body.a.b%

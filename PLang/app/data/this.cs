@@ -437,12 +437,54 @@ public partial class @this
     /// converts to T via TypeMapping, returns a fresh Data&lt;T&gt;.
     /// Every call resolves freshly against the current context — there is nothing
     /// to cache and nothing to invalidate. Caching, if any, lives on the caller.
+    ///
+    /// <para>
+    /// Internal: this is the source-generator's resolution entry point — T is
+    /// the declared C# property type, known at emit time. Public surface for
+    /// type-driven materialization is <see cref="As(string)"/> (caller names
+    /// the target PLang type at runtime, no generic at the call site).
+    /// </para>
     /// </summary>
-    public @this<T> As<T>(actor.context.@this? context = null)
+    internal @this<T> As<T>(actor.context.@this? context = null)
     {
         var ctx = context ?? _context;
         var raw = Value; // factory-resolved if any; never %var% substituted
         return AsT_Impl<T>(raw, ctx);
+    }
+
+    /// <summary>
+    /// Materializes this Data as the requested PLang type — explicit
+    /// cross-type coercion. Resolves <paramref name="typeName"/> via the
+    /// context's type registry to a CLR type, then runs the materializer on
+    /// the raw value. Used at call sites where the caller knows the target
+    /// shape at runtime — e.g. a save action passes the format inferred from
+    /// the destination extension (see todos.md "file.save cross-type coercion").
+    ///
+    /// <para>Returns a fresh Data wrapping the materialized value; the source's
+    /// own <c>.Type</c> is not consulted, only <paramref name="typeName"/>. For
+    /// the implicit case where the variable's declared type drives
+    /// materialization, just read <see cref="Value"/>.</para>
+    ///
+    /// <para>Unknown type names surface a clear error at access — the materializer
+    /// lookup fails fast rather than passing a wrong CLR shape downstream.</para>
+    /// </summary>
+    public @this As(string typeName, actor.context.@this? context = null)
+    {
+        if (string.IsNullOrWhiteSpace(typeName))
+            return global::app.data.@this.FromError(new global::app.errors.ServiceError(
+                "Data.As(typeName) requires a non-empty type name.", "InvalidTypeName", 400));
+
+        var ctx = context ?? _context;
+        var clr = ctx?.App.Types.Clr(typeName) ?? AppTypes.GetPrimitiveOrMime(typeName);
+        if (clr == null)
+            return global::app.data.@this.FromError(new global::app.errors.ServiceError(
+                $"No PLang type registered under name '{typeName}'.", "UnknownType", 400));
+
+        var raw = Value;
+        var converted = raw is string s
+            ? AppTypes.TryConvertTo(s, clr).Value
+            : AppTypes.ConvertTo(raw, clr);
+        return new @this(Name, converted, new type(typeName), Parent) { Context = ctx };
     }
 
     /// <summary>

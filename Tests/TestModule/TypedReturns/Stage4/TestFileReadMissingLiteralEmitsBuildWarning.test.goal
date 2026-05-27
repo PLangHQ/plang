@@ -1,0 +1,11 @@
+TestFileReadMissingLiteralEmitsBuildWarning
+/ file.read.Build() on a missing literal path emits a non-fatal warning
+/ via Channel("builder") and still returns the extension as the inferred
+/ type. From PLang we can verify the non-fatal half: build succeeds and
+/ downstream annotation is "txt" (file.read.Build() returned, didn't
+/ throw). The channel emission itself is C# territory — drained by
+/ Stage4_BuildMethodImplsTests.cs via MemoryChannel.
+- builder.goals from 'probes/missing/', write to %goals%
+- goal.getTypes %goals[0]%, write to %snapshot%
+- set %annot% = %snapshot[1].x%
+- assert.equals expected='txt', actual=%annot%
