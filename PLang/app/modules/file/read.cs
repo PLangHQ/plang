@@ -55,7 +55,14 @@ public partial class Read : IContext
         if (p == null || string.IsNullOrEmpty(p.Extension)) return data.@this.Ok();
         if (p.MimeType == "application/octet-stream") return data.@this.Ok();
 
-        var typeName = p.Extension.ToLowerInvariant();
+        var typeName = p.Extension.TrimStart('.').ToLowerInvariant();
+
+        // Only stamp if the extension is a registered PLang type — otherwise
+        // downstream variable.set tries to convert via an unknown type and
+        // surfaces "Unknown type 'X'". Common text-shaped extensions (csv, txt,
+        // xml, yaml) are registered as string aliases in app.types so they pass
+        // this check while still carrying the more-specific annotation downstream.
+        if (Context.App.Types.Get(typeName) == null) return data.@this.Ok();
 
         // Best-effort missing-file warning. Channel("builder") falls back to a
         // no-op sink when no build is active, so this is safe outside builds.

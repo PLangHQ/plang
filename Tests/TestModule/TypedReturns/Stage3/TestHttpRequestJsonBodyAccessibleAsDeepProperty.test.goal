@@ -5,6 +5,6 @@ TestHttpRequestJsonBodyAccessibleAsDeepProperty
 / (The actual Content-Type → Body parsing pipeline is covered end-to-end
 / in C# by Stage3_HttpContentTypeDispatchTests.cs; this PLang test
 / validates the user-visible navigation half.)
-- mock.intercept actionPattern="http.request", returnValue={statusCode:200, headers:{}, body:{a:{b:42}}, duration:"00:00:00"}, write to %m%
+- mock.intercept pattern="http.request", return={statusCode:200, headers:{}, body:{a:{b:42}}, duration:"00:00:00"}, write to %m%
 - http.request 'https://example.invalid/api', write to %resp%
 - assert.equals expected=42, actual=%resp.body.a.b%

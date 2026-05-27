@@ -30,6 +30,9 @@ public sealed class Ask : global::app.IExitsGoal
     /// Renders the bound answer for PLang string contexts — `write to %name%`
     /// followed by `%name% equals "Alice"` compares text against the answer
     /// without needing `%name.Answer%`. Returns empty string for a pending Ask.
+    /// **Note:** this means ToString() leaks the user's answer; do not use an
+    /// `Ask` value in diagnostic / log paths. Output-channel routing is the
+    /// right path; arbitrary string interpolation in trace dumps is not.
     /// </summary>
     public override string ToString() => Answer ?? string.Empty;
 }

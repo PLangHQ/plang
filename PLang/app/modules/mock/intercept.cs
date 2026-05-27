@@ -9,9 +9,9 @@ namespace app.modules.mock;
 [Action("intercept", Cacheable = false)]
 public partial class intercept : IContext
 {
-    public partial data.@this<string> ActionPattern { get; init; }
-    public partial data.@this? ReturnValue { get; init; }
-    public partial data.@this<GoalCall>? GoalToCall { get; init; }
+    public partial data.@this<string> Pattern { get; init; }
+    public partial data.@this? Return { get; init; }
+    public partial data.@this<GoalCall>? Call { get; init; }
     public partial data.@this<Dictionary<string, object?>>? Parameters { get; init; }
 
     public Task<data.@this<global::app.mock.Mock.@this>> Run()
@@ -19,12 +19,12 @@ public partial class intercept : IContext
         var handle = new global::app.mock.Mock.@this
         {
             Id = Guid.NewGuid().ToString("N")[..8],
-            ActionPattern = ActionPattern.Value!,
-            IsSpy = ReturnValue?.Value == null && GoalToCall?.Value == null
+            Pattern = Pattern.Value!,
+            IsSpy = Return?.Value == null && Call?.Value == null
         };
 
-        var returnValue = ReturnValue?.Value;
-        var goalToCall = GoalToCall?.Value;
+        var returnValue = Return?.Value;
+        var goalToCall = Call?.Value;
         var paramMatchers = Parameters?.Value;
 
         Func<actor.context.@this, app.goals.goal.steps.step.actions.action.@this?, data.@this?, Task<data.@this>> handler = async (ctx, _, _) =>
@@ -61,7 +61,7 @@ public partial class intercept : IContext
         var binding = new EventBinding(
             EventType.BeforeAction,
             handler,
-            actionPattern: ActionPattern.Value!);
+            actionPattern: Pattern.Value!);
 
         handle.EventBindingId = binding.Id;
 

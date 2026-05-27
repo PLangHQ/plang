@@ -561,6 +561,13 @@ public sealed class Default : IHttp
     /// <summary>
     /// Parses application/plang response: deserialize as data.@this (with Signature via [In]),
     /// verify signature, set %!ServiceIdentity%.
+    ///
+    /// **Why not Serializers.GetByContentType?** application/plang is the engine's
+    /// own transport — `_transportInOptions` carries the [In] signature-inflow
+    /// shape that the generic JSON serializer doesn't know about. Routing
+    /// through the registry would lose Signature parsing; this raw
+    /// `JsonSerializer.Deserialize&lt;data.@this&gt;` is intentional. Same rationale
+    /// applies to <c>StreamPlangAsync</c>'s per-line NDJSON deserialize.
     /// </summary>
     private async Task<data.@this> ParsePlangResponseAsync(
         HttpResponseMessage response,

@@ -16,7 +16,7 @@ public partial class Verify : IContext
         {
             return Task.FromResult(global::app.data.@this<bool>.FromError(new AssertionError(
                 ExpectedCount.Value, Mock.Value!.CallCount,
-                Message?.Value ?? $"Expected {Mock.Value!.ActionPattern} to be called {ExpectedCount.Value} time(s), but was called {Mock.Value!.CallCount} time(s)")));
+                Message?.Value ?? $"Expected {Mock.Value!.Pattern} to be called {ExpectedCount.Value} time(s), but was called {Mock.Value!.CallCount} time(s)")));
         }
 
         return Task.FromResult(global::app.data.@this<bool>.Ok(true));

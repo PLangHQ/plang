@@ -104,11 +104,11 @@ public partial class report : IContext
         foreach (var run in results)
         {
             var currentBuilderVersion = ResolveBuilderVersion(testing);
-            var drift = !string.IsNullOrEmpty(run.File.Goal.BuilderVersion)
+            var drift = !string.IsNullOrEmpty(run.Test.Goal.BuilderVersion)
                 && !string.IsNullOrEmpty(currentBuilderVersion)
-                && !string.Equals(run.File.Goal.BuilderVersion, currentBuilderVersion, StringComparison.Ordinal);
+                && !string.Equals(run.Test.Goal.BuilderVersion, currentBuilderVersion, StringComparison.Ordinal);
 
-            sb.AppendLine($"  [{run.Status}] {run.File.Goal.Path} ({run.Duration.TotalMilliseconds:F0}ms)"
+            sb.AppendLine($"  [{run.Status}] {run.Test.Goal.Path} ({run.Duration.TotalMilliseconds:F0}ms)"
                 + (drift ? " [builder drift]" : ""));
 
             if (run.Status == global::app.tester.Status.Fail && run.Error != null)
@@ -118,7 +118,7 @@ public partial class report : IContext
 
     private static void RenderFailure(StringBuilder sb, global::app.tester.Run run)
     {
-        sb.AppendLine("    FAIL: " + run.File.Goal.Path);
+        sb.AppendLine("    FAIL: " + run.Test.Goal.Path);
         if (run.Error is AssertionError assert)
         {
             sb.AppendLine($"      Expected: {FormatValue(assert.Expected)}");
@@ -255,13 +255,13 @@ public partial class report : IContext
         {
             runs.Add(new
             {
-                path = run.File.Goal.Path?.ToString(),
-                entryGoal = run.File.Goal.Name,
+                path = run.Test.Goal.Path?.ToString(),
+                entryGoal = run.Test.Goal.Name,
                 status = run.Status.ToString(),
                 durationMs = run.Duration.TotalMilliseconds,
-                goalHash = run.File.Goal.Hash,
-                builderVersion = run.File.Goal.BuilderVersion,
-                tags = run.File.Tags.Concat(run.UserTags).Distinct().ToList(),
+                goalHash = run.Test.Goal.Hash,
+                builderVersion = run.Test.Goal.BuilderVersion,
+                tags = run.Test.Tags.Concat(run.UserTags).Distinct().ToList(),
                 error = run.Error?.Message,
                 expected = (run.Error as AssertionError)?.Expected,
                 actual = (run.Error as AssertionError)?.Actual,
@@ -307,7 +307,7 @@ public partial class report : IContext
         sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         sb.AppendLine($"<testsuites tests=\"{results.Count}\" failures=\"{results.Count(r => r.Status == global::app.tester.Status.Fail)}\" errors=\"0\">");
         // Group by the goal's parent folder (path verb, no string surgery).
-        var byPath = results.GroupBy(r => r.File.Goal.Path?.Parent?.ToString() ?? "");
+        var byPath = results.GroupBy(r => r.Test.Goal.Path?.Parent?.ToString() ?? "");
         foreach (var group in byPath)
         {
             var suiteTests = group.ToList();
@@ -316,7 +316,7 @@ public partial class report : IContext
             sb.AppendLine($"  <testsuite name=\"{SecurityElement.Escape(group.Key)}\" tests=\"{suiteTests.Count}\" failures=\"{failures}\" time=\"{timeSec:F3}\">");
             foreach (var run in suiteTests)
             {
-                var name = SecurityElement.Escape(run.File.Goal.Path?.ToString() ?? "") ?? "";
+                var name = SecurityElement.Escape(run.Test.Goal.Path?.ToString() ?? "") ?? "";
                 sb.Append($"    <testcase name=\"{name}\" time=\"{run.Duration.TotalSeconds:F3}\"");
                 if (run.Status == global::app.tester.Status.Pass) sb.AppendLine(" />");
                 else
@@ -332,7 +332,7 @@ public partial class report : IContext
                             break;
                         case global::app.tester.Status.Stale:
                         case global::app.tester.Status.Skipped:
-                            sb.AppendLine($"      <skipped>{SecurityElement.Escape(run.File.StatusReason ?? run.Status.ToString())}</skipped>");
+                            sb.AppendLine($"      <skipped>{SecurityElement.Escape(run.Test.StatusReason ?? run.Status.ToString())}</skipped>");
                             break;
                     }
                     sb.AppendLine("    </testcase>");

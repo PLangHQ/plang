@@ -5,7 +5,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "mock.intercept actionPattern=\u0022file.read\u0022, returnValue=\u0022mocked\u0022, write to %m%",
+      "text": "mock.intercept pattern=\u0022some.action\u0022, return=\u0022mocked\u0022, write to %m%",
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
@@ -15,12 +15,12 @@
           "action": "intercept",
           "parameters": [
             {
-              "name": "ActionPattern",
-              "value": "file.read",
+              "name": "Pattern",
+              "value": "some.action",
               "type": "string"
             },
             {
-              "name": "ReturnValue",
+              "name": "Return",
               "value": "mocked",
               "type": "object"
             }
@@ -54,7 +54,7 @@
         }
       ],
       "intent": null,
-      "formal": "mock.intercept(ActionPattern=\u0022file.read\u0022, ReturnValue=\u0022mocked\u0022) | variable.set(Name=%m%, Value=%!data%)",
+      "formal": "mock.intercept(Pattern=\u0022some.action\u0022, Return=\u0022mocked\u0022) | variable.set(Name=%m%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -89,7 +89,7 @@
   "visibility": 1,
   "path": "/TestModule/TypedReturns/Stage2/probes/mock/Probe.goal",
   "prPath": "/TestModule/TypedReturns/Stage2/probes/mock/.build/probe.pr",
-  "hash": "28f9bfb014cdd9927aa94e8e35dd576351348d81b029fb158d41f41c6afdda42",
+  "hash": "9d8cc00a10ee70ea3aebbff0dae24a3040534b6da0ab64e89c38fd7099b3125d",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

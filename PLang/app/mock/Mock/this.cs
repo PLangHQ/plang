@@ -9,7 +9,7 @@ namespace app.mock.Mock;
 public class @this
 {
     public string Id { get; init; } = "";
-    public string ActionPattern { get; init; } = "";
+    public string Pattern { get; init; } = "";
     public int CallCount => Calls.Count;
     public bool IsSpy { get; init; }
     public List<Call> Calls { get; } = new();

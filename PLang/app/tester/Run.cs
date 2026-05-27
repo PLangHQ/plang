@@ -13,7 +13,7 @@ public sealed class Run
     private readonly Stopwatch _stopwatch;
 
     /// <summary>The discovered Test this run is executing.</summary>
-    public Test.@this File { get; }
+    public Test.@this Test { get; }
 
     /// <summary>Current lifecycle status. Transitions on Complete().</summary>
     public Status Status { get; private set; }
@@ -34,13 +34,13 @@ public sealed class Run
     /// </summary>
     public Timings Timings { get; } = new();
 
-    /// <summary>Tags added during the run via test.tag. Distinct from File.Tags (which is discovery-time).</summary>
+    /// <summary>Tags added during the run via test.tag. Distinct from Test.Tags (which is discovery-time).</summary>
     public HashSet<string> UserTags { get; } = new(StringComparer.OrdinalIgnoreCase);
 
-    public Run(Test.@this file)
+    public Run(Test.@this test)
     {
-        File = file;
-        Status = file.Status == Status.Ready ? Status.Ready : file.Status;
+        Test = test;
+        Status = test.Status == Status.Ready ? Status.Ready : test.Status;
         _stopwatch = Stopwatch.StartNew();
     }
 

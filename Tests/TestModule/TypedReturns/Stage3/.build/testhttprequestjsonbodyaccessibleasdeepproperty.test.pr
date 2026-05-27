@@ -5,7 +5,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "mock.intercept actionPattern=\u0022http.request\u0022, returnValue={statusCode:200, headers:{}, body:{a:{b:42}}, duration:\u002200:00:00\u0022}, write to %m%",
+      "text": "mock.intercept pattern=\u0022http.request\u0022, return={statusCode:200, headers:{}, body:{a:{b:42}}, duration:\u002200:00:00\u0022}, write to %m%",
       "lineNumber": 8,
       "indent": 0,
       "comment": "Mock http.request to return a Response-shaped value whose Body is a\ndeep dict. Asserts %resp.Body.a.b% reads through to 42, proving Data\nProperties navigation works on the typed Response result.\n(The actual Content-Type \u2192 Body parsing pipeline is covered end-to-end\nin C# by Stage3_HttpContentTypeDispatchTests.cs; this PLang test\nvalidates the user-visible navigation half.)",
@@ -15,12 +15,12 @@
           "action": "intercept",
           "parameters": [
             {
-              "name": "ActionPattern",
+              "name": "Pattern",
               "value": "http.request",
               "type": "string"
             },
             {
-              "name": "ReturnValue",
+              "name": "Return",
               "value": {
                 "statusCode": 200,
                 "headers": {},
@@ -43,7 +43,7 @@
           "parameters": [
             {
               "name": "Url",
-              "value": "%m%",
+              "value": "%!data%",
               "type": "string"
             },
             {
@@ -102,7 +102,7 @@
         }
       ],
       "intent": null,
-      "formal": "mock.intercept(ActionPattern=\u0022http.request\u0022, ReturnValue={statusCode:200, headers:{}, body:{a:{b:42}}, duration:\u002200:00:00\u0022}) | http.request(Url=\u0022%m%\u0022, Method=GET) , variable.set(Name=%m%, Value=%!data%, Type=string)",
+      "formal": "mock.intercept(Pattern=\u0022http.request\u0022, Return={statusCode:200, headers:{}, body:{a:{b:42}}, duration:\u002200:00:00\u0022}) , http.request(Url=%!data%, Method=GET) , variable.set(Name=%m%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -218,7 +218,7 @@
   "visibility": 1,
   "path": "/TestModule/TypedReturns/Stage3/TestHttpRequestJsonBodyAccessibleAsDeepProperty.test.goal",
   "prPath": "/TestModule/TypedReturns/Stage3/.build/testhttprequestjsonbodyaccessibleasdeepproperty.test.pr",
-  "hash": "2de6c7732fc8e70e1c390b8dfa4c112b1af463472a968a7f3ec275a8620bf235",
+  "hash": "2c16a05aa33dad3e056638fd6762f9b22e401fee2ccee4e4f9c6089dced1f8c4",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

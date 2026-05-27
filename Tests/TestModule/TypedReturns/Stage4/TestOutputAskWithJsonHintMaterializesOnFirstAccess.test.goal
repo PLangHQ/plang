@@ -3,6 +3,6 @@ TestOutputAskWithJsonHintMaterializesOnFirstAccess
 / first property access, which triggers JSON deserialization via the
 / Serializers registry. Mock the ask so the test doesn't block on an
 / interactive channel; the mock returns a JSON literal string.
-- mock.intercept actionPattern="output.ask", returnValue='{"foo":42}', write to %m%
+- mock.intercept pattern="output.ask", return='{"foo":42}', write to %m%
 - ask "give me json", write to %a%(json)
 - assert.equals expected=42, actual=%a.foo%

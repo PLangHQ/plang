@@ -58,6 +58,16 @@ public sealed partial class @this
         ["object"] = typeof(object),
         ["dynamic"] = typeof(object),
         ["json"] = typeof(JsonNode),
+        // Text-shaped file extensions — registered as string aliases so
+        // file.read.Build()'s extension-derived Type stamp ("csv", "txt", ...)
+        // doesn't surface "Unknown type" at runtime. Annotation stays specific
+        // (goal.getTypes still reports "csv"); only the runtime conversion
+        // target degrades to string.
+        ["csv"] = typeof(string),
+        ["txt"] = typeof(string),
+        ["xml"] = typeof(string),
+        ["yaml"] = typeof(string),
+        ["yml"] = typeof(string),
         ["int?"] = typeof(int?),
         ["long?"] = typeof(long?),
         ["double?"] = typeof(double?),

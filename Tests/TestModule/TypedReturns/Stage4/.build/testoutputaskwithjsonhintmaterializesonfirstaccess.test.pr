@@ -5,7 +5,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "mock.intercept actionPattern=\u0022output.ask\u0022, returnValue=\u0027{\u0022foo\u0022:42}\u0027, write to %m%",
+      "text": "mock.intercept pattern=\u0022output.ask\u0022, return=\u0027{\u0022foo\u0022:42}\u0027, write to %m%",
       "lineNumber": 6,
       "indent": 0,
       "comment": "output.ask \u002B (json) hint: the variable holds the raw string until\nfirst property access, which triggers JSON deserialization via the\nSerializers registry. Mock the ask so the test doesn\u0027t block on an\ninteractive channel; the mock returns a JSON literal string.",
@@ -15,33 +15,15 @@
           "action": "intercept",
           "parameters": [
             {
-              "name": "ActionPattern",
+              "name": "Pattern",
               "value": "output.ask",
               "type": "string"
             },
             {
-              "name": "ReturnValue",
+              "name": "Return",
               "value": {
                 "foo": 42
               },
-              "type": "dictionary\u00602"
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
-        },
-        {
-          "module": "output",
-          "action": "ask",
-          "parameters": [
-            {
-              "name": "Question",
-              "value": "",
-              "type": "string"
-            },
-            {
-              "name": "Variables",
-              "value": "%m%",
               "type": "object"
             }
           ],
@@ -74,7 +56,7 @@
         }
       ],
       "intent": null,
-      "formal": "mock.intercept(ActionPattern=\u0022output.ask\u0022, ReturnValue={\u0022foo\u0022:42}) | output.ask(Question=\u0022\u0022, Variables=%m%) , variable.set(Name=%m%, Value=%!data%, Type=object)",
+      "formal": "mock.intercept(Pattern=\u0022output.ask\u0022, Return={\u0022foo\u0022:42}, Call=goal.call({name:\u0022\u0022}), Parameters={}) | variable.set(Name=%m%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -129,7 +111,7 @@
         }
       ],
       "intent": null,
-      "formal": "output.ask(Question=\u0022give me json\u0022) | variable.set(Name=%a%, Value=%!data%, Type=\u0022json\u0022)",
+      "formal": "output.ask(Question=\u0022give me json\u0022) | variable.set(Name=%a%, Value=%!data%, Type=json)",
       "source": null,
       "waitForExecution": true
     },
@@ -169,7 +151,7 @@
   "visibility": 1,
   "path": "/TestModule/TypedReturns/Stage4/TestOutputAskWithJsonHintMaterializesOnFirstAccess.test.goal",
   "prPath": "/TestModule/TypedReturns/Stage4/.build/testoutputaskwithjsonhintmaterializesonfirstaccess.test.pr",
-  "hash": "16ce09f7e1d476b4d9394f3f4aaa8061f45d338df6012d882298769acab2fd88",
+  "hash": "12c25590d77d08e59f8dbcb16bfe01f036ad3706626fef94ed705b2e4d7b5e63",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

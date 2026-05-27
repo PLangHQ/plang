@@ -606,11 +606,11 @@ public class RunActionTests
 
         await Assert.That(runs.Count).IsEqualTo(2);
         // Throwing fixture captured as Fail — no exception propagated.
-        var failed = runs.Single(r => r.File.Goal.Path?.ToString() == "/Throw.test.goal");
+        var failed = runs.Single(r => r.Test.Goal.Path?.ToString() == "/Throw.test.goal");
         await Assert.That(failed.Status).IsEqualTo(global::app.tester.Status.Fail);
         await Assert.That(failed.Error).IsNotNull();
         // Healthy fixture still ran — loop stayed parallel-safe.
-        var passed = runs.Single(r => r.File.Goal.Path?.ToString() == "/Healthy.test.goal");
+        var passed = runs.Single(r => r.Test.Goal.Path?.ToString() == "/Healthy.test.goal");
         await Assert.That(passed.Status).IsEqualTo(global::app.tester.Status.Pass);
     }
 }

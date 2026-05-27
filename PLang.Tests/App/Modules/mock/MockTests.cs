@@ -24,8 +24,8 @@ public class MockTests
         var action = new intercept
         {
             Context = context,
-            ActionPattern = "file.read",
-            ReturnValue = new global::app.data.@this("", "test content")        };
+            Pattern = "file.read",
+            Return = new global::app.data.@this("", "test content")        };
 
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
@@ -33,7 +33,7 @@ public class MockTests
         await Assert.That(result.Value is global::app.mock.Mock.@this).IsTrue();
 
         var handle = (global::app.mock.Mock.@this)result.Value!;
-        await Assert.That(handle.ActionPattern).IsEqualTo("file.read");
+        await Assert.That(handle.Pattern).IsEqualTo("file.read");
         await Assert.That(handle.CallCount).IsEqualTo(0);
         await Assert.That(handle.IsSpy).IsFalse();
     }
@@ -45,7 +45,7 @@ public class MockTests
         var action = new intercept
         {
             Context = context,
-            ActionPattern = "output.write"
+            Pattern = "output.write"
         };
 
         var result = await action.Run();
@@ -62,8 +62,8 @@ public class MockTests
         var action = new intercept
         {
             Context = context,
-            ActionPattern = "file.read",
-            ReturnValue = new global::app.data.@this("", "mocked")        };
+            Pattern = "file.read",
+            Return = new global::app.data.@this("", "mocked")        };
 
         var beforeCount = context.Events.Count;
         await action.Run();
@@ -79,8 +79,8 @@ public class MockTests
         var action = new intercept
         {
             Context = context,
-            ActionPattern = "file.read",
-            ReturnValue = new global::app.data.@this("", "mocked")        };
+            Pattern = "file.read",
+            Return = new global::app.data.@this("", "mocked")        };
 
         var result = await action.Run();
         var handle = (global::app.mock.Mock.@this)result.Value!;
@@ -98,7 +98,7 @@ public class MockTests
         var handle = new global::app.mock.Mock.@this
         {
             Id = "test",
-            ActionPattern = "file.read"
+            Pattern = "file.read"
         };
         handle.RecordCall(new Dictionary<string, object?> { ["path"] = "test.txt" });
         handle.RecordCall(new Dictionary<string, object?> { ["path"] = "other.txt" });
@@ -121,7 +121,7 @@ public class MockTests
         var handle = new global::app.mock.Mock.@this
         {
             Id = "test",
-            ActionPattern = "file.read"
+            Pattern = "file.read"
         };
         handle.RecordCall(new Dictionary<string, object?> { ["path"] = "test.txt" });
 
@@ -144,7 +144,7 @@ public class MockTests
         var handle = new global::app.mock.Mock.@this
         {
             Id = "test",
-            ActionPattern = "file.read"
+            Pattern = "file.read"
         };
 
         var verify = new Verify
@@ -173,8 +173,8 @@ public class MockTests
         var mockAction = new intercept
         {
             Context = context,
-            ActionPattern = "file.read",
-            ReturnValue = new global::app.data.@this("", "mocked")        };
+            Pattern = "file.read",
+            Return = new global::app.data.@this("", "mocked")        };
         var mockResult = await mockAction.Run();
         var handle = (global::app.mock.Mock.@this)mockResult.Value!;
 
@@ -200,15 +200,15 @@ public class MockTests
         var mock1 = new intercept
         {
             Context = context,
-            ActionPattern = "file.read",
-            ReturnValue = new global::app.data.@this("", "mocked1")        };
+            Pattern = "file.read",
+            Return = new global::app.data.@this("", "mocked1")        };
         await mock1.Run();
 
         var mock2 = new intercept
         {
             Context = context,
-            ActionPattern = "output.write",
-            ReturnValue = new global::app.data.@this("", "mocked2")        };
+            Pattern = "output.write",
+            Return = new global::app.data.@this("", "mocked2")        };
         await mock2.Run();
 
         await Assert.That(context.Events.Count).IsGreaterThanOrEqualTo(2);
@@ -232,7 +232,7 @@ public class MockTests
         var handle = new global::app.mock.Mock.@this
         {
             Id = "test",
-            ActionPattern = "file.read"
+            Pattern = "file.read"
         };
 
         handle.RecordCall(new Dictionary<string, object?> { ["path"] = "config.json" });
