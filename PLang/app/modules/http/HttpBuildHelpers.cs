@@ -32,6 +32,13 @@ internal static class HttpBuildHelpers
         var mime = app?.Formats.Mime(ext) ?? "application/octet-stream";
         if (mime == "application/octet-stream") return Task.FromResult(data.@this.Ok());
 
-        return Task.FromResult(data.@this.Ok(ext.TrimStart('.').ToLowerInvariant()));
+        var typeName = ext.TrimStart('.').ToLowerInvariant();
+
+        // Only stamp if the extension is a registered PLang type — otherwise
+        // downstream variable.set tries to convert via an unknown type and
+        // surfaces "Unknown type 'X'". Mirrors the gate in file/read.cs.
+        if (app?.Types.Get(typeName) == null) return Task.FromResult(data.@this.Ok());
+
+        return Task.FromResult(data.@this.Ok(typeName));
     }
 }

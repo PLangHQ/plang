@@ -138,6 +138,16 @@ public class Stage4_BuildMethodImplsTests
     }
 
     [Test]
+    public async Task HttpRequest_Build_LiteralUrlWithUnregisteredExtension_ReturnsBareOk()
+    {
+        // .pdf has a known mime but is not a registered PLang type. Stamping
+        // "pdf" would make the trailing variable.set fail with "Unknown type 'pdf'".
+        var result = await Build("http", "request", ("Url", "https://x/report.pdf"));
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsNull();
+    }
+
+    [Test]
     public async Task HttpUpload_Build_NonLiteralUrl_ReturnsBareOk()
     {
         var result = await Build("http", "upload",
