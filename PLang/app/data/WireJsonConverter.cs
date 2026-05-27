@@ -99,7 +99,22 @@ public sealed class WireJsonConverter : JsonConverter<@this>
                     else throw new JsonException("type field must be a JSON string");
                     break;
                 case "value":
-                    value = JsonSerializer.Deserialize<object?>(ref reader, options);
+                    // Peek at the token to see whether the value slot is a
+                    // nested Data (recognised by its {name, value, [signature]}
+                    // shape) — STJ alone would surface a Dictionary because the
+                    // destination type is object. Without rehydration the inner
+                    // Data's Signature would be observable as a sub-dictionary
+                    // but never reach signing.verify or App-level navigation.
+                    if (reader.TokenType == JsonTokenType.StartObject)
+                    {
+                        // Buffer the sub-object so we can decide.
+                        using var doc = JsonDocument.ParseValue(ref reader);
+                        value = LiftDataIfShaped(doc.RootElement, options);
+                    }
+                    else
+                    {
+                        value = JsonSerializer.Deserialize<object?>(ref reader, options);
+                    }
                     break;
                 case "signature":
                     signature = JsonSerializer.Deserialize<app.modules.signing.Signature>(ref reader, options);
@@ -113,18 +128,41 @@ public sealed class WireJsonConverter : JsonConverter<@this>
         throw new JsonException("Unterminated app.data.@this wire shape");
     }
 
+    // A JSON object with both "name" and "value" keys is the canonical Data
+    // wire shape (the WireJsonConverter always emits both on Write, including
+    // the "value": null case). Domain types Identity / Signature etc. have
+    // neither pair: Identity has "name" but no "value"; Signature has "type"
+    // but no "name" or "value". Requiring both keys keeps rehydration
+    // unambiguous across the value-graph without an explicit type marker.
+    private static object? LiftDataIfShaped(System.Text.Json.JsonElement element, JsonSerializerOptions options)
+    {
+        bool hasName = false, hasValue = false;
+        foreach (var prop in element.EnumerateObject())
+        {
+            if (!hasName && prop.Name.Equals("name", StringComparison.OrdinalIgnoreCase)) hasName = true;
+            else if (!hasValue && prop.Name.Equals("value", StringComparison.OrdinalIgnoreCase)) hasValue = true;
+            if (hasName && hasValue) break;
+        }
+
+        if (!(hasName && hasValue))
+        {
+            return JsonSerializer.Deserialize<object?>(element.GetRawText(), options);
+        }
+
+        return JsonSerializer.Deserialize<@this>(element.GetRawText(), options);
+    }
+
     public override void Write(Utf8JsonWriter writer, @this data, JsonSerializerOptions options)
     {
         var isHashOuter = IsHashOuter(data);
-        // Sign-if-missing — but only when the Data is actually Context-wired.
-        // A Data with no Context has no signing identity available; production
-        // discipline routes through Variables.Set / Channels which wire Context
-        // before any wire crossing, so the no-Context case in practice means
-        // an internal in-memory serialise (e.g. .pr authoring) that doesn't
-        // need an attestation. Skipping silently keeps that path working
-        // without re-introducing the "outermost-only" rule the converter
-        // replaces.
-        if (!isHashOuter && data.RawSignature == null && data.Context != null)
+        // Sign-if-missing — but only when the Data is wired into a real actor
+        // scope (Context.Actor is non-null). A bare Context with no Actor is
+        // the "internal in-memory serialise" case (test fixtures, .pr
+        // authoring, raw IClass calls); signing has no identity to draw on
+        // and skipping silently keeps those paths working. Production
+        // discipline (Variables.Set / Channels.Register) always sets Actor
+        // before any wire crossing.
+        if (!isHashOuter && data.RawSignature == null && data.Context?.Actor != null)
         {
             data.EnsureSigned();
         }

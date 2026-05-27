@@ -20,17 +20,11 @@ public partial class @this
     /// </summary>
     private const long MaxDecompressedSize = 100 * 1024 * 1024;
 
-    private readonly JsonSerializerOptions _envelopeJsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        PropertyNameCaseInsensitive = true,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        Converters = { new global::app.data.Json() },
-        TypeInfoResolver = new DefaultJsonTypeInfoResolver
-        {
-            Modifiers = { global::app.channels.serializers.filters.Sensitive.Strip }
-        }
-    };
+    // Context-less fallback serializer — same options shape as the registered
+    // application/plang serializer. Used when Compress/Decompress run outside
+    // an actor scope (raw Context constructed directly in tests).
+    private static readonly global::app.channels.serializers.serializer.plang.@this _fallbackPlang =
+        new global::app.channels.serializers.serializer.plang.@this();
 
     private app.modules.signing.Signature? _signature;
 
@@ -105,11 +99,11 @@ public partial class @this
     /// <summary>
     /// Compresses if the current type is compressible. After Wrap(), the type is the category
     /// (e.g. "spreadsheet"). Checks compressibility through context → App.Types.
-    /// Serializes current Data to JSON, compresses with GZip, wraps in archived envelope.
+    /// Routes through the registered application/plang serializer (so the bytes
+    /// inside the archive are the same canonical wire shape any other transport
+    /// would emit — including the inner Signature, fixing today's strip-Signature
+    /// bug). Wraps a single layer: <c>{type=archived, value=byte[]}</c>.
     /// Returns self if not compressible or no context.
-    /// Note: Properties are not preserved through the compression cycle — they are [JsonIgnore]
-    /// and will be empty after Decompress(). This is by design: Properties are for the [Out]
-    /// transport view, not intermediate compression.
     /// </summary>
     public @this Compress()
     {
@@ -119,15 +113,16 @@ public partial class @this
         if (!Type.Compressible)
             return this;
 
-        var json = JsonSerializer.SerializeToUtf8Bytes(this, typeof(@this), _envelopeJsonOptions);
-        var compressed = GZipCompress(json);
+        var serializer = _context.Actor?.Channels.Serializers.GetByType("application/plang")
+                         ?? (global::app.channels.serializers.serializer.ISerializer)_fallbackPlang;
 
-        var inner = new @this("", compressed, type.FromName("gzip"));
-        inner.Context = _context;
+        using var ms = new MemoryStream();
+        serializer.SerializeAsync(ms, this).GetAwaiter().GetResult();
+        var compressed = GZipCompress(ms.ToArray());
 
-        var envelope = new @this("", inner, type.FromName("archived"));
-        envelope.Context = _context;
-        return envelope;
+        var outer = new @this("", compressed, type.FromName("archived"));
+        outer.Context = _context;
+        return outer;
     }
 
     /// <summary>
@@ -164,29 +159,37 @@ public partial class @this
 
     /// <summary>
     /// Decompresses an archived envelope. If type is not "archived", returns self (no-op).
-    /// Reads inner Data for compressed bytes, decompresses with GZip, deserializes back to Data.
+    /// archived.Value is a byte[] (single-wrap shape, post-Stage-3) — gunzip and
+    /// deserialise through the registered application/plang serializer to recover
+    /// the original Data with its inner signature intact.
     /// </summary>
     public @this Decompress()
     {
         if (!string.Equals(Type?.Value, "archived", StringComparison.OrdinalIgnoreCase))
             return this;
 
-        if (Value is not @this inner)
-            return FromError(new ServiceError("Archived Data has no inner Data", "DecompressError", 500));
-
-        var compressed = inner.GetValue<byte[]>();
+        var compressed = GetValue<byte[]>();
         if (compressed == null)
-            return FromError(new ServiceError("Archived inner Data has no byte[] value", "DecompressError", 500));
+            return FromError(new ServiceError("Archived Data has no byte[] value", "DecompressError", 500));
 
         try
         {
             var decompressed = GZipDecompress(compressed);
 
-            var result = JsonSerializer.Deserialize<@this>(decompressed, _envelopeJsonOptions);
-            if (result == null)
-                return FromError(new ServiceError("Failed to deserialize decompressed Data", "DecompressError", 500));
+            var serializer = _context?.Actor?.Channels.Serializers.GetByType("application/plang")
+                             ?? (global::app.channels.serializers.serializer.ISerializer)_fallbackPlang;
 
-            RehydrateNestedData(result);
+            using var ms = new MemoryStream(decompressed);
+            var deser = serializer.DeserializeAsync(ms).GetAwaiter().GetResult();
+            if (!deser.Success)
+                return FromError(new ServiceError(
+                    "Deserialization failed after decompression: " + (deser.Error?.Message ?? "unknown"),
+                    "DecompressError", 500));
+
+            var result = deser.Value as @this;
+            if (result == null)
+                return FromError(new ServiceError("Decompressed payload did not parse to a Data envelope", "DecompressError", 500));
+
             result.Context = _context;
             return result;
         }
@@ -216,36 +219,6 @@ public partial class @this
             return inner;
         }
         return this;
-    }
-
-    // --- Rehydration ---
-
-    /// <summary>
-    /// After JSON deserialization, Value of type object? becomes Dictionary&lt;string, object?&gt;
-    /// when the original value was a nested Data. This method detects dictionaries that look
-    /// like serialized Data (have "name" and "value" keys) and reconstructs them as @this objects.
-    /// </summary>
-    private const int MaxRehydrationDepth = 128;
-
-    private static void RehydrateNestedData(@this data, int depth = 0)
-    {
-        if (depth > MaxRehydrationDepth)
-            throw new InvalidDataException($"Nested Data exceeds maximum rehydration depth ({MaxRehydrationDepth})");
-
-        if (data.Value is Dictionary<string, object?> dict && dict.ContainsKey("value"))
-        {
-            var name = dict.TryGetValue("name", out var n) ? n?.ToString() ?? "" : "";
-            var value = dict.TryGetValue("value", out var v) ? v : null;
-            type? type = null;
-            if (dict.TryGetValue("type", out var t) && t is string typeStr)
-                type = new type(typeStr);
-
-            var inner = new @this(name, value, type);
-            RehydrateNestedData(inner, depth + 1);
-
-            // Use SetValueDirect to avoid Value setter clearing _type
-            data.SetValueDirect(inner);
-        }
     }
 
     // --- GZip helpers ---
