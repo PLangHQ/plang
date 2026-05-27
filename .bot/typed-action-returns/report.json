@@ -152,6 +152,74 @@
         "health": "green \u2014 no blocker; Stage 0 tests green per handoff; findings are polish/follow-up.",
         "notes": "8 findings: 7 LOW + 1 design call (IClass.SetAction default). Most actionable: [PlangType] AllowMultiple=false contradicts Registry comment+loop."
       }
+    },
+    {
+      "id": "4ad63964-2725-4e71-a22b-0f279cdeebc3",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-27T10:50:00Z",
+      "timestamp_end": "2026-05-27T11:25:00Z",
+      "intent": "Review typed-action-returns Stages 1-4 + serializer/http bonus production code",
+      "before": {
+        "assumptions": "Stages 1-4 + Serializers-return-Data + http-body-dispatch landed across 15 commits (68319f649..9513a6fe7). Coder handoff says PLang.Tests 3123/3123 green, plang --test 208 pass.",
+        "risk": "Big surface (~770 insertions across 51 production files). New: Response record, Ask record w/ ShouldExit override, file.read/llm.query/http.* Build() impls, Serializers returning Data, Schema\u2192Types rename, MockHandle\u2192Mock rename. Footgun: Data<object> double-wrap if forwarders mishandled. Apply new leaf-returns-Data rule."
+      },
+      "plan": ".bot/typed-action-returns/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/modules/output/ask.cs",
+            "PLang/app/http/Response/this.cs",
+            "PLang/app/modules/http/code/Default.cs",
+            "PLang/app/modules/http/request.cs",
+            "PLang/app/modules/http/upload.cs",
+            "PLang/app/modules/http/HttpBuildHelpers.cs",
+            "PLang/app/modules/file/read.cs",
+            "PLang/app/modules/llm/query.cs",
+            "PLang/app/mock/Mock/this.cs",
+            "PLang/app/modules/mock/action.cs",
+            "PLang/app/tester/Test/this.cs",
+            "PLang/app/tester/Run.cs",
+            "PLang/app/modules/test/discover.cs",
+            "PLang/app/modules/test/run.cs",
+            "PLang/app/modules/builder/code/Default.cs",
+            "PLang/app/modules/builder/actions.cs",
+            "PLang/app/modules/builder/goals.cs",
+            "PLang/app/modules/this.cs",
+            "PLang/app/types/this.cs",
+            "PLang/app/goals/this.cs",
+            "PLang/app/types/path/this.Authorize.cs",
+            "PLang/app/data/ShouldExit.cs",
+            "PLang/app/IExitsGoal.cs",
+            "PLang/app/channels/serializers/this.cs",
+            "PLang/app/channels/serializers/serializer/this.cs",
+            "PLang/app/channels/serializers/serializer/Json.cs",
+            "PLang/app/channels/serializers/serializer/Text.cs",
+            "PLang/app/Utils/PathHelper.cs",
+            "PLang/app/modules/settings/Sqlite.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Five-pass + new leaf-returns-Data rule + Data<T> implicit-op footgun audit across Stages 1-4 + bonus Serializers/HTTP-body-dispatch. 11 LOW findings; none block ship. Meatiest cleanup: F3 (HTTP leaf helpers throw instead of Data) + F4 (Read{String,Bytes} duplicate)."
+        },
+        {
+          "paths": [
+            ".bot/typed-action-returns/codeanalyzer/v2/plan.md",
+            ".bot/typed-action-returns/codeanalyzer/v2/report.md",
+            ".bot/typed-action-returns/codeanalyzer/v2/verdict.json",
+            ".bot/typed-action-returns/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Standard codeanalyzer artifacts. Summary rewritten to cover v2 (Stages 1-4 + bonuses)."
+        }
+      ],
+      "after": {
+        "status": "FAIL \u2014 NEEDS WORK (low severity)",
+        "health": "green \u2014 no blocker; PLang.Tests 3123/3123 + plang --test 208/208 per coder handoff; all findings are polish/follow-up.",
+        "notes": "11 findings: 4 readability, 3 simplification, 2 behavioral, 1 leaf-Data, 1 polish carried from v1. Most actionable: HTTP leaf helpers (F3, F4)."
+      }
     }
   ]
 }
