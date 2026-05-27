@@ -1,0 +1,179 @@
+{
+  "name": "TestOutputAskWithJsonHintMaterializesOnFirstAccess",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "mock.intercept actionPattern=\u0022output.ask\u0022, returnValue=\u0027{\u0022foo\u0022:42}\u0027, write to %m%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "output.ask \u002B (json) hint: the variable holds the raw string until\nfirst property access, which triggers JSON deserialization via the\nSerializers registry. Mock the ask so the test doesn\u0027t block on an\ninteractive channel; the mock returns a JSON literal string.",
+      "actions": [
+        {
+          "module": "mock",
+          "action": "intercept",
+          "parameters": [
+            {
+              "name": "ActionPattern",
+              "value": "output.ask",
+              "type": "string"
+            },
+            {
+              "name": "ReturnValue",
+              "value": {
+                "foo": 42
+              },
+              "type": "dictionary\u00602"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "output",
+          "action": "ask",
+          "parameters": [
+            {
+              "name": "Question",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "Variables",
+              "value": "%m%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%m%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "mock.intercept(ActionPattern=\u0022output.ask\u0022, ReturnValue={\u0022foo\u0022:42}) | output.ask(Question=\u0022\u0022, Variables=%m%) , variable.set(Name=%m%, Value=%!data%, Type=object)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "ask \u0022give me json\u0022, write to %a%(json)",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "ask",
+          "parameters": [
+            {
+              "name": "Question",
+              "value": "give me json",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%a%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "json",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "output.ask(Question=\u0022give me json\u0022) | variable.set(Name=%a%, Value=%!data%, Type=\u0022json\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert.equals expected=42, actual=%a.foo%",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "42",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%a.foo%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=42, Actual=%a.foo%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/TestModule/TypedReturns/Stage4/TestOutputAskWithJsonHintMaterializesOnFirstAccess.test.goal",
+  "prPath": "/TestModule/TypedReturns/Stage4/.build/testoutputaskwithjsonhintmaterializesonfirstaccess.test.pr",
+  "hash": "16ce09f7e1d476b4d9394f3f4aaa8061f45d338df6012d882298769acab2fd88",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

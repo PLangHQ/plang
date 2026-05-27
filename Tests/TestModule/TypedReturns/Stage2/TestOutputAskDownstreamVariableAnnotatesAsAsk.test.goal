@@ -1,0 +1,11 @@
+TestOutputAskDownstreamVariableAnnotatesAsAsk
+/ output.ask write-target annotates as (ask) downstream — its reflected
+/ return type is Data<Ask>. Ask.ToString() returns the Answer string so
+/ downstream code can still interpolate %answer% as text, but the type
+/ identity in the snapshot stays "ask". (Test-designer's original spec
+/ said "string"; reconfirmed with Ingi 2026-05-27 — match reflected type
+/ for consistency with every other action.)
+- builder.goals from 'probes/ask/', write to %goals%
+- goal.getTypes %goals[0]%, write to %snapshot%
+- set %annot% = %snapshot[1].answer%
+- assert.equals expected='ask', actual=%annot%

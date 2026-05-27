@@ -1,0 +1,44 @@
+{
+  "name": "Sample",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "assert true",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": true,
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.isTrue(Value=true)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/TestModule/TypedReturns/Stage1/stage1_fixture/Sample.test.goal",
+  "prPath": "/TestModule/TypedReturns/Stage1/stage1_fixture/.build/sample.test.pr",
+  "hash": "c3ff75f8fee418b15fc8e76421350baa7801c7da8bc3cec9cc3651f1d28a3ea3",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

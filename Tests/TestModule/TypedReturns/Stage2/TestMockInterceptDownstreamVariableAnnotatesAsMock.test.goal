@@ -1,3 +1,8 @@
 TestMockInterceptDownstreamVariableAnnotatesAsMock
 / mock.intercept write-target annotates as (mock) downstream — not (object).
-- throw "not implemented"
+/ Stage 2 typed mock.intercept as Task<Data<Mock.@this>> — the reflected
+/ return type flows through goal.getTypes into the next step's snapshot.
+- builder.goals from 'probes/mock/', write to %goals%
+- goal.getTypes %goals[0]%, write to %snapshot%
+- set %annot% = %snapshot[1].m%
+- assert.equals expected='mock', actual=%annot%

@@ -1,0 +1,472 @@
+{
+  "name": "TestRunnerPipelineStillWorksAfterTesterFileRename",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "test.discover tests in \u0027stage1_fixture/\u0027 recursive, pattern=\u0027*.test.goal\u0027, write to %tests%",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": "Smoke: test.discover \u2192 test.run still works end-to-end after the\ntester/File \u2192 tester/Test rename. Asserts (a) discovery returns the\nfixture, (b) test.run executes it and reports it as passing, AND\n(c) downstream annotation for test.discover\u0027s write-target is\nlist\u003Ctest\u003E (the rename\u0027s user-visible signature change), not\nlist\u003Cfile\u003E.",
+      "actions": [
+        {
+          "module": "test",
+          "action": "discover",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "stage1_fixture/",
+              "type": "path"
+            },
+            {
+              "name": "Pattern",
+              "value": "*.test.goal",
+              "type": "string"
+            },
+            {
+              "name": "Recursive",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%tests%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "list"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "test.discover(Path=\u0022stage1_fixture/\u0022, Pattern=\u0022*.test.goal\u0022, Recursive=true) , variable.set(Name=%tests%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "list.count %tests%, write to %discoveredCount%",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "count",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%tests%",
+              "type": "variable"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%discoveredCount%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "int"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "list.count(ListName=%tests%), variable.set(Name=%discoveredCount%, Value=%!data%, Type=int)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %discoveredCount% equals 1, \u0022should discover one fixture .test.goal\u0022",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "%discoveredCount%",
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": 1,
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "should discover one fixture .test.goal",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=%discoveredCount%, Actual=1, Message=\u0022should discover one fixture .test.goal\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "test.run %tests%, write to %results%",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "test",
+          "action": "run",
+          "parameters": [
+            {
+              "name": "Tests",
+              "value": "%tests%",
+              "type": "list\u003Ctest\u003E"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%results%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "results"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "test.run(Tests=%tests%, Parallel=%discoveredcount%, Timeout=%discoveredcount%) | variable.set(Name=%results%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "list.count %results%, write to %ranCount%",
+      "lineNumber": 12,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "count",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%results%",
+              "type": "variable"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%ranCount%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "int"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "list.count(ListName=%results%), variable.set(Name=%ranCount%, Value=%!data%, Type=int)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %ranCount% equals 1, \u0022test.run should produce one result\u0022",
+      "lineNumber": 13,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "test",
+          "action": "run",
+          "parameters": [
+            {
+              "name": "Tests",
+              "value": "%tests%",
+              "type": "list\u003Ctest\u003E"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%ranCount%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "test.run should produce one result",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "test.run(Tests=%tests%) , assert.equals(Expected=1, Actual=%ranCount%, Message=\u0022test.run should produce one result\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "builder.goals from \u0027stage1_self/\u0027, write to %selfGoal%",
+      "lineNumber": 14,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "builder",
+          "action": "goals",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "stage1_self/",
+              "type": "path"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%selfGoal%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "list"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "builder.goals(Path=\u0022stage1_self/\u0022), variable.set(Name=%selfGoal%, Value=%!data%, Type=object)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "goal.getTypes %selfGoal[0]%, write to %varTypes%",
+      "lineNumber": 15,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "getTypes",
+          "parameters": [
+            {
+              "name": "Goal",
+              "value": "%selfGoal[0]%",
+              "type": "goal"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%varTypes%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "list"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "goal.getTypes(Goal=%selfGoal[0]%), variable.set(Name=%varTypes%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "assert %varTypes[1].tests% equals \u0027list\u003Ctest\u003E\u0027, \u0022downstream snapshot of test.discover should annotate as list\u003Ctest\u003E\u0022",
+      "lineNumber": 16,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "test",
+          "action": "discover",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": ".",
+              "type": "path"
+            },
+            {
+              "name": "Pattern",
+              "value": "*.test.goal",
+              "type": "string"
+            },
+            {
+              "name": "Recursive",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "list\u003Ctest\u003E",
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%varTypes[1].tests%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "downstream snapshot of test.discover should annotate as list\u003Ctest\u003E",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "test.discover(Path=\u0022.\u0022, Pattern=\u0022*.test.goal\u0022, Recursive=true), assert.equals(Expected=\u0022list\u003Ctest\u003E\u0022, Actual=%varTypes[1].tests%, Message=\u0022downstream snapshot of test.discover should annotate as list\u003Ctest\u003E\u0022)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/TestModule/TypedReturns/Stage1/TestRunnerPipelineStillWorksAfterTesterFileRename.test.goal",
+  "prPath": "/TestModule/TypedReturns/Stage1/.build/testrunnerpipelinestillworksaftertesterfilerename.test.pr",
+  "hash": "3c9a3eba73b40d4229db7865057f73c10526c3f3bacdfa19d71eaba7ae48d064",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

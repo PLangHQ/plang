@@ -1,0 +1,104 @@
+{
+  "name": "HintProbe",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "file.read path=\u0027data.csv\u0027, write to %x%(json)",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "data.csv",
+              "type": "path"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%x%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "json",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "file.read(Path=%path%, ResolveVariables=false) , variable.set(Name=%x%, Value=%!data%, Type=json)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write out %x%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%x%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "output.write(Data=%x%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/TestModule/TypedReturns/Stage4/probes/hint/Probe.goal",
+  "prPath": "/TestModule/TypedReturns/Stage4/probes/hint/.build/probe.pr",
+  "hash": "07655358b3d6903bfb3c9c6f465853c5783f2d1dceaaef80eb6c4dcd405de1ed",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

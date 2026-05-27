@@ -15,7 +15,7 @@ namespace app.modules.goal;
 /// SAME step that introduces them — the step's body needs to reference them.
 ///
 /// Type sources, in priority order:
-///   1. `variable.set Name=%x%, Value=%__data__%` → previous producing action's return type
+///   1. `variable.set Name=%x%, Value=%!data%` → previous producing action's return type
 ///      (reflected from its handler's Run() method).
 ///   2. `variable.set Name=%x%, Value=&lt;literal&gt;` → the Value parameter's `type` field on the .pr.
 ///   3. `loop.foreach Collection=%xs%, ItemName=%y%` → element type of %xs%
@@ -79,14 +79,15 @@ public partial class getTypes : IContext
             if (nameParam?.Value is string rawName && !string.IsNullOrEmpty(rawName))
             {
                 string type;
-                if (valueParam?.Value is string sval && string.Equals(sval, "%__data__%", StringComparison.OrdinalIgnoreCase))
+                if (typeParam?.Value is string explicitType && !string.IsNullOrEmpty(explicitType))
+                {
+                    // Type slot wins — covers both Build()'s stamp (file.read.Build()
+                    // → "csv") and the user (type) hint (set %x% = {...}, type=json).
+                    type = explicitType;
+                }
+                else if (valueParam?.Value is string sval && string.Equals(sval, "%!data%", StringComparison.OrdinalIgnoreCase))
                 {
                     type = chainReturnType ?? "object";
-                }
-                else if (typeParam?.Value is string explicitType && !string.IsNullOrEmpty(explicitType))
-                {
-                    // The optional Type=json override (set %x% = {...}, type=json).
-                    type = explicitType;
                 }
                 else
                 {

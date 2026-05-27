@@ -1,0 +1,228 @@
+{
+  "name": "TestHttpRequestJsonBodyAccessibleAsDeepProperty",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "mock.intercept actionPattern=\u0022http.request\u0022, returnValue={statusCode:200, headers:{}, body:{a:{b:42}}, duration:\u002200:00:00\u0022}, write to %m%",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": "Mock http.request to return a Response-shaped value whose Body is a\ndeep dict. Asserts %resp.Body.a.b% reads through to 42, proving Data\nProperties navigation works on the typed Response result.\n(The actual Content-Type \u2192 Body parsing pipeline is covered end-to-end\nin C# by Stage3_HttpContentTypeDispatchTests.cs; this PLang test\nvalidates the user-visible navigation half.)",
+      "actions": [
+        {
+          "module": "mock",
+          "action": "intercept",
+          "parameters": [
+            {
+              "name": "ActionPattern",
+              "value": "http.request",
+              "type": "string"
+            },
+            {
+              "name": "ReturnValue",
+              "value": {
+                "statusCode": 200,
+                "headers": {},
+                "body": {
+                  "a": {
+                    "b": 42
+                  }
+                },
+                "duration": "00:00:00"
+              },
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "http",
+          "action": "request",
+          "parameters": [
+            {
+              "name": "Url",
+              "value": "%m%",
+              "type": "string"
+            },
+            {
+              "name": "Method",
+              "value": "GET",
+              "type": "httpmethod"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "contenttype",
+              "value": "application/json",
+              "type": "string"
+            },
+            {
+              "name": "encoding",
+              "value": "utf-8",
+              "type": "string"
+            },
+            {
+              "name": "timeoutinsec",
+              "value": 30,
+              "type": "int"
+            },
+            {
+              "name": "unsigned",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%m%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "mock.intercept(ActionPattern=\u0022http.request\u0022, ReturnValue={statusCode:200, headers:{}, body:{a:{b:42}}, duration:\u002200:00:00\u0022}) | http.request(Url=\u0022%m%\u0022, Method=GET) , variable.set(Name=%m%, Value=%!data%, Type=string)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "http.request \u0027https://example.invalid/api\u0027, write to %resp%",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "http",
+          "action": "request",
+          "parameters": [
+            {
+              "name": "Url",
+              "value": "https://example.invalid/api",
+              "type": "string"
+            },
+            {
+              "name": "Method",
+              "value": "GET",
+              "type": "httpmethod"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "contenttype",
+              "value": "application/json",
+              "type": "string"
+            },
+            {
+              "name": "encoding",
+              "value": "utf-8",
+              "type": "string"
+            },
+            {
+              "name": "timeoutinsec",
+              "value": 30,
+              "type": "int"
+            },
+            {
+              "name": "unsigned",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%resp%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "http.request(Url=\u0022https://example.invalid/api\u0022, Method=GET) , variable.set(Name=%resp%, Value=%!data%, Type=object)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert.equals expected=42, actual=%resp.body.a.b%",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "42",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%resp.body.a.b%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=42, Actual=%resp.body.a.b%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/TestModule/TypedReturns/Stage3/TestHttpRequestJsonBodyAccessibleAsDeepProperty.test.goal",
+  "prPath": "/TestModule/TypedReturns/Stage3/.build/testhttprequestjsonbodyaccessibleasdeepproperty.test.pr",
+  "hash": "2de6c7732fc8e70e1c390b8dfa4c112b1af463472a968a7f3ec275a8620bf235",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

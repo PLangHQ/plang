@@ -1,0 +1,99 @@
+{
+  "name": "MockProbe",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "mock.intercept actionPattern=\u0022file.read\u0022, returnValue=\u0022mocked\u0022, write to %m%",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "mock",
+          "action": "intercept",
+          "parameters": [
+            {
+              "name": "ActionPattern",
+              "value": "file.read",
+              "type": "string"
+            },
+            {
+              "name": "ReturnValue",
+              "value": "mocked",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%m%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "mock.intercept(ActionPattern=\u0022file.read\u0022, ReturnValue=\u0022mocked\u0022) | variable.set(Name=%m%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write out \u0022ok\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "ok",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "output.write(Data=\u0022ok\u0022(object))",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/TestModule/TypedReturns/Stage2/probes/mock/Probe.goal",
+  "prPath": "/TestModule/TypedReturns/Stage2/probes/mock/.build/probe.pr",
+  "hash": "28f9bfb014cdd9927aa94e8e35dd576351348d81b029fb158d41f41c6afdda42",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

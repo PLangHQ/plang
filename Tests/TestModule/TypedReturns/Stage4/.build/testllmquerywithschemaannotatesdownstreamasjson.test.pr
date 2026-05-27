@@ -1,0 +1,191 @@
+{
+  "name": "TestLlmQueryWithSchemaAnnotatesDownstreamAsJson",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "builder.goals from \u0027probes/llm/\u0027, write to %goals%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "llm.query.Build() returns \u0022json\u0022 when a Schema parameter is set.\nDownstream snapshot must read %y%(json), not (object) \u2014 the typed\nschema contract flows through Build() into the .pr Type stamp.",
+      "actions": [
+        {
+          "module": "builder",
+          "action": "goals",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "probes/llm/",
+              "type": "path"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goals%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "list",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "builder.goals(Path=\u0022probes/llm/\u0022), variable.set(Name=%goals%, Value=%!data%, Type=list)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "goal.getTypes %goals[0]%, write to %snapshot%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "getTypes",
+          "parameters": [
+            {
+              "name": "Goal",
+              "value": "%goals[0]%",
+              "type": "goal"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%snapshot%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "list"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "goal.getTypes(Goal=%goals[0]%), variable.set(Name=%snapshot%, Value=%!data%, type=object)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %annot% = %snapshot[1].y%",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%annot%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%snapshot[1].y%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%annot%, Value=%snapshot[1].y%, Type=object)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert.equals expected=\u0027json\u0027, actual=%annot%",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "json",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%annot%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022json\u0022, Actual=%annot%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/TestModule/TypedReturns/Stage4/TestLlmQueryWithSchemaAnnotatesDownstreamAsJson.test.goal",
+  "prPath": "/TestModule/TypedReturns/Stage4/.build/testllmquerywithschemaannotatesdownstreamasjson.test.pr",
+  "hash": "841d3adea68710d1d2c40ef9984d7f5af7aa0670477f48aa73ca8fa45e7cf712",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

@@ -1,0 +1,3 @@
+LlmProbe
+- llm.query messages=[{Role:"user", Content:"hi"}], schema={name:"string"}, write to %y%
+- write out %y%

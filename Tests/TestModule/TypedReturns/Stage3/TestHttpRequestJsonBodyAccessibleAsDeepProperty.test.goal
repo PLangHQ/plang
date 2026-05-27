@@ -1,5 +1,10 @@
 TestHttpRequestJsonBodyAccessibleAsDeepProperty
-/ Mock endpoint returns Content-Type "application/json" with body {"a":{"b":42}}.
-/ After http.request, %resp.Body.a.b% reads 42 directly — no explicit parse step needed.
-/ Validates the Stage 3 runtime Content-Type dispatch end-to-end.
-- throw "not implemented"
+/ Mock http.request to return a Response-shaped value whose Body is a
+/ deep dict. Asserts %resp.Body.a.b% reads through to 42, proving Data
+/ Properties navigation works on the typed Response result.
+/ (The actual Content-Type → Body parsing pipeline is covered end-to-end
+/ in C# by Stage3_HttpContentTypeDispatchTests.cs; this PLang test
+/ validates the user-visible navigation half.)
+- mock.intercept actionPattern="http.request", returnValue={statusCode:200, headers:{}, body:{a:{b:42}}, duration:"00:00:00"}, write to %m%
+- http.request 'https://example.invalid/api', write to %resp%
+- assert.equals expected=42, actual=%resp.body.a.b%

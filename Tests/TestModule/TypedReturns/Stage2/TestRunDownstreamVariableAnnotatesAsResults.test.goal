@@ -1,3 +1,8 @@
 TestRunDownstreamVariableAnnotatesAsResults
-/ test.run output variable's downstream annotation must read (results), not (object).
-- throw "not implemented"
+/ test.run write-target's downstream annotation must read (results), not
+/ (object). Stage 2 typed test.run as Task<Data<Results>> — the reflected
+/ return type carries through goal.getTypes into the next step's snapshot.
+- builder.goals from 'probes/run/', write to %goals%
+- goal.getTypes %goals[0]%, write to %snapshot%
+- set %annot% = %snapshot[2].r%
+- assert.equals expected='results', actual=%annot%

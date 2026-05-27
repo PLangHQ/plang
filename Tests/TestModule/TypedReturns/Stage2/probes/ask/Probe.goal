@@ -1,0 +1,3 @@
+AskProbe
+- ask "what's your name?", write to %answer%
+- write out %answer%

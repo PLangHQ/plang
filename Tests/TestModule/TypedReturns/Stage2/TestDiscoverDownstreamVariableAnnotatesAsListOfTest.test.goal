@@ -1,4 +1,9 @@
 TestDiscoverDownstreamVariableAnnotatesAsListOfTest
-/ Builds a goal calling test.discover, then a downstream step. The trace's "Variables in scope"
-/ snapshot for the downstream step must show %tests%(list<test>), not (object).
-- throw "not implemented"
+/ Builds a goal calling test.discover, then a downstream step. The trace's
+/ "Variables in scope" snapshot for the downstream step must show
+/ %tests%(list<test>), not (object). Verified via goal.getTypes — its
+/ output is the same per-step snapshot the compile LLM sees.
+- builder.goals from 'probes/discover/', write to %goals%
+- goal.getTypes %goals[0]%, write to %snapshot%
+- set %annot% = %snapshot[1].tests%
+- assert.equals expected='list<test>', actual=%annot%
