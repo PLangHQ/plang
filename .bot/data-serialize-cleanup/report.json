@@ -6,10 +6,10 @@
       "bot": "architect",
       "timestamp_start": "2026-05-26T16:22:59Z",
       "timestamp_end": "2026-05-26T16:27:20Z",
-      "intent": "Design Data's variable→wire→variable round trip: flat shape, signing at channel, merge the two plang serializers, drop Envelope.",
+      "intent": "Design Data's variable\u2192wire\u2192variable round trip: flat shape, signing at channel, merge the two plang serializers, drop Envelope.",
       "before": {
         "assumptions": "Two plang serializers (application/plang and application/plang+data) duplicate STJ setup. The plang+data serializer builds a parallel Envelope class to bypass [JsonIgnore] on Signature. Stream.WriteCore strips the Data wrapper before handing to the serializer. Compress double-wraps (gzip Data inside archived Data). ISerializer accepts object?, but PLang only ever ships Data.",
-        "risk": "Touches the channel write path and four serializer implementations atomically. Any caller that relied on the polymorphic object? input or on the data.Value strip will break — but per Ingi's assertion, those callers don't exist in PLang's actual flow because Data is the universal currency."
+        "risk": "Touches the channel write path and four serializer implementations atomically. Any caller that relied on the polymorphic object? input or on the data.Value strip will break \u2014 but per Ingi's assertion, those callers don't exist in PLang's actual flow because Data is the universal currency."
       },
       "plan": ".bot/data-serialize-cleanup/architect/plan.md",
       "actions": [
@@ -33,7 +33,7 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Four stage files. 1 tightens ISerializer to Data + unstrips Stream.WriteCore. 2 merges the plang serializers, drops Envelope, moves EnsureSigned to Channel. 3 flattens Compress. 4 vocabulary sweep — drop 'envelope' word."
+          "context": "Four stage files. 1 tightens ISerializer to Data + unstrips Stream.WriteCore. 2 merges the plang serializers, drops Envelope, moves EnsureSigned to Channel. 3 flattens Compress. 4 vocabulary sweep \u2014 drop 'envelope' word."
         },
         {
           "paths": [
@@ -58,6 +58,44 @@
         "status": "Initial design plan complete. Four stages carved, wire-shape reference written, summary logged. Ready for test-designer to produce test-strategy.md and test-coverage.md, or for coder to begin Stage 1.",
         "health": "Design is settled. Conversation with Ingi covered the round-trip semantics, name as addressability coordinate, signing position, and the flat wire shape. No open architectural questions.",
         "notes": "Out of scope and explicitly parked: algorithm tagging on archived/encryption (the +variant pattern), protobuf encoder, Encrypt path flattening (waits for crypto service), inspection-path serialization (data.ToString for debug)."
+      }
+    },
+    {
+      "id": "2a9c588c-de25-4444-8504-03111939ff31",
+      "bot": "architect",
+      "timestamp_start": "2026-05-27T00:00:00Z",
+      "timestamp_end": "2026-05-27T00:00:00Z",
+      "intent": "Merge runtime2 into data-serialize-cleanup; reflect typed-action-returns in plan + Stage 1",
+      "before": {
+        "assumptions": "Plan and stages were carved against the pre-merge serializer surface. ISerializer returned bare T? and threw on parse errors. Stage 1 was going to tighten both return shape and input shape in one stroke.",
+        "risk": "The merge could have changed the surface enough to invalidate other stages \u2014 needs an audit before claiming the plan still stands."
+      },
+      "plan": ".bot/data-serialize-cleanup/architect/plan.md",
+      "actions": [
+        {
+          "paths": [],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Merged origin/runtime2 cleanly. Confirmed: Stages 2/3/4 unchanged; Stage 1 splits \u2014 return half done by typed-action-returns commit 5b1b894c4, input half remains."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/plan.md",
+            ".bot/data-serialize-cleanup/architect/stage-1-iserializer-data.md",
+            ".bot/data-serialize-cleanup/architect/stage-2-plang-merge.md",
+            ".bot/data-serialize-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "plan.md problem #3 + ISerializer decision section + stage index annotated. Stage 1 rewritten to enumerate done-vs-remaining and narrow scope to input-tightening. Stage 2 code example updated to Task<Data> + try/catch. Summary gets a new top entry recording the merge and the changes."
+        }
+      ],
+      "after": {
+        "status": "Plan is reconciled with runtime2 surface. Stage 1 is narrower but still required (input side); other stages stand.",
+        "health": "green",
+        "notes": "Coder/test-designer pickup should read stage-1-iserializer-data.md fresh \u2014 the done-list at the top prevents re-doing the merged work."
       }
     }
   ]

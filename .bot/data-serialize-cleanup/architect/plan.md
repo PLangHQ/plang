@@ -24,7 +24,7 @@ Four interacting smells in `PLang/app/channels/serializers/serializer/plang/Data
 
 2. **STJ options are configured three places.** `serializer/plang/this.cs`, `serializer/plang/Data.cs`, and `data/this.Envelope.cs` each instantiate near-identical `JsonSerializerOptions`. `Json.cs` is the JSON engine custodian — the plang serializer should compose with it, not duplicate it.
 
-3. **The serializer must always receive Data.** That's the contract — Data in, bytes out. The MIME's identity decides what to emit (wrapper or just the value); the input shape is fixed. Today nothing enforces this: `ISerializer` accepts `object?`, and `Stream.WriteCore` feeds it `data.Value` rather than `data` itself (`stream/this.cs:56`). The plang+data serializer is then forced to reconstruct the wrapper from scratch via `Envelope` because by the time it runs, the wrapper that should carry type+signature is already gone.
+3. **The serializer must always receive Data.** That's the contract — Data in, bytes out. The MIME's identity decides what to emit (wrapper or just the value); the input shape is fixed. Today nothing enforces this: `ISerializer` accepts `object?`, and `Stream.WriteCore` feeds it `data.Value` rather than `data` itself (`stream/this.cs:56`). The plang+data serializer is then forced to reconstruct the wrapper from scratch via `Envelope` because by the time it runs, the wrapper that should carry type+signature is already gone. (Note — the *return* side of ISerializer was tightened to `Data` by the `typed-action-returns` merge: errors now flow through `Data.Error` instead of throwing. The *input* side — `object? value` and the `Type? type = null` parameter — is what this branch closes.)
 
 4. **`Compress()` double-wraps.** Current code builds `Data{archived, Data{gzip, byte[]}}`. The inner gzip Data is redundant — `archived.Value` can be a `byte[]` directly. "Data all the way down" is a property of *byte layers* (decompress reveals another serialized Data), not JSON object nesting.
 
@@ -66,7 +66,7 @@ Concrete JSON examples (plain, compressed, encrypted, nested-value) live in [pla
 
 **Data is opaque to its consumers.** Every layer — Variables, action handlers, Compress, Channel, ISerializer — handles Data as an opaque unit. Only the encoder at the leaf walks `[Out]` properties. Nothing peeks at Type or Value to decide behaviour. (See [design_principles.md → Data Is Opaque to Its Consumers](../../../memory/design_principles.md).)
 
-**ISerializer takes Data, returns Data.** The `object?` polymorphism is a System.Text.Json holdover — useful for general-purpose JSON, wrong for PLang's actual flow. Tightening the interface eliminates the null branch (`if (value == null) return "null"`), the `Type? type` parameter (Data carries its own type), and the "what if it's not Data" fallthrough.
+**ISerializer takes Data, returns Data.** The return half landed in `typed-action-returns` (every method now returns `Data` / `Data<T>`, errors travel as `Data.Error` instead of throwing). The input half is what this branch closes: `object? value` and `Type? type = null` become a single `Data data` parameter. Tightening eliminates the null branch (`if (value == null) return "null"`), the `Type? type` parameter (Data carries its own type), and the "what if it's not Data" fallthrough.
 
 **`+` variants for encoding/algorithm differentiation.** `application/plang` defaults to JSON; `application/plang+protobuf` is the future binary variant. Same pattern for transport types: `archived+gzip`, `encryption+aes-256-gcm`. Today only the defaults exist; the variant slot is reserved, not used.
 
@@ -81,12 +81,12 @@ Concrete JSON examples (plain, compressed, encrypted, nested-value) live in [pla
 
 | Stage | File | Status |
 |-------|------|--------|
-| 1 | [ISerializer tightened to Data](stage-1-iserializer-data.md) | pending |
+| 1 | [ISerializer input tightened to Data](stage-1-iserializer-data.md) | partial — return half landed via `typed-action-returns`, input half remains |
 | 2 | [Merge application/plang serializers + drop Envelope + signing moves](stage-2-plang-merge.md) | pending |
 | 3 | [Flatten Compress/Decompress](stage-3-flat-compress.md) | pending |
 | 4 | [Vocabulary sweep — drop "envelope" + rename this.Envelope.cs](stage-4-vocabulary-sweep.md) | pending |
 
-Stages 1 and 2 are tightly coupled — the interface change in Stage 1 forces all four serializer implementations to update at once, and Stage 2's merge sits naturally on top. They could be one PR or two depending on review appetite; the design is one decision. Stage 3 follows once the serializer is reliable. Stage 4 can land any time after Stage 2.
+Stages 1 and 2 are tightly coupled — the input-tightening in Stage 1 forces all four serializer implementations to update at once, and Stage 2's merge sits naturally on top. They could be one PR or two depending on review appetite; the design is one decision. Stage 3 follows once the serializer is reliable. Stage 4 can land any time after Stage 2.
 
 ## Test surface
 

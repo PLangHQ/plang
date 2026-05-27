@@ -32,18 +32,34 @@ public sealed class @this : ISerializer {
             .WithModifier(global::app.channels.serializers.filters.Sensitive.Strip);
     }
 
-    public async Task SerializeAsync(Stream stream, Data data, CancellationToken ct = default) {
+    public async Task<Data> SerializeAsync(Stream stream, Data data, CancellationToken ct = default) {
         // No EnsureSigned here — the channel handles it before this call.
-        await _engine.SerializeAsync(stream, data, ct);
+        // Errors flow through Data.Error (the typed-action-returns shape, unchanged here).
+        try {
+            await _engine.SerializeAsync(stream, data, ct);
+            return Data.Ok();
+        }
+        catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException) {
+            return Data.FromError(new ServiceError(
+                $"plang serialize failed: {ex.Message}", "PlangSerializeError", 400) { Exception = ex });
+        }
     }
 
     public async Task<Data> DeserializeAsync(Stream stream, CancellationToken ct = default) {
         // Symmetric — Json + DataConverter + Transport.ForInbound modifier.
-        return await _engine.ForInbound().DeserializeAsync<Data>(stream, ct);
+        try {
+            var result = await _engine.ForInbound().DeserializeAsync<Data>(stream, ct);
+            return Data.Ok(result);
+        }
+        catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException) {
+            return Data.FromError(new ServiceError(
+                $"plang deserialize failed: {ex.Message}", "PlangDeserializeError", 400) { Exception = ex });
+        }
     }
 
-    public string Serialize(Data data) { ... }
+    public Data<string> Serialize(Data data) { ... }
     public Data Deserialize(string s) { ... }
+    public Data<T> Deserialize<T>(string s) { ... }
 }
 ```
 
