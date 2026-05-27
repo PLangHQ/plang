@@ -190,7 +190,7 @@ public sealed class @this : IAsyncDisposable
             return await Serializers.DeserializeAsync<T>(new DeserializeOptions
             {
                 Stream = sc.Stream,
-                ContentType = sc.Mime,
+                Type = sc.Mime,
                 CancellationToken = cancellationToken
             });
         }

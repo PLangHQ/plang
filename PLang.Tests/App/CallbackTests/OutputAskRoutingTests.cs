@@ -22,9 +22,9 @@ public class OutputAskRoutingTests
             Name = name;
             Direction = global::app.channels.channel.ChannelDirection.Bidirectional;
         }
-        public override Task<global::app.data.@this> WriteCore(global::app.data.@this data, CancellationToken ct = default)
+        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
             => Task.FromResult(global::app.data.@this.Ok());
-        public override Task<global::app.data.@this> ReadCore(CancellationToken ct = default)
+        public override Task<global::app.data.@this> Read(CancellationToken ct = default)
             => Task.FromResult(global::app.data.@this.Ok((object?)null));
     }
 
@@ -65,7 +65,7 @@ public class OutputAskRoutingTests
         // Empty question to skip WriteCore — exercises Ask's read-line path
         // without needing a registered Channels collection for the serializer.
         var action = new ask { Context = app.User.Context, Question = new global::app.data.@this<string>("", "") };
-        var result = await ch.AskCore(action);
+        var result = await ch.Ask(action);
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value as string).IsEqualTo("Alice");
     }
@@ -88,7 +88,7 @@ public class OutputAskRoutingTests
             Context = app.User.Context,
             Question = new global::app.data.@this<string>("", "Allow X?")
         };
-        var result = await ch.AskCore(action);
+        var result = await ch.Ask(action);
         await Assert.That(result.Value).IsTypeOf<global::app.modules.output.Ask>();
         await Assert.That(((global::app.modules.output.Ask)result.Value!).Answer).IsNull();
         await Assert.That(result.Type?.Value).IsEqualTo("ask");
@@ -103,7 +103,7 @@ public class OutputAskRoutingTests
             Context = app.User.Context,
             Question = new global::app.data.@this<string>("", "?")
         };
-        var result = await ch.AskCore(action);
+        var result = await ch.Ask(action);
         await Assert.That(result.Snapshot).IsNotNull();
     }
 }

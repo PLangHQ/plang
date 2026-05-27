@@ -1,3 +1,7 @@
+using System.Reflection;
+using app.channels.serializers;
+using app.channels.serializers.serializer;
+
 namespace PLang.Tests.App.Serialization;
 
 // data-serialize-cleanup — Stage 1
@@ -11,34 +15,39 @@ public class ISerializerInputContractTests
     [Test]
     public async Task SerializeAsync_AcceptsDataArgument_ReturnsTaskData()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var json = new global::app.channels.serializers.serializer.Json();
+        using var ms = new MemoryStream();
+        var result = await json.SerializeAsync(ms, global::app.data.@this.Ok("hello"));
+        await Assert.That(result).IsNotNull();
+        await Assert.That(result.Success).IsTrue();
     }
 
     // 1.2 — Old polymorphic SerializeAsync(Stream, object, …) overload is gone.
-    //       Expressed as a reflection check; the compile-time guard is the real one
-    //       (calling sites cease to compile if the overload returns).
     [Test]
     public async Task SerializeAsync_PolymorphicObjectOverload_NotPresentOnInterface()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var t = typeof(ISerializer);
+        var methods = t.GetMethods().Where(m => m.Name == "SerializeAsync").ToList();
+        await Assert.That(methods.Count).IsEqualTo(1);
+        var parms = methods[0].GetParameters();
+        await Assert.That(parms[1].ParameterType).IsEqualTo(typeof(global::app.data.@this));
     }
 
     // 1.7 — SerializeOptions.Type carries the MIME string (renamed from ContentType).
     [Test]
     public async Task SerializeOptions_Type_CarriesMimeString()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var opts = new SerializeOptions { Type = "application/json" };
+        await Assert.That(opts.Type).IsEqualTo("application/json");
     }
 
     // 1.8 — SerializeOptions.Data is typed as Data (not object?).
     [Test]
     public async Task SerializeOptions_Data_IsTypedAsData()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var prop = typeof(SerializeOptions).GetProperty("Data");
+        await Assert.That(prop).IsNotNull();
+        await Assert.That(prop!.PropertyType).IsEqualTo(typeof(global::app.data.@this));
     }
 
     // 1.11 — Stream channel's renamed Write hook passes the full Data into the registered
@@ -46,30 +55,66 @@ public class ISerializerInputContractTests
     [Test]
     public async Task StreamChannel_Write_HandsFullDataToSerializer_NotValueOnly()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var probe = new ProbeSerializer();
+
+        await using var app = new global::app.@this("/tmp/stream-channel-write-test");
+        var ch = new global::app.channels.channel.stream.@this(
+            "probe", new MemoryStream(), global::app.channels.channel.ChannelDirection.Output)
+        {
+            Mime = probe.Type,
+        };
+        app.User.Channels.Register(ch);
+        ch.Channels!.Serializers.Register(probe);
+
+        var input = global::app.data.@this.Ok("payload");
+        await ch.WriteAsync(input);
+
+        await Assert.That(probe.LastData).IsNotNull();
+        await Assert.That(ReferenceEquals(probe.LastData, input)).IsTrue()
+            .Because("Stream.Write must pass the same Data reference to the serializer.");
+    }
+
+    private sealed class ProbeSerializer : ISerializer
+    {
+        public global::app.data.@this? LastData { get; private set; }
+        public string Type => "application/x-probe";
+        public string Extension => ".probe";
+        public Task<global::app.data.@this> SerializeAsync(Stream s, global::app.data.@this data, CancellationToken ct = default)
+        {
+            LastData = data;
+            return Task.FromResult(global::app.data.@this.Ok());
+        }
+        public Task<global::app.data.@this> DeserializeAsync(Stream s, CancellationToken ct = default)
+            => Task.FromResult(global::app.data.@this.Ok());
+        public Task<global::app.data.@this<T>> DeserializeAsync<T>(Stream s, CancellationToken ct = default)
+            => Task.FromResult(global::app.data.@this<T>.Ok(default!));
+        public global::app.data.@this<string> Serialize(global::app.data.@this data) => global::app.data.@this<string>.Ok("");
+        public global::app.data.@this Deserialize(string s) => global::app.data.@this.Ok();
+        public global::app.data.@this<T> Deserialize<T>(string s) => global::app.data.@this<T>.Ok(default!);
     }
 
     // SerializeOptions.Type-old: the previous ContentType property is gone.
     [Test]
     public async Task SerializeOptions_ContentType_PropertyRemoved()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var prop = typeof(SerializeOptions).GetProperty("ContentType");
+        await Assert.That(prop).IsNull();
     }
 
     // DeserializeOptions / ResolveOptions: same Type rename — both compile in usage.
     [Test]
     public async Task DeserializeOptions_Type_CarriesMimeString_NoContentTypeProperty()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var opts = new DeserializeOptions { Type = "application/plang" };
+        await Assert.That(opts.Type).IsEqualTo("application/plang");
+        await Assert.That(typeof(DeserializeOptions).GetProperty("ContentType")).IsNull();
     }
 
     [Test]
     public async Task ResolveOptions_Type_CarriesMimeString_NoContentTypeProperty()
     {
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var opts = new ResolveOptions { Type = "application/plang" };
+        await Assert.That(opts.Type).IsEqualTo("application/plang");
+        await Assert.That(typeof(ResolveOptions).GetProperty("ContentType")).IsNull();
     }
 }

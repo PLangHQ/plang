@@ -13,7 +13,7 @@ public enum ChannelDirection
 /// <summary>
 /// Abstract base for every channel in PLang.
 /// Concrete subtypes (<see cref="Stream.@this"/>, <see cref="Goal.@this"/>) implement
-/// <see cref="WriteCore"/> / <see cref="ReadCore"/> / <see cref="AskCore"/>.
+/// <see cref="Write"/> / <see cref="Read"/> / <see cref="Ask"/>.
 ///
 /// The split into Session / Message gives external developers two structural bases
 /// to extend — they pick the one matching their transport's nature:
@@ -58,7 +58,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
     /// <summary>
     /// Channel-event bindings (Stage 8) with their lock discipline and recursion
     /// guard encapsulated. Same shape spirit as Goal.Events / Step.Events.
-    /// Bindings fire from WriteAsync / ReadAsync / Ask: BeforeWrite, AfterWrite,
+    /// Bindings fire from WriteAsync / ReadAsync / AskAsync: BeforeWrite, AfterWrite,
     /// BeforeRead, AfterRead, OnAsk.
     /// </summary>
     public global::app.channels.channel.events.@this Events { get; } = new();
@@ -90,37 +90,38 @@ public abstract class @this : IAsyncDisposable, IDisposable
     public virtual bool CanWrite => IsOpen && Direction != ChannelDirection.Input;
 
     /// <summary>
-    /// Core write — concrete subtypes implement. Receives the full Data envelope (Rule 7,
+    /// Abstract write — concrete subtypes implement. Receives the full Data envelope (Rule 7,
     /// relay don't repackage); the channel's serializer decides how to render.
     /// </summary>
-    public abstract Task<global::app.data.@this> WriteCore(global::app.data.@this data, CancellationToken ct = default);
+    public abstract Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default);
 
     /// <summary>
-    /// Core read — concrete subtypes implement.
+    /// Abstract read — concrete subtypes implement.
     /// </summary>
-    public abstract Task<global::app.data.@this> ReadCore(CancellationToken ct = default);
+    public abstract Task<global::app.data.@this> Read(CancellationToken ct = default);
 
     /// <summary>
-    /// Core ask — concrete subtypes implement. Takes the action directly so the
+    /// Abstract ask — concrete subtypes implement. Takes the action directly so the
     /// channel can extract <c>Question.Value</c>, capture a Snapshot, or read
     /// other action state. Session blocks until answer; Message returns
     /// <c>Data&lt;Ask&gt;</c> with Snapshot attached (engine short-circuits).
     /// </summary>
+    public abstract Task<global::app.data.@this> Ask(modules.output.ask action, CancellationToken ct = default);
 
-    public abstract Task<global::app.data.@this> AskCore(modules.output.ask action, CancellationToken ct = default);
     /// <summary>
-    /// Public write entry. Wraps WriteCore in BeforeWrite / AfterWrite event firing.
+    /// Public write entry. Wraps Write in BeforeWrite / AfterWrite event firing.
     /// Before-handler throwing aborts the write (returns Data.Error,
-    /// AfterWrite is suppressed). After-handler always fires when WriteCore was
+    /// AfterWrite is suppressed). After-handler always fires when Write was
     /// reached (success or error); their throws are suppressed.
     /// </summary>
     public virtual async Task<global::app.data.@this> WriteAsync(global::app.data.@this data, CancellationToken ct = default)
     {
         // Fire BeforeWrite — abort on throw.
-        var beforeAborted = await FireBefore(global::app.events.EventType.BeforeWrite, data);        if (beforeAborted != null) return beforeAborted;
+        var beforeAborted = await FireBefore(global::app.events.EventType.BeforeWrite, data);
+        if (beforeAborted != null) return beforeAborted;
 
         global::app.data.@this result;
-        try { result = await WriteCore(data, ct); }
+        try { result = await Write(data, ct); }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
             result = global::app.data.@this.FromError(new global::app.errors.ServiceError(
@@ -128,41 +129,46 @@ public abstract class @this : IAsyncDisposable, IDisposable
         }
 
         // Fire AfterWrite — always (even on error). Handler throws are suppressed.
-        await FireAfter(global::app.events.EventType.AfterWrite, result);        return result;
+        await FireAfter(global::app.events.EventType.AfterWrite, result);
+        return result;
     }
 
     /// <summary>
-    /// Public read entry. Wraps ReadCore in BeforeRead / AfterRead event firing.
+    /// Public read entry. Wraps Read in BeforeRead / AfterRead event firing.
     /// </summary>
     public virtual async Task<global::app.data.@this> ReadAsync(CancellationToken ct = default)
     {
-        var beforeAborted = await FireBefore(global::app.events.EventType.BeforeRead, global::app.data.@this.Ok());        if (beforeAborted != null) return beforeAborted;
+        var beforeAborted = await FireBefore(global::app.events.EventType.BeforeRead, global::app.data.@this.Ok());
+        if (beforeAborted != null) return beforeAborted;
 
         global::app.data.@this result;
-        try { result = await ReadCore(ct); }
+        try { result = await Read(ct); }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
             result = global::app.data.@this.FromError(new global::app.errors.ServiceError(
                 $"Channel '{Name}' read failed: {ex.Message}", "ReadError") { Exception = ex });
         }
 
-        await FireAfter(global::app.events.EventType.AfterRead, result);        return result;
+        await FireAfter(global::app.events.EventType.AfterRead, result);
+        return result;
     }
 
     /// <summary>
-    /// Public ask entry. Fires OnAsk after the Core completes (Session: post-answer;
+    /// Public ask entry. Fires OnAsk after the Ask completes (Session: post-answer;
     /// Message: pre-suspend — the channel kind decides timing).
     /// </summary>
-    public virtual async Task<global::app.data.@this> Ask(modules.output.ask action, CancellationToken ct = default)
+    public virtual async Task<global::app.data.@this> AskAsync(modules.output.ask action, CancellationToken ct = default)
     {
         global::app.data.@this result;
-        try { result = await AskCore(action, ct); }        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+        try { result = await Ask(action, ct); }
+        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
             result = global::app.data.@this.FromError(new global::app.errors.ServiceError(
                 $"Channel '{Name}' ask failed: {ex.Message}", "AskError") { Exception = ex });
         }
 
-        await FireAfter(global::app.events.EventType.OnAsk, result);        return result;
+        await FireAfter(global::app.events.EventType.OnAsk, result);
+        return result;
     }
 
     /// <summary>
@@ -195,7 +201,8 @@ public abstract class @this : IAsyncDisposable, IDisposable
         }
     }
 
-    private async Task<global::app.data.@this?> FireBefore(global::app.events.EventType type, global::app.data.@this data)    {
+    private async Task<global::app.data.@this?> FireBefore(global::app.events.EventType type, global::app.data.@this data)
+    {
         foreach (var binding in MatchingBindings(type))
         {
             if (Events.IsActive(binding.Id)) continue;   // recursion guard
@@ -215,7 +222,8 @@ public abstract class @this : IAsyncDisposable, IDisposable
         return null;
     }
 
-    private async Task FireAfter(global::app.events.EventType type, global::app.data.@this data)    {
+    private async Task FireAfter(global::app.events.EventType type, global::app.data.@this data)
+    {
         foreach (var binding in MatchingBindings(type))
         {
             if (Events.IsActive(binding.Id)) continue;
@@ -227,7 +235,8 @@ public abstract class @this : IAsyncDisposable, IDisposable
 
     private Task<global::app.data.@this> InvokeChannelHandler(
         global::app.events.lifecycle.bindings.binding.@this binding,
-        global::app.data.@this data)    {
+        global::app.data.@this data)
+    {
         // Bindings receive (context, action=null, result=data). The context comes
         // from the channel's owning Actor when the channel went through
         // Channels.Register; tests sometimes construct a channel directly without

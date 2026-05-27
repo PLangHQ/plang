@@ -14,11 +14,13 @@ namespace app.channels.serializers.serializer.plang;
 /// Read does NOT auto-verify — verification is the consumer's explicit step (callback.run
 /// invokes <c>signing.verify</c> before dispatching). The reconstructed Data has its
 /// signature populated-but-unverified.
+///
+/// Stage-2 of data-serialize-cleanup will merge this into the main plang serializer.
 /// </summary>
 public sealed class Data : ISerializer
 {
-    public string ContentType => "application/plang+data";
-    public string FileExtension => ".pdata";
+    public string Type => "application/plang+data";
+    public string Extension => ".pdata";
 
     private readonly JsonSerializerOptions _options = new()
     {
@@ -35,29 +37,18 @@ public sealed class Data : ISerializer
         }
     };
 
-    public async Task<global::app.data.@this> SerializeAsync(Stream stream, object? value, Type? type = null,
-        CancellationToken cancellationToken = default)
+    public async Task<global::app.data.@this> SerializeAsync(Stream stream, global::app.data.@this data, CancellationToken cancellationToken = default)
     {
         try
         {
-            if (value is global::app.data.@this d)
+            data.EnsureSigned();
+            var envelope = new Envelope
             {
-                d.EnsureSigned();
-                var envelope = new Envelope
-                {
-                    Type = d.Type?.Value ?? "",
-                    Value = d.Value,
-                    Signature = d.RawSignature
-                };
-                await JsonSerializer.SerializeAsync(stream, envelope, _options, cancellationToken);
-                return global::app.data.@this.Ok();
-            }
-            if (value == null)
-            {
-                await stream.WriteAsync("null"u8.ToArray(), cancellationToken);
-                return global::app.data.@this.Ok();
-            }
-            await JsonSerializer.SerializeAsync(stream, value, type ?? value.GetType(), _options, cancellationToken);
+                Type = data.Type?.Value ?? "",
+                Value = data.Value,
+                Signature = data.RawSignature
+            };
+            await JsonSerializer.SerializeAsync(stream, envelope, _options, cancellationToken);
             return global::app.data.@this.Ok();
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
@@ -67,18 +58,13 @@ public sealed class Data : ISerializer
         }
     }
 
-    public async Task<global::app.data.@this> DeserializeAsync(Stream stream, Type type, CancellationToken cancellationToken = default)
+    public async Task<global::app.data.@this> DeserializeAsync(Stream stream, CancellationToken cancellationToken = default)
     {
         try
         {
             if (stream.Length == 0) return global::app.data.@this.Ok();
-            if (type == typeof(global::app.data.@this))
-            {
-                var env = await JsonSerializer.DeserializeAsync<Envelope>(stream, _options, cancellationToken);
-                return global::app.data.@this.Ok(env != null ? FromEnvelope(env) : null);
-            }
-            var v = await JsonSerializer.DeserializeAsync(stream, type, _options, cancellationToken);
-            return global::app.data.@this.Ok(v);
+            var env = await JsonSerializer.DeserializeAsync<Envelope>(stream, _options, cancellationToken);
+            return global::app.data.@this.Ok(env != null ? FromEnvelope(env) : null);
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
         {
@@ -107,23 +93,18 @@ public sealed class Data : ISerializer
         }
     }
 
-    public global::app.data.@this<string> Serialize(object? value, Type? type = null)
+    public global::app.data.@this<string> Serialize(global::app.data.@this data)
     {
         try
         {
-            if (value is global::app.data.@this d)
+            data.EnsureSigned();
+            var envelope = new Envelope
             {
-                d.EnsureSigned();
-                var envelope = new Envelope
-                {
-                    Type = d.Type?.Value ?? "",
-                    Value = d.Value,
-                    Signature = d.RawSignature
-                };
-                return global::app.data.@this<string>.Ok(JsonSerializer.Serialize(envelope, _options));
-            }
-            if (value == null) return global::app.data.@this<string>.Ok("null");
-            return global::app.data.@this<string>.Ok(JsonSerializer.Serialize(value, type ?? value.GetType(), _options));
+                Type = data.Type?.Value ?? "",
+                Value = data.Value,
+                Signature = data.RawSignature
+            };
+            return global::app.data.@this<string>.Ok(JsonSerializer.Serialize(envelope, _options));
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {
@@ -132,17 +113,13 @@ public sealed class Data : ISerializer
         }
     }
 
-    public global::app.data.@this Deserialize(string data, Type type)
+    public global::app.data.@this Deserialize(string s)
     {
         try
         {
-            if (string.IsNullOrEmpty(data) || data == "null") return global::app.data.@this.Ok();
-            if (type == typeof(global::app.data.@this))
-            {
-                var env = JsonSerializer.Deserialize<Envelope>(data, _options);
-                return global::app.data.@this.Ok(env != null ? FromEnvelope(env) : null);
-            }
-            return global::app.data.@this.Ok(JsonSerializer.Deserialize(data, type, _options));
+            if (string.IsNullOrEmpty(s) || s == "null") return global::app.data.@this.Ok();
+            var env = JsonSerializer.Deserialize<Envelope>(s, _options);
+            return global::app.data.@this.Ok(env != null ? FromEnvelope(env) : null);
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {
@@ -151,17 +128,17 @@ public sealed class Data : ISerializer
         }
     }
 
-    public global::app.data.@this<T> Deserialize<T>(string data)
+    public global::app.data.@this<T> Deserialize<T>(string s)
     {
         try
         {
-            if (string.IsNullOrEmpty(data) || data == "null") return global::app.data.@this<T>.Ok(default!);
+            if (string.IsNullOrEmpty(s) || s == "null") return global::app.data.@this<T>.Ok(default!);
             if (typeof(T) == typeof(global::app.data.@this))
             {
-                var env = JsonSerializer.Deserialize<Envelope>(data, _options);
+                var env = JsonSerializer.Deserialize<Envelope>(s, _options);
                 return global::app.data.@this<T>.Ok(env != null ? (T)(object)FromEnvelope(env) : default!);
             }
-            return global::app.data.@this<T>.Ok(JsonSerializer.Deserialize<T>(data, _options)!);
+            return global::app.data.@this<T>.Ok(JsonSerializer.Deserialize<T>(s, _options)!);
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {

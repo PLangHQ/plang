@@ -515,11 +515,11 @@ public sealed class Default : IHttp
         }
         var bytes = bytesRead.Value!;
         object? body;
-        var serializer = context.Actor.Channels.Serializers.GetByContentType(contentType);
+        var serializer = context.Actor.Channels.Serializers.GetByType(contentType);
         if (serializer != null)
         {
             using var stream = new MemoryStream(bytes);
-            var deser = await serializer.DeserializeAsync(stream, typeof(object));
+            var deser = await serializer.DeserializeAsync(stream);
             body = deser.Success ? deser.Value : TextFallback(bytes, contentType);
         }
         else

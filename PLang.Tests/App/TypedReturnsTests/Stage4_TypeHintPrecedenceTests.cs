@@ -46,20 +46,20 @@ public class Stage4_TypeHintPrecedenceTests
 
     private sealed class StubSerializer : global::app.channels.serializers.serializer.ISerializer
     {
-        public string ContentType { get; init; } = "";
-        public string FileExtension { get; init; } = "";
-        public Task<Data> SerializeAsync(System.IO.Stream s, object? v, System.Type? t = null, System.Threading.CancellationToken ct = default) => Task.FromResult(Data.Ok());
-        public Task<Data> DeserializeAsync(System.IO.Stream s, System.Type t, System.Threading.CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        public string Type { get; init; } = "";
+        public string Extension { get; init; } = "";
+        public Task<Data> SerializeAsync(System.IO.Stream s, Data d, System.Threading.CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        public Task<Data> DeserializeAsync(System.IO.Stream s, System.Threading.CancellationToken ct = default) => Task.FromResult(Data.Ok());
         public Task<global::app.data.@this<T>> DeserializeAsync<T>(System.IO.Stream s, System.Threading.CancellationToken ct = default) => Task.FromResult(global::app.data.@this<T>.Ok(default!));
-        public global::app.data.@this<string> Serialize(object? v, System.Type? t = null) => global::app.data.@this<string>.Ok("");
-        public Data Deserialize(string d, System.Type t) => Data.Ok();
+        public global::app.data.@this<string> Serialize(Data d) => global::app.data.@this<string>.Ok("");
+        public Data Deserialize(string d) => Data.Ok();
         public global::app.data.@this<T> Deserialize<T>(string d) => global::app.data.@this<T>.Ok(default!);
     }
 
     [Test]
     public async Task SerializersGetByExtension_MultiSegment_Resolves()
     {
-        var stub = new StubSerializer { FileExtension = ".junit.xml", ContentType = "application/junit+xml" };
+        var stub = new StubSerializer { Extension = ".junit.xml", Type = "application/junit+xml" };
         _app.User.Channels.Serializers.Register(stub);
 
         var resolved = _app.User.Channels.Serializers.GetByExtension(".junit.xml");
@@ -72,7 +72,7 @@ public class Stage4_TypeHintPrecedenceTests
         // Register only the single-segment ".xml" — a multi-segment lookup that
         // doesn't have its own registration must walk down to the trailing
         // segment and resolve there.
-        var xml = new StubSerializer { FileExtension = ".xml", ContentType = "application/xml" };
+        var xml = new StubSerializer { Extension = ".xml", Type = "application/xml" };
         _app.User.Channels.Serializers.Register(xml);
 
         var resolved = _app.User.Channels.Serializers.GetByExtension(".unknown.xml");
