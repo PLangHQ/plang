@@ -20,6 +20,93 @@
       "status": "open",
       "parent_id": "684d335e21",
       "ts": "2026-05-26T16:56:56",
+      "drifted": true
+    },
+    {
+      "id": "6babf93895",
+      "line": 17,
+      "text": "so if we have it in the serializer, each data object would be serialized if we had data inside data? if that is the case, then why not? lets say I get zip object, it´s signed, I unzip it and I see the 'real' Data, that is also signed, just wondering if we get some benefit of it. I could forward that Data to someone else and we still would have signature from the original creator, lets discuss",
+      "anchor": "Once that's accepted, three follow-on simplifications fall out: ISerializer narrows from `object?` to `Data`, the two `application/plang` serializers collapse into one, signing moves from the serializer to the channel.",
+      "author": "user",
+      "status": "open",
+      "parent_id": "18fdfeda61",
+      "ts": "2026-05-27T16:43:46",
+      "drifted": false
+    },
+    {
+      "id": "870bac762a",
+      "line": 17,
+      "text": "You're right and I want to walk back the previous reply. Let me play the movie again.\n\nThe key piece I missed: EnsureSigned() is *no-op if a Signature is already present*. So 'serializer signs every Data it sees' actually means 'sign only what isn't signed yet.' That's a very different rule from 'sign always.'\n\nReplay with serializer-driven signing:\n- Alice creates D1, signs it. D1 carries Alice's signature.\n- Alice compresses D1 → D2 { type=archived, value=bytes-of-D1 }. The bytes contain D1 with Alice's signature still attached.\n- Alice's channel write: serializer walks D2. D2 unsigned → sign with Alice. D1 inside the bytes was already signed → unchanged. D2 goes out with one wire signature (Alice on archived envelope); bytes carry D1's signature (Alice on inner).\n- Bob receives D2, decompresses to D1. D1 has Alice's signature. Bob can verify provenance.\n- Bob forwards D1 to Charlie by wrapping in his own D3 { value: D1 }. Serializer walks D3: D3 unsigned → sign with Bob. D1 already signed → unchanged.\n- Charlie sees D3 signed by Bob; opens it; sees D1 signed by Alice. Provenance chain preserved without Bob needing to know anything about D1's origin.\n\nThat's a genuinely better property than my previous 'two signatures for one payload' framing. The two signatures aren't redundant — they're attestations of different things: D2/D3 attest transit ('this channel/this actor passed this along'), D1 attests authorship ('Alice made this'). Forwarding preserves the chain naturally.\n\nThe 'cost' I worried about (extra signature on every nested Data) is small: signing is cheap, and EnsureSigned-is-no-op means it only happens once per Data over its lifetime. The Compress-internal case I was protecting against — bytes inside an archived wrapper getting signed twice — doesn't actually happen, because EnsureSigned sees the existing signature on the inner and skips.\n\nWhere this lands the design:\n- Signing-trigger moves *into the serializer* (specifically, into the app.data.Json converter that walks Data) — not into the channel. Every Data node the converter visits: if Signature is null, call EnsureSigned. The channel doesn't need to do anything special.\n- The 'only outermost signs' rule I previously argued for is dropped. The new rule is 'sign-once-per-Data, idempotent, performed at wire crossing.' Multiple Datas in a tree each get signed independently, which is the property you want for forwarding.\n- Stage 2's deliverable changes: no 'Channel.WriteAsync calls data.EnsureSigned() before WriteCore' — instead, the merged plang serializer (or its inner converter) does it. Lighter change to channel/this.cs.\n- Stage 3's Compress: now goes through the registered serializer (already in the Stage 3 deliverable) — that path will naturally sign the inner Data if it isn't already signed. The 'no signing inside Compress' note in Stage 3 becomes wrong; I'll rewrite it as 'Compress uses the registered serializer, which signs through its normal walk.'\n\nOne thing I want to double-check before updating the stages: when EnsureSigned signs a Data whose Value contains a List<Data>, does the signature canonicalize over the inner Datas' current state (including their Signatures), or only over their values? If the latter, the chain still works but the outer signature doesn't bind the inner signatures — they could be tampered with independently. If the former, the outer signs over inner-including-signature, which is the strict chain. I haven't read the signing module deeply enough yet to know — let me check before writing the stage changes. Worth a separate conversation if the current code signs only over Value and not Signature.\n\nLeaving this open. If you agree with the direction, I'll update plan.md's 'Signing lives at the channel' section, Stage 2's signing-move deliverable, and Stage 3's Compress section in one pass.",
+      "anchor": "Once that's accepted, three follow-on simplifications fall out: ISerializer narrows from `object?` to `Data`, the two `application/plang` serializers collapse into one, signing moves from the serializer to the channel.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "6babf93895",
+      "ts": "2026-05-27T16:52:29"
+    },
+    {
+      "id": "21c1db1c1e",
+      "line": 29,
+      "text": "We talk a lot about Compress here, but I feel like we are missing a bigger picture, what would other types be; encryption, something else? and how do we define it, it would need to be defined somewhere I feel like, or does it come naturally in a way that we are repackaging a Data",
+      "anchor": "4. **`Compress()` double-wraps.** Current code builds `Data{archived, Data{gzip, byte[]}}`. The inner gzip Data is redundant — `archived.Value` can be a `byte[]` directly. \"Data all the way down\" is a property of *byte layers* (decompress reveals another serialized Data), not JSON object nesting.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-27T16:45:35",
+      "drifted": false
+    },
+    {
+      "id": "0e91f0aef5",
+      "line": 29,
+      "text": "Good push — I wasn't being explicit about the general shape. Added a 'Transforms are a pattern, not a registry' section to the Cross-cutting decisions: Compress is one instance of (Data → bytes → Data{type=marker, value=byte[]}). The family is Compress / Encrypt / Sign / future Brotli-Zstd-etc. There's no separate registration system: the verb is a method on Data, the wire marker is a Type value, algorithm differentiation rides on the +variant slot ('archived+gzip', 'archived+brotli'). Decoding mirrors. Type's own .Compressible / .Encryptable properties (already there for Compressible) gate whether a transform applies.\n\nIt does come naturally in the sense you suspected: repackaging a Data into a new Data with bytes inside. The smell of double-wrap (Data{archived, Data{gzip, byte[]}}) was hiding the uniformity — flattening (Stage 3) makes all transforms look the same on the wire.",
+      "anchor": "4. **`Compress()` double-wraps.** Current code builds `Data{archived, Data{gzip, byte[]}}`. The inner gzip Data is redundant — `archived.Value` can be a `byte[]` directly. \"Data all the way down\" is a property of *byte layers* (decompress reveals another serialized Data), not JSON object nesting.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "21c1db1c1e",
+      "ts": "2026-05-27T16:52:02",
+      "drifted": false
+    },
+    {
+      "id": "438cfa362a",
+      "line": 57,
+      "text": "it being base64 is simply because the serializer decides that, in this example the json, he sees byte and convert it to base64, this is serializer decition",
+      "anchor": "The compressed bytes — when base64-decoded and gunzipped — *are themselves* a serialized Data with name \"user\". Nesting happens through byte-decoding layers, not JSON object nesting. Each Data on the wire is flat.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-27T16:46:30",
+      "drifted": true
+    },
+    {
+      "id": "4da94f492c",
+      "line": 57,
+      "text": "Right — base64 is JSON-specific. Fixed the wording: the bytes get decoded per the wire format's convention (base64 in JSON because no binary literal; raw bytes in protobuf/CBOR). The point I was reaching for — that nesting is byte-layer, not JSON-object-layer — survives, just no longer tied to base64.",
+      "anchor": "The compressed bytes — when decoded per the wire format's convention (base64 in JSON because JSON has no binary literal; raw bytes in protobuf/CBOR) and gunzipped — *are themselves* a serialized Data with name \"user\". The base64 isn't intrinsic to the shape; it's the JSON serializer's choice for representing `byte[]`. Nesting happens through byte-decoding layers, not JSON object nesting. Each Data on the wire is flat.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "438cfa362a",
+      "ts": "2026-05-27T16:51:43",
+      "drifted": false
+    },
+    {
+      "id": "daee6add42",
+      "line": 67,
+      "text": "this link doesn´t work, is this part of doc?",
+      "anchor": "**Data is opaque to its consumers.** Every layer — Variables, action handlers, Compress, Channel, ISerializer — handles Data as an opaque unit. Only the encoder at the leaf walks `[Out]` properties. Nothing peeks at Type or Value to decide behaviour. (See [design_principles.md → Data Is Opaque to Its Consumers](../../../memory/design_principles.md).)",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-27T16:47:33",
+      "drifted": true
+    },
+    {
+      "id": "068dfdb0dd",
+      "line": 67,
+      "text": "You're right — that link points into my memory directory, which isn't in the repo so you can't see it. Removed the link and inlined the principle in one extra sentence (\"A consumer that needs to branch on what's inside has stopped being a consumer and started being an encoder — push the work down to the leaf.\") which is the load-bearing bit anyway.",
+      "anchor": "**Data is opaque to its consumers.** Every layer — Variables, action handlers, Compress, Channel, ISerializer — handles Data as an opaque unit. Only the encoder at the leaf walks `[Out]` properties. Nothing peeks at Type or Value to decide behaviour. A consumer that needs to branch on what's inside has stopped being a consumer and started being an encoder — push the work down to the leaf.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "daee6add42",
+      "ts": "2026-05-27T16:51:51",
       "drifted": false
     }
   ]

@@ -54,7 +54,7 @@ For a compressed `%user%`:
 }
 ```
 
-The compressed bytes — when base64-decoded and gunzipped — *are themselves* a serialized Data with name "user". Nesting happens through byte-decoding layers, not JSON object nesting. Each Data on the wire is flat.
+The compressed bytes — when decoded per the wire format's convention (base64 in JSON because JSON has no binary literal; raw bytes in protobuf/CBOR) and gunzipped — *are themselves* a serialized Data with name "user". The base64 isn't intrinsic to the shape; it's the JSON serializer's choice for representing `byte[]`. Nesting happens through byte-decoding layers, not JSON object nesting. Each Data on the wire is flat.
 
 Concrete JSON examples (plain, compressed, encrypted, nested-value) live in [plan/wire-shape.md](plan/wire-shape.md).
 
@@ -64,11 +64,24 @@ Concrete JSON examples (plain, compressed, encrypted, nested-value) live in [pla
 
 **Signing lives at the channel.** `Channel.WriteCore` calls `data.EnsureSigned()` before invoking the serializer. The serializer never signs — it just emits whatever Signature is set. Why not sign in the serializer? Because `Compress` also serializes Data (to in-memory bytes that will be buried inside an archived wrapper). If the serializer signed, those buried bytes would carry a signature *and* the channel would sign the archived wrapper on its way out — two signatures for one logical payload. Moving the signing decision out of the serializer makes "only outermost signs" automatic by construction: channels sign because their writes are externally visible; in-pipeline transforms (Compress, Encrypt) don't sign because their output stays in-process and gets buried inside another Data. The serializer is unconscious of inner/outer — that's not its concern.
 
-**Data is opaque to its consumers.** Every layer — Variables, action handlers, Compress, Channel, ISerializer — handles Data as an opaque unit. Only the encoder at the leaf walks `[Out]` properties. Nothing peeks at Type or Value to decide behaviour. (See [design_principles.md → Data Is Opaque to Its Consumers](../../../memory/design_principles.md).)
+**Data is opaque to its consumers.** Every layer — Variables, action handlers, Compress, Channel, ISerializer — handles Data as an opaque unit. Only the encoder at the leaf walks `[Out]` properties. Nothing peeks at Type or Value to decide behaviour. A consumer that needs to branch on what's inside has stopped being a consumer and started being an encoder — push the work down to the leaf.
 
 **ISerializer takes Data, returns Data.** The return half landed in `typed-action-returns` (every method now returns `Data` / `Data<T>`, errors travel as `Data.Error` instead of throwing). The input half is what this branch closes: `object? value` and `Type? type = null` become a single `Data data` parameter. Tightening eliminates the null branch (`if (value == null) return "null"`), the `Type? type` parameter (Data carries its own type), and the "what if it's not Data" fallthrough.
 
 **`+` variants for encoding/algorithm differentiation.** `application/plang` defaults to JSON; `application/plang+protobuf` is the future binary variant. Same pattern for transport types: `archived+gzip`, `encryption+aes-256-gcm`. Today only the defaults exist; the variant slot is reserved, not used.
+
+**Transforms are a pattern, not a registry.** Compress is one instance of a general shape: take a Data, produce a Data whose `Value` is bytes (the transformed payload) and whose `Type` names the transformation. The full family:
+
+| Verb | Input | Output |
+|------|-------|--------|
+| `data.Compress()` | Data | Data { type=archived, value=byte[] (gzip-of-serialized-Data) } |
+| `data.Encrypt()` | Data | Data { type=encrypted, value=byte[] (cipher-of-serialized-Data) } |
+| `data.Sign()` / `EnsureSigned()` | Data | same Data with Signature populated (in-place; no wrapping) |
+| Future: `data.Brotli()`, `data.Zstd()` | Data | Data { type=archived+brotli, value=byte[] } |
+
+No separate registry. The verb is a method on Data; the wire marker is a `Type` value; algorithm differentiation rides on the `+variant` slot. Decoding mirrors: `Decompress()` peels `archived`, `Decrypt()` peels `encrypted`, with the variant naming the routine. Type's own `.Compressible` / `.Encryptable` properties (when added) gate whether a transform applies — same pattern Compress already uses today.
+
+The serializer is unaware of any of this. It serializes Data; what's *inside* Data — primitives, bytes, nested Data — is opaque. Transforms produce a new Data; the serializer renders it. The fact that "byte[] inside archived" used to be "Data inside Data" was the smell — flat wrapping (Stage 3) makes the pattern uniform across all transforms.
 
 ## Out of scope
 
