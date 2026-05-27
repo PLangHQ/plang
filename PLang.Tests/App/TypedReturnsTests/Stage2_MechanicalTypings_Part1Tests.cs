@@ -53,12 +53,16 @@ public class Stage2_MechanicalTypings_Part1Tests
         Assert.Fail("Pending: TypeInfo record not yet created; see file header.");
     }
 
+    // Ingi's call (2026-05-27): output.ask returns Task<Data<Ask>>, not <string>.
+    // Ask was extended with Answer; IExitsGoal gained virtual ShouldExit() so the
+    // resume path (Answer != null) flows through, suspend path (Answer == null)
+    // short-circuits as before.
     [Test]
-    public async Task OutputAsk_Run_ReturnsTaskDataOfString()
+    public async Task OutputAsk_Run_ReturnsTaskDataOfAsk()
     {
-        // Pending — IExitsGoal Ask sentinel cannot cleanly flow through
-        // Task<Data<string>>. Coder flagged for Ingi (file header).
-        Assert.Fail("Pending: IExitsGoal forwarding design needs Ingi's call.");
+        var ret = RunReturnType<global::app.modules.output.ask>();
+        var expected = typeof(Task<global::app.data.@this<global::app.modules.output.Ask>>);
+        await Assert.That(ret).IsEqualTo(expected);
     }
 
     [Test]
@@ -87,11 +91,15 @@ public class Stage2_MechanicalTypings_Part1Tests
         await Assert.That(row!.ReturnTypeName).IsEqualTo("results");
     }
 
+    // Catalog renders the architect's expected "string" as "ask" — the runtime
+    // return type IS Ask, with .Answer carrying the user's string reply.
     [Test]
-    public async Task ModulesDescribe_OutputAsk_AdvertisesStringReturnType()
+    public async Task ModulesDescribe_OutputAsk_AdvertisesAskReturnType()
     {
-        // Pending — blocked on output.ask typing.
-        Assert.Fail("Pending: output.ask not yet typed.");
+        var rendered = await _app.Modules.Describe();
+        var row = rendered.FirstOrDefault(a => a.Module == "output" && a.ActionName == "ask");
+        await Assert.That(row).IsNotNull();
+        await Assert.That(row!.ReturnTypeName).IsEqualTo("ask");
     }
 
     [Test]

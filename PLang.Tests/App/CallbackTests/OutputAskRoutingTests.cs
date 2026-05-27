@@ -37,7 +37,7 @@ public class OutputAskRoutingTests
         var handler = new ask { Context = ctx, Question = new global::app.data.@this<string>("", "name?") };
         var result = await handler.Run();
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value as string).IsEqualTo("Alice");
+        await Assert.That(result.Value?.Answer).IsEqualTo("Alice");
         await Assert.That(ctx.Variables.Get(ask.AnswerVariableName).IsInitialized).IsFalse();
     }
 
@@ -77,7 +77,11 @@ public class OutputAskRoutingTests
         await Assert.That(true).IsTrue();
     }
 
-    [Test] public async Task MessageChannelAsk_ReturnsDataAsk_WithQuestionAsValue()
+    // Post-Ingi-Data<Ask>-typing (2026-05-27): the suspend wire shape carries a
+    // bare Ask sentinel (Answer==null) — the question text rides on the Snapshot
+    // and on the action.Question parameter, not on the Data Value. The Ask's
+    // IExitsGoal.ShouldExit() returns true while Answer is null.
+    [Test] public async Task MessageChannelAsk_ReturnsDataAsk_WithSuspendShape()
     {
         var app = NewApp();
         var ch = new TestMessageChannel("input");
@@ -87,7 +91,8 @@ public class OutputAskRoutingTests
             Question = new global::app.data.@this<string>("", "Allow X?")
         };
         var result = await ch.AskCore(action);
-        await Assert.That(result.Value as string).IsEqualTo("Allow X?");
+        await Assert.That(result.Value).IsTypeOf<global::app.modules.output.Ask>();
+        await Assert.That(((global::app.modules.output.Ask)result.Value!).Answer).IsNull();
         await Assert.That(result.Type?.Value).IsEqualTo("ask");
     }
 
