@@ -6,7 +6,7 @@ namespace app.modules.mock;
 [Action("verify", Cacheable = false)]
 public partial class Verify : IContext
 {
-    public partial data.@this<types.MockHandle> Mock { get; init; }
+    public partial data.@this<global::app.mock.Mock.@this> Mock { get; init; }
     public partial data.@this<int> ExpectedCount { get; init; }
     public partial data.@this<string>? Message { get; init; }
 

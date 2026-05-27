@@ -73,13 +73,13 @@ public class Stage0_PlangTypeRemovalTests
         await Assert.That(name).IsEqualTo("results");
     }
 
-    // MockHandle derives "mockhandle" from class name lowercased — the [PlangType]
-    // marker on it is the no-arg discoverability form, not a name override.
+    // app.mock.Mock.@this is an @this class — its PLang type name derives
+    // from the last namespace segment ("mock"), not the class name ("@this").
     [Test]
     public async Task Mock_PlangTypeName_DerivesFromClassName()
     {
-        var name = _app.Types.Name(typeof(global::app.modules.mock.types.MockHandle));
-        await Assert.That(name).IsEqualTo("mockhandle");
+        var name = _app.Types.Name(typeof(global::app.mock.Mock.@this));
+        await Assert.That(name).IsEqualTo("mock");
     }
 
     // app.tester.Test.@this is an @this class — its PLang type name derives

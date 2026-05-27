@@ -22,13 +22,17 @@ public class Stage2_MechanicalTypings_Part2Tests
     [Test]
     public async Task MockIntercept_Run_ReturnsTaskDataOfMock()
     {
-        Assert.Fail("Pending: app.mock.Mock.@this record not yet authored");
+        var ret = RunReturnType<global::app.modules.mock.MockAction>();
+        var expected = typeof(Task<global::app.data.@this<global::app.mock.Mock.@this>>);
+        await Assert.That(ret).IsEqualTo(expected);
     }
 
     [Test]
     public async Task MockMock_TypeLivesAtOBPSingularFolder()
     {
-        Assert.Fail("Pending: PLang/app/mock/Mock/this.cs not yet created");
+        var t = typeof(global::app.mock.Mock.@this);
+        await Assert.That(t.Namespace).IsEqualTo("app.mock.Mock");
+        await Assert.That(t.Name).IsEqualTo("this");
     }
 
     [Test]
@@ -85,7 +89,10 @@ public class Stage2_MechanicalTypings_Part2Tests
     [Test]
     public async Task ModulesDescribe_MockIntercept_AdvertisesMockReturnType()
     {
-        Assert.Fail("Pending: mock.intercept typing blocked on Mock record");
+        var rendered = await _app.Modules.Describe();
+        var row = rendered.FirstOrDefault(a => a.Module == "mock" && a.ActionName == "intercept");
+        await Assert.That(row).IsNotNull();
+        await Assert.That(row!.ReturnTypeName).IsEqualTo("mock");
     }
 
     [Test]

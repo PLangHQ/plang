@@ -14,9 +14,9 @@ public partial class MockAction : IContext
     public partial data.@this<GoalCall>? GoalToCall { get; init; }
     public partial data.@this<Dictionary<string, object?>>? Parameters { get; init; }
 
-    public Task<data.@this> Run()
+    public Task<data.@this<global::app.mock.Mock.@this>> Run()
     {
-        var handle = new types.MockHandle
+        var handle = new global::app.mock.Mock.@this
         {
             Id = Guid.NewGuid().ToString("N")[..8],
             ActionPattern = ActionPattern.Value!,
@@ -70,7 +70,7 @@ public partial class MockAction : IContext
 
         Context.Events.Register(binding);
 
-        return Task.FromResult(Data(handle));
+        return Task.FromResult(data.@this<global::app.mock.Mock.@this>.Ok(handle));
     }
 
     private static app.goals.goal.steps.step.actions.action.@this? FindCurrentAction(actor.context.@this ctx)
