@@ -1,3 +1,20 @@
+## 2026-05-27 — Test strategy + coverage written for test-designer handoff
+
+Wrote `plan/test-strategy.md` (the narrative — scope, layer mapping, four integration cuts) and `plan/test-coverage.md` (heavy reference — coverage matrix per stage, consolidated failure matrix, new-surfaces inventory). Both were already referenced from `plan.md`'s Test surface section but didn't exist on disk; the dangling links would have stalled test-designer.
+
+The four integration cuts pin end-to-end behaviour:
+
+1. Plain Data round-trip with implicit signing — proves ISerializer input contract + wire converter symmetry + sign-if-missing fires + canonicalization matches wire shape.
+2. Sign-then-compress preserves inner attestation — proves Compress through the registered serializer + sign-if-missing during byte conversion + chain is cryptographically tight.
+3. Multi-actor forwarding chain — proves sign-if-missing is idempotent + forwarding preserves provenance + outer signature binds structurally-nested inner signatures (the Stage 2 canonicalization fix).
+4. Properties wire shape + navigation — proves nested `properties` round-trip + unconstrained keys + canonicalization binds Properties + `!` navigation reaches the right store.
+
+The coverage matrix has ~60 rows split across five stages; each row maps a behaviour to a layer (C# / goal / integration) and sense (green / negative). Failure matrix is consolidated to one table — ~18 negative paths with detection point + error type + layer. New-surfaces inventory lists every type, method, property, and rename the branch introduces, with file paths.
+
+Plan.md's Test surface section reworded to describe what's *in* each file rather than "to be written."
+
+Ready for test-designer handoff.
+
 ## 2026-05-27 — Stage 1 OBP renames; Properties shape pivot to nested
 
 Two rounds of follow-up review on the previous pivots.

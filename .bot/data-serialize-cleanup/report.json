@@ -235,6 +235,61 @@
         "health": "green",
         "notes": "No reserved-key validation in the Properties C# type \u2014 keys are unconstrained because they live in their own object on the wire."
       }
+    },
+    {
+      "id": "e00a86d3-7d36-4e6f-9c31-5091e8bd0438",
+      "bot": "architect",
+      "timestamp_start": "2026-05-27T21:30:00Z",
+      "timestamp_end": "2026-05-27T21:30:00Z",
+      "intent": "Write the test-strategy and test-coverage files referenced by plan.md so the test-designer handoff has all the design content it needs.",
+      "before": {
+        "assumptions": "plan.md referenced plan/test-strategy.md and plan/test-coverage.md, but the files did not exist on disk. Ingi caught the dangling link before sending to test-designer.",
+        "risk": "Test-designer would have either followed broken links (wasted cycle), derived coverage from scratch (slow, error-prone), or asked architect to write them (cycle delay). Architect character file is explicit these are architect-produced content."
+      },
+      "plan": ".bot/data-serialize-cleanup/architect/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/plan/test-strategy.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Narrative file. Scope statement; test layer mapping (C# / goal / integration); four integration cuts narrated in full (Plain round-trip, Sign-then-compress, Multi-actor forwarding, Properties wire shape); explicit list of what is NOT covered by the cuts."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/plan/test-coverage.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Reference file. Coverage matrix per stage (~60 rows total): behavior + layer + sense. Consolidated failure matrix (~18 negative paths). New-surfaces inventory: interfaces/types, new methods, renamed/removed surfaces, variable-syntax, existing surfaces touched by reference."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/plan.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Test surface section reworded \u2014 describes what is IN each file rather than \"to be written.\""
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "New top entry documenting the test-strategy/test-coverage write and the test-designer-handoff readiness."
+        }
+      ],
+      "after": {
+        "status": "plan + 5 stages + wire-shape + test-strategy + test-coverage are all consistent and on disk. Branch is ready for test-designer handoff.",
+        "health": "green",
+        "notes": "Next: run.ps1 test-designer data-serialize-cleanup \"Create test suites from the architect plan on branch data-serialize-cleanup\" -b data-serialize-cleanup"
+      }
     }
   ]
 }

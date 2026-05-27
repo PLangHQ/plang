@@ -127,9 +127,9 @@ Stages 1 and 2 are tightly coupled — the input-tightening in Stage 1 forces al
 
 ## Test surface
 
-Test strategy and coverage live in [plan/test-strategy.md](plan/test-strategy.md) and [plan/test-coverage.md](plan/test-coverage.md) — to be written after stages are reviewed and settled.
+Test strategy and coverage live in [plan/test-strategy.md](plan/test-strategy.md) (the narrative — scope, layer mapping, four integration cuts) and [plan/test-coverage.md](plan/test-coverage.md) (the heavy reference — coverage matrix per stage, consolidated failure matrix, new-surfaces inventory). Test-designer reads strategy top-to-bottom for the cuts, then walks the coverage matrix row-by-row writing one test per row.
 
-Key behaviours to pin:
+Key behaviours to pin (already encoded in the matrix; here for quick scan):
 - A `Data.Ok("hello")` round-trips through `application/plang` losslessly (name, type, value, signature, properties all preserved).
 - A compressed Data round-trips: outer wrapper signed; inner bytes decode to a serialized Data with its own signature (sign-then-compress chain preserved).
 - Inner Datas in a nested value field each carry their own signature on the wire (sign-if-missing rule applied during the converter walk).
