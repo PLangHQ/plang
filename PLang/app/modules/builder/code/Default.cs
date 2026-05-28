@@ -305,10 +305,45 @@ public class Default : IBuilder
         var step = action.Step.Value;
         if (step == null)
         {
+            // Dump what the planner actually returned so the user can see the
+            // malformed shape instead of guessing. Skip system/user/usage —
+            // those are stamped by the parent goal (input we sent + cost
+            // bookkeeping), not the LLM's planning output.
+            string planDetail = "(no plan was produced)";
+            try
+            {
+                var planValue = action.Context.Variables.Get("plan")?.Value;
+                if (planValue != null)
+                {
+                    // Round-trip whatever shape the planner produced
+                    // (JsonElement, JsonNode, Dictionary, anonymous record) into
+                    // a JsonNode so we can extract just description + steps.
+                    var raw = System.Text.Json.JsonSerializer.Serialize(planValue);
+                    var node = System.Text.Json.Nodes.JsonNode.Parse(raw);
+                    var steps = node?["steps"];
+                    if (steps != null)
+                    {
+                        var preview = new System.Text.Json.Nodes.JsonObject
+                        {
+                            ["description"] = node!["description"]?.DeepClone(),
+                            ["steps"] = steps.DeepClone(),
+                        };
+                        planDetail = "the LLM returned this plan:\n" +
+                            preview.ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                    }
+                    else
+                    {
+                        planDetail = "the LLM never returned a steps array — usually means the response failed to parse or the retry chain exhausted before any valid plan came back.";
+                    }
+                }
+            }
+            catch (System.Exception) { /* fall through with the default planDetail */ }
+
             return data.@this.FromError(new global::app.errors.ActionError(
                 "The LLM couldn't produce a usable plan for this goal — its proposed step count didn't match the goal, and the retry didn't recover. " +
                 "Try running plang build again (the LLM is non-deterministic). " +
-                "If it keeps failing, simplify or reword your goal text — long quoted strings or phrases that look like instructions can confuse the planner.",
+                "If it keeps failing, simplify or reword your goal text — long quoted strings or phrases that look like instructions can confuse the planner.\n\n" +
+                $"What we got back: {planDetail}",
                 "BuilderPlannerFailed", 400));
         }
         var input = action.Actions.Value ?? new List<string>();
