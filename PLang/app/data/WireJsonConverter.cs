@@ -79,12 +79,41 @@ public sealed class WireJsonConverter : JsonConverter<@this>
         }
     }
 
+    // Hard ceiling on nested Data depth. STJ's own MaxDepth=64 caps a single
+    // ParseValue call, but LiftDataIfShaped restarts STJ via
+    // Deserialize<@this>(string, options) on each recursion — that resets
+    // STJ's depth counter to zero, leaving only the C# call stack to bound
+    // recursion (security v1 F1: pre-auth StackOverflow DoS at ~500 levels,
+    // ~11 KB payload). The AsyncLocal counter below threads through every
+    // Read invocation so the budget applies cumulatively across the
+    // GetRawText round-trip. 64 mirrors STJ's default; throws JsonException
+    // past it so the catch in plang.@this.DeserializeAsync turns it into a
+    // typed PlangDeserializeError 400 rather than a crash.
+    private const int MaxReadDepth = 64;
+    private static readonly AsyncLocal<int> _readDepth = new();
+
     public override @this Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType == JsonTokenType.Null) return null!;
         if (reader.TokenType != JsonTokenType.StartObject)
             throw new JsonException("Expected StartObject for app.data.@this wire shape");
 
+        if (_readDepth.Value >= MaxReadDepth)
+            throw new JsonException(
+                $"app.data.@this wire shape nested past MaxReadDepth ({MaxReadDepth}) — payload rejected to prevent stack overflow.");
+        _readDepth.Value++;
+        try
+        {
+            return ReadBody(ref reader, options);
+        }
+        finally
+        {
+            _readDepth.Value--;
+        }
+    }
+
+    private @this ReadBody(ref Utf8JsonReader reader, JsonSerializerOptions options)
+    {
         string name = "";
         object? value = null;
         type? typeRef = null;
