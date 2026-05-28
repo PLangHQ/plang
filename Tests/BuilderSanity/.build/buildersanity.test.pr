@@ -23,11 +23,6 @@
               "name": "Value",
               "value": 0,
               "type": "int"
-            },
-            {
-              "name": "Type",
-              "value": "int",
-              "type": "string"
             }
           ],
           "defaults": [
@@ -41,13 +36,13 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%total%, Value=0, Type=int)",
+      "formal": "variable.set(Name=%total%, Value=0)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "set %items% = \u0027[1, 2, 3]\u0027",
+      "text": "set %items% = [1, 2, 3]",
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
@@ -68,7 +63,12 @@
                 2,
                 3
               ],
-              "type": "list\u00601"
+              "type": "list"
+            },
+            {
+              "name": "Type",
+              "value": "list",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -82,7 +82,7 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%items%, Value=\u0027[1, 2, 3]\u0027, Type=json)",
+      "formal": "variable.set(Name=%items%, Value=[1, 2, 3], Type=list)",
       "source": null,
       "waitForExecution": true
     },
@@ -132,7 +132,7 @@
         }
       ],
       "intent": null,
-      "formal": "loop.foreach(Collection=%items%) , goal.call(GoalName={name:\u0022AddItem\u0022, parameters:[{name:\u0022item\u0022, value:%item%, type:\u0022string\u0022}]})",
+      "formal": "loop.foreach(Collection=%items%), goal.call(GoalName={name:\u0022AddItem\u0022, parameters:[{name:\u0022item\u0022, value:%item%, type:\u0022string\u0022}]})",
       "source": null,
       "waitForExecution": true
     },
@@ -212,7 +212,7 @@
               "value": {
                 "name": "Finalize",
                 "parallel": false,
-                "parameters": [],
+                "parameters": null,
                 "prPath": "/BuilderSanity/.build/finalize.pr"
               },
               "type": "goal.call"
@@ -294,7 +294,7 @@
   "visibility": 1,
   "path": "/BuilderSanity/BuilderSanity.test.goal",
   "prPath": "/BuilderSanity/.build/buildersanity.test.pr",
-  "hash": "f9d638002b26e982aaa64ccd857246a19e8ef3fab394982828efe18fe917a204",
+  "hash": "7f0be4d9c344b2eb2ffd7eb8dab4e3adadcd480137515db058baee08e9a18667",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
