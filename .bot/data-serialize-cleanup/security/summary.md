@@ -1,58 +1,46 @@
 # Security summary — `data-serialize-cleanup`
 
-**Version:** v1
+**Version:** v2 (latest)
 **Date:** 2026-05-28
-**Verdict:** FAIL — F1 is a pre-auth unrecoverable DoS, rated High
+**Verdict:** PASS
 
 ## What this is
 
-PLang's wire-serialization cleanup branch: ISerializer input/return both tightened to `Data`, application/plang serializers merged into one canonical home, sign-if-missing moved into the wire converter walk, hash bytes canonicalized through the same outbound options so the outer signature transitively binds inner Datas. Stage 3 flattens Compress to `{type=archived, value=byte[]}`. Stage 4 adds a nested `properties` wire scope and the `%x!key%` operator. Stage 5 drops "envelope" vocabulary.
+PLang's wire-serialization cleanup branch — ISerializer tightened to `Data`, application/plang serializers merged, sign-if-missing moved into the wire converter, hash bytes canonicalized through the same outbound options, Compress flattened, Properties get a nested wire scope + `!` operator.
 
-Codeanalyzer v2 PASSED. Tester v2 PASSED with mutation verification. My pass focused on what structural review and behavioural tests don't catch.
+Codeanalyzer v2 PASSED. Tester v2 PASSED with mutation verification.
 
-## What was done
+## v2 vs v1
 
-Reviewed the security-load-bearing surfaces (wire converter, canonicalization, `!` parser, Properties gate, decompression, Sensitive wiring) and ran the semgrep baseline (14 findings, no new violations).
+**v1 raised F1 (HIGH): pre-auth StackOverflow DoS via `WireJsonConverter.LiftDataIfShaped` recursion. Verdict was FAIL.**
 
-## Findings
+**v2: F1 retracted to Info as a false-positive.** Mutation test (set `MaxReadDepth = int.MaxValue` in the post-fix code) showed the 200-level depth-bomb regression test **still passed**. That means the new AsyncLocal counter is not the gate — STJ's per-reader `MaxDepth=64` is.
 
-| ID | Severity | Area | Status |
-|----|----------|------|--------|
-| F1 | **High** | WireJsonConverter recursion depth reset via GetRawText round-trip → pre-auth StackOverflow DoS | **open (blocks merge)** |
-| F2 | Low | application/plang merged serializer omits Sensitive filter (intentional for settings persistence, widened scope by Stage 2) | open |
-| F3 | Low | Properties.EnsureSupportedValue top-level only; List<Data>/Dict<Data> round-trip asymmetrically | open |
-| F4 | Info | sign-if-missing silently no-ops when Context.Actor==null | open |
+The reasoning I missed in v1: `JsonDocument.ParseValue(ref reader)` consumes from the **same** reader and inherits its `MaxDepth`. A 200-deep payload triggers `JsonException` at depth 64 inside the **outermost** `ParseValue` call. No `LiftDataIfShaped` recursion happens. Each recursive `Deserialize<@this>(rawText)` is fed a sub-tree at most `MaxDepth-1` deep, so the C# ladder shortens by one level per step rather than growing unboundedly.
+
+The fix coder landed (AsyncLocal counter + 3 regression tests) is harmless and worth keeping as defense-in-depth — it covers the case where a future caller raises `options.MaxDepth` to allow deeper non-Data graphs. But it doesn't close a real exploitable vulnerability.
+
+## Findings (final state)
+
+| ID | Severity | Status | Area |
+|----|----------|--------|------|
+| F1 | Info (was HIGH) | fixed (defense-in-depth) | WireJsonConverter recursion depth — STJ MaxDepth already gates |
+| F2 | Low | open | application/plang serializer omits Sensitive filter (intentional for settings; widened by Stage 2) |
+| F3 | Low | open | Properties.EnsureSupportedValue top-level only; List<Data>/Dict<Data> round-trip asymmetrically |
+| F4 | Info | open | sign-if-missing silently no-ops when Context.Actor==null |
 
 Full machine-readable form: `.bot/data-serialize-cleanup/security-report.json`.
 
-### F1 — blocks merge
+## What I'd flag for the user
 
-`WireJsonConverter.Read` consumes a JSON value via:
-
-```csharp
-using var doc = JsonDocument.ParseValue(ref reader);
-value = LiftDataIfShaped(doc.RootElement, options);
-// → JsonSerializer.Deserialize<@this>(element.GetRawText(), options);
-```
-
-`GetRawText()` + `Deserialize<@this>(string, options)` creates a **fresh** `Utf8JsonReader` with depth=0. STJ's `MaxDepth=64` applies *per parse* — each recursive Data level restarts the budget. ~500-level nested `{"name":"a","value":{...}}` (~11 KB) → ~500 × ~5 C# stack frames → `StackOverflowException` → unrecoverable process crash.
-
-**Why High, not Medium:**
-- **Pre-auth.** Parsing happens before `signing.verify` runs. Attacker does not need a verified identity.
-- **Unrecoverable.** .NET treats StackOverflow as fatal; no catch unwinds.
-- **Already reachable.** `callback.run` deserializes wire bytes into Data today (standing memory finding). The deserializer is exposed to untrusted bytes through that path — not contingent on a future external channel.
-- **Cheap.** ~11 KB payload, trivially repeatable from outside the trust boundary.
-
-**Fix:** thread an AsyncLocal recursion counter through `WireJsonConverter.Read`, throw `JsonException` past 64 nesting levels. Regression test: 200-level nested input must `JsonException`, not `StackOverflowException`.
+I called HIGH and FAIL on v1 based on an incomplete trace. The fix landed cleanly and is defensible, but the severity was wrong. The honest record is here for future bots so the lesson sticks (also captured in `feedback_pre_auth_parse_severity.md` memory): pre-auth + unrecoverable + reachable today is a real rating signal, BUT verify the stack-blow path is actually unbounded — `Utf8JsonReader.MaxDepth` self-enforces across `ParseValue` and inherited through to extracted sub-trees, so a "depth-reset recursion" claim needs the source-reader MaxDepth check to actually fail before the claim holds.
 
 ## Next bot
 
-**Verdict: FAIL**
-
-Issues: F1 — pre-auth StackOverflow DoS in `WireJsonConverter.LiftDataIfShaped`.
+**Verdict: PASS**
 
 ```
-run.ps1 coder data-serialize-cleanup "Fix F1 (security v1 HIGH): WireJsonConverter.LiftDataIfShaped resets STJ MaxDepth on each recursion via GetRawText+Deserialize<@this>(string) — pre-auth StackOverflow DoS reachable through callback wire deserialization. See .bot/data-serialize-cleanup/security/v1/plan.md and .bot/data-serialize-cleanup/security-report.json F1." -b data-serialize-cleanup
+run.ps1 auditor data-serialize-cleanup "Review the code on branch data-serialize-cleanup" -b data-serialize-cleanup
 ```
 
-Next bot: coder
+Next bot: auditor

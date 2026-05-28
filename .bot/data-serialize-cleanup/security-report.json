@@ -94,7 +94,7 @@
   "findings": [
     {
       "id": 1,
-      "severity": "high",
+      "severity": "info",
       "category": "resource-exhaustion",
       "vector": "Recursive Data deserialization through LiftDataIfShaped resets STJ MaxDepth on every level by round-tripping through `JsonElement.GetRawText()` + `JsonSerializer.Deserialize<@this>(string, options)`. The new Deserialize call creates a fresh Utf8JsonReader with depth counter reset to zero. STJ's MaxDepth=64 caps JSON nesting per ParseValue call, but each LiftDataIfShaped recursion is a NEW parse → the depth budget restarts. C# call stack is the only remaining bound.",
       "preconditions": "Any path that hands attacker-controlled bytes to plang.Deserialize* — reachable TODAY via the callback wire surface (callback.run deserializes Data from wire before any signature check fires; see standing memory finding). Parsing occurs BEFORE signing.verify runs, so the attacker does not need a verified identity to land the payload. Not contingent on a future external channel.",
@@ -103,8 +103,9 @@
         "PLang/app/data/WireJsonConverter.cs"
       ],
       "exploit_sketch": "Craft application/plang JSON of the shape `{\"name\":\"a\",\"value\":{\"name\":\"a\",\"value\":{...}}}` nested ~500 times. Each Read sees `value` as StartObject → JsonDocument.ParseValue (one frame, OK within MaxDepth=64) → LiftDataIfShaped detects name+value pair → JsonSerializer.Deserialize<@this>(GetRawText(), options) → new Utf8JsonReader with depth=0 → recursive Read. Roughly 5 stack frames per Data level; default .NET 1 MB stack overflows around 400-600 levels. Payload size ~22 bytes/level × 500 ≈ 11 KB — well under any channel buffer cap. Submit via any inbound application/plang channel (HTTP-receive with Mime=application/plang, callback resume, inter-process pipe, etc.).",
-      "proposed_fix": "Either (a) thread an AsyncLocal recursion-depth counter through WireJsonConverter.Read and throw JsonException at e.g. 64 levels, mirroring STJ's own MaxDepth contract; or (b) restructure LiftDataIfShaped to consume tokens off the inherited reader instead of round-tripping through GetRawText() — re-use the same reader so MaxDepth applies cumulatively. Option (b) is cleaner but bigger; option (a) is a 5-line fix. Either way add a regression test that deserialises 200-level nested input and asserts JsonException, not StackOverflowException.",
-      "status": "open"
+      "proposed_fix": "Coder landed option (a) — AsyncLocal recursion-depth counter throwing JsonException past 64 levels. Defense-in-depth, harmless. Worth keeping for the future-MaxDepth-override case.",
+      "status": "fixed",
+      "v2_note": "Mutation test (MaxReadDepth=int.MaxValue) showed the 200-level bomb still surfaces PlangDeserializeError — STJ's per-reader MaxDepth=64 is the actual gate, not the new counter. My v1 trace missed that ParseValue inherits the source reader's MaxDepth and can't hand the recursive call a sub-tree deeper than it. So F1 was a false-positive at HIGH; the deserializer was already protected. Coder's fix kept as defense-in-depth."
     },
     {
       "id": 2,
@@ -150,5 +151,5 @@
       "status": "open"
     }
   ],
-  "summary": "Architecture-of-trust layer is clean: canonicalization (Hash through registered plang serializer + MarkOuterForHash carveout) is correct, outer signature transitively binds inner Datas, `!` operator parser fails closed (closed v1 F5), zip-bomb defense (100 MB) in place. F1 is a pre-auth unrecoverable DoS — parsing happens before signing.verify, callback wire already exposes the deserializer to untrusted bytes, ~11 KB payload kills the process. Rated High; verdict FAIL under critical/high-blocks rule. ~5-line fix (AsyncLocal recursion depth counter in WireJsonConverter). F2/F3/F4 are standing-pattern or accepted-tradeoff items that don't gate."
+  "summary": "v2 update: F1 retracted from HIGH to Info after mutation testing. Setting MaxReadDepth=int.MaxValue did not change the 200-level depth-bomb outcome — STJ's per-reader MaxDepth=64 was already the gate. My v1 reasoning treated each LiftDataIfShaped → Deserialize<@this>(string) recursion as depth-reset → unbounded; but ParseValue inherits the source reader's MaxDepth and can't hand the recursive call a sub-tree deeper than it. Coder's AsyncLocal counter is kept as defense-in-depth (covers the future case where a caller raises options.MaxDepth). Architecture-of-trust layer remains clean: canonicalization correct, outer signature binds inner Datas, `!` parser fails closed, zip-bomb defense (100 MB) in place. F2/F3/F4 unchanged. Verdict: PASS."
 }

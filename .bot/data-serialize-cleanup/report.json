@@ -535,6 +535,65 @@
         "health": "Branch blocked on F1. ~5-line fix in WireJsonConverter (AsyncLocal recursion counter).",
         "notes": "Initial v1 rated F1 Medium under the (wrong) framing that no external plang channel ships. Corrected: parsing happens pre-verify and the callback wire already exposes the deserializer to untrusted bytes. F2/F3/F4 unchanged."
       }
+    },
+    {
+      "id": "e69b4b75-2a7f-49d9-8e84-ce52ca9243c3",
+      "bot": "security",
+      "timestamp_start": "2026-05-28T01:45:00Z",
+      "timestamp_end": "2026-05-28T02:05:00Z",
+      "intent": "Verify Coder's F1 fix; mutation-test whether the new gate is load-bearing; correct v1 severity if not.",
+      "before": {
+        "assumptions": "Coder addressed F1 (HIGH) with AsyncLocal recursion counter + regression tests. v1 verdict was FAIL.",
+        "risk": "If new counter isn't load-bearing, v1 over-rated F1. Need mutation test to find out."
+      },
+      "plan": ".bot/data-serialize-cleanup/security/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/data/WireJsonConverter.cs",
+            "PLang.Tests/App/Serialization/WireConverterDepthBombTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read fix \u2014 AsyncLocal<int> counter, increment/decrement around ReadBody, JsonException past MaxReadDepth=64. Tests cover string + stream entries."
+        },
+        {
+          "paths": [
+            "PLang/app/data/WireJsonConverter.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mutation test: temporarily set MaxReadDepth=int.MaxValue, rebuilt, ran 3 depth-bomb tests. All passed \u2014 the new counter is NOT the gate. STJ's per-reader MaxDepth=64 already rejects the bomb at outermost ParseValue. Reverted; no commit."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/security-report.json"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "F1 severity HIGH \u2192 Info, status open \u2192 fixed (defense-in-depth). Summary rewritten with corrected ParseValue-inherits-MaxDepth trace."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/security/v2/plan.md",
+            ".bot/data-serialize-cleanup/security/v2/verdict.json",
+            ".bot/data-serialize-cleanup/security/v2/v1_review_summary.md",
+            ".bot/data-serialize-cleanup/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 artefacts. Honest correction recorded: v1 HIGH was false-positive; STJ defaults already protected deserializer."
+        }
+      ],
+      "after": {
+        "status": "PASS \u2014 F1 retracted to Info (false-positive at HIGH). 3 Low/Info open items unchanged.",
+        "health": "Branch merge-ready. Coder's defense-in-depth fix kept (covers future-MaxDepth-override). My v1 severity flip was a reasoning error.",
+        "notes": "Updating feedback_pre_auth_parse_severity.md memory with the missing trace-step (ParseValue inherits source reader's MaxDepth)."
+      }
     }
   ]
 }
