@@ -430,6 +430,111 @@
         "notes": "Process: no .bot/data-serialize-cleanup/coder/ folder exists \u2014 flagged as process violation, not a blocker. Coder did substantive work across Stages 1-5 + F1-F11 but skipped writing tester-handoff artifacts."
       },
       "timestamp_end": "2026-05-28T01:08:44Z"
+    },
+    {
+      "id": "8b05d729-8d62-4964-862f-4f8e114ee7be",
+      "bot": "security",
+      "timestamp_start": "2026-05-28T01:20:13Z",
+      "timestamp_end": "2026-05-28T01:30:00Z",
+      "intent": "Security review of data-serialize-cleanup: wire converter, canonicalization, sign-if-missing carveouts, Properties round-trips, Sensitive-leak surfaces.",
+      "before": {
+        "assumptions": "Codeanalyzer v2 PASSED (11 v1 findings closed). Tester v2 PASSED with mutation verification. Architecture stable. Looking for security-class gaps the structural review and behavioural tests don't catch.",
+        "risk": "Stage 2 widens application/plang's role as inter-actor transport; Sensitive-skip carveout (for settings/sqlite) inherits to every channel using plang mime. Stage 4 Properties on wire introduces a new asymmetric path (write-as-Data, read-as-dict). Stage 1's converter walk has multiple recursion entry points."
+      },
+      "plan": ".bot/data-serialize-cleanup/security/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/data/WireJsonConverter.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read full Write/Read paths, MarkOuterForHash ref-counting (closed v1 F2), LiftDataIfShaped rehydration. Found F1: GetRawText+Deserialize<@this>(string) creates a new Utf8JsonReader with depth=0 on each recursion level \u2014 STJ MaxDepth budget restarts, only the C# call stack bounds nesting. Medium DoS."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/crypto/code/Default.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Hash routes through registered application/plang serializer with MarkOuterForHash carveout. SerializerMismatch 500 on type-mismatch (closed v1 F4). Outer signature transitively binds inner Datas \u2014 correct."
+        },
+        {
+          "paths": [
+            "PLang/app/variables/Variable.cs",
+            "PLang/app/modules/variable/set.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Variable.Resolve fails-closed on malformed shapes via IsMalformed; variable.set returns InvalidVariableReference 400. Closed v1 F5."
+        },
+        {
+          "paths": [
+            "PLang/app/data/Properties.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "EnsureSupportedValue is top-level only \u2014 IDictionary/IEnumerable accepted structurally. F3 finding: List<Data>/Dict<Data> round-trips asymmetrically. Coder accepted as v1 F9 tradeoff."
+        },
+        {
+          "paths": [
+            "PLang/app/data/this.Transport.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "100 MB MaxDecompressedSize cap in place. Stage 3 flatten correct. Compress/Decompress route through registered plang serializer with ContextLessFallback single-source-of-truth (closed v1 F10)."
+        },
+        {
+          "paths": [
+            "PLang/app/channels/serializers/serializer/plang/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Documented intentional Sensitive.Strip omission (for settings/sqlite). F2 finding: any external channel registered with mime=application/plang transports [Sensitive] cleartext. Stage 2 widens this surface."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/signing/code/Ed25519.cs",
+            "PLang/app/modules/signing/verify.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "signing.verify pipeline unchanged from runtime2 base (only vocab edit). NoSignature 400 returned when RawSignature null \u2014 receive-side gate holds. Step 7 'if Value != null' skip is unchanged; not introduced by this branch."
+        },
+        {
+          "paths": [
+            ".semgrep/"
+          ],
+          "type": "review",
+          "category": "config",
+          "confidence": "high",
+          "context": "semgrep-scan.sh: 14 findings (down from 15 baseline). All serializer-default-options informational hits in pre-existing files. No new violations introduced."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/security/v1/plan.md",
+            ".bot/data-serialize-cleanup/security/v1/verdict.json",
+            ".bot/data-serialize-cleanup/security-report.json",
+            ".bot/data-serialize-cleanup/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Standard security-pass artefacts."
+        }
+      ],
+      "after": {
+        "status": "PASS \u2014 1 Medium open, 3 Low/Info open. No critical/high.",
+        "health": "Branch merge-ready under the critical/high-blocks-merge rule. F1 (Medium DoS) recommended to land before merge \u2014 5-line fix.",
+        "notes": "F1 is the only newly-introduced finding; F2/F3/F4 are widened-scope or accepted-tradeoff items on known patterns. F1 ratchets to High the moment any external-bytes channel registers with mime=application/plang."
+      }
     }
   ]
 }

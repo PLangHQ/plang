@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "data-serialize-cleanup v1 — no critical/high open; one Medium DoS (F1: LiftDataIfShaped stack-overflow via depth reset) and three Low/Info standing-pattern items"
+}
