@@ -181,6 +181,32 @@
         "health": "Clean rebuild (zero PLNG002), C# 3380/3380, PLang 233/233. Tests didn't catch V1 because no fixture exercises Store-mode + inner-Data-with-Properties.",
         "notes": "Next: coder fixes V1 (plumb View into json.Writer ctor from Wire.Write site) + adds Store + inner-Data + Properties fixture."
       }
+    },
+    {
+      "id": "codeanalyzer-v3-2026-05-28",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-28T16:50:00Z",
+      "timestamp_end": "2026-05-28T17:00:00Z",
+      "intent": "Verify coder v3's fix for V1 (json.Writer.EndRecord hard-coded View.Out, M2 second site).",
+      "before": {
+        "assumptions": "Coder v3 commit 5630ab0ad claims V1 closed by threading View into json.Writer ctor, plus a fixture covering the Store-mode + inner-Data-with-Properties path."
+      },
+      "actions": [
+        {
+          "paths": [".bot/data-normalize/codeanalyzer/v3.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "PASS. View threaded through json.Writer's ctor (default Out), Wire.Write passes its View at construction. New fixture (StoreView_PropagatesIntoInnerDataProperties_NotHardcodedToOut) pins both Out-excludes and Store-includes [Sensitive] PrivateKey reachable through inner Data's Properties — covers exactly the path v2 said was uncovered."
+        }
+      ],
+      "verdict": "pass",
+      "next_bot": "security",
+      "after": {
+        "status": "PASS — V1 closed correctly with fixture. All v1 + v2 findings now closed. Report at .bot/data-normalize/codeanalyzer/v3.md.",
+        "health": "Clean rebuild (zero PLNG002), C# 3381/3381 (+1 V1 fixture), PLang 233/233.",
+        "notes": "Next: security validates the sign-walk + Properties pipeline. Chain: codeanalyzer → security → tester → auditor → docs."
+      }
     }
   ]
 }
