@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace app.channels.serializers;
+namespace app.channels.serializers.json;
 
 /// <summary>
 /// JSON implementation of <see cref="IWriter"/> — wraps a
@@ -12,12 +12,12 @@ namespace app.channels.serializers;
 /// object into a tree of primitives / byte[] / Data / List, so writing is a
 /// pure dispatch on the runtime type of each visited value.</para>
 /// </summary>
-public sealed class JsonWriter : IWriter
+public sealed class Writer : IWriter
 {
     private readonly Utf8JsonWriter _writer;
     private readonly JsonSerializerOptions _options;
 
-    public JsonWriter(Utf8JsonWriter writer, JsonSerializerOptions? options = null)
+    public Writer(Utf8JsonWriter writer, JsonSerializerOptions? options = null)
     {
         _writer = writer;
         _options = options ?? new JsonSerializerOptions();
@@ -85,25 +85,6 @@ public sealed class JsonWriter : IWriter
         _writer.WriteEndObject();
     }
 
-    /// <summary>
-    /// True when every element of <paramref name="list"/> is a <see cref="app.data.@this"/>
-    /// with a non-empty <c>Name</c> — i.e. the list represents a domain object's
-    /// property bag (Normalize's output for a non-list non-primitive). Returns
-    /// the list itself (cast as IEnumerable of Data) via <paramref name="dataList"/>.
-    /// </summary>
-    private static bool IsNamedDataBag(System.Collections.IEnumerable list, out System.Collections.IEnumerable? dataList)
-    {
-        dataList = list;
-        bool any = false;
-        foreach (var item in list)
-        {
-            any = true;
-            if (item is not app.data.@this d) return false;
-            if (string.IsNullOrEmpty(d.Name)) return false;
-        }
-        return any;
-    }
-
     void IWriter.EndRecord() => throw new System.InvalidOperationException(
         "JsonWriter.EndRecord requires the Data record reference — call EndRecord(Data) instead.");
 
@@ -127,27 +108,26 @@ public sealed class JsonWriter : IWriter
             case string s: String(s); return;
             case System.DateTime dt: DateTime(dt); return;
             case byte[] bytes: Bytes(bytes); return;
+            case System.Enum e: String(e.ToString()); return;
             case app.data.@this nested:
                 BeginRecord(nested);
                 Value(nested.Value);
                 EndRecord(nested);
                 return;
-            case System.Collections.IEnumerable list:
-                if (IsNamedDataBag(list, out var nameKey))
+            case List<app.data.@this> propertyBag:
+                // NormalizeObject (a domain class → property bag) always returns
+                // List<Data>. Emit as JSON object — including the empty case,
+                // so a record-with-no-properties (Execute) round-trips as `{}`
+                // not `[]`.
+                _writer.WriteStartObject();
+                foreach (var child in propertyBag)
                 {
-                    // Named List<Data> → JSON object. The property-bag form
-                    // produced by Normalize on a domain object reads naturally
-                    // as { name1: value1, name2: value2 } rather than an array
-                    // of records.
-                    _writer.WriteStartObject();
-                    foreach (app.data.@this child in (System.Collections.IEnumerable)nameKey!)
-                    {
-                        _writer.WritePropertyName(child.Name);
-                        Value(child.Value);
-                    }
-                    _writer.WriteEndObject();
-                    return;
+                    _writer.WritePropertyName(child.Name);
+                    Value(child.Value);
                 }
+                _writer.WriteEndObject();
+                return;
+            case System.Collections.IEnumerable list:
                 BeginArray(-1);
                 foreach (var item in list) Value(item);
                 EndArray();

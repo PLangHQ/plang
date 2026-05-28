@@ -7,7 +7,7 @@ namespace app.channels.serializers;
 /// <para>The pipeline is: <c>Normalize()</c> walks the in-memory value into a
 /// uniform tree of <c>primitive | byte[] | Data | List&lt;&gt;</c>; an
 /// <see cref="IWriter"/> implementation then walks the tree and emits bytes
-/// in its target format. JSON (<see cref="JsonWriter"/>) is the first impl;
+/// in its target format. JSON (<see cref="json.Writer"/>) is the first impl;
 /// protobuf / MsgPack / CBOR ship later as siblings without touching Normalize
 /// or any domain type.</para>
 ///

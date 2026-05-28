@@ -33,7 +33,7 @@ public class Default : ICrypto
         {
             // Canonicalize through the same wire options the merged application/plang
             // serializer uses, so hashed-bytes ≡ wire-bytes (minus the outermost
-            // Signature field, suppressed via WireJsonConverter.MarkOuterForHash).
+            // Signature field, suppressed via Wire.MarkOuterForHash).
             // The outer signature transitively binds inner Datas' signatures.
             //
             // If something other than the canonical plang.@this is registered for
@@ -46,7 +46,7 @@ public class Default : ICrypto
                     "Registered application/plang serializer is not the canonical plang.@this; hash bytes would diverge from wire bytes.",
                     "SerializerMismatch", 500));
             var serializer = (registered as global::app.channels.serializers.serializer.plang.@this) ?? _fallbackPlang;
-            using (global::app.data.WireJsonConverter.MarkOuterForHash(data))
+            using (global::app.data.Wire.MarkOuterForHash(data))
             {
                 bytes = JsonSerializer.SerializeToUtf8Bytes(data, serializer.OutboundOptions);
             }

@@ -30,7 +30,7 @@ public partial class @this
     /// </summary>
     [JsonIgnore]
     [In]
-    [Out]
+    [Out, Store]
     public app.modules.signing.Signature? Signature
     {
         get => _signature;

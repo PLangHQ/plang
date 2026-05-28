@@ -8,7 +8,7 @@ namespace PLang.Tests.App.Serialization;
 // ride as { Scheme, Relative }. setting's value is "****" on the wire.
 //
 // Stage 2b: tests exercise the pipeline directly (Normalize + JsonWriter via
-// NormalizePipelineHelper). WireJsonConverter rewiring stays a separate change.
+// NormalizePipelineHelper). Wire rewiring stays a separate change.
 
 public class JsonWriterDomainShapeTests
 {
@@ -101,9 +101,9 @@ public class JsonWriterDomainShapeTests
         await Assert.That(json.StartsWith("\"")).IsFalse();
     }
 
-    [Test] public async Task WireJsonConverter_Write_InvokesNormalize_BeforeDispatchingToWriter()
+    [Test] public async Task Wire_Write_InvokesNormalize_BeforeDispatchingToWriter()
     {
-        // The Stage 2b wiring (WireJsonConverter.Write → Normalize → JsonWriter)
+        // The Stage 2b wiring (Wire.Write → Normalize → JsonWriter)
         // is exercised here by calling the same call chain directly. The pin:
         // a domain object's value slot is the property-bag JSON object form,
         // proving Normalize ran before emission.

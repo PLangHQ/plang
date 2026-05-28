@@ -47,10 +47,16 @@ public class Cut1_JsonRoundTripTests
 
     [Test] public async Task Cut1_ListOfData_RoundTrips_PreservingNamesAndTypes()
     {
+        // A raw user-provided List<Data> emits as a JSON array of records
+        // (each preserves its name + value envelope). The property-bag form
+        // {a:1, b:"two"} is reserved for Normalize's domain-object output;
+        // a raw List<Data> stays observable as a list.
         var bag = new List<Data> { new("a", 1), new("b", "two") };
         var json = NormalizePipelineHelper.SerializeValueSlot(bag);
-        await Assert.That(json).Contains("\"a\":1");
-        await Assert.That(json).Contains("\"b\":\"two\"");
+        await Assert.That(json).Contains("\"name\":\"a\"");
+        await Assert.That(json).Contains("\"value\":1");
+        await Assert.That(json).Contains("\"name\":\"b\"");
+        await Assert.That(json).Contains("\"value\":\"two\"");
     }
 
     [Test] public async Task Cut1_Setting_RoundTrips_KeyVisible_ValueMasked()

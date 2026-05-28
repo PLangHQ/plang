@@ -16,7 +16,7 @@ public abstract partial class @this : modules.IContext, global::app.data.IBoolea
     /// Scheme name for this path (e.g. "file", "http", "https"). Subclasses
     /// implement. Used by Permission canonical-form and diagnostic surfaces.
     /// </summary>
-    [Out] public abstract string Scheme { get; }
+    [Out, Store] public abstract string Scheme { get; }
 
 
     /// <summary>
@@ -92,7 +92,7 @@ public abstract partial class @this : modules.IContext, global::app.data.IBoolea
     public string Raw { get; init; } = "";
     public virtual string Absolute => _absolutePath;
 
-    [Out] public string Relative
+    [Out, Store] public string Relative
     {
         get
         {

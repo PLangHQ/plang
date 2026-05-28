@@ -128,26 +128,23 @@ public class NormalizeTreeShapeTests
 
     [Test] public async Task Normalize_PropertyLookupCache_PopulatesOnFirstCall_HitsOnSecond()
     {
-        global::app.channels.serializers.filters.Wire.ClearCacheForTests();
-        var sizeBefore = global::app.channels.serializers.filters.Wire.CacheSize;
+        global::app.channels.serializers.filters.Tagged.ClearCacheForTests();
+        var sizeBefore = global::app.channels.serializers.filters.Tagged.CacheSize;
         var identity = new global::app.modules.identity.Identity { Name = "x", PublicKey = "y" };
         new Data("", identity).Normalize();
-        var sizeAfter1 = global::app.channels.serializers.filters.Wire.CacheSize;
+        var sizeAfter1 = global::app.channels.serializers.filters.Tagged.CacheSize;
         new Data("", identity).Normalize();
-        var sizeAfter2 = global::app.channels.serializers.filters.Wire.CacheSize;
+        var sizeAfter2 = global::app.channels.serializers.filters.Tagged.CacheSize;
         await Assert.That(sizeAfter1).IsGreaterThan(sizeBefore);
         await Assert.That(sizeAfter2).IsEqualTo(sizeAfter1).Because("second call hits cache, no new entry");
     }
 
     [Test] public async Task Normalize_UnsupportedType_ThrowsTypedError()
     {
-        // A delegate has no [Out] properties — normalizes into an empty
-        // List<Data> rather than throwing. Pins the lenient-by-default
-        // behavior: a future tightening that adds a hard rejection would
-        // surface here.
+        // Delegates aren't representable as a property bag — emitted as
+        // null leaf (the receiver can't reconstruct a delegate from bytes).
         var d = new Data("", new System.Func<int>(() => 0));
         var result = d.Normalize();
-        await Assert.That(result).IsTypeOf<List<Data>>();
-        await Assert.That(((List<Data>)result!).Count).IsEqualTo(0);
+        await Assert.That(result).IsNull();
     }
 }

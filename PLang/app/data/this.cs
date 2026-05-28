@@ -184,7 +184,7 @@ public partial class @this
     // AND after the constructor body.
     [JsonIgnore]
     [LlmIgnore]
-    [Out]
+    [Out, Store]
     public Properties Properties { get; set; } = new();
 
     [JsonConstructor]
@@ -203,7 +203,7 @@ public partial class @this
     }
 
     [JsonPropertyName("value")]
-    [Out]
+    [Out, Store]
     public virtual object? Value
     {
         get
@@ -274,7 +274,7 @@ public partial class @this
     [JsonPropertyName("type")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [JsonConverter(typeof(global::app.data.Json))]
-    [Out]
+    [Out, Store]
     public type? Type
     {
         get

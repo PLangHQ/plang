@@ -617,7 +617,7 @@ public class DataTests
     public async Task Properties_HasOutAttribute()
     {
         // data-normalize Stage 1: [Out] is the wire whitelist. Properties already
-        // ships via WireJsonConverter's custom Write — the tag aligns the attribute
+        // ships via Wire's custom Write — the tag aligns the attribute
         // with reality so Stage 2's filter sees it correctly.
         var prop = typeof(Data).GetProperty(nameof(Data.Properties));
 

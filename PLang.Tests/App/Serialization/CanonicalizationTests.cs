@@ -26,7 +26,7 @@ public class CanonicalizationTests
         var data = new global::app.data.@this("greeting", "hello") { Context = app.User.Context };
 
         byte[] wireBytesWithoutOuterSig;
-        using (global::app.data.WireJsonConverter.MarkOuterForHash(data))
+        using (global::app.data.Wire.MarkOuterForHash(data))
         {
             wireBytesWithoutOuterSig = JsonSerializer.SerializeToUtf8Bytes(data, plang.OutboundOptions);
         }
@@ -53,7 +53,7 @@ public class CanonicalizationTests
         var data = new global::app.data.@this("x", "y") { Context = app.User.Context };
 
         byte[] hashInputBytes;
-        using (global::app.data.WireJsonConverter.MarkOuterForHash(data))
+        using (global::app.data.Wire.MarkOuterForHash(data))
         {
             hashInputBytes = JsonSerializer.SerializeToUtf8Bytes(data, plang.OutboundOptions);
         }

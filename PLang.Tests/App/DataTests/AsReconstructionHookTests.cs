@@ -53,7 +53,7 @@ public class AsReconstructionHookTests
         // Stage 3 path-hook integration with a live Context — exercised via the
         // path hook's NormalizeContextRequired guard. Full round-trip with a
         // wired Context lives in higher-level integration tests once
-        // WireJsonConverter is rerouted through Normalize (deferred).
+        // Wire is rerouted through Normalize (deferred).
         var children = new List<Data> { new("scheme", "file"), new("relative", "/foo/bar.txt") };
         var carrier = new Data("", children);
         var ex = await Assert.ThrowsAsync<NormalizeException>(async () =>
@@ -100,7 +100,7 @@ public class AsReconstructionHookTests
     [Test] public async Task PathJsonConverter_Read_Deleted_Or_DelegatesToAsPathHook()
     {
         // Stage 2 deferred — path.JsonConverter still owns Read. Once
-        // WireJsonConverter routes through Normalize + Reconstruct, this
+        // Wire routes through Normalize + Reconstruct, this
         // converter goes away or delegates. Today the converter file exists.
         var converterType = System.Type.GetType("app.types.path.JsonConverter, PLang", throwOnError: false);
         // Either: converter is gone (Read-deletion path), or it exists and the

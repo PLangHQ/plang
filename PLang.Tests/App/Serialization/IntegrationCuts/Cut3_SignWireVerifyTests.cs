@@ -62,7 +62,7 @@ public class Cut3_SignWireVerifyTests
     [Test] public async Task Cut3_PlangSerializer_SignVerify_Roundtrip_AfterMigration()
     {
         var srcRoot = FindRepoRoot();
-        var src = global::System.IO.File.ReadAllText(global::System.IO.Path.Combine(srcRoot, "PLang/app/data/WireJsonConverter.cs"));
+        var src = global::System.IO.File.ReadAllText(global::System.IO.Path.Combine(srcRoot, "PLang/app/data/Wire.cs"));
         await Assert.That(src.Contains("RawSignature")).IsFalse();
     }
 

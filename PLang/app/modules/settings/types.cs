@@ -6,7 +6,7 @@ public static class types
 {
     public record setting
     {
-        [Out] public string? key { get; init; }
-        [Out, Masked] public object? value { get; init; }
+        [Out, Store] public string? key { get; init; }
+        [Out, Masked, Store] public object? value { get; init; }
     }
 }

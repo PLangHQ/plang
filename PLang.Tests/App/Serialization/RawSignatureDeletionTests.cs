@@ -5,7 +5,7 @@ namespace PLang.Tests.App.Serialization;
 // data-normalize — Stage 1
 // Data.RawSignature is deleted (legacy from when Signature.get had a lazy-populate side effect).
 // Seven call sites across three files migrate to `Signature` directly:
-//   - PLang/app/data/WireJsonConverter.cs (3 sites)
+//   - PLang/app/data/Wire.cs (3 sites)
 //   - PLang/app/actor/permission/this.cs (2 sites)
 //   - PLang/app/modules/signing/code/Ed25519.cs (2 sites)
 // Compile-time guarantee — expressed here via reflection so a regression fails as a test, not a build.
@@ -38,9 +38,9 @@ public class RawSignatureDeletionTests
         await Assert.That(prop).IsNotNull();
     }
 
-    [Test] public async Task WireJsonConverter_DoesNotReferenceRawSignature_StringScan()
+    [Test] public async Task Wire_DoesNotReferenceRawSignature_StringScan()
     {
-        var src = ReadSource("PLang/app/data/WireJsonConverter.cs");
+        var src = ReadSource("PLang/app/data/Wire.cs");
         await Assert.That(src.Contains("RawSignature")).IsFalse();
     }
 

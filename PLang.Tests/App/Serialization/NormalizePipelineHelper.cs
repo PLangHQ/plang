@@ -5,7 +5,7 @@ using app.channels.serializers;
 namespace PLang.Tests.App.Serialization;
 
 // Stage 2b helper — encapsulates the Normalize → JsonWriter → bytes pipeline
-// the integration cuts exercise. Mirrors the call shape WireJsonConverter
+// the integration cuts exercise. Mirrors the call shape Wire
 // adopts when Stage 2b lands; turning the wiring on later replaces the
 // helper's body without touching the test surface.
 
@@ -16,7 +16,7 @@ internal static class NormalizePipelineHelper
         var ms = new MemoryStream();
         using (var jw = new Utf8JsonWriter(ms))
         {
-            var writer = new JsonWriter(jw);
+            var writer = new global::app.channels.serializers.json.Writer(jw);
             var carrier = new app.data.@this("", rawValue);
             var normalized = carrier.Normalize(mode);
             writer.Value(normalized);
@@ -33,7 +33,7 @@ internal static class NormalizePipelineHelper
         var ms = new MemoryStream();
         using (var jw = new Utf8JsonWriter(ms))
         {
-            var writer = new JsonWriter(jw);
+            var writer = new global::app.channels.serializers.json.Writer(jw);
             writer.BeginRecord(record);
             var normalized = record.Normalize(mode);
             writer.Value(normalized);

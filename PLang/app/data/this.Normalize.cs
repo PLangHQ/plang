@@ -51,8 +51,20 @@ public partial class @this
 
         // Tree-native leaves ------------------------------------------------
         if (value is null) return null;
-        if (value is string || value is bool || value is System.DateTime || value is decimal || value is byte[])
+        if (value is string || value is bool
+            || value is System.DateTime || value is System.DateTimeOffset
+            || value is System.TimeSpan || value is System.Guid
+            || value is decimal || value is byte[])
             return value;
+        // Enums are leaves — represented by name on the wire. Without this
+        // they (and DateTimeOffset/TimeSpan/Guid above) fall through to
+        // NormalizeObject which walks their public struct properties into
+        // an unusable property bag.
+        if (value is System.Enum) return value;
+        // Delegates aren't representable as a property bag — Method/Target
+        // walks blow up on reflection-only members like
+        // RuntimeType.DeclaringMethod. Emit as null leaf.
+        if (value is System.Delegate) return null;
         if (value is int || value is long || value is double || value is float)
             return value;
 
@@ -130,7 +142,7 @@ public partial class @this
             throw CycleError(obj);
         try
         {
-            var entries = Wire.PropertiesFor(obj.GetType(), mode);
+            var entries = app.channels.serializers.filters.Tagged.PropertiesFor(obj.GetType(), mode);
             var children = new List<@this>(entries.Length);
 
             foreach (var entry in entries)
@@ -189,17 +201,4 @@ public partial class @this
         => new NormalizeException(
             $"Cycle detected during Normalize at type {node.GetType().Name}.",
             "NormalizeCycleDetected");
-}
-
-/// <summary>
-/// Hard failure during <see cref="@this.Normalize"/>. The <see cref="Key"/>
-/// names the failure mode (NormalizeCycleDetected, NormalizeMaxDepthExceeded,
-/// NormalizeGetterThrew) so callers can map to a typed channel error.
-/// </summary>
-public sealed class NormalizeException : System.Exception
-{
-    public string Key { get; }
-
-    public NormalizeException(string message, string key, System.Exception? inner = null)
-        : base(message, inner) { Key = key; }
 }
