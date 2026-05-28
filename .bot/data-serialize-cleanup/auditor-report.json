@@ -1,0 +1,39 @@
+{
+  "reviewer": "auditor",
+  "branch": "data-serialize-cleanup",
+  "timestamp": "2026-05-28T01:51:27Z",
+  "reviewed_version": "v1",
+  "summary": "Three reviewers (codeanalyzer v2, tester v2, security v2) PASSED. Walked the seams between them — canonicalization four-file chain (WireJsonConverter ↔ crypto/Default ↔ plang.@this.OutboundOptions ↔ ContextLessFallback), the ! operator parser-to-writer composition, the Properties insertion/wire/navigation triangle, the LiftDataIfShaped depth-bomb bound. Story holds. Two minor endorsements; no critical or major.",
+  "previous_reviews_assessed": {
+    "codeanalyzer": "agree — each F1–F11 closure lands at the cited line numbers; ref-counted MarkOuterForHash composes; SerializerMismatch error path real; F9/F11 deferrals documented in code.",
+    "tester": "agree — mutation test on Stage 2 (OutboundOptions → Default makes 3 tests fail) is the right load-bearing check; their two weak-assertion notes are real.",
+    "security": "agree — re-traced LiftDataIfShaped recursion bound through ParseValue's MaxDepth inheritance; v1 HIGH retraction to Info is correct."
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "category": "review-gap",
+      "file": "Tests/Serialization/CompressRoundTrip.test.goal",
+      "line": 6,
+      "issue": "%archived!Type% assertion passes via Data infrastructure reflection fallback (this.Navigation.cs:318), not via Properties scope. compress sets Data.Type, not Properties[\"Type\"]. The test reads like Stage 4 ! operator coverage but exercises the legacy fallback path.",
+      "missed_by": "none",
+      "impact": "Test name suggests a Properties-scope contract; future Stage 4 tightening that removes the fallback path would silently flip this from a real assertion to a NotFound. Endorses tester F1.",
+      "suggestion": "Either use %archived.Type.Value% (explicit Data infrastructure) or split into a separate Properties-scope test."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "category": "architectural",
+      "file": "PLang/app/modules/crypto/hash.cs",
+      "line": 18,
+      "issue": "`public async Task<data.@this<byte[]>> Run() => Crypto.Hash(this);` — async keyword wraps a synchronous body. Should emit CS1998 but appears suppressed at project level.",
+      "missed_by": "codeanalyzer",
+      "impact": "Cosmetic. The deeper question (why is Crypto.Hash sync given EnsureSigned runs sync-over-async inside it?) is the same F3 carve-out coder documented and architect deferred.",
+      "suggestion": "`public Task<data.@this<byte[]>> Run() => Task.FromResult(Crypto.Hash(this));` — or fold this into the pre-walk async EnsureSigned pass when that lands."
+    }
+  ],
+  "process_notes": [
+    ".bot/data-serialize-cleanup/coder/ folder missing — no summary.md, no v<N>/plan.md, no coder session in report.json. Tester already flagged. Work landed correctly; surfacing once for downstream handoffs."
+  ]
+}

@@ -3,11 +3,11 @@ using app.channels.serializers.serializer;
 namespace app.channels.serializers;
 
 /// <summary>
-/// Registry for serializers, allowing lookup by content type or file extension.
+/// Registry for serializers, allowing lookup by MIME type or file extension.
 /// </summary>
 public sealed class @this
 {
-    private readonly Dictionary<string, ISerializer> _byContentType = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, ISerializer> _byType = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, ISerializer> _byExtension = new(StringComparer.OrdinalIgnoreCase);
     private ISerializer _default;
 
@@ -25,19 +25,17 @@ public sealed class @this
         var json = new global::app.channels.serializers.serializer.Json(context);
         var text = new global::app.channels.serializers.serializer.Text(jsonFallback: json);
         var plang = new global::app.channels.serializers.serializer.plang.@this(context);
-        var plangData = new global::app.channels.serializers.serializer.plang.Data();
 
         Register(json);
         Register(text);
         Register(plang);
-        Register(plangData);
 
-        // Register alternative content types
-        _byContentType["text/json"] = json;
-        _byContentType["application/json; charset=utf-8"] = json;
-        _byContentType["application/plang+json"] = plang;
+        // Register alternative MIME types
+        _byType["text/json"] = json;
+        _byType["application/json; charset=utf-8"] = json;
+        _byType["application/plang+json"] = plang;
         // text/html shares the JSON wire shape — global::app.channels.serializers.serializer.Json emits Value only.
-        _byContentType["text/html"] = json;
+        _byType["text/html"] = json;
 
         _default = json;
     }
@@ -47,34 +45,34 @@ public sealed class @this
     /// </summary>
     public void Register(ISerializer serializer)
     {
-        _byContentType[serializer.ContentType] = serializer;
-        _byExtension[serializer.FileExtension] = serializer;
+        _byType[serializer.Type] = serializer;
+        _byExtension[serializer.Extension] = serializer;
     }
 
     /// <summary>
     /// Gets a serializer by mimetype, throwing <see cref="UnregisteredMimeType"/> when not
     /// registered. Use this when the contract is "the caller named a specific wire shape and
     /// expects routing to succeed" — in particular, Channel routing for outbound Data with an
-    /// explicit content type. Counterpart of <see cref="GetByContentType"/> which returns null.
+    /// explicit MIME type. Counterpart of <see cref="GetByType"/> which returns null.
     /// </summary>
     public ISerializer GetByMimeType(string mimeType)
     {
-        var s = GetByContentType(mimeType);
+        var s = GetByType(mimeType);
         if (s == null) throw new UnregisteredMimeType(mimeType);
         return s;
     }
 
     /// <summary>
-    /// Gets a serializer by content type.
+    /// Gets a serializer by MIME type. Strips charset suffix if present.
     /// </summary>
-    public ISerializer? GetByContentType(string contentType)
+    public ISerializer? GetByType(string type)
     {
         // Strip charset if present
-        var semicolon = contentType.IndexOf(';');
+        var semicolon = type.IndexOf(';');
         if (semicolon > 0)
-            contentType = contentType[..semicolon].Trim();
+            type = type[..semicolon].Trim();
 
-        return _byContentType.TryGetValue(contentType, out var serializer) ? serializer : null;
+        return _byType.TryGetValue(type, out var serializer) ? serializer : null;
     }
 
     /// <summary>
@@ -99,14 +97,14 @@ public sealed class @this
     }
 
     /// <summary>
-    /// Gets a serializer by content type or falls back to default.
+    /// Gets a serializer by MIME type or falls back to default.
     /// </summary>
-    public ISerializer GetOrDefault(string? contentType)
+    public ISerializer GetOrDefault(string? type)
     {
-        if (string.IsNullOrEmpty(contentType))
+        if (string.IsNullOrEmpty(type))
             return _default;
 
-        return GetByContentType(contentType) ?? _default;
+        return GetByType(type) ?? _default;
     }
 
     /// <summary>
@@ -121,17 +119,17 @@ public sealed class @this
     /// <summary>
     /// Gets the JSON serializer.
     /// </summary>
-    public ISerializer Json => _byContentType["application/json"];
+    public ISerializer Json => _byType["application/json"];
 
     /// <summary>
     /// Gets the text serializer.
     /// </summary>
-    public ISerializer Text => _byContentType["text/plain"];
+    public ISerializer Text => _byType["text/plain"];
 
     /// <summary>
-    /// Gets all registered content types.
+    /// Gets all registered MIME types.
     /// </summary>
-    public IEnumerable<string> ContentTypes => _byContentType.Keys;
+    public IEnumerable<string> Types => _byType.Keys;
 
     /// <summary>
     /// Gets all registered file extensions.
@@ -139,11 +137,11 @@ public sealed class @this
     public IEnumerable<string> Extensions => _byExtension.Keys;
 
     /// <summary>
-    /// Deserializes content using the appropriate serializer, chosen by extension or contentType.
+    /// Deserializes content using the appropriate serializer, chosen by extension or MIME type.
     /// </summary>
     public data.@this<T> Deserialize<T>(DeserializeOptions options)
     {
-        var serializer = ResolveSerializer(options.ContentType, options.Extension);
+        var serializer = ResolveSerializer(new ResolveOptions { Type = options.Type, Extension = options.Extension });
 
         if (options.Value is string str)
             return serializer.Deserialize<T>(str);
@@ -159,7 +157,7 @@ public sealed class @this
     /// </summary>
     public Task<data.@this> SerializeAsync(SerializeOptions options)
     {
-        var serializer = ResolveSerializer(options.ContentType, options.Extension);
+        var serializer = ResolveSerializer(new ResolveOptions { Type = options.Type, Extension = options.Extension });
         return serializer.SerializeAsync(options.Stream, options.Data, cancellationToken: options.CancellationToken);
     }
 
@@ -171,16 +169,16 @@ public sealed class @this
         if (options.Stream == null)
             throw new ArgumentException("Stream is required for async deserialization", nameof(options));
 
-        var serializer = ResolveSerializer(options.ContentType, options.Extension);
+        var serializer = ResolveSerializer(new ResolveOptions { Type = options.Type, Extension = options.Extension });
         return serializer.DeserializeAsync<T>(options.Stream, options.CancellationToken);
     }
 
-    private ISerializer ResolveSerializer(string? contentType, string? extension)
+    private ISerializer ResolveSerializer(ResolveOptions options)
     {
-        if (!string.IsNullOrEmpty(contentType))
-            return GetOrDefault(contentType);
-        if (!string.IsNullOrEmpty(extension))
-            return GetByExtension(extension) ?? _default;
+        if (!string.IsNullOrEmpty(options.Type))
+            return GetOrDefault(options.Type);
+        if (!string.IsNullOrEmpty(options.Extension))
+            return GetByExtension(options.Extension) ?? _default;
         return _default;
     }
 }
@@ -191,8 +189,8 @@ public sealed class @this
 public class SerializeOptions
 {
     public Stream Stream { get; init; } = null!;
-    public object? Data { get; init; }
-    public string? ContentType { get; init; }
+    public data.@this Data { get; init; } = global::app.data.@this.Ok();
+    public string? Type { get; init; }
     public string? Extension { get; init; }
     public CancellationToken CancellationToken { get; init; }
 }
@@ -205,6 +203,16 @@ public class DeserializeOptions
     public object? Value { get; init; }
     public Stream? Stream { get; init; }
     public string? Extension { get; init; }
-    public string? ContentType { get; init; }
+    public string? Type { get; init; }
     public CancellationToken CancellationToken { get; init; }
+}
+
+/// <summary>
+/// Options for serializer resolution — names the MIME type or file extension
+/// to drive registry lookup.
+/// </summary>
+public class ResolveOptions
+{
+    public string? Type { get; init; }
+    public string? Extension { get; init; }
 }

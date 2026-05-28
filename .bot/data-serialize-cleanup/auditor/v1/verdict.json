@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "Cross-file canonicalization chain holds; ! operator end-to-end composes; depth-bomb bound confirmed via ParseValue's inherited MaxDepth. Two minor findings (test assertion path + crypto/hash.cs async-without-await) — no critical or major."
+}

@@ -17,9 +17,389 @@
       "text": "Agreed on the framing — Stream isn't the leaf, the serializer is. Rewrote item 3 to center the serializer: its contract is Data-in / bytes-out, and Stream.WriteCore feeding it data.Value is a *consequence* of the contract not being enforced (object? polymorphism). The fact-pattern stays, but the framing now reads bug-as-serializer-contract-violation, not bug-as-stream-strip.\n\nOn signing — the load-bearing reason is the Compress scenario. Compress serializes Data to bytes to bury them inside the archived wrapper. If the serializer signed, those buried bytes would carry a signature, and then the channel would sign the archived wrapper on its way out — two signatures for one logical payload. With signing at the channel and the serializer signing-agnostic, the rule \"only outermost signs\" becomes automatic by construction: channels sign because writes are externally visible; transforms don't because their bytes get buried. The serializer is unconscious of inner/outer. Expanded the \"Signing lives at the channel\" section to spell this counterfactual out.",
       "anchor": "3. **The serializer doesn't always receive Data.** `ISerializer` accepts `object?`, and `Stream.WriteCore` feeds it `data.Value` rather than `data` itself (`stream/this.cs:56`). The \"emit wrapper or just the value\" decision belongs *inside* the serializer — different MIMEs make different choices — but only if it always sees Data first. Today the plang+data serializer is forced to reconstruct the wrapper from scratch via `Envelope` because by the time it runs, the wrapper that should carry type+signature is already gone.",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "684d335e21",
       "ts": "2026-05-26T16:56:56",
+      "drifted": true
+    },
+    {
+      "id": "6babf93895",
+      "line": 17,
+      "text": "so if we have it in the serializer, each data object would be serialized if we had data inside data? if that is the case, then why not? lets say I get zip object, it´s signed, I unzip it and I see the 'real' Data, that is also signed, just wondering if we get some benefit of it. I could forward that Data to someone else and we still would have signature from the original creator, lets discuss",
+      "anchor": "Once that's accepted, three follow-on simplifications fall out: ISerializer narrows from `object?` to `Data`, the two `application/plang` serializers collapse into one, signing moves from the serializer to the channel.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "18fdfeda61",
+      "ts": "2026-05-27T16:43:46",
+      "drifted": true
+    },
+    {
+      "id": "870bac762a",
+      "line": 17,
+      "text": "You're right and I want to walk back the previous reply. Let me play the movie again.\n\nThe key piece I missed: EnsureSigned() is *no-op if a Signature is already present*. So 'serializer signs every Data it sees' actually means 'sign only what isn't signed yet.' That's a very different rule from 'sign always.'\n\nReplay with serializer-driven signing:\n- Alice creates D1, signs it. D1 carries Alice's signature.\n- Alice compresses D1 → D2 { type=archived, value=bytes-of-D1 }. The bytes contain D1 with Alice's signature still attached.\n- Alice's channel write: serializer walks D2. D2 unsigned → sign with Alice. D1 inside the bytes was already signed → unchanged. D2 goes out with one wire signature (Alice on archived envelope); bytes carry D1's signature (Alice on inner).\n- Bob receives D2, decompresses to D1. D1 has Alice's signature. Bob can verify provenance.\n- Bob forwards D1 to Charlie by wrapping in his own D3 { value: D1 }. Serializer walks D3: D3 unsigned → sign with Bob. D1 already signed → unchanged.\n- Charlie sees D3 signed by Bob; opens it; sees D1 signed by Alice. Provenance chain preserved without Bob needing to know anything about D1's origin.\n\nThat's a genuinely better property than my previous 'two signatures for one payload' framing. The two signatures aren't redundant — they're attestations of different things: D2/D3 attest transit ('this channel/this actor passed this along'), D1 attests authorship ('Alice made this'). Forwarding preserves the chain naturally.\n\nThe 'cost' I worried about (extra signature on every nested Data) is small: signing is cheap, and EnsureSigned-is-no-op means it only happens once per Data over its lifetime. The Compress-internal case I was protecting against — bytes inside an archived wrapper getting signed twice — doesn't actually happen, because EnsureSigned sees the existing signature on the inner and skips.\n\nWhere this lands the design:\n- Signing-trigger moves *into the serializer* (specifically, into the app.data.Json converter that walks Data) — not into the channel. Every Data node the converter visits: if Signature is null, call EnsureSigned. The channel doesn't need to do anything special.\n- The 'only outermost signs' rule I previously argued for is dropped. The new rule is 'sign-once-per-Data, idempotent, performed at wire crossing.' Multiple Datas in a tree each get signed independently, which is the property you want for forwarding.\n- Stage 2's deliverable changes: no 'Channel.WriteAsync calls data.EnsureSigned() before WriteCore' — instead, the merged plang serializer (or its inner converter) does it. Lighter change to channel/this.cs.\n- Stage 3's Compress: now goes through the registered serializer (already in the Stage 3 deliverable) — that path will naturally sign the inner Data if it isn't already signed. The 'no signing inside Compress' note in Stage 3 becomes wrong; I'll rewrite it as 'Compress uses the registered serializer, which signs through its normal walk.'\n\nOne thing I want to double-check before updating the stages: when EnsureSigned signs a Data whose Value contains a List<Data>, does the signature canonicalize over the inner Datas' current state (including their Signatures), or only over their values? If the latter, the chain still works but the outer signature doesn't bind the inner signatures — they could be tampered with independently. If the former, the outer signs over inner-including-signature, which is the strict chain. I haven't read the signing module deeply enough yet to know — let me check before writing the stage changes. Worth a separate conversation if the current code signs only over Value and not Signature.\n\nLeaving this open. If you agree with the direction, I'll update plan.md's 'Signing lives at the channel' section, Stage 2's signing-move deliverable, and Stage 3's Compress section in one pass.",
+      "anchor": "Once that's accepted, three follow-on simplifications fall out: ISerializer narrows from `object?` to `Data`, the two `application/plang` serializers collapse into one, signing moves from the serializer to the channel.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "6babf93895",
+      "ts": "2026-05-27T16:52:29",
+      "drifted": true
+    },
+    {
+      "id": "ce1c268af7",
+      "line": 17,
+      "text": "if it contains List<Data> each item in that list should be signed.",
+      "anchor": "Once that's accepted, three follow-on simplifications fall out: ISerializer narrows from `object?` to `Data`, the two `application/plang` serializers collapse into one, signing moves from the serializer to the channel.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "870bac762a",
+      "ts": "2026-05-27T17:01:58",
+      "drifted": true
+    },
+    {
+      "id": "658bd147c6",
+      "line": 17,
+      "text": "Good, confirms the rule. So sign-if-missing applies uniformly: nested-in-Value, items-in-List<Data>, items-in-nested-List<Data>, etc. — whatever the Data-converter walks, it sign-checks. The unit of attestation is the Data node, regardless of how it sits in the tree.\n\nHolding off on plan/stage edits per your other message. One thing I found while looking at the signing module that's worth flagging now (since it affects how strong the 'chain' actually is): the current canonicalization in modules/crypto/code/Default.cs:19-20 hashes JsonSerializer.Serialize(value) with default options. Default options respect [JsonIgnore] on Signature → the outer signature does NOT bind the inner Datas' signatures. It binds the inner Value/Name/Type (via JSON of the inner Data object) but the inner signature field is omitted from the hash because [JsonIgnore].\n\nWhat that means in practice: Bob receives D2 signed by Alice. D2.value contains D1's bytes. If Bob (or a man-in-the-middle) swaps D1's signature for a different signature inside D2's value, D2's outer signature still verifies — because the hash never covered the inner signature in the first place. The chain works as long as nobody tampers, but it isn't *cryptographically* tight.\n\nThis is a separate concern from the design pivot we just settled — the architectural decision (sign-each-Data-via-converter) stands either way. But making the chain tight would require canonicalizing over Value-including-Signature, which is a hash-format change. Likely a follow-up branch, not this one. Flagging it so it isn't lost.",
+      "anchor": "Once that's accepted, three follow-on simplifications fall out: ISerializer narrows from `object?` to `Data`, the two `application/plang` serializers collapse into one, signing moves from the serializer to the channel.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "ce1c268af7",
+      "ts": "2026-05-27T17:07:07",
+      "drifted": true
+    },
+    {
+      "id": "fe544e7d7d",
+      "line": 17,
+      "text": "\"because the hash never covered the inner signature in the first place.\" wait. so I have data(user.fistname, etc.) and sign it, then it compresses it, then the signature should be made of the data(user.firstname, etc) bytes, right?",
+      "anchor": "Once that's accepted, three follow-on simplifications fall out: ISerializer narrows from `object?` to `Data`, the two `application/plang` serializers collapse into one, signing moves from the serializer to the channel.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "658bd147c6",
+      "ts": "2026-05-27T17:09:48",
+      "drifted": true
+    },
+    {
+      "id": "1a97b66987",
+      "line": 17,
+      "text": "You're right to push on this — I conflated two scenarios. Let me split them.\n\n**Scenario A — compressed (your example):** Alice signs D1. Compress(D1) → D2 { type=archived, value=byte[] }. D2 hits the channel, gets signed: hash over D2.Value = hash over byte[]. The byte[] *is* a literal byte stream — crypto/Default.cs:19 takes `value is byte[] raw ? raw : ...` and the raw branch hashes the bytes directly. The bytes contain D1's full serialized form (including Signature if the serializer that produced the bytes emits it). So D2's signature DOES bind D1's signature transitively through the bytes. Chain is cryptographically tight here, exactly as you described. My earlier flag was wrong for this case.\n\nThere is one catch in the *current* code that doesn't survive Stage 3: today's Compress uses `_envelopeJsonOptions` (this.Envelope.cs:23-33) which does NOT include the Transport.ForOutbound modifier. That modifier is what re-includes Signature ([Out]-marked) over the [JsonIgnore]. So today's compressed bytes do NOT contain D1's signature — it gets stripped at the JsonIgnore boundary. Bob decompresses and gets D1 *without* Alice's signature. That's a bug in today's Compress, not a property of the design.\n\nStage 3 (the cleanup) fixes this automatically: Compress routes through `Serializers.Get(\"application/plang\")`, which uses Transport.ForOutbound, which preserves Signature in the bytes. After Stage 3 the chain works as you intended: sign-then-compress preserves the inner signature in the wire, decompress restores it intact, outer signature binds the whole package.\n\n**Scenario B — structured nested (no bytes):** D3 = Data { value: D1 } where D1 is a structured Data instance, not bytes. JsonSerializer.Serialize(D3.Value) hits crypto/Default.cs:20 — the fallback branch that calls `JsonSerializer.Serialize(value)` with *no options*. Default options respect [JsonIgnore] on Signature → D1's signature is omitted from the hash. The outer signature does not bind the inner signature for this nesting shape.\n\nThe fix for B is to make crypto/Default.cs use the same Transport.ForOutbound options that the wire serializer uses, so signing-canonicalization and wire-canonicalization are identical. That's a small change — probably belongs in this branch as part of Stage 2 (since the merged plang serializer is where Transport.ForOutbound becomes the canonical option set).\n\nSo: chain IS tight for compressed/encrypted (byte[]-leaf payloads). Chain isn't tight today for structured-nested Data. Fixing it means canonicalizing the same way the wire writes — one rule, one set of options. Will fold that into Stage 2 when you greenlight stage edits.",
+      "anchor": "Once that's accepted, three follow-on simplifications fall out: ISerializer narrows from `object?` to `Data`, the two `application/plang` serializers collapse into one, signing moves from the serializer to the channel.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "fe544e7d7d",
+      "ts": "2026-05-27T17:16:48",
+      "drifted": true
+    },
+    {
+      "id": "410058e2ce",
+      "line": 17,
+      "text": "just need to fix the json options for the compress, lets do it so we dont forget.\n\nbut on your Scenario A, Alice doesn't need to sign D1 specifially, the compression library does that because it gets in Data, this data needs to be turned into bytes to compress at that time it's signed, then it is compressed, then the compressed object goes on wire and gets signed. if modules arent including Signature on the Data, it should(like this comprees action)",
+      "anchor": "Once that's accepted, three follow-on simplifications fall out: ISerializer narrows from `object?` to `Data`, the two `application/plang` serializers collapse into one, signing moves from the serializer to the channel.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "1a97b66987",
+      "ts": "2026-05-27T17:21:34",
+      "drifted": true
+    },
+    {
+      "id": "fec36c1e0d",
+      "line": 17,
+      "text": "You're right — Alice doesn't sign explicitly. I framed it wrong by saying \"Alice signs D1\" as a separate step. The actual mechanism is: D1 enters Compress unsigned. Compress's serializer-walk (the converter) hits D1 with no signature → calls EnsureSigned → D1 is now signed *during the byte conversion*. Bytes emerge containing a signed D1. Then Compress wraps in D2; D2 hits the channel; channel's serializer-walk signs D2 the same way. No \"Alice consciously signs\" anywhere — it's all the same converter rule (sign-if-missing while walking).\n\nThat's actually a cleaner mental model than the one I wrote. The developer never calls sign explicitly for the transit-attestation case. The sign action stays available for cases where they want to seal a Data deliberately (e.g., before storing it, before handing it to a non-PLang consumer), but the channel/transform path is automatic.\n\nOn the json-options fix you flagged: Stage 3 already routes Compress through `Serializers.Get(\"application/plang\")`, which is the merged serializer that uses Transport.ForOutbound. So the fix lands implicitly when Stage 3 lands — `_envelopeJsonOptions` and the direct `JsonSerializer.SerializeToUtf8Bytes` call both go away in the same edit. No separate one-line tweak needed; the structural change to route through the registered serializer is the fix.\n\nThe Stage 3 plan currently *says* this (\"the registered serializer is what makes Compress preserve the inner shape correctly\") but doesn't explicitly call out \"and this is why today's compressed bytes don't carry signatures.\" I'll spell that out in the Stage 3 design narrative when stage edits open — make the bug-being-fixed visible, not implicit.\n\nIs that enough to not-forget, or did you want me to do something more direct (like make the C# edit now)? Architect normally doesn't touch source — coder does — but if you want this carved out as a quick standalone commit before the rest of the cleanup, I can do it.",
+      "anchor": "Once that's accepted, three follow-on simplifications fall out: ISerializer narrows from `object?` to `Data`, the two `application/plang` serializers collapse into one, signing moves from the serializer to the channel.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "410058e2ce",
+      "ts": "2026-05-27T20:07:23",
+      "drifted": true
+    },
+    {
+      "id": "21c1db1c1e",
+      "line": 29,
+      "text": "We talk a lot about Compress here, but I feel like we are missing a bigger picture, what would other types be; encryption, something else? and how do we define it, it would need to be defined somewhere I feel like, or does it come naturally in a way that we are repackaging a Data",
+      "anchor": "4. **`Compress()` double-wraps.** Current code builds `Data{archived, Data{gzip, byte[]}}`. The inner gzip Data is redundant — `archived.Value` can be a `byte[]` directly. \"Data all the way down\" is a property of *byte layers* (decompress reveals another serialized Data), not JSON object nesting.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-27T16:45:35",
+      "drifted": false
+    },
+    {
+      "id": "0e91f0aef5",
+      "line": 29,
+      "text": "Good push — I wasn't being explicit about the general shape. Added a 'Transforms are a pattern, not a registry' section to the Cross-cutting decisions: Compress is one instance of (Data → bytes → Data{type=marker, value=byte[]}). The family is Compress / Encrypt / Sign / future Brotli-Zstd-etc. There's no separate registration system: the verb is a method on Data, the wire marker is a Type value, algorithm differentiation rides on the +variant slot ('archived+gzip', 'archived+brotli'). Decoding mirrors. Type's own .Compressible / .Encryptable properties (already there for Compressible) gate whether a transform applies.\n\nIt does come naturally in the sense you suspected: repackaging a Data into a new Data with bytes inside. The smell of double-wrap (Data{archived, Data{gzip, byte[]}}) was hiding the uniformity — flattening (Stage 3) makes all transforms look the same on the wire.",
+      "anchor": "4. **`Compress()` double-wraps.** Current code builds `Data{archived, Data{gzip, byte[]}}`. The inner gzip Data is redundant — `archived.Value` can be a `byte[]` directly. \"Data all the way down\" is a property of *byte layers* (decompress reveals another serialized Data), not JSON object nesting.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "21c1db1c1e",
+      "ts": "2026-05-27T16:52:02",
+      "drifted": false
+    },
+    {
+      "id": "438cfa362a",
+      "line": 57,
+      "text": "it being base64 is simply because the serializer decides that, in this example the json, he sees byte and convert it to base64, this is serializer decition",
+      "anchor": "The compressed bytes — when base64-decoded and gunzipped — *are themselves* a serialized Data with name \"user\". Nesting happens through byte-decoding layers, not JSON object nesting. Each Data on the wire is flat.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-27T16:46:30",
+      "drifted": true
+    },
+    {
+      "id": "4da94f492c",
+      "line": 57,
+      "text": "Right — base64 is JSON-specific. Fixed the wording: the bytes get decoded per the wire format's convention (base64 in JSON because no binary literal; raw bytes in protobuf/CBOR). The point I was reaching for — that nesting is byte-layer, not JSON-object-layer — survives, just no longer tied to base64.",
+      "anchor": "The compressed bytes — when decoded per the wire format's convention (base64 in JSON because JSON has no binary literal; raw bytes in protobuf/CBOR) and gunzipped — *are themselves* a serialized Data with name \"user\". The base64 isn't intrinsic to the shape; it's the JSON serializer's choice for representing `byte[]`. Nesting happens through byte-decoding layers, not JSON object nesting. Each Data on the wire is flat.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "438cfa362a",
+      "ts": "2026-05-27T16:51:43",
+      "drifted": false
+    },
+    {
+      "id": "daee6add42",
+      "line": 67,
+      "text": "this link doesn´t work, is this part of doc?",
+      "anchor": "**Data is opaque to its consumers.** Every layer — Variables, action handlers, Compress, Channel, ISerializer — handles Data as an opaque unit. Only the encoder at the leaf walks `[Out]` properties. Nothing peeks at Type or Value to decide behaviour. (See [design_principles.md → Data Is Opaque to Its Consumers](../../../memory/design_principles.md).)",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-27T16:47:33",
+      "drifted": true
+    },
+    {
+      "id": "068dfdb0dd",
+      "line": 77,
+      "text": "You're right — that link points into my memory directory, which isn't in the repo so you can't see it. Removed the link and inlined the principle in one extra sentence (\"A consumer that needs to branch on what's inside has stopped being a consumer and started being an encoder — push the work down to the leaf.\") which is the load-bearing bit anyway.",
+      "anchor": "**Data is opaque to its consumers.** Every layer — Variables, action handlers, Compress, Channel, ISerializer — handles Data as an opaque unit. Only the encoder at the leaf walks `[Out]` properties. Nothing peeks at Type or Value to decide behaviour. A consumer that needs to branch on what's inside has stopped being a consumer and started being an encoder — push the work down to the leaf.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "daee6add42",
+      "ts": "2026-05-27T16:51:51",
+      "drifted": false
+    }
+  ],
+  "plan/wire-shape.md": [
+    {
+      "id": "e62a3bbfad",
+      "line": 7,
+      "text": "I think we need also to include Properties in this, but maybe in a problemtic way :) lets say I have llm request, the default value is just the content that the llm is generating, this allows for nice code\n\n```plang\n- llm %system%, %user%, write to %output%\n- write out %output% / this is llm text response\n```\n\nbut I want to be able to see the cost, so in the c# code we add those to the properties of the data that is return, I was thinking of flattening the object, I would add property cost: 100\n\n\n\n{\nname:\"response\"\ntype:\"string\",\nvalue:\"llm response\",\ncost: 100\n}\n\nthis is if we flatten, it should not affect the object it self because if the object is complex like user in the example below, that is all in the value : { complex object }\n\nany thing that is not value, type, signature is a Property on the Data, but if the Data is some Data<SomeClass> and that class contains Cost then it would use that property that is strict instead of filling the Properties property on Data class. What do you think?",
+      "anchor": "The simplest case: a Data named \"user\" with an object value, signed by the channel on its way out.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-27T16:55:02",
+      "drifted": true
+    },
+    {
+      "id": "db4b171f6c",
+      "line": 7,
+      "text": "I like this and want to walk it through to make sure I have it right.\n\nThe two-track rule you're proposing:\n\n1. Data<T> path (strict): T's properties live structurally inside Value. Cost becomes value.cost. Wire shape is { name, type=\"llmresponse\", value: { text: \"...\", cost: 100 }, signature }.\n\n2. Data + Properties path (untyped): Properties dictionary flattens to top-level fields next to name/type/value/signature. Wire is { name, type=\"string\", value=\"llm text\", cost: 100, signature }.\n\nThe ergonomics goal: in PLang you write `%response%` and get the LLM text directly (Value renders), and `%response.cost%` navigates to the cost field. With path 2, %response.cost% reads Properties[\"cost\"]; with path 1, %response.cost% reads Value.Cost. The dev-facing surface is uniform; the underlying storage differs.\n\nThat works and is a real ergonomic win. Three things I want to think through before we commit:\n\n(a) Reserved-key collision. \"name\", \"type\", \"value\", \"signature\" are top-level reserved on the wire. Properties can't have keys with those names — needs to be a rule (compile-time check on attribute-decorated Property fields, runtime guard on dictionary inserts). Easy to enforce.\n\n(b) Round-trip ambiguity at the boundary. When Charlie receives JSON { name, type, value, cost, signature, foo: \"x\" }, how does the deserializer decide that `cost` and `foo` are Properties vs. unknown wire fields? The rule \"anything not in {name,type,value,signature} is Properties\" makes the parser forgiving — receivers can carry arbitrary extra metadata without choking. That's probably good; it also means PLang's wire shape is forward-compatible to new top-level fields naturally.\n\n(c) [Out] semantics shift. Today Properties is [JsonIgnore]. The proposal makes Properties flatten via [Out] (or similar). What's the discipline for which Property entries cross the wire? All by default, with an opt-out marker? Only [Out]-marked entries? The today-rule is \"none\"; you're proposing \"all unless filtered\" or \"opt-in via [Out]\" — needs to be one or the other.\n\nHolding the plan edits per your other message. If you confirm (a)/(b)/(c) — reserved-key rule, all-extra-fields-are-Properties on receive, and which opt-in/opt-out for [Out] — I'll update plan.md (Cross-cutting decisions: Properties flatten to wire) and wire-shape.md (add a llm-response example showing the flat-cost shape).",
+      "anchor": "The simplest case: a Data named \"user\" with an object value, signed by the channel on its way out.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "e62a3bbfad",
+      "ts": "2026-05-27T17:07:25",
+      "drifted": true
+    },
+    {
+      "id": "9c7d17b357",
+      "line": 7,
+      "text": "since it's from the Properties object on data, you would access it with %response!cost%, this is to prevent such things when object %user.kind% and %user!kind%, two different things, user.kind is property on the user object/json and user!kind is value store in Properties on data. name, type, value and signature would have to be reserved",
+      "anchor": "The simplest case: a Data named \"user\" with an object value, signed by the channel on its way out.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "db4b171f6c",
+      "ts": "2026-05-27T17:13:46",
+      "drifted": true
+    },
+    {
+      "id": "43bf05ea63",
+      "line": 7,
+      "text": "That's clean. The `.` vs `!` split resolves my (a) and (b) at once:\n\n- `%user.kind%` → Value-object navigation. The `.` reads structurally into Value's JSON shape. If T has a Kind property, dot finds it; for untyped Data, dot reads value[\"kind\"] from the anonymous object.\n- `%user!kind%` → Properties navigation. The `!` reads from the Properties dictionary on the Data wrapper. Decoupled from whatever's in Value.\n\nNo collision possible between the two namespaces — even if Value has a \"kind\" field AND Properties has a \"kind\" entry, they're addressable separately. The user makes the choice explicit at every access.\n\nReserved-key rule (\"name\", \"type\", \"value\", \"signature\") settles your point (a): Properties cannot use those names. Compile-time check via an analyzer or a static initializer guard on Property assignment.\n\nMy point (b) also dissolves: receiver-side, the deserializer reads the four reserved fields into name/type/value/signature, and *everything else* on the top-level JSON object goes into Properties verbatim. Receiver doesn't have to know in advance what extra fields exist. Forward compatibility for free.\n\nThat leaves my point (c) — the [Out] discipline for Properties. Three plausible rules:\n\n1. **All Properties cross the wire by default.** Add `[OutIgnore]` (or similar) to opt individual entries out. Matches the [Out] re-include pattern we use for Signature.\n2. **Only [Out]-marked Property entries cross.** Opt-in. Safer (no accidental leakage) but more verbose for the LLM-cost case where every Property is meant to ride.\n3. **All cross, but Sensitive-marked entries strip.** Reuses the Sensitive filter that already exists for Value.\n\nI'd lean toward (1) — symmetric with how Signature works (default-emit, marked-ignored is the exception). The Sensitive strip from (3) gets layered on top regardless. But (2) would be defensible if you're worried about a Property accidentally carrying a secret that no one tagged.\n\nWhich one? Once you pick, I'll fold the whole picture (`!` syntax + reserved-key rule + all-extras-into-Properties on receive + the chosen [Out] rule) into plan.md as a new Cross-cutting decision, and add a wire-shape.md example with the LLM-response shape showing flat cost.",
+      "anchor": "The simplest case: a Data named \"user\" with an object value, signed by the channel on its way out.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "9c7d17b357",
+      "ts": "2026-05-27T17:17:05",
+      "drifted": true
+    },
+    {
+      "id": "060c6467d4",
+      "line": 7,
+      "text": "yes, we need to have public properties and then private, on that is serialized one that is not, just dont know how we can solve that\n\nfor the llm example, it would be public because we want to display that info\nbut for db, there the property is e.g. the sql statement exectuted, parameters and such for good for debug info.\n\nbut now that I think about it, I will tackle it when I do that, for now all Properties should be serailized. so lets go with that. I dont believe we can have any special [out] on each property, the Properties the type of Properties : list<data>, so that would mean when we serialize each property is signed (because we decided that all Data would be signed, hmmm... \n\nso as you can see, I havent thought this through",
+      "anchor": "The simplest case: a Data named \"user\" with an object value, signed by the channel on its way out.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "43bf05ea63",
+      "ts": "2026-05-27T20:05:57",
+      "drifted": true
+    },
+    {
+      "id": "c09572dd8b",
+      "line": 7,
+      "text": "You caught the load-bearing tension. Let me take a position rather than just say \"let's discuss.\"\n\n**Properties should NOT be `List<Data>`.** Should be `Dictionary<string, object?>` — primitives + simple JSON shapes (string, int, bool, dict, list-of-primitives). No nested Data instances inside Properties.\n\nReason: Properties are *metadata about the Data*, not domain content. Cost, debug info, SQL trace, timing — they describe the carrier, they aren't part of the payload's signed body. If Properties entries were Data-instances and got swept up in the sign-if-missing walk, you'd get:\n\n- Per-Property signature bloat. An LLM response with cost + tokens + latency would carry four signatures (outer + three Property-Datas). The wire shape becomes obviously wrong.\n- Conceptual confusion. The outer Data's signature already attests \"these are the Properties associated with this response.\" Re-signing each Property entry as its own Data attests... the same thing, but in a way that doesn't compose with the outer attestation.\n- Verify ambiguity. If a Property's Data signature fails verification, what does that mean — the response is corrupt, or just the metadata is? The outer signature is the only thing that should arbitrate trust over the whole package.\n\nThe rule that drops the tension: **the sign-if-missing converter only walks Value-graph Datas, not Properties-bag entries.** Properties live structurally outside the signed body; the outer signature covers the *flattened wire shape* of the Properties (which is just primitive key-value pairs), so tampering is still detected, but no nested signatures get conjured.\n\nThis also means the C# shape change is concrete: `Properties` becomes `Dictionary<string, object?>` (or a typed wrapper around it). Not `List<Data>`. The wire shape stays clean — top-level primitives next to name/type/value/signature.\n\nFor your public/private concern (display LLM cost, hide SQL params on the wire): I'd punt that to a follow-up. The Sensitive filter we already have on Value could be lifted to Properties — `[Sensitive]` on a known Property key strips it. But the broader \"public Properties vs private Properties\" is a real design conversation worth its own branch. For this branch: all Properties cross the wire, primitives only, no per-Property signing.\n\nThat narrows the surface enough to commit:\n- Properties: Dictionary<string, object?>, primitives only\n- All Properties flatten to top-level wire fields\n- `%x!key%` access syntax (Properties), `%x.field%` (Value)\n- Reserved keys: name/type/value/signature\n- Sign-if-missing walk skips Properties; outer signature covers the flat key-value shape via JSON canonicalization\n- Out of scope: public/private split, sensitive-Property stripping, structured (Data-typed) Property values — follow-up branches\n\nIf that lands as the rule, the wire shape, the access syntax, and the signing model all line up. Want me to lock this in?",
+      "anchor": "The simplest case: a Data named \"user\" with an object value, signed by the channel on its way out.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "060c6467d4",
+      "ts": "2026-05-27T20:07:45",
+      "drifted": true
+    },
+    {
+      "id": "97484126fa",
+      "line": 7,
+      "text": "yes, I suppose you are correct about this, Properties should be dict, I like your rule, it lands. I think we are locked",
+      "anchor": "The simplest case: a Data named \"user\" with an object value, signed by the channel on its way out.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "c09572dd8b",
+      "ts": "2026-05-27T20:14:21",
+      "drifted": true
+    },
+    {
+      "id": "66b524fc8c",
+      "line": 9,
+      "text": "I think the type would just be \"json\" or \"object\" not \"user\", the type only comes from the strictly typed Data<T>,",
+      "anchor": "```json",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-27T16:57:24",
+      "drifted": false
+    },
+    {
+      "id": "87bc4cfe1a",
+      "line": 9,
+      "text": "Right — that example is wrong. The type field is the strict type-name, sourced from Data<T>. When the Data is untyped (constructed as `new data.@this(\"user\", someAnonymousObject)`), there's no schema name to put there.\n\nWhat goes in `type` for the untyped case? Looking at TypeMapping, candidates are \"object\", \"json\", or maybe \"dict\" depending on what the value's CLR shape is. I'd lean toward \"object\" for an anonymous bag (matches the JSON `{...}` shape) and \"dict\" only if the value is literally `Dictionary<,>`. Whatever the convention, it should be the runtime's natural type-name for that value shape — not the variable's name.\n\nThe two real cases:\n- Untyped: `new data.@this(\"user\", new { firstName=\"Ingi\", ... })` → wire { name: \"user\", type: \"object\", value: {...} }\n- Typed: `new data.@this<User>(\"user\", userInstance)` → wire { name: \"user\", type: \"user\", value: {...} }\n\nThe \"user\" in name is the variable binding; the \"user\" in type is the schema. Different things; only the typed path populates the latter with a meaningful schema name.\n\nHolding the wire-shape.md edit per your other message. When you greenlight, I'll fix the plain-Data example to show `type: \"object\"` and add a sibling example showing the Data<User> typed case with `type: \"user\"` — so the distinction is visible side-by-side.",
+      "anchor": "```json",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "66b524fc8c",
+      "ts": "2026-05-27T17:07:37",
+      "drifted": false
+    },
+    {
+      "id": "edec2adec3",
+      "line": 9,
+      "text": "looks good",
+      "anchor": "```json",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "87bc4cfe1a",
+      "ts": "2026-05-27T17:14:42",
+      "drifted": false
+    },
+    {
+      "id": "9ab1549664",
+      "line": 9,
+      "text": "Approved — when you give the overall greenlight for plan/wire-shape edits, I'll bundle the type-field fix together with the Properties decision (whichever [Out] rule you pick) and the signing-canonicalization fix, so wire-shape.md doesn't get touched twice.",
+      "anchor": "```json",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "edec2adec3",
+      "ts": "2026-05-27T17:17:11",
+      "drifted": false
+    }
+  ],
+  "stage-1-iserializer-data.md": [
+    {
+      "id": "9dbdacfab4",
+      "line": 44,
+      "text": "It's just Extension, not FileExtension, remember obp, read over if there other places. ContentType should maybe just be Type. I know ContentType is pretty standard, but we are living in plang world, we deal with type.",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-27T20:31:11",
+      "drifted": true
+    },
+    {
+      "id": "7cbb032664",
+      "line": 44,
+      "text": "Right — OBP applies. Renamed in the interface signature and added the rename to scope. The surface is broader than I first thought; folded all of it into Stage 1 since the compiler-guided rename and the input-tightening both touch the same surface:\n\n- ISerializer: ContentType → Type, FileExtension → Extension\n- All 4 concrete serializers (Json, Text, plang/this, plang/Data): property renames\n- Serializers registry (PLang/app/channels/serializers/this.cs): _byContentType → _byType, GetByContentType → GetByType, ContentTypes → Types, SerializeOptions.ContentType → Type, same for DeserializeOptions / ResolveOptions\n- channels/this.cs:193 and other options-populating call sites\n\nAdded a one-paragraph rationale in the deliverables: the owner is `serializer`, so the `Content` and `File` qualifiers carry no information. PLang already has `data.Type` (PLang data type-name); `serializer.Type` reads unambiguously as MIME because of the different owner. The two `Type` properties are namespaced by their context. Same OBP rule that kills the redundant `Core` suffix in the next comment.",
+      "anchor": "",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "9dbdacfab4",
+      "ts": "2026-05-27T20:48:40",
+      "drifted": false
+    },
+    {
+      "id": "68931ce9b7",
+      "line": 70,
+      "text": "Maybe change WriteCore to Write, whats the point of Core?",
+      "anchor": "`Stream.WriteCore` changes from:",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-27T20:32:04",
+      "drifted": true
+    },
+    {
+      "id": "3fb195c57e",
+      "line": 70,
+      "text": "Right — `Core` is a redundant suffix that just means \"don't call directly, this is the override hook.\" That's a discipline communicated by access modifier and convention, not by name decoration.\n\nLooked at channel/this.cs to confirm the structure: abstract `WriteCore` / `ReadCore` / `AskCore` are the override hooks; public virtual `WriteAsync` / `ReadAsync` / `AskAsync` are the orchestrators that fire BeforeWrite / AfterWrite events and route through the abstract hook. Renamed:\n\n- WriteCore → Write\n- ReadCore → Read\n- AskCore → Ask\n\nPublic orchestrators keep their Async suffix to mark them as the entry point with events. A reader scanning the class sees `WriteAsync` (the entry) and `Write` (the override hook); the suffix asymmetry tells you which is which.\n\nScope ripple: every channel subclass overrides one of the *Core methods — channel/stream/this.cs, channel/goal/this.cs, channel/message/this.cs, channel/noop/this.cs, channel/events/this.cs, channel/session/this.cs. The compiler will flag each one. Folded that into Stage 1's scope since Stage 1 already touches channel/stream/this.cs for the data-flow change (passing `data` instead of `data.Value`); doing the rename in the same edit means coder lands the OBP cleanup in one pass.\n\nAlso added a paragraph in the deliverables tying both renames together — Extension/Type and Write/Read/Ask are the same OBP move: drop redundant suffixes when the owner already names the context.",
+      "anchor": "- **Json** — emits `data.Value` as JSON (external clients want the value, not the wrapper). Deserialize parses JSON, wraps in `Data.Ok(parsed)`. No `if (value == null)` branch; Data at the boundary is never null.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "68931ce9b7",
+      "ts": "2026-05-27T20:48:53",
+      "drifted": false
+    }
+  ],
+  "stage-4-properties-on-wire.md": [
+    {
+      "id": "2acb268b1c",
+      "line": 113,
+      "text": "I believe we have !key navigation, like we have with .Value, but I guess coder will figure it out",
+      "anchor": "Variable expression parser learns `!`:",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-27T20:40:53",
+      "drifted": false
+    },
+    {
+      "id": "fb19ff8d2a",
+      "line": 113,
+      "text": "Confirmed — %x!key% follows the same pattern as the existing dereference operators on Data (e.g. the in-code `data.Value` reach is consistent with %x.field% navigation). The parser change is a single-token addition; coder will sort the lexer details (positional disambiguation from the boolean-negation prefix `%!flag%` is the only sharp edge, and it's positionally distinct because `!` after a variable name is unambiguous from `!` at the start of an expression). Leaving the description as-is in the stage doc.",
+      "anchor": "Variable expression parser learns `!`:",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "2acb268b1c",
+      "ts": "2026-05-27T20:49:01",
+      "drifted": false
+    },
+    {
+      "id": "84ee96ddba",
+      "line": 132,
+      "text": "I am wondering if it's wrong decision to flatten the properties into the object, and in stead have properties, so {name:\"user\", type\"object\", value:\"...\", properties : {..}}, what do you say, it is big before we approve this plan",
+      "anchor": "1. The LLM-response ergonomics. `{ name, type, value: \"...\", cost: 100, signature }` reads as a single object with cost as a sibling of value. The nested form `{ name, type, value: \"...\", properties: { cost: 100 }, signature }` adds a level of indirection that callers have to navigate. PLang's variable language gets the cleaner shape.",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-27T20:42:39",
+      "drifted": false
+    },
+    {
+      "id": "c4271ced3f",
+      "line": 132,
+      "text": "This is worth slowing down on. Let me play the movie for both shapes and see if I still believe flat is right.\n\n**The two shapes, side by side**\n\nFlat:\n```\n{ \"name\": \"response\", \"type\": \"string\", \"value\": \"Hello!\",\n  \"cost\": 100, \"model\": \"claude\",\n  \"signature\": {...} }\n```\n\nNested:\n```\n{ \"name\": \"response\", \"type\": \"string\", \"value\": \"Hello!\",\n  \"properties\": { \"cost\": 100, \"model\": \"claude\" },\n  \"signature\": {...} }\n```\n\nThe PLang-side surface is identical for both: `%response%` renders Value, `%response!cost%` reads Properties. The wire converter handles either shape; the C# Data API doesn't change. So the question is purely *what does the JSON look like*.\n\n**Three lenses**\n\n1. *Forward-compatibility for new reserved fields.* PLang is going to evolve — we might add `traceId` as a top-level field in two months. With flat, any Property whose key happens to be `traceId` would either conflict (reserved-key check throws at insertion) or silently shadow (parser bug). With nested, no conflict — Properties live in their own scope; PLang adds reserved fields freely. **Nested wins.**\n\n2. *Forward-compatibility for unknown receivers.* Charlie's older PLang doesn't know what `cost` means. With flat (and the rule \"anything-not-reserved goes into Properties\"), Charlie carries it as a Property — round-trip preserves it. With nested, Charlie also carries it as a Property (it's in the `properties` bag) — same round-trip. Both shapes are equally forgiving here. **Tie.**\n\n3. *Self-documenting wire shape.* A reader looking at the JSON for the first time. Flat: \"name, type, value… what's cost? Is that part of the schema or extra data?\" Nested: \"name, type, value, signature, properties — five fields, clear separation between content and metadata.\" **Nested wins on clarity.**\n\n4. *Per-Property metadata in the future.* You called out public/private Properties as future work; structured-Property values too. With nested, there's a natural place to put per-Property annotations (`properties: { cost: { value: 100, visibility: \"public\" } }` or similar shapes). With flat, every annotation needs a side-band scheme — `cost__visibility: \"public\"` or another reserved-key. **Nested wins on future flexibility.**\n\n5. *Ergonomics of the LLM-response case.* I'd argued flat reads more naturally (\"cost as a sibling of value\"). Reconsidering: that's mostly aesthetic. PLang users access `%response!cost%`, not `wire.cost`. Even when debugging a wire payload, `properties: { cost: 100 }` is plenty readable. **Flat's edge here is small.**\n\n**Where I land**\n\nI'd previously argued for flat. I'm changing my position: **nested is the better call.** The forward-compat-for-reserved-fields concern is real (PLang isn't done evolving), the self-documenting wire is genuinely cleaner, and the future-per-Property-metadata story is much easier with a scope to land in. The LLM-response ergonomic case isn't strong enough to outweigh those three.\n\n**One implication worth calling out**\n\nThe \"anything-not-reserved becomes a Property\" rule was a flat-shape convenience. With nested, the rule changes to: top-level keys outside the five (`name`, `type`, `value`, `signature`, `properties`) get *ignored* on read, not captured. That trades round-trip-of-unknown-fields for stricter wire validation. The trade-off is fine because Properties is the explicit *expected* metadata channel; unknown reserved fields are genuinely \"future PLang spoke a new language at me,\" and silently dropping them is no worse than capturing them somewhere I won't introspect.\n\n**What changes if you confirm**\n\n- Stage 4 deliverables: wire converter emits `properties: { … }` nested instead of flattening at top level.\n- Reserved keys grow from 4 to 5: `name`, `type`, `value`, `signature`, `properties` cannot be used as Property keys.\n- The receiver-side rule becomes \"five reserved fields parsed; anything else top-level is unknown and ignored.\"\n- wire-shape.md's LLM-response example shows the nested shape.\n- plan.md's Properties cross-cutting decision updates to match.\n- Stage 4's design rationale flips to argue for nested instead of flat.\n\nHolding the edits until you call it. This one's structural enough that I want explicit confirmation before churning the stage doc.",
+      "anchor": "1. The LLM-response ergonomics. `{ name, type, value: \"...\", cost: 100, signature }` reads as a single object with cost as a sibling of value. The nested form `{ name, type, value: \"...\", properties: { cost: 100 }, signature }` adds a level of indirection that callers have to navigate. PLang's variable language gets the cleaner shape.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "84ee96ddba",
+      "ts": "2026-05-27T20:49:32",
+      "drifted": false
+    },
+    {
+      "id": "470ce8dc6e",
+      "line": 132,
+      "text": "ok, lets do this. just one thing, actually, now we dont need any reserved keys, because reason for the reserved keys was because properties was flatten to the root object, no longer so it can have any key it wants",
+      "anchor": "1. The LLM-response ergonomics. `{ name, type, value: \"...\", cost: 100, signature }` reads as a single object with cost as a sibling of value. The nested form `{ name, type, value: \"...\", properties: { cost: 100 }, signature }` adds a level of indirection that callers have to navigate. PLang's variable language gets the cleaner shape.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "c4271ced3f",
+      "ts": "2026-05-27T20:52:41",
       "drifted": false
     }
   ]

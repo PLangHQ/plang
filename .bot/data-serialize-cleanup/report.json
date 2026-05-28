@@ -2,14 +2,114 @@
   "branch": "data-serialize-cleanup",
   "sessions": [
     {
+      "id": "f78f1da6-1888-4d5b-82f6-8205a5ff0636",
+      "bot": "test-designer",
+      "timestamp_start": "2026-05-27T21:09:50Z",
+      "timestamp_end": "2026-05-27T21:20:43Z",
+      "intent": "Translate architect's coverage matrix into failing-test contract: C# TUnit stubs, PLang .goal stubs, and 4 integration cuts.",
+      "before": {
+        "assumptions": "Architect handed off a complete coverage matrix (~60 rows) + failure matrix (~19 rows) + new-surfaces inventory across 5 stages. Test-strategy fixes 4 integration cuts. Test-designer owns the final test surface \u2014 matrix is suggestion, not gospel (Ingi reconfirmed up front).",
+        "risk": "Stage 1 + Stage 2 are tightly coupled. If coder splits them into separate PRs, the Stage 1 tests will reference renamed surfaces (Type/Extension) that don't compile until Stage 2 is also merged. Mitigation: stubs are Assert.Fail anyway \u2014 they only need the architecture to settle, not the build to be green at every intermediate commit."
+      },
+      "plan": ".bot/data-serialize-cleanup/test-designer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/Serialization/ISerializerInputContractTests.cs",
+            "PLang.Tests/App/Serialization/SerializerRenameTests.cs",
+            "PLang.Tests/App/Serialization/ChannelHookRenameTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 1 \u2014 ISerializer input tightened to Data, OBP renames on serializer/channel families. Reflection-based assertions for the 'old name gone' rows (1.2, ContentType property removed, GetByContentType method removed, etc.) \u2014 they can't be TUnit bodies, the compile-time guard is the real assertion."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Serialization/MergedPlangSerializerTests.cs",
+            "PLang.Tests/App/Serialization/WireConverterSigningTests.cs",
+            "PLang.Tests/App/Serialization/CanonicalizationTests.cs",
+            "PLang.Tests/App/Serialization/JsonCompositionTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 2 \u2014 merged application/plang serializer, sign-if-missing in wire converter, canonicalization fix (crypto.Hash via Transport.ForOutbound), Json composition extensions. Added Json.ForInbound symmetry test (new-surfaces inventory mentions it but no matrix row pins it) and a byte[]-leaf wire-converter test (Stage 3's flat Compress relies on it)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Serialization/CompressFlattenedTests.cs",
+            "Tests/Serialization/CompressRoundTrip.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 3 \u2014 flat Compress. Nine C# tests pin the shape change and the deletion of _envelopeJsonOptions + RehydrateNestedData; the .goal pins the PLang developer-facing round-trip."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Serialization/PropertiesWireShapeTests.cs",
+            "PLang.Tests/App/Serialization/IntegrationCuts/Cut4_PropertiesWireTests.cs",
+            "Tests/Serialization/PropertiesBangNavigation.test.goal",
+            "Tests/Serialization/ValueVsPropertiesDisjoint.test.goal",
+            "Tests/Serialization/PropertiesBangChainedNavigation.test.goal",
+            "Tests/Serialization/NegationPrefixStillParses.test.goal",
+            "Tests/Serialization/VariableRendersValueOnly.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 4 \u2014 Properties get a wire scope. ~20 C# tests pin the nested wire object, primitive round-trips (incl. JSON int\u2192long promotion), unconstrained keys, the unknown-top-level-field-is-ignored rule, and canonicalization binding Properties. Five .goal tests pin the developer-facing %x!key% navigation including bang vs negation-prefix disambiguation."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Serialization/IntegrationCuts/Cut1_PlainRoundTripTests.cs",
+            "PLang.Tests/App/Serialization/IntegrationCuts/Cut2_SignThenCompressTests.cs",
+            "PLang.Tests/App/Serialization/IntegrationCuts/Cut3_MultiActorForwardingTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Integration cuts 1\u20133. Architect's strategy doc fixed these as the end-to-end contract; I translated each into ~4 TUnit methods covering wire-shape assertions, value/signature preservation, and the tamper-fails-verify guarantee per cut."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Serialization/TransportRenameTests.cs",
+            "PLang.Tests/App/Serialization/FailureMatrixTests.cs",
+            "Tests/Serialization/DoubleBangParseError.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 5 vocabulary sweep (kept rows 5.1 + 5.3; pruned 5.2/5.4/5.5/5.6 as CI invariants, not unit tests) and consolidated failure-matrix rows (EnsureSigned without Context, Properties unsupported value type, Decompress malformed input, channel direction violations, crypto unsupported algorithm)."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/test-designer/v1/plan.md",
+            ".bot/data-serialize-cleanup/test-designer/v1/verdict.json",
+            ".bot/data-serialize-cleanup/test-designer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plan, verdict, and rolling summary."
+        }
+      ],
+      "after": {
+        "status": "Contract written. 11 C# files + 4 integration-cut classes + 7 .goal files. ~90 test methods + 7 goal stubs, all failing (Assert.Fail / throw not implemented). `dotnet build PLang.Tests` clean \u2014 0 errors.",
+        "health": "Ready for coder. Coder should work in stage order (1\u21922\u21923\u21924\u21925); stages 1 and 2 likely merge as one PR per architect's note.",
+        "notes": "Pruned non-unit-test rows from matrix (5.2 git grep, 5.4 var renames, 5.5/5.6 build-clean tautologies). Added two tests not in matrix: WireConverter byte[]-leaf emission (Stage 3 dependency) and Json.ForInbound symmetry (new-surfaces inventory orphan). Regrouped files by topic (PropertiesWireShapeTests, WireConverterSigningTests) rather than by stage number \u2014 easier to maintain when stages converge in PRs."
+      }
+    },
+    {
       "id": "fc88121d-d408-4521-8b80-a76f945ea054",
       "bot": "architect",
       "timestamp_start": "2026-05-26T16:22:59Z",
       "timestamp_end": "2026-05-26T16:27:20Z",
-      "intent": "Design Data's variable→wire→variable round trip: flat shape, signing at channel, merge the two plang serializers, drop Envelope.",
+      "intent": "Design Data's variable\u2192wire\u2192variable round trip: flat shape, signing at channel, merge the two plang serializers, drop Envelope.",
       "before": {
         "assumptions": "Two plang serializers (application/plang and application/plang+data) duplicate STJ setup. The plang+data serializer builds a parallel Envelope class to bypass [JsonIgnore] on Signature. Stream.WriteCore strips the Data wrapper before handing to the serializer. Compress double-wraps (gzip Data inside archived Data). ISerializer accepts object?, but PLang only ever ships Data.",
-        "risk": "Touches the channel write path and four serializer implementations atomically. Any caller that relied on the polymorphic object? input or on the data.Value strip will break — but per Ingi's assertion, those callers don't exist in PLang's actual flow because Data is the universal currency."
+        "risk": "Touches the channel write path and four serializer implementations atomically. Any caller that relied on the polymorphic object? input or on the data.Value strip will break \u2014 but per Ingi's assertion, those callers don't exist in PLang's actual flow because Data is the universal currency."
       },
       "plan": ".bot/data-serialize-cleanup/architect/plan.md",
       "actions": [
@@ -33,7 +133,7 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Four stage files. 1 tightens ISerializer to Data + unstrips Stream.WriteCore. 2 merges the plang serializers, drops Envelope, moves EnsureSigned to Channel. 3 flattens Compress. 4 vocabulary sweep — drop 'envelope' word."
+          "context": "Four stage files. 1 tightens ISerializer to Data + unstrips Stream.WriteCore. 2 merges the plang serializers, drops Envelope, moves EnsureSigned to Channel. 3 flattens Compress. 4 vocabulary sweep \u2014 drop 'envelope' word."
         },
         {
           "paths": [
@@ -58,6 +158,559 @@
         "status": "Initial design plan complete. Four stages carved, wire-shape reference written, summary logged. Ready for test-designer to produce test-strategy.md and test-coverage.md, or for coder to begin Stage 1.",
         "health": "Design is settled. Conversation with Ingi covered the round-trip semantics, name as addressability coordinate, signing position, and the flat wire shape. No open architectural questions.",
         "notes": "Out of scope and explicitly parked: algorithm tagging on archived/encryption (the +variant pattern), protobuf encoder, Encrypt path flattening (waits for crypto service), inspection-path serialization (data.ToString for debug)."
+      }
+    },
+    {
+      "id": "2a9c588c-de25-4444-8504-03111939ff31",
+      "bot": "architect",
+      "timestamp_start": "2026-05-27T00:00:00Z",
+      "timestamp_end": "2026-05-27T00:00:00Z",
+      "intent": "Merge runtime2 into data-serialize-cleanup; reflect typed-action-returns in plan + Stage 1",
+      "before": {
+        "assumptions": "Plan and stages were carved against the pre-merge serializer surface. ISerializer returned bare T? and threw on parse errors. Stage 1 was going to tighten both return shape and input shape in one stroke.",
+        "risk": "The merge could have changed the surface enough to invalidate other stages \u2014 needs an audit before claiming the plan still stands."
+      },
+      "plan": ".bot/data-serialize-cleanup/architect/plan.md",
+      "actions": [
+        {
+          "paths": [],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Merged origin/runtime2 cleanly. Confirmed: Stages 2/3/4 unchanged; Stage 1 splits \u2014 return half done by typed-action-returns commit 5b1b894c4, input half remains."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/plan.md",
+            ".bot/data-serialize-cleanup/architect/stage-1-iserializer-data.md",
+            ".bot/data-serialize-cleanup/architect/stage-2-plang-merge.md",
+            ".bot/data-serialize-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "plan.md problem #3 + ISerializer decision section + stage index annotated. Stage 1 rewritten to enumerate done-vs-remaining and narrow scope to input-tightening. Stage 2 code example updated to Task<Data> + try/catch. Summary gets a new top entry recording the merge and the changes."
+        }
+      ],
+      "after": {
+        "status": "Plan is reconciled with runtime2 surface. Stage 1 is narrower but still required (input side); other stages stand.",
+        "health": "green",
+        "notes": "Coder/test-designer pickup should read stage-1-iserializer-data.md fresh \u2014 the done-list at the top prevents re-doing the merged work."
+      }
+    },
+    {
+      "id": "1346488c-bfa4-4069-964c-c1b46811b716",
+      "bot": "architect",
+      "timestamp_start": "2026-05-27T17:30:00Z",
+      "timestamp_end": "2026-05-27T17:30:00Z",
+      "intent": "Lock in design pivots from review: sign-in-converter, canonicalization fix, Properties-on-wire (new Stage 4); rewrite plan + stages + wire-shape accordingly",
+      "before": {
+        "assumptions": "Plan said signing happens at the channel (outermost only); Properties were [JsonIgnore]; the type field in wire-shape used variable-name instead of schema-name; Stage 2 deliverable was \"channel signs before WriteCore\".",
+        "risk": "The pivot to sign-in-converter touches Stage 2 and Stage 3 narratives at once. Properties-on-wire adds a real architectural stage (C# shape change + wire emission + variable-syntax change). Risk is leaving the stages inconsistent if any one of them keeps the old framing."
+      },
+      "plan": ".bot/data-serialize-cleanup/architect/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/plan.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Rewrote the Signing decision section (sign-if-missing during converter walk, three properties: forwarding, compress, list-of-Data). Added Properties cross-cutting decision (Dictionary<string,object?> primitives, flat top-level wire, %x.field% vs %x!key%, reserved keys, sign-walk-skips). Updated stages table to 5 stages. Updated test-surface bullets to match new behaviour."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/stage-2-plang-merge.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Substantial rewrite. Dropped \"channel signs before WriteCore\" deliverable; replaced with sign-in-converter (wire converter calls EnsureSigned during walk). Added crypto/Default.cs canonicalization fix (hash through wire-direction options). Updated code example, design narrative, risks, and coder verification list."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/stage-3-flat-compress.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Replaced the \"no signing inside Compress\" section (which was wrong) with the new framing: Compress routes through the registered serializer; the converter signs D1 during the byte-conversion automatically; this also fixes today's bug where _envelopeJsonOptions strips Signature from compressed bytes. Updated Properties round-trip note (will survive after Stage 4). Added sign-then-compress verification."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/stage-4-properties-on-wire.md",
+            ".bot/data-serialize-cleanup/architect/stage-5-vocabulary-sweep.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "New Stage 4: Properties flatten to the wire. Scope, deliverables (Properties.cs C# rewrite, wire converter Write/Read, %!key% syntax, reserved-key enforcement), design rationale, risks, coder verification. Stage 5 is the renamed vocabulary sweep (was Stage 4)."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/stage-4-vocabulary-sweep.md"
+          ],
+          "type": "rename",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Renamed to stage-5-vocabulary-sweep.md to make room for Stage 4 = Properties on wire. Vocabulary sweep is unchanged otherwise."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/plan/wire-shape.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Fixed plain-Data example to show type:\"object\" for untyped (vs type:\"user\" for Data<User> in sibling example). Added LLM-response example showing Properties flattened to top-level (cost, model). Updated compressed-Data narrative to show inner Data carries its own signature (sign-during-byte-conversion). Updated nested-Data section to show inner Datas each have signatures, with canonicalization binding the chain. Updated \"What's NOT on the wire\" and round-trip invariants."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added new top entry recording the three pivots (signing, canonicalization, Properties) and the new Stage 4. Stage status table updated to 5 stages."
+        }
+      ],
+      "after": {
+        "status": "Plan + 5 stages + wire-shape now consistent with all design decisions from the review session. Stage 1 is partial-complete (return half merged); Stages 2-5 are pending.",
+        "health": "green",
+        "notes": "Ready for coder pickup. Stage 2 carries the biggest surface (merge plang serializers + sign-in-converter + canonicalization). Stage 4 (Properties) is independent enough that it could run in parallel with Stage 3 once Stage 2 lands."
+      }
+    },
+    {
+      "id": "977a5531-a317-460e-9520-70d4663a435c",
+      "bot": "architect",
+      "timestamp_start": "2026-05-27T21:00:00Z",
+      "timestamp_end": "2026-05-27T21:00:00Z",
+      "intent": "Properties shape pivot from flat to nested; drop reserved-key rule. Apply edits across plan, Stage 4, and wire-shape.",
+      "before": {
+        "assumptions": "Stage 4 emitted Properties as top-level wire fields (flat) and enforced reserved-key validation. Plan Properties section + wire-shape examples + Stage 4 deliverables all reflected the flat shape.",
+        "risk": "Three files describe the same Property shape from different angles. If any one of them keeps the flat shape, the docs drift."
+      },
+      "plan": ".bot/data-serialize-cleanup/architect/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/plan.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Rewrote Properties cross-cutting decision for nested shape. Dropped reserved-key rule. Updated receiver-side rule to \"unknown top-level fields ignored\". Updated test-surface bullet for Properties round-trip."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/stage-4-properties-on-wire.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Full rewrite. Title \"flatten to the wire\" \u2192 \"get a wire scope\". Properties C# type drops reserved-key guard. Wire converter Write emits nested properties object (omitted when empty); Read parses 5 reserved fields and silently skips unknown top-level. Design re-argues for nested via four-lens analysis. Coder-verification checks updated to assert nested shape, no reserved-key throw, omit-when-empty, etc."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/plan/wire-shape.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "LLM-response example now shows nested properties object. \"What is NOT on the wire\" updated for five-field contract + unconstrained Property keys + ignore-unknown rule. Round-trip invariants updated."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "New top entry recording the Stage 1 OBP renames and the Properties flat-to-nested pivot. Stage status table updated."
+        }
+      ],
+      "after": {
+        "status": "Plan, Stage 4, wire-shape, and summary now all describe the nested-properties shape consistently. Ready for coder pickup.",
+        "health": "green",
+        "notes": "No reserved-key validation in the Properties C# type \u2014 keys are unconstrained because they live in their own object on the wire."
+      }
+    },
+    {
+      "id": "e00a86d3-7d36-4e6f-9c31-5091e8bd0438",
+      "bot": "architect",
+      "timestamp_start": "2026-05-27T21:30:00Z",
+      "timestamp_end": "2026-05-27T21:30:00Z",
+      "intent": "Write the test-strategy and test-coverage files referenced by plan.md so the test-designer handoff has all the design content it needs.",
+      "before": {
+        "assumptions": "plan.md referenced plan/test-strategy.md and plan/test-coverage.md, but the files did not exist on disk. Ingi caught the dangling link before sending to test-designer.",
+        "risk": "Test-designer would have either followed broken links (wasted cycle), derived coverage from scratch (slow, error-prone), or asked architect to write them (cycle delay). Architect character file is explicit these are architect-produced content."
+      },
+      "plan": ".bot/data-serialize-cleanup/architect/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/plan/test-strategy.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Narrative file. Scope statement; test layer mapping (C# / goal / integration); four integration cuts narrated in full (Plain round-trip, Sign-then-compress, Multi-actor forwarding, Properties wire shape); explicit list of what is NOT covered by the cuts."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/plan/test-coverage.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Reference file. Coverage matrix per stage (~60 rows total): behavior + layer + sense. Consolidated failure matrix (~18 negative paths). New-surfaces inventory: interfaces/types, new methods, renamed/removed surfaces, variable-syntax, existing surfaces touched by reference."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/plan.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Test surface section reworded \u2014 describes what is IN each file rather than \"to be written.\""
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "New top entry documenting the test-strategy/test-coverage write and the test-designer-handoff readiness."
+        }
+      ],
+      "after": {
+        "status": "plan + 5 stages + wire-shape + test-strategy + test-coverage are all consistent and on disk. Branch is ready for test-designer handoff.",
+        "health": "green",
+        "notes": "Next: run.ps1 test-designer data-serialize-cleanup \"Create test suites from the architect plan on branch data-serialize-cleanup\" -b data-serialize-cleanup"
+      }
+    },
+    {
+      "id": "ac1455f3-d8e3-4db9-a60d-0517d428d926",
+      "bot": "tester",
+      "timestamp_start": "2026-05-28T00:53:56Z",
+      "intent": "Validate test quality on data-serialize-cleanup after codeanalyzer v2 PASS",
+      "before": {
+        "assumptions": "test-designer v1 wrote ~90 failing stubs; coder closed Stage 1-5 + F1-F11; codeanalyzer v2 PASS",
+        "risk": "no coder/ folder or baseline-tests.md exists \u2014 process violation; cannot distinguish regressions from pre-existing failures without baseline"
+      },
+      "actions": [
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/test-report.json",
+            ".bot/data-serialize-cleanup/tester/v2/plan.md",
+            ".bot/data-serialize-cleanup/tester/v2/verdict.json",
+            ".bot/data-serialize-cleanup/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Tester v2 outputs: report, plan, verdict, summary. Two minor weak-assertion findings; process note (no coder/ folder); verdict PASS."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/crypto/code/Default.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mutation test: replaced serializer.OutboundOptions with JsonSerializerOptions.Default at line 51 to verify Stage 2 canonicalization coverage. 3 tests correctly failed (CryptoHash_UsesTransportForOutboundOptions_NotDefaultStj, Cut4_TamperingPropertyValue_FailsOuterSignatureVerify, OuterSignature_AfterPropertiesValueTamper_FailsVerify). Mutation reverted; git status clean."
+        }
+      ],
+      "plan": ".bot/data-serialize-cleanup/tester/v2/plan.md",
+      "after": {
+        "status": "pass",
+        "health": "C# 3229/3229 + PLang 228/228 green on clean rebuild; Stage 2 canonicalization fix mutation-verified; 2 minor weak-assertion findings (cosmetic).",
+        "notes": "Process: no .bot/data-serialize-cleanup/coder/ folder exists \u2014 flagged as process violation, not a blocker. Coder did substantive work across Stages 1-5 + F1-F11 but skipped writing tester-handoff artifacts."
+      },
+      "timestamp_end": "2026-05-28T01:08:44Z"
+    },
+    {
+      "id": "8b05d729-8d62-4964-862f-4f8e114ee7be",
+      "bot": "security",
+      "timestamp_start": "2026-05-28T01:20:13Z",
+      "timestamp_end": "2026-05-28T01:40:00Z",
+      "intent": "Security review of data-serialize-cleanup: wire converter, canonicalization, sign-if-missing carveouts, Properties round-trips, Sensitive-leak surfaces.",
+      "before": {
+        "assumptions": "Codeanalyzer v2 PASSED (11 v1 findings closed). Tester v2 PASSED with mutation verification. Architecture stable. Looking for security-class gaps the structural review and behavioural tests don't catch.",
+        "risk": "Stage 2 widens application/plang's role as inter-actor transport; Sensitive-skip carveout (for settings/sqlite) inherits to every channel using plang mime. Stage 4 Properties on wire introduces a new asymmetric path (write-as-Data, read-as-dict). Stage 1's converter walk has multiple recursion entry points."
+      },
+      "plan": ".bot/data-serialize-cleanup/security/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/data/WireJsonConverter.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read full Write/Read paths, MarkOuterForHash ref-counting (closed v1 F2), LiftDataIfShaped rehydration. Found F1: GetRawText+Deserialize<@this>(string) creates a new Utf8JsonReader with depth=0 on each recursion level \u2014 STJ MaxDepth budget restarts, only the C# call stack bounds nesting. Medium DoS."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/crypto/code/Default.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Hash routes through registered application/plang serializer with MarkOuterForHash carveout. SerializerMismatch 500 on type-mismatch (closed v1 F4). Outer signature transitively binds inner Datas \u2014 correct."
+        },
+        {
+          "paths": [
+            "PLang/app/variables/Variable.cs",
+            "PLang/app/modules/variable/set.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Variable.Resolve fails-closed on malformed shapes via IsMalformed; variable.set returns InvalidVariableReference 400. Closed v1 F5."
+        },
+        {
+          "paths": [
+            "PLang/app/data/Properties.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "EnsureSupportedValue is top-level only \u2014 IDictionary/IEnumerable accepted structurally. F3 finding: List<Data>/Dict<Data> round-trips asymmetrically. Coder accepted as v1 F9 tradeoff."
+        },
+        {
+          "paths": [
+            "PLang/app/data/this.Transport.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "100 MB MaxDecompressedSize cap in place. Stage 3 flatten correct. Compress/Decompress route through registered plang serializer with ContextLessFallback single-source-of-truth (closed v1 F10)."
+        },
+        {
+          "paths": [
+            "PLang/app/channels/serializers/serializer/plang/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Documented intentional Sensitive.Strip omission (for settings/sqlite). F2 finding: any external channel registered with mime=application/plang transports [Sensitive] cleartext. Stage 2 widens this surface."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/signing/code/Ed25519.cs",
+            "PLang/app/modules/signing/verify.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "signing.verify pipeline unchanged from runtime2 base (only vocab edit). NoSignature 400 returned when RawSignature null \u2014 receive-side gate holds. Step 7 'if Value != null' skip is unchanged; not introduced by this branch."
+        },
+        {
+          "paths": [
+            ".semgrep/"
+          ],
+          "type": "review",
+          "category": "config",
+          "confidence": "high",
+          "context": "semgrep-scan.sh: 14 findings (down from 15 baseline). All serializer-default-options informational hits in pre-existing files. No new violations introduced."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/security/v1/plan.md",
+            ".bot/data-serialize-cleanup/security/v1/verdict.json",
+            ".bot/data-serialize-cleanup/security-report.json",
+            ".bot/data-serialize-cleanup/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Standard security-pass artefacts."
+        }
+      ],
+      "after": {
+        "status": "FAIL \u2014 F1 re-rated High after user pushback. Pre-auth, unrecoverable DoS reachable via callback wire deserialization today.",
+        "health": "Branch blocked on F1. ~5-line fix in WireJsonConverter (AsyncLocal recursion counter).",
+        "notes": "Initial v1 rated F1 Medium under the (wrong) framing that no external plang channel ships. Corrected: parsing happens pre-verify and the callback wire already exposes the deserializer to untrusted bytes. F2/F3/F4 unchanged."
+      }
+    },
+    {
+      "id": "e69b4b75-2a7f-49d9-8e84-ce52ca9243c3",
+      "bot": "security",
+      "timestamp_start": "2026-05-28T01:45:00Z",
+      "timestamp_end": "2026-05-28T02:05:00Z",
+      "intent": "Verify Coder's F1 fix; mutation-test whether the new gate is load-bearing; correct v1 severity if not.",
+      "before": {
+        "assumptions": "Coder addressed F1 (HIGH) with AsyncLocal recursion counter + regression tests. v1 verdict was FAIL.",
+        "risk": "If new counter isn't load-bearing, v1 over-rated F1. Need mutation test to find out."
+      },
+      "plan": ".bot/data-serialize-cleanup/security/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/data/WireJsonConverter.cs",
+            "PLang.Tests/App/Serialization/WireConverterDepthBombTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read fix \u2014 AsyncLocal<int> counter, increment/decrement around ReadBody, JsonException past MaxReadDepth=64. Tests cover string + stream entries."
+        },
+        {
+          "paths": [
+            "PLang/app/data/WireJsonConverter.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mutation test: temporarily set MaxReadDepth=int.MaxValue, rebuilt, ran 3 depth-bomb tests. All passed \u2014 the new counter is NOT the gate. STJ's per-reader MaxDepth=64 already rejects the bomb at outermost ParseValue. Reverted; no commit."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/security-report.json"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "F1 severity HIGH \u2192 Info, status open \u2192 fixed (defense-in-depth). Summary rewritten with corrected ParseValue-inherits-MaxDepth trace."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/security/v2/plan.md",
+            ".bot/data-serialize-cleanup/security/v2/verdict.json",
+            ".bot/data-serialize-cleanup/security/v2/v1_review_summary.md",
+            ".bot/data-serialize-cleanup/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 artefacts. Honest correction recorded: v1 HIGH was false-positive; STJ defaults already protected deserializer."
+        }
+      ],
+      "after": {
+        "status": "PASS \u2014 F1 retracted to Info (false-positive at HIGH). 3 Low/Info open items unchanged.",
+        "health": "Branch merge-ready. Coder's defense-in-depth fix kept (covers future-MaxDepth-override). My v1 severity flip was a reasoning error.",
+        "notes": "Updating feedback_pre_auth_parse_severity.md memory with the missing trace-step (ParseValue inherits source reader's MaxDepth)."
+      }
+    },
+    {
+      "id": "fcbbb185-ea87-49bd-a889-8b2f8bc0503d",
+      "bot": "auditor",
+      "timestamp_start": "2026-05-28T01:51:27Z",
+      "intent": "Second-opinion review of data-serialize-cleanup after codeanalyzer/tester/security all PASSED v2.",
+      "before": {
+        "assumptions": "Three reviewers PASS; coder addressed F1-F11; tester mutation-verified canonicalization. My job: find the gap between reviewers, not redo their passes.",
+        "risk": "Cross-file contracts (WireJsonConverter \u2194 crypto.Hash \u2194 Transport), Properties wire shape asymmetric round-trip surface, sign-if-missing reach, ! operator parser cross-cutting"
+      },
+      "plan": ".bot/data-serialize-cleanup/auditor/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/codeanalyzer/v2.md",
+            ".bot/data-serialize-cleanup/tester/summary.md",
+            ".bot/data-serialize-cleanup/security/v2/v1_review_summary.md",
+            ".bot/data-serialize-cleanup/security-report.json"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Read prior bot reports to ground audit in what they already covered."
+        },
+        {
+          "paths": [
+            "PLang/app/data/WireJsonConverter.cs",
+            "PLang/app/data/Properties.cs",
+            "PLang/app/data/this.Transport.cs",
+            "PLang/app/channels/serializers/serializer/plang/this.cs",
+            "PLang/app/modules/crypto/code/Default.cs",
+            "PLang/app/modules/crypto/hash.cs",
+            "PLang/app/variables/Variable.cs",
+            "PLang/app/modules/variable/set.cs",
+            "PLang/app/modules/variable/compress.cs",
+            "Tests/Serialization/CompressRoundTrip.test.goal"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Cross-file walks: canonicalization four-file chain; ! operator end-to-end; Properties insertion/wire/navigation triangle; depth-bomb trace through ParseValue's MaxDepth inheritance."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/auditor/v1/plan.md",
+            ".bot/data-serialize-cleanup/auditor/v1/result.md",
+            ".bot/data-serialize-cleanup/auditor/v1/verdict.json",
+            ".bot/data-serialize-cleanup/auditor/summary.md",
+            ".bot/data-serialize-cleanup/auditor-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote auditor v1 outputs: PASS verdict with two minor findings (test assertion path; crypto/hash.cs async-without-await). No critical or major."
+        }
+      ],
+      "timestamp_end": "2026-05-28T01:55:00Z",
+      "after": {
+        "status": "PASS \u2014 branch is merge-ready",
+        "health": "Cross-file canonicalization story holds; three reviewers agreed and my walk confirms; no critical or major.",
+        "notes": "Two minor findings (one endorses tester F1; one cosmetic async signature). Process note: no coder/ folder for this branch \u2014 tester already flagged."
+      }
+    },
+    {
+      "id": "e4fd042e-7fdc-49f8-973f-eacda509b708",
+      "bot": "docs",
+      "timestamp_start": "2026-05-28T02:15:04.853773Z",
+      "timestamp_end": "2026-05-28T02:23:14.652508Z",
+      "intent": "Update Documentation/v0.2 + Runtime2 to reflect data-serialize-cleanup (5 stages); apply coder's CLAUDE.md proposal.",
+      "before": {
+        "assumptions": "All prior PASSes hold (codeanalyzer v2, tester v2, security v2, auditor v1). Coder folder missing \u2014 work landed in commits only.",
+        "risk": "Docs drift across architecture.md, callbacks.md, io-channels.md, good_to_know.md, app-tree.md, data-spec.md, variables.md from envelope vocab, plang+data serializer merge, channel hook renames, Properties wire scope, and Compress flatten."
+      },
+      "plan": ".bot/data-serialize-cleanup/docs/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "Documentation/v0.2/io-channels.md",
+            "Documentation/v0.2/callbacks.md",
+            "Documentation/v0.2/architecture.md",
+            "Documentation/v0.2/good_to_know.md",
+            "Documentation/v0.2/app-tree.md",
+            "Documentation/Runtime2/data-spec.md",
+            "Documentation/v0.2/variables.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Sweep all docs referencing pre-data-serialize-cleanup surface: envelope vocab, plang+data, channel-hook *Core names, ContentType field, ICallback-only lazy signing, RehydrateNestedData, Data.Envelope. Add new content where surface is genuinely new (Properties wire scope, ! operator, sign-if-missing in converter, canonicalization through OutboundOptions)."
+        },
+        {
+          "paths": [
+            "CLAUDE.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Applied coder's 'Data is not enveloped' CLAUDE.md proposal. Target /PLang/App/CLAUDE.md did not exist; landed in repo-root /CLAUDE.md (the canonical project CLAUDE.md). Wording adjusted from 'app.data.Json' to 'app.data.WireJsonConverter' since the converter owns the wire shape, not Json.cs (the STJ wrapper)."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/docs/v1/plan.md",
+            ".bot/data-serialize-cleanup/docs/v1/result.md",
+            ".bot/data-serialize-cleanup/docs/v1/verdict.json",
+            ".bot/data-serialize-cleanup/docs/summary.md",
+            ".bot/data-serialize-cleanup/docs-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Standard docs-bot deliverables for v1 \u2014 plan, CHANGELOG-style result, verdict, summary, and per-bot report capturing decisions on the one CLAUDE.md proposal."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "ready-to-merge",
+        "notes": "All seven doc gaps filled across Documentation/v0.2 and Documentation/Runtime2. The 'Data is not enveloped' CLAUDE.md rule landed in /CLAUDE.md. No PLang example gaps to flag (tester already wrote LlmProperties + NegationPrefixStillParses + Compress round-trip coverage). Coder folder is absent \u2014 already flagged by tester and auditor; not re-escalating."
       }
     }
   ]

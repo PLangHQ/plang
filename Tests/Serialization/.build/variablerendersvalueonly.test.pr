@@ -1,0 +1,128 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %response% = \u0027just-the-value\u0027",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "%response% (no operator) must render the Value, not the whole Data. Properties must\nNOT bleed into the variable\u0027s primary render. Coverage row 4.14.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%response%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "just-the-value",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%response%, Value=\u0022just-the-value\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %response!cost% = 100",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%response!cost%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": 100,
+              "type": "int"
+            },
+            {
+              "name": "Type",
+              "value": "string",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%response!cost%, Value=100, Type=string)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %response% equals \u0027just-the-value\u0027",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "just-the-value",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%response%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022just-the-value\u0022, Actual=%response%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Serialization/VariableRendersValueOnly.test.goal",
+  "prPath": "/Serialization/.build/variablerendersvalueonly.test.pr",
+  "hash": "658aaefdcd2da3cbf035f2a64b33b47064d9cb4d216af9e0d1ffcc65e8b50982",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

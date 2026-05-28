@@ -35,7 +35,7 @@ public interface IStore : IDisposable
 
     /// <summary>
     /// Sets a Data value by table and key. Creates the table if it doesn't exist.
-    /// The full Data envelope (value, type, signature) is persisted.
+    /// The full Data (value, type, signature) is persisted.
     /// </summary>
     Task<data.@this> Set(string table, string key, data.@this data);
 

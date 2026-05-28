@@ -104,7 +104,7 @@ public class IntegrationCutsTests
         private readonly Action _onInvoke;
         public GoalChannelProbe(string name, global::app.goals.goal.@this goal, global::app.actor.@this actor, Action onInvoke)
             : base(name, goal, actor) { _onInvoke = onInvoke; }
-        public override Task<Data> WriteCore(Data data, CancellationToken ct = default)
+        public override Task<Data> Write(Data data, CancellationToken ct = default)
         {
             _onInvoke();
             return Task.FromResult(Data.Ok());

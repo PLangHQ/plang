@@ -68,7 +68,7 @@ public class LlmIntegrationTests
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value?.ToString() ?? "").Contains("42");
-        await Assert.That(result.Properties["TotalTokens"]?.Value).IsNotNull();
+        await Assert.That(result.Properties["TotalTokens"]).IsNotNull();
     }
 
     // --- Test 2: JSON schema response ---
@@ -98,7 +98,7 @@ public class LlmIntegrationTests
         await Assert.That(result.Value).IsNotNull();
         var json = result.Value is JsonElement je ? je : JsonSerializer.SerializeToElement(result.Value);
         await Assert.That(json.TryGetProperty("sentiment", out _)).IsTrue();
-        await Assert.That(result.Properties["Format"]?.Value?.ToString()).IsEqualTo("json");
+        await Assert.That(result.Properties["Format"]?.ToString()).IsEqualTo("json");
     }
 
     // --- Test 3: Code format extraction ---
@@ -205,7 +205,7 @@ public class LlmIntegrationTests
         // The LLM should have attempted the tool, got an error (goal doesn't exist),
         // and then responded with something about not being able to get the weather
         await Assert.That(result.Value?.ToString() ?? "").IsNotEmpty();
-        var toolCallCount = result.Properties["ToolCallCount"]?.Value;
+        var toolCallCount = result.Properties["ToolCallCount"];
         await Assert.That(toolCallCount).IsNotNull();
     }
 
@@ -296,12 +296,12 @@ public class LlmIntegrationTests
 
     private static string? BuildSnapshotFromResult(Data result)
     {
-        var rawResponse = result.Properties["RawResponse"]?.Value?.ToString();
+        var rawResponse = result.Properties["RawResponse"]?.ToString();
         if (rawResponse == null) return null;
 
-        var model = result.Properties["Model"]?.Value?.ToString() ?? "gpt-5.4-nano";
-        var promptTokens = result.Properties["PromptTokens"]?.Value is int pt ? pt : 0;
-        var completionTokens = result.Properties["CompletionTokens"]?.Value is int ct ? ct : 0;
+        var model = result.Properties["Model"]?.ToString() ?? "gpt-5.4-nano";
+        var promptTokens = result.Properties["PromptTokens"] is int pt ? pt : 0;
+        var completionTokens = result.Properties["CompletionTokens"] is int ct ? ct : 0;
 
         return JsonSerializer.Serialize(new
         {

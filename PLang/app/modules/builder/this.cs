@@ -122,7 +122,7 @@ public sealed partial class @this
             // The User actor's "output"/"input" channels wrap stdout/stdin — write
             // the prompt to output, then ReadLine off the input stream. Two-call
             // because the default channels are direction-split (output write-only,
-            // input read-only) so Stream.AskCore can't bridge them.
+            // input read-only) so Stream.Ask can't bridge them.
             var outputChannel = _app.User.Channels.Get(global::app.channels.@this.Output) as global::app.channels.channel.stream.@this;
             var inputChannel = _app.User.Channels.Get(global::app.channels.@this.Input) as global::app.channels.channel.stream.@this;
             if (outputChannel == null || inputChannel == null)

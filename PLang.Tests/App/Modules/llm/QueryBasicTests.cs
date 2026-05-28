@@ -157,14 +157,14 @@ public class QueryBasicTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Properties["RawResponse"]?.Value?.ToString()).IsEqualTo("result text");
-        await Assert.That(result.Properties["Model"]?.Value?.ToString()).IsEqualTo("gpt-5.4-nano");
-        await Assert.That(result.Properties["PromptTokens"]?.Value).IsEqualTo(15);
-        await Assert.That(result.Properties["CompletionTokens"]?.Value).IsEqualTo(25);
-        await Assert.That(result.Properties["TotalTokens"]?.Value).IsEqualTo(40);
-        await Assert.That(result.Properties["Cached"]?.Value).IsEqualTo(false);
+        await Assert.That(result.Properties["RawResponse"]?.ToString()).IsEqualTo("result text");
+        await Assert.That(result.Properties["Model"]?.ToString()).IsEqualTo("gpt-5.4-nano");
+        await Assert.That(result.Properties["PromptTokens"]).IsEqualTo(15);
+        await Assert.That(result.Properties["CompletionTokens"]).IsEqualTo(25);
+        await Assert.That(result.Properties["TotalTokens"]).IsEqualTo(40);
+        await Assert.That(result.Properties["Cached"]).IsEqualTo(false);
         // CachedTokens reaches Properties — wire-up check on the success-exit path.
-        await Assert.That(result.Properties["CachedTokens"]?.Value).IsEqualTo(5);
+        await Assert.That(result.Properties["CachedTokens"]).IsEqualTo(5);
     }
 
     // Pricing table covers gpt-5.4-{nano,mini,(base)}. A model not on that list
@@ -190,7 +190,7 @@ public class QueryBasicTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Properties["Cost"]?.Value).IsNull();
+        await Assert.That(result.Properties["Cost"]).IsNull();
     }
 
     // Cost math: prompt_tokens=100, cached_tokens=40, completion_tokens=50 against
@@ -212,9 +212,9 @@ public class QueryBasicTests
 
         await Assert.That(result.Success).IsTrue();
         decimal expected = (60m * 0.20m + 40m * 0.02m + 50m * 1.25m) / 1_000_000m;
-        await Assert.That((decimal?)result.Properties["Cost"]?.Value).IsEqualTo(expected);
+        await Assert.That((decimal?)result.Properties["Cost"]).IsEqualTo(expected);
         // CachedTokens surfaces on Properties too (F5).
-        await Assert.That(result.Properties["CachedTokens"]?.Value).IsEqualTo(40);
+        await Assert.That(result.Properties["CachedTokens"]).IsEqualTo(40);
     }
 
     // Longest-prefix-wins. Both "gpt-5.4" and "gpt-5.4-mini" are pricing prefixes;
@@ -245,7 +245,7 @@ public class QueryBasicTests
 
         await Assert.That(result.Success).IsTrue();
         // 1e6·0.75/1e6 + 1e6·4.50/1e6 = 5.25 exact.
-        await Assert.That((decimal?)result.Properties["Cost"]?.Value).IsEqualTo(5.25m);
+        await Assert.That((decimal?)result.Properties["Cost"]).IsEqualTo(5.25m);
     }
 
     // Cost accumulates across the tool-call retry loop. First response asks for a
@@ -293,9 +293,9 @@ public class QueryBasicTests
         // Total = 76.75 / 1_000_000
         decimal call1 = (10m * 0.20m + 0m * 0.02m + 5m * 1.25m) / 1_000_000m;
         decimal call2 = (150m * 0.20m + 50m * 0.02m + 30m * 1.25m) / 1_000_000m;
-        await Assert.That((decimal?)result.Properties["Cost"]?.Value).IsEqualTo(call1 + call2);
+        await Assert.That((decimal?)result.Properties["Cost"]).IsEqualTo(call1 + call2);
         // CachedTokens on the tool-call exit path (F5).
-        await Assert.That(result.Properties["CachedTokens"]?.Value).IsEqualTo(50);
+        await Assert.That(result.Properties["CachedTokens"]).IsEqualTo(50);
     }
 
     #endregion

@@ -14,7 +14,7 @@ public class JsonSerializerRoundTripTests
         var data = new Data("v") { Value = "hello", Context = app.User.Context };
 
         var json = app.User.Channels.Serializers.GetByMimeType("application/json");
-        var s = json.Serialize(data.Value).Value!;
+        var s = json.Serialize(data).Value!;
 
         await Assert.That(s.Contains("hello")).IsTrue();
         // RawSignature stays null — JsonSerializer doesn't access Signature property.

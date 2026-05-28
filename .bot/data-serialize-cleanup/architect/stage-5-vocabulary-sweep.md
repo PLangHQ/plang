@@ -1,4 +1,4 @@
-# Stage 4: Vocabulary sweep — drop "envelope", rename `this.Envelope.cs`
+# Stage 5: Vocabulary sweep — drop "envelope", rename `this.Envelope.cs`
 
 **Goal:** Remove the word "envelope" from PLang's serialization vocabulary. Data is not enveloped in anything — Data IS the shape, full stop. Rename `this.Envelope.cs` and scrub the word from comments across the codebase.
 

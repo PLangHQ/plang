@@ -71,9 +71,11 @@ The `RehydrateNestedData` walk goes away — STJ + DataConverter now handle nest
 
 **Why the JSON serialization goes through the registered serializer, not direct STJ.** Today's `Compress()` reaches for `JsonSerializer.SerializeToUtf8Bytes` with a private `_envelopeJsonOptions` block. This duplicates the STJ setup that lives in `Json.cs` / the merged `plang/this.cs`. After Stage 2, the right shape exists: ask `Serializers.Get("application/plang")` and use it. No private options, no parallel STJ chain.
 
-**No signing inside Compress.** Per Stage 2's positioning, signing lives at the channel boundary. Compress's output stays in-process (it's a transform that returns a new Data, not a channel write). The bytes inside the gzip are unsigned. When the archived wrapper eventually hits a channel, THAT call signs. When decompressed, the inner Data has no signature — correct per Ingi's "only outermost signs" rule.
+**Signing happens during the byte-conversion, not as a separate step.** Compress routes through the registered `application/plang` serializer (the one Stage 2 lands). That serializer's converter does sign-if-missing on every Data it walks. So when Compress serializes D1 to bytes, the converter sees D1 with no signature → calls EnsureSigned → bytes encode a *signed* D1. Compress wraps the bytes into `D2 { type=archived, value=byte[] }`; D2 itself is unsigned in-memory. When D2 eventually hits a channel, the same converter walks D2, signs D2 (D2 unsigned), notes the byte[] value is opaque (no further Data walking), emits. Two signatures attesting two different things: D1's signature attests the user data; D2's signature attests the compressed package.
 
-**`Properties` still don't survive the round trip.** Already noted in the existing comment (`this.Envelope.cs:110-112`): Properties is `[JsonIgnore]`, so it doesn't ride along through compression. This is by design — Properties is the in-process transport view, not wire payload. Keep this contract.
+This is what fixes today's bug. Today `Compress()` uses `_envelopeJsonOptions` (`this.Envelope.cs:23-33`) which does NOT include the `Transport.ForOutbound` modifier. `Signature` is `[JsonIgnore]`, so the bytes today omit it — Bob decompresses to a *signature-less* D1. After this stage routes through the registered serializer (which DOES include Transport.ForOutbound), D1's signature rides along inside the bytes. Sign-then-compress and compress-then-sign produce equivalent wire shapes; forwarding preserves Alice's attestation.
+
+**`Properties` survive after Stage 4.** Today the existing `Compress()` comment (`this.Envelope.cs:110-112`) calls out that Properties don't round-trip — because they're `[JsonIgnore]`. After Stage 4 flattens Properties onto the wire, this constraint goes away: Properties of the compressed Data ride in the bytes alongside name/type/value/signature. The compressed-then-decompressed Data preserves its Properties. The Stage 3 work itself doesn't need to touch Properties — once Stage 4 lands, the natural serializer-round-trip carries them.
 
 **The sync-over-async smell.** The current code calls `.GetAwaiter().GetResult()`. Compress today is synchronous (`@this Compress()`), and the serializer is async. Two options:
 1. Make `Compress()` async (`Task<@this> Compress()`) — propagates through callers.
@@ -87,7 +89,8 @@ The async propagation is structurally right but pulls in callers across the Wrap
 - The `RehydrateNestedData` removal: any test that exercised it is testing implementation, not behaviour. The round-trip test (compress → decompress → equality with original) is the real contract — keep that one, drop the rehydration unit tests.
 
 **What the coder verifies:**
-- Round-trip: `Data.Ok({large object}).Compress().Decompress()` equals the original (modulo Properties, by design).
-- The compressed wire shape (when serialized through application/plang) is the flat three-field form: `{type: "archived", value: "<base64>", signature: {...}}`. No inner Data in JSON.
-- The inner serialized Data (after gunzipping the bytes) is itself a valid `application/plang` document.
+- Round-trip: `Data.Ok({large object}).Compress().Decompress()` equals the original.
+- The compressed wire shape (when serialized through application/plang) is the flat form: `{name: "", type: "archived", value: "<base64-encoded-bytes>", signature: {...}}`. No inner Data in JSON.
+- The inner serialized Data (after gunzipping the bytes) is itself a valid `application/plang` document with its own `signature` field intact (closes today's signature-strip bug).
 - A non-compressible type's `Compress()` returns self unchanged (matches today's contract).
+- Sign-then-compress chain: `Data.Ok(user).Sign().Compress()` round-trips through a channel; decompressing yields a Data whose `Signature` is the original Alice signature; the outer archived wrapper has its own signature.
