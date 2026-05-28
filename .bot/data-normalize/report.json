@@ -254,6 +254,56 @@
         "health": "C# green (3381/3381). PLang red (232/233) \u2014 /BuilderSanity/BuilderSanity.test.goal fails because the fixture's `set %items% = '[1, 2, 3]'` + `foreach %items%` relies on string\u2192list auto-parse but strings are atomic under current IsPlangIterable. V1 fixture is mutation-verified honest.",
         "notes": "Coder v1/v2/v3 all missing baseline-tests.md \u2014 process violation flagged. 2 minor coverage notes on Wire outer-Properties path and json.Writer default-arg, both optional."
       }
+    },
+    {
+      "id": "98c16404-f2ef-4e22-acfc-3b647d4b3566",
+      "bot": "tester",
+      "timestamp_start": "2026-05-28T17:11:39Z",
+      "intent": "Verify coder v4 closes tester v3's BuilderSanity finding (which traced to my own pre-test builder rebuild, not the branch) and that the list-literal fixture form is stable across builder reruns.",
+      "before": {
+        "assumptions": "Coder v4 changed Tests/BuilderSanity/BuilderSanity.test.goal:7 to use unquoted list literal [1, 2, 3] and regenerated the .pr; wrote baseline-tests.md. Claims C# 3381/3381, PLang 233/233.",
+        "risk": "The non-determinism only fully resolves if multiple builder reruns produce stable output. If a rerun still flips %items% type, the fix is partial."
+      },
+      "plan": ".bot/data-normalize/tester/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/data-normalize/tester/v4/v3_review_summary.md",
+            ".bot/data-normalize/tester/v4/plan.md",
+            ".bot/data-normalize/tester/v4/verdict.json",
+            ".bot/data-normalize/tester/summary.md",
+            ".bot/data-normalize/test-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "tester v4 outputs. PASS verdict. Acknowledges v3 misattribution was procedural (pre-test rebuild on graded fixture); v4 confirms branch is honest."
+        },
+        {
+          "paths": [
+            "Tests/BuilderSanity/.build/buildersanity.test.pr"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Rebuilt 3x with cache=false; md5 identical (0d66eb02b8f30b03461a128a69a96218) and test passed each time. Coder v4's unquoted list-literal rewrite is deterministic."
+        },
+        {
+          "paths": [
+            "PLang/app/channels/serializers/json/writer.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Re-mutation test on V1 fixture: replaced _view with View.Out \u2192 fixture failed as expected. Reverted."
+        }
+      ],
+      "timestamp_end": "2026-05-28T17:20:00Z",
+      "after": {
+        "status": "approved",
+        "health": "All green. C# 3381/3381, PLang 233/233. BuilderSanity rebuild deterministic. V1 fixture mutation-verified. baseline-tests.md present.",
+        "notes": "v3 verdict retracted \u2014 misattribution from running cache=false rebuild on a graded fixture. Lesson saved to tester memory."
+      }
     }
   ]
 }

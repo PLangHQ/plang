@@ -1,59 +1,55 @@
 # tester — data-normalize
 
 ## Version
-v3 (matches coder v3; no prior tester output on this branch).
+v4 (current). v3 → FAIL was retracted by v4 — see `v3_review_summary.md`
+under `v4/`.
 
 ## What this is
-First tester pass on the data-normalize branch. The branch implemented
-structural Normalize + IWriter + As<T> reconstruction, then the
-codeanalyzer→coder loop closed three major findings (M1 STJ fallback, M2
-Properties STJ bypass, M3 dict sign-walk) plus a v3 V1 — `json.Writer.EndRecord`
-was hard-coding `View.Out` when normalizing inner-Data Properties for inline
-emission, which would silently strip [Sensitive] from inner Properties on a
-Store-mode walk.
+Final tester pass on data-normalize. Validates that the data-normalize
+branch (Normalize + IWriter + As<T> reconstruction, M1-M3 closures, V1
+view-threading fix) is honest and that the v3 BuilderSanity red was a
+tester-procedural failure, not a branch defect.
 
-## What was done
-- Clean rebuild per CLAUDE.md stale-binary guidance.
-- C# suite: **3381/3381 pass**.
-- PLang suite: **232/233** — one real failure
-  (`/BuilderSanity/BuilderSanity.test.goal`) that coder v3 reported as
-  passing (claimed 233/233). Root cause: the fixture uses
-  `set %items% = '[1, 2, 3]'` followed by `foreach %items%`, which under
-  current `IsPlangIterable` semantics (strings are atomic — `PLang/app/data/this.cs:341`)
-  yields the whole string once and the body's `math.add` chokes on the literal.
-  Either a fixture bug or an intentional semantic change that broke the
-  smoke test; either way it's red.
-- Built the V1 fixture for json.Writer.EndRecord with cache=false equivalent
-  (full clean rebuild) and **mutation-verified it**: reverting
-  `_view` → `app.View.Out` in `writer.cs:87` makes the new fixture's Store
-  assertion fail (secret missing from store bytes). Restored. Source diff
-  clean.
-- Two minor coverage notes:
-  - The outer-Properties path in `Wire.Write` (lines 400-416) isn't pinned
-    by a symmetric Store-view test; the V1 fixture covers inner.Properties only.
-  - `json.Writer`'s third-arg default of `View.Out` isn't exercised — Wire
-    always passes explicitly. Optional defensive test, or drop the default.
+## What was done (v4)
+- Clean rebuild per stale-binary protocol.
+- C# suite: **3381 / 3381 pass**.
+- PLang suite: **233 / 233 pass** including BuilderSanity (which v3
+  flagged red).
+- **Robustness check:** rebuilt `BuilderSanity.test.pr` three times in
+  succession with `cache=false`. All three produced byte-identical .pr
+  files (md5 `0d66eb02b8f30b03461a128a69a96218`) and the test passed each
+  time. Coder v4's unquoted list-literal rewrite (`set %items% = [1, 2, 3]`)
+  removed the LLM nondeterminism that bit v3.
+- **V1 fixture re-mutation:** temporarily replaced `_view` with
+  `app.View.Out` in `json.Writer.EndRecord` and reran the new fixture
+  `StoreView_PropagatesIntoInnerDataProperties_NotHardcodedToOut`. Test
+  failed at the Store assertion as expected (PRIV-must-persist missing
+  from store bytes). Reverted; source diff clean.
+- Coder v4 wrote the missing `baseline-tests.md` — process gap closed.
 
-## Process violation
-Coder v1/v2/v3 each shipped without `baseline-tests.md`. Per character
-contract that file should record the test state *before* the coder edits.
-The single PLang failure was likely pre-existing across versions — the
-coder simply never reran PLang tests on this branch — but without baseline
-files I can't prove that, and per strict-red-is-red the absence of a
-baseline doesn't grant a carve-out.
+## What changed since v3
+- `Tests/BuilderSanity/BuilderSanity.test.goal:7` — unquoted list literal.
+- `Tests/BuilderSanity/.build/buildersanity.test.pr` — regenerated.
+- `.bot/data-normalize/coder/v4/baseline-tests.md` — added.
+
+## v3 misattribution (lesson learned)
+v3 ran `plang build /BuilderSanity --cache=false` as a builder-validation
+step before `plang --test`. That rebuild produced a bad `.pr`
+(`%items%` as a string literal instead of a list), which then failed
+the suite. The bad `.pr` never reached origin because v3 committed only
+`.bot/`. v3 still issued a FAIL verdict and attributed the cause to the
+branch — incorrect. Lesson saved to memory:
+`feedback_builder_check_not_on_graded_fixture.md` — pick a throwaway
+fixture for the builder check, never a graded one, or `git checkout`
+the .pr before running plang --test.
+
+## Code example — what changed in the fixture
+```diff
+- - set %items% = '[1, 2, 3]'   # quoted: builder might JSON-parse, might not
++ - set %items% = [1, 2, 3]     # unquoted: unambiguous PLang list literal
+```
+With the unquoted form, three cache=false rebuilds produced identical
+.pr output and the test passed each time.
 
 ## Verdict
-**FAIL.** One failing PLang test plus inaccurate test-count reporting from
-coder v3. Send back to coder to either fix the BuilderSanity fixture (build
-a real list instead of relying on string→list auto-parse) or delete it if
-string-atomicity is the settled semantics, and to write a real
-`baseline-tests.md` next time.
-
-## Code example — the mutation that proved the V1 fixture
-```csharp
-// PLang/app/channels/serializers/json/writer.cs, EndRecord:
-//   var normalized = app.data.@this.NormalizeValue(kvp.Value, _view, ...);   // ✓
-//   var normalized = app.data.@this.NormalizeValue(kvp.Value, app.View.Out, ...); // mutation
-// → StoreView_PropagatesIntoInnerDataProperties_NotHardcodedToOut fails:
-//   "PRIV-must-persist" missing from store bytes. Test catches it. Restored.
-```
+**PASS.** Data-normalize is ready for the next bot.

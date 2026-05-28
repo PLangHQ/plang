@@ -1,47 +1,32 @@
 {
   "tester": "tester",
   "branch": "data-normalize",
-  "timestamp": "2026-05-28T16:35:00Z",
-  "tested_version": "v3",
+  "timestamp": "2026-05-28T17:18:00Z",
+  "tested_version": "v4",
   "test_run": {
     "csharp": { "total": 3381, "passed": 3381, "failed": 0, "skipped": 0 },
-    "plang": { "total": 233, "passed": 232, "failed": 1, "skipped": 0 }
+    "plang": { "total": 233, "passed": 233, "failed": 0, "skipped": 0 }
   },
-  "coverage": {
-    "note": "No coverlet pass this version; V1 change is a single-file mutation that the new fixture catches (verified)."
+  "robustness": {
+    "builder_sanity_rebuilds": 3,
+    "pr_hash_stable": true,
+    "pr_md5": "0d66eb02b8f30b03461a128a69a96218",
+    "all_runs_passed": true,
+    "note": "Coder v4 rewrote Tests/BuilderSanity/BuilderSanity.test.goal:7 to use unquoted list literal [1, 2, 3] (was quoted '[1, 2, 3]'). With the unquoted form the builder's LLM has no degree of freedom — three cache=false rebuilds produced byte-identical .pr files and the test passed each time. The non-determinism that bit me in v3 is gone."
   },
-  "findings": [
-    {
-      "id": 1,
-      "severity": "critical",
-      "type": "false-green",
-      "test_file": "Tests/BuilderSanity/BuilderSanity.test.goal",
-      "code_file": "PLang/app/data/this.cs",
-      "issue": "PLang test /BuilderSanity/BuilderSanity.test.goal FAILS with 'math.add: FormatException: The input string '[1, 2, 3]' was not in a correct format.' Coder v3 reported PLang 233/233; actual is 232/233.",
-      "impact": "Coder shipped with inaccurate test counts. The fixture relies on `set %items% = '[1, 2, 3]'` being auto-parsed into a list by `foreach`. Under current PLang semantics strings are atomic (data/this.cs:341 IsPlangIterable rejects string), so foreach yields the whole string once and the body's math.add chokes on the literal. Either a fixture bug (should construct a real list) or a deliberate semantics change that was never reflected in this smoke test. Either way the test is red and was claimed green.",
-      "suggestion": "Coder: update the fixture to construct a list (e.g. via list.create or `set %items% = [1, 2, 3]` if the builder supports it) OR delete the fixture if string→list auto-parse is intentionally gone. Also: every coder version on this branch (v1/v2/v3) is missing baseline-tests.md, so 'pre-existing' vs 'regression' can't be settled from the bot record — please write the baseline file on the next coder pass."
-    },
-    {
-      "id": 2,
-      "severity": "minor",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/App/Serialization/CanonicalizationTests.cs",
-      "code_file": "PLang/app/data/Wire.cs",
-      "issue": "The new V1 fixture (StoreView_PropagatesIntoInnerDataProperties_NotHardcodedToOut) pins the View threading into json.Writer.EndRecord — the second M2 site. The first M2 site (Wire.cs:400-416, outer Wire.Write's own Properties walk) reads `View` directly with no intermediate writer, so structurally a similar regression there would be caught only if a Store-view test deposited a [Sensitive]-bearing value into the outer Data's Properties (not the inner's). No such test exists today. Risk is low because the outer-Properties path uses View as a local variable — there's no field to silently revert to a default — but a symmetric fixture would prevent future drift if someone refactors Wire.Write to construct the json.Writer earlier and accidentally drops the View arg.",
-      "impact": "Not a current bug — coverage gap that would have to coincide with a refactor to materialize. Low priority.",
-      "suggestion": "Optional: add a sibling fixture that puts the [Sensitive]-carrying List<Identity> into outer.Properties (not inner.Properties) and asserts the same Out-excludes / Store-includes contract on the outer's Properties block."
-    },
-    {
-      "id": 3,
-      "severity": "minor",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/App/Serialization/CanonicalizationTests.cs",
-      "code_file": "PLang/app/channels/serializers/json/writer.cs",
-      "issue": "json.Writer's constructor has a third arg defaulted to View.Out. Wire.Write passes View explicitly (line 392), so the default path is never exercised in production. Tests don't pin the default either — if a future caller constructs json.Writer directly and forgets the third arg, it'll silently get Out-mode filtering on Store/Debug-intended writes.",
-      "impact": "Defensive — would only matter if a new Writer call site appears.",
-      "suggestion": "Optional: a tiny unit test instantiating `new app.channels.serializers.json.Writer(jsonWriter)` and asserting EndRecord uses View.Out, or just remove the default and force every caller to be explicit."
-    }
-  ],
-  "verdict": "needs-fixes",
-  "summary": "C# suite green (3381/3381). PLang suite red (232/233): one failing test — /BuilderSanity/BuilderSanity.test.goal — that coder v3 reported as passing (claimed 233/233). The new V1 fixture for the json.Writer.EndRecord view-threading fix is honest and mutation-verified (reverting `_view` to `View.Out` in EndRecord makes the Store assertion fail; restored). Two minor coverage notes on adjacent Wire/Writer paths. Process violation: no baseline-tests.md in any coder version on this branch."
+  "v1_fixture_remutation": {
+    "site": "PLang/app/channels/serializers/json/writer.cs:87",
+    "test": "PLang.Tests/App/Serialization/CanonicalizationTests.cs:101 StoreView_PropagatesIntoInnerDataProperties_NotHardcodedToOut",
+    "mutation": "_view → app.View.Out in EndRecord NormalizeValue call",
+    "result": "test failed at Store assertion as expected — fixture still catches the regression under v4 rebuild",
+    "reverted": true
+  },
+  "v3_misattribution": {
+    "what_happened": "v3 ran `plang build /BuilderSanity --cache=false` as a builder-validation step before `plang --test`. The LLM rebuild produced a .pr where %items% = '[1, 2, 3]' came out as a string literal, not a list. plang --test then ran against the locally-modified .pr, foreach yielded the whole string once, math.add threw FormatException. v3 committed only .bot/ so the bad .pr never reached origin, but issued a FAIL verdict attributing the failure to the branch.",
+    "actually_caused_by": "tester procedure, not branch",
+    "lesson_saved": "/memory/feedback_builder_check_not_on_graded_fixture.md"
+  },
+  "findings": [],
+  "verdict": "approved",
+  "summary": "All clear. Both suites green; the list-literal rewrite of BuilderSanity is deterministic across builder reruns; the V1 fixture for the json.Writer view-threading still mutation-catches; coder v4 wrote the missing baseline-tests.md. v3 FAIL verdict was tester procedural — my own builder rebuild on a graded fixture produced a bad .pr. Memory updated."
 }
