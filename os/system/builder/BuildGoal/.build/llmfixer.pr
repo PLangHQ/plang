@@ -11,26 +11,48 @@
       "comment": null,
       "actions": [
         {
-          "module": "builder",
-          "action": "enrichResponse",
+          "module": "event",
+          "action": "on",
           "parameters": [
             {
-              "name": "StepResults",
-              "value": "%!error.Message%",
-              "type": "buildresponse"
+              "name": "Type",
+              "value": "OnError",
+              "type": "eventtype"
             },
             {
-              "name": "Goal",
-              "value": "%!error.Message%",
-              "type": "goal"
+              "name": "GoalToCall",
+              "value": {
+                "name": "/system/builder/EmitBuildEvent",
+                "parallel": false,
+                "parameters": [
+                  {
+                    "name": "errorMessage",
+                    "value": "%!error.Message%",
+                    "type": "string"
+                  }
+                ],
+                "prPath": "/system/builder/.build/emitbuildevent.pr"
+              },
+              "type": "goal.call"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "isregex",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "priority",
+              "value": 0,
+              "type": "int"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "formal": "builder.enrichResponse(StepResults=%!error.Message%, Goal=%!error.Message%)",
+      "formal": "event.on(Type=OnError, GoalToCall=goal.call(GoalName={name:\u0022/system/builder/EmitBuildEvent\u0022, parameters:[errorMessage=%!error.Message%]}))",
       "source": null,
       "waitForExecution": true
     },
@@ -77,13 +99,13 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%fixerMessages%, Value=[{\u0022Role\u0022:\u0022user\u0022, \u0022Content\u0022:\u0022Your previous response was rejected: %!error.Message%\\n\\nReturn the corrected plan. Each step\u0027s \u0060actions\u0060 MUST be a non-empty array of \\\u0022module.action\\\u0022 strings from the catalog (e.g. \\\u0022\\\u0022variable.set\\\u0022\\\u0022, \\\u0022file.read\\\u0022). \u0060index\u0060 is 0-based.\u0022}], Type=json)",
+      "formal": "variable.set(Name=%fixerMessages%, Value=[{\u0022Role\u0022:\u0022user\u0022,\u0022Content\u0022:\u0022Your previous response was rejected: %!error.Message%\\n\\nReturn the corrected plan. Each step\u0027s \u0060actions\u0060 MUST be a non-empty array of \\\u0022module.action\\\u0022 strings from the catalog (e.g. \\\u0022variable.set\\\u0022, \\\u0022file.read\\\u0022). \u0060index\u0060 is 0-based.\u0022}], Type=json)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "llm.query Messages=%fixerMessages%, Schema={description: string, steps: [{index: int, actions: [string], confidence: string, explanation?: string}]}, cache=%!build.cache%, previousConversation=%plan%, write to %plan%",
+      "text": "llm.query Messages=%fixerMessages%, Schema={description: string, steps: list\u003C{index: int, actions: list\u003Cstring\u003E, confidence: string, explanation?: string}\u003E}, cache=%!build.cache%, previousConversation=%plan%, write to %plan%",
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
@@ -101,16 +123,7 @@
               "name": "Schema",
               "value": {
                 "description": "string",
-                "steps": [
-                  {
-                    "index": "int",
-                    "actions": [
-                      "string"
-                    ],
-                    "confidence": "string",
-                    "explanation?": "string"
-                  }
-                ]
+                "steps": "list\u003C{index: int, actions: list\u003Cstring\u003E, confidence: string, explanation?: string}\u003E"
               },
               "type": "dictionary\u00602"
             },
@@ -180,7 +193,7 @@
         }
       ],
       "intent": null,
-      "formal": "llm.query(Messages=%fixerMessages%, Schema={description: string, steps: [{index: int, actions: [string], confidence: string, explanation?: string}]}, Cache=%!build.cache%, ContinuePreviousConversation=%plan%) | variable.set(Name=%plan%, Value=%!data%, Type=object)",
+      "formal": "llm.query(Messages=%fixerMessages%, Schema={description: string, steps: list\u003C{index: int, actions: list\u003Cstring\u003E, confidence: string, explanation?: string}\u003E}, Cache=%!build.cache%, ContinuePreviousConversation=%plan%) | variable.set(Name=%plan%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     }
@@ -189,7 +202,7 @@
   "visibility": 1,
   "path": "/system/builder/BuildGoal/LlmFixer.goal",
   "prPath": "/system/builder/BuildGoal/.build/llmfixer.pr",
-  "hash": "deebc2e5548e55dae82a6634f77a37f88a5a1cada7a56776fef61a351246041e",
+  "hash": "f408dd456b1b3f65881750c7174103d26d600818e318b7ea09e1e2eb1f84df37",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

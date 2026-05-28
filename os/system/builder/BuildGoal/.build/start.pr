@@ -41,7 +41,7 @@
         }
       ],
       "intent": null,
-      "formal": "goal.call(GoalName={name:\u0022/system/builder/EmitBuildEvent\u0022, parameters:[{name:\u0022kind\u0022, value:\u0022goalHeader\u0022, type:\u0022string\u0022},{name:\u0022goal\u0022, value:\u0022%goal%\u0022, type:\u0022string\u0022}]})",
+      "formal": "goal.call(GoalName={name:\u0022/system/builder/EmitBuildEvent\u0022, parameters:[{name:\u0022kind\u0022, value:\u0022goalHeader\u0022, type:\u0022string\u0022},{name:\u0022goal\u0022, value:\u0022%goal%\u0022, type:\u0022object\u0022}]})",
       "source": null,
       "waitForExecution": true
     },
@@ -78,7 +78,7 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%buildStart%, Value=%Now.Ticks%, Type=object)",
+      "formal": "variable.set(Name=%buildStart%, Value=%Now.Ticks%)",
       "source": null,
       "waitForExecution": true
     },
@@ -304,6 +304,11 @@
               "name": "Value",
               "value": "%compileSystemPrompt%",
               "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "string",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -317,7 +322,7 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%trace.compileSystem%, Value=%compileSystemPrompt%, Type=object)",
+      "formal": "variable.set(Name=%trace.compileSystem%, Value=%compileSystemPrompt%, Type=string)",
       "source": null,
       "waitForExecution": true
     },
@@ -396,7 +401,7 @@
         }
       ],
       "intent": null,
-      "formal": "loop.foreach(Collection=%plan.steps%), goal.call(GoalName={name:\u0022BuildStep/Start\u0022, parameters:[{name:\u0022planStep\u0022, value:%item%, type:\u0022string\u0022}]}) | error.handle(Actions=[goal.call(GoalName={name:\u0022HandleBuildFailure\u0022})])",
+      "formal": "loop.foreach(Collection=%plan.steps%), goal.call(GoalName={name:\u0022BuildStep/Start\u0022, parameters:[planStep=%item%]}) | error.handle(Actions=[goal.call(GoalName={name:\u0022HandleBuildFailure\u0022})])",
       "source": null,
       "waitForExecution": true
     },
@@ -488,7 +493,7 @@
         }
       ],
       "intent": null,
-      "formal": "loop.foreach(Collection=%parentGoal.Goals%), goal.call(GoalName={name:\u0022BuildSubGoal\u0022, parameters:[{name:\u0022subGoal\u0022, value:%!data%, type:\u0022string\u0022}]})",
+      "formal": "loop.foreach(Collection=%parentGoal.Goals%), goal.call(GoalName={name:\u0022BuildSubGoal\u0022, parameters:[subGoal=%item%]})",
       "source": null,
       "waitForExecution": true
     },
@@ -664,11 +669,6 @@
               "name": "Value",
               "value": "%elapsedMs%",
               "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": "object",
-              "type": "string"
             }
           ],
           "defaults": [
@@ -1083,7 +1083,7 @@
             }
           ],
           "intent": null,
-          "formal": "list.add(ListName=%trace.subGoals%, Value={goal:%goal%, plan:%plan%})",
+          "formal": "list.add(ListName=%trace.subGoals%, Value={\u0022goal\u0022:\u0022%goal%\u0022,\u0022plan\u0022:\u0022%plan%\u0022})",
           "source": null,
           "waitForExecution": true
         },
@@ -1291,7 +1291,7 @@
                       },
                       {
                         "name": "errorMessage",
-                        "value": "%!error.Message%",
+                        "value": "%!data%.Message%",
                         "type": "string"
                       }
                     ],
@@ -1305,7 +1305,7 @@
             }
           ],
           "intent": null,
-          "formal": "goal.call(GoalName={name:\u0022/system/builder/EmitBuildEvent\u0022, parameters:[{name:\u0022kind\u0022, value:\u0022goalError\u0022, type:\u0022string\u0022}, {name:\u0022goal\u0022, value:\u0022%goal%\u0022, type:\u0022object\u0022}, {name:\u0022errorMessage\u0022, value:\u0022%!error.Message%\u0022, type:\u0022object\u0022}]})",
+          "formal": "goal.call(GoalName={name:\u0022/system/builder/EmitBuildEvent\u0022, parameters:[{name:\u0022kind\u0022, value:\u0022goalError\u0022, type:\u0022string\u0022},{name:\u0022goal\u0022, value:%goal%, type:\u0022string\u0022},{name:\u0022errorMessage\u0022, value:%!data%.Message%, type:\u0022string\u0022}]})",
           "source": null,
           "waitForExecution": true
         },

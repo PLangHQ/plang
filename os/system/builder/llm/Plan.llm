@@ -51,6 +51,18 @@ Step text `- call Validate` (or any `call <Identifier>`) is a goal-to-goal call:
 
 Exception: explicit `<module>.<action> <params>` syntax (e.g. `builder.validate actions=%x%`, `file.save Path=%p%`) — that names the action directly.
 
+## The verb is the leading word — parameter values are arguments, never actions
+
+The action set comes from the step's leading verb (or the explicit `module.action` token in the explicit form). **Parameter values are arguments to that action — they never determine which action to pick.**
+
+A value that *resembles* another action's domain — an `event`-sounding string in a parameter, a `%goal%` reference, a verb-like word inside quotes — does not change the verb. Examples that often mislead:
+
+- `call X kind="goalError", goal=%g%` — verb is `call` → `goal.call`. Not `event.on` (the value `"goalError"` is a label, not an event registration). Not `error.throw`.
+- `set %x% = %a% + %b%` — verb is `set` → `variable.set` (with `math.add` as a peer for the arithmetic expression). The arithmetic-on-the-right doesn't make the WHOLE step `math.add` alone.
+- `write out "deleting %file%"` — verb is `write` → `output.write`. The word "deleting" in the value doesn't add `file.remove`.
+
+If a parameter value tempts you toward a different action than the verb suggests, **include both in the set and let the compiler decide from the leading verb**. The compiler reads each candidate's examples and matches against the step text shape — extras are free, wrong-only sets deadlock.
+
 ## Rules
 
 - Step count in response MUST match step count in goal. `/` lines are NOT steps. `on error` is part of its step. Emit one result for every index 0..N-1.
