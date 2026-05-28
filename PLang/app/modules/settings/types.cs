@@ -1,10 +1,12 @@
+using app;
+
 namespace app.modules.settings;
 
 public static class types
 {
     public record setting
     {
-        public string? key { get; init; }
-        public object? value { get; init; }
+        [Out] public string? key { get; init; }
+        [Out, Masked] public object? value { get; init; }
     }
 }

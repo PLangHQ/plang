@@ -269,7 +269,7 @@ public sealed class WireJsonConverter : JsonConverter<@this>
         // and skipping silently keeps those paths working. Production
         // discipline (Variables.Set / Channels.Register) always sets Actor
         // before any wire crossing.
-        if (!isHashOuter && data.RawSignature == null && data.Context?.Actor != null)
+        if (!isHashOuter && data.Signature == null && data.Context?.Actor != null)
         {
             data.EnsureSigned();
         }
@@ -306,10 +306,10 @@ public sealed class WireJsonConverter : JsonConverter<@this>
             writer.WriteEndObject();
         }
 
-        if (!isHashOuter && data.RawSignature != null)
+        if (!isHashOuter && data.Signature != null)
         {
             writer.WritePropertyName("signature");
-            JsonSerializer.Serialize(writer, data.RawSignature, options);
+            JsonSerializer.Serialize(writer, data.Signature, options);
         }
 
         writer.WriteEndObject();

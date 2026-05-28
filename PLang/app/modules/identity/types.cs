@@ -15,10 +15,10 @@ public sealed class Identity
     public Identity(string name) { Name = name; }
 
     /// <summary>Identity name (e.g., "default", "work").</summary>
-    [LlmBuilder] public string Name { get; set; } = "Identity";
+    [LlmBuilder, Out] public string Name { get; set; } = "Identity";
 
     /// <summary>Base64-encoded Ed25519 public key. Used as the identity in signed Datas.</summary>
-    [LlmBuilder] public string PublicKey { get; set; } = "";
+    [LlmBuilder, Out] public string PublicKey { get; set; } = "";
 
     /// <summary>Base64-encoded Ed25519 private key. Marked [Sensitive] — excluded from output serialization.</summary>
     [Sensitive]

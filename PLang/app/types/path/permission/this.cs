@@ -25,10 +25,10 @@ public enum Match
 /// field — null today (permanent), parameterised later.
 /// </summary>
 public sealed record @this(
-    string Actor,
-    string Path,
-    verb.@this Verb,
-    Match Match)
+    [property: Out] string Actor,
+    [property: Out] string Path,
+    [property: Out] verb.@this Verb,
+    [property: Out] Match Match)
 {
     public bool Covers(@this request) =>
         Actor == request.Actor

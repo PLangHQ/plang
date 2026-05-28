@@ -48,3 +48,13 @@ public sealed class InAttribute : Attribute { }
 /// </summary>
 [AttributeUsage(AttributeTargets.Property)]
 public sealed class SensitiveAttribute : Attribute { }
+
+/// <summary>
+/// Marks a property that ships on the wire with its name visible but its value replaced
+/// by the literal string "****". Distinct from <see cref="SensitiveAttribute"/> (which
+/// excludes the property entirely). Canonical use: <c>setting.value</c> — receivers know
+/// the setting is configured without seeing the secret.
+/// Combines with <see cref="OutAttribute"/>; honored in both Out and Debug views.
+/// </summary>
+[AttributeUsage(AttributeTargets.Property)]
+public sealed class MaskedAttribute : Attribute { }

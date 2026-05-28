@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 
 namespace app.channels.serializers.filters;
@@ -54,6 +55,18 @@ public static class Transport
             var jsonProp = typeInfo.CreateJsonPropertyInfo(prop.PropertyType, prop.Name.ToLowerInvariant());
             jsonProp.Get = prop.CanRead ? prop.GetValue : null;
             jsonProp.Set = prop.CanWrite ? prop.SetValue : null;
+
+            // Preserve any property-level [JsonConverter] — recreating the entry
+            // from PropertyType alone would otherwise drop the custom converter
+            // and force STJ to serialize types like data.type (with non-serializable
+            // System.Type members) through the default object path. data-normalize
+            // Stage 1 widened the [Out] set, exposing this gap.
+            var converterAttr = prop.GetCustomAttribute<JsonConverterAttribute>(inherit: true);
+            if (converterAttr?.ConverterType != null)
+            {
+                jsonProp.CustomConverter = (JsonConverter?)Activator.CreateInstance(converterAttr.ConverterType);
+            }
+
             typeInfo.Properties.Add(jsonProp);
         }
     }

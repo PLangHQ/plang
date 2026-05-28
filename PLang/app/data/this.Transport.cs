@@ -38,14 +38,6 @@ public partial class @this
     }
 
     /// <summary>
-    /// Backing-field accessor that never triggers lazy populate. Used by code paths that
-    /// need to *peek* whether a signature exists (signing.verify's "no signature" check)
-    /// without auto-signing.
-    /// </summary>
-    [JsonIgnore]
-    internal app.modules.signing.Signature? RawSignature => _signature;
-
-    /// <summary>
     /// Explicitly populates <see cref="Signature"/> via the configured signing pipeline if
     /// not already set. No-op when a signature is already present. Called by the wire
     /// converter's sign-if-missing walk and by callers that need to seal a Data before

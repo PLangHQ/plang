@@ -1,7 +1,9 @@
+using app;
+
 namespace app.modules.list.types;
 
 public record list
 {
-    public int count { get; init; }
-    public object? value { get; init; }
+    [Out] public int count { get; init; }
+    [Out] public object? value { get; init; }
 }

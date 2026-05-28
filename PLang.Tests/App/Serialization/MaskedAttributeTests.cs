@@ -10,17 +10,43 @@ namespace PLang.Tests.App.Serialization;
 public class MaskedAttributeTests
 {
     [Test] public async Task MaskedAttribute_Exists_InAppNamespace()
-        { Assert.Fail("Not implemented"); await Task.CompletedTask; }
+    {
+        var t = typeof(global::app.MaskedAttribute);
+        await Assert.That(t.Namespace).IsEqualTo("app");
+        await Assert.That(t.Name).IsEqualTo("MaskedAttribute");
+    }
 
     [Test] public async Task MaskedAttribute_IsSealed_PropertyTargetOnly()
-        { Assert.Fail("Not implemented"); await Task.CompletedTask; }
+    {
+        var t = typeof(global::app.MaskedAttribute);
+        await Assert.That(t.IsSealed).IsTrue();
+        var usage = t.GetCustomAttribute<AttributeUsageAttribute>();
+        await Assert.That(usage).IsNotNull();
+        await Assert.That(usage!.ValidOn).IsEqualTo(AttributeTargets.Property);
+    }
 
     [Test] public async Task MaskedAttribute_CanCoexistWithOut_OnSameProperty()
-        { Assert.Fail("Not implemented"); await Task.CompletedTask; }
+    {
+        var p = typeof(global::app.modules.settings.types.setting)
+            .GetProperty("value", BindingFlags.Public | BindingFlags.Instance);
+        await Assert.That(p).IsNotNull();
+        await Assert.That(p!.IsDefined(typeof(global::app.OutAttribute), inherit: true)).IsTrue();
+        await Assert.That(p.IsDefined(typeof(global::app.MaskedAttribute), inherit: true)).IsTrue();
+    }
 
     [Test] public async Task SettingValue_Has_OutAndMasked()
-        { Assert.Fail("Not implemented"); await Task.CompletedTask; }
+    {
+        var p = typeof(global::app.modules.settings.types.setting)
+            .GetProperty("value", BindingFlags.Public | BindingFlags.Instance)!;
+        await Assert.That(p.IsDefined(typeof(global::app.OutAttribute), inherit: true)).IsTrue();
+        await Assert.That(p.IsDefined(typeof(global::app.MaskedAttribute), inherit: true)).IsTrue();
+    }
 
     [Test] public async Task SettingKey_HasOut_NotMasked()
-        { Assert.Fail("Not implemented"); await Task.CompletedTask; }
+    {
+        var p = typeof(global::app.modules.settings.types.setting)
+            .GetProperty("key", BindingFlags.Public | BindingFlags.Instance)!;
+        await Assert.That(p.IsDefined(typeof(global::app.OutAttribute), inherit: true)).IsTrue();
+        await Assert.That(p.IsDefined(typeof(global::app.MaskedAttribute), inherit: true)).IsFalse();
+    }
 }

@@ -74,8 +74,8 @@ public class CanonicalizationTests
         var outer = new global::app.data.@this("outer", inner) { Context = app.User.Context };
 
         var json = plang.Serialize(outer).Value!;
-        await Assert.That(inner.RawSignature).IsNotNull();
-        await Assert.That(outer.RawSignature).IsNotNull();
+        await Assert.That(inner.Signature).IsNotNull();
+        await Assert.That(outer.Signature).IsNotNull();
 
         // Tamper inner value byte on the wire by flipping the secret literal.
         // (Base64 sig values get \u-escaped for + and /, which makes raw-string
