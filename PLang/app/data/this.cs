@@ -79,7 +79,7 @@ public sealed class type
 /// Wraps a variable value in App with metadata.
 /// Name is the variable/parameter name, Value is the data accessed via %name%.
 /// Also serves as the universal result type (replaces Return).
-/// Partial class — split by concern: data.cs (core), data.Result.cs, data.Navigation.cs, data.Envelope.cs.
+/// Partial class — split by concern: data.cs (core), data.Result.cs, data.Navigation.cs, data.Transport.cs.
 /// </summary>
 public partial class @this
 {

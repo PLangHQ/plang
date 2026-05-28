@@ -10,11 +10,11 @@ public class MimeRegistrationTests
     {
         var app = new global::app.@this("/test");
         var json = app.User.Channels.Serializers.GetByMimeType("application/json");
-        var pdata = app.User.Channels.Serializers.GetByMimeType("application/plang+data");
+        var plang = app.User.Channels.Serializers.GetByMimeType("application/plang");
         var text = app.User.Channels.Serializers.GetByMimeType("text/plain");
 
         await Assert.That(json).IsTypeOf<global::app.channels.serializers.serializer.Json>();
-        await Assert.That(pdata).IsTypeOf<global::app.channels.serializers.serializer.plang.Data>();
+        await Assert.That(plang).IsTypeOf<global::app.channels.serializers.serializer.plang.@this>();
         await Assert.That(text).IsTypeOf<global::app.channels.serializers.serializer.Text>();
     }
 
@@ -31,10 +31,12 @@ public class MimeRegistrationTests
     }
 
     [Test]
-    public async Task ApplicationPlangData_Mime_RegisteredAtAppBoot()
+    public async Task ApplicationPlangData_Mime_NoLongerRegistered_MergedIntoApplicationPlang()
     {
+        // Stage 2: the separate "application/plang+data" wire shape collapsed
+        // into "application/plang". GetByType returns null; GetByMimeType throws.
         var app = new global::app.@this("/test");
-        var s = app.User.Channels.Serializers.GetByMimeType("application/plang+data");
-        await Assert.That(s).IsTypeOf<global::app.channels.serializers.serializer.plang.Data>();
+        var s = app.User.Channels.Serializers.GetByType("application/plang+data");
+        await Assert.That(s).IsNull();
     }
 }

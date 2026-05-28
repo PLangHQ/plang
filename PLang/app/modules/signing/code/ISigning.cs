@@ -10,7 +10,7 @@ namespace app.modules.signing.code;
 /// </summary>
 public interface ISigning : IKey
 {
-    /// <summary>Full signing pipeline: get identity, hash, build envelope, sign.</summary>
+    /// <summary>Full signing pipeline: get identity, hash, build object, sign.</summary>
     Task<data.@this<object>> SignAsync(sign action);
 
     /// <summary>Full verification pipeline: type check, timeout, nonce, contracts, hash, verify.</summary>

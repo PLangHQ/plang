@@ -1,0 +1,222 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %original% = \u0027The quick brown fox jumps over the lazy dog.\u0027, type=text/plain",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "Compress \u002B decompress through PLang must round-trip the wrapped value losslessly.\nVerifies coverage row 3.9 \u2014 the developer-facing surface for Stage 3\u0027s flat Compress.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%original%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "The quick brown fox jumps over the lazy dog.",
+              "type": "string"
+            },
+            {
+              "name": "Type",
+              "value": "text/plain",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%original%, Value=\u0022The quick brown fox jumps over the lazy dog.\u0022, Type=\u0022text/plain\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "compress %original%, write to %archived%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "compress",
+          "parameters": [
+            {
+              "name": "Variable",
+              "value": "%original%",
+              "type": "variable"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%archived%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.compress(Variable=%original%) , variable.set(Name=%archived%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %archived!Type% equals \u0027archived\u0027",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "archived",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%archived!Type%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022archived\u0022, Actual=%archived!)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "decompress %archived%, write to %restored%",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "decompress",
+          "parameters": [
+            {
+              "name": "Variable",
+              "value": "%archived%",
+              "type": "variable"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%restored%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.decompress(Variable=%archived%) , variable.set(Name=%restored%, Value=%!data%, Type=object)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %restored% equals \u0027The quick brown fox jumps over the lazy dog.\u0027",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "The quick brown fox jumps over the lazy dog.",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%restored%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022The quick brown fox jumps over the lazy dog.\u0022, Actual=%restored%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Serialization/CompressRoundTrip.test.goal",
+  "prPath": "/Serialization/.build/compressroundtrip.test.pr",
+  "hash": "28a95e9992ad39a0061e43a6cfd0bc22dd55bb21b7669924a43b57afb3d8a498",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

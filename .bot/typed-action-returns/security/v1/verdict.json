@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "No critical/high. Three low/info open: Channel(name) no-op silent-drop (forward risk), Data.As(string) info-only, ReadAsT lost outer catch for non-JSON/IO exceptions. HTTP size-cap consolidation closes a prior audit-list duplicate-impl concern." }

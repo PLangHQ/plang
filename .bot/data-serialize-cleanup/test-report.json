@@ -1,0 +1,39 @@
+{
+  "tester": "tester",
+  "branch": "data-serialize-cleanup",
+  "timestamp": "2026-05-28T00:00:00Z",
+  "tested_version": "v2",
+  "test_run": {
+    "csharp": { "total": 3229, "passed": 3229, "failed": 0, "skipped": 0 },
+    "plang":  { "total": 228,  "passed": 228,  "failed": 0, "skipped": 0 }
+  },
+  "coverage": {
+    "changed_files_covered": "n/a (no coverage.json generated — full suite green; mutation-verified)",
+    "changed_files_total": 10,
+    "uncovered_files": []
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "Tests/Serialization/CompressRoundTrip.test.goal",
+      "code_file": "PLang/app/modules/variable/compress.cs",
+      "issue": "Assertion `%archived!Type% equals 'archived'` passes via the `!`-operator's fallback to Data infrastructure reflection (Data.Type), not via Properties[\"Type\"]. The compress action sets the Data.Type field, not a Property. The test reads like it's checking Properties scope, but the assertion is satisfied by the Data.Type reflection path. Wouldn't distinguish a regression that, say, set Properties[\"Type\"] = \"archived\" while leaving Data.Type empty.",
+      "impact": "Low — assertion does verify *something* about compress output, but documents the wrong contract. A reader copying the pattern might assume `!Key` is a Properties-only operator, which it isn't (Stage 4 left the reflection fallback in place at `this.Navigation.cs:318`).",
+      "suggestion": "Either (a) assert against the infrastructure-explicit form (`%archived.Type.Value%`) since Data.Type is the actual contract, or (b) cover both with disjoint cases: one Property write asserted via `!`, one Data.Type assertion via `.Type.Value`."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/App/Serialization/WireConverterSigningTests.cs",
+      "code_file": "PLang/app/data/WireJsonConverter.cs",
+      "issue": "`WireConverter_DoesNotWalkProperties_AsDataNodes` (line 135) and `Cut1_WireJson_HasFourTopLevelFields_NameTypeValueSignature` (line 47) both assert `properties` is absent on the wire when Properties is empty. Comments label this `pre-Stage-4` behaviour — stale, Stage 4 has landed. The tests pass because empty Properties is omit-when-empty, but their stated intent (\"converter doesn't walk Properties\") is not what they verify.",
+      "impact": "Cosmetic — the actual coverage of \"empty Properties omitted\" is fine (and is also covered by `Wire_EmptyProperties_OmitsPropertiesFieldEntirely`). Risk is reader confusion: someone reading these tests later thinks the wire never carries `properties`, contrary to Stage 4's design.",
+      "suggestion": "Update the comments to drop `pre-Stage-4` framing and rename the test to `WireConverter_OnEmptyProperties_OmitsPropertiesField` (or delete it as duplicate of the PropertiesWireShape coverage)."
+    }
+  ],
+  "verdict": "approved",
+  "summary": "Branch is honest. C# 3229/3229 + PLang 228/228 green on a clean rebuild. Stage 2's canonicalization fix is real — confirmed by mutation: swapping `serializer.OutboundOptions` for `JsonSerializerOptions.Default` in `crypto/code/Default.cs:51` correctly fails three tests, including the dedicated `CryptoHash_UsesTransportForOutboundOptions_NotDefaultStj`. Failure matrix tests assert typed `Error.Key` values (DataHashMismatch, DecompressError, ChannelReadOnly, …), not just `Success=false`. PLang test `.pr` files all map step text to the correct module.action — no builder false-greens. Two minor weak-assertion findings (stale comments + a `!Key` operator fallback masking the intended Properties-scope contract) — neither blocks merge. Process note: no `.bot/data-serialize-cleanup/coder/` folder, no `baseline-tests.md`, no coder session in `report.json` — flag, not blocker."
+}

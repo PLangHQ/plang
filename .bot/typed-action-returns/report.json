@@ -2,6 +2,59 @@
   "branch": "typed-action-returns",
   "sessions": [
     {
+      "id": "01J5T-tester-v1",
+      "bot": "tester",
+      "timestamp_start": "2026-05-27T13:51:34Z",
+      "intent": "Validate test quality and run full suites for typed-action-returns branch (Stages 0-4 + Serializers Data refactor + http body dispatch)",
+      "before": {
+        "assumptions": "Coder reports 3123/3123 C# + 208/0/12 PLang. codeanalyzer v3 PASS. No baseline-tests.md from coder (process violation \u2014 to note).",
+        "risk": "Branch made wide-ranging signature changes (Data<T> typings across ~10 actions, Serializers Data refactor, Ask shape change, http.Response). False-greens likely in stage tests if they only check signature shape, not behavior. PLang 12 'stale' placeholders need verification \u2014 could be real missing coverage."
+      },
+      "plan": ".bot/typed-action-returns/tester/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/typed-action-returns/tester/v1/csharp-test-output.txt",
+            ".bot/typed-action-returns/tester/v1/plang-test-output.txt"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Captured full-suite runs after clean rebuild \u2014 C# 3124/3124 + PLang 221/221 PASS. PLang stale-binary trap navigated via rm bin/obj + rebuild PlangConsole + rebuild PLang.Tests."
+        },
+        {
+          "paths": [
+            ".bot/typed-action-returns/tester/v1/plan.md",
+            ".bot/typed-action-returns/tester/summary.md",
+            ".bot/typed-action-returns/tester/v1/verdict.json",
+            ".bot/typed-action-returns/test-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Quality analysis: audited 13 TypedReturns plang goals (no text/action drift), Stage 0-4 C# tests (Build inference seam is strong; signature-reflection contracts are honest). Surfaced 4 minor + 1 info finding. Verdict: PASS."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Serialization/JsonStreamSerializerTests.cs",
+            "PLang.Tests/App/Serialization/TextStreamSerializerTests.cs",
+            "PLang.Tests/App/TypedReturnsTests/Stage3_HttpContentTypeDispatchTests.cs",
+            "PLang.Tests/App/TypedReturnsTests/Stage4_BuildMethodImplsTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "medium",
+          "context": "Flagged missing-coverage on the Serializers Data.Fail wrapping (try/catch added by refactor, never exercised by tests) and the http TextFallback parse-failure path. Weak-assertion on FileRead BuildWarning test."
+        }
+      ],
+      "after": {
+        "status": "fail",
+        "health": "green-but-lying",
+        "notes": "Full suite green (3124+221) but two confirmed false-greens flip verdict to FAIL per the false-green-as-red rule: (1) FileRead BuildWarning test asserts a tautology (channel registered in Setup); (2) Data<object> double-wrap supposedly covered by static reflection that never invokes a handler. Next: coder fixes both tests."
+      },
+      "timestamp_end": "2026-05-27T14:08:00Z"
+    },
+    {
       "id": "01J5T-test-designer-v1",
       "bot": "test-designer",
       "timestamp_start": "2026-05-26T19:55:00Z",
@@ -220,6 +273,415 @@
         "health": "green \u2014 no blocker; PLang.Tests 3123/3123 + plang --test 208/208 per coder handoff; all findings are polish/follow-up.",
         "notes": "11 findings: 4 readability, 3 simplification, 2 behavioral, 1 leaf-Data, 1 polish carried from v1. Most actionable: HTTP leaf helpers (F3, F4)."
       }
+    },
+    {
+      "id": "d7aae825-3b2c-4cf5-9189-655cf3f7932b",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-27T13:00:00Z",
+      "timestamp_end": "2026-05-27T13:49:44Z",
+      "intent": "Re-review v2 follow-up commits on typed-action-returns",
+      "before": {
+        "assumptions": "Coder addressed F1-F7, F9-F11 across 4 commits (117b754f3..HEAD); F8 closed won't-fix by architect. PLang.Tests + plang --test green per coder handoff.",
+        "risk": "Spill-over property rename (Mock.ActionPattern -> Pattern), precedence swap in getTypes.cs, new registered-types gate in file/read.cs each carry small behavioral risk worth re-pass."
+      },
+      "plan": ".bot/typed-action-returns/codeanalyzer/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/mock/Mock/this.cs",
+            "PLang/app/modules/builder/code/Default.cs",
+            "PLang/app/modules/file/read.cs",
+            "PLang/app/modules/goal/getTypes.cs",
+            "PLang/app/modules/http/code/Default.cs",
+            "PLang/app/modules/mock/intercept.cs",
+            "PLang/app/modules/mock/verify.cs",
+            "PLang/app/modules/output/ask.cs",
+            "PLang/app/modules/test/discover.cs",
+            "PLang/app/modules/test/report.cs",
+            "PLang/app/modules/test/run.cs",
+            "PLang/app/tester/Run.cs",
+            "PLang/app/types/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Five-pass + leaf-Data + Data<T> footgun on the 13-file v2-followup diff. All 10 actionable findings closed; 2 info-level observations recorded (N1 stale %__data__% comments, N2 mild warning-gate side effect)."
+        },
+        {
+          "paths": [
+            ".bot/typed-action-returns/codeanalyzer/v3/plan.md",
+            ".bot/typed-action-returns/codeanalyzer/v3/report.md",
+            ".bot/typed-action-returns/codeanalyzer/v3/verdict.json",
+            ".bot/typed-action-returns/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Standard codeanalyzer artifacts; summary overwritten to cover v3."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "green - branch is in shape to merge; build clean, test posture green per handoff.",
+        "notes": "All v2 findings closed. N1 (3 stale %__data__% comments in goal/getTypes.cs) and N2 (registered-types gate also silences missing-file warning for unregistered exts) recorded as info-level only."
+      }
+    },
+    {
+      "id": "tester-v2-fba31043",
+      "bot": "tester",
+      "timestamp_start": "2026-05-27T15:30:00Z",
+      "intent": "Verify coder v1 follow-up addresses tester v1 false-greens (FileRead memory-channel drain, Data<object> runtime double-wrap sweep) + 3 minor coverage gaps",
+      "before": {
+        "assumptions": "Coder commit 6965c89e4 claims to fix tester v1 finding #1 (FileRead memory channel) and #6 (RuntimeDoubleWrapTests) plus #2/#3 (serializer Data.Fail + http TextFallback). Need to (a) re-run full suites, (b) mutation-test the new false-green fixes, (c) confirm new minor-coverage tests actually assert behavior, not just success.",
+        "risk": "Tester v1 names the implicit-operator footgun as the headline risk; the new sweep test needs to actually catch a real double-wrap. Mutation-testing required."
+      },
+      "plan": ".bot/typed-action-returns/tester/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/typed-action-returns/tester/v2/csharp-test-output.txt",
+            ".bot/typed-action-returns/tester/v2/plang-test-output.txt"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Full-suite runs after clean rebuild. C# 3136/3136 (+12 new from coder v2 commit), PLang 221/221. Both green."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/file/read.cs",
+            "PLang/app/modules/list/first.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mutation-tested coder v1 fixes. (1) commented out Channels.Channel(\"builder\").WriteAsync(...) in file/read.cs:76 \u2014 FileRead test went red as expected, reverted. (2) replaced Ok(first.Value) with Ok(first) in list/first.cs:15 to force implicit-operator double-wrap \u2014 RuntimeDoubleWrap ListFirst test caught it with the exact footgun message, reverted. Source clean post-mutation."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Serialization/JsonStreamSerializerTests.cs",
+            "PLang.Tests/App/Serialization/TextStreamSerializerTests.cs",
+            "PLang.Tests/App/TypedReturnsTests/Stage3_HttpContentTypeDispatchTests.cs",
+            "PLang.Tests/App/TypedReturnsTests/RuntimeDoubleWrapTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Audited new tests for honest assertions. JsonStreamSerializer asserts Error.Key=JsonDeserializeError; TextStreamSerializer uses ThrowingStream for real IOException + asserts Error.Key; http BodyDispatch test asserts literal malformed string body (not just non-null). RuntimeDoubleWrap tripwire pins 18 Data<object> handlers via reflection \u2014 any new one forces an invocation test or narrowed T."
+        },
+        {
+          "paths": [
+            ".bot/typed-action-returns/tester/v2/plan.md",
+            ".bot/typed-action-returns/tester/v2/v1_review_summary.md",
+            ".bot/typed-action-returns/tester/v2/verdict.json",
+            ".bot/typed-action-returns/tester/summary.md",
+            ".bot/typed-action-returns/test-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Final reports. Verdict: PASS. No new findings."
+        }
+      ],
+      "timestamp_end": "2026-05-27T15:55:00Z",
+      "after": {
+        "status": "pass",
+        "health": "green",
+        "notes": "Both tester v1 critical false-greens (FileRead BuildWarning + Data<object> runtime double-wrap) cleanly fixed and mutation-tested. Minor-coverage tests assert behavior, not just success. Suites: 3136/3136 C# + 221/221 PLang. No new findings."
+      }
+    },
+    {
+      "id": "a002c700-ac12-4ce2-8f0c-2a3b727780e3",
+      "bot": "security",
+      "timestamp_start": "2026-05-27T15:22:35.938662+00:00",
+      "timestamp_end": "2026-05-27T15:25:29.963200+00:00",
+      "intent": "Security review of typed-action-returns branch",
+      "before": {
+        "assumptions": "Branch passed codeanalyzer v3 and tester v2.",
+        "risk": "Serializer Data<T> wrapping must preserve [Sensitive] and signing inflow. HTTP size cap consolidation could regress slow-loris guard. Build() runs handler code at compile-time. Channel(name) no-op fallback could mask audit writes."
+      },
+      "plan": ".bot/typed-action-returns/security/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "scripts/semgrep-scan.sh"
+          ],
+          "type": "review",
+          "category": "config",
+          "confidence": "high",
+          "context": "Ran semgrep \u2014 15 findings, matches baseline (no regressions)"
+        },
+        {
+          "paths": [
+            "PLang/app/channels/serializers/serializer/Json.cs",
+            "PLang/app/channels/serializers/serializer/Text.cs",
+            "PLang/app/channels/serializers/serializer/plang/Data.cs",
+            "PLang/app/channels/serializers/serializer/plang/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified Data<T>-wrapped serializer flow preserves signing inflow via _transportInOptions and keeps STJ catch list exhaustive for parse failures"
+        },
+        {
+          "paths": [
+            "PLang/app/modules/http/code/Default.cs",
+            "PLang/app/modules/http/HttpBuildHelpers.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "HTTP size cap + slow-loris consolidation: prior duplicate-impl concern now closed (one owner)"
+        },
+        {
+          "paths": [
+            "PLang/app/modules/IClass.cs",
+            "PLang.Generators/Emission/Action/this.cs",
+            "PLang/app/modules/file/read.cs",
+            "PLang/app/modules/llm/query.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Build() at validate respects AuthGate, swallows denials silently \u2014 no info disclosure"
+        },
+        {
+          "paths": [
+            "PLang/app/channels/this.cs",
+            "PLang/app/channels/channel/noop/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "F1: Channel(name) silent-drop fallback is forward-risk for any future audit-style channel"
+        },
+        {
+          "paths": [
+            "PLang/app/data/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "F2: new Data.As(string typeName) \u2014 type-confusion if typeName ever becomes caller-controlled"
+        },
+        {
+          "paths": [
+            ".bot/typed-action-returns/security-report.json",
+            ".bot/typed-action-returns/security/v1/report.md",
+            ".bot/typed-action-returns/security/v1/verdict.json",
+            ".bot/typed-action-returns/security/v1/plan.md",
+            ".bot/typed-action-returns/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Security review artifacts"
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "clean \u2014 3 new low/info opens, none merge-blocking; standing fixes intact",
+        "notes": "HTTP size-cap consolidation net improvement (closes prior duplicate-impl concern). AuthGate canonicalization (purge-systemio v2) holds. Next bot: auditor."
+      }
+    },
+    {
+      "id": "c8533fe1-a35f-4ed4-91bf-8669a3aaf733",
+      "bot": "auditor",
+      "timestamp_start": "2026-05-27T15:27:01.101606Z",
+      "intent": "Cross-cutting audit of typed-action-returns after 3 PASS verdicts (codeanalyzer v3, tester v2, security v1).",
+      "before": {
+        "assumptions": "Three reviewers approved; focus on gaps between them \u2014 Ask.ToString() contract change ripple, Build() swallow-all exception handler, Channel(builder) silent-drop, deferred Run.File property rename.",
+        "risk": "Wide refactor (944 files); cross-file contract drift most likely between Ask consumers, Data<T> double-wrap sites, and the new Build() validate-time pass."
+      },
+      "actions": [
+        {
+          "paths": [
+            ".bot/typed-action-returns/codeanalyzer/v3/",
+            ".bot/typed-action-returns/tester/v2/",
+            ".bot/typed-action-returns/security/v1/",
+            ".bot/typed-action-returns/coder/handoff.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Read all three reviewer summaries + verdicts + coder handoff to map what was covered."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/http/HttpBuildHelpers.cs",
+            "PLang/app/modules/file/read.cs",
+            "PLang/app/modules/variable/set.cs",
+            "PLang/app/types/this.cs",
+            "PLang/app/modules/builder/code/Default.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Traced Build() inference path file.read vs HttpBuildHelpers; confirmed registered-types gate is present in file.read but missing in HttpBuildHelpers, and variable.set Fails on unregistered Type at runtime."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/output/ask.cs",
+            "PLang/app/types/path/this.Authorize.cs",
+            "PLang/app/types/path/file/this.Operations.cs",
+            "PLang/app/data/ShouldExit.cs",
+            "PLang/app/IExitsGoal.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified Ask.ToString migration is complete at both named consumers and ShouldExit value-side opt-out wires through."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/TypedReturnsTests/Stage4_BuildMethodImplsTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Confirmed http Build() coverage only exercises registered .json \u2014 unregistered-extension regression invisible to suite."
+        },
+        {
+          "paths": [
+            ".bot/typed-action-returns/auditor/v1/plan.md",
+            ".bot/typed-action-returns/auditor/v1/result.md",
+            ".bot/typed-action-returns/auditor/v1/verdict.json",
+            ".bot/typed-action-returns/auditor-report.json",
+            ".bot/typed-action-returns/auditor/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote auditor artifacts: plan, result with reproducer, verdict (fail), structured report, and summary."
+        }
+      ],
+      "plan": ".bot/typed-action-returns/auditor/v1/plan.md",
+      "after": {
+        "status": "fail",
+        "health": "one major cross-file finding (F1)",
+        "notes": "HttpBuildHelpers missing registered-types gate; file.read has it. Fix is mechanical (~3 lines + 1 test). Other seams (Ask.ToString, ShouldExit, Build() safety, Channel(builder)) clean."
+      },
+      "timestamp_end": "2026-05-27T15:31:14.869054Z"
+    },
+    {
+      "id": "2d3bd528-02e9-473f-b126-c3b572f7b8b5",
+      "bot": "auditor",
+      "timestamp_start": "2026-05-27T15:39:07.942547Z",
+      "intent": "Re-audit after coder v2 fix for F1.",
+      "before": {
+        "assumptions": "Coder pushed a 1-commit fix (8576f2dc6) that mirrors the gate from file.read.Build() and adds a regression test.",
+        "risk": "Low \u2014 single-file mechanical fix."
+      },
+      "plan": ".bot/typed-action-returns/auditor/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/modules/http/HttpBuildHelpers.cs",
+            "PLang.Tests/App/TypedReturnsTests/Stage4_BuildMethodImplsTests.cs",
+            ".bot/typed-action-returns/coder/v2/report.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Reviewed coder v2 diff (commit 8576f2dc6) \u2014 3 files, +50/-1; fix mirrors file/read.cs gate exactly."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/http/HttpBuildHelpers.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Mutation test: temporarily removed the new gate, re-ran HttpRequest_Build_LiteralUrlWithUnregisteredExtension_ReturnsBareOk \u2014 failed with \"Expected to be null but found pdf\". Restored gate; tree clean. Full Stage4 suite 12/12 green."
+        },
+        {
+          "paths": [
+            ".bot/typed-action-returns/auditor/v2/plan.md",
+            ".bot/typed-action-returns/auditor/v2/v1_review_summary.md",
+            ".bot/typed-action-returns/auditor/v2/verdict.json",
+            ".bot/typed-action-returns/auditor-report.json",
+            ".bot/typed-action-returns/auditor/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote v2 artifacts; updated auditor-report.json (no findings) and summary.md with before/after."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "F1 closed cleanly",
+        "notes": "Coder v2 fix matches suggestion exactly; new regression test mutation-validated; Stage4 12/12 green."
+      },
+      "timestamp_end": "2026-05-27T15:40:09.797467Z"
+    },
+    {
+      "id": "bb0b5b12-b8ef-4edd-bfaa-918949f8d7fe",
+      "bot": "docs",
+      "timestamp_start": "2026-05-27T15:41:56Z",
+      "timestamp_end": "2026-05-27T15:47:50Z",
+      "intent": "Documentation completeness gate for typed-action-returns after auditor v2 PASS",
+      "before": {
+        "assumptions": "Auditor v2 PASS (commit 7f635bd9b). Tester v2 PASS 3136 C# + 221 PLang. Security PASS. No claude-md/character proposals on this branch. Major surface: IClass.Build()/SetAction(), Channel(name) lookup, BuildWarning record, typed Data<T> Run() returns across http/test/output/builder/mock/goal, Ask.Answer + IExitsGoal, new http Response record, Schema\u2192builder.Types and MockHandle\u2192Mock.@this renames, Serializers/ISerializer now return Data, multi-segment GetByExtension, (type) hint syntax in Compile.llm.",
+        "risk": "Large surface (207 files). Many public records/properties added. Most user-visible: Ask shape change (Answer + ToString), Response record body dispatch, (type) hint syntax. Architecture doc updates needed in good_to_know.md and a new typed-returns chapter."
+      },
+      "actions": [
+        {
+          "paths": [
+            "Documentation/v0.2/good_to_know.md",
+            "Documentation/v0.2/architecture.md",
+            "os/system/modules/mock/intercept.description.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Chased 3 stale rename refs (MockHandle, app.tester.File, Schema.@this) and renamed/sharpened the mock action description after mock.action -> mock.intercept rename."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/good_to_know.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added 4 new sections covering build-time side of typed-action-returns: Build()-time type stamping (IClass.Build, (type) hints, BuildWarning channel-write), Serializers/ISerializer returns Data (closed throw list), multi-segment GetByExtension, IExitsGoal.ShouldExit value-side opt-out pattern."
+        },
+        {
+          "paths": [
+            ".bot/typed-action-returns/docs/v1/plan.md",
+            ".bot/typed-action-returns/docs/v1/result.md",
+            ".bot/typed-action-returns/docs/v1/verdict.json",
+            ".bot/typed-action-returns/docs/summary.md",
+            ".bot/typed-action-returns/docs-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Standard docs bot output: plan, result with CHANGELOG-shaped surface inventory, verdict pass, summary, and structured docs-report."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/IClass.cs",
+            "PLang/app/IExitsGoal.cs",
+            "PLang/app/http/Response/this.cs",
+            "PLang/app/tester/Test/this.cs",
+            "PLang/app/mock/Mock/this.cs",
+            "PLang/app/modules/builder/warning/this.cs",
+            "PLang/app/modules/output/ask.cs",
+            "PLang/app/channels/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "XML doc coverage audit on every new public type. All verified well-documented by coder; no flag-back required."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "green",
+        "notes": "All 8 doc gaps filled (4 stale-ref updates + 4 new architecture sections). XML docs already clean on new public surface. No proposal files present on this branch. Ready to merge."
+      },
+      "plan": ".bot/typed-action-returns/docs/v1/plan.md"
     }
   ]
 }

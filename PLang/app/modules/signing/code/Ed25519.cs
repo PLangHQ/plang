@@ -11,7 +11,7 @@ namespace app.modules.signing.code;
 
 /// <summary>
 /// Ed25519 signing provider. Owns the full signing/verification pipeline.
-/// Low-level crypto via NSec. High-level pipeline builds Signature envelopes.
+/// Low-level crypto via NSec. High-level pipeline builds Signature objects.
 /// </summary>
 public class Ed25519 : ISigning
 {

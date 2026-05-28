@@ -128,6 +128,21 @@ public class Stage3_HttpContentTypeDispatchTests
     }
 
     [Test]
+    public async Task BodyDispatch_BrokenJsonContentType_FallsBackToString()
+    {
+        // application/json with malformed body: deser.Success is false → the
+        // TextFallback kicks in and Body lands as the raw bytes decoded to
+        // string. If a future change made deser.Success always true, this
+        // turns red.
+        const string malformed = "{not json";
+        var resp = await Get("https://x/broken", r =>
+            r.Content = new StringContent(malformed, Encoding.UTF8, "application/json"));
+        await Assert.That(resp.Body).IsTypeOf<string>()
+            .Because("Malformed JSON must surface as the raw text via TextFallback, not null.");
+        await Assert.That((string)resp.Body!).IsEqualTo(malformed);
+    }
+
+    [Test]
     public async Task HttpDownload_BodyDispatch_NotApplied()
     {
         // http.download writes to file; ParseResponseAsync is not invoked, so no

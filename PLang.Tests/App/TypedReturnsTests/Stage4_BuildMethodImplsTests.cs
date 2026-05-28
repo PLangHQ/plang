@@ -76,15 +76,17 @@ public class Stage4_BuildMethodImplsTests
     [Test]
     public async Task FileRead_Build_LiteralMissingFile_WritesBuildWarning()
     {
-        var channel = _app.User.Channels.CreateMemoryChannel("builder");
-        _app.User.Channels.Register(channel);
+        var channel = (global::app.channels.channel.stream.@this)
+            _app.User.Channels.CreateMemoryChannel("builder");
 
-        // File doesn't exist on disk — Build() should still infer + emit warning.
-        var result = await Build("file", "read", ("Path", "definitely-missing-stage4.csv"));
+        const string missing = "definitely-missing-stage4.csv";
+        var result = await Build("file", "read", ("Path", missing));
         await Assert.That(result.Success).IsTrue();
 
-        // Channel write succeeded routing to the real channel (not the noop sink).
-        await Assert.That(_app.User.Channels.Channel("builder")).IsNotTypeOf<global::app.channels.channel.noop.@this>();
+        channel.Stream.Position = 0;
+        var written = await channel.ReadAllTextAsync();
+        await Assert.That(written).Contains(missing)
+            .Because("Build() must write a missing-file warning whose message names the offending path.");
     }
 
     [Test]
@@ -133,6 +135,16 @@ public class Stage4_BuildMethodImplsTests
         var result = await Build("http", "request", ("Url", "https://api/x.json"));
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsEqualTo("json");
+    }
+
+    [Test]
+    public async Task HttpRequest_Build_LiteralUrlWithUnregisteredExtension_ReturnsBareOk()
+    {
+        // .pdf has a known mime but is not a registered PLang type. Stamping
+        // "pdf" would make the trailing variable.set fail with "Unknown type 'pdf'".
+        var result = await Build("http", "request", ("Url", "https://x/report.pdf"));
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsNull();
     }
 
     [Test]

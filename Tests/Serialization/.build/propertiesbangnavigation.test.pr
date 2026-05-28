@@ -1,0 +1,128 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %response% = \u0027hello\u0027",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "%response!cost% must resolve to Properties[\u0022cost\u0022] \u2014 the bang operator reaches into\nthe Properties scope, not into Value. Coverage row 4.10.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%response%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "hello",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%response%, Value=\u0022hello\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %response!cost% = 100",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%response!cost%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": 100,
+              "type": "int"
+            },
+            {
+              "name": "Type",
+              "value": "string",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%response!cost%, Value=100, Type=string)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %response!cost% equals 100",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 100,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%response!cost%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=100, Actual=%response!cost%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Serialization/PropertiesBangNavigation.test.goal",
+  "prPath": "/Serialization/.build/propertiesbangnavigation.test.pr",
+  "hash": "9b04b4c6423d323cb59f7aaecc6a4c870f43c0ccfa6ad92ba8eb8330930187f6",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

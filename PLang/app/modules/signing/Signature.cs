@@ -6,7 +6,7 @@ using app.variables;
 namespace app.modules.signing;
 
 /// <summary>
-/// The signed data envelope. Owns creation (signing) and verification.
+/// Cryptographic signature attached to a Data. Owns creation (signing) and verification.
 /// All fields are serialized in a deterministic order for signature verification.
 /// </summary>
 public class Signature
@@ -40,7 +40,7 @@ public class Signature
     public data.@this Hash { get; internal set; } = app.data.@this.Ok("");
 
     /// <summary>
-    /// Serializes Data as { "type": "algorithm", "value": "base64hash" } in the signing envelope.
+    /// Serializes Data as { "type": "algorithm", "value": "base64hash" } in the signing object.
     /// </summary>
     internal class HashDataConverter : JsonConverter<data.@this>
     {

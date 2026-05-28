@@ -9,7 +9,7 @@ namespace app.modules.settings;
 
 /// <summary>
 /// SQLite-backed persistent settings store.
-/// Two-column schema per table: key TEXT PRIMARY KEY, data TEXT (Data envelope via global::app.channels.serializers.serializer.plang.@this).
+/// Two-column schema per table: key TEXT PRIMARY KEY, data TEXT (Data via global::app.channels.serializers.serializer.plang.@this).
 /// WAL mode for concurrent reads. Tables auto-created on first write.
 /// Connection per operation (SQLite pools internally via connection string).
 /// </summary>

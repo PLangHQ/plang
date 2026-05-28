@@ -99,7 +99,7 @@ public class QueryEdgeCaseTests
         await Assert.That(_handler.CallCount).IsEqualTo(3);
         await Assert.That(callIndex).IsEqualTo(3);
         // Loop exited via MaxToolCalls — result carries metadata
-        await Assert.That(result.Properties["Truncated"]?.Value).IsEqualTo(true);
+        await Assert.That(result.Properties["Truncated"]).IsEqualTo(true);
     }
 
     [Test]

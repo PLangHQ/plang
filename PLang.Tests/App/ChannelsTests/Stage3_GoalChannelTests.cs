@@ -16,7 +16,7 @@ public class Stage3_GoalChannelTests
         // Empty steps → goal completes with Ok. Test validates %!data% binding via Variables.
         var ch = new GoalChannel("logger", goal, app.User);
         var dataIn = Data.Ok("payload-A");
-        var result = await ch.WriteCore(dataIn);
+        var result = await ch.Write(dataIn);
         await Assert.That(result.Success).IsTrue();
 
         var captured = app.User.Context.Variables.Get("!data");
@@ -29,7 +29,7 @@ public class Stage3_GoalChannelTests
         var app = new global::app.@this("/tmp/g2");
         var goal = new EngineGoal { Name = "ReturnsOk", Path = "Returns.goal", PrPath = "/R.pr" };
         var ch = new GoalChannel("c", goal, app.User);
-        var result = await ch.WriteCore(Data.Ok("x"));
+        var result = await ch.Write(Data.Ok("x"));
         await Assert.That(result.Success).IsTrue();
     }
 
@@ -90,7 +90,7 @@ public class Stage3_GoalChannelTests
         using (app.User.PushChannelsOverride(app.User.FoundationalChannels))
         {
             var stream = (StreamChannel)app.User.Channels.Resolve("output")!;
-            await stream.WriteCore(Data.Ok("payload"));
+            await stream.Write(Data.Ok("payload"));
         }
         var bytes = global::System.Text.Encoding.UTF8.GetString(captured.ToArray());
         await Assert.That(bytes.Contains("payload")).IsTrue();
@@ -136,7 +136,7 @@ public class Stage3_GoalChannelTests
         // Single write through the overlay; goal runs and any inner write resolves
         // foundational. Empty Steps means it just completes — Stream is unaffected
         // here, so we just assert no exception/recursion blew up.
-        var result = await loggerCh.WriteCore(Data.Ok("msg"));
+        var result = await loggerCh.Write(Data.Ok("msg"));
         await Assert.That(result.Success).IsTrue();
     }
 
@@ -146,7 +146,7 @@ public class Stage3_GoalChannelTests
         var app = new global::app.@this("/tmp/g8");
         var goal = new EngineGoal { Name = "Asker", Path = "Asker.goal", PrPath = "/A.pr" };
         var ch = new GoalChannel("input", goal, app.User);
-        var result = await ch.AskCore(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "q?") });
+        var result = await ch.Ask(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "q?") });
         await Assert.That(result.Success).IsTrue();
     }
 
@@ -159,7 +159,7 @@ public class Stage3_GoalChannelTests
         await ch.DisposeAsync();
         // Goal still usable — re-register as a different channel.
         var ch2 = new GoalChannel("c2", goal, app.User);
-        var result = await ch2.WriteCore(Data.Ok("x"));
+        var result = await ch2.Write(Data.Ok("x"));
         await Assert.That(result.Success).IsTrue();
     }
 }
