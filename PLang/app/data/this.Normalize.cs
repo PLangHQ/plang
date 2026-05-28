@@ -56,15 +56,22 @@ public partial class @this
         if (value is int || value is long || value is double || value is float)
             return value;
 
-        // Nested Data: normalize its Value in place, return as-is.
+        // Nested Data: normalize its Value into a fresh tree. Do NOT mutate the
+        // source Data — outbound serialization must be observation-only or
+        // domain values (Identity etc.) get replaced with their property-bag
+        // form on the original, breaking subsequent in-memory reads.
         if (value is @this nested)
         {
             if (!visited.Add(nested))
                 throw CycleError(nested);
             try
             {
-                nested._value = NormalizeValue(nested.Value, mode, visited, depth + 1);
-                return nested;
+                var innerNormalized = NormalizeValue(nested.Value, mode, visited, depth + 1);
+                if (ReferenceEquals(innerNormalized, nested.Value)) return nested;
+                var copy = new @this(nested.Name, innerNormalized, nested.Type);
+                copy.Properties = nested.Properties;
+                copy.Signature = nested.Signature;
+                return copy;
             }
             finally { visited.Remove(nested); }
         }

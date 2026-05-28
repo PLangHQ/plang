@@ -111,7 +111,51 @@ public partial class @this
     {
         if (value is null) return null;
 
-        // Try the parameterless ctor first.
+        // Gather children by name first — needed for both parameterless and
+        // positional-ctor paths.
+        var byName = new Dictionary<string, @this>(StringComparer.OrdinalIgnoreCase);
+        if (value is System.Collections.IEnumerable seqEarly)
+            foreach (var item in seqEarly)
+                if (item is @this child) byName[child.Name] = child;
+
+        // Positional-ctor path: types with no parameterless ctor (records with
+        // positional parameters, immutable classes) reconstruct by gathering
+        // the matching children and calling the longest public ctor.
+        if (targetType.GetConstructor(System.Type.EmptyTypes) == null)
+        {
+            var ctors = targetType.GetConstructors(BindingFlags.Public | BindingFlags.Instance);
+            if (ctors.Length == 0)
+                throw new NormalizeException(
+                    $"No reconstruction strategy for {targetType.Name}: no public ctor and no FromNormalized hook found.",
+                    "NormalizeNoReconstructionStrategy");
+            // Prefer the ctor whose parameter names all match available children.
+            var best = ctors.OrderByDescending(c => c.GetParameters().Length).First();
+            var pars = best.GetParameters();
+            var args = new object?[pars.Length];
+            for (int i = 0; i < pars.Length; i++)
+            {
+                var pname = pars[i].Name ?? "";
+                if (byName.TryGetValue(pname.ToLowerInvariant(), out var c))
+                    args[i] = Walk(c.Value, pars[i].ParameterType, ctx);
+                else if (pars[i].HasDefaultValue)
+                    args[i] = pars[i].DefaultValue;
+                else
+                    args[i] = pars[i].ParameterType.IsValueType
+                        ? Activator.CreateInstance(pars[i].ParameterType)
+                        : null;
+            }
+            try
+            {
+                return best.Invoke(args);
+            }
+            catch (System.Exception ex)
+            {
+                throw new NormalizeException(
+                    $"Reconstruct failed invoking positional ctor of {targetType.Name}: {ex.Message}",
+                    "NormalizeReconstructFailed", ex);
+            }
+        }
+
         object? instance;
         try
         {
@@ -123,14 +167,6 @@ public partial class @this
                 $"No reconstruction strategy for {targetType.Name}: neither parameterless ctor nor FromNormalized hook found.",
                 "NormalizeNoReconstructionStrategy");
         }
-
-        // The tree's children: a List<Data> when the value came from Normalize,
-        // or already the target instance if no decomposition happened.
-        if (value is not System.Collections.IEnumerable seq) return instance;
-
-        var byName = new Dictionary<string, @this>(StringComparer.OrdinalIgnoreCase);
-        foreach (var item in seq)
-            if (item is @this child) byName[child.Name] = child;
 
         if (byName.Count == 0) return instance;
 
@@ -163,7 +199,9 @@ public partial class @this
     private static bool IsLeafTarget(System.Type t)
         => t.IsPrimitive
         || t == typeof(string) || t == typeof(decimal)
-        || t == typeof(System.DateTime) || t == typeof(byte[])
+        || t == typeof(System.DateTime) || t == typeof(System.DateTimeOffset)
+        || t == typeof(System.TimeSpan) || t == typeof(System.Guid)
+        || t == typeof(byte[])
         || t.IsEnum;
 
     private static Func<@this, actor.context.@this?, object?>? GetHook(System.Type targetType)

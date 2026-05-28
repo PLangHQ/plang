@@ -92,17 +92,14 @@ public class AsTreeWalkerTests
 
     [Test] public async Task As_RecordWithPositionalCtor_ReconstructsThroughCtor()
     {
-        // Positional records have no parameterless ctor — Reconstruct raises
-        // NormalizeNoReconstructionStrategy. Record-positional-ctor support is
-        // a deferred extension; pin the residue today.
+        // Positional records (no parameterless ctor) reconstruct by gathering
+        // matching children and invoking the longest public ctor.
         var bag = new List<Data> { new("name", "alice"), new("count", 5) };
         var carrier = new Data("", bag);
-        var ex = await Assert.ThrowsAsync<NormalizeException>(async () =>
-        {
-            carrier.Reconstruct<HasOutRecord>();
-            await Task.CompletedTask;
-        });
-        await Assert.That(ex!.Key).IsEqualTo("NormalizeNoReconstructionStrategy");
+        var rebuilt = carrier.Reconstruct<HasOutRecord>();
+        await Assert.That(rebuilt).IsNotNull();
+        await Assert.That(rebuilt!.Name).IsEqualTo("alice");
+        await Assert.That(rebuilt.Count).IsEqualTo(5);
     }
 
     [Test] public async Task As_NoOutProperties_ReturnsAllDefaultInstance()
@@ -167,13 +164,13 @@ public class AsTreeWalkerTests
 
     [Test] public async Task As_T_OnTypeWithNoParameterlessCtor_AndNoHook_RaisesNoReconstructionStrategy()
     {
+        // Positional ctor wins when a non-parameterless ctor is the only path
+        // — NoCtor(string name) is callable with the "name" child. So a
+        // missing-public-ctor type (abstract base) is what raises today.
         var children = new List<Data> { new("name", "x") };
         var carrier = new Data("", children);
-        var ex = await Assert.ThrowsAsync<NormalizeException>(async () =>
-        {
-            carrier.Reconstruct<NoCtor>();
-            await Task.CompletedTask;
-        });
-        await Assert.That(ex!.Key).IsEqualTo("NormalizeNoReconstructionStrategy");
+        var rebuilt = carrier.Reconstruct<NoCtor>();
+        await Assert.That(rebuilt).IsNotNull();
+        await Assert.That(rebuilt!.Name).IsEqualTo("x");
     }
 }
