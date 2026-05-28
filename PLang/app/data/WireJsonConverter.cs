@@ -28,23 +28,36 @@ namespace app.data;
 /// </summary>
 public sealed class WireJsonConverter : JsonConverter<@this>
 {
-    private static readonly AsyncLocal<HashSet<@this>?> _hashOuter = new();
+    // Ref-counted "outer being hashed right now" tracking. A plain HashSet
+    // would lose the marker when nested Hash calls run on the same Data
+    // instance (signing.verify re-hashing inner while outer Verify is mid-
+    // serialise; chained crypto.Hash through a goal whose own result is
+    // being signed): inner-disposal would Remove the Data the outer still
+    // depended on, and the next outer Write would think it was safe to
+    // EnsureSigned, causing recursion. Per-instance ref-count keeps each
+    // scope's lifetime independent.
+    private static readonly AsyncLocal<Dictionary<@this, int>?> _hashOuter = new();
 
     /// <summary>
     /// Marks <paramref name="data"/> as the "outer being hashed right now."
     /// While the returned scope is alive, the converter writes that one
     /// Data's body without invoking <see cref="@this.EnsureSigned"/> and
-    /// without emitting its Signature field.
+    /// without emitting its Signature field. Reference-counted: nested
+    /// MarkOuterForHash calls on the same Data instance compose correctly.
     /// </summary>
     public static IDisposable MarkOuterForHash(@this data)
     {
-        var set = _hashOuter.Value ??= new HashSet<@this>(ReferenceEqualityComparer.Instance);
-        set.Add(data);
+        var map = _hashOuter.Value ??= new Dictionary<@this, int>(ReferenceEqualityComparer.Instance);
+        map.TryGetValue(data, out var n);
+        map[data] = n + 1;
         return new Scope(data);
     }
 
     private static bool IsHashOuter(@this data)
-        => _hashOuter.Value?.Contains(data) == true;
+    {
+        var map = _hashOuter.Value;
+        return map != null && map.TryGetValue(data, out var n) && n > 0;
+    }
 
     private sealed class Scope : IDisposable
     {
@@ -55,9 +68,14 @@ public sealed class WireJsonConverter : JsonConverter<@this>
         {
             if (_disposed) return;
             _disposed = true;
-            var set = _hashOuter.Value;
-            set?.Remove(_data);
-            if (set != null && set.Count == 0) _hashOuter.Value = null;
+            var map = _hashOuter.Value;
+            if (map == null) return;
+            if (map.TryGetValue(_data, out var n))
+            {
+                if (n <= 1) map.Remove(_data);
+                else map[_data] = n - 1;
+            }
+            if (map.Count == 0) _hashOuter.Value = null;
         }
     }
 

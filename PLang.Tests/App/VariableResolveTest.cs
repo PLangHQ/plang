@@ -18,11 +18,14 @@ public class VariableResolveTest
         await Assert.That(v.IsMalformed).IsFalse();
     }
 
-    [Test] public async Task Resolve_NegationPlusProperty_BothCaptured()
+    [Test] public async Task Resolve_NegationPlusProperty_FlagsMalformed()
     {
+        // Negation prefix + property suffix together (`%!x!cost%`) has no
+        // defined semantics — caught at parse time so write paths fail with
+        // a typed syntax error instead of VariableNotFound on "!x".
         var v = global::app.variables.Variable.Resolve("%!response!cost%", null!);
-        await Assert.That(v.Name).IsEqualTo("!response");
-        await Assert.That(v.Property).IsEqualTo("cost");
+        await Assert.That(v.IsMalformed).IsTrue();
+        await Assert.That(v.Property).IsNull();
     }
 
     [Test] public async Task Resolve_DoubleBang_FlagsMalformed_NoSplit()

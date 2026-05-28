@@ -99,10 +99,24 @@ public sealed record Variable(string Name, string RawValue, bool WasPercentWrapp
         }
         else if (bangsInHead == 1)
         {
-            var bang = head.IndexOf('!');
-            name = (hasNegationPrefix ? "!" : "") + head[..bang];
-            property = head[(bang + 1)..];
-            if (property.Length == 0) { property = null; malformed = true; }
+            // Negation prefix + property suffix together (`%!x!cost%`) is a
+            // shape with no defined semantics — negating a Property read of a
+            // boolean Property is the only meaningful read, and that's a path
+            // the read-side parser (Variables.Resolve) doesn't support. We
+            // reject at parse time so a write attempt fails with a typed
+            // syntax error rather than VariableNotFound on "!x".
+            if (hasNegationPrefix)
+            {
+                name = "!" + body;
+                malformed = true;
+            }
+            else
+            {
+                var bang = head.IndexOf('!');
+                name = head[..bang];
+                property = head[(bang + 1)..];
+                if (property.Length == 0) { property = null; malformed = true; }
+            }
         }
         else
         {

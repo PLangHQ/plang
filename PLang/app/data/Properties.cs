@@ -64,15 +64,11 @@ public sealed class Properties : IDictionary<string, object?>
     public bool TryGetValue(string key, out object? value) => _items.TryGetValue(key, out value);
 
     /// <summary>
-    /// Sets a property value. The optional <paramref name="type"/> parameter
-    /// is accepted for callsite compatibility with the legacy IList&lt;Data&gt;
-    /// surface but ignored — Properties values are wire-supported primitives;
-    /// type info lives implicitly in the runtime CLR type of <paramref name="value"/>.
+    /// Sets a property value. Equivalent to <c>this[name] = value</c> — kept as
+    /// a method form for callers that prefer the verb shape over an indexer
+    /// (e.g. <c>result.Properties.Set("branchIndex", 0)</c>).
     /// </summary>
-    public void Set(string name, object? value, type? type = null)
-    {
-        this[name] = value;
-    }
+    public void Set(string name, object? value) => this[name] = value;
 
     /// <summary>
     /// Convenience reader: gets a property as T (primitive coercion via
@@ -84,7 +80,7 @@ public sealed class Properties : IDictionary<string, object?>
         if (!_items.TryGetValue(name, out var v) || v is null) return default;
         if (v is T typed) return typed;
         try { return (T)Convert.ChangeType(v, typeof(T)); }
-        catch { return default; }
+        catch (Exception ex) when (ex is InvalidCastException or FormatException or OverflowException) { return default; }
     }
 
     public void Clear() => _items.Clear();
@@ -107,16 +103,27 @@ public sealed class Properties : IDictionary<string, object?>
         return clone;
     }
 
+    // EnsureSupportedValue is a best-effort top-level gate: scalars are
+    // checked exhaustively, container types (dict/list) are accepted
+    // structurally without recursing into their leaves. The recursion would
+    // catch nested non-primitives at the call site (rather than at the wire
+    // boundary where STJ surfaces an opaque emit error) but the cost is real
+    // domain-object containers — `List<LlmMessage>` and similar — that today
+    // pass through Properties.* untouched. The right tightening lives at
+    // those upstream call sites (convert to dict/list-of-primitives before
+    // storing) and is tracked separately; for now this gate keeps Data
+    // instances out of Properties (the only invariant Stage 4 has to enforce
+    // at this layer) and trusts the producer for everything else.
     private static void EnsureSupportedValue(object? value)
     {
         if (value is null) return;
-        if (value is string or bool or int or long or double or decimal or float
-            or DateTime or DateTimeOffset or byte[] or Guid) return;
-        if (value is IDictionary<string, object?> or IEnumerable<object?>) return;
         if (value is global::app.data.@this)
             throw new ArgumentException(
                 "Property values must be wire-supported primitives. Data instances belong in data.Value, not Properties.",
                 nameof(value));
+        if (value is string or bool or int or long or double or decimal or float
+            or DateTime or DateTimeOffset or byte[] or Guid) return;
+        if (value is System.Collections.IDictionary or System.Collections.IEnumerable) return;
         throw new ArgumentException(
             $"Property value of type {value.GetType()} is not a wire-supported primitive.",
             nameof(value));

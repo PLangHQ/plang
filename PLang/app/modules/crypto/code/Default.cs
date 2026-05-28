@@ -14,12 +14,12 @@ public class Default : ICrypto
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
-    // Context-less fallback wire options — same shape as the registered
-    // application/plang serializer but without an actor-bound path converter.
-    // Used by Hash when called outside of an actor scope (test fixtures, raw
-    // ICrypto consumers); production goes through the registered serializer.
-    private static readonly global::app.channels.serializers.serializer.plang.@this _fallbackPlang =
-        new global::app.channels.serializers.serializer.plang.@this();
+    // Context-less fallback — single source of truth lives on plang.@this so
+    // Transport.Compress and crypto.Hash never drift. Used by Hash when called
+    // outside of an actor scope (test fixtures, raw ICrypto consumers);
+    // production goes through the registered serializer.
+    private static global::app.channels.serializers.serializer.plang.@this _fallbackPlang
+        => global::app.channels.serializers.serializer.plang.@this.ContextLessFallback;
 
     public data.@this<byte[]> Hash(Hash action)
     {
@@ -35,9 +35,17 @@ public class Default : ICrypto
             // serializer uses, so hashed-bytes ≡ wire-bytes (minus the outermost
             // Signature field, suppressed via WireJsonConverter.MarkOuterForHash).
             // The outer signature transitively binds inner Datas' signatures.
-            var serializer = action.Context?.Actor?.Channels.Serializers.GetByType("application/plang")
-                             as global::app.channels.serializers.serializer.plang.@this
-                             ?? _fallbackPlang;
+            //
+            // If something other than the canonical plang.@this is registered for
+            // "application/plang" (custom transport, test double, future format),
+            // fail loud — hash and wire would diverge silently and signature
+            // verification would behave inconsistently across the same payload.
+            var registered = action.Context?.Actor?.Channels.Serializers.GetByType("application/plang");
+            if (registered != null && registered is not global::app.channels.serializers.serializer.plang.@this)
+                return global::app.data.@this<byte[]>.FromError(new ActionError(
+                    "Registered application/plang serializer is not the canonical plang.@this; hash bytes would diverge from wire bytes.",
+                    "SerializerMismatch", 500));
+            var serializer = (registered as global::app.channels.serializers.serializer.plang.@this) ?? _fallbackPlang;
             using (global::app.data.WireJsonConverter.MarkOuterForHash(data))
             {
                 bytes = JsonSerializer.SerializeToUtf8Bytes(data, serializer.OutboundOptions);

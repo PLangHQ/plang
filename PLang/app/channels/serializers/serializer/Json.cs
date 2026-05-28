@@ -93,7 +93,7 @@ public sealed class Json : ISerializer
     {
         try
         {
-            if (stream.Length == 0) return global::app.data.@this.Ok();
+            if (stream.CanSeek && stream.Length == 0) return global::app.data.@this.Ok();
             var v = await JsonSerializer.DeserializeAsync<object?>(stream, _options, cancellationToken);
             return global::app.data.@this.Ok(v);
         }
@@ -108,7 +108,7 @@ public sealed class Json : ISerializer
     {
         try
         {
-            if (stream.Length == 0) return global::app.data.@this<T>.Ok(default!);
+            if (stream.CanSeek && stream.Length == 0) return global::app.data.@this<T>.Ok(default!);
             var v = await JsonSerializer.DeserializeAsync<T>(stream, _options, cancellationToken);
             return global::app.data.@this<T>.Ok(v!);
         }

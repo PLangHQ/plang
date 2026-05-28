@@ -91,6 +91,15 @@ public sealed class @this : ISerializer
     /// </summary>
     internal JsonSerializerOptions OutboundOptions => _outbound;
 
+    /// <summary>
+    /// Context-less fallback instance — used by callers (crypto.Hash,
+    /// Data.CompressAsync/DecompressAsync) that may run outside an actor
+    /// scope and still need the canonical wire shape. Single source of truth
+    /// so both Hash and Transport route through the same OutboundOptions
+    /// (no drift if the construction recipe changes).
+    /// </summary>
+    public static readonly @this ContextLessFallback = new @this();
+
     public async Task<global::app.data.@this> SerializeAsync(Stream stream, global::app.data.@this data, CancellationToken cancellationToken = default)
     {
         try
@@ -109,7 +118,7 @@ public sealed class @this : ISerializer
     {
         try
         {
-            if (stream.Length == 0) return global::app.data.@this.Ok();
+            if (stream.CanSeek && stream.Length == 0) return global::app.data.@this.Ok();
             var v = await JsonSerializer.DeserializeAsync<global::app.data.@this>(stream, _inbound, cancellationToken);
             return global::app.data.@this.Ok(v);
         }
@@ -124,7 +133,7 @@ public sealed class @this : ISerializer
     {
         try
         {
-            if (stream.Length == 0) return global::app.data.@this<T>.Ok(default!);
+            if (stream.CanSeek && stream.Length == 0) return global::app.data.@this<T>.Ok(default!);
             var v = await JsonSerializer.DeserializeAsync<T>(stream, _inbound, cancellationToken);
             return global::app.data.@this<T>.Ok(v!);
         }

@@ -18,21 +18,21 @@ public partial class Compress : IContext
     [IsNotNull]
     public partial data.@this<Variable> Variable { get; init; }
 
-    public Task<data.@this> Run()
+    public async Task<data.@this> Run()
     {
         var target = Context.Variables.Get(Variable.Value!.Name);
         if (target == null || !target.IsInitialized)
-            return Task.FromResult(data.@this.FromError(
+            return data.@this.FromError(
                 new errors.ServiceError($"Variable '{Variable.Value.Name}' is not set",
-                    "VariableNotFound", 400)));
-        return Task.FromResult(target.Compress());
+                    "VariableNotFound", 400));
+        return await target.CompressAsync();
     }
 }
 
 /// <summary>
 /// Decompresses a Data whose <c>type=archived</c>. Returns the original
 /// Data (with inner signature intact); returns self unchanged when the
-/// target is not an archived envelope.
+/// target is not an archived outer.
 /// </summary>
 [Action("decompress", Cacheable = false)]
 public partial class Decompress : IContext
@@ -41,13 +41,13 @@ public partial class Decompress : IContext
     [IsNotNull]
     public partial data.@this<Variable> Variable { get; init; }
 
-    public Task<data.@this> Run()
+    public async Task<data.@this> Run()
     {
         var target = Context.Variables.Get(Variable.Value!.Name);
         if (target == null || !target.IsInitialized)
-            return Task.FromResult(data.@this.FromError(
+            return data.@this.FromError(
                 new errors.ServiceError($"Variable '{Variable.Value.Name}' is not set",
-                    "VariableNotFound", 400)));
-        return Task.FromResult(target.Decompress());
+                    "VariableNotFound", 400));
+        return await target.DecompressAsync();
     }
 }

@@ -20,12 +20,6 @@ public partial class @this
     /// </summary>
     private const long MaxDecompressedSize = 100 * 1024 * 1024;
 
-    // Context-less fallback serializer — same options shape as the registered
-    // application/plang serializer. Used when Compress/Decompress run outside
-    // an actor scope (raw Context constructed directly in tests).
-    private static readonly global::app.channels.serializers.serializer.plang.@this _fallbackPlang =
-        new global::app.channels.serializers.serializer.plang.@this();
-
     private app.modules.signing.Signature? _signature;
 
     /// <summary>
@@ -106,7 +100,16 @@ public partial class @this
     /// bug). Wraps a single layer: <c>{type=archived, value=byte[]}</c>.
     /// Returns self if not compressible or no context.
     /// </summary>
-    public @this Compress()
+    public @this Compress() => CompressAsync().GetAwaiter().GetResult();
+
+    /// <summary>
+    /// Async-native variant of <see cref="Compress"/> — preferred by
+    /// action handlers (<c>variable.compress.Run()</c>) and any caller
+    /// already in an async context. The sync wrapper exists for C#
+    /// composition sites that aren't async (and accepts the sync-over-
+    /// async cost there).
+    /// </summary>
+    public async Task<@this> CompressAsync(CancellationToken ct = default)
     {
         if (_context == null || Type == null)
             return this;
@@ -115,10 +118,10 @@ public partial class @this
             return this;
 
         var serializer = _context.Actor?.Channels.Serializers.GetByType("application/plang")
-                         ?? (global::app.channels.serializers.serializer.ISerializer)_fallbackPlang;
+                         ?? (global::app.channels.serializers.serializer.ISerializer)global::app.channels.serializers.serializer.plang.@this.ContextLessFallback;
 
         using var ms = new MemoryStream();
-        serializer.SerializeAsync(ms, this).GetAwaiter().GetResult();
+        await serializer.SerializeAsync(ms, this, ct);
         var compressed = GZipCompress(ms.ToArray());
 
         var outer = new @this("", compressed, type.FromName("archived"));
@@ -164,7 +167,13 @@ public partial class @this
     /// deserialise through the registered application/plang serializer to recover
     /// the original Data with its inner signature intact.
     /// </summary>
-    public @this Decompress()
+    public @this Decompress() => DecompressAsync().GetAwaiter().GetResult();
+
+    /// <summary>
+    /// Async-native variant of <see cref="Decompress"/> — preferred by
+    /// action handlers and async callers.
+    /// </summary>
+    public async Task<@this> DecompressAsync(CancellationToken ct = default)
     {
         if (!string.Equals(Type?.Value, "archived", StringComparison.OrdinalIgnoreCase))
             return this;
@@ -178,10 +187,10 @@ public partial class @this
             var decompressed = GZipDecompress(compressed);
 
             var serializer = _context?.Actor?.Channels.Serializers.GetByType("application/plang")
-                             ?? (global::app.channels.serializers.serializer.ISerializer)_fallbackPlang;
+                             ?? (global::app.channels.serializers.serializer.ISerializer)global::app.channels.serializers.serializer.plang.@this.ContextLessFallback;
 
             using var ms = new MemoryStream(decompressed);
-            var deser = serializer.DeserializeAsync(ms).GetAwaiter().GetResult();
+            var deser = await serializer.DeserializeAsync(ms, ct);
             if (!deser.Success)
                 return FromError(new ServiceError(
                     "Deserialization failed after decompression: " + (deser.Error?.Message ?? "unknown"),
@@ -211,6 +220,17 @@ public partial class @this
     /// <summary>
     /// Strips the category outer, returning the inner Data.
     /// If Value is a Data, returns it. Otherwise returns self (already flat).
+    ///
+    /// <para>
+    /// Side effect: when Value IS a Data, this writes <c>inner.Context = _context</c>
+    /// so subsequent calls on the returned Data resolve against the unwrapping
+    /// actor's scope. Inner is a shared reference (it lives in the outer's Value
+    /// graph), so two consumers Unwrapping the same outer from different actor
+    /// contexts will trash inner.Context to whichever ran last. In practice
+    /// Context here is a "default for further calls" hint rather than identity,
+    /// so the race is benign; a future tightening would clone-and-rebind on
+    /// Unwrap when the forwarding case starts requiring isolated provenance.
+    /// </para>
     /// </summary>
     public @this Unwrap()
     {
