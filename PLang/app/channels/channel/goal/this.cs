@@ -7,17 +7,26 @@ namespace app.channels.channel.goal;
 /// envelope as input (available as <c>%!data%</c> inside the goal). Returns the
 /// goal's result Data.
 ///
-/// Recursion rule: the channel captures a reference to the registering actor, and
-/// for the duration of each goal call swaps the actor's channel resolution to the
-/// actor's <see cref="Actor.@this.FoundationalChannels"/>. So a goal-channel body
-/// like <c>- write out %!data%</c> reaches the original entry-point streams, not
-/// the overlay that fired this goal — preventing infinite recursion and giving
-/// fan-out via composition for free.
+/// Recursion rule: while the goal body is running on the current async context,
+/// <see cref="IsExecuting"/> is true and the registry's <c>Get</c> treats this
+/// channel as not-found. A body like <c>- write out %!data%</c> on a channel
+/// named <c>"output"</c> can't loop back into itself; sibling and late-registered
+/// channels stay visible.
 /// </summary>
 public class @this : global::app.channels.channel.session.@this
 {
     /// <summary>The goal this channel dispatches writes to.</summary>
     public global::app.goals.goal.@this Goal { get; }
+
+    private readonly AsyncLocal<bool> _executing = new();
+
+    /// <summary>
+    /// True while this channel's goal body is running on the current async context.
+    /// The registry's <c>Get</c> treats an executing goal-channel as not-found, so
+    /// a body that writes to its own name surfaces <c>ChannelNotFound</c> instead
+    /// of looping back into itself.
+    /// </summary>
+    public bool IsExecuting => _executing.Value;
 
     public @this(string name, global::app.goals.goal.@this goal, global::app.actor.@this actor,
         ChannelDirection direction = ChannelDirection.Bidirectional)
@@ -49,12 +58,6 @@ public class @this : global::app.channels.channel.session.@this
         if (!IsOpen)
             return global::app.data.@this.FromError(new ServiceError($"Channel '{Name}' is closed", "ChannelClosed", 400));
 
-        var app = Actor.App;
-        var foundational = Actor.FoundationalChannels;
-        // Switch the actor's channel resolution to the foundational set for the duration
-        // of the goal call. AsyncLocal scoping means concurrent calls don't collide.
-        using var _ = Actor.PushChannelsOverride(foundational);
-
         var ctx = Actor.Context;
 
         // Channels are not a fork — `write out %x%` is just a function call from
@@ -66,14 +69,20 @@ public class @this : global::app.channels.channel.session.@this
         // otherwise — and either way subsequent goal-body sets behave the same.
         ctx.Variables.Set("!data", new data.@this("!data", data.Value, data.Type));
 
+        var prev = _executing.Value;
+        _executing.Value = true;
         try
         {
-            return await app.RunGoalAsync(Goal, ctx, ct);
+            return await Actor.App.RunGoalAsync(Goal, ctx, ct);
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
             return global::app.data.@this.FromError(new ServiceError(
                 $"Goal channel '{Name}' failed: {ex.Message}", "GoalChannelError") { Exception = ex });
+        }
+        finally
+        {
+            _executing.Value = prev;
         }
     }
 

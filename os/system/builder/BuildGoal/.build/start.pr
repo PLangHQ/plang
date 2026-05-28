@@ -860,11 +860,6 @@
                     "prPath": "/system/builder/.build/emitbuildevent.pr"
                   },
                   "type": "goal.call"
-                },
-                {
-                  "name": "Actor",
-                  "value": "system",
-                  "type": "actor"
                 }
               ],
               "defaults": null,
@@ -872,7 +867,7 @@
             }
           ],
           "intent": null,
-          "formal": "goal.call(GoalName={name:\u0022/system/builder/EmitBuildEvent\u0022, parameters:[{name:\u0022kind\u0022, value:\u0022subGoalHeader\u0022, type:\u0022string\u0022},{name:\u0022goal\u0022, value:\u0022%goal%\u0022, type:\u0022object\u0022}]}, Actor=\u0022system\u0022)",
+          "formal": "goal.call(GoalName={name:\u0022/system/builder/EmitBuildEvent\u0022, parameters:[{name:\u0022kind\u0022, value:\u0022subGoalHeader\u0022, type:\u0022string\u0022},{name:\u0022goal\u0022, value:\u0022%goal%\u0022, type:\u0022object\u0022}]})",
           "source": null,
           "waitForExecution": true
         },

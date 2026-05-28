@@ -507,11 +507,6 @@ public sealed partial class @this : IAsyncDisposable
             if (!invariant.Success) return invariant;
         }
 
-        // Foundational set: capture the boot-time channels so goal channels can
-        // resolve their writes against the originals (recursion isolation).
-        System.FreezeFoundational();
-        User.FreezeFoundational();
-
         context ??= System.Context;
         CurrentActor = System;
 
