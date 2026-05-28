@@ -140,18 +140,20 @@
       },
       "actions": [
         {
-          "paths": [".bot/data-normalize/codeanalyzer/v1.md"],
+          "paths": [
+            ".bot/data-normalize/codeanalyzer/v1.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "3 majors + 8 polish. M1: json.Writer.Value default branch falls back to STJ — bypasses [Out]/[Sensitive]/[Masked] at the last gate. M2: Wire.Write emits Properties via STJ — asymmetric with the Read side that restricts to primitives. M3: EnsureInnerSigned skips IDictionary values — inner Datas held in dict values ship unsigned. P-series: Reconstruct bare-catch conflates ctor-missing with ctor-threw; Tagged inherit:true is dead-cargo; IWriter has no Enum/Float/DateTimeOffset/TimeSpan/Guid slots though Normalize keeps them as leaves; [Out,Store] on Data envelope props is dead-code; Reconstruct re-Normalize on every call; Dict<K,V> silent drop; tree-leaf list inconsistency; path 'scheme' wire field unused on inbound."
+          "context": "3 majors + 8 polish. M1: json.Writer.Value default branch falls back to STJ \u2014 bypasses [Out]/[Sensitive]/[Masked] at the last gate. M2: Wire.Write emits Properties via STJ \u2014 asymmetric with the Read side that restricts to primitives. M3: EnsureInnerSigned skips IDictionary values \u2014 inner Datas held in dict values ship unsigned. P-series: Reconstruct bare-catch conflates ctor-missing with ctor-threw; Tagged inherit:true is dead-cargo; IWriter has no Enum/Float/DateTimeOffset/TimeSpan/Guid slots though Normalize keeps them as leaves; [Out,Store] on Data envelope props is dead-code; Reconstruct re-Normalize on every call; Dict<K,V> silent drop; tree-leaf list inconsistency; path 'scheme' wire field unused on inbound."
         }
       ],
       "verdict": "fail",
       "next_bot": "coder",
       "after": {
-        "status": "FAIL — 3 majors must be fixed before Stage 2b wiring. Report at .bot/data-normalize/codeanalyzer/v1.md.",
-        "health": "Branch builds + tests green. Findings are latent — none failing today because Stage 2b wiring hasn't switched on the value-slot pipeline. Must address M1-M3 before that switch.",
+        "status": "FAIL \u2014 3 majors must be fixed before Stage 2b wiring. Report at .bot/data-normalize/codeanalyzer/v1.md.",
+        "health": "Branch builds + tests green. Findings are latent \u2014 none failing today because Stage 2b wiring hasn't switched on the value-slot pipeline. Must address M1-M3 before that switch.",
         "notes": "Verified clean rebuild (zero PLNG002), 3379/3379 C# tests, 233/233 PLang tests. Next: coder addresses M1-M3, then codeanalyzer v2."
       }
     },
@@ -167,17 +169,19 @@
       },
       "actions": [
         {
-          "paths": [".bot/data-normalize/codeanalyzer/v2.md"],
+          "paths": [
+            ".bot/data-normalize/codeanalyzer/v2.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "PASS. M1 (typed throw at gate), M2 (Normalize+Value pipeline for Properties), M3 (dict branch + fixture) all closed. P1-P8 all addressed correctly. One residual polish (V1): json.Writer.EndRecord hard-codes View.Out when normalizing inner-Data Properties — asymmetric with Wire.Write's View propagation. Theoretical harm only today since Properties holds primitives, polish-only."
+          "context": "PASS. M1 (typed throw at gate), M2 (Normalize+Value pipeline for Properties), M3 (dict branch + fixture) all closed. P1-P8 all addressed correctly. One residual polish (V1): json.Writer.EndRecord hard-codes View.Out when normalizing inner-Data Properties \u2014 asymmetric with Wire.Write's View propagation. Theoretical harm only today since Properties holds primitives, polish-only."
         }
       ],
       "verdict": "fail",
       "next_bot": "coder",
       "after": {
-        "status": "FAIL — M2's fix is half-landed. Outer Wire.Write correctly propagates View into the Properties pipeline, but json.Writer.EndRecord hard-codes View.Out for inner-Data Properties. Same M2 shape at the second emission site. Report at .bot/data-normalize/codeanalyzer/v2.md.",
+        "status": "FAIL \u2014 M2's fix is half-landed. Outer Wire.Write correctly propagates View into the Properties pipeline, but json.Writer.EndRecord hard-codes View.Out for inner-Data Properties. Same M2 shape at the second emission site. Report at .bot/data-normalize/codeanalyzer/v2.md.",
         "health": "Clean rebuild (zero PLNG002), C# 3380/3380, PLang 233/233. Tests didn't catch V1 because no fixture exercises Store-mode + inner-Data-with-Properties.",
         "notes": "Next: coder fixes V1 (plumb View into json.Writer ctor from Wire.Write site) + adds Store + inner-Data + Properties fixture."
       }
@@ -193,19 +197,62 @@
       },
       "actions": [
         {
-          "paths": [".bot/data-normalize/codeanalyzer/v3.md"],
+          "paths": [
+            ".bot/data-normalize/codeanalyzer/v3.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "PASS. View threaded through json.Writer's ctor (default Out), Wire.Write passes its View at construction. New fixture (StoreView_PropagatesIntoInnerDataProperties_NotHardcodedToOut) pins both Out-excludes and Store-includes [Sensitive] PrivateKey reachable through inner Data's Properties — covers exactly the path v2 said was uncovered."
+          "context": "PASS. View threaded through json.Writer's ctor (default Out), Wire.Write passes its View at construction. New fixture (StoreView_PropagatesIntoInnerDataProperties_NotHardcodedToOut) pins both Out-excludes and Store-includes [Sensitive] PrivateKey reachable through inner Data's Properties \u2014 covers exactly the path v2 said was uncovered."
         }
       ],
       "verdict": "pass",
       "next_bot": "tester",
       "after": {
-        "status": "PASS — V1 closed correctly with fixture. All v1 + v2 findings now closed. Report at .bot/data-normalize/codeanalyzer/v3.md.",
+        "status": "PASS \u2014 V1 closed correctly with fixture. All v1 + v2 findings now closed. Report at .bot/data-normalize/codeanalyzer/v3.md.",
         "health": "Clean rebuild (zero PLNG002), C# 3381/3381 (+1 V1 fixture), PLang 233/233.",
         "notes": "Next: tester."
+      }
+    },
+    {
+      "id": "a3a7fcfc-4e5e-4657-ae85-94433d6a3596",
+      "bot": "tester",
+      "timestamp_start": "2026-05-28T16:23:19Z",
+      "intent": "Quality-validate test coverage for data-normalize v3: V1 fixture (View threading into json.Writer.EndRecord) and the broader Normalize/Reconstruct/Wire surface.",
+      "before": {
+        "assumptions": "codeanalyzer v3 PASSED; coder v3 closed V1 with a new fixture (StoreView_PropagatesIntoInnerDataProperties_NotHardcodedToOut); C# 3381/3381, PLang 233/233 per coder. No prior tester output exists on this branch.",
+        "risk": "No baseline-tests.md from coder \u2014 process violation to flag. V1 fixture is a single-shot mutation test; need to verify it actually fails on mutation and that adjacent paths (collection-inside-Properties shallow gate; symmetric Store/Out asymmetry across non-json writers) are not silently uncovered."
+      },
+      "actions": [
+        {
+          "paths": [
+            ".bot/data-normalize/tester/v3/plan.md",
+            ".bot/data-normalize/tester/v3/coverage.json",
+            ".bot/data-normalize/tester/v3/verdict.json",
+            ".bot/data-normalize/tester/summary.md",
+            ".bot/data-normalize/test-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "tester v3 outputs. Verdict FAIL: 1 PLang test red (BuilderSanity smoke \u2014 math.add on string '[1,2,3]'), coder v3 claimed 233/233 but actual is 232/233; V1 fixture honest and mutation-verified."
+        },
+        {
+          "paths": [
+            "PLang/app/channels/serializers/json/writer.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mutation test: temporarily replaced _view with View.Out in EndRecord NormalizeValue call. New fixture StoreView_PropagatesIntoInnerDataProperties_NotHardcodedToOut failed as expected (PRIV-must-persist missing from store bytes). Reverted; git status clean for source."
+        }
+      ],
+      "plan": ".bot/data-normalize/tester/v3/plan.md",
+      "timestamp_end": "2026-05-28T16:35:30Z",
+      "after": {
+        "status": "needs-fixes",
+        "health": "C# green (3381/3381). PLang red (232/233) \u2014 /BuilderSanity/BuilderSanity.test.goal fails because the fixture's `set %items% = '[1, 2, 3]'` + `foreach %items%` relies on string\u2192list auto-parse but strings are atomic under current IsPlangIterable. V1 fixture is mutation-verified honest.",
+        "notes": "Coder v1/v2/v3 all missing baseline-tests.md \u2014 process violation flagged. 2 minor coverage notes on Wire outer-Properties path and json.Writer default-arg, both optional."
       }
     }
   ]
