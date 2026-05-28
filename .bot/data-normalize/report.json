@@ -304,6 +304,67 @@
         "health": "All green. C# 3381/3381, PLang 233/233. BuilderSanity rebuild deterministic. V1 fixture mutation-verified. baseline-tests.md present.",
         "notes": "v3 verdict retracted \u2014 misattribution from running cache=false rebuild on a graded fixture. Lesson saved to tester memory."
       }
+    },
+    {
+      "id": "f2a8b1cc-9d4e-4a31-8f2a-1b3c2d4e5f60",
+      "bot": "security",
+      "timestamp_start": "2026-05-28T17:28:55Z",
+      "timestamp_end": "2026-05-28T17:38:00Z",
+      "intent": "Blue+red security audit of data-normalize: Normalize/Reconstruct/Wire/json.Writer/Tagged + attribute migrations.",
+      "before": {
+        "assumptions": "codeanalyzer v3 PASS (V1 closed, M-series clean); tester v4 PASS (3381/3381 + 233/233); Wire.Read depth cap from data-serialize-cleanup is carried forward through the rename; AuthGate canonicalisation from purge-systemio-from-actions/v2 closes the lexical-prefix bypass that Reconstruct's path hook depends on.",
+        "risk": "Two new recursive surfaces (Normalize, Reconstruct.Walk) plus a reflection-driven Tagged filter. Untagged-type transparent fallback in Tagged is a latent footgun for any future domain type that lands in a Data value graph and forgets [Sensitive]."
+      },
+      "plan": ".bot/data-normalize/security/v1/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/data-normalize/security/v1/plan.md", ".bot/data-normalize/security/v1/result.md", ".bot/data-normalize/security/v1/verdict.json", ".bot/data-normalize/security/summary.md", ".bot/data-normalize/security-report.json"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v1 plan / result / verdict / summary / branch-level security-report. PASS verdict."
+        },
+        {
+          "paths": ["PLang/app/data/this.Normalize.cs", "PLang/app/data/this.Reconstruct.cs", "PLang/app/data/Wire.cs", "PLang/app/data/NormalizeException.cs", "PLang/app/data/this.Transport.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Normalize: MaxNormalizeDepth=128, ReferenceEqualityComparer cycle set, leaf table consistent with IsTreeLeafType, Masked never invokes getter, getter-throws wrapped. Reconstruct: Walk relies on Wire.Read's MaxReadDepth=64 for wire trees; T is caller-controlled (no type-confusion). Wire: depth cap carried through rename; Properties primitives-only via ReadPropertyPrimitive; hash-outer ref-counted; sign-if-missing requires Context.Actor. Transport: gzip-decompress already capped at 100MB."
+        },
+        {
+          "paths": ["PLang/app/channels/serializers/IWriter.cs", "PLang/app/channels/serializers/json/writer.cs", "PLang/app/channels/serializers/filters/Tagged.cs", "PLang/app/channels/serializers/filters/Transport.cs", "PLang/app/channels/serializers/serializer/plang/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "json.Writer: _view threaded via ctor (codeanalyzer v3 V1 closed), default case throws NormalizeException — fails closed on unknown leaf type, prevents STJ reflection bypass of Out/Sensitive/Masked. Tagged: per-(type,mode) cache; transparent fallback for types with no four-tags = ships all public — design-aware footgun (memory note). plang serializer: three options bags (Out / In / Store), no view drift at call sites."
+        },
+        {
+          "paths": ["PLang/app/modules/identity/types.cs", "PLang/app/modules/settings/types.cs", "PLang/app/variables/Variable.cs", "PLang/app/types/path/this.cs", "PLang/app/http/Response/this.cs", "PLang/app/View.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Attribute migrations: Identity PrivateKey stays [Sensitive] + gains [Store]; setting.value [Out, Masked, Store]; Variable.Name [Out] only (RawValue excluded — correct, secrets can live in raw refs); path.Scheme + path.Relative [Out, Store] (Absolute excluded — sandbox-correct); http.Response Status/Headers/Body [Out]. [Masked] new attribute."
+        },
+        {
+          "paths": ["PLang/app/modules/settings/Sqlite.cs", "PLang/app/modules/signing/code/Ed25519.cs", "PLang/app/modules/crypto/code/Default.cs", "PLang/app/actor/permission/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Sqlite.Set switched to Store view (correct — Identity.PrivateKey round-trips); Ed25519.VerifyAsync now reads .Signature directly (RawSignature deleted); permission flow swaps RawSignature → Signature (semantic-equivalent). Signature mutation sites enumerated — Wire.Read, WrapAsTyped, Normalize copy, Ed25519 sign — all proper code paths."
+        },
+        {
+          "paths": [".semgrep/", "scripts/semgrep-scan.sh"],
+          "type": "review",
+          "category": "config",
+          "confidence": "high",
+          "context": "Semgrep baseline scan — 15 findings, matches baseline. No new files added to the plang-serializer-default-options list; builder/code/Default.cs:321 plan-dump matches the existing 14 sites (planValue is LLM-JSON, no path/Sensitive reachability)."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "Clean — no critical/high findings. Verdict: pass. Branch ready for auditor.",
+        "notes": "Two design-aware notes recorded for memory: (1) Tagged transparent fallback ships all public props for untagged types — architect-intentional but a latent footgun the next domain-type author must remember; (2) BuilderPlannerFailed plan dump uses default JsonSerializer.Serialize — matches existing semgrep baseline. Next bot: auditor."
+      }
     }
   ]
 }
