@@ -51,13 +51,19 @@ public static class Tagged
         // sub-records) round-trip naturally without each sub-property carrying
         // a tag inventory. Mirrors the existing View filter's "isViewAware"
         // discipline.
+        //
+        // PropertyInfo's IsDefined ignores the inherit flag — base-declaration
+        // attributes don't propagate to override properties regardless of the
+        // flag. Subclasses that need an [Out] on an overridden property re-apply
+        // the tag explicitly (see FilePath/HttpPath's Scheme override).
+        // inherit:false documents the actual semantics.
         bool typeIsTagAware = false;
         foreach (var p in props)
         {
-            if (p.IsDefined(typeof(OutAttribute), inherit: true)
-                || p.IsDefined(typeof(StoreAttribute), inherit: true)
-                || p.IsDefined(typeof(SensitiveAttribute), inherit: true)
-                || p.IsDefined(typeof(MaskedAttribute), inherit: true))
+            if (p.IsDefined(typeof(OutAttribute), inherit: false)
+                || p.IsDefined(typeof(StoreAttribute), inherit: false)
+                || p.IsDefined(typeof(SensitiveAttribute), inherit: false)
+                || p.IsDefined(typeof(MaskedAttribute), inherit: false))
             {
                 typeIsTagAware = true;
                 break;
@@ -73,7 +79,7 @@ public static class Tagged
             // [Sensitive] is wire-layer-only. Store-mode persists the full
             // object (Identity.PrivateKey needs to survive sqlite round-trip).
             if (mode != global::app.View.Store
-                && prop.IsDefined(typeof(SensitiveAttribute), inherit: true))
+                && prop.IsDefined(typeof(SensitiveAttribute), inherit: false))
                 continue;
 
             // [JsonIgnore] in Debug/Store mode still excludes — those tags
@@ -81,9 +87,9 @@ public static class Tagged
             // (path.GoalCall, path.Context, GoalCall.Event, etc.). An explicit
             // [Out] or [Store] tag opts the property back in.
             if (mode != global::app.View.Out
-                && prop.IsDefined(typeof(System.Text.Json.Serialization.JsonIgnoreAttribute), inherit: true)
-                && !prop.IsDefined(typeof(OutAttribute), inherit: true)
-                && !prop.IsDefined(typeof(StoreAttribute), inherit: true))
+                && prop.IsDefined(typeof(System.Text.Json.Serialization.JsonIgnoreAttribute), inherit: false)
+                && !prop.IsDefined(typeof(OutAttribute), inherit: false)
+                && !prop.IsDefined(typeof(StoreAttribute), inherit: false))
                 continue;
 
             bool include = mode switch
@@ -94,8 +100,8 @@ public static class Tagged
                 // tagged-property filter discipline.
                 global::app.View.Store when !typeIsTagAware => true,
                 global::app.View.Out when !typeIsTagAware => true,
-                global::app.View.Store => prop.IsDefined(typeof(StoreAttribute), inherit: true),
-                _ => prop.IsDefined(typeof(OutAttribute), inherit: true),
+                global::app.View.Store => prop.IsDefined(typeof(StoreAttribute), inherit: false),
+                _ => prop.IsDefined(typeof(OutAttribute), inherit: false),
             };
 
             if (!include) continue;
@@ -104,7 +110,7 @@ public static class Tagged
             // receiver). On the local persistence path, the real value
             // travels — no observer to hide from.
             bool masked = mode != global::app.View.Store
-                && prop.IsDefined(typeof(MaskedAttribute), inherit: true);
+                && prop.IsDefined(typeof(MaskedAttribute), inherit: false);
             entries.Add(new Entry(prop, masked));
         }
 

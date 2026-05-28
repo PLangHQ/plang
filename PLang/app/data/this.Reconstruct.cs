@@ -35,7 +35,13 @@ public partial class @this
     public T? Reconstruct<T>(actor.context.@this? context = null)
     {
         var ctx = context ?? _context;
-        var tree = Normalize();
+        // Skip Normalize when Value is already a tree-native leaf — those
+        // cases (null, primitives, byte[], BCL leaf structs, enums, nested
+        // Data) re-walk to themselves in Normalize. Domain objects and raw
+        // collections still need Normalize to decompose into the property-bag
+        // shape Walk consumes.
+        var raw = Value;
+        var tree = IsLeafShape(raw) ? raw : Normalize();
         var result = Walk(tree, typeof(T), ctx);
         if (result is null) return default;
         if (result is T typed) return typed;
@@ -43,6 +49,15 @@ public partial class @this
         // the walker didn't catch (e.g. int → long).
         return (T?)AppTypes.ConvertTo(result, typeof(T));
     }
+
+    private static bool IsLeafShape(object? v)
+        => v is null
+        || v is string || v is bool
+        || v is int || v is long || v is double || v is float || v is decimal
+        || v is System.DateTime || v is System.DateTimeOffset
+        || v is System.TimeSpan || v is System.Guid
+        || v is byte[] || v is System.Enum
+        || v is @this;
 
     private static object? Walk(object? value, System.Type targetType, actor.context.@this? ctx)
     {
@@ -95,8 +110,14 @@ public partial class @this
                 {
                     if (item is not @this child) continue;
                     var k = AppTypes.ConvertTo(child.Name, keyType);
+                    if (k == null)
+                    {
+                        throw new NormalizeException(
+                            $"Reconstruct can't convert dictionary key '{child.Name}' to {keyType.Name}.",
+                            "NormalizeReconstructFailed");
+                    }
                     var v = Walk(child.Value, valueType, ctx);
-                    if (k != null) dictInstance[k] = v;
+                    dictInstance[k] = v;
                 }
             }
             return dictInstance;
@@ -160,11 +181,19 @@ public partial class @this
         {
             instance = Activator.CreateInstance(targetType);
         }
-        catch
+        catch (MissingMethodException)
         {
             throw new NormalizeException(
                 $"No reconstruction strategy for {targetType.Name}: neither parameterless ctor nor FromNormalized hook found.",
                 "NormalizeNoReconstructionStrategy");
+        }
+        catch (System.Exception ex)
+        {
+            // Parameterless ctor exists but its body threw — distinct from
+            // strategy-missing. Surface the original failure.
+            throw new NormalizeException(
+                $"Reconstruct failed instantiating {targetType.Name}: {ex.Message}",
+                "NormalizeReconstructFailed", ex);
         }
 
         if (byName.Count == 0) return instance;
@@ -220,6 +249,11 @@ public partial class @this
 
         // Convention 2 — path.@this and subclasses: read the "relative" child
         // from the normalized tree and call Resolve(relative, ctx).
+        // Note: the "scheme" child on the wire is informational only — path
+        // strings carry their scheme prefix ("http://…", absolute file paths)
+        // so Resolve recovers the scheme without consulting the field. The
+        // wire field exists for receivers that want to dispatch without
+        // parsing; this hook doesn't.
         if (typeof(app.types.path.@this).IsAssignableFrom(targetType))
         {
             return (data, ctx) =>

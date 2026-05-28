@@ -22,9 +22,14 @@ public interface IWriter
     void Bool(bool value);
     void Int(int value);
     void Long(long value);
+    void Float(float value);
     void Double(double value);
     void String(string value);
     void DateTime(System.DateTime value);
+    void DateTimeOffset(System.DateTimeOffset value);
+    void TimeSpan(System.TimeSpan value);
+    void Guid(System.Guid value);
+    void Enum(System.Enum value);
     void Decimal(decimal value);
     void Bytes(byte[] value);
 

@@ -189,10 +189,14 @@ public partial class @this
         return elementType != null;
     }
 
+    // Keep in lockstep with the leaf cases in NormalizeValue (top of file).
     private static bool IsTreeLeafType(System.Type t)
         => t == typeof(string) || t == typeof(int) || t == typeof(long)
         || t == typeof(double) || t == typeof(float) || t == typeof(bool)
-        || t == typeof(System.DateTime) || t == typeof(decimal) || t == typeof(byte[]);
+        || t == typeof(System.DateTime) || t == typeof(System.DateTimeOffset)
+        || t == typeof(System.TimeSpan) || t == typeof(System.Guid)
+        || t == typeof(decimal) || t == typeof(byte[])
+        || t.IsEnum;
 
     private static System.Exception CycleError(object node)
         => new NormalizeException(

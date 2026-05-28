@@ -160,6 +160,15 @@ public sealed class Wire : JsonConverter<@this>
             EnsureInnerSigned(inner.Value);
             return;
         }
+        // IDictionary's IEnumerable yields DictionaryEntry boxes, not values —
+        // foreach over the dict would walk DictionaryEntry which is neither
+        // Data nor IEnumerable, and inner Datas held as dict values would
+        // never get sealed. Branch on IDictionary first.
+        if (value is System.Collections.IDictionary dict)
+        {
+            foreach (var v in dict.Values) EnsureInnerSigned(v);
+            return;
+        }
         if (value is System.Collections.IEnumerable seq && value is not string)
         {
             foreach (var item in seq) EnsureInnerSigned(item);
@@ -395,7 +404,13 @@ public sealed class Wire : JsonConverter<@this>
             foreach (var kvp in data.Properties)
             {
                 writer.WritePropertyName(kvp.Key);
-                JsonSerializer.Serialize(writer, kvp.Value, options);
+                // Route through Normalize + json.Writer same as the value slot,
+                // so [Out] / [Sensitive] / [Masked] discipline applies symmetrically
+                // if a caller deposits a domain object into Properties.
+                var normalized = @this.NormalizeValue(kvp.Value, View,
+                    new HashSet<object>(System.Collections.Generic.ReferenceEqualityComparer.Instance),
+                    depth: 0);
+                jsonWriter.Value(normalized);
             }
             writer.WriteEndObject();
         }

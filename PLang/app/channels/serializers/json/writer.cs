@@ -27,9 +27,14 @@ public sealed class Writer : IWriter
     public void Bool(bool value) => _writer.WriteBooleanValue(value);
     public void Int(int value) => _writer.WriteNumberValue(value);
     public void Long(long value) => _writer.WriteNumberValue(value);
+    public void Float(float value) => _writer.WriteNumberValue(value);
     public void Double(double value) => _writer.WriteNumberValue(value);
     public void String(string value) => _writer.WriteStringValue(value);
     public void DateTime(System.DateTime value) => _writer.WriteStringValue(value);
+    public void DateTimeOffset(System.DateTimeOffset value) => _writer.WriteStringValue(value);
+    public void TimeSpan(System.TimeSpan value) => _writer.WriteStringValue(value.ToString("c"));
+    public void Guid(System.Guid value) => _writer.WriteStringValue(value);
+    public void Enum(System.Enum value) => _writer.WriteStringValue(value.ToString());
     public void Decimal(decimal value) => _writer.WriteNumberValue(value);
     public void Bytes(byte[] value) => _writer.WriteBase64StringValue(value);
 
@@ -71,7 +76,13 @@ public sealed class Writer : IWriter
             foreach (var kvp in record.Properties)
             {
                 _writer.WritePropertyName(kvp.Key);
-                JsonSerializer.Serialize(_writer, kvp.Value, _options);
+                // Route through the same Value pipeline as the value slot —
+                // arbitrary objects deposited in Properties otherwise sidestep
+                // the [Out] / [Sensitive] / [Masked] discipline.
+                var normalized = app.data.@this.NormalizeValue(kvp.Value, app.View.Out,
+                    new HashSet<object>(System.Collections.Generic.ReferenceEqualityComparer.Instance),
+                    depth: 0);
+                Value(normalized);
             }
             _writer.WriteEndObject();
         }
@@ -102,13 +113,16 @@ public sealed class Writer : IWriter
             case bool b: Bool(b); return;
             case int i: Int(i); return;
             case long l: Long(l); return;
+            case float f: Float(f); return;
             case double d: Double(d); return;
-            case float f: Double(f); return;
             case decimal dec: Decimal(dec); return;
             case string s: String(s); return;
             case System.DateTime dt: DateTime(dt); return;
+            case System.DateTimeOffset dto: DateTimeOffset(dto); return;
+            case System.TimeSpan ts: TimeSpan(ts); return;
+            case System.Guid g: Guid(g); return;
+            case System.Enum e: Enum(e); return;
             case byte[] bytes: Bytes(bytes); return;
-            case System.Enum e: String(e.ToString()); return;
             case app.data.@this nested:
                 BeginRecord(nested);
                 Value(nested.Value);
@@ -133,10 +147,14 @@ public sealed class Writer : IWriter
                 EndArray();
                 return;
             default:
-                // Fallback: hand the unexpected object to STJ. Reaching here means
-                // Normalize missed a case — surface a typed error in the future.
-                JsonSerializer.Serialize(_writer, normalized, _options);
-                return;
+                // Reaching here means Normalize handed off a value whose runtime
+                // type isn't in the tree contract. Falling back to STJ would
+                // reflect every public property and bypass [Out]/[Sensitive]/[Masked]
+                // discipline — the wire could leak fields the filter excludes.
+                // Fail closed instead.
+                throw new app.data.NormalizeException(
+                    $"json.Writer received a value of type {normalized.GetType().FullName} that isn't part of the tree contract. Normalize is missing a case for this type.",
+                    "NormalizeUnexpectedLeafType");
         }
     }
 }

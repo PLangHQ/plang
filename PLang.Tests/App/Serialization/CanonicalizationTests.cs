@@ -98,6 +98,26 @@ public class CanonicalizationTests
             .Because("Tampering inner signature must invalidate outer verification.");
     }
 
+    [Test] public async Task EnsureInnerSigned_RecursesIntoDictionaryValues()
+    {
+        // IDictionary's IEnumerable yields DictionaryEntry boxes, not values.
+        // Without an explicit dict branch in Wire.EnsureInnerSigned, an inner
+        // Data held as a dictionary value ships unsigned even though the outer
+        // Wire walk visited the dict.
+        await using var app = NewSignedApp();
+        var inner = new global::app.data.@this("inner", "secret") { Context = app.User.Context };
+        var dict = new Dictionary<string, object?> { ["payload"] = inner };
+        var outer = new global::app.data.@this("outer", dict) { Context = app.User.Context };
+
+        var plang = (global::app.channels.serializers.serializer.plang.@this)
+            app.User.Channels.Serializers.GetByMimeType("application/plang");
+        var json = plang.Serialize(outer).Value!;
+
+        await Assert.That(inner.Signature).IsNotNull()
+            .Because("Wire.EnsureInnerSigned must reach Datas held as dict values, not just list elements.");
+        await Assert.That(outer.Signature).IsNotNull();
+    }
+
     private static string FlipChar(string s)
     {
         var arr = s.ToCharArray();
