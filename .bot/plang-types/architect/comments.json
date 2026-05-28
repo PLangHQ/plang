@@ -305,5 +305,139 @@
       "ts": "2026-05-28T20:27:20",
       "drifted": true
     }
+  ],
+  "plan/review-opus-4-8.md": [
+    {
+      "id": "07a340128e",
+      "line": 41,
+      "text": "but for regular folks it's the same, so I think it should be by default equal but a setting where you can change that",
+      "anchor": "The fix is **exact-only cross-kind equality**. `decimal(0.1m) == double(0.1d)` is *false*: 0.1 has no exact double representation, so they're not the same number under any precision-respecting view. Same for 0.1000000000000000055m vs 0.1d. All three become inequal. Transitivity restored.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T23:07:15",
+      "drifted": false
+    },
+    {
+      "id": "e04619f9e1",
+      "line": 41,
+      "text": "Conceded back — your call wins. The right shape is:\n\n- **`==` / `Equals` is lenient by default.** Cross-kind promotes to a common form and compares. Matches what every regular PLang dev expects: `0.1 == 0.1` is true, period, regardless of whether one side originated as decimal and the other as double.\n- **`ExactEquals(other)` for those who know.** Explicit method. Same Kind + exact bit-level. No ambient state, no policy axis — the user reaches for the method when they need it (crypto, finance, debugging).\n- **`GetHashCode` follows the lenient `==`.** Canonical form: lenient-equal values hash to the same bucket. Cost is hash collisions for nearby-but-not-equal values; bucket lookup is still O(1) amortized — same trade Python takes with `hash(0.1) == hash(Decimal('0.1'))`.\n\nThe transitivity hazard in HashSet/Dictionary is still real in theory but bounded in practice: PLang devs almost never put `number` directly in a HashSet — they use list / dict actions whose equality discipline is whatever PLang's collection layer enforces. So the edge case sits in C#-only code paths that opt into ExactEquals.\n\nWithdrawing my 'full concede' on Opus 4.8's point 2 — going lenient default, opt-in strict.",
+      "anchor": "The fix is **exact-only cross-kind equality**. `decimal(0.1m) == double(0.1d)` is *false*: 0.1 has no exact double representation, so they're not the same number under any precision-respecting view. Same for 0.1000000000000000055m vs 0.1d. All three become inequal. Transitivity restored.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "07a340128e",
+      "ts": "2026-05-28T23:14:53",
+      "drifted": false
+    },
+    {
+      "id": "7266480dff",
+      "line": 45,
+      "text": "problem is, we dont really have a way to convert it to either or other type, so thats why I want the default to be equal and those that know what they are doing set it",
+      "anchor": "**The cost we accept:** `From(0.1m) != From(0.1)` will surprise developers who *think of them as the same number*. But that surprise is the truth — 0.1m IS NOT 0.1d in any honest precision view. Surfacing it as inequality is honest; silently producing wrong answers in HashSet/Dictionary is not.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T23:08:10",
+      "drifted": false
+    },
+    {
+      "id": "21f14609c1",
+      "line": 45,
+      "text": "Same thread as the L41 reply. The 'can't convert' framing is exactly why lenient is the right default — devs don't know if their `0.1` is decimal or double and shouldn't have to. Resolved together with the L41 comment.",
+      "anchor": "**The cost we accept:** `From(0.1m) != From(0.1)` will surprise developers who *think of them as the same number*. But that surprise is the truth — 0.1m IS NOT 0.1d in any honest precision view. Surfacing it as inequality is honest; silently producing wrong answers in HashSet/Dictionary is not.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "7266480dff",
+      "ts": "2026-05-28T23:15:34",
+      "drifted": false
+    },
+    {
+      "id": "4f4d172de9",
+      "line": 83,
+      "text": "everthing in plang returns data so, not sure what you mean, maybe some internal thing, private method would throw, but we should return Data error to the runtime from the module.",
+      "anchor": "**My position: concede, with a clean split.** Real architectural mismatch. The fix isn't \"everything returns Data\" — C# operators (`+`, `*`, etc.) can't, by signature. The split is by surface:",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T23:09:36",
+      "drifted": false
+    },
+    {
+      "id": "39abd0e326",
+      "line": 83,
+      "text": "Right — that's the split I'm proposing, just phrased from the C# side. The handler / module-surface boundary always returns `Data` — never throws. Internal `private` methods (and C# operators on `number` itself like `+`, `-`, `*`) throw the way every CLR numeric does; the math handler catches and converts to `Data.Error`. So:\n\n- `math.add` handler: `Run() → Data<number>`. Calls `number.Add(a, b, policy)` (the Data-returning named method, not the operator). Catches happen inside `number.Add` itself.\n- `number.Add(...)` body: catches `OverflowException` internally, returns `Data<number>.Fail(\"MathOverflow\", ...)`.\n- `number + number` operator: throws on overflow. Used by `number.Add` internally for the lenient path, and by any C# code outside the action layer that wants ergonomic arithmetic.\n\nBoundary up to the runtime is Data; the back of the curtain has exceptions for the same reason `decimal + decimal` does. Confirming we're aligned.",
+      "anchor": "**My position: concede, with a clean split.** Real architectural mismatch. The fix isn't \"everything returns Data\" — C# operators (`+`, `*`, etc.) can't, by signature. The split is by surface:",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "4f4d172de9",
+      "ts": "2026-05-28T23:14:53",
+      "drifted": false
+    },
+    {
+      "id": "8ffd60131d",
+      "line": 131,
+      "text": "Maybe we dont need context, but it is thread safe so not sure what the problem is.",
+      "anchor": "**My position: full concede.** Mutable Context on a value-typed numeric is wrong. I bolted it on for cosmetic factory-shape uniformity with `path.Resolve(raw, context)`. The cost wasn't visible to me at write-time but is real:",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-28T23:10:37",
+      "drifted": false
+    },
+    {
+      "id": "594ba8ef89",
+      "line": 131,
+      "text": "Fair pushback. The thread-safety isn't the problem (and Opus 4.8 didn't quite frame it as one either) — it's that Context on a `number` has no real use site after construction. The factory `Resolve(raw, context)` uses it briefly for registry / catalog lookup during construction, then has nothing to do with it. Storing it on the instance is carrying unused state, and the OBP-#4 risk only matters if number gets cached cross-request — which it might, since values get parked in MemoryStack.\n\nFix is mechanical, not architectural alarm: `Resolve(raw, context)` keeps the parameter (signature-uniform with path.Resolve, etc.) but the body doesn't write it to a field; `From(5)` and internal factories don't see Context at all. Drop the `Context { get; set; }` property and the `IContext` interface on number. No state, no risk, no perf hit on construction. Mechanical enough that it lands without further discussion.",
+      "anchor": "**My position: full concede.** Mutable Context on a value-typed numeric is wrong. I bolted it on for cosmetic factory-shape uniformity with `path.Resolve(raw, context)`. The cost wasn't visible to me at write-time but is real:",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "8ffd60131d",
+      "ts": "2026-05-28T23:14:53",
+      "drifted": false
+    },
+    {
+      "id": "1ce57655bb",
+      "line": 157,
+      "text": "very interesting, lets talk",
+      "anchor": "### `readonly record struct number` revisited",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-28T23:10:56",
+      "drifted": false
+    },
+    {
+      "id": "5a6e1a5604",
+      "line": 157,
+      "text": "OK let me lay it out concretely so we have something to talk against.\n\n**The case for `readonly record struct number(NumberKind Kind, long I, decimal D, double F)`:**\n\n1. **Exact equality auto-generated** (record struct gives field-by-field). Matches the ExactEquals we already need on the lenient-default side — just inherit the struct's auto-gen and use that as ExactEquals; override Equals for the lenient default.\n2. **No heap allocation per number.** Today's class form heap-allocates one `@this` per arithmetic result; struct sits on the stack / inline in `Data<number>.Value`. Heavy-math goals (a loop summing 10k numbers) save ~10k allocations.\n3. **Matches what `int` / `decimal` / `double` already are** — value types. The surface reads coherently: every numeric in the CLR is a struct; PLang's `number` joins them.\n4. **OBP convention is preserved where it matters.** `@this` is for navigable owner types (Goal, Step, Config) — types where `parent.child.grandchild` is the language. A `number` has nothing to navigate to. The convention costs us nothing here because we're not losing navigability.\n\n**The cost:**\n\n1. **Breaks the `@this` convention for one class.** `app.types.number` (struct) vs `app.types.number.@this` (class) is a real readability inconsistency across the codebase. Everything else under `app/types/` would use `@this`; only number wouldn't.\n2. **`IBooleanResolvable.AsBooleanAsync()` boxes the struct on interface dispatch.** Every truthiness check (`if %x%`) allocates. This partially defeats the no-heap win — though arithmetic (the hot path) doesn't go through interface dispatch, so arithmetic stays alloc-free; only truthiness pays.\n3. **Source-generator coupling.** PLNG001 expects `Data<T>` parameter slots; T as struct is supported (`Data<int>` works today), but `[PlangType]` discovery and the registry plumbing would need to handle the struct case symmetrically with classes. Probably fine; needs a quick check.\n4. **`partial` files under the type folder get awkward.** `app/types/number/this.cs` for the struct definition, then `this.Parse.cs`, `this.Operators.cs`, `this.Arithmetic.cs` are partials *of the struct*. C# allows partial structs but it's less common; reads slightly differently than partial classes.\n\n**My read:** the wins (alloc-free arithmetic, auto-equality, value-type honesty) outweigh the costs (one convention break, truthiness boxing). The convention break is the load-bearing concern — but the convention exists for a reason, and that reason doesn't apply here.\n\n**What I'd want to know from you:** how strongly do you feel about preserving `@this` everywhere vs. accepting one structural exception for the pure-value case? If you're firm on @this everywhere, the class form stays and we accept the heap allocation + manual equality + manual hash; if you're open to the exception, the struct form is cleaner. Leaving open.",
+      "anchor": "### `readonly record struct number` revisited",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "1ce57655bb",
+      "ts": "2026-05-28T23:15:34",
+      "drifted": false
+    },
+    {
+      "id": "b5ed18689a",
+      "line": 191,
+      "text": "one thing I thought of is, what if we support rational numbers? so people do '- set %x% = 7/8' and it stays that way?",
+      "anchor": "**The one thing I'd want to discuss before changing anything**: the **sealed-class-vs-readonly-record-struct** question. 4.8 didn't raise it directly but the equality and Context critiques both reinforce the case. Worth a 10-minute back-and-forth before either decision is committed to the doc.",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-28T23:12:02",
+      "drifted": false
+    },
+    {
+      "id": "08f4276de1",
+      "line": 191,
+      "text": "Good question. Two clean ways to land it:\n\n**Option A — `Rational` as a sixth `NumberKind` inside `number`.** Adds two slots (`long _num`, `long _den`) or shares `_i` for numerator with a new `_den` slot. `Parse(\"7/8\")` lands as `Kind = Rational`. Arithmetic: rational + rational stays rational (lowest-terms canonicalization on construction via GCD). Mixed-kind ops promote: rational + decimal → decimal (with loss measured by the lcm of the denominator); rational + double → double (IEEE). Same Data<number> wrapper, same handlers, same wire shape. The cost: one more row/column on the promotion table, plus the rational-specific reductions (GCD, lowest-terms invariant).\n\n**Option B — `rational` as a separate sibling type** under `app/types/rational/`. Parallel to `number`, parallel to the future `quantity` (which handles `5kg`). Has its own arithmetic, its own truthiness (`0/n` falsy), its own serializer files. Cross-type ops between `number` and `rational` go through explicit promotion (`(number)%r%`) — the LLM picks the type per the developer's prose intent (`- set %price% = 7/8` keys on the slash being kept exact, picks rational; `- set %x% = 7/8` with general numeric intent picks number).\n\n**My instinct: Option B.** Three reasons:\n\n1. Rational arithmetic has different rules (GCD on construction, denominator-overflow questions, no IEEE concepts). Folding it into `number` widens every `number` switch with one more case, and the `Parse` rules grow another fork.\n2. Most PLang devs don't reach for rational. Putting it in the universal umbrella costs every handler that touches numbers an extra case to consider.\n3. The pattern matches `quantity` (also numbers-with-extra-structure). Both sit as siblings, not inside `number`. Coherent vocabulary.\n\n**The pull toward Option A:** the worked example `- set %x% = 7/8` reads more naturally if `%x%(number)` covers it — devs don't have to know they wanted `rational` specifically. They'd just write the literal and the LLM would type-stamp it.\n\nThe right call depends on whether you see rational as 'a kind of number' (A) or 'a kind of numeric thing parallel to number' (B). Quantity is clearly (B) because units are non-numeric structure; rational is borderline.\n\nNot a this-branch decision either way — both are deferrable to a follow-up branch with a real consumer driving them (the same discipline we applied to BigInteger and quantity). But worth knowing your read so the type vocabulary inventory is forward-coherent. Leaving open.",
+      "anchor": "**The one thing I'd want to discuss before changing anything**: the **sealed-class-vs-readonly-record-struct** question. 4.8 didn't raise it directly but the equality and Context critiques both reinforce the case. Worth a 10-minute back-and-forth before either decision is committed to the doc.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "b5ed18689a",
+      "ts": "2026-05-28T23:15:34",
+      "drifted": false
+    }
   ]
 }
