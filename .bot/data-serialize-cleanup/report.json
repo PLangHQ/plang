@@ -656,6 +656,62 @@
         "health": "Cross-file canonicalization story holds; three reviewers agreed and my walk confirms; no critical or major.",
         "notes": "Two minor findings (one endorses tester F1; one cosmetic async signature). Process note: no coder/ folder for this branch \u2014 tester already flagged."
       }
+    },
+    {
+      "id": "e4fd042e-7fdc-49f8-973f-eacda509b708",
+      "bot": "docs",
+      "timestamp_start": "2026-05-28T02:15:04.853773Z",
+      "timestamp_end": "2026-05-28T02:23:14.652508Z",
+      "intent": "Update Documentation/v0.2 + Runtime2 to reflect data-serialize-cleanup (5 stages); apply coder's CLAUDE.md proposal.",
+      "before": {
+        "assumptions": "All prior PASSes hold (codeanalyzer v2, tester v2, security v2, auditor v1). Coder folder missing \u2014 work landed in commits only.",
+        "risk": "Docs drift across architecture.md, callbacks.md, io-channels.md, good_to_know.md, app-tree.md, data-spec.md, variables.md from envelope vocab, plang+data serializer merge, channel hook renames, Properties wire scope, and Compress flatten."
+      },
+      "plan": ".bot/data-serialize-cleanup/docs/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "Documentation/v0.2/io-channels.md",
+            "Documentation/v0.2/callbacks.md",
+            "Documentation/v0.2/architecture.md",
+            "Documentation/v0.2/good_to_know.md",
+            "Documentation/v0.2/app-tree.md",
+            "Documentation/Runtime2/data-spec.md",
+            "Documentation/v0.2/variables.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Sweep all docs referencing pre-data-serialize-cleanup surface: envelope vocab, plang+data, channel-hook *Core names, ContentType field, ICallback-only lazy signing, RehydrateNestedData, Data.Envelope. Add new content where surface is genuinely new (Properties wire scope, ! operator, sign-if-missing in converter, canonicalization through OutboundOptions)."
+        },
+        {
+          "paths": [
+            "CLAUDE.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Applied coder's 'Data is not enveloped' CLAUDE.md proposal. Target /PLang/App/CLAUDE.md did not exist; landed in repo-root /CLAUDE.md (the canonical project CLAUDE.md). Wording adjusted from 'app.data.Json' to 'app.data.WireJsonConverter' since the converter owns the wire shape, not Json.cs (the STJ wrapper)."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/docs/v1/plan.md",
+            ".bot/data-serialize-cleanup/docs/v1/result.md",
+            ".bot/data-serialize-cleanup/docs/v1/verdict.json",
+            ".bot/data-serialize-cleanup/docs/summary.md",
+            ".bot/data-serialize-cleanup/docs-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Standard docs-bot deliverables for v1 \u2014 plan, CHANGELOG-style result, verdict, summary, and per-bot report capturing decisions on the one CLAUDE.md proposal."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "ready-to-merge",
+        "notes": "All seven doc gaps filled across Documentation/v0.2 and Documentation/Runtime2. The 'Data is not enveloped' CLAUDE.md rule landed in /CLAUDE.md. No PLang example gaps to flag (tester already wrote LlmProperties + NegationPrefixStillParses + Compress round-trip coverage). Coder folder is absent \u2014 already flagged by tester and auditor; not re-escalating."
+      }
     }
   ]
 }

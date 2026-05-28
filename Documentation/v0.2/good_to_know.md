@@ -393,7 +393,7 @@ See `PLang/app/modules/error/handle.cs` for the implementation.
 
 **Why this matters:** `Data` has `Error`, `Success`, `Error.Key`, `Error.StatusCode` built in. Returning `null` from a `Data?` method loses information — the caller can't distinguish "not found" from "depth exceeded" or "permission denied." Use `Data.FromError` so the error travels through the normal pipeline with a clear key and status code.
 
-**When a throw converts to Data.FromError:** Methods like `RehydrateNestedData` throw because they're called inside `Decompress()` which has a try/catch that converts exceptions to `Data.FromError`. The throw propagates up to the nearest Data-returning boundary. This is fine — just make sure that boundary exists.
+**When a throw converts to Data.FromError:** A method deep inside a Data-returning boundary may throw freely as long as the boundary's try/catch converts to `Data.FromError`. `Decompress()` is the canonical example — it routes through the `application/plang` serializer (which itself returns `Data`) and wraps `InvalidDataException` / `JsonException` into `Data.FromError`. The throw propagates up to the nearest Data-returning boundary. This is fine — just make sure that boundary exists. (Historical note: an earlier `RehydrateNestedData` walk illustrated the same pattern; it was deleted on `data-serialize-cleanup` when Compress/Decompress flattened — the discipline is unchanged.)
 
 ---
 
@@ -474,11 +474,11 @@ Several subsystems have resource limits to prevent abuse:
 
 The `[Sensitive]` attribute (defined in `app/View.cs`) marks properties that contain secret data (e.g., `IdentityData.PrivateKey`). It controls a two-mode serialization split:
 
-- **Output serialization** (JsonStreamSerializer, Data.Envelope Compress): `SensitivePropertyFilter` strips `[Sensitive]` properties. Private keys never leak through channels, API responses, or compressed payloads.
+- **Output serialization** (the `application/plang` wire serializer + `Data.Transport.Compress`): `Sensitive.Strip` (composed onto the merged serializer's options chain) drops `[Sensitive]` properties. Private keys never leak through channels, API responses, or compressed payloads.
 - **Storage serialization** (raw JsonSerializer via DataSource): Filter is NOT applied. Private keys persist in SQLite.
 - **Code-level access**: Unaffected. `%MyIdentity.PrivateKey%` in PLang code resolves normally — the attribute only controls serialization.
 
-The filter is always-on — it's wired into both `JsonStreamSerializer`'s default options and `Data.Envelope`'s `_envelopeJsonOptions`. No opt-in required. Any new type with `[Sensitive]` properties is automatically filtered.
+The filter is always-on — `application/plang` composes it directly onto its STJ options alongside `Transport.ForOutbound` (and `Compress` routes through the same registered serializer). No opt-in required. Any new type with `[Sensitive]` properties is automatically filtered.
 
 ---
 
@@ -571,9 +571,9 @@ This prevents `InvalidCastException` when comparing `int` vs `long` (a common JS
 
 ## Signing Module — Architecture
 
-The signing module (`signing.sign`, `signing.verify`) creates and verifies signed data envelopes. Key design decisions:
+The signing module (`signing.sign`, `signing.verify`) creates and verifies cryptographic signatures attached to `Data`. Key design decisions:
 
-**SignedData owns everything.** `SignedData.CreateAsync(sign action)` orchestrates signing, `SignedData.VerifyAsync(verify action)` orchestrates verification. Handlers are one-line delegates — all logic lives on the envelope itself (OBP: behavior on the owner).
+**SignedData owns everything.** `SignedData.CreateAsync(sign action)` orchestrates signing, `SignedData.VerifyAsync(verify action)` orchestrates verification. Handlers are one-line delegates — all logic lives on the `SignedData` record itself (OBP: behavior on the owner).
 
 **Deterministic serialization.** `JsonPropertyOrder` on every field ensures identical byte output for signing and verification. `ToSigningBytes()` nulls the Signature field before serializing (save-mutate-restore pattern) — safe because PLang executes steps sequentially per context.
 
@@ -581,11 +581,11 @@ The signing module (`signing.sign`, `signing.verify`) creates and verifies signe
 
 **Nonce replay protection.** Uses `ICache.TryAddAsync` with a TTL matching the signature timeout. Atomic — first use succeeds, replays fail. Single-process only; distributed deployments need a shared ICache implementation (Redis).
 
-**Implementation resolution.** The `sign` and `verify` actions both declare `[Code] ISigning Signer` — the source generator emits eager `app.Code.Get<ISigning>()` (registry default). To swap algorithms, register a different `ISigning` and promote it via `code.setDefault`. Verification reads the algorithm from the envelope's `Algorithm` field — the wire envelope carries its own identity, not the caller's.
+**Implementation resolution.** The `sign` and `verify` actions both declare `[Code] ISigning Signer` — the source generator emits eager `app.Code.Get<ISigning>()` (registry default). To swap algorithms, register a different `ISigning` and promote it via `code.setDefault`. Verification reads the algorithm from the `SignedData.Algorithm` field — the wire signature carries its own identity, not the caller's.
 
 **Contracts.** Lightweight agreement mechanism. Signer attaches contract identifiers (e.g., `["C0"]`), verifier checks they match. Both null/empty = match. Both present = case-insensitive set equality.
 
-**Integration with Data.** `Data.Signature` holds the `SignedData` envelope (`[JsonIgnore]`, `[Out]`). Signing attaches it; verification reads it. The property is on Data itself, so any Data flowing through channels can carry a signature.
+**Integration with Data.** `Data.Signature` holds the `SignedData` record (`[JsonIgnore]`, `[Out]`). Signing attaches it; verification reads it. The property is on Data itself, so any Data flowing through channels can carry a signature. As of `data-serialize-cleanup`, `WireJsonConverter.Write` calls `EnsureSigned()` sign-if-missing on every Data it walks, so egress through any channel auto-seals — the explicit `signing.sign` step remains useful when the developer wants to set contracts, headers, or expiry.
 
 ---
 
@@ -1275,7 +1275,7 @@ Full implementation: `PLang/app/modules/builder/code/Default.cs` (the validate-p
 
 ## `Serializers/ISerializer` returns `Data` — no throws
 
-Every `ISerializer` method (`Deserialize<T>`, `DeserializeAsync<T>`, `SerializeAsync`, …) returns `Data` / `Data<T>` rather than throwing. Impls (Json, Text, plang, plang+data) wrap each method body in try/catch over a **closed list**:
+Every `ISerializer` method (`Deserialize<T>`, `DeserializeAsync<T>`, `SerializeAsync`, …) returns `Data` / `Data<T>` rather than throwing. Impls (Json, Text, plang) wrap each method body in try/catch over a **closed list**:
 
 - `System.Text.Json.JsonException`
 - `System.NotSupportedException`
@@ -1287,7 +1287,7 @@ Call sites read `.Success` and `.Value` / `.Error` instead of try/catch around t
 
 ### http body dispatch through the registry
 
-`http.request` / `http.upload` return `Task<Data<app.http.Response.@this>>`. The `Response` record is `(int Status, Dictionary<string,string> Headers, object? Body, TimeSpan Duration)`; `Body` is dispatched by Content-Type via `Serializers.GetByContentType` + a `TextFallback` for text-shaped misses (`text/*`, `application/xml`, `application/json`, `text/csv`). Binary content-types and missing Content-Type fall back to `byte[]`.
+`http.request` / `http.upload` return `Task<Data<app.http.Response.@this>>`. The `Response` record is `(int Status, Dictionary<string,string> Headers, object? Body, TimeSpan Duration)`; `Body` is dispatched by Content-Type via `Serializers.GetByType` + a `TextFallback` for text-shaped misses (`text/*`, `application/xml`, `application/json`, `text/csv`). Binary content-types and missing Content-Type fall back to `byte[]`.
 
 Legacy properties (`%response.StatusCode%`, `%response.Body%` as raw string) remain reachable via `Response.BuildProperties` so existing PLang code keeps working alongside the new `%response.Status%` / typed `%response.Body%`.
 

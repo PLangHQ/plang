@@ -193,15 +193,15 @@ Edge cases:
 
 Deep-clones the value. Preserves: `Name`, `Type`, `Error`, `Handled`, `Returned`, `ReturnDepth`, `Warnings`, `Signature`, `Properties` (shallow clone of collection), `Context`.
 
-## 15. Envelope Pipeline
+## 15. Transport Pipeline
 
-Data supports a transport pipeline for wrapping, compressing, and encrypting values.
+Data supports a transport pipeline for wrapping, compressing, and encrypting values. The methods live on `app/data/this.Transport.cs` (renamed from the old `this.Envelope.cs` on `data-serialize-cleanup`).
 
 ### Outbound: Wrap → Compress → Encrypt
 
-**Wrap:** Creates a category envelope. If the type has a `Kind` (e.g., `"image/jpeg"` → kind `"image"`), wraps in outer Data with `Type = "image"` and inner = original Data. Requires context. PLang primitives (no kind) return self.
+**Wrap:** Creates a category wrapper Data. If the type has a `Kind` (e.g., `"image/jpeg"` → kind `"image"`), wraps in outer Data with `Type = "image"` and inner = original Data. Requires context. PLang primitives (no kind) return self.
 
-**Compress:** If the category type is compressible (e.g., `"text"` is, `"image"` is not), serializes to JSON, GZip-compresses, wraps as `{ type: "archived", value: { type: "gzip", value: byte[] } }`. Returns self if not compressible or no context.
+**Compress:** If the category type is compressible (e.g., `"text"` is, `"image"` is not), routes the Data through the registered `application/plang` serializer to produce bytes, GZip-compresses them, and returns a flat archived Data: `{ name: "", type: "archived", value: byte[] }`. No inner `gzip` Data — the byte[] is the `Value` directly. Returns self if not compressible or no context.
 
 **Encrypt:** Currently a no-op (returns self). Placeholder for future crypto service.
 
@@ -209,26 +209,50 @@ Data supports a transport pipeline for wrapping, compressing, and encrypting val
 
 **Decrypt:** No-op if type is not `"encrypted"`. Placeholder.
 
-**Decompress:** If type is `"archived"`, reads inner gzip bytes, decompresses, deserializes back to Data. Error cases (all return `Success = false`, `StatusCode = 500`):
-- Inner value is not a Data object
-- Inner Data has no byte[] value
+**Decompress:** If type is `"archived"`, reads `Value` as `byte[]`, GZip-decompresses, deserializes via the registered `application/plang` serializer back to Data. Error cases (all return `Success = false`, `StatusCode = 500`):
+- `Value` is not a `byte[]`
 - Corrupt/invalid gzip data
 - Invalid JSON after decompression
 - Payload exceeds 100 MB size limit (zip bomb protection)
 
-**Unwrap:** If `Value` is a Data, returns it (strips envelope). Otherwise returns self.
+**Unwrap:** If `Value` is a Data, returns it (unwraps the outer Data). Otherwise returns self.
 
-### Properties are NOT preserved through compression
-Properties are `[JsonIgnore]` — after compress → decompress, `Properties.Count = 0`. By design: Properties are for the transport view, not intermediate compression.
+### Properties round-trip through compress/decompress
+Because `Compress` routes through the same `application/plang` serializer that channels use, `Properties` ride along inside the bytes (the wire shape's `properties` field — Stage 4). After `Compress → Decompress`, `Properties` are preserved. The legacy "Properties are `[JsonIgnore]`" constraint no longer applies.
+
+### Signatures and the wire round-trip
+Because `Compress` routes through `application/plang`, `WireJsonConverter.Write` calls `EnsureSigned()` sign-if-missing on every Data it walks. The inner Data's signature rides inside the compressed bytes; the outer `archived` Data gets its own signature when *it* later crosses a channel. Sign-then-compress and compress-then-sign produce equivalent wire shapes — forwarding preserves Alice's attestation.
 
 ### Round-trip
-`Wrap → Compress → Encrypt → Decrypt → Decompress → Unwrap` preserves the original value.
+`Wrap → Compress → Encrypt → Decrypt → Decompress → Unwrap` preserves the original value (including its `Properties`).
+
+## 15a. Properties — sidecar metadata
+
+`Properties` is the per-Data sidecar bag: `IDictionary<string, object?>` (case-insensitive). On the wire it lives in its own nested `properties` object — a fifth top-level field alongside `name`, `type`, `value`, `signature`. Omitted when empty.
+
+**Insertion gate.** `Properties[key] = value` admits only wire-supported primitives: `string`, `bool`, `int`, `long`, `double`, `decimal`, `DateTime`, `byte[]`, `null`, plus `IDictionary<string,object?>` and `IEnumerable<object?>` shapes built from those. Raw `Data` instances are rejected — Properties are metadata *about* the Data, not nested Datas that need their own attestations. Unsupported shapes throw `ArgumentException`; `variable.set` callers see `InvalidVariableReference` (400).
+
+**Keys are unconstrained.** Because Properties live in their own nested object, key names don't collide with the reserved top-level fields — `Properties["value"]` is fine; it lives at `properties.value`, not at the root.
+
+**Access from PLang.** Two operators, two stores:
+
+| Expression       | Reads                          |
+|------------------|--------------------------------|
+| `%x.field%`      | `x.Value` navigation (existing) |
+| `%x!key%`        | `x.Properties[key]` lookup (Stage 4) |
+| `%x!key.path%`   | `x.Properties[key]`, then dot-navigate within the dict/list |
+
+`%x!key%` is the **mid-expression `!`** — between an identifier and a key. The leading-`!` shape `%!name%` (infrastructure namespace: `%!data%`, `%!error%`) is positionally distinct and still parses as a single variable reference. Malformed shapes (`%x!!cost%`, `%x.y!cost%`, `%!x!cost%`) flag `Variable.IsMalformed`; `variable.set` rejects them up front.
+
+**Writing Properties.** `set %x!key% = value` writes through `variable.set` to `Properties[key]`. Type round-trips faithfully through the wire (numbers may promote `int → long` via JSON; explicit `string`/`bool`/`DateTime` survive intact).
 
 ## 16. Signature
 
 - Defaults to `null`
-- Can hold a `SignedData` object with `Type`, `Nonce`, etc.
+- Holds a `SignedData` record (`signing.SignedData`) with `Type`, `Nonce`, `Algorithm`, `Headers`, etc.
 - Marked with `[Out]` and `[In]` attributes (part of transport view)
+- `WireJsonConverter.Write` calls `EnsureSigned()` sign-if-missing on egress — every Data the converter walks auto-seals if its `Signature` is null. Idempotent: already-signed Data is skipped. Forwarded payloads preserve nested provenance (Alice's inner signature rides intact under Bob's outer signature).
+- Canonicalization for `crypto.Hash` uses the same options bag (`plang.@this.OutboundOptions`) the wire writer uses. Hash bytes ≡ wire bytes minus the outer `Signature` field. Tampering with `name`, `type`, `value`, `properties`, or any nested-Data signature invalidates the outer signature.
 
 ## 17. Data\<T\> (Generic)
 

@@ -389,16 +389,16 @@ Actor.Channels      per-actor channel collection
 
 Standard channels: `default`, `stdin`, `stdout`, `stderr`.
 
-Each channel has a Stream, Direction (Input/Output/Bidirectional), and ContentType.
+Each channel has a Stream, Direction (Input/Output/Bidirectional), and a `Mime` (the wire content type — `text/plain` by default; per-channel override).
 
 ### Serializers
 
-Routes content-type to serializer:
-- `JsonStreamSerializer` — JSON
-- `PlangSerializer` — .pr files (PLang binary format)
-- `TextStreamSerializer` — plain text
+Routes MIME type to serializer (each `ISerializer` declares `Type` and `Extension`):
+- `application/json` (`Json`) — JSON view of `data.Value`
+- `text/plain` (`Text`) — `data.Value.ToString()`
+- `application/plang` (the single PLang wire serializer) — full Data shape `{name, type, value, properties, signature}`, composed over `Json` with `WireJsonConverter` + `Transport.ForOutbound` + `Sensitive.Strip` modifiers
 
-`Channels.ReadAsync<T>(path)` reads a file, determines content type from extension, deserializes via the matching serializer.
+`Channels.ReadAsync<T>(path)` reads a file, determines MIME from extension, deserializes via the matching serializer. The registry's lookup APIs are `GetByType(mime)` / `GetByMimeType(mime)` (throws when unregistered) and `GetByExtension(ext)`.
 
 ---
 
@@ -504,7 +504,7 @@ The public verb is `- run %callback%` (`callback.run`). It implements a strict s
 
 `AskCallback` resumes by binding the answer under the sentinel `%!ask.answer%` and re-dispatching the original `output.ask` action. `ErrorCallback` resumes by reconstructing a fresh App from the snapshot and dispatching from `BottomFrame`. CLR exceptions out of `cb.Run` are wrapped as typed `Data.FromError` (no raw exceptions leak through the public entry).
 
-The wire serializer is `application/plang+data` (`PlangDataSerializer`); reading `data.Signature` on Write triggers lazy signing **only when the wrapped value is an `ICallback`** — see `good_to_know.md` for the carve-out.
+The wire serializer is `application/plang` — a single, merged serializer composed over `Json` with `WireJsonConverter` + `Transport.ForOutbound` + `Sensitive.Strip` modifiers (the historical `application/plang+data` variant was merged on `data-serialize-cleanup`). Signing is **converter-driven**: `WireJsonConverter.Write` fires `data.EnsureSigned()` sign-if-missing on every Data it walks, so any Data egressing through any channel auto-seals. Forwarding preserves provenance — Alice's inner signature rides intact under Bob's outer signature.
 
 See `callbacks.md` for the full design.
 
@@ -526,7 +526,9 @@ app/
     this.cs                   universal Data type
     this.Result.cs            error/success concern
     this.Navigation.cs        dot-path traversal
-    this.Envelope.cs          compress/wrap/encrypt
+    this.Transport.cs         compress/wrap/encrypt (the transport pipeline)
+    Properties.cs             IDictionary<string,object?> sidecar metadata
+    WireJsonConverter.cs      five-field wire shape + sign-if-missing
     Navigators/               per-type navigation
   
   goals/
