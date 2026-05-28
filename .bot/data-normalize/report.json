@@ -174,12 +174,12 @@
           "context": "PASS. M1 (typed throw at gate), M2 (Normalize+Value pipeline for Properties), M3 (dict branch + fixture) all closed. P1-P8 all addressed correctly. One residual polish (V1): json.Writer.EndRecord hard-codes View.Out when normalizing inner-Data Properties — asymmetric with Wire.Write's View propagation. Theoretical harm only today since Properties holds primitives, polish-only."
         }
       ],
-      "verdict": "pass",
-      "next_bot": "security",
+      "verdict": "fail",
+      "next_bot": "coder",
       "after": {
-        "status": "PASS — all v1 findings closed. One new polish-only residual (V1) for future pass. Report at .bot/data-normalize/codeanalyzer/v2.md.",
-        "health": "Clean rebuild (zero PLNG002), C# 3380/3380, PLang 233/233. No regressions.",
-        "notes": "Next: security validates the sign-walk + Properties pipeline now that M2/M3 close the gaps. Chain: codeanalyzer → security → tester → auditor → docs (mirroring data-serialize-cleanup)."
+        "status": "FAIL — M2's fix is half-landed. Outer Wire.Write correctly propagates View into the Properties pipeline, but json.Writer.EndRecord hard-codes View.Out for inner-Data Properties. Same M2 shape at the second emission site. Report at .bot/data-normalize/codeanalyzer/v2.md.",
+        "health": "Clean rebuild (zero PLNG002), C# 3380/3380, PLang 233/233. Tests didn't catch V1 because no fixture exercises Store-mode + inner-Data-with-Properties.",
+        "notes": "Next: coder fixes V1 (plumb View into json.Writer ctor from Wire.Write site) + adds Store + inner-Data + Properties fixture."
       }
     }
   ]
