@@ -16,11 +16,14 @@ public sealed class Writer : IWriter
 {
     private readonly Utf8JsonWriter _writer;
     private readonly JsonSerializerOptions _options;
+    private readonly app.View _view;
 
-    public Writer(Utf8JsonWriter writer, JsonSerializerOptions? options = null)
+    public Writer(Utf8JsonWriter writer, JsonSerializerOptions? options = null,
+        app.View view = app.View.Out)
     {
         _writer = writer;
         _options = options ?? new JsonSerializerOptions();
+        _view = view;
     }
 
     public void Null() => _writer.WriteNullValue();
@@ -76,10 +79,12 @@ public sealed class Writer : IWriter
             foreach (var kvp in record.Properties)
             {
                 _writer.WritePropertyName(kvp.Key);
-                // Route through the same Value pipeline as the value slot —
-                // arbitrary objects deposited in Properties otherwise sidestep
-                // the [Out] / [Sensitive] / [Masked] discipline.
-                var normalized = app.data.@this.NormalizeValue(kvp.Value, app.View.Out,
+                // Route through the same Value pipeline as the value slot,
+                // honoring the writer's configured view. Hard-coding View.Out
+                // here would silently strip [Sensitive] and [Store]-only
+                // fields when an inner Data is emitted inline during a
+                // Store-mode walk.
+                var normalized = app.data.@this.NormalizeValue(kvp.Value, _view,
                     new HashSet<object>(System.Collections.Generic.ReferenceEqualityComparer.Instance),
                     depth: 0);
                 Value(normalized);
