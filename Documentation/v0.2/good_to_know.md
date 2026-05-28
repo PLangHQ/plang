@@ -482,6 +482,49 @@ The filter is always-on — `application/plang` composes it directly onto its ST
 
 ---
 
+## Domain types ride the wire as property bags, not bespoke JSON converters
+
+**Rule.** A new C# type that needs to ship through the `application/plang`
+wire serializer does **not** get a custom `JsonConverter`. It gets `[Out]`
+on each property that should ship, and `Normalize` does the rest — the
+type is decomposed into `{name, type, value}` child Datas for each tagged
+property, and `json.Writer` lays out the bytes.
+
+**Why:** before `data-normalize` every domain type with a non-default JSON
+shape had its own converter (`path` shipped as a bare string via
+`path.JsonConverter`, `Identity` had a hand-rolled property list, etc.).
+Two converters drifting from each other was a real failure mode. Now the
+shape comes from one place — the `[Out]` set on the type — and one walker
+fires for every type. If you find yourself reaching for `JsonConverterAttribute`
+on a domain type, you are reaching for the smell.
+
+**How to apply.**
+
+1. Tag the properties that should ship: `[Out]` for the wire view, `[Store]`
+   for local persistence. Use both when the property crosses both
+   boundaries (e.g., `Identity.Name`).
+2. Use `[Sensitive]` on properties that must never leave the process
+   (e.g., `Identity.PrivateKey`), and `[Masked]` on properties whose
+   *existence* is informative but whose value is secret (e.g.,
+   `setting.value`).
+3. If reconstruction from the property bag needs custom logic (resolving a
+   string to a polymorphic subclass, validating ctor preconditions, etc.),
+   add a `public static T FromNormalized(Data, Context)` method. The
+   `Reconstruct<T>` dispatch picks it up before the generic property-bag
+   fallback.
+4. **Don't** wrap the type in a parallel "wire shape" record to bypass
+   `[JsonIgnore]`. The historical `Envelope` class was the load-bearing
+   example of that smell.
+
+**Carve-out:** `path.@this` keeps a `JsonConverter` for the **inbound**
+direction (bridging legacy bare-string path JSON), but its outbound path
+flows through Normalize like every other type.
+
+**See:** `Documentation/Runtime2/data-spec.md` §16a for the full Normalize
+→ IWriter → bytes pipeline.
+
+---
+
 ## IdentityData — Data Subclass
 
 `IdentityData` extends `Data` directly — a pure data record with typed properties (`PublicKey`, `PrivateKey`, `IsDefault`, `IsArchived`, `Created`). It lives on `Actor.Identity` as a property. No lazy resolution, no sync-over-async.
@@ -585,7 +628,7 @@ The signing module (`signing.sign`, `signing.verify`) creates and verifies crypt
 
 **Contracts.** Lightweight agreement mechanism. Signer attaches contract identifiers (e.g., `["C0"]`), verifier checks they match. Both null/empty = match. Both present = case-insensitive set equality.
 
-**Integration with Data.** `Data.Signature` holds the `SignedData` record (`[JsonIgnore]`, `[Out]`). Signing attaches it; verification reads it. The property is on Data itself, so any Data flowing through channels can carry a signature. As of `data-serialize-cleanup`, `WireJsonConverter.Write` calls `EnsureSigned()` sign-if-missing on every Data it walks, so egress through any channel auto-seals — the explicit `signing.sign` step remains useful when the developer wants to set contracts, headers, or expiry.
+**Integration with Data.** `Data.Signature` holds the `SignedData` record (`[JsonIgnore]`, `[Out]`). Signing attaches it; verification reads it. The property is on Data itself, so any Data flowing through channels can carry a signature. As of `data-serialize-cleanup`, `Wire.Write` (the class was named `WireJsonConverter` until `data-normalize` renamed it to `Wire`) calls `EnsureSigned()` sign-if-missing on every Data it walks, so egress through any channel auto-seals — the explicit `signing.sign` step remains useful when the developer wants to set contracts, headers, or expiry.
 
 ---
 

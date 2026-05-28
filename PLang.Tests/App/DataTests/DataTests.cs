@@ -614,12 +614,15 @@ public class DataTests
     }
 
     [Test]
-    public async Task Properties_HasNoOutAttribute()
+    public async Task Properties_HasOutAttribute()
     {
+        // data-normalize Stage 1: [Out] is the wire whitelist. Properties already
+        // ships via Wire's custom Write — the tag aligns the attribute
+        // with reality so Stage 2's filter sees it correctly.
         var prop = typeof(Data).GetProperty(nameof(Data.Properties));
 
         await Assert.That(prop).IsNotNull();
-        await Assert.That(prop!.GetCustomAttribute<OutAttribute>()).IsNull();
+        await Assert.That(prop!.GetCustomAttribute<OutAttribute>()).IsNotNull();
     }
 
     [Test]

@@ -21,7 +21,7 @@ public sealed class Ask : global::app.IExitsGoal
 {
     /// <summary>The user's response on the resume path. Null while the ask is
     /// pending — short-circuit semantics fire until this is bound.</summary>
-    public string? Answer { get; init; }
+    [Out] public string? Answer { get; init; }
 
     /// <inheritdoc/>
     public bool ShouldExit() => Answer == null;

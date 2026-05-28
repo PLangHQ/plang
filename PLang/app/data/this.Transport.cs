@@ -30,20 +30,12 @@ public partial class @this
     /// </summary>
     [JsonIgnore]
     [In]
-    [Out]
+    [Out, Store]
     public app.modules.signing.Signature? Signature
     {
         get => _signature;
         set => _signature = value;
     }
-
-    /// <summary>
-    /// Backing-field accessor that never triggers lazy populate. Used by code paths that
-    /// need to *peek* whether a signature exists (signing.verify's "no signature" check)
-    /// without auto-signing.
-    /// </summary>
-    [JsonIgnore]
-    internal app.modules.signing.Signature? RawSignature => _signature;
 
     /// <summary>
     /// Explicitly populates <see cref="Signature"/> via the configured signing pipeline if

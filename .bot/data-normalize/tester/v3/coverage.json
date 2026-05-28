@@ -1,0 +1,15 @@
+{
+  "note": "Tester v3 did not run a full coverlet pass — the V1 change is one small file (json.Writer.EndRecord) with an existing-fixture mutation test that demonstrates coverage. Branch-level coverage was not the question this version asked.",
+  "changed_files_v3": [
+    "PLang/app/channels/serializers/json/writer.cs",
+    "PLang.Tests/App/Serialization/CanonicalizationTests.cs"
+  ],
+  "v3_change_covered": true,
+  "mutation_verified": {
+    "site": "PLang/app/channels/serializers/json/writer.cs:87",
+    "mutation": "replaced _view with app.View.Out in NormalizeValue call",
+    "test": "PLang.Tests/App/Serialization/CanonicalizationTests.cs:101 StoreView_PropagatesIntoInnerDataProperties_NotHardcodedToOut",
+    "result": "test failed at Store assertion (PRIV-must-persist missing from store bytes) — fixture catches the regression",
+    "reverted": true
+  }
+}

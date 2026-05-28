@@ -5,8 +5,11 @@ namespace app.data;
 
 /// <summary>
 /// Wire converter for <c>app.data.@this</c> — the single point where the
-/// canonical four-field shape <c>{name, type, value, signature}</c> is emitted
-/// and parsed.
+/// canonical five-field shape <c>{name, type, value, properties, signature}</c>
+/// is emitted and parsed. The <c>properties</c> field is omitted when empty;
+/// <c>signature</c> is omitted when null. The <c>value</c> slot is built by
+/// <c>data.Normalize(View) → IWriter</c> so domain types ride as
+/// <c>[Out]</c>-tagged property bags; no per-type JsonConverter is needed.
 ///
 /// <para>
 /// Sign-if-missing: each Data the converter visits during a Write walk gets
@@ -20,13 +23,13 @@ namespace app.data;
 /// Hash carve-out: when crypto.Hash needs to canonicalize a Data D for
 /// signing, the converter is told (via <see cref="MarkOuterForHash"/>) that
 /// D is the "outer being signed right now." For that one Data, Write emits
-/// <c>{name, type, value}</c> with <em>no</em> signature field and does NOT
-/// call EnsureSigned (which would loop). All inner Datas reached through the
-/// walk still go through sign-if-missing and emit their full four fields, so
-/// the outer signature transitively binds inner attestations.
+/// <c>{name, type, value, properties}</c> with <em>no</em> signature field
+/// and does NOT call EnsureSigned (which would loop). All inner Datas reached
+/// through the walk still go through sign-if-missing and emit their full
+/// shape, so the outer signature transitively binds inner attestations.
 /// </para>
 /// </summary>
-public sealed class WireJsonConverter : JsonConverter<@this>
+public sealed class Wire : JsonConverter<@this>
 {
     // Ref-counted "outer being hashed right now" tracking. A plain HashSet
     // would lose the marker when nested Hash calls run on the same Data
@@ -37,6 +40,24 @@ public sealed class WireJsonConverter : JsonConverter<@this>
     // EnsureSigned, causing recursion. Per-instance ref-count keeps each
     // scope's lifetime independent.
     private static readonly AsyncLocal<Dictionary<@this, int>?> _hashOuter = new();
+
+    /// <summary>
+    /// The view this converter emits in. Owned per-instance — the plang
+    /// serializer keeps separate <see cref="System.Text.Json.JsonSerializerOptions"/>
+    /// for outbound (<see cref="global::app.View.Out"/>) and store
+    /// (<see cref="global::app.View.Store"/>) paths, each carrying its own
+    /// converter. Treating this as data on the converter (rather than
+    /// AsyncLocal ambient state) keeps the storage-vs-wire decision visible
+    /// at the construction site.
+    /// </summary>
+    public global::app.View View { get; }
+
+    public Wire() : this(global::app.View.Out) { }
+
+    public Wire(global::app.View view)
+    {
+        View = view;
+    }
 
     /// <summary>
     /// Marks <paramref name="data"/> as the "outer being hashed right now."
@@ -92,6 +113,17 @@ public sealed class WireJsonConverter : JsonConverter<@this>
     private const int MaxReadDepth = 64;
     private static readonly AsyncLocal<int> _readDepth = new();
 
+    /// <summary>
+    /// Wire is the canonical Data envelope — owns the shape for the base
+    /// <see cref="@this"/> and every typed subclass (<c>Data&lt;T&gt;</c>,
+    /// <c>DynamicData</c>, etc.). Without this override STJ skips the
+    /// converter on subclasses and falls back to its parameterized-ctor
+    /// deserializer, which can't bind <c>(name, value, type, parent)</c>
+    /// against the <c>{name, type, value, properties, signature}</c> wire.
+    /// </summary>
+    public override bool CanConvert(System.Type typeToConvert)
+        => typeof(@this).IsAssignableFrom(typeToConvert);
+
     public override @this Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType == JsonTokenType.Null) return null!;
@@ -104,12 +136,69 @@ public sealed class WireJsonConverter : JsonConverter<@this>
         _readDepth.Value++;
         try
         {
-            return ReadBody(ref reader, options);
+            var bodyData = ReadBody(ref reader, options);
+            // When the caller asked for a typed Data<T>, wrap the base body
+            // into a Data<T> so STJ's cast to typeToConvert succeeds. The
+            // typed Data<T>.Value getter handles the dict-to-T conversion
+            // lazily through GetValue<T>.
+            if (typeToConvert != typeof(@this) && typeof(@this).IsAssignableFrom(typeToConvert))
+            {
+                return WrapAsTyped(bodyData, typeToConvert);
+            }
+            return bodyData;
         }
         finally
         {
             _readDepth.Value--;
         }
+    }
+
+    private static void EnsureInnerSigned(object? value)
+    {
+        if (value is null) return;
+        if (value is @this inner)
+        {
+            if (inner.Signature == null && inner.Context?.Actor != null)
+                inner.EnsureSigned();
+            EnsureInnerSigned(inner.Value);
+            return;
+        }
+        // IDictionary's IEnumerable yields DictionaryEntry boxes, not values —
+        // foreach over the dict would walk DictionaryEntry which is neither
+        // Data nor IEnumerable, and inner Datas held as dict values would
+        // never get sealed. Branch on IDictionary first.
+        if (value is System.Collections.IDictionary dict)
+        {
+            foreach (var v in dict.Values) EnsureInnerSigned(v);
+            return;
+        }
+        if (value is System.Collections.IEnumerable seq && value is not string)
+        {
+            foreach (var item in seq) EnsureInnerSigned(item);
+        }
+    }
+
+    private static @this WrapAsTyped(@this body, System.Type targetType)
+    {
+        // Data<T>'s ctor parameters all have C# defaults — but reflection
+        // sees a 4-arg signature. Invoke it via Type.Missing for each slot
+        // so the runtime applies the declared defaults, then copy body
+        // state on top. Value stays raw (dict / list); Data<T>.Value's
+        // GetValue<T>() converts lazily at read-time.
+        var typed = (@this)System.Activator.CreateInstance(
+            targetType,
+            System.Reflection.BindingFlags.Instance
+                | System.Reflection.BindingFlags.Public
+                | System.Reflection.BindingFlags.OptionalParamBinding,
+            null,
+            new object?[] { System.Type.Missing, System.Type.Missing, System.Type.Missing, System.Type.Missing },
+            null)!;
+        typed.Name = body.Name;
+        typed.Value = body.Value;
+        if (body.Type != null) typed.Type = body.Type;
+        typed.Properties = body.Properties;
+        if (body.Signature != null) typed.Signature = body.Signature;
+        return typed;
     }
 
     private @this ReadBody(ref Utf8JsonReader reader, JsonSerializerOptions options)
@@ -236,7 +325,7 @@ public sealed class WireJsonConverter : JsonConverter<@this>
     }
 
     // A JSON object with both "name" and "value" keys is the canonical Data
-    // wire shape (the WireJsonConverter always emits both on Write, including
+    // wire shape (the Wire always emits both on Write, including
     // the "value": null case). Domain types Identity / Signature etc. have
     // neither pair: Identity has "name" but no "value"; Signature has "type"
     // but no "name" or "value". Requiring both keys keeps rehydration
@@ -269,10 +358,16 @@ public sealed class WireJsonConverter : JsonConverter<@this>
         // and skipping silently keeps those paths working. Production
         // discipline (Variables.Set / Channels.Register) always sets Actor
         // before any wire crossing.
-        if (!isHashOuter && data.RawSignature == null && data.Context?.Actor != null)
+        if (!isHashOuter && data.Signature == null && data.Context?.Actor != null)
         {
             data.EnsureSigned();
         }
+
+        // Inner Datas in the value graph are emitted inline by json.Writer
+        // (no STJ recursion), so the sign-if-missing check above only fires
+        // for the outer. Walk the graph once here so every Data in scope
+        // gets sealed before any byte leaves.
+        EnsureInnerSigned(data.Value);
 
         writer.WriteStartObject();
         writer.WriteString("name", data.Name);
@@ -287,7 +382,18 @@ public sealed class WireJsonConverter : JsonConverter<@this>
         }
 
         writer.WritePropertyName("value");
-        JsonSerializer.Serialize(writer, data.Value, options);
+        // The value slot routes through Normalize + json.Writer. Domain
+        // objects emit as their filtered property bag;
+        // primitives, nested Data, and lists pass through unchanged. View
+        // selects the filter:
+        //   - View.Out (default) — third-party-facing, [Out] only, Sensitive
+        //     excluded, Masked emits "****".
+        //   - View.Store — local persistence (sqlite). [Store] only,
+        //     Sensitive included, Masked ignored. Round-trips local state.
+        //   - View.Debug — diagnostic dump.
+        var normalizedValue = data.Normalize(View);
+        var jsonWriter = new app.channels.serializers.json.Writer(writer, options, View);
+        jsonWriter.Value(normalizedValue);
 
         // properties — nested object, omitted when empty to keep the wire compact.
         // Sign-if-missing walks Value-graph Datas only, never Properties; the
@@ -301,15 +407,21 @@ public sealed class WireJsonConverter : JsonConverter<@this>
             foreach (var kvp in data.Properties)
             {
                 writer.WritePropertyName(kvp.Key);
-                JsonSerializer.Serialize(writer, kvp.Value, options);
+                // Route through Normalize + json.Writer same as the value slot,
+                // so [Out] / [Sensitive] / [Masked] discipline applies symmetrically
+                // if a caller deposits a domain object into Properties.
+                var normalized = @this.NormalizeValue(kvp.Value, View,
+                    new HashSet<object>(System.Collections.Generic.ReferenceEqualityComparer.Instance),
+                    depth: 0);
+                jsonWriter.Value(normalized);
             }
             writer.WriteEndObject();
         }
 
-        if (!isHashOuter && data.RawSignature != null)
+        if (!isHashOuter && data.Signature != null)
         {
             writer.WritePropertyName("signature");
-            JsonSerializer.Serialize(writer, data.RawSignature, options);
+            JsonSerializer.Serialize(writer, data.Signature, options);
         }
 
         writer.WriteEndObject();

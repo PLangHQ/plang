@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "data-normalize: bounded Normalize (depth 128 + cycle set), Reconstruct inherits Wire.Read depth-64 cap, json.Writer fail-closed on unknown leaf — no critical/high findings; Tagged transparent-fallback recorded as design-aware footgun." }

@@ -90,6 +90,11 @@
               "name": "Value",
               "value": "%!data%",
               "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "json",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -103,10 +108,7 @@
         }
       ],
       "intent": null,
-      "guidance": "llm.query with Messages built from system\u002Buser. The step text says \u0027scheme\u0027 with sentiment:string and score:number; map this to Schema as a JSON-shaped object. Then store the parsed response into %result% via variable.set.",
-      "level": "high",
-      "confidence": 92,
-      "formal": "llm.query(Messages=[{role:\u0022system\u0022,content:\u0022You analyze sentiment. Respond in JSON only.\u0022},{role:\u0022user\u0022,content:\u0022Analyze: I love sunny days\u0022}], Schema={sentiment:string, score:number}) , variable.set(Name=%result%, Value=%!data%, type=object)",
+      "formal": "llm.query(Messages=[llmmessage], Schema={sentiment:string, score:number}) | variable.set(Name=%result%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -132,9 +134,6 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
       "formal": "assert.isNotNull(Value=%result%)",
       "source": null,
       "waitForExecution": true
@@ -152,7 +151,7 @@
           "parameters": [
             {
               "name": "Value",
-              "value": "%result.sentiment%",
+              "value": "%result%",
               "type": "object"
             }
           ],
@@ -161,10 +160,7 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": "assert.isNotNull(Value=%result.sentiment%)",
+      "formal": "assert.isNotNull(Value=%result%, Message omitted)",
       "source": null,
       "waitForExecution": true
     }

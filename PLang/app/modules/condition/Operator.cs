@@ -36,7 +36,7 @@ public sealed class Operator
     [app.Attributes.Choices]
     public static string[] Choices(actor.context.@this? ctx) => [.. Registry.Keys];
 
-    public string Value { get; }
+    [Out] public string Value { get; }
     public Func<data.@this?, data.@this?, Task<bool>> Evaluate { get; }
 
     public Operator(string value)

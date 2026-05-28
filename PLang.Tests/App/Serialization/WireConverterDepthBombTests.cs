@@ -3,7 +3,7 @@ using System.Text;
 namespace PLang.Tests.App.Serialization;
 
 // Security v1 F1 regression — pre-auth StackOverflow DoS via
-// nested-Data wire deserialization. WireJsonConverter.LiftDataIfShaped
+// nested-Data wire deserialization. Wire.LiftDataIfShaped
 // rebuilds a fresh Utf8JsonReader on every level (depth counter resets),
 // so STJ's MaxDepth=64 only applied per-level. Bound the recursion to
 // the same MaxReadDepth via an AsyncLocal so deep input rejects as a

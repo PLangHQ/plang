@@ -16,7 +16,7 @@ namespace app.variables;
 /// Provenance lives on the wrapper — <c>Data&lt;Variable&gt;.Signature</c> when signing
 /// lands. Variable itself is a value, not a wrapper.
 /// </summary>
-public sealed record Variable(string Name, string RawValue, bool WasPercentWrapped) : IRawNameResolvable
+public sealed record Variable([property: Out] string Name, string RawValue, bool WasPercentWrapped) : IRawNameResolvable
 {
     /// <summary>
     /// Optional Property suffix captured from the raw reference shape

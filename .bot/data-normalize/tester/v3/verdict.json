@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "C# 3381/3381 green. PLang 232/233 — one real failure (/BuilderSanity/BuilderSanity.test.goal) that coder reported as passing. V1 fixture is honest and mutation-verified; process violation: no baseline-tests.md in any coder version."
+}

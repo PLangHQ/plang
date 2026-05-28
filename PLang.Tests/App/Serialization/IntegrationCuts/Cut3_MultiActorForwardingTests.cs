@@ -29,7 +29,7 @@ public class Cut3_MultiActorForwardingTests
         // A: sign inner via its identity.
         var inner = new global::app.data.@this("user", "Ingi") { Context = a.User.Context };
         inner.EnsureSigned();
-        var aIdentity = inner.RawSignature!.Identity;
+        var aIdentity = inner.Signature!.Identity;
 
         // B: wrap into outer carrying B's identity. The walk-into-inner sees
         // inner already-signed and skips re-signing (forwarding preserves provenance).
@@ -52,9 +52,9 @@ public class Cut3_MultiActorForwardingTests
         var chain = BuildChain();
         await using (chain.AppA) await using (chain.AppB) await using (chain.AppC)
         {
-            await Assert.That(chain.RoundTripped.RawSignature).IsNotNull();
-            await Assert.That(chain.RoundTripped.RawSignature!.Identity).IsEqualTo(chain.Outer.RawSignature!.Identity);
-            await Assert.That(chain.Outer.RawSignature!.Identity).IsNotEqualTo(chain.Inner.RawSignature!.Identity);
+            await Assert.That(chain.RoundTripped.Signature).IsNotNull();
+            await Assert.That(chain.RoundTripped.Signature!.Identity).IsEqualTo(chain.Outer.Signature!.Identity);
+            await Assert.That(chain.Outer.Signature!.Identity).IsNotEqualTo(chain.Inner.Signature!.Identity);
         }
     }
 
@@ -65,8 +65,8 @@ public class Cut3_MultiActorForwardingTests
         {
             var innerAfter = chain.RoundTripped.Value as global::app.data.@this;
             await Assert.That(innerAfter).IsNotNull();
-            await Assert.That(innerAfter!.RawSignature).IsNotNull();
-            await Assert.That(innerAfter.RawSignature!.Identity).IsEqualTo(chain.Inner.RawSignature!.Identity);
+            await Assert.That(innerAfter!.Signature).IsNotNull();
+            await Assert.That(innerAfter.Signature!.Identity).IsEqualTo(chain.Inner.Signature!.Identity);
         }
     }
 

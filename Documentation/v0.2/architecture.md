@@ -396,7 +396,7 @@ Each channel has a Stream, Direction (Input/Output/Bidirectional), and a `Mime` 
 Routes MIME type to serializer (each `ISerializer` declares `Type` and `Extension`):
 - `application/json` (`Json`) — JSON view of `data.Value`
 - `text/plain` (`Text`) — `data.Value.ToString()`
-- `application/plang` (the single PLang wire serializer) — full Data shape `{name, type, value, properties, signature}`, composed over `Json` with `WireJsonConverter` + `Transport.ForOutbound` + `Sensitive.Strip` modifiers
+- `application/plang` (the single PLang wire serializer) — full Data shape `{name, type, value, properties, signature}`, composed over `Json` with `Wire` + `Transport.ForOutbound` + `Sensitive.Strip` modifiers (`Wire` was named `WireJsonConverter` before `data-normalize`)
 
 `Channels.ReadAsync<T>(path)` reads a file, determines MIME from extension, deserializes via the matching serializer. The registry's lookup APIs are `GetByType(mime)` / `GetByMimeType(mime)` (throws when unregistered) and `GetByExtension(ext)`.
 
@@ -504,7 +504,7 @@ The public verb is `- run %callback%` (`callback.run`). It implements a strict s
 
 `AskCallback` resumes by binding the answer under the sentinel `%!ask.answer%` and re-dispatching the original `output.ask` action. `ErrorCallback` resumes by reconstructing a fresh App from the snapshot and dispatching from `BottomFrame`. CLR exceptions out of `cb.Run` are wrapped as typed `Data.FromError` (no raw exceptions leak through the public entry).
 
-The wire serializer is `application/plang` — a single, merged serializer composed over `Json` with `WireJsonConverter` + `Transport.ForOutbound` + `Sensitive.Strip` modifiers (the historical `application/plang+data` variant was merged on `data-serialize-cleanup`). Signing is **converter-driven**: `WireJsonConverter.Write` fires `data.EnsureSigned()` sign-if-missing on every Data it walks, so any Data egressing through any channel auto-seals. Forwarding preserves provenance — Alice's inner signature rides intact under Bob's outer signature.
+The wire serializer is `application/plang` — a single, merged serializer composed over `Json` with `Wire` + `Transport.ForOutbound` + `Sensitive.Strip` modifiers (the historical `application/plang+data` variant was merged on `data-serialize-cleanup`; the `Wire` class itself was named `WireJsonConverter` before `data-normalize`). Signing is **converter-driven**: `Wire.Write` fires `data.EnsureSigned()` sign-if-missing on every Data it walks, so any Data egressing through any channel auto-seals. Forwarding preserves provenance — Alice's inner signature rides intact under Bob's outer signature.
 
 See `callbacks.md` for the full design.
 
@@ -528,7 +528,9 @@ app/
     this.Navigation.cs        dot-path traversal
     this.Transport.cs         compress/wrap/encrypt (the transport pipeline)
     Properties.cs             IDictionary<string,object?> sidecar metadata
-    WireJsonConverter.cs      five-field wire shape + sign-if-missing
+    Wire.cs                   five-field wire shape + sign-if-missing (renamed from WireJsonConverter on data-normalize)
+    this.Normalize.cs         walks Value into uniform primitive | byte[] | Data | List<>
+    this.Reconstruct.cs       reverse walker — Reconstruct<T> + FromNormalized hooks
     Navigators/               per-type navigation
   
   goals/
