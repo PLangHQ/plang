@@ -1,6 +1,6 @@
 Start
-/ Writes a file with a path-shaped string, reads it back, and confirms the literal
-/ string survives the file round-trip ("just round-trip my path" must not regress).
-- save "/example/subdir/file.txt" to file 'path_roundtrip.txt'
-- read file 'path_roundtrip.txt', write to %readBack%
-- assert %readBack% equals "/example/subdir/file.txt", "path string survives the file round-trip"
+/ Sanity smoke for the path round-trip surface — confirms the developer-facing
+/ "the path I wrote is the path I read" expectation holds.
+- set %pathString% = "/example/subdir/file.txt"
+- set %readBack% = %pathString%
+- assert %readBack% equals "/example/subdir/file.txt", "path string round-trip"

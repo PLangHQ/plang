@@ -302,7 +302,15 @@ public class Default : IBuilder
 
     public data.@this ValidateStepActions(validateStepActions action)
     {
-        var step = action.Step.Value!;
+        var step = action.Step.Value;
+        if (step == null)
+        {
+            return data.@this.FromError(new global::app.errors.ActionError(
+                "The LLM couldn't produce a usable plan for this goal — its proposed step count didn't match the goal, and the retry didn't recover. " +
+                "Try running plang build again (the LLM is non-deterministic). " +
+                "If it keeps failing, simplify or reword your goal text — long quoted strings or phrases that look like instructions can confuse the planner.",
+                "BuilderPlannerFailed", 400));
+        }
         var input = action.Actions.Value ?? new List<string>();
         var modules = action.Context.App.Modules;
 

@@ -23,6 +23,11 @@
               "name": "Value",
               "value": 0,
               "type": "int"
+            },
+            {
+              "name": "Type",
+              "value": "int",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -64,11 +69,6 @@
                 3
               ],
               "type": "list\u00601"
-            },
-            {
-              "name": "Type",
-              "value": "json",
-              "type": "string"
             }
           ],
           "defaults": [
@@ -82,7 +82,7 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%items%, Value=[1, 2, 3], Type=json)",
+      "formal": "variable.set(Name=%items%, Value=\u0027[1, 2, 3]\u0027, Type=json)",
       "source": null,
       "waitForExecution": true
     },
@@ -132,7 +132,7 @@
         }
       ],
       "intent": null,
-      "formal": "loop.foreach(Collection=%items%), goal.call(GoalName={name:\u0022AddItem\u0022, parameters:[{name:\u0022item\u0022, value:%item%, type:\u0022string\u0022}]})",
+      "formal": "loop.foreach(Collection=%items%) , goal.call(GoalName={name:\u0022AddItem\u0022, parameters:[{name:\u0022item\u0022, value:%item%, type:\u0022string\u0022}]})",
       "source": null,
       "waitForExecution": true
     },
@@ -212,7 +212,7 @@
               "value": {
                 "name": "Finalize",
                 "parallel": false,
-                "parameters": null,
+                "parameters": [],
                 "prPath": "/BuilderSanity/.build/finalize.pr"
               },
               "type": "goal.call"

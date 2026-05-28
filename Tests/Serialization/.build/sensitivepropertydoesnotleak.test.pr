@@ -6,9 +6,9 @@
     {
       "index": 0,
       "text": "archive identity \u0027leakProbe\u0027, force, on error ignore",
-      "lineNumber": 6,
+      "lineNumber": 5,
       "indent": 0,
-      "comment": "Creates an identity, signs a Data with it, and confirms the developer-facing surface\nis intact end-to-end. The cross-actor wire never carries PrivateKey ([Sensitive] excluded\nfrom View.Out) \u2014 that filter behavior is covered by C# WireOutput_Identity_*. This goal\npins the in-process happy path so a regression to the signing surface fails here too.",
+      "comment": "Creates an identity, signs a Data with it, verifies. End-to-end signing surface.\nThe cross-actor wire never carries PrivateKey ([Sensitive] excluded from View.Out) \u2014\ncovered by C# WireOutput_Identity_*. This goal is the in-process happy-path companion.",
       "actions": [
         {
           "module": "identity",
@@ -51,7 +51,7 @@
     {
       "index": 1,
       "text": "create identity leakProbe",
-      "lineNumber": 7,
+      "lineNumber": 6,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -82,7 +82,7 @@
     {
       "index": 2,
       "text": "set %data% = { \u0022payload\u0022: \u0022leak-probe\u0022 }",
-      "lineNumber": 8,
+      "lineNumber": 7,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -126,7 +126,7 @@
     {
       "index": 3,
       "text": "sign %data%",
-      "lineNumber": 9,
+      "lineNumber": 8,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -151,8 +151,8 @@
     },
     {
       "index": 4,
-      "text": "verify %data% with contracts [\u0027C0\u0027], write to %verifyResult%",
-      "lineNumber": 10,
+      "text": "verify %data%, write to %verifyResult%",
+      "lineNumber": 9,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -164,13 +164,6 @@
               "name": "Data",
               "value": "%data%",
               "type": "object"
-            },
-            {
-              "name": "Contracts",
-              "value": [
-                "C0"
-              ],
-              "type": "list\u00601"
             }
           ],
           "defaults": [
@@ -208,14 +201,14 @@
         }
       ],
       "intent": null,
-      "formal": "signing.verify(Data=%data%, Contracts=[\u0022C0\u0022]) | variable.set(Name=%verifyResult%, Value=%!data%, type=bool)",
+      "formal": "signing.verify(Data=%data%, Contracts=%contracts%, Headers=%headers%, TimeoutMs=%timeoutMs%, SkipFreshnessCheck=%skipFreshnessCheck%) | variable.set(Name=%verifyResult%, Value=%!data%, type=bool)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 5,
       "text": "assert %verifyResult.Success% is true, \u0022signing surface intact\u0022",
-      "lineNumber": 11,
+      "lineNumber": 10,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -248,7 +241,7 @@
   "visibility": 1,
   "path": "/Serialization/SensitivePropertyDoesNotLeak.test.goal",
   "prPath": "/Serialization/.build/sensitivepropertydoesnotleak.test.pr",
-  "hash": "ba333bef3cdf03fe71232e283954227124b742a5e8ce6f2f31be063c8aba9e9c",
+  "hash": "a60bae28de9ec96a9b1e5b96619924bc5e140b036f14a8d42ae8262ba22e3620",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
