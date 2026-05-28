@@ -10,8 +10,8 @@ public class SerializerRegistryTests
     {
         var registry = new SerializerRegistry();
 
-        await Assert.That(registry.GetByContentType("application/json")).IsNotNull();
-        await Assert.That(registry.GetByContentType("text/plain")).IsNotNull();
+        await Assert.That(registry.GetByType("application/json")).IsNotNull();
+        await Assert.That(registry.GetByType("text/plain")).IsNotNull();
     }
 
     [Test]
@@ -21,7 +21,7 @@ public class SerializerRegistryTests
 
         var defaultSerializer = registry.Default;
 
-        await Assert.That(defaultSerializer.ContentType).IsEqualTo("application/json");
+        await Assert.That(defaultSerializer.Type).IsEqualTo("application/json");
     }
 
     [Test]
@@ -53,7 +53,7 @@ public class SerializerRegistryTests
 
         var json = registry.Json;
 
-        await Assert.That(json.ContentType).IsEqualTo("application/json");
+        await Assert.That(json.Type).IsEqualTo("application/json");
     }
 
     [Test]
@@ -63,7 +63,7 @@ public class SerializerRegistryTests
 
         var text = registry.Text;
 
-        await Assert.That(text.ContentType).IsEqualTo("text/plain");
+        await Assert.That(text.Type).IsEqualTo("text/plain");
     }
 
     [Test]
@@ -74,7 +74,7 @@ public class SerializerRegistryTests
 
         registry.Register(customSerializer);
 
-        await Assert.That(registry.GetByContentType("custom/type")).IsEqualTo(customSerializer);
+        await Assert.That(registry.GetByType("custom/type")).IsEqualTo(customSerializer);
     }
 
     [Test]
@@ -93,10 +93,10 @@ public class SerializerRegistryTests
     {
         var registry = new SerializerRegistry();
 
-        var serializer = registry.GetByContentType("application/json");
+        var serializer = registry.GetByType("application/json");
 
         await Assert.That(serializer).IsNotNull();
-        await Assert.That(serializer!.ContentType).IsEqualTo("application/json");
+        await Assert.That(serializer!.Type).IsEqualTo("application/json");
     }
 
     [Test]
@@ -104,10 +104,10 @@ public class SerializerRegistryTests
     {
         var registry = new SerializerRegistry();
 
-        var serializer = registry.GetByContentType("application/json; charset=utf-8");
+        var serializer = registry.GetByType("application/json; charset=utf-8");
 
         await Assert.That(serializer).IsNotNull();
-        await Assert.That(serializer!.ContentType).IsEqualTo("application/json");
+        await Assert.That(serializer!.Type).IsEqualTo("application/json");
     }
 
     [Test]
@@ -115,10 +115,10 @@ public class SerializerRegistryTests
     {
         var registry = new SerializerRegistry();
 
-        var serializer = registry.GetByContentType("text/json");
+        var serializer = registry.GetByType("text/json");
 
         await Assert.That(serializer).IsNotNull();
-        await Assert.That(serializer!.ContentType).IsEqualTo("application/json");
+        await Assert.That(serializer!.Type).IsEqualTo("application/json");
     }
 
     [Test]
@@ -126,9 +126,9 @@ public class SerializerRegistryTests
     {
         var registry = new SerializerRegistry();
 
-        var lower = registry.GetByContentType("application/json");
-        var upper = registry.GetByContentType("APPLICATION/JSON");
-        var mixed = registry.GetByContentType("Application/Json");
+        var lower = registry.GetByType("application/json");
+        var upper = registry.GetByType("APPLICATION/JSON");
+        var mixed = registry.GetByType("Application/Json");
 
         await Assert.That(lower).IsNotNull();
         await Assert.That(upper).IsNotNull();
@@ -140,7 +140,7 @@ public class SerializerRegistryTests
     {
         var registry = new SerializerRegistry();
 
-        var serializer = registry.GetByContentType("unknown/type");
+        var serializer = registry.GetByType("unknown/type");
 
         await Assert.That(serializer).IsNull();
     }
@@ -173,7 +173,7 @@ public class SerializerRegistryTests
         var serializer = registry.GetByExtension(".txt");
 
         await Assert.That(serializer).IsNotNull();
-        await Assert.That(serializer!.ContentType).IsEqualTo("text/plain");
+        await Assert.That(serializer!.Type).IsEqualTo("text/plain");
     }
 
     [Test]
@@ -205,7 +205,7 @@ public class SerializerRegistryTests
 
         var serializer = registry.GetOrDefault("text/plain");
 
-        await Assert.That(serializer.ContentType).IsEqualTo("text/plain");
+        await Assert.That(serializer.Type).IsEqualTo("text/plain");
     }
 
     [Test]
@@ -243,7 +243,7 @@ public class SerializerRegistryTests
     {
         var registry = new SerializerRegistry();
 
-        var types = registry.ContentTypes.ToList();
+        var types = registry.Types.ToList();
 
         await Assert.That(types).Contains("application/json");
         await Assert.That(types).Contains("text/plain");
@@ -263,23 +263,23 @@ public class SerializerRegistryTests
 
     private class CustomSerializer : ISerializer
     {
-        public string ContentType => "custom/type";
-        public string FileExtension => ".custom";
+        public string Type => "custom/type";
+        public string Extension => ".custom";
 
-        public Task<Data> SerializeAsync(Stream stream, object? value, Type? type = null, CancellationToken cancellationToken = default)
+        public Task<Data> SerializeAsync(Stream stream, Data data, CancellationToken cancellationToken = default)
             => Task.FromResult(Data.Ok());
 
-        public Task<Data> DeserializeAsync(Stream stream, Type type, CancellationToken cancellationToken = default)
+        public Task<Data> DeserializeAsync(Stream stream, CancellationToken cancellationToken = default)
             => Task.FromResult(Data.Ok());
 
         public Task<global::app.data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default)
             => Task.FromResult(global::app.data.@this<T>.Ok(default!));
 
-        public global::app.data.@this<string> Serialize(object? value, Type? type = null)
-            => global::app.data.@this<string>.Ok(value?.ToString() ?? "");
+        public global::app.data.@this<string> Serialize(Data data)
+            => global::app.data.@this<string>.Ok(data.Value?.ToString() ?? "");
 
-        public Data Deserialize(string data, Type type) => Data.Ok();
+        public Data Deserialize(string s) => Data.Ok();
 
-        public global::app.data.@this<T> Deserialize<T>(string data) => global::app.data.@this<T>.Ok(default!);
+        public global::app.data.@this<T> Deserialize<T>(string s) => global::app.data.@this<T>.Ok(default!);
     }
 }

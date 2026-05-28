@@ -14,7 +14,7 @@ public class Stage2_StreamChannelTests
         { Mime = "text/plain" };
         app.User.Channels.Register(ch);
 
-        var result = await ch.WriteCore(Data.Ok("hello"));
+        var result = await ch.Write(Data.Ok("hello"));
         await Assert.That(result.Success).IsTrue();
 
         var written = global::System.Text.Encoding.UTF8.GetString(captureStream.ToArray());
@@ -27,7 +27,7 @@ public class Stage2_StreamChannelTests
         var ms = new MemoryStream(global::System.Text.Encoding.UTF8.GetBytes("hello"));
         var ch = new StreamChannel("c", ms, ChannelDirection.Input, ownsStream: false)
         { Mime = "text/plain" };
-        var result = await ch.ReadCore();
+        var result = await ch.Read();
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value as string).IsEqualTo("hello");
     }
@@ -48,7 +48,7 @@ public class Stage2_StreamChannelTests
         await Assert.That(ch.Direction).IsEqualTo(ChannelDirection.Output);
         await Assert.That(ch.CanWrite).IsTrue();
         await Assert.That(ch.CanRead).IsFalse();
-        var read = await ch.ReadCore();
+        var read = await ch.Read();
         await Assert.That(read.Success).IsFalse();
         await Assert.That(read.Error!.Key).IsEqualTo("ChannelWriteOnly");
     }
@@ -60,7 +60,7 @@ public class Stage2_StreamChannelTests
         await Assert.That(ch.Direction).IsEqualTo(ChannelDirection.Input);
         await Assert.That(ch.CanRead).IsTrue();
         await Assert.That(ch.CanWrite).IsFalse();
-        var write = await ch.WriteCore(Data.Ok("x"));
+        var write = await ch.Write(Data.Ok("x"));
         await Assert.That(write.Success).IsFalse();
         await Assert.That(write.Error!.Key).IsEqualTo("ChannelReadOnly");
     }
@@ -71,7 +71,7 @@ public class Stage2_StreamChannelTests
         await using var app = new global::app.@this("/test", autoWireConsoleChannels: false);
         var ch = new StreamChannel("c", new ThrowingStream(throwOnWrite: true), ChannelDirection.Output, ownsStream: false);
         app.User.Channels.Register(ch);
-        var result = await ch.WriteCore(Data.Ok("x"));
+        var result = await ch.Write(Data.Ok("x"));
         await Assert.That(result.Success).IsFalse();
         // Serializer-layer errors travel directly through Data.Error without
         // wrapping — the underlying ThrowingStream IOException surfaces as
@@ -83,7 +83,7 @@ public class Stage2_StreamChannelTests
     public async Task StreamChannel_ReadCore_FailsWithReadError_OnUnderlyingStreamThrow()
     {
         var ch = new StreamChannel("c", new ThrowingStream(throwOnRead: true), ChannelDirection.Input, ownsStream: false);
-        var result = await ch.ReadCore();
+        var result = await ch.Read();
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ReadError");
     }
@@ -94,7 +94,7 @@ public class Stage2_StreamChannelTests
         var ms = new MemoryStream(global::System.Text.Encoding.UTF8.GetBytes("answer\n"));
         var ch = new StreamChannel("i", ms, ChannelDirection.Bidirectional, ownsStream: false)
         { Mime = "text/plain" };
-        var result = await ch.AskCore(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "") });
+        var result = await ch.Ask(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "") });
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value as string).IsEqualTo("answer");
     }
@@ -113,7 +113,7 @@ public class Stage2_StreamChannelTests
             Mime = "text/plain",
             Encoding = "iso-8859-1"
         };
-        var result = await ch.AskCore(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "") });
+        var result = await ch.Ask(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "") });
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value as string).IsEqualTo("é");
     }
@@ -128,7 +128,7 @@ public class Stage2_StreamChannelTests
             Mime = "text/plain",
             Timeout = TimeSpan.FromMilliseconds(100)
         };
-        var result = await ch.AskCore(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "") });
+        var result = await ch.Ask(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "") });
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("AskTimeout");
     }

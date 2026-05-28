@@ -153,7 +153,7 @@ Modules. Build a snapshot with `app.Modules.Schema.Build()`; the builder
 template and the trace viewer read from there. Lives next to the
 action-module folders for proximity to what it describes.
 
-## Data — the universal result envelope
+## Data — the universal result wrapper
 
 Returned by every action. `app/data/this.cs` plus partials:
 
@@ -161,12 +161,14 @@ Returned by every action. `app/data/this.cs` plus partials:
 Data
 ├── Value, Properties, Error, Success
 ├── Ok(value) / Fail(error) / Merge(other)
-├── Compare(...)       (this.Compare.cs)
-├── Envelope wrapping  (this.Envelope.cs)
-├── Navigation         (this.Navigation.cs — drives %var.path%)
-├── Result helpers     (this.Result.cs)
-├── Snapshot           (this.Snapshot.cs — capture/restore for the snapshot system)
-└── Code-specific      (app/data/code/)
+├── Compare(...)              (this.Compare.cs)
+├── Transport pipeline        (this.Transport.cs — Wrap/Compress/Encrypt/…/Unwrap)
+├── Navigation                (this.Navigation.cs — drives %var.path% and %var!key%)
+├── Result helpers            (this.Result.cs)
+├── Snapshot                  (this.Snapshot.cs — capture/restore for the snapshot system)
+├── Properties sidecar        (Properties.cs — IDictionary<string,object?>, primitive-only)
+├── Wire converter            (WireJsonConverter.cs — {name,type,value,properties,signature})
+└── Code-specific             (app/data/code/)
 ```
 
 `Data<T>` is the typed variant; the `T = Variable` case is the marker used for

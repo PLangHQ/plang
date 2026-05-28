@@ -129,12 +129,12 @@ public class Stage4_ChannelResolutionTests
             Name = "probe";
             Direction = ChannelDirection.Output;
         }
-        public override Task<Data> WriteCore(Data data, CancellationToken ct = default)
+        public override Task<Data> Write(Data data, CancellationToken ct = default)
         {
             Received = data;
             return Task.FromResult(Data.Ok());
         }
-        public override Task<Data> ReadCore(CancellationToken ct = default) => Task.FromResult(Data.Ok());
-        public override Task<Data> AskCore(global::app.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        public override Task<Data> Read(CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        public override Task<Data> Ask(global::app.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok());
     }
 }

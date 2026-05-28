@@ -3,14 +3,14 @@ using System.Text;
 namespace app.channels.serializers.serializer;
 
 /// <summary>
-/// Plain text serializer - converts objects to their string representation.
+/// Plain text serializer - emits data.Value as its string representation.
 /// Falls back to JSON for complex types so that e.g. List&lt;T&gt; outputs proper JSON
 /// instead of "System.Collections.Generic.List`1[...]".
 /// </summary>
 public sealed class Text : ISerializer
 {
-    public string ContentType => "text/plain";
-    public string FileExtension => ".txt";
+    public string Type => "text/plain";
+    public string Extension => ".txt";
 
     private readonly Encoding _encoding;
     private readonly global::app.channels.serializers.serializer.Json _jsonFallback;
@@ -21,58 +21,61 @@ public sealed class Text : ISerializer
         _jsonFallback = jsonFallback ?? new global::app.channels.serializers.serializer.Json();
     }
 
-    public async Task<data.@this> SerializeAsync(Stream stream, object? value, Type? type = null, CancellationToken cancellationToken = default)
+    public async Task<data.@this> SerializeAsync(Stream stream, data.@this data, CancellationToken cancellationToken = default)
     {
         try
         {
+            var value = data.Value;
             if (!IsSimpleType(value))
-                return await _jsonFallback.SerializeAsync(stream, value, type, cancellationToken);
+                return await _jsonFallback.SerializeAsync(stream, data, cancellationToken);
 
             var bytes = _encoding.GetBytes((value?.ToString() ?? "") + Environment.NewLine);
             await stream.WriteAsync(bytes, cancellationToken);
-            return data.@this.Ok();
+            return global::app.data.@this.Ok();
         }
         catch (Exception ex) when (ex is IOException)
         {
-            return data.@this.FromError(new errors.ServiceError(
+            return global::app.data.@this.FromError(new errors.ServiceError(
                 $"Text serialize failed: {ex.Message}", "TextSerializeError", 400) { Exception = ex });
         }
     }
 
-    public async Task<data.@this> DeserializeAsync(Stream stream, Type type, CancellationToken cancellationToken = default)
+    public async Task<data.@this> DeserializeAsync(Stream stream, CancellationToken cancellationToken = default)
     {
         try
         {
             using var reader = new StreamReader(stream, _encoding, leaveOpen: true);
             var text = await reader.ReadToEndAsync(cancellationToken);
-            return data.@this.Ok(ConvertFromString(text, type));
+            return global::app.data.@this.Ok(text);
         }
         catch (Exception ex) when (ex is IOException)
         {
-            return data.@this.FromError(new errors.ServiceError(
+            return global::app.data.@this.FromError(new errors.ServiceError(
                 $"Text deserialize failed: {ex.Message}", "TextDeserializeError", 400) { Exception = ex });
         }
     }
 
     public async Task<data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default)
     {
-        var result = await DeserializeAsync(stream, typeof(T), cancellationToken);
-        if (!result.Success) return data.@this<T>.From(result);
-        return data.@this<T>.Ok(result.Value is T typed ? typed : default!);
+        var result = await DeserializeAsync(stream, cancellationToken);
+        if (!result.Success) return global::app.data.@this<T>.From(result);
+        var converted = ConvertFromString(result.Value as string ?? "", typeof(T));
+        return global::app.data.@this<T>.Ok(converted is T typed ? typed : default!);
     }
 
-    public data.@this<string> Serialize(object? value, Type? type = null)
+    public data.@this<string> Serialize(data.@this data)
     {
-        if (IsSimpleType(value)) return data.@this<string>.Ok(value?.ToString() ?? "");
-        return _jsonFallback.Serialize(value, type);
+        var value = data.Value;
+        if (IsSimpleType(value)) return global::app.data.@this<string>.Ok(value?.ToString() ?? "");
+        return _jsonFallback.Serialize(data);
     }
 
-    public data.@this Deserialize(string data, Type type)
-        => global::app.data.@this.Ok(ConvertFromString(data, type));
+    public data.@this Deserialize(string s)
+        => global::app.data.@this.Ok(s);
 
-    public data.@this<T> Deserialize<T>(string data)
+    public data.@this<T> Deserialize<T>(string s)
     {
-        var result = ConvertFromString(data, typeof(T));
+        var result = ConvertFromString(s, typeof(T));
         return global::app.data.@this<T>.Ok(result is T typed ? typed : default!);
     }
 

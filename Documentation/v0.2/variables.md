@@ -127,25 +127,45 @@ Key properties for variable use:
 
 ## Properties
 
-`app.memory.Properties : IList<Data>` — named collection of `Data` items.
+`app.data.Properties : IDictionary<string, object?>` — a per-Data sidecar bag of primitive metadata. On the wire it lives in its own nested `properties` object (see `Documentation/Runtime2/data-spec.md` §15a).
 
 ```csharp
-public class Properties : IList<Data>
+public sealed class Properties : IDictionary<string, object?>
 {
-    // Named access
-    Data? this[string name] { get; set; }
-
-    // Typed access
-    T? Get<T>(string name)
-    void Set(string name, object? value)
-    bool Remove(string name)
-
-    // Conversion
-    Dictionary<string, object?> ToDictionary()
+    public object? this[string key] { get; set; }   // case-insensitive
+    public void Add(string key, object? value);
+    // … standard IDictionary surface
 }
 ```
 
-Used by `Data.Properties` for attaching metadata to variables.
+**Insertion gate.** Values must be wire-supported primitives — `string`, `bool`, `int`, `long`, `double`, `decimal`, `DateTime`, `byte[]`, `null`, or `IDictionary<string,object?>` / `IEnumerable<object?>` shapes built from those. Raw `Data` instances are rejected (Properties are metadata *about* the Data, not nested Datas with their own attestations). Unsupported shapes throw `ArgumentException`; the PLang surface (`variable.set`) wraps that as `InvalidVariableReference` 400.
+
+### PLang access — `.` vs `!`
+
+Two operators, two stores on the same Data. The Value-namespace and the Properties-namespace are distinct; the operator chooses which one the lookup goes through.
+
+| Expression       | Reads                                          |
+|------------------|------------------------------------------------|
+| `%x.field%`      | `x.Value` navigation                           |
+| `%x!key%`        | `x.Properties[key]`                            |
+| `%x!key.path%`   | `x.Properties[key]`, then dot-navigate within  |
+
+```plang
+- llm system "you are a translator", user "%text%", write to %resp%
+- log "translation: %resp.text%"           / Value.text
+- log "tokens used:  %resp!TotalTokens%"   / Properties["TotalTokens"]
+- log "model name:   %resp!Model%"         / Properties["Model"]
+```
+
+**Writing Properties.** `set %x!key% = value` writes through `variable.set` to `Properties[key]`. The value goes through the insertion gate above; supported primitives round-trip faithfully through the wire (numbers may promote `int → long` via JSON; `string`/`bool`/`DateTime` survive intact).
+
+**Malformed shapes.** These flag `Variable.IsMalformed` and surface `InvalidVariableReference` 400 before any property write:
+
+- `%x!!cost%` — multi-bang in head
+- `%x.y!cost%` — bang after dot/bracket
+- `%!x!cost%` — leading-bang (infrastructure namespace) followed by a key
+
+The leading-`!` shape `%!name%` (the infrastructure namespace: `%!data%`, `%!error%`) is positionally distinct from the mid-expression `!` and still parses as a single variable reference. The lexer disambiguates by position.
 
 ## Variable Syntax in PLang
 

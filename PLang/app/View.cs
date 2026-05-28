@@ -28,14 +28,14 @@ public sealed class DefaultAttribute : Attribute { }
 
 /// <summary>
 /// Marks properties that should be serialized when Data leaves the system (transport/wire outbound).
-/// Used for envelope metadata like Signature.
+/// Used for transport metadata like Signature.
 /// </summary>
 [AttributeUsage(AttributeTargets.Property)]
 public sealed class OutAttribute : Attribute { }
 
 /// <summary>
 /// Marks properties that should be deserialized when Data arrives from the wire (transport inbound).
-/// Used for envelope metadata like Signature that needs to round-trip.
+/// Used for transport metadata like Signature that needs to round-trip.
 /// </summary>
 [AttributeUsage(AttributeTargets.Property)]
 public sealed class InAttribute : Attribute { }

@@ -1,0 +1,155 @@
+{
+  "analyst": "security",
+  "branch": "data-serialize-cleanup",
+  "timestamp": "2026-05-28T01:20:13Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "wire-deserialization (application/plang)",
+      "exposure": "Any channel that uses the merged plang serializer to ingest external bytes (post-Stage-2 consolidation widened this surface). `plang.@this.DeserializeAsync` / `Deserialize(string)` route through `WireJsonConverter.Read`, which calls `LiftDataIfShaped` on any JSON object in the `value` slot.",
+      "trust_boundary": "Bytes off the wire are untrusted until signing.verify runs. Wire converter parses the shape first; verify runs against the parsed Data after.",
+      "mitigations": [
+        "STJ MaxDepth=64 caps JSON nesting per ParseValue call",
+        "100 MB cap on decompressed bytes in Transport.GZipDecompress",
+        "EnsureSupportedValue rejects Data instances on Properties insertion (top-level)"
+      ],
+      "gaps": [
+        "LiftDataIfShaped resets STJ depth on every nesting level by going through GetRawText()+Deserialize<@this>(string) — see F1",
+        "No size limit on compressed input bytes; only on decompressed output (a 100 MB allocation per inbound payload is sustainable but not paged)",
+        "EnsureSupportedValue is structural (top-level only) — nested Data inside IDictionary/IEnumerable accepted on insert"
+      ]
+    },
+    {
+      "area": "sign-if-missing during wire egress",
+      "exposure": "WireJsonConverter.Write fires EnsureSigned on each Data it visits, but only when `data.Context?.Actor != null`. Bare-context Datas serialize unsigned.",
+      "trust_boundary": "Caller responsibility: production paths (Variables.Set / Channels.Register) must wire Actor before any wire crossing; receive-side signing.verify is the trust gate.",
+      "mitigations": [
+        "signing.verify returns NoSignature 400 when RawSignature is null",
+        "Documented carveout (handler comment + xmldoc) for test fixtures / .pr authoring / raw IClass calls"
+      ],
+      "gaps": [
+        "Consumers that dispatch on Data without verifying signature trust wire input — same systemic shape as the standing `callback.run` finding",
+        "No 'strict' mode that throws on unsigned egress (would surface mis-wired pipelines before they leak)"
+      ]
+    },
+    {
+      "area": "canonicalization (crypto.Hash)",
+      "exposure": "Hash bytes must equal wire bytes (minus the outermost Signature field) so the outer signature transitively binds inner-Data signatures.",
+      "trust_boundary": "Bytes signed must equal bytes verified.",
+      "mitigations": [
+        "crypto/Default.Hash routes through registered application/plang serializer (or ContextLessFallback) so wire == hash",
+        "Type-mismatch check on registered serializer returns SerializerMismatch 500 (closed v1 finding F4)",
+        "MarkOuterForHash uses Dictionary<@this,int> with ReferenceEqualityComparer + ref-count (closed v1 F2)"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "transport sensitive-field exposure",
+      "exposure": "`application/plang` serializer intentionally omits the Sensitive.Strip modifier so settings/sqlite/identity persistence works.",
+      "trust_boundary": "PLang's settings store is trusted; inter-actor channels carrying plang bytes externally are not.",
+      "mitigations": [
+        "Json/Text serializers DO apply Sensitive.Strip — channels for external publication should pick those",
+        "Identity.PrivateKey is the only [Sensitive] field today"
+      ],
+      "gaps": [
+        "No build-time gate stops a channel from being registered with plang mime for external transport",
+        "Stage 2 widens the set of channels that route through plang (callback was already standing finding; transport serializer is now the single home)"
+      ]
+    },
+    {
+      "area": "Properties wire shape (Stage 4)",
+      "exposure": "Each property value emitted as `properties.{key}: <primitive|object|array>`. On write, each value is run through STJ which may pick up the WireJsonConverter if the value is itself a Data. On read, ReadPropertyPrimitive parses primitive shapes only — Data shape is not lifted back.",
+      "trust_boundary": "Properties carry metadata; sign-if-missing walks Value-graph Datas only.",
+      "mitigations": [
+        "EnsureSupportedValue rejects Data instances on direct insert",
+        "Outer signature canonicalizes the full wire (including Properties), so tampering invalidates the outer signature"
+      ],
+      "gaps": [
+        "EnsureSupportedValue accepts IDictionary/IEnumerable structurally — a List<Data> would slip through and emit signed Datas on wire that round-trip back as dictionaries (asymmetric)"
+      ]
+    },
+    {
+      "area": "Variable.Resolve / `!` operator (Stage 4)",
+      "exposure": "Parser owns the `%x!cost%` → (Name=\"x\", Property=\"cost\") split. Malformed shapes (`%x!!cost%`, `%x!a!b%`, `%!x!cost%`) are flagged IsMalformed; write-side fails with InvalidVariableReference 400.",
+      "trust_boundary": "Variable references come from .pr (signed by user) and from action handlers.",
+      "mitigations": [
+        "IsMalformed propagates → variable.set returns typed 400 instead of silently writing to Properties[\"\"] or junk-Name binding (closed v1 F5)",
+        "Variable.Resolve never throws — parse errors ride on IsMalformed/Name"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "decompression (Stage 3 flatten)",
+      "exposure": "archived.Value is byte[] of gzipped wire JSON. DecompressAsync calls GZipDecompress then serializer.DeserializeAsync.",
+      "trust_boundary": "Compressed bytes are wire-untrusted; decompression must cap expansion.",
+      "mitigations": [
+        "MaxDecompressedSize = 100 MB enforced inside GZipDecompress",
+        "InvalidDataException / JsonException / InvalidOperationException narrowly caught → DecompressError 500"
+      ],
+      "gaps": [
+        "No cap on compressed input size (caller's responsibility); but decompressed-output cap closes the classic zip-bomb"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "info",
+      "category": "resource-exhaustion",
+      "vector": "Recursive Data deserialization through LiftDataIfShaped resets STJ MaxDepth on every level by round-tripping through `JsonElement.GetRawText()` + `JsonSerializer.Deserialize<@this>(string, options)`. The new Deserialize call creates a fresh Utf8JsonReader with depth counter reset to zero. STJ's MaxDepth=64 caps JSON nesting per ParseValue call, but each LiftDataIfShaped recursion is a NEW parse → the depth budget restarts. C# call stack is the only remaining bound.",
+      "preconditions": "Any path that hands attacker-controlled bytes to plang.Deserialize* — reachable TODAY via the callback wire surface (callback.run deserializes Data from wire before any signature check fires; see standing memory finding). Parsing occurs BEFORE signing.verify runs, so the attacker does not need a verified identity to land the payload. Not contingent on a future external channel.",
+      "impact": "Pre-auth, unrecoverable host process crash. .NET treats StackOverflow as unrecoverable — no catch unwinds, no error path, just process death. DoS against the deserializing actor/process. Cheap (~11 KB), trivially repeatable, no preconditions beyond wire reachability.",
+      "affected_files": [
+        "PLang/app/data/WireJsonConverter.cs"
+      ],
+      "exploit_sketch": "Craft application/plang JSON of the shape `{\"name\":\"a\",\"value\":{\"name\":\"a\",\"value\":{...}}}` nested ~500 times. Each Read sees `value` as StartObject → JsonDocument.ParseValue (one frame, OK within MaxDepth=64) → LiftDataIfShaped detects name+value pair → JsonSerializer.Deserialize<@this>(GetRawText(), options) → new Utf8JsonReader with depth=0 → recursive Read. Roughly 5 stack frames per Data level; default .NET 1 MB stack overflows around 400-600 levels. Payload size ~22 bytes/level × 500 ≈ 11 KB — well under any channel buffer cap. Submit via any inbound application/plang channel (HTTP-receive with Mime=application/plang, callback resume, inter-process pipe, etc.).",
+      "proposed_fix": "Coder landed option (a) — AsyncLocal recursion-depth counter throwing JsonException past 64 levels. Defense-in-depth, harmless. Worth keeping for the future-MaxDepth-override case.",
+      "status": "fixed",
+      "v2_note": "Mutation test (MaxReadDepth=int.MaxValue) showed the 200-level bomb still surfaces PlangDeserializeError — STJ's per-reader MaxDepth=64 is the actual gate, not the new counter. My v1 trace missed that ParseValue inherits the source reader's MaxDepth and can't hand the recursive call a sub-tree deeper than it. So F1 was a false-positive at HIGH; the deserializer was already protected. Coder's fix kept as defense-in-depth."
+    },
+    {
+      "id": 2,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "Stage 2 consolidates application/plang as the single inter-actor transport serializer. The merged class explicitly does NOT chain `Sensitive.Strip` into its outbound options (xmldoc: \"PLang's own settings/sqlite store rides on this serializer to persist Identity\"). Any channel registered with Mime=application/plang transports [Sensitive] field values in cleartext.",
+      "preconditions": "An actor registers a non-local channel (HTTP, socket, file, callback) with `Mime=application/plang`. Today only Identity.PrivateKey carries `[Sensitive]`; future additions inherit the gap. Same systemic shape as the standing `pattern_http_module_security.md` and the runtime2-callback v1 finding (callback wire serializers don't apply SensitivePropertyFilter).",
+      "impact": "PrivateKey (and any future [Sensitive] field) crosses the wire. Caller-of-channel cannot retroactively redact.",
+      "affected_files": [
+        "PLang/app/channels/serializers/serializer/plang/this.cs"
+      ],
+      "exploit_sketch": "Register channel: `channel.add name=remote mime=application/plang ...`. Write any Data whose Value graph reaches an Identity object. Wire bytes contain `\"privateKey\": \"...base64...\"`. Receive side reads it. Out-of-band capture of wire bytes also works.",
+      "proposed_fix": "Two-track. (a) Document the rule at channel-registration time: if Mime=application/plang AND channel is external (not in-process settings/sqlite), wrap outbound through a Sensitive.Strip-augmented options layer. (b) Architectural cleaner: split into `application/plang-persisted` (no Strip, used by settings/sqlite only) vs `application/plang` (with Strip, default for inter-actor transport). Lower priority while only Identity.PrivateKey is in scope, but the architectural fix should land before any other [Sensitive] field ships.",
+      "status": "open"
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "category": "deserialization",
+      "vector": "`Properties.EnsureSupportedValue` is a top-level structural gate: scalars exhaustively checked, but `IDictionary` / `IEnumerable` accepted without recursing into elements. A `List<Data>` or `Dictionary<string, Data>` slips through and is stored as-is. On wire write each contained Data goes through WireJsonConverter (sign-if-missing fires — inner attestations are emitted). On wire read, ReadPropertyPrimitive parses primitive shapes only — never invokes LiftDataIfShaped — so the inner Data round-trips as a Dictionary. The signed inner attestation IS in the bytes but is unreachable post-deserialize.",
+      "preconditions": "A producer (test fixture, action handler, .pr author) calls `data.Properties[key] = someListContainingData`. Accepted as tradeoff in codeanalyzer v1 F9 — the rationale being `List<LlmMessage>` shape today.",
+      "impact": "Asymmetric round-trip: producer expects Data attestations in Properties (they aren't reachable post-deserialize), or attestations the consumer believed unreachable are present in the bytes (signed but invisible). Confused-API risk rather than direct exploit. Outer signature still binds the wire bytes so tampering is detected.",
+      "affected_files": [
+        "PLang/app/data/Properties.cs",
+        "PLang/app/data/WireJsonConverter.cs"
+      ],
+      "exploit_sketch": "Producer: `data.Properties[\"messages\"] = new List<Data> { childData };`. Wire emit signs childData (sign-if-missing). Wire read: properties.messages comes back as `List<object?>` of dictionaries — childData.Signature is in the bytes but unreachable through `data.Properties.Get<Data>(\"messages\")`. Consumer that trusts presence-in-Properties as a security signal would be confused.",
+      "proposed_fix": "Long-term: tighten EnsureSupportedValue to recurse (or fail loudly) on container leaves. Short-term: keep coder's v1 F9 deferral but document the asymmetry in Properties.xmldoc with an explicit \"Data in Properties is opaque post-deserialize\" note. Acceptable to defer if producers are audited at upstream call sites.",
+      "status": "open"
+    },
+    {
+      "id": 4,
+      "severity": "info",
+      "category": "info-disclosure",
+      "vector": "Sign-if-missing in WireJsonConverter.Write silently skips EnsureSigned when `data.Context?.Actor == null`. Same shape as the standing finding about `callback.run` skipping verify when RawSignature==null: a permissive branch on the shared dispatch path. Receive-side signing.verify catches the absence (returns NoSignature 400), so the gate holds today.",
+      "preconditions": "An attacker would need to (a) cause Data with no Actor to reach a wire-egress AND (b) get a consumer to trust the wire bytes without calling signing.verify. (a) requires misconfigured production code (the xmldoc claims production always wires Actor); (b) requires a consumer pattern that skips verification.",
+      "impact": "Defense-in-depth gap. Today consumer-side verify is the gate; the wire converter's permissive skip is a 'paper, not security' defense rather than primary trust. Risk turns Medium if any consumer pattern emerges that gates trust on Signature-presence without calling signing.verify.",
+      "affected_files": [
+        "PLang/app/data/WireJsonConverter.cs"
+      ],
+      "exploit_sketch": "Not directly exploitable today — would require pairing with a verify-skipping consumer. Standing memory: `callback.run` skips verify when RawSignature==null is the matching consumer-side gap; flipping both together would breach the model.",
+      "proposed_fix": "Add a `RequireSignature=true` mode (channel-level or serializer-options-level) where the wire converter throws `InvalidOperationException` rather than silently skipping. Wire it default-on for non-in-process channels. The current skip stays for the documented test/fixture paths.",
+      "status": "open"
+    }
+  ],
+  "summary": "v2 update: F1 retracted from HIGH to Info after mutation testing. Setting MaxReadDepth=int.MaxValue did not change the 200-level depth-bomb outcome — STJ's per-reader MaxDepth=64 was already the gate. My v1 reasoning treated each LiftDataIfShaped → Deserialize<@this>(string) recursion as depth-reset → unbounded; but ParseValue inherits the source reader's MaxDepth and can't hand the recursive call a sub-tree deeper than it. Coder's AsyncLocal counter is kept as defense-in-depth (covers the future case where a caller raises options.MaxDepth). Architecture-of-trust layer remains clean: canonicalization correct, outer signature binds inner Datas, `!` parser fails closed, zip-bomb defense (100 MB) in place. F2/F3/F4 unchanged. Verdict: PASS."
+}

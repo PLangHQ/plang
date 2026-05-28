@@ -20,15 +20,15 @@ public sealed class @this : global::app.channels.channel.@this
         Direction = ChannelDirection.Bidirectional;
     }
 
-    public override System.Threading.Tasks.Task<global::app.data.@this> WriteCore(
+    public override System.Threading.Tasks.Task<global::app.data.@this> Write(
         global::app.data.@this data, System.Threading.CancellationToken ct = default)
         => System.Threading.Tasks.Task.FromResult(global::app.data.@this.Ok());
 
-    public override System.Threading.Tasks.Task<global::app.data.@this> ReadCore(
+    public override System.Threading.Tasks.Task<global::app.data.@this> Read(
         System.Threading.CancellationToken ct = default)
         => System.Threading.Tasks.Task.FromResult(global::app.data.@this.NotFound());
 
-    public override System.Threading.Tasks.Task<global::app.data.@this> AskCore(
+    public override System.Threading.Tasks.Task<global::app.data.@this> Ask(
         global::app.modules.output.ask action, System.Threading.CancellationToken ct = default)
         => System.Threading.Tasks.Task.FromResult(global::app.data.@this.Ok());
 }

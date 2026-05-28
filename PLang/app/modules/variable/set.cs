@@ -46,6 +46,40 @@ public partial class Set : IContext, IBuildValidatable
 
     public Task<data.@this> Run()
     {
+        // Variable.Resolve flagged the slot as syntactically malformed
+        // (`%x!!cost%`, `%x!a!b%`, etc.) — fail with a typed error rather
+        // than silently writing to Properties[""] or replacing the binding
+        // with a junk Name.
+        if (Name.Value!.IsMalformed)
+            return Task.FromResult(global::app.data.@this.FromError(
+                new errors.ServiceError(
+                    $"Variable reference '{Name.Value.RawValue}' is not a valid name — only a single '!' separates a variable from its Property key, and the suffix may not appear after '.' or '['.",
+                    "InvalidVariableReference", 400)));
+
+        // %x!cost% target — mutate the named variable's Properties[key]
+        // instead of replacing the binding. Same action, two stores:
+        // bare-name slots hit Value, !-suffixed slots hit Properties.
+        // Goes through Variable.Resolve's parsing — see Variable.Property.
+        var property = Name.Value.Property;
+        if (!string.IsNullOrEmpty(property))
+        {
+            var target = Context.Variables.Get(Name.Value.Name);
+            if (target == null || !target.IsInitialized)
+                return Task.FromResult(global::app.data.@this.FromError(
+                    new errors.ServiceError($"Variable '{Name.Value.Name}' is not set",
+                        "VariableNotFound", 400)));
+            try
+            {
+                target.Properties[property] = Value.Value;
+            }
+            catch (ArgumentException ex)
+            {
+                return Task.FromResult(global::app.data.@this.FromError(
+                    new errors.ServiceError(ex.Message, "InvalidPropertyValue", 400)));
+            }
+            return Task.FromResult(target);
+        }
+
         if (AsDefault.Value)
         {
             var existing = Context.Variables.Get(Name.Value);
@@ -76,6 +110,11 @@ public partial class Set : IContext, IBuildValidatable
                 converted = c;
             }
             var typedData = ConstructDataOfT(Name.Value, targetType, converted, Context);
+            // Pin the user-named Type onto the Data so downstream `%x!Type%`
+            // / `%x.Type%` consumers see the explicit value rather than the
+            // runtime-inferred name (e.g. user wrote `type=text/plain`; the
+            // CLR runtime type is `string` — we keep the MIME on the wire).
+            typedData.Type = global::app.data.type.FromName(Type.Value);
             CopyProperties(Value, typedData);
             return Task.FromResult(Context.Variables.Set(typedData));
         }
@@ -85,6 +124,13 @@ public partial class Set : IContext, IBuildValidatable
         // if-chain; cold types fall through to reflection.
         var raw = Value.Value;
         data.@this minted = MintTyped(Name.Value, raw, Context);
+        // The source Data may carry an explicit Type that's narrower than the runtime
+        // type of its Value (e.g. `data.Compress()` returns a Data<byte[]> tagged
+        // type=archived; MintTyped would otherwise produce Data<byte[]> with no
+        // type label, losing the transport marker). Preserve the source's Type
+        // when it has one — Properties already get copied below for the same
+        // "carry source metadata across the binding-mint" reason.
+        if (Value.Type != null) minted.Type = Value.Type;
         CopyProperties(Value, minted);
         return Task.FromResult(Context.Variables.Set(minted));
     }
@@ -101,7 +147,7 @@ public partial class Set : IContext, IBuildValidatable
     {
         if (source.Properties.Count == 0 || ReferenceEquals(source, target)) return;
         foreach (var p in source.Properties)
-            target.Properties.Set(p.Name, p.Value, p.Type);
+            target.Properties[p.Key] = p.Value;
     }
 
     /// <summary>

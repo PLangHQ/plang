@@ -45,7 +45,7 @@ public sealed class @this : IAsyncDisposable
     public @this Snapshot();                 // shallow copy — same instances, new dict
 
     // Convenience (most callers prefer the typed surface on Channel.Stream.@this directly):
-    public Task<Data.@this> WriteAsync(string channelName, object? data, string? contentType = null, CancellationToken ct = default);
+    public Task<Data.@this> WriteAsync(string channelName, Data.@this data, string? type = null, CancellationToken ct = default);
     public Task<Data.@this> WriteTextAsync(string channelName, string text, CancellationToken ct = default);
     public Task<Data.@this> ReadChannelAsync<T>(string channelName, CancellationToken ct = default);
     public Task<Data.@this> ReadTextAsync(string channelName, CancellationToken ct = default);
@@ -61,7 +61,7 @@ Reach the registry from an actor: `actor.Channels`. Every channel registered is 
 
 ## The channel: `app.channels.Channel.@this`
 
-Abstract base. Carries config (Buffer, Timeout, Mime, Encoding, Encryption, Signing), wires the public `WriteAsync` / `ReadAsync` / `Ask` to the abstract `WriteCore` / `ReadCore` / `AskCore` that concretes implement, and runs the channel-event lifecycle (Before/After Read/Write, OnAsk).
+Abstract base. Carries config (Buffer, Timeout, Mime, Encoding, Encryption, Signing), wires the public `WriteAsync` / `ReadAsync` / `Ask` to the abstract `Write` / `Read` / `Ask` hooks that concretes implement, and runs the channel-event lifecycle (Before/After Read/Write, OnAsk). The `Core` suffix on the hooks was dropped in `data-serialize-cleanup` — the public orchestrators keep the `Async` suffix; the hooks are bare verbs.
 
 ```csharp
 public abstract class @this : IAsyncDisposable, IDisposable
@@ -82,17 +82,17 @@ public abstract class @this : IAsyncDisposable, IDisposable
     public virtual bool CanRead  { get; }                // IsOpen && Direction != Output
     public virtual bool CanWrite { get; }                // IsOpen && Direction != Input
 
-    public abstract Task<Data.@this> WriteCore(Data.@this data, CancellationToken ct = default);
-    public abstract Task<Data.@this> ReadCore(CancellationToken ct = default);
-    public abstract Task<Data.@this> AskCore(Data.@this prompt, CancellationToken ct = default);
+    public abstract Task<Data.@this> Write(Data.@this data, CancellationToken ct = default);
+    public abstract Task<Data.@this> Read(CancellationToken ct = default);
+    public abstract Task<Data.@this> Ask(modules.output.ask action, CancellationToken ct = default);
 
     public virtual Task<Data.@this> WriteAsync(Data.@this data, CancellationToken ct = default);
     public virtual Task<Data.@this> ReadAsync(CancellationToken ct = default);
-    public virtual Task<Data.@this> Ask(Data.@this prompt, CancellationToken ct = default);
+    public virtual Task<Data.@this> AskAsync(modules.output.ask action, CancellationToken ct = default);
 }
 ```
 
-`WriteAsync` is the public entry — it fires `BeforeWrite` (a throw aborts the write; `AfterWrite` is suppressed), invokes `WriteCore`, then fires `AfterWrite` (always — handler throws are swallowed; original outcome stands). Same shape for `ReadAsync` / `Ask`.
+`WriteAsync` is the public entry — it fires `BeforeWrite` (a throw aborts the write; `AfterWrite` is suppressed), invokes the abstract `Write` hook, then fires `AfterWrite` (always — handler throws are swallowed; original outcome stands). Same shape for `ReadAsync` / `AskAsync`.
 
 ### Subtypes
 
@@ -101,7 +101,7 @@ Channel.@this (abstract)
 ├── Channel.Session.@this (abstract)    kept-open, stateful: Ask blocks until answer
 │   ├── Channel.Stream.@this            wraps System.IO.Stream (stdin/stdout/stderr/file/memory)
 │   └── Channel.Goal.@this              writes invoke a goal; %!data% available inside
-└── Channel.Message.@this (abstract)    one-shot: AskCore returns Suspend, callback resumes
+└── Channel.Message.@this (abstract)    one-shot: Ask returns Suspend, callback resumes
                                         (Web channel will extend Message when shipped)
 ```
 
@@ -128,11 +128,11 @@ public sealed class @this : Session.@this
 }
 ```
 
-`AskCore` writes the prompt then `await reader.ReadLineAsync()` with `ResolveEncoding()` and `leaveOpen: true`, gated by per-channel `Timeout`. Works on bidirectional streams (memory, HTTP session). Does **not** work across the split console pair — see below.
+`Ask` writes the prompt then `await reader.ReadLineAsync()` with `ResolveEncoding()` and `leaveOpen: true`, gated by per-channel `Timeout`. Works on bidirectional streams (memory, HTTP session). Does **not** work across the split console pair — see below.
 
 #### `Channel.Goal.@this`
 
-Writes invoke a PLang goal. The Data envelope lands in the goal as `%!data%`. The channel captures the registering actor; for the duration of each goal call it pushes an AsyncLocal channel-resolution overlay onto the actor — the actor's `FoundationalChannels` (the snapshot taken at boot, before any user-registered overlays). So a goal-channel body like
+Writes invoke a PLang goal. The Data lands in the goal as `%!data%`. The channel captures the registering actor; for the duration of each goal call it pushes an AsyncLocal channel-resolution overlay onto the actor — the actor's `FoundationalChannels` (the snapshot taken at boot, before any user-registered overlays). So a goal-channel body like
 
 ```plang
 Logger
@@ -206,7 +206,7 @@ Every PLang `write` step resolves through the channels registry. `write out` res
 
 ## Interactive prompts
 
-The default console pair is direction-split (`output` write-only, `input` read-only). `Channel.Stream.AskCore` writes-then-reads on a single bidirectional stream — works for memory and HTTP-session channels, **not** across the console pair. Two-call pattern from C#:
+The default console pair is direction-split (`output` write-only, `input` read-only). `Channel.Stream.Ask` writes-then-reads on a single bidirectional stream — works for memory and HTTP-session channels, **not** across the console pair. Two-call pattern from C#:
 
 ```csharp
 var output = User.Channels.Get(global::app.channels.@this.Output) as Channel.Stream.@this;

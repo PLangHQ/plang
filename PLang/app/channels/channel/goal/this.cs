@@ -4,7 +4,7 @@ namespace app.channels.channel.goal;
 
 /// <summary>
 /// Concrete goal-backed channel. WriteAsync invokes the wrapped goal with the Data
-/// envelope as input (available as <c>%!data%</c> inside the goal). Returns the
+/// Data as input (available as <c>%!data%</c> inside the goal). Returns the
 /// goal's result Data.
 ///
 /// Recursion rule: the channel captures a reference to the registering actor, and
@@ -28,17 +28,17 @@ public class @this : global::app.channels.channel.session.@this
         Direction = direction;
     }
 
-    public override async Task<global::app.data.@this> WriteCore(global::app.data.@this data, CancellationToken ct = default)
+    public override async Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
     {
         return await InvokeGoal(data, ct);
     }
 
-    public override async Task<global::app.data.@this> ReadCore(CancellationToken ct = default)
+    public override async Task<global::app.data.@this> Read(CancellationToken ct = default)
     {
         return await InvokeGoal(global::app.data.@this.Ok((object?)null), ct);
     }
 
-    public override async Task<global::app.data.@this> AskCore(modules.output.ask action, CancellationToken ct = default)
+    public override async Task<global::app.data.@this> Ask(modules.output.ask action, CancellationToken ct = default)
     {
         var prompt = global::app.data.@this.Ok(action.Question?.Value);
         return await InvokeGoal(prompt, ct);

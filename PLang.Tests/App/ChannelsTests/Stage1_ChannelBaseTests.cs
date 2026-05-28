@@ -46,9 +46,9 @@ public class Stage1_ChannelBaseTests
     {
         var baseType = typeof(Channel);
         await Assert.That(baseType.IsAbstract).IsTrue();
-        var write = baseType.GetMethod("WriteCore");
-        var read = baseType.GetMethod("ReadCore");
-        var ask = baseType.GetMethod("AskCore");
+        var write = baseType.GetMethod("Write");
+        var read = baseType.GetMethod("Read");
+        var ask = baseType.GetMethod("Ask");
         await Assert.That(write).IsNotNull();
         await Assert.That(read).IsNotNull();
         await Assert.That(ask).IsNotNull();
@@ -92,7 +92,7 @@ public class Stage1_ChannelBaseTests
         var jsonCh = new StreamChannel("json", captureA, ChannelDirection.Output, ownsStream: false)
         { Mime = "application/json" };
         app.User.Channels.Register(jsonCh);
-        await jsonCh.WriteCore(Data.Ok(new { name = "x" }));
+        await jsonCh.Write(Data.Ok(new { name = "x" }));
         await jsonCh.DisposeAsync();
         var jsonText = global::System.Text.Encoding.UTF8.GetString(captureA.ToArray());
         await Assert.That(jsonText).Contains("\"name\"");
@@ -101,7 +101,7 @@ public class Stage1_ChannelBaseTests
         var textCh = new StreamChannel("txt", captureB, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" };
         app.User.Channels.Register(textCh);
-        await textCh.WriteCore(Data.Ok("plain hello"));
+        await textCh.Write(Data.Ok("plain hello"));
         await textCh.DisposeAsync();
         var raw = global::System.Text.Encoding.UTF8.GetString(captureB.ToArray());
         await Assert.That(raw.Contains("plain hello")).IsTrue();
