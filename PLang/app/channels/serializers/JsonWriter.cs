@@ -85,6 +85,25 @@ public sealed class JsonWriter : IWriter
         _writer.WriteEndObject();
     }
 
+    /// <summary>
+    /// True when every element of <paramref name="list"/> is a <see cref="app.data.@this"/>
+    /// with a non-empty <c>Name</c> — i.e. the list represents a domain object's
+    /// property bag (Normalize's output for a non-list non-primitive). Returns
+    /// the list itself (cast as IEnumerable of Data) via <paramref name="dataList"/>.
+    /// </summary>
+    private static bool IsNamedDataBag(System.Collections.IEnumerable list, out System.Collections.IEnumerable? dataList)
+    {
+        dataList = list;
+        bool any = false;
+        foreach (var item in list)
+        {
+            any = true;
+            if (item is not app.data.@this d) return false;
+            if (string.IsNullOrEmpty(d.Name)) return false;
+        }
+        return any;
+    }
+
     void IWriter.EndRecord() => throw new System.InvalidOperationException(
         "JsonWriter.EndRecord requires the Data record reference — call EndRecord(Data) instead.");
 
@@ -114,6 +133,21 @@ public sealed class JsonWriter : IWriter
                 EndRecord(nested);
                 return;
             case System.Collections.IEnumerable list:
+                if (IsNamedDataBag(list, out var nameKey))
+                {
+                    // Named List<Data> → JSON object. The property-bag form
+                    // produced by Normalize on a domain object reads naturally
+                    // as { name1: value1, name2: value2 } rather than an array
+                    // of records.
+                    _writer.WriteStartObject();
+                    foreach (app.data.@this child in (System.Collections.IEnumerable)nameKey!)
+                    {
+                        _writer.WritePropertyName(child.Name);
+                        Value(child.Value);
+                    }
+                    _writer.WriteEndObject();
+                    return;
+                }
                 BeginArray(-1);
                 foreach (var item in list) Value(item);
                 EndArray();

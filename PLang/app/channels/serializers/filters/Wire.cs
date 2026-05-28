@@ -48,6 +48,15 @@ public static class Wire
             if (!prop.CanRead) continue;
             if (prop.IsDefined(typeof(SensitiveAttribute), inherit: true)) continue;
 
+            // [JsonIgnore] in Debug mode still excludes — those tags exist for
+            // cycle-protection on runtime-graph properties (path.GoalCall,
+            // path.Context, GoalCall.Event, etc.). [Out] explicitly opted in
+            // overrides JsonIgnore (e.g. Data.Properties).
+            if (mode == global::app.View.Debug
+                && prop.IsDefined(typeof(System.Text.Json.Serialization.JsonIgnoreAttribute), inherit: true)
+                && !prop.IsDefined(typeof(OutAttribute), inherit: true))
+                continue;
+
             bool include = mode == global::app.View.Debug
                 || prop.IsDefined(typeof(OutAttribute), inherit: true);
 
