@@ -5,12 +5,11 @@
       "id": "f78f1da6-1888-4d5b-82f6-8205a5ff0636",
       "bot": "test-designer",
       "timestamp_start": "2026-05-27T21:09:50Z",
-      "timestamp_end": null,
       "timestamp_end": "2026-05-27T21:20:43Z",
       "intent": "Translate architect's coverage matrix into failing-test contract: C# TUnit stubs, PLang .goal stubs, and 4 integration cuts.",
       "before": {
-        "assumptions": "Architect handed off a complete coverage matrix (~60 rows) + failure matrix (~19 rows) + new-surfaces inventory across 5 stages. Test-strategy fixes 4 integration cuts. Test-designer owns the final test surface — matrix is suggestion, not gospel (Ingi reconfirmed up front).",
-        "risk": "Stage 1 + Stage 2 are tightly coupled. If coder splits them into separate PRs, the Stage 1 tests will reference renamed surfaces (Type/Extension) that don't compile until Stage 2 is also merged. Mitigation: stubs are Assert.Fail anyway — they only need the architecture to settle, not the build to be green at every intermediate commit."
+        "assumptions": "Architect handed off a complete coverage matrix (~60 rows) + failure matrix (~19 rows) + new-surfaces inventory across 5 stages. Test-strategy fixes 4 integration cuts. Test-designer owns the final test surface \u2014 matrix is suggestion, not gospel (Ingi reconfirmed up front).",
+        "risk": "Stage 1 + Stage 2 are tightly coupled. If coder splits them into separate PRs, the Stage 1 tests will reference renamed surfaces (Type/Extension) that don't compile until Stage 2 is also merged. Mitigation: stubs are Assert.Fail anyway \u2014 they only need the architecture to settle, not the build to be green at every intermediate commit."
       },
       "plan": ".bot/data-serialize-cleanup/test-designer/v1/plan.md",
       "actions": [
@@ -23,7 +22,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Stage 1 — ISerializer input tightened to Data, OBP renames on serializer/channel families. Reflection-based assertions for the 'old name gone' rows (1.2, ContentType property removed, GetByContentType method removed, etc.) — they can't be TUnit bodies, the compile-time guard is the real assertion."
+          "context": "Stage 1 \u2014 ISerializer input tightened to Data, OBP renames on serializer/channel families. Reflection-based assertions for the 'old name gone' rows (1.2, ContentType property removed, GetByContentType method removed, etc.) \u2014 they can't be TUnit bodies, the compile-time guard is the real assertion."
         },
         {
           "paths": [
@@ -35,7 +34,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Stage 2 — merged application/plang serializer, sign-if-missing in wire converter, canonicalization fix (crypto.Hash via Transport.ForOutbound), Json composition extensions. Added Json.ForInbound symmetry test (new-surfaces inventory mentions it but no matrix row pins it) and a byte[]-leaf wire-converter test (Stage 3's flat Compress relies on it)."
+          "context": "Stage 2 \u2014 merged application/plang serializer, sign-if-missing in wire converter, canonicalization fix (crypto.Hash via Transport.ForOutbound), Json composition extensions. Added Json.ForInbound symmetry test (new-surfaces inventory mentions it but no matrix row pins it) and a byte[]-leaf wire-converter test (Stage 3's flat Compress relies on it)."
         },
         {
           "paths": [
@@ -45,7 +44,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Stage 3 — flat Compress. Nine C# tests pin the shape change and the deletion of _envelopeJsonOptions + RehydrateNestedData; the .goal pins the PLang developer-facing round-trip."
+          "context": "Stage 3 \u2014 flat Compress. Nine C# tests pin the shape change and the deletion of _envelopeJsonOptions + RehydrateNestedData; the .goal pins the PLang developer-facing round-trip."
         },
         {
           "paths": [
@@ -60,7 +59,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Stage 4 — Properties get a wire scope. ~20 C# tests pin the nested wire object, primitive round-trips (incl. JSON int→long promotion), unconstrained keys, the unknown-top-level-field-is-ignored rule, and canonicalization binding Properties. Five .goal tests pin the developer-facing %x!key% navigation including bang vs negation-prefix disambiguation."
+          "context": "Stage 4 \u2014 Properties get a wire scope. ~20 C# tests pin the nested wire object, primitive round-trips (incl. JSON int\u2192long promotion), unconstrained keys, the unknown-top-level-field-is-ignored rule, and canonicalization binding Properties. Five .goal tests pin the developer-facing %x!key% navigation including bang vs negation-prefix disambiguation."
         },
         {
           "paths": [
@@ -71,7 +70,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Integration cuts 1–3. Architect's strategy doc fixed these as the end-to-end contract; I translated each into ~4 TUnit methods covering wire-shape assertions, value/signature preservation, and the tamper-fails-verify guarantee per cut."
+          "context": "Integration cuts 1\u20133. Architect's strategy doc fixed these as the end-to-end contract; I translated each into ~4 TUnit methods covering wire-shape assertions, value/signature preservation, and the tamper-fails-verify guarantee per cut."
         },
         {
           "paths": [
@@ -97,9 +96,9 @@
         }
       ],
       "after": {
-        "status": "Contract written. 11 C# files + 4 integration-cut classes + 7 .goal files. ~90 test methods + 7 goal stubs, all failing (Assert.Fail / throw not implemented). `dotnet build PLang.Tests` clean — 0 errors.",
-        "health": "Ready for coder. Coder should work in stage order (1→2→3→4→5); stages 1 and 2 likely merge as one PR per architect's note.",
-        "notes": "Pruned non-unit-test rows from matrix (5.2 git grep, 5.4 var renames, 5.5/5.6 build-clean tautologies). Added two tests not in matrix: WireConverter byte[]-leaf emission (Stage 3 dependency) and Json.ForInbound symmetry (new-surfaces inventory orphan). Regrouped files by topic (PropertiesWireShapeTests, WireConverterSigningTests) rather than by stage number — easier to maintain when stages converge in PRs."
+        "status": "Contract written. 11 C# files + 4 integration-cut classes + 7 .goal files. ~90 test methods + 7 goal stubs, all failing (Assert.Fail / throw not implemented). `dotnet build PLang.Tests` clean \u2014 0 errors.",
+        "health": "Ready for coder. Coder should work in stage order (1\u21922\u21923\u21924\u21925); stages 1 and 2 likely merge as one PR per architect's note.",
+        "notes": "Pruned non-unit-test rows from matrix (5.2 git grep, 5.4 var renames, 5.5/5.6 build-clean tautologies). Added two tests not in matrix: WireConverter byte[]-leaf emission (Stage 3 dependency) and Json.ForInbound symmetry (new-surfaces inventory orphan). Regrouped files by topic (PropertiesWireShapeTests, WireConverterSigningTests) rather than by stage number \u2014 easier to maintain when stages converge in PRs."
       }
     },
     {
@@ -391,6 +390,46 @@
         "health": "green",
         "notes": "Next: run.ps1 test-designer data-serialize-cleanup \"Create test suites from the architect plan on branch data-serialize-cleanup\" -b data-serialize-cleanup"
       }
+    },
+    {
+      "id": "ac1455f3-d8e3-4db9-a60d-0517d428d926",
+      "bot": "tester",
+      "timestamp_start": "2026-05-28T00:53:56Z",
+      "intent": "Validate test quality on data-serialize-cleanup after codeanalyzer v2 PASS",
+      "before": {
+        "assumptions": "test-designer v1 wrote ~90 failing stubs; coder closed Stage 1-5 + F1-F11; codeanalyzer v2 PASS",
+        "risk": "no coder/ folder or baseline-tests.md exists \u2014 process violation; cannot distinguish regressions from pre-existing failures without baseline"
+      },
+      "actions": [
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/test-report.json",
+            ".bot/data-serialize-cleanup/tester/v2/plan.md",
+            ".bot/data-serialize-cleanup/tester/v2/verdict.json",
+            ".bot/data-serialize-cleanup/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Tester v2 outputs: report, plan, verdict, summary. Two minor weak-assertion findings; process note (no coder/ folder); verdict PASS."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/crypto/code/Default.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mutation test: replaced serializer.OutboundOptions with JsonSerializerOptions.Default at line 51 to verify Stage 2 canonicalization coverage. 3 tests correctly failed (CryptoHash_UsesTransportForOutboundOptions_NotDefaultStj, Cut4_TamperingPropertyValue_FailsOuterSignatureVerify, OuterSignature_AfterPropertiesValueTamper_FailsVerify). Mutation reverted; git status clean."
+        }
+      ],
+      "plan": ".bot/data-serialize-cleanup/tester/v2/plan.md",
+      "after": {
+        "status": "pass",
+        "health": "C# 3229/3229 + PLang 228/228 green on clean rebuild; Stage 2 canonicalization fix mutation-verified; 2 minor weak-assertion findings (cosmetic).",
+        "notes": "Process: no .bot/data-serialize-cleanup/coder/ folder exists \u2014 flagged as process violation, not a blocker. Coder did substantive work across Stages 1-5 + F1-F11 but skipped writing tester-handoff artifacts."
+      },
+      "timestamp_end": "2026-05-28T01:08:44Z"
     }
   ]
 }
