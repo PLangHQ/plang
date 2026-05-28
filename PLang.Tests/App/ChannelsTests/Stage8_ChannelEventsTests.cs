@@ -178,7 +178,7 @@ public class Stage8_ChannelEventsTests
             receivedData = payload;
             return Task.FromResult(Data.Ok());
         }));
-        var result = await ch.Ask(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "") });
+        var result = await ch.AskAsync(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "") });
         await Assert.That(result.Value as string).IsEqualTo("answer");
         await Assert.That(receivedData).IsNotNull();
         await Assert.That(receivedData!.Value as string).IsEqualTo("answer");
@@ -198,7 +198,7 @@ public class Stage8_ChannelEventsTests
             fired = true;
             return Task.FromResult(Data.Ok());
         }));
-        await ch.Ask(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "q?") });
+        await ch.AskAsync(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "q?") });
         await Assert.That(fired).IsTrue();
     }
 
@@ -276,17 +276,17 @@ public class Stage8_ChannelEventsTests
     private sealed class ThrowOnWriteChannel : Channel
     {
         public ThrowOnWriteChannel(string name) { Name = name; }
-        public override Task<Data> WriteCore(Data data, CancellationToken ct = default)
+        public override Task<Data> Write(Data data, CancellationToken ct = default)
             => throw new IOException("boom");
-        public override Task<Data> ReadCore(CancellationToken ct = default) => Task.FromResult(Data.Ok());
-        public override Task<Data> AskCore(global::app.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        public override Task<Data> Read(CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        public override Task<Data> Ask(global::app.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok());
     }
 
     private sealed class MessageProbeChannel : global::app.channels.channel.message.@this
     {
         public MessageProbeChannel(string name) { Name = name; }
-        public override Task<Data> WriteCore(Data data, CancellationToken ct = default) => Task.FromResult(Data.Ok());
-        public override Task<Data> ReadCore(CancellationToken ct = default) => Task.FromResult(Data.Ok());
-        public override Task<Data> AskCore(global::app.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok("answer-from-resume"));
+        public override Task<Data> Write(Data data, CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        public override Task<Data> Read(CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        public override Task<Data> Ask(global::app.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok("answer-from-resume"));
     }
 }

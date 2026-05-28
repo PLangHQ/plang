@@ -160,17 +160,17 @@ public sealed class @this : IAsyncDisposable
     }
 
     /// <summary>
-    /// Convenience write — resolves the channel by name, wraps the data in an
-    /// envelope if needed, and delegates to the channel's own WriteAsync (which
-    /// fires events and routes through WriteCore + the per-actor Serializers).
+    /// Convenience write — resolves the channel by name, wraps the data in
+    /// a Data if needed, and delegates to the channel's own WriteAsync (which
+    /// fires events and routes through Write + the per-actor Serializers).
     /// </summary>
     public async Task<data.@this> WriteAsync(string channelName, object? data, CancellationToken cancellationToken = default)
     {
         var (channel, error) = GetChannel(channelName, requireWrite: true);
         if (error != null) return error;
 
-        var envelope = data is global::app.data.@this d ? d : global::app.data.@this.Ok(data);
-        return await channel!.WriteAsync(envelope, cancellationToken);
+        var wrapped = data is global::app.data.@this d ? d : global::app.data.@this.Ok(data);
+        return await channel!.WriteAsync(wrapped, cancellationToken);
     }
 
     /// <summary>Reads typed data from a channel.</summary>
@@ -187,7 +187,7 @@ public sealed class @this : IAsyncDisposable
             return await Serializers.DeserializeAsync<T>(new DeserializeOptions
             {
                 Stream = sc.Stream,
-                ContentType = sc.Mime,
+                Type = sc.Mime,
                 CancellationToken = cancellationToken
             });
         }

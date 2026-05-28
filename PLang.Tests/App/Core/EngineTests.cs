@@ -205,7 +205,7 @@ public class EngineTests
         await using var engine = new global::app.@this("/app");
 
         await Assert.That(engine.User.Channels.Serializers).IsNotNull();
-        await Assert.That(engine.User.Channels.Serializers.GetByContentType("application/json")).IsNotNull();
+        await Assert.That(engine.User.Channels.Serializers.GetByType("application/json")).IsNotNull();
     }
 
     [Test]

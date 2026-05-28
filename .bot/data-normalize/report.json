@@ -1,0 +1,476 @@
+{
+  "branch": "data-normalize",
+  "sessions": [
+    {
+      "id": "5f32e9be-a133-42dd-bcb1-7fedf439bd35",
+      "bot": "architect",
+      "timestamp_start": "2026-05-26T17:34:46Z",
+      "timestamp_end": "2026-05-26T17:38:00Z",
+      "intent": "Placeholder branch: capture the structural-normalization design (option 3) discovered while working on data-serialize-cleanup, so the design conversation isn't lost. Stages to be carved when work begins.",
+      "before": {
+        "assumptions": "data-serialize-cleanup will merge first. ISerializer takes Data, the two plang serializers have merged, signing is at the channel, Compress is flat. JSON-via-STJ-reflection is the only encoding path today.",
+        "risk": "Design captured pre-implementation; details on lazy-vs-eager normalize, cycle detection, custom serialization extension, and the IWriter protocol shape need real coding sessions to settle. Not all questions answered."
+      },
+      "plan": ".bot/data-normalize/architect/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/data-normalize/architect/plan.md",
+            ".bot/data-normalize/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "medium",
+          "context": "Initial plan and summary. Plan captures the structural normalization design: Value contract tightening, Normalize sketch, bare-when-possible wire shape, format-agnostic encoder protocol, As<T> as tree-walker, rough five-stage outline. Stages not yet carved into individual files \u2014 that happens when work starts."
+        }
+      ],
+      "after": {
+        "status": "Branch created as placeholder. Plan captures the design direction. Stages pending real work session.",
+        "health": "Depends on data-serialize-cleanup landing first. No immediate action \u2014 branch sits until cleanup merges.",
+        "notes": "Open design questions: eager vs lazy normalize (recommendation: lazy first); cycle detection mechanism; custom serialization extension surface (IDataNormalizable?); wire-attribute reuse of [Out] vs new [WireIgnore]; choice of protobuf library for proof stage."
+      }
+    },
+    {
+      "id": "85767e5e-ff14-496d-be0e-37e92e1118d8",
+      "bot": "test-designer",
+      "timestamp_start": "2026-05-28T10:18:08.770700Z",
+      "intent": "Write failing-test contract for data-normalize: [Out] discipline, Normalize+IWriter+JsonWriter, As<T> tree-walker.",
+      "before": {
+        "assumptions": "Architect plan settled in 3 stages with comprehensive coverage matrix; building on data-serialize-cleanup which has merged. WireJsonConverter is the single wire writer; [Out] becomes positive whitelist in Stage 2; [Masked] attribute is new; RawSignature deletion is mechanical.",
+        "risk": "Coverage matrix has ~50 rows across three stages plus three integration cuts; risk is over-stubbing tests for behaviors that better fit existing test files. Will prune redundancies and group by concept (Stage 1 attribute placement, Normalize tree shapes, IWriter contract, As<T> reconstruction, integration cuts, failure matrix) rather than echoing architect rows 1:1."
+      },
+      "actions": [
+        {
+          "paths": [
+            ".bot/data-normalize/test-designer/v1/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plan covers 5 batches grouped by concept (not by stage): Stage 1 attributes, Normalize core, IWriter+JsonWriter+Debug, As<T>, integration+failure+goals."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Serialization/OutAttributeInventoryTests.cs",
+            "PLang.Tests/App/Serialization/RawSignatureDeletionTests.cs",
+            "PLang.Tests/App/Serialization/MaskedAttributeTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Batch 1 \u2014 Stage 1 surface. Per-type [Out] inventory (13 types), RawSignature deletion verified via reflection over Data + string-scan over 3 caller files, new [Masked] attribute existence + setting.value tagging."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/DataTests/NormalizeTreeShapeTests.cs",
+            "PLang.Tests/App/DataTests/NormalizeFilterTests.cs",
+            "PLang.Tests/App/DataTests/NormalizeCycleAndDepthTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Batch 2 \u2014 Normalize core. Tree shape per input (primitives, lists homogeneous/heterogeneous, dicts, domain objects, idempotence, cache). Filter behavior ([Out]/[Sensitive]/[Masked], lowercased names). Cycle + depth + getter-throws."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Serialization/IWriterContractTests.cs",
+            "PLang.Tests/App/Serialization/JsonWriterDomainShapeTests.cs",
+            "PLang.Tests/App/Serialization/DebugModeBypassTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Batch 3 \u2014 wire emission. IWriter interface surface + JsonWriter per-method bytes. Domain-shape output (path, Identity, setting, list, http.Response). Debug vs Out filter toggle."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/DataTests/AsTreeWalkerTests.cs",
+            "PLang.Tests/App/DataTests/AsReconstructionHookTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Batch 4 \u2014 As<T> reverse direction. Generic property-bag reconstruction (primitives, lists, dicts, records). Per-type hook dispatch for path.Resolve. Negative paths (scheme mismatch, missing required, type mismatch)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Serialization/IntegrationCuts/Cut1_JsonRoundTripTests.cs",
+            "PLang.Tests/App/Serialization/IntegrationCuts/Cut2_DebugModeTests.cs",
+            "PLang.Tests/App/Serialization/IntegrationCuts/Cut3_SignWireVerifyTests.cs",
+            "PLang.Tests/App/Serialization/FailureMatrixNormalizeTests.cs",
+            "Tests/Serialization/PathRoundTripAfterNormalize.test.goal",
+            "Tests/Serialization/SensitivePropertyDoesNotLeak.test.goal",
+            "Tests/Serialization/MaskedSettingOnWire.test.goal",
+            "Tests/Serialization/DebugModePayloadIncludesNonOut.test.goal",
+            "Tests/Signing/RoundTripAfterRawSignatureDeletion.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Batch 5 \u2014 three integration cuts (JSON round-trip parity, debug-mode bypass, sign\u2192wire\u2192verify), the failure-matrix residue file, and 5 PLang goal files for developer-visible surfaces."
+        },
+        {
+          "paths": [
+            ".bot/data-normalize/test-designer/summary.md",
+            ".bot/data-normalize/test-designer/v1/verdict.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session finalization. verdict.json = pass:true."
+        }
+      ],
+      "plan": ".bot/data-normalize/test-designer/v1/plan.md",
+      "timestamp_end": "2026-05-28T10:28:59.987637Z",
+      "after": {
+        "status": "v1 failing-test contract written. 15 C# files + 5 .goal files. ~120 stubs total. Every body is Assert.Fail / throw \"not implemented\".",
+        "health": "Ready for coder. Tests describe the contract; coder turns stubs into real assertions as Stages 1-3 land.",
+        "notes": "Grouped by concept rather than stage; pruned redundant matrix rows; one goal per .goal file per memory rule."
+      }
+    },
+    {
+      "id": "codeanalyzer-v1-2026-05-28",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-28T15:30:00Z",
+      "timestamp_end": "2026-05-28T15:55:00Z",
+      "intent": "Code-review pass over data-normalize: Normalize, Reconstruct, Tagged filter, IWriter/JsonWriter, Wire converter changes, Stage 1 [Out]/[Masked]/[Store] migration. Cross-cutting scans: System.IO, Console, OBP, bare-catch.",
+      "before": {
+        "assumptions": "Stage 2b wiring deferred. C# 3379/3379 + PLang 233/233 + zero PLNG002 on clean rebuild. Reviewing latent defects ahead of wire-switchover.",
+        "risk": "Stage 2b wiring will land soon; majors M1/M2 widen the wire-leak surface as soon as the value-slot pipeline switches to Normalize+JsonWriter."
+      },
+      "actions": [
+        {
+          "paths": [
+            ".bot/data-normalize/codeanalyzer/v1.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "3 majors + 8 polish. M1: json.Writer.Value default branch falls back to STJ \u2014 bypasses [Out]/[Sensitive]/[Masked] at the last gate. M2: Wire.Write emits Properties via STJ \u2014 asymmetric with the Read side that restricts to primitives. M3: EnsureInnerSigned skips IDictionary values \u2014 inner Datas held in dict values ship unsigned. P-series: Reconstruct bare-catch conflates ctor-missing with ctor-threw; Tagged inherit:true is dead-cargo; IWriter has no Enum/Float/DateTimeOffset/TimeSpan/Guid slots though Normalize keeps them as leaves; [Out,Store] on Data envelope props is dead-code; Reconstruct re-Normalize on every call; Dict<K,V> silent drop; tree-leaf list inconsistency; path 'scheme' wire field unused on inbound."
+        }
+      ],
+      "verdict": "fail",
+      "next_bot": "coder",
+      "after": {
+        "status": "FAIL \u2014 3 majors must be fixed before Stage 2b wiring. Report at .bot/data-normalize/codeanalyzer/v1.md.",
+        "health": "Branch builds + tests green. Findings are latent \u2014 none failing today because Stage 2b wiring hasn't switched on the value-slot pipeline. Must address M1-M3 before that switch.",
+        "notes": "Verified clean rebuild (zero PLNG002), 3379/3379 C# tests, 233/233 PLang tests. Next: coder addresses M1-M3, then codeanalyzer v2."
+      }
+    },
+    {
+      "id": "codeanalyzer-v2-2026-05-28",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-28T16:10:00Z",
+      "timestamp_end": "2026-05-28T16:30:00Z",
+      "intent": "Verify coder v2's fixes against codeanalyzer v1 findings. Confirm M1-M3 closed correctly, P1-P8 absorbed, no regressions.",
+      "before": {
+        "assumptions": "Coder v2 commit f1f83d4b9 claims all 11 v1 findings addressed. Tests claimed C# 3380/3380 + PLang 233/233.",
+        "risk": "Verifying that the fixes are correct rather than just present."
+      },
+      "actions": [
+        {
+          "paths": [
+            ".bot/data-normalize/codeanalyzer/v2.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "PASS. M1 (typed throw at gate), M2 (Normalize+Value pipeline for Properties), M3 (dict branch + fixture) all closed. P1-P8 all addressed correctly. One residual polish (V1): json.Writer.EndRecord hard-codes View.Out when normalizing inner-Data Properties \u2014 asymmetric with Wire.Write's View propagation. Theoretical harm only today since Properties holds primitives, polish-only."
+        }
+      ],
+      "verdict": "fail",
+      "next_bot": "coder",
+      "after": {
+        "status": "FAIL \u2014 M2's fix is half-landed. Outer Wire.Write correctly propagates View into the Properties pipeline, but json.Writer.EndRecord hard-codes View.Out for inner-Data Properties. Same M2 shape at the second emission site. Report at .bot/data-normalize/codeanalyzer/v2.md.",
+        "health": "Clean rebuild (zero PLNG002), C# 3380/3380, PLang 233/233. Tests didn't catch V1 because no fixture exercises Store-mode + inner-Data-with-Properties.",
+        "notes": "Next: coder fixes V1 (plumb View into json.Writer ctor from Wire.Write site) + adds Store + inner-Data + Properties fixture."
+      }
+    },
+    {
+      "id": "codeanalyzer-v3-2026-05-28",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-28T16:50:00Z",
+      "timestamp_end": "2026-05-28T17:00:00Z",
+      "intent": "Verify coder v3's fix for V1 (json.Writer.EndRecord hard-coded View.Out, M2 second site).",
+      "before": {
+        "assumptions": "Coder v3 commit 5630ab0ad claims V1 closed by threading View into json.Writer ctor, plus a fixture covering the Store-mode + inner-Data-with-Properties path."
+      },
+      "actions": [
+        {
+          "paths": [
+            ".bot/data-normalize/codeanalyzer/v3.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "PASS. View threaded through json.Writer's ctor (default Out), Wire.Write passes its View at construction. New fixture (StoreView_PropagatesIntoInnerDataProperties_NotHardcodedToOut) pins both Out-excludes and Store-includes [Sensitive] PrivateKey reachable through inner Data's Properties \u2014 covers exactly the path v2 said was uncovered."
+        }
+      ],
+      "verdict": "pass",
+      "next_bot": "tester",
+      "after": {
+        "status": "PASS \u2014 V1 closed correctly with fixture. All v1 + v2 findings now closed. Report at .bot/data-normalize/codeanalyzer/v3.md.",
+        "health": "Clean rebuild (zero PLNG002), C# 3381/3381 (+1 V1 fixture), PLang 233/233.",
+        "notes": "Next: tester."
+      }
+    },
+    {
+      "id": "a3a7fcfc-4e5e-4657-ae85-94433d6a3596",
+      "bot": "tester",
+      "timestamp_start": "2026-05-28T16:23:19Z",
+      "intent": "Quality-validate test coverage for data-normalize v3: V1 fixture (View threading into json.Writer.EndRecord) and the broader Normalize/Reconstruct/Wire surface.",
+      "before": {
+        "assumptions": "codeanalyzer v3 PASSED; coder v3 closed V1 with a new fixture (StoreView_PropagatesIntoInnerDataProperties_NotHardcodedToOut); C# 3381/3381, PLang 233/233 per coder. No prior tester output exists on this branch.",
+        "risk": "No baseline-tests.md from coder \u2014 process violation to flag. V1 fixture is a single-shot mutation test; need to verify it actually fails on mutation and that adjacent paths (collection-inside-Properties shallow gate; symmetric Store/Out asymmetry across non-json writers) are not silently uncovered."
+      },
+      "actions": [
+        {
+          "paths": [
+            ".bot/data-normalize/tester/v3/plan.md",
+            ".bot/data-normalize/tester/v3/coverage.json",
+            ".bot/data-normalize/tester/v3/verdict.json",
+            ".bot/data-normalize/tester/summary.md",
+            ".bot/data-normalize/test-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "tester v3 outputs. Verdict FAIL: 1 PLang test red (BuilderSanity smoke \u2014 math.add on string '[1,2,3]'), coder v3 claimed 233/233 but actual is 232/233; V1 fixture honest and mutation-verified."
+        },
+        {
+          "paths": [
+            "PLang/app/channels/serializers/json/writer.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mutation test: temporarily replaced _view with View.Out in EndRecord NormalizeValue call. New fixture StoreView_PropagatesIntoInnerDataProperties_NotHardcodedToOut failed as expected (PRIV-must-persist missing from store bytes). Reverted; git status clean for source."
+        }
+      ],
+      "plan": ".bot/data-normalize/tester/v3/plan.md",
+      "timestamp_end": "2026-05-28T16:35:30Z",
+      "after": {
+        "status": "needs-fixes",
+        "health": "C# green (3381/3381). PLang red (232/233) \u2014 /BuilderSanity/BuilderSanity.test.goal fails because the fixture's `set %items% = '[1, 2, 3]'` + `foreach %items%` relies on string\u2192list auto-parse but strings are atomic under current IsPlangIterable. V1 fixture is mutation-verified honest.",
+        "notes": "Coder v1/v2/v3 all missing baseline-tests.md \u2014 process violation flagged. 2 minor coverage notes on Wire outer-Properties path and json.Writer default-arg, both optional."
+      }
+    },
+    {
+      "id": "98c16404-f2ef-4e22-acfc-3b647d4b3566",
+      "bot": "tester",
+      "timestamp_start": "2026-05-28T17:11:39Z",
+      "intent": "Verify coder v4 closes tester v3's BuilderSanity finding (which traced to my own pre-test builder rebuild, not the branch) and that the list-literal fixture form is stable across builder reruns.",
+      "before": {
+        "assumptions": "Coder v4 changed Tests/BuilderSanity/BuilderSanity.test.goal:7 to use unquoted list literal [1, 2, 3] and regenerated the .pr; wrote baseline-tests.md. Claims C# 3381/3381, PLang 233/233.",
+        "risk": "The non-determinism only fully resolves if multiple builder reruns produce stable output. If a rerun still flips %items% type, the fix is partial."
+      },
+      "plan": ".bot/data-normalize/tester/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/data-normalize/tester/v4/v3_review_summary.md",
+            ".bot/data-normalize/tester/v4/plan.md",
+            ".bot/data-normalize/tester/v4/verdict.json",
+            ".bot/data-normalize/tester/summary.md",
+            ".bot/data-normalize/test-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "tester v4 outputs. PASS verdict. Acknowledges v3 misattribution was procedural (pre-test rebuild on graded fixture); v4 confirms branch is honest."
+        },
+        {
+          "paths": [
+            "Tests/BuilderSanity/.build/buildersanity.test.pr"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Rebuilt 3x with cache=false; md5 identical (0d66eb02b8f30b03461a128a69a96218) and test passed each time. Coder v4's unquoted list-literal rewrite is deterministic."
+        },
+        {
+          "paths": [
+            "PLang/app/channels/serializers/json/writer.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Re-mutation test on V1 fixture: replaced _view with View.Out \u2192 fixture failed as expected. Reverted."
+        }
+      ],
+      "timestamp_end": "2026-05-28T17:20:00Z",
+      "after": {
+        "status": "approved",
+        "health": "All green. C# 3381/3381, PLang 233/233. BuilderSanity rebuild deterministic. V1 fixture mutation-verified. baseline-tests.md present.",
+        "notes": "v3 verdict retracted \u2014 misattribution from running cache=false rebuild on a graded fixture. Lesson saved to tester memory."
+      }
+    },
+    {
+      "id": "f2a8b1cc-9d4e-4a31-8f2a-1b3c2d4e5f60",
+      "bot": "security",
+      "timestamp_start": "2026-05-28T17:28:55Z",
+      "timestamp_end": "2026-05-28T17:38:00Z",
+      "intent": "Blue+red security audit of data-normalize: Normalize/Reconstruct/Wire/json.Writer/Tagged + attribute migrations.",
+      "before": {
+        "assumptions": "codeanalyzer v3 PASS (V1 closed, M-series clean); tester v4 PASS (3381/3381 + 233/233); Wire.Read depth cap from data-serialize-cleanup is carried forward through the rename; AuthGate canonicalisation from purge-systemio-from-actions/v2 closes the lexical-prefix bypass that Reconstruct's path hook depends on.",
+        "risk": "Two new recursive surfaces (Normalize, Reconstruct.Walk) plus a reflection-driven Tagged filter. Untagged-type transparent fallback in Tagged is a latent footgun for any future domain type that lands in a Data value graph and forgets [Sensitive]."
+      },
+      "plan": ".bot/data-normalize/security/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/data-normalize/security/v1/plan.md",
+            ".bot/data-normalize/security/v1/result.md",
+            ".bot/data-normalize/security/v1/verdict.json",
+            ".bot/data-normalize/security/summary.md",
+            ".bot/data-normalize/security-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v1 plan / result / verdict / summary / branch-level security-report. PASS verdict."
+        },
+        {
+          "paths": [
+            "PLang/app/data/this.Normalize.cs",
+            "PLang/app/data/this.Reconstruct.cs",
+            "PLang/app/data/Wire.cs",
+            "PLang/app/data/NormalizeException.cs",
+            "PLang/app/data/this.Transport.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Normalize: MaxNormalizeDepth=128, ReferenceEqualityComparer cycle set, leaf table consistent with IsTreeLeafType, Masked never invokes getter, getter-throws wrapped. Reconstruct: Walk relies on Wire.Read's MaxReadDepth=64 for wire trees; T is caller-controlled (no type-confusion). Wire: depth cap carried through rename; Properties primitives-only via ReadPropertyPrimitive; hash-outer ref-counted; sign-if-missing requires Context.Actor. Transport: gzip-decompress already capped at 100MB."
+        },
+        {
+          "paths": [
+            "PLang/app/channels/serializers/IWriter.cs",
+            "PLang/app/channels/serializers/json/writer.cs",
+            "PLang/app/channels/serializers/filters/Tagged.cs",
+            "PLang/app/channels/serializers/filters/Transport.cs",
+            "PLang/app/channels/serializers/serializer/plang/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "json.Writer: _view threaded via ctor (codeanalyzer v3 V1 closed), default case throws NormalizeException \u2014 fails closed on unknown leaf type, prevents STJ reflection bypass of Out/Sensitive/Masked. Tagged: per-(type,mode) cache; transparent fallback for types with no four-tags = ships all public \u2014 design-aware footgun (memory note). plang serializer: three options bags (Out / In / Store), no view drift at call sites."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/identity/types.cs",
+            "PLang/app/modules/settings/types.cs",
+            "PLang/app/variables/Variable.cs",
+            "PLang/app/types/path/this.cs",
+            "PLang/app/http/Response/this.cs",
+            "PLang/app/View.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Attribute migrations: Identity PrivateKey stays [Sensitive] + gains [Store]; setting.value [Out, Masked, Store]; Variable.Name [Out] only (RawValue excluded \u2014 correct, secrets can live in raw refs); path.Scheme + path.Relative [Out, Store] (Absolute excluded \u2014 sandbox-correct); http.Response Status/Headers/Body [Out]. [Masked] new attribute."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/settings/Sqlite.cs",
+            "PLang/app/modules/signing/code/Ed25519.cs",
+            "PLang/app/modules/crypto/code/Default.cs",
+            "PLang/app/actor/permission/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Sqlite.Set switched to Store view (correct \u2014 Identity.PrivateKey round-trips); Ed25519.VerifyAsync now reads .Signature directly (RawSignature deleted); permission flow swaps RawSignature \u2192 Signature (semantic-equivalent). Signature mutation sites enumerated \u2014 Wire.Read, WrapAsTyped, Normalize copy, Ed25519 sign \u2014 all proper code paths."
+        },
+        {
+          "paths": [
+            ".semgrep/",
+            "scripts/semgrep-scan.sh"
+          ],
+          "type": "review",
+          "category": "config",
+          "confidence": "high",
+          "context": "Semgrep baseline scan \u2014 15 findings, matches baseline. No new files added to the plang-serializer-default-options list; builder/code/Default.cs:321 plan-dump matches the existing 14 sites (planValue is LLM-JSON, no path/Sensitive reachability)."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "Clean \u2014 no critical/high findings. Verdict: pass. Branch ready for auditor.",
+        "notes": "Two design-aware notes recorded for memory: (1) Tagged transparent fallback ships all public props for untagged types \u2014 architect-intentional but a latent footgun the next domain-type author must remember; (2) BuilderPlannerFailed plan dump uses default JsonSerializer.Serialize \u2014 matches existing semgrep baseline. Next bot: auditor."
+      }
+    },
+    {
+      "id": "ef83229a-9244-4009-aa0c-1fd0659e0b2a",
+      "bot": "docs",
+      "timestamp_start": "2026-05-28T18:03:11.729030+00:00",
+      "intent": "Document the data-normalize landing: Wire rename, Normalize/Reconstruct, IWriter, Tagged filter, View.Store, [Masked].",
+      "before": {
+        "assumptions": "Auditor v1 PASS; coder v4 latest. New surfaces: Wire.cs (renamed from WireJsonConverter.cs), [Masked] attribute, View.Store, IWriter + json.Writer, this.Normalize.cs + this.Reconstruct.cs, Tagged filter. RawSignature deleted. Wire shape now property-bag via Normalize (path \u2192 {scheme, relative}, Identity \u2192 {name, publickey}, setting.value \u2192 '****').",
+        "risk": "Stale references to WireJsonConverter filename/class across multiple docs. Stale 'four-field' doc on Wire.cs."
+      },
+      "actions": [
+        {
+          "paths": [
+            "CLAUDE.md",
+            "Documentation/v0.2/architecture.md",
+            "Documentation/v0.2/app-tree.md",
+            "Documentation/v0.2/callbacks.md",
+            "Documentation/v0.2/good_to_know.md",
+            "Documentation/Runtime2/data-spec.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Renamed WireJsonConverter \u2192 Wire across 10 doc sites + the CLAUDE.md anchor. Every retained mention of the old name is now a 'renamed from' breadcrumb."
+        },
+        {
+          "paths": [
+            "PLang/app/data/Wire.cs"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "XML class summary said four-field; implementation emits five-field. Aligned and pointed at the Normalize+IWriter pipeline."
+        },
+        {
+          "paths": [
+            "Documentation/Runtime2/data-spec.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added \u00a716a covering Normalize, IWriter+json.Writer, Tagged filter, View.Store, [Masked], Reconstruct<T> with typed-error matrix, plus the two auditor minors as known non-blocking follow-ups."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/good_to_know.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "New rule: domain types ride the wire as property bags \u2014 do not add a JsonConverter for a new domain type. Includes the path inbound carve-out."
+        },
+        {
+          "paths": [
+            ".bot/data-normalize/docs/v1/plan.md",
+            ".bot/data-normalize/docs/v1/result.md",
+            ".bot/data-normalize/docs/v1/verdict.json",
+            ".bot/data-normalize/docs/summary.md",
+            ".bot/data-normalize/docs-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Standard docs-bot reports."
+        }
+      ],
+      "plan": ".bot/data-normalize/docs/v1/plan.md",
+      "timestamp_end": "2026-05-28T18:10:01.695261+00:00",
+      "after": {
+        "status": "PASS \u2014 ready to merge",
+        "health": "App-tree checker reports clean (30 modules, 37 app props, 7 actor props, 7 data partials). All WireJsonConverter references either renamed or kept as explicit 'renamed from' breadcrumbs.",
+        "notes": "No CLAUDE.md or character proposals on this branch. Two auditor v1 minor findings (Reconstruct positional-ctor silent default, longest-ctor comment drift) documented inline in data-spec.md \u00a716a as known non-blocking follow-ups rather than filed separately \u2014 no current callers trigger either."
+      }
+    }
+  ]
+}

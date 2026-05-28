@@ -94,7 +94,7 @@ public sealed partial class @this : global::app.types.path.@this
         return new @this(rawPath, context) { Raw = rawPath };
     }
 
-    public override string Scheme => _uri.Scheme.ToLowerInvariant();
+    [Out, Store] public override string Scheme => _uri.Scheme.ToLowerInvariant();
 
     /// <summary>The parsed request URI.</summary>
     public Uri Uri => _uri;

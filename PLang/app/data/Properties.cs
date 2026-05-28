@@ -3,118 +3,129 @@ using System.Collections;
 namespace app.data;
 
 /// <summary>
-/// A collection of Data properties.
-/// Provides indexed and named access to child properties.
+/// Per-Data metadata key/value bag. Wire shape: a single nested
+/// <c>"properties": { ... }</c> object on the canonical four-field wire shape.
+///
+/// <para>
+/// Values must be wire-supported primitives: <c>string</c>, <c>bool</c>,
+/// <c>int</c>/<c>long</c>/<c>double</c>/<c>decimal</c>, <c>DateTime</c>,
+/// <c>byte[]</c>, or a nested <c>IDictionary&lt;string, object?&gt;</c> /
+/// <c>IEnumerable&lt;object?&gt;</c> of the same. <c>Data</c> instances are
+/// NOT allowed — Properties is the metadata channel; typed payloads ride in
+/// <c>data.Value</c>.
+/// </para>
+///
+/// <para>
+/// Keys are unconstrained — any string works, including the reserved wire-
+/// field names <c>name</c>/<c>type</c>/<c>value</c>/<c>signature</c>/<c>properties</c>,
+/// because Properties live inside their own JSON object on the wire and can
+/// never collide with the top-level reserved fields.
+/// </para>
+///
+/// <para>
+/// Navigation: <c>%x.field%</c> reads <c>data.Value</c>'s structural shape;
+/// <c>%x!key%</c> reads <c>data.Properties[key]</c>. The two namespaces are
+/// disjoint — <c>%user.kind%</c> and <c>%user!kind%</c> can coexist with
+/// different values.
+/// </para>
 /// </summary>
-public class Properties : IList<@this>
+public sealed class Properties : IDictionary<string, object?>
 {
-    private readonly List<@this> _items = new();
+    private readonly Dictionary<string, object?> _items = new(StringComparer.OrdinalIgnoreCase);
 
-    public @this this[int index]
+    public object? this[string key]
     {
-        get => _items[index];
-        set => _items[index] = value;
-    }
-
-    public @this? this[string name]
-    {
-        get => _items.FirstOrDefault(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+        get => _items.TryGetValue(key, out var v) ? v : null;
         set
         {
-            var index = _items.FindIndex(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-            if (value == null)
-            {
-                if (index >= 0)
-                    _items.RemoveAt(index);
-            }
-            else if (index >= 0)
-            {
-                _items[index] = value;
-            }
-            else
-            {
-                _items.Add(value);
-            }
+            EnsureSupportedValue(value);
+            if (value == null) _items.Remove(key);
+            else _items[key] = value;
         }
     }
 
-    public int Count => _items.Count;
-    public bool IsReadOnly => false;
+    public void Add(string key, object? value)
+    {
+        EnsureSupportedValue(value);
+        _items.Add(key, value);
+    }
 
-    public void Add(@this item) => _items.Add(item);
-    public void Clear() => _items.Clear();
-    public bool Contains(@this item) => _items.Contains(item);
-    public bool Contains(string name) => _items.Any(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-    public void CopyTo(@this[] array, int arrayIndex) => _items.CopyTo(array, arrayIndex);
-    public IEnumerator<@this> GetEnumerator() => _items.GetEnumerator();
-    public int IndexOf(@this item) => _items.IndexOf(item);
-    public void Insert(int index, @this item) => _items.Insert(index, item);
-    public bool Remove(@this item) => _items.Remove(item);
-    public void RemoveAt(int index) => _items.RemoveAt(index);
-    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    public void Add(KeyValuePair<string, object?> item) => Add(item.Key, item.Value);
+
+    public bool Remove(string key) => _items.Remove(key);
+    public bool Remove(KeyValuePair<string, object?> item)
+        => _items.TryGetValue(item.Key, out var v) && Equals(v, item.Value) && _items.Remove(item.Key);
+
+    public bool ContainsKey(string key) => _items.ContainsKey(key);
+    public bool Contains(string key) => _items.ContainsKey(key);
+    public bool Contains(KeyValuePair<string, object?> item)
+        => _items.TryGetValue(item.Key, out var v) && Equals(v, item.Value);
+
+    public bool TryGetValue(string key, out object? value) => _items.TryGetValue(key, out value);
 
     /// <summary>
-    /// Gets a property value by name.
+    /// Sets a property value. Equivalent to <c>this[name] = value</c> — kept as
+    /// a method form for callers that prefer the verb shape over an indexer
+    /// (e.g. <c>result.Properties.Set("branchIndex", 0)</c>).
+    /// </summary>
+    public void Set(string name, object? value) => this[name] = value;
+
+    /// <summary>
+    /// Convenience reader: gets a property as T (primitive coercion via
+    /// <see cref="Convert.ChangeType(object?, System.Type)"/>) — returns
+    /// <c>default(T)</c> when the key is absent or the value cannot be coerced.
     /// </summary>
     public T? Get<T>(string name)
     {
-        var prop = this[name];
-        return prop != null ? prop.GetValue<T>() : default;
+        if (!_items.TryGetValue(name, out var v) || v is null) return default;
+        if (v is T typed) return typed;
+        try { return (T)Convert.ChangeType(v, typeof(T)); }
+        catch (Exception ex) when (ex is InvalidCastException or FormatException or OverflowException) { return default; }
     }
 
-    /// <summary>
-    /// Sets a property value by name.
-    /// </summary>
-    public void Set(string name, object? value, type? type = null)
-    {
-        var existing = this[name];
-        if (existing != null)
-        {
-            existing.Value = value;
-            if (type != null)
-                existing.Type = type;
-        }
-        else
-        {
-            Add(new @this(name, value, type));
-        }
-    }
+    public void Clear() => _items.Clear();
 
-    /// <summary>
-    /// Removes a property by name.
-    /// </summary>
-    public bool Remove(string name)
-    {
-        var index = _items.FindIndex(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-        if (index >= 0)
-        {
-            _items.RemoveAt(index);
-            return true;
-        }
-        return false;
-    }
+    public int Count => _items.Count;
+    public bool IsReadOnly => false;
+    public ICollection<string> Keys => _items.Keys;
+    public ICollection<object?> Values => _items.Values;
 
-    /// <summary>
-    /// Creates a copy of this Properties collection with independent item list.
-    /// </summary>
+    public void CopyTo(KeyValuePair<string, object?>[] array, int arrayIndex)
+        => ((ICollection<KeyValuePair<string, object?>>)_items).CopyTo(array, arrayIndex);
+
+    public IEnumerator<KeyValuePair<string, object?>> GetEnumerator() => _items.GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator() => _items.GetEnumerator();
+
     public Properties Clone()
     {
         var clone = new Properties();
-        foreach (var item in _items)
-            clone._items.Add(item);
+        foreach (var kvp in _items) clone._items[kvp.Key] = kvp.Value;
         return clone;
     }
 
-    /// <summary>
-    /// Converts to a dictionary representation.
-    /// </summary>
-    public Dictionary<string, object?> ToDictionary()
+    // EnsureSupportedValue is a best-effort top-level gate: scalars are
+    // checked exhaustively, container types (dict/list) are accepted
+    // structurally without recursing into their leaves. The recursion would
+    // catch nested non-primitives at the call site (rather than at the wire
+    // boundary where STJ surfaces an opaque emit error) but the cost is real
+    // domain-object containers — `List<LlmMessage>` and similar — that today
+    // pass through Properties.* untouched. The right tightening lives at
+    // those upstream call sites (convert to dict/list-of-primitives before
+    // storing) and is tracked separately; for now this gate keeps Data
+    // instances out of Properties (the only invariant Stage 4 has to enforce
+    // at this layer) and trusts the producer for everything else.
+    private static void EnsureSupportedValue(object? value)
     {
-        var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-        foreach (var item in _items)
-        {
-            dict[item.Name] = item.Value;
-        }
-        return dict;
+        if (value is null) return;
+        if (value is global::app.data.@this)
+            throw new ArgumentException(
+                "Property values must be wire-supported primitives. Data instances belong in data.Value, not Properties.",
+                nameof(value));
+        if (value is string or bool or int or long or double or decimal or float
+            or DateTime or DateTimeOffset or byte[] or Guid) return;
+        if (value is System.Collections.IDictionary or System.Collections.IEnumerable) return;
+        throw new ArgumentException(
+            $"Property value of type {value.GetType()} is not a wire-supported primitive.",
+            nameof(value));
     }
 }

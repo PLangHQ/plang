@@ -1,6 +1,6 @@
 # Callbacks
 
-Callbacks are PLang's way of making *suspend-and-resume* a first-class value. A callback is a typed record that captures "where this run was paused, what state survives the pause, and how to land back here when an answer arrives". It rides through the wire as a signed `Data` envelope — the same envelope every other PLang value uses — and the runtime treats unsigned or tampered envelopes as hard errors before any dispatch happens.
+Callbacks are PLang's way of making *suspend-and-resume* a first-class value. A callback is a typed record that captures "where this run was paused, what state survives the pause, and how to land back here when an answer arrives". It rides through the wire as a signed `Data` — the same wire shape every other PLang value uses — and the runtime treats unsigned or tampered Data as hard errors before any dispatch happens.
 
 There are two implementations in v1 and one verb that runs them.
 
@@ -58,7 +58,7 @@ The **wire shape is narrower than the in-process Snapshot fidelity**. `ErrorCall
                                             CallbackDispatchError (500)
 ```
 
-The gate is the security boundary. Neither `AskCallback.Run` nor `ErrorCallback.Run` re-checks the signature. Adding new callback types means implementing `ICallback` and trusting this gate to vet the envelope before dispatch.
+The gate is the security boundary. Neither `AskCallback.Run` nor `ErrorCallback.Run` re-checks the signature. Adding new callback types means implementing `ICallback` and trusting this gate to vet the Data before dispatch.
 
 ### Wire-size caps
 
@@ -70,28 +70,35 @@ Channel layer remains the primary control; the caps catch anything that slips pa
 
 ### Sensitive-property strip
 
-`AskCallback._options`, `ErrorCallback._options`, and `PlangDataSerializer._options` all install `SensitivePropertyFilter.Strip` via `DefaultJsonTypeInfoResolver`. Anything marked `[Sensitive]` on the inner value is removed before bytes hit the wire — same modifier `Data.@this._envelopeJsonOptions` already used.
+The merged `application/plang` serializer composes `Sensitive.Strip` onto its STJ options (alongside `Transport.ForOutbound`); `AskCallback._options` and `ErrorCallback._options` install the same modifier via `DefaultJsonTypeInfoResolver` for their internal-shape serialisation. Anything marked `[Sensitive]` on the inner value is removed before bytes hit the wire.
 
-## Lazy signing on `Data.Signature` — ICallback-only carve-out
+## Sign-if-missing — the converter does it
 
-When you read `data.Signature`, the getter populates lazily *only if the wrapped value is an `ICallback`*. For every other Data, `Signature` stays `null` until `EnsureSigned()` is called explicitly, and `RawSignature` (an internal accessor) gives verify-path code a way to peek without triggering populate.
+There is no `ICallback` carve-out anymore. As of `data-serialize-cleanup` (Stage 2), signing happens inside `app.data.Wire.Write` (the class was named `WireJsonConverter` until `data-normalize` renamed it to `Wire`) — for every Data the converter walks. The rule is sign-if-missing, idempotent: if `data.Signature` is null, `data.EnsureSigned()` fires before the bytes are emitted; if it's already populated (because the Data was deserialised from a signed wire payload, or because some prior path signed it), the converter skips. Forwarding preserves provenance — Alice's signed `D1` wrapped in Bob's `D3` round-trips with both signatures intact.
 
-The carve-out is deliberate. A fully lazy populate breaks existing `if (data.Signature == null)` checks across the verify path. Restricting auto-populate to `ICallback` keeps the change behavioural-minimum: callbacks cross security boundaries, so they always seal; everything else keeps the explicit-`EnsureSigned` discipline. If you're tempted to widen the carve-out, audit every `data.Signature == null` site first.
+Three consequences fall out for callbacks:
 
-## The `application/plang+data` mimetype
+1. `callback.run`'s `Callback.EnsureSigned()` (gate step 2 above) is mostly belt-and-braces — by the time bytes are deserialised the converter has already populated `Signature`. The explicit call remains for the *in-process* path where no serialisation happened.
+2. Any Data through any channel auto-seals on egress. The verify-path code that previously gated on `data.Signature == null` still sees `null` only on Data that has never been written.
+3. Canonicalization for `crypto.Hash` was switched to the same options bag the wire converter uses (`plang.@this.OutboundOptions`). Hash bytes ≡ wire bytes minus the outer `Signature` field. Tampering with `name`, `type`, `value`, `properties`, or any nested-Data signature invalidates the outer signature.
 
-`PlangDataSerializer` (in `app/channels/Serializers/Serializer/`) is the wire serializer for the full Data envelope: `{ Type, Value, Signature }`. Distinct from `PlangSerializer` (`application/plang`), which targets the older PLang-to-PLang transport without the signature field.
+## The `application/plang` mimetype
 
-- **Write** triggers `data.EnsureSigned()` so the envelope ships sealed.
+`application/plang` is the single wire serializer for the full Data shape. The historical `application/plang+data` mimetype was merged into it on `data-serialize-cleanup` — the `+data` variant and the `PlangDataSerializer` class no longer exist.
+
+- The serializer (`app/channels/serializers/serializer/plang/this.cs`) composes the `Json` engine with `Wire` + `Transport.ForOutbound` + `Sensitive.Strip` modifiers; no `JsonSerializer.X` calls live in the serializer itself.
+- `Wire` emits the five-field wire shape `{name, type, value, properties, signature}` (the `properties` field is omitted when empty; `signature` when null), signing each Data sign-if-missing as it walks. The value slot is built via `data.Normalize(View) → IWriter` so domain types ride as `[Out]`-tagged property bags instead of bespoke JSON converters — see `Documentation/Runtime2/data-spec.md` §17.
 - **Read** does **not** auto-verify. The reconstructed Data has its signature populated-but-unverified; consumers (`callback.run`) call `signing.verify` explicitly.
 
-JSON envelope today (the wire shape is the coder's call per Stage 3 — could become CBOR or length-prefixed binary later without breaking the contract):
+JSON wire shape (the wire format is the coder's call — could become CBOR or length-prefixed binary later without breaking the contract):
 
 ```json
 {
+  "name": "answer",
   "type": "ask",
-  "value": { ... ICallback wire shape ... },
-  "signature": { ... }
+  "value": { /* ICallback wire shape */ },
+  "properties": { /* optional metadata, omitted when empty */ },
+  "signature": { /* signing.SignedData wire shape */ }
 }
 ```
 
@@ -110,11 +117,11 @@ It is **not pushable** into the AsyncLocal `Current`. It has no Stopwatch, no `O
 ## Configuration
 
 ```csharp
-app.Callback.Signature.Expires       // default expiry (TimeSpan) for callback envelopes;
+app.Callback.Signature.Expires       // default expiry (TimeSpan) for callback signatures;
                                      // null = no expiry; integrity is unconditional
 ```
 
-Read by the lazy signature getter when the wrapped value is an `ICallback`. The PLang surface for writing this is on the v0.2 todos list.
+Read by `EnsureSigned`'s expiry stamping for `ICallback`-valued Data. The PLang surface for writing this is on the v0.2 todos list.
 
 ## Out of scope on this branch (open work)
 
@@ -129,4 +136,8 @@ Read by the lazy signature getter when the wrapped value is an `ICallback`. The 
 - `PLang/app/callstack/RestoredFrame.cs` — the position surrogate.
 - `PLang/app/modules/callback/run.cs` — the seal-then-verify gate.
 - `PLang/app/modules/output/ask.cs` — the issuer + resume sentinel.
-- `PLang/app/channels/Serializers/Serializer/PlangDataSerializer.cs` — the wire serializer.
+- `PLang/app/channels/serializers/serializer/plang/this.cs` — the merged `application/plang` wire serializer.
+- `PLang/app/data/Wire.cs` — the converter that walks the `{name, type, value, properties, signature}` wire shape and fires sign-if-missing on every Data (renamed from `WireJsonConverter.cs` on `data-normalize`).
+- `PLang/app/data/this.Normalize.cs` + `this.Reconstruct.cs` — the structural-normalize tree-walkers used by `Wire`.
+- `PLang/app/channels/serializers/IWriter.cs` + `json/writer.cs` — the format-encoder protocol; JSON is the first impl, protobuf/CBOR ship later as siblings without touching Normalize.
+- `PLang/app/channels/serializers/filters/Tagged.cs` — `(type, View)`-cached property selector that decides which CLR properties ship per view (`Out`/`Store`/`Debug`).

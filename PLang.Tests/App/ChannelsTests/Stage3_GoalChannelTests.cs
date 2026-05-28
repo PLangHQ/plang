@@ -20,7 +20,7 @@ public class Stage3_GoalChannelTests
         var goal = new EngineGoal { Name = "Probe", Path = "Probe.goal", PrPath = "/Probe.pr" };
         var ch = new GoalChannel("logger", goal, app.User);
         var dataIn = Data.Ok("payload-A");
-        var result = await ch.WriteCore(dataIn);
+        var result = await ch.Write(dataIn);
         await Assert.That(result.Success).IsTrue();
 
         var captured = app.User.Context.Variables.Get("!data");
@@ -33,7 +33,7 @@ public class Stage3_GoalChannelTests
         var app = new global::app.@this("/tmp/g2");
         var goal = new EngineGoal { Name = "ReturnsOk", Path = "Returns.goal", PrPath = "/R.pr" };
         var ch = new GoalChannel("c", goal, app.User);
-        var result = await ch.WriteCore(Data.Ok("x"));
+        var result = await ch.Write(Data.Ok("x"));
         await Assert.That(result.Success).IsTrue();
     }
 
@@ -44,7 +44,7 @@ public class Stage3_GoalChannelTests
         var goal = new EngineGoal { Name = "G", Path = "G.goal", PrPath = "/G.pr" };
         var ch = new GoalChannel("x", goal, app.User);
         await Assert.That(ch.IsExecuting).IsFalse();
-        await ch.WriteCore(Data.Ok("x"));
+        await ch.Write(Data.Ok("x"));
         await Assert.That(ch.IsExecuting).IsFalse();
     }
 
@@ -115,7 +115,7 @@ public class Stage3_GoalChannelTests
         var app = new global::app.@this("/tmp/g8");
         var goal = new EngineGoal { Name = "Asker", Path = "Asker.goal", PrPath = "/A.pr" };
         var ch = new GoalChannel("input", goal, app.User);
-        var result = await ch.AskCore(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "q?") });
+        var result = await ch.Ask(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "q?") });
         await Assert.That(result.Success).IsTrue();
     }
 
@@ -128,7 +128,7 @@ public class Stage3_GoalChannelTests
         await ch.DisposeAsync();
         // Goal still usable — re-register as a different channel.
         var ch2 = new GoalChannel("c2", goal, app.User);
-        var result = await ch2.WriteCore(Data.Ok("x"));
+        var result = await ch2.Write(Data.Ok("x"));
         await Assert.That(result.Success).IsTrue();
     }
 }

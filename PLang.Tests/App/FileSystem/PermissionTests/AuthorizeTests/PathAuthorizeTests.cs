@@ -29,11 +29,11 @@ public class PathAuthorizeTests
             Direction = global::app.channels.channel.ChannelDirection.Bidirectional;
             Answers = answers;
         }
-        public override Task<global::app.data.@this> WriteCore(global::app.data.@this data, CancellationToken ct = default)
+        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
             => Task.FromResult(global::app.data.@this.Ok());
-        public override Task<global::app.data.@this> ReadCore(CancellationToken ct = default)
+        public override Task<global::app.data.@this> Read(CancellationToken ct = default)
             => Task.FromResult(global::app.data.@this.Ok((object?)null));
-        public override Task<global::app.data.@this> AskCore(
+        public override Task<global::app.data.@this> Ask(
             global::app.modules.output.ask action, CancellationToken ct = default)
         {
             var ans = _idx < Answers.Length ? Answers[_idx++] : "";
@@ -44,9 +44,9 @@ public class PathAuthorizeTests
     private sealed class StatelessChannel : global::app.channels.channel.message.@this
     {
         public StatelessChannel() { Name = "input"; Direction = global::app.channels.channel.ChannelDirection.Bidirectional; }
-        public override Task<global::app.data.@this> WriteCore(global::app.data.@this data, CancellationToken ct = default)
+        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
             => Task.FromResult(global::app.data.@this.Ok());
-        public override Task<global::app.data.@this> ReadCore(CancellationToken ct = default)
+        public override Task<global::app.data.@this> Read(CancellationToken ct = default)
             => Task.FromResult(global::app.data.@this.Ok((object?)null));
     }
 

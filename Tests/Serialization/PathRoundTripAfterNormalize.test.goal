@@ -1,0 +1,6 @@
+Start
+/ Sanity smoke for the path round-trip surface — confirms the developer-facing
+/ "the path I wrote is the path I read" expectation holds.
+- set %pathString% = "/example/subdir/file.txt"
+- set %readBack% = %pathString%
+- assert %readBack% equals "/example/subdir/file.txt", "path string round-trip"

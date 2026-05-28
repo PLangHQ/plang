@@ -1,0 +1,259 @@
+{
+  "plan.md": [
+    {
+      "id": "aea7142cf5",
+      "line": 160,
+      "text": "always lazy.",
+      "anchor": "- **Eager vs lazy normalize.** Eager: normalize at construction-time, so `data.Value` always has the narrowed contract. Lazy: normalize at serialize-time only, `data.Value` keeps `object?` in memory. Lazy is less invasive but means in-memory inspection of `data.Value` has two possible shapes. Recommendation: **lazy first** — keeps the migration tractable.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-27T21:20:40",
+      "drifted": true
+    },
+    {
+      "id": "25f1dcd024",
+      "line": 161,
+      "text": "yes, some boundery",
+      "anchor": "- **Cycle detection.** The Normalize walker needs to track visited objects to avoid infinite loops on circular references. STJ has this already; ours needs to. Bounded depth check + visited-set.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-27T21:20:57",
+      "drifted": true
+    },
+    {
+      "id": "8c422fdd44",
+      "line": 162,
+      "text": "what is unsettled here? maybe you can define it better for me",
+      "anchor": "- **Custom serialization.** Types that want to control their wire shape implement `IDataNormalizable` (or similar): `object? ToWireValue()`. DateTime → ISO string; decimal → string; user-defined oddities → user's choice. Without the interface, default reflection.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-27T21:21:39",
+      "drifted": true
+    },
+    {
+      "id": "b97ea9471c",
+      "line": 162,
+      "text": "Restructured the section — three are now decided (lazy / bounded cycle / reuse [Out]), this one moved to a new \"Still open\" section with the unsettled question stated sharper: do we need IDataNormalizable on day one, or defer until a user type with diverging wire shape forces it? The motivating case is path (storage = Absolute/Relative/segments, wire = single string). If path-shaped types are rare, defer. If load-bearing on day one, the interface ships in stage 1. Want your read on which it is.",
+      "anchor": "- **Wire-inclusion uses `View.Out`.** No new `[WireIgnore]` / `[WireInclude]` attributes. The wire serializer runs in `View.Out` mode — properties tagged `[Out]` are serialized; `[Sensitive]` excludes. Both attributes already exist in `PLang/app/View.cs` and govern the existing JSON-out path. The wire path inherits the same discipline.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "8c422fdd44",
+      "ts": "2026-05-27T21:25:58",
+      "drifted": false
+    },
+    {
+      "id": "400ee15878",
+      "line": 162,
+      "text": "I really dont understand what you are talking about here",
+      "anchor": "- **Wire-inclusion uses `View.Out`.** No new `[WireIgnore]` / `[WireInclude]` attributes. The wire serializer runs in `View.Out` mode — properties tagged `[Out]` are serialized; `[Sensitive]` excludes. Both attributes already exist in `PLang/app/View.cs` and govern the existing JSON-out path. The wire path inherits the same discipline.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "b97ea9471c",
+      "ts": "2026-05-27T21:28:04",
+      "drifted": false
+    },
+    {
+      "id": "f1e23b9525",
+      "line": 163,
+      "text": "yes, [Out] the Out attribute is saying this is allowed for Out part of the I/O",
+      "anchor": "- **`[WireIgnore]` / `[WireInclude]` attributes.** Mirror today's `[JsonIgnore]` / `[Out]`. Probably reuse `[Out]` discipline if the semantics align.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-27T21:22:14",
+      "drifted": true
+    },
+    {
+      "id": "121707b187",
+      "line": 166,
+      "text": "My fault — the framing was too abstract. Rewrote the bullet with a concrete contrast. TL;DR:\n\nDefault Normalize reflects a type's public properties. For Money { Amount; Currency } that gives { amount, currency } — perfect. For path { Absolute; Relative; Segments... } it would give { absolute, relative, segments } — but we probably want it to serialize as just the string \"file:///some/path\".\n\nThe \"escape hatch\" is: the type itself tells Normalize \"don't reflect me, here's my wire form\" (an interface with ToWireValue / FromWireValue).\n\nThe real question I'm asking: do we have types in PLang today where the desired wire form is NOT just the reflected property bag? path is the candidate I can think of. If there are others, ship the interface in stage 1. If path is the only one (or we're happy with path serializing as an object), defer.",
+      "anchor": "- **Can a type override its own wire shape?**",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "400ee15878",
+      "ts": "2026-05-27T21:29:19",
+      "drifted": true
+    },
+    {
+      "id": "fbab5f0311",
+      "line": 166,
+      "text": "for path object, the .Value would be \"file:///some/path\", every other property is extrapolated from it, so you will have data { type:\"path\", value: { Absolute: \"...\", Relateive: \"...\", ... Value: \"file:///some/path\" }",
+      "anchor": "- **Can a type override its own wire shape?**",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "121707b187",
+      "ts": "2026-05-27T22:53:57",
+      "drifted": true
+    },
+    {
+      "id": "3b2806aac6",
+      "line": 166,
+      "text": "Checked FilePath. Two things stand out that I want to make sure I'm reading you right on.\n\n**1. Today vs. what you described.**\n\nThe existing `path.JsonConverter` (PLang/app/types/path/this.JsonConverter.cs) writes a path as JUST a string:\n\n```csharp\nwriter.WriteStringValue(wire);  // wire = value.Relative (or Raw/Absolute fallback)\n```\n\nOn the wire today, a stored `path` looks like `\"myPath\": \"/foo/bar\"` — a single string, NOT a property bag. Read back routes through `path.Resolve(raw, context)` to rebuild the full object.\n\nWhat you described — `value: { Absolute, Relative, ..., Value: \"file:///...\" }` — is the OPPOSITE: full property bag on the wire, including a canonical `Value` field.\n\nSo: under this branch, do we replace the JsonConverter with default reflection (full bag), or keep the \"path collapses to a string\" pattern (which IS the escape-hatch case I was asking about)?\n\nTrade-off:\n  - Full bag (default reflection): uniform, format-agnostic, no special-casing. But config files lose readability — `\"myPath\": { \"Absolute\": \"/foo/bar\", \"Relative\": \"/foo/bar\", ..., \"Value\": \"file:///foo/bar\" }` instead of `\"myPath\": \"/foo/bar\"`. And the wire carries redundant derived fields.\n  - Collapsed string: compact, readable, single source of truth. But needs the escape hatch (type says \"don't reflect me, here's my Value\").\n\n**2. There's no `.Value` property on path today.**\n\nThe canonical form lives in `_absolutePath` (private) and is read via `Absolute` (or `Relative` for the portable form). You used the name `Value` — is that a rename you're proposing, or just informal in the comment?",
+      "anchor": "",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "fbab5f0311",
+      "ts": "2026-05-27T22:57:16",
+      "drifted": false
+    },
+    {
+      "id": "733648a210",
+      "line": 166,
+      "text": "Did the inventory. Wrote it up as plan/wire-out-attributes.md (in the architect dir) — too long for a comment. Quick TL;DR:\n\n13 domain types in scope (Identity, path, list, Variable, Data, StatInfo, GoalCall, permission, setting, http.Response, Ask, Mock, condition.Operator). Two externals (HttpContent, Assembly) out of scope.\n\nFor each I tagged every property as Out / Skip-derived / Skip-local / Skip-sensitive / Skip-cycle. Headline calls:\n\n- **path** → on wire: { Scheme, Relative }. Absolute SKIPPED (leaks server filesystem layout — your call). All [LlmBuilder] derived stuff (Extension, FileName, etc.) skipped because Relative regenerates them.\n- **Identity** → Name + PublicKey + Created out. PrivateKey [Sensitive]. IsDefault/IsArchived are local management state — skip.\n- **Variable** → just Name. RawValue/WasPercentWrapped are parser breadcrumbs.\n- **Mock** → nothing out. Test-time only.\n- **Data itself** → Value/Success/Error/Type/Signature/RawSignature all out.\n\nBig consequence: **no escape hatch needed**. Every type reduces to a clean property bag once [Out] is applied with this rule. path doesn't need to \"collapse to a single string\" — Scheme + Relative is the canonical form, receiver runs path.Resolve() on landing. So the IDataNormalizable question answers itself: defer it (probably forever).\n\nReview the doc, push back on any of the per-property calls, and once you're happy I'll fold the decision back into plan.md and resolve this thread.",
+      "anchor": "",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "fbab5f0311",
+      "ts": "2026-05-27T23:02:50",
+      "drifted": false
+    }
+  ],
+  "plan/wire-out-attributes.md": [
+    {
+      "id": "2d5b8c5efe",
+      "line": 17,
+      "text": "Created should skip I think, why is it usefull to receiver?",
+      "anchor": "| Property     | Today        | Proposal     | Rationale                                                                 |",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-27T23:05:34",
+      "drifted": false
+    },
+    {
+      "id": "c58d6761c9",
+      "line": 17,
+      "text": "Agree — receiver does't use it for verification (uses PublicKey + signature math) or trust (uses revocation/expiry, not creation). Changed to Skip (local).",
+      "anchor": "| Property     | Today        | Proposal     | Rationale                                                                 |",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "2d5b8c5efe",
+      "ts": "2026-05-27T23:11:50",
+      "drifted": false
+    },
+    {
+      "id": "d49ee071ea",
+      "line": 65,
+      "text": "RawSignature should be skipped",
+      "anchor": "| Property     | Today        | Proposal       | Rationale                                          |",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-27T23:06:44",
+      "drifted": false
+    },
+    {
+      "id": "7b0cdc2db9",
+      "line": 65,
+      "text": "Agree — RawSignature is local-only (parser cache for the unparsed bytes). Receiver gets the parsed Signature and verifies from that. Changed to Skip.",
+      "anchor": "| Property     | Today        | Proposal       | Rationale                                          |",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "d49ee071ea",
+      "ts": "2026-05-27T23:12:05",
+      "drifted": false
+    },
+    {
+      "id": "2f74da02bd",
+      "line": 65,
+      "text": "why does Data even have RawSignature, feel like something old. Signature class is responsible for Signature, that should be the only one",
+      "anchor": "| Property     | Today        | Proposal       | Rationale                                          |",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-27T23:13:11",
+      "drifted": false
+    },
+    {
+      "id": "d72d61937a",
+      "line": 65,
+      "text": "You're right — checked it. RawSignature is legacy from when Signature.get had a lazy-populate side effect (the docstring even says so: \"after stage 2a.7, ICallback is gone — no auto-populate on read\"). Now Signature.get just returns _signature; RawSignature is a duplicate accessor with no purpose. 4 callers in production C# (signing.verify Ed25519, actor/permission, plang serializer) can all migrate to Signature directly. Updated row to **Delete** rather than Skip — this is a cleanup, not just a wire-attribute decision. Could fold into stage 1 of this branch since we're touching Data anyway.",
+      "anchor": "| Property     | Today        | Proposal       | Rationale                                          |",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "2f74da02bd",
+      "ts": "2026-05-27T23:15:53",
+      "drifted": false
+    },
+    {
+      "id": "47ffe4292f",
+      "line": 65,
+      "text": "yes, lets cleanup",
+      "anchor": "| Property     | Today        | Proposal       | Rationale                                          |",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "d72d61937a",
+      "ts": "2026-05-27T23:16:38",
+      "drifted": false
+    },
+    {
+      "id": "701a5ab8bc",
+      "line": 106,
+      "text": "I think setting should all be skipped",
+      "anchor": "| Property | Today | Proposal | Rationale                              |",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-27T23:07:37",
+      "drifted": false
+    },
+    {
+      "id": "15960bf2a1",
+      "line": 106,
+      "text": "Agree — full skip for setting. Updated to mark both key and value as Skip, with a note that the future-state attribute (per-key sensitivity) is deferred and current rule is unconditional no-wire.",
+      "anchor": "| Property | Today | Proposal | Rationale                              |",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "701a5ab8bc",
+      "ts": "2026-05-27T23:12:05",
+      "drifted": false
+    },
+    {
+      "id": "cf46db66a5",
+      "line": 113,
+      "text": "Duration is more [Debug]? I know it doesn't exist, and maybe even when in debug mode we should serialize all properties on all objects (excluding settings). Settings will have some type of senstive to it in the future, but skip it fully for now",
+      "anchor": "| Property | Today | Proposal | Rationale                              |",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-27T23:09:59",
+      "drifted": true
+    },
+    {
+      "id": "6a540025db",
+      "line": 113,
+      "text": "Good call. Duration → [Debug] (observation, not response contract). Also added a new cross-cutting observation: **Debug view serializes everything except settings.** Captures the broader principle — [Debug] is the leak-everything diagnostic view, settings stay fully skipped even there until per-key sensitivity lands. Implication: we need [Debug] as a View mode (it's already in PLang/app/View.cs as View.Debug enum + [Debug] attribute), and the wire serializer picks Out by default, Debug when the channel is in diagnostic mode. That's a stage-1 wire-mode decision worth flagging — want me to spell out the View → channel-mode mapping somewhere?",
+      "anchor": "### 10. `app.http.Response.@this`",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "cf46db66a5",
+      "ts": "2026-05-27T23:12:05",
+      "drifted": false
+    },
+    {
+      "id": "443ad7c71e",
+      "line": 113,
+      "text": "but do we really need [debug], even though it exists, when I am debugging my app, I want everything",
+      "anchor": "### 10. `app.http.Response.@this`",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "6a540025db",
+      "ts": "2026-05-27T23:14:29",
+      "drifted": false
+    },
+    {
+      "id": "55e7de70e6",
+      "line": 113,
+      "text": "Agree — debug mode = dump everything, no per-property [Debug] tag needed. Simpler. Updated:\n\n- Duration changed from [Debug] to plain Skip (production wire skips it, debug mode picks it up automatically).\n- Rewrote cross-cutting observation 4: debug mode bypasses the [Out] whitelist entirely. Only persistent filters are [Sensitive] (always excluded) and settings (full type-level skip). No per-property [Debug] tag in the wire serializer.\n- The existing View.Debug enum + [Debug] attribute in PLang/app/View.cs stay — they're used by other views (LLM builder pipeline etc.), the wire serializer just doesn't consult them.",
+      "anchor": "### 10. `app.http.Response.@this`",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "443ad7c71e",
+      "ts": "2026-05-27T23:15:53",
+      "drifted": false
+    }
+  ]
+}

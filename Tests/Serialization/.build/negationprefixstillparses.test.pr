@@ -1,0 +1,133 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %payload% = \u0027leading-bang-still-binds\u0027",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "%!flag% (leading-! shape) must still parse as a single variable reference (Name=\u0022!flag\u0022),\nNOT be reinterpreted as a Property dereference of the form %x!key%. Coverage row 4.13.\nThe leading-! marker is the \u0022infrastructure\u0022 namespace prefix (%!data%, %!error%, \u2026);\nthe Stage-4 Property suffix only fires when the ! sits between a name and a key.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%payload%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "leading-bang-still-binds",
+              "type": "string"
+            },
+            {
+              "name": "Type",
+              "value": "string",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%payload%, Value=\u0022leading-bang-still-binds\u0022, Type=string)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %!flag% = \u0027sits-in-bang-namespace\u0027",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%!flag%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "sits-in-bang-namespace",
+              "type": "string"
+            },
+            {
+              "name": "Type",
+              "value": "string",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%!flag%, Value=\u0022sits-in-bang-namespace\u0022, Type=string)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %!flag% equals \u0027sits-in-bang-namespace\u0027",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "sits-in-bang-namespace",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%!flag%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022sits-in-bang-namespace\u0022, Actual=%!flag%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Serialization/NegationPrefixStillParses.test.goal",
+  "prPath": "/Serialization/.build/negationprefixstillparses.test.pr",
+  "hash": "2f6cc686daf1d30843a9b34129a92f44692e04916da7755fc0d7661ae4626f72",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

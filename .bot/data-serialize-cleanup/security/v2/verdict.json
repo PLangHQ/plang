@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "data-serialize-cleanup v2 — F1 fix landed and tested (defense-in-depth; mutation revealed STJ MaxDepth already protected the deserializer, so v1's HIGH was a false-positive). 3 Low/Info standing items unchanged."
+}

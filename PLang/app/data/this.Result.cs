@@ -29,12 +29,14 @@ public partial class @this
     public int ReturnDepth { get; set; } = 1;
 
     [JsonIgnore]
+    [Out, Store]
     public IError? Error { get; set; }
 
     [JsonIgnore]
     public List<Info>? Warnings { get; set; }
 
     [JsonIgnore]
+    [Out, Store]
     public bool Success => Error == null;
 
     public static implicit operator bool(@this d) => d.Success;

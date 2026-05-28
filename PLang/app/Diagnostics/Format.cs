@@ -56,7 +56,7 @@ public static class Format
 
     /// <summary>
     /// Direct access to the underlying JsonSerializerOptions for callers that need to
-    /// drive the serializer themselves (e.g. test-report envelope serialization). Prefer
+    /// drive the serializer themselves (e.g. test-report transport serialization). Prefer
     /// <see cref="Value"/> when the result is a single value.
     /// </summary>
     public static JsonSerializerOptions Options => DiagnosticOutput;

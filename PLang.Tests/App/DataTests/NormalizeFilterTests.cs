@@ -1,0 +1,107 @@
+using app.data;
+
+namespace PLang.Tests.App.DataTests;
+
+// data-normalize — Stage 2
+// Normalize consumes the new wire-view filter ([Out] as positive whitelist):
+//   - Only [Out] properties become children (production mode).
+//   - [Sensitive] is always excluded (wins over [Out]).
+//   - [Masked] includes the property name; value is "****" — getter is never invoked.
+//   - Child names lowercased.
+// Debug-mode behavior lives in DebugModeBypassTests.
+
+public class NormalizeFilterTests
+{
+    // A reflection-only fixture so we don't depend on a specific domain shape.
+    private sealed class Bag
+    {
+        [global::app.Out] public string? Public { get; set; }
+        public string? NotOut { get; set; }
+        [global::app.Out, global::app.Sensitive] public string? Secret { get; set; }
+        [global::app.Out, global::app.Masked] public string? Token { get; set; }
+        [global::app.Out] public string? MixedCaseName { get; set; }
+    }
+
+    private sealed class ThrowingGetter
+    {
+        public int Counter = 0;
+        [global::app.Out, global::app.Masked]
+        public string Bomb { get { Counter++; throw new System.InvalidOperationException("should never be read"); } }
+    }
+
+    [Test] public async Task Normalize_OmitsProperties_WithoutOutAttribute()
+    {
+        var bag = new Bag { Public = "p", NotOut = "n" };
+        var children = (List<Data>)new Data("", bag).Normalize()!;
+        await Assert.That(children.Any(c => c.Name == "public")).IsTrue();
+        await Assert.That(children.Any(c => c.Name == "notout")).IsFalse();
+    }
+
+    [Test] public async Task Normalize_OmitsSensitiveProperties_EvenWhenOutIsAlsoPresent()
+    {
+        var bag = new Bag { Secret = "x" };
+        var children = (List<Data>)new Data("", bag).Normalize()!;
+        await Assert.That(children.Any(c => c.Name == "secret")).IsFalse();
+    }
+
+    [Test] public async Task Normalize_MaskedProperty_NameTravels_ValueIsFourStars()
+    {
+        var bag = new Bag { Token = "real-token" };
+        var children = (List<Data>)new Data("", bag).Normalize()!;
+        var tok = children.First(c => c.Name == "token");
+        await Assert.That((string?)tok.Value).IsEqualTo("****");
+    }
+
+    [Test] public async Task Normalize_MaskedProperty_GetterIsNeverInvoked()
+    {
+        var t = new ThrowingGetter();
+        var children = (List<Data>)new Data("", t).Normalize()!;
+        await Assert.That(t.Counter).IsEqualTo(0).Because("Masked getter must not be read");
+        await Assert.That(children.First(c => c.Name == "bomb").Value).IsEqualTo("****");
+    }
+
+    [Test] public async Task Normalize_ChildNames_AreLowercased()
+    {
+        var bag = new Bag { MixedCaseName = "v" };
+        var children = (List<Data>)new Data("", bag).Normalize()!;
+        await Assert.That(children.Any(c => c.Name == "mixedcasename")).IsTrue();
+        await Assert.That(children.Any(c => c.Name == "MixedCaseName")).IsFalse();
+    }
+
+    [Test] public async Task Normalize_Identity_EmitsName_PublicKey_Only()
+    {
+        var identity = new global::app.modules.identity.Identity
+        {
+            Name = "alice",
+            PublicKey = "pk",
+            PrivateKey = "secret",
+            IsDefault = true,
+            IsArchived = false,
+        };
+        var children = (List<Data>)new Data("", identity).Normalize()!;
+        await Assert.That(children.Count).IsEqualTo(2);
+        await Assert.That(children.Any(c => c.Name == "name")).IsTrue();
+        await Assert.That(children.Any(c => c.Name == "publickey")).IsTrue();
+    }
+
+    [Test] public async Task Normalize_Path_EmitsScheme_Relative_Only_NoAbsolute()
+    {
+        // FilePath is the concrete impl; constructed without Context so derived
+        // properties fall back to raw/absolute. Wire-view filter still drops them.
+        global::app.types.path.@this path = "/foo/bar.txt";
+        var children = (List<Data>)new Data("", path).Normalize()!;
+        await Assert.That(children.Any(c => c.Name == "scheme")).IsTrue();
+        await Assert.That(children.Any(c => c.Name == "relative")).IsTrue();
+        await Assert.That(children.Any(c => c.Name == "absolute")).IsFalse();
+        await Assert.That(children.Any(c => c.Name == "extension")).IsFalse();
+        await Assert.That(children.Any(c => c.Name == "filename")).IsFalse();
+    }
+
+    [Test] public async Task Normalize_Setting_EmitsKey_AndValueMaskedFourStars()
+    {
+        var s = new global::app.modules.settings.types.setting { key = "API_KEY", value = "secret-token" };
+        var children = (List<Data>)new Data("", s).Normalize()!;
+        await Assert.That(children.First(c => c.Name == "key").Value).IsEqualTo("API_KEY");
+        await Assert.That(children.First(c => c.Name == "value").Value).IsEqualTo("****");
+    }
+}

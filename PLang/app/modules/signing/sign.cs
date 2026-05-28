@@ -16,7 +16,7 @@ public partial class sign : IContext
     /// <summary>Contracts for this signature. Default: ["C0"].</summary>
     public partial data.@this<List<string>>? Contracts { get; init; }
 
-    /// <summary>Optional headers to include in the signature envelope.</summary>
+    /// <summary>Optional headers to include in the signature object.</summary>
     public partial data.@this<Dictionary<string, object>>? Headers { get; init; }
 
     /// <summary>Optional TTL. If set, signature.Expires = Created + this duration.
