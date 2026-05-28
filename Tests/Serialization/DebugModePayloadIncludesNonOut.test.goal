@@ -1,0 +1,5 @@
+Start
+/ A goal that serializes a domain Data in debug mode through the channel. The payload
+/ contains properties that lack [Out] (e.g. http.Response.Duration). [Sensitive] is still
+/ absent. [Masked] values are still "****". Confirms debug-mode bypass at the developer surface.
+- throw "not implemented"

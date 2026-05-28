@@ -1,0 +1,6 @@
+Start
+/ A goal that signs a Data, serializes through the channel, deserializes on the receiver,
+/ and verifies the signature — exercises the post-RawSignature-deletion path end-to-end.
+/ Confirms the four caller-site migrations (Ed25519 ×2, actor/permission ×2, plang serializer ×2,
+/ wire converter ×3) didn't break the developer-visible signing surface.
+- throw "not implemented"

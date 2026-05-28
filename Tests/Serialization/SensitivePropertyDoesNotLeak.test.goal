@@ -1,0 +1,5 @@
+Start
+/ A goal that round-trips a Data containing a [Sensitive] property (Identity.PrivateKey)
+/ through the channel. The serialized bytes never contain the secret. Confirms that the
+/ wire-view filter honors [Sensitive] in production mode.
+- throw "not implemented"

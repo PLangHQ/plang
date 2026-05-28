@@ -1,0 +1,5 @@
+Start
+/ A goal that serializes a setting{ key, value } through the channel. On the wire, key is
+/ visible and value is the literal string "****" — never the configured secret. Receiver
+/ knows the setting EXISTS without ever seeing what it holds.
+- throw "not implemented"

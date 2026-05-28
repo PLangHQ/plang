@@ -21,13 +21,111 @@
           "type": "create",
           "category": "doc",
           "confidence": "medium",
-          "context": "Initial plan and summary. Plan captures the structural normalization design: Value contract tightening, Normalize sketch, bare-when-possible wire shape, format-agnostic encoder protocol, As<T> as tree-walker, rough five-stage outline. Stages not yet carved into individual files — that happens when work starts."
+          "context": "Initial plan and summary. Plan captures the structural normalization design: Value contract tightening, Normalize sketch, bare-when-possible wire shape, format-agnostic encoder protocol, As<T> as tree-walker, rough five-stage outline. Stages not yet carved into individual files \u2014 that happens when work starts."
         }
       ],
       "after": {
         "status": "Branch created as placeholder. Plan captures the design direction. Stages pending real work session.",
-        "health": "Depends on data-serialize-cleanup landing first. No immediate action — branch sits until cleanup merges.",
+        "health": "Depends on data-serialize-cleanup landing first. No immediate action \u2014 branch sits until cleanup merges.",
         "notes": "Open design questions: eager vs lazy normalize (recommendation: lazy first); cycle detection mechanism; custom serialization extension surface (IDataNormalizable?); wire-attribute reuse of [Out] vs new [WireIgnore]; choice of protobuf library for proof stage."
+      }
+    },
+    {
+      "id": "85767e5e-ff14-496d-be0e-37e92e1118d8",
+      "bot": "test-designer",
+      "timestamp_start": "2026-05-28T10:18:08.770700Z",
+      "intent": "Write failing-test contract for data-normalize: [Out] discipline, Normalize+IWriter+JsonWriter, As<T> tree-walker.",
+      "before": {
+        "assumptions": "Architect plan settled in 3 stages with comprehensive coverage matrix; building on data-serialize-cleanup which has merged. WireJsonConverter is the single wire writer; [Out] becomes positive whitelist in Stage 2; [Masked] attribute is new; RawSignature deletion is mechanical.",
+        "risk": "Coverage matrix has ~50 rows across three stages plus three integration cuts; risk is over-stubbing tests for behaviors that better fit existing test files. Will prune redundancies and group by concept (Stage 1 attribute placement, Normalize tree shapes, IWriter contract, As<T> reconstruction, integration cuts, failure matrix) rather than echoing architect rows 1:1."
+      },
+      "actions": [
+        {
+          "paths": [
+            ".bot/data-normalize/test-designer/v1/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plan covers 5 batches grouped by concept (not by stage): Stage 1 attributes, Normalize core, IWriter+JsonWriter+Debug, As<T>, integration+failure+goals."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Serialization/OutAttributeInventoryTests.cs",
+            "PLang.Tests/App/Serialization/RawSignatureDeletionTests.cs",
+            "PLang.Tests/App/Serialization/MaskedAttributeTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Batch 1 \u2014 Stage 1 surface. Per-type [Out] inventory (13 types), RawSignature deletion verified via reflection over Data + string-scan over 3 caller files, new [Masked] attribute existence + setting.value tagging."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/DataTests/NormalizeTreeShapeTests.cs",
+            "PLang.Tests/App/DataTests/NormalizeFilterTests.cs",
+            "PLang.Tests/App/DataTests/NormalizeCycleAndDepthTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Batch 2 \u2014 Normalize core. Tree shape per input (primitives, lists homogeneous/heterogeneous, dicts, domain objects, idempotence, cache). Filter behavior ([Out]/[Sensitive]/[Masked], lowercased names). Cycle + depth + getter-throws."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Serialization/IWriterContractTests.cs",
+            "PLang.Tests/App/Serialization/JsonWriterDomainShapeTests.cs",
+            "PLang.Tests/App/Serialization/DebugModeBypassTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Batch 3 \u2014 wire emission. IWriter interface surface + JsonWriter per-method bytes. Domain-shape output (path, Identity, setting, list, http.Response). Debug vs Out filter toggle."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/DataTests/AsTreeWalkerTests.cs",
+            "PLang.Tests/App/DataTests/AsReconstructionHookTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Batch 4 \u2014 As<T> reverse direction. Generic property-bag reconstruction (primitives, lists, dicts, records). Per-type hook dispatch for path.Resolve. Negative paths (scheme mismatch, missing required, type mismatch)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Serialization/IntegrationCuts/Cut1_JsonRoundTripTests.cs",
+            "PLang.Tests/App/Serialization/IntegrationCuts/Cut2_DebugModeTests.cs",
+            "PLang.Tests/App/Serialization/IntegrationCuts/Cut3_SignWireVerifyTests.cs",
+            "PLang.Tests/App/Serialization/FailureMatrixNormalizeTests.cs",
+            "Tests/Serialization/PathRoundTripAfterNormalize.test.goal",
+            "Tests/Serialization/SensitivePropertyDoesNotLeak.test.goal",
+            "Tests/Serialization/MaskedSettingOnWire.test.goal",
+            "Tests/Serialization/DebugModePayloadIncludesNonOut.test.goal",
+            "Tests/Signing/RoundTripAfterRawSignatureDeletion.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Batch 5 \u2014 three integration cuts (JSON round-trip parity, debug-mode bypass, sign\u2192wire\u2192verify), the failure-matrix residue file, and 5 PLang goal files for developer-visible surfaces."
+        },
+        {
+          "paths": [
+            ".bot/data-normalize/test-designer/summary.md",
+            ".bot/data-normalize/test-designer/v1/verdict.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session finalization. verdict.json = pass:true."
+        }
+      ],
+      "plan": ".bot/data-normalize/test-designer/v1/plan.md",
+      "timestamp_end": "2026-05-28T10:28:59.987637Z",
+      "after": {
+        "status": "v1 failing-test contract written. 15 C# files + 5 .goal files. ~120 stubs total. Every body is Assert.Fail / throw \"not implemented\".",
+        "health": "Ready for coder. Tests describe the contract; coder turns stubs into real assertions as Stages 1-3 land.",
+        "notes": "Grouped by concept rather than stage; pruned redundant matrix rows; one goal per .goal file per memory rule."
       }
     }
   ]
