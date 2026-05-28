@@ -1,0 +1,10 @@
+Start
+/ Creates an identity, signs a Data with it, verifies. End-to-end signing surface.
+/ The cross-actor wire never carries PrivateKey ([Sensitive] excluded from View.Out) —
+/ covered by C# WireOutput_Identity_*. This goal is the in-process happy-path companion.
+- archive identity 'leakProbe', force, on error ignore
+- create identity leakProbe
+- set %data% = { "payload": "leak-probe" }
+- sign %data%
+- verify %data%, write to %verifyResult%
+- assert %verifyResult.Success% is true, "signing surface intact"

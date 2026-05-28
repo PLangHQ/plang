@@ -23,11 +23,6 @@
               "name": "Value",
               "value": "big",
               "type": "string"
-            },
-            {
-              "name": "Type",
-              "value": "string",
-              "type": "string"
             }
           ],
           "defaults": [
@@ -41,10 +36,7 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": "variable.set(Name=%label%, Value=\u0022big\u0022, Type=string)",
+      "formal": "variable.set(Name=%label%, Value=\u0022big\u0022)",
       "source": null,
       "waitForExecution": true
     }

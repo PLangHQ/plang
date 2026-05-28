@@ -182,8 +182,17 @@ public partial class @this
     // can override via `new Data<T>(...) { Properties = source.Properties }` and have the
     // initializer win — assignments in the object initializer fire AFTER field initializers
     // AND after the constructor body.
+    //
+    // [Out, Store] on this and the other envelope properties (Value, Type, Error,
+    // Success, Signature) is documentation, not active filtering. Wire writes the
+    // canonical {name, type, value, properties, signature} envelope by hand and
+    // never consults Tagged for the Data type itself — Normalize's nested-Data
+    // branch (this.Normalize.cs) short-circuits before NormalizeObject runs on
+    // a Data. The tags advertise the intended wire shape; the actual wire
+    // emission lives in Wire.Write.
     [JsonIgnore]
     [LlmIgnore]
+    [Out, Store]
     public Properties Properties { get; set; } = new();
 
     [JsonConstructor]
@@ -202,6 +211,7 @@ public partial class @this
     }
 
     [JsonPropertyName("value")]
+    [Out, Store]
     public virtual object? Value
     {
         get
@@ -272,6 +282,7 @@ public partial class @this
     [JsonPropertyName("type")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [JsonConverter(typeof(global::app.data.Json))]
+    [Out, Store]
     public type? Type
     {
         get

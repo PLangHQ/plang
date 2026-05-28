@@ -26,7 +26,7 @@ public class CanonicalizationTests
         var data = new global::app.data.@this("greeting", "hello") { Context = app.User.Context };
 
         byte[] wireBytesWithoutOuterSig;
-        using (global::app.data.WireJsonConverter.MarkOuterForHash(data))
+        using (global::app.data.Wire.MarkOuterForHash(data))
         {
             wireBytesWithoutOuterSig = JsonSerializer.SerializeToUtf8Bytes(data, plang.OutboundOptions);
         }
@@ -53,7 +53,7 @@ public class CanonicalizationTests
         var data = new global::app.data.@this("x", "y") { Context = app.User.Context };
 
         byte[] hashInputBytes;
-        using (global::app.data.WireJsonConverter.MarkOuterForHash(data))
+        using (global::app.data.Wire.MarkOuterForHash(data))
         {
             hashInputBytes = JsonSerializer.SerializeToUtf8Bytes(data, plang.OutboundOptions);
         }
@@ -74,8 +74,8 @@ public class CanonicalizationTests
         var outer = new global::app.data.@this("outer", inner) { Context = app.User.Context };
 
         var json = plang.Serialize(outer).Value!;
-        await Assert.That(inner.RawSignature).IsNotNull();
-        await Assert.That(outer.RawSignature).IsNotNull();
+        await Assert.That(inner.Signature).IsNotNull();
+        await Assert.That(outer.Signature).IsNotNull();
 
         // Tamper inner value byte on the wire by flipping the secret literal.
         // (Base64 sig values get \u-escaped for + and /, which makes raw-string
@@ -96,6 +96,62 @@ public class CanonicalizationTests
 
         await Assert.That(verifyResult.Success).IsFalse()
             .Because("Tampering inner signature must invalidate outer verification.");
+    }
+
+    [Test] public async Task StoreView_PropagatesIntoInnerDataProperties_NotHardcodedToOut()
+    {
+        // M2 second site: json.Writer.EndRecord normalizes inner-Data Properties
+        // for inline emission. If it hard-codes View.Out, view-sensitive
+        // content reachable through inner Properties gets the wrong filter
+        // applied even though the outer Wire is running in Store mode.
+        //
+        // Properties' value-shape gate is shallow (collections pass through
+        // unvalidated), so an inner Identity reachable via a list inside
+        // Properties exercises the view-pass-through without violating the
+        // direct-domain-object gate.
+        await using var app = NewSignedApp();
+        var inner = new global::app.data.@this("inner", "v") { Context = app.User.Context };
+        inner.Properties["meta"] = new List<object>
+        {
+            new global::app.modules.identity.Identity
+            {
+                Name = "alice",
+                PublicKey = "pk",
+                PrivateKey = "PRIV-must-persist",   // [Sensitive] — Store keeps, Out excludes
+            }
+        };
+        var outer = new global::app.data.@this("outer", inner) { Context = app.User.Context };
+
+        var plang = (global::app.channels.serializers.serializer.plang.@this)
+            app.User.Channels.Serializers.GetByMimeType("application/plang");
+
+        var outBytes = plang.Serialize(outer).Value!;
+        await Assert.That(outBytes).DoesNotContain("PRIV-must-persist")
+            .Because("Out view excludes [Sensitive] — the secret never reaches the wire.");
+
+        var storeBytes = plang.Store(outer).Value!;
+        await Assert.That(storeBytes).Contains("PRIV-must-persist")
+            .Because("Store view includes [Sensitive] — the secret must persist locally so signing keeps working on re-read.");
+    }
+
+    [Test] public async Task EnsureInnerSigned_RecursesIntoDictionaryValues()
+    {
+        // IDictionary's IEnumerable yields DictionaryEntry boxes, not values.
+        // Without an explicit dict branch in Wire.EnsureInnerSigned, an inner
+        // Data held as a dictionary value ships unsigned even though the outer
+        // Wire walk visited the dict.
+        await using var app = NewSignedApp();
+        var inner = new global::app.data.@this("inner", "secret") { Context = app.User.Context };
+        var dict = new Dictionary<string, object?> { ["payload"] = inner };
+        var outer = new global::app.data.@this("outer", dict) { Context = app.User.Context };
+
+        var plang = (global::app.channels.serializers.serializer.plang.@this)
+            app.User.Channels.Serializers.GetByMimeType("application/plang");
+        var json = plang.Serialize(outer).Value!;
+
+        await Assert.That(inner.Signature).IsNotNull()
+            .Because("Wire.EnsureInnerSigned must reach Datas held as dict values, not just list elements.");
+        await Assert.That(outer.Signature).IsNotNull();
     }
 
     private static string FlipChar(string s)

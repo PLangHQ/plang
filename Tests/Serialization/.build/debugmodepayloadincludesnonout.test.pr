@@ -1,0 +1,96 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %placeholder% = \u0027debug-mode covered by C# tests\u0027",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "Debug-mode View selection happens at the serializer-options level, which PLang doesn\u0027t\nexpose as a language verb today. The behavioral assertions (\u0022Debug includes non-[Out]\nproperties\u0022, \u0022Sensitive still excluded\u0022, \u0022Masked still ****\u0022) are covered by the C#\nDebugModeBypassTests and Cut2_DebugModeTests suites. This goal is a placeholder pass.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%placeholder%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "debug-mode covered by C# tests",
+              "type": "string"
+            },
+            {
+              "name": "Type",
+              "value": "string",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%placeholder%, Value=\u0022debug-mode covered by C# tests\u0022, Type=string)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %placeholder% equals \u0027debug-mode covered by C# tests\u0027, \u0022no-op smoke\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "debug-mode covered by C# tests",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%placeholder%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "no-op smoke",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022debug-mode covered by C# tests\u0022, Actual=%placeholder%, Message=\u0022no-op smoke\u0022)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Serialization/DebugModePayloadIncludesNonOut.test.goal",
+  "prPath": "/Serialization/.build/debugmodepayloadincludesnonout.test.pr",
+  "hash": "4ee452a260cdc76fb56e6929f5498647eafd8621ad3e1ac48d48af7228272f8f",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

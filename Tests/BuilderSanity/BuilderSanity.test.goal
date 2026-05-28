@@ -4,7 +4,7 @@ Start
 / Run via `plang '--build={"files":["BuilderSanity/BuilderSanity.test.goal","BuilderSanity/AddItem.goal","BuilderSanity/MarkBig.goal","BuilderSanity/Finalize.goal"],"cache":false}'`
 / from the Tests/ directory before trusting `plang --test` results.
 - set %total% = 0
-- set %items% = '[1, 2, 3]'
+- set %items% = [1, 2, 3]
 - foreach %items%, call AddItem item=%item%
 - if %total% is greater than 5, call MarkBig
 - call Finalize

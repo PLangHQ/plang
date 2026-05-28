@@ -1,0 +1,42 @@
+{
+  "analyst": "security",
+  "branch": "data-normalize",
+  "timestamp": "2026-05-28T17:35:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "data-normalize",
+      "exposure": "Reflection-at-boundary walking arbitrary CLR objects into the uniform tree.",
+      "trust_boundary": "Outbound wire crossing — Normalize fires on whatever a handler put into Data.Value.",
+      "mitigations": ["MaxNormalizeDepth=128", "ReferenceEqualityComparer cycle set", "Tagged.PropertiesFor per-(type,mode) cache", "[Masked] never invokes getter", "getter-throw wrapped as NormalizeGetterThrew"],
+      "gaps": []
+    },
+    {
+      "area": "data-reconstruct",
+      "exposure": "Generic Walk<T> tree-walker reflecting on caller-supplied T to rehydrate domain types.",
+      "trust_boundary": "Inbound wire data has already passed Wire.Read (depth-capped). T is caller-controlled, not wire-controlled.",
+      "mitigations": ["MaxReadDepth=64 on Wire.Read bounds the tree size", "FromNormalized hook + path.Resolve canonicalisation via AuthGate"],
+      "gaps": ["Walk itself has no internal depth cap — relies on Wire.Read for untrusted input. Acceptable today; flagged if a future inbound path bypasses Wire."]
+    },
+    {
+      "area": "tagged-filter",
+      "exposure": "Per-type per-view property whitelist driving every wire emission.",
+      "trust_boundary": "Outbound Out view is what crosses to receivers.",
+      "mitigations": ["Out/Store/Sensitive/Masked attribute matrix", "json.Writer fail-closed default on unknown leaf type"],
+      "gaps": ["Transparent fallback ships all public props for types with zero of the four tags — intentional, but a latent footgun for future domain types."]
+    },
+    {
+      "area": "wire-read",
+      "exposure": "Pre-auth deserialiser; first contact with untrusted bytes.",
+      "trust_boundary": "Any channel that hands bytes to plang serializer's Deserialize.",
+      "mitigations": ["MaxReadDepth=64 cumulative across LiftDataIfShaped restart", "Properties sidecar restricted to JSON primitives via ReadPropertyPrimitive", "signature deserialises into a fixed-shape record, no polymorphism"],
+      "gaps": []
+    }
+  ],
+  "findings": [],
+  "summary": "data-normalize lands structural normalisation cleanly. Both recursive new files (Normalize, Reconstruct.Walk) live behind bounded trust gates (own 128-depth cap; inherited 64-depth cap respectively). json.Writer's fail-closed default forecloses the STJ-reflection bypass that the OBP refactor was designed to eliminate. Attribute migrations on Identity/setting/Variable/path/http.Response are surgical; sqlite correctly switched to Store view. No critical/high findings open. Two design-aware notes captured (Tagged transparent fallback, BuilderPlannerFailed plan-dump baseline match).",
+  "security_comment": {
+    "codeanalyzer_v3": "Re-verified V1 close — json.Writer constructor threads _view, EndRecord uses it, CanonicalizationTests:101 fixture exercises Store-mode preservation of [Sensitive] PrivateKey. Clean.",
+    "tester_v4": "Relied on for baseline test counts and BuilderSanity determinism check."
+  }
+}

@@ -10,7 +10,7 @@ namespace app.channels.serializers.serializer.plang;
 /// <para>
 /// Composes its STJ options from a fresh base (camelCase + null-skip), then adds
 /// the path converter (Context-bound when available), the
-/// <see cref="global::app.data.WireJsonConverter"/> (sign-if-missing during the
+/// <see cref="global::app.data.Wire"/> (sign-if-missing during the
 /// walk + canonical four-field shape), and
 /// <see cref="global::app.channels.serializers.filters.Transport.ForOutbound"/>
 /// (re-includes [Out] properties like Signature).
@@ -40,6 +40,7 @@ public sealed class @this : ISerializer
 
     private readonly JsonSerializerOptions _outbound;
     private readonly JsonSerializerOptions _inbound;
+    private readonly JsonSerializerOptions _store;
 
     public @this() : this(null) { }
 
@@ -49,7 +50,27 @@ public sealed class @this : ISerializer
             ? new global::app.types.path.JsonConverter(context)
             : new global::app.types.path.JsonConverter();
 
-        _outbound = new JsonSerializerOptions
+        _outbound = BuildOptions(
+            new global::app.data.Wire(global::app.View.Out),
+            pathConverter,
+            global::app.channels.serializers.filters.Transport.ForOutbound);
+
+        _inbound = BuildOptions(
+            new global::app.data.Wire(global::app.View.Out),
+            pathConverter,
+            global::app.channels.serializers.filters.Transport.ForInbound);
+
+        _store = BuildOptions(
+            new global::app.data.Wire(global::app.View.Store),
+            pathConverter,
+            global::app.channels.serializers.filters.Transport.ForOutbound);
+    }
+
+    private static JsonSerializerOptions BuildOptions(
+        global::app.data.Wire wire,
+        global::app.types.path.JsonConverter pathConverter,
+        System.Action<JsonTypeInfo> modifier)
+        => new()
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             PropertyNameCaseInsensitive = true,
@@ -58,32 +79,14 @@ public sealed class @this : ISerializer
             Converters =
             {
                 new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
-                new global::app.data.WireJsonConverter(),
+                wire,
                 pathConverter,
             },
             TypeInfoResolver = new DefaultJsonTypeInfoResolver
             {
-                Modifiers = { global::app.channels.serializers.filters.Transport.ForOutbound }
+                Modifiers = { modifier }
             }
         };
-
-        _inbound = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            PropertyNameCaseInsensitive = true,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            Converters =
-            {
-                new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
-                new global::app.data.WireJsonConverter(),
-                pathConverter,
-            },
-            TypeInfoResolver = new DefaultJsonTypeInfoResolver
-            {
-                Modifiers = { global::app.channels.serializers.filters.Transport.ForInbound }
-            }
-        };
-    }
 
     /// <summary>
     /// Raw outbound options — exposed for canonicalization (crypto.Hash) so the
@@ -154,6 +157,67 @@ public sealed class @this : ISerializer
         {
             return global::app.data.@this<string>.FromError(new errors.ServiceError(
                 $"Plang serialize failed: {ex.Message}", "PlangSerializeError", 400) { Exception = ex });
+        }
+    }
+
+    /// <summary>
+    /// Serialize for local persistence (sqlite settings / identity / permission
+    /// store). Uses the <see cref="global::app.View.Store"/>-bound
+    /// <see cref="global::app.data.Wire"/> so every
+    /// <c>[Store]</c>-tagged property — including <c>[Sensitive]</c> ones
+    /// like <c>Identity.PrivateKey</c> — round-trips. No observer on the
+    /// local persistence path, so <c>[Masked]</c> is ignored too.
+    /// </summary>
+    public global::app.data.@this<string> Store(global::app.data.@this data)
+    {
+        try
+        {
+            return global::app.data.@this<string>.Ok(JsonSerializer.Serialize(data, _store));
+        }
+        catch (Exception ex) when (ex is JsonException or NotSupportedException)
+        {
+            return global::app.data.@this<string>.FromError(new errors.ServiceError(
+                $"Plang Store failed: {ex.Message}", "PlangSerializeError", 400) { Exception = ex });
+        }
+    }
+
+    /// <summary>
+    /// Deserialize from local persistence (sqlite). Symmetric to
+    /// <see cref="Store"/>; reads through the Store-view options so any
+    /// [Store]-only property (re-)hydrates on the inbound side.
+    /// </summary>
+    public global::app.data.@this<global::app.data.@this> Load(string s)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(s) || s == "null")
+                return global::app.data.@this<global::app.data.@this>.Ok(default!);
+            return global::app.data.@this<global::app.data.@this>.Ok(
+                JsonSerializer.Deserialize<global::app.data.@this>(s, _store)!);
+        }
+        catch (Exception ex) when (ex is JsonException or NotSupportedException)
+        {
+            return global::app.data.@this<global::app.data.@this>.FromError(new errors.ServiceError(
+                $"Plang Load failed: {ex.Message}", "PlangDeserializeError", 400) { Exception = ex });
+        }
+    }
+
+    /// <summary>
+    /// Typed load — symmetric to <see cref="Load(string)"/> when the caller
+    /// knows the wrapped type (e.g. <c>Load&lt;Identity&gt;</c> from the
+    /// identity table). [Store]-only properties hydrate on the inbound side.
+    /// </summary>
+    public global::app.data.@this<T> Load<T>(string s)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(s) || s == "null") return global::app.data.@this<T>.Ok(default!);
+            return global::app.data.@this<T>.Ok(JsonSerializer.Deserialize<T>(s, _store)!);
+        }
+        catch (Exception ex) when (ex is JsonException or NotSupportedException)
+        {
+            return global::app.data.@this<T>.FromError(new errors.ServiceError(
+                $"Plang Load failed: {ex.Message}", "PlangDeserializeError", 400) { Exception = ex });
         }
     }
 

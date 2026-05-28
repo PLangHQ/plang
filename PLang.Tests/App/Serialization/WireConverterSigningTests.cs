@@ -17,11 +17,11 @@ public class WireConverterSigningTests
             app.User.Channels.Serializers.GetByMimeType("application/plang");
 
         var data = new global::app.data.@this("greeting", "hello") { Context = app.User.Context };
-        await Assert.That(data.RawSignature).IsNull();
+        await Assert.That(data.Signature).IsNull();
 
         var json = plang.Serialize(data).Value!;
 
-        await Assert.That(data.RawSignature).IsNotNull().Because("Converter must EnsureSigned before emit");
+        await Assert.That(data.Signature).IsNotNull().Because("Converter must EnsureSigned before emit");
         await Assert.That(json).Contains("\"signature\"");
     }
 
@@ -33,10 +33,10 @@ public class WireConverterSigningTests
 
         var data = new global::app.data.@this("x", "y") { Context = app.User.Context };
         data.EnsureSigned();
-        var firstSigBytes = data.RawSignature!.Value;
+        var firstSigBytes = data.Signature!.Value;
 
         plang.Serialize(data);
-        var secondSigBytes = data.RawSignature!.Value;
+        var secondSigBytes = data.Signature!.Value;
 
         await Assert.That(secondSigBytes).IsEqualTo(firstSigBytes);
     }
@@ -46,9 +46,9 @@ public class WireConverterSigningTests
         await using var app = NewSignedApp();
         var data = new global::app.data.@this("x", "y") { Context = app.User.Context };
         data.EnsureSigned();
-        var sig = data.RawSignature;
+        var sig = data.Signature;
         data.EnsureSigned();
-        await Assert.That(ReferenceEquals(sig, data.RawSignature)).IsTrue()
+        await Assert.That(ReferenceEquals(sig, data.Signature)).IsTrue()
             .Because("EnsureSigned is idempotent — second call is a no-op when Signature is already set.");
     }
 
@@ -71,11 +71,11 @@ public class WireConverterSigningTests
 
         var json = plang.Serialize(outer).Value!;
 
-        await Assert.That(inner1.RawSignature).IsNotNull();
-        await Assert.That(inner2.RawSignature).IsNotNull();
-        await Assert.That(outer.RawSignature).IsNotNull();
-        await Assert.That(JsonContains(json, inner1.RawSignature!.Value!)).IsTrue();
-        await Assert.That(JsonContains(json, inner2.RawSignature!.Value!)).IsTrue();
+        await Assert.That(inner1.Signature).IsNotNull();
+        await Assert.That(inner2.Signature).IsNotNull();
+        await Assert.That(outer.Signature).IsNotNull();
+        await Assert.That(JsonContains(json, inner1.Signature!.Value!)).IsTrue();
+        await Assert.That(JsonContains(json, inner2.Signature!.Value!)).IsTrue();
     }
 
     // STJ escapes `+` and `/` as + / / in default options — flatten both
@@ -97,7 +97,7 @@ public class WireConverterSigningTests
         var json = plang.Serialize(data).Value!;
         await Assert.That(json).Contains("after");
         await Assert.That(json).DoesNotContain("before");
-        await Assert.That(data.RawSignature).IsNotNull();
+        await Assert.That(data.Signature).IsNotNull();
     }
 
     [Test] public async Task ApplicationPlang_Read_PopulatesSignature_WithoutAutoVerify()
@@ -113,7 +113,7 @@ public class WireConverterSigningTests
         await Assert.That(back.Success).IsTrue();
         var roundTripped = back.Value as global::app.data.@this;
         await Assert.That(roundTripped).IsNotNull();
-        await Assert.That(roundTripped!.RawSignature).IsNotNull()
+        await Assert.That(roundTripped!.Signature).IsNotNull()
             .Because("Read reconstructs Signature into the Data, populated-but-unverified.");
     }
 

@@ -91,7 +91,7 @@ public sealed class @this
 
         // Heuristic for "persisted": signature present. In-memory grants come
         // in unsigned ("y" branch in Path.Authorize doesn't call EnsureSigned).
-        if (signed.RawSignature != null)
+        if (signed.Signature != null)
         {
             await _actor.App.SettingsStore.Set(PermissionTable, key, signed);
             return;
@@ -136,7 +136,7 @@ public sealed class @this
         if (!grant.Covers(request)) return false;
 
         // Signature check (cached per-Data via Properties).
-        if (grantData.RawSignature == null) return true; // in-memory unsigned grant
+        if (grantData.Signature == null) return true; // in-memory unsigned grant
         if (grantData.Properties[VerifiedFlag] is bool b) return b;
 
         var verified = await VerifySignature(grantData);

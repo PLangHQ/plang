@@ -62,10 +62,10 @@ public class Ed25519 : ISigning
 
     public virtual async Task<data.@this<bool>> VerifyAsync(verify action)
     {
-        if (action.Data?.RawSignature == null)
+        if (action.Data?.Signature == null)
             return global::app.data.@this<bool>.FromError(new ActionError("Data has no signature", "NoSignature", 400));
 
-        var signedData = action.Data.RawSignature;
+        var signedData = action.Data.Signature;
         var app = action.Context.App;
         var now = (DateTimeOffset)action.Context.Variables.GetValue("NowUtc")!;
         var signingSettings = app.Config.For<Config>(action.Context);

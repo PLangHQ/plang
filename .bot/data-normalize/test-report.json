@@ -1,0 +1,32 @@
+{
+  "tester": "tester",
+  "branch": "data-normalize",
+  "timestamp": "2026-05-28T17:18:00Z",
+  "tested_version": "v4",
+  "test_run": {
+    "csharp": { "total": 3381, "passed": 3381, "failed": 0, "skipped": 0 },
+    "plang": { "total": 233, "passed": 233, "failed": 0, "skipped": 0 }
+  },
+  "robustness": {
+    "builder_sanity_rebuilds": 3,
+    "pr_hash_stable": true,
+    "pr_md5": "0d66eb02b8f30b03461a128a69a96218",
+    "all_runs_passed": true,
+    "note": "Coder v4 rewrote Tests/BuilderSanity/BuilderSanity.test.goal:7 to use unquoted list literal [1, 2, 3] (was quoted '[1, 2, 3]'). With the unquoted form the builder's LLM has no degree of freedom — three cache=false rebuilds produced byte-identical .pr files and the test passed each time. The non-determinism that bit me in v3 is gone."
+  },
+  "v1_fixture_remutation": {
+    "site": "PLang/app/channels/serializers/json/writer.cs:87",
+    "test": "PLang.Tests/App/Serialization/CanonicalizationTests.cs:101 StoreView_PropagatesIntoInnerDataProperties_NotHardcodedToOut",
+    "mutation": "_view → app.View.Out in EndRecord NormalizeValue call",
+    "result": "test failed at Store assertion as expected — fixture still catches the regression under v4 rebuild",
+    "reverted": true
+  },
+  "v3_misattribution": {
+    "what_happened": "v3 ran `plang build /BuilderSanity --cache=false` as a builder-validation step before `plang --test`. The LLM rebuild produced a .pr where %items% = '[1, 2, 3]' came out as a string literal, not a list. plang --test then ran against the locally-modified .pr, foreach yielded the whole string once, math.add threw FormatException. v3 committed only .bot/ so the bad .pr never reached origin, but issued a FAIL verdict attributing the failure to the branch.",
+    "actually_caused_by": "tester procedure, not branch",
+    "lesson_saved": "/memory/feedback_builder_check_not_on_graded_fixture.md"
+  },
+  "findings": [],
+  "verdict": "approved",
+  "summary": "All clear. Both suites green; the list-literal rewrite of BuilderSanity is deterministic across builder reruns; the V1 fixture for the json.Writer view-threading still mutation-catches; coder v4 wrote the missing baseline-tests.md. v3 FAIL verdict was tester procedural — my own builder rebuild on a graded fixture produced a bad .pr. Memory updated."
+}

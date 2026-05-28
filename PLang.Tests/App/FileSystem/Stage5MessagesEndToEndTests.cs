@@ -80,7 +80,7 @@ public class Stage5MessagesEndToEndTests
         // Grant landed and is signed (persisted).
         var found = await app.User.Permission.Find(path, new Verb { Read = new Read() });
         await Assert.That(found).IsNotNull();
-        await Assert.That(found!.RawSignature).IsNotNull();
+        await Assert.That(found!.Signature).IsNotNull();
     }
 
     [Test] public async Task Scenario3_ImmediateRereadSkipsPrompt_FindCoversNoAsk()
