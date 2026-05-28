@@ -167,7 +167,8 @@ Data
 ├── Result helpers            (this.Result.cs)
 ├── Snapshot                  (this.Snapshot.cs — capture/restore for the snapshot system)
 ├── Properties sidecar        (Properties.cs — IDictionary<string,object?>, primitive-only)
-├── Wire converter            (WireJsonConverter.cs — {name,type,value,properties,signature})
+├── Normalize / Reconstruct   (this.Normalize.cs / this.Reconstruct.cs — uniform tree-walk)
+├── Wire converter            (Wire.cs — {name,type,value,properties,signature}; renamed from WireJsonConverter)
 └── Code-specific             (app/data/code/)
 ```
 

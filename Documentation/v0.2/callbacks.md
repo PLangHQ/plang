@@ -74,7 +74,7 @@ The merged `application/plang` serializer composes `Sensitive.Strip` onto its ST
 
 ## Sign-if-missing — the converter does it
 
-There is no `ICallback` carve-out anymore. As of `data-serialize-cleanup` (Stage 2), signing happens inside `app.data.WireJsonConverter.Write` — for every Data the converter walks. The rule is sign-if-missing, idempotent: if `data.Signature` is null, `data.EnsureSigned()` fires before the bytes are emitted; if it's already populated (because the Data was deserialised from a signed wire payload, or because some prior path signed it), the converter skips. Forwarding preserves provenance — Alice's signed `D1` wrapped in Bob's `D3` round-trips with both signatures intact.
+There is no `ICallback` carve-out anymore. As of `data-serialize-cleanup` (Stage 2), signing happens inside `app.data.Wire.Write` (the class was named `WireJsonConverter` until `data-normalize` renamed it to `Wire`) — for every Data the converter walks. The rule is sign-if-missing, idempotent: if `data.Signature` is null, `data.EnsureSigned()` fires before the bytes are emitted; if it's already populated (because the Data was deserialised from a signed wire payload, or because some prior path signed it), the converter skips. Forwarding preserves provenance — Alice's signed `D1` wrapped in Bob's `D3` round-trips with both signatures intact.
 
 Three consequences fall out for callbacks:
 
@@ -86,8 +86,8 @@ Three consequences fall out for callbacks:
 
 `application/plang` is the single wire serializer for the full Data shape. The historical `application/plang+data` mimetype was merged into it on `data-serialize-cleanup` — the `+data` variant and the `PlangDataSerializer` class no longer exist.
 
-- The serializer (`app/channels/serializers/serializer/plang/this.cs`) composes the `Json` engine with `WireJsonConverter` + `Transport.ForOutbound` + `Sensitive.Strip` modifiers; no `JsonSerializer.X` calls live in the serializer itself.
-- `WireJsonConverter` emits the five-field wire shape `{name, type, value, properties, signature}` (the `properties` field is omitted when empty; `signature` when null), signing each Data sign-if-missing as it walks.
+- The serializer (`app/channels/serializers/serializer/plang/this.cs`) composes the `Json` engine with `Wire` + `Transport.ForOutbound` + `Sensitive.Strip` modifiers; no `JsonSerializer.X` calls live in the serializer itself.
+- `Wire` emits the five-field wire shape `{name, type, value, properties, signature}` (the `properties` field is omitted when empty; `signature` when null), signing each Data sign-if-missing as it walks. The value slot is built via `data.Normalize(View) → IWriter` so domain types ride as `[Out]`-tagged property bags instead of bespoke JSON converters — see `Documentation/Runtime2/data-spec.md` §17.
 - **Read** does **not** auto-verify. The reconstructed Data has its signature populated-but-unverified; consumers (`callback.run`) call `signing.verify` explicitly.
 
 JSON wire shape (the wire format is the coder's call — could become CBOR or length-prefixed binary later without breaking the contract):
@@ -137,4 +137,7 @@ Read by `EnsureSigned`'s expiry stamping for `ICallback`-valued Data. The PLang 
 - `PLang/app/modules/callback/run.cs` — the seal-then-verify gate.
 - `PLang/app/modules/output/ask.cs` — the issuer + resume sentinel.
 - `PLang/app/channels/serializers/serializer/plang/this.cs` — the merged `application/plang` wire serializer.
-- `PLang/app/data/WireJsonConverter.cs` — the converter that walks the `{name, type, value, properties, signature}` wire shape and fires sign-if-missing on every Data.
+- `PLang/app/data/Wire.cs` — the converter that walks the `{name, type, value, properties, signature}` wire shape and fires sign-if-missing on every Data (renamed from `WireJsonConverter.cs` on `data-normalize`).
+- `PLang/app/data/this.Normalize.cs` + `this.Reconstruct.cs` — the structural-normalize tree-walkers used by `Wire`.
+- `PLang/app/channels/serializers/IWriter.cs` + `json/writer.cs` — the format-encoder protocol; JSON is the first impl, protobuf/CBOR ship later as siblings without touching Normalize.
+- `PLang/app/channels/serializers/filters/Tagged.cs` — `(type, View)`-cached property selector that decides which CLR properties ship per view (`Out`/`Store`/`Debug`).

@@ -5,8 +5,11 @@ namespace app.data;
 
 /// <summary>
 /// Wire converter for <c>app.data.@this</c> — the single point where the
-/// canonical four-field shape <c>{name, type, value, signature}</c> is emitted
-/// and parsed.
+/// canonical five-field shape <c>{name, type, value, properties, signature}</c>
+/// is emitted and parsed. The <c>properties</c> field is omitted when empty;
+/// <c>signature</c> is omitted when null. The <c>value</c> slot is built by
+/// <c>data.Normalize(View) → IWriter</c> so domain types ride as
+/// <c>[Out]</c>-tagged property bags; no per-type JsonConverter is needed.
 ///
 /// <para>
 /// Sign-if-missing: each Data the converter visits during a Write walk gets
@@ -20,10 +23,10 @@ namespace app.data;
 /// Hash carve-out: when crypto.Hash needs to canonicalize a Data D for
 /// signing, the converter is told (via <see cref="MarkOuterForHash"/>) that
 /// D is the "outer being signed right now." For that one Data, Write emits
-/// <c>{name, type, value}</c> with <em>no</em> signature field and does NOT
-/// call EnsureSigned (which would loop). All inner Datas reached through the
-/// walk still go through sign-if-missing and emit their full four fields, so
-/// the outer signature transitively binds inner attestations.
+/// <c>{name, type, value, properties}</c> with <em>no</em> signature field
+/// and does NOT call EnsureSigned (which would loop). All inner Datas reached
+/// through the walk still go through sign-if-missing and emit their full
+/// shape, so the outer signature transitively binds inner attestations.
 /// </para>
 /// </summary>
 public sealed class Wire : JsonConverter<@this>
