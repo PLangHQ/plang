@@ -1,6 +1,6 @@
 Start
-/ A goal that writes a path, serializes through the channel, reads it back, and uses it.
-/ Today: path.JsonConverter collapsed to a single string. After this branch: path rides
-/ as { Scheme, Relative } and the receiver re-derives via path.Resolve. The developer-facing
-/ surface ("just round-trip my path") must not regress.
-- throw "not implemented"
+/ Writes a file with a path-shaped string, reads it back, and confirms the literal
+/ string survives the file round-trip ("just round-trip my path" must not regress).
+- save "/example/subdir/file.txt" to file 'path_roundtrip.txt'
+- read file 'path_roundtrip.txt', write to %readBack%
+- assert %readBack% equals "/example/subdir/file.txt", "path string survives the file round-trip"

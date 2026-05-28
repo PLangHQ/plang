@@ -1,0 +1,253 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "archive identity \u0027roundtripSigner\u0027, force, on error ignore",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Signs a Data, verifies, asserts. Exercises the sign-then-verify surface end-to-end:\ncanonical bytes are computed by the wire shape, signature attached, then re-canonicalized\nand checked on verify. A clean pass means the typed signing API is intact.",
+      "actions": [
+        {
+          "module": "identity",
+          "action": "archive",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "roundtripSigner",
+              "type": "string"
+            },
+            {
+              "name": "Force",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "IgnoreError",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "formal": "identity.archive(Name=\u0022roundtripSigner\u0022, Force=true) | error.handle(IgnoreError=true)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "create identity roundtripSigner",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "identity",
+          "action": "create",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "roundtripSigner",
+              "type": "string"
+            },
+            {
+              "name": "SetAsDefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "identity.create(Name=\u0022roundtripSigner\u0022, SetAsDefault=false)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %data% = { \u0022message\u0022: \u0022round-trip me\u0022 }",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%data%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "message": "round-trip me"
+              },
+              "type": "dictionary\u00602"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%data%, Value={\u0022message\u0022:\u0022round-trip me\u0022}, Type=json)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "sign %data%",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "signing",
+          "action": "sign",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "signing.sign(Data=%data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "verify %data% with contracts [\u0027C0\u0027], write to %verifyResult%",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "signing",
+          "action": "verify",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data%",
+              "type": "object"
+            },
+            {
+              "name": "Contracts",
+              "value": [
+                "C0"
+              ],
+              "type": "list\u00601"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "skipfreshnesscheck",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%verifyResult%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "bool"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "signing.verify(Data=%data%, Contracts=[\u0022C0\u0022]) | variable.set(Name=%verifyResult%, Value=%!data%, type=bool)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %verifyResult.Success% is true, \u0022signed Data must verify on the same actor\u0022",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%verifyResult.Success%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "signed Data must verify on the same actor",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.isTrue(Value=%verifyResult.Success%, Message=\u0022signed Data must verify on the same actor\u0022)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Signing/RoundTripAfterRawSignatureDeletion.test.goal",
+  "prPath": "/Signing/.build/roundtripafterrawsignaturedeletion.test.pr",
+  "hash": "bdaf4fd285c91cadee3ce969642df3dbf55d5a0c3727385dfe579995ac7c7d7b",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

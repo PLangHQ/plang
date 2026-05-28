@@ -4,9 +4,9 @@ using System.Reflection;
 namespace app.channels.serializers.filters;
 
 /// <summary>
-/// Tagged-view filter: decides which properties on a CLR type ship on the wire,
-/// per the data-normalize Stage 2 contract. Consumed by <c>Data.Normalize</c>
-/// when walking a non-primitive value into its property-bag child list.
+/// Tagged-view filter: decides which properties on a CLR type ship on the
+/// wire. Consumed by <c>Data.Normalize</c> when walking a non-primitive
+/// value into its property-bag child list.
 ///
 /// <para>Three modes:</para>
 /// <list type="bullet">
@@ -30,16 +30,17 @@ public static class Tagged
 {
     public readonly record struct Entry(PropertyInfo Property, bool Masked);
 
-    private static readonly ConcurrentDictionary<(System.Type Type, global::app.View Mode), Entry[]> _cache = new();
+    private static readonly ConcurrentDictionary<(System.Type Type, global::app.View Mode), IReadOnlyList<Entry>> _cache = new();
 
     /// <summary>
     /// Returns the property entries that ship on the wire for <paramref name="type"/>
-    /// in <paramref name="mode"/>. Cached.
+    /// in <paramref name="mode"/>. Cached. The returned list is immutable —
+    /// the same reference is handed back to every caller for the same key.
     /// </summary>
-    public static Entry[] PropertiesFor(System.Type type, global::app.View mode)
+    public static IReadOnlyList<Entry> PropertiesFor(System.Type type, global::app.View mode)
         => _cache.GetOrAdd((type, mode), key => Compute(key.Type, key.Mode));
 
-    private static Entry[] Compute(System.Type type, global::app.View mode)
+    private static IReadOnlyList<Entry> Compute(System.Type type, global::app.View mode)
     {
         var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
         var entries = new List<Entry>(props.Length);
@@ -107,6 +108,9 @@ public static class Tagged
             entries.Add(new Entry(prop, masked));
         }
 
+        // Materialize as an array — fixed-size, no overhead vs List<T>'s
+        // _size/_version book-keeping. The return type IReadOnlyList<Entry>
+        // exposes only the read surface.
         return entries.ToArray();
     }
 

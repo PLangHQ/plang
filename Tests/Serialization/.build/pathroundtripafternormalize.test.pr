@@ -1,0 +1,164 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write to \u0022/tmp/plang-pathroundtrip.txt\u0022, \u0022/example/subdir/file.txt\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "Writes a file containing a path string, reads it back, and confirms the path\nsurvives the channel round-trip (\u0022just round-trip my path\u0022 must not regress).",
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "/tmp/plang-pathroundtrip.txt",
+              "type": "object"
+            },
+            {
+              "name": "channel",
+              "value": "/example/subdir/file.txt",
+              "type": "channel"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "file",
+          "action": "save",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "%!data%",
+              "type": "path"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "output.write(Data=\u0022/tmp/plang-pathroundtrip.txt\u0022, channel=\u0022/example/subdir/file.txt\u0022) | file.save(Path=%!data%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "read \u0022/tmp/plang-pathroundtrip.txt\u0022, write to %readBack%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "/tmp/plang-pathroundtrip.txt",
+              "type": "path"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "resolvevariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%readBack%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "txt",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "file.read(Path=\u0022/tmp/plang-pathroundtrip.txt\u0022, ResolveVariables=false) , variable.set(Name=%readBack%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %readBack% equals \u0022/example/subdir/file.txt\u0022, \u0022path string survives the file round-trip\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "/example/subdir/file.txt",
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%readBack%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "path string survives the file round-trip",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022/example/subdir/file.txt\u0022, Actual=%readBack%, Message=\u0022path string survives the file round-trip\u0022)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Serialization/PathRoundTripAfterNormalize.test.goal",
+  "prPath": "/Serialization/.build/pathroundtripafternormalize.test.pr",
+  "hash": "8dc136079c03b1cdadd0e16c453189622c48ac3bf457f67d9699b0a299b4ad38",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

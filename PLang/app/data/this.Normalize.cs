@@ -5,14 +5,12 @@ using app.channels.serializers.filters;
 namespace app.data;
 
 /// <summary>
-/// Data structural normalization — Stage 2 of data-normalize.
-///
-/// <para>Walks <see cref="@this.Value"/> into a uniform tree whose runtime
-/// types are limited to: <c>null</c>, primitives (string, int, long, double,
-/// bool, DateTime, decimal), <c>byte[]</c>, <see cref="@this"/>, or
-/// <see cref="IList"/> of any of the above. Reflection fires here (one-time,
-/// cached by <see cref="Wire"/>) so format encoders never have to introspect
-/// arbitrary C# types.</para>
+/// Data structural normalization. Walks <see cref="@this.Value"/> into a
+/// uniform tree whose runtime types are limited to: <c>null</c>, primitives
+/// (string, int, long, double, bool, DateTime, decimal), <c>byte[]</c>,
+/// <see cref="@this"/>, or <see cref="IList"/> of any of the above.
+/// Reflection fires here (one-time, cached by the wire-view filter) so
+/// format encoders never have to introspect arbitrary C# types.
 ///
 /// <para>Bounded: a visited-set guards against reference cycles, a depth cap
 /// prevents stack overflow on deep but acyclic graphs. Both raise typed
@@ -143,7 +141,7 @@ public partial class @this
         try
         {
             var entries = app.channels.serializers.filters.Tagged.PropertiesFor(obj.GetType(), mode);
-            var children = new List<@this>(entries.Length);
+            var children = new List<@this>(entries.Count);
 
             foreach (var entry in entries)
             {
@@ -151,9 +149,8 @@ public partial class @this
 
                 if (entry.Masked)
                 {
-                    // Per the architect spec: the getter is never invoked for
-                    // a [Masked] property — the value never traverses memory
-                    // boundaries it shouldn't.
+                    // [Masked] never invokes the getter — the value must not
+                    // traverse memory boundaries it shouldn't cross.
                     children.Add(new @this(name, "****"));
                     continue;
                 }

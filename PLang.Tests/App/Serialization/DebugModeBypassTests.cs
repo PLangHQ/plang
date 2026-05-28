@@ -79,7 +79,7 @@ public class DebugModeBypassTests
         global::app.channels.serializers.filters.Tagged.ClearCacheForTests();
         var outEntries = global::app.channels.serializers.filters.Tagged.PropertiesFor(typeof(global::app.modules.identity.Identity), global::app.View.Out);
         var debugEntries = global::app.channels.serializers.filters.Tagged.PropertiesFor(typeof(global::app.modules.identity.Identity), global::app.View.Debug);
-        await Assert.That(outEntries.Length).IsLessThan(debugEntries.Length);
+        await Assert.That(outEntries.Count).IsLessThan(debugEntries.Count);
         // Both cached: re-fetch returns the same array references.
         await Assert.That(global::app.channels.serializers.filters.Tagged.PropertiesFor(typeof(global::app.modules.identity.Identity), global::app.View.Out))
             .IsSameReferenceAs(outEntries);

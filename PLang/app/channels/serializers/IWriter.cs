@@ -2,7 +2,7 @@ namespace app.channels.serializers;
 
 /// <summary>
 /// Format-encoder protocol consumed by the wire pipeline once
-/// <see cref="app.data.@this"/> has been normalized (Stage 2 of data-normalize).
+/// <see cref="app.data.@this"/> has been normalized.
 ///
 /// <para>The pipeline is: <c>Normalize()</c> walks the in-memory value into a
 /// uniform tree of <c>primitive | byte[] | Data | List&lt;&gt;</c>; an

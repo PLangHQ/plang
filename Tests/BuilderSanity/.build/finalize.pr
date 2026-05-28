@@ -36,9 +36,6 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
       "formal": "variable.set(Name=%label%, Value=\u0022%label%-and-done\u0022, Type=tstring)",
       "source": null,
       "waitForExecution": true

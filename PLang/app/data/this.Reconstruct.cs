@@ -5,9 +5,8 @@ using app.channels.serializers.filters;
 namespace app.data;
 
 /// <summary>
-/// Data tree-walker reconstruction — Stage 3 of data-normalize.
-///
-/// <para>The reverse direction of <see cref="@this.Normalize"/>: given a value
+/// Data tree-walker reconstruction — the reverse direction of
+/// <see cref="@this.Normalize"/>: given a value
 /// that's been normalized into the uniform tree
 /// (<c>primitive | byte[] | Data | List&lt;&gt;</c>), reconstruct an instance
 /// of T by recursively walking the tree, dispatching per child Data by name

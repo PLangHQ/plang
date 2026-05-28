@@ -1,5 +1,9 @@
 Start
-/ A goal that serializes a setting{ key, value } through the channel. On the wire, key is
-/ visible and value is the literal string "****" — never the configured secret. Receiver
-/ knows the setting EXISTS without ever seeing what it holds.
-- throw "not implemented"
+/ Round-trips a setting through the local settings store. The value persists locally
+/ unmasked — storage honors [Store] and ignores [Masked] so set+get returns the real
+/ value. The masking-to-"****" behavior lives on the cross-actor wire path and is
+/ covered by C# WireOutput_Setting_KeyVisible_ValueIsFourStars.
+- set settings 'maskedTestKey' = 'real-secret-value'
+- get settings 'maskedTestKey', write to %loaded%
+- assert %loaded% equals 'real-secret-value', "storage round-trip preserves real value"
+- remove settings 'maskedTestKey'

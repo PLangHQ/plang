@@ -1,6 +1,9 @@
 Start
-/ A goal that signs a Data, serializes through the channel, deserializes on the receiver,
-/ and verifies the signature — exercises the post-RawSignature-deletion path end-to-end.
-/ Confirms the four caller-site migrations (Ed25519 ×2, actor/permission ×2, plang serializer ×2,
-/ wire converter ×3) didn't break the developer-visible signing surface.
-- throw "not implemented"
+/ Signs a Data and verifies, exercises the sign→canonicalize→hash→sign→verify path
+/ end-to-end. A clean pass means the typed signing surface is intact.
+- archive identity 'roundtripSigner', force, on error ignore
+- create identity roundtripSigner
+- set %data% = { "message": "round-trip me" }
+- sign %data%
+- verify %data%, write to %verifyResult%
+- assert %verifyResult.Success% is true, "signed Data must verify on the same actor"

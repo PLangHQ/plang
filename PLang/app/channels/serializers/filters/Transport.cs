@@ -57,10 +57,9 @@ public static class Transport
             jsonProp.Set = prop.CanWrite ? prop.SetValue : null;
 
             // Preserve any property-level [JsonConverter] — recreating the entry
-            // from PropertyType alone would otherwise drop the custom converter
-            // and force STJ to serialize types like data.type (with non-serializable
-            // System.Type members) through the default object path. data-normalize
-            // Stage 1 widened the [Out] set, exposing this gap.
+            // from PropertyType alone would drop the custom converter and force
+            // STJ to serialize types like data.type (with non-serializable
+            // System.Type members) through the default object path.
             var converterAttr = prop.GetCustomAttribute<JsonConverterAttribute>(inherit: true);
             if (converterAttr?.ConverterType != null)
             {

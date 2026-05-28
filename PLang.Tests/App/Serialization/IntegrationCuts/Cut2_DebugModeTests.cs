@@ -57,7 +57,7 @@ public class Cut2_DebugModeTests
         var fileType = typeof(global::app.types.path.file.@this);
         var outEntries = global::app.channels.serializers.filters.Tagged.PropertiesFor(fileType, global::app.View.Out);
         var debugEntries = global::app.channels.serializers.filters.Tagged.PropertiesFor(fileType, global::app.View.Debug);
-        await Assert.That(debugEntries.Length).IsGreaterThan(outEntries.Length);
+        await Assert.That(debugEntries.Count).IsGreaterThan(outEntries.Count);
         await Assert.That(debugEntries.Any(e => e.Property.Name == "Raw")).IsTrue();
         await Assert.That(outEntries.Any(e => e.Property.Name == "Raw")).IsFalse();
     }

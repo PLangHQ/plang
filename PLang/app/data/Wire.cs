@@ -351,11 +351,10 @@ public sealed class Wire : JsonConverter<@this>
             data.EnsureSigned();
         }
 
-        // Recursive sign-if-missing across the value graph. Pre-Stage-2b each
-        // inner Data was reached via STJ's recursive Serialize call which
-        // re-entered Wire.Write and triggered the block above. Now the inner
-        // Datas are emitted inline by JsonWriter; walk the value graph once
-        // here so every Data in scope gets sealed before any byte leaves.
+        // Inner Datas in the value graph are emitted inline by json.Writer
+        // (no STJ recursion), so the sign-if-missing check above only fires
+        // for the outer. Walk the graph once here so every Data in scope
+        // gets sealed before any byte leaves.
         EnsureInnerSigned(data.Value);
 
         writer.WriteStartObject();
@@ -371,8 +370,8 @@ public sealed class Wire : JsonConverter<@this>
         }
 
         writer.WritePropertyName("value");
-        // data-normalize Stage 2: route the value slot through Normalize +
-        // JsonWriter. Domain objects emit as their filtered property bag;
+        // The value slot routes through Normalize + json.Writer. Domain
+        // objects emit as their filtered property bag;
         // primitives, nested Data, and lists pass through unchanged. View
         // selects the filter:
         //   - View.Out (default) — third-party-facing, [Out] only, Sensitive

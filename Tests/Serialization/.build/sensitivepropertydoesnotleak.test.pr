@@ -1,0 +1,258 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "archive identity \u0027leakProbe\u0027, force, on error ignore",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "Creates an identity, signs a Data with it, and confirms the developer-facing surface\nis intact end-to-end. The cross-actor wire never carries PrivateKey ([Sensitive] excluded\nfrom View.Out) \u2014 that filter behavior is covered by C# WireOutput_Identity_*. This goal\npins the in-process happy path so a regression to the signing surface fails here too.",
+      "actions": [
+        {
+          "module": "identity",
+          "action": "archive",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "leakProbe",
+              "type": "string"
+            },
+            {
+              "name": "Force",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "IgnoreError",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "formal": "identity.archive(Name=\u0022leakProbe\u0022, Force=true) | error.handle(IgnoreError=true)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "create identity leakProbe",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "identity",
+          "action": "create",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "leakProbe",
+              "type": "string"
+            },
+            {
+              "name": "SetAsDefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "identity.create(Name=\u0022leakProbe\u0022, SetAsDefault=false)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %data% = { \u0022payload\u0022: \u0022leak-probe\u0022 }",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%data%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "payload": "leak-probe"
+              },
+              "type": "dictionary\u00602"
+            },
+            {
+              "name": "Type",
+              "value": "json",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%data%, Value={\u0022payload\u0022:\u0022leak-probe\u0022}, Type=json)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "sign %data%",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "signing",
+          "action": "sign",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "signing.sign(Data=%data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "verify %data% with contracts [\u0027C0\u0027], write to %verifyResult%",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "signing",
+          "action": "verify",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%data%",
+              "type": "object"
+            },
+            {
+              "name": "Contracts",
+              "value": [
+                "C0"
+              ],
+              "type": "list\u00601"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "skipfreshnesscheck",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%verifyResult%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "bool"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "signing.verify(Data=%data%, Contracts=[\u0022C0\u0022]) | variable.set(Name=%verifyResult%, Value=%!data%, type=bool)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %verifyResult.Success% is true, \u0022signing surface intact\u0022",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%verifyResult.Success%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "signing surface intact",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.isTrue(Value=%verifyResult.Success%, Message=\u0022signing surface intact\u0022)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Serialization/SensitivePropertyDoesNotLeak.test.goal",
+  "prPath": "/Serialization/.build/sensitivepropertydoesnotleak.test.pr",
+  "hash": "ba333bef3cdf03fe71232e283954227124b742a5e8ce6f2f31be063c8aba9e9c",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}
