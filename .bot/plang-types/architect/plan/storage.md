@@ -32,6 +32,35 @@ public enum NumberKind { Int, Long, Float, Double, Decimal }
 
 The class is `sealed` (no variants — numeric kinds don't have file-vs-http-style storage divergence). Implements `IContext` because `Data<number>` propagates Context through the runtime and `number.Resolve(string, context)` needs it to look the same as `path.Resolve`. Implements `IBooleanResolvable` because zero (and NaN) is falsy.
 
+### Which CLR kinds collapse into which slots
+
+| CLR type | Storage slot | NumberKind tag (catalog name) | Notes |
+|---|---|---|---|
+| `sbyte`, `byte`, `short`, `ushort`, `int` | `_i` (long) | `Int` | `byte`/`short` widen to `int` on entry — the LLM-facing catalog already has `byte`/`bytes` reserved for `byte[]` (a different concept), so unsigned narrow-int slots are not user-pickable as PLang types. |
+| `uint` | `_i` (long) | `Long` | Doesn't fit `int`'s signed range; promotes one step. |
+| `long` | `_i` (long) | `Long` | Native fit. |
+| `ulong` | `_d` (decimal) | `Decimal` | Doesn't fit signed `long`; goes through `decimal` (which has range > 2^64) rather than overflowing or losing precision. |
+| `Int128` / `UInt128` | `_d` (decimal) | `Decimal` | Past long; decimal's mantissa covers the practical range used in arithmetic. Edge cases past `decimal.MaxValue` fail to `Parse` rather than silently truncating. |
+| `float`, `double` | `_f` (double) | `Float` / `Double` | Float widens; Double is native. |
+| `decimal` | `_d` (decimal) | `Decimal` | Native fit. |
+
+The catalog vocabulary the LLM sees is the union of the **NumberKind tag** column, not the **CLR type** column. So a developer who writes `set %x% = 4294967295` (uint max) sees `%x%(long)` in scope — the LLM never has to think in `uint`. Concrete C# at action sites that genuinely takes `uint` casts via `(uint)x` at the boundary; same discipline as today's `int`/`long`/`decimal` cross-walks.
+
+### Bigger than `decimal` — `BigInteger`, arbitrary precision
+
+Out of scope for this branch's `number`. The `_d` slot is `decimal` (CLR), which carries 28–29 significant digits — enough for 18-digit crypto values with room, not enough for arbitrary-precision integer math (RSA key arithmetic, etc.).
+
+When a real consumer surfaces (a crypto module, a large-int math feature), `BigInteger` slots in as a fifth `NumberKind` (`BigNumber` tag) with its own storage slot:
+
+```csharp
+private readonly System.Numerics.BigInteger _big;   // when Kind == BigNumber
+public enum NumberKind { Int, Long, Float, Double, Decimal, BigNumber }
+```
+
+Promotion table grows one row/column. `Parse` adds a final fall-through for inputs that don't fit `decimal`. Nothing else in the surrounding architecture changes — the umbrella absorbs it.
+
+That work is deferred to a separate branch with a real consumer driving it. Adding `BigNumber` now without a leaf action that opens up the slot is speculative — same out-of-scope discipline as `video`/`audio` in the types vocabulary. Flagged here so future-me knows the umbrella was designed to absorb it.
+
 ## Construction
 
 Static factories per kind, plus implicit-IN operators for ergonomics at handler sites:

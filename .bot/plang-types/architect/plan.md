@@ -33,25 +33,26 @@ A developer writes:
 ```
 Start
 - read file profile.png, write to %photo%
-- write out %photo% to console
-- write out %photo% to html
+- write out %photo%
 ```
 
-**Builder.** LLM picks `file.read` for step 1. Stage-typed return signature is `Data<image>` (the extension `.png` resolves to `image` via the type registry; `file.read.Build()` stamps the action's return type). LLM scope after step 1: `%photo%(image)`. For step 2, LLM picks `output.write` for the console channel — no type-specific awareness, `output.write` takes a polymorphic `Data`. Same for step 3 with the html channel.
+The .goal text says nothing about console vs html — **the runtime state decides which serializer**. CLI run: text serializer. Web-request handler: html serializer. Same goal, same step, the channel context determines the format.
+
+**Builder.** LLM picks `file.read` for step 1. Stage-typed return signature is `Data<image>` (the extension `.png` resolves to `image` via the type registry; `file.read.Build()` stamps the action's return type). LLM scope after step 1: `%photo%(image)`. For step 2, LLM picks `output.write` — no type-specific awareness, `output.write` takes a polymorphic `Data`.
 
 **Runtime, step 1.** `file.read.Run()` reads bytes, returns `Data<image>.Ok(new app.types.image.@this(bytes, mime: "image/png"))`. The Image instance owns `Bytes` and `Mime`. The Data wrapper carries `Type = "image"`. Memory stores `%photo% = Data{Type="image", Value=<Image>}`.
 
-**Runtime, step 2.** `output.write` grabs `%photo%`, hands the Data to the console channel's writer with serializer identity `text/plain`. The channel does **not** look inside `Value`. It calls `data.Normalize(...)` to walk the graph; Normalize encounters the Image instance, sees `IWireWritable`, asks it to render for `serializer.Type = "text/plain"`. Image's implementation dispatches on mime: text/plain → `writer.String("[image: image/png 1.2MB]")` (or the originating path, if held). Console gets a readable line.
+**Runtime, step 2 — CLI run.** `output.write` grabs `%photo%` and hands the Data to whatever the active channel is — for a CLI run that's `stdout` with the text serializer. The channel does **not** look inside `Value`. It hands the Data + serializer identity (`text/plain`) into the wire pipeline; the pipeline dispatches based on `Data.Type` (the routing key) and the serializer's format identity. Image's text rendering picks the path placeholder. Console gets a readable line.
 
-**Runtime, step 3.** Same flow, serializer identity `text/html`. Image dispatches: text/html → `writer.String("<img src=\"data:image/png;base64,…\">")`. HTML channel gets the markup. (Today `text/html` is aliased to `application/json`'s writer in the registry — HTML markup ships as a JSON string field. When HTML grows its own writer, the raw-string slot is the one the type's `IWireWritable.WriteTo` already targets; no type-side change needed.)
+**Runtime, step 2 — web-request run.** Same step, same `output.write`. But now the active channel is the http-response writer with the html serializer. The same Data flows in; the dispatch keys on `Data.Type=image` and serializer `text/html`. Image's html rendering picks the path form by default (a static-files-served `<img src="/uploads/profile.png">` when the server allows it; base64 inline as a fallback). The browser gets markup.
 
-Same Image instance, three uses: stored, rendered for console, rendered for html. The value was never re-materialized in memory. The format mapping never lived in the channel.
+Same Image instance, same step in the same goal, two channels, two wire shapes. The value was never re-materialized. The format mapping never lived in the channel. The goal author never had to know about HTML or text — just "write out the photo."
 
 ## What's already there
 
 Three precedents in code that prove the pattern is partial today:
 
-- **`app/types/path/`** — multi-variant type owning verbs (`this.Operations`), authorization (`this.Authorize`), serialization (`this.JsonConverter`), derivation (`this.Derivation`), per-variant subfolders (`file/`, `http/`). The folder shape we're generalizing to every type.
+- **`app/types/path/`** — multi-variant type owning verbs (`this.Operations`), authorization (`this.Authorize`), derivation (`this.Derivation`), per-variant subfolders (`file/`, `http/`). The folder shape we're generalizing to every type. (Note: `this.JsonConverter.cs` in the path folder is the legacy single-format converter — it gets absorbed by the new dispatch shape when path adopts per-(type, format) serializer files, so this file moves out and a `path/serializer/` folder appears instead. Tracked in the open dispatch-shape question.)
 - **`app/data/IBooleanResolvable.cs`** — `Data.ToBooleanAsync` dispatches when the value implements it. The canonical implementer is `path` (truthiness = "does the resource exist", may require I/O). The exact dispatch pattern `IWireWritable` mirrors.
 - **`static Resolve(string, context)`** — the existing factory convention. `path.Resolve` picks scheme variant from the raw string; `app.types.Conversion.TryConvertTo` dispatches.
 
@@ -71,6 +72,103 @@ Out of scope for this branch: `video`, `audio`, `document`, `archive`, `font`, `
 
 Per-type details, ownership matrix, and registration shape in [plan/types.md](plan/types.md).
 
+## Folder tree after the work
+
+What the codebase looks like at the end of this branch (delta from today, ignoring unrelated trees):
+
+```
+PLang/
+  app/
+    data/
+      this.cs                          (existing) — Data, the courier
+      this.Normalize.cs                (existing) — walk fallback, untouched for IWireWritable types
+      Wire.cs                          (modified) — adds (Data.Type, writer.Format) dispatch hop
+      IBooleanResolvable.cs            (existing)
+      IWireWritable.cs                 (new — IF the single-method shape wins;
+                                       see open question)
+    types/
+      this.cs                          (modified) — Primitives table becomes a discovered registry
+      Conversion.cs                    (modified) — dispatches through registry
+      Registry.cs                      (existing) — gains @PlangType discovery hooks
+      PlangTypeAttribute.cs            (new)
+      path/                            (existing) — gains serializer/ subfolder, sheds this.JsonConverter
+        this.cs
+        this.Authorize.cs
+        this.Operations.cs
+        this.Derivation.cs
+        file/
+        http/
+        scheme/
+        permission/
+        serializer/                    (new — pending dispatch shape decision)
+          json.cs                      (new) — replaces this.JsonConverter for json
+          plang.cs                     (new)
+          text.cs                      (new)
+      number/                          (new — the first proving instance)
+        this.cs                          NumberKind enum, storage slots, IBooleanResolvable
+        this.Parse.cs                    Parse / TryParse / Resolve(string, context)
+        this.Operators.cs                +, -, *, /, %, ==, != (policy-free lenient)
+        this.Arithmetic.cs               Add/Sub/Mul/Div/Mod/Pow (policy-aware)
+        this.Equality.cs                 Equals + canonical GetHashCode
+        Config.cs                        : IConfig — OverflowMode, PrecisionMode
+        NumberPolicy.cs                  the resolved struct passed into Arithmetic
+        serializer/                    (pending dispatch decision)
+          json.cs
+          plang.cs
+          text.cs
+      image/                           (new — the second proving instance)
+        this.cs                          Bytes, Mime, sourcePath, IBooleanResolvable
+        this.Parse.cs                    Resolve(string) — path / data-url / base64
+        this.ParseBytes.cs               Resolve(byte[]) — raw-bytes construction
+        serializer/                    (pending dispatch decision)
+          json.cs                        base64 string
+          plang.cs                       base64 string (same as json today)
+          text.cs                        path placeholder
+          protobuf.cs                    raw bytes (future when writer ships)
+      code/                            (new — the third proving instance)
+        this.cs                          Source, Language, IBooleanResolvable
+        this.Parse.cs                    Resolve(string) with language detection
+        serializer/                    (pending dispatch decision)
+          json.cs                        the raw source string
+          plang.cs                       same
+          text.cs                        same
+      datetime/                        (new — folder for the parse complexity)
+        this.cs                          wraps DateTimeOffset
+        this.Parse.cs                    ISO-8601 tz-aware
+      duration/                        (new — folder for the parse complexity)
+        this.cs                          wraps TimeSpan
+        this.Parse.cs                    1.02:03:04 + ISO-8601
+      (date, time, string, int, long, decimal, bool, bytes, guid, …) — table-only entries
+                                       in app/types/this.cs; no folders
+    modules/
+      math/                            (existing — actions grow Config and use NumberPolicy)
+        add.cs                         (modified) — returns Data<number>; reads config via app.config.For<number.Config>
+        … (subtract, multiply, divide, modulo, abs, ceiling, floor, round,
+            max, min, power, sqrt, random — same shape)
+      file/
+        read.cs                        (modified) — Build() stamps Data.Type from extension via registry
+        write.cs                       (modified) — accepts Data<number|image|code|…> uniformly
+      output/
+        write.cs                       (existing) — already polymorphic; nothing changes
+    channels/
+      serializers/
+        IWriter.cs                     (modified) — gains a Format identity property
+        this.cs                        (existing) — registry stays
+        serializer/
+          json.cs                      (modified — value-slot dispatch through type registry)
+          plang/this.cs                (modified — same)
+          Text.cs                      (modified — same)
+        filters/                       (existing, untouched)
+  Generators/
+    Discovery/this.cs                  (modified) — scans [PlangType], emits registration table
+    Emission/                          (modified) — generates the (type, format) dispatch table
+    PLNG_TypeNotRegistered.cs          (new) — gate for handlers declaring Data<T> where T isn't a registered PlangType
+```
+
+The new top-level shape is: every PLang type is a folder under `app/types/`. The folder holds the value (`this.cs`), the parse-in factory (`this.Parse.cs`), optionally a config record (`Config.cs`) when the type has policy axes, and a `serializer/` subfolder per render-out format. Module action folders (`app/modules/math/`, `app/modules/image/`, …) consume the types via typed slots; they don't carry any per-type-format knowledge.
+
+This is a sketch — the leaf-by-leaf file shapes may shift during stage-carving — but the overall topology is what to expect.
+
 ## Cross-cutting decisions
 
 - **LLM scope shows the bare type, not subtype.** `%photo%(image)`, not `%photo%(image/png)`. Subtype precision lives at the runtime registry layer (the Image instance carries `Mime = "image/png"` for the serializer to use) but is hidden from the compile prompt. Confirmed 2026-05-28.
@@ -79,15 +177,15 @@ Per-type details, ownership matrix, and registration shape in [plan/types.md](pl
 - **The type registry replaces the flat `Primitives` table.** `app/types/this.cs:34`'s dictionary becomes a discovered registry: each `app/types/<name>/this.cs` registers (name, CLR type, optional MIME family) at App construction. Adding a new type means a new folder, not an edit in six places. `app.formats` becomes the extension-to-name helper (the parse-in lookup `read file profile.png` uses to stamp `Type=image`), not a parallel universe.
 - **`path` retroactively gains `IWireWritable`** during this branch — it already has a JSON converter; adding the marker means path-as-protobuf and path-as-html will work the right way without a future migration. Cost is one method on `path.@this`.
 
-## Open questions for you
+## Settled in review
 
-1. **Interface location and signature.** Leaning `app/data/IWireWritable.cs` (sits next to `IBooleanResolvable`, since `Data.Normalize` is the dispatcher). Signature: `void WriteTo(IWriter writer, ISerializer serializer)` — gives the value both the encoder and the format identity. Sync because format encoding shouldn't reach I/O. Alternative: pass just the mime string instead of the serializer instance — leaner, but loses the ability to delegate sub-fragments back through the serializer (which Image might want for properties).
+- **Type registry shape: discovery-time.** Source generator scans `app/types/<name>/this.cs`, emits a static registration table at compile time. Matches `[Action]` discovery. Confirmed 2026-05-28.
+- **HTML deferred.** HTML serializer isn't real yet (today `text/html` aliases JSON in the registry); the `<img>` markup case stays a footnote and the work to give HTML its own writer is a separate branch.
+- **Number's arithmetic policy stays on this branch.** It's a leaf-action concern (math handlers consult settings via `app.config.For<number.Config>(context)`), not the architectural spine — see [plan/policy.md](plan/policy.md) for the rewritten shape using the existing `app.config` walk. Not deferred.
 
-2. **Type registry shape.** Two options. *Discovery-time* (the source generator scans `app/types/<name>/this.cs` and emits a static registration table at compile time — matches how `[Action]` discovery already works). *App-construction-time* (App scans loaded assemblies for `[PlangType]` once at startup — matches how `path.scheme.@this` populates today). Discovery-time is faster and lets PLNG-style gates catch missing registrations at build; App-time is simpler and matches the existing scheme registry. I lean discovery-time but it's not a hill.
+## Open question for you
 
-3. **Number's arithmetic policy.** Under this reframe, the `NumberPolicy` system in [plan/policy.md](plan/policy.md) is a leaf-action concern (math handlers consult settings, call policy-aware overloads). The plan still holds for number, but it's no longer the architectural spine — it's an internal detail of one type. Confirm you still want it scoped this way, vs. deferring policy entirely and shipping number with single-mode arithmetic first.
-
-4. **HTML as its own writer vs. JSON-aliased.** Today `text/html` aliases `application/json` in the serializer registry. The `<img>` markup case for image works around this by riding as a JSON string field. If we let HTML grow its own writer on this branch, every type's `IWireWritable.WriteTo` for `text/html` writes raw markup (no JSON escaping). Cleaner long-term; ships HTML as a real format. But it widens scope. Defer to a follow-up?
+**Dispatch shape.** The earlier proposal: one method on the value (`IWireWritable.WriteTo(IWriter, ISerializer)`) that switches on `serializer.Type` internally. Ingi pushed back on 2026-05-28: that switch-inside-method is a smell from far enough away, and OBP says distinct (type × format) combinations get distinct files. The alternative: `app/types/<name>/serializer/<format>.cs` per (type, format), each file owns one rendering, source generator wires the dispatch table. Image-as-json lives at `app/types/image/serializer/json.cs`; image-as-text at `…/serializer/text.cs`; image-as-protobuf at `…/serializer/protobuf.cs`. The writer (json.Writer / future protobuf.Writer) carries its format identity; the wire pipeline looks up `(Data.Type, writer.Format) → static method` and calls it. Normalize stays as the fallback walk for non-registered types. My proposal lives in the open comment thread on [plan/dispatch.md](plan/dispatch.md); reading welcomed before I rewrite the dispatch deep-dive around it.
 
 ## How this lands vs. the old plan
 

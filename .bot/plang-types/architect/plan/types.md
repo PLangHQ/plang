@@ -77,9 +77,11 @@ Each rebind moves a row in `app/types/this.cs:34`'s table. Each rebind also touc
 - `Wire.Read` / `Wire.Write` — DateTime cases become DateTimeOffset cases (the IWriter already has `DateTimeOffset(System.DateTimeOffset)`).
 - Any test fixture or builder example that picked `datetime` against DateTime — relandable via test sweep.
 
-These cleanups don't *require* the per-type-folder migration this branch establishes — they could ship in a smaller PR. But folding them in here closes the half-state Ingi specifically called out (`IsPrimitive` accepts DateTimeOffset, name table doesn't), and the new types (`number`, `image`, `code`) land alongside cleaned-up neighbors so the catalog reads coherently from day one.
+These cleanups don't *require* the per-type-folder migration this branch establishes — they could ship as a smaller follow-up. But folding them in here closes the half-state Ingi specifically called out (`IsPrimitive` accepts DateTimeOffset, name table doesn't), and the new types (`number`, `image`, `code`) land alongside cleaned-up neighbors so the catalog reads coherently from day one.
 
-**Open:** should the four cleanups also adopt `app/types/<name>/` folder shape (datetime, date, time, duration each get their own folder with `this.cs` that wraps the CLR type)? Or do they stay in the flat `Primitives` table since they have no leaf-action surface beyond what the CLR provides? I lean toward folders for `datetime` and `duration` (both have parse / format complications worth owning); table-only for `date` and `time` (trivial wrappers). Decision deferred to the discussion before stages get carved.
+**Folder shape:** `datetime` and `duration` get their own folders (`app/types/datetime/this.cs`, `app/types/duration/this.cs`) — both have parse / format complications worth owning (DateTimeOffset's tz-aware ISO-8601 round-trip; TimeSpan's `1.02:03:04` vs ISO-8601 duration formats). `date` and `time` stay as table-only entries since they're trivial CLR wrappers with no leaf-action complexity.
+
+**On `duration` vs `timespan` as the LLM-facing name:** `duration` is the right name. PLang devs write prose ("a duration of 5 minutes") and pick types that read like the prose; `timespan` is C#-flavored. `timespan` stays as a deprecated alias for backwards compatibility on existing `.goal` files but the catalog leads with `duration` and the docs only mention it.
 
 ## Out of scope on this branch
 
@@ -108,13 +110,15 @@ Adding a new entry requires editing this dictionary, editing the `PrimitiveNames
 Under this branch, each `app/types/<name>/this.cs` declares:
 
 ```csharp
-[PlangType("image", clrType: typeof(image.@this))]
+[PlangType("image")]
 public sealed class @this : app.data.IBooleanResolvable, app.data.IWireWritable, app.modules.IContext
 {
     public static @this Resolve(string raw, app.actor.context.@this context) { /* ... */ }
     // ...
 }
 ```
+
+`[PlangType]` takes just the PLang-facing name — the CLR type *is* the class the attribute is on, so the generator picks it up from the symbol it's scanning. No redundant `typeof(image.@this)` argument.
 
 The `[PlangType]` attribute is the registration declaration. App-time (or generator-time — open question 2 in the spine) scans `[PlangType]`-bearing classes and builds the registry. `app.types.@this.Get(name)`, `IsPrimitive(type)`, `NameOf(type)` all dispatch through the registry. Adding a new type means adding a new folder with an attributed class — one edit site.
 

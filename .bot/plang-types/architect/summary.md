@@ -1,3 +1,26 @@
+## 2026-05-28 — Review pass on v1 (23 comments addressed)
+
+Ingi's review of the rewritten plan. 19 of 23 resolved by edits, 4 left open as a single architectural thread.
+
+**Resolved:**
+- **Movie example fixed.** Dropped `to console` / `to html` from the .goal — the runtime state (CLI vs web request) decides the channel and serializer, not the goal text. Step 2 in the movie now walks both runs from the same goal text.
+- **Image-as-html defaults to path** (link to a static-served file), with base64 inline as the fallback. Smart-detect of "static files allowed for this mime" deferred.
+- **path's `this.JsonConverter`** flagged as legacy — it gets absorbed by the new per-(type, format) serializer-file shape once that's settled.
+- **Class tree.** Added a folder-by-folder sketch of what the codebase looks like at end-of-branch under "Folder tree after the work."
+- **Type registry: discovery-time settled.** Source generator scans `[PlangType]` and emits a static registration table. Matches `[Action]` discovery.
+- **HTML deferred** — not real yet; out of scope.
+- **`[PlangType]` shrinks to one arg** (just the PLang-facing name) — the CLR type comes for free from the symbol the attribute is on.
+- **`duration` confirmed over `timespan`** for LLM-facing name; `timespan` stays as deprecated alias.
+- **Cleanups committed:** `datetime` and `duration` get their own folders (parse complexity worth owning); `date` and `time` stay as table-only entries.
+- **No PR wording** — flagged by Ingi for the Nth time; updated `feedback_no_prs.md` memory to also cover "don't reference PR as a unit of work in plans."
+- **Number's policy uses `app.config`, not a new `environment` tree.** This is the big policy.md rewrite: `Goal` isn't guaranteed thread-safe so a goal-private overlay is wrong; `app.config` already does context → parent → defaults → record-default walking with `IConfig` views (`number.Config : IConfig`). Dropped `[Optional]` (`?` is the optional marker).
+- **18-digit precision question** addressed in both policy.md (the escape hatch is `Precision = Decimal` → `decimal` carries 28–29 digits, room for 18) and storage.md (BigInteger slot reserved for the day decimal stops being enough).
+- **CLR coverage table** added to storage.md: which CLR numeric types collapse into which storage slot, why the LLM-facing catalog hides the narrow-int / unsigned distinction.
+
+**Open — four-comment thread (one architectural question).** The earlier proposal had a single `IWireWritable.WriteTo(IWriter, ISerializer)` method on the value that switches on mime internally. Ingi pushed back: that's a switch-inside-method smell from far enough away; OBP says distinct (type × format) combinations get distinct files. Alternative: `app/types/<name>/serializer/<format>.cs` per (type, format) — each file owns one rendering, source generator wires the dispatch table, writer carries its format identity, `Wire.Write` does the `(Data.Type, writer.Format) → static method` lookup directly. No interface on the value, no mime switch, no Normalize handshake. I lean this way; proposal posted in the comment threads (plan.md line 84, plan/dispatch.md lines 66 / 70 / 119). Awaiting sign-off before rewriting dispatch.md around it.
+
+Stage status: not yet carved. Next: settle the dispatch shape, then carve stages.
+
 ## 2026-05-28 — Reframe: type-as-router, branch renamed to `plang-types`
 
 Ingi reframed the branch's purpose: this isn't about `number` — it's about establishing **higher-level types in PLang** where the runtime is a courier and types own their leaf behavior. `Data { Type = "image", Value = <Image> }` rides through memory untouched; only leaf actions (`math.add` reaches into `number`; `image.resize` reaches into bytes) and leaf serializers (per-format renderers — text/plain → path, text/html → `<img>`, application/plang → base64, protobuf → bytes) dereference. The type owns its serialization (a `data.serialize` style dispatch that forwards to the value); the runtime owns nothing about the kind.

@@ -42,7 +42,7 @@ public interface IWireWritable
 }
 ```
 
-Sync. Reaching for I/O during wire emission is a bug — the value should already hold its bytes (or its lazy-resolved equivalent) by the time it reaches the writer. Async dispatch lives at action verbs, where `image.resize` may read source bytes from disk; the result of that action is a fully-materialized `Image` instance with `Bytes` populated.
+The signature is **synchronous** — `void WriteTo(...)`, not `Task WriteTo(...)`. Reaching for I/O during wire emission is a bug: the value should already hold its bytes (or its lazy-resolved equivalent) by the time it reaches the writer. Async dispatch belongs at action verbs, where `image.resize` may read source bytes from disk; the result of that action is a fully-materialized `Image` instance with `Bytes` populated. The serializer is then synchronous over already-resident memory.
 
 ## How the dispatch hooks in
 

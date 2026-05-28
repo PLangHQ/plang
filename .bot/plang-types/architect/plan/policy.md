@@ -37,93 +37,44 @@ public enum PrecisionMode { Double, Decimal }
 - `Double` (lenient default): `Decimal + Double` promotes to `Double` — IEEE-754 wins, decimal precision lost past ~15 digits.
 - `Decimal`: `Decimal + Double` stays `Decimal` — throws if the double operand is NaN / Infinity / out of decimal range.
 
-## Three scopes
+## Scopes
 
-| Scope | How it's set | Where it's stored | Lifetime |
+The runtime's existing `app.config` walk covers three scopes — context (current), parent contexts (chain), and app defaults (`App.Config.Defaults`). Step scope sits below as a per-action override. Precedence: **step → context.ConfigScope → parent.ConfigScope → … → App.Config.Defaults → record default**.
+
+| Scope | How it's set | Where it lives | Lifetime |
 |---|---|---|---|
-| App | `- set environment.number.overflow = throw` (scope omitted; default is `app`) | `App.Environment.Number` | App lifetime |
-| Goal | `- set environment.number.overflow = throw, scope: goal` | `Goal.Environment.Number` (lazy overlay) | Until goal exits |
-| Step | `- math.add %x% %y% overflow=throw` (action parameter) | `Action.Overflow` / `Action.Precision` properties | One call |
+| Step | nullable action param (`overflow=throw`) | `Action.Overflow` / `Action.Precision` | One call |
+| Context (and parent chain) | `- set math.number.overflow = throw` | `context.ConfigScope` (lazy) | Until context dies |
+| App default | `- set math.number.overflow = throw, default: true` | `App.Config.Defaults` | App lifetime |
+| Built-in | record property default (`Promote` / `Double`) | `number.Config` record | (compile-time) |
 
-Step scope is the finest-grained and lives only for one action call. It's not a separate "set then call" — it's a parameter on the action itself, set by the LLM at compile time per the developer's per-step prose.
+Step scope is the finest-grained and lives only for one action call — a nullable property on the action record, set by the LLM at compile time per the developer's per-step prose. All other scopes flow through `app.config`'s existing walk.
 
-## Resolution
+No ambient state. No `AsyncLocal`. No `Goal`-private overlay. `app.config`'s walk is explicit through `context.Parent` — debuggable, testable, no surprise behavior across thread / await boundaries.
+
+## Scope storage — use `app.config`, not a new `environment` tree
+
+Earlier drafts proposed an `app.environment.number.@this` config tree with a lazy overlay on `Goal`. **Withdrawn.** The runtime already has the right mechanism — `app.config` at `PLang/app/config/this.cs` — and Ingi flagged on 2026-05-28 that `Goal` is not guaranteed thread-safe so a goal-private overlay is the wrong shape.
+
+How `app.config` solves it:
+
+- `Context.ConfigScope` is the per-context scope (created lazily when a settings handler writes).
+- Resolution walks `context.ConfigScope → context.Parent.ConfigScope → … → App.Config.Defaults → classDefault`.
+- `IConfig` marker + `app.config.For<T>(context)` returns a context-bound view that reads keys with the module prefix already applied.
+
+For number, this means:
 
 ```csharp
-public static NumberPolicy Resolve(
-    OverflowMode?  stepOverflow,
-    PrecisionMode? stepPrecision,
-    environment.number.@this? goalScope,
-    environment.number.@this   appScope)
+namespace app.modules.math.number;
+
+public sealed record Config : IConfig
 {
-    return new NumberPolicy
-    {
-        Overflow  = stepOverflow  ?? goalScope?.Overflow  ?? appScope.Overflow,
-        Precision = stepPrecision ?? goalScope?.Precision ?? appScope.Precision,
-    };
+    public OverflowMode  Overflow  { get; init; } = OverflowMode.Promote;
+    public PrecisionMode Precision { get; init; } = PrecisionMode.Double;
 }
 ```
 
-Precedence: **step > goal > app > built-in default**. The built-in default lives in `appScope` since `App.Environment.Number` is constructed with `NumberPolicy.Lenient` at App startup. `goalScope` may be null (the lazy overlay hasn't been created yet) — the null-conditional handles that path cleanly.
-
-No ambient state. No `AsyncLocal<NumberPolicy>`. Every resolution is an explicit walk through arguments the caller passes — debuggable, testable, no surprise behavior across thread / await boundaries.
-
-## App-level home
-
-```csharp
-namespace app.environment.number;
-
-public sealed class @this
-{
-    public OverflowMode  Overflow  { get; set; } = OverflowMode.Promote;
-    public PrecisionMode Precision { get; set; } = PrecisionMode.Double;
-}
-```
-
-Mounted on `app.environment.@this`:
-
-```csharp
-namespace app.environment;
-
-public sealed class @this
-{
-    public number.@this Number { get; } = new();
-    // future siblings: text, time, culture, ...
-}
-```
-
-`App` grows an `Environment` property of type `app.environment.@this`, constructed once at App startup. The `Number` child is non-nullable — always exists, always has lenient defaults until a step modifies it.
-
-## Goal-level overlay — lazy
-
-`Goal` grows an `Environment` overlay mirroring the existing `Events` pattern:
-
-```csharp
-// In app.goals.goal.this.cs — alongside the existing Events backing field
-private app.environment.@this? _environment;
-
-[System.Text.Json.Serialization.JsonIgnore]
-public app.environment.@this? Environment
-{
-    get => _environment;                       // null until a step writes to it
-    set => _environment = value;
-}
-
-// Plus a lazy-creating helper used by environment.set when scope=goal:
-internal app.environment.@this EnsureEnvironment()
-    => _environment ??= new app.environment.@this();
-```
-
-Distinction from `App.Environment`:
-
-- `App.Environment.Number` always exists, never null. Holds the app-wide values.
-- `Goal.Environment` is **null** by default. Created only when a step writes to it with `scope: goal`. Even then, individual children (`.Number`, future `.Text`, …) are only populated for the axes the goal actually touches.
-
-When the goal exits and the goal frame is dropped, the overlay goes with it — no explicit cleanup. Sub-goals **do not inherit** their parent goal's overlay; if a parent goal sets `environment.number.overflow=throw, scope: goal` and calls a child goal, the child sees the App-level value, not the parent's overlay. (Goal-scope means "this goal's body," not "this goal and everything it calls.") Worth confirming with Ingi during Stage 2 — see open question at the bottom.
-
-## Step-level: action parameters
-
-Every `math.*` action grows two optional parameters:
+Resolution at a math handler:
 
 ```csharp
 [Action("add")]
@@ -132,50 +83,58 @@ public partial class Add : IContext
     public partial Data<number> A { get; init; }
     public partial Data<number> B { get; init; }
 
-    [Optional] public OverflowMode?  Overflow  { get; init; }
-    [Optional] public PrecisionMode? Precision { get; init; }
+    public partial OverflowMode?  Overflow  { get; init; }   // step override; nullable IS the optional marker
+    public partial PrecisionMode? Precision { get; init; }
 
     public Task<Data<number>> Run()
     {
-        var policy = NumberPolicy.Resolve(
-            stepOverflow:  Overflow,
-            stepPrecision: Precision,
-            goalScope:     Context.Goal.Environment?.Number,
-            appScope:      Context.App.Environment.Number);
+        var view   = Context.App.Config.For<number.Config>(Context);
+        var policy = new NumberPolicy
+        {
+            Overflow  = Overflow  ?? view.Overflow,
+            Precision = Precision ?? view.Precision,
+        };
         var result = number.Add(A.Value, B.Value, policy);
         return Task.FromResult(Data<number>.Ok(result));
     }
 }
 ```
 
-The LLM sees `Overflow` / `Precision` as ordinary enum-valued action parameters in the catalog. Most calls won't set them — the action prose teaching layer (markdown files under `os/system/modules/math/`) gives the LLM the rule: set only when the developer explicitly asks for strict or lenient behavior on this step.
+`view.Overflow` walks `ConfigScope → parent → Defaults → record default` — that's three of the four scopes for free (context-level, parent-context-level, app-level). Step scope is the local action parameter. No goal-private overlay needed; nothing stored on `Goal` directly.
 
-## The `environment.set` action surface
+Sub-goal inheritance falls out for free too — `app.config` walks the parent chain by construction. If a parent context sets `Overflow=Throw`, child contexts see it unless they shadow. That's the opposite of what the old draft proposed (which deliberately blocked inheritance), but it's the path of least surprise and matches how every other `IConfig` in the runtime already behaves.
 
-`- set environment.number.overflow = throw, scope: goal` is the developer-facing syntax. Three contracts:
+## Step-level: action parameters
 
-1. **Parse the key path.** `environment.number.overflow` decomposes into namespace `environment.number` and property `overflow`. The action walks `App.Environment` (or `Goal.Environment` per scope) by namespace segment, finds the leaf property by name. Strongly-typed — invalid paths or missing properties are compile-time errors at build (validated by the action's Build hook), not runtime nulls.
+`Overflow` / `Precision` ride as nullable enum properties on the action record (see Run() shown above). **`?` is the optional marker** — no `[Optional]` attribute needed. The LLM sees them as ordinary enum-valued action parameters in the catalog. Most calls won't set them — the action prose teaching layer (markdown files under `os/system/modules/math/`) gives the LLM the rule: set only when the developer explicitly asks for strict or lenient behavior on this step.
 
-2. **Parse the value.** Value is a string from the .goal source; the action coerces to the property's CLR type (`OverflowMode`, `PrecisionMode`, ...). For enum-typed properties this is `Enum.Parse(propertyType, value, ignoreCase: true)`.
+## The settings action surface
 
-3. **Apply the scope.**
-   - `scope: app` (default) — writes to `App.Environment.Number.Overflow`.
-   - `scope: goal` — writes to `Goal.EnsureEnvironment().Number.Overflow` (creates the overlay if needed; creates the `Number` child if needed).
-   - `scope: step` — **invalid** for `environment.set`. Step-scoping happens via the math action's own parameters, not via a separate set. The action surfaces this as a typed build error.
+Setting policy lives on the existing settings-handler shape (`app.config.Set`-style), not a new `environment.set` action. A developer writes:
 
-Stage 2 owns the implementation; this plan locks the shape.
+```
+- set math.number.overflow = throw
+```
+
+The settings handler resolves the module prefix (`math.number` → `number.Config`), parses the value into `OverflowMode`, and writes to `context.ConfigScope` (context-scoped by default) or `app.Config.Defaults` (when `Default: true`). The walking handles propagation across sub-goals; no per-scope action variant is needed.
 
 ## What this is NOT
 
-- **Not a generic settings system.** `environment.number` is a typed config object with typed enum-valued properties. Adding `environment.text` later for the text category is the same shape — typed object, typed properties. Nothing is dynamic dictionary-style.
-- **Not block-scoped.** Step scope is the finest-grained, lives only for one action call, set on the action parameters. No `using (NumberPolicy.Strict)` C# blocks.
-- **Not thread-local or AsyncLocal.** Explicit precedence walk via arguments. No hidden propagation through await points.
-- **Not inherited across sub-goals by default.** Goal-scope means "this goal's body" — sub-goals start fresh from App scope. (See open question.)
+- **Not a new `environment` config tree.** Reuse `app.config`. `number.Config : IConfig` is the typed config object.
+- **Not stored on Goal.** Goal isn't thread-safe; the `ConfigScope` lives on `Context`, which has a clear ownership model.
+- **Not block-scoped.** Step scope is the finest-grained, lives only for one action call, set as a nullable property on the action record.
+- **Not thread-local or AsyncLocal.** The walk is explicit via `context.Parent`.
 
-## Open question for Stage 2
+## The 18-digit precision question
 
-**Sub-goal inheritance.** If parent goal sets `environment.number.overflow=throw, scope: goal` and calls a child goal, does the child see the parent's overlay or the App-level value?
+Ingi flagged on 2026-05-28: crypto currency values can carry 18 decimal points. The default `Precision = Double` mode loses precision past ~15 significant digits because IEEE-754 only has 52 bits of mantissa. For a crypto value held as `decimal` that meets a `double` operand in any arithmetic, the **default policy silently truncates** to double precision — that's the lossy path.
 
-This plan stakes out "child sees App-level value" — the simplest and most predictable shape. The alternative ("child walks the goal-stack overlay chain") is more flexible but introduces a precedence rule that needs to be documented and held consistent across other future `environment.*` axes.
+Three responses:
 
-Defer to Stage 2 with a leaning toward "no inheritance." Worth a one-line confirm from Ingi before Stage 2 lands.
+1. **The escape hatch already exists.** `Precision = Decimal` keeps the value in `decimal` slot through arithmetic; `decimal` carries 28–29 significant digits, so 18 fits with room. The crypto handler sets `precision=decimal` (either on the math step or as a Config default for that goal). Lossless for everything decimal can hold.
+
+2. **`decimal` × `double` is the dangerous boundary.** If someone holds a price as `decimal(1.123456789012345678)` and multiplies by a `double` factor, even with `Precision=Decimal` the double operand can't faithfully represent itself — the double already lost precision before the multiplication. The policy can refuse to promote (throw on the cross-kind op), or convert through `Convert.ToDecimal(double)` (lossy at the boundary, but bounded). Today's draft does the latter via `Decimal + Double → Decimal` with a throw on NaN/Infinity/out-of-range. Worth flagging in the user-facing docs: "crypto-grade precision means avoid `double` literals anywhere in your chain."
+
+3. **`BigInteger` / arbitrary-precision is out of scope for this branch.** Past ~28 digits even `decimal` runs out. A `bignumber` type with `System.Numerics.BigInteger` (integer-only) or a `Mantissa + Exponent` decimal-extended type would cover the long tail. Naturally fits the `number` umbrella as a fifth `NumberKind` (`BigInteger`), but it's a future addition — design once 18-digit decimal feels like a real ceiling, not now. Flagged in [storage.md](storage.md) at the kinds discussion.
+
+For day-one shipping: lenient default (`Double`) for general code, switch to strict (`Decimal`) at the action or config level for crypto / finance. Document explicitly. If 28 digits is a real ceiling later, `BigInteger` slots in without a structural change to the policy resolver — just a new kind, new promotion-table row.

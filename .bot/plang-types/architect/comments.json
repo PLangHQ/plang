@@ -1,0 +1,309 @@
+{
+  "plan.md": [
+    {
+      "id": "029abb5861",
+      "line": 3,
+      "text": "I dont know where to put this, so here: can you create a tree of how it would look like with all the classes somewhere",
+      "anchor": "**Branch:** `plang-types` (off `runtime2`, was `number-type` before the 2026-05-28 reframe — see `summary.md`).",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T20:17:59",
+      "drifted": false
+    },
+    {
+      "id": "9835f01223",
+      "line": 33,
+      "text": "we cant to 'to console' or 'to html' it doesnt make sense, the state the code is running controls that, so if it´s a web request the serializer will be html serializer, if he is running in console it´s text serializer",
+      "anchor": "```",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T19:11:55",
+      "drifted": false
+    },
+    {
+      "id": "75dfd588b7",
+      "line": 44,
+      "text": "see above",
+      "anchor": "**Runtime, step 2.** `output.write` grabs `%photo%`, hands the Data to the console channel's writer with serializer identity `text/plain`. The channel does **not** look inside `Value`. It calls `data.Normalize(...)` to walk the graph; Normalize encounters the Image instance, sees `IWireWritable`, asks it to render for `serializer.Type = \"text/plain\"`. Image's implementation dispatches on mime: text/plain → `writer.String(\"[image: image/png 1.2MB]\")` (or the originating path, if held). Console gets a readable line.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T19:13:36",
+      "drifted": true
+    },
+    {
+      "id": "e6c9b0dfe6",
+      "line": 46,
+      "text": "see above. but I would say image would be path for html, but he could possibly be smart and detect if static files are allowed (or this mimetype is allowed) on the server, if it is then path else base64. But this might be for later.",
+      "anchor": "**Runtime, step 3.** Same flow, serializer identity `text/html`. Image dispatches: text/html → `writer.String(\"<img src=\\\"data:image/png;base64,…\\\">\")`. HTML channel gets the markup. (Today `text/html` is aliased to `application/json`'s writer in the registry — HTML markup ships as a JSON string field. When HTML grows its own writer, the raw-string slot is the one the type's `IWireWritable.WriteTo` already targets; no type-side change needed.)",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T19:15:07",
+      "drifted": true
+    },
+    {
+      "id": "79c627312e",
+      "line": 54,
+      "text": "having this.JsonConverter in the path looks wrong at the obp level. not sure if it should be a todo or we should fix it now to prevent future confusion.",
+      "anchor": "- **`app/types/path/`** — multi-variant type owning verbs (`this.Operations`), authorization (`this.Authorize`), serialization (`this.JsonConverter`), derivation (`this.Derivation`), per-variant subfolders (`file/`, `http/`). The folder shape we're generalizing to every type.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T19:16:32",
+      "drifted": true
+    },
+    {
+      "id": "f20c85d5b9",
+      "line": 84,
+      "text": "Why not just Write(...), not sure if we need the serializer, isn´t that already decided by the writer? so with our image example, when i do Write(..), it should load the correct /types/{typeName}/serializer/{serializer}.cs the Json.cs locacated in the serializer already know what type it is, it is json",
+      "anchor": "1. **Interface location and signature.** Leaning `app/data/IWireWritable.cs` (sits next to `IBooleanResolvable`, since `Data.Normalize` is the dispatcher). Signature: `void WriteTo(IWriter writer, ISerializer serializer)` — gives the value both the encoder and the format identity. Sync because format encoding shouldn't reach I/O. Alternative: pass just the mime string instead of the serializer instance — leaner, but loses the ability to delegate sub-fragments back through the serializer (which Image might want for properties).",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-28T19:23:02",
+      "drifted": true
+    },
+    {
+      "id": "001cfbc0a7",
+      "line": 84,
+      "text": "Agree the per-serializer-file shape is more OBP than one-method-switches-on-mime. Proposal: `app/types/<name>/serializer/<format>.cs` per (type, format), each file owns one rendering. Source generator scans them and emits a static dispatch table keyed on (Data.Type, writer.Format). Writer carries its format identity (`json.Writer.Format = \"application/json\"`); Wire.Write does the lookup once at the value slot and calls the registered static method. No interface on the value, no internal mime switch. Normalize stays as the fallback walk for non-registered types (today's domain decomposition).\n\nCost: ~3 types × ~5 formats × ~5 file lines = ~75 tiny single-method files. Each one is one decision in one place. Trade is fewer-files vs `ls` reading like a manifest of what the type can do per output medium. I lean per-file; final call is yours. If you sign off, I'll rewrite plan/dispatch.md and the folder tree commits to it, and the open question collapses.",
+      "anchor": "      this.Normalize.cs                (existing) — walk fallback, untouched for IWireWritable types",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "f20c85d5b9",
+      "ts": "2026-05-28T20:36:35",
+      "drifted": false
+    },
+    {
+      "id": "831c35a9fd",
+      "line": 86,
+      "text": "sounds fine, discovery time",
+      "anchor": "2. **Type registry shape.** Two options. *Discovery-time* (the source generator scans `app/types/<name>/this.cs` and emits a static registration table at compile time — matches how `[Action]` discovery already works). *App-construction-time* (App scans loaded assemblies for `[PlangType]` once at startup — matches how `path.scheme.@this` populates today). Discovery-time is faster and lets PLNG-style gates catch missing registrations at build; App-time is simpler and matches the existing scheme registry. I lean discovery-time but it's not a hill.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T19:23:39",
+      "drifted": true
+    },
+    {
+      "id": "0ff67b29a5",
+      "line": 90,
+      "text": "lets not worry about html for now, we dont support it yet.",
+      "anchor": "4. **HTML as its own writer vs. JSON-aliased.** Today `text/html` aliases `application/json` in the serializer registry. The `<img>` markup case for image works around this by riding as a JSON string field. If we let HTML grow its own writer on this branch, every type's `IWireWritable.WriteTo` for `text/html` writes raw markup (no JSON escaping). Cleaner long-term; ships HTML as a real format. But it widens scope. Defer to a follow-up?",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T19:24:34",
+      "drifted": true
+    }
+  ],
+  "plan/dispatch.md": [
+    {
+      "id": "8c4f85ff4f",
+      "line": 45,
+      "text": "what is this Sync.?",
+      "anchor": "Sync. Reaching for I/O during wire emission is a bug — the value should already hold its bytes (or its lazy-resolved equivalent) by the time it reaches the writer. Async dispatch lives at action verbs, where `image.resize` may read source bytes from disk; the result of that action is a fully-materialized `Image` instance with `Bytes` populated.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T19:35:24",
+      "drifted": true
+    },
+    {
+      "id": "d90839d627",
+      "line": 66,
+      "text": "returning the writer should be fine, dont see a problem with that",
+      "anchor": "The complication: `Normalize` produces a *tree of primitives* that `Wire.Write` then walks. `IWireWritable.WriteTo` doesn't return primitives — it writes directly into the `IWriter`. So Normalize can't return the rendered content; it has to return a *deferred marker* that `json.Writer` (and future writers) recognize.",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-28T19:37:22",
+      "drifted": false
+    },
+    {
+      "id": "38701049ce",
+      "line": 66,
+      "text": "With the per-serializer-file shape I'm proposing on plan.md line 84, the A-vs-B question goes away — there's no marker-and-Normalize handshake. Wire.Write does the `(Data.Type, writer.Format) → static method` lookup directly at the value slot and calls it; non-registered types fall through to today's Normalize walk. I'll rewrite this whole section once you sign off on the shape; leaving open until then.",
+      "anchor": "The complication: `Normalize` produces a *tree of primitives* that `Wire.Write` then walks. `IWireWritable.WriteTo` doesn't return primitives — it writes directly into the `IWriter`. So Normalize can't return the rendered content; it has to return a *deferred marker* that `json.Writer` (and future writers) recognize.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "d90839d627",
+      "ts": "2026-05-28T20:36:51",
+      "drifted": false
+    },
+    {
+      "id": "ce3a98bcfa",
+      "line": 70,
+      "text": "I think I need to see some flow to understand this",
+      "anchor": "- **Option A — Deferred marker.** Normalize returns a `WireWritableNode { Value }` placeholder. The writer's value-dispatch method recognizes it and calls `Value.WriteTo(this, serializer)`. Clean separation; needs the writer to learn one new node type.",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-28T19:38:32",
+      "drifted": false
+    },
+    {
+      "id": "a91f90b840",
+      "line": 70,
+      "text": "Flow under the per-serializer-file shape (proposed on plan.md line 84). Wire.Write seeing `Data{Type=image, Value=<Image>}`:\n\n1. Read Data.Type → 'image'.\n2. Read writer.Format → 'application/json' (or 'text/plain', etc. — the writer carries its own format identity).\n3. Registry lookup `(image, application/json) → app.types.image.serializer.json.Write` (the static method generated from the file).\n4. Call `Write(image, writer)`. Inside that file: `writer.String(Convert.ToBase64String(image.Bytes))`.\n5. Done — no Normalize hop, no marker placeholder, no internal mime switch.\n\nIf lookup misses (Data.Type is unregistered, or the type didn't author a serializer for this format), fall back to today's `data.Normalize() → walker → property bag` path. I'll fold this concrete trace into the rewritten dispatch.md once you sign off on the shape.",
+      "anchor": "- **Option A — Deferred marker.** Normalize returns a `WireWritableNode { Value }` placeholder. The writer's value-dispatch method recognizes it and calls `Value.WriteTo(this, serializer)`. Clean separation; needs the writer to learn one new node type.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "ce3a98bcfa",
+      "ts": "2026-05-28T20:36:52",
+      "drifted": false
+    },
+    {
+      "id": "54b3661528",
+      "line": 119,
+      "text": "I saw somewhere you had /types/image/serializer/{type}.cs, so it would be \"json.cs' or is that overdoing it, yes, maybe, hmmm....",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-28T19:41:25",
+      "drifted": false
+    },
+    {
+      "id": "163fdd5834",
+      "line": 119,
+      "text": "Yes — that's the shape I'm now pushing for. Full proposal in my reply on plan.md line 84. The 'hmmm....' is fair: ~3 types × ~5 formats × ~5 file lines = ~75 tiny single-method files. But each is one decision in one place; the folder under each type reads like a manifest of 'what can this type do, and how, for each output medium.' I lean per-file; final call is yours.",
+      "anchor": "```csharp",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "54b3661528",
+      "ts": "2026-05-28T20:36:52",
+      "drifted": false
+    },
+    {
+      "id": "65f2acae36",
+      "line": 205,
+      "text": "just make sure that Resolve knows how to reach into the type/image.cs the Image object should know how to deserialize it self.",
+      "anchor": "- JSON / plang: deserializer hits a `\"value\"` slot, gets a string. If the surrounding `Data.Type` is `\"image\"`, looks up the image type's `Resolve(string, context)`, which sees base64 and calls `Convert.FromBase64String` to reconstruct bytes.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T19:59:25",
+      "drifted": false
+    }
+  ],
+  "plan/storage.md": [
+    {
+      "id": "82bf3d74c0",
+      "line": 31,
+      "text": "what about unit, and what about int4, uintX, intX, and all the other?",
+      "anchor": "`Float` is preserved as a *label* (for `ToString`, catalog fidelity, round-trip identity) but widened to `double` on entry — single-precision shares the `_f` slot. Standard practice in most VMs; saves a slot, saves a code path. Re-narrowing to `float` on exit happens at the explicit-OUT cast.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T20:02:41",
+      "drifted": false
+    },
+    {
+      "id": "44d5dcea69",
+      "line": 31,
+      "text": "And then BigNumber what about that, we will have crypto currency with 18 decimal points",
+      "anchor": "`Float` is preserved as a *label* (for `ToString`, catalog fidelity, round-trip identity) but widened to `double` on entry — single-precision shares the `_f` slot. Standard practice in most VMs; saves a slot, saves a code path. Re-narrowing to `float` on exit happens at the explicit-OUT cast.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T20:22:54",
+      "drifted": false
+    }
+  ],
+  "plan/types.md": [
+    {
+      "id": "175d77e45f",
+      "line": 66,
+      "text": "is duration better than timespan?",
+      "anchor": "| LLM-facing name | Old binding | New binding | Note |",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T20:11:34",
+      "drifted": false
+    },
+    {
+      "id": "9eb5626daf",
+      "line": 80,
+      "text": "we dont use PR in this project, i have said this many times and you still keep putting PRs in the plans",
+      "anchor": "These cleanups don't *require* the per-type-folder migration this branch establishes — they could ship in a smaller PR. But folding them in here closes the half-state Ingi specifically called out (`IsPrimitive` accepts DateTimeOffset, name table doesn't), and the new types (`number`, `image`, `code`) land alongside cleaned-up neighbors so the catalog reads coherently from day one.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T20:12:25",
+      "drifted": true
+    },
+    {
+      "id": "2e96388397",
+      "line": 82,
+      "text": "as you recommend",
+      "anchor": "**Open:** should the four cleanups also adopt `app/types/<name>/` folder shape (datetime, date, time, duration each get their own folder with `this.cs` that wraps the CLR type)? Or do they stay in the flat `Primitives` table since they have no leaf-action surface beyond what the CLR provides? I lean toward folders for `datetime` and `duration` (both have parse / format complications worth owning); table-only for `date` and `time` (trivial wrappers). Decision deferred to the discussion before stages get carved.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T20:12:55",
+      "drifted": true
+    },
+    {
+      "id": "f24a3d5e2c",
+      "line": 110,
+      "text": "do we need clrType: typeof(image.@this)? doesn't that come for free?",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T20:16:10",
+      "drifted": true
+    }
+  ],
+  "plan/policy.md": [
+    {
+      "id": "6ff259f993",
+      "line": 37,
+      "text": "15 digits, now that we have crypto currency with 18 decimal points, what will happen here? if we loos past 15 digits?",
+      "anchor": "- `Double` (lenient default): `Decimal + Double` promotes to `Double` — IEEE-754 wins, decimal precision lost past ~15 digits.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T20:21:20",
+      "drifted": false
+    },
+    {
+      "id": "ef6df8bd9a",
+      "line": 101,
+      "text": "we cannot be sure that goal is thread safe, so storing environment on goal might not be good idea, if you really want environment there you can public Environment {get  {return context.app.Environment;}}",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T20:25:54",
+      "drifted": true
+    },
+    {
+      "id": "cbeadbe2f7",
+      "line": 119,
+      "text": "we do have some scoping mechanism in the runtime today",
+      "anchor": "- `App.Environment.Number` always exists, never null. Holds the app-wide values.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T20:26:21",
+      "drifted": true
+    },
+    {
+      "id": "50136cf12b",
+      "line": 128,
+      "text": "I dont think we need [Optional], the \"?\" says it's optional",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T20:27:20",
+      "drifted": true
+    }
+  ]
+}
