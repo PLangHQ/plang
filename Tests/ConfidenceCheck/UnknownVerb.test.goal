@@ -1,0 +1,7 @@
+UnknownVerb
+/ Test goal that uses a verb (compress) with no matching action.
+/ Should trigger Low/VeryLow confidence in Plan + Compile.
+
+- set %original% = "hello world"
+- compress %original%, write to %archived%
+- write out %archived%

@@ -14,6 +14,18 @@ The engine has **modules** (namespaces) with **actions**. Each action has proper
 
 - `index` — step index in the goal (0-based)
 - `actions` — array of `"module.action"` strings the step uses. Unordered; the compiler decides chain order from action examples.
+- `confidence` — one of `VeryHigh|High|Medium|Low|VeryLow`. How well the catalog matched the step's verbs and intent.
+- `explanation` — when `confidence` is `Medium` or below, one short sentence naming the part you weren't sure about (an unknown verb, an ambiguous mapping, a missing action you'd expect). Omit when confidence is `High` or `VeryHigh`.
+
+## Confidence levels
+
+- **VeryHigh** — every verb in the step maps cleanly to a catalog action.
+- **High** — clear mapping with no ambiguity even if not the exact word.
+- **Medium** — fit is plausible but not central; multiple modules could apply.
+- **Low** — closest existing action doesn't really cover the verb; you settled for a fallback.
+- **VeryLow** — no good match; selection is speculative. Likely a missing action in the catalog.
+
+When the step text uses a verb that has no matching action (e.g. `compress %x%`), pick the closest fallback (often `variable.set`), set `confidence: VeryLow`, and put the unmatched verb in `explanation` (e.g. `"no action matches verb 'compress'"`).
 
 ## How to read a step
 
@@ -71,12 +83,12 @@ Response:
 {
   "description": "Calls Greet, reads cached config, conditional debug output, iterates items, saves with retry.",
   "steps": [
-    {"index": 0, "actions": ["goal.call"]},
-    {"index": 1, "actions": ["file.read", "cache.wrap", "variable.set"]},
-    {"index": 2, "actions": ["condition.if"]},
-    {"index": 3, "actions": ["output.write"]},
-    {"index": 4, "actions": ["loop.foreach", "goal.call"]},
-    {"index": 5, "actions": ["goal.call", "error.handle"]}
+    {"index": 0, "actions": ["goal.call"], "confidence": "VeryHigh"},
+    {"index": 1, "actions": ["file.read", "cache.wrap", "variable.set"], "confidence": "VeryHigh"},
+    {"index": 2, "actions": ["condition.if"], "confidence": "VeryHigh"},
+    {"index": 3, "actions": ["output.write"], "confidence": "VeryHigh"},
+    {"index": 4, "actions": ["loop.foreach", "goal.call"], "confidence": "VeryHigh"},
+    {"index": 5, "actions": ["goal.call", "error.handle"], "confidence": "VeryHigh"}
   ]
 }
 ```
