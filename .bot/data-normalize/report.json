@@ -201,11 +201,11 @@
         }
       ],
       "verdict": "pass",
-      "next_bot": "security",
+      "next_bot": "tester",
       "after": {
         "status": "PASS — V1 closed correctly with fixture. All v1 + v2 findings now closed. Report at .bot/data-normalize/codeanalyzer/v3.md.",
         "health": "Clean rebuild (zero PLNG002), C# 3381/3381 (+1 V1 fixture), PLang 233/233.",
-        "notes": "Next: security validates the sign-walk + Properties pipeline. Chain: codeanalyzer → security → tester → auditor → docs."
+        "notes": "Next: tester."
       }
     }
   ]
