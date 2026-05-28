@@ -69,7 +69,8 @@ Three categories per property:
 | Error        | none         | **[Out]**      | Failure detail                                     |
 | Type         | none         | **[Out]**      | The type label                                     |
 | Signature    | [Out] today  | **[Out]**      | Already correctly marked                           |
-| RawSignature | none         | **Delete**     | Legacy — was a no-lazy-populate peek when Signature.get auto-signed; after stage 2a.7 removed ICallback, this is now identical to `Signature.get`. Remove the property; migrate the 4 callers (signing.verify, actor/permission, plang serializer) to `Signature` directly. |
+| Properties   | [JsonIgnore] | **[Out]**      | Per-Data metadata sidecar (the `!key` namespace). Already on the wire as the 5th field today via `WireJsonConverter`'s custom Write — `[Out]` tag aligns the attribute with reality and lets the wire-view filter see it (Stage 2). |
+| RawSignature | none         | **Delete**     | Legacy — was a no-lazy-populate peek when Signature.get auto-signed; after stage 2a.7 removed ICallback, this is now identical to `Signature.get`. Remove the property; migrate the 7 callers (WireJsonConverter ×3, actor/permission ×2, Ed25519 ×2) to `Signature` directly. |
 | Context      | [JsonIgnore] | Skip (cycle)   | Runtime graph                                      |
 
 ### 6. `app.types.path.@this.StatInfo`
@@ -152,7 +153,7 @@ Three categories per property:
 
 ## Cross-cutting observations
 
-1. **Default-out vs. opt-in.** Today the codebase uses `[Sensitive]` to *exclude* and `[Out]` to *include*. The proposal above is consistent with `[Out]` as a whitelist — properties without `[Out]` don't ship. That matches what's in `PLang/app/View.cs` already.
+1. **`[Out]` is the wire whitelist.** Only properties with `[Out]` go on the wire. Properties without `[Out]` are excluded. This is a redefinition of today's `[Out]` (which only forces a `[JsonIgnore]`'d property back in). The new wire-view filter that enforces it ships in Stage 2; this inventory is the input to that filter.
 
 2. **Derived properties skip pattern.** All `[LlmBuilder]` properties on `path` (Extension, FileName, etc.) skip on wire because they're derivable from `Relative`. This means `[LlmBuilder]` and `[Out]` are NOT the same set — that's correct. `LlmBuilder` is "show the LLM these for context"; `Out` is "ship across the wire."
 

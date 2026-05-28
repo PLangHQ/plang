@@ -10,7 +10,7 @@ This branch reshapes how `Data` is encoded on the wire — every test here lives
 
 **The new pipeline works.** `Data.Normalize()` → `IWriter` → bytes → reader → `As<T>` round-trips correctly for every domain type in [`wire-out-attributes.md`](wire-out-attributes.md), with `[Out]` filtering in production mode and debug-mode bypass that still honors `[Sensitive]` + `[Masked]`.
 
-A second non-reflection format (protobuf / MsgPack) is *not* shipped on this branch — the `IWriter` abstraction is shaped to accept one without changes to Normalize or any domain type, but actually proving that with a concrete second format is deferred. No cross-format tests here.
+No second format ships on this branch. `IWriter` exists so a future protobuf/MsgPack writer slots in as a sibling implementation, but proving that with a concrete second format is a future branch. No cross-format tests here.
 
 ## Test layer mapping
 

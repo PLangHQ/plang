@@ -119,7 +119,7 @@ Inventory of what's NEW. Path + signature where useful. Test-designer writes tes
 
 - **`IWriter`** — `PLang/app/channels/serializers/IWriter.cs` (path is a suggestion). Methods per stage-2 design: Null, Bool, Int, Long, Double, String, DateTime, Decimal, Bytes, BeginArray(count), EndArray, BeginRecord(Data), EndRecord. Coder owns the exact signature shape.
 - **`JsonWriter : IWriter`** — `PLang/app/channels/serializers/json/JsonWriter.cs` (suggestion). Wraps `Utf8JsonWriter`.
-- *(A second non-reflection `IWriter` — protobuf / MsgPack — is **deferred**. The IWriter shape is designed to accept one, but no second format ships on this branch.)*
+- **Wire-view filter** — `PLang/app/channels/serializers/filters/Wire.cs` (suggestion). Whitelist semantics over `[Out]`; honors `[Sensitive]` (always excludes) and `[Masked]` (emits `"****"`). Debug-mode bypass that still respects `[Sensitive]` and `[Masked]`.
 
 ### New attributes (`PLang/app/View.cs`)
 
@@ -132,21 +132,25 @@ Inventory of what's NEW. Path + signature where useful. Test-designer writes tes
 
 ### Modified / deleted
 
-- **`Data.RawSignature`** — DELETED. Four call sites migrate to `Signature` directly.
-- **`path.JsonConverter.Write`** — DELETED (Stage 2). Default reflection takes over.
+- **`Data.RawSignature`** — DELETED. Seven sites across three files migrate to `Signature` directly (`WireJsonConverter` ×3, `actor/permission` ×2, `Ed25519` ×2).
+- **`Data.Properties`** — gains `[Out]` (was `[JsonIgnore]`). Already on the wire via `WireJsonConverter`'s custom Write; the tag aligns the attribute with reality and lets the new wire-view filter see it.
+- **`path.JsonConverter.Write`** — DELETED (Stage 2). Default reflection + wire-view filter take over.
 - **`path.JsonConverter.Read`** — DELETED or migrated to call As<path> hook (Stage 3 decision).
 - **`Data.Value`** contract — narrows at *wire-tree* level (Stage 2). In-memory `Value` keeps `object?` — lazy normalize means no in-memory call site changes.
+- **`WireJsonConverter.Write`** — gains a Normalize call on `data.Value` before STJ (now `JsonWriter`) emits the value bytes. Outer shape, sign-if-missing, hash-outer carve-out unchanged.
 
 ### New registrations
 
-- *(None on this branch — deferred with the second-format proof.)*
+- None.
 
 ### Existing surfaces this branch touches by reference
 
-- **`PLang/app/View.cs`** — `[Out]`, `[Sensitive]`, `View.Out`, `View.Debug` already exist; this branch leans on them and adds `[Masked]`.
-- **`PLang/app/data/this.cs`** — entry point for Normalize, As<T>; RawSignature lives here today.
-- **`PLang/app/data/this.Envelope.cs`** — Signature property + Wrap/Compress/Encrypt pipeline; the Normalize step inserts before / replaces parts of this.
-- **`PLang/app/channels/serializers/serializer/`** — the existing serializer chain; entry point gains the Normalize call.
+- **`PLang/app/View.cs`** — `[Out]`, `[Sensitive]`, `View.Out`, `View.Debug` already exist; this branch redefines `[Out]` as a positive wire whitelist and adds `[Masked]`.
+- **`PLang/app/data/this.cs`** — entry point for Normalize, As<T>; `Properties` declared here.
+- **`PLang/app/data/this.Transport.cs`** — Signature property + Wrap/Compress/Encrypt pipeline + `RawSignature` (this branch deletes it). The Normalize step inserts before the value bytes are written.
+- **`PLang/app/data/WireJsonConverter.cs`** — the single wire writer; gains a Normalize call inside its Write.
+- **`PLang/app/data/Properties.cs`** — sidecar metadata bag (already on the wire as the 5th field); not touched by Normalize but gets `[Out]` on its declaration in `this.cs`.
+- **`PLang/app/channels/serializers/filters/`** — `View.cs`, `Transport.cs`, `Sensitive.cs` live here; the new `Wire.cs` filter joins them.
 - **`PLang/app/types/path/this.JsonConverter.cs`** — gutted (Stage 2 removes Write; Stage 3 decides Read's fate).
 - **`PLang/app/modules/signing/code/Ed25519.cs`** — uses RawSignature today; migrates to Signature.
 - **`PLang/app/actor/permission/this.cs`** — uses RawSignature today; migrates to Signature.

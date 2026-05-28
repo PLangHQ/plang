@@ -1,3 +1,30 @@
+## 2026-05-28 — Merged runtime2, reconciled plan with data-serialize-cleanup
+
+Merged `runtime2` into `data-normalize` (31 commits). The big landing was `data-serialize-cleanup` — it reshaped the wire from the four-field `{name, type, value, signature}` to the five-field `{name, type, value, properties, signature}` and introduced `app.data.WireJsonConverter` as the single point of wire emission. Sign-if-missing, depth-bounding, and the Properties sidecar all live there now.
+
+Three real reconciliations once I read the merged code:
+
+1. **`[Out]` is the wire whitelist.** Today `[Out]` only forces a `[JsonIgnore]`'d property back into JSON. My plan was quietly assuming `[Out]` meant "only these ship" — that needed to be made explicit. Stage 2 gains a new wire-view filter that enforces the whitelist meaning; Stage 1 stays surface-only (tag properties). Ingi: *"the [Out] is what defines what goes out to the wire, stop thinking about JsonIgnore."*
+
+2. **`IWriter` stays on this branch.** I floated deferring it (no second format ships here, the new CLAUDE.md rule pushes against speculative wrappers). Ingi: *"do IWriter, we'll come to it soon enough. It's an interface, it needs same as the json writer."* Confirmed — `IWriter` ships, `JsonWriter` is the first impl, `WireJsonConverter.Write` calls it on the normalized `data.Value`. `WireJsonConverter` stays as the outer-shape entry point; this branch doesn't replace it.
+
+3. **`Properties` carries `[Out]`.** Was `[JsonIgnore]` on `Data.cs:187`. Already on the wire via `WireJsonConverter`'s custom Write, the tag just aligns the attribute with reality so the new filter sees it.
+
+Mechanical clean-up: Stage 1's caller list for `RawSignature` deletion is now **7 sites in 3 files** (`WireJsonConverter` ×3, `actor/permission` ×2, `Ed25519` ×2) — the old `plang/Data.cs` sites are gone because that file was merged into `plang/this.cs`. File ref updated: `this.Envelope.cs` → `this.Transport.cs:46`.
+
+Test docs trimmed: the "second non-reflection format" framing is gone since no second format ships here.
+
+Stage status:
+| Stage | File | Status |
+|-------|------|--------|
+| 1 | [Out discipline + RawSignature cleanup](stage-1-out-discipline.md) | pending |
+| 2 | [Normalize + IWriter + JsonWriter + wire-view filter](stage-2-normalize-jsonwriter.md) | pending |
+| 3 | [As<T> tree-walker](stage-3-as-tree-walker.md) | pending |
+
+**Next:** `run.ps1 test-designer data-normalize "Write test suites from the architect plan on branch data-normalize" -b data-normalize`
+
+---
+
 ## 2026-05-27 — Design settled, stages carved, ready for downstream
 
 Worked through the cross-cutting decisions interactively with Ingi via the review server. Five settled rules:
