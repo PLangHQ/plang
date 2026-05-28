@@ -2,6 +2,50 @@
   "branch": "number-type",
   "sessions": [
     {
+      "id": "9d1cb3a4-7e2f-4b8a-9c54-2e1aa9b3c402",
+      "bot": "architect",
+      "timestamp_start": "2026-05-28T00:00:00Z",
+      "timestamp_end": "2026-05-28T00:00:00Z",
+      "intent": "Capture an open conversation about PLang's primitive vocabulary — broader scope than this branch, parks here because `number` is one entry in it.",
+      "before": {
+        "assumptions": "Ingi opened a design conversation while on the `data-normalize` branch. The trigger was 'we need to define primitive data types in plang' — he wanted TimeSpan, DateTimeOffset (no DateTime), unified number, and 'maybe more'. Pulled in category kinds (image/video/code) after I noted the LLM's vocabulary is the real question. He asked me to file the thinking here for later review without making decisions.",
+        "risk": "If this work happens uncoordinated with the `number-type` plan, the per-primitive OBP shape gets bolted on after `number` ships, leaving `number` as a special case. Counter-risk: widening this branch to a vocabulary overhaul delays `number` and explodes scope. The doc lays out both paths without choosing — that's the user's call."
+      },
+      "plan": ".bot/number-type/architect/plan/primitive-vocabulary.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/number-type/architect/plan/primitive-vocabulary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Discussion topic file in the plan/ deep-dive folder. Frames the three-concept collision (wire CLR types / named picks / format kinds), notes that the high-level kind table Ingi remembered is `app/formats/this.cs` (not deleted), confirms the date/time/duration renames he settled, lays out the two-arc vs one-arc fork without deciding."
+        },
+        {
+          "paths": [
+            ".bot/number-type/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added a new top entry summarizing the discussion and pointing at the topic file. Stage table unchanged — nothing in the existing plan moved."
+        },
+        {
+          "paths": [],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Did NOT modify plan.md or the storage/policy deep-dives. The vocabulary question is broader than `number` itself; mixing it into the spine would suggest it's part of this branch's deliverable when the user explicitly parked it for later review."
+        }
+      ],
+      "after": {
+        "status": "Discussion captured. No decisions made on the broader vocabulary; user to review and decide between one-arc vs two-arc framing.",
+        "health": "Number-type plan is unchanged and still ready to carve. The new doc is informational; nothing depends on it.",
+        "notes": "Conversation happened while on `data-normalize` branch; switched here only to file the writeup. Returning to `data-normalize` after commit + push."
+      }
+    },
+    {
       "id": "edc6cf73-08ec-4398-b4e8-4a041c112fcb",
       "bot": "architect",
       "timestamp_start": "2026-05-27T15:53:15Z",
