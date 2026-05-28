@@ -1,0 +1,52 @@
+{
+  "branch": "rename-file-to-path",
+  "sessions": [
+    {
+      "id": "f8ed26ac-300c-41ed-a29e-71215b5c1b80",
+      "bot": "architect",
+      "timestamp_start": "2026-05-28T18:09:35Z",
+      "timestamp_end": "2026-05-28T18:09:35Z",
+      "intent": "Plan the rename of PLang's `file` module to `path` to match the protocol-agnostic abstraction the type layer already provides.",
+      "before": {
+        "assumptions": "Module-name discovery is namespace-driven (source generator reads `namespace app.modules.<name>`), so the rename rides through the catalog automatically. The `http` module stays separate. The `app.types.path.file` namespace (FilePath type) is unrelated to the module rename and stays.",
+        "risk": "Stale `plang` binary causes phantom test failures (`Action 'path.X' not found`) unless a clean rebuild is performed before `plang --test`. Doc sweep must avoid blindly s/file/path/ because `file` appears as an English noun in many places where the reading stays correct."
+      },
+      "plan": ".bot/rename-file-to-path/architect/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/rename-file-to-path/architect/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Spine plan: Why section, note-to-coder ownership callout, in-scope list, deferred (NOT in scope) list per conversation, single-stage index, cross-cutting decisions (no shim, namespace-driven discovery, build order, stale-binary trap)."
+        },
+        {
+          "paths": [".bot/rename-file-to-path/architect/stage-1-rename.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Single mechanical stage. Goal/Scope/Deliverables/Dependencies header, note-to-coder ownership callout, ordered implementation steps (C# first → build → markdown → .goal sweep → docs → clean rebuild → plang build → tests), file-by-file inventory, common-failure guide, verification checklist with concrete grep commands."
+        },
+        {
+          "paths": [".bot/rename-file-to-path/architect/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Initial summary entry; newest-at-top per architect convention. Captures the Why, the deferred questions settled with Ingi, and the recon impact counts."
+        },
+        {
+          "paths": [],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Defer HTTP-specific configuration (headers, auth), http.upload/download collapse into path.copy, response metadata on Data.Properties, and POST-vs-PUT default for path.save to HTTP. No real-world pain yet; designing in advance is guessing. This branch is rename-only."
+        }
+      ],
+      "after": {
+        "status": "Plan complete and ready for coder handoff.",
+        "health": "Branch created clean off origin/runtime2. No code edits yet; only architect output under `.bot/rename-file-to-path/architect/`.",
+        "notes": "Next bot: coder. Run: `run.ps1 coder rename-file-to-path \"Execute the file→path module rename per architect plan\" -b rename-file-to-path`. Stage-1 carries the full mechanical inventory; coder owns the final shape but the Deliverables list is the contract."
+      }
+    }
+  ]
+}
