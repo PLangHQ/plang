@@ -71,7 +71,7 @@ Three named cuts. Each is the contract for one end-to-end behavior; per-`@this` 
 
 **Setup:** A `Data` instance with a signed envelope (the Stage 1 RawSignature → Signature migration is the surface here).
 
-**Capture:** Sign the Data. Serialize via the wire serializer (any format from Stages 2 or 4).
+**Capture:** Sign the Data. Serialize via the wire serializer (`JsonWriter` from Stage 2 — the only concrete format on this branch).
 
 **Resume:** Receive the bytes on the other side. Deserialize. Verify the signature.
 
