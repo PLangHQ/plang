@@ -435,7 +435,7 @@
       "id": "8b05d729-8d62-4964-862f-4f8e114ee7be",
       "bot": "security",
       "timestamp_start": "2026-05-28T01:20:13Z",
-      "timestamp_end": "2026-05-28T01:30:00Z",
+      "timestamp_end": "2026-05-28T01:40:00Z",
       "intent": "Security review of data-serialize-cleanup: wire converter, canonicalization, sign-if-missing carveouts, Properties round-trips, Sensitive-leak surfaces.",
       "before": {
         "assumptions": "Codeanalyzer v2 PASSED (11 v1 findings closed). Tester v2 PASSED with mutation verification. Architecture stable. Looking for security-class gaps the structural review and behavioural tests don't catch.",
@@ -531,9 +531,9 @@
         }
       ],
       "after": {
-        "status": "PASS \u2014 1 Medium open, 3 Low/Info open. No critical/high.",
-        "health": "Branch merge-ready under the critical/high-blocks-merge rule. F1 (Medium DoS) recommended to land before merge \u2014 5-line fix.",
-        "notes": "F1 is the only newly-introduced finding; F2/F3/F4 are widened-scope or accepted-tradeoff items on known patterns. F1 ratchets to High the moment any external-bytes channel registers with mime=application/plang."
+        "status": "FAIL \u2014 F1 re-rated High after user pushback. Pre-auth, unrecoverable DoS reachable via callback wire deserialization today.",
+        "health": "Branch blocked on F1. ~5-line fix in WireJsonConverter (AsyncLocal recursion counter).",
+        "notes": "Initial v1 rated F1 Medium under the (wrong) framing that no external plang channel ships. Corrected: parsing happens pre-verify and the callback wire already exposes the deserializer to untrusted bytes. F2/F3/F4 unchanged."
       }
     }
   ]

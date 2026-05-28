@@ -94,11 +94,11 @@
   "findings": [
     {
       "id": 1,
-      "severity": "medium",
+      "severity": "high",
       "category": "resource-exhaustion",
       "vector": "Recursive Data deserialization through LiftDataIfShaped resets STJ MaxDepth on every level by round-tripping through `JsonElement.GetRawText()` + `JsonSerializer.Deserialize<@this>(string, options)`. The new Deserialize call creates a fresh Utf8JsonReader with depth counter reset to zero. STJ's MaxDepth=64 caps JSON nesting per ParseValue call, but each LiftDataIfShaped recursion is a NEW parse → the depth budget restarts. C# call stack is the only remaining bound.",
-      "preconditions": "Any channel that uses the merged plang serializer to ingest attacker-controlled bytes. After Stage 2, this is the single home for inter-actor transport. The attacker need only get a payload past the bytes-on-stream layer (HTTP body, channel stream, callback wire).",
-      "impact": "StackOverflowException in the deserialization thread. .NET treats StackOverflow as unrecoverable (no catch unwinds) — host process crash. DoS against the deserializing actor / process. Repeatable from outside the trust boundary.",
+      "preconditions": "Any path that hands attacker-controlled bytes to plang.Deserialize* — reachable TODAY via the callback wire surface (callback.run deserializes Data from wire before any signature check fires; see standing memory finding). Parsing occurs BEFORE signing.verify runs, so the attacker does not need a verified identity to land the payload. Not contingent on a future external channel.",
+      "impact": "Pre-auth, unrecoverable host process crash. .NET treats StackOverflow as unrecoverable — no catch unwinds, no error path, just process death. DoS against the deserializing actor/process. Cheap (~11 KB), trivially repeatable, no preconditions beyond wire reachability.",
       "affected_files": [
         "PLang/app/data/WireJsonConverter.cs"
       ],
@@ -150,5 +150,5 @@
       "status": "open"
     }
   ],
-  "summary": "Branch is clean on the architecture-of-trust layer: canonicalization (Hash through registered plang serializer + MarkOuterForHash carveout) is correct, the outer signature transitively binds inner Datas, the `!` operator parser fails closed on malformed shapes (closed v1 F5), and the zip-bomb defense (100 MB) is in place. One real finding — F1, a recursion DoS through LiftDataIfShaped's depth reset — should land before this merges; medium severity, ~5-line fix. F2/F3/F4 are standing-pattern or accepted-tradeoff items that don't gate the merge. Verdict: FAIL pending F1, otherwise PASS-leaning."
+  "summary": "Architecture-of-trust layer is clean: canonicalization (Hash through registered plang serializer + MarkOuterForHash carveout) is correct, outer signature transitively binds inner Datas, `!` operator parser fails closed (closed v1 F5), zip-bomb defense (100 MB) in place. F1 is a pre-auth unrecoverable DoS — parsing happens before signing.verify, callback wire already exposes the deserializer to untrusted bytes, ~11 KB payload kills the process. Rated High; verdict FAIL under critical/high-blocks rule. ~5-line fix (AsyncLocal recursion depth counter in WireJsonConverter). F2/F3/F4 are standing-pattern or accepted-tradeoff items that don't gate."
 }

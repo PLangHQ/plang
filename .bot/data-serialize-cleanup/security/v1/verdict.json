@@ -1,4 +1,4 @@
 {
-  "status": "pass",
-  "summary": "data-serialize-cleanup v1 — no critical/high open; one Medium DoS (F1: LiftDataIfShaped stack-overflow via depth reset) and three Low/Info standing-pattern items"
+  "status": "fail",
+  "summary": "data-serialize-cleanup v1 — F1 (High): pre-auth StackOverflow DoS via WireJsonConverter.LiftDataIfShaped depth reset; reachable through callback wire deserialization today"
 }
