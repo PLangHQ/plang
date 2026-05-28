@@ -147,10 +147,12 @@
           "context": "3 majors + 8 polish. M1: json.Writer.Value default branch falls back to STJ — bypasses [Out]/[Sensitive]/[Masked] at the last gate. M2: Wire.Write emits Properties via STJ — asymmetric with the Read side that restricts to primitives. M3: EnsureInnerSigned skips IDictionary values — inner Datas held in dict values ship unsigned. P-series: Reconstruct bare-catch conflates ctor-missing with ctor-threw; Tagged inherit:true is dead-cargo; IWriter has no Enum/Float/DateTimeOffset/TimeSpan/Guid slots though Normalize keeps them as leaves; [Out,Store] on Data envelope props is dead-code; Reconstruct re-Normalize on every call; Dict<K,V> silent drop; tree-leaf list inconsistency; path 'scheme' wire field unused on inbound."
         }
       ],
+      "verdict": "fail",
+      "next_bot": "coder",
       "after": {
-        "status": "Report written to .bot/data-normalize/codeanalyzer/v1.md.",
-        "health": "Branch builds + tests green. No regressions. Findings are latent — none are failing today because Stage 2b wiring hasn't switched on the value-slot pipeline yet. Recommend addressing M1-M3 before that switch.",
-        "notes": "Verified clean rebuild (zero PLNG002), 3379/3379 C# tests, 233/233 PLang tests."
+        "status": "FAIL — 3 majors must be fixed before Stage 2b wiring. Report at .bot/data-normalize/codeanalyzer/v1.md.",
+        "health": "Branch builds + tests green. Findings are latent — none failing today because Stage 2b wiring hasn't switched on the value-slot pipeline. Must address M1-M3 before that switch.",
+        "notes": "Verified clean rebuild (zero PLNG002), 3379/3379 C# tests, 233/233 PLang tests. Next: coder addresses M1-M3, then codeanalyzer v2."
       }
     }
   ]
