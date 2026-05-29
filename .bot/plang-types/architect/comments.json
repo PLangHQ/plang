@@ -1,0 +1,687 @@
+{
+  "plan.md": [
+    {
+      "id": "029abb5861",
+      "line": 3,
+      "text": "I dont know where to put this, so here: can you create a tree of how it would look like with all the classes somewhere",
+      "anchor": "**Branch:** `plang-types` (off `runtime2`, was `number-type` before the 2026-05-28 reframe — see `summary.md`).",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T20:17:59",
+      "drifted": true
+    },
+    {
+      "id": "3b5b3c4510",
+      "line": 3,
+      "text": "one thing that we are missing in this is adding types or overwriting. this is where [code] comes in, where users can do something like '- load mynumbers.dll', it detects the what interface it implements and injects it, allowing users to overwrite what 'int' is or add their new type",
+      "anchor": "**Branch:** `plang-types` (off `runtime2`, was `number-type` before the 2026-05-28 reframe — see `summary.md`).",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-29T09:41:19",
+      "drifted": true
+    },
+    {
+      "id": "b531430755",
+      "line": 3,
+      "text": "Big one — captured as a new spine section 'Extending the type vocabulary at runtime', and detailed in dispatch.md 'Runtime-loaded and overwritten types'. The good news: most of it is already wired. `code.load` (PLang/app/modules/code/load.cs) already does load→scan-for-interface→register for ICode providers; type-loading is the same shape pointed at [PlangType] classes. `Registry.RegisterRuntime(name, type)` is the existing hook, and `Registry.ResolveType` already checks runtime registrations BEFORE the built-in table — so overwriting 'int' works at the resolution layer for free.\n\nOne honest limit I want you to see: runtime registration changes *resolution and rendering* (what 'int' maps to, how it serializes) but it can't rewrite what the source generator already baked at build — the PLNG slot validation, the Data<int> params on already-compiled handlers, the type stamps in shipped .pr files. So `- load myint.dll` makes int resolve/render differently going forward, but a handler compiled against built-in int still sees built-in int at its typed slot. Adding NEW types is unconstrained; overwriting built-ins is 'new resolution + new rendering, same compiled slots.' Flagged so nobody expects load to retroactively rewrite already-built goals. The serializer side: a loaded DLL ships an ITypeRenderer per format, registered into the same dispatch table the generator feeds.",
+      "anchor": "**Branch:** `plang-types` (off `runtime2`, was `number-type` before the 2026-05-28 reframe — see `summary.md`).",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "3b5b3c4510",
+      "ts": "2026-05-29T09:57:02",
+      "drifted": true
+    },
+    {
+      "id": "9835f01223",
+      "line": 33,
+      "text": "we cant to 'to console' or 'to html' it doesnt make sense, the state the code is running controls that, so if it´s a web request the serializer will be html serializer, if he is running in console it´s text serializer",
+      "anchor": "```",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T19:11:55",
+      "drifted": true
+    },
+    {
+      "id": "75dfd588b7",
+      "line": 44,
+      "text": "see above",
+      "anchor": "**Runtime, step 2.** `output.write` grabs `%photo%`, hands the Data to the console channel's writer with serializer identity `text/plain`. The channel does **not** look inside `Value`. It calls `data.Normalize(...)` to walk the graph; Normalize encounters the Image instance, sees `IWireWritable`, asks it to render for `serializer.Type = \"text/plain\"`. Image's implementation dispatches on mime: text/plain → `writer.String(\"[image: image/png 1.2MB]\")` (or the originating path, if held). Console gets a readable line.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T19:13:36",
+      "drifted": true
+    },
+    {
+      "id": "e6c9b0dfe6",
+      "line": 46,
+      "text": "see above. but I would say image would be path for html, but he could possibly be smart and detect if static files are allowed (or this mimetype is allowed) on the server, if it is then path else base64. But this might be for later.",
+      "anchor": "**Runtime, step 3.** Same flow, serializer identity `text/html`. Image dispatches: text/html → `writer.String(\"<img src=\\\"data:image/png;base64,…\\\">\")`. HTML channel gets the markup. (Today `text/html` is aliased to `application/json`'s writer in the registry — HTML markup ships as a JSON string field. When HTML grows its own writer, the raw-string slot is the one the type's `IWireWritable.WriteTo` already targets; no type-side change needed.)",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T19:15:07",
+      "drifted": true
+    },
+    {
+      "id": "05ca832faf",
+      "line": 47,
+      "text": "I feel like we need to visualize the flow of build and runtime. I see something like this\n\n' - read photo.jpg, write to %photo%'\nwhen llm reads this he sets type=\"image\", mimetype=\"jpg\"  //this part I am not sure\n\n\n'- set %x% = 3.5'\nwill llm say type=\"decimal\" or type=\"number/decimal\" or ...\n\nwe want to have the runtime do as litle work as possible, we shouldn´t need to parse a string (or at least very minimal) for each execution, just here is the pr, now run it",
+      "anchor": "Same Image instance, same step in the same goal, two channels, two wire shapes. The value was never re-materialized, the format mapping never lived in the channel, and the goal author never had to know about text vs. web — just \"write out the photo.\"",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-29T10:39:06",
+      "drifted": false
+    },
+    {
+      "id": "1945403c74",
+      "line": 47,
+      "text": "Visualized in a new deep-dive: plan/build-vs-runtime.md (linked from this section). It traces a goal through build → .pr → runtime as side-by-side columns and answers both your questions. Short version:\n\nYour principle is already half-real — the .pr stores values typed and JSON-native today: `set %total% = 0` compiles to `{value: 0, type: \"int\"}` (JSON number 0, not the string \"0\"), `[1,2,3]` to `{value:[1,2,3], type:\"list\"}`. The runtime loads those as numbers/lists with no string parsing. The whole design just generalizes that rule.\n\n1. **`read photo.jpg`** → build stamps `%photo%(image)` (the return type, read from file.read's `Data<image>` signature — not from sniffing the file). The **mime is NOT baked** — it's a runtime property of the Image value, derived from the extension/content when file.read actually opens the file. Reasons: the LLM vocab is bare `image` (no subtype), the file isn't read at build, and mime belongs to the value not the plan. So `.pr` carries `image`; the value carries `image/jpeg`.\n\n2. **`set %x% = 3.5`** → `type=\"decimal\"`. Concrete kind, NOT `number`, NOT `number/decimal`. `number` is only for the genuinely-runtime-polymorphic case (math.add can't know its kind until it runs). A literal's kind is known at build, so we bake the precise kind and keep the info. No hierarchical subtype tag (same decision as bare `image`). The value bakes as JSON `3.5`; the `type:\"decimal\"` field disambiguates (JSON has no decimal/double distinction). Runtime reads (3.5, decimal) → number{Decimal} with no decimal.Parse.\n\nThe coder rule: literals are baked value-native + concrete-kind (never a string to re-parse); number.Parse runs only for runtime-dynamic strings (file contents, http body, terminal input). 'Here is the pr, now run it' — build did the thinking.",
+      "anchor": "Same Image instance, same step in the same goal, two channels, two wire shapes. The value was never re-materialized, the format mapping never lived in the channel, and the goal author never had to know about text vs. web — just \"write out the photo.\"",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "05ca832faf",
+      "ts": "2026-05-29T10:43:56",
+      "drifted": false
+    },
+    {
+      "id": "79c627312e",
+      "line": 54,
+      "text": "having this.JsonConverter in the path looks wrong at the obp level. not sure if it should be a todo or we should fix it now to prevent future confusion.",
+      "anchor": "- **`app/types/path/`** — multi-variant type owning verbs (`this.Operations`), authorization (`this.Authorize`), serialization (`this.JsonConverter`), derivation (`this.Derivation`), per-variant subfolders (`file/`, `http/`). The folder shape we're generalizing to every type.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T19:16:32",
+      "drifted": true
+    },
+    {
+      "id": "f20c85d5b9",
+      "line": 84,
+      "text": "Why not just Write(...), not sure if we need the serializer, isn´t that already decided by the writer? so with our image example, when i do Write(..), it should load the correct /types/{typeName}/serializer/{serializer}.cs the Json.cs locacated in the serializer already know what type it is, it is json",
+      "anchor": "1. **Interface location and signature.** Leaning `app/data/IWireWritable.cs` (sits next to `IBooleanResolvable`, since `Data.Normalize` is the dispatcher). Signature: `void WriteTo(IWriter writer, ISerializer serializer)` — gives the value both the encoder and the format identity. Sync because format encoding shouldn't reach I/O. Alternative: pass just the mime string instead of the serializer instance — leaner, but loses the ability to delegate sub-fragments back through the serializer (which Image might want for properties).",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T19:23:02",
+      "drifted": true
+    },
+    {
+      "id": "001cfbc0a7",
+      "line": 84,
+      "text": "Agree the per-serializer-file shape is more OBP than one-method-switches-on-mime. Proposal: `app/types/<name>/serializer/<format>.cs` per (type, format), each file owns one rendering. Source generator scans them and emits a static dispatch table keyed on (Data.Type, writer.Format). Writer carries its format identity (`json.Writer.Format = \"application/json\"`); Wire.Write does the lookup once at the value slot and calls the registered static method. No interface on the value, no internal mime switch. Normalize stays as the fallback walk for non-registered types (today's domain decomposition).\n\nCost: ~3 types × ~5 formats × ~5 file lines = ~75 tiny single-method files. Each one is one decision in one place. Trade is fewer-files vs `ls` reading like a manifest of what the type can do per output medium. I lean per-file; final call is yours. If you sign off, I'll rewrite plan/dispatch.md and the folder tree commits to it, and the open question collapses.",
+      "anchor": "      this.Normalize.cs                (existing) — walk fallback, untouched for IWireWritable types",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "f20c85d5b9",
+      "ts": "2026-05-28T20:36:35",
+      "drifted": true
+    },
+    {
+      "id": "831c35a9fd",
+      "line": 86,
+      "text": "sounds fine, discovery time",
+      "anchor": "2. **Type registry shape.** Two options. *Discovery-time* (the source generator scans `app/types/<name>/this.cs` and emits a static registration table at compile time — matches how `[Action]` discovery already works). *App-construction-time* (App scans loaded assemblies for `[PlangType]` once at startup — matches how `path.scheme.@this` populates today). Discovery-time is faster and lets PLNG-style gates catch missing registrations at build; App-time is simpler and matches the existing scheme registry. I lean discovery-time but it's not a hill.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T19:23:39",
+      "drifted": true
+    },
+    {
+      "id": "0ff67b29a5",
+      "line": 90,
+      "text": "lets not worry about html for now, we dont support it yet.",
+      "anchor": "4. **HTML as its own writer vs. JSON-aliased.** Today `text/html` aliases `application/json` in the serializer registry. The `<img>` markup case for image works around this by riding as a JSON string field. If we let HTML grow its own writer on this branch, every type's `IWireWritable.WriteTo` for `text/html` writes raw markup (no JSON escaping). Cleaner long-term; ships HTML as a real format. But it widens scope. Defer to a follow-up?",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T19:24:34",
+      "drifted": true
+    }
+  ],
+  "plan/dispatch.md": [
+    {
+      "id": "8c4f85ff4f",
+      "line": 45,
+      "text": "what is this Sync.?",
+      "anchor": "Sync. Reaching for I/O during wire emission is a bug — the value should already hold its bytes (or its lazy-resolved equivalent) by the time it reaches the writer. Async dispatch lives at action verbs, where `image.resize` may read source bytes from disk; the result of that action is a fully-materialized `Image` instance with `Bytes` populated.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T19:35:24",
+      "drifted": true
+    },
+    {
+      "id": "d90839d627",
+      "line": 66,
+      "text": "returning the writer should be fine, dont see a problem with that",
+      "anchor": "The complication: `Normalize` produces a *tree of primitives* that `Wire.Write` then walks. `IWireWritable.WriteTo` doesn't return primitives — it writes directly into the `IWriter`. So Normalize can't return the rendered content; it has to return a *deferred marker* that `json.Writer` (and future writers) recognize.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T19:37:22",
+      "drifted": true
+    },
+    {
+      "id": "38701049ce",
+      "line": 66,
+      "text": "With the per-serializer-file shape I'm proposing on plan.md line 84, the A-vs-B question goes away — there's no marker-and-Normalize handshake. Wire.Write does the `(Data.Type, writer.Format) → static method` lookup directly at the value slot and calls it; non-registered types fall through to today's Normalize walk. I'll rewrite this whole section once you sign off on the shape; leaving open until then.",
+      "anchor": "The complication: `Normalize` produces a *tree of primitives* that `Wire.Write` then walks. `IWireWritable.WriteTo` doesn't return primitives — it writes directly into the `IWriter`. So Normalize can't return the rendered content; it has to return a *deferred marker* that `json.Writer` (and future writers) recognize.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "d90839d627",
+      "ts": "2026-05-28T20:36:51",
+      "drifted": true
+    },
+    {
+      "id": "cf829b8069",
+      "line": 66,
+      "text": "ok, signed off",
+      "anchor": "The complication: `Normalize` produces a *tree of primitives* that `Wire.Write` then walks. `IWireWritable.WriteTo` doesn't return primitives — it writes directly into the `IWriter`. So Normalize can't return the rendered content; it has to return a *deferred marker* that `json.Writer` (and future writers) recognize.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "38701049ce",
+      "ts": "2026-05-29T09:38:08",
+      "drifted": true
+    },
+    {
+      "id": "ebb6ceb093",
+      "line": 66,
+      "text": "Signed off — dispatch.md fully rewritten around the per-(type, format) serializer-file shape. The A-vs-B marker debate is gone; the section now describes the TypedValueNode tag + writer-side (type, format) lookup directly. Thanks.",
+      "anchor": "    public static void Write(image.@this value, IWriter writer)",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "cf829b8069",
+      "ts": "2026-05-29T09:57:18",
+      "drifted": false
+    },
+    {
+      "id": "ce3a98bcfa",
+      "line": 70,
+      "text": "I think I need to see some flow to understand this",
+      "anchor": "- **Option A — Deferred marker.** Normalize returns a `WireWritableNode { Value }` placeholder. The writer's value-dispatch method recognizes it and calls `Value.WriteTo(this, serializer)`. Clean separation; needs the writer to learn one new node type.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T19:38:32",
+      "drifted": true
+    },
+    {
+      "id": "a91f90b840",
+      "line": 70,
+      "text": "Flow under the per-serializer-file shape (proposed on plan.md line 84). Wire.Write seeing `Data{Type=image, Value=<Image>}`:\n\n1. Read Data.Type → 'image'.\n2. Read writer.Format → 'application/json' (or 'text/plain', etc. — the writer carries its own format identity).\n3. Registry lookup `(image, application/json) → app.types.image.serializer.json.Write` (the static method generated from the file).\n4. Call `Write(image, writer)`. Inside that file: `writer.String(Convert.ToBase64String(image.Bytes))`.\n5. Done — no Normalize hop, no marker placeholder, no internal mime switch.\n\nIf lookup misses (Data.Type is unregistered, or the type didn't author a serializer for this format), fall back to today's `data.Normalize() → walker → property bag` path. I'll fold this concrete trace into the rewritten dispatch.md once you sign off on the shape.",
+      "anchor": "- **Option A — Deferred marker.** Normalize returns a `WireWritableNode { Value }` placeholder. The writer's value-dispatch method recognizes it and calls `Value.WriteTo(this, serializer)`. Clean separation; needs the writer to learn one new node type.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "ce3a98bcfa",
+      "ts": "2026-05-28T20:36:52",
+      "drifted": true
+    },
+    {
+      "id": "46023c3fc3",
+      "line": 70,
+      "text": "good, like it",
+      "anchor": "- **Option A — Deferred marker.** Normalize returns a `WireWritableNode { Value }` placeholder. The writer's value-dispatch method recognizes it and calls `Value.WriteTo(this, serializer)`. Clean separation; needs the writer to learn one new node type.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "a91f90b840",
+      "ts": "2026-05-29T09:38:56",
+      "drifted": true
+    },
+    {
+      "id": "6d8119cb08",
+      "line": 70,
+      "text": "Kept the deferred-marker mechanism you liked (Normalize tags TypedValueNode, writer resolves it) — it composes cleanly with the per-file shape: the marker now resolves to a generator-wired static method per (type, format) instead of an interface method on the value. The concrete 5-step flow is in the rewritten 'The flow, concretely' section.",
+      "anchor": "",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "46023c3fc3",
+      "ts": "2026-05-29T09:57:18",
+      "drifted": false
+    },
+    {
+      "id": "54b3661528",
+      "line": 119,
+      "text": "I saw somewhere you had /types/image/serializer/{type}.cs, so it would be \"json.cs' or is that overdoing it, yes, maybe, hmmm....",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T19:41:25",
+      "drifted": true
+    },
+    {
+      "id": "163fdd5834",
+      "line": 119,
+      "text": "Yes — that's the shape I'm now pushing for. Full proposal in my reply on plan.md line 84. The 'hmmm....' is fair: ~3 types × ~5 formats × ~5 file lines = ~75 tiny single-method files. But each is one decision in one place; the folder under each type reads like a manifest of 'what can this type do, and how, for each output medium.' I lean per-file; final call is yours.",
+      "anchor": "```csharp",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "54b3661528",
+      "ts": "2026-05-28T20:36:52",
+      "drifted": true
+    },
+    {
+      "id": "65f2acae36",
+      "line": 205,
+      "text": "just make sure that Resolve knows how to reach into the type/image.cs the Image object should know how to deserialize it self.",
+      "anchor": "- JSON / plang: deserializer hits a `\"value\"` slot, gets a string. If the surrounding `Data.Type` is `\"image\"`, looks up the image type's `Resolve(string, context)`, which sees base64 and calls `Convert.FromBase64String` to reconstruct bytes.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T19:59:25",
+      "drifted": true
+    }
+  ],
+  "plan/storage.md": [
+    {
+      "id": "82bf3d74c0",
+      "line": 30,
+      "text": "what about unit, and what about int4, uintX, intX, and all the other?",
+      "anchor": "`Float` is preserved as a *label* (for `ToString`, catalog fidelity, round-trip identity) but widened to `double` on entry — single-precision shares the `_f` slot. Standard practice in most VMs; saves a slot, saves a code path. Re-narrowing to `float` on exit happens at the explicit-OUT cast.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T20:02:41",
+      "drifted": true
+    },
+    {
+      "id": "44d5dcea69",
+      "line": 30,
+      "text": "And then BigNumber what about that, we will have crypto currency with 18 decimal points",
+      "anchor": "`Float` is preserved as a *label* (for `ToString`, catalog fidelity, round-trip identity) but widened to `double` on entry — single-precision shares the `_f` slot. Standard practice in most VMs; saves a slot, saves a code path. Re-narrowing to `float` on exit happens at the explicit-OUT cast.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T20:22:54",
+      "drifted": true
+    }
+  ],
+  "plan/types.md": [
+    {
+      "id": "175d77e45f",
+      "line": 66,
+      "text": "is duration better than timespan?",
+      "anchor": "| LLM-facing name | Old binding | New binding | Note |",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T20:11:34",
+      "drifted": false
+    },
+    {
+      "id": "9eb5626daf",
+      "line": 80,
+      "text": "we dont use PR in this project, i have said this many times and you still keep putting PRs in the plans",
+      "anchor": "These cleanups don't *require* the per-type-folder migration this branch establishes — they could ship in a smaller PR. But folding them in here closes the half-state Ingi specifically called out (`IsPrimitive` accepts DateTimeOffset, name table doesn't), and the new types (`number`, `image`, `code`) land alongside cleaned-up neighbors so the catalog reads coherently from day one.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T20:12:25",
+      "drifted": true
+    },
+    {
+      "id": "2e96388397",
+      "line": 82,
+      "text": "as you recommend",
+      "anchor": "**Open:** should the four cleanups also adopt `app/types/<name>/` folder shape (datetime, date, time, duration each get their own folder with `this.cs` that wraps the CLR type)? Or do they stay in the flat `Primitives` table since they have no leaf-action surface beyond what the CLR provides? I lean toward folders for `datetime` and `duration` (both have parse / format complications worth owning); table-only for `date` and `time` (trivial wrappers). Decision deferred to the discussion before stages get carved.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T20:12:55",
+      "drifted": true
+    },
+    {
+      "id": "f24a3d5e2c",
+      "line": 110,
+      "text": "do we need clrType: typeof(image.@this)? doesn't that come for free?",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T20:16:10",
+      "drifted": true
+    }
+  ],
+  "plan/policy.md": [
+    {
+      "id": "6ff259f993",
+      "line": 37,
+      "text": "15 digits, now that we have crypto currency with 18 decimal points, what will happen here? if we loos past 15 digits?",
+      "anchor": "- `Double` (lenient default): `Decimal + Double` promotes to `Double` — IEEE-754 wins, decimal precision lost past ~15 digits.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T20:21:20",
+      "drifted": false
+    },
+    {
+      "id": "ef6df8bd9a",
+      "line": 101,
+      "text": "we cannot be sure that goal is thread safe, so storing environment on goal might not be good idea, if you really want environment there you can public Environment {get  {return context.app.Environment;}}",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T20:25:54",
+      "drifted": true
+    },
+    {
+      "id": "cbeadbe2f7",
+      "line": 119,
+      "text": "we do have some scoping mechanism in the runtime today",
+      "anchor": "- `App.Environment.Number` always exists, never null. Holds the app-wide values.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T20:26:21",
+      "drifted": true
+    },
+    {
+      "id": "50136cf12b",
+      "line": 128,
+      "text": "I dont think we need [Optional], the \"?\" says it's optional",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T20:27:20",
+      "drifted": true
+    }
+  ],
+  "plan/review-opus-4-8.md": [
+    {
+      "id": "07a340128e",
+      "line": 43,
+      "text": "but for regular folks it's the same, so I think it should be by default equal but a setting where you can change that",
+      "anchor": "The fix is **exact-only cross-kind equality**. `decimal(0.1m) == double(0.1d)` is *false*: 0.1 has no exact double representation, so they're not the same number under any precision-respecting view. Same for 0.1000000000000000055m vs 0.1d. All three become inequal. Transitivity restored.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T23:07:15",
+      "drifted": false
+    },
+    {
+      "id": "e04619f9e1",
+      "line": 43,
+      "text": "Conceded back — your call wins. The right shape is:\n\n- **`==` / `Equals` is lenient by default.** Cross-kind promotes to a common form and compares. Matches what every regular PLang dev expects: `0.1 == 0.1` is true, period, regardless of whether one side originated as decimal and the other as double.\n- **`ExactEquals(other)` for those who know.** Explicit method. Same Kind + exact bit-level. No ambient state, no policy axis — the user reaches for the method when they need it (crypto, finance, debugging).\n- **`GetHashCode` follows the lenient `==`.** Canonical form: lenient-equal values hash to the same bucket. Cost is hash collisions for nearby-but-not-equal values; bucket lookup is still O(1) amortized — same trade Python takes with `hash(0.1) == hash(Decimal('0.1'))`.\n\nThe transitivity hazard in HashSet/Dictionary is still real in theory but bounded in practice: PLang devs almost never put `number` directly in a HashSet — they use list / dict actions whose equality discipline is whatever PLang's collection layer enforces. So the edge case sits in C#-only code paths that opt into ExactEquals.\n\nWithdrawing my 'full concede' on Opus 4.8's point 2 — going lenient default, opt-in strict.",
+      "anchor": "The fix is **exact-only cross-kind equality**. `decimal(0.1m) == double(0.1d)` is *false*: 0.1 has no exact double representation, so they're not the same number under any precision-respecting view. Same for 0.1000000000000000055m vs 0.1d. All three become inequal. Transitivity restored.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "07a340128e",
+      "ts": "2026-05-28T23:14:53",
+      "drifted": false
+    },
+    {
+      "id": "7266480dff",
+      "line": 47,
+      "text": "problem is, we dont really have a way to convert it to either or other type, so thats why I want the default to be equal and those that know what they are doing set it",
+      "anchor": "**The cost we accept:** `From(0.1m) != From(0.1)` will surprise developers who *think of them as the same number*. But that surprise is the truth — 0.1m IS NOT 0.1d in any honest precision view. Surfacing it as inequality is honest; silently producing wrong answers in HashSet/Dictionary is not.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T23:08:10",
+      "drifted": false
+    },
+    {
+      "id": "21f14609c1",
+      "line": 47,
+      "text": "Same thread as the L41 reply. The 'can't convert' framing is exactly why lenient is the right default — devs don't know if their `0.1` is decimal or double and shouldn't have to. Resolved together with the L41 comment.",
+      "anchor": "**The cost we accept:** `From(0.1m) != From(0.1)` will surprise developers who *think of them as the same number*. But that surprise is the truth — 0.1m IS NOT 0.1d in any honest precision view. Surfacing it as inequality is honest; silently producing wrong answers in HashSet/Dictionary is not.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "7266480dff",
+      "ts": "2026-05-28T23:15:34",
+      "drifted": false
+    },
+    {
+      "id": "4f4d172de9",
+      "line": 85,
+      "text": "everthing in plang returns data so, not sure what you mean, maybe some internal thing, private method would throw, but we should return Data error to the runtime from the module.",
+      "anchor": "**My position: concede, with a clean split.** Real architectural mismatch. The fix isn't \"everything returns Data\" — C# operators (`+`, `*`, etc.) can't, by signature. The split is by surface:",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T23:09:36",
+      "drifted": false
+    },
+    {
+      "id": "39abd0e326",
+      "line": 85,
+      "text": "Right — that's the split I'm proposing, just phrased from the C# side. The handler / module-surface boundary always returns `Data` — never throws. Internal `private` methods (and C# operators on `number` itself like `+`, `-`, `*`) throw the way every CLR numeric does; the math handler catches and converts to `Data.Error`. So:\n\n- `math.add` handler: `Run() → Data<number>`. Calls `number.Add(a, b, policy)` (the Data-returning named method, not the operator). Catches happen inside `number.Add` itself.\n- `number.Add(...)` body: catches `OverflowException` internally, returns `Data<number>.Fail(\"MathOverflow\", ...)`.\n- `number + number` operator: throws on overflow. Used by `number.Add` internally for the lenient path, and by any C# code outside the action layer that wants ergonomic arithmetic.\n\nBoundary up to the runtime is Data; the back of the curtain has exceptions for the same reason `decimal + decimal` does. Confirming we're aligned.",
+      "anchor": "**My position: concede, with a clean split.** Real architectural mismatch. The fix isn't \"everything returns Data\" — C# operators (`+`, `*`, etc.) can't, by signature. The split is by surface:",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "4f4d172de9",
+      "ts": "2026-05-28T23:14:53",
+      "drifted": false
+    },
+    {
+      "id": "8ffd60131d",
+      "line": 133,
+      "text": "Maybe we dont need context, but it is thread safe so not sure what the problem is.",
+      "anchor": "**My position: full concede.** Mutable Context on a value-typed numeric is wrong. I bolted it on for cosmetic factory-shape uniformity with `path.Resolve(raw, context)`. The cost wasn't visible to me at write-time but is real:",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T23:10:37",
+      "drifted": false
+    },
+    {
+      "id": "594ba8ef89",
+      "line": 133,
+      "text": "Fair pushback. The thread-safety isn't the problem (and Opus 4.8 didn't quite frame it as one either) — it's that Context on a `number` has no real use site after construction. The factory `Resolve(raw, context)` uses it briefly for registry / catalog lookup during construction, then has nothing to do with it. Storing it on the instance is carrying unused state, and the OBP-#4 risk only matters if number gets cached cross-request — which it might, since values get parked in MemoryStack.\n\nFix is mechanical, not architectural alarm: `Resolve(raw, context)` keeps the parameter (signature-uniform with path.Resolve, etc.) but the body doesn't write it to a field; `From(5)` and internal factories don't see Context at all. Drop the `Context { get; set; }` property and the `IContext` interface on number. No state, no risk, no perf hit on construction. Mechanical enough that it lands without further discussion.",
+      "anchor": "**My position: full concede.** Mutable Context on a value-typed numeric is wrong. I bolted it on for cosmetic factory-shape uniformity with `path.Resolve(raw, context)`. The cost wasn't visible to me at write-time but is real:",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "8ffd60131d",
+      "ts": "2026-05-28T23:14:53",
+      "drifted": false
+    },
+    {
+      "id": "37afdbfe5c",
+      "line": 157,
+      "text": "Landed as readonly struct (named @this, convention intact) in storage.md. One correction you should see, since your reason was allocation: I verified Data.Value is `object` (app/data/this.cs:86), so a struct boxes the moment it enters Data — which is the dominant runtime path (variables, memory stack, results). The allocation win is real only for pure-C# arithmetic intermediates that never touch Data (a reducer accumulator like list.sum over a big list), and that path is partly mooted because heavy numeric loops route to [code] anyway. Struct still stands on value-semantics grounds (number IS a value, like int/decimal), so I proceeded — but the allocation rationale specifically is weak. If that changes your mind it's a one-keyword flip back to sealed class. Recorded in the 'Decisions landed' table.",
+      "anchor": "## What 4.8 didn't address that I think it should have",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "4018aea335",
+      "ts": "2026-05-29T09:57:18",
+      "drifted": false
+    },
+    {
+      "id": "1ce57655bb",
+      "line": 159,
+      "text": "very interesting, lets talk",
+      "anchor": "### `readonly record struct number` revisited",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T23:10:56",
+      "drifted": false
+    },
+    {
+      "id": "5a6e1a5604",
+      "line": 159,
+      "text": "OK let me lay it out concretely so we have something to talk against.\n\n**The case for `readonly record struct number(NumberKind Kind, long I, decimal D, double F)`:**\n\n1. **Exact equality auto-generated** (record struct gives field-by-field). Matches the ExactEquals we already need on the lenient-default side — just inherit the struct's auto-gen and use that as ExactEquals; override Equals for the lenient default.\n2. **No heap allocation per number.** Today's class form heap-allocates one `@this` per arithmetic result; struct sits on the stack / inline in `Data<number>.Value`. Heavy-math goals (a loop summing 10k numbers) save ~10k allocations.\n3. **Matches what `int` / `decimal` / `double` already are** — value types. The surface reads coherently: every numeric in the CLR is a struct; PLang's `number` joins them.\n4. **OBP convention is preserved where it matters.** `@this` is for navigable owner types (Goal, Step, Config) — types where `parent.child.grandchild` is the language. A `number` has nothing to navigate to. The convention costs us nothing here because we're not losing navigability.\n\n**The cost:**\n\n1. **Breaks the `@this` convention for one class.** `app.types.number` (struct) vs `app.types.number.@this` (class) is a real readability inconsistency across the codebase. Everything else under `app/types/` would use `@this`; only number wouldn't.\n2. **`IBooleanResolvable.AsBooleanAsync()` boxes the struct on interface dispatch.** Every truthiness check (`if %x%`) allocates. This partially defeats the no-heap win — though arithmetic (the hot path) doesn't go through interface dispatch, so arithmetic stays alloc-free; only truthiness pays.\n3. **Source-generator coupling.** PLNG001 expects `Data<T>` parameter slots; T as struct is supported (`Data<int>` works today), but `[PlangType]` discovery and the registry plumbing would need to handle the struct case symmetrically with classes. Probably fine; needs a quick check.\n4. **`partial` files under the type folder get awkward.** `app/types/number/this.cs` for the struct definition, then `this.Parse.cs`, `this.Operators.cs`, `this.Arithmetic.cs` are partials *of the struct*. C# allows partial structs but it's less common; reads slightly differently than partial classes.\n\n**My read:** the wins (alloc-free arithmetic, auto-equality, value-type honesty) outweigh the costs (one convention break, truthiness boxing). The convention break is the load-bearing concern — but the convention exists for a reason, and that reason doesn't apply here.\n\n**What I'd want to know from you:** how strongly do you feel about preserving `@this` everywhere vs. accepting one structural exception for the pure-value case? If you're firm on @this everywhere, the class form stays and we accept the heap allocation + manual equality + manual hash; if you're open to the exception, the struct form is cleaner. Leaving open.",
+      "anchor": "### `readonly record struct number` revisited",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "1ce57655bb",
+      "ts": "2026-05-28T23:15:34",
+      "drifted": false
+    },
+    {
+      "id": "4018aea335",
+      "line": 159,
+      "text": "I think the win for less allocation is more important. so lets try for struct setup on this on type",
+      "anchor": "### `readonly record struct number` revisited",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "5a6e1a5604",
+      "ts": "2026-05-29T09:35:02",
+      "drifted": false
+    },
+    {
+      "id": "9962d151a9",
+      "line": 191,
+      "text": "Agreed — Option B (separate `rational` sibling type, parallel to number and the future quantity), added later with a real consumer driving it, not this branch. Recorded in the 'Decisions landed' table and flagged in plan.md open questions so the vocabulary stays forward-coherent. Nothing to build now.",
+      "anchor": "Smaller cleanups (try/catch, Float Kind, \"no boxing\" wording) fold into whichever section they touch.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "8a017115a8",
+      "ts": "2026-05-29T09:57:18",
+      "drifted": false
+    },
+    {
+      "id": "b5ed18689a",
+      "line": 193,
+      "text": "one thing I thought of is, what if we support rational numbers? so people do '- set %x% = 7/8' and it stays that way?",
+      "anchor": "**The one thing I'd want to discuss before changing anything**: the **sealed-class-vs-readonly-record-struct** question. 4.8 didn't raise it directly but the equality and Context critiques both reinforce the case. Worth a 10-minute back-and-forth before either decision is committed to the doc.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-28T23:12:02",
+      "drifted": false
+    },
+    {
+      "id": "08f4276de1",
+      "line": 193,
+      "text": "Good question. Two clean ways to land it:\n\n**Option A — `Rational` as a sixth `NumberKind` inside `number`.** Adds two slots (`long _num`, `long _den`) or shares `_i` for numerator with a new `_den` slot. `Parse(\"7/8\")` lands as `Kind = Rational`. Arithmetic: rational + rational stays rational (lowest-terms canonicalization on construction via GCD). Mixed-kind ops promote: rational + decimal → decimal (with loss measured by the lcm of the denominator); rational + double → double (IEEE). Same Data<number> wrapper, same handlers, same wire shape. The cost: one more row/column on the promotion table, plus the rational-specific reductions (GCD, lowest-terms invariant).\n\n**Option B — `rational` as a separate sibling type** under `app/types/rational/`. Parallel to `number`, parallel to the future `quantity` (which handles `5kg`). Has its own arithmetic, its own truthiness (`0/n` falsy), its own serializer files. Cross-type ops between `number` and `rational` go through explicit promotion (`(number)%r%`) — the LLM picks the type per the developer's prose intent (`- set %price% = 7/8` keys on the slash being kept exact, picks rational; `- set %x% = 7/8` with general numeric intent picks number).\n\n**My instinct: Option B.** Three reasons:\n\n1. Rational arithmetic has different rules (GCD on construction, denominator-overflow questions, no IEEE concepts). Folding it into `number` widens every `number` switch with one more case, and the `Parse` rules grow another fork.\n2. Most PLang devs don't reach for rational. Putting it in the universal umbrella costs every handler that touches numbers an extra case to consider.\n3. The pattern matches `quantity` (also numbers-with-extra-structure). Both sit as siblings, not inside `number`. Coherent vocabulary.\n\n**The pull toward Option A:** the worked example `- set %x% = 7/8` reads more naturally if `%x%(number)` covers it — devs don't have to know they wanted `rational` specifically. They'd just write the literal and the LLM would type-stamp it.\n\nThe right call depends on whether you see rational as 'a kind of number' (A) or 'a kind of numeric thing parallel to number' (B). Quantity is clearly (B) because units are non-numeric structure; rational is borderline.\n\nNot a this-branch decision either way — both are deferrable to a follow-up branch with a real consumer driving them (the same discipline we applied to BigInteger and quantity). But worth knowing your read so the type vocabulary inventory is forward-coherent. Leaving open.",
+      "anchor": "**The one thing I'd want to discuss before changing anything**: the **sealed-class-vs-readonly-record-struct** question. 4.8 didn't raise it directly but the equality and Context critiques both reinforce the case. Worth a 10-minute back-and-forth before either decision is committed to the doc.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "b5ed18689a",
+      "ts": "2026-05-28T23:15:34",
+      "drifted": false
+    },
+    {
+      "id": "8a017115a8",
+      "line": 193,
+      "text": "I think we would go for B then, and the good thing is, we dont need to implement now, that can be added later, so lets add it later",
+      "anchor": "**The one thing I'd want to discuss before changing anything**: the **sealed-class-vs-readonly-record-struct** question. 4.8 didn't raise it directly but the equality and Context critiques both reinforce the case. Worth a 10-minute back-and-forth before either decision is committed to the doc.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "08f4276de1",
+      "ts": "2026-05-29T09:37:17",
+      "drifted": false
+    }
+  ],
+  "plan/build-vs-runtime.md": [
+    {
+      "id": "7248075dfb",
+      "line": 48,
+      "text": "shit.... I am realizing here, %photo% is actually two types, it´s path and image, so %photo%(path|image)\nbecause we can still do \n'- if %photo.Exists% then' <-- Exists is a path thingy\n'- write out %photo.Exif%' <- Exif is a photo thingy (we dont have it now, but will in future)\n\nthis fucks us a bit",
+      "anchor": "- The **input** parameter: `{ Path: { value: \"photo.jpg\", type: \"path\" } }`.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-29T10:50:50",
+      "drifted": false
+    },
+    {
+      "id": "8e78482388",
+      "line": 48,
+      "text": "Good catch, but I think it's less scary than a union type — it's composition. `%photo%` is ONE type, `image`, whose value carries a `SourcePath: path` (that field is already in the image design). So:\n- `%photo.Exif%` → native image member.\n- `%photo.Exists%` → delegates to the source path (does the file still exist).\n- `%photo.SourcePath%` → the path itself, for explicit path ops (`copy %photo.SourcePath% to backup/`).\n\nRouting key stays single: `Data.Type = image`. Serialization is image's. The path-ness is a *facet it has*, not a co-equal type it *is*. 'File-backed' is a trait any read-from-file type shares (a `code` read from disk carries its source path too) — so it's a reusable composition, not an image-specific hack.\n\nWhy I'd avoid a true `path|image` union:\n- **Facet ambiguity.** If `%photo%` can pass to a `Data<path>` slot AND a `Data<image>` slot, then `copy %photo%` (file) and `resize %photo%` (bytes) both typecheck and a reader can't tell which facet a step used. Composition forces the honest `%photo.SourcePath%` for file ops — explicit beats clever here.\n- **Serializer ambiguity.** A union value still has one wire shape; `path|image` doesn't say which serializer fires. `image` (with a source path) is unambiguous.\n- **Vocabulary blowup.** Unions multiply the scope display and member-resolution rules for marginal ergonomic gain.\n\nThe one thing composition costs you: `%photo.Exists%` as sugar needs image to surface a delegated `Exists` (or you write `%photo.SourcePath.Exists%`). I'd add the sugar for file-backed types — cheap, and keeps your ergonomics.\n\nYour call though, since it's your language: do you want true union typing (`%photo%` servable as either path or image to action slots), or composition (one `image` type, path reachable via `.SourcePath`, a few delegated conveniences)? I lean composition hard.",
+      "anchor": "- The **input** parameter: `{ Path: { value: \"photo.jpg\", type: \"path\" } }`.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "7248075dfb",
+      "ts": "2026-05-29T11:05:33",
+      "drifted": false
+    },
+    {
+      "id": "a53b7bcda5",
+      "line": 48,
+      "text": "no union, you are right, it becomes dangerous. it is like inherting from multiple classes. I thing %photo.Path% would then give the type=\"path\" back, allowing for %photo.Path.Exists%, I dont think image type needs Exists on it, but all images are made from a path, so Path property on image is some we need. so when we send to llm the types we have it is something like this\n\nType info\n- int, decima.....\n- path(string) => Properties: Exists, Size\n- image(path) => Properties: Exif, Path(path) <-- llm see it is path type\n\nso when it sees me write code like this\n\n'- write out %photo.path.exists%' \n\nit can see that it's accessing the path object which has the exist, happy results",
+      "anchor": "- The **input** parameter: `{ Path: { value: \"photo.jpg\", type: \"path\" } }`.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "8e78482388",
+      "ts": "2026-05-29T11:13:10",
+      "drifted": false
+    },
+    {
+      "id": "85632e792d",
+      "line": 48,
+      "text": "Locked — composition, no union. Landing it as a `Path` property of type `path` on image (renaming the design's `SourcePath` → `Path` to match your notation). No delegated `.Exists` on image — agreed, explicit `%photo.Path.Exists%` is the honest navigation. The type catalog the LLM gets becomes typed-property so it can navigate:\n\n    path(string)  => Exists, Size, Extension, …\n    image(path)   => Exif, Width, Height, Path(path)\n\nThe `(path)` after the `Path` member tells the LLM that property is itself a `path`, so `%photo.Path.Exists%` type-checks all the way down. One note: `Path` is nullable — an image decoded from base64 has no source file — so on a non-file image `%photo.Path%` is null (`.Exists` on null is a typed null, not a crash). Routing key / serialization stay `image`.",
+      "anchor": "- The **input** parameter: `{ Path: { value: \"photo.jpg\", type: \"path\" } }`.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "a53b7bcda5",
+      "ts": "2026-05-29T11:24:43",
+      "drifted": false
+    },
+    {
+      "id": "db6e950bf6",
+      "line": 58,
+      "text": "why does number type behave differently the image? is that because we know the type at build time for numbers, but we dont really know the mimetype until we read the file?  It just feel like two different behaviour for what should be the same thing. \"number\" is higher level type, just like \"image\" is higher level type. So it means we need to know this special thing for number while all other types stay at the high level.\n\nbut now I am thinking, lets say I have this\n'- set %x% = %gps%(ISO 6709)' <-- this would become type=\"gis\" but very usefull info is provided by developer how to parse it. \n\nand what if say\n'- set %y% = %image%(gif)' <-- now we \"known\" that it's going to be gif",
+      "anchor": "### `- set %x% = 3.5` → type `decimal` (concrete), not `number`, not `number/decimal`",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-29T10:57:02",
+      "drifted": false
+    },
+    {
+      "id": "032c845c1d",
+      "line": 58,
+      "text": "You're right, and this bugs me too now that you put it that way — I created an asymmetry that isn't real. Here's the unification:\n\n**Every type is a high-level type + an optional refinement, captured at build when the source provides it.** number's Kind (decimal) IS a refinement — exactly like image's Mime (gif) is a refinement. They are the *same thing*; I was just presenting one as 'concrete' and the other as 'bare'. That was the wart.\n\nThe refinement is captured whenever the source gives it, by the same rule for every type:\n- literal shape: `3.5` → number:decimal\n- file extension: `photo.jpg` → image:jpeg\n- developer annotation: `%image%(gif)` → image:gif, `%gps%(ISO 6709)` → gis:ISO-6709\n\nAnd notice the refinement does triple duty — it's a subtype label, a precision tag, AND a parse hint. `ISO 6709` literally tells the runtime how to parse the gps string; `decimal` tells it which Kind to build; `gif` tells it how to read the bytes. That's the same 'build bakes the parse decision so runtime doesn't guess' principle, generalized. Your two examples are the proof that it's uniform.\n\nSo: **one rule, no 'watch out for numbers'.** Routing key / serialization is always the high-level type (number, image, gis); the refinement rides as passenger metadata and as the construction hint.\n\nTwo sub-decisions I need from you before I rewrite the doc around this:\n1. Does the LLM *see* the refinement in scope — `%x%(number:decimal)` / `%photo%(image:jpeg)` — or only the high-level `%x%(number)` with the refinement living in the .pr value? (I lean: show it; it's developer intent and precision info, throwing it away is the original sin here.)\n2. The annotation syntax `%image%(gif)` / `%gps%(ISO 6709)` — is that real/proposed, and is `(...)` the spelling you want for 'refine this value's type'?",
+      "anchor": "### `- set %x% = 3.5` → type `decimal` (concrete), not `number`, not `number/decimal`",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "db6e950bf6",
+      "ts": "2026-05-29T11:04:54",
+      "drifted": false
+    },
+    {
+      "id": "d13cd96853",
+      "line": 58,
+      "text": "one note, it should be seperate property in pr, not seperated by \":\", that would mean parsing at runtime, we want to do minimal work at runtime\n\nllm sees the numbers refinement, we tell him number has int, decimal,....\nbut I dont thing we really need to do that for most other, i think the builder should do that, each type should know how to determine the \"kind\" (is that the property we are choosing), so when we validate the step, each type would have \"build\" method, that takes in the value and sets the kind.\n\nso if I do\n\n'- set %x% = \"myphoto.jpg\" => builder would see it's image => image.build() => inside image build we check extension and set kind=extension (no dot) => kind=\"jpg\"",
+      "anchor": "### `- set %x% = 3.5` → type `decimal` (concrete), not `number`, not `number/decimal`",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "032c845c1d",
+      "ts": "2026-05-29T11:19:11",
+      "drifted": false
+    },
+    {
+      "id": "f9cc83de42",
+      "line": 58,
+      "text": "All three landed, and this is what kills the 'number is special' wart:\n\n1. **Separate `kind` field in the .pr**, never a `type:kind` string. A param becomes `{name, value, type, kind?}` (kind omitted when none). No runtime split — your minimal-runtime principle.\n2. **Per-type `Build(value)` sets the kind** — the build-time sibling of `Resolve`. `image.Build(\"myphoto.jpg\")` → kind=jpg (extension, no dot); `number.Build(3.5)` → kind=decimal (literal shape); `path.Build(\"https://…\")` → kind=http (path's file/http variants become kinds too). Each type owns its kind determination.\n3. **LLM is shown number's kinds** (int/decimal/double/long) because precision is developer-meaningful; for image/path/etc. the kind is derived silently by Build() and the LLM never picks it. Uniform mechanism (every type.Build sets kind), per-type catalog visibility — no 'watch out for numbers' footnote.\n\nThe consequence worth naming out loud: **int/decimal/double stop being top-level PLang types — they're number's kinds.** Type is always `number`; `kind` says which. (CLR int/decimal/double stay as storage; `Data<int>` maps to number kind=int, `Data<number>` to number kind=runtime-decided.) `decimal` is to `number` exactly what `jpg` is to `image`. 'kind' is the field name — it already matches number's NumberKind enum. Updating the docs around this now.",
+      "anchor": "### `- set %x% = 3.5` → type `decimal` (concrete), not `number`, not `number/decimal`",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "d13cd96853",
+      "ts": "2026-05-29T11:24:44",
+      "drifted": false
+    },
+    {
+      "id": "edf04f48f4",
+      "line": 81,
+      "text": "here we need 2 rules, to seperate the types, this is what bugs me. it saying to llm 'hey, here are the types, but watch for numbers because they are special\", just bugs me",
+      "anchor": "Net: \"here is the `.pr`, now run it\" is the right mental model. Build did the thinking; runtime does the doing.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-29T11:00:59",
+      "drifted": false
+    },
+    {
+      "id": "c516aa2e5e",
+      "line": 81,
+      "text": "Same thing that bugged you on L58, and you're right — the 'two rules' framing is the bug, not the design. Under the unified model (my reply above): there is ONE rule. Every type is high-level + optional refinement, captured at build when the source provides it. number follows it identically to image — `decimal` is number's refinement the way `gif` is image's. The LLM is told 'here are the types' with no special-case footnote; numbers aren't special, they just happen to get their refinement from literal-shape instead of a file extension. Once you sign off on the unified model I'll rewrite this section so the 'watch for numbers' framing is gone entirely.",
+      "anchor": "Net: \"here is the `.pr`, now run it\" is the right mental model. Build did the thinking; runtime does the doing.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "edf04f48f4",
+      "ts": "2026-05-29T11:04:54",
+      "drifted": false
+    }
+  ]
+}

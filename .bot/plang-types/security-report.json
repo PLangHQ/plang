@@ -1,0 +1,97 @@
+{
+  "analyst": "security",
+  "branch": "plang-types",
+  "timestamp": "2026-05-29T00:00:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "runtime-type-loading",
+      "exposure": "code.load → app.types.Loader.Register scans an Execute-gated assembly for [PlangType] classes and ITypeRenderer implementations; runtime registrations win over generator-emitted entries in ResolveType + renderers.Of.",
+      "trust_boundary": "FilePath.AuthGate(Execute) on the DLL path. Past that, every code path is user-sovereign per the PLang threat model.",
+      "mitigations": ["Execute-gate on DLL load", "SealedNames allowlist refuses to shadow identity/signature/signedoperation/callback/channel at all three gate sites (explicit [PlangType], inferred @this name, ITypeRenderer.TypeName) — case-insensitive OrdinalIgnoreCase", "parameterless-ctor rule mirrors code.load", "renderer ctor wrapped in try/catch except OOM/SOF", "Coverage check: every newly-registered [PlangType] needs ≥1 renderer or load fails with TypeLoadCoverage", "Tester v5 mutation-confirmed each sealed-gate site by neutralising it independently"],
+      "gaps": ["Loader.Register bails on the FIRST sealed-name collision; PlangType registrations from preceding classes in the same DLL stay in _runtimeNameToType (no rollback). Sub-Low informational — the user already crossed the Execute trust boundary, so a hostile DLL's non-sealed registrations would have succeeded anyway under by-design accepted-risk."]
+    },
+    {
+      "area": "image-value-intake",
+      "exposure": "app.types.image.@this constructed from bytes via file.read MIME=image/*, image.ResolveAsync (any path scheme), FromDataUrl base64, bare base64. Dimensions read lazily via SixLabors.ImageSharp.Image.Identify(Bytes).",
+      "trust_boundary": "file.read/HTTP go through path.@this AuthGate. image.ResolveAsync delegates to path.@this.Resolve.",
+      "mitigations": ["AuthGate on the path verb", "ImageSharp.Image.Identify is header-only (does not decode pixel data)", "Identify exceptions swallowed and (0,0) returned"],
+      "gaps": ["No max-bytes cap on ReadBytes (existing standing finding; now extends to image type)", "No shipping handler binds Data<image> from string today — ResolveAsync HTTP branch is latent"]
+    },
+    {
+      "area": "math-handlers (post mathhelper-deletion merge)",
+      "exposure": "All math handlers (add, subtract, multiply, divide, intdiv, modulo, power, abs, floor, ceiling, round, sqrt, min, max) now route through number.* methods. Each number.* wraps in number.Wrap which catches DivideByZero, Overflow, Arithmetic, PowerExponentTooLarge.",
+      "trust_boundary": "Action parameters are typed (Data<number>, Data<int>). Source is action-call site arguments (LLM-produced .pr literals, %var% values).",
+      "mitigations": ["InvariantCulture throughout", "Wrap envelope covers the four arithmetic exception families with typed Data.Fail keys", "PowerExponentTooLarge cap = 64 protects three CPU-loop branches (Tester v5 mutation-confirmed)"],
+      "gaps": ["Wrap does NOT catch ArgumentOutOfRangeException — System.Math.Round(decimal, decimals) throws when decimals∉[0,28] (or [0,15] for double); math.round Decimals=%var% can land any int. Same shape applies to any future call with similarly-bounded framework parameters."]
+    },
+    {
+      "area": "wire-rehydration / typed-value-render-dispatch",
+      "exposure": "Wire.Read processes incoming Data wire shape; LiftDataIfShaped restarts STJ for sub-objects; Normalize tags registered-PlangType values as TypedValueNode; json.Writer routes them via renderers.Of(typeName, format).",
+      "trust_boundary": "All incoming Data crosses Wire before signing.verify gate.",
+      "mitigations": ["AsyncLocal _readDepth counter capped at MaxReadDepth=64 (v1 fix on builder-ergonomics, regression suite intact)", "json.Writer fail-closed default (throws NormalizeUnexpectedLeafType for any value not in the tree contract)", "RendererLookupMissed thrown when a tagged TypedValueNode has no renderer"],
+      "gaps": []
+    },
+    {
+      "area": "number-parse-and-arithmetic",
+      "exposure": "number.@this.Parse(string) and Resolve(string, context) accept arbitrary strings; arithmetic surface routes through DoOp/DoPower/Do*; policy axes resolved via MathPolicy.",
+      "trust_boundary": "Source is action handler parameters; bound by typed signature.",
+      "mitigations": ["InvariantCulture across Parse paths", "Overflow / DivideByZero / Arithmetic wrapped in typed Data.Fail keys", "checked arithmetic in DoIntKind"],
+      "gaps": []
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "math.power exponent unbounded — `for (long i = 0; i < expL; i++)` in DoPower at PLang/app/types/number/this.Arithmetic.cs with no upper bound below long.MaxValue.",
+      "preconditions": "User script calls math.power with attacker-influenced exponent (LLM JSON / HTTP / file content reaching %Exp%).",
+      "impact": "Local CPU DoS — synchronous spin within actor process.",
+      "affected_files": ["PLang/app/types/number/this.Arithmetic.cs"],
+      "exploit_sketch": "`- compute power Base=2 Exp=%user_exp%` with %user_exp%=1000000000.",
+      "proposed_fix": "Cap |expL| at Config.MaxPowerExponent (default 64), typed PowerExponentTooLarge failure.",
+      "status": "fixed",
+      "fix_landed": "coder v4 (8c99912a0) + codeanalyzer-driven rework moved cap into the three CPU-loop branches via EnsureExponentInRange; Math.Pow branches deliberately skip. Tester v5 mutation-confirmed coverage at each loop site and skip at each Math.Pow site."
+    },
+    {
+      "id": 2,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "Loader.Register lets a third-party DLL shadow built-in [PlangType] names like 'identity' via runtime-wins precedence — outer Data.EnsureSigned then signs an attacker-composed body with the actor's legitimate key.",
+      "preconditions": "User runs `code.load 'evil.dll'`. Execute-gate prompt.",
+      "impact": "Authentically-signed envelopes whose body is renderer-controlled. Accepted-risk under user-sovereign model but trust transfer is non-obvious.",
+      "affected_files": ["PLang/app/types/Loader.cs"],
+      "exploit_sketch": "Hostile DLL declares [PlangType('identity')] + ITypeRenderer{TypeName='identity'}; Loader.Register replaces routing; subsequent Identity-typed Data emits attacker-controlled body, gets signed by real actor key.",
+      "proposed_fix": "SealedNames allowlist of signing/transport-load-bearing names refused at all three gate sites.",
+      "status": "fixed",
+      "fix_landed": "coder v4 (8c99912a0) added SealedNames = {identity, signature, signedoperation, callback, channel} (OrdinalIgnoreCase). Coder v5 (1cdb0a840) added two missing gate sites tester v4 flagged. Tester v5 mutation-confirmed each site fails independently when its check is neutralised."
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "image.@this byte intake has no max-bytes cap. file.read constructs image.@this from any image/* MIME read result without a size guard; image.ResolveAsync's HTTP-URL branch calls path.ReadBytes() with no cap. byte[] is the OOM vector; ImageSharp Identify is header-only and safe.",
+      "preconditions": "(a) `read %image%` against a large file/HTTP URL with AuthGate(Read) approved, OR (b) future handler exposes Data<image> with string input.",
+      "impact": "Actor-process OOM, local DoS today; flips channel-shaped when any Data<image> string-binding handler ships.",
+      "affected_files": ["PLang/app/modules/file/read.cs", "PLang/app/types/image/this.Parse.cs", "PLang/app/types/image/this.cs"],
+      "exploit_sketch": "`- read https://attacker/huge.jpg`. AuthGate(HttpRead) approved → ReadBytes returns multi-GB → image.@this stores reference → memory residency until variable cleared.",
+      "proposed_fix": "Consolidate ReadBytes(maxBytes?) at the path-verb layer with ImageTooLarge typed failure. Covers this finding + the standing OpenAiProvider ReadAllBytes case.",
+      "status": "open",
+      "deferral_note": "coder v4 deferred — no shipping handler binds Data<image> from string today; fix is architectural (path-verb layer) and best landed in a focused 'path-verb size guards' branch."
+    },
+    {
+      "id": 4,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "math.round with Decimals out of [0, 28] (decimal) or [0, 15] (double) throws ArgumentOutOfRangeException from System.Math.Round. number.Wrap catches DivideByZero / Overflow / Arithmetic / PowerExponentTooLarge but NOT ArgumentOutOfRangeException — the exception escapes the action handler instead of surfacing as a typed Data.Fail.",
+      "preconditions": "User script feeds attacker-influenced int into Decimals slot: `- round %x% Decimals=%user_decimals%`. Default is 0, but the slot accepts any int.",
+      "impact": "Uncaught runtime exception out of the action handler. Generic runtime-error surface instead of typed Data.Fail — degrades the error-key contract that downstream goals branch on. Not a crash escalation, but breaks the action-boundary discipline the rest of the math family observes.",
+      "affected_files": ["PLang/app/types/number/this.Unary.cs", "PLang/app/modules/math/round.cs"],
+      "exploit_sketch": "`- round %value% Decimals=999, on error set %err% = true` — under the existing typed-failure shape the Wrap envelope would map to ArithmeticError; today it throws ArgumentOutOfRangeException uncaught. Downstream `%err%` may not bind because the failure shape isn't the one the on-error clause expects.",
+      "proposed_fix": "Either (a) clamp decimals into the framework-legal range at DoRound entry (preserve the typed-failure contract, surface ArithmeticError for out-of-range), OR (b) add ArgumentException to Wrap's catch list with a typed key like 'InvalidArgument'. Option (a) is the smaller change. Same shape should be applied wherever a framework call has bounded-int parameters; the math family is the immediate locus.",
+      "status": "open"
+    }
+  ],
+  "summary": "PASS. v1 F1 (math.power exponent cap) and F2 (Loader sealed-names allowlist) are both closed with mutation-confirmed coverage at all gate sites — coder v4 + v5 cycle plus tester v5 mutation-tested each independently. New Low finding F4: math.round throws uncaught ArgumentOutOfRangeException on Decimals∉[0,28]/[0,15], degrading the action-boundary typed-failure contract. F3 (image byte cap) remains a deliberate deferral — latent, no shipping handler exposes Data<image> from string, fix is architectural (path-verb layer) and slated for a separate branch. Wire/Normalize/json.Writer integration remains solid; v1 builder-ergonomics depth-guard intact. Semgrep architectural baseline unchanged at 15 (all known serializer-hygiene). Branch is safe to merge with F3 + F4 tracked."
+}

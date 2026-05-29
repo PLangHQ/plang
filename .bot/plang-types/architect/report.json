@@ -1,0 +1,160 @@
+{
+  "branch": "plang-types",
+  "sessions": [
+    {
+      "id": "9d1cb3a4-7e2f-4b8a-9c54-2e1aa9b3c402",
+      "bot": "architect",
+      "timestamp_start": "2026-05-28T00:00:00Z",
+      "timestamp_end": "2026-05-28T00:00:00Z",
+      "intent": "Capture an open conversation about PLang's primitive vocabulary \u2014 broader scope than this branch, parks here because `number` is one entry in it.",
+      "before": {
+        "assumptions": "Ingi opened a design conversation while on the `data-normalize` branch. The trigger was 'we need to define primitive data types in plang' \u2014 he wanted TimeSpan, DateTimeOffset (no DateTime), unified number, and 'maybe more'. Pulled in category kinds (image/video/code) after I noted the LLM's vocabulary is the real question. He asked me to file the thinking here for later review without making decisions.",
+        "risk": "If this work happens uncoordinated with the `number-type` plan, the per-primitive OBP shape gets bolted on after `number` ships, leaving `number` as a special case. Counter-risk: widening this branch to a vocabulary overhaul delays `number` and explodes scope. The doc lays out both paths without choosing \u2014 that's the user's call."
+      },
+      "plan": ".bot/number-type/architect/plan/primitive-vocabulary.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/number-type/architect/plan/primitive-vocabulary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Discussion topic file in the plan/ deep-dive folder. Frames the three-concept collision (wire CLR types / named picks / format kinds), notes that the high-level kind table Ingi remembered is `app/formats/this.cs` (not deleted), confirms the date/time/duration renames he settled, lays out the two-arc vs one-arc fork without deciding."
+        },
+        {
+          "paths": [
+            ".bot/number-type/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added a new top entry summarizing the discussion and pointing at the topic file. Stage table unchanged \u2014 nothing in the existing plan moved."
+        },
+        {
+          "paths": [],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Did NOT modify plan.md or the storage/policy deep-dives. The vocabulary question is broader than `number` itself; mixing it into the spine would suggest it's part of this branch's deliverable when the user explicitly parked it for later review."
+        }
+      ],
+      "after": {
+        "status": "Discussion captured. No decisions made on the broader vocabulary; user to review and decide between one-arc vs two-arc framing.",
+        "health": "Number-type plan is unchanged and still ready to carve. The new doc is informational; nothing depends on it.",
+        "notes": "Conversation happened while on `data-normalize` branch; switched here only to file the writeup. Returning to `data-normalize` after commit + push."
+      }
+    },
+    {
+      "id": "edc6cf73-08ec-4398-b4e8-4a041c112fcb",
+      "bot": "architect",
+      "timestamp_start": "2026-05-27T15:53:15Z",
+      "timestamp_end": "2026-05-27T15:56:21Z",
+      "intent": "Design the `number` category type and the arithmetic-policy resolution model.",
+      "before": {
+        "assumptions": "Builder handed off a well-scoped task: introduce `number` as a category type to fix LLM-scope drift after `typed-action-returns` (math.* returning Data<object>, decimal literals tagged object). Builder is PLang-side strong but C#-shaky; their `boxed object + Kind` sketch and `int < long < decimal < double` promotion claim were both off and needed re-derivation. Ingi steered: PLang is general-purpose, so decimal-only storage breaks IEEE-754 semantics and isn't defensible; arithmetic policy should be developer-configurable via settings, not architect-imposed.",
+        "risk": "Storage shape (tagged union vs boxed wrapper vs struct) drives allocation cost and convention compliance \u2014 wrong call cascades into every math.* handler. Policy resolution (step > goal > app) needs goal-local overlay infrastructure that doesn't exist yet; risk is the overlay leaks across goal boundaries or stays attached during goal pooling. Mixed decimal+double promotion is a real semantic fork \u2014 picking wrong gives surprise throws or silent precision loss."
+      },
+      "plan": ".bot/number-type/architect/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/number-type/architect/plan.md",
+            ".bot/number-type/architect/plan/storage.md",
+            ".bot/number-type/architect/plan/policy.md",
+            ".bot/number-type/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote two-layer plan: spine in plan.md (decision narrative, stage index, cross-cutting decisions, verification recipe), deep dives in plan/storage.md (tagged-union storage, arithmetic, parse, equality, ToString) and plan/policy.md (two-axis NumberPolicy, three-scope resolution, environment.number app + goal overlay, environment.set surface). Stages explicitly NOT carved per user request \u2014 that's the next session."
+        },
+        {
+          "paths": [],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Three architectural calls made in conversation, before any file was written: (1) `number` spans all numeric kinds \u2014 rejected decimal-only; (2) tagged-union storage with explicit slots \u2014 rejected builder's boxed-object pitch and the struct alternative; (3) developer-configurable policy via settings rather than architect-imposed promotion \u2014 operators stay policy-free, handlers consult settings."
+        }
+      ],
+      "after": {
+        "status": "Plan written, stages not yet carved (per explicit user instruction). Ready for stage carving in next session.",
+        "health": "Design is settled across the three forks that were live (storage shape, decimal-only vs IEEE-754, policy ownership). One open question logged in plan/policy.md for Stage 2: sub-goal inheritance of goal-scoped overlay (current lean: no inheritance, sub-goal sees App scope).",
+        "notes": "Verification recipe folded from builder handoff. MathHelper.ToDouble / PreserveType in PLang/app/modules/math/MathHelper.cs identified as the deletion target at Stage 3 end \u2014 its existence confirms the need for `number`. environment module exists (only `run.cs` today); adding `environment.set` is a clean extension. Goal.Events lazy-overlay pattern is the model for Goal.Environment."
+      }
+    },
+    {
+      "id": "ea02a2f9-25ab-48ad-9ef1-762c10dd1cbc",
+      "bot": "architect",
+      "timestamp_start": "2026-05-28T18:55:06Z",
+      "timestamp_end": "2026-05-28T18:55:06Z",
+      "intent": "Reframe the branch around type-as-router with leaf-owned behavior; rename to `plang-types`; rewrite plan; carve `IWireWritable` dispatch surface.",
+      "before": {
+        "assumptions": "Ingi reframed the goal mid-conversation: this branch is not about `number` per se, it's about establishing higher-level PLang types where the runtime is a courier and only leaves (actions + serializers) dereference Value. The type owns its serialization (`data.serialize` style dispatch into the value). LLM scope shows bare type, no subtype. No stages this round; just spine + deep dives.",
+        "risk": "Old plan was structurally misaligned with the new framing (treated number+policy as the spine instead of the dispatch pattern). Risk of leaving stale references or contradictions between old `plan/storage.md` / `plan/policy.md` and the new spine. Mitigation: keep storage/policy as number-specific deep dives explicitly scoped from `plan/types.md`, retire `plan/primitive-vocabulary.md`, rewrite `plan.md` and the top entry of `summary.md`."
+      },
+      "plan": ".bot/plang-types/architect/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/number-type/architect/"
+          ],
+          "type": "rename",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Branch renamed `number-type` \u2192 `plang-types`; bot directory moved via `git mv` so commit history is preserved on the rename."
+        },
+        {
+          "paths": [
+            ".bot/plang-types/architect/plan/primitive-vocabulary.md"
+          ],
+          "type": "delete",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Retired \u2014 its substance (confirmed datetime/date/time/duration renames, three-concept collision, two-arc fork) is now folded into the new spine and `plan/types.md`. Two-arc fork itself is resolved: neither arc exactly; dispatch pattern ships with three real instances, wider format-kind lift becomes follow-up work using the same shape."
+        },
+        {
+          "paths": [
+            ".bot/plang-types/architect/plan.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Full rewrite. New spine: type-as-router with leaf-owned behavior. Three commitments (per-type folder + `IWireWritable` + type tag as routing key); end-to-end movie (.goal example through builder \u2192 runtime \u2192 serializer leaf); references existing precedent (`app/types/path/`, `IBooleanResolvable`, `static Resolve`); vocabulary inventory (number, image, code + datetime/date/time/duration cleanups); cross-cutting decisions; four open questions for Ingi to settle before stages."
+        },
+        {
+          "paths": [
+            ".bot/plang-types/architect/plan/dispatch.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Deep dive on the serialization-dispatch surface. Reviews today's two-layer wire pipeline (Normalize + IWriter), introduces `app.data.IWireWritable { void WriteTo(IWriter, ISerializer) }`, hooks into Normalize via a deferred `WireWritableNode` placeholder (Option A vs eager Option B; chose A to keep Normalize format-agnostic). Per-type WriteTo walkthroughs for number, image, code, path. Parse-in side stays on existing `static Resolve(string, context)`. Edge cases: cycles, sensitive fields, nested IWireWritable, unknown mime, round-trip."
+        },
+        {
+          "paths": [
+            ".bot/plang-types/architect/plan/types.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Per-type inventory + ownership matrix + registration. Three proving instances (number, image, code) and four mechanical cleanups (datetime\u2192DateTimeOffset, date\u2192DateOnly, time\u2192TimeOnly, duration\u2192TimeSpan). Replacement of the flat `Primitives` table at `app/types/this.cs:34` via `[PlangType]`-attributed classes + a registry. Out-of-scope list (video, audio, document, \u2026) deferred until action surfaces exist."
+        },
+        {
+          "paths": [
+            ".bot/plang-types/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added top entry summarizing the reframe, the rename, and the four open questions. Previous entries preserved as history."
+        }
+      ],
+      "after": {
+        "status": "Plan rewritten; awaiting Ingi's resolution on four open questions before stages get carved.",
+        "health": "Branch up to date with runtime2 head (merged in earlier this session including data-normalize). All references in the new spine point at real code paths (verified: `app/types/path/`, `IBooleanResolvable.cs`, `Normalize.cs:42`, `IWriter.cs:19`, `Primitives` at `app/types/this.cs:34`, `serializers/this.cs`).",
+        "notes": "Four open questions in `plan.md`: (1) `IWireWritable` location and signature shape, (2) registry discovery-time vs App-time, (3) keep number's NumberPolicy or defer, (4) HTML as its own writer vs JSON-aliased. Next user-facing action: settle the open questions, then carve stages."
+      }
+    }
+  ]
+}

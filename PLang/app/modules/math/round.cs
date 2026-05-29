@@ -1,4 +1,5 @@
 using app.variables;
+using number = global::app.types.number.@this;
 
 namespace app.modules.math;
 
@@ -9,11 +10,12 @@ public partial class Round : IContext
     [Default(0)]
     public partial data.@this<int> Decimals { get; init; }
 
-    public Task<data.@this<object>> Run()
+    public Task<data.@this<number>> Run()
     {
-        var result = Math.Round(MathHelper.ToDouble(Value.Value), Decimals.Value, MidpointRounding.AwayFromZero);
-        if (Decimals.Value == 0)
-            return Task.FromResult(data.@this<object>.Ok(MathHelper.PreserveType(result, Value.Value)));
-        return Task.FromResult(data.@this<object>.Ok(result));
+        var n = number.FromObject(Value.Value);
+        if (n == null)
+            return Task.FromResult(data.@this<number>.FromError(
+                new errors.ValidationError("math.round requires a number", "InvalidInput")));
+        return Task.FromResult(number.Round(n, Decimals.Value));
     }
 }

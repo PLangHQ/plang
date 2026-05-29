@@ -1,0 +1,6 @@
+Start
+/ file.read of photo.png produces an image value (build-time kind stamping for
+/ image+png is verified end-to-end in C# FileReadBuildTests.FileReadRun_ImageMime).
+- file.read photo.png, write to %photo%
+- assert %photo% is not null
+- assert %photo.Mime% equals "image/png"

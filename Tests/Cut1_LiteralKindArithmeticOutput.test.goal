@@ -1,0 +1,9 @@
+Start
+/ Integration cut 1 — runtime spine: int literal + decimal literal → math.add
+/ promotes to Decimal → 4.5. The .pr-shape claims (which kinds get stamped on
+/ which params) are pinned in C# BuilderKindStampingTests; variable.set's
+/ polymorphic Value gets no kind, typed kind-bearing params do.
+- set %x% = 1
+- set %z% = 3.5
+- math.add A=%x% B=%z%, write to %b%
+- assert %b% equals 4.5

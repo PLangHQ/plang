@@ -1,0 +1,104 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "math.divide A=7 B=2, write to %quotient%",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "The divide-footgun rule, end-to-end: 7 / 2 leaves the integer track and yields 3.5,\nnot 3. Promotion happens at the number type, not in the handler.",
+      "actions": [
+        {
+          "module": "math",
+          "action": "divide",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 7,
+              "type": "object"
+            },
+            {
+              "name": "B",
+              "value": 2,
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%quotient%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "number"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "math.divide(A=7, B=2) | variable.set(Name=%quotient%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %quotient% equals 3.5",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 3.5,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%quotient%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=3.5, Actual=%quotient%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Math/DivideSevenByTwoIsThreeHalves.test.goal",
+  "prPath": "/Math/.build/dividesevenbytwoisthreehalves.test.pr",
+  "hash": "4ade406c1dd4c1621cfd30c531f64173e19c7e3ef954c946ea53b58d9f003ef0",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

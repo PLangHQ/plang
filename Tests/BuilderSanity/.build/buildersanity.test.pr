@@ -22,7 +22,7 @@
             {
               "name": "Value",
               "value": 0,
-              "type": "int"
+              "type": "object"
             }
           ],
           "defaults": [
@@ -63,12 +63,7 @@
                 2,
                 3
               ],
-              "type": "list"
-            },
-            {
-              "name": "Type",
-              "value": "list",
-              "type": "string"
+              "type": "list\u00601"
             }
           ],
           "defaults": [
@@ -82,7 +77,7 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%items%, Value=[1, 2, 3], Type=list)",
+      "formal": "variable.set(Name=%items%, Value=[1, 2, 3], Type=json)",
       "source": null,
       "waitForExecution": true
     },
@@ -212,7 +207,7 @@
               "value": {
                 "name": "Finalize",
                 "parallel": false,
-                "parameters": null,
+                "parameters": [],
                 "prPath": "/BuilderSanity/.build/finalize.pr"
               },
               "type": "goal.call"
@@ -240,12 +235,12 @@
           "parameters": [
             {
               "name": "Expected",
-              "value": "%total%",
+              "value": 6,
               "type": "object"
             },
             {
               "name": "Actual",
-              "value": 6,
+              "value": "%total%",
               "type": "object"
             }
           ],
@@ -254,7 +249,7 @@
         }
       ],
       "intent": null,
-      "formal": "assert.equals(Expected=%total%, Actual=6)",
+      "formal": "assert.equals(Expected=6, Actual=%total%)",
       "source": null,
       "waitForExecution": true
     },
@@ -272,7 +267,7 @@
             {
               "name": "Expected",
               "value": "big-and-done",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Actual",

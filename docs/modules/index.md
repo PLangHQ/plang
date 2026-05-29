@@ -48,7 +48,7 @@ Modifiers attach to a single action and change how it runs — retry on failure,
 | Module | Description | Actions |
 |--------|-------------|---------|
 | [list](list.md) | Work with lists and collections | add, remove, get, set, count, first, last, sort, reverse, join, split, contains, indexof, flatten, unique, range |
-| [math](math.md) | Arithmetic and number operations | add, subtract, multiply, divide, modulo, power, sqrt, abs, round, floor, ceiling, min, max, random |
+| [math](math.md) | Arithmetic and number operations | add, subtract, multiply, divide, intdiv, modulo, power, sqrt, abs, round, floor, ceiling, min, max, random |
 
 ### I/O
 

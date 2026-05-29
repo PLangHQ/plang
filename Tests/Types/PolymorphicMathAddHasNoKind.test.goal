@@ -1,0 +1,8 @@
+Start
+/ Runtime smoke: int + decimal yields the expected 5.5 (Decimal promotion path).
+/ The .pr-shape rule it pins ("polymorphic math.add result has no kind in the
+/ .pr") is asserted on the built .pr JSON in C# BuilderKindStampingTests.
+- set %x% = 2
+- set %z% = 3.5
+- math.add A=%x% B=%z%, write to %b%
+- assert %b% equals 5.5

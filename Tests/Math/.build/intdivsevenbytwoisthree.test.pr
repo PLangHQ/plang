@@ -1,0 +1,104 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "math.intdiv A=7 B=2, write to %quotient%",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "math.intdiv is the named opt-in for truncating integer division: 7 intdiv 2 \u2192 3.\nThis goal exists so devs reaching for C# integer-division semantics have a clear surface.",
+      "actions": [
+        {
+          "module": "math",
+          "action": "intdiv",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 7,
+              "type": "object"
+            },
+            {
+              "name": "B",
+              "value": 2,
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%quotient%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "math.intdiv(A=7, B=2) | variable.set(Name=%quotient%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %quotient% equals 3",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 3,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%quotient%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=3, Actual=%quotient%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Math/IntDivSevenByTwoIsThree.test.goal",
+  "prPath": "/Math/.build/intdivsevenbytwoisthree.test.pr",
+  "hash": "18fc09878ff5bcc33cefeabc998de166c555813b8c3b6288d620089f3cc2b34e",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

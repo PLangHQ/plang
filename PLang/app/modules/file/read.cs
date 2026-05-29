@@ -20,13 +20,25 @@ public partial class Read : IContext
     [Default(false)]
     public partial data.@this<bool> ResolveVariables { get; init; }
 
-    // Bare Data — polymorphic by MIME (text → string, binary → byte[], json → structured).
-    // The Type stamp from ReadText carries the actual shape.
+    // Bare Data — polymorphic by MIME (text → string, binary → byte[], json → structured,
+    // image → app.types.image.@this). The Type stamp carries the high-level type; the
+    // value is the typed instance.
     public async Task<data.@this> Run()
     {
         if (!Path.Success) return Path;   // codeanalyzer v1 F4 — typed scheme error, not an NRE
         var read = await Path.Value!.ReadText();
         if (!read.Success || read.Type?.ClrType.Exit() == true) return read;
+
+        // plang-types Stage 5: when the read result is image-MIME bytes, lift
+        // to an image value. Bytes are loaded once here; image is the leaf
+        // owner of width/height/mime — width/height stay lazy until accessed.
+        var mime = read.Type?.Value ?? "";
+        if (read.Value is byte[] bytes && mime.StartsWith("image/", System.StringComparison.OrdinalIgnoreCase))
+        {
+            var image = new global::app.types.image.@this(bytes, mime, Path.Value);
+            return new data.@this(read.Name, image, data.type.FromName("image"));
+        }
+
         if (ResolveVariables.Value && read.Value is string content)
         {
             var resolved = Context.Variables.Resolve(content, skipInfrastructure: true);
@@ -55,13 +67,20 @@ public partial class Read : IContext
         if (p == null || string.IsNullOrEmpty(p.Extension)) return data.@this.Ok();
         if (p.MimeType == "application/octet-stream") return data.@this.Ok();
 
-        var typeName = p.Extension.TrimStart('.').ToLowerInvariant();
-
-        // Only stamp if the extension is a registered PLang type — otherwise
-        // downstream variable.set tries to convert via an unknown type and
-        // surfaces "Unknown type 'X'". Common text-shaped extensions (csv, txt,
-        // xml, yaml) are registered as string aliases in app.types so they pass
-        // this check while still carrying the more-specific annotation downstream.
+        // plang-types Stage 5: resolve extension → HIGH-LEVEL type (image, code,
+        // …) via app.formats when the high-level name is a registered typed
+        // value (image has Build/kind/serializer). For text-shaped extensions
+        // (csv/json/xml/yaml/md/txt/ini) keep the extension stamp — they're
+        // string aliases that read more clearly than the generic "text".
+        var ext = p.Extension.TrimStart('.').ToLowerInvariant();
+        string typeName = ext;
+        var highLevel = Context.App.Formats.Kind(ext);
+        if (highLevel != null
+            && !string.Equals(highLevel, "text", System.StringComparison.OrdinalIgnoreCase)
+            && Context.App.Types.Get(highLevel) != null)
+        {
+            typeName = highLevel;
+        }
         if (Context.App.Types.Get(typeName) == null) return data.@this.Ok();
 
         // Best-effort missing-file warning. Channel("builder") falls back to a

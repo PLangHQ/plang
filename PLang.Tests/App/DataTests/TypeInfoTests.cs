@@ -158,9 +158,10 @@ public class TypeTests
     [Test]
     public async Task DateTime_StaticProperty_ReturnsDateTimeType()
     {
+        // plang-types Stage 6: datetime resolves to DateTimeOffset.
         var type = Type.DateTime;
 
-        await Assert.That(type.ClrType).IsEqualTo(typeof(DateTime));
+        await Assert.That(type.ClrType).IsEqualTo(typeof(DateTimeOffset));
         await Assert.That(type.Value).IsEqualTo("datetime");
     }
 

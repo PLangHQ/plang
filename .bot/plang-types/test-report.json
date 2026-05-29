@@ -1,0 +1,71 @@
+{
+  "tester": "tester",
+  "branch": "plang-types",
+  "timestamp": "2026-05-29T18:20:37Z",
+  "tested_version": "v5",
+  "test_run": {
+    "csharp": { "total": 3636, "passed": 3636, "failed": 0, "skipped": 0 },
+    "plang": { "total": 248, "passed": 248, "failed": 0, "skipped": 0,
+      "note": "The v4 StreamCallback 502 did not recur — confirms it was external infra." }
+  },
+  "coverage": {
+    "changed_files_covered": 2,
+    "changed_files_total": 2,
+    "uncovered_files": [],
+    "note": "v5 changed only tests + 1 docstring (this.Unary.cs). Loader.cs sealed gate now has all 3 enforcement sites covered."
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "resolved",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/App/Types/RuntimeTypeLoadingTests.cs",
+      "code_file": "PLang/app/types/Loader.cs",
+      "issue": "v4-F1: Loader sealed gate tested at 1 of 3 sites. coder v5 added LoadDll_SealedNameAsRendererTypeName (pass-2 renderer, SignatureRendererShadow.dll) and LoadDll_InferredSealedName (pass-1 inferred-name, CallbackInferredShadow.dll).",
+      "impact": "RESOLVED. Tester-reproduced mutation: neutralizing :122 + :101 (leaving :88 intact) failed exactly those 2 tests of 11; explicit-attr test stayed green (control). Both assert ErrorKey==TypeLoadCollision + ErrorMessage contains the sealed name, so no TypeLoadCoverage slip.",
+      "suggestion": "None — resolved."
+    },
+    {
+      "id": 2,
+      "severity": "resolved",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/App/Modules/math/MathTests.cs",
+      "code_file": "PLang/app/modules/math/sqrt.cs",
+      "issue": "v4-F2: Sqrt_NegativeInput_Fails asserted only Success.IsFalse. coder v5 added Assert Error.Key == \"ArithmeticError\".",
+      "impact": "RESOLVED. Tester-reproduced mutation: DoSqrt throwing DivideByZeroException now fails the test at the Error.Key assertion (was green under the same mutation in v4).",
+      "suggestion": "None — resolved."
+    },
+    {
+      "id": 3,
+      "severity": "resolved",
+      "type": "missing-coverage",
+      "test_file": "(process) .bot/plang-types/coder/v5/baseline-tests.md",
+      "code_file": "n/a",
+      "issue": "v4-F3: no baseline-tests.md for v3/v4. coder v5 wrote one (HEAD a58dcfeee, all-green).",
+      "impact": "RESOLVED for v5.",
+      "suggestion": "Keep writing it every version."
+    },
+    {
+      "id": 4,
+      "severity": "resolved",
+      "type": "false-green",
+      "test_file": "n/a (doc drift)",
+      "code_file": "PLang/app/types/number/this.Unary.cs",
+      "issue": "v4-F4: stale Sqrt docstring said validation lives 'inside the handler'. coder v5 corrected it to 'throws ArithmeticException -> Wrap -> ArithmeticError, one canonical key'.",
+      "impact": "RESOLVED.",
+      "suggestion": "None."
+    },
+    {
+      "id": 5,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "n/a (process)",
+      "code_file": ".bot/plang-types/coder/v5/report.md",
+      "issue": "coder/v5/report.md is an empty file; the detail lives only in the commit message.",
+      "impact": "Non-blocking process nit; no effect on test quality.",
+      "suggestion": "Populate report.md per the workflow."
+    }
+  ],
+  "verdict": "approved",
+  "summary": "coder v5 resolved all four tester-v4 findings. The two review-driven sealed-gate tests (renderer-pass + inferred-name) and the strengthened sqrt Error.Key assert were each independently mutation-confirmed by the tester to go red when their target gate/key breaks, with the explicit-attribute test held as an untouched green control. C# 3636/3636, plang 248/248 (the v4 502 flake did not recur). One non-blocking nit: empty coder/v5/report.md. No false greens remain — PASS."
+}

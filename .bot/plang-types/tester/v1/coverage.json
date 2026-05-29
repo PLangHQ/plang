@@ -1,0 +1,13 @@
+{
+  "tool": "TUnit --coverage (cobertura)",
+  "scope": "changed production .cs vs merge-base(origin/runtime2)",
+  "changed_prod_files": 54,
+  "covered_gt0pct": 51,
+  "uncovered": [
+    { "file": "PLang/app/modules/math/number/Config.cs", "line_rate": "0%",
+      "note": "NumberPolicy config-resolution record. Only reflected on (GetProperty) by MathHandler_ReadsPolicyViaAppConfigForNumberConfig; its actual app.config read + parent-context climb is never executed. The C# SubContext test is a no-op (Assert.That(true)), and the planned plang goals OverflowThrowSettingHonored/SubGoalInheritsParentPolicy were not created." },
+    { "file": "PLang/app/channels/serializers/IWriter.cs", "line_rate": "n/a", "note": "interface — no executable lines" },
+    { "file": "PLang/app/types/ITypeRenderer.cs", "line_rate": "n/a", "note": "interface — no executable lines" }
+  ],
+  "summary": "Raw line coverage of changed production code is high (51/54 with >0%). The gap is not breadth but DEPTH: several green tests over the covered files assert nothing (placeholder Assert.That(true)), so executed lines are not the same as verified behavior. Config.cs (policy resolution) is the one changed file with a real 0% + no honest test behind it."
+}

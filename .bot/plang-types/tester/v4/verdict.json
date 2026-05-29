@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "Loader sealed-name security gate tested at 1 of 3 enforcement sites (mutation-confirmed); sqrt handler test asserts only Success.IsFalse." }

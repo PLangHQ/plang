@@ -1426,3 +1426,21 @@ A's body writes to B (B is free), B is executing (its `_executing` is
 true), B's body writes to A — A is now executing on the same async
 context, lookup returns null, `ChannelNotFound` surfaces. The bit flows
 down the await chain; no central registry view to swap.
+
+## Typed values — `app/types/<name>/`, per-(type, format) renderers, `type` + `kind` as separate fields
+
+Higher-level PLang values (`number`, `image`, `code`, `path`, `datetime`, `duration`, …) live as folders under `PLang/app/types/<name>/`. Each owns a small contract: `this.cs` (the value + `[PlangType]` + `IBooleanResolvable` truthiness), `this.Parse.cs` (`static Resolve(value, context)` — runtime construction), `this.Build.cs` (`static Build(value) → kind` — build-time kind derivation), and a `serializer/` subfolder.
+
+**`type` + `kind` are separate `.pr` fields.** Every value carries a high-level `type` (the routing key) and an optional `kind` refinement, stored separately — never as a `type:kind` string. The `kind` is stamped at build by the type's own `Build(value)` method, the build-time sibling of `Resolve`. So **`int`/`decimal`/`double` are kinds of `number`**, `jpg`/`png` are kinds of `image`, `csharp`/`python` are kinds of `code`, `http`/`file` are kinds of `path`. Number isn't special; the LLM is shown a type's kinds only when developer-meaningful (number's precision) — otherwise `Build()` derives the kind silently.
+
+**Per-(type, format) serializer dispatch.** Each type owns `serializer/<format>.cs` files — one `Default.cs` (uniform rendering) plus a file per format that genuinely differs. `image/serializer/text.cs` renders a path placeholder, `image/serializer/protobuf.cs` raw bytes, `image/serializer/Default.cs` base64. The filename **is** the format selector, the folder name **is** the type. The source generator emits a `(typeName, formatToken) → Write` table; the writer carries its `Format` token and looks up. No `IWireWritable` interface on the value; no mime switch inside any method.
+
+**Two `Build`s, kept distinct.** The **action** `IClass.Build()` decides an *action's* return type when it's dynamic (e.g., `file.read.Build()` reads the extension and resolves it to `image`). The **type** `Build(value)` decides a *value's* `kind`. They cooperate: `read photo.jpg` → action's Build sets `type = "image"`, type's Build sets `kind = "jpg"`.
+
+**Multi-faceted values compose, not union.** A file-backed `image` carries a `Path` property of type `path` (nullable when constructed from raw bytes). `%photo.Path.Exists%` navigates through the typed-property catalog. No `path|image` union — the routing key stays single.
+
+**Runtime DLL loading extends the catalog.** `code.load` scans the loaded assembly for `[PlangType]` classes and `ITypeRenderer` implementations as well as `ICode`. Runtime registrations outrank generator-emitted ones at resolution + rendering, but cannot rewrite what the source generator already baked into compiled handler slots and shipped `.pr` stamps. Five names are **sealed** against shadowing (`identity`, `signature`, `signedoperation`, `callback`, `channel`) because their bodies are signing- or transport-load-bearing — attempting to register one fails with `TypeLoadCollision`. `Loader.SealedNames` enforces this at every register site.
+
+**Couriers never read `.Value`.** Variable memory, callstack, channel routing, signing, the wire envelope all key on `Data.Type` (and `Data.Kind` when relevant). Only **leaf actions** (handlers declaring `Data<T>` parameters) and **leaf serializers** (the per-(type, format) renderer files) get to dereference `Data.Value`. This is [OBP Rule #9](object_pattern_formal.md#9-only-leaves-touch-datavalue) — and the seventh entry in `/CLAUDE.md`'s OBP Smell Checklist.
+
+Full design (movie, build-vs-runtime trace, dispatch mechanism): the architect plan on the `plang-types` branch — `.bot/plang-types/architect/plan.md` and the seven stage files alongside.

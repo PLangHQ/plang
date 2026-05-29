@@ -113,11 +113,28 @@ public sealed partial class @this
         lock (_initLock)
         {
             if (_initialized) return;
+            SeedClrPrimitives();
             foreach (var assembly in Assemblies)
                 IndexAssembly(assembly);
             _initialized = true;
         }
     }
+
+    /// <summary>
+    /// Seeds CLR-primitive PLang names (<c>string</c>, <c>int</c>, …) into the
+    /// registry from <c>app.types.primitives.@this</c> — the single source for
+    /// the seeded data. These types have no folder, no <c>Resolve</c>, no
+    /// <c>Build</c>; the registration only wires name↔CLR type so
+    /// <see cref="ResolveType"/> stays the one lookup path.
+    /// </summary>
+    private void SeedClrPrimitives()
+    {
+        foreach (var (name, type) in primitives.@this.Aliases)
+            _nameToType.TryAdd(name, type);
+        foreach (var (type, name) in primitives.@this.Canonical)
+            _typeToName.TryAdd(type, name);
+    }
+
 
     private void IndexAssembly(Assembly assembly)
     {

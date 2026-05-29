@@ -29,69 +29,29 @@ public sealed partial class @this
     /// </summary>
     public path.scheme.@this Scheme { get; } = new();
 
-    // --- Primitive lookup tables — read-only constant data, no per-App divergence. ---
+    /// <summary>
+    /// Per-App build-time kind dispatcher — discovers and invokes each
+    /// registered type's <c>static string? Build(object?)</c> hook (the
+    /// build-time sibling of <c>Resolve</c>). Owns the reflection cache.
+    /// Call: <c>App.Types.Kinds.Of(declaredType, value)</c> during build to
+    /// stamp <c>Data.Kind</c> alongside <c>Data.Type</c>.
+    /// </summary>
+    public kinds.@this Kinds { get; } = new();
 
-    private static readonly Dictionary<string, System.Type> Primitives = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["string"] = typeof(string),
-        ["text"] = typeof(string),
-        ["int"] = typeof(int),
-        ["integer"] = typeof(int),
-        ["long"] = typeof(long),
-        ["float"] = typeof(float),
-        ["double"] = typeof(double),
-        ["decimal"] = typeof(decimal),
-        ["bool"] = typeof(bool),
-        ["boolean"] = typeof(bool),
-        ["datetime"] = typeof(DateTime),
-        ["date"] = typeof(DateTime),
-        ["time"] = typeof(TimeSpan),
-        ["timespan"] = typeof(TimeSpan),
-        ["guid"] = typeof(Guid),
-        ["byte"] = typeof(byte),
-        ["bytes"] = typeof(byte[]),
-        ["list"] = typeof(List<object>),
-        ["array"] = typeof(object[]),
-        ["dictionary"] = typeof(Dictionary<string, object>),
-        ["dict"] = typeof(Dictionary<string, object>),
-        ["map"] = typeof(Dictionary<string, object>),
-        ["object"] = typeof(object),
-        ["dynamic"] = typeof(object),
-        ["json"] = typeof(JsonNode),
-        // Text-shaped file extensions — registered as string aliases so
-        // file.read.Build()'s extension-derived Type stamp ("csv", "txt", ...)
-        // doesn't surface "Unknown type" at runtime. Annotation stays specific
-        // (goal.getTypes still reports "csv"); only the runtime conversion
-        // target degrades to string.
-        ["csv"] = typeof(string),
-        ["txt"] = typeof(string),
-        ["xml"] = typeof(string),
-        ["yaml"] = typeof(string),
-        ["yml"] = typeof(string),
-        ["int?"] = typeof(int?),
-        ["long?"] = typeof(long?),
-        ["double?"] = typeof(double?),
-        ["bool?"] = typeof(bool?),
-        ["datetime?"] = typeof(DateTime?),
-        ["guid?"] = typeof(Guid?),
-    };
+    /// <summary>
+    /// Per-(type, format) renderer dispatch — feeds the writer's
+    /// <see cref="data.TypedValueNode"/> case. Discovers
+    /// <c>app/types/&lt;name&gt;/serializer/&lt;format&gt;.cs</c> classes via
+    /// reflection over <see cref="renderers.@this.Assemblies"/> and exposes a
+    /// runtime-registration seam for DLLs loaded at runtime.
+    /// </summary>
+    public renderers.@this Renderers { get; } = new();
 
-    private static readonly Dictionary<System.Type, string> PrimitiveNames = new()
-    {
-        [typeof(string)] = "string",
-        [typeof(int)] = "int",
-        [typeof(long)] = "long",
-        [typeof(float)] = "float",
-        [typeof(double)] = "double",
-        [typeof(decimal)] = "decimal",
-        [typeof(bool)] = "bool",
-        [typeof(DateTime)] = "datetime",
-        [typeof(TimeSpan)] = "timespan",
-        [typeof(Guid)] = "guid",
-        [typeof(byte)] = "byte",
-        [typeof(byte[])] = "bytes",
-        [typeof(object)] = "object",
-    };
+    // --- Primitive lookup tables ---
+    // Aliases / canonical-name data lives on app.types.primitives.@this — one
+    // home for the seeded entries that both the registry (instance lookup) and
+    // the static no-context fallback (GetPrimitiveOrMime / GetPrimitiveName)
+    // read from.
 
     private const int MaxGenericDepth = 20;
 
@@ -103,7 +63,7 @@ public sealed partial class @this
     public static System.Type? GetPrimitiveOrMime(string typeName)
     {
         if (string.IsNullOrWhiteSpace(typeName)) return null;
-        if (Primitives.TryGetValue(typeName, out var primitive)) return primitive;
+        if (primitives.@this.Aliases.TryGetValue(typeName, out var primitive)) return primitive;
         return ClrFromMime(typeName);
     }
 
@@ -115,7 +75,7 @@ public sealed partial class @this
     public static string? GetPrimitiveName(System.Type type)
     {
         var underlying = Nullable.GetUnderlyingType(type) ?? type;
-        return PrimitiveNames.TryGetValue(underlying, out var name) ? name : null;
+        return primitives.@this.Canonical.TryGetValue(underlying, out var name) ? name : null;
     }
 
     /// <summary>
@@ -158,7 +118,7 @@ public sealed partial class @this
             return $"list<{GetTypeNameStatic(elementType)}>";
         }
 
-        if (PrimitiveNames.TryGetValue(type, out var name)) return name;
+        if (primitives.@this.Canonical.TryGetValue(type, out var name)) return name;
 
         var listIface = type.GetInterfaces().FirstOrDefault(i =>
             i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
@@ -219,9 +179,9 @@ public sealed partial class @this
             }
         }
 
-        if (Primitives.TryGetValue(typeName, out var type))
-            return type;
-
+        // Registry is the single source of truth — primitives are seeded into
+        // it at init via SeedClrPrimitives. The static Primitives dict still
+        // backs the no-context fallback (GetPrimitiveOrMime / GetPrimitiveName).
         var domainType = ResolveType(typeName);
         if (domainType != null) return domainType;
 
@@ -308,7 +268,7 @@ public sealed partial class @this
             return $"list<{GetTypeName(elementType)}>";
         }
 
-        if (PrimitiveNames.TryGetValue(type, out var name))
+        if (primitives.@this.Canonical.TryGetValue(type, out var name))
             return name;
 
         var listIface = type.GetInterfaces().FirstOrDefault(i =>
@@ -429,6 +389,8 @@ public sealed partial class @this
             || underlying == typeof(decimal)
             || underlying == typeof(DateTime)
             || underlying == typeof(DateTimeOffset)
+            || underlying == typeof(DateOnly)
+            || underlying == typeof(TimeOnly)
             || underlying == typeof(TimeSpan)
             || underlying == typeof(Guid);
     }
@@ -442,19 +404,7 @@ public sealed partial class @this
     /// "text"→"string" and all nullable variants). Domain types are surfaced through
     /// the schemas block via [PlangType] declarations, not listed here.
     /// </summary>
-    public List<string> GetBuilderTypeNames()
-    {
-        var seen = new HashSet<System.Type>();
-        var names = new List<string>();
-        foreach (var kvp in Primitives)
-        {
-            if (kvp.Key.EndsWith("?")) continue;
-            if (seen.Contains(kvp.Value)) continue;
-            seen.Add(kvp.Value);
-            names.Add(kvp.Key);
-        }
-        return names;
-    }
+    public List<string> GetBuilderTypeNames() => primitives.@this.BuilderNames.ToList();
 
     /// <summary>Alias for <see cref="GetBuilderTypeNames"/> — preserves existing <c>app.types.BuilderNames</c> caller habit.</summary>
     public List<string> BuilderNames() => GetBuilderTypeNames();
@@ -520,6 +470,7 @@ public sealed partial class @this
             string? staticExample = ReadStaticString(type, "Example");
             string? staticDescription = ReadStaticString(type, "Description");
             string? staticShape = ReadStaticString(type, "Shape");
+            IReadOnlyList<string>? staticKinds = ReadStaticStringList(type, "Kinds");
 
             var values = GetValidValues(type);
             if (values != null)
@@ -587,6 +538,7 @@ public sealed partial class @this
                     Properties = llmProps.Count > 0 ? llmProps : null,
                     Description = staticDescription,
                     Example = staticExample,
+                    Kinds = staticKinds,
                     ClrType = type,
                 });
                 continue;
@@ -601,6 +553,7 @@ public sealed partial class @this
                     Fields = llmProps,
                     Description = staticDescription,
                     Example = staticExample,
+                    Kinds = staticKinds,
                     ClrType = type,
                 });
             }
@@ -639,6 +592,29 @@ public sealed partial class @this
         try
         {
             return prop.GetValue(null) as string;
+        }
+        catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Reads a public-static <c>IReadOnlyList&lt;string&gt;</c> (or <c>IEnumerable&lt;string&gt;</c>)
+    /// property — the catalog's opt-in <c>Kinds</c> vocabulary convention. Returns null when
+    /// the property is absent, the wrong shape, or throws.
+    /// </summary>
+    private static IReadOnlyList<string>? ReadStaticStringList(System.Type type, string propertyName)
+    {
+        var prop = type.GetProperty(propertyName,
+            BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+        if (prop == null) return null;
+        try
+        {
+            var raw = prop.GetValue(null);
+            if (raw is IReadOnlyList<string> list) return list;
+            if (raw is IEnumerable<string> seq) return seq.ToList();
+            return null;
         }
         catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
         {

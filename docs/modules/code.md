@@ -20,7 +20,17 @@ Load code from a .NET assembly.
 | Path | string | yes | Path to the .dll file |
 | Name | string | no | Display name (the implementation supplies its own name by default) |
 
-The loaded assembly is scanned for classes implementing `ICode`. Each is registered for its specific interface (e.g., `ICrypto`, `ISigning`). The first registration for a type becomes the default.
+The loaded assembly is scanned for three kinds of contribution:
+
+- **`ICode` implementations** — registered for their specific interface (`ICrypto`, `ISigning`, …). The first registration for a type becomes the default.
+- **`[PlangType]` classes** — added to the type registry. Runtime-loaded names win over built-ins at name → CLR-type resolution, so a DLL can introduce a new type (`quantity`, `tensor`) or refine how an existing one resolves at runtime.
+- **`ITypeRenderer` implementations** — added to the per-(type, format) renderer table. Runtime-registered renderers win over generator-emitted ones, so a DLL can change how an existing type lands on the wire for a given format.
+
+A DLL only needs to contribute one of the three to load successfully.
+
+**Sealed names — refused at load.** The following type names are reserved and a runtime-loaded DLL cannot shadow them: `identity`, `signature`, `signedoperation`, `callback`, `channel`. Their bodies are signing- or transport-load-bearing — replacing them would let an attacker-composed body ride out under a valid signature. Attempting to load a DLL that registers one of these names fails with `TypeLoadCollision`. Primitives (`int`, `string`, `path`, …) stay overridable because their body is constrained by the type itself.
+
+**Honest limit.** Runtime registration changes *resolution* (name → CLR type) and *rendering* (the wire form) going forward. It does NOT rewrite what the source generator already baked at PLang build: PLNG-validated parameter slots, the `Data<int>` slots on already-compiled action handlers, or type stamps in shipped `.pr` files. Adding new types is unconstrained; overwriting built-ins is "new resolution + new rendering, same compiled slots."
 
 ### remove
 
