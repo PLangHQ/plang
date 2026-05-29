@@ -4,7 +4,7 @@ This file goes deep on the C# shape of `app.types.number.@this`: storage layout,
 
 ## The shape — `readonly struct`
 
-Ingi chose the struct form on 2026-05-29. The type is a **`readonly struct` still named `@this`** — so it remains `app.types.number.@this`, the `@this` folder convention is untouched, and only the `class`→`struct` keyword changes:
+`number` is a **`readonly struct` named `@this`** — so it's `app.types.number.@this`, the `@this` folder convention holds, and it reads like every other type in `app/types/`:
 
 ```csharp
 namespace app.types.number;
@@ -27,13 +27,13 @@ public readonly struct @this : System.IEquatable<@this>, global::app.data.IBoole
 public enum NumberKind { Int, Long, Float, Double, Decimal }
 ```
 
-`Float` is preserved as a *label* (for `ToString`, catalog fidelity, round-trip identity) but widened to `double` on entry — single-precision shares the `_f` slot. Standard practice in most VMs; saves a slot, saves a code path. Re-narrowing to `float` on exit happens at the explicit-OUT cast.
+A struct because a number is a *value*: no identity, immutable, two `5`s are the same — exactly like `int`/`decimal`/`double`, which are all structs. It implements `IEquatable<@this>` for value equality and `IBooleanResolvable` because zero (and NaN) is falsy.
 
-**No `Context`, no `IContext`.** The earlier draft carried a mutable `Context` property and implemented `IContext` for surface-uniformity with `path.Resolve`. Dropped (Opus 4.8 review point 6, [review-opus-4-8.md](review-opus-4-8.md)). A number has no use for Context after construction — `Resolve(raw, context)` keeps the parameter for factory-signature consistency but never stores it. A pure value carrying per-request state that gets parked in the memory stack across requests is an OBP Rule #4 violation; removing it makes `number` a genuine value.
+`Float` is a *label* (for `ToString`, catalog fidelity, round-trip identity) widened to `double` on entry — single-precision shares the `_f` slot. Standard VM practice: saves a slot and a code path. Re-narrowing to `float` happens at the explicit-OUT cast.
 
-**Why struct, honestly.** Ingi's stated reason was allocation. The architect's correction (verified against `app/data/this.cs:86`): `Data` stores its value as `private object? _value`, and `Data<T>.Value`'s setter writes through to that `object?` slot — so a `number` struct **boxes the moment it enters `Data.Value`**, which is the dominant runtime path (variables, memory stack, action results, wire). In that path a struct allocates the same as a class. The allocation win is real only for **pure-C# arithmetic intermediates that never enter Data** — a reducer accumulator (`list.sum` over a large list keeps one `number` local, struct = stack, class = N heap allocs). That path is itself partly mooted because PLang routes heavy numeric loops to `[code]`. So the genuine case for struct is **value semantics**, not allocation: a number has no identity, is immutable, and two `5`s are the same value — exactly like `int`/`decimal`/`double`, which are all structs. Naming the struct `@this` means we get value semantics at zero convention cost. (If the corrected allocation picture changes the call, it's a keyword flip back to `sealed class` — the rest of this doc is unaffected.)
+**No `Context`, no `IContext`.** A number has no use for Context after construction. `Resolve(raw, context)` keeps the parameter for factory-signature consistency with other types but never stores it; `From(5)` and the internal factories never see it. A value carrying per-request state that could get parked in the memory stack across requests is an OBP Rule #4 violation — keeping `number` Context-free makes it a genuine value.
 
-Implements `IEquatable<@this>` for value equality (see "Value equality" below) and `IBooleanResolvable` because zero (and NaN) is falsy. `IBooleanResolvable` dispatch operates on the already-boxed `Data.Value`, so it adds no boxing beyond what Data already did.
+**One caveat to know about the struct, for the coder.** `Data` stores its value as `object` (`app/data/this.cs:86`), so a `number` **boxes the moment it lands in `Data.Value`** — the dominant runtime path. There a struct allocates the same as a class would; the struct's stack-allocation win is real only for pure-C# arithmetic intermediates that never enter `Data` (e.g. a `list.sum` accumulator). So pick `struct` for the value-semantics, not for an allocation win that mostly doesn't materialize. `IBooleanResolvable` dispatch reads the already-boxed `Data.Value`, so truthiness adds no boxing beyond what `Data` already did.
 
 ### Which CLR kinds collapse into which slots
 
@@ -82,7 +82,7 @@ public static implicit operator @this(float v)   => From(v);
 public static implicit operator @this(double v)  => From(v);
 ```
 
-Implicit IN lets handlers write `Data<number>.Ok(5)` without ceremony. Each implicit-IN call allocates one `@this` instance; that allocation is the cost we accept for class-style storage. No double-allocation: the primitive sits in the slot, not in a boxed object.
+Implicit IN lets handlers write `Data<number>.Ok(5)` without ceremony — the primitive sits in the struct's slot, no boxing until the value is stored into `Data.Value`.
 
 ## Going back out — explicit only
 
@@ -106,7 +106,7 @@ Narrowing always **throws on failure** — no silent truncation. The PLang dev w
 
 ### Error model — throws at the C# boundary, `Data` at the handler boundary
 
-Settled with Ingi 2026-05-29 (Opus 4.8 review point 4, [review-opus-4-8.md](review-opus-4-8.md)). Two surfaces, one error model where it matters:
+Two surfaces, one error model where it matters:
 
 - **C# operators and `private` internals throw** — `(int)n`, `a + b`, `decimal`-overflow, integer div-by-zero. This is what every CLR numeric does; in-process C# owns the exception path the way it does for `int`/`decimal`.
 - **The module/handler surface always returns `Data`** — never throws to the runtime. `math.add`'s `Run()` returns `Data<number>`; it calls the Data-returning named method `number.Add(a, b, policy)`, which catches `OverflowException` internally and returns `Data<number>.Fail("MathOverflow", …)`. Same shape for the parse/cast boundary: `Resolve` throws, `TryResolve → Data<number>` doesn't; `ToInt32` throws, `TryToInt32 → Data<int>` doesn't.
@@ -135,9 +135,7 @@ public static @this  Resolve(string raw, actor.context.@this context);
 
 ## Arithmetic
 
-> **Pending (not yet decided):** Opus 4.8 review point 3 argues `Divide` and `Power` should *not* share Add's promotion rule — `7 / 2` resolving to `Int` kind gives integer-divide `3`, a footgun for a non-programmer audience (Python split `/` and `//` for exactly this). My recommendation in [review-opus-4-8.md](review-opus-4-8.md): `/` always promotes out of the integer kinds (`Int / Int → Decimal` under default precision, so `7/2 → 3.5`), `^` promotes on negative/fractional exponents, and a named `math.intdiv` action owns truncating division. **Not landed below** — the shared-shape code stays as written until Ingi rules on it. Treat the single promotion table as provisional for `/` and `^`.
-
-`Add` / `Subtract` / `Multiply` / `Divide` / `Modulo` / `Power` all follow the same shape:
+`Add` / `Subtract` / `Multiply` / `Modulo` follow one shape; `Divide` and `Power` carry their own result-kind rule (below). All take a `NumberPolicy` and dispatch on the promoted kind:
 
 ```csharp
 public static @this Add(@this a, @this b, NumberPolicy policy)
@@ -162,7 +160,7 @@ public static @this operator %(@this a, @this b) => Modulo(a, b, NumberPolicy.Le
 
 Operators always use the lenient default. Policy-aware overloads are what math action handlers call. The dual surface (operator + named static) is deliberate — operators read clean in C# test fixtures and at handler sites that don't care; the named overload is what the runtime uses when policy matters.
 
-### Promotion table
+### Promotion table (Add / Subtract / Multiply / Modulo)
 
 | Left ↓ Right → | Int | Long | Decimal | Double |
 |---|---|---|---|---|
@@ -171,7 +169,19 @@ Operators always use the lenient default. Policy-aware overloads are what math a
 | Decimal | Decimal | Decimal | Decimal | **policy.Precision** |
 | Double | Double | Double | **policy.Precision** | Double |
 
-The single fork is decimal × double. `policy.Precision == Double` (lenient default) promotes to Double; `Decimal` keeps decimal and throws on double NaN/Infinity/out-of-range. Same fork in both directions of the table.
+The single fork is decimal × double. `policy.Precision == Double` (lenient default) promotes to Double; `Decimal` keeps decimal and throws on double NaN/Infinity/out-of-range. Same fork in both directions.
+
+### Divide and Power leave the integer track
+
+`7 / 2` must not be `3`. Integer division is the right tool sometimes, but it's the wrong *default* for a language whose audience isn't thinking in C# types — a developer who writes `7 / 2` means three-and-a-half. So:
+
+- **`Divide`** never resolves to `Int`/`Long`. `Int / Int` and `Long / Long` promote to `Decimal` under the lenient default (`policy.Precision == Double` promotes to `Double` instead, for chains that are already floating). Decimal/double inputs follow the table above. `7 / 2 → 3.5`.
+- **`Power`** promotes by exponent: a non-negative integer exponent on an integer base stays integer (`2 ^ 10 → 1024`, overflow per policy); a **negative** exponent leaves the integer track (`2 ^ -1 → 0.5`, Decimal/Double per precision); a **fractional** exponent is always `Double` (IEEE — `2 ^ 0.5`).
+- **Truncating division is explicit.** `math.intdiv` (a named action) does `7 intdiv 2 → 3` and `7 mod 2` pairs with it. A developer who wants the integer-floor behavior names it — the way Python made `//` distinct from `/`.
+
+Division by zero:
+- Integer / Decimal: `DivideByZeroException` regardless of policy — there is no integer Infinity, and the handler turns it into `Data.Error`.
+- Double (or a kind that promoted to Double): IEEE-754 `±Infinity` / `NaN`.
 
 ### Integer overflow
 
@@ -180,9 +190,7 @@ The single fork is decimal × double. `policy.Precision == Double` (lenient defa
 - `policy.Overflow == Promote` (lenient default): on `OverflowException`, widen to the next kind. `Int` overflow → recompute as `Long`. `Long` overflow → recompute as `Decimal`. `Decimal` overflow → throw (no wider integer kind exists; decimal's range is far larger than long's, so this rarely fires).
 - `policy.Overflow == Throw`: any overflow throws immediately, no widening. Int + Int that wouldn't fit in int → `OverflowException`.
 
-Division by zero:
-- Integer / Decimal: throws `DivideByZeroException` regardless of policy. There is no integer Infinity.
-- Double: returns `double.PositiveInfinity` / `NegativeInfinity` / `NaN` per IEEE-754. Mixed kinds promoting to Double inherit this.
+(Division by zero is covered under "Divide and Power leave the integer track" above.)
 
 ## `IBooleanResolvable`
 
@@ -200,7 +208,7 @@ NaN is **falsy** — generalizing "zero is false" to "not-a-real-number is false
 
 ## Value equality — lenient default, `ExactEquals` for the careful
 
-Ingi's call on 2026-05-29 (Opus 4.8 review point 2, [review-opus-4-8.md](review-opus-4-8.md)): **`==` is lenient by default, an explicit `ExactEquals` is there for those who know they need it.** A regular PLang developer expects `0.1 == 0.1` to be true regardless of whether one side originated as decimal and the other as double — they don't know (and shouldn't have to know) the storage kind. So the default `==` promotes to a common form and compares:
+**`==` is lenient by default; an explicit `ExactEquals` is there for those who need it.** A regular PLang developer expects `0.1 == 0.1` to be true regardless of whether one side originated as decimal and the other as double — they don't know (and shouldn't have to know) the storage kind. So the default `==` promotes to a common form and compares:
 
 - `number.From(5) == number.From(5L)` → true.
 - `number.From(5m) == number.From(5.0)` → true (within double precision).
@@ -256,7 +264,7 @@ public override int GetHashCode()
 }
 ```
 
-`DecimalEqualsGuarded` replaces the earlier `try/catch`-inside-Equals (Opus 4.8 smaller note): an explicit `IsFinite` + decimal-range check, no exceptions on a hot path. `TryGetIntegralValue` canonicalizes the hash so `From(5)`, `From(5L)`, `From(5m)` share a bucket — closing the Equals/GetHashCode gap the earlier draft flagged as "mechanical."
+`DecimalEqualsGuarded` is an explicit `IsFinite` + decimal-range check (no `try/catch` for control flow on a hot path). `TryGetIntegralValue` canonicalizes the hash so `From(5)`, `From(5L)`, `From(5m)` share a bucket, keeping the `Equals`/`GetHashCode` contract.
 
 ### The honest caveat — lenient `==` is not a clean equivalence relation
 

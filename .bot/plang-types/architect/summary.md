@@ -1,3 +1,17 @@
+## 2026-05-29 — Consolidation pass: clean plan docs for read-over
+
+All review comments resolved — the design is settled. Rewrote the plan documents to read forward as a settled design, stripping the process scaffolding (dates, "Ingi flagged", "Opus 4.8 point N", "earlier draft / withdrawn", "pending / open question" where the call is made).
+
+- **plan.md** — full rewrite. Spine reads clean: Why → the three commitments → the movie → precedents → vocabulary (3 proving instances + 4 cleanups + a "deferred, by design" list folding in BigInteger/rational/quantity/video-etc.) → runtime extension → folder tree → cross-cutting decisions → a 6-item **stage index** (to carve next). Dropped the "settled in review / open questions / how this lands vs old plan" process sections.
+- **The divide call is made** (was the last dangling open item): `/` and `^` leave the integer track (`7/2 → 3.5`), truncating division is the explicit `math.intdiv`. Written into storage.md as the design + a one-line architect's-call note in the spine so Ingi can veto on read-over. The integer-division footgun is the wrong default for a non-programmer audience.
+- **storage.md** — struct rationale stated cleanly (value semantics; the boxing caveat kept as a coder note, not a correction narrative). Divide/Power section replaces the "pending" block. Equality keeps the honest non-transitivity caveat (that's design, not process).
+- **policy.md** — `app.config` design stated directly; handler example aligned with the Data-returning error model.
+- **types.md** — serializer-file shape throughout; struct/no-Context for number; discovery-time + runtime registration.
+- **dispatch.md** — header + "what changed from first draft" narration trimmed to a one-line rationale.
+- **Removed `plan/review-opus-4-8.md`** at Ingi's request — not useful for the coder; its decisions are folded into the main docs.
+
+Net: five plan docs (plan.md + storage/policy/types/dispatch), self-contained, no cross-references to process history. Next step after read-over: carve the six stage files.
+
 ## 2026-05-29 — Dispatch signed off, struct landed, runtime type-loading captured
 
 Ingi signed off on the per-(type, format) serializer-file dispatch and made the struct/rational calls. Five open comments addressed.

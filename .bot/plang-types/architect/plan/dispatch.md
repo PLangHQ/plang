@@ -1,8 +1,8 @@
 # Dispatch — per-(type, format) serializer files
 
-This file locks the serialization-dispatch contract. The spine ([../plan.md](../plan.md)) locks the architectural decision; this is the implementation shape Ingi signed off on 2026-05-29 (comment thread on `plan.md` L84 and this file L66/L70).
+This file locks the serialization-dispatch contract. The spine ([../plan.md](../plan.md)) locks the architectural decision; this is the implementation shape.
 
-**What changed from the first draft.** The original proposal put a single `IWireWritable.WriteTo(IWriter, ISerializer)` method on each value, switching on the mime internally. Ingi pushed back: a method that switches on format is a smell from across the room, and OBP says distinct (type × format) combinations get distinct files. The settled shape: **one small file per (type, format)**, each owning exactly one rendering, with the source generator wiring the dispatch table. No interface on the value, no internal mime switch. The value is a dumb data holder; the *rendering* lives beside the type, one file per output medium.
+**The shape in one line:** one small file per (type, format), `app/types/<name>/serializer/<format>.cs`, each owning exactly one rendering; the source generator wires the dispatch table. No interface on the value, no mime switch inside a method — the value is a dumb data holder, the rendering lives beside the type, one file per output medium. (A method that switches on format internally is the smell this avoids — distinct (type × format) combinations are distinct files.)
 
 ## What exists today
 
@@ -110,7 +110,7 @@ The source generator scans `app/types/*/serializer/*.cs` (discovery-time, the re
 
 ## How it hooks into the existing pipeline
 
-Two touch points, mirroring the deferred-marker mechanism Ingi liked (this file's old L70):
+Two touch points, using a deferred marker:
 
 **Normalize tags, doesn't render.** When the walk reaches a value whose CLR type resolves to a PLang name (`Registry.ResolveName(value.GetType())` is non-null) and that type has at least one registered serializer, Normalize wraps it as a marker instead of reflecting it:
 
@@ -152,7 +152,7 @@ Switch the run to protobuf: step 4 looks up `("image", "protobuf")` → hit → 
 
 ## Runtime-loaded and overwritten types
 
-This is the dimension Ingi raised on `plan.md` L3 (`- load mynumbers.dll`). A type loaded from an external DLL at runtime can't be generator-wired — the generator already ran at PLang's build. So the dispatch table needs a **runtime-registration path** alongside the generated one, and the existing `code.load` machinery is the template.
+A type loaded from an external DLL at runtime (`- load mynumbers.dll`) can't be generator-wired — the generator already ran at PLang's build. So the dispatch table needs a **runtime-registration path** alongside the generated one, and the existing `code.load` machinery is the template.
 
 `code.load` (`PLang/app/modules/code/load.cs`) today: loads a DLL, scans `GetExportedTypes()` for `ICode` implementations, registers each instance. The type-loading feature generalizes the same shape:
 
@@ -171,7 +171,7 @@ Emit is 1-to-many (one type, a file per format). Parse is many-to-one (any forma
 - protobuf: a bytes slot → `image.@this.Resolve(byte[], context)` overload, constructs directly.
 - text: a string slot → `Resolve` interprets (path-shaped → image-backed-by-path; base64 → bytes; neither → typed parse error).
 
-The type owns deserializing itself (Ingi's L205 comment, already resolved): the dispatch picks the type by `Data.Type`, the type's `Resolve` overloads pick the construction path by incoming primitive shape. `Conversion.TryConvertTo` grows one branch — typed parse via `Resolve(byte[], context)` when the input is binary and `Data.Type` is set.
+The type owns deserializing itself: the dispatch picks the type by `Data.Type`, and the type's `Resolve` overloads pick the construction path by incoming primitive shape. `Conversion.TryConvertTo` grows one branch — typed parse via `Resolve(byte[], context)` when the input is binary and `Data.Type` is set.
 
 ## What changes vs. what stays
 
@@ -190,7 +190,7 @@ The type owns deserializing itself (Ingi's L205 comment, already resolved): the 
 - Generator: scan `serializer/*.cs`, emit registrations; PLNG gate for missing-coverage.
 - `code.load` sibling (or extension) that registers `[PlangType]` classes + their `ITypeRenderer`s from a loaded DLL.
 
-`path`'s existing `this.JsonConverter.cs` (Ingi flagged the OBP smell on `plan.md` L54) is absorbed: its single-format logic moves into `app/types/path/serializer/Default.cs`, and `this.JsonConverter.cs` is deleted once STJ-pathway callers route through the new dispatch.
+`path`'s existing `this.JsonConverter.cs` (the legacy single-format converter) is absorbed: its logic moves into `app/types/path/serializer/Default.cs`, and `this.JsonConverter.cs` is deleted once STJ-pathway callers route through the new dispatch.
 
 ## Edge cases
 

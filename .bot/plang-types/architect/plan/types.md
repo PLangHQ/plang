@@ -6,12 +6,12 @@ This file goes deep on what types ship on this branch, what each owns, the regis
 
 Every PLang type lives at `app/types/<name>/`:
 
-- `this.cs` — the value class, `sealed` unless it has genuine variants (`path` is `abstract` because file vs http have different storage; `number` is `sealed` because the tagged union covers all kinds with one shape; `image` is `sealed` because mime + bytes is uniform).
-- `this.cs` implements the cross-cutting interfaces: `app.data.IBooleanResolvable` (truthiness), `app.data.IWireWritable` (serialization), `app.modules.IContext` (so leaf actions can reach back into the runtime), and optionally `[PlangType]` registration attribute (see "Registration" below).
-- `this.cs` exposes `public static @this Resolve(string raw, app.actor.context.@this context)` — the single string-coercion factory. `app.types.Conversion.TryConvertTo` dispatches here.
-- Sub-files at the type's discretion: variant subfolders (`path/file/`, `path/http/`), surface partials (`this.Operations`, `this.Authorize`, `this.JsonConverter`), per-type modules.
+- `this.cs` — the value. A `readonly struct` for pure values (`number`), a `sealed class` for reference-shaped values (`image`, `code`), an `abstract` class for variant families (`path` — file vs http have different storage and dispatch). Carries `[PlangType("name")]` and implements `app.data.IBooleanResolvable` (truthiness); class-shaped types may also implement `app.modules.IContext` to reach the runtime (`number`, a value, does not).
+- `this.cs` (or `this.Parse.cs`) exposes `public static @this Resolve(string raw, app.actor.context.@this context)` — the single coercion factory. `app.types.Conversion.TryConvertTo` dispatches here. A binary type adds a `Resolve(byte[], context)` overload.
+- `serializer/<format>.cs` — one file per (type, format) rendering; `Default.cs` is the uniform fallback. Serialization is **not** an interface on the value; it's these files (see [dispatch.md](dispatch.md)).
+- Sub-files at the type's discretion: variant subfolders (`path/file/`, `path/http/`), surface partials (`this.Operations`, `this.Authorize`).
 
-The type does **not** depend on any channel. The type sees `serializer.Type` (the mime string) at `WriteTo` time and dispatches. The channel does not depend on any type — it asks `Data.Normalize`, which finds the marker.
+The type does **not** depend on any channel, and no channel depends on a type. The bridge is the writer's `Format` token: `Normalize` tags a registered value as `TypedValueNode`, the writer looks up `(Data.Type, Format)` and calls the type's serializer file.
 
 ## The three proving instances
 
@@ -19,49 +19,49 @@ The type does **not** depend on any channel. The type sees `serializer.Type` (th
 
 **Folder:** `app/types/number/`
 **Files this branch creates:**
-- `this.cs` — `NumberKind` enum + storage slots (`_i`, `_d`, `_f`), `Kind` property, `static From(int|long|decimal|float|double)`, implicit-IN operators.
-- `this.Parse.cs` — `static Resolve`, `static Parse`, `static TryParse`.
-- `this.Operators.cs` — C# operator overloads (`+`, `-`, `*`, `/`, `%`, `==`, `!=`), policy-free (lenient default).
-- `this.Arithmetic.cs` — `static Add(@this, @this, NumberPolicy)` and siblings; policy-aware overloads called by `math.*` handlers.
-- `this.Equality.cs` — `Equals`, `GetHashCode` with hash canonicalization across equivalent kinds.
+- `this.cs` — `readonly struct @this`, `NumberKind` enum + storage slots (`_i`, `_d`, `_f`), `Kind`, `static From(int|long|decimal|float|double)`, implicit-IN operators.
+- `this.Parse.cs` — `static Resolve` / `Parse` / `TryParse`.
+- `this.Operators.cs` — operator overloads `+ - * / %` (lenient default).
+- `this.Arithmetic.cs` — `static Add(@this, @this, NumberPolicy)` and siblings; policy-aware, `Data`-returning; called by `math.*` handlers.
+- `this.Equality.cs` — lenient `Equals` + `ExactEquals` + canonical `GetHashCode`.
+- `Config.cs` / `NumberPolicy.cs` — the policy axes and resolved struct.
+- `serializer/Default.cs` — `(number, *)` → the matching `IWriter` numeric primitive per `Kind`.
 
-**Full design detail:** [storage.md](storage.md) (storage layout, parse, operators, IBooleanResolvable, equality, ToString) and [policy.md](policy.md) (NumberPolicy struct, two axes × three scopes, resolver, environment.number config).
+**Full design detail:** [storage.md](storage.md) (storage, parse, operators, equality, IBooleanResolvable, ToString) and [policy.md](policy.md) (NumberPolicy, the two axes, the `app.config` resolver).
 
-**Leaf-action consumers:** all of `math.*` (`add`, `subtract`, `multiply`, `divide`, `modulo`, `power`, `abs`, `ceiling`, `floor`, `round`, `max`, `min`, `sqrt`, `random`) plus the numeric reducers `list.sum`, `list.avg`, `list.min`, `list.max`. Each grows optional `Overflow` / `Precision` parameters; each calls `NumberPolicy.Resolve` and dispatches to the policy-aware arithmetic.
+**Leaf-action consumers:** all of `math.*` (`add`, `subtract`, `multiply`, `divide`, `modulo`, `power`, `abs`, `ceiling`, `floor`, `round`, `max`, `min`, `sqrt`, `random`, `intdiv`) plus the numeric reducers `list.sum`, `list.avg`, `list.min`, `list.max`. Each grows optional `Overflow` / `Precision` parameters and resolves policy via `app.config.For<number.Config>`.
 
-**Wire dispatch:** uniform — every format knows numbers (see [dispatch.md](dispatch.md) `number` section).
+**Wire dispatch:** uniform — one `Default.cs` picks the writer primitive by `Kind`.
 
-**Why it earns its slot:** tagged-union storage that needs to pick the right writer primitive per `Kind`. Proves the dispatch-on-internal-state path of `IWireWritable`. Also closes the existing `MathHelper.ToDouble` / `MathHelper.PreserveType` scattering — those get deleted at the end.
+**Why it earns its slot:** the value-with-internal-variants proof. Also closes the existing `MathHelper.ToDouble` / `MathHelper.PreserveType` scattering — deleted at the end of the math retype.
 
 ### `image` — bytes plus mime, format-asymmetric
 
 **Folder:** `app/types/image/`
 **Files this branch creates:**
-- `this.cs` — `Bytes`, `Mime`, optional `_sourcePath`, `Width`/`Height` (lazy from bytes), constructors, IBooleanResolvable (bytes.Length > 0), IWireWritable (mime-keyed dispatch).
+- `this.cs` — `Bytes`, `Mime`, optional `SourcePath`, `Width`/`Height` (lazy from bytes), constructors, `IBooleanResolvable` (bytes.Length > 0).
 - `this.Parse.cs` — `static Resolve(string raw, context)` interpreting path / data URL / base64; `static Resolve(byte[] raw, context)` from-bytes.
+- `serializer/text.cs` (path placeholder), `serializer/protobuf.cs` (raw bytes, when that writer ships), `serializer/Default.cs` (base64 — covers json + plang).
 
 **Leaf-action consumers:** not part of this branch (image module actions are a follow-up). `file.read` ships the construction path (extension `.png`/`.jpg`/`.gif` → `Type = image`). `output.write` consumes via the dispatch.
 
-**Wire dispatch:** asymmetric per format. See [dispatch.md](dispatch.md) `image` section for the full mime mapping.
-
-**Why it earns its slot:** the hardest proof case for `IWireWritable` — same instance renders to four genuinely different wire shapes (bytes / base64 / `<img>` markup / path string). If the dispatch works for image, every future binary-category type (video, audio, document, archive) slots in by analogy without a single architectural change.
+**Why it earns its slot:** the hardest proof — same instance renders to genuinely different wire shapes (raw bytes / base64 / path placeholder). If the per-format files work for image, every future binary-category type (video, audio, document, archive) slots in by analogy without an architectural change.
 
 ### `code` — text plus language tag
 
 **Folder:** `app/types/code/`
 **Files this branch creates:**
-- `this.cs` — `Source`, `Language`, IBooleanResolvable (source non-empty), IWireWritable (mime-keyed: HTML wraps, others pass through as string).
-- `this.Parse.cs` — `static Resolve(string raw, context)` — heuristic language detect (shebang, fenced code block header) or default `text` if none.
+- `this.cs` — `Source`, `Language`, `IBooleanResolvable` (source non-empty).
+- `this.Parse.cs` — `static Resolve(string raw, context)` — heuristic language detect (shebang, fenced-block header) or default `text`.
+- `serializer/Default.cs` — `writer.String(Source)`. (An `html.cs` that wraps in `<pre><code>` lands once an HTML writer exists.)
 
 **Leaf-action consumers:** `code.run`, `code.validate`, `code.format` (follow-up branches). Not part of this branch's deliverable; `code` ships as a vocabulary entry first.
 
-**Wire dispatch:** mostly-uniform string, HTML wraps for display. See [dispatch.md](dispatch.md) `code` section.
-
-**Why it earns its slot:** text-shaped with semantic awareness for rendering — proves the third distinct dispatch pattern beyond uniform (number) and binary-asymmetric (image). Also lets the LLM start picking `code` over `string` for snippets where that's the right semantic, which sharpens the catalog vocabulary.
+**Why it earns its slot:** text-shaped with semantic awareness for rendering — the third distinct pattern beyond uniform (number) and binary-asymmetric (image). Also lets the LLM pick `code` over `string` for snippets where that's the right semantic, sharpening the catalog vocabulary.
 
 ## The mechanical cleanups
 
-These don't need format-aware rendering — they're rebinds of the existing flat-table entries. Confirmed with you on 2026-05-28.
+These don't need format-aware rendering — they're rebinds of existing flat-table entries.
 
 | LLM-facing name | Old binding | New binding | Note |
 |---|---|---|---|
@@ -77,7 +77,7 @@ Each rebind moves a row in `app/types/this.cs:34`'s table. Each rebind also touc
 - `Wire.Read` / `Wire.Write` — DateTime cases become DateTimeOffset cases (the IWriter already has `DateTimeOffset(System.DateTimeOffset)`).
 - Any test fixture or builder example that picked `datetime` against DateTime — relandable via test sweep.
 
-These cleanups don't *require* the per-type-folder migration this branch establishes — they could ship as a smaller follow-up. But folding them in here closes the half-state Ingi specifically called out (`IsPrimitive` accepts DateTimeOffset, name table doesn't), and the new types (`number`, `image`, `code`) land alongside cleaned-up neighbors so the catalog reads coherently from day one.
+These cleanups don't *require* the per-type-folder migration — they could ship as a smaller follow-up. But folding them in here closes the existing half-state (`IsPrimitive` accepts `DateTimeOffset`, the name table doesn't), and the new types land alongside cleaned-up neighbors so the catalog reads coherently from day one.
 
 **Folder shape:** `datetime` and `duration` get their own folders (`app/types/datetime/this.cs`, `app/types/duration/this.cs`) — both have parse / format complications worth owning (DateTimeOffset's tz-aware ISO-8601 round-trip; TimeSpan's `1.02:03:04` vs ISO-8601 duration formats). `date` and `time` stay as table-only entries since they're trivial CLR wrappers with no leaf-action complexity.
 

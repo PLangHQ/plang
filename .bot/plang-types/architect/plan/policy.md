@@ -52,9 +52,9 @@ Step scope is the finest-grained and lives only for one action call — a nullab
 
 No ambient state. No `AsyncLocal`. No `Goal`-private overlay. `app.config`'s walk is explicit through `context.Parent` — debuggable, testable, no surprise behavior across thread / await boundaries.
 
-## Scope storage — use `app.config`, not a new `environment` tree
+## Scope storage — `app.config`
 
-Earlier drafts proposed an `app.environment.number.@this` config tree with a lazy overlay on `Goal`. **Withdrawn.** The runtime already has the right mechanism — `app.config` at `PLang/app/config/this.cs` — and Ingi flagged on 2026-05-28 that `Goal` is not guaranteed thread-safe so a goal-private overlay is the wrong shape.
+Policy lives in the runtime's existing config mechanism, `app.config` (`PLang/app/config/this.cs`) — not a new `environment` tree and not a `Goal`-private overlay (`Goal` isn't guaranteed thread-safe; a goal-stored overlay would be the wrong place for it).
 
 How `app.config` solves it:
 
@@ -94,15 +94,16 @@ public partial class Add : IContext
             Overflow  = Overflow  ?? view.Overflow,
             Precision = Precision ?? view.Precision,
         };
-        var result = number.Add(A.Value, B.Value, policy);
-        return Task.FromResult(Data<number>.Ok(result));
+        // number.Add returns Data<number> — it catches OverflowException
+        // internally and returns Data.Fail("MathOverflow"). The handler relays.
+        return Task.FromResult(number.Add(A.Value, B.Value, policy));
     }
 }
 ```
 
-`view.Overflow` walks `ConfigScope → parent → Defaults → record default` — that's three of the four scopes for free (context-level, parent-context-level, app-level). Step scope is the local action parameter. No goal-private overlay needed; nothing stored on `Goal` directly.
+`view.Overflow` walks `ConfigScope → parent → Defaults → record default` — three of the four scopes for free (context, parent-context, app). Step scope is the local action parameter. Nothing is stored on `Goal`.
 
-Sub-goal inheritance falls out for free too — `app.config` walks the parent chain by construction. If a parent context sets `Overflow=Throw`, child contexts see it unless they shadow. That's the opposite of what the old draft proposed (which deliberately blocked inheritance), but it's the path of least surprise and matches how every other `IConfig` in the runtime already behaves.
+Sub-goal inheritance falls out for free: `app.config` walks the parent chain by construction, so a parent context's `Overflow=Throw` is visible to children unless they shadow it — the path of least surprise, and how every other `IConfig` in the runtime already behaves.
 
 ## Step-level: action parameters
 
@@ -127,7 +128,7 @@ The settings handler resolves the module prefix (`math.number` → `number.Confi
 
 ## The 18-digit precision question
 
-Ingi flagged on 2026-05-28: crypto currency values can carry 18 decimal points. The default `Precision = Double` mode loses precision past ~15 significant digits because IEEE-754 only has 52 bits of mantissa. For a crypto value held as `decimal` that meets a `double` operand in any arithmetic, the **default policy silently truncates** to double precision — that's the lossy path.
+Crypto-currency values can carry 18 decimal points. The default `Precision = Double` mode loses precision past ~15 significant digits (IEEE-754 has 52 mantissa bits). For a value held as `decimal` that meets a `double` operand in any arithmetic, the **default policy promotes to double and truncates** — the lossy path.
 
 Three responses:
 

@@ -28,7 +28,7 @@
       "text": "Big one — captured as a new spine section 'Extending the type vocabulary at runtime', and detailed in dispatch.md 'Runtime-loaded and overwritten types'. The good news: most of it is already wired. `code.load` (PLang/app/modules/code/load.cs) already does load→scan-for-interface→register for ICode providers; type-loading is the same shape pointed at [PlangType] classes. `Registry.RegisterRuntime(name, type)` is the existing hook, and `Registry.ResolveType` already checks runtime registrations BEFORE the built-in table — so overwriting 'int' works at the resolution layer for free.\n\nOne honest limit I want you to see: runtime registration changes *resolution and rendering* (what 'int' maps to, how it serializes) but it can't rewrite what the source generator already baked at build — the PLNG slot validation, the Data<int> params on already-compiled handlers, the type stamps in shipped .pr files. So `- load myint.dll` makes int resolve/render differently going forward, but a handler compiled against built-in int still sees built-in int at its typed slot. Adding NEW types is unconstrained; overwriting built-ins is 'new resolution + new rendering, same compiled slots.' Flagged so nobody expects load to retroactively rewrite already-built goals. The serializer side: a loaded DLL ships an ITypeRenderer per format, registered into the same dispatch table the generator feeds.",
       "anchor": "**Branch:** `plang-types` (off `runtime2`, was `number-type` before the 2026-05-28 reframe — see `summary.md`).",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "3b5b3c4510",
       "ts": "2026-05-29T09:57:02",
       "drifted": false
@@ -173,7 +173,7 @@
       "text": "Signed off — dispatch.md fully rewritten around the per-(type, format) serializer-file shape. The A-vs-B marker debate is gone; the section now describes the TypedValueNode tag + writer-side (type, format) lookup directly. Thanks.",
       "anchor": "    public static void Write(image.@this value, IWriter writer)",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "cf829b8069",
       "ts": "2026-05-29T09:57:18",
       "drifted": false
@@ -467,7 +467,7 @@
       "text": "Landed as readonly struct (named @this, convention intact) in storage.md. One correction you should see, since your reason was allocation: I verified Data.Value is `object` (app/data/this.cs:86), so a struct boxes the moment it enters Data — which is the dominant runtime path (variables, memory stack, results). The allocation win is real only for pure-C# arithmetic intermediates that never touch Data (a reducer accumulator like list.sum over a big list), and that path is partly mooted because heavy numeric loops route to [code] anyway. Struct still stands on value-semantics grounds (number IS a value, like int/decimal), so I proceeded — but the allocation rationale specifically is weak. If that changes your mind it's a one-keyword flip back to sealed class. Recorded in the 'Decisions landed' table.",
       "anchor": "## What 4.8 didn't address that I think it should have",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "4018aea335",
       "ts": "2026-05-29T09:57:18",
       "drifted": false
@@ -511,7 +511,7 @@
       "text": "Agreed — Option B (separate `rational` sibling type, parallel to number and the future quantity), added later with a real consumer driving it, not this branch. Recorded in the 'Decisions landed' table and flagged in plan.md open questions so the vocabulary stays forward-coherent. Nothing to build now.",
       "anchor": "Smaller cleanups (try/catch, Float Kind, \"no boxing\" wording) fold into whichever section they touch.",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "8a017115a8",
       "ts": "2026-05-29T09:57:18",
       "drifted": false
