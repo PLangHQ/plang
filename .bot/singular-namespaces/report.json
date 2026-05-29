@@ -47,6 +47,39 @@
         "health": "green — plan carved, no code changed",
         "notes": "Plan is design-complete and ready for test-designer then coder. Open item for coder+test-designer: the index-miss policy setting (name + default). Stage 4 is the integration risk (builder LLM schema must be golden-pinned). The generator string literals are the highest-risk mechanical item in stage 1 — verify by clean rebuild. CLAUDE.md OBP-block token updates filed for the docs bot (do not edit CLAUDE.md directly)."
       }
+    },
+    {
+      "id": "248e84b9-cf41-43ec-bb4c-dc85713dfe14",
+      "bot": "architect",
+      "timestamp_start": "2026-05-29T15:16:02Z",
+      "timestamp_end": "2026-05-29T15:16:02Z",
+      "intent": "Address Ingi's review comments on the plan, then recreate the stage files and test-handoff files with the review changes baked in.",
+      "before": {
+        "assumptions": "Ingi reviewed the five plan files via the review server and left comments; he then deleted the stage/test files for a focused design review and, once comments were addressed, asked to recreate them.",
+        "risk": "Stage/test files must stay consistent with the revised design (module not demoted; ctx→context + extra nullable back-refs; type=PLang System.Type with data.Type.ClrType). Any drift between the deep dives and the stage files would mislead the coder."
+      },
+      "plan": ".bot/singular-namespaces/architect/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/singular-namespaces/architect/plan/accessor-model.md", ".bot/singular-namespaces/architect/plan/nullability.md", ".bot/singular-namespaces/architect/plan/type-entity.md", ".bot/singular-namespaces/architect/plan/rename-map.md", ".bot/singular-namespaces/architect/plan.md", ".bot/singular-namespaces/architect/claude-md-proposals.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Addressed 5 review comments (all agreed): module keeps this.cs as a no-.current service at app.module (reversed my demote); ctx→context everywhere + swept for other over-nullable back-refs (5 structural flip, 2 init-only held); type.@this = PLang's System.Type; data.Type.ClrType (CLR type lives on the entity). Replied + resolved each via the review-server API."
+        },
+        {
+          "paths": [".bot/singular-namespaces/architect/stage-1-rename.md", ".bot/singular-namespaces/architect/stage-2-nullability.md", ".bot/singular-namespaces/architect/stage-3-accessor.md", ".bot/singular-namespaces/architect/stage-4-type-entity.md", ".bot/singular-namespaces/architect/plan/test-strategy.md", ".bot/singular-namespaces/architect/plan/test-coverage.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Recreated the four stage files and the two test-handoff files with the review changes baked in. Restored stage/test links in plan.md and the stage-status table in summary.md."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green — plan + stages + tests consistent, no code changed",
+        "notes": "Plan is complete and ready for test-designer. All review comments resolved. Stage files and test handoff reflect the revised design (module not demoted, ctx→context, type entity = PLang System.Type with data.Type.ClrType)."
+      }
     }
   ]
 }

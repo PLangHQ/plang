@@ -51,10 +51,10 @@ Rules that fell out of the design walk (full reasoning in `plan/accessor-model.m
 
 The four pieces have a strict dependency order:
 
-1. **Rename** — folders + namespaces + both `GlobalUsings.cs` + generator strings/templates + test mirrors + doc refs. Singular+lowercase; property names and the nullable shape unchanged. ~190 files, mostly alias-shielded. The foundation.
-2. **Non-null `app`/`context`** — drop ~39 defensive `?.`, remove the external static fallbacks, route the no-context type sites through app. After the rename (namespaces stable), before the accessor work (so it never threads `App?.`). Surfaces the un-stamped-`data` reads the `?.` hid.
-3. **Accessor reshape** — `app.X` → collection node; rename properties (`Goals`→`goal` …); add `[name]`/`.list`/`.current`/`.of<T>()`; registry=selection+lifecycle (push channel I/O to the element); module stays a normal `app.module` service (no demote); delete the four `App*` aliases; migrate ~286 call sites. The heart.
-4. **Type entity** — promote `type.@this` to a rich entity (name+clr+scheme+valid-values), consolidating `System.Type` + `builder.Types.Entry` + scheme; `data.Type` returns it. Depends on 2 and 3; reshapes the builder schema path.
+1. **[Rename](stage-1-rename.md)** — folders + namespaces + both `GlobalUsings.cs` + generator strings/templates + test mirrors + doc refs. Singular+lowercase; property names and the nullable shape unchanged. ~190 files, mostly alias-shielded. The foundation.
+2. **[Non-null `app`/`context`](stage-2-nullability.md)** — drop ~39 defensive `?.`, remove the external static fallbacks, route the no-context type sites through app, flip the 5 structural back-refs, rename `ctx`→`context`. After the rename (namespaces stable), before the accessor work (so it never threads `App?.`). Surfaces the un-stamped-`data` reads the `?.` hid.
+3. **[Accessor reshape](stage-3-accessor.md)** — `app.X` → collection node; rename properties (`Goals`→`goal` …); add `[name]`/`.list`/`.current`/`.of<T>()`; registry=selection+lifecycle (push channel I/O to the element); module stays a normal `app.module` service (no demote); delete the four `App*` aliases; migrate ~286 call sites. The heart.
+4. **[Type entity](stage-4-type-entity.md)** — promote `type.@this` to PLang's `System.Type` (`Name`/`ClrType`/`Scheme`/`ValidValues`), consolidating `System.Type` + `builder.Types.Entry` + scheme; `data.Type` returns it, `data.Type.ClrType` gives the CLR type. Depends on 2 and 3; reshapes the builder schema path.
 
 Each piece should leave the build green and both suites passing before the next — rebuild clean, since `plang --test` runs off a pre-built binary (stale-binary trap in `/CLAUDE.md`).
 
@@ -64,3 +64,4 @@ Each piece should leave the build green and both suites passing before the next 
 - [rename-map.md](plan/rename-map.md) — the corrected complete rename table, both GlobalUsings, generator strings, test mirrors, doc references.
 - [nullability.md](plan/nullability.md) — the non-null surface, what's removed vs what stays, the stamping invariant.
 - [type-entity.md](plan/type-entity.md) — the `type.@this` promotion and `data.Type`.
+- [test-strategy.md](plan/test-strategy.md) / [test-coverage.md](plan/test-coverage.md) — for test-designer.
