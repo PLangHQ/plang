@@ -52,4 +52,41 @@ public class NumberPowerTests
         await Assert.That(r.Success).IsFalse();
         await Assert.That(r.Error?.Key).IsEqualTo("MathOverflow");
     }
+
+    [Test] public async Task Power_ExponentAtCap_SmallBase_StillSucceeds()
+    {
+        // Boundary: |exp| == MaxPowerExponent is allowed. 1^64 = 1 (no overflow).
+        var r = number.Power(number.From(1), number.From(number.MaxPowerExponent),
+            PPolicy.Lenient);
+        await Assert.That(r.Success).IsTrue();
+    }
+
+    [Test] public async Task Power_ExponentJustOverCap_TypedFailure_PowerExponentTooLarge()
+    {
+        // CPU-DoS guard: untrusted exponent above the cap surfaces a typed
+        // Data.Fail instead of spinning the actor's core.
+        var r = number.Power(number.From(2), number.From(number.MaxPowerExponent + 1),
+            PPolicy.Lenient);
+        await Assert.That(r.Success).IsFalse();
+        await Assert.That(r.Error?.Key).IsEqualTo("PowerExponentTooLarge");
+    }
+
+    [Test] public async Task Power_NegativeExponentBeyondCap_TypedFailure_PowerExponentTooLarge()
+    {
+        var r = number.Power(number.From(2), number.From(-number.MaxPowerExponent - 1),
+            PPolicy.Lenient);
+        await Assert.That(r.Success).IsFalse();
+        await Assert.That(r.Error?.Key).IsEqualTo("PowerExponentTooLarge");
+    }
+
+    [Test] public async Task Power_FractionalExponent_NotSubjectToCap()
+    {
+        // Fractional exponent routes through Math.Pow (constant time) —
+        // the cap is integer-loop-only. A genuinely fractional exponent
+        // larger than the cap still succeeds without spinning a loop.
+        var r = number.Power(number.From(2), number.From(100.5),
+            PPolicy.Lenient);
+        await Assert.That(r.Success).IsTrue();
+        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Double);
+    }
 }

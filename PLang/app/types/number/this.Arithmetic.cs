@@ -20,9 +20,22 @@ namespace app.types.number;
 /// <para>Power promotes by exponent shape: integer base + non-negative
 /// integer exponent stays integer (overflow per policy); negative exponent
 /// leaves the integer track; fractional exponent is always Double.</para>
+///
+/// <para>Integer-exponent magnitude is capped at
+/// <see cref="MaxPowerExponent"/> (CPU-DoS guard — without the cap, a
+/// goal taking an untrusted exponent could spin the actor's core).
+/// Fractional and over-cap exponents on a Double base route through
+/// <c>System.Math.Pow</c>, which is constant-time.</para>
 /// </summary>
 public sealed partial class @this
 {
+    /// <summary>
+    /// Maximum |exponent| the integer-track power loops will iterate.
+    /// Past this, the handler surfaces <c>Data.Fail("PowerExponentTooLarge")</c>
+    /// — an explicit refusal rather than a silent CPU spin.
+    /// </summary>
+    public const long MaxPowerExponent = 64;
+
     public static global::app.data.@this<@this> Add(@this a, @this b, NumberPolicy policy)
         => Wrap(() => DoOp(a, b, ArithOp.Add, policy));
 
@@ -62,6 +75,16 @@ public sealed partial class @this
             return global::app.data.@this<@this>.FromError(
                 new global::app.errors.ServiceError(ex.Message, "ArithmeticError", 400) { Exception = ex });
         }
+        catch (PowerExponentTooLargeException ex)
+        {
+            return global::app.data.@this<@this>.FromError(
+                new global::app.errors.ServiceError(ex.Message, "PowerExponentTooLarge", 400) { Exception = ex });
+        }
+    }
+
+    private sealed class PowerExponentTooLargeException : System.Exception
+    {
+        public PowerExponentTooLargeException(string message) : base(message) { }
     }
 
     private enum ArithOp { Add, Sub, Mul, Mod }
@@ -184,6 +207,9 @@ public sealed partial class @this
 
         // Negative integer exponent leaves integer track.
         long expL = baseExp.AsInt64();
+        if (expL > MaxPowerExponent || expL < -MaxPowerExponent)
+            throw new PowerExponentTooLargeException(
+                $"Integer-exponent magnitude {expL} exceeds limit {MaxPowerExponent}.");
         if (expL < 0)
         {
             // Promote per precision policy.

@@ -36,6 +36,20 @@ public static class Loader
         IReadOnlyList<string> RegisteredTypes,
         IReadOnlyList<(string TypeName, string Format)> RegisteredRenderers);
 
+    /// <summary>
+    /// Built-in type names a runtime-loaded DLL may not shadow. The bodies
+    /// of these types are signing- or transport-load-bearing — a DLL that
+    /// replaced <c>identity</c>'s CLR type or its renderer could produce
+    /// authentically-signed envelopes whose body was attacker-composed.
+    /// Primitives (<c>int</c>, <c>string</c>, <c>path</c>) stay overridable
+    /// because their body is constrained by the type itself.
+    /// </summary>
+    public static readonly System.Collections.Generic.IReadOnlySet<string> SealedNames =
+        new System.Collections.Generic.HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
+        {
+            "identity", "signature", "signedoperation", "callback", "channel",
+        };
+
     public static Result Register(Assembly assembly, @this registry)
     {
         if (assembly == null) throw new System.ArgumentNullException(nameof(assembly));
@@ -63,6 +77,10 @@ public static class Loader
                 {
                     var name = a.Name ?? InferName(clr);
                     if (name == null) continue;
+                    if (SealedNames.Contains(name))
+                        return new Result(false, "TypeLoadCollision",
+                            $"[PlangType('{name}')] is reserved — '{name}' is on the sealed built-in list and may not be shadowed by a runtime-loaded DLL.",
+                            types, renderersList);
                     registry.Register(name, clr);
                     canonical ??= name;
                 }
@@ -70,7 +88,14 @@ public static class Loader
             else if (string.Equals(clr.Name, "this", System.StringComparison.Ordinal))
             {
                 canonical = InferName(clr);
-                if (canonical != null) registry.Register(canonical, clr);
+                if (canonical != null)
+                {
+                    if (SealedNames.Contains(canonical))
+                        return new Result(false, "TypeLoadCollision",
+                            $"Inferred PlangType name '{canonical}' is on the sealed built-in list and may not be shadowed by a runtime-loaded DLL.",
+                            types, renderersList);
+                    registry.Register(canonical, clr);
+                }
             }
             if (canonical != null) types.Add(canonical);
         }
@@ -86,6 +111,10 @@ public static class Loader
             try { instance = (ITypeRenderer)ctor.Invoke(null); }
             catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
             { continue; }
+            if (SealedNames.Contains(instance.TypeName))
+                return new Result(false, "TypeLoadCollision",
+                    $"ITypeRenderer for '{instance.TypeName}' rejected — '{instance.TypeName}' is on the sealed built-in list and its rendering may not be replaced by a runtime-loaded DLL.",
+                    types, renderersList);
             registry.Renderers.Register(instance.TypeName, instance.Format,
                 (value, writer) => instance.Write(value, writer));
             renderersList.Add((instance.TypeName, instance.Format));

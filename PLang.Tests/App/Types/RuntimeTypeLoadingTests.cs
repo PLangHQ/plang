@@ -128,6 +128,41 @@ public class RuntimeTypeLoadingTests
         await Assert.That(slotAfter).IsEqualTo(typeof(global::app.types.number.@this));
     }
 
+    private static readonly string IdentityShadowDll = System.IO.Path.GetFullPath(
+        System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..",
+            "App", "Fixtures", "dlls", "IdentityShadow.dll"));
+
+    [Test] public async Task LoadDll_AttemptToShadowSealedName_FailsWith_TypeLoadCollision()
+    {
+        // A loaded DLL may not replace `identity`'s CLR type — the body it
+        // signs would otherwise be attacker-composed under an authentic
+        // outer signature. Loader.Register refuses the registration with a
+        // typed TypeLoadCollision error before touching the registry.
+        var asm = System.Reflection.Assembly.LoadFrom(IdentityShadowDll);
+        var result = global::app.types.Loader.Register(asm, new EngineTypes());
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.ErrorKey).IsEqualTo("TypeLoadCollision");
+        await Assert.That(result.ErrorMessage).Contains("identity");
+    }
+
+    [Test] public async Task SealedNames_AreCaseInsensitive_AndCoverCoreSigningTypes()
+    {
+        // The carve-out covers the names the signing pipeline assumes are
+        // built-in. Lookup is OrdinalIgnoreCase so a DLL declaring
+        // `[PlangType("Identity")]` can't slip past the comparison.
+        var sealedSet = global::app.types.Loader.SealedNames;
+        await Assert.That(sealedSet.Contains("identity")).IsTrue();
+        await Assert.That(sealedSet.Contains("IDENTITY")).IsTrue();
+        await Assert.That(sealedSet.Contains("signature")).IsTrue();
+        await Assert.That(sealedSet.Contains("signedoperation")).IsTrue();
+        await Assert.That(sealedSet.Contains("callback")).IsTrue();
+        await Assert.That(sealedSet.Contains("channel")).IsTrue();
+        // Primitives stay overridable — their body is constrained by the type.
+        await Assert.That(sealedSet.Contains("int")).IsFalse();
+        await Assert.That(sealedSet.Contains("string")).IsFalse();
+        await Assert.That(sealedSet.Contains("path")).IsFalse();
+    }
+
     [Test] public async Task ITypeRenderer_InterfaceShape_FormatPropertyAndWriteMethod()
     {
         var t = typeof(global::app.types.ITypeRenderer);
