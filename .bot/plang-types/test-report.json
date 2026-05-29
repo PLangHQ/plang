@@ -1,26 +1,61 @@
 {
   "tester": "tester",
   "branch": "plang-types",
-  "timestamp": "2026-05-29T16:30:00Z",
-  "tested_version": "v3",
+  "timestamp": "2026-05-29T18:07:34Z",
+  "tested_version": "v4",
   "test_run": {
-    "csharp": { "total": 3614, "passed": 3604, "failed": 0, "skipped": 10 },
-    "plang": { "total": 248, "passed": 248, "failed": 0, "skipped": 0 }
+    "csharp": { "total": 3634, "passed": 3634, "failed": 0, "skipped": 0 },
+    "plang": { "total": 248, "passed": 247, "failed": 1, "skipped": 0,
+      "note": "Run 1 green (0 FAIL). Run 2 hit a single FAIL: Modules/Http/StreamCallback — '502 Bad Gateway' from an external endpoint (24.5s). Flaky external infra; coder v4 touched no HTTP code. NOT a coder-v4 regression." }
   },
   "coverage": {
-    "changed_files_covered": 52,
-    "changed_files_total": 54,
-    "uncovered_files": [
-      "PLang/app/channels/serializers/IWriter.cs",
-      "PLang/app/types/ITypeRenderer.cs"
-    ]
+    "changed_files_covered": 3,
+    "changed_files_total": 3,
+    "uncovered_files": [],
+    "note": "Changed production files (number/this.Arithmetic.cs power cap, types/Loader.cs sealed gate, math/sqrt.cs) all have line coverage; the gap is branch/path coverage on Loader's sealed gate — see F1."
   },
-  "history": {
-    "v1": "FAIL — 10 findings (Cut4 stubs, kind-stamping false greens, ~10 no-op deferrals, NumberPolicy 0% coverage).",
-    "v2": "FAIL — 9/10 fixed & mutation-verified; 1 new false green (OverflowThrowSettingHonored used decimal.MaxValue, Overflow=Throw not load-bearing).",
-    "v3": "PASS — the single v2 finding fixed and independently mutation-confirmed."
-  },
-  "findings": [],
-  "verdict": "approved",
-  "summary": "Coder v3 fixed the last finding. OverflowThrowSettingHonored.test.goal now uses long.MaxValue (Promote widens Long->Decimal silently; Throw surfaces MathOverflow), paired with a new OverflowPromoteWidens sibling. The pair is mutually validating (identical inputs, opposite Overflow, opposite expected outcome — both can't pass unless the param changes behavior), and I independently mutation-confirmed it: stripping Overflow=Throw makes the goal [Fail]. .pr carries the correct Overflow param (no builder false-green). All v1/v2 findings resolved; the headline DLL-roundtrip and runtime-wins coverage were mutation-verified in v2. No remaining false greens. plang 248/248, C# 3604/10skip/0fail. Tree clean, no source committed."
+  "findings": [
+    {
+      "id": 1,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/App/Types/RuntimeTypeLoadingTests.cs",
+      "code_file": "PLang/app/types/Loader.cs",
+      "issue": "The sealed-name security gate has THREE enforcement sites (pass-1 explicit [PlangType] @ Loader.cs:88, ITypeRenderer-registration pass @ :122, inferred-name branch @ :101). Only the pass-1 explicit-attribute site is tested (LoadDll_AttemptToShadowSealedName via IdentityShadow.dll). SealedNames_AreCaseInsensitive is purely structural (asserts set contents). No test exercises the renderer-registration gate or the inferred-name gate.",
+      "impact": "Renderer-substitution is the EXACT attack the SealedNames docstring names ('replaced identity's CLR type OR ITS RENDERER could produce authentically-signed envelopes whose body was attacker-composed'). A future refactor that drops the :122 or :101 check would let a runtime-loaded DLL register a renderer for `identity` (or shadow it via the @this-convention inferred name) and silently change how the signing-load-bearing type serializes — with zero test going red. MUTATION-CONFIRMED: neutralizing BOTH the :122 and :101 checks leaves all 9 RuntimeTypeLoadingTests green (0 failed).",
+      "suggestion": "Add two tests: (a) a fixture ITypeRenderer with TypeName=\"identity\" -> Loader.Register must return Success=false, ErrorKey=\"TypeLoadCollision\"; (b) a `this`-named class in a namespace whose leaf is a sealed name (inferred-name path), or a direct fixture exercising the InferName branch -> assert TypeLoadCollision. Mirror the existing IdentityShadow assertions (Success/ErrorKey/ErrorMessage)."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/App/Modules/math/MathTests.cs",
+      "code_file": "PLang/app/modules/math/sqrt.cs",
+      "issue": "Sqrt_NegativeInput_Fails asserts only result.Success.IsFalse(). The codeanalyzer-F2 fix changed the negative-sqrt error key from 'InvalidInput' (old handler pre-check) to 'ArithmeticError' (now from number.Sqrt via Wrap). The handler test does not assert the key, so it cannot tell the difference — it would pass under any failure.",
+      "impact": "The handler-boundary contract (negative sqrt surfaces 'ArithmeticError', the single canonical key the F2 fix promised) is unpinned at the handler. MUTATION-CONFIRMED: forcing DoSqrt to throw DivideByZeroException ('DivideByZero' key) keeps Sqrt_NegativeInput_Fails GREEN. Not a false green for the fix overall — NumberUnaryTests.Sqrt_NegativeNumber_SurfacesArithmeticError pins Error.Key at the number layer and DID go red under the same mutation. So coverage exists; the handler test is just weak.",
+      "suggestion": "Add `await Assert.That(result.Error?.Key).IsEqualTo(\"ArithmeticError\");` to Sqrt_NegativeInput_Fails so the handler-boundary key is pinned, not just the number-layer one."
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "(process) .bot/plang-types/coder/v3/, v4/",
+      "code_file": "n/a",
+      "issue": "coder v3 and v4 shipped no baseline-tests.md (only v2 has one). Character workflow requires the coder to record pre-edit test state each version; tester must flag a missing baseline as a process violation.",
+      "impact": "Regression vs pre-existing-failure attribution had to be reconstructed from v2's baseline (8a2cd23cb: 3609 C# / 246 plang green) plus this session's two plang runs. Low impact this turn because the v2 baseline was all-green, but the discipline should hold.",
+      "suggestion": "coder writes baseline-tests.md at the start of every version, not just v2."
+    },
+    {
+      "id": 4,
+      "severity": "minor",
+      "type": "false-green",
+      "test_file": "n/a (doc drift)",
+      "code_file": "PLang/app/types/number/this.Unary.cs",
+      "issue": "Post-F2, the class docstring (lines 13-15) still says negative sqrt 'surfaces a typed validation error inside the handler, not this method.' That is now inverted: the handler pre-check was deleted and DoSqrt itself throws ArithmeticException. Not a test defect — a stale comment that will mislead the next reader about where the validation lives.",
+      "impact": "Documentation drift on the exact behavior F2 changed; could lead a future contributor to re-add a handler pre-check 'because the doc says so', resurrecting the double-guard codeanalyzer F2 removed.",
+      "suggestion": "Update the docstring to: 'negative input throws ArithmeticException here, surfaced as ArithmeticError via Wrap; the handler no longer pre-checks.'"
+    }
+  ],
+  "verdict": "needs-fixes",
+  "summary": "Coder v4 (security F1 power CPU-DoS cap + F2 Loader sealed-name allowlist; codeanalyzer-v2 F1 cap-scoping + F2 sqrt single-key + F3 doc) plus the mathhelper-deletion unary retype. C# suite 3634/3634 green; the power-cap tests are genuinely strong (boundary, just-over-cap typed failure, Math.Pow-skip pins for double/fractional). Two real test-quality gaps confirmed by mutation: (F1, major) the Loader sealed-name security gate is enforced at 3 sites but tested at only 1 — neutralizing the ITypeRenderer-registration and inferred-name checks leaves all RuntimeTypeLoadingTests green, and renderer-substitution is the documented threat; (F2, minor) the sqrt handler test asserts only Success.IsFalse so the F2 error-key change is unpinned at the handler boundary (it IS pinned at the number layer). Minor process/doc items (F3 missing baseline, F4 stale docstring). The single plang FAIL was an external 502 Bad Gateway on an HTTP streaming test — flaky infra, green on the prior run, unrelated to coder v4. Verdict needs-fixes on F1+F2."
 }

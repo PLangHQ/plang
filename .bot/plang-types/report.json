@@ -458,6 +458,74 @@
         "health": "3 Low findings, none merge-blocking",
         "notes": "Next: auditor"
       }
+    },
+    {
+      "id": "38da5887-6507-41c4-b8b2-1012ed07f8ff",
+      "bot": "tester",
+      "timestamp_start": "2026-05-29T17:56:25.769020+00:00",
+      "timestamp_end": "2026-05-29T18:10:04.061810+00:00",
+      "intent": "Validate test quality for coder v4 work: math.power CPU-DoS cap, Loader sealed-name allowlist, sqrt error-key unification, unary retype merge.",
+      "before": {
+        "assumptions": "Coder v4 addressed security v1 (power cap F1, loader allowlist F2; image cap F3 deferred) and codeanalyzer v2 minors (cap-on-MathPow-paths F1, sqrt double-guard F2, doc F3). mathhelper-deletion merge retyped unary/comparison handlers through number.*.",
+        "risk": "Security-driven gate code (3 sealed-name sites, only 1 likely tested) and an error-key change on sqrt (handler test may assert only Success) are the highest false-green risk."
+      },
+      "plan": ".bot/plang-types/tester/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/plang-types/tester/v4/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Scoped review of coder v4 + mathhelper-deletion merge; 3 false-green hypotheses."
+        },
+        {
+          "paths": [
+            "PLang.Tests"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild (stale-binary protocol). C# 3634/3634 green. plang green run1, run2 one external 502 on StreamCallback (flaky, non-HTTP coder change)."
+        },
+        {
+          "paths": [
+            "PLang/app/types/Loader.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mutation test: neutralized ITypeRenderer-pass (:122) and inferred-name (:101) sealed checks -> all 9 RuntimeTypeLoadingTests still green. F1 major: 2 of 3 security gate sites untested. Reverted."
+        },
+        {
+          "paths": [
+            "PLang/app/types/number/this.Unary.cs",
+            "PLang/app/modules/math/sqrt.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mutation test: DoSqrt threw DivideByZeroException -> handler test Sqrt_NegativeInput_Fails stayed green (asserts only Success), number-layer test went red. F2 minor weak-assertion; coverage exists at number layer. Reverted."
+        },
+        {
+          "paths": [
+            ".bot/plang-types/test-report.json",
+            ".bot/plang-types/tester/v4/result.md",
+            ".bot/plang-types/tester/v4/verdict.json",
+            ".bot/plang-types/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote findings F1-F4, verdict needs-fixes, summary."
+        }
+      ],
+      "after": {
+        "status": "needs-fixes",
+        "health": "C# 3634/3634 green; plang flaky-502 external; 1 major + 3 minor test-quality findings",
+        "notes": "F1 (major): Loader sealed-name security gate tested at 1 of 3 enforcement sites (mutation-confirmed). F2 (minor): sqrt handler test asserts only Success.IsFalse, key pinned only at number layer. F3 missing baseline v3/v4. F4 stale Unary docstring. plang 502 is external flake, not coder-v4."
+      }
     }
   ]
 }
