@@ -33,7 +33,7 @@ public partial class @this
     public object? Normalize(View mode = View.Out)
     {
         var visited = new HashSet<object>(System.Collections.Generic.ReferenceEqualityComparer.Instance);
-        return NormalizeValue(Value, mode, visited, depth: 0);
+        return NormalizeValue(Value, mode, visited, depth: 0, types: _context?.App?.Types);
     }
 
     /// <summary>
@@ -41,6 +41,18 @@ public partial class @this
     /// already-tree values unchanged.
     /// </summary>
     internal static object? NormalizeValue(object? value, View mode, HashSet<object> visited, int depth)
+        => NormalizeValue(value, mode, visited, depth, types: null);
+
+    /// <summary>
+    /// Walk-with-types overload — when <paramref name="types"/> is non-null,
+    /// values whose CLR type resolves to a registered <see cref="app.Attributes.PlangTypeAttribute"/>
+    /// name AND have at least one entry in <see cref="app.types.renderers.@this"/>
+    /// are tagged as <see cref="TypedValueNode"/> rather than reflected. Bare
+    /// (no-types) callers fall back to today's reflection — safe default for
+    /// tests / no-Context paths.
+    /// </summary>
+    internal static object? NormalizeValue(object? value, View mode, HashSet<object> visited, int depth,
+        app.types.@this? types)
     {
         if (depth > MaxNormalizeDepth)
             throw new NormalizeException(
@@ -76,7 +88,7 @@ public partial class @this
                 throw CycleError(nested);
             try
             {
-                var innerNormalized = NormalizeValue(nested.Value, mode, visited, depth + 1);
+                var innerNormalized = NormalizeValue(nested.Value, mode, visited, depth + 1, types);
                 if (ReferenceEquals(innerNormalized, nested.Value)) return nested;
                 var copy = new @this(nested.Name, innerNormalized, nested.Type);
                 copy.Properties = nested.Properties;
@@ -97,7 +109,7 @@ public partial class @this
                 foreach (DictionaryEntry e in dict)
                 {
                     var name = e.Key?.ToString() ?? "";
-                    var child = new @this(name, NormalizeValue(e.Value, mode, visited, depth + 1));
+                    var child = new @this(name, NormalizeValue(e.Value, mode, visited, depth + 1, types));
                     list.Add(child);
                 }
                 return list;
@@ -122,7 +134,7 @@ public partial class @this
                 var wrapped = new List<object?>();
                 foreach (var item in enumerable)
                 {
-                    var normalized = NormalizeValue(item, mode, visited, depth + 1);
+                    var normalized = NormalizeValue(item, mode, visited, depth + 1, types);
                     wrapped.Add(normalized);
                 }
                 return wrapped;
@@ -130,11 +142,33 @@ public partial class @this
             finally { visited.Remove(value); }
         }
 
+        // Registered-type tag — when a registry is in scope, a value whose CLR
+        // type (or any ancestor in its inheritance chain) resolves to a
+        // [PlangType] name AND has a renderer is tagged as a TypedValueNode
+        // (writer-resolved). Skips the reflection walk; [Sensitive] discipline
+        // becomes the renderer's responsibility.
+        //
+        // The ancestor walk matches PLang's abstract-base pattern: a concrete
+        // FilePath / HttpPath inherits from the abstract path.@this; the
+        // renderer is registered under "path" but the runtime value is FilePath.
+        // Walking up finds the right registration without combinatorial
+        // per-subclass entries.
+        if (types != null)
+        {
+            for (var t = value.GetType(); t != null && t != typeof(object); t = t.BaseType)
+            {
+                var typeName = types.ResolveName(t);
+                if (typeName != null && types.Renderers.Has(typeName))
+                    return new TypedValueNode(value, typeName);
+            }
+        }
+
         // Domain object: reflect into List<Data> children using the wire-view filter.
-        return NormalizeObject(value, mode, visited, depth);
+        return NormalizeObject(value, mode, visited, depth, types);
     }
 
-    private static List<@this> NormalizeObject(object obj, View mode, HashSet<object> visited, int depth)
+    private static List<@this> NormalizeObject(object obj, View mode, HashSet<object> visited, int depth,
+        app.types.@this? types)
     {
         if (!visited.Add(obj))
             throw CycleError(obj);
@@ -167,7 +201,7 @@ public partial class @this
                         "NormalizeGetterThrew", ex);
                 }
 
-                children.Add(new @this(name, NormalizeValue(raw, mode, visited, depth + 1)));
+                children.Add(new @this(name, NormalizeValue(raw, mode, visited, depth + 1, types: types)));
             }
 
             return children;

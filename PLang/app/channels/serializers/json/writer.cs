@@ -17,14 +17,18 @@ public sealed class Writer : IWriter
     private readonly Utf8JsonWriter _writer;
     private readonly JsonSerializerOptions _options;
     private readonly app.View _view;
+    private readonly app.types.renderers.@this? _renderers;
 
     public Writer(Utf8JsonWriter writer, JsonSerializerOptions? options = null,
-        app.View view = app.View.Out)
+        app.View view = app.View.Out, app.types.renderers.@this? renderers = null)
     {
         _writer = writer;
         _options = options ?? new JsonSerializerOptions();
         _view = view;
+        _renderers = renderers;
     }
+
+    public string Format => "json";
 
     public void Null() => _writer.WriteNullValue();
     public void Bool(bool value) => _writer.WriteBooleanValue(value);
@@ -128,6 +132,18 @@ public sealed class Writer : IWriter
             case System.Guid g: Guid(g); return;
             case System.Enum e: Enum(e); return;
             case byte[] bytes: Bytes(bytes); return;
+            case app.data.TypedValueNode typed:
+                // Per-(type, format) renderer dispatch. The build gate (PLNG)
+                // makes this lookup total for built-in [PlangType] types;
+                // runtime-loaded types must register at least a Default
+                // renderer or the load fails (Stage 7).
+                var write = _renderers?.Of(typed.TypeName, Format);
+                if (write == null)
+                    throw new app.data.NormalizeException(
+                        $"No renderer registered for ({typed.TypeName}, {Format}) — type was tagged but no Default.cs / per-format Write was discovered.",
+                        "RendererLookupMissed");
+                write(typed.Value, this);
+                return;
             case app.data.@this nested:
                 BeginRecord(nested);
                 Value(nested.Value);

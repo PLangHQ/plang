@@ -410,7 +410,8 @@ public sealed class Wire : JsonConverter<@this>
         //     Sensitive included, Masked ignored. Round-trips local state.
         //   - View.Debug — diagnostic dump.
         var normalizedValue = data.Normalize(View);
-        var jsonWriter = new app.channels.serializers.json.Writer(writer, options, View);
+        var jsonWriter = new app.channels.serializers.json.Writer(writer, options, View,
+            renderers: data.Context?.App?.Types.Renderers);
         jsonWriter.Value(normalizedValue);
 
         // properties — nested object, omitted when empty to keep the wire compact.

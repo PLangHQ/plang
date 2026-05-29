@@ -38,6 +38,15 @@ public sealed partial class @this
     /// </summary>
     public kinds.@this Kinds { get; } = new();
 
+    /// <summary>
+    /// Per-(type, format) renderer dispatch — feeds the writer's
+    /// <see cref="data.TypedValueNode"/> case. Discovers
+    /// <c>app/types/&lt;name&gt;/serializer/&lt;format&gt;.cs</c> classes via
+    /// reflection over <see cref="renderers.@this.Assemblies"/> and exposes a
+    /// runtime-registration seam for DLLs loaded at runtime.
+    /// </summary>
+    public renderers.@this Renderers { get; } = new();
+
     // --- Primitive lookup tables ---
     // Aliases / canonical-name data lives on app.types.primitives.@this — one
     // home for the seeded entries that both the registry (instance lookup) and
