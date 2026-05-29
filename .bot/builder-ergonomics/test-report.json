@@ -1,0 +1,49 @@
+{
+  "tester": "tester",
+  "branch": "builder-ergonomics",
+  "timestamp": "2026-05-29T10:47:57Z",
+  "tested_version": "v2",
+  "test_run": {
+    "csharp": { "total": 3377, "passed": 3377, "failed": 0, "skipped": 0 },
+    "plang": { "total": 234, "passed": 234, "failed": 0, "skipped": 0 }
+  },
+  "coverage": {
+    "changed_files_covered": 6,
+    "changed_files_total": 6,
+    "uncovered_files": []
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "(none — Tests/ConfidenceCheck deleted)",
+      "code_file": "os/system/builder/BuildStep/Start.goal",
+      "issue": "RESOLVED-as-deletion + residual observation: the v1 false-green UnknownVerb.test.goal was deleted (correct). The confidence-per-step (P6) feature now has no automated test in either suite; it is verified only by human observation of '⚠ planner VeryLow' in CLI build output.",
+      "impact": "A P6 emission regression would not be caught by the suite.",
+      "suggestion": "Optional follow-up: drive the confidence renderer from a fixture/mock plan (decoupled from the live LLM) and assert the rendered warning line. Not a blocker."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "type": "edge-case",
+      "test_file": "Tests/Modules/Http/* (UploadFile, etc.)",
+      "code_file": "(none — external endpoints)",
+      "issue": "F4 deferred: network-dependent Http tests redden/timeout when the gateway is down. All passed this run.",
+      "impact": "Suite flakes on network conditions, unrelated to branch code.",
+      "suggestion": "Separate ticket: mock transport or integration-only tag."
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "type": "edge-case",
+      "test_file": "PLang.Tests (dll-execution permission gate test)",
+      "code_file": "(test harness)",
+      "issue": "F5 deferred: interactive y/n/a prompt leaks to console during the C# run.",
+      "impact": "Could hang in a non-interactive CI without a TTY.",
+      "suggestion": "Separate ticket: supply a redirected auto-deny input channel for the gate test."
+    }
+  ],
+  "verdict": "approved",
+  "summary": "Re-test of coder v2. All three actionable v1 findings resolved and independently verified: F1 false-green deleted; F2 cache test now asserts per-key reference identity (C# 3377/3377, flake gone); F3 added an end-to-end goal-channel-recursion test, mutation-confirmed it catches the guard (Expected ChannelNotFound / Actual CallStackOverflow when _executing.Value=true is removed). Both suites green from a clean rebuild, no builder action-mismatch. F4/F5 deferred as environmental/hygiene. PASS."
+}

@@ -1,0 +1,86 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %z% = 3.5",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "Runtime smoke: a decimal literal flows through variable.set and re-reads as 3.5.\nThe build-time .pr shape (variable.set\u0027s Value is polymorphic Data\u003Cobject\u003E, no\nkind stamped; typed kind-bearing params DO stamp kind) is pinned in C#\nBuilderKindStampingTests \u2014 assertable on the .pr JSON, not from a runtime goal.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%z%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": 3.5,
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%z%, Value=3.5)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %z% equals 3.5",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 3.5,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%z%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=3.5, Actual=%z%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Types/SetDecimalLiteralStampsKind.test.goal",
+  "prPath": "/Types/.build/setdecimalliteralstampskind.test.pr",
+  "hash": "a65fd5a89ca900eadf9dfd5fab94d9212e18caf6d9e3747d7a17b2465231c714",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

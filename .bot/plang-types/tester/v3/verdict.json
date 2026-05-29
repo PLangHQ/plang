@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "Single v2 false green fixed: OverflowThrowSettingHonored now uses long.MaxValue (Promote widens, Throw errors) + a Promote sibling; mutually validating and independently mutation-confirmed load-bearing. plang 248/248, C# 3604/10skip/0fail. No remaining false greens." }

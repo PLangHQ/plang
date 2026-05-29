@@ -1,0 +1,2 @@
+InspectError
+- set %errorKey% = %!error.Key%

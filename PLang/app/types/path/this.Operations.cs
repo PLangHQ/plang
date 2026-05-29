@@ -18,7 +18,11 @@ public abstract partial class @this
     /// IsFile=true → file (Length set). IsFile=false → directory.
     /// Nested under path so callers reach it as <c>path.@this.StatInfo</c>.
     /// </summary>
-    public sealed record StatInfo(bool Exists, bool? IsFile = null, long? Length = null, DateTime? Modified = null);
+    public sealed record StatInfo(
+        [property: Out] bool Exists,
+        [property: Out] bool? IsFile = null,
+        [property: Out] long? Length = null,
+        [property: Out] DateTime? Modified = null);
 
     /// <summary>
     /// Authorize + Exit-bubble guard. Returns non-null when the caller should

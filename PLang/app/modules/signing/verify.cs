@@ -4,7 +4,7 @@ using app.modules.signing.code;
 namespace app.modules.signing;
 
 /// <summary>
-/// Verifies a signed data envelope.
+/// Verifies a signed Data.
 /// </summary>
 [Action("verify", Cacheable = false)]
 public partial class verify : IContext

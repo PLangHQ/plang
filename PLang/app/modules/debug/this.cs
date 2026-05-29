@@ -610,7 +610,7 @@ public sealed class @this
                 sb.AppendLine($"      Properties ({data.Properties.Count}):");
                 foreach (var prop in data.Properties)
                 {
-                    sb.AppendLine($"        {prop.Name} = {FormatValue(prop.Value, context)}");
+                    sb.AppendLine($"        {prop.Key} = {FormatValue(prop.Value, context)}");
                 }
             }
         }

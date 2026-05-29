@@ -47,7 +47,7 @@ public sealed partial class @this : global::app.types.path.@this
         return PathHelper.GetFullPath(absolutePath);
     }
 
-    public override string Scheme => "file";
+    [Out, Store] public override string Scheme => "file";
 
     // --- Live filesystem state — file-scheme-only (relocated off the base) ---
     //

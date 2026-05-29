@@ -90,8 +90,18 @@ public sealed class @this : IAsyncDisposable
     public channel.@this GetOrCreate(string name, Func<channel.@this> factory)
         => _channels.GetOrAdd(name, _ => factory());
 
+    /// <summary>
+    /// Resolves a registered channel by name. Treats a goal-channel that is
+    /// currently executing on this async context as not-found, so a goal body
+    /// that writes to its own name can't loop back into itself. Sibling and
+    /// late-registered channels stay visible.
+    /// </summary>
     public channel.@this? Get(string name)
-        => _channels.TryGetValue(name, out var channel) ? channel : null;
+    {
+        if (!_channels.TryGetValue(name, out var channel)) return null;
+        if (channel is channel.goal.@this g && g.IsExecuting) return null;
+        return channel;
+    }
 
     /// <summary>
     /// Named-channel lookup with no-op fallback. Returns the registered channel
@@ -134,19 +144,6 @@ public sealed class @this : IAsyncDisposable
     /// <summary>All registered channels.</summary>
     public IEnumerable<channel.@this> All => _channels.Values;
 
-    /// <summary>
-    /// Shallow snapshot — new registry, same channel instances. Mutations to either
-    /// side after the call do not affect the other. Used to capture the foundational
-    /// set for goal-channel recursion isolation.
-    /// </summary>
-    public @this Snapshot()
-    {
-        var copy = new @this(_app, Serializers) { Actor = Actor };
-        foreach (var ch in _channels.Values)
-            copy.Register(ch);
-        return copy;
-    }
-
     private (channel.@this? Channel, data.@this? Error) GetChannel(string name, bool? requireRead = null, bool? requireWrite = null)
     {
         var channel = Get(name);
@@ -163,17 +160,17 @@ public sealed class @this : IAsyncDisposable
     }
 
     /// <summary>
-    /// Convenience write — resolves the channel by name, wraps the data in an
-    /// envelope if needed, and delegates to the channel's own WriteAsync (which
-    /// fires events and routes through WriteCore + the per-actor Serializers).
+    /// Convenience write — resolves the channel by name, wraps the data in
+    /// a Data if needed, and delegates to the channel's own WriteAsync (which
+    /// fires events and routes through Write + the per-actor Serializers).
     /// </summary>
     public async Task<data.@this> WriteAsync(string channelName, object? data, CancellationToken cancellationToken = default)
     {
         var (channel, error) = GetChannel(channelName, requireWrite: true);
         if (error != null) return error;
 
-        var envelope = data is global::app.data.@this d ? d : global::app.data.@this.Ok(data);
-        return await channel!.WriteAsync(envelope, cancellationToken);
+        var wrapped = data is global::app.data.@this d ? d : global::app.data.@this.Ok(data);
+        return await channel!.WriteAsync(wrapped, cancellationToken);
     }
 
     /// <summary>Reads typed data from a channel.</summary>
@@ -190,7 +187,7 @@ public sealed class @this : IAsyncDisposable
             return await Serializers.DeserializeAsync<T>(new DeserializeOptions
             {
                 Stream = sc.Stream,
-                ContentType = sc.Mime,
+                Type = sc.Mime,
                 CancellationToken = cancellationToken
             });
         }

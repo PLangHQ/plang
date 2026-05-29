@@ -99,9 +99,13 @@ Actor
 │   ├── Find(path, verb)                       // in-memory then sqlite, verified
 │   ├── Add(signedGrant)                       // unsigned → in-memory, signed → sqlite
 │   └── Revoke(record)                         // drops from both homes by Path
-├── Identity                                   // signing identity (Service only by default)
-└── FreezeFoundational()                       // snapshot boot-time channels
+└── Identity                                   // signing identity (Service only by default)
 ```
+
+The actor no longer carries a foundational-channels snapshot or an
+`AsyncLocal` channel-resolution overlay; goal-channel recursion isolation
+moved onto the channel itself as `Channel.Goal.@this.IsExecuting`
+(see [io-channels.md](io-channels.md)).
 
 ## modules/ — the registered action set
 
@@ -153,7 +157,7 @@ Modules. Build a snapshot with `app.Modules.Schema.Build()`; the builder
 template and the trace viewer read from there. Lives next to the
 action-module folders for proximity to what it describes.
 
-## Data — the universal result envelope
+## Data — the universal result wrapper
 
 Returned by every action. `app/data/this.cs` plus partials:
 
@@ -161,12 +165,15 @@ Returned by every action. `app/data/this.cs` plus partials:
 Data
 ├── Value, Properties, Error, Success
 ├── Ok(value) / Fail(error) / Merge(other)
-├── Compare(...)       (this.Compare.cs)
-├── Envelope wrapping  (this.Envelope.cs)
-├── Navigation         (this.Navigation.cs — drives %var.path%)
-├── Result helpers     (this.Result.cs)
-├── Snapshot           (this.Snapshot.cs — capture/restore for the snapshot system)
-└── Code-specific      (app/data/code/)
+├── Compare(...)              (this.Compare.cs)
+├── Transport pipeline        (this.Transport.cs — Wrap/Compress/Encrypt/…/Unwrap)
+├── Navigation                (this.Navigation.cs — drives %var.path% and %var!key%)
+├── Result helpers            (this.Result.cs)
+├── Snapshot                  (this.Snapshot.cs — capture/restore for the snapshot system)
+├── Properties sidecar        (Properties.cs — IDictionary<string,object?>, primitive-only)
+├── Normalize / Reconstruct   (this.Normalize.cs / this.Reconstruct.cs — uniform tree-walk)
+├── Wire converter            (Wire.cs — {name,type,value,properties,signature}; renamed from WireJsonConverter)
+└── Code-specific             (app/data/code/)
 ```
 
 `Data<T>` is the typed variant; the `T = Variable` case is the marker used for

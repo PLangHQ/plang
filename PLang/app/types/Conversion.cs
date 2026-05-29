@@ -401,9 +401,16 @@ public sealed partial class @this
             }
             catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
             {
-                return (null, new errors.Error(
+                var convErr = new errors.Error(
                     $"Cannot convert '{value}' ({sourceType.Name}) to {targetType.Name}: {ex.Message}",
-                    "PrimitiveConversionFailed", 400));
+                    "PrimitiveConversionFailed", 400)
+                { Exception = ex };
+                if (value is errors.Error sourceErr)
+                {
+                    sourceErr.ErrorChain.Add(convErr);
+                    return (null, sourceErr);
+                }
+                return (null, convErr);
             }
         }
 

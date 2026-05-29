@@ -32,28 +32,12 @@ public class IntegrationCutsTests
         await Assert.That(userError.Length).IsEqualTo(0L);
     }
 
-    [Test]
-    public async Task Cut2_GoalChannelFanOut_HitsTwoDestinations_NoRecursion()
-    {
-        await using var app = new global::app.@this("/tmp/cut2");
-        var foundational = new MemoryStream();
-        app.User.Channels.Register(new StreamChannel("output", foundational, ChannelDirection.Output, ownsStream: false)
-        { Mime = "text/plain" });
-        app.User.FreezeFoundational();
-
-        // Logger goal: simulate fan-out by registering a Goal channel that
-        // captures invocation count and writes to the foundational stream
-        // directly (the override scope makes this safe).
-        int loggerInvocations = 0;
-        var loggerGoal = new global::app.goals.goal.@this { Name = "Logger", Path = "L.goal", PrPath = "/L.pr" };
-        var logger = new GoalChannelProbe("output", loggerGoal, app.User, () => loggerInvocations++);
-        app.User.Channels.Register(logger);
-
-        // Outer write through the overlay → Logger fires once → no recursion.
-        var ch = app.User.Channels.Resolve("output");  // hits the Goal overlay
-        await ch.WriteAsync(Data.Ok("hi"));
-        await Assert.That(loggerInvocations).IsEqualTo(1);
-    }
+    // Cut2 removed: tested the FreezeFoundational / foundational-snapshot
+    // recursion guard. Replaced by per-channel IsExecuting flag in
+    // commit 827d34e19 (channels: replace foundational snapshot with
+    // per-channel IsExecuting recursion guard). Stage3
+    // Channels_Get_TreatsExecutingGoalChannelAsNotFound is the invariant
+    // test now.
 
     [Test]
     public async Task Cut3_ChannelEvents_AbortPlusAuditMetric_AcrossTwoWrites()
@@ -104,7 +88,7 @@ public class IntegrationCutsTests
         private readonly Action _onInvoke;
         public GoalChannelProbe(string name, global::app.goals.goal.@this goal, global::app.actor.@this actor, Action onInvoke)
             : base(name, goal, actor) { _onInvoke = onInvoke; }
-        public override Task<Data> WriteCore(Data data, CancellationToken ct = default)
+        public override Task<Data> Write(Data data, CancellationToken ct = default)
         {
             _onInvoke();
             return Task.FromResult(Data.Ok());

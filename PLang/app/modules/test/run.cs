@@ -82,13 +82,6 @@ public partial class run : IContext
         childApp.Parent = parentApp;
         childApp.Tester.IsEnabled = true;
 
-        // Freeze foundational channels NOW — before any user code (channel.set,
-        // etc.) registers overlays. Without this, FoundationalChannels lazy-
-        // snapshots on first read, which is AFTER user-installed goal channels;
-        // a goal-channel answerer then finds itself as its own "input" and
-        // recurses to stack overflow.
-        childApp.System.FreezeFoundational();
-        childApp.User.FreezeFoundational();
         var testRun = new global::app.tester.Run(test);
         childApp.Tester.CurrentTest = testRun;
 
@@ -120,7 +113,7 @@ public partial class run : IContext
                         }
                         if (result.Properties.Contains("branchChain"))
                         {
-                            var chain = result.Properties["branchChain"]?.Value as List<string>;
+                            var chain = result.Properties["branchChain"] as List<string>;
                             if (chain != null)
                                 childApp.Tester.Coverage.RecordBranchChain(site, chain);
                         }
@@ -135,7 +128,7 @@ public partial class run : IContext
         // Output capture — every write on the User actor's "output" channel
         // appends to testRun.Output. BeforeWrite (not AfterWrite) — AfterWrite
         // fires with the *result* of WriteCore (typically value-less Ok), while
-        // BeforeWrite fires with the *input* envelope carrying the actual
+        // BeforeWrite fires with the *input* Data carrying the actual
         // payload. Filtered by channel name so writes to "error" / "debug"
         // don't get captured.
         var outputBuf = new StringBuilder();

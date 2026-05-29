@@ -8,7 +8,7 @@ namespace app.http.Response;
 /// <c>image/*</c> / binary / missing Content-Type → <c>byte[]</c>.
 /// </summary>
 public sealed record @this(
-    int Status,
-    Dictionary<string, string> Headers,
-    object? Body,
+    [property: Out] int Status,
+    [property: Out] Dictionary<string, string> Headers,
+    [property: Out] object? Body,
     System.TimeSpan Duration);

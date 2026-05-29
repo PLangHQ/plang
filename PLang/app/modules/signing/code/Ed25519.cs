@@ -11,7 +11,7 @@ namespace app.modules.signing.code;
 
 /// <summary>
 /// Ed25519 signing provider. Owns the full signing/verification pipeline.
-/// Low-level crypto via NSec. High-level pipeline builds Signature envelopes.
+/// Low-level crypto via NSec. High-level pipeline builds Signature objects.
 /// </summary>
 public class Ed25519 : ISigning
 {
@@ -62,10 +62,10 @@ public class Ed25519 : ISigning
 
     public virtual async Task<data.@this<bool>> VerifyAsync(verify action)
     {
-        if (action.Data?.RawSignature == null)
+        if (action.Data?.Signature == null)
             return global::app.data.@this<bool>.FromError(new ActionError("Data has no signature", "NoSignature", 400));
 
-        var signedData = action.Data.RawSignature;
+        var signedData = action.Data.Signature;
         var app = action.Context.App;
         var now = (DateTimeOffset)action.Context.Variables.GetValue("NowUtc")!;
         var signingSettings = app.Config.For<Config>(action.Context);

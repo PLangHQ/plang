@@ -91,7 +91,7 @@ public sealed class @this
 
         // Heuristic for "persisted": signature present. In-memory grants come
         // in unsigned ("y" branch in Path.Authorize doesn't call EnsureSigned).
-        if (signed.RawSignature != null)
+        if (signed.Signature != null)
         {
             await _actor.App.SettingsStore.Set(PermissionTable, key, signed);
             return;
@@ -136,12 +136,11 @@ public sealed class @this
         if (!grant.Covers(request)) return false;
 
         // Signature check (cached per-Data via Properties).
-        if (grantData.RawSignature == null) return true; // in-memory unsigned grant
-        var cached = grantData.Properties[VerifiedFlag];
-        if (cached?.Value is bool b) return b;
+        if (grantData.Signature == null) return true; // in-memory unsigned grant
+        if (grantData.Properties[VerifiedFlag] is bool b) return b;
 
         var verified = await VerifySignature(grantData);
-        grantData.Properties[VerifiedFlag] = new global::app.data.@this(VerifiedFlag, verified);
+        grantData.Properties[VerifiedFlag] = verified;
         return verified;
     }
 
@@ -163,7 +162,7 @@ public sealed class @this
             var result = await _actor.Context.App.RunAction(action, _actor.Context);
             return result.Success;
         }
-        // Filter rule: signing failures (bad key, tampered envelope) surface as
+        // Filter rule: signing failures (bad key, tampered Data) surface as
         // `result.Success == false` and don't throw. Anything that does throw
         // here is a contract break — surface via debug, return false (deny).
         catch (Exception ex) when (ex is not (NullReferenceException

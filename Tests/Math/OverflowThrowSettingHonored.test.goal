@@ -1,0 +1,7 @@
+Start
+/ Step-level Overflow=Throw routes through MathPolicy.Resolve into the handler.
+/ long.MaxValue + long.MaxValue overflows the Long kind. Under default
+/ Lenient/Promote the handler widens Long→Decimal silently (covered by sibling
+/ OverflowPromoteWidens); under Throw the overflow surfaces as MathOverflow.
+- math.add A=9223372036854775807 B=9223372036854775807 Overflow=Throw, on error set %err% = true
+- assert %err% is true

@@ -5,30 +5,54 @@
   "steps": [
     {
       "index": 0,
-      "text": "write out \u0022  Planner validation failed: %!error.Message% \u2014 retrying...\u0022",
+      "text": "call /system/builder/EmitBuildEvent kind=\u0022planner-validation-failed\u0022, errorMessage=%!error.Message%",
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
       "actions": [
         {
-          "module": "output",
-          "action": "write",
+          "module": "event",
+          "action": "on",
           "parameters": [
             {
-              "name": "Data",
-              "value": "  Planner validation failed: %!error.Message% \u2014 retrying...",
-              "type": "tstring"
+              "name": "Type",
+              "value": "OnError",
+              "type": "eventtype"
+            },
+            {
+              "name": "GoalToCall",
+              "value": {
+                "name": "/system/builder/EmitBuildEvent",
+                "parallel": false,
+                "parameters": [
+                  {
+                    "name": "errorMessage",
+                    "value": "%!error.Message%",
+                    "type": "string"
+                  }
+                ],
+                "prPath": "/system/builder/.build/emitbuildevent.pr"
+              },
+              "type": "goal.call"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "isregex",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "priority",
+              "value": 0,
+              "type": "int"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
+      "formal": "event.on(Type=OnError, GoalToCall=goal.call(GoalName={name:\u0022/system/builder/EmitBuildEvent\u0022, parameters:[errorMessage=%!error.Message%]}))",
       "source": null,
       "waitForExecution": true
     },
@@ -75,16 +99,13 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%fixerMessages%, Value=[{\u0022Role\u0022:\u0022user\u0022,\u0022Content\u0022:\u0022Your previous response was rejected: %!error.Message%\\n\\nReturn the corrected plan. Each step\u0027s \u0060actions\u0060 MUST be a non-empty array of \\\u0022module.action\\\u0022 strings from the catalog (e.g. \\\u0022variable.set\\\u0022, \\\u0022file.read\\\u0022). \u0060index\u0060 is 0-based.\u0022}], Type=json)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "llm.query Messages=%fixerMessages%, Schema={description: string, steps: [{index: int, actions: [string]}]}, cache=%!build.cache%, previousConversation=%plan%, write to %plan%",
+      "text": "llm.query Messages=%fixerMessages%, Schema={description: string, steps: list\u003C{index: int, actions: list\u003Cstring\u003E, confidence: string, explanation?: string}\u003E}, cache=%!build.cache%, previousConversation=%plan%, write to %plan%",
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
@@ -102,14 +123,7 @@
               "name": "Schema",
               "value": {
                 "description": "string",
-                "steps": [
-                  {
-                    "index": "int",
-                    "actions": [
-                      "string"
-                    ]
-                  }
-                ]
+                "steps": "list\u003C{index: int, actions: list\u003Cstring\u003E, confidence: string, explanation?: string}\u003E"
               },
               "type": "dictionary\u00602"
             },
@@ -161,6 +175,11 @@
               "name": "Value",
               "value": "%!data%",
               "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "json",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -174,10 +193,7 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
+      "formal": "llm.query(Messages=%fixerMessages%, Schema={description: string, steps: list\u003C{index: int, actions: list\u003Cstring\u003E, confidence: string, explanation?: string}\u003E}, Cache=%!build.cache%, ContinuePreviousConversation=%plan%) | variable.set(Name=%plan%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     }
@@ -186,7 +202,7 @@
   "visibility": 1,
   "path": "/system/builder/BuildGoal/LlmFixer.goal",
   "prPath": "/system/builder/BuildGoal/.build/llmfixer.pr",
-  "hash": "64e94d95f9b47064d745b4c4193df58966288e085cc108e080e5cf4333b76fc5",
+  "hash": "f408dd456b1b3f65881750c7174103d26d600818e318b7ea09e1e2eb1f84df37",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

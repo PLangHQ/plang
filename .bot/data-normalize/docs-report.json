@@ -1,0 +1,29 @@
+{
+  "reviewer": "docs",
+  "branch": "data-normalize",
+  "timestamp": "2026-05-28T00:00:00Z",
+  "reviewed_version": "v1",
+  "summary": "Propagated the data-normalize landing (Normalize, Reconstruct, IWriter + json.Writer, Tagged filter, View.Store, [Masked]) into Documentation/Runtime2/data-spec.md §16a + a new good_to_know.md rule. Swept WireJsonConverter → Wire across 6 docs + CLAUDE.md per auditor directive. Fixed stale four-field XML doc on Wire.cs. No missing PLang examples, no unclear-intent code — branch ready to merge.",
+  "stats": { "gaps_found": 6, "gaps_filled": 6, "docs_updated": 7, "docs_created": 0 },
+  "changes": [
+    { "id": 1, "type": "architecture-doc", "action": "updated", "file": "Documentation/Runtime2/data-spec.md", "description": "Added §16a 'Wire shape: Normalize → IWriter → bytes' covering Normalize bounds/typed errors, IWriter + json.Writer, Tagged filter, View.Store carve-out, [Masked], Reconstruct<T> dispatch + error keys, and known non-blocking follow-ups. Also swept WireJsonConverter → Wire in §15/§16." },
+    { "id": 2, "type": "consistency", "action": "updated", "file": "CLAUDE.md", "description": "Updated the 'Data is not enveloped' anchor: app.data.WireJsonConverter → app.data.Wire, added the Normalize → IWriter pipeline reference, pointed at the new good_to_know.md rule." },
+    { "id": 3, "type": "consistency", "action": "updated", "file": "Documentation/v0.2/architecture.md", "description": "Swept three WireJsonConverter references; added Normalize/Reconstruct file entries to the directory tree." },
+    { "id": 4, "type": "consistency", "action": "updated", "file": "Documentation/v0.2/app-tree.md", "description": "Renamed Wire converter entry to Wire.cs; added this.Normalize.cs / this.Reconstruct.cs siblings. App-tree checker reports clean." },
+    { "id": 5, "type": "consistency", "action": "updated", "file": "Documentation/v0.2/callbacks.md", "description": "Swept four WireJsonConverter references; expanded See-also with Normalize/Reconstruct/IWriter/Tagged file pointers; cross-linked §16a in the application/plang section." },
+    { "id": 6, "type": "consistency", "action": "updated", "file": "Documentation/Runtime2/data-spec.md", "description": "Swept WireJsonConverter references in §15 (Transport Pipeline signature round-trip) and §16 (Signature)." },
+    { "id": 7, "type": "consistency", "action": "updated", "file": "Documentation/v0.2/good_to_know.md", "description": "Swept WireJsonConverter reference in the Signing — Architecture section." },
+    { "id": 8, "type": "architecture-doc", "action": "created", "file": "Documentation/v0.2/good_to_know.md", "description": "New rule 'Domain types ride the wire as property bags, not bespoke JSON converters' — captures the new pattern, why, how to apply, and the path inbound carve-out." },
+    { "id": 9, "type": "xml-doc", "action": "updated", "file": "PLang/app/data/Wire.cs", "description": "Fixed stale class summary: four-field → five-field; documented that the value slot is built via Normalize(View) → IWriter so domain types ride as [Out]-tagged property bags." }
+  ],
+  "findings": [
+    { "id": 1, "severity": "major", "category": "stale-doc", "file": "PLang/app/data/Wire.cs", "issue": "Class XML doc summary said canonical four-field shape {name, type, value, signature}; implementation emits five-field shape {name, type, value, properties, signature}.", "resolution": "filled", "detail": "Aligned the summary with the implementation, also flagged the Normalize+IWriter pipeline so consumers reading the source understand where the value slot comes from." },
+    { "id": 2, "severity": "major", "category": "stale-doc", "file": "Documentation/* + CLAUDE.md (10 sites across 6 files)", "issue": "All references to WireJsonConverter / WireJsonConverter.cs / WireJsonConverter.Write are stale post-data-normalize rename.", "resolution": "filled", "detail": "Swept all sites to Wire / Wire.cs / Wire.Write with explicit 'renamed from WireJsonConverter on data-normalize' breadcrumbs so a reader landing on old docs still navigates correctly." },
+    { "id": 3, "severity": "major", "category": "missing-doc", "file": "Documentation/Runtime2/data-spec.md", "issue": "No architecture coverage for the structural-normalize pipeline (Normalize, Reconstruct<T>, IWriter, json.Writer, Tagged filter, View.Store, [Masked]).", "resolution": "filled", "detail": "New §16a added; six new surfaces documented with dispatch tables, error-key matrix, and a 'where to look in code' index." },
+    { "id": 4, "severity": "minor", "category": "missing-doc", "file": "Documentation/v0.2/good_to_know.md", "issue": "The 'add [Out], don't add a JsonConverter' rule that flows from the new pipeline is not codified anywhere, so a future contributor adding a wire-bound domain type will repeat the bespoke-converter pattern Normalize is meant to retire.", "resolution": "filled", "detail": "New rule landed with the smell, the why, how to apply, and the path inbound carve-out as a footnote." },
+    { "id": 5, "severity": "minor", "category": "missing-doc", "file": "Documentation/v0.2/app-tree.md, architecture.md (directory tree)", "issue": "this.Normalize.cs and this.Reconstruct.cs are absent from the tree views; Wire.cs entry shows the old name.", "resolution": "filled", "detail": "Both files added to both trees; Wire.cs entry renamed; app-tree checker reports clean." },
+    { "id": 6, "severity": "minor", "category": "unclear-doc", "file": "Documentation/Runtime2/data-spec.md §16a", "issue": "Auditor v1 flagged two minor footguns in Reconstruct (positional-ctor required-param silent default; longest-ctor comment drift).", "resolution": "filled", "detail": "Documented as 'Known follow-ups' inside the new §16a rather than filed as separate issues — neither has current callers, so a non-blocking note in-place is the right scope." }
+  ],
+  "claude_md_proposals": [],
+  "character_proposals": []
+}

@@ -1,0 +1,161 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set settings \u0027maskedTestKey\u0027 = \u0027real-secret-value\u0027",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "Round-trips a setting through the local settings store. The value persists locally\nunmasked \u2014 storage honors [Store] and ignores [Masked] so set\u002Bget returns the real\nvalue. The masking-to-\u0022****\u0022 behavior lives on the cross-actor wire path and is\ncovered by C# WireOutput_Setting_KeyVisible_ValueIsFourStars.",
+      "actions": [
+        {
+          "module": "settings",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Key",
+              "value": "maskedTestKey",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "real-secret-value",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "settings.set(Key=\u0022maskedTestKey\u0022, Value=\u0022real-secret-value\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "get settings \u0027maskedTestKey\u0027, write to %loaded%",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "settings",
+          "action": "get",
+          "parameters": [
+            {
+              "name": "Key",
+              "value": "maskedTestKey",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%loaded%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "settings.get(Key=\u0022maskedTestKey\u0022) , variable.set(Name=%loaded%, Value=%!data%, type=\u0022object\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %loaded% equals \u0027real-secret-value\u0027, \u0022storage round-trip preserves real value\u0022",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "real-secret-value",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%loaded%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "storage round-trip preserves real value",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022real-secret-value\u0022, Actual=%loaded%, Message=\u0022storage round-trip preserves real value\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "remove settings \u0027maskedTestKey\u0027",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "settings",
+          "action": "remove",
+          "parameters": [
+            {
+              "name": "Key",
+              "value": "maskedTestKey",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "settings.remove(Key=\u0022maskedTestKey\u0022)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Serialization/MaskedSettingOnWire.test.goal",
+  "prPath": "/Serialization/.build/maskedsettingonwire.test.pr",
+  "hash": "5f8ebbbbf4d79ab1b41b3e963f41cbbfe47108c9fa7ca74e8cd3880d58461985",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

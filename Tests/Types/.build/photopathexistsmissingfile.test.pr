@@ -1,0 +1,224 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "file.copy from=photo.png to=tmp-photo-missing.png",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Integration cut 3 (negative): same shape as PhotoPathExistsNavigation but the source\nfile is removed before the if. \u0060%photo.Path.Exists%\u0060 evaluates false (HEAD-style stat\nvia path.IBooleanResolvable). No crash.",
+      "actions": [
+        {
+          "module": "file",
+          "action": "copy",
+          "parameters": [
+            {
+              "name": "Source",
+              "value": "photo.png",
+              "type": "path",
+              "kind": "file"
+            },
+            {
+              "name": "Destination",
+              "value": "tmp-photo-missing.png",
+              "type": "path",
+              "kind": "file"
+            },
+            {
+              "name": "Overwrite",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "IncludeSubfolders",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "file.copy(Source=%source%, Destination=%destination%, Overwrite=false, IncludeSubfolders=true)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "file.read tmp-photo-missing.png, write to %photo%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "tmp-photo-missing.png",
+              "type": "path",
+              "kind": "file"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "resolvevariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%photo%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "image",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "file.read(Path=\u0022tmp-photo-missing.png\u0022) , variable.set(Name=%photo%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "file.delete path=tmp-photo-missing.png",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "delete",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "tmp-photo-missing.png",
+              "type": "path",
+              "kind": "file"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "ignoreifnotfound",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "recursive",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "file.delete(Path=\u0022tmp-photo-missing.png\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set %exists% = %photo.Path.Exists%",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%exists%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%photo.Path.Exists%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%exists%, Value=%photo.Path.Exists%, Type=object)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %exists% is false",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isFalse",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%exists%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.isFalse(Value=%exists%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Types/PhotoPathExistsMissingFile.test.goal",
+  "prPath": "/Types/.build/photopathexistsmissingfile.test.pr",
+  "hash": "340c633796cf3640cc88d34f8a4edc0472a52131deec2300729eba370580112d",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

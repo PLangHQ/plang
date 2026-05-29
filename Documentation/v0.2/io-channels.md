@@ -45,7 +45,7 @@ public sealed class @this : IAsyncDisposable
     public @this Snapshot();                 // shallow copy — same instances, new dict
 
     // Convenience (most callers prefer the typed surface on Channel.Stream.@this directly):
-    public Task<Data.@this> WriteAsync(string channelName, object? data, string? contentType = null, CancellationToken ct = default);
+    public Task<Data.@this> WriteAsync(string channelName, Data.@this data, string? type = null, CancellationToken ct = default);
     public Task<Data.@this> WriteTextAsync(string channelName, string text, CancellationToken ct = default);
     public Task<Data.@this> ReadChannelAsync<T>(string channelName, CancellationToken ct = default);
     public Task<Data.@this> ReadTextAsync(string channelName, CancellationToken ct = default);
@@ -61,7 +61,7 @@ Reach the registry from an actor: `actor.Channels`. Every channel registered is 
 
 ## The channel: `app.channels.Channel.@this`
 
-Abstract base. Carries config (Buffer, Timeout, Mime, Encoding, Encryption, Signing), wires the public `WriteAsync` / `ReadAsync` / `Ask` to the abstract `WriteCore` / `ReadCore` / `AskCore` that concretes implement, and runs the channel-event lifecycle (Before/After Read/Write, OnAsk).
+Abstract base. Carries config (Buffer, Timeout, Mime, Encoding, Encryption, Signing), wires the public `WriteAsync` / `ReadAsync` / `Ask` to the abstract `Write` / `Read` / `Ask` hooks that concretes implement, and runs the channel-event lifecycle (Before/After Read/Write, OnAsk). The `Core` suffix on the hooks was dropped in `data-serialize-cleanup` — the public orchestrators keep the `Async` suffix; the hooks are bare verbs.
 
 ```csharp
 public abstract class @this : IAsyncDisposable, IDisposable
@@ -82,17 +82,17 @@ public abstract class @this : IAsyncDisposable, IDisposable
     public virtual bool CanRead  { get; }                // IsOpen && Direction != Output
     public virtual bool CanWrite { get; }                // IsOpen && Direction != Input
 
-    public abstract Task<Data.@this> WriteCore(Data.@this data, CancellationToken ct = default);
-    public abstract Task<Data.@this> ReadCore(CancellationToken ct = default);
-    public abstract Task<Data.@this> AskCore(Data.@this prompt, CancellationToken ct = default);
+    public abstract Task<Data.@this> Write(Data.@this data, CancellationToken ct = default);
+    public abstract Task<Data.@this> Read(CancellationToken ct = default);
+    public abstract Task<Data.@this> Ask(modules.output.ask action, CancellationToken ct = default);
 
     public virtual Task<Data.@this> WriteAsync(Data.@this data, CancellationToken ct = default);
     public virtual Task<Data.@this> ReadAsync(CancellationToken ct = default);
-    public virtual Task<Data.@this> Ask(Data.@this prompt, CancellationToken ct = default);
+    public virtual Task<Data.@this> AskAsync(modules.output.ask action, CancellationToken ct = default);
 }
 ```
 
-`WriteAsync` is the public entry — it fires `BeforeWrite` (a throw aborts the write; `AfterWrite` is suppressed), invokes `WriteCore`, then fires `AfterWrite` (always — handler throws are swallowed; original outcome stands). Same shape for `ReadAsync` / `Ask`.
+`WriteAsync` is the public entry — it fires `BeforeWrite` (a throw aborts the write; `AfterWrite` is suppressed), invokes the abstract `Write` hook, then fires `AfterWrite` (always — handler throws are swallowed; original outcome stands). Same shape for `ReadAsync` / `AskAsync`.
 
 ### Subtypes
 
@@ -101,7 +101,7 @@ Channel.@this (abstract)
 ├── Channel.Session.@this (abstract)    kept-open, stateful: Ask blocks until answer
 │   ├── Channel.Stream.@this            wraps System.IO.Stream (stdin/stdout/stderr/file/memory)
 │   └── Channel.Goal.@this              writes invoke a goal; %!data% available inside
-└── Channel.Message.@this (abstract)    one-shot: AskCore returns Suspend, callback resumes
+└── Channel.Message.@this (abstract)    one-shot: Ask returns Suspend, callback resumes
                                         (Web channel will extend Message when shipped)
 ```
 
@@ -128,18 +128,49 @@ public sealed class @this : Session.@this
 }
 ```
 
-`AskCore` writes the prompt then `await reader.ReadLineAsync()` with `ResolveEncoding()` and `leaveOpen: true`, gated by per-channel `Timeout`. Works on bidirectional streams (memory, HTTP session). Does **not** work across the split console pair — see below.
+`Ask` writes the prompt then `await reader.ReadLineAsync()` with `ResolveEncoding()` and `leaveOpen: true`, gated by per-channel `Timeout`. Works on bidirectional streams (memory, HTTP session). Does **not** work across the split console pair — see below.
 
 #### `Channel.Goal.@this`
 
-Writes invoke a PLang goal. The Data envelope lands in the goal as `%!data%`. The channel captures the registering actor; for the duration of each goal call it pushes an AsyncLocal channel-resolution overlay onto the actor — the actor's `FoundationalChannels` (the snapshot taken at boot, before any user-registered overlays). So a goal-channel body like
+Writes invoke a PLang goal. The Data lands in the goal as `%!data%`. The
+channel captures the registering actor; while the goal body runs on the
+current async context, the channel's private `AsyncLocal<bool> _executing`
+is `true` and `IsExecuting` reads it. The registry's `Get(name)` treats
+an executing goal-channel as not-found:
+
+```csharp
+public channel.@this? Get(string name)
+{
+    if (!_channels.TryGetValue(name, out var channel)) return null;
+    if (channel is channel.goal.@this g && g.IsExecuting) return null;
+    return channel;
+}
+```
+
+Source: `PLang/app/channels/channel/goal/this.cs`,
+`PLang/app/channels/this.cs`.
+
+So a goal-channel body like
 
 ```plang
 Logger
 - write out %!data% to log.txt
 ```
 
-reaches the original entry-point streams, not the overlay that fired the goal-channel — preventing infinite recursion if the same name is later re-registered, and giving fan-out via composition for free (a `logger` goal-channel can write through `output` and also append to a file).
+cannot re-enter itself: `write out` resolves `"output"`, which (if Logger
+is registered *as* `"output"`) reports back as not-found and surfaces
+`ChannelNotFound`. Sibling and late-registered channels stay visible —
+the guard is per-channel, not a registry-wide overlay. Cycle A→B→A
+breaks at the second hop: A sets A.IsExecuting=true, A's body writes to
+B (B is free), B sets B.IsExecuting=true, B's body writes to A — A is
+now executing, so the lookup fails with `ChannelNotFound`.
+
+The fall-back semantics ("recurse into the *original* `output` stream
+silently") that the deleted foundational-snapshot mechanism implied are
+gone. A goal-channel author who wants fan-out — write to the original
+stream AND a side-effect — registers the goal-channel under a fresh
+name and the original `"output"` stays intact; the user goal writes to
+both names explicitly.
 
 **`%!data%` lifetime inside a goal-channel:** the channel sets `%!data%` once before the goal runs, but every action's result is also aliased there (the "current step data" convention). After the first step runs, `%!data%` no longer holds the channel input — it holds whatever the prior step returned. **If the goal needs the channel input across multiple steps, capture it into a local at the top:**
 
@@ -170,19 +201,28 @@ Per-channel binding list with its own lock and an AsyncLocal "this binding is al
 
 `app.modules.debug.Write(...)` resolves the System actor's `debug` channel falling back to `error`. It is gated on `IsEnabled` (set by `--debug`); production code calls it freely without checking. Full rule on when to use which surface: see `good_to_know.md` "Console.* Is Banned in Production C#".
 
-## Actor channel resolution & overrides
+## Actor channel resolution
 
 ```csharp
 public sealed class app.actor.@this
 {
-    public AppChannels Channels => _channelsOverride.Value ?? _channels;
-    public AppChannels FoundationalChannels { get; }                 // boot snapshot, lazy
-    public IDisposable PushChannelsOverride(AppChannels overlay);    // AsyncLocal scope
-    public void FreezeFoundational();
+    public AppChannels Channels { get; }     // the direct registry, no overlay
 }
 ```
 
-`PushChannelsOverride` returns a disposable scope; the override is AsyncLocal so concurrent flows don't collide. Goal channels use this internally to swap to `FoundationalChannels` during goal invocation. External callers normally never touch this — it is the mechanism, not the surface.
+There is no overlay layer. `Actor.Channels` is the per-actor registry
+and every resolution goes through it directly. Goal-channel recursion
+isolation is the channel's responsibility (`Channel.Goal.@this.IsExecuting`
++ the `Get`-side branch above), not the actor's.
+
+A historical `FoundationalChannels` boot snapshot plus
+`PushChannelsOverride` / `FreezeFoundational` plus `AppChannels.Snapshot`
+existed in earlier builds. That mechanism shipped a bug: anything
+registered after the snapshot was invisible to writes from inside a
+goal-channel body — e.g. a `"builder"` channel registered at the top of
+`Build.goal` couldn't be reached from `EmitBuildEvent.goal`. The
+mechanism is deleted; `IsExecuting` is the replacement. Full incident:
+`.bot/builder-ergonomics/foundational-channels-snapshot-bug.md`.
 
 ## PLang surface
 
@@ -206,7 +246,7 @@ Every PLang `write` step resolves through the channels registry. `write out` res
 
 ## Interactive prompts
 
-The default console pair is direction-split (`output` write-only, `input` read-only). `Channel.Stream.AskCore` writes-then-reads on a single bidirectional stream — works for memory and HTTP-session channels, **not** across the console pair. Two-call pattern from C#:
+The default console pair is direction-split (`output` write-only, `input` read-only). `Channel.Stream.Ask` writes-then-reads on a single bidirectional stream — works for memory and HTTP-session channels, **not** across the console pair. Two-call pattern from C#:
 
 ```csharp
 var output = User.Channels.Get(global::app.channels.@this.Output) as Channel.Stream.@this;
@@ -246,18 +286,28 @@ captured.Stream.Position = 0;
 var stderr = await captured.ReadAllTextAsync();
 ```
 
-### PLang — replace `output` with a goal channel
+### PLang — wrap `output` with a side-effect via a fan-out channel
 
 ```plang
 Start
-- set output channel as Logger
+- set channel "logger" call Logger
+- write 'hello' to logger        /// goes to log.txt, then to output
 
 Logger
-- write out %!data%
 - append %!data% to log.txt
+- write out %!data%              /// "output" is not the channel that fired us, so this is fine
 ```
 
-Every subsequent `write out` invokes `Logger`. The recursion guard on `Channel.Goal.@this` makes `write out %!data%` inside `Logger` reach the foundational `output` (the original stdout snapshot), not loop back into itself.
+Inside `Logger`, `IsExecuting` is true only for the `"logger"` channel.
+`write out %!data%` resolves `"output"` — a different channel, not
+guarded — and reaches stdout normally.
+
+The pattern "redirect `output` and recurse back into the original
+stdout from the body" no longer works: registering `Logger` *as*
+`"output"` would make `write out` inside `Logger` surface
+`ChannelNotFound`. If you want both effects, keep `"output"` as stdout
+and add a sibling channel (above), or have the body write directly to
+file/stderr/stream rather than recursing through `"output"`.
 
 ## Roadmap
 

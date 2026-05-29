@@ -1,4 +1,5 @@
 using app.variables;
+using number = global::app.types.number.@this;
 
 namespace app.modules.math;
 
@@ -7,14 +8,13 @@ public partial class Sqrt : IContext
 {
     public partial data.@this Value { get; init; }
 
-    public Task<data.@this<object>> Run()
+    public Task<data.@this<number>> Run()
     {
-        var input = MathHelper.ToDouble(Value.Value);
-        if (input < 0)
-            return Task.FromResult(data.@this<object>.FromError(
-                new app.errors.ValidationError("Cannot take square root of negative number", "InvalidInput")));
-
-        var result = Math.Sqrt(input);
-        return Task.FromResult(data.@this<object>.Ok(result));
+        var n = number.FromObject(Value.Value);
+        if (n == null)
+            return Task.FromResult(data.@this<number>.FromError(
+                new errors.ValidationError("math.sqrt requires a number", "InvalidInput")));
+        // number.Sqrt surfaces negative input as ArithmeticError via Wrap.
+        return Task.FromResult(number.Sqrt(n));
     }
 }

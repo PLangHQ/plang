@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "coder v5 resolved all four v4 findings; both new sealed-gate tests and the sqrt-key assert mutation-confirmed by tester. C# 3636/3636, plang 248/248." }

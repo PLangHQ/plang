@@ -87,33 +87,37 @@ public class TypeMappingTests
     [Test]
     public async Task GetType_DateTime_ReturnsDateTimeType()
     {
+        // plang-types Stage 6: datetime rebinds to DateTimeOffset.
         var type = TypeMapping.GetType("datetime");
 
-        await Assert.That(type).IsEqualTo(typeof(DateTime));
+        await Assert.That(type).IsEqualTo(typeof(DateTimeOffset));
     }
 
     [Test]
     public async Task GetType_Date_ReturnsDateTimeType()
     {
+        // plang-types Stage 6: date rebinds to DateOnly.
         var type = TypeMapping.GetType("date");
 
-        await Assert.That(type).IsEqualTo(typeof(DateTime));
+        await Assert.That(type).IsEqualTo(typeof(DateOnly));
     }
 
     [Test]
     public async Task GetType_Time_ReturnsTimeSpanType()
     {
+        // plang-types Stage 6: time rebinds to TimeOnly.
         var type = TypeMapping.GetType("time");
 
-        await Assert.That(type).IsEqualTo(typeof(TimeSpan));
+        await Assert.That(type).IsEqualTo(typeof(TimeOnly));
     }
 
     [Test]
     public async Task GetType_TimeSpan_ReturnsTimeSpanType()
     {
-        var type = TypeMapping.GetType("timespan");
-
-        await Assert.That(type).IsEqualTo(typeof(TimeSpan));
+        // plang-types Stage 6 / Ingi's call: `timespan` is dropped — the
+        // single canonical name for TimeSpan is `duration`.
+        await Assert.That(TypeMapping.GetType("duration")).IsEqualTo(typeof(TimeSpan));
+        await Assert.That(TypeMapping.GetType("timespan")).IsNull();
     }
 
     [Test]
@@ -231,9 +235,10 @@ public class TypeMappingTests
     [Test]
     public async Task GetType_NullableDateTime_ReturnsNullableDateTimeType()
     {
+        // plang-types Stage 6: datetime? rebinds to DateTimeOffset?.
         var type = TypeMapping.GetType("datetime?");
 
-        await Assert.That(type).IsEqualTo(typeof(DateTime?));
+        await Assert.That(type).IsEqualTo(typeof(DateTimeOffset?));
     }
 
     [Test]
@@ -375,9 +380,11 @@ public class TypeMappingTests
     [Test]
     public async Task GetTypeName_TimeSpan_ReturnsTimeSpan()
     {
+        // plang-types Stage 6: TimeSpan's canonical PLang name is `duration`.
+        // `timespan` survives as a deprecated alias on the inbound table.
         var name = TypeMapping.GetTypeName(typeof(TimeSpan));
 
-        await Assert.That(name).IsEqualTo("timespan");
+        await Assert.That(name).IsEqualTo("duration");
     }
 
     [Test]

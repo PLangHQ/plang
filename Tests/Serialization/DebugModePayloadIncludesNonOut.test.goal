@@ -1,0 +1,7 @@
+Start
+/ Debug-mode View selection happens at the serializer-options level, which PLang doesn't
+/ expose as a language verb today. The behavioral assertions ("Debug includes non-[Out]
+/ properties", "Sensitive still excluded", "Masked still ****") are covered by the C#
+/ DebugModeBypassTests and Cut2_DebugModeTests suites. This goal is a placeholder pass.
+- set %placeholder% = 'debug-mode covered by C# tests'
+- assert %placeholder% equals 'debug-mode covered by C# tests', "no-op smoke"

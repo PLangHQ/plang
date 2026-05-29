@@ -54,9 +54,6 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
       "formal": "math.add(A=%total%, B=%item%) | variable.set(Name=%total%, Value=%!data%)",
       "source": null,
       "waitForExecution": true

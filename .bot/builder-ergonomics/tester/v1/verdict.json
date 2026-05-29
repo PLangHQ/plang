@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "1 flaky C# test (shared static cache under parallel run), 1 confirmed false-green P6 reproduction that asserts nothing and ships the bug it should catch, channel recursion guard untested end-to-end (mutation-confirmed); plus 1 environmental 502 in UploadFile." }

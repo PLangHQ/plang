@@ -21,7 +21,7 @@ public sealed class Ask : global::app.IExitsGoal
 {
     /// <summary>The user's response on the resume path. Null while the ask is
     /// pending — short-circuit semantics fire until this is bound.</summary>
-    public string? Answer { get; init; }
+    [Out] public string? Answer { get; init; }
 
     /// <inheritdoc/>
     public bool ShouldExit() => Answer == null;
@@ -84,7 +84,7 @@ public partial class ask : IContext
         // contract here so callers never see the legacy string-bearing form.
         var input = Context.Actor?.Channels.Resolve(global::app.channels.@this.Input)
             ?? throw new InvalidOperationException("No input channel registered on actor");
-        var askResult = await input.Ask(this);
+        var askResult = await input.AskAsync(this);
         if (!askResult.Success) return data.@this<Ask>.From(askResult);
         // Stream-channel shape: a bare string answer. Lift into a resolved Ask
         // (no Snapshot needed — the answer is already here).

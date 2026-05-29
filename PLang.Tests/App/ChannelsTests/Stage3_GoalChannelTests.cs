@@ -1,10 +1,15 @@
+using System.Reflection;
 using GoalChannel = global::app.channels.channel.goal.@this;
 using EngineGoal = global::app.goals.goal.@this;
 
 namespace PLang.Tests.App.ChannelsTests;
 
-// Channel.Goal concrete + recursion rule + foundational set capture.
-// Architect: stage-3-goal-channel.md.
+// Channel.Goal concrete + recursion rule.
+//
+// Recursion isolation lives on GoalChannel.IsExecuting (AsyncLocal):
+// while a goal-channel's body is running on the current async context,
+// Channels.Get returns null for that name, so a body that writes to its
+// own name surfaces ChannelNotFound instead of looping.
 
 public class Stage3_GoalChannelTests
 {
@@ -13,10 +18,9 @@ public class Stage3_GoalChannelTests
     {
         var app = new global::app.@this("/tmp/g1");
         var goal = new EngineGoal { Name = "Probe", Path = "Probe.goal", PrPath = "/Probe.pr" };
-        // Empty steps → goal completes with Ok. Test validates %!data% binding via Variables.
         var ch = new GoalChannel("logger", goal, app.User);
         var dataIn = Data.Ok("payload-A");
-        var result = await ch.WriteCore(dataIn);
+        var result = await ch.Write(dataIn);
         await Assert.That(result.Success).IsTrue();
 
         var captured = app.User.Context.Variables.Get("!data");
@@ -29,115 +33,80 @@ public class Stage3_GoalChannelTests
         var app = new global::app.@this("/tmp/g2");
         var goal = new EngineGoal { Name = "ReturnsOk", Path = "Returns.goal", PrPath = "/R.pr" };
         var ch = new GoalChannel("c", goal, app.User);
-        var result = await ch.WriteCore(Data.Ok("x"));
+        var result = await ch.Write(Data.Ok("x"));
         await Assert.That(result.Success).IsTrue();
     }
 
     [Test]
-    public async Task GoalChannel_RegisteredBeforeFreeze_CapturesPreFreezeFoundationalSet()
+    public async Task GoalChannel_IsExecuting_IsFalseBeforeAndAfterWrite()
     {
-        var app = new global::app.@this("/tmp/g3");
-        // Freeze: snapshot taken now.
-        app.User.FreezeFoundational();
-        var foundationalNames = app.User.FoundationalChannels.ChannelNames.ToHashSet();
-        // Add a new channel after freeze.
-        app.User.Channels.Register(StreamChannel.Memory("late"));
-
-        await Assert.That(foundationalNames.Contains("late")).IsFalse();
-        await Assert.That(app.User.Channels.Contains("late")).IsTrue();
+        var app = new global::app.@this("/tmp/g_exec");
+        var goal = new EngineGoal { Name = "G", Path = "G.goal", PrPath = "/G.pr" };
+        var ch = new GoalChannel("x", goal, app.User);
+        await Assert.That(ch.IsExecuting).IsFalse();
+        await ch.Write(Data.Ok("x"));
+        await Assert.That(ch.IsExecuting).IsFalse();
     }
 
     [Test]
-    public async Task GoalChannel_WritesInsideGoal_ResolveAgainstFoundational_NotCurrentOverlay()
+    public async Task Channels_Get_TreatsExecutingGoalChannelAsNotFound()
     {
-        var app = new global::app.@this("/tmp/g4");
-        // Foundational state: capture stream registered as "output".
-        var foundationalCapture = new MemoryStream();
-        app.User.Channels.Register(new StreamChannel("output", foundationalCapture, ChannelDirection.Output, ownsStream: false)
-        { Mime = "text/plain" });
-        app.User.FreezeFoundational();
+        // The load-bearing recursion guard: while a goal-channel's body is
+        // running, the registry treats that name as not-found, so a body that
+        // writes to its own name can't loop back into itself.
+        var app = new global::app.@this("/tmp/g_recurse");
+        var goal = new EngineGoal { Name = "G", Path = "G.goal", PrPath = "/G.pr" };
+        var ch = new GoalChannel("logger", goal, app.User);
+        app.User.Channels.Register(ch);
 
-        // Now overlay a goal channel as "output".
-        var overlayGoal = new EngineGoal { Name = "Overlay", Path = "O.goal", PrPath = "/O.pr" };
-        var goalCh = new GoalChannel("output", overlayGoal, app.User);
-        app.User.Channels.Register(goalCh);
+        // Not executing → resolves normally.
+        await Assert.That(app.User.Channels.Get("logger")).IsEqualTo((Channel?)ch);
 
-        // Inside the goal channel call, the override is active. We probe by checking
-        // that during the override scope, Channels.Resolve("output") returns the
-        // foundational stream channel, not the goal channel.
-        using (app.User.PushChannelsOverride(app.User.FoundationalChannels))
+        // Simulate mid-execution by flipping the AsyncLocal directly.
+        var field = typeof(GoalChannel).GetField("_executing",
+            BindingFlags.NonPublic | BindingFlags.Instance)!;
+        var asyncLocal = (AsyncLocal<bool>)field.GetValue(ch)!;
+        asyncLocal.Value = true;
+        try
         {
-            var resolved = app.User.Channels.Resolve("output");
-            await Assert.That(resolved).IsNotNull();
-            await Assert.That(resolved is StreamChannel).IsTrue();
+            await Assert.That(app.User.Channels.Get("logger")).IsNull();
+            await Assert.That(app.User.Channels.Resolve("logger")).IsNull();
         }
+        finally { asyncLocal.Value = false; }
+
+        // Restored: resolves again.
+        await Assert.That(app.User.Channels.Get("logger")).IsEqualTo((Channel?)ch);
     }
 
     [Test]
-    public async Task GoalChannel_AsOutput_GoalWriteOut_ReachesFoundationalStdout()
+    public async Task Channels_Get_LateRegisteredChannel_VisibleEverywhere()
     {
-        var app = new global::app.@this("/tmp/g5");
-        var captured = new MemoryStream();
-        app.User.Channels.Register(new StreamChannel("output", captured, ChannelDirection.Output, ownsStream: false)
-        { Mime = "text/plain" });
-        app.User.FreezeFoundational();
+        // The bug we're closing: a channel registered after boot must be
+        // visible even when lookups happen inside a goal-channel body.
+        // With the old foundational-snapshot approach, late-registered names
+        // were invisible there. With per-channel IsExecuting, they aren't.
+        var app = new global::app.@this("/tmp/g_late");
+        var sinkGoal = new EngineGoal { Name = "Sink", Path = "S.goal", PrPath = "/S.pr" };
+        var sink = new GoalChannel("sink", sinkGoal, app.User);
+        app.User.Channels.Register(sink);
 
-        var overlayGoal = new EngineGoal { Name = "Overlay", Path = "O.goal", PrPath = "/O.pr" };
-        var goalCh = new GoalChannel("output", overlayGoal, app.User);
-        app.User.Channels.Register(goalCh);
+        // Register "builder" AFTER "sink" exists. Old code froze foundational
+        // before this; this test passes only because no freeze is involved.
+        var builder = StreamChannel.Memory("builder");
+        app.User.Channels.Register(builder);
 
-        // Within an override scope, write to foundational "output" lands in `captured`.
-        using (app.User.PushChannelsOverride(app.User.FoundationalChannels))
+        // Inside sink's body, "builder" must still resolve.
+        var sinkExec = (AsyncLocal<bool>)typeof(GoalChannel)
+            .GetField("_executing", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .GetValue(sink)!;
+        sinkExec.Value = true;
+        try
         {
-            var stream = (StreamChannel)app.User.Channels.Resolve("output")!;
-            await stream.WriteCore(Data.Ok("payload"));
+            await Assert.That(app.User.Channels.Get("builder")).IsEqualTo((Channel?)builder);
+            // And "sink" itself is correctly hidden.
+            await Assert.That(app.User.Channels.Get("sink")).IsNull();
         }
-        var bytes = global::System.Text.Encoding.UTF8.GetString(captured.ToArray());
-        await Assert.That(bytes.Contains("payload")).IsTrue();
-    }
-
-    [Test]
-    public async Task GoalChannel_StackedOverrides_DoNotChain()
-    {
-        var app = new global::app.@this("/tmp/g6");
-        var foundationCapture = new MemoryStream();
-        app.User.Channels.Register(new StreamChannel("output", foundationCapture, ChannelDirection.Output, ownsStream: false)
-        { Mime = "text/plain" });
-        app.User.FreezeFoundational();
-
-        var goalA = new EngineGoal { Name = "A", Path = "A.goal", PrPath = "/A.pr" };
-        var goalB = new EngineGoal { Name = "B", Path = "B.goal", PrPath = "/B.pr" };
-        var chA = new GoalChannel("output", goalA, app.User);
-        app.User.Channels.Register(chA);
-        var chB = new GoalChannel("output", goalB, app.User);
-        app.User.Channels.Register(chB);
-
-        // GoalB's foundational view should still be the original Stream channel,
-        // not goalA. Both goals reference the same Actor.FoundationalChannels.
-        await Assert.That(app.User.FoundationalChannels.Resolve("output") is StreamChannel).IsTrue();
-    }
-
-    [Test]
-    public async Task GoalChannel_FanOutComposition_WritesToFileAndOutput_NoRecursion()
-    {
-        // Light version: confirm no infinite recursion when a goal channel's body
-        // would reference its own name. The override + foundational set guarantees
-        // it. Full integration cut covers the dual-destination assertion.
-        var app = new global::app.@this("/tmp/g7");
-        var captured = new MemoryStream();
-        app.User.Channels.Register(new StreamChannel("output", captured, ChannelDirection.Output, ownsStream: false)
-        { Mime = "text/plain" });
-        app.User.FreezeFoundational();
-
-        var loggerGoal = new EngineGoal { Name = "Logger", Path = "L.goal", PrPath = "/L.pr" };
-        var loggerCh = new GoalChannel("output", loggerGoal, app.User);
-        app.User.Channels.Register(loggerCh);
-
-        // Single write through the overlay; goal runs and any inner write resolves
-        // foundational. Empty Steps means it just completes — Stream is unaffected
-        // here, so we just assert no exception/recursion blew up.
-        var result = await loggerCh.WriteCore(Data.Ok("msg"));
-        await Assert.That(result.Success).IsTrue();
+        finally { sinkExec.Value = false; }
     }
 
     [Test]
@@ -146,7 +115,7 @@ public class Stage3_GoalChannelTests
         var app = new global::app.@this("/tmp/g8");
         var goal = new EngineGoal { Name = "Asker", Path = "Asker.goal", PrPath = "/A.pr" };
         var ch = new GoalChannel("input", goal, app.User);
-        var result = await ch.AskCore(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "q?") });
+        var result = await ch.Ask(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "q?") });
         await Assert.That(result.Success).IsTrue();
     }
 
@@ -159,7 +128,7 @@ public class Stage3_GoalChannelTests
         await ch.DisposeAsync();
         // Goal still usable — re-register as a different channel.
         var ch2 = new GoalChannel("c2", goal, app.User);
-        var result = await ch2.WriteCore(Data.Ok("x"));
+        var result = await ch2.Write(Data.Ok("x"));
         await Assert.That(result.Success).IsTrue();
     }
 }

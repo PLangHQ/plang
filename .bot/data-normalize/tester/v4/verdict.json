@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "C# 3381/3381, PLang 233/233 including BuilderSanity. Fixture rebuild stable across 3 cache=false reruns (identical hash, all pass). V1 fixture re-mutation-verified. v3 FAIL was self-inflicted by a pre-test builder run on a graded fixture."
+}

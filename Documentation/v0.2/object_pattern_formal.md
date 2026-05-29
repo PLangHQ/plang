@@ -290,6 +290,38 @@ var result = await Events.Before.RunAsync(new EventContext
 var result = await Events.Before.Run(context);
 ```
 
+### 9. Only leaves touch `Data.Value`
+
+`Data` rides through the runtime as a closed package: `{Type, Value, Properties, Signature}`. The runtime is a courier — it moves the package, reads the routing key (`Data.Type`), inspects success/error state, but never opens it. `Data.Value` is opaque to every layer between where it's produced and where it's consumed.
+
+Two surfaces are leaves. Everything else is courier.
+
+1. **Leaf actions.** A handler that declares `Data<image> A { get; init; }` is opening the package — it has named the type and is going to read bytes. `math.add` opens up `number`; `image.resize` opens up bytes + mime; `output.write` does **not** open the package, it forwards.
+2. **Leaf serializers.** When a value reaches a channel, the channel asks the value to render itself for that format. `image` for `text/plain` renders as a path placeholder; for `text/html` as `<img>` markup; for `application/plang` or `application/json` as base64 string; for `application/protobuf` as raw bytes. Same instance, four wire shapes — the type owns the mapping, not the channel.
+
+Everything else — variable memory, callstack frames, goal-to-goal handoff, channel routing, signing, the wire envelope — sees only the package, not the contents. They read `Data.Type` to route; they read `.Success` / `.Error` to gate; they never reach for `.Value`.
+
+```csharp
+// Wrong: courier opens the package mid-flight
+public Task<Data> Run() {
+    if (input.Value is Image img) {            // courier became a leaf
+        return DoSomething(img.Bytes);
+    }
+    return input;  // and now lies about being a relay
+}
+
+// Correct: declare the type at the leaf, or forward as Data
+public Task<Data<image>> Run() {
+    var img = A.Value;                          // typed slot — this *is* the leaf
+    var resized = Resize(img.Bytes, ...);
+    return Task.FromResult(Data<image>.Ok(resized));
+}
+```
+
+This is what makes adding a new PLang type cheap. A type registers its routing key (its name), declares its leaf-action surface (`Data<image>` parameter slots on handlers), and declares its leaf-serializer behavior (`IWireWritable` or the equivalent on the value class). Nothing in the courier path changes. The first new type that needs touching variable memory, callstack, or channel routing means the type system has grown a leak.
+
+The rule is a sharpening of Rule #7: don't repackage `Data`, *and* don't open it mid-flight to peek at `Value`. The two failures look different at the call site but they are the same architectural mistake — a courier pretending to be a leaf.
+
 ## Why This Matters for LLMs
 
 An LLM reading OBP code can traverse the object graph like a map. `app.Goals.Get("Start")` — it knows exactly where goals live. `step.Actions.RunAsync(app, context)` — it knows actions own their execution.

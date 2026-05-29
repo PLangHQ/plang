@@ -47,7 +47,8 @@ public class EngineTypesTests
     [Test]
     public async Task Clr_DateTime_ReturnsDateTimeType()
     {
-        await Assert.That(_types.Clr("datetime")).IsEqualTo(typeof(DateTime));
+        // plang-types Stage 6: datetime rebinds to DateTimeOffset.
+        await Assert.That(_types.Clr("datetime")).IsEqualTo(typeof(DateTimeOffset));
     }
 
     [Test]

@@ -1,0 +1,7 @@
+BuilderChannel
+/ Builder channel sink. Goal-backed channel registered at Build start so all
+/ build-time output flows through one named seam. Today it forwards to the
+/ default output channel; later we can swap the consumer (file log, TUI,
+/ structured stream) without touching the call sites.
+
+- write out %!data%

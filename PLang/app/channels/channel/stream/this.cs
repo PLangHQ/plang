@@ -42,7 +42,7 @@ public sealed class @this : global::app.channels.channel.session.@this
     public override bool CanRead => IsOpen && Direction != ChannelDirection.Output && Stream.CanRead;
     public override bool CanWrite => IsOpen && Direction != ChannelDirection.Input && Stream.CanWrite;
 
-    public override async Task<global::app.data.@this> WriteCore(global::app.data.@this data, CancellationToken ct = default)
+    public override async Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
     {
         if (!CanWrite)
             return global::app.data.@this.FromError(new ServiceError(
@@ -53,8 +53,8 @@ public sealed class @this : global::app.channels.channel.session.@this
             var serResult = await Channels!.Serializers.SerializeAsync(new SerializeOptions
             {
                 Stream = Stream,
-                Data = data.Value,
-                ContentType = Mime,
+                Data = data,
+                Type = Mime,
                 CancellationToken = ct
             });
             return serResult;
@@ -66,7 +66,7 @@ public sealed class @this : global::app.channels.channel.session.@this
         }
     }
 
-    public override async Task<global::app.data.@this> ReadCore(CancellationToken ct = default)
+    public override async Task<global::app.data.@this> Read(CancellationToken ct = default)
     {
         if (!CanRead)
             return global::app.data.@this.FromError(new ServiceError(
@@ -84,7 +84,7 @@ public sealed class @this : global::app.channels.channel.session.@this
         }
     }
 
-    public override async Task<global::app.data.@this> AskCore(modules.output.ask action, CancellationToken ct = default)
+    public override async Task<global::app.data.@this> Ask(modules.output.ask action, CancellationToken ct = default)
     {
         // Two-call pattern across the actor's split output/input pair — per
         // CLAUDE.md's "Console.* Is Banned" rule: write the prompt via the
@@ -102,7 +102,7 @@ public sealed class @this : global::app.channels.channel.session.@this
             }
             else if (CanWrite)
             {
-                var writeRes = await WriteCore(global::app.data.@this.Ok(question), ct);
+                var writeRes = await Write(global::app.data.@this.Ok(question), ct);
                 if (!writeRes.Success) return writeRes;
             }
             // No writer at all — proceed to read; the prompt is just lost.

@@ -14,6 +14,18 @@ The engine has **modules** (namespaces) with **actions**. Each action has proper
 
 - `index` — step index in the goal (0-based)
 - `actions` — array of `"module.action"` strings the step uses. Unordered; the compiler decides chain order from action examples.
+- `confidence` — one of `VeryHigh|High|Medium|Low|VeryLow`. How well the catalog matched the step's verbs and intent.
+- `explanation` — when `confidence` is `Medium` or below, one short sentence naming the part you weren't sure about (an unknown verb, an ambiguous mapping, a missing action you'd expect). Omit when confidence is `High` or `VeryHigh`.
+
+## Confidence levels
+
+- **VeryHigh** — every verb in the step maps cleanly to a catalog action.
+- **High** — clear mapping with no ambiguity even if not the exact word.
+- **Medium** — fit is plausible but not central; multiple modules could apply.
+- **Low** — closest existing action doesn't really cover the verb; you settled for a fallback.
+- **VeryLow** — no good match; selection is speculative. Likely a missing action in the catalog.
+
+When the step text uses a verb that has no matching action (e.g. `compress %x%`), pick the closest fallback (often `variable.set`), set `confidence: VeryLow`, and put the unmatched verb in `explanation` (e.g. `"no action matches verb 'compress'"`).
 
 ## How to read a step
 
@@ -38,6 +50,18 @@ If a step is a single clause, `actions` has one entry. If it's compound, more en
 Step text `- call Validate` (or any `call <Identifier>`) is a goal-to-goal call: `goal.call`. NOT `builder.validate`, NOT `file.save` — `call` is the verb, the identifier is the goal name. Compiler fills the goal name; you just emit `goal.call`.
 
 Exception: explicit `<module>.<action> <params>` syntax (e.g. `builder.validate actions=%x%`, `file.save Path=%p%`) — that names the action directly.
+
+## The verb is the leading word — parameter values are arguments, never actions
+
+The action set comes from the step's leading verb (or the explicit `module.action` token in the explicit form). **Parameter values are arguments to that action — they never determine which action to pick.**
+
+A value that *resembles* another action's domain — an `event`-sounding string in a parameter, a `%goal%` reference, a verb-like word inside quotes — does not change the verb. Examples that often mislead:
+
+- `call X kind="goalError", goal=%g%` — verb is `call` → `goal.call`. Not `event.on` (the value `"goalError"` is a label, not an event registration). Not `error.throw`.
+- `set %x% = %a% + %b%` — verb is `set` → `variable.set` (with `math.add` as a peer for the arithmetic expression). The arithmetic-on-the-right doesn't make the WHOLE step `math.add` alone.
+- `write out "deleting %file%"` — verb is `write` → `output.write`. The word "deleting" in the value doesn't add `file.remove`.
+
+If a parameter value tempts you toward a different action than the verb suggests, **include both in the set and let the compiler decide from the leading verb**. The compiler reads each candidate's examples and matches against the step text shape — extras are free, wrong-only sets deadlock.
 
 ## Rules
 
@@ -71,12 +95,12 @@ Response:
 {
   "description": "Calls Greet, reads cached config, conditional debug output, iterates items, saves with retry.",
   "steps": [
-    {"index": 0, "actions": ["goal.call"]},
-    {"index": 1, "actions": ["file.read", "cache.wrap", "variable.set"]},
-    {"index": 2, "actions": ["condition.if"]},
-    {"index": 3, "actions": ["output.write"]},
-    {"index": 4, "actions": ["loop.foreach", "goal.call"]},
-    {"index": 5, "actions": ["goal.call", "error.handle"]}
+    {"index": 0, "actions": ["goal.call"], "confidence": "VeryHigh"},
+    {"index": 1, "actions": ["file.read", "cache.wrap", "variable.set"], "confidence": "VeryHigh"},
+    {"index": 2, "actions": ["condition.if"], "confidence": "VeryHigh"},
+    {"index": 3, "actions": ["output.write"], "confidence": "VeryHigh"},
+    {"index": 4, "actions": ["loop.foreach", "goal.call"], "confidence": "VeryHigh"},
+    {"index": 5, "actions": ["goal.call", "error.handle"], "confidence": "VeryHigh"}
   ]
 }
 ```

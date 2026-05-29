@@ -1,0 +1,168 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %response% = \u0027hello\u0027",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "%response!cost.input% must dereference Properties[\u0022cost\u0022] and then dot-navigate into\nthe resulting dict. Chained navigation: bang first, then dot. Coverage row 4.12.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%response%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "hello",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%response%, Value=\u0022hello\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %costDict% = \u0027{\u0022input\u0022:50, \u0022output\u0022:75}\u0027, type=json",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%costDict%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "input": 50,
+                "output": 75
+              },
+              "type": "dictionary\u00602"
+            },
+            {
+              "name": "Type",
+              "value": "json",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%costDict%, Value={\u0022input\u0022:50, \u0022output\u0022:75}, Type=json)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %response!cost% = %costDict%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%response!cost%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%costDict%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%response!cost%, Value=%costDict%, Type=object)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %response!cost.input% equals 50",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "50",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%response!cost.input%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=50, Actual=%response!cost.input%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Serialization/PropertiesBangChainedNavigation.test.goal",
+  "prPath": "/Serialization/.build/propertiesbangchainednavigation.test.pr",
+  "hash": "acb0b5e2d191fbefd6d37108aa002e034c6aefaac1057e0388d1d5d3860cd791",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

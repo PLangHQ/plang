@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "data-serialize-cleanup v1 — F1 (High): pre-auth StackOverflow DoS via WireJsonConverter.LiftDataIfShaped depth reset; reachable through callback wire deserialization today"
+}

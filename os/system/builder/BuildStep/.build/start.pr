@@ -36,9 +36,6 @@
         }
       ],
       "intent": null,
-      "guidance": "Set %step% from the current plan step data (%goal.Steps[planStep.index]%).",
-      "level": "high",
-      "confidence": 95,
       "formal": "variable.set(Name=%step%, Value=%goal.Steps[planStep.index]%, Type=object)",
       "source": null,
       "waitForExecution": true
@@ -59,7 +56,7 @@
               "value": {
                 "name": "Compile",
                 "parallel": false,
-                "parameters": null,
+                "parameters": [],
                 "prPath": "/system/builder/BuildStep/.build/start.pr"
               },
               "type": "goal.call"
@@ -70,10 +67,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Call the Compile goal.",
-      "level": "high",
-      "confidence": 90,
-      "formal": "goal.call(GoalName={name:\u0022Compile\u0022})",
+      "formal": "goal.call(GoalName={name:\"Compile\"})",
       "source": null,
       "waitForExecution": true
     }
@@ -89,7 +83,7 @@
           "text": "builder.validateStepActions step=%step%, actions=%planStep.actions%, write to %planStep.actions%",
           "lineNumber": 15,
           "indent": 0,
-          "comment": "Validate planner\u0027s action set against runtime catalog \u002B augment with explicit\nmodule.action tokens from step text. Drops hallucinated entries; appends any\nliteral \u0060module.action\u0060 mention the planner missed. See building-the-builder.md\n\u0022preventing self-rebuild corruption\u0022 for the rationale.",
+          "comment": "Validate planner's action set against runtime catalog + augment with explicit\nmodule.action tokens from step text. Drops hallucinated entries; appends any\nliteral `module.action` mention the planner missed. See building-the-builder.md\n\"preventing self-rebuild corruption\" for the rationale.",
           "actions": [
             {
               "module": "builder",
@@ -103,7 +97,7 @@
                 {
                   "name": "Actions",
                   "value": "%planStep.actions%",
-                  "type": "list\u003Cstring\u003E"
+                  "type": "list<string>"
                 }
               ],
               "defaults": null,
@@ -135,9 +129,6 @@
             }
           ],
           "intent": null,
-          "guidance": null,
-          "level": "high",
-          "confidence": 99,
           "formal": "builder.validateStepActions(Step=%step%, Actions=%planStep.actions%) , variable.set(Name=%planStep.actions%, Value=%!data%)",
           "source": null,
           "waitForExecution": true
@@ -156,7 +147,7 @@
                 {
                   "name": "Actions",
                   "value": "%planStep.actions%",
-                  "type": "list\u003Cstring\u003E"
+                  "type": "list<string>"
                 }
               ],
               "defaults": null,
@@ -174,7 +165,7 @@
                 {
                   "name": "Value",
                   "value": "%!data%",
-                  "type": "object"
+                  "type": "list"
                 }
               ],
               "defaults": [
@@ -188,10 +179,7 @@
             }
           ],
           "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
-          "formal": "builder.actions(Actions=%planStep.actions%) | variable.set(Name=%actions%, Value=%!data%, Type=object)",
+          "formal": "builder.actions(Actions=%planStep.actions%), variable.set(Name=%actions%, Value=%!data%)",
           "source": null,
           "waitForExecution": true
         },
@@ -209,7 +197,7 @@
                 {
                   "name": "Actions",
                   "value": "%planStep.actions%",
-                  "type": "list\u003Cstring\u003E"
+                  "type": "list<string>"
                 }
               ],
               "defaults": null,
@@ -241,10 +229,7 @@
             }
           ],
           "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
-          "formal": "builder.types(Actions=%planStep.actions%), variable.set(Name=%typeInfo%, Value=%!data%, type=\u0022object\u0022)",
+          "formal": "builder.types(Actions=%planStep.actions%), variable.set(Name=%typeInfo%, Value=%!data%)",
           "source": null,
           "waitForExecution": true
         },
@@ -280,7 +265,7 @@
                 {
                   "name": "Value",
                   "value": "%!data%",
-                  "type": "object"
+                  "type": "list"
                 }
               ],
               "defaults": [
@@ -294,10 +279,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Re-walk the goal to refresh inferred variable types after prior BuildSteps populated Actions.",
-          "level": "high",
-          "confidence": 90,
-          "formal": "goal.getTypes(Goal=%goal%) , variable.set(Name=%varTypes%, Value=%!data%, Type=object)",
+          "formal": "goal.getTypes(Goal=%goal%), variable.set(Name=%varTypes%, Value=%!data%)",
           "source": null,
           "waitForExecution": true
         },
@@ -321,6 +303,11 @@
                   "name": "Value",
                   "value": "%varTypes[step.Index]%",
                   "type": "object"
+                },
+                {
+                  "name": "Type",
+                  "value": "object",
+                  "type": "string"
                 }
               ],
               "defaults": [
@@ -334,16 +321,13 @@
             }
           ],
           "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
           "formal": "variable.set(Name=%stepVarTypes%, Value=%varTypes[step.Index]%, Type=object)",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 5,
-          "text": "render template \u0022/system/builder/llm/templates/stepForLlm.template\u0022, write to %stepForLlm%",
+          "text": "render template \"/system/builder/llm/templates/stepForLlm.template\", write to %stepForLlm%",
           "lineNumber": 21,
           "indent": 0,
           "comment": null,
@@ -356,11 +340,6 @@
                   "name": "Template",
                   "value": "/system/builder/llm/templates/stepForLlm.template",
                   "type": "string"
-                },
-                {
-                  "name": "IsFile",
-                  "value": true,
-                  "type": "bool"
                 }
               ],
               "defaults": null,
@@ -392,16 +371,13 @@
             }
           ],
           "intent": null,
-          "guidance": "Render the step-for-LLM template from a file path, writing the rendered text into %stepForLlm%.",
-          "level": "high",
-          "confidence": 92,
-          "formal": "ui.render(Template=\u0022/system/builder/llm/templates/stepForLlm.template\u0022, IsFile=true) | variable.set(Name=%stepForLlm%, Value=%!data%, type=\u0022string\u0022)",
+          "formal": "ui.render(Template=\"/system/builder/llm/templates/stepForLlm.template\") | variable.set(Name=%stepForLlm%, Value=%!data%, Type=string)",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 6,
-          "text": "render template \u0022/system/builder/llm/templates/stepActionDetails.template\u0022, write to %actionDetails%",
+          "text": "render template \"/system/builder/llm/templates/stepActionDetails.template\", write to %actionDetails%",
           "lineNumber": 22,
           "indent": 0,
           "comment": null,
@@ -414,11 +390,6 @@
                   "name": "Template",
                   "value": "/system/builder/llm/templates/stepActionDetails.template",
                   "type": "string"
-                },
-                {
-                  "name": "IsFile",
-                  "value": true,
-                  "type": "bool"
                 }
               ],
               "defaults": null,
@@ -450,16 +421,13 @@
             }
           ],
           "intent": null,
-          "guidance": "Render the step-action-details template from a file path, writing the rendered text into %actionDetails%.",
-          "level": "high",
-          "confidence": 92,
-          "formal": "ui.render(Template=\u0022/system/builder/llm/templates/stepActionDetails.template\u0022, IsFile=true) | variable.set(Name=%actionDetails%, Value=%!data%, type=string)",
+          "formal": "ui.render(Template=\"/system/builder/llm/templates/stepActionDetails.template\") | variable.set(Name=%actionDetails%, Value=%!data%)",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 7,
-          "text": "render template \u0022/system/builder/llm/Compile.llm\u0022, write to %buildStepPrompt%",
+          "text": "render template \"/system/builder/llm/Compile.llm\", write to %buildStepPrompt%",
           "lineNumber": 23,
           "indent": 0,
           "comment": null,
@@ -503,16 +471,13 @@
             }
           ],
           "intent": null,
-          "guidance": "Render the Compile.llm template from a file path, writing the rendered prompt into %buildStepPrompt%.",
-          "level": "high",
-          "confidence": 90,
-          "formal": "ui.render(Template=\u0022/system/builder/llm/Compile.llm\u0022) | variable.set(Name=%buildStepPrompt%, Value=%!data%, type=\u0022string\u0022)",
+          "formal": "ui.render(Template=\"/system/builder/llm/Compile.llm\") | variable.set(Name=%buildStepPrompt%, Value=%!data%, Type=string)",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 8,
-          "text": "render template \u0022/system/builder/llm/CompileUser.llm\u0022, write to %buildStepUserMsg%",
+          "text": "render template \"/system/builder/llm/CompileUser.llm\", write to %buildStepUserMsg%",
           "lineNumber": 24,
           "indent": 0,
           "comment": null,
@@ -525,11 +490,6 @@
                   "name": "Template",
                   "value": "/system/builder/llm/CompileUser.llm",
                   "type": "string"
-                },
-                {
-                  "name": "IsFile",
-                  "value": true,
-                  "type": "bool"
                 }
               ],
               "defaults": null,
@@ -561,16 +521,13 @@
             }
           ],
           "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
-          "formal": "ui.render(Template=\u0022/system/builder/llm/CompileUser.llm\u0022, IsFile=true) | variable.set(Name=%buildStepUserMsg%, Value=%!data%, type=string)",
+          "formal": "ui.render(Template=\"/system/builder/llm/CompileUser.llm\") | variable.set(Name=%buildStepUserMsg%, Value=%!data%)",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 9,
-          "text": "set %messages% = [{\u0022Role\u0022:\u0022system\u0022, \u0022Content\u0022:\u0022%buildStepPrompt%\u0022}, {\u0022Role\u0022:\u0022user\u0022, \u0022Content\u0022:\u0022%buildStepUserMsg%\u0022}], type=json",
+          "text": "set %messages% = [{\"Role\":\"system\", \"Content\":\"%buildStepPrompt%\"}, {\"Role\":\"user\", \"Content\":\"%buildStepUserMsg%\"}], type=json",
           "lineNumber": 25,
           "indent": 0,
           "comment": null,
@@ -596,7 +553,7 @@
                       "Content": "%buildStepUserMsg%"
                     }
                   ],
-                  "type": "list\u00601"
+                  "type": "list`1"
                 },
                 {
                   "name": "Type",
@@ -615,19 +572,16 @@
             }
           ],
           "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
-          "formal": "variable.set(Name=%messages%, Value=[{\u0022Role\u0022:\u0022system\u0022,\u0022Content\u0022:\u0022%buildStepPrompt%\u0022},{\u0022Role\u0022:\u0022user\u0022,\u0022Content\u0022:\u0022%buildStepUserMsg%\u0022}], Type=json)",
+          "formal": "variable.set(Name=%messages%, Value=[{\"Role\":\"system\",\"Content\":\"%buildStepPrompt%\"},{\"Role\":\"user\",\"Content\":\"%buildStepUserMsg%\"}], Type=json)",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 10,
-          "text": "call QueryAndVerify, on error key \u0022missing-actions\u0022 call RefineActions, then retry 2 times",
+          "text": "call QueryAndVerify, on error key \"missing-actions\" call RefineActions, then retry 2 times",
           "lineNumber": 30,
           "indent": 0,
-          "comment": "QueryAndVerify wraps llm.query \u002B a missing-actions check (throws on missing-actions).\non error key=\u0022missing-actions\u0022: run RefineActions first (expands %planStep.actions%),\nthen retry the whole QueryAndVerify. RetryCount is the runtime\u0027s job, no counter.",
+          "comment": "QueryAndVerify wraps llm.query + a missing-actions check (throws on missing-actions).\non error key=\"missing-actions\": run RefineActions first (expands %planStep.actions%),\nthen retry the whole QueryAndVerify. RetryCount is the runtime's job, no counter.",
           "actions": [
             {
               "module": "goal",
@@ -678,7 +632,7 @@
                           ]
                         }
                       ],
-                      "type": "list\u003Caction\u003E"
+                      "type": "list<action>"
                     }
                   ],
                   "defaults": null,
@@ -688,10 +642,7 @@
             }
           ],
           "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
-          "formal": "goal.call(GoalName={name:\u0022QueryAndVerify\u0022}) | error.handle(Actions=[goal.call(GoalName={name:\u0022RefineActions\u0022})], Key=\u0022missing-actions\u0022, RetryCount=2)",
+          "formal": "goal.call(GoalName={name:\"QueryAndVerify\"}) | error.handle(Actions=[goal.call(GoalName={name:\"RefineActions\"})], Key=\"missing-actions\", RetryCount=2)",
           "source": null,
           "waitForExecution": true
         },
@@ -730,7 +681,7 @@
                       "cached": "%compileResult.Cached%"
                     }
                   },
-                  "type": "dictionary\u00602"
+                  "type": "dictionary`2"
                 }
               ],
               "defaults": [
@@ -744,10 +695,7 @@
             }
           ],
           "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
-          "formal": "list.add(ListName=%trace.stepPasses%, Value={\u0022goal\u0022:\u0022%goal.Name%\u0022,\u0022index\u0022:\u0022%step.Index%\u0022,\u0022stepText\u0022:\u0022%step.Text%\u0022,\u0022actions\u0022:\u0022%planStep.actions%\u0022,\u0022user\u0022:\u0022%buildStepUserMsg%\u0022,\u0022response\u0022:\u0022%compileResult%\u0022,\u0022usage\u0022:{\u0022model\u0022:\u0022%compileResult.Model%\u0022,\u0022promptTokens\u0022:\u0022%compileResult.PromptTokens%\u0022,\u0022cachedTokens\u0022:\u0022%compileResult.CachedTokens%\u0022,\u0022completionTokens\u0022:\u0022%compileResult.CompletionTokens%\u0022,\u0022totalTokens\u0022:\u0022%compileResult.TotalTokens%\u0022,\u0022cost\u0022:\u0022%compileResult.Cost%\u0022,\u0022cached\u0022:\u0022%compileResult.Cached%\u0022}})",
+          "formal": "list.add(ListName=%trace.stepPasses%, Value={goal:%goal.Name%, index:%step.Index%, stepText:%step.Text%, actions:%planStep.actions%, user:%buildStepUserMsg%, response:%compileResult%, usage:{model:%compileResult.Model%, promptTokens:%compileResult.PromptTokens%, cachedTokens:%compileResult.CachedTokens%, completionTokens:%compileResult.CompletionTokens%, totalTokens:%compileResult.TotalTokens%, cost:%compileResult.Cost%, cached:%compileResult.Cached%}})",
           "source": null,
           "waitForExecution": true
         },
@@ -771,6 +719,11 @@
                   "name": "Value",
                   "value": "%compileResult.actions%",
                   "type": "object"
+                },
+                {
+                  "name": "Type",
+                  "value": "object",
+                  "type": "string"
                 }
               ],
               "defaults": [
@@ -784,9 +737,6 @@
             }
           ],
           "intent": null,
-          "guidance": "Set the compiled actions for the current step index into %goal.Steps[step.Index].Actions%.",
-          "level": "medium",
-          "confidence": 60,
           "formal": "variable.set(Name=%goal.Steps[step.Index].Actions%, Value=%compileResult.actions%, Type=object)",
           "source": null,
           "waitForExecution": true
@@ -811,6 +761,11 @@
                   "name": "Value",
                   "value": "%compileResult.formal%",
                   "type": "object"
+                },
+                {
+                  "name": "Type",
+                  "value": "object",
+                  "type": "string"
                 }
               ],
               "defaults": [
@@ -824,9 +779,6 @@
             }
           ],
           "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
           "formal": "variable.set(Name=%goal.Steps[step.Index].Formal%, Value=%compileResult.formal%, Type=object)",
           "source": null,
           "waitForExecution": true
@@ -836,7 +788,7 @@
           "text": "builder.validate actions=%goal.Steps[step.Index].Actions%, on error call FixValidation, then retry 2 times",
           "lineNumber": 41,
           "indent": 0,
-          "comment": "Validation retry: FixValidation re-queries the LLM with the validator\u0027s complaint as\npreviousConversation context, writes the corrected compileResult, updates goal.Steps.\nThen retry builder.validate against the corrected actions.",
+          "comment": "Validation retry: FixValidation re-queries the LLM with the validator's complaint as\npreviousConversation context, writes the corrected compileResult, updates goal.Steps.\nThen retry builder.validate against the corrected actions.",
           "actions": [
             {
               "module": "builder",
@@ -845,7 +797,7 @@
                 {
                   "name": "Actions",
                   "value": "%goal.Steps[step.Index].Actions%",
-                  "type": "list\u003Caction\u003E"
+                  "type": "list<action>"
                 }
               ],
               "defaults": null,
@@ -871,17 +823,12 @@
                           ]
                         }
                       ],
-                      "type": "list\u003Caction\u003E"
+                      "type": "list<action>"
                     },
                     {
                       "name": "RetryCount",
                       "value": 2,
                       "type": "int"
-                    },
-                    {
-                      "name": "Order",
-                      "value": "RetryFirst",
-                      "type": "errororder"
                     }
                   ],
                   "defaults": null,
@@ -891,49 +838,17 @@
             }
           ],
           "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
-          "formal": "builder.validate(Actions=%goal.Steps[step.Index].Actions%) | error.handle(Actions=[goal.call(GoalName={name:\u0022FixValidation\u0022})], RetryCount=2, Order=RetryFirst)",
+          "formal": "builder.validate(Actions=%goal.Steps[step.Index].Actions%) | error.handle(Actions=[goal.call(GoalName={name:\"FixValidation\"})], RetryCount=2)",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 15,
-          "text": "if %!build.summary% is true, call EmitSummary",
+          "text": "call EmitSummary",
           "lineNumber": 43,
           "indent": 0,
           "comment": null,
           "actions": [
-            {
-              "module": "condition",
-              "action": "if",
-              "parameters": [
-                {
-                  "name": "Left",
-                  "value": "%!build.summary%",
-                  "type": "object"
-                },
-                {
-                  "name": "Operator",
-                  "value": "==",
-                  "type": "operator"
-                },
-                {
-                  "name": "Right",
-                  "value": true,
-                  "type": "bool"
-                }
-              ],
-              "defaults": [
-                {
-                  "name": "negate",
-                  "value": false,
-                  "type": "bool"
-                }
-              ],
-              "modifiers": []
-            },
             {
               "module": "goal",
               "action": "call",
@@ -943,7 +858,7 @@
                   "value": {
                     "name": "EmitSummary",
                     "parallel": false,
-                    "parameters": null,
+                    "parameters": [],
                     "prPath": "/system/builder/BuildStep/.build/start.pr"
                   },
                   "type": "goal.call"
@@ -954,10 +869,7 @@
             }
           ],
           "intent": null,
-          "guidance": "If %!build.summary% is true, call EmitSummary.",
-          "level": "high",
-          "confidence": 90,
-          "formal": "condition.if(Left=%!build.summary%, Operator=\u0022==\u0022, Right=true), goal.call(GoalName={name:\u0022EmitSummary\u0022})",
+          "formal": "goal.call(GoalName={name:\"EmitSummary\"})",
           "source": null,
           "waitForExecution": true
         }
@@ -966,11 +878,11 @@
       "visibility": 0,
       "path": "/system/builder/BuildStep/Start.goal",
       "prPath": "/system/builder/BuildStep/.build/start.pr",
-      "hash": "7289b4d7723d18c539bbb4511e3414319c80dd98e711118c7622d1f39b2de747",
+      "hash": "4fb80a0684b4305b21f3ce8adddea9f9679b89941382c384360cb87a0bb4677d",
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
-      "isSystem": false,
+      "isSystem": true,
       "isTest": false,
       "inputParameters": null
     },
@@ -981,7 +893,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "llm.query Messages=%messages%, Schema={formal: string, actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}]}], errors?: [{key: string, message: string}]}, cache=%!build.cache%, on error call HandleStepFailure, write to %compileResult%",
+          "text": "llm.query Messages=%messages%, Schema={formal: string, actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}]}], confidence: string, explanation?: string, errors?: [{key: string, message: string}]}, cache=%!build.cache%, on error call HandleStepFailure, write to %compileResult%",
           "lineNumber": 47,
           "indent": 0,
           "comment": null,
@@ -993,7 +905,7 @@
                 {
                   "name": "Messages",
                   "value": "%messages%",
-                  "type": "list\u003Cllmmessage\u003E"
+                  "type": "list<llmmessage>"
                 },
                 {
                   "name": "Schema",
@@ -1018,6 +930,8 @@
                         ]
                       }
                     ],
+                    "confidence": "string",
+                    "explanation": "string",
                     "errors": [
                       {
                         "key": "string",
@@ -1025,7 +939,7 @@
                       }
                     ]
                   },
-                  "type": "dictionary\u00602"
+                  "type": "object"
                 },
                 {
                   "name": "Cache",
@@ -1075,14 +989,15 @@
                             {
                               "name": "GoalName",
                               "value": {
-                                "name": "HandleStepFailure"
+                                "name": "HandleStepFailure",
+                                "parameters": []
                               },
                               "type": "goal.call"
                             }
                           ]
                         }
                       ],
-                      "type": "list\u003Caction\u003E"
+                      "type": "list<action>"
                     }
                   ],
                   "defaults": null,
@@ -1103,6 +1018,11 @@
                   "name": "Value",
                   "value": "%!data%",
                   "type": "object"
+                },
+                {
+                  "name": "Type",
+                  "value": "json",
+                  "type": "string"
                 }
               ],
               "defaults": [
@@ -1116,16 +1036,13 @@
             }
           ],
           "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
-          "formal": "llm.query(Messages=%messages%, Schema={formal: string, actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}]}], errors?: [{key: string, message: string}]}, Cache=%!build.cache%) | error.handle(Actions=[goal.call(GoalName={name:\u0022HandleStepFailure\u0022})]) , variable.set(Name=%compileResult%, Value=%!data%, type=\u0022object\u0022)",
+          "formal": "llm.query(Messages=%messages%, Schema={formal: string, actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}]}], confidence: string, explanation?: string, errors?: [{key: string, message: string}]}, Cache=%!build.cache%) | error.handle(Actions=[goal.call(GoalName={name:\"HandleStepFailure\"})]), variable.set(Name=%compileResult%, Value=%!data%, type=\"object\")",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 1,
-          "text": "if %compileResult.errors[0].key% is \u0022missing-actions\u0022, throw error \u0022missing-actions: %compileResult.errors[0].message%\u0022 key=\u0022missing-actions\u0022",
+          "text": "if %compileResult.errors[0].key% is \"missing-actions\", throw error \"missing-actions: %compileResult.errors[0].message%\" key=\"missing-actions\"",
           "lineNumber": 48,
           "indent": 0,
           "comment": null,
@@ -1184,10 +1101,7 @@
             }
           ],
           "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
-          "formal": "condition.if(Left=%compileResult.errors[0].key%, Operator=\u0022==\u0022, Right=\u0022missing-actions\u0022), error.throw(Message=\u0022missing-actions: %compileResult.errors[0].message%\u0022, StatusCode=500, Key=\u0022missing-actions\u0022)",
+          "formal": "condition.if(Left=%compileResult.errors[0].key%, Operator=\"==\", Right=\"missing-actions\"), error.throw(Message=\"missing-actions: %compileResult.errors[0].message%\", StatusCode=500, Key=\"missing-actions\")",
           "source": null,
           "waitForExecution": true
         }
@@ -1196,11 +1110,11 @@
       "visibility": 0,
       "path": "/system/builder/BuildStep/Start.goal",
       "prPath": "/system/builder/BuildStep/.build/start.pr",
-      "hash": "44bccdeaf0a75bff82aef10a5ea7a42f3f932345fc31a551bec68b435e8b1c4e",
+      "hash": "78a12eed86efe8e863339a3ee7d8ab3540da6cd5d585ba4b4c5cf82dcc99e86a",
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
-      "isSystem": false,
+      "isSystem": true,
       "isTest": false,
       "inputParameters": null
     },
@@ -1211,10 +1125,10 @@
       "steps": [
         {
           "index": 0,
-          "text": "set %complaint% = \u0022Compiler returned missing-actions for step %step.Index% (text: \u0027%step.Text%\u0027). Current action set is insufficient: %planStep.actions%. Reason: %!error.Message%. Return a corrected action set for step %step.Index% only.\u0022, type=string",
+          "text": "set %complaint% = \"Compiler returned missing-actions for step %step.Index% (text: '%step.Text%'). Current action set is insufficient: %planStep.actions%. Reason: %!error.Message%. Return a corrected action set for step %step.Index% only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) \u2014 recovery confidence matters because it tells the dev whether even the correction is a guess.\", type=string",
           "lineNumber": 53,
           "indent": 0,
-          "comment": "Planner continuation: hand the LLM the compiler\u0027s complaint, get an expanded action set.",
+          "comment": "Planner continuation: hand the LLM the compiler's complaint, get an expanded action set.",
           "actions": [
             {
               "module": "variable",
@@ -1227,7 +1141,7 @@
                 },
                 {
                   "name": "Value",
-                  "value": "Compiler returned missing-actions for step %step.Index% (text: \u0027%step.Text%\u0027). Current action set is insufficient: %planStep.actions%. Reason: %!error.Message%. Return a corrected action set for step %step.Index% only.",
+                  "value": "Compiler returned missing-actions for step %step.Index% (text: '%step.Text%'). Current action set is insufficient: %planStep.actions%. Reason: %!error.Message%. Return a corrected action set for step %step.Index% only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) \u2014 recovery confidence matters because it tells the dev whether even the correction is a guess.",
                   "type": "string"
                 },
                 {
@@ -1247,16 +1161,13 @@
             }
           ],
           "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
-          "formal": "variable.set(Name=%complaint%, Value=\u0022Compiler returned missing-actions for step %step.Index% (text: \u0027%step.Text%\u0027). Current action set is insufficient: %planStep.actions%. Reason: %!error.Message%. Return a corrected action set for step %step.Index% only.\u0022, Type=string)",
+          "formal": "variable.set(Name=%complaint%, Value=\"Compiler returned missing-actions for step %step.Index% (text: '%step.Text%'). Current action set is insufficient: %planStep.actions%. Reason: %!error.Message%. Return a corrected action set for step %step.Index% only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) \u2014 recovery confidence matters because it tells the dev whether even the correction is a guess.\", Type=string)",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 1,
-          "text": "set %refineMessages% = [{\u0022Role\u0022:\u0022user\u0022, \u0022Content\u0022:\u0022%complaint%\u0022}], type=json",
+          "text": "set %refineMessages% = [{\"Role\":\"user\", \"Content\":\"%complaint%\"}], type=json",
           "lineNumber": 54,
           "indent": 0,
           "comment": null,
@@ -1278,7 +1189,7 @@
                       "Content": "%complaint%"
                     }
                   ],
-                  "type": "list\u00601"
+                  "type": "list`1"
                 },
                 {
                   "name": "Type",
@@ -1297,16 +1208,13 @@
             }
           ],
           "intent": null,
-          "guidance": "Build %refineMessages% as a JSON array containing a single user message with the complaint content.",
-          "level": "high",
-          "confidence": 90,
-          "formal": "variable.set(Name=%refineMessages%, Value=[{\u0022Role\u0022:\u0022user\u0022,\u0022Content\u0022:\u0022%complaint%\u0022}], Type=json)",
+          "formal": "variable.set(Name=%refineMessages%, Value=[{\"Role\":\"user\",\"Content\":\"%complaint%\"}], Type=json)",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 2,
-          "text": "llm.query Messages=%refineMessages%, Schema={index: int, actions: [string]}, cache=%!build.cache%, previousConversation=%plan%, write to %correction%",
+          "text": "llm.query Messages=%refineMessages%, Schema={index: int, actions: [string], confidence: string, explanation?: string}, cache=%!build.cache%, previousConversation=%plan%, write to %correction%",
           "lineNumber": 55,
           "indent": 0,
           "comment": null,
@@ -1318,17 +1226,25 @@
                 {
                   "name": "Messages",
                   "value": "%refineMessages%",
-                  "type": "list\u003Cllmmessage\u003E"
+                  "type": "list<llmmessage>"
                 },
                 {
                   "name": "Schema",
                   "value": {
-                    "index": "int",
-                    "actions": [
-                      "string"
-                    ]
+                    "index": {
+                      "type": "int"
+                    },
+                    "actions": {
+                      "type": "list<string>"
+                    },
+                    "confidence": {
+                      "type": "string"
+                    },
+                    "explanation?": {
+                      "type": "string"
+                    }
                   },
-                  "type": "dictionary\u00602"
+                  "type": "dictionary`2"
                 },
                 {
                   "name": "Cache",
@@ -1378,6 +1294,11 @@
                   "name": "Value",
                   "value": "%!data%",
                   "type": "object"
+                },
+                {
+                  "name": "Type",
+                  "value": "json",
+                  "type": "string"
                 }
               ],
               "defaults": [
@@ -1391,10 +1312,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Call llm.query with Messages=%refineMessages%, Schema={index:int, formal:string}, previousConversation=%plan%, and cache=%!build.cache%. Store the response into %correction%.",
-          "level": "medium",
-          "confidence": 60,
-          "formal": "llm.query(Messages=%refineMessages%, Schema={index: int, actions: [string]}, Cache=%!build.cache%, ContinuePreviousConversation=%plan%) , variable.set(Name=%correction%, Value=%!data%, type=object)",
+          "formal": "llm.query(Messages=%refineMessages%, Schema={index: int, actions: [string], confidence: string, explanation?: string}, Cache=%!build.cache%, ContinuePreviousConversation=%plan%) , variable.set(Name=%correction%, Value=%!data%, Type=string)",
           "source": null,
           "waitForExecution": true
         },
@@ -1421,7 +1339,7 @@
                 },
                 {
                   "name": "Type",
-                  "value": "object",
+                  "value": "json",
                   "type": "string"
                 }
               ],
@@ -1436,10 +1354,7 @@
             }
           ],
           "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
-          "formal": "variable.set(Name=%planStep.actions%, Value=%correction%, Type=object)",
+          "formal": "variable.set(Name=%planStep.actions%, Value=%correction%, Type=json)",
           "source": null,
           "waitForExecution": true
         },
@@ -1462,104 +1377,7 @@
                 {
                   "name": "Value",
                   "value": "%correction%",
-                  "type": "object"
-                },
-                {
-                  "name": "Type",
-                  "value": "object",
-                  "type": "string"
-                }
-              ],
-              "defaults": [
-                {
-                  "name": "asdefault",
-                  "value": false,
-                  "type": "bool"
-                }
-              ],
-              "modifiers": []
-            }
-          ],
-          "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
-          "formal": "variable.set(Name=%trace.plan.steps[step.Index].actions%, Value=%correction%, Type=object)",
-          "source": null,
-          "waitForExecution": true
-        },
-        {
-          "index": 5,
-          "text": "write out \u0022  Step %step.Index% missing-actions \u2014 expanding set\u0022",
-          "lineNumber": 58,
-          "indent": 0,
-          "comment": null,
-          "actions": [
-            {
-              "module": "output",
-              "action": "write",
-              "parameters": [
-                {
-                  "name": "Data",
-                  "value": "  Step %step.Index% missing-actions \u2014 expanding set",
-                  "type": "tstring"
-                }
-              ],
-              "defaults": null,
-              "modifiers": []
-            }
-          ],
-          "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
-          "formal": "output.write(Data=\u0022  Step %step.Index% missing-actions \u2014 expanding set\u0022)",
-          "source": null,
-          "waitForExecution": true
-        }
-      ],
-      "goals": [],
-      "visibility": 0,
-      "path": "/system/builder/BuildStep/Start.goal",
-      "prPath": "/system/builder/BuildStep/.build/start.pr",
-      "hash": "d549e672eb3ee7df8ab91872502e32c4ed011b86b30391b53f4ab8e9401e6238",
-      "builderVersion": null,
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": false,
-      "isTest": false,
-      "inputParameters": null
-    },
-    {
-      "name": "FixValidation",
-      "description": null,
-      "comment": null,
-      "steps": [
-        {
-          "index": 0,
-          "text": "set %fixMessages% = [{\u0022Role\u0022:\u0022user\u0022, \u0022Content\u0022:\u0022Your previous response was rejected by the validator: %!error.Message%\\n\\nReturn the corrected response in the same Output Shape (formal, actions, errors, warnings) for this step only.\u0022}], type=json",
-          "lineNumber": 65,
-          "indent": 0,
-          "comment": "Validator rejected the compiled actions. Re-prompt the LLM with the validator\u0027s\ncomplaint, write corrected compileResult, update goal.Steps so the subsequent retry\nof builder.validate sees the corrected actions.",
-          "actions": [
-            {
-              "module": "variable",
-              "action": "set",
-              "parameters": [
-                {
-                  "name": "Name",
-                  "value": "%fixMessages%",
-                  "type": "variable"
-                },
-                {
-                  "name": "Value",
-                  "value": [
-                    {
-                      "Role": "user",
-                      "Content": "Your previous response was rejected by the validator: %!error.Message%\n\nReturn the corrected response in the same Output Shape (formal, actions, errors, warnings) for this step only."
-                    }
-                  ],
-                  "type": "list\u00601"
+                  "type": "json"
                 },
                 {
                   "name": "Type",
@@ -1578,16 +1396,120 @@
             }
           ],
           "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
-          "formal": "variable.set(Name=%fixMessages%, Value=[{\u0022Role\u0022:\u0022user\u0022,\u0022Content\u0022:\u0022Your previous response was rejected by the validator: %!error.Message%\\n\\nReturn the corrected response in the same Output Shape (formal, actions, errors, warnings) for this step only.\u0022}], Type=json)",
+          "formal": "variable.set(Name=%trace.plan.steps[step.Index].actions%, Value=%correction%, Type=json)",
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 5,
+          "text": "call /system/builder/EmitBuildEvent kind=\"step-missing-actions\", step=%step%",
+          "lineNumber": 58,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "goal",
+              "action": "call",
+              "parameters": [
+                {
+                  "name": "GoalName",
+                  "value": {
+                    "name": "/system/builder/EmitBuildEvent",
+                    "parallel": false,
+                    "parameters": [
+                      {
+                        "name": "kind",
+                        "value": "step-missing-actions",
+                        "type": "string"
+                      },
+                      {
+                        "name": "step",
+                        "value": "%step%",
+                        "type": "string"
+                      }
+                    ],
+                    "prPath": "/system/builder/.build/emitbuildevent.pr"
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "formal": "goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[{name:\"kind\", value:\"step-missing-actions\", type:\"string\"}, {name:\"step\", value:\"%step%\", type:\"string\"}]})",
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/system/builder/BuildStep/Start.goal",
+      "prPath": "/system/builder/BuildStep/.build/start.pr",
+      "hash": "951aaf6739765f8349242e6dfe31a15bfd01876cc98e569950e9f750fc3d2bcd",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": true,
+      "isTest": false,
+      "inputParameters": null
+    },
+    {
+      "name": "FixValidation",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "set %fixMessages% = [{\"Role\":\"user\", \"Content\":\"Your previous response was rejected by the validator: %!error.Message%\\n\\nReturn the corrected response in the same Output Shape (formal, actions, confidence, explanation, errors, warnings) for this step only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) \u2014 recovery confidence matters because it tells the dev whether even the correction is a guess.\"}], type=json",
+          "lineNumber": 65,
+          "indent": 0,
+          "comment": "Validator rejected the compiled actions. Re-prompt the LLM with the validator's\ncomplaint, write corrected compileResult, update goal.Steps so the subsequent retry\nof builder.validate sees the corrected actions.",
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%fixMessages%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": [
+                    {
+                      "Role": "user",
+                      "Content": "Your previous response was rejected by the validator: %!error.Message%\n\nReturn the corrected response in the same Output Shape (formal, actions, confidence, explanation, errors, warnings) for this step only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) \u2014 recovery confidence matters because it tells the dev whether even the correction is a guess."
+                    }
+                  ],
+                  "type": "list`1"
+                },
+                {
+                  "name": "Type",
+                  "value": "json",
+                  "type": "string"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "formal": "variable.set(Name=%fixMessages%, Value=[{\"Role\":\"user\",\"Content\":\"Your previous response was rejected by the validator: %!error.Message%\\n\\nReturn the corrected response in the same Output Shape (formal, actions, confidence, explanation, errors, warnings) for this step only. Include `confidence` (VeryHigh|High|Medium|Low|VeryLow) and `explanation` (one short sentence when confidence is Medium or below) \u2014 recovery confidence matters because it tells the dev whether even the correction is a guess.\"}], Type=json)",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 1,
-          "text": "llm.query Messages=%fixMessages%, Schema={formal: string, actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], modifiers?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}]}], errors?: [{key: string, message: string}]}], errors?: [{key: string, message: string}]}, cache=%!build.cache%, previousConversation=%compileResult%, write to %compileResult%",
+          "text": "llm.query Messages=%fixMessages%, Schema={formal: string, actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], modifiers?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}]}], errors?: [{key: string, message: string}]}], confidence: string, explanation?: string, errors?: [{key: string, message: string}]}, cache=%!build.cache%, previousConversation=%compileResult%, write to %compileResult%",
           "lineNumber": 66,
           "indent": 0,
           "comment": null,
@@ -1599,7 +1521,7 @@
                 {
                   "name": "Messages",
                   "value": "%fixMessages%",
-                  "type": "list\u003Cllmmessage\u003E"
+                  "type": "list<llmmessage>"
                 },
                 {
                   "name": "Schema",
@@ -1637,6 +1559,8 @@
                         ]
                       }
                     ],
+                    "confidence": "string",
+                    "explanation": "string",
                     "errors": [
                       {
                         "key": "string",
@@ -1644,7 +1568,7 @@
                       }
                     ]
                   },
-                  "type": "dictionary\u00602"
+                  "type": "dictionary`2"
                 },
                 {
                   "name": "Cache",
@@ -1653,7 +1577,7 @@
                 },
                 {
                   "name": "ContinuePreviousConversation",
-                  "value": "%compileResult%",
+                  "value": true,
                   "type": "bool"
                 }
               ],
@@ -1679,21 +1603,7 @@
                   "type": "int"
                 }
               ],
-              "modifiers": [
-                {
-                  "module": "cache",
-                  "action": "wrap",
-                  "parameters": [
-                    {
-                      "name": "DurationMs",
-                      "value": "%!build.cache%",
-                      "type": "long"
-                    }
-                  ],
-                  "defaults": null,
-                  "modifiers": []
-                }
-              ]
+              "modifiers": []
             },
             {
               "module": "variable",
@@ -1708,6 +1618,11 @@
                   "name": "Value",
                   "value": "%!data%",
                   "type": "object"
+                },
+                {
+                  "name": "Type",
+                  "value": "json",
+                  "type": "string"
                 }
               ],
               "defaults": [
@@ -1721,10 +1636,7 @@
             }
           ],
           "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
-          "formal": "llm.query(Messages=%fixMessages%, Schema={formal: string, actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], modifiers?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}]}], errors?: [{key: string, message: string}]}], errors?: [{key: string, message: string}]}, Cache=%!build.cache%, ContinuePreviousConversation=%compileResult%) | variable.set(Name=%compileResult%, Value=%!data%)",
+          "formal": "llm.query(Messages=%fixMessages%, Schema={formal: string, actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], modifiers?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}]}], errors?: [{key: string, message: string}]}], confidence: string, explanation?: string, errors?: [{key: string, message: string}]}, Cache=%!build.cache%, ContinuePreviousConversation=true) , variable.set(Name=%compileResult%, Value=%!data%, type=object)",
           "source": null,
           "waitForExecution": true
         },
@@ -1748,6 +1660,11 @@
                   "name": "Value",
                   "value": "%compileResult.actions%",
                   "type": "object"
+                },
+                {
+                  "name": "Type",
+                  "value": "json",
+                  "type": "string"
                 }
               ],
               "defaults": [
@@ -1761,10 +1678,7 @@
             }
           ],
           "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
-          "formal": "variable.set(Name=%goal.Steps[step.Index].Actions%, Value=%compileResult.actions%, Type=object)",
+          "formal": "variable.set(Name=%goal.Steps[step.Index].Actions%, Value=%compileResult.actions%, Type=json)",
           "source": null,
           "waitForExecution": true
         },
@@ -1788,6 +1702,11 @@
                   "name": "Value",
                   "value": "%compileResult.formal%",
                   "type": "object"
+                },
+                {
+                  "name": "Type",
+                  "value": "object",
+                  "type": "string"
                 }
               ],
               "defaults": [
@@ -1801,28 +1720,46 @@
             }
           ],
           "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
           "formal": "variable.set(Name=%goal.Steps[step.Index].Formal%, Value=%compileResult.formal%, Type=object)",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 4,
-          "text": "write out \u0022  Step %step.Index% validation error \u2014 retrying: %!error.Message%\u0022",
+          "text": "call /system/builder/EmitBuildEvent kind=\"step-validation-error\", step=%step%, errorMessage=%!error.Message%",
           "lineNumber": 69,
           "indent": 0,
           "comment": null,
           "actions": [
             {
-              "module": "output",
-              "action": "write",
+              "module": "goal",
+              "action": "call",
               "parameters": [
                 {
-                  "name": "Data",
-                  "value": "  Step %step.Index% validation error \u2014 retrying: %!error.Message%",
-                  "type": "tstring"
+                  "name": "GoalName",
+                  "value": {
+                    "name": "/system/builder/EmitBuildEvent",
+                    "parallel": false,
+                    "parameters": [
+                      {
+                        "name": "kind",
+                        "value": "step-validation-error",
+                        "type": "string"
+                      },
+                      {
+                        "name": "step",
+                        "value": "%step%",
+                        "type": "string"
+                      },
+                      {
+                        "name": "errorMessage",
+                        "value": "%!error.Message%",
+                        "type": "string"
+                      }
+                    ],
+                    "prPath": "/system/builder/.build/emitbuildevent.pr"
+                  },
+                  "type": "goal.call"
                 }
               ],
               "defaults": null,
@@ -1830,10 +1767,7 @@
             }
           ],
           "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
-          "formal": "output.write(Data=\u0022  Step %step.Index% validation error \u2014 retrying: %!error.Message%\u0022)",
+          "formal": "goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[{name:\"kind\", value:\"step-validation-error\", type:\"string\"},{name:\"step\", value:\"%step%\", type:\"string\"},{name:\"errorMessage\", value\":\"%!error.Message%\", type:\"string\"}]})",
           "source": null,
           "waitForExecution": true
         }
@@ -1842,11 +1776,11 @@
       "visibility": 0,
       "path": "/system/builder/BuildStep/Start.goal",
       "prPath": "/system/builder/BuildStep/.build/start.pr",
-      "hash": "a7c1a0dfefb23680d0103b4aa7bd1feeec845a1b1d5a06234de5e61e2e3f91dc",
+      "hash": "e6475f439f274c8780bf3bd007a756f41c34d0d2e81cce62076bf2888e8d5788",
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
-      "isSystem": false,
+      "isSystem": true,
       "isTest": false,
       "inputParameters": null
     },
@@ -1857,30 +1791,13 @@
       "steps": [
         {
           "index": 0,
-          "text": "write out \u0022  Step %step.Index% build error: %!error.Message%\u0022",
+          "text": "call /system/builder/EmitBuildEvent kind=\"step-build-error\", step=%step%, errorMessage=%!error.Message%",
           "lineNumber": 73,
           "indent": 0,
           "comment": null,
-          "actions": [
-            {
-              "module": "output",
-              "action": "write",
-              "parameters": [
-                {
-                  "name": "Data",
-                  "value": "  Step %step.Index% build error: %!error.Message%",
-                  "type": "tstring"
-                }
-              ],
-              "defaults": null,
-              "modifiers": []
-            }
-          ],
+          "actions": [],
           "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
-          "formal": "output.write(Data=\u0022  Step %step.Index% build error: %!error.Message%\u0022)",
+          "formal": "event.on(Type=OnError, GoalToCall=%!error.Message%)",
           "source": null,
           "waitForExecution": true
         },
@@ -1911,9 +1828,6 @@
             }
           ],
           "intent": null,
-          "guidance": "throw the error object using error.throw. The step text indicates throwing %!error% directly.",
-          "level": "high",
-          "confidence": 90,
           "formal": "error.throw(Message=%!error%, StatusCode=500)",
           "source": null,
           "waitForExecution": true
@@ -1923,11 +1837,11 @@
       "visibility": 0,
       "path": "/system/builder/BuildStep/Start.goal",
       "prPath": "/system/builder/BuildStep/.build/start.pr",
-      "hash": "df1b58d704d41aa9384673e3f597575ef3519b9c703eafd7b1c84ee1fd5f3d47",
+      "hash": "0cdaec28289b979c7ab0f2837c4906267fdaeef3020bf0e4313e925c096ea937",
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
-      "isSystem": false,
+      "isSystem": true,
       "isTest": false,
       "inputParameters": null
     },
@@ -1938,10 +1852,10 @@
       "steps": [
         {
           "index": 0,
-          "text": "if %compileResult.Cached% is true, output.write Data=\u0022  [\u2261] %step.Text%\u0022,",
-          "lineNumber": 79,
+          "text": "if %compileResult.Cached% is true, call /system/builder/EmitBuildEvent kind=\"step-cached\", step=%step%",
+          "lineNumber": 81,
           "indent": 0,
-          "comment": "One line per step. [\u2261] for cache hits, [\u2713] for fresh.",
+          "comment": "Per-step build summary line, plus a warning line when either the planner or\nthe compiler reported Low / VeryLow confidence (LLM had to settle for a\nfallback action or guess a mapping \u2014 the dev should see it at build time).",
           "actions": [
             {
               "module": "condition",
@@ -1960,7 +1874,7 @@
                 {
                   "name": "Right",
                   "value": true,
-                  "type": "bool"
+                  "type": "object"
                 }
               ],
               "defaults": [
@@ -1973,13 +1887,29 @@
               "modifiers": []
             },
             {
-              "module": "output",
-              "action": "write",
+              "module": "goal",
+              "action": "call",
               "parameters": [
                 {
-                  "name": "Data",
-                  "value": "  [\u2261] %step.Text%",
-                  "type": "tstring"
+                  "name": "GoalName",
+                  "value": {
+                    "name": "/system/builder/EmitBuildEvent",
+                    "parallel": false,
+                    "parameters": [
+                      {
+                        "name": "kind",
+                        "value": "step-cached",
+                        "type": "string"
+                      },
+                      {
+                        "name": "step",
+                        "value": "%step%",
+                        "type": "string"
+                      }
+                    ],
+                    "prPath": "/system/builder/.build/emitbuildevent.pr"
+                  },
+                  "type": "goal.call"
                 }
               ],
               "defaults": null,
@@ -1987,35 +1917,69 @@
             }
           ],
           "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
-          "formal": "condition.if(Left=%compileResult.Cached%, Operator=\u0022==\u0022, Right=true), output.write(Data=\u0022  [\u2261] %step.Text%\u0022)",
+          "formal": "condition.if(Left=%compileResult.Cached%, Operator=\"==\", Right=true), goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[{name:\"kind\", value:\"step-cached\", type:\"string\"},{name:\"step\", value:\"%step%\", type:\"string\"}]})",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 1,
-          "text": "if %compileResult.Cached% is not true, output.write Data=\u0022  [\u2713] %step.Text%\u0022,",
-          "lineNumber": 80,
+          "text": "if %compileResult.Cached% is not true, call /system/builder/EmitBuildEvent kind=\"step-fresh\", step=%step%",
+          "lineNumber": 82,
           "indent": 0,
           "comment": null,
           "actions": [
             {
               "module": "condition",
-              "action": "else",
-              "parameters": [],
+              "action": "if",
+              "parameters": [
+                {
+                  "name": "Left",
+                  "value": "%compileResult.Cached%",
+                  "type": "object"
+                },
+                {
+                  "name": "Operator",
+                  "value": "==",
+                  "type": "operator"
+                },
+                {
+                  "name": "Right",
+                  "value": true,
+                  "type": "object"
+                },
+                {
+                  "name": "Negate",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
               "defaults": null,
               "modifiers": []
             },
             {
-              "module": "output",
-              "action": "write",
+              "module": "goal",
+              "action": "call",
               "parameters": [
                 {
-                  "name": "Data",
-                  "value": "  [\u2713] %step.Text%",
-                  "type": "tstring"
+                  "name": "GoalName",
+                  "value": {
+                    "name": "/system/builder/EmitBuildEvent",
+                    "parallel": false,
+                    "parameters": [
+                      {
+                        "name": "kind",
+                        "value": "step-fresh",
+                        "type": "string"
+                      },
+                      {
+                        "name": "step",
+                        "value": "%step%",
+                        "type": "string"
+                      }
+                    ],
+                    "prPath": "/system/builder/.build/emitbuildevent.pr"
+                  },
+                  "type": "goal.call"
                 }
               ],
               "defaults": null,
@@ -2023,10 +1987,291 @@
             }
           ],
           "intent": null,
-          "guidance": null,
-          "level": null,
-          "confidence": null,
-          "formal": "condition.else(), output.write(Data=\u0022  [\u2713] %step.Text%\u0022)",
+          "formal": "condition.if(Left=%compileResult.Cached%, Operator=\"==\", Right=true, Negate=true), goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[{name:\"kind\", value:\"step-fresh\", type:\"string\"},{name:\"step\", value:\"%step%\", type:\"string\"}]})",
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "if %planStep.confidence% is \"Low\", call /system/builder/EmitBuildEvent kind=\"confidence-warning-planner\", planStep=%planStep%",
+          "lineNumber": 83,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "condition",
+              "action": "if",
+              "parameters": [
+                {
+                  "name": "Left",
+                  "value": "%planStep.confidence%",
+                  "type": "object"
+                },
+                {
+                  "name": "Operator",
+                  "value": "==",
+                  "type": "operator"
+                },
+                {
+                  "name": "Right",
+                  "value": "Low",
+                  "type": "object"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "negate",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            },
+            {
+              "module": "goal",
+              "action": "call",
+              "parameters": [
+                {
+                  "name": "GoalName",
+                  "value": {
+                    "name": "/system/builder/EmitBuildEvent",
+                    "parallel": false,
+                    "parameters": [
+                      {
+                        "name": "kind",
+                        "value": "confidence-warning-planner",
+                        "type": "string"
+                      },
+                      {
+                        "name": "planStep",
+                        "value": "%planStep%",
+                        "type": "string"
+                      }
+                    ],
+                    "prPath": "/system/builder/.build/emitbuildevent.pr"
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "formal": "condition.if(Left=%planStep.confidence%, Operator=\"==\", Right=\"Low\"), goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[{name:\"kind\", value:\"confidence-warning-planner\", type:\"string\"},{name:\"planStep\", value:\"%planStep%\", type:\"object\"}]})",
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 3,
+          "text": "if %planStep.confidence% is \"VeryLow\", call /system/builder/EmitBuildEvent kind=\"confidence-warning-planner\", planStep=%planStep%",
+          "lineNumber": 84,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "condition",
+              "action": "if",
+              "parameters": [
+                {
+                  "name": "Left",
+                  "value": "%planStep.confidence%",
+                  "type": "object"
+                },
+                {
+                  "name": "Operator",
+                  "value": "==",
+                  "type": "operator"
+                },
+                {
+                  "name": "Right",
+                  "value": "VeryLow",
+                  "type": "object"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "negate",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            },
+            {
+              "module": "goal",
+              "action": "call",
+              "parameters": [
+                {
+                  "name": "GoalName",
+                  "value": {
+                    "name": "/system/builder/EmitBuildEvent",
+                    "parallel": false,
+                    "parameters": [
+                      {
+                        "name": "kind",
+                        "value": "confidence-warning-planner",
+                        "type": "string"
+                      },
+                      {
+                        "name": "planStep",
+                        "value": "%planStep%",
+                        "type": "string"
+                      }
+                    ],
+                    "prPath": "/system/builder/.build/emitbuildevent.pr"
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "formal": "condition.if(Left=%planStep.confidence%, Operator=\"==\", Right=\"VeryLow\"), goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[{name:\"kind\", value:\"confidence-warning-planner\", type:\"string\"},{name:\"planStep\", value:\"%planStep%\", type:\"object\"}]})",
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 4,
+          "text": "if %compileResult.confidence% is \"Low\", call /system/builder/EmitBuildEvent kind=\"confidence-warning-compiler\", compileResult=%compileResult%",
+          "lineNumber": 85,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "condition",
+              "action": "if",
+              "parameters": [
+                {
+                  "name": "Left",
+                  "value": "%compileResult.confidence%",
+                  "type": "object"
+                },
+                {
+                  "name": "Operator",
+                  "value": "==",
+                  "type": "operator"
+                },
+                {
+                  "name": "Right",
+                  "value": "Low",
+                  "type": "object"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "negate",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            },
+            {
+              "module": "goal",
+              "action": "call",
+              "parameters": [
+                {
+                  "name": "GoalName",
+                  "value": {
+                    "name": "/system/builder/EmitBuildEvent",
+                    "parallel": false,
+                    "parameters": [
+                      {
+                        "name": "kind",
+                        "value": "confidence-warning-compiler",
+                        "type": "string"
+                      },
+                      {
+                        "name": "compileResult",
+                        "value": "%compileResult%",
+                        "type": "string"
+                      }
+                    ],
+                    "prPath": "/system/builder/.build/emitbuildevent.pr"
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "formal": "condition.if(Left=%compileResult.confidence%, Operator=\"==\", Right=\"Low\"), goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[{name:\"kind\", value:\"confidence-warning-compiler\", type:\"string\"},{name:\"compileResult\", value:\"%compileResult%\", type:\"object\"}]})",
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 5,
+          "text": "if %compileResult.confidence% is \"VeryLow\", call /system/builder/EmitBuildEvent kind=\"confidence-warning-compiler\", compileResult=%compileResult%",
+          "lineNumber": 86,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "condition",
+              "action": "if",
+              "parameters": [
+                {
+                  "name": "Left",
+                  "value": "%compileResult.confidence%",
+                  "type": "object"
+                },
+                {
+                  "name": "Operator",
+                  "value": "==",
+                  "type": "operator"
+                },
+                {
+                  "name": "Right",
+                  "value": "VeryLow",
+                  "type": "object"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "negate",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            },
+            {
+              "module": "goal",
+              "action": "call",
+              "parameters": [
+                {
+                  "name": "GoalName",
+                  "value": {
+                    "name": "/system/builder/EmitBuildEvent",
+                    "parallel": false,
+                    "parameters": [
+                      {
+                        "name": "kind",
+                        "value": "confidence-warning-compiler",
+                        "type": "string"
+                      },
+                      {
+                        "name": "compileResult",
+                        "value": "%compileResult%",
+                        "type": "string"
+                      }
+                    ],
+                    "prPath": "/system/builder/.build/emitbuildevent.pr"
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "formal": "condition.if(Left=%compileResult.confidence%, Operator=\"==\", Right=\"VeryLow\"), goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[{name:\"kind\", value:\"confidence-warning-compiler\", type:\"string\"},{name:\"compileResult\", value:\"%compileResult%\", type:\"object\"}]})",
           "source": null,
           "waitForExecution": true
         }
@@ -2035,11 +2280,11 @@
       "visibility": 0,
       "path": "/system/builder/BuildStep/Start.goal",
       "prPath": "/system/builder/BuildStep/.build/start.pr",
-      "hash": "e077552ee659d8fe554f00f80dd3ae9b9a6bb70feed9f07effa85d4db8719be3",
+      "hash": "86ddd2a4906bf1d6ab75268e1d4c914e821e93e73d6ed600dbe6d50385c8f760",
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
-      "isSystem": false,
+      "isSystem": true,
       "isTest": false,
       "inputParameters": null
     }
@@ -2051,7 +2296,7 @@
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
-  "isSystem": false,
+  "isSystem": true,
   "isTest": false,
   "inputParameters": null
 }

@@ -17,18 +17,18 @@ public sealed class GoalCall : modules.IEvent
     public modules.EventContext? Event { get; set; }
 
     /// <summary>Goal name to call (e.g., "ProcessData", "Setup/Init").</summary>
-    [Store, LlmBuilder]
+    [Store, LlmBuilder, Out]
     public string Name { get; init; } = "";
 
     /// <summary>Whether this tool is safe for concurrent execution. Default false.</summary>
-    [Store, LlmBuilder]
+    [Store, LlmBuilder, Out]
     public bool Parallel { get; init; }
 
     /// <summary>Parameters to pass to the goal, each as a named Data value.</summary>
-    [Store, LlmBuilder]
+    [Store, LlmBuilder, Out]
     public List<data.@this>? Parameters { get; set; }
     /// <summary>Pre-resolved .pr file path. Null when the goal name contains %variables%.</summary>
-    [Store]
+    [Store, Out]
     public global::app.types.path.@this? PrPath { get; set; }
 
     /// <summary>The action this GoalCall originated from. Set during parameter resolution.</summary>

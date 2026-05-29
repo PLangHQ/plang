@@ -8,7 +8,7 @@ namespace app.modules;
 /// <see cref="app.channels.@this.Resolve"/> on the current actor's Channels, and
 /// injects the resolved <see cref="app.channels.channel.@this"/> instance here.
 ///
-/// Actions navigate: Channel.WriteAsync(envelope) / Channel.Ask(prompt) / etc.
+/// Actions navigate: Channel.WriteAsync(data) / Channel.Ask(prompt) / etc.
 /// </summary>
 public interface IChannel
 {

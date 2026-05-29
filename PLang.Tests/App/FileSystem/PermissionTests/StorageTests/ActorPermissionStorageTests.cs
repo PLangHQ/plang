@@ -52,11 +52,11 @@ public class ActorPermissionStorageTests
     [Test] public async Task TwoHomes_InMemoryGrant_AndPersistedGrant_FindReturnsCorrectOne_AndRoutingHonoured()
     {
         var app = NewApp();
-        // In-memory grant for /mem (unsigned → session, no RawSignature)
+        // In-memory grant for /mem (unsigned → session, no Signature)
         var memGrant = Grant(app, app.User.Name, "/mem");
         await app.User.Permission.Add(memGrant);
 
-        // Persisted grant for /disk (signed → sqlite, RawSignature set)
+        // Persisted grant for /disk (signed → sqlite, Signature set)
         var diskGrant = Grant(app, app.User.Name, "/disk");
         diskGrant.EnsureSigned();
         await app.User.Permission.Add(diskGrant);

@@ -393,7 +393,7 @@ See `PLang/app/modules/error/handle.cs` for the implementation.
 
 **Why this matters:** `Data` has `Error`, `Success`, `Error.Key`, `Error.StatusCode` built in. Returning `null` from a `Data?` method loses information — the caller can't distinguish "not found" from "depth exceeded" or "permission denied." Use `Data.FromError` so the error travels through the normal pipeline with a clear key and status code.
 
-**When a throw converts to Data.FromError:** Methods like `RehydrateNestedData` throw because they're called inside `Decompress()` which has a try/catch that converts exceptions to `Data.FromError`. The throw propagates up to the nearest Data-returning boundary. This is fine — just make sure that boundary exists.
+**When a throw converts to Data.FromError:** A method deep inside a Data-returning boundary may throw freely as long as the boundary's try/catch converts to `Data.FromError`. `Decompress()` is the canonical example — it routes through the `application/plang` serializer (which itself returns `Data`) and wraps `InvalidDataException` / `JsonException` into `Data.FromError`. The throw propagates up to the nearest Data-returning boundary. This is fine — just make sure that boundary exists. (Historical note: an earlier `RehydrateNestedData` walk illustrated the same pattern; it was deleted on `data-serialize-cleanup` when Compress/Decompress flattened — the discipline is unchanged.)
 
 ---
 
@@ -474,11 +474,54 @@ Several subsystems have resource limits to prevent abuse:
 
 The `[Sensitive]` attribute (defined in `app/View.cs`) marks properties that contain secret data (e.g., `IdentityData.PrivateKey`). It controls a two-mode serialization split:
 
-- **Output serialization** (JsonStreamSerializer, Data.Envelope Compress): `SensitivePropertyFilter` strips `[Sensitive]` properties. Private keys never leak through channels, API responses, or compressed payloads.
+- **Output serialization** (the `application/plang` wire serializer + `Data.Transport.Compress`): `Sensitive.Strip` (composed onto the merged serializer's options chain) drops `[Sensitive]` properties. Private keys never leak through channels, API responses, or compressed payloads.
 - **Storage serialization** (raw JsonSerializer via DataSource): Filter is NOT applied. Private keys persist in SQLite.
 - **Code-level access**: Unaffected. `%MyIdentity.PrivateKey%` in PLang code resolves normally — the attribute only controls serialization.
 
-The filter is always-on — it's wired into both `JsonStreamSerializer`'s default options and `Data.Envelope`'s `_envelopeJsonOptions`. No opt-in required. Any new type with `[Sensitive]` properties is automatically filtered.
+The filter is always-on — `application/plang` composes it directly onto its STJ options alongside `Transport.ForOutbound` (and `Compress` routes through the same registered serializer). No opt-in required. Any new type with `[Sensitive]` properties is automatically filtered.
+
+---
+
+## Domain types ride the wire as property bags, not bespoke JSON converters
+
+**Rule.** A new C# type that needs to ship through the `application/plang`
+wire serializer does **not** get a custom `JsonConverter`. It gets `[Out]`
+on each property that should ship, and `Normalize` does the rest — the
+type is decomposed into `{name, type, value}` child Datas for each tagged
+property, and `json.Writer` lays out the bytes.
+
+**Why:** before `data-normalize` every domain type with a non-default JSON
+shape had its own converter (`path` shipped as a bare string via
+`path.JsonConverter`, `Identity` had a hand-rolled property list, etc.).
+Two converters drifting from each other was a real failure mode. Now the
+shape comes from one place — the `[Out]` set on the type — and one walker
+fires for every type. If you find yourself reaching for `JsonConverterAttribute`
+on a domain type, you are reaching for the smell.
+
+**How to apply.**
+
+1. Tag the properties that should ship: `[Out]` for the wire view, `[Store]`
+   for local persistence. Use both when the property crosses both
+   boundaries (e.g., `Identity.Name`).
+2. Use `[Sensitive]` on properties that must never leave the process
+   (e.g., `Identity.PrivateKey`), and `[Masked]` on properties whose
+   *existence* is informative but whose value is secret (e.g.,
+   `setting.value`).
+3. If reconstruction from the property bag needs custom logic (resolving a
+   string to a polymorphic subclass, validating ctor preconditions, etc.),
+   add a `public static T FromNormalized(Data, Context)` method. The
+   `Reconstruct<T>` dispatch picks it up before the generic property-bag
+   fallback.
+4. **Don't** wrap the type in a parallel "wire shape" record to bypass
+   `[JsonIgnore]`. The historical `Envelope` class was the load-bearing
+   example of that smell.
+
+**Carve-out:** `path.@this` keeps a `JsonConverter` for the **inbound**
+direction (bridging legacy bare-string path JSON), but its outbound path
+flows through Normalize like every other type.
+
+**See:** `Documentation/Runtime2/data-spec.md` §16a for the full Normalize
+→ IWriter → bytes pipeline.
 
 ---
 
@@ -571,9 +614,9 @@ This prevents `InvalidCastException` when comparing `int` vs `long` (a common JS
 
 ## Signing Module — Architecture
 
-The signing module (`signing.sign`, `signing.verify`) creates and verifies signed data envelopes. Key design decisions:
+The signing module (`signing.sign`, `signing.verify`) creates and verifies cryptographic signatures attached to `Data`. Key design decisions:
 
-**SignedData owns everything.** `SignedData.CreateAsync(sign action)` orchestrates signing, `SignedData.VerifyAsync(verify action)` orchestrates verification. Handlers are one-line delegates — all logic lives on the envelope itself (OBP: behavior on the owner).
+**SignedData owns everything.** `SignedData.CreateAsync(sign action)` orchestrates signing, `SignedData.VerifyAsync(verify action)` orchestrates verification. Handlers are one-line delegates — all logic lives on the `SignedData` record itself (OBP: behavior on the owner).
 
 **Deterministic serialization.** `JsonPropertyOrder` on every field ensures identical byte output for signing and verification. `ToSigningBytes()` nulls the Signature field before serializing (save-mutate-restore pattern) — safe because PLang executes steps sequentially per context.
 
@@ -581,11 +624,11 @@ The signing module (`signing.sign`, `signing.verify`) creates and verifies signe
 
 **Nonce replay protection.** Uses `ICache.TryAddAsync` with a TTL matching the signature timeout. Atomic — first use succeeds, replays fail. Single-process only; distributed deployments need a shared ICache implementation (Redis).
 
-**Implementation resolution.** The `sign` and `verify` actions both declare `[Code] ISigning Signer` — the source generator emits eager `app.Code.Get<ISigning>()` (registry default). To swap algorithms, register a different `ISigning` and promote it via `code.setDefault`. Verification reads the algorithm from the envelope's `Algorithm` field — the wire envelope carries its own identity, not the caller's.
+**Implementation resolution.** The `sign` and `verify` actions both declare `[Code] ISigning Signer` — the source generator emits eager `app.Code.Get<ISigning>()` (registry default). To swap algorithms, register a different `ISigning` and promote it via `code.setDefault`. Verification reads the algorithm from the `SignedData.Algorithm` field — the wire signature carries its own identity, not the caller's.
 
 **Contracts.** Lightweight agreement mechanism. Signer attaches contract identifiers (e.g., `["C0"]`), verifier checks they match. Both null/empty = match. Both present = case-insensitive set equality.
 
-**Integration with Data.** `Data.Signature` holds the `SignedData` envelope (`[JsonIgnore]`, `[Out]`). Signing attaches it; verification reads it. The property is on Data itself, so any Data flowing through channels can carry a signature.
+**Integration with Data.** `Data.Signature` holds the `SignedData` record (`[JsonIgnore]`, `[Out]`). Signing attaches it; verification reads it. The property is on Data itself, so any Data flowing through channels can carry a signature. As of `data-serialize-cleanup`, `Wire.Write` (the class was named `WireJsonConverter` until `data-normalize` renamed it to `Wire`) calls `EnsureSigned()` sign-if-missing on every Data it walks, so egress through any channel auto-seals — the explicit `signing.sign` step remains useful when the developer wants to set contracts, headers, or expiry.
 
 ---
 
@@ -1275,7 +1318,7 @@ Full implementation: `PLang/app/modules/builder/code/Default.cs` (the validate-p
 
 ## `Serializers/ISerializer` returns `Data` — no throws
 
-Every `ISerializer` method (`Deserialize<T>`, `DeserializeAsync<T>`, `SerializeAsync`, …) returns `Data` / `Data<T>` rather than throwing. Impls (Json, Text, plang, plang+data) wrap each method body in try/catch over a **closed list**:
+Every `ISerializer` method (`Deserialize<T>`, `DeserializeAsync<T>`, `SerializeAsync`, …) returns `Data` / `Data<T>` rather than throwing. Impls (Json, Text, plang) wrap each method body in try/catch over a **closed list**:
 
 - `System.Text.Json.JsonException`
 - `System.NotSupportedException`
@@ -1287,7 +1330,7 @@ Call sites read `.Success` and `.Value` / `.Error` instead of try/catch around t
 
 ### http body dispatch through the registry
 
-`http.request` / `http.upload` return `Task<Data<app.http.Response.@this>>`. The `Response` record is `(int Status, Dictionary<string,string> Headers, object? Body, TimeSpan Duration)`; `Body` is dispatched by Content-Type via `Serializers.GetByContentType` + a `TextFallback` for text-shaped misses (`text/*`, `application/xml`, `application/json`, `text/csv`). Binary content-types and missing Content-Type fall back to `byte[]`.
+`http.request` / `http.upload` return `Task<Data<app.http.Response.@this>>`. The `Response` record is `(int Status, Dictionary<string,string> Headers, object? Body, TimeSpan Duration)`; `Body` is dispatched by Content-Type via `Serializers.GetByType` + a `TextFallback` for text-shaped misses (`text/*`, `application/xml`, `application/json`, `text/csv`). Binary content-types and missing Content-Type fall back to `byte[]`.
 
 Legacy properties (`%response.StatusCode%`, `%response.Body%` as raw string) remain reachable via `Response.BuildProperties` so existing PLang code keeps working alongside the new `%response.Status%` / typed `%response.Body%`.
 
@@ -1316,3 +1359,88 @@ public sealed class Ask : IExitsGoal
 The carve-out: `Data` with only `Type` set (no Value) still triggers the **Type-side** exit check. The Value-side `ShouldExit()` only fires when a Value is present.
 
 Pattern to copy when adding another resolved-sentinel type: implement `IExitsGoal`, expose a nullable "answer-like" field, override `ShouldExit()` to return false when that field is bound. Don't reach for a separate "ResolvedAsk" subclass — one record, two states, the override carries the semantics.
+
+## Recursion guards belong on the value, not on a parallel context layer
+
+When a type's instance can re-enter itself through its own body (a goal
+channel whose body writes to channels, a step orchestrator that may
+evaluate sub-steps, an event binding that fires on a hook the binding
+itself triggers), the question is *where the "I'm already running" bit
+lives*. Two shapes appear:
+
+1. **Push a parallel view onto the owning context, resolve against it.**
+   Snapshot the registry at boot, override it during the call, swap it
+   back. The lookup site asks "which view am I in?" and walks the
+   resulting collection.
+2. **Put the bit on the instance itself, branch at the lookup site.**
+   One `AsyncLocal<bool> _executing` (private) on the instance, one
+   public `IsExecuting` getter, one `if … return null` at the registry
+   lookup. The registry stays single-view; the instance carries its
+   own discipline.
+
+Default to **#2**. It is the OBP-aligned shape: the type that owns the
+data owns the rule that guards it.
+
+`channels` on `builder-ergonomics` migrated from #1 to #2:
+- **What was deleted** — `Actor.FoundationalChannels`,
+  `FreezeFoundational`, `PushChannelsOverride`,
+  `AsyncLocal<AppChannels?> _channelsOverride`, `AppChannels.Snapshot`,
+  the foundational-lazy-init in the actor.
+- **What replaced it** — `Channel.Goal.@this._executing` +
+  `IsExecuting` (private field, public getter), one branch in
+  `AppChannels.Get`:
+  `if (channel is channel.goal.@this g && g.IsExecuting) return null;`
+
+The shipped bug that forced the migration is the canonical failure mode
+of shape #1: a foundational snapshot taken on first access froze the
+registry to whatever was registered at that moment, making everything
+registered later invisible to writes from inside a goal-channel body.
+The "boot-snapshot" approach also conflated "guard against
+self-recursion" with "see only the boot view of the world", which are
+unrelated concerns. The repro is `.bot/builder-ergonomics/foundational-channels-snapshot-bug.md`.
+
+### Tells that you're drifting back into shape #1
+
+- "The lookup needs to know which view it's in" → add a flag on the
+  resolved object, branch at the lookup instead.
+- "I need an AsyncLocal stack of registries / channels / contexts to
+  swap during the call" → if the *only* reason the stack exists is to
+  hide the calling instance, an AsyncLocal `bool` on the instance is
+  enough.
+- "The snapshot is lazy on first access" → a lazy snapshot ties the
+  view to whatever wall-clock event happened to fire first. Future
+  registrations are silently invisible.
+
+### When shape #1 IS the right answer
+
+If the override needs to expose a **different set of values** (different
+channels, different bindings) — not just hide the calling instance —
+then a real overlay layer earns its keep. The smell-test: can you
+describe the override as "everything stays the same except instance X
+acts as if it weren't here"? If yes, shape #2. If you actually need to
+substitute X with a different X (mocking, scoped-fixture tests, a real
+permission override), shape #1.
+
+Cycle A→B→A under shape #2: A is executing (its `_executing` is true),
+A's body writes to B (B is free), B is executing (its `_executing` is
+true), B's body writes to A — A is now executing on the same async
+context, lookup returns null, `ChannelNotFound` surfaces. The bit flows
+down the await chain; no central registry view to swap.
+
+## Typed values — `app/types/<name>/`, per-(type, format) renderers, `type` + `kind` as separate fields
+
+Higher-level PLang values (`number`, `image`, `code`, `path`, `datetime`, `duration`, …) live as folders under `PLang/app/types/<name>/`. Each owns a small contract: `this.cs` (the value + `[PlangType]` + `IBooleanResolvable` truthiness), `this.Parse.cs` (`static Resolve(value, context)` — runtime construction), `this.Build.cs` (`static Build(value) → kind` — build-time kind derivation), and a `serializer/` subfolder.
+
+**`type` + `kind` are separate `.pr` fields.** Every value carries a high-level `type` (the routing key) and an optional `kind` refinement, stored separately — never as a `type:kind` string. The `kind` is stamped at build by the type's own `Build(value)` method, the build-time sibling of `Resolve`. So **`int`/`decimal`/`double` are kinds of `number`**, `jpg`/`png` are kinds of `image`, `csharp`/`python` are kinds of `code`, `http`/`file` are kinds of `path`. Number isn't special; the LLM is shown a type's kinds only when developer-meaningful (number's precision) — otherwise `Build()` derives the kind silently.
+
+**Per-(type, format) serializer dispatch.** Each type owns `serializer/<format>.cs` files — one `Default.cs` (uniform rendering) plus a file per format that genuinely differs. `image/serializer/text.cs` renders a path placeholder, `image/serializer/protobuf.cs` raw bytes, `image/serializer/Default.cs` base64. The filename **is** the format selector, the folder name **is** the type. The source generator emits a `(typeName, formatToken) → Write` table; the writer carries its `Format` token and looks up. No `IWireWritable` interface on the value; no mime switch inside any method.
+
+**Two `Build`s, kept distinct.** The **action** `IClass.Build()` decides an *action's* return type when it's dynamic (e.g., `file.read.Build()` reads the extension and resolves it to `image`). The **type** `Build(value)` decides a *value's* `kind`. They cooperate: `read photo.jpg` → action's Build sets `type = "image"`, type's Build sets `kind = "jpg"`.
+
+**Multi-faceted values compose, not union.** A file-backed `image` carries a `Path` property of type `path` (nullable when constructed from raw bytes). `%photo.Path.Exists%` navigates through the typed-property catalog. No `path|image` union — the routing key stays single.
+
+**Runtime DLL loading extends the catalog.** `code.load` scans the loaded assembly for `[PlangType]` classes and `ITypeRenderer` implementations as well as `ICode`. Runtime registrations outrank generator-emitted ones at resolution + rendering, but cannot rewrite what the source generator already baked into compiled handler slots and shipped `.pr` stamps. Five names are **sealed** against shadowing (`identity`, `signature`, `signedoperation`, `callback`, `channel`) because their bodies are signing- or transport-load-bearing — attempting to register one fails with `TypeLoadCollision`. `Loader.SealedNames` enforces this at every register site.
+
+**Couriers never read `.Value`.** Variable memory, callstack, channel routing, signing, the wire envelope all key on `Data.Type` (and `Data.Kind` when relevant). Only **leaf actions** (handlers declaring `Data<T>` parameters) and **leaf serializers** (the per-(type, format) renderer files) get to dereference `Data.Value`. This is [OBP Rule #9](object_pattern_formal.md#9-only-leaves-touch-datavalue) — and the seventh entry in `/CLAUDE.md`'s OBP Smell Checklist.
+
+Full design (movie, build-vs-runtime trace, dispatch mechanism): the architect plan on the `plang-types` branch — `.bot/plang-types/architect/plan.md` and the seven stage files alongside.

@@ -1,0 +1,12 @@
+EmitBuildEvent
+/ One-call helper for build-time output. Caller passes %event% (name) plus any
+/ variables the template needs:
+/   - call EmitBuildEvent event="build-path"                              (path is already in scope at the caller? still passes as goal param)
+/   - call EmitBuildEvent event="step-fresh", step=%step%
+/   - call EmitBuildEvent event="build-error", goal=%goal%, errorMessage=%!error.Message%
+/ Renders /system/builder/templates/output/build-output.template (one
+/ template, one case-block per event) and writes the result to the "builder"
+/ channel. Swap the channel's backing goal to redirect all build output.
+
+- render template "/system/builder/templates/output/build-output.template", write to %msg%
+- write out %msg% channel: "builder"
