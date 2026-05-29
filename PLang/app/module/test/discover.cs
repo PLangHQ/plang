@@ -17,7 +17,7 @@ namespace app.module.test;
 /// test.tag actions) and auto-tags (via [RequiresCapability] on the action
 /// handlers referenced in the .pr, recursing through static goal.call chains),
 /// then applies the Testing.Include/Exclude tag filters. Returns a
-/// List&lt;global::app.tester.Test.@this&gt; that test.run consumes.
+/// List&lt;global::app.tester.test.@this&gt; that test.run consumes.
 ///
 /// <para>The pre-AuthGate scan that this handler used to do —
 /// <c>StartsWith(rootPrefix)</c> hand-rolled containment + raw
@@ -40,23 +40,23 @@ public partial class discover : IContext
     [Default(true)]
     public partial data.@this<bool> Recursive { get; init; }
 
-    public async Task<data.@this<List<global::app.tester.Test.@this>>> Run()
+    public async Task<data.@this<List<global::app.tester.test.@this>>> Run()
     {
         var app = Context.App!;
-        var empty = data.@this<List<global::app.tester.Test.@this>>.Ok(new List<global::app.tester.Test.@this>());
+        var empty = data.@this<List<global::app.tester.test.@this>>.Ok(new List<global::app.tester.test.@this>());
 
         var root = Path.Value;
         if (root == null) return empty;
 
         // List routes through AuthGate(Read). Out-of-root: prompt or denial.
         var listed = await root.List(Pattern.Value!, Recursive.Value);
-        if (!listed.Success) return data.@this<List<global::app.tester.Test.@this>>.FromError(listed.Error!);
+        if (!listed.Success) return data.@this<List<global::app.tester.test.@this>>.FromError(listed.Error!);
         if (listed.Value == null) return empty;
 
         var include = Context.App.Tester.Include;
         var exclude = Context.App.Tester.Exclude;
 
-        var files = new List<global::app.tester.Test.@this>();
+        var files = new List<global::app.tester.test.@this>();
         foreach (var match in listed.Value)
         {
             // .test.goal files only resolve under the file scheme; foreign schemes
@@ -64,11 +64,11 @@ public partial class discover : IContext
             if (match is not FilePath fileMatch) continue;
             files.Add(await DiscoverOne(fileMatch, app, include, exclude));
         }
-        return data.@this<List<global::app.tester.Test.@this>>.Ok(files);
+        return data.@this<List<global::app.tester.test.@this>>.Ok(files);
     }
 
     /// <summary>Discovers metadata for a single .test.goal file (FilePath form).</summary>
-    private async Task<global::app.tester.Test.@this> DiscoverOne(FilePath goalFile, global::app.@this app,
+    private async Task<global::app.tester.test.@this> DiscoverOne(FilePath goalFile, global::app.@this app,
         HashSet<string> include, HashSet<string> exclude)
     {
         // Read the .goal source first — even when the .pr is missing or
@@ -80,7 +80,7 @@ public partial class discover : IContext
         {
             // Build a minimal goal from just the file's path so Test.Goal
             // is never null. Status=Stale with the read error as reason.
-            return new global::app.tester.Test.@this
+            return new global::app.tester.test.@this
             {
                 Goal = new Goal { Path = goalFile },
                 Status = global::app.tester.Status.Stale,
@@ -97,7 +97,7 @@ public partial class discover : IContext
 
         if (prFile == null)
         {
-            return new global::app.tester.Test.@this
+            return new global::app.tester.test.@this
             {
                 Goal = sourceGoal,
                 Status = global::app.tester.Status.Stale,
@@ -108,7 +108,7 @@ public partial class discover : IContext
         var prExists = await prFile.ExistsAsync();
         if (!prExists.Success || prExists.Value != true)
         {
-            return new global::app.tester.Test.@this
+            return new global::app.tester.test.@this
             {
                 Goal = sourceGoal,
                 Status = global::app.tester.Status.Stale,
@@ -121,7 +121,7 @@ public partial class discover : IContext
         var prRead = await prFile.ReadText();
         if (!prRead.Success)
         {
-            return new global::app.tester.Test.@this
+            return new global::app.tester.test.@this
             {
                 Goal = sourceGoal,
                 Status = global::app.tester.Status.Stale,
@@ -131,7 +131,7 @@ public partial class discover : IContext
         var prGoal = prRead.Value as Goal;
         if (prGoal == null)
         {
-            return new global::app.tester.Test.@this
+            return new global::app.tester.test.@this
             {
                 Goal = sourceGoal,
                 Status = global::app.tester.Status.Stale,
@@ -141,7 +141,7 @@ public partial class discover : IContext
 
         if (!string.Equals(sourceGoal.Hash, prGoal.Hash, StringComparison.OrdinalIgnoreCase))
         {
-            return new global::app.tester.Test.@this
+            return new global::app.tester.test.@this
             {
                 Goal = sourceGoal,
                 Status = global::app.tester.Status.Stale,
@@ -159,7 +159,7 @@ public partial class discover : IContext
         var chainVisited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         SeedBranchChains(prGoal, Context.App!.Tester.Coverage, chainVisited);
 
-        var file = new global::app.tester.Test.@this
+        var file = new global::app.tester.test.@this
         {
             Goal = prGoal,
         };

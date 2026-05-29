@@ -1,4 +1,4 @@
-namespace app.callstack.call.diffs;
+namespace app.callstack.call.diff;
 
 /// <summary>
 /// Variable mutations observed during this Call's lifetime. Populated synchronously by

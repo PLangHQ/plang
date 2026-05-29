@@ -170,14 +170,14 @@ public class OutAttributeInventoryTests
     // 10. http.Response ------------------------------------------------------
     [Test] public async Task HttpResponse_Status_Headers_Body_HaveOut()
     {
-        var t = typeof(global::app.http.Response.@this);
+        var t = typeof(global::app.http.response.@this);
         await Assert.That(HasOut(t, "Status")).IsTrue();
         await Assert.That(HasOut(t, "Headers")).IsTrue();
         await Assert.That(HasOut(t, "Body")).IsTrue();
     }
     [Test] public async Task HttpResponse_Duration_NotOut()
     {
-        await Assert.That(HasOut(typeof(global::app.http.Response.@this), "Duration")).IsFalse();
+        await Assert.That(HasOut(typeof(global::app.http.response.@this), "Duration")).IsFalse();
     }
 
     // 11. Ask ----------------------------------------------------------------
@@ -189,7 +189,7 @@ public class OutAttributeInventoryTests
     // 12. Mock ---------------------------------------------------------------
     [Test] public async Task Mock_NoOutProperties_TestOnlyType()
     {
-        var t = typeof(global::app.mock.Mock.@this);
+        var t = typeof(global::app.mock.@this);
         foreach (var p in t.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic))
             await Assert.That(p.IsDefined(typeof(global::app.OutAttribute), inherit: true))
                 .IsFalse()

@@ -1,5 +1,5 @@
 using System.Reflection;
-using AppService = global::app.Services.Service.@this;
+using AppService = global::app.service.@this;
 
 namespace PLang.Tests.App.ChannelsTests;
 

@@ -1,6 +1,6 @@
 using app.variable;
-using ExampleSpec = app.builder.Types.Spec.Example;
-using ActionSpec = app.builder.Types.Spec.Action;
+using ExampleSpec = app.builder.type.Example;
+using ActionSpec = app.builder.type.Action;
 using number = global::app.type.number.@this;
 
 using POverflow = global::app.type.number.OverflowMode;

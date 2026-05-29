@@ -9,7 +9,7 @@ namespace app.module.test;
 
 /// <summary>
 /// Main test-runner loop. C# handler — NOT a PLang foreach, immune to the silent-skip
-/// bug that motivated this module. For each Ready global::app.tester.Test.@this, spins up a fresh App
+/// bug that motivated this module. For each Ready global::app.tester.test.@this, spins up a fresh App
 /// instance (file boundary = App boundary), subscribes AfterAction for coverage,
 /// runs the test's entry goal under a timeout CancellationToken, records a global::app.tester.Run,
 /// merges the child's Coverage into the parent, then releases the App.
@@ -29,14 +29,14 @@ public partial class run : IContext
     internal static event Action<app.@this>? ChildAppCreated;
 
     [IsNotNull]
-    public partial data.@this<List<global::app.tester.Test.@this>> Tests { get; init; }
+    public partial data.@this<List<global::app.tester.test.@this>> Tests { get; init; }
 
     public partial data.@this<int>? Parallel { get; init; }
     public partial data.@this<int>? Timeout { get; init; }
 
     public async Task<data.@this<global::app.tester.Results>> Run()
     {
-        var tests = Tests.Value ?? new List<global::app.tester.Test.@this>();
+        var tests = Tests.Value ?? new List<global::app.tester.test.@this>();
         var parentApp = Context.App!;
         var parallel = Parallel?.Value ?? parentApp.Tester.Parallel;
         var timeoutSeconds = Timeout?.Value ?? parentApp.Tester.TimeoutSeconds;
@@ -59,7 +59,7 @@ public partial class run : IContext
         return data.@this<global::app.tester.Results>.Ok(parentApp.Tester.Results);
     }
 
-    private async Task RunSingleAsync(global::app.tester.Test.@this test, TimeSpan timeout, app.@this parentApp)
+    private async Task RunSingleAsync(global::app.tester.test.@this test, TimeSpan timeout, app.@this parentApp)
     {
         // Non-ready tests (Stale, Skipped, etc.) are recorded but not executed —
         // the report surfaces them with their discovery-time status. Hiding them

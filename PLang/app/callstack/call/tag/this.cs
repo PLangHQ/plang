@@ -1,4 +1,4 @@
-namespace app.callstack.call.tags;
+namespace app.callstack.call.tag;
 
 /// <summary>
 /// Free-form tags written by C# handlers (<c>cache.hit=true</c>, <c>http.status=503</c>,

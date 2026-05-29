@@ -67,7 +67,7 @@ public class DebugModeBypassTests
 
     [Test] public async Task DebugMode_HttpResponse_IncludesDuration_NotInOutMode()
     {
-        var resp = new global::app.http.Response.@this(200, new Dictionary<string, string>(), "ok", System.TimeSpan.FromMilliseconds(50));
+        var resp = new global::app.http.response.@this(200, new Dictionary<string, string>(), "ok", System.TimeSpan.FromMilliseconds(50));
         var outChildren = (List<Data>)new Data("", resp).Normalize(global::app.View.Out)!;
         await Assert.That(outChildren.Any(c => c.Name == "duration")).IsFalse();
         var debugChildren = (List<Data>)new Data("", resp).Normalize(global::app.View.Debug)!;

@@ -1,4 +1,4 @@
-namespace app.builder.Types.Spec;
+namespace app.builder.type;
 
 /// <summary>
 /// One action node inside an <see cref="Example"/>. Composes recursively:

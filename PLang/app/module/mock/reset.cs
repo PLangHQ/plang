@@ -6,7 +6,7 @@ namespace app.module.mock;
 [Action("reset", Cacheable = false)]
 public partial class Reset : IContext
 {
-    public partial data.@this<global::app.mock.Mock.@this>? Mock { get; init; }
+    public partial data.@this<global::app.mock.@this>? Mock { get; init; }
 
     public Task<data.@this> Run()
     {
@@ -21,7 +21,7 @@ public partial class Reset : IContext
             var bindings = Context.Events.GetBindings(EventType.BeforeAction);
             foreach (var binding in bindings)
             {
-                if (binding.Targets.OfType<global::app.mock.Mock.@this>().Any())
+                if (binding.Targets.OfType<global::app.mock.@this>().Any())
                 {
                     Context.Events.Unregister(binding.Id);
                 }

@@ -1,6 +1,6 @@
 using CallEntity = app.callstack.call.@this;
 
-namespace app.callstack.call.children;
+namespace app.callstack.call.child.list;
 
 /// <summary>
 /// Live siblings under a Call. Owns its lock + FIFO eviction policy — callers

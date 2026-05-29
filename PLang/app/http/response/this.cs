@@ -1,4 +1,4 @@
-namespace app.http.Response;
+namespace app.http.response;
 
 /// <summary>
 /// Strongly-typed result returned by <c>http.request</c> and <c>http.upload</c>.

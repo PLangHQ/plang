@@ -27,7 +27,7 @@ public sealed partial class @this : IAsyncDisposable
 
     private actor.@this? _system;
     private actor.@this? _user;
-    private global::app.Services.@this? _services;
+    private global::app.service.list.@this? _services;
 
     /// <summary>
     /// Unique identifier for this app. Loaded from app.pr, or generated on first run.
@@ -241,7 +241,7 @@ public sealed partial class @this : IAsyncDisposable
     /// scope (channels, identity, parent ref). Stage 7: replaces runtime1's
     /// Service-as-actor model.
     /// </summary>
-    public global::app.Services.@this Services => _services ??= new global::app.Services.@this(this);
+    public global::app.service.list.@this Services => _services ??= new global::app.service.list.@this(this);
 
     /// <summary>
     /// The currently executing actor. Defaults to User. Changed to System during bootstrap (Start).

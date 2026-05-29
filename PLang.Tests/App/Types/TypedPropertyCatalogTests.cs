@@ -43,7 +43,7 @@ public class TypedPropertyCatalogTests
         _types.Assemblies.Add(typeof(TypedPropertyCatalogTests).Assembly);
     }
 
-    private global::app.builder.Types.Entry? FindEntry(string name)
+    private global::app.builder.type.Entry? FindEntry(string name)
     {
         foreach (var e in _types.BuildTypeEntries(null))
             if (e.Name == name) return e;

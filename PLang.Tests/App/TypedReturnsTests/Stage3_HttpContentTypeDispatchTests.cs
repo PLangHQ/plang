@@ -4,7 +4,7 @@ using System.Text;
 using app.module.code;
 using app.module.http;
 using app.module.http.code;
-using Response = global::app.http.Response.@this;
+using Response = global::app.http.response.@this;
 
 namespace PLang.Tests.App.TypedReturnsTests;
 

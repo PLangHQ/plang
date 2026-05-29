@@ -23,7 +23,7 @@ internal static class TypeMapping
 
     public static List<string> GetBuilderTypeNames() => _app.Types.GetBuilderTypeNames();
 
-    public static List<global::app.builder.Types.Entry> BuildTypeEntries(global::app.module.@this? modules)
+    public static List<global::app.builder.type.Entry> BuildTypeEntries(global::app.module.@this? modules)
         => _app.Types.BuildTypeEntries(modules);
 
     public static bool IsScalarPlangType(System.Type type) => global::app.type.list.@this.IsScalarPlangType(type);

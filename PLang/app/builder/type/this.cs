@@ -3,14 +3,14 @@ using System.Text.Json.Serialization;
 using app.Attributes;
 using app.Utils;
 
-namespace app.builder.Types;
+namespace app.builder.type;
 
 /// <summary>
 /// "What every action looks like, for the LLM." Owned by Modules; describes
 /// the registered actions' types, parameter schemas, and authored Examples.
 ///
 /// Two roles in one type:
-///   - Host (the instance held at <c>app.builder.Types</c>) — has <c>_modules</c>
+///   - Host (the instance held at <c>app.builder.type</c>) — has <c>_modules</c>
 ///     and exposes <see cref="Build"/> + <see cref="Render"/>. Its
 ///     <see cref="PrimitiveNames"/> / <see cref="Types"/> are empty arrays.
 ///   - Built result (returned by <see cref="Build"/>) — same instance shape,
@@ -18,8 +18,8 @@ namespace app.builder.Types;
 ///     viewer) use the built result.
 ///
 /// OBP: schema is a real object owned by Modules. Reach it via
-/// <c>app.builder.Types</c>; build a snapshot via
-/// <c>app.builder.Types.Build()</c>.
+/// <c>app.builder.type</c>; build a snapshot via
+/// <c>app.builder.type.Build()</c>.
 /// </summary>
 public sealed partial class @this
 {

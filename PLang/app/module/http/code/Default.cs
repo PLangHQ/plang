@@ -533,8 +533,8 @@ public sealed class Default : IHttp
         foreach (var h in response.Content.Headers)
             respHeaders[h.Key] = string.Join(", ", h.Value);
 
-        var typed = new global::app.http.Response.@this(statusCode, respHeaders, body, duration);
-        var result = data.@this<global::app.http.Response.@this>.Ok(typed);
+        var typed = new global::app.http.response.@this(statusCode, respHeaders, body, duration);
+        var result = data.@this<global::app.http.response.@this>.Ok(typed);
         // Legacy Property bag — pre-Stage-3 PLang code reads %resp.StatusCode%,
         // %resp.Url%, %resp.RequestHeaders% etc. via Properties navigation.
         // Keep it populated so existing test goals don't break.

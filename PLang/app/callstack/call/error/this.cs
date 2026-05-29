@@ -1,6 +1,6 @@
 using IError = app.error.IError;
 
-namespace app.callstack.call.Errors;
+namespace app.callstack.call.error;
 
 /// <summary>
 /// Errors that occurred during this Call's lifetime. Per-frame view; the run-wide

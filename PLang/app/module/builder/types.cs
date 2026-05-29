@@ -17,9 +17,9 @@ public partial class types : IContext
     [Code]
     public partial IBuilder Builder { get; }
 
-    public async Task<data.@this<global::app.builder.Types.@this>> Run()
+    public async Task<data.@this<global::app.builder.type.@this>> Run()
     {
         var result = await Builder.Types(this);
-        return data.@this<global::app.builder.Types.@this>.From(result);
+        return data.@this<global::app.builder.type.@this>.From(result);
     }
 }

@@ -22,7 +22,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     public async Task TestDiscover_Run_ReturnsTaskDataListOfTest()
     {
         var ret = RunReturnType<global::app.module.test.discover>();
-        var expected = typeof(Task<global::app.data.@this<List<global::app.tester.Test.@this>>>);
+        var expected = typeof(Task<global::app.data.@this<List<global::app.tester.test.@this>>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
 

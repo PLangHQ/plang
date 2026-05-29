@@ -1,6 +1,6 @@
 using app.module.identity;
 
-namespace app.Services.Service;
+namespace app.service;
 
 /// <summary>
 /// Per-outbound-call I/O scope. Not an Actor — Service holds Channels (per-call
@@ -8,14 +8,14 @@ namespace app.Services.Service;
 /// that triggered the call.
 ///
 /// Lifetime is bounded by the call (HTTP request/response) or the connection
-/// (TCP, WebSocket). Spawned via <see cref="@this.New"/> on <see cref="app.Services.@this"/>;
+/// (TCP, WebSocket). Spawned via <see cref="@this.New"/> on <see cref="app.service.list.@this"/>;
 /// disposed removes from the collection and tears down the channels.
 /// </summary>
 public sealed class @this : IAsyncDisposable
 {
-    private readonly app.Services.@this _collection;
+    private readonly app.service.list.@this _collection;
 
-    /// <summary>Stable identity for collection lookups — see <see cref="app.Services.@this.Remove"/>.</summary>
+    /// <summary>Stable identity for collection lookups — see <see cref="app.service.list.@this.Remove"/>.</summary>
     public Guid Id { get; } = Guid.NewGuid();
 
     /// <summary>The actor that spawned this Service (audit / tracing).</summary>
@@ -30,7 +30,7 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     public Identity? Identity => Parent.App.System.Identity;
 
-    internal @this(app.Services.@this collection, global::app.actor.@this parent)
+    internal @this(app.service.list.@this collection, global::app.actor.@this parent)
     {
         _collection = collection;
         Parent = parent;

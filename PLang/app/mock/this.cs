@@ -1,4 +1,4 @@
-namespace app.mock.Mock;
+namespace app.mock;
 
 /// <summary>
 /// Handle for an active mock intercept registered via <c>mock.intercept</c>.

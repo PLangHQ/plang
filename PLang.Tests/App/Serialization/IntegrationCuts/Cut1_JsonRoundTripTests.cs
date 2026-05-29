@@ -70,7 +70,7 @@ public class Cut1_JsonRoundTripTests
 
     [Test] public async Task Cut1_HttpResponse_RoundTrips_Status_Headers_Body_NoDuration()
     {
-        var r = new global::app.http.Response.@this(
+        var r = new global::app.http.response.@this(
             200,
             new Dictionary<string, string> { ["Content-Type"] = "text/plain" },
             "hello",

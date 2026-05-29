@@ -77,11 +77,11 @@ public class EdgeCaseTests
         // test so the Results grow — verify count is from the outer action, not the
         // inner grandchild-runs).
 
-        var emptyList = new List<global::app.tester.Test.@this>();
+        var emptyList = new List<global::app.tester.test.@this>();
         var outerAction = new global::app.module.test.run
         {
             Context = _app.User.Context,
-            Tests = new global::app.data.@this<List<global::app.tester.Test.@this>>("Tests", emptyList),
+            Tests = new global::app.data.@this<List<global::app.tester.test.@this>>("Tests", emptyList),
             Parallel = null,
             Timeout = null
         };
@@ -112,7 +112,7 @@ public class EdgeCaseTests
         var result = await action.Run();
         if (result.Success)
         {
-            var files = result.Value as List<global::app.tester.Test.@this> ?? new List<global::app.tester.Test.@this>();
+            var files = result.Value as List<global::app.tester.test.@this> ?? new List<global::app.tester.test.@this>();
             await Assert.That(files.Count).IsEqualTo(0);
         }
     }
@@ -125,7 +125,7 @@ public class EdgeCaseTests
     [Test]
     public async Task Report_ConsoleCapture_AnsiEscapeSequences_Stripped()
     {
-        var run = new global::app.tester.Run(new global::app.tester.Test.@this { Goal = new Goal { Name = "X", Path = "/Tests/X.test.goal" } });
+        var run = new global::app.tester.Run(new global::app.tester.test.@this { Goal = new Goal { Name = "X", Path = "/Tests/X.test.goal" } });
         run.Output = "\x1B[32mFAKE OK\x1B[0m\x1B[2JCLEARED";
         run.Complete(global::app.tester.Status.Fail, new global::app.error.AssertionError(1, 2));
         _app.Tester.Results.Add(run);
@@ -156,7 +156,7 @@ public class EdgeCaseTests
                 ["nested"] = outer
             }
         };
-        var run = new global::app.tester.Run(new global::app.tester.Test.@this { Goal = new Goal { Name = "N", Path = "/Tests/Nested.test.goal" } });
+        var run = new global::app.tester.Run(new global::app.tester.test.@this { Goal = new Goal { Name = "N", Path = "/Tests/Nested.test.goal" } });
         run.Complete(global::app.tester.Status.Fail, err);
         _app.Tester.Results.Add(run);
 

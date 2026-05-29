@@ -24,11 +24,11 @@ public class ComplexTypeDiscoveryTests
         _app.Builder.IsEnabled = true;
     }
 
-    private static string RenderEntry(global::app.builder.Types.Entry e) => e.Kind switch
+    private static string RenderEntry(global::app.builder.type.Entry e) => e.Kind switch
     {
-        global::app.builder.Types.EntryKind.Enum => string.Join(" | ", e.Values!),
-        global::app.builder.Types.EntryKind.Scalar => e.Shape ?? "",
-        _ => "{ " + string.Join(", ", (e.Fields ?? Array.Empty<global::app.builder.Types.Field>())
+        global::app.builder.type.EntryKind.Enum => string.Join(" | ", e.Values!),
+        global::app.builder.type.EntryKind.Scalar => e.Shape ?? "",
+        _ => "{ " + string.Join(", ", (e.Fields ?? Array.Empty<global::app.builder.type.Field>())
             .Select(f => f.Name + ": " + f.TypeName)) + " }"
     };
 

@@ -5,10 +5,10 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using app.Utils;
-using ActionSpec = app.builder.Types.Spec.Action;
-using ExampleSpec = app.builder.Types.Spec.Example;
+using ActionSpec = app.builder.type.Action;
+using ExampleSpec = app.builder.type.Example;
 
-namespace app.builder.Types;
+namespace app.builder.type;
 
 /// <summary>
 /// Renders an <see cref="Example"/> into the formal-language string the

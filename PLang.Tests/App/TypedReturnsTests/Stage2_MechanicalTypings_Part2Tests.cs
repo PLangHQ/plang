@@ -23,15 +23,15 @@ public class Stage2_MechanicalTypings_Part2Tests
     public async Task MockIntercept_Run_ReturnsTaskDataOfMock()
     {
         var ret = RunReturnType<global::app.module.mock.intercept>();
-        var expected = typeof(Task<global::app.data.@this<global::app.mock.Mock.@this>>);
+        var expected = typeof(Task<global::app.data.@this<global::app.mock.@this>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
 
     [Test]
     public async Task MockMock_TypeLivesAtOBPSingularFolder()
     {
-        var t = typeof(global::app.mock.Mock.@this);
-        await Assert.That(t.Namespace).IsEqualTo("app.mock.Mock");
+        var t = typeof(global::app.mock.@this);
+        await Assert.That(t.Namespace).IsEqualTo("app.mock");
         await Assert.That(t.Name).IsEqualTo("this");
     }
 
@@ -39,7 +39,7 @@ public class Stage2_MechanicalTypings_Part2Tests
     public async Task BuilderTypes_Run_ReturnsTaskDataOfBuilderTypesRecord()
     {
         var ret = RunReturnType<global::app.module.builder.types>();
-        var expected = typeof(Task<global::app.data.@this<global::app.builder.Types.@this>>);
+        var expected = typeof(Task<global::app.data.@this<global::app.builder.type.@this>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
 
@@ -68,7 +68,7 @@ public class Stage2_MechanicalTypings_Part2Tests
     {
         // builder.Types.@this is the only catalog wrapper; builder.actions and
         // builder.goals return their natural list shapes directly.
-        await Assert.That(typeof(global::app.builder.Types.@this).Namespace).IsEqualTo("app.builder.Types");
+        await Assert.That(typeof(global::app.builder.type.@this).Namespace).IsEqualTo("app.builder.type");
     }
 
     // test.tag is bare Task<Data> or Task<Data<bool>>; the meaningful negative

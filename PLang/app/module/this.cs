@@ -22,14 +22,14 @@ public sealed class @this : IAsyncDisposable
     /// <summary>
     /// "What every action looks like, for the LLM." Describes the registered
     /// actions' types, parameter schemas, and authored Examples. Built on
-    /// demand via <c>app.builder.Types.Build()</c>; <see cref="global::app.builder.Types.@this.Render"/>
+    /// demand via <c>app.builder.type.Build()</c>; <see cref="global::app.builder.type.@this.Render"/>
     /// works on the host instance directly without a Build call.
     /// </summary>
-    public global::app.builder.Types.@this Schema { get; }
+    public global::app.builder.type.@this Schema { get; }
 
     public @this()
     {
-        Schema = new global::app.builder.Types.@this(this);
+        Schema = new global::app.builder.type.@this(this);
         Discover(typeof(@this).Assembly, "app.module");
     }
 
@@ -356,10 +356,10 @@ public sealed class @this : IAsyncDisposable
                     BindingFlags.Public | BindingFlags.Static, binder: null,
                     types: System.Type.EmptyTypes, modifiers: null);
                 if (examplesForLlm != null
-                    && typeof(app.builder.Types.Spec.Example[]).IsAssignableFrom(examplesForLlm.ReturnType))
+                    && typeof(app.builder.type.Example[]).IsAssignableFrom(examplesForLlm.ReturnType))
                 {
-                    var specs = (app.builder.Types.Spec.Example[]?)examplesForLlm.Invoke(null, null)
-                        ?? System.Array.Empty<app.builder.Types.Spec.Example>();
+                    var specs = (app.builder.type.Example[]?)examplesForLlm.Invoke(null, null)
+                        ?? System.Array.Empty<app.builder.type.Example>();
                     examples = specs
                         .Select(s => new data.@this(s.UserIntent, Schema.Render(s)))
                         .ToList();

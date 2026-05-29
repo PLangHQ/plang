@@ -1,4 +1,4 @@
-namespace app.builder.Types.Spec;
+namespace app.builder.type;
 
 /// <summary>
 /// Structured Example for the LLM builder catalog. Authored by an action class

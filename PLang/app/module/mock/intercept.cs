@@ -14,9 +14,9 @@ public partial class intercept : IContext
     public partial data.@this<GoalCall>? Call { get; init; }
     public partial data.@this<Dictionary<string, object?>>? Parameters { get; init; }
 
-    public Task<data.@this<global::app.mock.Mock.@this>> Run()
+    public Task<data.@this<global::app.mock.@this>> Run()
     {
-        var handle = new global::app.mock.Mock.@this
+        var handle = new global::app.mock.@this
         {
             Id = Guid.NewGuid().ToString("N")[..8],
             Pattern = Pattern.Value!,
@@ -70,7 +70,7 @@ public partial class intercept : IContext
 
         Context.Events.Register(binding);
 
-        return Task.FromResult(data.@this<global::app.mock.Mock.@this>.Ok(handle));
+        return Task.FromResult(data.@this<global::app.mock.@this>.Ok(handle));
     }
 
     private static app.goal.steps.step.actions.action.@this? FindCurrentAction(actor.context.@this ctx)

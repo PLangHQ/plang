@@ -72,7 +72,7 @@ public class JsonWriterDomainShapeTests
 
     [Test] public async Task WireOutput_HttpResponse_ExcludesDuration()
     {
-        var r = new global::app.http.Response.@this(200, new Dictionary<string, string>(), "ok",
+        var r = new global::app.http.response.@this(200, new Dictionary<string, string>(), "ok",
             System.TimeSpan.FromMilliseconds(50));
         var json = NormalizePipelineHelper.SerializeValueSlot(r);
         await Assert.That(json).Contains("\"status\":200");

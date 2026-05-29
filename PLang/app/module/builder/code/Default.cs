@@ -112,7 +112,7 @@ public class Default : IBuilder
             }
 
             var filteredTypes = schema.Types.Where(t => refs.Contains(t.Name)).ToList();
-            schema = new global::app.builder.Types.@this(modules)
+            schema = new global::app.builder.type.@this(modules)
             {
                 PrimitiveNames = schema.PrimitiveNames,
                 Types = filteredTypes,

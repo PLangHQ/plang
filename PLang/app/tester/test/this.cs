@@ -1,6 +1,6 @@
 using Goal = app.goal.@this;
 
-namespace app.tester.Test;
+namespace app.tester.test;
 
 /// <summary>
 /// Discovery record for a <c>*.test.goal</c> file. Populated by test.discover.

@@ -7,7 +7,7 @@ namespace PLang.Tests.App.Tester;
 /// <summary>
 /// Batch 8 — test.discover action.
 /// C# handler: filesystem walk + .pr parsing. Inputs: Path (default "."), Pattern
-/// (default "*.test.goal"). Returns List&lt;global::app.tester.Test.@this&gt; with file path, entry goal,
+/// (default "*.test.goal"). Returns List&lt;global::app.tester.test.@this&gt; with file path, entry goal,
 /// .pr path, tags, status.
 ///
 /// Freshness uses Goal.Hash (SHA-256 over Name + Steps.Text, [Store]-persisted in
@@ -134,7 +134,7 @@ public class DiscoverActionTests
         return relativePath;
     }
 
-    private async Task<List<global::app.tester.Test.@this>> Discover(string path = ".", bool recursive = true)
+    private async Task<List<global::app.tester.test.@this>> Discover(string path = ".", bool recursive = true)
     {
         var action = new global::app.module.test.discover
         {
@@ -145,11 +145,11 @@ public class DiscoverActionTests
             Recursive = new global::app.data.@this<bool>("Recursive", recursive)
         };
         var result = await action.Run();
-        return result.Value as List<global::app.tester.Test.@this> ?? new List<global::app.tester.Test.@this>();
+        return result.Value as List<global::app.tester.test.@this> ?? new List<global::app.tester.test.@this>();
     }
 
     // Walks the tree of *.test.goal files under the target path; every match surfaces
-    // in the returned List<global::app.tester.Test.@this>.
+    // in the returned List<global::app.tester.test.@this>.
     [Test]
     public async Task Discover_RecursiveWalk_FindsAllTestGoalFiles()
     {

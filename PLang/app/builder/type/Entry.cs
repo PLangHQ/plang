@@ -1,4 +1,4 @@
-namespace app.builder.Types;
+namespace app.builder.type;
 
 /// <summary>
 /// A type in the PLang catalog. Discriminated by <see cref="Kind"/>:

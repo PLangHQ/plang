@@ -1,5 +1,5 @@
 using System.Reflection;
-using Response = global::app.http.Response.@this;
+using Response = global::app.http.response.@this;
 
 namespace PLang.Tests.App.TypedReturnsTests;
 
@@ -16,7 +16,7 @@ public class Stage3_HttpResponseTests
     public async Task HttpResponse_RecordExistsAt_AppHttpResponseThis()
     {
         var t = typeof(Response);
-        await Assert.That(t.Namespace).IsEqualTo("app.http.Response");
+        await Assert.That(t.Namespace).IsEqualTo("app.http.response");
         await Assert.That(t.Name).IsEqualTo("this");
     }
 
