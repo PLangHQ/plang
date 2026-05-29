@@ -1,63 +1,50 @@
 # tester — plang-types — summary
 
-**Version:** v1 — **VERDICT: FAIL (needs-fixes)**
+**Latest version:** v2 — **VERDICT: FAIL (one new false green; ~5-min fix)**
 
 ## What this is
 
-The `plang-types` branch lands the unified `type + kind` value model: every value is a
-high-level PLang type plus an optional `kind` refinement; per-(type,format) renderer
-dispatch; new `number`/`image`/`code` value types; arithmetic policy on `number`;
-temporal cleanups (datetime/date/time/duration, `timespan` dropped); and a runtime
-DLL-loading extension point (`code.load` → `[PlangType]` + `ITypeRenderer`). 7 architect
-stages, implemented by coder v1.
+The `plang-types` branch lands the unified `type + kind` value model: high-level PLang
+type + optional `kind` refinement, per-(type,format) renderer dispatch, new
+`number`/`image`/`code` value types, arithmetic policy on `number`, temporal cleanups,
+and a runtime DLL-loading extension point (`code.load` → `[PlangType]` + `ITypeRenderer`).
 
-## What was done (this tester pass)
+## v1 (FAIL) — 10 findings
 
-Clean rebuild (stale-binary trap honored). Full suites green with no regressions:
-**C# 3609/3609, plang 246/246.** Coverage of changed prod files high (51/54 >0%).
-Confirmed both codeanalyzer dead-branch findings are cleanly fixed. Validated the builder
-works via `cache:false` rebuilds (after correcting my command form to the documented
-`--build={...}` flag) — no builder false-greens; .pr step text matches module.action.
-All mutations/rebuilds reverted; tree clean.
+Green suite (3609 C#, 246 plang) but dishonest: Cut4 runtime-DLL goals were load-only
+stubs; literal kind-stamping goals asserted runtime values while the `.pr` carried
+`type:object`/no-kind; ~10 deferred tests passed as no-op `Assert.That(true)`; NumberPolicy
+`Config.cs` was 0% covered. Full detail in `tester/v1/result.md`.
 
-The suite is all-green but **not honest** — 10 findings, headline:
+## v2 (FAIL) — coder addressed all 10; 9 verified real, 1 new false green
 
-1. **CRITICAL** — Cut4 runtime-DLL goals (`LoadDllRegistersType`, `LoadDllOverwritesBuiltIn`)
-   are load-only stubs: `code.load` + `assert %loadFailed% is null`. Identical behavior,
-   distinct names. Never render a loaded-type value or check overwrite precedence — the
-   exact roundtrip the codeanalyzer recommended.
-2. **MAJOR** — `LoadDll_AlreadyCompiledHandlerSlot...` C# test asserts only that a property
-   exists; tautology (deleting the feature keeps it green).
-3. **MAJOR** — literal kind-stamping goals (`SetDecimalLiteralStampsKind`, `Cut1`,
-   `PolymorphicMathAddHasNoKind`) assert runtime values; cache:false proves the .pr carries
-   `type:object`/no-kind (builder stamps kind only for typed params, not `variable.set`).
-4. **MAJOR** — ~10 deferred tests pass as no-op `Assert.That(true).IsTrue()` (PLNG003 gate,
-   PlangWriter/TextWriter, MathHelper absence, http image, sub-context policy). Should be `[Skip]`.
-5. **MAJOR** — `DurationRoundTrip` only `is not null`; no value/second-form/round-trip.
-6–10. weak `FailsLoad` guard, NumberPolicy `Config.cs` 0% coverage, weak `ReadPhotoStampsImage`,
-   `RuntimeRendererWins` no-shadow-assert, and a process gap (coder shipped no baseline-tests.md).
+Clean rebuild: **C# 3604 pass / 10 skip / 0 fail, plang 247/247.**
 
-Solid (not findings): NumberDivide/Arithmetic (value+Kind+Error.Key), PathSerializer
-byte-for-byte parity, FileReadBuild runtime image lift, KindField wire round-trip,
-MathHandler RunSignature (throw-based).
+**Verified real (mutation-tested where it mattered):**
+- #1 CRITICAL — `TypeProviderDllRoundtripTests.cs` loads the real DLL and drives
+  Money→"USD 10" / CustomInt→"CUSTOM-INT" through `Renderers.Of`. **Mutation:** reversing
+  `Registry.ResolveType` runtime-first precedence fails the CustomInt + RuntimeWins +
+  HandlerSlot tests → the coverage bites.
+- #2/#6/#9 RuntimeTypeLoading rewrites, #3 BuilderKindStamping (`.pr`-shape), #4 ten
+  deferrals now `[Skip]`, #5 Duration both-forms+equals, #8 Mime assertion, #7 C#
+  policy-resolution (step/context/app-default/parent-climb) — all genuine.
 
-## Files written
+**New false green (the FAIL):**
+- `Tests/Math/OverflowThrowSettingHonored.test.goal` uses `decimal.MaxValue + decimal.MaxValue`,
+  which overflows under **every** policy (no Decimal→wider promotion in `this.Arithmetic.cs`).
+  So `Overflow=Throw` is not load-bearing. **Empirically confirmed:** the same add without
+  `Overflow=Throw` also sets `%err%=true` and passes. The goal's name promises it verifies
+  the Throw setting is honored; it doesn't. Behavior itself IS covered in C#, so it's a
+  misnamed/non-distinguishing goal, not an untested path.
 
-- `.bot/plang-types/test-report.json` — full findings (shared branch root)
-- `.bot/plang-types/tester/v1/{plan,result,verdict}.md/json`, `coverage.json`
+## Fix for coder
 
-## Example of the false-green pattern
+One goal. Change the input so Throw vs Promote diverge:
+`math.add A=2147483647 B=2147483647 Overflow=Throw` (int.MaxValue + int.MaxValue) →
+Promote widens to Long (no error), Throw → MathOverflow (`%err%` true). Ideally add a
+sibling without the override asserting `%err%` is null.
 
-```
-# Tests/Cut4_RuntimeLoadAndRender/LoadDllOverwritesBuiltIn.test.goal
-# comment: "value resolves to loaded CLR type and renders via loaded renderer — runtime wins"
-- code.load Path=TypeProvider.dll, on error set %loadFailed% = true
-- assert %loadFailed% is null      # <-- only checks the DLL loaded; nothing about resolve/render/overwrite
-```
+## Files
 
-## For coder (next)
-
-Most fixes are in the tests, not production code: mark deferrals `[Skip]`; add real
-assertions to the Cut4 goals (assign + render + assert output / overwrite), DurationRoundTrip
-(value + both forms), and the kind-stamping path (C# .pr-shape assertion on a typed param);
-implement the NumberPolicy resolution coverage (SubContext + the two planned Math goals).
+- `.bot/plang-types/test-report.json` (shared) — v1_findings_resolution table + the v2 finding
+- `tester/v1/`, `tester/v2/` — plan/result/verdict per version

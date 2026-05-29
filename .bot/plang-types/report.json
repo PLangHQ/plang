@@ -261,6 +261,68 @@
         "health": "All-green suite but dishonest: headline runtime-DLL roundtrip and build-time kind-stamping surfaces are green-but-empty; ~10 deferrals pass as no-op tests; NumberPolicy resolution uncovered. Branch itself has no reds/regressions and the mechanism unit tests are honest.",
         "notes": "10 findings (1 critical, 5 major, 3 minor, 1 process). No source mutated; builder verified via cache:false; no builder false-greens. Next: coder to fix tests (mark deferrals [Skip], add real assertions, cover policy resolution)."
       }
+    },
+    {
+      "id": "3aff037a-40fa-4c08-b127-bd8ce98a5d12",
+      "bot": "tester",
+      "timestamp_start": "2026-05-29T16:28:45Z",
+      "timestamp_end": "2026-05-29T16:28:45Z",
+      "intent": "Verify coder v2 fixes to the 10 tester v1 findings are load-bearing, not green-restating-the-bug. Mutation-test headline new coverage.",
+      "before": {
+        "assumptions": "Coder v2 reports all 10 findings addressed; C# 3604/10skip, plang 247. Two new C# test files are the headline. Review-driven fixes are highest false-green risk.",
+        "risk": "New tests may pass for the wrong reason. The #7 overflow goal and the .pr-shape and DLL-roundtrip tests need mutation/empirical checks to confirm they bite."
+      },
+      "plan": ".bot/plang-types/tester/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/Types/TypeProviderDllRoundtripTests.cs",
+            "PLang/app/types/Registry.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Mutation test: reversed ResolveType runtime-first precedence; confirmed LoadDll_ExistingName_RuntimeWinsAtResolveType, AlreadyCompiledHandlerSlot, and TypeProviderDllRoundtrip.CustomInt all FAIL. Runtime-wins + DLL roundtrip coverage is load-bearing. Reverted."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/BuilderKindStampingTests.cs",
+            "PLang.Tests/App/Types/RuntimeTypeLoadingTests.cs",
+            "PLang.Tests/App/Types/NumberPolicyResolutionTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "#2/#6/#9 rewrites verified real; #3 pins path->kind=file + polymorphic-no-kind against committed .pr; #7 C# resolution tests (step/context/app-default/parent-climb) thorough. 10 deferred tests now [Skip] (confirmed in run)."
+        },
+        {
+          "paths": [
+            "Tests/Math/OverflowThrowSettingHonored.test.goal",
+            "PLang/app/types/number/this.Arithmetic.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "NEW false green: decimal.MaxValue overflows under every policy (no Decimal->wider promotion). Empirically built+ran the same add without Overflow=Throw -> %err% still true -> param not load-bearing. Goal does not verify the Throw setting is honored."
+        },
+        {
+          "paths": [
+            ".bot/plang-types/tester/v2/result.md",
+            ".bot/plang-types/tester/v2/verdict.json",
+            ".bot/plang-types/test-report.json",
+            ".bot/plang-types/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "tester v2 outputs. Verdict FAIL on one confirmed false green (single-goal fix); 9/10 v1 fixes verified real and mutation-confirmed."
+        }
+      ],
+      "after": {
+        "status": "fail",
+        "health": "Massively improved: critical DLL roundtrip + runtime-wins are now real and mutation-verified; deferrals honestly [Skip]'d; policy resolution thoroughly covered in C#. One new false green remains: the OverflowThrowSettingHonored plang goal's Overflow=Throw is not load-bearing (decimal overflow is policy-independent).",
+        "notes": "FAIL per strict-red (confirmed false green), but it is a single ~5-min goal fix: change input to int.MaxValue+int.MaxValue so Promote(success) vs Throw(error) diverge, or assert a sibling-default-no-error. Tree clean; mutation reverted; no source committed."
+      }
     }
   ]
 }
