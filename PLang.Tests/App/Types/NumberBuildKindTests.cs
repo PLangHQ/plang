@@ -1,3 +1,5 @@
+using PNum = global::app.types.number.@this;
+
 namespace PLang.Tests.App.Types;
 
 // plang-types — Stage 3
@@ -7,23 +9,42 @@ namespace PLang.Tests.App.Types;
 public class NumberBuildKindTests
 {
     [Test] public async Task Build_DecimalLiteral_ReturnsDecimal()
-        => throw new global::System.NotImplementedException();
+    {
+        await Assert.That(PNum.Build(3.14m)).IsEqualTo("decimal");
+        await Assert.That(PNum.Build("3.14")).IsEqualTo("decimal");
+    }
 
     [Test] public async Task Build_IntegerLiteral_ReturnsInt()
-        => throw new global::System.NotImplementedException();
+    {
+        await Assert.That(PNum.Build(42)).IsEqualTo("int");
+        await Assert.That(PNum.Build("42")).IsEqualTo("int");
+    }
 
     [Test] public async Task Build_TooBigForInt_ReturnsLong()
-        => throw new global::System.NotImplementedException();
+    {
+        await Assert.That(PNum.Build(3000000000L)).IsEqualTo("long");
+        await Assert.That(PNum.Build("3000000000")).IsEqualTo("long");
+    }
 
     [Test] public async Task Build_ExponentNotation_ReturnsDouble()
-        => throw new global::System.NotImplementedException();
+    {
+        await Assert.That(PNum.Build("5e10")).IsEqualTo("double");
+        await Assert.That(PNum.Build(1.5)).IsEqualTo("double");
+    }
 
     [Test] public async Task Build_StringValue_ReadsLikeLiteral()
-        => throw new global::System.NotImplementedException();
+    {
+        await Assert.That(PNum.Build("0.5")).IsEqualTo("decimal");
+        await Assert.That(PNum.Build("123")).IsEqualTo("int");
+        await Assert.That(PNum.Build("1e10")).IsEqualTo("double");
+    }
 
     [Test] public async Task Build_NonNumeric_ReturnsNull()
-        => throw new global::System.NotImplementedException();
+    {
+        await Assert.That(PNum.Build("hello")).IsNull();
+        await Assert.That(PNum.Build(true)).IsNull();
+    }
 
     [Test] public async Task Build_NullValue_ReturnsNull()
-        => throw new global::System.NotImplementedException();
+        => await Assert.That(PNum.Build(null)).IsNull();
 }
