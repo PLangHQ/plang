@@ -18,27 +18,28 @@ The `value` is a JSON-native token; the `type` is the resolved PLang type name. 
 ## The two phases, side by side
 
 ```
-GOAL (.goal)                BUILD  (once)                        .pr (artifact)               RUNTIME (every run)
-─────────────────────────   ──────────────────────────────────  ───────────────────────────  ────────────────────────────────
-- set %x% = 3.5             LLM: decimal-point literal → decimal { value: 3.5, type:           load JSON 3.5 (already numeric)
-                            bakes value as JSON number 3.5        "decimal" }                   → number{Decimal, 3.5m}. NO parse.
-                            scope now: %x%(decimal)
+GOAL (.goal)                BUILD  (once)                        .pr (artifact)                  RUNTIME (every run)
+─────────────────────────   ──────────────────────────────────  ──────────────────────────────  ────────────────────────────────
+- set %x% = 3.5             LLM: type number. number.Build(3.5)  { value: 3.5,                   load JSON 3.5 (already numeric)
+                            → kind "decimal" (decimal point).     type:"number", kind:"decimal" } → number{Decimal, 3.5m}. NO parse.
+                            scope now: %x%(number) kind=decimal
 
-- read photo.jpg,           LLM: picks file.read.                 step: file.read              file.read.Run() reads bytes,
-  write to %photo%          file.read's signature is              { Path: { value:"photo.jpg", builds image{bytes, mime:
-                            Data<image> → return type = image.    type:"path" } }              "image/jpeg"} — mime derived
-                            ext .jpg → image via registry.        return type image (from      HERE, from the file. Data.Type
-                            scope now: %photo%(image)             the Data<image> signature)   = "image" comes from the signature.
+- read photo.jpg,           LLM: picks file.read.                 step: file.read                 file.read.Run() reads bytes,
+  write to %photo%          signature Data<image> → type image.   { Path: {value:"photo.jpg",     builds image{bytes, mime}.
+                            image.Build("photo.jpg") → kind        type:"path"} }                  Data.Type="image" from the
+                            "jpg" (extension).                    return type:"image", kind:"jpg" signature; kind already baked.
+                            scope now: %photo%(image) kind=jpg
 
-- set %y% = %x% + 1         LLM: sees %x%(decimal), 1 is int.     step: math.add(%x%, 1)       math.add(3.5m, 1) → number{Decimal}.
-                            picks math.add → Data<number>.        then variable.set %y%        promotion happens in C#, not parsing.
-                            scope now: %y%(number)
+- set %y% = %x% + 1         LLM: sees %x%(number), 1 is int.      step: math.add(%x%, 1)          math.add(3.5m, 1) → number{Decimal}.
+                            picks math.add → Data<number>.        then variable.set %y%           promotion in C#, not parsing.
+                            scope: %y%(number), kind runtime →    (no kind: decided at runtime)   kind set by the result.
+                            absent in .pr
 
-- write out %photo%         LLM: picks output.write (polymorphic  step: output.write(%photo%)  channel + writer.Format → dispatch
-                            Data, no type awareness needed)                                    (image, Format) → serializer file
+- write out %photo%         LLM: picks output.write (polymorphic  step: output.write(%photo%)     channel + writer.Format → dispatch
+                            Data, no type awareness needed)                                       (image, Format) → serializer file
 ```
 
-Read the columns as a pipeline: the **build** column is where every "what type is this?" question is answered. By the time the `.pr` exists, the runtime never asks that question again — it either loads a baked value or runs a typed C# action that produces a `Data` already tagged by its signature.
+Read the columns as a pipeline: the **build** column is where every "what type is this, what kind?" question is answered (the LLM picks the high-level `type`; the type's `Build(value)` sets the `kind`). By the time the `.pr` exists, the runtime never asks again — it loads a baked `{type, kind, value}` or runs a typed C# action that produces a `Data` already tagged. The one case where `kind` is absent is a polymorphic result (`math.add`) whose kind is genuinely decided at runtime by promotion.
 
 ## Answering the two questions — one rule, no special case
 
