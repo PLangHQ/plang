@@ -1,239 +1,205 @@
-# Dispatch — `IWireWritable` and the Normalize hook
+# Dispatch — per-(type, format) serializer files
 
-This file goes deep on the serialization-dispatch surface introduced in the spine. The spine ([../plan.md](../plan.md)) locks the architectural decision; this locks the implementation contract.
+This file locks the serialization-dispatch contract. The spine ([../plan.md](../plan.md)) locks the architectural decision; this is the implementation shape Ingi signed off on 2026-05-29 (comment thread on `plan.md` L84 and this file L66/L70).
+
+**What changed from the first draft.** The original proposal put a single `IWireWritable.WriteTo(IWriter, ISerializer)` method on each value, switching on the mime internally. Ingi pushed back: a method that switches on format is a smell from across the room, and OBP says distinct (type × format) combinations get distinct files. The settled shape: **one small file per (type, format)**, each owning exactly one rendering, with the source generator wiring the dispatch table. No interface on the value, no internal mime switch. The value is a dumb data holder; the *rendering* lives beside the type, one file per output medium.
 
 ## What exists today
 
-The wire pipeline is already two layers, and the second layer is the right shape:
+The wire pipeline is already two layers, and both are the right shape to build on:
 
-1. **`app.data.this.Normalize(View)`** walks the value-graph into a uniform tree whose runtime types are limited to: `null`, primitives (string, int, long, double, bool, DateTime, decimal), `byte[]`, `app.data.@this`, or `IList`. Domain objects get decomposed by reflection into a property bag, respecting `[Out]`, `[Sensitive]`, `[Masked]` filters per the `View`. Lives at `PLang/app/data/this.Normalize.cs:42`.
+1. **`app.data.this.Normalize(View)`** walks the value-graph into a uniform tree whose runtime types are limited to: `null`, primitives, `byte[]`, `app.data.@this`, `IList`. Domain objects get decomposed by reflection into a property bag, respecting `[Out]`/`[Sensitive]`/`[Masked]` per `View`. Lives at `PLang/app/data/this.Normalize.cs:42`.
+2. **`app.channels.serializers.IWriter`** is the format-encoder protocol — one impl per format (today `app.channels.serializers.json.Writer`; protobuf/CBOR later). Primitive-typed methods (`Int`, `Long`, `Decimal`, `Double`, `String`, `Bytes`, `BeginArray`/`EndArray`, `BeginRecord`/`EndRecord`). `PLang/app/channels/serializers/IWriter.cs:19`.
+3. **`app.types.@this` registry** — `[PlangType("name")]` discovery + `ResolveName(Type)` / `ResolveType(name)` / `RegisterRuntime(name, type)`. `PLang/app/types/Registry.cs`. This already exists; the plang-types branch extends it, it does not invent it.
 
-2. **`app.channels.serializers.IWriter`** is the format-encoder protocol. One impl per format (today: `app.channels.serializers.json.Writer`; later: protobuf, CBOR). Methods are primitive-typed: `Int`, `Long`, `Decimal`, `Double`, `String`, `Bytes`, `BeginArray`/`EndArray`, `BeginRecord`/`EndRecord`. The writer walks the normalized tree and emits format-specific bytes. Lives at `PLang/app/channels/serializers/IWriter.cs:19`.
+The reflection decomposition in (1) is fine for plain domain objects (Identity, Signature, a user record). It is **not** fine for format-asymmetric types — image renders as base64 in JSON, raw bytes in protobuf, a path placeholder in text. A property bag can't express that. That's what the per-format serializer files are for.
 
-3. **`app.channels.serializers.serializer.ISerializer`** identifies a format by mime (`Type = "application/plang"`, `"text/plain"`, …) and owns the read/write entry points. Wraps an `IWriter`. Lives at `PLang/app/channels/serializers/serializer/this.cs:12`.
+## The folder shape
 
-The slot to intercept is **(1)**. Today Normalize decomposes every domain object the same way: walk public properties, build a `Data` property bag. For format-asymmetric types (image: bytes / base64 / `<img>` markup / path depending on format) that doesn't work — a property bag isn't enough; the type needs to choose what its content looks like *for the format it's about to be encoded in*.
+Each type owns a `serializer/` subfolder. One file per format that renders differently; a `Default.cs` catch-all for the rest:
 
-## What we add
+```
+app/types/image/serializer/
+    text.cs        (image, text)      → writer.String(path placeholder)
+    protobuf.cs    (image, protobuf)  → writer.Bytes(raw)
+    Default.cs     (image, *)         → writer.String(base64)
+app/types/number/serializer/
+    Default.cs     (number, *)        → writer.Int/Long/Decimal/Double(...)
+app/types/code/serializer/
+    Default.cs     (code, *)          → writer.String(source)
+app/types/path/serializer/
+    Default.cs     (path, *)          → writer.String(Relative)
+```
 
-A single marker interface on the value:
+Most types need only `Default.cs` — number, code, and path render the same regardless of format. Image is the one proving type that needs format-specific files (text → path, protobuf → bytes), and even it leans on `Default.cs` for json/plang (both base64). So the "~75 tiny files" worry from the first draft collapses: it's ~1 file for most types, ~3 for the asymmetric ones. The folder reads like a manifest of *what this type can do, per output medium*, and an empty-looking `serializer/` with one `Default.cs` says "renders uniformly" at a glance.
+
+### A single file
 
 ```csharp
-namespace app.data;
+// app/types/image/serializer/protobuf.cs
+namespace app.types.image.serializer;
 
-/// <summary>
-/// A value that knows how to render itself onto the wire for a specific format.
-///
-/// <para><see cref="Normalize"/> dispatches to <see cref="WriteTo"/> when the
-/// wrapped value implements this interface, instead of decomposing into a
-/// property bag via reflection. The value receives the active
-/// <see cref="ISerializer"/> (carrying format identity — mime string,
-/// extension) and the <see cref="IWriter"/> (the format encoder), and emits
-/// its content through the writer's primitive vocabulary. The choice of
-/// primitive (bytes vs base64 string vs markup string) is the type's, keyed
-/// off the format.</para>
-///
-/// Kept here next to <c>Data</c> (the dispatcher) so <c>Data</c> depends on
-/// the marker, not on any concrete value type.
-/// </summary>
-public interface IWireWritable
+public static class protobuf
 {
-    void WriteTo(IWriter writer, ISerializer serializer);
+    public static void Write(image.@this value, IWriter writer)
+        => writer.Bytes(value.Bytes);
 }
 ```
 
-The signature is **synchronous** — `void WriteTo(...)`, not `Task WriteTo(...)`. Reaching for I/O during wire emission is a bug: the value should already hold its bytes (or its lazy-resolved equivalent) by the time it reaches the writer. Async dispatch belongs at action verbs, where `image.resize` may read source bytes from disk; the result of that action is a fully-materialized `Image` instance with `Bytes` populated. The serializer is then synchronous over already-resident memory.
-
-## How the dispatch hooks in
-
-One branch added at the top of `NormalizeValue` (`PLang/app/data/this.Normalize.cs:42`), before today's tree-native and reflection branches:
-
 ```csharp
-internal static object? NormalizeValue(object? value, View mode, HashSet<object> visited, int depth)
+// app/types/image/serializer/text.cs
+namespace app.types.image.serializer;
+
+public static class text
 {
-    if (depth > MaxNormalizeDepth) throw new NormalizeException(...);
-
-    if (value is null) return null;
-
-    // NEW: value owns its serialization for the active format.
-    if (value is IWireWritable selfWriting)
-        return new WireWritableNode(selfWriting);   // placeholder marker — see below
-
-    // ... existing tree-native, nested-Data, dict, list, reflection branches ...
+    public static void Write(image.@this value, IWriter writer)
+        => writer.String(value.SourcePath ?? $"[image: {value.Mime} {value.Bytes.Length}B]");
 }
 ```
 
-The complication: `Normalize` produces a *tree of primitives* that `Wire.Write` then walks. `IWireWritable.WriteTo` doesn't return primitives — it writes directly into the `IWriter`. So Normalize can't return the rendered content; it has to return a *deferred marker* that `json.Writer` (and future writers) recognize.
-
-Two ways to handle that:
-
-- **Option A — Deferred marker.** Normalize returns a `WireWritableNode { Value }` placeholder. The writer's value-dispatch method recognizes it and calls `Value.WriteTo(this, serializer)`. Clean separation; needs the writer to learn one new node type.
-- **Option B — Eager render at Normalize-time.** Normalize gets the active `ISerializer`/`IWriter` passed in, and `IWireWritable.WriteTo` is invoked during the Normalize walk, writing into a buffer that's then spliced into the output. Avoids the placeholder, but couples Normalize to the writer (today Normalize is format-agnostic).
-
-I lean **Option A**. Keeps Normalize format-agnostic; the writer adds one branch; future writers handle the same marker uniformly. The placeholder is one tiny record (`sealed record WireWritableNode(IWireWritable Value)`).
-
-The writer-side branch lives in `app.channels.serializers.json.Writer.Value(object?)`:
-
 ```csharp
-public void Value(object? normalized)
+// app/types/image/serializer/Default.cs   (Default — `default` is a C# keyword, PascalCase per the filesystem/Default precedent)
+namespace app.types.image.serializer;
+
+public static class Default
 {
-    switch (normalized)
-    {
-        case null:                  Null(); break;
-        case WireWritableNode w:    w.Value.WriteTo(this, _serializer); break;  // NEW
-        case @this data:            BeginRecord(data); /* ... */ EndRecord(); break;
-        case bool b:                Bool(b); break;
-        // ... existing primitive cases ...
-    }
+    public static void Write(image.@this value, IWriter writer)
+        => writer.String(System.Convert.ToBase64String(value.Bytes));
 }
 ```
 
-The writer needs to know which serializer it's a part of (for the `serializer` arg in `WriteTo`). Today `json.Writer` is constructed from a `Utf8JsonWriter` + options + `View`; we add the `ISerializer` to its constructor (the plang serializer holds the json writer; passing itself through is one extra ref). Trivial.
+No switch. No mime string in the body. The file name **is** the format selector; the folder name **is** the type. Each file is one decision in one place. The `Write` method takes the concrete value type and the format-agnostic `IWriter` — a file uses only the writer primitives, never reaches for a concrete writer subclass. (If a format ever needs a richer primitive than `IWriter` exposes, that's a signal to add a method to `IWriter`, not to couple a type file to `json.Writer`.)
 
-## What `WriteTo` looks like per type
+## The writer carries its format token
 
-### `number`
-
-Format-uniform. Every wire format knows how to write a number primitive. The type's job is to dispatch on its `Kind` to pick which writer primitive carries it:
+`IWriter` gains one read-only property:
 
 ```csharp
-public void WriteTo(IWriter writer, ISerializer serializer)
+public interface IWriter
 {
-    switch (Kind)
-    {
-        case NumberKind.Int:     writer.Int((int)_i); break;
-        case NumberKind.Long:    writer.Long(_i); break;
-        case NumberKind.Decimal: writer.Decimal(_d); break;
-        case NumberKind.Float:   writer.Float((float)_f); break;
-        case NumberKind.Double:  writer.Double(_f); break;
-    }
+    /// <summary>Short format token — "json", "plang", "text", "protobuf". The
+    /// (type, format) serializer lookup key. Maps to the serializer's mime,
+    /// but type files match on this token, never the mime string.</summary>
+    string Format { get; }
+    // ... existing primitive methods ...
 }
 ```
 
-The `serializer` argument is unused — number doesn't render differently for JSON vs plang vs protobuf. (Text serializer's `String` falls back to `ToString()` for non-string writes, or text-writer has its own value-dispatch that handles numbers; either works.)
+`json.Writer.Format => "json"`. The serializer registry (`app/channels/serializers/this.cs`) already maps mime → serializer; the writer just surfaces its own short token. Type-serializer files key off this token, so the smell of `case "application/json":` strings sprinkled through type code never appears.
 
-### `image`
+## The dispatch table — generator-wired
 
-Format-asymmetric — the whole point of the interface:
+The source generator scans `app/types/*/serializer/*.cs` (discovery-time, the registry decision from the spine). For each file it emits one registration into a static table:
 
-```csharp
-public void WriteTo(IWriter writer, ISerializer serializer)
-{
-    switch (serializer.Type)
-    {
-        case "text/plain":
-            // Path placeholder if we have one; size summary otherwise.
-            writer.String(_sourcePath ?? $"[image: {_mime} {_bytes.Length}B]");
-            break;
-
-        case "text/html":
-            // Inline data URL. When HTML grows its own writer (no JSON
-            // escaping), this slot emits raw markup.
-            writer.String($"<img src=\"data:{_mime};base64,{Convert.ToBase64String(_bytes)}\">");
-            break;
-
-        case "application/json":
-        case "application/plang":
-        case "application/plang+json":
-            // Base64 string — the lossless JSON representation of bytes.
-            writer.String(Convert.ToBase64String(_bytes));
-            break;
-
-        case "application/protobuf":
-        case "application/octet-stream":
-            // Native bytes — the lossless binary representation.
-            writer.Bytes(_bytes);
-            break;
-
-        default:
-            // Unknown format — default to base64 string, the broadest fallback.
-            writer.String(Convert.ToBase64String(_bytes));
-            break;
-    }
-}
+```
+(typeName, formatToken) → static void Write(object value, IWriter writer)
 ```
 
-The mime mapping lives in one place: on the type. Adding a new channel that wants HTML doesn't touch image; adding a new image variant (animated PNG, AVIF) might add internal state but doesn't touch any channel.
+`Default.cs` registers under the wildcard token `"*"`. So the table for the proving types is:
 
-### `code`
-
-Text-shaped with a language tag. Most formats render as a string; HTML wraps for display:
-
-```csharp
-public void WriteTo(IWriter writer, ISerializer serializer)
-{
-    switch (serializer.Type)
-    {
-        case "text/html":
-            writer.String($"<pre><code class=\"language-{_language}\">{HtmlEscape(_source)}</code></pre>");
-            break;
-
-        case "text/plain":
-        case "application/json":
-        case "application/plang":
-        case "application/plang+json":
-        default:
-            writer.String(_source);
-            break;
-    }
-}
+```
+(image,  "text")     → app.types.image.serializer.text.Write
+(image,  "protobuf") → app.types.image.serializer.protobuf.Write
+(image,  "*")        → app.types.image.serializer.Default.Write
+(number, "*")        → app.types.number.serializer.Default.Write
+(code,   "*")        → app.types.code.serializer.Default.Write
+(path,   "*")        → app.types.path.serializer.Default.Write
 ```
 
-The language tag rides as a `Property` on the surrounding `Data`, not as part of the value rendering — the property surfaces uniformly across formats and the LLM can read it back via `%snippet!language%`. No subtype precision in the LLM scope (per the spine's cross-cutting decision); `code` is the type, `language` is metadata on the wrapper.
+**Build-time gate (PLNG).** Every `[PlangType]` must have either a `Default.cs` or a file for every registered format token. The generator emits a PLNG diagnostic at error severity otherwise. This is what guarantees a runtime lookup for a registered type can never miss — there is always a specific file or the wildcard.
 
-### `path` (retroactive)
+## How it hooks into the existing pipeline
 
-Add the interface to `app.types.path.@this`. The existing `JsonConverter` (`PLang/app/types/path/this.JsonConverter.cs`) emits the portable `Relative` string for JSON. Under `IWireWritable` this becomes:
+Two touch points, mirroring the deferred-marker mechanism Ingi liked (this file's old L70):
+
+**Normalize tags, doesn't render.** When the walk reaches a value whose CLR type resolves to a PLang name (`Registry.ResolveName(value.GetType())` is non-null) and that type has at least one registered serializer, Normalize wraps it as a marker instead of reflecting it:
 
 ```csharp
-public void WriteTo(IWriter writer, ISerializer serializer)
+// in NormalizeValue, before the reflection branch
+if (Registry.ResolveName(value.GetType()) is string typeName
+    && TypeSerializers.Has(typeName))
 {
-    // Portable form for all formats — path's wire shape is its Relative
-    // string by construction (file vs http variants both serialize to a
-    // single string the parse side resolves through scheme registry).
-    var wire = Context != null ? TryGetRelative() : (Raw ?? Absolute);
-    writer.String(wire);
+    return new TypedValueNode(value, typeName);   // sealed record TypedValueNode(object Value, string TypeName)
 }
+// else: today's reflection walk into a property bag, unchanged
 ```
 
-The `JsonConverter` stays for now (STJ-pathway callers route through it directly), but Normalize-dispatched paths flow through `WriteTo`. When the dust settles the `JsonConverter` can shrink to "call WriteTo into a buffer."
+Normalize stays format-agnostic — it only tags. Unregistered domain objects (no `[PlangType]`) fall straight through to the existing reflection decomposition; nothing about them changes.
 
-## The parse-in side — `Resolve(string, context)`
+**The writer resolves the marker.** `json.Writer.Value(object?)` (`PLang/app/channels/serializers/json/writer.cs:113`) gains one case:
 
-The interface is **out-only**. Parsing back from the wire still goes through `static Resolve(string, context)` — the existing factory convention — for string-shaped representations. For format-specific binary representations (protobuf bytes for image, raw bytes for path), the format's reader handles the round-trip:
+```csharp
+case TypedValueNode tv:
+    var write = TypeSerializers.Get(tv.TypeName, Format)      // specific (type, format)
+             ?? TypeSerializers.Get(tv.TypeName, "*");        // Default.cs wildcard
+    write(tv.Value, this);                                    // build-gate guarantees non-null
+    return;
+```
 
-- JSON / plang: deserializer hits a `"value"` slot, gets a string. If the surrounding `Data.Type` is `"image"`, looks up the image type's `Resolve(string, context)`, which sees base64 and calls `Convert.FromBase64String` to reconstruct bytes.
-- Protobuf: deserializer hits a bytes slot. Same `Type=image` lookup; `Resolve(byte[], context)` (a separate overload, by-bytes) constructs directly.
-- Text: a string slot. `Resolve` tries to interpret — path-shaped string → image-backed-by-path; base64 → bytes; neither → fail.
+The writer knows its own `Format`; it does the (type, format) lookup and calls the generator-wired method. No other writer code changes — every future `IWriter` impl (protobuf, CBOR) gets the same one case and the whole type vocabulary works for it for free.
 
-The parse asymmetry is fine: emit is always 1-to-many (one type, four formats), parse is always many-to-one (any format, one type) with the type knowing which incoming shapes are valid. The existing `Conversion.TryConvertTo` dispatch grows a new branch (typed parse via `Resolve(byte[], context)` when input is binary and Type is set).
+## The flow, concretely
+
+`Wire.Write` is emitting `Data{Type="image", Value=<Image>}` through the json writer:
+
+1. `Wire.Write` calls `data.Normalize(View)`. The walk reaches the `Image` value.
+2. `Registry.ResolveName(typeof(image.@this))` → `"image"`; `TypeSerializers.Has("image")` → true. Normalize returns `TypedValueNode(<Image>, "image")`.
+3. `Wire.Write` hands the normalized tree to `jsonWriter.Value(...)`. It reaches the `TypedValueNode`.
+4. Writer's `Format` is `"json"`. Lookup `("image", "json")` → miss; lookup `("image", "*")` → `image.serializer.Default.Write`.
+5. Call `Default.Write(<Image>, jsonWriter)` → `jsonWriter.String(base64)`.
+
+Switch the run to protobuf: step 4 looks up `("image", "protobuf")` → hit → `protobuf.Write` → `writer.Bytes(raw)`. Same value, same step, different writer, different wire shape — and the channel never branched on type, the type never named a channel.
+
+## Runtime-loaded and overwritten types
+
+This is the dimension Ingi raised on `plan.md` L3 (`- load mynumbers.dll`). A type loaded from an external DLL at runtime can't be generator-wired — the generator already ran at PLang's build. So the dispatch table needs a **runtime-registration path** alongside the generated one, and the existing `code.load` machinery is the template.
+
+`code.load` (`PLang/app/modules/code/load.cs`) today: loads a DLL, scans `GetExportedTypes()` for `ICode` implementations, registers each instance. The type-loading feature generalizes the same shape:
+
+1. Scan the DLL for `[PlangType]`-bearing classes → `Registry.RegisterRuntime(name, clrType)` (the existing hook at `Registry.cs:103`).
+2. Scan for the loaded type's renderers and register them as delegates into the same dispatch table the generator feeds: `TypeSerializers.RegisterRuntime(typeName, formatToken, writeDelegate)`. The DLL exposes them via a small interface the loader can reflect — the type-system analogue of `ICode` (call it `ITypeRenderer { string Format { get; } void Write(object value, IWriter writer); }`), so a loaded assembly ships one renderer instance per format it supports.
+
+**Overwriting `int` works because resolution already favors runtime.** `Registry.ResolveType` checks `_runtimeNameToType` before the discovery-time table (`Registry.cs:85`), so `RegisterRuntime("int", customType)` shadows the built-in mapping for everything that resolves types by name — including the value slot's serializer dispatch. The runtime serializer table follows the same precedence (runtime registration wins over generated).
+
+**The honest limit on overwriting built-ins.** Runtime registration changes *resolution and serialization* — what a name maps to, how a value renders. It cannot change what the **source generator already baked at build**: PLNG001 parameter-slot validation, the `Data<int>` slots emitted on existing action handlers, the compile-time type stamps in shipped `.pr` files. So `- load myint.dll` can make `int` resolve to a custom type and render differently, but a handler compiled against the built-in `int` still sees the built-in at its typed slot. Adding **new** types is unconstrained; overwriting built-ins is "new resolution + new rendering, same compiled slots." Worth stating loudly in the user-facing docs so nobody expects `- load myint.dll` to retroactively rewrite the arithmetic of already-built goals. This is captured as a cross-cutting note in [../plan.md](../plan.md) "Extending the type vocabulary at runtime".
+
+## The parse-in side — `Resolve`, unchanged
+
+Emit is 1-to-many (one type, a file per format). Parse is many-to-one (any format → one type). So parse-in does **not** get per-format files — it stays on the type's `static Resolve(string|byte[], context)` (the existing factory convention, on `this.cs` / `this.Parse.cs`):
+
+- JSON / plang: the deserializer hits a `"value"` slot, gets a string. If the surrounding `Data.Type` is `"image"`, it calls `image.@this.Resolve(string, context)`, which sees base64 and `Convert.FromBase64String`s it back to bytes.
+- protobuf: a bytes slot → `image.@this.Resolve(byte[], context)` overload, constructs directly.
+- text: a string slot → `Resolve` interprets (path-shaped → image-backed-by-path; base64 → bytes; neither → typed parse error).
+
+The type owns deserializing itself (Ingi's L205 comment, already resolved): the dispatch picks the type by `Data.Type`, the type's `Resolve` overloads pick the construction path by incoming primitive shape. `Conversion.TryConvertTo` grows one branch — typed parse via `Resolve(byte[], context)` when the input is binary and `Data.Type` is set.
 
 ## What changes vs. what stays
 
 **Stays:**
-- `Data.Normalize`'s tree shape and the View-based filter discipline.
-- `IWriter`'s primitive vocabulary (no new methods — every type routes through the existing slots).
-- `ISerializer`'s mime identity and the registry at `app/channels/serializers/this.cs`.
-- The plang serializer's outer-shape contract (`{name, type, value, properties, signature}`) — `IWireWritable` only affects how `value` is emitted.
-- All existing `[JsonConverter]`-based custom emission (path's `JsonConverter`, signature's converter, etc.).
+- `Data.Normalize`'s tree shape and the View-based filter discipline. The only addition is the tag-instead-of-reflect branch for registered types.
+- `IWriter`'s primitive vocabulary (no new value methods — types route through existing slots). One new read-only `Format` property.
+- The reflection walk for unregistered domain objects (Identity, Signature, user records) — untouched.
+- The plang serializer's outer-shape contract (`{name, type, value, properties, signature}`). The serializer dispatch only governs the `value` slot.
 
-**Changes:**
-- One new file: `PLang/app/data/IWireWritable.cs` (the marker interface).
-- One new internal node type: `WireWritableNode` (in `PLang/app/data/this.Normalize.cs`, the placeholder for the writer to recognize).
-- One added branch in `NormalizeValue` (`PLang/app/data/this.Normalize.cs:42`).
-- One added branch in `app.channels.serializers.json.Writer.Value` (and any future writer's value-dispatch).
-- One ctor arg added to `json.Writer` (the `ISerializer` ref, threaded through).
+**Changes / new:**
+- New per-(type, format) files under `app/types/<name>/serializer/`. Static `Write(<Type>, IWriter)` each.
+- New static dispatch table `TypeSerializers` (generator-emitted) with a runtime-registration path for loaded types.
+- New `sealed record TypedValueNode(object Value, string TypeName)` and the tag branch in `NormalizeValue`.
+- One `case TypedValueNode` in each `IWriter`'s value-dispatch.
+- One `Format` property on `IWriter` + impls.
+- Generator: scan `serializer/*.cs`, emit registrations; PLNG gate for missing-coverage.
+- `code.load` sibling (or extension) that registers `[PlangType]` classes + their `ITypeRenderer`s from a loaded DLL.
 
-That's the entire dispatch surface. Three proving types adopt the interface (number, image, code), `path` adopts it retroactively, and the door is open for every future type to do the same without touching any channel.
+`path`'s existing `this.JsonConverter.cs` (Ingi flagged the OBP smell on `plan.md` L54) is absorbed: its single-format logic moves into `app/types/path/serializer/Default.cs`, and `this.JsonConverter.cs` is deleted once STJ-pathway callers route through the new dispatch.
 
 ## Edge cases
 
-**Cycles.** `IWireWritable` values can't be part of a cycle the way property-bag domain objects can — they're leaf values by definition. The visited-set in Normalize still guards against the surrounding graph cycling; the leaf write itself is acyclic.
+**Cycles.** Registered-type values are leaves by definition — no cycle through them. Normalize's visited-set still guards the surrounding graph.
 
-**Sensitive fields.** A type that holds secret content (private key, password) and implements `IWireWritable` has full control over what reaches the wire. The `Sensitive` filter doesn't apply (the value isn't decomposed). Documentation rule: don't implement `IWireWritable` for types that carry secret payloads — let them go through the reflection walk so `[Sensitive]` discipline applies.
+**Sensitive fields.** A registered type fully controls what its serializer files emit; the `[Sensitive]` reflection filter doesn't apply (the value isn't decomposed). Rule: a type carrying secret payload (private key) either doesn't register a serializer (falls to the reflection walk so `[Sensitive]` applies) or its serializer files explicitly mask. Documented on the type.
 
-**Nested `IWireWritable`.** A value might want to delegate sub-fragments back through the writer (e.g. a `Document` type whose body is a `code` snippet). `WriteTo` can recursively call into other `WriteTo`s as long as it owns the wrapping (`writer.BeginArray` / `EndArray`, etc.). The writer's `Value` dispatch handles the recursive case identically to top-level.
+**Nested registered types.** A `Document` whose body is a `code` value: the document's serializer file calls `writer` brackets and, for the nested `code`, can re-enter the dispatch (`writer.Value(new TypedValueNode(body, "code"))` or a helper). The writer's `Value` dispatch handles nesting identically to top-level.
 
-**Unknown mime.** If a type's `WriteTo` doesn't recognize `serializer.Type`, it should fall back to its most general representation (base64 for image, raw string for code). Never throw — an unknown format channel should always get *something*; format introduction shouldn't require touching every type.
+**Unknown format with no Default.** Can't happen for a registered type — the build gate requires `Default.cs` or full coverage. For a *runtime-loaded* type the loader must register at least a `"*"` renderer or the load fails with a typed error (mirrors `code.load`'s "no parameterless constructor" rejection).
 
-**Round-trip.** A value emitted through `IWireWritable` must be reconstructible via `Resolve` from at least one format's emission (typically `application/plang`). The branch should add a `BuilderSanity`-style test that emit-then-resolve round-trips a constructed instance of every registered type.
+**Round-trip.** Every registered type needs a `BuilderSanity`-style test: construct an instance, emit through each format's writer, `Resolve` back, assert equality (via the type's lenient equality — see [storage.md](storage.md)). At least `application/plang` must round-trip losslessly.

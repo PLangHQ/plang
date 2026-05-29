@@ -111,16 +111,18 @@ Under this branch, each `app/types/<name>/this.cs` declares:
 
 ```csharp
 [PlangType("image")]
-public sealed class @this : app.data.IBooleanResolvable, app.data.IWireWritable, app.modules.IContext
+public sealed class @this : app.data.IBooleanResolvable, app.modules.IContext
 {
     public static @this Resolve(string raw, app.actor.context.@this context) { /* ... */ }
     // ...
 }
 ```
 
-`[PlangType]` takes just the PLang-facing name — the CLR type *is* the class the attribute is on, so the generator picks it up from the symbol it's scanning. No redundant `typeof(image.@this)` argument.
+Serialization is **not** an interface on the class — it lives in `serializer/<format>.cs` files beside it (see [dispatch.md](dispatch.md)). `number`, being a `readonly struct` value, drops `IContext` (no stored Context); class-shaped types like `image` may keep it.
 
-The `[PlangType]` attribute is the registration declaration. App-time (or generator-time — open question 2 in the spine) scans `[PlangType]`-bearing classes and builds the registry. `app.types.@this.Get(name)`, `IsPrimitive(type)`, `NameOf(type)` all dispatch through the registry. Adding a new type means adding a new folder with an attributed class — one edit site.
+`[PlangType]` takes just the PLang-facing name — the CLR type *is* the class the attribute is on, so the generator picks it up from the symbol it's scanning. No redundant `typeof(image.@this)` argument. (`[PlangType]` and the discovery scan already exist in `Registry.cs`.)
+
+Registration is **discovery-time** (settled): the source generator scans `[PlangType]` classes + `serializer/*.cs` and emits the registration + dispatch tables. `ResolveType` / `ResolveName` / `IsPrimitive` dispatch through the registry. Adding a new type means adding a folder with an attributed class — one edit site. A DLL loaded at runtime registers via `RegisterRuntime` (the spine's "Extending the type vocabulary at runtime").
 
 CLR primitives (`string`, `int`, `long`, …) keep their entries via a small bootstrap registration at registry construction. They're not full PLang types (no folder, no `Resolve` method needed — they ride through `Conversion`'s direct paths) but they participate in the same registry for name lookup.
 
@@ -134,7 +136,7 @@ The cross-cutting interfaces and surfaces each type-folder owns:
 |---|---|---|---|---|---|
 | `static Resolve(string, context)` | ✓ | ✓ | ✓ | ✓ (exists) | ✓ if folder; else via Conversion |
 | `IBooleanResolvable` | ✓ (0/NaN false) | ✓ (empty bytes false) | ✓ (empty source false) | ✓ (exists) | — |
-| `IWireWritable` | ✓ (Kind dispatch) | ✓ (mime dispatch) | ✓ (mime dispatch) | ✓ (single string form) | — (CLR primitives flow through IWriter directly) |
+| `serializer/` files | `Default.cs` (Kind→primitive) | `text` + `protobuf` + `Default` | `Default.cs` (+`html` later) | `Default.cs` (Relative string) | — (CLR primitives flow through IWriter directly) |
 | `[PlangType]` registration | ✓ | ✓ | ✓ | retro-add | retro-add for folder cases |
 | Leaf-action consumers | `math.*`, `list.*` reducers | (none this branch) | (none this branch) | `file.*`, `http.*` (exist) | `time.*` etc. (separate work) |
 

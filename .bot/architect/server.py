@@ -726,7 +726,7 @@ function renderSidebar() {
     }
     li.appendChild(document.createTextNode(f));
     if (f === currentFile) li.className = 'active';
-    const count = (comments[f] || []).length;
+    const count = (comments[f] || []).filter(c => (c.status || 'open') === 'open').length;
     if (count) {
       const b = document.createElement('span');
       b.className = 'badge'; b.textContent = count;

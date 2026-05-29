@@ -1,3 +1,19 @@
+## 2026-05-29 — Dispatch signed off, struct landed, runtime type-loading captured
+
+Ingi signed off on the per-(type, format) serializer-file dispatch and made the struct/rational calls. Five open comments addressed.
+
+**Dispatch — rewrote `plan/dispatch.md` wholesale.** The `IWireWritable`-single-method-with-mime-switch design is gone. Settled shape: `app/types/<name>/serializer/<format>.cs`, one `Default.cs` (uniform rendering) plus a file per format that genuinely differs (image needs `text`, `protobuf`, `Default`; number/code/path need only `Default`). The source generator emits a `(typeName, formatToken) → Write` table; the writer carries a `Format` token and does the lookup; `Normalize` tags registered-type values as a deferred `TypedValueNode` and the writer resolves it. This collapses the "~75 tiny files" worry — most types are one file. Grounded the doc on real surfaces verified this session: `Registry.cs` (`[PlangType]`, `RegisterRuntime`, `ResolveType` runtime-precedence) and `code.load` already exist.
+
+**Runtime type-loading captured (new spine section).** Ingi's L3 comment: `- load mynumbers.dll` should detect the interface, inject the type, allow overwriting `int`. This is already mostly wired — `code.load` is the load-scan-register template, `RegisterRuntime` is the hook, `ResolveType` already favors runtime over built-in (so overwrite works at the resolution layer). Honest limit documented: runtime registration changes resolution + rendering, not what the generator already baked (PLNG slots, compiled `Data<int>` params, shipped `.pr` stamps).
+
+**`number` is now a `readonly struct`** (Ingi's call). Named `@this` so the convention is intact. **Architect correction surfaced:** verified `Data.Value` is `object` (`app/data/this.cs:86`), so a struct boxes on store into Data — the allocation win Ingi cited holds only for pure-C# reducer accumulators, not the dominant Data path. Struct still stands on value-semantics grounds; flip to `sealed class` is one keyword if the corrected premise changes the call. Folded in the already-agreed equality (lenient default + `ExactEquals`, non-transitivity caveat documented), Context removal, and error model (throws at C# boundary / Data at handler boundary) into `storage.md`.
+
+**Rational numbers** (L191): Option B (separate `rational` sibling type), deferred — not this branch. Recorded in `review-opus-4-8.md` + plan.md open questions.
+
+Still open (recommendations standing, no ruling yet): divide/power per-op promotion (`7/2 → 3.5` + `math.intdiv`), curated-boundary section, literal-shape-semantics section. All flagged in the docs as pending.
+
+Files: `plan/dispatch.md` (rewritten), `plan/storage.md` (struct + equality + context + error model), `plan.md` (folder tree, cross-cutting bullets, settled/open, runtime-loading section), `plan/types.md` (serializer-file matrix), `plan/review-opus-4-8.md` (decisions-landed table). Stage status: still not carved — settle the three pending items, then carve.
+
 ## 2026-05-28 — Review pass on v1 (23 comments addressed)
 
 Ingi's review of the rewritten plan. 19 of 23 resolved by edits, 4 left open as a single architectural thread.

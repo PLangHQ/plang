@@ -1,6 +1,8 @@
 # Review from Opus 4.8 on storage.md + policy.md — my counter-arguments
 
-**Source.** Ingi shared the current `plan/storage.md` and `plan/policy.md` with Opus 4.8 on 2026-05-28. The review came back with six numbered critiques plus three smaller notes. This file walks each one and takes a position: concede, push back, or partially agree with a delta. **No changes have been made to the existing plan files** — Ingi reads this first, then decides what to land.
+**Source.** Ingi shared the current `plan/storage.md` and `plan/policy.md` with Opus 4.8 on 2026-05-28. The review came back with six numbered critiques plus three smaller notes. This file walks each one and takes a position: concede, push back, or partially agree with a delta.
+
+**Status (2026-05-29):** Ingi has reviewed and decided. Outcomes are recorded in "Decisions landed (2026-05-29)" at the bottom; the ones marked "landed" are now reflected in `storage.md`. The body below preserves the original argument-by-argument analysis as the reasoning record.
 
 The thumbnail: **four of six I concede outright** (equality, throws-vs-Data, mutable Context, integer-divide), **one I push back on partially** (curated boundary — the framing-as-decision is rhetorical; I'd already implicitly committed), **one I partially agree on** (literal-shape semantics — value-dependent typing is deliberate but worth documenting loudly). Two of 4.8's collateral notes are factually wrong on current state (the policy concern was already addressed by my rewrite to `app.config`; "no App root anymore" is just incorrect).
 
@@ -189,3 +191,24 @@ The second half — "no `App` root anymore" — is just factually wrong on curre
 Smaller cleanups (try/catch, Float Kind, "no boxing" wording) fold into whichever section they touch.
 
 **The one thing I'd want to discuss before changing anything**: the **sealed-class-vs-readonly-record-struct** question. 4.8 didn't raise it directly but the equality and Context critiques both reinforce the case. Worth a 10-minute back-and-forth before either decision is committed to the doc.
+
+---
+
+## Decisions landed (2026-05-29)
+
+Ingi reviewed this file. Outcomes, and where each is now reflected:
+
+| Point | Decision | Landed in |
+|---|---|---|
+| 2 — equality | **Lenient `==` by default** (`0.1 == 0.1` true regardless of kind), **`ExactEquals` opt-in** for crypto/finance/debug. Not exact-only — that's the worse default. Non-transitivity caveat documented, not "fixed." | [storage.md](storage.md) "Value equality" |
+| 4 — error model | **Throws at the C# boundary, `Data` at the handler boundary.** Operators/private internals throw like any CLR numeric; module surface returns `Data.Error`. Ingi: "everything in plang returns data… private method would throw, but we should return Data error to the runtime from the module." | [storage.md](storage.md) "Error model" |
+| 6 — Context | **Dropped.** No `Context` field, no `IContext`. `Resolve(raw, context)` keeps the param for signature consistency, never stores it. Ingi noted thread-safety isn't the worry; the point is a value shouldn't carry unused per-request state. | [storage.md](storage.md) "The shape" |
+| struct vs class | **`readonly struct @this`** (struct named `@this`, convention intact). Ingi: "the win for less allocation is more important." **Architect correction:** verified `Data.Value` is `object` (`app/data/this.cs:86`), so a struct **boxes on store into Data** — the allocation win is real only for pure-C# arithmetic intermediates that never enter Data (reducer accumulators), and that path is partly mooted by `[code]`. Struct still stands on **value-semantics** grounds. Proceeding on that corrected basis; flip back to `sealed class` is one keyword if the corrected premise changes the call. | [storage.md](storage.md) "The shape" |
+| 3 — divide/per-op promotion | **Open — not landed.** No user ruling yet. My rec (in point 3 above): `/` promotes out of integers (`7/2 → 3.5`), `^` promotes on negative/fractional exponents, `math.intdiv` for truncating. Flagged as a provisional note in storage.md Arithmetic. | pending |
+| 1 — curated boundary | **Open — recommendation standing.** Curated set; BigInteger/Int128 deferred (no arithmetic consumer; crypto is `byte[]` not arithmetic-scalar); units → future `quantity` sibling. Not yet written as a storage.md section pending confirm. | pending (rec in point 1) |
+| 5 — literal-shape typing | **Open — documentation only.** The `5`/`5.0`/`5e0` kind-flip is deliberate; should be surfaced loudly with the LLM-stamp vs runtime-Parse cooperation. Not yet a storage.md section. | pending (rec in point 5) |
+| rational numbers | **Option B (separate `rational` sibling type), added later — not this branch.** Ingi: "we dont need to implement now, that can be added later." Recorded; nothing to build. | this file (below) + plan.md "Open questions" |
+
+### Rational numbers — Ingi's call (Option B, deferred)
+
+`- set %x% = 7/8` keeping the value exact as a rational is a real future want. Decision: a **separate `rational` type** under `app/types/rational/` (parallel to `number` and the future `quantity`), not a sixth `NumberKind` inside `number` — rational arithmetic has its own rules (GCD/lowest-terms on construction, denominator-overflow, no IEEE concepts) and most code never needs it, so folding it into the universal `number` would tax every `number` switch. **Not built on this branch** — it's a follow-up with a real consumer driving it, same discipline as BigInteger and the format-kind types. Captured so the type vocabulary stays forward-coherent.
