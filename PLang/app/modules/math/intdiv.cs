@@ -8,24 +8,22 @@ using PPrecision = global::app.types.number.PrecisionMode;
 
 namespace app.modules.math;
 
-[Action("divide")]
-public partial class Divide : IContext
+/// <summary>
+/// Truncating integer division — the explicit opt-in for the C# semantics
+/// the plain <c>math.divide</c> intentionally avoids. <c>7 intdiv 2 → 3</c>;
+/// negative numerators truncate toward zero. Pairs with <c>math.modulo</c>.
+/// </summary>
+[Action("intdiv")]
+public partial class IntDiv : IContext
 {
     public static ExampleSpec[] ExamplesForLlm() => new[]
     {
         new ExampleSpec(
-            "divide 10 by 4, write to %quotient%",
+            "integer divide 7 by 2, write to %quotient%",
             new[]
             {
-                new ActionSpec("math",     "divide", new() { ["A"] = 10, ["B"] = 4 }),
+                new ActionSpec("math",     "intdiv", new() { ["A"] = 7, ["B"] = 2 }),
                 new ActionSpec("variable", "set",    new() { ["Name"] = "%quotient%", ["Value"] = "%!data%" }),
-            }),
-        new ExampleSpec(
-            "set %avg% = %total% / %count%",
-            new[]
-            {
-                new ActionSpec("math",     "divide", new() { ["A"] = "%total%", ["B"] = "%count%" }),
-                new ActionSpec("variable", "set",    new() { ["Name"] = "%avg%", ["Value"] = "%!data%" }),
             }),
     };
 
@@ -34,8 +32,6 @@ public partial class Divide : IContext
     public partial data.@this<POverflow>? Overflow { get; init; }
     public partial data.@this<PPrecision>? Precision { get; init; }
 
-    // Divide leaves the integer track — 7/2 → 3.5. Truncating integer division
-    // is the explicit math.intdiv action.
     public Task<data.@this<Number>> Run()
     {
         var policy = MathPolicy.Resolve(Context, Overflow?.Value, Precision?.Value);
@@ -43,7 +39,7 @@ public partial class Divide : IContext
         var bn = Number.FromObject(B.Value);
         if (an == null || bn == null)
             return Task.FromResult(data.@this<Number>.FromError(
-                new errors.ValidationError("math.divide requires two numbers", "InvalidInput")));
-        return Task.FromResult(Number.Divide(an, bn, policy));
+                new errors.ValidationError("math.intdiv requires two numbers", "InvalidInput")));
+        return Task.FromResult(Number.IntDivide(an, bn, policy));
     }
 }

@@ -1,3 +1,7 @@
+using number = global::app.types.number.@this;
+using PKind = global::app.types.number.NumberKind;
+using PPolicy = global::app.types.number.NumberPolicy;
+
 namespace PLang.Tests.App.Types;
 
 // plang-types — Stage 4 (the divide footgun call)
@@ -7,30 +11,59 @@ namespace PLang.Tests.App.Types;
 
 public class NumberDivideTests
 {
+    private static PPolicy P => PPolicy.Lenient;
+
     [Test] public async Task Divide_SevenByTwo_ReturnsThreeAndHalf_NotThree()
-        => throw new global::System.NotImplementedException();
+    {
+        var r = number.Divide(number.From(7), number.From(2), P);
+        await Assert.That(r.Success).IsTrue();
+        await Assert.That((decimal)r.Value!).IsEqualTo(3.5m);
+    }
 
     [Test] public async Task Divide_IntByInt_LeavesIntegerTrack_KindDecimal()
-        => throw new global::System.NotImplementedException();
+        => await Assert.That(number.Divide(number.From(7), number.From(2), P).Value!.Kind).IsEqualTo(PKind.Decimal);
 
     [Test] public async Task Divide_DecimalByInt_ReturnsDecimal()
-        => throw new global::System.NotImplementedException();
+        => await Assert.That(number.Divide(number.From(7m), number.From(2), P).Value!.Kind).IsEqualTo(PKind.Decimal);
 
     [Test] public async Task Divide_OneByMillion_FullPrecision_NotSilentZero()
-        => throw new global::System.NotImplementedException();
+    {
+        var r = number.Divide(number.From(1), number.From(1000000), P);
+        await Assert.That(r.Success).IsTrue();
+        await Assert.That((decimal)r.Value!).IsEqualTo(0.000001m);
+    }
 
     [Test] public async Task IntDiv_SevenByTwo_ReturnsThree()
-        => throw new global::System.NotImplementedException();
+    {
+        var r = number.IntDivide(number.From(7), number.From(2), P);
+        await Assert.That(r.Success).IsTrue();
+        await Assert.That((int)r.Value!).IsEqualTo(3);
+    }
 
     [Test] public async Task IntDiv_NegativeNumerator_TruncatesTowardZero()
-        => throw new global::System.NotImplementedException();
+    {
+        var r = number.IntDivide(number.From(-7), number.From(2), P);
+        await Assert.That((int)r.Value!).IsEqualTo(-3);
+    }
 
     [Test] public async Task Divide_ByZero_Integer_DataFailDivideByZero()
-        => throw new global::System.NotImplementedException();
+    {
+        var r = number.Divide(number.From(7), number.From(0), P);
+        await Assert.That(r.Success).IsFalse();
+        await Assert.That(r.Error?.Key).IsEqualTo("DivideByZero");
+    }
 
     [Test] public async Task Divide_ByZero_Decimal_DataFailDivideByZero()
-        => throw new global::System.NotImplementedException();
+    {
+        var r = number.Divide(number.From(7m), number.From(0m), P);
+        await Assert.That(r.Success).IsFalse();
+        await Assert.That(r.Error?.Key).IsEqualTo("DivideByZero");
+    }
 
     [Test] public async Task IntDiv_ByZero_DataFailDivideByZero()
-        => throw new global::System.NotImplementedException();
+    {
+        var r = number.IntDivide(number.From(7), number.From(0), P);
+        await Assert.That(r.Success).IsFalse();
+        await Assert.That(r.Error?.Key).IsEqualTo("DivideByZero");
+    }
 }

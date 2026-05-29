@@ -1,4 +1,4 @@
-using PNum = global::app.types.number.@this;
+using number = global::app.types.number.@this;
 using PKind = global::app.types.number.NumberKind;
 
 namespace PLang.Tests.App.Types;
@@ -12,7 +12,7 @@ public class NumberParseTests
 {
     [Test] public async Task Parse_PlainInt_IsInt()
     {
-        var n = PNum.Parse("5");
+        var n = number.Parse("5");
         await Assert.That(n).IsNotNull();
         await Assert.That(n!.Kind).IsEqualTo(PKind.Int);
         await Assert.That((int)n).IsEqualTo(5);
@@ -20,32 +20,32 @@ public class NumberParseTests
 
     [Test] public async Task Parse_TooBigForInt_PromotesToLong()
     {
-        var n = PNum.Parse("3000000000");
+        var n = number.Parse("3000000000");
         await Assert.That(n!.Kind).IsEqualTo(PKind.Long);
         await Assert.That((long)n).IsEqualTo(3000000000L);
     }
 
     [Test] public async Task Parse_DecimalPoint_IsDecimal()
     {
-        var n = PNum.Parse("5.0");
+        var n = number.Parse("5.0");
         await Assert.That(n!.Kind).IsEqualTo(PKind.Decimal);
     }
 
     [Test] public async Task Parse_ScientificNotation_IsDouble()
     {
-        var n = PNum.Parse("5e0");
+        var n = number.Parse("5e0");
         await Assert.That(n!.Kind).IsEqualTo(PKind.Double);
     }
 
     [Test] public async Task Parse_Negative_PreservesSign()
     {
-        var n = PNum.Parse("-42");
+        var n = number.Parse("-42");
         await Assert.That((int)n!).IsEqualTo(-42);
     }
 
     [Test] public async Task TryParse_NonNumeric_ReturnsFalse_OutputNull()
     {
-        var ok = PNum.TryParse("hello", out var n);
+        var ok = number.TryParse("hello", out var n);
         await Assert.That(ok).IsFalse();
         await Assert.That(n).IsNull();
     }
@@ -57,8 +57,8 @@ public class NumberParseTests
         // populated after a Resolve.
         await using var app = new global::app.@this(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-num-resolve-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var n = PNum.Resolve("3.14", app.User.Context);
-        var fields = typeof(PNum).GetFields(System.Reflection.BindingFlags.Instance
+        var n = number.Resolve("3.14", app.User.Context);
+        var fields = typeof(number).GetFields(System.Reflection.BindingFlags.Instance
                                           | System.Reflection.BindingFlags.NonPublic);
         foreach (var f in fields)
         {
@@ -71,7 +71,7 @@ public class NumberParseTests
 
     [Test] public async Task Resolve_EmptyString_ReturnsNull()
     {
-        await Assert.That(PNum.Parse("")).IsNull();
-        await Assert.That(PNum.Parse("   ")).IsNull();
+        await Assert.That(number.Parse("")).IsNull();
+        await Assert.That(number.Parse("   ")).IsNull();
     }
 }

@@ -11,6 +11,10 @@ internal static class MathHelper
     internal static double ToDouble(object? value)
     {
         if (value == null) return 0;
+        // plang-types Stage 4: math.Add/etc. return Data<number>. When a
+        // non-retyped handler (abs/floor/…) consumes the result of a retyped
+        // one, the value arrives as number@this — honour the conversion.
+        if (value is global::app.types.number.@this n) return n.ToDouble();
         return Convert.ToDouble(value);
     }
 

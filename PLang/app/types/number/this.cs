@@ -20,7 +20,7 @@ namespace app.types.number;
 /// re-narrows at the explicit-OUT cast; the Float label keeps round-trip
 /// identity for catalog/print.</para>
 /// </summary>
-public sealed partial class @this : System.IEquatable<@this>, global::app.data.IBooleanResolvable
+public sealed partial class @this : System.IEquatable<@this>, global::app.data.IBooleanResolvable, System.IConvertible
 {
     public NumberKind Kind { get; }
 
@@ -55,6 +55,41 @@ public sealed partial class @this : System.IEquatable<@this>, global::app.data.I
     public static @this From(decimal v) => new(NumberKind.Decimal, d: v);
     public static @this From(float v) => new(NumberKind.Float, f: v);
     public static @this From(double v) => new(NumberKind.Double, f: v);
+
+    /// <summary>
+    /// Polymorphic coercion — accepts CLR primitives, a string (routed through
+    /// <see cref="Parse"/>), or an existing <see cref="@this"/>. Throws
+    /// <see cref="System.FormatException"/> for inputs that don't represent a
+    /// number; null returns null. The conversion entry point math.* handlers
+    /// use to lift untyped Data values into the number space.
+    /// </summary>
+    public static @this? FromObject(object? value)
+    {
+        switch (value)
+        {
+            case null: return null;
+            case @this n: return n;
+            case int i: return From(i);
+            case long l: return From(l);
+            case decimal d: return From(d);
+            case float f: return From(f);
+            case double dbl: return From(dbl);
+            case sbyte sb: return From((int)sb);
+            case byte b: return From((int)b);
+            case short s16: return From((int)s16);
+            case ushort us: return From((int)us);
+            case uint u: return From((long)u);
+            case ulong ul: return From((decimal)ul);
+            case string s:
+                var parsed = Parse(s);
+                if (parsed == null) throw new System.FormatException($"number.FromObject: '{s}' is not a valid number");
+                return parsed;
+            case bool: throw new System.FormatException("number.FromObject: bool is not a number");
+            default:
+                throw new System.FormatException(
+                    $"number.FromObject: cannot coerce {value.GetType().Name} to number");
+        }
+    }
 
     // Implicit IN — handlers can write `Data<number>.Ok(5)` without ceremony.
     public static implicit operator @this(int v) => From(v);

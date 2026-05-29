@@ -1,6 +1,10 @@
 using app.variables;
 using ExampleSpec = app.builder.Types.Spec.Example;
 using ActionSpec = app.builder.Types.Spec.Action;
+using Number = global::app.types.number.@this;
+
+using POverflow = global::app.types.number.OverflowMode;
+using PPrecision = global::app.types.number.PrecisionMode;
 
 namespace app.modules.math;
 
@@ -27,10 +31,17 @@ public partial class Power : IContext
 
     public partial data.@this Base { get; init; }
     public partial data.@this Exponent { get; init; }
+    public partial data.@this<POverflow>? Overflow { get; init; }
+    public partial data.@this<PPrecision>? Precision { get; init; }
 
-    public Task<data.@this<object>> Run()
+    public Task<data.@this<Number>> Run()
     {
-        var result = Math.Pow(MathHelper.ToDouble(Base.Value), MathHelper.ToDouble(Exponent.Value));
-        return Task.FromResult(data.@this<object>.Ok(MathHelper.PreserveType(result, Base.Value, Exponent.Value)));
+        var policy = MathPolicy.Resolve(Context, Overflow?.Value, Precision?.Value);
+        var an = Number.FromObject(Base.Value);
+        var bn = Number.FromObject(Exponent.Value);
+        if (an == null || bn == null)
+            return Task.FromResult(data.@this<Number>.FromError(
+                new errors.ValidationError("math.power requires base and exponent", "InvalidInput")));
+        return Task.FromResult(Number.Power(an, bn, policy));
     }
 }

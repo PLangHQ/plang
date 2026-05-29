@@ -37,7 +37,13 @@ public sealed partial class @this
         return CrossKindEquals(this, other);
     }
 
-    public override bool Equals(object? obj) => obj is @this n && Equals(n);
+    public override bool Equals(object? obj) => obj switch
+    {
+        @this n => Equals(n),
+        int or long or decimal or float or double or sbyte or byte or short or ushort or uint or ulong
+            => Equals(FromObject(obj)),
+        _ => false,
+    };
 
     public bool ExactEquals(@this? other)
     {

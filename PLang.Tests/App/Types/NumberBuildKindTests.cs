@@ -1,4 +1,4 @@
-using PNum = global::app.types.number.@this;
+using number = global::app.types.number.@this;
 
 namespace PLang.Tests.App.Types;
 
@@ -10,41 +10,41 @@ public class NumberBuildKindTests
 {
     [Test] public async Task Build_DecimalLiteral_ReturnsDecimal()
     {
-        await Assert.That(PNum.Build(3.14m)).IsEqualTo("decimal");
-        await Assert.That(PNum.Build("3.14")).IsEqualTo("decimal");
+        await Assert.That(number.Build(3.14m)).IsEqualTo("decimal");
+        await Assert.That(number.Build("3.14")).IsEqualTo("decimal");
     }
 
     [Test] public async Task Build_IntegerLiteral_ReturnsInt()
     {
-        await Assert.That(PNum.Build(42)).IsEqualTo("int");
-        await Assert.That(PNum.Build("42")).IsEqualTo("int");
+        await Assert.That(number.Build(42)).IsEqualTo("int");
+        await Assert.That(number.Build("42")).IsEqualTo("int");
     }
 
     [Test] public async Task Build_TooBigForInt_ReturnsLong()
     {
-        await Assert.That(PNum.Build(3000000000L)).IsEqualTo("long");
-        await Assert.That(PNum.Build("3000000000")).IsEqualTo("long");
+        await Assert.That(number.Build(3000000000L)).IsEqualTo("long");
+        await Assert.That(number.Build("3000000000")).IsEqualTo("long");
     }
 
     [Test] public async Task Build_ExponentNotation_ReturnsDouble()
     {
-        await Assert.That(PNum.Build("5e10")).IsEqualTo("double");
-        await Assert.That(PNum.Build(1.5)).IsEqualTo("double");
+        await Assert.That(number.Build("5e10")).IsEqualTo("double");
+        await Assert.That(number.Build(1.5)).IsEqualTo("double");
     }
 
     [Test] public async Task Build_StringValue_ReadsLikeLiteral()
     {
-        await Assert.That(PNum.Build("0.5")).IsEqualTo("decimal");
-        await Assert.That(PNum.Build("123")).IsEqualTo("int");
-        await Assert.That(PNum.Build("1e10")).IsEqualTo("double");
+        await Assert.That(number.Build("0.5")).IsEqualTo("decimal");
+        await Assert.That(number.Build("123")).IsEqualTo("int");
+        await Assert.That(number.Build("1e10")).IsEqualTo("double");
     }
 
     [Test] public async Task Build_NonNumeric_ReturnsNull()
     {
-        await Assert.That(PNum.Build("hello")).IsNull();
-        await Assert.That(PNum.Build(true)).IsNull();
+        await Assert.That(number.Build("hello")).IsNull();
+        await Assert.That(number.Build(true)).IsNull();
     }
 
     [Test] public async Task Build_NullValue_ReturnsNull()
-        => await Assert.That(PNum.Build(null)).IsNull();
+        => await Assert.That(number.Build(null)).IsNull();
 }
