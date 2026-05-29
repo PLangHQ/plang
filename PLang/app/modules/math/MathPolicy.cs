@@ -18,7 +18,7 @@ internal static class MathPolicy
     public static NumberPolicy Resolve(actor.context.@this context,
         POverflow? stepOverflow, PPrecision? stepPrecision)
     {
-        var view = context.App.Config.For<global::app.modules.math.number.Config>(context);
+        var view = context.App.Config.For<global::app.modules.environment.number.Config>(context);
         return new NumberPolicy
         {
             Overflow = stepOverflow ?? view.Resolve("overflow", POverflow.Promote),

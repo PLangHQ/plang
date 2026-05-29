@@ -104,22 +104,15 @@ public class RuntimeDoubleWrapTests
             .ToList();
 
         // Note: math.Add/Subtract/Multiply/Divide/Modulo/Power/IntDiv migrated
-        // to Task<Data<number>> in plang-types Stage 4; only the non-arithmetic
-        // math handlers (abs/ceiling/floor/max/min/round/sqrt/random) still
-        // return Data<object> until their own retype follow-up.
+        // to Task<Data<number>> in plang-types Stage 4; abs/ceiling/floor/sqrt/
+        // round/min/max followed on the MathHelper-deletion branch. math.Random
+        // is still Data<object> until it gets its own number retype.
         var expected = new[]
         {
             "app.modules.list.First",
             "app.modules.list.Get",
             "app.modules.list.Last",
-            "app.modules.math.Abs",
-            "app.modules.math.Ceiling",
-            "app.modules.math.Floor",
-            "app.modules.math.Max",
-            "app.modules.math.Min",
             "app.modules.math.Random",
-            "app.modules.math.Round",
-            "app.modules.math.Sqrt",
             "app.modules.signing.sign",
         };
         await Assert.That(dataObjectHandlers).IsEquivalentTo(expected)
