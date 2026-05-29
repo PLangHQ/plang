@@ -55,13 +55,9 @@ public class ImageParseTests
         await Assert.That(img!.Mime).IsEqualTo("image/png");
     }
 
-    [Test] public async Task Resolve_HttpUrl_FetchesAndConstructs()
-    {
-        // DEFERRED — http fetch lives behind path.http.ReadBytes which needs a
-        // live HTTP roundtrip. Sync Resolve doesn't traverse the network at all
-        // (returns null); ResolveAsync's http branch would need a mock server.
-        await Assert.That(true).IsTrue();
-    }
+    [Test, Skip("deferred: needs mock HTTP server — ResolveAsync.http branch fetches via path.http.ReadBytes")]
+    public async Task Resolve_HttpUrl_FetchesAndConstructs()
+        => await Assert.That(true).IsTrue();
 
     [Test] public async Task Resolve_ByteArray_PngMagicBytes_PicksImagePng()
     {

@@ -1,0 +1,6 @@
+Start
+/ Step-level Overflow=Throw routes through MathPolicy.Resolve into the handler.
+/ decimal.MaxValue + decimal.MaxValue overflows the Decimal kind; under Throw the
+/ handler surfaces a MathOverflow error (Lenient/Promote would promote silently).
+- math.add A=79228162514264337593543950335 B=79228162514264337593543950335 Overflow=Throw, on error set %err% = true
+- assert %err% is true

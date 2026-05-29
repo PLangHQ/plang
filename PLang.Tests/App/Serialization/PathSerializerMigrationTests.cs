@@ -78,17 +78,9 @@ public class PathSerializerMigrationTests
         await Assert.That(global::app.types.path.@this.Build("%var%")).IsNull();
     }
 
-    [Test]
+    [Test, Skip("deferred: legacy JsonConverter still backs STJ-direct path reads; per-call-site migration is a follow-up")]
     public async Task LegacyJsonConverter_FileDoesNotExist_AfterMigration()
-    {
-        // DEFERRED — Stage 2 retains app/types/path/this.JsonConverter.cs because
-        // every STJ-direct path read in PLang/PLang.Tests still routes through it
-        // (Conversion.cs, channels/serializers/serializer/Json.cs, plang's
-        // converter chain, …). Migrating each read site to
-        // path.@this.Resolve(string, context) is a follow-up. The write-side
-        // is migrated: any Data whose Value is a path takes the new dispatch.
-        await Assert.That(true).IsTrue();
-    }
+        => await Assert.That(true).IsTrue();
 
     [Test]
     public async Task Path_Wire_ByteForByteParity_BeforeAndAfter_Migration()

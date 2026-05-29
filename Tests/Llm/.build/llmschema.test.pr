@@ -108,7 +108,7 @@
         }
       ],
       "intent": null,
-      "formal": "llm.query(Messages=[llmmessage], Schema={sentiment:string, score:number}) | variable.set(Name=%result%, Value=%!data%)",
+      "formal": "llm.query(Messages=[{role:\u0022system\u0022,content:\u0022You analyze sentiment. Respond in JSON only.\u0022},{role:\u0022user\u0022,content:\u0022Analyze: I love sunny days\u0022}], Schema={sentiment:string, score:number}) | variable.set(Name=%result%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -151,7 +151,7 @@
           "parameters": [
             {
               "name": "Value",
-              "value": "%result%",
+              "value": "%result.sentiment%",
               "type": "object"
             }
           ],
@@ -160,7 +160,7 @@
         }
       ],
       "intent": null,
-      "formal": "assert.isNotNull(Value=%result%, Message omitted)",
+      "formal": "assert.isNotNull(Value=%result.sentiment%)",
       "source": null,
       "waitForExecution": true
     }

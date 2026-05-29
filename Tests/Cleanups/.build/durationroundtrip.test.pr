@@ -5,10 +5,10 @@
   "steps": [
     {
       "index": 0,
-      "text": "set %d%(duration) = \u0022PT5M\u0022",
+      "text": "set %iso%(duration) = \u0022PT5M\u0022",
       "lineNumber": 5,
       "indent": 0,
-      "comment": "A duration value written to a variable and read back round-trips through the wire\nunchanged \u2014 both the dot:colon form (1.02:03:04) and the ISO-8601 form (PT5M) parse\nto the same TimeSpan and re-emit canonically.",
+      "comment": "Both the ISO-8601 form (PT5M) and the dot:colon form (0.00:05:00) parse to\nthe same TimeSpan. duration values compare structurally \u2014 ToString collapses\nto canonical \u002200:05:00\u0022, so equals across the two input forms passes.",
       "actions": [
         {
           "module": "variable",
@@ -16,7 +16,7 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%d%",
+              "value": "%iso%",
               "type": "variable"
             },
             {
@@ -41,14 +41,56 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%d%, Value=\u0022PT5M\u0022, Type=duration)",
+      "formal": "variable.set(Name=%iso%, Value=\u0022PT5M\u0022, Type=duration)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "assert %d% is not null",
+      "text": "set %dotcolon%(duration) = \u00220.00:05:00\u0022",
       "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%dotcolon%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "0.00:05:00",
+              "type": "string"
+            },
+            {
+              "name": "Type",
+              "value": "duration",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%dotcolon%, Value=\u00220.00:05:00\u0022, Type=duration)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %iso% is not null",
+      "lineNumber": 7,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -58,7 +100,7 @@
           "parameters": [
             {
               "name": "Value",
-              "value": "%d%",
+              "value": "%iso%",
               "type": "object"
             }
           ],
@@ -67,7 +109,64 @@
         }
       ],
       "intent": null,
-      "formal": "assert.isNotNull(Value=%d%)",
+      "formal": "assert.isNotNull(Value=%iso%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %dotcolon% is not null",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%dotcolon%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.isNotNull(Value=%dotcolon%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %iso% equals %dotcolon%",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "%iso%",
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%dotcolon%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=%iso%, Actual=%dotcolon%)",
       "source": null,
       "waitForExecution": true
     }
@@ -76,7 +175,7 @@
   "visibility": 1,
   "path": "/Cleanups/DurationRoundTrip.test.goal",
   "prPath": "/Cleanups/.build/durationroundtrip.test.pr",
-  "hash": "cb0052f2ff125c24b23564f906fc1cb8350f22476fd6400442b6cc0fadcd20fb",
+  "hash": "a4fd7a04c0ded88bfd113dcf77798f7792d73621e644c37849fae20b89185784",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

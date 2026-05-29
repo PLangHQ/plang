@@ -24,23 +24,13 @@ public class IWriterFormatTests
         await Assert.That(w.Format).IsEqualTo("json");
     }
 
-    [Test]
+    [Test, Skip("deferred: PlangWriter not yet shipped — plang mime reuses json.Writer")]
     public async Task PlangWriter_Format_IsPlangToken()
-    {
-        // PlangWriter doesn't exist yet — plang serializer reuses json.Writer under
-        // mime "application/plang". The IWriter contract reserves "plang" as a
-        // future token; the dedicated writer ships when a renderer differs between
-        // json and plang. Until then, both pathways resolve through (type, "*").
-        await Assert.That(true).IsTrue();
-    }
+        => await Assert.That(true).IsTrue();
 
-    [Test]
+    [Test, Skip("deferred: TextWriter not yet shipped — added when first format-asymmetric type lands")]
     public async Task TextWriter_Format_IsTextToken()
-    {
-        // TextWriter doesn't exist yet — added when the first format-asymmetric
-        // type ships (image in Stage 5: text → path placeholder, json → base64).
-        await Assert.That(true).IsTrue();
-    }
+        => await Assert.That(true).IsTrue();
 
     [Test]
     public async Task Writer_TypedValueNodeCase_CallsLookup_WithOwnFormatToken()

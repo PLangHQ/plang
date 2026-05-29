@@ -95,17 +95,11 @@ public class MathHandlerDataReturnTests
         await Assert.That(pt.GetGenericTypeDefinition() == typeof(global::app.data.@this<>)).IsTrue();
     }
 
-    [Test] public async Task MathHelper_ToDouble_NotPresentInProductionAssembly()
-    {
-        // DEFERRED — MathHelper.ToDouble still backs abs/ceiling/floor/min/max/
-        // round/sqrt. Deletion is queued for when those non-arithmetic handlers
-        // also retype through number.* (follow-up).
-        await Assert.That(true).IsTrue();
-    }
+    [Test, Skip("deferred: MathHelper.ToDouble still backs abs/ceiling/floor/min/max/round/sqrt")]
+    public async Task MathHelper_ToDouble_NotPresentInProductionAssembly()
+        => await Assert.That(true).IsTrue();
 
-    [Test] public async Task MathHelper_PreserveType_NotPresentInProductionAssembly()
-    {
-        // DEFERRED — same as above.
-        await Assert.That(true).IsTrue();
-    }
+    [Test, Skip("deferred: MathHelper.PreserveType still backs the non-arithmetic math handlers")]
+    public async Task MathHelper_PreserveType_NotPresentInProductionAssembly()
+        => await Assert.That(true).IsTrue();
 }

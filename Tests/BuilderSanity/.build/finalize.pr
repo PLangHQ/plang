@@ -22,7 +22,12 @@
             {
               "name": "Value",
               "value": "%label%-and-done",
-              "type": "tstring"
+              "type": "string"
+            },
+            {
+              "name": "Type",
+              "value": "string",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -36,7 +41,7 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%label%, Value=\u0022%label%-and-done\u0022, Type=tstring)",
+      "formal": "variable.set(Name=%label%, Value=\u0022%label%-and-done\u0022, Type=string)",
       "source": null,
       "waitForExecution": true
     }

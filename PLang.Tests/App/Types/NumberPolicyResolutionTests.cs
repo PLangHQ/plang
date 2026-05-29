@@ -54,10 +54,15 @@ public class NumberPolicyResolutionTests
 
     [Test] public async Task Resolve_SubContext_ClimbsParent_InheritsParentSetting()
     {
-        // DEFERRED — context.Parent chaining test would need access to a goal-
-        // call sub-context construction path. Covered indirectly by
-        // app.config's own walk tests.
-        await Assert.That(true).IsTrue();
+        // Parent context sets number.overflow=Throw; child context inherits via
+        // the ConfigScope.Resolve walk (this → Parent → App.Config.Defaults).
+        await using var app = NewApp();
+        var parent = app.User.Context;
+        app.Config.Set("number.overflow", POverflow.Throw, parent);
+
+        var child = new global::app.actor.context.@this(app, parent: parent);
+        var p = global::app.modules.math.MathPolicy.Resolve(child, null, null);
+        await Assert.That(p.Overflow).IsEqualTo(POverflow.Throw);
     }
 
     [Test] public async Task NumberPolicy_IsReadonlyStruct_OverflowAndPrecisionAxes()

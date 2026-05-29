@@ -6,9 +6,9 @@
     {
       "index": 0,
       "text": "set %x% = 1",
-      "lineNumber": 7,
+      "lineNumber": 6,
       "indent": 0,
-      "comment": "Integration cut 1 \u2014 the spine: literal kind \u2192 arithmetic \u2192 output.\nBuilds a .pr where %x% has type=number kind=int and %z% has type=number kind=decimal\n(separate fields, never \u0022number:decimal\u0022). The math.add step result %b% has type=number\nwith NO kind (runtime-decided). Runtime executes; output is 4.5 (and 0.1\u002B0.2 round-trips\nas documented for decimal precision).",
+      "comment": "Integration cut 1 \u2014 runtime spine: int literal \u002B decimal literal \u2192 math.add\npromotes to Decimal \u2192 4.5. The .pr-shape claims (which kinds get stamped on\nwhich params) are pinned in C# BuilderKindStampingTests; variable.set\u0027s\npolymorphic Value gets no kind, typed kind-bearing params do.",
       "actions": [
         {
           "module": "variable",
@@ -43,7 +43,7 @@
     {
       "index": 1,
       "text": "set %z% = 3.5",
-      "lineNumber": 8,
+      "lineNumber": 7,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -80,7 +80,7 @@
     {
       "index": 2,
       "text": "math.add A=%x% B=%z%, write to %b%",
-      "lineNumber": 9,
+      "lineNumber": 8,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -135,7 +135,7 @@
     {
       "index": 3,
       "text": "assert %b% equals 4.5",
-      "lineNumber": 10,
+      "lineNumber": 9,
       "indent": 0,
       "comment": null,
       "actions": [

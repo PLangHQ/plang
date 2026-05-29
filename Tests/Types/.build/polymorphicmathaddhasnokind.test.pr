@@ -8,7 +8,7 @@
       "text": "set %x% = 2",
       "lineNumber": 5,
       "indent": 0,
-      "comment": "\u0060set %b% = %x% \u002B %z%\u0060 compiles to math.add whose result %b% carries type=number with\nNO kind in the .pr \u2014 kind is runtime-decided. Pins the \u0022polymorphic result has no kind\u0022\nrule against accidental build-time kind-stamping.",
+      "comment": "Runtime smoke: int \u002B decimal yields the expected 5.5 (Decimal promotion path).\nThe .pr-shape rule it pins (\u0022polymorphic math.add result has no kind in the\n.pr\u0022) is asserted on the built .pr JSON in C# BuilderKindStampingTests.",
       "actions": [
         {
           "module": "variable",

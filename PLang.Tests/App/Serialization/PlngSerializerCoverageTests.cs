@@ -23,34 +23,19 @@ public class PlngSerializerCoverageTests
         await Assert.That(r.Has("path")).IsTrue();
     }
 
-    [Test] public async Task Coverage_PlangTypeWithEveryFormatFile_PassesGate_NoDefaultCs()
-    {
-        // No registered type yet exercises this case (image lands Stage 5).
-        // Once the gate exists, the test will register a fixture type whose
-        // serializer/ folder has files for every known format token and assert
-        // the gate accepts it without a Default.cs.
-        await Assert.That(true).IsTrue();
-    }
+    [Test, Skip("deferred: needs fixture type with all-format serializer folder once PLNG003 gate ships")]
+    public async Task Coverage_PlangTypeWithEveryFormatFile_PassesGate_NoDefaultCs()
+        => await Assert.That(true).IsTrue();
 
-    [Test] public async Task Coverage_PlangTypeWithNoSerializer_FailsBuild()
-    {
-        // DEFERRED — needs the analyzer's diagnostic to fire on a synthetic
-        // [PlangType] with no serializer folder. Will use Roslyn
-        // CSharpCompilation + CSharpDiagnosticAnalyzer when the gate ships.
-        await Assert.That(true).IsTrue();
-    }
+    [Test, Skip("deferred: needs Roslyn analyzer with PLNG003 diagnostic")]
+    public async Task Coverage_PlangTypeWithNoSerializer_FailsBuild()
+        => await Assert.That(true).IsTrue();
 
-    [Test] public async Task Coverage_PlangTypeMissingOneFormat_WithoutDefault_FailsBuild()
-    {
-        // DEFERRED — same path as the previous test.
-        await Assert.That(true).IsTrue();
-    }
+    [Test, Skip("deferred: needs Roslyn analyzer with PLNG003 diagnostic")]
+    public async Task Coverage_PlangTypeMissingOneFormat_WithoutDefault_FailsBuild()
+        => await Assert.That(true).IsTrue();
 
-    [Test] public async Task Coverage_DiagnosticIdIsPLNG_ErrorSeverity()
-    {
-        // DEFERRED — the diagnostic descriptor ID will be PLNG003 (PLNG001 +
-        // 002 are taken). Will assert ID + DiagnosticSeverity.Error when the
-        // analyzer lands.
-        await Assert.That(true).IsTrue();
-    }
+    [Test, Skip("deferred: PLNG003 analyzer not yet shipped")]
+    public async Task Coverage_DiagnosticIdIsPLNG_ErrorSeverity()
+        => await Assert.That(true).IsTrue();
 }

@@ -5,20 +5,29 @@
   "steps": [
     {
       "index": 0,
-      "text": "code.load Path=TypeProvider.dll, on error set %loadFailed% = true",
-      "lineNumber": 7,
+      "text": "math.add A=79228162514264337593543950335 B=79228162514264337593543950335 Overflow=Throw, on error set %err% = true",
+      "lineNumber": 5,
       "indent": 0,
-      "comment": "Smoke: load TypeProvider.dll cleanly (no parse / no auth / no scan failures).\nThe full register-and-render roundtrip (Money \u2192 assert wire output via the\nloaded renderer) lives in C# TypeProviderDllRoundtripTests \u2014 the plang goal\nlanguage has no surface for constructing arbitrary CLR instances to feed the\nrenderer table from a goal.",
+      "comment": "Step-level Overflow=Throw routes through MathPolicy.Resolve into the handler.\ndecimal.MaxValue \u002B decimal.MaxValue overflows the Decimal kind; under Throw the\nhandler surfaces a MathOverflow error (Lenient/Promote would promote silently).",
       "actions": [
         {
-          "module": "code",
-          "action": "load",
+          "module": "math",
+          "action": "add",
           "parameters": [
             {
-              "name": "Path",
-              "value": "TypeProvider.dll",
-              "type": "path",
-              "kind": "file"
+              "name": "A",
+              "value": 79228162514264337593543950335,
+              "type": "object"
+            },
+            {
+              "name": "B",
+              "value": 79228162514264337593543950335,
+              "type": "object"
+            },
+            {
+              "name": "Overflow",
+              "value": "Throw",
+              "type": "overflowmode"
             }
           ],
           "defaults": null,
@@ -36,7 +45,7 @@
                       "parameters": [
                         {
                           "name": "Name",
-                          "value": "%loadFailed%",
+                          "value": "%err%",
                           "type": "string"
                         },
                         {
@@ -57,24 +66,24 @@
         }
       ],
       "intent": null,
-      "formal": "code.load(Path=%TypeProvider.dll%) | error.handle(Actions=[variable.set(Name=%loadFailed%, Value=true, Type=bool)])",
+      "formal": "math.add(A=79228162514264337593543950335, B=79228162514264337593543950335, Overflow=Throw) | error.handle(Actions=[variable.set(Name=%err%, Value=true, Type=bool)])",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "assert %loadFailed% is null",
-      "lineNumber": 8,
+      "text": "assert %err% is true",
+      "lineNumber": 6,
       "indent": 0,
       "comment": null,
       "actions": [
         {
           "module": "assert",
-          "action": "isNull",
+          "action": "isTrue",
           "parameters": [
             {
               "name": "Value",
-              "value": "%loadFailed%",
+              "value": "%err%",
               "type": "object"
             }
           ],
@@ -83,16 +92,16 @@
         }
       ],
       "intent": null,
-      "formal": "assert.isNull(Value=%loadFailed%)",
+      "formal": "assert.isTrue(Value=%err%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Cut4_RuntimeLoadAndRender/LoadDllRegistersType.test.goal",
-  "prPath": "/Cut4_RuntimeLoadAndRender/.build/loaddllregisterstype.test.pr",
-  "hash": "a211f9b1c75cff0f08831baf09782cc86bccd1fbfd4561c90a509d2c8756d9a7",
+  "path": "/Math/OverflowThrowSettingHonored.test.goal",
+  "prPath": "/Math/.build/overflowthrowsettinghonored.test.pr",
+  "hash": "59055b938d69c8fabf8d46f4faef1ef27ae40e90a42adfb674149bf863b9d214",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

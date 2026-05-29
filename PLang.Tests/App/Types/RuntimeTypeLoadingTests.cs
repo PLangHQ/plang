@@ -74,54 +74,58 @@ public class RuntimeTypeLoadingTests
 
     [Test] public async Task LoadDll_ExistingName_RuntimeRendererWinsAtTypeSerializersLookup()
     {
+        // "path" has a generator-emitted Default.cs renderer; register a runtime
+        // one over it and assert the runtime delegate wins. Captures both
+        // outputs so a regression that resolved generated first would fail.
         var types = new EngineTypes();
-        bool fired = false;
-        types.Renderers.Register("int", global::app.types.renderers.@this.AnyFormat,
-            (v, w) => fired = true);
-        var write = types.Renderers.Of("int", "json");
-        await Assert.That(write).IsNotNull();
-        // Use a dummy writer to trigger the runtime delegate.
-        write!(0, new FakeWriter("json"));
-        await Assert.That(fired).IsTrue();
+        var generatedWriter = new FakeWriter("json");
+        var baseline = types.Renderers.Of("path", "json");
+        await Assert.That(baseline).IsNotNull();
+
+        string fired = "none";
+        types.Renderers.Register("path", "json",
+            (v, w) => fired = "runtime");
+
+        var after = types.Renderers.Of("path", "json");
+        await Assert.That(after).IsNotNull();
+        await Assert.That(System.Object.ReferenceEquals(after, baseline)).IsFalse();
+
+        after!("ignored", generatedWriter);
+        await Assert.That(fired).IsEqualTo("runtime");
     }
 
     [Test] public async Task LoadDll_PlangTypeWithoutAnyRenderer_FailsLoad_TypedError()
     {
-        // Build a synthetic mini-assembly via Roslyn? Too heavy. Instead,
-        // assert the failure shape by registering a [PlangType] directly via
-        // RegisterRuntime (no renderer) and calling a coverage check that
-        // mirrors Loader's gate.
-        var types = new EngineTypes();
-        types.Register("nominal-norend-only", typeof(FixtureNoRenderer));
-        await Assert.That(types.Renderers.Has("nominal-norend-only")).IsFalse();
-        // Loader's full pass over this assembly registers both Fixture types
-        // and surfaces the missing-renderer failure for FixtureNoRenderer.
+        // Loader registers all [PlangType] classes in pass 1, then enforces the
+        // coverage gate. The fixture-norenderer type must register, and the
+        // gate must surface a TypeLoadCoverage failure for it.
         var result = global::app.types.Loader.Register(TestAssembly, new EngineTypes());
-        if (result.RegisteredTypes.Contains("runtime-fixture-norenderer"))
-        {
-            // If the fixture-norenderer landed, Loader must have failed.
-            await Assert.That(result.Success).IsFalse();
-            await Assert.That(result.ErrorKey).IsEqualTo("TypeLoadCoverage");
-        }
+        await Assert.That(result.RegisteredTypes).Contains("runtime-fixture-norenderer");
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.ErrorKey).IsEqualTo("TypeLoadCoverage");
     }
 
     [Test] public async Task LoadDll_AlreadyCompiledHandlerSlot_StillSeesBuiltInType_NoRewrite()
     {
         // Honest limit: runtime registration changes resolution + rendering,
-        // not the compiled handler slots. A Data<int> slot on an existing
-        // handler keeps seeing the CLR int even after `int` is overridden.
+        // not the compiled handler IL. math.Add.Run returns Task<Data<number>>
+        // baked in by the source generator at compile time; assert the generic
+        // argument stays the built-in number type before AND after overriding
+        // "number" in the runtime registry.
+        var runReturn = typeof(global::app.modules.math.Add).GetMethod("Run")!.ReturnType;
+        var dataGeneric = runReturn.GetGenericArguments()[0];
+        await Assert.That(dataGeneric.IsGenericType).IsTrue();
+        await Assert.That(dataGeneric.GetGenericTypeDefinition()).IsEqualTo(typeof(global::app.data.@this<>));
+        var slotBefore = dataGeneric.GetGenericArguments()[0];
+        await Assert.That(slotBefore).IsEqualTo(typeof(global::app.types.number.@this));
+
         var types = new EngineTypes();
-        types.Register("int", typeof(System.Uri));
-        // The runtime override changes ResolveType / rendering — verified
-        // elsewhere. The handler's compiled Data<int> slot still references
-        // typeof(int) at the IL level (verifiable: reflection on the
-        // existing math.Add handler still shows Data<number> for arithmetic,
-        // not Uri).
-        var addType = typeof(global::app.modules.math.Add);
-        var aProp = addType.GetProperty("A");
-        // A's type is Data<this> (untyped) by design — but if any handler's
-        // typed slot existed pre-override, it should remain typeof(int) in IL.
-        await Assert.That(aProp).IsNotNull();
+        types.Register("number", typeof(System.Uri));
+        await Assert.That(types.ResolveType("number")).IsEqualTo(typeof(System.Uri));
+
+        var slotAfter = typeof(global::app.modules.math.Add).GetMethod("Run")!
+            .ReturnType.GetGenericArguments()[0].GetGenericArguments()[0];
+        await Assert.That(slotAfter).IsEqualTo(typeof(global::app.types.number.@this));
     }
 
     [Test] public async Task ITypeRenderer_InterfaceShape_FormatPropertyAndWriteMethod()
