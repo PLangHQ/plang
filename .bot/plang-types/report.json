@@ -183,6 +183,84 @@
         "findings": "F1 (Minor): renderers.IndexAssembly dead initial-assignment + unreachable Convert.ChangeType branch. F2 (Minor): number.DoDivide dead conditional contradicts its own comment + the file-level docstring. 4 Notes: IConvertible.GetAwaiter().GetResult() (sealed-sync, safe), path.serializer absolute-fallback (in-envelope, document), kinds.@this.Of silent hook exceptions (documented contract), Loader.cs naming.",
         "next": "tester"
       }
+    },
+    {
+      "id": "6942a831-5345-4fcd-96c4-14b6b7081163",
+      "bot": "tester",
+      "timestamp_start": "2026-05-29T15:19:02Z",
+      "timestamp_end": "2026-05-29T15:36:37Z",
+      "intent": "Validate test quality for plang-types: 7-stage type+kind model, serializer dispatch, number/image/code values, runtime DLL loading. Hunt false greens.",
+      "before": {
+        "assumptions": "Coder reports 3609/3609 C# green, codeanalyzer PASS with 2 minor dead-code findings. No coder summary.md/plan.md/baseline-tests.md present (only report.md) \u2014 baseline missing = process violation to flag.",
+        "risk": "Large surface (93 prod .cs, 40 C# test files, ~20 plang goals). Two codeanalyzer dead-branch findings (renderers IndexAssembly, number DoDivide) are prime false-green candidates: tests may cement always-Decimal/collapsed-delegate without pinning intent. Runtime DLL roundtrip + builder false greens in plang .pr files need direct inspection."
+      },
+      "plan": ".bot/plang-types/tester/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PlangConsole",
+            "PLang.Tests"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild + full suites. C# 3609/3609, plang 246/246, no regressions. Coverage 51/54 changed prod files >0%; Config.cs 0%."
+        },
+        {
+          "paths": [
+            "Tests/Types/SetDecimalLiteralStampsKind.test.goal",
+            "Tests/Cut1_LiteralKindArithmeticOutput.test.goal",
+            "Tests/Types/PolymorphicMathAddHasNoKind.test.goal",
+            "PLang/app/modules/builder/code/Default.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "cache:false rebuild proved .pr carries type:object/no-kind for set-literals; builder stamps kind only for typed params (Default.cs:881-896). Goals assert runtime values only -> false green (finding 3)."
+        },
+        {
+          "paths": [
+            "Tests/Cut4_RuntimeLoadAndRender/LoadDllRegistersType.test.goal",
+            "Tests/Cut4_RuntimeLoadAndRender/LoadDllOverwritesBuiltIn.test.goal",
+            "PLang/app/types/Loader.cs",
+            "PLang.Tests/App/Types/RuntimeTypeLoadingTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Cut4 goals are load-only stubs (no render/overwrite); RuntimeTypeLoading AlreadyCompiledHandlerSlot is a tautology; FailsLoad assertions if-guarded. Findings 1,2,6."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Serialization/PlngSerializerCoverageTests.cs",
+            "PLang.Tests/App/Serialization/IWriterFormatTests.cs",
+            "PLang.Tests/App/Types/MathHandlerDataReturnTests.cs",
+            "PLang.Tests/App/Types/NumberPolicyResolutionTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "~10 deferred no-op Assert.That(true) tests pass green with coverage-implying names. NumberPolicy Config.cs 0% covered. Findings 4,7."
+        },
+        {
+          "paths": [
+            ".bot/plang-types/test-report.json",
+            ".bot/plang-types/tester/v1/result.md",
+            ".bot/plang-types/tester/v1/verdict.json",
+            ".bot/plang-types/tester/v1/coverage.json",
+            ".bot/plang-types/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote tester v1 outputs. Verdict FAIL on strict-red (confirmed false greens)."
+        }
+      ],
+      "after": {
+        "status": "fail",
+        "health": "All-green suite but dishonest: headline runtime-DLL roundtrip and build-time kind-stamping surfaces are green-but-empty; ~10 deferrals pass as no-op tests; NumberPolicy resolution uncovered. Branch itself has no reds/regressions and the mechanism unit tests are honest.",
+        "notes": "10 findings (1 critical, 5 major, 3 minor, 1 process). No source mutated; builder verified via cache:false; no builder false-greens. Next: coder to fix tests (mark deferrals [Skip], add real assertions, cover policy resolution)."
+      }
     }
   ]
 }

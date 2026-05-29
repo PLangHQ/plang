@@ -1,0 +1,123 @@
+{
+  "tester": "tester",
+  "branch": "plang-types",
+  "timestamp": "2026-05-29T15:34:00Z",
+  "tested_version": "v1",
+  "test_run": {
+    "csharp": { "total": 3609, "passed": 3609, "failed": 0, "skipped": 0 },
+    "plang": { "total": 246, "passed": 246, "failed": 0, "skipped": 0 }
+  },
+  "coverage": {
+    "changed_files_covered": 51,
+    "changed_files_total": 54,
+    "uncovered_files": [
+      "PLang/app/modules/math/number/Config.cs",
+      "PLang/app/channels/serializers/IWriter.cs",
+      "PLang/app/types/ITypeRenderer.cs"
+    ]
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "critical",
+      "type": "false-green",
+      "test_file": "Tests/Cut4_RuntimeLoadAndRender/LoadDllRegistersType.test.goal, Tests/Cut4_RuntimeLoadAndRender/LoadDllOverwritesBuiltIn.test.goal",
+      "code_file": "PLang/app/types/Loader.cs, PLang/app/types/renderers/this.cs",
+      "issue": "Both goals' comments promise a full runtime-DLL roundtrip ('load -> resolve by name -> render via runtime-registered renderer' / 'overwrite built-in, render via loaded renderer, runtime wins ResolveType precedence'). The ACTUAL steps in both are identical: `code.load Path=TypeProvider.dll, on error set %loadFailed%=true` + `assert %loadFailed% is null`. Neither creates a value of the loaded type, renders it, nor asserts the rendered output or the overwrite precedence. The two distinctly-named goals are behaviorally the same test.",
+      "impact": "The headline Stage-7 deliverable (runtime type loading changes resolution AND rendering, runtime wins over built-ins) is unverified at the plang/end-to-end layer. A regression that registers the type but renders it wrong, or that breaks runtime-wins precedence on the renderer table, ships green. This is exactly the TypeProvider.dll Money/CustomInt roundtrip the codeanalyzer recommended pinning.",
+      "suggestion": "After code.load, assign a value of the loaded type (e.g. set %m%(money)=..., or read a value the loaded renderer formats) and `write out` it, then assert the rendered string matches the loaded renderer's output. For overwrite: assign a value of the overridden built-in name and assert it renders via the loaded renderer, not the built-in."
+    },
+    {
+      "id": 2,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "PLang.Tests/App/Types/RuntimeTypeLoadingTests.cs:108 (LoadDll_AlreadyCompiledHandlerSlot_StillSeesBuiltInType_NoRewrite)",
+      "code_file": "PLang/app/types/Loader.cs",
+      "issue": "The only assertion is `Assert.That(aProp).IsNotNull()` — that math.Add has a property named 'A'. The `types.Register(\"int\", typeof(Uri))` line above it has no bearing on the assertion. The test name and comment promise verification that a runtime override does NOT rewrite already-compiled handler slots, but nothing in the body observes any override behavior.",
+      "impact": "Deleting the entire runtime type-loading feature leaves this test green. Pure tautology; the 'honest limit' contract it claims to pin is unpinned.",
+      "suggestion": "Either reflect the handler's typed slot before AND after a runtime override and assert it is unchanged (the actual claim), or delete the test and rely on the resolution/render tests; do not leave a name that implies a guarantee the body doesn't check."
+    },
+    {
+      "id": 3,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "Tests/Types/SetDecimalLiteralStampsKind.test.goal, Tests/Cut1_LiteralKindArithmeticOutput.test.goal, Tests/Types/PolymorphicMathAddHasNoKind.test.goal",
+      "code_file": "PLang/app/modules/builder/code/Default.cs:881-896",
+      "issue": "Comments claim these goals verify the BUILD-TIME literal-kind stamping: %z%=3.5 -> .pr param {type:'number', kind:'decimal'}; x=int/z=decimal in Cut1; math.add result has 'no kind'. Verified by rebuilding with cache:false: the built .pr carries the set Value as {type:'object', value:3.5} with NO kind and NO 'number' — because the builder stamps kind only for TYPED parameters (Kinds.Of over the declared param type), and variable.set's Value is polymorphic Data<object>. The goals' only assertions are runtime value checks (%z% equals 3.5, %b% equals 5.5), which pass regardless of whether any kind is stamped.",
+      "impact": "The Stage-1/3 'literal-shape rule fires at build' behavior these tests are named for is not exercised; for variable.set literals it does not happen at all. A reader/CI sees 'SetDecimalLiteralStampsKind PASS' and believes the .pr kind shape is pinned. The genuine kind-stamping path (typed params -> kind=file/http on path) is only incidentally covered.",
+      "suggestion": "Build-time .pr shape cannot be asserted via runtime `assert`. Add a C# test that builds (or loads the built .pr for) a step whose parameter is a TYPED kind-bearing slot and asserts param.Kind. If the intent is genuinely to stamp variable.set literals, that is a coder gap to file; otherwise correct the goal comments and move the kind assertion to where the stamping actually occurs."
+    },
+    {
+      "id": 4,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "PLang.Tests/App/Serialization/PlngSerializerCoverageTests.cs:35,43,49 + :26; IWriterFormatTests.cs:28,38; MathHandlerDataReturnTests.cs:98,106; ImageParseTests.cs:58; PathSerializerMigrationTests.cs:81; NumberPolicyResolutionTests.cs:55",
+      "code_file": "(deferred features)",
+      "issue": "~10 [Test] methods whose sole assertion is `await Assert.That(true).IsTrue();` after a DEFERRED comment. They pass green and count toward the 3609 total. Several names directly imply verified behavior: Coverage_PlangTypeWithNoSerializer_FailsBuild, Coverage_DiagnosticIdIsPLNG_ErrorSeverity (PLNG003 gate — not shipped), PlangWriter_Format_IsPlangToken / TextWriter_Format_IsTextToken (writers not shipped), MathHelper_ToDouble/PreserveType_NotPresentInProductionAssembly (helpers still present), Resolve_HttpUrl_FetchesAndConstructs, LegacyJsonConverter_FileDoesNotExist_AfterMigration, Resolve_SubContext_ClimbsParent_InheritsParentSetting.",
+      "impact": "The suite reports coverage that does not exist. A name like '...FailsBuild PASS' or '...ClimbsParent PASS' reads as a verified negative/inheritance path when nothing ran. These map to the coder's documented deferrals (PLNG003 #1, PlangWriter/TextWriter #4, MathHelper deletion #3) — but encoding a deferral as a green pass hides it.",
+      "suggestion": "Mark each with TUnit `[Skip(\"deferred: <reason>\")]` (or `[Explicit]`) so they surface as skipped, not passed. Skipped is honest; green is not."
+    },
+    {
+      "id": 5,
+      "severity": "major",
+      "type": "weak-assertion",
+      "test_file": "Tests/Cleanups/DurationRoundTrip.test.goal",
+      "code_file": "PLang/app/types/duration/this.Parse.cs",
+      "issue": "Comment claims both the dot:colon form (1.02:03:04) and ISO-8601 (PT5M) parse to the same TimeSpan and re-emit canonically through the wire. Actual: `set %d%(duration) = \"PT5M\"` + `assert %d% is not null`. The dot:colon form is never exercised, the value (5 minutes) is never checked, and there is no round-trip/re-emit assertion.",
+      "impact": "Passes even if PT5M parses to TimeSpan.Zero or any non-null garbage. The ISO-8601 parser (new this branch, duration/this.Parse.cs) could regress its value computation undetected.",
+      "suggestion": "Assert the parsed value (e.g. %d% equals the dot:colon form 0.00:05:00 / 300 seconds), and assert both input forms produce equal values. Re-emit and compare the canonical string."
+    },
+    {
+      "id": 6,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/App/Types/RuntimeTypeLoadingTests.cs:88 (LoadDll_PlangTypeWithoutAnyRenderer_FailsLoad_TypedError)",
+      "code_file": "PLang/app/types/Loader.cs:97-105",
+      "issue": "The failure-shape assertions (result.Success IsFalse, ErrorKey == 'TypeLoadCoverage') are wrapped in `if (result.RegisteredTypes.Contains(\"runtime-fixture-norenderer\"))`. Today the guard is true (Loader registers all [PlangType] in pass 1 before the coverage gate, so the no-renderer type is in RegisteredTypes), so the assertions DO execute. But the protection is conditional: a future Loader change that skips registering no-renderer types empties the test silently.",
+      "impact": "A test named 'FailsLoad_TypedError' could stop verifying the typed failure with no signal. The TypeLoadCoverage gate (a real new behavior) becomes unpinned on a benign-looking refactor.",
+      "suggestion": "Assert the failure unconditionally: `await Assert.That(result.Success).IsFalse(); await Assert.That(result.ErrorKey).IsEqualTo(\"TypeLoadCoverage\");` — the Loader contract guarantees both today."
+    },
+    {
+      "id": 7,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/App/Types/NumberPolicyResolutionTests.cs (SubContext is a no-op), + missing Tests/Math/OverflowThrowSettingHonored.test.goal & SubGoalInheritsParentPolicy.test.goal",
+      "code_file": "PLang/app/modules/math/number/Config.cs",
+      "issue": "Config.cs (NumberPolicy resolution from app.config: overflow/precision read + parent-context climb) has 0% line coverage. The C# parent-climb test is a no-op (Assert.That(true), see finding 4), and the two plang goals the test-designer planned to exercise policy-via-set and the sub-goal context walk were not created. The only thing touching Config is a reflection-only property-existence test.",
+      "impact": "The end-to-end policy resolution — set overflow=Throw and observe it honored; sub-goal inherits parent policy — is unverified. NumberPolicy is the axis controlling overflow/divide behavior; a resolution bug (wrong precedence, broken parent walk) ships green.",
+      "suggestion": "Implement the deferred SubContext C# test with a real parent/child context, and add the planned plang goals (OverflowThrowSettingHonored, SubGoalInheritsParentPolicy) asserting the resolved policy actually changes arithmetic outcome."
+    },
+    {
+      "id": 8,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "Tests/Types/ReadPhotoStampsImage.test.goal",
+      "code_file": "PLang/app/modules/file/Read.cs",
+      "issue": "Comment claims %photo% is stamped type=image kind=png; the only assertion is `%photo% is not null`. The runtime type=image lift IS genuinely covered in C# (FileReadBuildTests.FileReadRun_ImageMime asserts result.Type.Value=='image'), so this is not a coverage gap — but the goal itself adds nothing and its comment overclaims the build-time shape.",
+      "impact": "Low — real coverage exists in C#. The goal is redundant green that reads as if it verifies the image stamping end-to-end.",
+      "suggestion": "Either strengthen (navigate %photo.Mime% or %photo.Path% and assert) or trim the comment to match what `is not null` actually checks."
+    },
+    {
+      "id": 9,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/App/Types/RuntimeTypeLoadingTests.cs:75 (LoadDll_ExistingName_RuntimeRendererWinsAtTypeSerializersLookup)",
+      "code_file": "PLang/app/types/renderers/this.cs",
+      "issue": "Registers a runtime renderer for 'int' and asserts the delegate fires when looked up. It does not assert the runtime renderer SHADOWS a pre-existing built-in int renderer — the 'wins' in the name. (The sibling ResolveType test IS a genuine shadow test thanks to ResolveType's runtime-first check.)",
+      "impact": "Low — registration + dispatch are verified; only the precedence claim for the renderer table is unpinned.",
+      "suggestion": "Register a built-in-style renderer under 'int' first (or assert against the known built-in output), then register the runtime one and assert the runtime output wins."
+    },
+    {
+      "id": 10,
+      "severity": "minor",
+      "type": "process",
+      "test_file": ".bot/plang-types/coder/",
+      "code_file": "n/a",
+      "issue": "Coder shipped only report.md — no summary.md, no v1/plan.md, and critically no v1/baseline-tests.md. The baseline records the pre-coder test state; without it a tester cannot mechanically separate regressions (green->red on coder's watch) from pre-existing reds.",
+      "impact": "Process gap. Mitigated here because the clean rebuild ran fully green (C# 3609/3609, plang 246/246) so there are no reds to attribute, but the safeguard was absent.",
+      "suggestion": "Coder should commit baseline-tests.md in v<N>/ before starting, per workflow."
+    }
+  ],
+  "verdict": "needs-fixes",
+  "summary": "Clean rebuild is fully green (C# 3609/3609, plang 246/246) with no regressions, and the two codeanalyzer dead-branch findings (renderers.IndexAssembly, number.DoDivide) are cleanly collapsed. The strong tests are genuinely strong: NumberDivide/NumberArithmetic pin value+Kind+Error.Key (DivideByZero/MathOverflow), PathSerializer does a real byte-for-byte parity vs the legacy converter, FileReadBuild verifies the runtime image lift, KindField round-trips the wire. BUT the two headline surfaces are green-but-empty: (a) the runtime-DLL roundtrip (Cut4) is two load-only stub goals that never render or check overwrite, and (b) the literal kind-stamping goals assert runtime values while the .pr they claim to shape carries type:object/no-kind (cache:false-verified). On top of that, ~10 deferred tests pass as no-op Assert.That(true), several with names implying verified negatives/inheritance, and NumberPolicy resolution (Config.cs) is 0% covered with its one real test deferred. Verdict FAIL on the strict-red rule (confirmed false greens). No source was mutated; builder confirmed working via cache:false and no builder false-greens in the .pr (step text matches module.action)."
+}
