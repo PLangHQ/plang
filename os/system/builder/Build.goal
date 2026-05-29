@@ -7,10 +7,11 @@ Build
 - set default %!build.cache% = true
 - set default %!build.summary% = true
 - set %traceGoals% = [], type=json
-- write out "Building path: %path%"
+- set channel "builder" call BuilderChannel
+- call EmitBuildEvent kind="build-path", path=%path%
 - builder.load, write to %app%
 - builder.goals path=%path%, write to %goals%
-- write out "Found %goals.Count% goals"
+- call EmitBuildEvent kind="goals-found", goals=%goals%
 - foreach %goals%, call BuildGoal goal=%item%
 - save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'
 - builder.appSave

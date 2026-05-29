@@ -1,0 +1,49 @@
+{
+  "name": "EchoBack",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write %!data% to echo",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Body writes back to its own channel name. The IsExecuting guard makes the\nregistry treat \u0022echo\u0022 as not-found while this body is running, so this\ninner write surfaces ChannelNotFound rather than recursing.",
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%!data%",
+              "type": "object"
+            },
+            {
+              "name": "channel",
+              "value": "echo",
+              "type": "channel"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "output.write(Data=%!data%, channel=\u0022echo\u0022)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Channels/GoalChannelRecursion/EchoBack.goal",
+  "prPath": "/Channels/GoalChannelRecursion/.build/echoback.pr",
+  "hash": "34fa06bdca789943db1d0d1d5766e546f94d173f947581d6509044fe8de2d8f6",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

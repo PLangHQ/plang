@@ -76,7 +76,6 @@ public class DebugModeBypassTests
 
     [Test] public async Task FilterCache_IsKeyedByTypeAndMode_DoesNotPoisonAcrossModes()
     {
-        global::app.channels.serializers.filters.Tagged.ClearCacheForTests();
         var outEntries = global::app.channels.serializers.filters.Tagged.PropertiesFor(typeof(global::app.modules.identity.Identity), global::app.View.Out);
         var debugEntries = global::app.channels.serializers.filters.Tagged.PropertiesFor(typeof(global::app.modules.identity.Identity), global::app.View.Debug);
         await Assert.That(outEntries.Count).IsLessThan(debugEntries.Count);

@@ -1,0 +1,94 @@
+{
+  "reviewer": "docs",
+  "branch": "builder-ergonomics",
+  "timestamp": "2026-05-29T10:30:00Z",
+  "reviewed_version": "v1",
+  "summary": "Branch ships the IsExecuting recursion guard (replacing FoundationalChannels), root-cause-first conversion errors, per-step builder confidence, and a 'builder' channel routing seam. Closed five documentation gaps — stale FoundationalChannels references in io-channels.md / app-tree.md / check-app-tree.sh, missing confidence + builder-channel sections in build.md, and a good_to_know entry on the 'recursion guard belongs on the value' OBP lesson. No XML doc gaps, no PLang example gaps, no proposals to evaluate.",
+  "stats": { "gaps_found": 5, "gaps_filled": 5, "docs_updated": 5, "docs_created": 0 },
+  "changes": [
+    {
+      "id": 1,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/io-channels.md",
+      "description": "Rewrote three sections that referenced deleted FoundationalChannels / PushChannelsOverride / FreezeFoundational APIs. Channel.Goal.@this paragraph now describes the AsyncLocal<bool> _executing guard with the registry Get() branch. 'Actor channel resolution' block reduced to single direct-registry property with a historical note pointing at the foundational-snapshot bug repro. 'Replace output with a goal channel' example rewritten to a sibling-channel fan-out (the old example would now surface ChannelNotFound)."
+    },
+    {
+      "id": 2,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/app-tree.md",
+      "description": "Dropped 'FreezeFoundational() — snapshot boot-time channels' line from the Actor tree (API gone). Added a one-paragraph back-pointer to io-channels.md noting where goal-channel recursion isolation now lives."
+    },
+    {
+      "id": 3,
+      "type": "consistency",
+      "action": "updated",
+      "file": "Documentation/v0.2/scripts/check-app-tree.sh",
+      "description": "Removed actor_skip_regex='^(FoundationalChannels)$'. The canary it skipped is gone; the script now checks actor properties without exceptions."
+    },
+    {
+      "id": 4,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/build.md",
+      "description": "Added 'Confidence per step' section (level table + warning shape + trace-file paths). Added 'Builder output routing' section (BuilderChannel.goal / EmitBuildEvent.goal / templates/output/build-output.template architecture, why the indirection exists as a redirection seam, EmitSummary gate removal note)."
+    },
+    {
+      "id": 5,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/good_to_know.md",
+      "description": "Appended 'Recursion guards belong on the value, not on a parallel context layer' — the OBP shape lesson this branch's load-bearing change codifies. Includes the migrated example (channels), the failure mode of the deleted approach (foundational-snapshot bug), tells for drifting back into shape #1, and when shape #1 is legitimately the right answer (when the overlay needs to expose *different values*, not just hide the calling instance)."
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "critical",
+      "category": "stale-doc",
+      "file": "Documentation/v0.2/io-channels.md",
+      "issue": "Three sections described the deleted FoundationalChannels / PushChannelsOverride / FreezeFoundational mechanism as load-bearing. A reader following the doc lands on APIs that do not compile.",
+      "resolution": "filled",
+      "detail": "Rewrote per change id 1 above."
+    },
+    {
+      "id": 2,
+      "severity": "major",
+      "category": "stale-doc",
+      "file": "Documentation/v0.2/app-tree.md",
+      "issue": "Actor block listed FreezeFoundational() as a public API.",
+      "resolution": "filled",
+      "detail": "Dropped the line; added back-pointer per change id 2."
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "category": "stale-doc",
+      "file": "Documentation/v0.2/scripts/check-app-tree.sh",
+      "issue": "actor_skip_regex still exempted FoundationalChannels (the property no longer exists, so the exemption is dead and would mask any future drift if a property of the same name were added).",
+      "resolution": "filled",
+      "detail": "Removed per change id 3."
+    },
+    {
+      "id": 4,
+      "severity": "major",
+      "category": "missing-doc",
+      "file": "Documentation/v0.2/build.md",
+      "issue": "Per-step confidence (planner + compiler, emitted by 4 LLM passes) and the new 'builder' channel routing (BuilderChannel.goal / EmitBuildEvent / template) were undocumented. The diagnostic recipe added in commit 659909d4f mentions confidence in passing but does not document the levels or the architecture.",
+      "resolution": "filled",
+      "detail": "Added two new sections per change id 4."
+    },
+    {
+      "id": 5,
+      "severity": "minor",
+      "category": "missing-doc",
+      "file": "Documentation/v0.2/good_to_know.md",
+      "issue": "The 'recursion guard on the value not on the context overlay' OBP lesson — codified in the branch's load-bearing C# change — was not recorded as a cross-cutting pattern. Worth capturing to prevent a future author re-implementing the deleted snapshot-overlay shape.",
+      "resolution": "filled",
+      "detail": "Added per change id 5."
+    }
+  ],
+  "claude_md_proposals": [],
+  "character_proposals": []
+}

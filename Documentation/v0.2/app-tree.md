@@ -99,9 +99,13 @@ Actor
 │   ├── Find(path, verb)                       // in-memory then sqlite, verified
 │   ├── Add(signedGrant)                       // unsigned → in-memory, signed → sqlite
 │   └── Revoke(record)                         // drops from both homes by Path
-├── Identity                                   // signing identity (Service only by default)
-└── FreezeFoundational()                       // snapshot boot-time channels
+└── Identity                                   // signing identity (Service only by default)
 ```
+
+The actor no longer carries a foundational-channels snapshot or an
+`AsyncLocal` channel-resolution overlay; goal-channel recursion isolation
+moved onto the channel itself as `Channel.Goal.@this.IsExecuting`
+(see [io-channels.md](io-channels.md)).
 
 ## modules/ — the registered action set
 

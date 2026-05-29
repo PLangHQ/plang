@@ -2,11 +2,14 @@ using System.Reflection;
 
 namespace PLang.Tests.App.ChannelsTests;
 
-// Entry-point wiring + invariants + FreezeFoundational.
+// Entry-point wiring + invariants.
 // Architect: stage-6-entry-point-wiring.md.
 // v3 cleanup: Channel.Role enum and EnsureRoleChannels are gone — invariant
 // lives on the registry as Channels.Verify; the names "output"/"error"/"input"
 // are pre-registered defaults.
+//
+// Foundational-snapshot machinery was removed: goal-channel recursion isolation
+// now lives on GoalChannel.IsExecuting (see Stage3 tests).
 
 public class Stage6_EntryPointWiringTests
 {
@@ -86,39 +89,6 @@ public class Stage6_EntryPointWiringTests
 
         var result = app.User.Channels.Verify();
         await Assert.That(result.Success).IsTrue();
-    }
-
-    [Test]
-    public async Task FreezeFoundational_CapturesPerActorSnapshot_BeforeGoalRuns()
-    {
-        await using var app = new global::app.@this("/tmp/s6h");
-        global::app.@this.WireDefaultConsoleChannels(app.System);
-        global::app.@this.WireDefaultConsoleChannels(app.User);
-
-        app.User.FreezeFoundational();
-        app.System.FreezeFoundational();
-
-        var userFoundational = app.User.FoundationalChannels.ChannelNames.ToHashSet();
-        var systemFoundational = app.System.FoundationalChannels.ChannelNames.ToHashSet();
-
-        await Assert.That(userFoundational).Contains("output");
-        await Assert.That(userFoundational).Contains("error");
-        await Assert.That(userFoundational).Contains("input");
-        await Assert.That(systemFoundational).Contains("output");
-    }
-
-    [Test]
-    public async Task FreezeFoundational_DoesNotCaptureChannelsAddedAfterFreeze()
-    {
-        await using var app = new global::app.@this("/tmp/s6i", autoWireConsoleChannels: false);
-        global::app.@this.WireDefaultConsoleChannels(app.User);
-        app.User.FreezeFoundational();
-
-        // Add a custom channel after freeze.
-        app.User.Channels.Register(StreamChannel.Memory("logger"));
-
-        await Assert.That(app.User.FoundationalChannels.Contains("logger")).IsFalse();
-        await Assert.That(app.User.Channels.Contains("logger")).IsTrue();
     }
 
     [Test]

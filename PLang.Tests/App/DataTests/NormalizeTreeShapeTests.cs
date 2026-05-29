@@ -126,17 +126,18 @@ public class NormalizeTreeShapeTests
         await Assert.That(((List<Data>)r1!).Count).IsEqualTo(((List<Data>)r2!).Count);
     }
 
-    [Test] public async Task Normalize_PropertyLookupCache_PopulatesOnFirstCall_HitsOnSecond()
+    [Test] public async Task Normalize_PropertyLookupCache_ReturnsSameReferenceForSameKey()
     {
-        global::app.channels.serializers.filters.Tagged.ClearCacheForTests();
-        var sizeBefore = global::app.channels.serializers.filters.Tagged.CacheSize;
-        var identity = new global::app.modules.identity.Identity { Name = "x", PublicKey = "y" };
-        new Data("", identity).Normalize();
-        var sizeAfter1 = global::app.channels.serializers.filters.Tagged.CacheSize;
-        new Data("", identity).Normalize();
-        var sizeAfter2 = global::app.channels.serializers.filters.Tagged.CacheSize;
-        await Assert.That(sizeAfter1).IsGreaterThan(sizeBefore);
-        await Assert.That(sizeAfter2).IsEqualTo(sizeAfter1).Because("second call hits cache, no new entry");
+        // The cache contract: PropertiesFor(T, mode) returns the same
+        // IReadOnlyList<Entry> reference for the same (Type, Mode) key —
+        // reflection fires once, then handed back. Asserting on the global
+        // CacheSize counter races with parallel Normalize tests; the
+        // per-key reference identity is the behaviour this filter owns.
+        System.Type t = typeof(global::app.modules.identity.Identity);
+        var first = global::app.channels.serializers.filters.Tagged.PropertiesFor(t, global::app.View.Out);
+        var second = global::app.channels.serializers.filters.Tagged.PropertiesFor(t, global::app.View.Out);
+        await Assert.That(object.ReferenceEquals(first, second)).IsTrue()
+            .Because("second call for the same (Type, Mode) key must hand back the cached reference");
     }
 
     [Test] public async Task Normalize_UnsupportedType_ThrowsTypedError()

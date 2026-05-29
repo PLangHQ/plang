@@ -5,7 +5,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "set default %path% = \"/\"",
+      "text": "set default %path% = \u0022/\u0022",
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
@@ -40,10 +40,7 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%path%, Value=\u0022/\u0022, AsDefault=true, Type=string)",
       "source": null,
       "waitForExecution": true
     },
@@ -69,11 +66,6 @@
               "type": "bool"
             },
             {
-              "name": "Type",
-              "value": "bool",
-              "type": "string"
-            },
-            {
               "name": "AsDefault",
               "value": true,
               "type": "bool"
@@ -84,10 +76,7 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%!build.cache%, Value=true, AsDefault=true, Type=string)",
       "source": null,
       "waitForExecution": true
     },
@@ -109,18 +98,18 @@
             },
             {
               "name": "Value",
-              "value": true,
-              "type": "bool"
-            },
-            {
-              "name": "AsDefault",
-              "value": true,
+              "value": "%!build.summary%",
               "type": "bool"
             },
             {
               "name": "Type",
               "value": "bool",
               "type": "string"
+            },
+            {
+              "name": "AsDefault",
+              "value": true,
+              "type": "bool"
             }
           ],
           "defaults": null,
@@ -128,16 +117,13 @@
         }
       ],
       "intent": null,
-      "guidance": "Set default for %!build.summary% to true using variable.set with AsDefault=true.",
-      "level": "high",
-      "confidence": 95,
-      "formal": null,
+      "formal": "variable.set(Name=%default%, Value=%!build.summary%, Type=bool, AsDefault=true)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 3,
-      "text": "set %traceGoals% = []",
+      "text": "set %traceGoals% = [], type=json",
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
@@ -154,7 +140,7 @@
             {
               "name": "Value",
               "value": [],
-              "type": "object"
+              "type": "list\u00601"
             },
             {
               "name": "Type",
@@ -173,28 +159,35 @@
         }
       ],
       "intent": null,
-      "guidance": "Initialize %traceGoals% to an empty JSON array. Use variable.set with Value type json.",
-      "level": "high",
-      "confidence": 90,
-      "formal": null,
+      "formal": "variable.set(Name=%traceGoals%, Value=[], Type=json)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 4,
-      "text": "write out \"Building path: %path%\"",
+      "text": "set channel \u0022builder\u0022 call BuilderChannel",
       "lineNumber": 10,
       "indent": 0,
       "comment": null,
       "actions": [
         {
-          "module": "output",
-          "action": "write",
+          "module": "channel",
+          "action": "set",
           "parameters": [
             {
-              "name": "Data",
-              "value": "Building path: %path%",
-              "type": "tstring"
+              "name": "Name",
+              "value": "builder",
+              "type": "string"
+            },
+            {
+              "name": "Goal",
+              "value": {
+                "name": "BuilderChannel",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/system/builder/.build/builderchannel.pr"
+              },
+              "type": "goal.call"
             }
           ],
           "defaults": null,
@@ -202,17 +195,56 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
+      "formal": "channel.set(Name=\u0022builder\u0022, Goal={name:\u0022BuilderChannel\u0022})",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 5,
-      "text": "builder.load, write to %app%",
+      "text": "call EmitBuildEvent kind=\u0022build-path\u0022, path=%path%",
       "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "EmitBuildEvent",
+                "parallel": false,
+                "parameters": [
+                  {
+                    "name": "kind",
+                    "value": "build-path",
+                    "type": "string"
+                  },
+                  {
+                    "name": "path",
+                    "value": "%path%",
+                    "type": "string"
+                  }
+                ],
+                "prPath": "/system/builder/.build/emitbuildevent.pr"
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "goal.call(GoalName={name:\u0022EmitBuildEvent\u0022, parameters:[{name:\u0022kind\u0022, value:\u0022build-path\u0022, type:\u0022string\u0022}, {name:\u0022path\u0022, value\u0022:\u0022%path%\u0022, type:\u0022string\u0022}]})",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "builder.load, write to %app%",
+      "lineNumber": 12,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -222,8 +254,8 @@
           "parameters": [
             {
               "name": "Path",
-              "value": ".",
-              "type": "string"
+              "value": "%path%",
+              "type": "path"
             }
           ],
           "defaults": null,
@@ -255,17 +287,14 @@
         }
       ],
       "intent": null,
-      "guidance": "Load app build context from %path% using builder.load, then assign result to %app% via variable.set.",
-      "level": "high",
-      "confidence": 85,
-      "formal": null,
+      "formal": "builder.load(Path=%path%) , variable.set(Name=%app%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
     {
-      "index": 6,
+      "index": 7,
       "text": "builder.goals path=%path%, write to %goals%",
-      "lineNumber": 12,
+      "lineNumber": 13,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -276,7 +305,7 @@
             {
               "name": "Path",
               "value": "%path%",
-              "type": "string"
+              "type": "path"
             }
           ],
           "defaults": null,
@@ -294,7 +323,7 @@
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "list"
             }
           ],
           "defaults": [
@@ -308,28 +337,41 @@
         }
       ],
       "intent": null,
-      "guidance": "Load goals from %path% using builder.goals, then assign to %goals% via variable.set.",
-      "level": "high",
-      "confidence": 85,
-      "formal": null,
+      "formal": "builder.goals(Path=%path%) , variable.set(Name=%goals%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
     {
-      "index": 7,
-      "text": "write out \"Found %goals.Count% goals\"",
-      "lineNumber": 13,
+      "index": 8,
+      "text": "call EmitBuildEvent kind=\u0022goals-found\u0022, goals=%goals%",
+      "lineNumber": 14,
       "indent": 0,
       "comment": null,
       "actions": [
         {
-          "module": "output",
-          "action": "write",
+          "module": "goal",
+          "action": "call",
           "parameters": [
             {
-              "name": "Data",
-              "value": "Found %goals.Count% goals",
-              "type": "tstring"
+              "name": "GoalName",
+              "value": {
+                "name": "EmitBuildEvent",
+                "parallel": false,
+                "parameters": [
+                  {
+                    "name": "kind",
+                    "value": "goals-found",
+                    "type": "string"
+                  },
+                  {
+                    "name": "goals",
+                    "value": "%goals%",
+                    "type": "string"
+                  }
+                ],
+                "prPath": "/system/builder/.build/emitbuildevent.pr"
+              },
+              "type": "goal.call"
             }
           ],
           "defaults": null,
@@ -337,17 +379,14 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
+      "formal": "goal.call(GoalName={name:\u0022EmitBuildEvent\u0022, parameters:[{name:\u0022kind\u0022, value:\u0022goals-found\u0022, type:\u0022string\u0022}, {name:\u0022goals\u0022, value:\u0022%goals%\u0022, type:\u0022list\u003Cgoal\u003E\u0022}]})",
       "source": null,
       "waitForExecution": true
     },
     {
-      "index": 8,
+      "index": 9,
       "text": "foreach %goals%, call BuildGoal goal=%item%",
-      "lineNumber": 14,
+      "lineNumber": 15,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -390,17 +429,14 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
+      "formal": "loop.foreach(Collection=%goals%), goal.call(GoalName={name:\u0022BuildGoal\u0022, parameters:[{name:\u0022goal\u0022, value:%item%, type:\u0022string\u0022}]})",
       "source": null,
       "waitForExecution": true
     },
     {
-      "index": 9,
-      "text": "save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'",
-      "lineNumber": 15,
+      "index": 10,
+      "text": "save %traceGoals% to file \u0027/.build/traces/%!trace.id%/manifest.json\u0027",
+      "lineNumber": 16,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -421,20 +457,41 @@
           ],
           "defaults": null,
           "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%path%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "path"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": "Save %traceGoals% to the specified manifest.json path using file.save.",
-      "level": "high",
-      "confidence": 85,
-      "formal": null,
+      "formal": "file.save(Path=\u0022/.build/traces/%!trace.id%/manifest.json\u0022, Value=%traceGoals%) , variable.set(Name=%path%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
     {
-      "index": 10,
+      "index": 11,
       "text": "builder.appSave",
-      "lineNumber": 16,
+      "lineNumber": 17,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -447,10 +504,7 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
+      "formal": "builder.appSave()",
       "source": null,
       "waitForExecution": true
     }
@@ -459,7 +513,7 @@
   "visibility": 1,
   "path": "/system/builder/Build.goal",
   "prPath": "/system/builder/.build/build.pr",
-  "hash": "3010e8e25e8cb4b25b74d39bb5bf7c64b802a34747d3c01fc0702366f5fe35c5",
+  "hash": "483f3bbb51832f3fbbe4ae152e1f0ccfc163a386a87a97d666d79543953a2dfe",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
