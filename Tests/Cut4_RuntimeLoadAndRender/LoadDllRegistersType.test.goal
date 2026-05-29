@@ -1,0 +1,6 @@
+Start
+/ Integration cut 4 (additive): load a tiny test DLL exposing one [PlangType] class plus
+/ one ITypeRenderer; assign a value of the loaded type; write it out. The output renders
+/ via the registered renderer. Proves the end-to-end runtime add: load → resolve by name →
+/ render via runtime-registered serializer.
+- throw "not implemented"

@@ -1,0 +1,5 @@
+Start
+/ Integration cut 3 (no-source variant): an image constructed from a base64 data URL has
+/ no source file. `%photo.Path%` is null and navigation gracefully terminates without
+/ crashing. Proves the nullable-Path facet contract.
+- throw "not implemented"

@@ -1,0 +1,5 @@
+Start
+/ `set %b% = %x% + %z%` compiles to math.add whose result %b% carries type=number with
+/ NO kind in the .pr — kind is runtime-decided. Pins the "polymorphic result has no kind"
+/ rule against accidental build-time kind-stamping.
+- throw "not implemented"

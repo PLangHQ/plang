@@ -1,0 +1,5 @@
+Start
+/ `set %z% = 3.5` produces a .pr parameter shaped as { name, value: 3.5, type: "number",
+/ kind: "decimal" } — value is JSON-native (not the string "3.5"), and type+kind are
+/ separate fields. The literal-shape rule fires at build, not at runtime.
+- throw "not implemented"

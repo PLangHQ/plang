@@ -1,0 +1,4 @@
+Start
+/ The divide-footgun rule, end-to-end: 7 / 2 leaves the integer track and yields 3.5,
+/ not 3. Promotion happens at the number type, not in the handler.
+- throw "not implemented"

@@ -1,0 +1,158 @@
+{
+  "branch": "plang-types",
+  "sessions": [
+    {
+      "id": "00ce921d-6873-4d37-9449-5f36247fbd67",
+      "bot": "test-designer",
+      "timestamp_start": "2026-05-29T11:58:42Z",
+      "timestamp_end": "2026-05-29T12:14:59Z",
+      "intent": "Design test contract for plang-types — registry+kind, serializer dispatch, number/image/code values, primitive cleanups, runtime loading.",
+      "before": {
+        "assumptions": "Architect plan settled and merged with runtime2; 7 stages carved + test-strategy.md + test-coverage.md present. Existing test infra at PLang.Tests/App/ (Serialization/, DataTests/, Types/) reusable; PLang goal tests live under Tests/ (uppercase).",
+        "risk": "Scope is large (~50 matrix rows + 4 integration cuts + failure matrix). Risk of either over-fragmenting tests (one per row blindly) or grouping too much (losing the per-behavior pin). Mitigation: batch by surface so the contract reads forward."
+      },
+      "plan": ".bot/plang-types/test-designer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/Types/RegistryFoldTests.cs",
+            "PLang.Tests/App/Types/KindFieldTests.cs",
+            "PLang.Tests/App/Types/TypeBuildHookTests.cs",
+            "PLang.Tests/App/Types/TypedPropertyCatalogTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 1 — registry fold no-regression, optional `kind` field as separate .pr field, type Build(value) discovery, typed-property catalog rendering."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Serialization/TypeSerializersDispatchTests.cs",
+            "PLang.Tests/App/Serialization/TypedValueNodeNormalizeTests.cs",
+            "PLang.Tests/App/Serialization/IWriterFormatTests.cs",
+            "PLang.Tests/App/Serialization/PathSerializerMigrationTests.cs",
+            "PLang.Tests/App/Serialization/PlngSerializerCoverageTests.cs",
+            "PLang.Tests/App/Serialization/NestedRegisteredTypeRoundTripTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 2 — TypeSerializers (typeName, formatToken) → Write dispatch; TypedValueNode tag-hook; IWriter.Format; path as first-mover absorbing this.JsonConverter; PLNG coverage gate."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/NumberValueTests.cs",
+            "PLang.Tests/App/Types/NumberParseTests.cs",
+            "PLang.Tests/App/Types/NumberBuildKindTests.cs",
+            "PLang.Tests/App/Types/NumberEqualityTests.cs",
+            "PLang.Tests/App/Types/NumberOperatorsTests.cs",
+            "PLang.Tests/App/Serialization/NumberSerializerTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 3 — number value (sealed class, NumberKind, From, casts, lenient/exact equality, NaN, hash, parse narrowest-fit, Build literal-shape rule, operators policy-free lenient, Default.cs per Kind)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/NumberArithmeticTests.cs",
+            "PLang.Tests/App/Types/NumberDivideTests.cs",
+            "PLang.Tests/App/Types/NumberPowerTests.cs",
+            "PLang.Tests/App/Types/NumberPolicyResolutionTests.cs",
+            "PLang.Tests/App/Types/MathHandlerDataReturnTests.cs",
+            "Tests/Math/DivideSevenByTwoIsThreeHalves.test.goal",
+            "Tests/Math/IntDivSevenByTwoIsThree.test.goal",
+            "Tests/Math/OverflowThrowSettingHonored.test.goal",
+            "Tests/Math/SubGoalInheritsParentPolicy.test.goal",
+            "Tests/Math/AddRoundTripDecimal.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 4 — arithmetic + policy via app.config (no Goal storage), divide-leaves-integer-track footgun + math.intdiv, power, MathHelper.ToDouble/PreserveType deletion, handler returns Data never throws."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/ImageValueTests.cs",
+            "PLang.Tests/App/Types/ImageParseTests.cs",
+            "PLang.Tests/App/Types/ImageBuildKindTests.cs",
+            "PLang.Tests/App/Types/CodeValueTests.cs",
+            "PLang.Tests/App/Types/FileReadBuildTests.cs",
+            "PLang.Tests/App/Serialization/ImageSerializerTests.cs",
+            "PLang.Tests/App/Serialization/CodeSerializerTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 5 — image (Bytes/Mime/nullable Path facet, composition over union), code (Source/Language), file.read.Build extension→high-level type, per-format serializer files (image text/protobuf/Default; code Default)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/CleanupBindingsTests.cs",
+            "Tests/Cleanups/TimespanAliasStillResolves.test.goal",
+            "Tests/Cleanups/DurationRoundTrip.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 6 — datetime→DateTimeOffset (DateTime banished), date→DateOnly, time→TimeOnly, duration→TimeSpan (timespan deprecated alias), no `this.Build.cs` on any (no kind)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/RuntimeTypeLoadingTests.cs",
+            "Tests/Cut4_RuntimeLoadAndRender/LoadDllRegistersType.test.goal",
+            "Tests/Cut4_RuntimeLoadAndRender/LoadDllOverwritesBuiltIn.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "medium",
+          "context": "Stage 7 — code.load-style runtime DLL scan registers [PlangType] + ITypeRenderer; overwrite precedence; honest-limit pin. Fixture DLL not committed — coder builds it under PLang.Tests/App/Fixtures/dlls/."
+        },
+        {
+          "paths": [
+            "Tests/Cut1_LiteralKindArithmeticOutput.test.goal",
+            "Tests/Types/SetDecimalLiteralStampsKind.test.goal",
+            "Tests/Types/PolymorphicMathAddHasNoKind.test.goal",
+            "Tests/Types/ReadPhotoStampsImage.test.goal",
+            "Tests/Types/PhotoPathExistsNavigation.test.goal",
+            "Tests/Types/PhotoPathExistsMissingFile.test.goal",
+            "Tests/Types/Base64ImagePathNull.test.goal",
+            "PLang.Tests/App/Serialization/IntegrationCuts/PlangTypesCut2_ImageTwoChannelsTests.cs",
+            "PLang.Tests/App/Serialization/IntegrationCuts/PlangTypesCut3_CompositionNavigationTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Cuts 1–3 — spine .goal (literal kind → arithmetic → output) + supporting .pr-inspection goals; C# harnesses for the two-channel image and Path facet navigation cuts. PlangTypes prefix on C# cuts dodges collision with data-normalize Cut1/2/3/4 in the same folder."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/*.cs",
+            "PLang.Tests/App/Serialization/*.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Mass-rewrote stub bodies from `await Task.FromResult(Assert.Fail(\"Not implemented\"))` to `throw new global::System.NotImplementedException()`. TUnit Assert.Fail returns void → Task.FromResult fails type inference; throw composes cleanly with async Task expression body. dotnet build PLang.Tests confirmed green (0 errors)."
+        },
+        {
+          "paths": [
+            ".bot/plang-types/test-designer/v1/plan.md",
+            ".bot/plang-types/test-designer/v1/verdict.json",
+            ".bot/plang-types/test-designer/summary.md",
+            ".bot/plang-types/report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v1 plan + verdict + summary + this report."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "dotnet build PLang.Tests is green (0 errors). All 24 new C# test files compile; ~150 stubs land as failing tests pinning the contract. 14 new PLang .goal files land with `- throw \"not implemented\"` bodies pinning the developer-facing surface.",
+        "notes": "Coder runs next. Architect's stage dependency order: 1+2 together (machinery + path first mover) → 3 → 4 → 5 → 6 (parallelizable) → 7 (needs fixture DLL under PLang.Tests/App/Fixtures/dlls/). The PLNG_SerializerCoverage gate must land in Stage 2 so the runtime writer lookup stays total for built-in types. No fixture DLL was committed — Stage 7 coder builds it matching existing fixture pattern."
+      }
+    }
+  ]
+}

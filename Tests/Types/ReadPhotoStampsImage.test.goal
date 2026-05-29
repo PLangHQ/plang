@@ -1,0 +1,6 @@
+Start
+/ `read photo.png, write to %photo%` builds with %photo% type=image kind=png. The action
+/ Build resolves the extension to the high-level type (image); the type Build supplies
+/ the kind (png). Runtime: file.read.Run() returns a Data tagged Type="image" carrying
+/ an image.@this(bytes, mime="image/png").
+- throw "not implemented"

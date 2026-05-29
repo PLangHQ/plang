@@ -1,0 +1,5 @@
+Start
+/ Integration cut 3 (negative): same shape as PhotoPathExistsNavigation but the source
+/ file is removed before the if. `%photo.Path.Exists%` evaluates false (HEAD-style stat
+/ via path.IBooleanResolvable). No crash.
+- throw "not implemented"

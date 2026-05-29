@@ -1,0 +1,5 @@
+Start
+/ A sub-goal called from a parent that set a strict number policy inherits that policy
+/ via the app.config context-walk (context.Parent climb). Pins "policy inheritance falls
+/ out of the existing ConfigScope walk", no per-goal storage.
+- throw "not implemented"

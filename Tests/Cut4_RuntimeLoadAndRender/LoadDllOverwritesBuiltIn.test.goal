@@ -1,0 +1,6 @@
+Start
+/ Integration cut 4 (overwrite): load a DLL that re-registers an existing built-in name
+/ (e.g. a custom `int`). A subsequent value of that name resolves to the loaded CLR type
+/ and renders via the loaded renderer — runtime registration wins ResolveType precedence.
+/ The honest-limit caveat lives in C# RuntimeTypeLoadingTests.
+- throw "not implemented"

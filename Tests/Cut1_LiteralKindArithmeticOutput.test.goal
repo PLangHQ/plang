@@ -1,0 +1,7 @@
+Start
+/ Integration cut 1 — the spine: literal kind → arithmetic → output.
+/ Builds a .pr where %x% has type=number kind=int and %z% has type=number kind=decimal
+/ (separate fields, never "number:decimal"). The math.add step result %b% has type=number
+/ with NO kind (runtime-decided). Runtime executes; output is 4.5 (and 0.1+0.2 round-trips
+/ as documented for decimal precision).
+- throw "not implemented"
