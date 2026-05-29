@@ -14,9 +14,7 @@ public partial class Sqrt : IContext
         if (n == null)
             return Task.FromResult(data.@this<number>.FromError(
                 new errors.ValidationError("math.sqrt requires a number", "InvalidInput")));
-        if (n.ToDouble() < 0)
-            return Task.FromResult(data.@this<number>.FromError(
-                new errors.ValidationError("Cannot take square root of negative number", "InvalidInput")));
+        // number.Sqrt surfaces negative input as ArithmeticError via Wrap.
         return Task.FromResult(number.Sqrt(n));
     }
 }

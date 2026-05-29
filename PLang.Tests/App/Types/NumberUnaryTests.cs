@@ -78,9 +78,9 @@ public class NumberUnaryTests
 
     [Test] public async Task Sqrt_NegativeNumber_SurfacesArithmeticError()
     {
-        // number.Sqrt itself throws ArithmeticException → Wrap maps to
-        // "ArithmeticError" key. The handler (math.Sqrt) checks first and
-        // surfaces the friendlier "InvalidInput" error before reaching here.
+        // number.Sqrt throws ArithmeticException → Wrap maps to "ArithmeticError"
+        // key. math.sqrt handler relies on this — no pre-check, one canonical
+        // error key for negative-sqrt across both call paths.
         var r = number.Sqrt(number.From(-1));
         await Assert.That(r.Success).IsFalse();
         await Assert.That(r.Error?.Key).IsEqualTo("ArithmeticError");

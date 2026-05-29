@@ -43,6 +43,14 @@ public static class Loader
     /// authentically-signed envelopes whose body was attacker-composed.
     /// Primitives (<c>int</c>, <c>string</c>, <c>path</c>) stay overridable
     /// because their body is constrained by the type itself.
+    ///
+    /// <para><strong>When to extend:</strong> any time a new
+    /// <c>[PlangType]</c>-decorated class joins the catalog whose body is
+    /// signing-load-bearing (its bytes get signed by an actor's key) or
+    /// transport-load-bearing (its bytes are persisted / round-tripped
+    /// across the wire and trusted on read), add its PLang name here.
+    /// Forgetting to extend the list means a runtime-loaded DLL can
+    /// silently substitute the type's wire body.</para>
     /// </summary>
     public static readonly System.Collections.Generic.IReadOnlySet<string> SealedNames =
         new System.Collections.Generic.HashSet<string>(System.StringComparer.OrdinalIgnoreCase)

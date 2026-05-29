@@ -205,17 +205,17 @@ public sealed partial class @this
         if (exponentIsFractional)
             return From(System.Math.Pow(a.AsDouble(), baseExp.AsDouble()));
 
-        // Negative integer exponent leaves integer track.
+        // Cap is loop-protective only — Math.Pow paths (Double base, negative
+        // exponent on non-Decimal base) are constant-time and skip the check.
         long expL = baseExp.AsInt64();
-        if (expL > MaxPowerExponent || expL < -MaxPowerExponent)
-            throw new PowerExponentTooLargeException(
-                $"Integer-exponent magnitude {expL} exceeds limit {MaxPowerExponent}.");
+
         if (expL < 0)
         {
             // Promote per precision policy.
             if (policy.Precision == PrecisionMode.Decimal
                 && a.Kind != NumberKind.Double && a.Kind != NumberKind.Float)
             {
+                EnsureExponentInRange(expL);
                 decimal acc = 1m, baseD = a.AsDecimal();
                 for (long i = 0; i < -expL; i++) acc /= baseD;
                 return From(acc);
@@ -227,6 +227,7 @@ public sealed partial class @this
         if ((a.Kind == NumberKind.Int || a.Kind == NumberKind.Long)
             && (baseExp.Kind == NumberKind.Int || baseExp.Kind == NumberKind.Long))
         {
+            EnsureExponentInRange(expL);
             try
             {
                 long b = a.AsInt64();
@@ -237,7 +238,7 @@ public sealed partial class @this
             }
             catch (System.OverflowException) when (policy.Overflow == OverflowMode.Promote)
             {
-                // Widen to decimal.
+                // Widen to decimal — same expL, still under cap.
                 decimal acc = 1m, baseD = a.AsDecimal();
                 for (long i = 0; i < expL; i++) acc *= baseD;
                 return From(acc);
@@ -247,11 +248,20 @@ public sealed partial class @this
         // Decimal or Double base — route through the matching path.
         if (a.Kind == NumberKind.Decimal && expL >= 0)
         {
+            EnsureExponentInRange(expL);
             decimal acc = 1m, baseD = a.AsDecimal();
             for (long i = 0; i < expL; i++) acc *= baseD;
             return From(acc);
         }
+        // Double base — Math.Pow is constant time, no cap needed.
         return From(System.Math.Pow(a.AsDouble(), expL));
+    }
+
+    private static void EnsureExponentInRange(long expL)
+    {
+        if (expL > MaxPowerExponent || expL < -MaxPowerExponent)
+            throw new PowerExponentTooLargeException(
+                $"Integer-exponent magnitude {expL} exceeds limit {MaxPowerExponent}.");
     }
 
     /// <summary>

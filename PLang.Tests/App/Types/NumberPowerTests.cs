@@ -71,12 +71,32 @@ public class NumberPowerTests
         await Assert.That(r.Error?.Key).IsEqualTo("PowerExponentTooLarge");
     }
 
-    [Test] public async Task Power_NegativeExponentBeyondCap_TypedFailure_PowerExponentTooLarge()
+    [Test] public async Task Power_NegativeExponentBeyondCap_DecimalPrecision_TypedFailure()
     {
+        // Negative integer exponent on integer base lands in the Decimal loop
+        // path only when Precision == Decimal (Strict). Lenient routes through
+        // Math.Pow which is constant-time and skips the cap.
         var r = number.Power(number.From(2), number.From(-number.MaxPowerExponent - 1),
-            PPolicy.Lenient);
+            PPolicy.Strict);
         await Assert.That(r.Success).IsFalse();
         await Assert.That(r.Error?.Key).IsEqualTo("PowerExponentTooLarge");
+    }
+
+    [Test] public async Task Power_DoubleBase_LargeExponent_SkipsCap_UsesMathPow()
+    {
+        // Cap is loop-protective only — Double base routes through Math.Pow
+        // (constant time) and is not subject to the magnitude limit.
+        var r = number.Power(number.From(2.0), number.From(1000),
+            PPolicy.Lenient);
+        await Assert.That(r.Success).IsTrue();
+        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Double);
+    }
+
+    [Test] public async Task Power_NegativeExponent_DoubleBase_SkipsCap()
+    {
+        var r = number.Power(number.From(2), number.From(-1000),
+            PPolicy.Lenient);
+        await Assert.That(r.Success).IsTrue();
     }
 
     [Test] public async Task Power_FractionalExponent_NotSubjectToCap()
