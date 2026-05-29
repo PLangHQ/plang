@@ -93,7 +93,7 @@ public class GoalMimeDeserializationTests
         // Stage 2's mop-up after PLang scripts that read .goal contents as
         // text needed to keep working.
         var (app, _) = MakeApp();
-        var mime = app.Formats.Mime(".goal");
+        var mime = app.Format.Mime(".goal");
         await Assert.That(mime).IsEqualTo("text/plain");
     }
 }

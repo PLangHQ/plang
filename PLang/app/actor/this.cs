@@ -38,9 +38,6 @@ public sealed class @this : IAsyncDisposable
     /// on <see cref="channel.goal.@this.IsExecuting"/> — the registry's <c>Get</c>
     /// treats an executing goal-channel as not-found.
     /// </summary>
-    public global::app.channel.list.@this Channels => _channels;
-
-    /// <summary>Singular accessor — see <see cref="Channels"/>.</summary>
     public global::app.channel.list.@this Channel => _channels;
 
     /// <summary>
@@ -93,14 +90,14 @@ public sealed class @this : IAsyncDisposable
         // Register %Settings.X% as a navigable mount on this actor's Variables.
         // Resolution dispatches to app.Settings.Get(path, this.Context); the
         // lambda captures *this* actor's Context so per-actor context propagates.
-        Context.Variables.RegisterNavigable("Settings", path => app.Settings.Get(path, Context));
+        Context.Variable.RegisterNavigable("Settings", path => app.Settings.Get(path, Context));
 
         // Register %!app% — navigates the App object graph (e.g., %!app.tester.IsEnabled%)
-        Context.Variables.Set("!app", new data.DynamicData("!app", () => app));
+        Context.Variable.Set("!app", new data.DynamicData("!app", () => app));
 
         // Register lazy %MyIdentity% — resolves to the System actor's default identity.
         // Data.DynamicData re-evaluates on each access, so changes via setDefault/rename are reflected.
-        Context.Variables.Set("MyIdentity", new data.DynamicData("MyIdentity", () =>
+        Context.Variable.Set("MyIdentity", new data.DynamicData("MyIdentity", () =>
         {
             var provider = app.Code.Get<IIdentity>();
             if (!provider.Success) return null;

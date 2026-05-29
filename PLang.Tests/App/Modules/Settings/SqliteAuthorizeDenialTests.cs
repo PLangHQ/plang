@@ -36,7 +36,7 @@ public class SqliteAuthorizeDenialTests
     [Test] public async Task SqliteOpen_DataSourceOutsideRoot_DeniedAnswer_DoesNotOpenDb()
     {
         var app = NewApp(out _);
-        app.User.Channels.Register(new CannedChannel("n"));
+        app.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "external.sqlite");
         var dbPath = new FilePath(outOfRoot, app.User.Context);
@@ -51,7 +51,7 @@ public class SqliteAuthorizeDenialTests
     {
         var app = NewApp(out var root);
         var ch = new CannedChannel("UNEXPECTED");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
         var dbPath = new FilePath(System.IO.Path.Combine(root, "data.sqlite"), app.User.Context);
         using var _ = new global::app.module.settings.Sqlite(dbPath);
         await Assert.That(ch.AskCount).IsEqualTo(0);

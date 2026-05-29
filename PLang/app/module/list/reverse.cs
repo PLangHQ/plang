@@ -9,7 +9,7 @@ public partial class Reverse : IContext
 
     public Task<data.@this<type.list>> Run()
     {
-        var data = Context.Variables.Get(ListName.Value);
+        var data = Context.Variable.Get(ListName.Value);
         if (data.Value is not List<object?> list)
             return Task.FromResult(global::app.data.@this<type.list>.FromError(
                 new app.error.ValidationError($"Variable '{ListName.Value}' is not a list")));

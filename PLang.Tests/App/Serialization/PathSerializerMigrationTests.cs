@@ -26,7 +26,7 @@ public class PathSerializerMigrationTests
         var data = new global::app.data.@this("x", p) { Context = context };
 
         var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
         var json = JsonSerializer.Serialize(data,
             (JsonSerializerOptions)typeof(global::app.channel.serializer.plang.@this)
                 .GetField("_outbound", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
@@ -48,7 +48,7 @@ public class PathSerializerMigrationTests
         var data = new global::app.data.@this("x", p) { Context = context };
 
         var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
         var options = (JsonSerializerOptions)typeof(global::app.channel.serializer.plang.@this)
             .GetField("_outbound", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .GetValue(plang)!;
@@ -97,7 +97,7 @@ public class PathSerializerMigrationTests
         using (var utf = new Utf8JsonWriter(ms))
         {
             var w = new global::app.channel.serializer.json.Writer(utf, options: null,
-                view: global::app.View.Out, renderers: app.Types.Renderers);
+                view: global::app.View.Out, renderers: app.Type.Renderers);
             w.Value(new global::app.data.TypedValueNode(p, "path"));
         }
         var fromRenderer = System.Text.Encoding.UTF8.GetString(ms.ToArray());

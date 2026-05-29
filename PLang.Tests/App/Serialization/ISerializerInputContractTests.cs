@@ -63,7 +63,7 @@ public class ISerializerInputContractTests
         {
             Mime = probe.Type,
         };
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
         ch.Channels!.Serializers.Register(probe);
 
         var input = global::app.data.@this.Ok("payload");

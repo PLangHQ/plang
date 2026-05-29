@@ -65,7 +65,7 @@ public class ExecuteVerbTests
     {
         var app = NewApp(out _);
         var canned = new CannedChannel("n");
-        app.User.Channels.Register(canned);
+        app.User.Channel.Register(canned);
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(outOfRoot);
@@ -99,7 +99,7 @@ public class ExecuteVerbTests
     {
         var app = NewApp(out var root);
         var canned = new CannedChannel("UNEXPECTED");
-        app.User.Channels.Register(canned);
+        app.User.Channel.Register(canned);
         // Pre-stage: an actually-loadable DLL inside the App root. We use this
         // very test assembly — it lives somewhere on disk and copying it here
         // produces a valid loadable target.
@@ -115,7 +115,7 @@ public class ExecuteVerbTests
     [Test] public async Task LoadAssemblyAsync_OutOfRoot_StatelessChannel_ReturnsAsk()
     {
         var app = NewApp(out _);
-        app.User.Channels.Register(new StatelessChannel());
+        app.User.Channel.Register(new StatelessChannel());
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "stub.dll");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
@@ -129,7 +129,7 @@ public class ExecuteVerbTests
     [Test] public async Task LoadAssemblyAsync_OutOfRoot_DeniedAnswer_DoesNotLoadAssembly()
     {
         var app = NewApp(out _);
-        app.User.Channels.Register(new CannedChannel("n"));
+        app.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "stub.dll");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);

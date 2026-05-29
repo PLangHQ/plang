@@ -26,7 +26,7 @@ public partial class Set : IContext, IBuildValidatable
             // Skip validation when value contains %variable% references — they resolve at runtime
             if (value.HasVariableReference) return null;
 
-            var targetType = value.Context?.App.Types.Get(value.Type.Value)
+            var targetType = value.Context?.App.Type.Get(value.Type.Value)
                              ?? global::app.type.list.@this.GetPrimitiveOrMime(value.Type.Value);
             if (targetType != null && !targetType.IsInstanceOfType(value.Value))
             {
@@ -63,7 +63,7 @@ public partial class Set : IContext, IBuildValidatable
         var property = Name.Value.Property;
         if (!string.IsNullOrEmpty(property))
         {
-            var target = Context.Variables.Get(Name.Value.Name);
+            var target = Context.Variable.Get(Name.Value.Name);
             if (target == null || !target.IsInitialized)
                 return Task.FromResult(global::app.data.@this.FromError(
                     new global::app.error.ServiceError($"Variable '{Name.Value.Name}' is not set",
@@ -82,7 +82,7 @@ public partial class Set : IContext, IBuildValidatable
 
         if (AsDefault.Value)
         {
-            var existing = Context.Variables.Get(Name.Value);
+            var existing = Context.Variable.Get(Name.Value);
             if (existing.IsInitialized)
                 return Task.FromResult(existing);
         }
@@ -95,7 +95,7 @@ public partial class Set : IContext, IBuildValidatable
         // json` (mapped to variable.set Type=json) followed by foreach over the resulting dict.
         if (Type?.Value != null)
         {
-            var targetType = Context.App.Types.Get(Type.Value);
+            var targetType = Context.App.Type.Get(Type.Value);
             if (targetType == null)
             {
                 return Task.FromResult(global::app.data.@this.FromError(
@@ -116,7 +116,7 @@ public partial class Set : IContext, IBuildValidatable
             // CLR runtime type is `string` — we keep the MIME on the wire).
             typedData.Type = global::app.type.@this.FromName(Type.Value);
             CopyProperties(Value, typedData);
-            return Task.FromResult(Context.Variables.Set(typedData));
+            return Task.FromResult(Context.Variable.Set(typedData));
         }
 
         // No forced type — type-infer from Value.Value's runtime type. Hot types (string,
@@ -132,7 +132,7 @@ public partial class Set : IContext, IBuildValidatable
         // "carry source metadata across the binding-mint" reason.
         if (Value.Type != null) minted.Type = Value.Type;
         CopyProperties(Value, minted);
-        return Task.FromResult(Context.Variables.Set(minted));
+        return Task.FromResult(Context.Variable.Set(minted));
     }
 
     /// <summary>

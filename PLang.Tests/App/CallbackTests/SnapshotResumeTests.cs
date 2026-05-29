@@ -64,10 +64,10 @@ public class SnapshotResumeTests
         var step0 = SetStep(0, "s0", "first"); step0.Goal = goal;
         var step1 = SetStep(1, "s1", "second"); step1.Goal = goal;
         goal.Steps.Add(step0); goal.Steps.Add(step1);
-        app.Goals.Add(goal);
+        app.Goal.Add(goal);
 
         // Push the action of step1 so the snapshot captures (stepIdx=1, actionIdx=0).
-        await using (var call = context.App.CallStack.Push(step1.Actions[0], context.Variables))
+        await using (var call = context.App.CallStack.Push(step1.Actions[0], context.Variable))
         {
             var snap = app.Snapshot();
             // Pop the call frame before Resume so Restore doesn't conflict.
@@ -76,8 +76,8 @@ public class SnapshotResumeTests
             var result = await snap.Resume(context);
             await Assert.That(result.Success).IsTrue();
             // Step 1 ran on resume; step 0 should NOT have run (we resumed mid-goal).
-            await Assert.That(context.Variables.GetValue("s1")).IsEqualTo("second");
-            await Assert.That(context.Variables.Get("s0").IsInitialized).IsFalse();
+            await Assert.That(context.Variable.GetValue("s1")).IsEqualTo("second");
+            await Assert.That(context.Variable.Get("s0").IsInitialized).IsFalse();
         }
     }
 

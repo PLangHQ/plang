@@ -92,7 +92,7 @@ public class DotDotTraversalRegressionTests
         try
         {
             // Channel that denies any AuthGate prompt.
-            app.User.Channels.Register(new CannedChannel("n"));
+            app.User.Channel.Register(new CannedChannel("n"));
 
             var prPath = Path.Resolve(System.IO.Path.Combine(root, "subdir", ".build", "probe.pr"), context);
             context.Goal = new Goal

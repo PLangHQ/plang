@@ -163,7 +163,7 @@ public class AsTIdentityTests
     {
         var context = _app.User.Context;
         var live = new global::app.data.@this<List<object?>>("products", new List<object?> { "a", "b" }) { Context = context };
-        context.Variables.Set(live);
+        context.Variable.Set(live);
 
         var paramData = new Data("Slot", "%products%") { Context = context };
         var canonical = paramData.AsCanonical();
@@ -171,7 +171,7 @@ public class AsTIdentityTests
         await Assert.That(ReferenceEquals(canonical, live)).IsTrue();
         // Mutation propagates: appending via live's value is visible through Variables.Get.
         ((List<object?>)canonical.Value!).Add("c");
-        var stored = (List<object?>)context.Variables.Get("products").Value!;
+        var stored = (List<object?>)context.Variable.Get("products").Value!;
         await Assert.That(stored.Count).IsEqualTo(3);
     }
 
@@ -182,7 +182,7 @@ public class AsTIdentityTests
     public async Task AsT_PlainDataTarget_ListWithNestedVars_ResolvesAndReturnsFreshData()
     {
         var context = _app.User.Context;
-        context.Variables.Set("greeting", "hello");
+        context.Variable.Set("greeting", "hello");
         var raw = new List<object?> { "%greeting%", "literal" };
         var paramData = new Data("Slot", raw) { Context = context };
 
@@ -201,7 +201,7 @@ public class AsTIdentityTests
     public async Task AsT_PlainDataTarget_DictWithNestedVars_ResolvesAndReturnsFreshData()
     {
         var context = _app.User.Context;
-        context.Variables.Set("prompt", "You are a compiler");
+        context.Variable.Set("prompt", "You are a compiler");
         var raw = new Dictionary<string, object?> { ["role"] = "system", ["content"] = "%prompt%" };
         var paramData = new Data("Slot", raw) { Context = context };
 
@@ -220,8 +220,8 @@ public class AsTIdentityTests
     public async Task AsT_PlainDataTarget_ListOfDictsWithNestedVars_DeepResolves()
     {
         var context = _app.User.Context;
-        context.Variables.Set("prompt", "You are a compiler");
-        context.Variables.Set("user", "build this goal");
+        context.Variable.Set("prompt", "You are a compiler");
+        context.Variable.Set("user", "build this goal");
         var raw = new List<object?>
         {
             new Dictionary<string, object?> { ["Role"] = "system", ["Content"] = "%prompt%" },
@@ -270,7 +270,7 @@ public class AsTIdentityTests
     public async Task AsT_PlainDataTarget_DictWithInfraVar_ResolvesAtCanonicalWalk()
     {
         var context = _app.User.Context;
-        context.Variables.Set(new global::app.data.DynamicData("!error", () => "boom"));
+        context.Variable.Set(new global::app.data.DynamicData("!error", () => "boom"));
         var raw = new Dictionary<string, object?> { ["message"] = "%!error%" };
         var paramData = new Data("trace.buildError", raw) { Context = context };
 

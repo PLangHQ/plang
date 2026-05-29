@@ -11,7 +11,7 @@ public class AppRunTests
     public void Setup()
     {
         _app = new global::app.@this("/app");
-        _app.Goals.Add(new global::app.goal.@this
+        _app.Goal.Add(new global::app.goal.@this
         {
             Name = "RunTarget",
             Path = "/RunTarget.goal"

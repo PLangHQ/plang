@@ -94,7 +94,7 @@ public class OrchestrateBranchCoverageTests
     [Test]
     public async Task MultiActionOrchestrate_InnerElseIfMatches_FilterSkipsPhantomSites_SubStepsRun()
     {
-        _app.User.Context.Variables.Set("x", 5);
+        _app.User.Context.Variable.Set("x", 5);
 
         var orchestrateStep = new Step
         {
@@ -125,7 +125,7 @@ public class OrchestrateBranchCoverageTests
             Path = "/Orch.goal",
             Steps = new GoalSteps { orchestrateStep, subStep }
         };
-        _app.Goals.Add(goal);
+        _app.Goal.Add(goal);
 
         var (coverage, observed) = RegisterCoverageProbe();
 
@@ -137,7 +137,7 @@ public class OrchestrateBranchCoverageTests
         //    was silently skipped — the sub-step stayed disabled from the outer's
         //    pass and `subran` would be unset. After the fix, the re-enable fires
         //    and the sub-step runs.
-        var vars = _app.User.Context.Variables;
+        var vars = _app.User.Context.Variable;
         await Assert.That(vars.Get<int>("subran")).IsEqualTo(1);
 
         // 2. alreadyOrchestrating guard keyed on the real step: inner elseif's body
@@ -175,7 +175,7 @@ public class OrchestrateBranchCoverageTests
     [Test]
     public async Task SingleIfFalse_DisablesIndentedSubStep()
     {
-        _app.User.Context.Variables.Set("x", 5);
+        _app.User.Context.Variable.Set("x", 5);
 
         var conditionStep = new Step
         {
@@ -197,11 +197,11 @@ public class OrchestrateBranchCoverageTests
             Path = "/SingleIf.goal",
             Steps = new GoalSteps { conditionStep, subStep }
         };
-        _app.Goals.Add(goal);
+        _app.Goal.Add(goal);
 
         await _app.RunGoalAsync(goal, _app.User.Context);
 
-        var vars = _app.User.Context.Variables;
+        var vars = _app.User.Context.Variable;
         await Assert.That(vars.Contains("subran")).IsFalse();
     }
 

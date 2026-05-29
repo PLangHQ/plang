@@ -413,7 +413,7 @@ public sealed class Wire : JsonConverter<@this>
         //   - View.Debug — diagnostic dump.
         var normalizedValue = data.Normalize(View);
         var jsonWriter = new app.channel.serializer.json.Writer(writer, options, View,
-            renderers: data.Context?.App?.Types.Renderers);
+            renderers: data.Context?.App?.Type.Renderers);
         jsonWriter.Value(normalizedValue);
 
         // properties — nested object, omitted when empty to keep the wire compact.

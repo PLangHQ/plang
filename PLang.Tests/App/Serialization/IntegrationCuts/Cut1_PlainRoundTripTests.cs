@@ -19,7 +19,7 @@ public class Cut1_PlainRoundTripTests
     {
         var app = NewApp();
         var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var data = new global::app.data.@this(name, value) { Context = app.User.Context };
         var wire = plang.Serialize(data).Value!;

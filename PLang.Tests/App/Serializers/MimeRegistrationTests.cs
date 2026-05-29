@@ -9,9 +9,9 @@ public class MimeRegistrationTests
     public async Task Channels_LookupSerializerByMimeType_RoutesAccordingly()
     {
         var app = new global::app.@this("/test");
-        var json = app.User.Channels.Serializers.GetByMimeType("application/json");
-        var plang = app.User.Channels.Serializers.GetByMimeType("application/plang");
-        var text = app.User.Channels.Serializers.GetByMimeType("text/plain");
+        var json = app.User.Channel.Serializers.GetByMimeType("application/json");
+        var plang = app.User.Channel.Serializers.GetByMimeType("application/plang");
+        var text = app.User.Channel.Serializers.GetByMimeType("text/plain");
 
         await Assert.That(json).IsTypeOf<global::app.channel.serializer.Json>();
         await Assert.That(plang).IsTypeOf<global::app.channel.serializer.plang.@this>();
@@ -23,11 +23,11 @@ public class MimeRegistrationTests
     {
         // No silent fallback — names + integrity model says hard error.
         var app = new global::app.@this("/test");
-        await Assert.ThrowsAsync<UnregisteredMimeType>(async () =>
+        await Assert.ThrowsAsync<UnregisteredMimeType>((Func<Task>)(async () =>
         {
-            app.User.Channels.Serializers.GetByMimeType("application/x-totally-made-up");
+            app.User.Channel.Serializers.GetByMimeType("application/x-totally-made-up");
             await Task.CompletedTask;
-        });
+        }));
     }
 
     [Test]
@@ -36,7 +36,7 @@ public class MimeRegistrationTests
         // Stage 2: the separate "application/plang+data" wire shape collapsed
         // into "application/plang". GetByType returns null; GetByMimeType throws.
         var app = new global::app.@this("/test");
-        var s = app.User.Channels.Serializers.GetByType("application/plang+data");
+        var s = app.User.Channel.Serializers.GetByType("application/plang+data");
         await Assert.That(s).IsNull();
     }
 }

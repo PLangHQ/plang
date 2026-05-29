@@ -94,7 +94,7 @@ public sealed class @this : global::app.channel.session.@this
         var question = action.Question?.Value;
         if (!string.IsNullOrEmpty(question))
         {
-            var output = action.Context?.Actor?.Channels.Resolve(global::app.channel.list.@this.Output);
+            var output = action.Context?.Actor?.Channel.Resolve(global::app.channel.list.@this.Output);
             if (output != null && output.CanWrite)
             {
                 var writeRes = await output.WriteAsync(global::app.data.@this.Ok(question), ct);

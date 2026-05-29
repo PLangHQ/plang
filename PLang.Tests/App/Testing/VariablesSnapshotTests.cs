@@ -24,7 +24,7 @@ public class VariablesSnapshotTests
     [Test]
     public async Task Snapshot_EmptyNonSystemVars_ReturnsEmptyDictionary()
     {
-        var snapshot = _app.User.Context.Variables.Snapshot();
+        var snapshot = _app.User.Context.Variable.Snapshot();
         await Assert.That(snapshot.Count).IsEqualTo(0);
     }
 
@@ -32,7 +32,7 @@ public class VariablesSnapshotTests
     [Test]
     public async Task Snapshot_UserVariables_AllIncludedInDictionary()
     {
-        var vars = _app.User.Context.Variables;
+        var vars = _app.User.Context.Variable;
         vars.Set("foo", 1);
         vars.Set("bar", "x");
         vars.Set("baz", new List<int> { 1, 2, 3 });
@@ -50,7 +50,7 @@ public class VariablesSnapshotTests
     [Test]
     public async Task Snapshot_SystemVariables_ExcludedByDefault()
     {
-        var snapshot = _app.User.Context.Variables.Snapshot();
+        var snapshot = _app.User.Context.Variable.Snapshot();
         await Assert.That(snapshot.ContainsKey("Now")).IsFalse();
         await Assert.That(snapshot.ContainsKey("NowUtc")).IsFalse();
         await Assert.That(snapshot.ContainsKey("GUID")).IsFalse();
@@ -62,7 +62,7 @@ public class VariablesSnapshotTests
     [Test]
     public async Task Snapshot_NullValuedVariable_PresentAsNull_NotAbsent()
     {
-        var vars = _app.User.Context.Variables;
+        var vars = _app.User.Context.Variable;
         vars.Set("maybe", null);
 
         var snapshot = vars.Snapshot();
@@ -74,7 +74,7 @@ public class VariablesSnapshotTests
     [Test]
     public async Task Snapshot_UnsetVariable_AbsentFromDictionary()
     {
-        var snapshot = _app.User.Context.Variables.Snapshot();
+        var snapshot = _app.User.Context.Variable.Snapshot();
         await Assert.That(snapshot.ContainsKey("neverSet")).IsFalse();
     }
 
@@ -84,7 +84,7 @@ public class VariablesSnapshotTests
     [Test]
     public async Task Snapshot_CapturesByReference_MutationAfterSnapshotIsReflected()
     {
-        var vars = _app.User.Context.Variables;
+        var vars = _app.User.Context.Variable;
         var list = new List<int> { 1, 2 };
         vars.Set("items", list);
 
@@ -101,7 +101,7 @@ public class VariablesSnapshotTests
     [Test]
     public async Task Snapshot_AfterInnerScopeSet_ReflectsMostRecentWrite()
     {
-        var vars = _app.User.Context.Variables;
+        var vars = _app.User.Context.Variable;
         vars.Set("x", 1);
         var saved = vars.Save();
         try
@@ -118,7 +118,7 @@ public class VariablesSnapshotTests
     [Test]
     public async Task Snapshot_DuringConcurrentWrite_DoesNotThrow()
     {
-        var vars = _app.User.Context.Variables;
+        var vars = _app.User.Context.Variable;
         for (int i = 0; i < 100; i++) vars.Set($"k{i}", i);
 
         using var stop = new CancellationTokenSource();

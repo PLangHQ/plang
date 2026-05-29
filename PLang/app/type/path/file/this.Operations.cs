@@ -69,7 +69,7 @@ public sealed partial class @this
             var snapshot = Context!.App.Builder.GetPrSnapshot(Absolute);
             if (snapshot != null)
             {
-                var snapshotType = app.type.@this.FromMime(Context!.App.Formats.Mime(Extension));
+                var snapshotType = app.type.@this.FromMime(Context!.App.Format.Mime(Extension));
                 var snapshotClr = snapshotType.ClrType;
                 if (snapshotClr != null && snapshotClr != typeof(string))
                 {
@@ -86,7 +86,7 @@ public sealed partial class @this
 
         try
         {
-            var mime = Context!.App.Formats.Mime(Extension);
+            var mime = Context!.App.Format.Mime(Extension);
             var type = app.type.@this.FromMime(mime);
             object content;
 
@@ -220,7 +220,7 @@ public sealed partial class @this
             else
             {
                 await using var stream = System.IO.File.Create(Absolute);
-                var serResult = await Context!.Actor.Channels.Serializers.SerializeAsync(new global::app.channel.serializer.list.SerializeOptions
+                var serResult = await Context!.Actor.Channel.Serializers.SerializeAsync(new global::app.channel.serializer.list.SerializeOptions
                     { Stream = stream, Data = value!, Extension = Extension });
                 if (!serResult.Success)
                     return data.@this<global::app.type.path.@this>.FromError(serResult.Error!);

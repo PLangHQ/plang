@@ -20,10 +20,10 @@ public class DebugSmokeTests
         // Debug.Write routes via System.Channels.Resolve("debug") ?? Resolve("error").
         // Register a memory channel as "error" on System so debug output lands in a
         // capture buffer instead of the real stderr stream the channel was wired to.
-        _app.System.Channels.Register(global::app.channel.stream.@this.Memory(
+        _app.System.Channel.Register(global::app.channel.stream.@this.Memory(
             global::app.channel.list.@this.Error));
         _capture = (global::app.channel.stream.@this)
-            _app.System.Channels.Get(global::app.channel.list.@this.Error)!;
+            _app.System.Channel.Get(global::app.channel.list.@this.Error)!;
     }
 
     [After(Test)]
@@ -69,7 +69,7 @@ public class DebugSmokeTests
                 }
             }
         };
-        _app.Goals.Add(goal);
+        _app.Goal.Add(goal);
 
         // If the widened lambda mis-handles the (action, result) params (e.g. dereferences a
         // null), this call throws. If signatures are correct, it completes and emits to stderr.

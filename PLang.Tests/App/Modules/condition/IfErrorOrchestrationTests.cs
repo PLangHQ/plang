@@ -78,7 +78,7 @@ public class IfErrorOrchestrationTests : IDisposable
     public async Task If_OrchestratedSuccess_MarksResultHandled()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new StreamChannel(
+        _app.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });

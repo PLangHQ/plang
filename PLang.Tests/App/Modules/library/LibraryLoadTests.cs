@@ -52,7 +52,7 @@ public class ModuleAddTests
                 Namespace = "app.module"
             };
 
-            var countBefore = app.Modules.Count;
+            var countBefore = app.Module.Count;
             var result = await add.Run();
 
             await Assert.That(result.Success).IsTrue();
@@ -78,7 +78,7 @@ public class ModuleAddTests
             await Assert.That(result.Success).IsTrue();
 
             // After adding, actions should be discoverable via the flat registry
-            await Assert.That(app.Modules.Contains("variable", "set")).IsTrue();
+            await Assert.That(app.Module.Contains("variable", "set")).IsTrue();
         }
     }
 
@@ -140,7 +140,7 @@ public class ModuleAddTests
             await Assert.That(result.Success).IsTrue();
 
             // With null namespace, Discover defaults to App.modules
-            await Assert.That(app.Modules.Contains("variable", "set")).IsTrue();
+            await Assert.That(app.Module.Contains("variable", "set")).IsTrue();
         }
     }
 
@@ -161,7 +161,7 @@ public class ModuleAddTests
             await Assert.That(result.Success).IsTrue();
 
             // Actions registered via Discover should be resolvable
-            var (action, error) = app.Modules.GetCodeGenerated(new PrAction { Module = "variable", ActionName = "set" });
+            var (action, error) = app.Module.GetCodeGenerated(new PrAction { Module = "variable", ActionName = "set" });
             await Assert.That(action).IsNotNull();
             await Assert.That(error).IsNull();
         }

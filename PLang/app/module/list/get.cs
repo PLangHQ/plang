@@ -10,7 +10,7 @@ public partial class Get : IContext
 
     public Task<data.@this<object>> Run()
     {
-        var data = Context.Variables.Get(ListName.Value);
+        var data = Context.Variable.Get(ListName.Value);
         var item = data.GetChild($"[{Index.Value}]");
 
         if (!item.IsInitialized)

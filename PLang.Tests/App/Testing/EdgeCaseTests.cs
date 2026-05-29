@@ -25,7 +25,7 @@ public class EdgeCaseTests
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = new global::app.@this(_tempDir);
         _captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new StreamChannel(
+        _app.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, _captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });

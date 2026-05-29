@@ -25,7 +25,7 @@ public class ListAddIdentityTests
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
 
-    private (global::app.actor.context.@this context, Variables vars) Ctx() => (_app.User.Context, _app.User.Context.Variables);
+    private (global::app.actor.context.@this context, Variables vars) Ctx() => (_app.User.Context, _app.User.Context.Variable);
 
     // Mutation IS visible through Variables.Get because list.add mutates the live
     // List<object?> reference held by the variable's Data. No Variables.Set("products", list)

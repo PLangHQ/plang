@@ -90,7 +90,7 @@ public class SecurityFixTests
     public async Task Resolve_SkipInfrastructure_DoesNotExpandBangVars()
     {
         var context = _app.User.Context;
-        var vars = context.Variables;
+        var vars = context.Variable;
 
         // Set a normal variable
         vars.Set("name", "Alice");
@@ -105,7 +105,7 @@ public class SecurityFixTests
     public async Task Resolve_Default_ExpandsBangVars()
     {
         var context = _app.User.Context;
-        var vars = context.Variables;
+        var vars = context.Variable;
 
         // Without skipInfrastructure, %!app% should resolve (or leave as-is if not found)
         // The important thing is it TRIES to resolve — unlike the skip case

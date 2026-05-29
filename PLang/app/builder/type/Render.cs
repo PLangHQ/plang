@@ -178,7 +178,7 @@ public sealed partial class @this
         // type-marker token. Same convention as Modules.@this.Describe().
         if (typeof(app.variable.IRawNameResolvable).IsAssignableFrom(unwrapped))
             return "string";
-        return _modules.App?.Types.GetTypeName(unwrapped)
+        return _modules.App?.Type.GetTypeName(unwrapped)
                ?? unwrapped.Name.ToLowerInvariant();
     }
 

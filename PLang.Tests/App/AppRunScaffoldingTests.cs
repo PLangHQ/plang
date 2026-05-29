@@ -101,7 +101,7 @@ public class AppRunScaffoldingTests
         // Use ThrowingHandler-equivalent: the matrix snapshot handler returns FromError but doesn't throw.
         // Build a handler instance that throws.
         var thrower = new ThrowingMatrixHandler();
-        _app.Modules.Register("matrix.throwing", "throw", thrower);
+        _app.Module.Register("matrix.throwing", "throw", thrower);
 
         var currentBefore = _app.User.Context.CallStack?.Current;
         var action = MakeAction("matrix.throwing", "throw");
@@ -151,7 +151,7 @@ public class AppRunScaffoldingTests
     public async Task AppRun_HandlerThrowsOCE_TranslatesToServiceError_DoesNotPropagate()
     {
         var oceThrower = new OceThrowingHandler();
-        _app.Modules.Register("matrix.oce", "throwoce", oceThrower);
+        _app.Module.Register("matrix.oce", "throwoce", oceThrower);
 
         var action = MakeAction("matrix.oce", "throwoce");
 

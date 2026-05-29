@@ -29,7 +29,7 @@ public class NestedRegisteredTypeRoundTripTests
         }) { Context = context };
 
         var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
         var options = (JsonSerializerOptions)typeof(global::app.channel.serializer.plang.@this)
             .GetField("_outbound", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .GetValue(plang)!;
@@ -56,9 +56,9 @@ public class NestedRegisteredTypeRoundTripTests
         using (var utf = new Utf8JsonWriter(ms))
         {
             var w = new global::app.channel.serializer.json.Writer(utf, options: null,
-                view: global::app.View.Out, renderers: app.Types.Renderers);
+                view: global::app.View.Out, renderers: app.Type.Renderers);
             var visited = new HashSet<object>(System.Collections.Generic.ReferenceEqualityComparer.Instance);
-            var normalized = global::app.data.@this.NormalizeValue(paths, global::app.View.Out, visited, 0, app.Types);
+            var normalized = global::app.data.@this.NormalizeValue(paths, global::app.View.Out, visited, 0, app.Type);
             w.Value(normalized);
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
@@ -84,9 +84,9 @@ public class NestedRegisteredTypeRoundTripTests
         using (var utf = new Utf8JsonWriter(ms))
         {
             var w = new global::app.channel.serializer.json.Writer(utf, options: null,
-                view: global::app.View.Out, renderers: app.Types.Renderers);
+                view: global::app.View.Out, renderers: app.Type.Renderers);
             var visited = new HashSet<object>(System.Collections.Generic.ReferenceEqualityComparer.Instance);
-            var normalized = global::app.data.@this.NormalizeValue(wrapper, global::app.View.Out, visited, 0, app.Types);
+            var normalized = global::app.data.@this.NormalizeValue(wrapper, global::app.View.Out, visited, 0, app.Type);
             w.Value(normalized);
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
@@ -106,7 +106,7 @@ public class NestedRegisteredTypeRoundTripTests
         var visited = new HashSet<object>(System.Collections.Generic.ReferenceEqualityComparer.Instance);
         try
         {
-            global::app.data.@this.NormalizeValue(chain, global::app.View.Out, visited, 0, app.Types);
+            global::app.data.@this.NormalizeValue(chain, global::app.View.Out, visited, 0, app.Type);
             // Either it raises NormalizeMaxDepthExceeded or it completes cleanly.
             // Both outcomes are acceptable; the failure mode we forbid is
             // a StackOverflowException (we'd never reach this assertion).

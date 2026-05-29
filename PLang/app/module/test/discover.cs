@@ -211,7 +211,7 @@ public partial class discover : IContext
         if (depth > 50) return;
         if (!visited.Add(goal.Name)) return;
 
-        var modules = Context.App!.Modules;
+        var modules = Context.App!.Module;
         var subGoals = new List<Goal>();
         goal.ForEachAction((step, action) =>
         {
@@ -227,7 +227,7 @@ public partial class discover : IContext
                 var targetName = ResolveStaticGoalName(action);
                 if (targetName != null)
                 {
-                    var sub = Context.App.Goals.Get(targetName);
+                    var sub = Context.App.Goal.Get(targetName);
                     if (sub != null) subGoals.Add(sub);
                 }
             }
@@ -282,7 +282,7 @@ public partial class discover : IContext
                 var targetName = ResolveStaticGoalName(action);
                 if (targetName != null)
                 {
-                    var sub = Context.App!.Goals.Get(targetName);
+                    var sub = Context.App!.Goal.Get(targetName);
                     if (sub != null) subGoals.Add(sub);
                 }
             }

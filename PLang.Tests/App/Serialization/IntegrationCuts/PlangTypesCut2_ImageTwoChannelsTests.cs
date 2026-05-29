@@ -46,7 +46,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         var p = global::app.type.path.@this.Resolve("/srv/photo.png", app.User.Context);
         var img = new image(PngBytes, "image/png", p);
 
-        var write = app.Types.Renderers.Of("image", "text");
+        var write = app.Type.Renderers.Of("image", "text");
         await Assert.That(write).IsNotNull();
         var w = new CaptureWriter("text");
         write!(img, w);
@@ -64,7 +64,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         using (var utf = new Utf8JsonWriter(ms))
         {
             var w = new global::app.channel.serializer.json.Writer(utf, options: null,
-                view: global::app.View.Out, renderers: app.Types.Renderers);
+                view: global::app.View.Out, renderers: app.Type.Renderers);
             w.Value(new global::app.data.TypedValueNode(img, "image"));
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
@@ -79,8 +79,8 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         var img = new image(PngBytes, "image/png", p);
         var beforeBytes = img.Bytes;
 
-        app.Types.Renderers.Of("image", "text")!(img, new CaptureWriter("text"));
-        app.Types.Renderers.Of("image", "json")!(img, new CaptureWriter("json"));
+        app.Type.Renderers.Of("image", "text")!(img, new CaptureWriter("text"));
+        app.Type.Renderers.Of("image", "json")!(img, new CaptureWriter("json"));
 
         // Bytes is the same reference — no copy, no re-decode.
         await Assert.That(ReferenceEquals(img.Bytes, beforeBytes)).IsTrue();
@@ -113,9 +113,9 @@ public class PlangTypesCut2_ImageTwoChannelsTests
             new global::app.type.@this("image")) { Context = app.User.Context };
 
         await Assert.That(data.Type?.Value).IsEqualTo("image");
-        app.Types.Renderers.Of("image", "text")!(img, new CaptureWriter("text"));
+        app.Type.Renderers.Of("image", "text")!(img, new CaptureWriter("text"));
         await Assert.That(data.Type?.Value).IsEqualTo("image");
-        app.Types.Renderers.Of("image", "json")!(img, new CaptureWriter("json"));
+        app.Type.Renderers.Of("image", "json")!(img, new CaptureWriter("json"));
         await Assert.That(data.Type?.Value).IsEqualTo("image");
     }
 }

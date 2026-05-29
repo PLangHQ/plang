@@ -472,10 +472,10 @@ public class RunActionTests
         void Probe(global::app.@this childApp)
         {
             if (!childApp.AbsolutePath.StartsWith(_tempDir)) return;
-            childApp.User.Channels.Register(new StreamChannel(
+            childApp.User.Channel.Register(new StreamChannel(
                 global::app.channel.list.@this.Output, outStream,
                 ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
-            childApp.User.Channels.Register(new StreamChannel(
+            childApp.User.Channel.Register(new StreamChannel(
                 global::app.channel.list.@this.Error, errStream,
                 ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
         }

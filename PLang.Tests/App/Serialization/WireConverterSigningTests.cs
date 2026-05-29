@@ -14,7 +14,7 @@ public class WireConverterSigningTests
     {
         await using var app = NewSignedApp();
         var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var data = new global::app.data.@this("greeting", "hello") { Context = app.User.Context };
         await Assert.That(data.Signature).IsNull();
@@ -29,7 +29,7 @@ public class WireConverterSigningTests
     {
         await using var app = NewSignedApp();
         var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var data = new global::app.data.@this("x", "y") { Context = app.User.Context };
         data.EnsureSigned();
@@ -56,7 +56,7 @@ public class WireConverterSigningTests
     {
         await using var app = NewSignedApp();
         var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var inner1 = new global::app.data.@this("a", "1") { Context = app.User.Context };
         var inner2 = new global::app.data.@this("b", "2") { Context = app.User.Context };
@@ -93,7 +93,7 @@ public class WireConverterSigningTests
         // Mutate BEFORE serialize — the converter signs the mutated value.
         data.Value = "after";
         var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
         var json = plang.Serialize(data).Value!;
         await Assert.That(json).Contains("after");
         await Assert.That(json).DoesNotContain("before");
@@ -104,7 +104,7 @@ public class WireConverterSigningTests
     {
         await using var app = NewSignedApp();
         var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var data = new global::app.data.@this("greeting", "hello") { Context = app.User.Context };
         var json = plang.Serialize(data).Value!;
@@ -121,7 +121,7 @@ public class WireConverterSigningTests
     {
         await using var app = NewSignedApp();
         var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var bytes = new byte[] { 1, 2, 3, 4 };
         var data = new global::app.data.@this("blob", bytes) { Context = app.User.Context };
@@ -139,7 +139,7 @@ public class WireConverterSigningTests
         // into Dictionary<string, object?>; the don't-walk-Properties rule is preserved.
         await using var app = NewSignedApp();
         var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var data = new global::app.data.@this("x", "y") { Context = app.User.Context };
         var json = plang.Serialize(data).Value!;

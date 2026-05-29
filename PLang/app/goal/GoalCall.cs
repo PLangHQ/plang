@@ -37,7 +37,7 @@ public sealed class GoalCall : module.IEvent
 
     /// <summary>
     /// Resolves the Goal. PrPath is authoritative when set — file.read only.
-    /// Otherwise: action chain → app.Goals → file.read fallback.
+    /// Otherwise: action chain → app.Goal → file.read fallback.
     /// Returns Data with the Goal as Value, or Data with Error if not found.
     /// </summary>
     public async Task<data.@this> GetGoalAsync(app.@this app, actor.context.@this context)
@@ -61,7 +61,7 @@ public sealed class GoalCall : module.IEvent
         }
 
         // 2. Check app's loaded goals
-        var loaded = app.Goals.Get(Name);
+        var loaded = app.Goal.Get(Name);
         if (loaded != null) return data.@this.Ok(loaded);
 
         // 3. Derive the .pr path from Name and file.read.

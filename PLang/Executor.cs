@@ -38,7 +38,7 @@ namespace PLang
 			var engine = new app.@this(startupDirectory);
 			engine.OsDirectory = engine.OsAbsolutePath;
 
-			var userVars = engine.User.Context.Variables;
+			var userVars = engine.User.Context.Variable;
 
 			// Route CLI parameters to user Variables
 			foreach (var param in parameters)
@@ -97,14 +97,14 @@ namespace PLang
 			// Tester mode routes to system test runner instead of Start.goal
 			if (engine.Tester.IsEnabled && goalFile == "Start.goal")
 			{
-				engine.System.Context.Variables.Set("goalFile", "/system/.build/test.pr");
+				engine.System.Context.Variable.Set("goalFile", "/system/.build/test.pr");
 				return (engine, null);
 			}
 
 			var prPath = goalFile.Replace(".goal", ".pr", StringComparison.OrdinalIgnoreCase);
 			if (!prPath.StartsWith(".build"))
 				prPath = ".build/" + prPath;
-			engine.System.Context.Variables.Set("goalFile", "/" + prPath.ToLowerInvariant());
+			engine.System.Context.Variable.Set("goalFile", "/" + prPath.ToLowerInvariant());
 
 			return (engine, null);
 		}

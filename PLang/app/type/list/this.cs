@@ -14,7 +14,7 @@ namespace app.type.list;
 ///
 /// File-format characteristics (extension → Kind, extension → MIME, Kind →
 /// compressibility) live separately on <see cref="app.format.list.@this"/> at
-/// <c>app.Formats</c>.
+/// <c>app.Format</c>.
 /// </summary>
 public sealed partial class @this
 {
@@ -48,7 +48,7 @@ public sealed partial class @this
     public renderer.@this Renderers { get; } = new();
 
     // --- Primitive lookup tables ---
-    // Aliases / canonical-name data lives on app.type.app.type.primitive.@this — one
+    // Aliases / canonical-name data lives on app.type.primitive.@this — one
     // home for the seeded entries that both the registry (instance lookup) and
     // the static no-context fallback (GetPrimitiveOrMime / GetPrimitiveName)
     // read from.

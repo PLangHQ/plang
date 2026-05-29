@@ -122,7 +122,7 @@ public class HandlerShapeTests
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-hs2-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
         var app = new global::app.@this(root);
-        app.User.Channels.Register(new CannedNoChannel());
+        app.User.Channel.Register(new CannedNoChannel());
 
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-foreign-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(outOfRoot);
@@ -147,7 +147,7 @@ public class HandlerShapeTests
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-n1-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
         var app = new global::app.@this(root);
-        app.User.Channels.Register(new CannedNoChannel());
+        app.User.Channel.Register(new CannedNoChannel());
 
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-n1-foreign-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(outOfRoot);

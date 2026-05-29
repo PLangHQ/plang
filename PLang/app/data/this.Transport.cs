@@ -111,7 +111,7 @@ public partial class @this
         if (!Type.Compressible)
             return this;
 
-        var serializer = _context.Actor?.Channels.Serializers.GetByType("application/plang")
+        var serializer = _context.Actor?.Channel.Serializers.GetByType("application/plang")
                          ?? (global::app.channel.serializer.ISerializer)global::app.channel.serializer.plang.@this.ContextLessFallback;
 
         using var ms = new MemoryStream();
@@ -180,7 +180,7 @@ public partial class @this
         {
             var decompressed = GZipDecompress(compressed);
 
-            var serializer = _context?.Actor?.Channels.Serializers.GetByType("application/plang")
+            var serializer = _context?.Actor?.Channel.Serializers.GetByType("application/plang")
                              ?? (global::app.channel.serializer.ISerializer)global::app.channel.serializer.plang.@this.ContextLessFallback;
 
             using var ms = new MemoryStream(decompressed);

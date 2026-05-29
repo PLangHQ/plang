@@ -11,16 +11,16 @@ public class ErrorsTrailSnapshotTests
         var src = new global::app.@this("/src");
         var e1 = new ServiceError("first", "TestErr", 400);
         var e2 = new ServiceError("second", "TestErr", 500);
-        using (src.Errors.Push(e1)) { /* scoped */ }
-        using (src.Errors.Push(e2)) { /* scoped */ }
+        using (src.Error.Push(e1)) { /* scoped */ }
+        using (src.Error.Push(e2)) { /* scoped */ }
 
         var snap = src.Snapshot();
         var dst = new global::app.@this("/dst");
         dst.Restore(snap, dst.User.Context);
 
-        await Assert.That(dst.Errors.Trail.Count).IsEqualTo(2);
-        await Assert.That(dst.Errors.Trail[0].Message).IsEqualTo("first");
-        await Assert.That(dst.Errors.Trail[1].Message).IsEqualTo("second");
+        await Assert.That(dst.Error.Trail.Count).IsEqualTo(2);
+        await Assert.That(dst.Error.Trail[0].Message).IsEqualTo("first");
+        await Assert.That(dst.Error.Trail[1].Message).IsEqualTo("second");
     }
 
     [Test]
@@ -28,17 +28,17 @@ public class ErrorsTrailSnapshotTests
     {
         // The restored Trail rejects mutation — historic record, not a live append target.
         var src = new global::app.@this("/src");
-        using (src.Errors.Push(new ServiceError("only", "TestErr", 400))) { /* scoped */ }
+        using (src.Error.Push(new ServiceError("only", "TestErr", 400))) { /* scoped */ }
 
         var snap = src.Snapshot();
         var dst = new global::app.@this("/dst");
         dst.Restore(snap, dst.User.Context);
 
-        await Assert.That(dst.Errors.Trail.IsFrozen).IsTrue();
-        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        await Assert.That(dst.Error.Trail.IsFrozen).IsTrue();
+        await Assert.ThrowsAsync<InvalidOperationException>((Func<Task>)(async () =>
         {
-            dst.Errors.Trail.Add(new ServiceError("nope", "TestErr", 400));
+            dst.Error.Trail.Add((IError)new ServiceError("nope", "TestErr", 400));
             await Task.CompletedTask;
-        });
+        }));
     }
 }

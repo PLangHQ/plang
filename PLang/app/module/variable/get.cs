@@ -12,6 +12,6 @@ public partial class Get : IContext
 
     public Task<data.@this> Run()
     {
-        return Task.FromResult(Context.Variables.Get(Name.Value));
+        return Task.FromResult(Context.Variable.Get(Name.Value));
     }
 }

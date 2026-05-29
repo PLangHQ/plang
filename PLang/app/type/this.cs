@@ -25,17 +25,17 @@ public sealed class @this
     /// <summary>
     /// Derive CLR type: navigate through context to App.Types, fall back to static TypeMapping.
     /// </summary>
-    public System.Type? ClrType => Context?.App.Types.Clr(Value) ?? AppTypes.GetPrimitiveOrMime(Value);
+    public System.Type? ClrType => Context?.App.Type.Clr(Value) ?? AppTypes.GetPrimitiveOrMime(Value);
 
     /// <summary>
     /// Kind of this type value (e.g. "image", "text"). Null for PLang type names like "string".
     /// </summary>
-    public string? Kind => Context?.App.Formats.KindOf(Value);
+    public string? Kind => Context?.App.Format.KindOf(Value);
 
     /// <summary>
     /// Whether content of this type benefits from compression.
     /// </summary>
-    public bool Compressible => Kind != null && (Context?.App.Formats.Compressible(Kind) ?? false);
+    public bool Compressible => Kind != null && (Context?.App.Format.Compressible(Kind) ?? false);
 
     public static @this String => new("string");
     public static @this Int => new("int");

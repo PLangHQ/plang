@@ -2,7 +2,7 @@
 // app.module.typedreturns.* so the source generator picks them up and
 // generates SetAction/ExecuteAsync the same way production handlers get.
 // Not auto-discovered (Modules.Discover walks PLang.dll only); tests
-// register via app.Modules.RegisterType before invoking validate.
+// register via app.Module.RegisterType before invoking validate.
 
 namespace app.module.typedreturns;
 

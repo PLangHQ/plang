@@ -40,8 +40,8 @@ public class OtherAccessorsTests
     [Test] public async Task ContextVariable_IndexByName_AfterSet_ReturnsValue()
     {
         await using var app = new PLangEngine("/test");
-        app.User.Context.Variables.Set("x", "hello");
-        await Assert.That(app.User.Context.Variables["x"].Value).IsEqualTo("hello");
+        app.User.Context.Variable.Set("x", "hello");
+        await Assert.That(app.User.Context.Variable["x"].Value).IsEqualTo("hello");
     }
 
     [Test] public async Task ContextVariable_Set_RemainsAVerb_NotIndexerAssignment()

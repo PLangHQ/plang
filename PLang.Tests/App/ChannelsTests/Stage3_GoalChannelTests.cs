@@ -23,7 +23,7 @@ public class Stage3_GoalChannelTests
         var result = await ch.Write(dataIn);
         await Assert.That(result.Success).IsTrue();
 
-        var captured = app.User.Context.Variables.Get("!data");
+        var captured = app.User.Context.Variable.Get("!data");
         await Assert.That(captured).IsNotNull();
     }
 
@@ -57,10 +57,10 @@ public class Stage3_GoalChannelTests
         var app = new global::app.@this("/tmp/g_recurse");
         var goal = new EngineGoal { Name = "G", Path = "G.goal", PrPath = "/G.pr" };
         var ch = new GoalChannel("logger", goal, app.User);
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
 
         // Not executing → resolves normally.
-        await Assert.That(app.User.Channels.Get("logger")).IsEqualTo((Channel?)ch);
+        await Assert.That(app.User.Channel.Get("logger")).IsEqualTo((Channel?)ch);
 
         // Simulate mid-execution by flipping the AsyncLocal directly.
         var field = typeof(GoalChannel).GetField("_executing",
@@ -69,13 +69,13 @@ public class Stage3_GoalChannelTests
         asyncLocal.Value = true;
         try
         {
-            await Assert.That(app.User.Channels.Get("logger")).IsNull();
-            await Assert.That(app.User.Channels.Resolve("logger")).IsNull();
+            await Assert.That(app.User.Channel.Get("logger")).IsNull();
+            await Assert.That(app.User.Channel.Resolve("logger")).IsNull();
         }
         finally { asyncLocal.Value = false; }
 
         // Restored: resolves again.
-        await Assert.That(app.User.Channels.Get("logger")).IsEqualTo((Channel?)ch);
+        await Assert.That(app.User.Channel.Get("logger")).IsEqualTo((Channel?)ch);
     }
 
     [Test]
@@ -88,12 +88,12 @@ public class Stage3_GoalChannelTests
         var app = new global::app.@this("/tmp/g_late");
         var sinkGoal = new EngineGoal { Name = "Sink", Path = "S.goal", PrPath = "/S.pr" };
         var sink = new GoalChannel("sink", sinkGoal, app.User);
-        app.User.Channels.Register(sink);
+        app.User.Channel.Register(sink);
 
         // Register "builder" AFTER "sink" exists. Old code froze foundational
         // before this; this test passes only because no freeze is involved.
         var builder = StreamChannel.Memory("builder");
-        app.User.Channels.Register(builder);
+        app.User.Channel.Register(builder);
 
         // Inside sink's body, "builder" must still resolve.
         var sinkExec = (AsyncLocal<bool>)typeof(GoalChannel)
@@ -102,9 +102,9 @@ public class Stage3_GoalChannelTests
         sinkExec.Value = true;
         try
         {
-            await Assert.That(app.User.Channels.Get("builder")).IsEqualTo((Channel?)builder);
+            await Assert.That(app.User.Channel.Get("builder")).IsEqualTo((Channel?)builder);
             // And "sink" itself is correctly hidden.
-            await Assert.That(app.User.Channels.Get("sink")).IsNull();
+            await Assert.That(app.User.Channel.Get("sink")).IsNull();
         }
         finally { sinkExec.Value = false; }
     }

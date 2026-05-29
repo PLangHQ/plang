@@ -87,7 +87,7 @@ public class Fluid : ITemplate
 
         // Load Variables (GetAll already excludes !-prefixed). Use dictionary key as
         // the Fluid variable name — Data.Name is advisory and may differ.
-        foreach (var kvp in action.Context.Variables.GetAll())
+        foreach (var kvp in action.Context.Variable.GetAll())
         {
             fluidContext.SetValue(kvp.Key, FluidValue.Create(kvp.Value.Value, options));
         }

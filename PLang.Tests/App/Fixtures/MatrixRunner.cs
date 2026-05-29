@@ -25,7 +25,7 @@ public static class MatrixRunner
 
     /// <summary>
     /// Runs the matrix handler TAction through App.Run. Parameters and defaults are
-    /// supplied as (name, value) pairs; variables are seeded into context.Variables.
+    /// supplied as (name, value) pairs; variables are seeded into context.Variable.
     /// </summary>
     public static async Task<Result> RunAsync<TAction>(
         global::app.@this app,
@@ -52,7 +52,7 @@ public static class MatrixRunner
         if (variables != null)
         {
             foreach (var kv in variables)
-                context.Variables.Set(kv.Key, kv.Value);
+                context.Variable.Set(kv.Key, kv.Value);
         }
 
         var data = await action.RunAsync(context);
@@ -88,7 +88,7 @@ public static class MatrixRunner
         if (variables != null)
         {
             foreach (var kv in variables)
-                context.Variables.Set(kv.Key, kv.Value);
+                context.Variable.Set(kv.Key, kv.Value);
         }
 
         var handler = new TAction();
@@ -105,8 +105,8 @@ public static class MatrixRunner
         where TAction : class, ICodeGenerated
     {
         var (module, actionName) = ModuleAndAction<TAction>();
-        if (app.Modules.Contains(module, actionName)) return;
-        app.Modules.RegisterType(module, actionName, typeof(TAction));
+        if (app.Module.Contains(module, actionName)) return;
+        app.Module.RegisterType(module, actionName, typeof(TAction));
     }
 
     /// <summary>
@@ -128,8 +128,8 @@ public static class MatrixRunner
             var actionName = attr.Name ?? type.Name.ToLowerInvariant();
             var moduleNs = type.Namespace!;
             var module = moduleNs.Substring("app.module.".Length);
-            if (!app.Modules.Contains(module, actionName))
-                app.Modules.RegisterType(module, actionName, type);
+            if (!app.Module.Contains(module, actionName))
+                app.Module.RegisterType(module, actionName, type);
         }
     }
 

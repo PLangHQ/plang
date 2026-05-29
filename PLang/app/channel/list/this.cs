@@ -20,7 +20,7 @@ public sealed class @this : IAsyncDisposable
 
     /// <summary>
     /// The owning App. Child channels navigate via <c>Channel.Channels.App</c>
-    /// to reach app-level surfaces (e.g. <c>app.Events</c> bindings) without
+    /// to reach app-level surfaces (e.g. <c>app.Event</c> bindings) without
     /// going through Actor — Service-owned Channels have no Actor.
     /// </summary>
     public app.@this App => _app;

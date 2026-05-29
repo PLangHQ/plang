@@ -515,7 +515,7 @@ public sealed class Default : IHttp
         }
         var bytes = bytesRead.Value!;
         object? body;
-        var serializer = context.Actor.Channels.Serializers.GetByType(contentType);
+        var serializer = context.Actor.Channel.Serializers.GetByType(contentType);
         if (serializer != null)
         {
             using var stream = new MemoryStream(bytes);
@@ -621,7 +621,7 @@ public sealed class Default : IHttp
             return verifyResult;
         }
 
-        context.Variables.Set("!ServiceIdentity", data.Signature?.Identity);
+        context.Variable.Set("!ServiceIdentity", data.Signature?.Identity);
 
         BuildProperties(data, request, response);
         return data;
@@ -644,7 +644,7 @@ public sealed class Default : IHttp
             var verifyAction = new signing.verify { Context = context, Data = data };
             var verifyResult = await app.RunAction<signing.verify>(verifyAction, context);
             if (verifyResult.Success)
-                context.Variables.Set("!ServiceIdentity", data.Signature.Identity);
+                context.Variable.Set("!ServiceIdentity", data.Signature.Identity);
             return;
         }
 
@@ -663,7 +663,7 @@ public sealed class Default : IHttp
         var legacyVerify = new signing.verify { Context = context, Data = legacyData };
         var legacyResult = await app.RunAction<signing.verify>(legacyVerify, context);
         if (legacyResult.Success)
-            context.Variables.Set("!ServiceIdentity", signedData.Identity);
+            context.Variable.Set("!ServiceIdentity", signedData.Identity);
     }
 
     /// <summary>
@@ -809,7 +809,7 @@ public sealed class Default : IHttp
         };
         var result = await app.RunGoalAsync(call, context, ct);
         if (!result.Success)
-            await app.System.Channels.WriteTextAsync(global::app.channel.list.@this.Error, result.Error?.Message ?? "");
+            await app.System.Channel.WriteTextAsync(global::app.channel.list.@this.Error, result.Error?.Message ?? "");
     }
 
     private static StreamFormat DetectStreamFormat(string contentType)
@@ -865,7 +865,7 @@ public sealed class Default : IHttp
                         throw new InvalidOperationException(
                             $"SSE stream disconnected after {maxConsecutiveOverflows} consecutive buffer overflows — possible attack");
 
-                    await app.System.Channels.WriteAsync(global::app.channel.list.@this.Error,
+                    await app.System.Channel.WriteAsync(global::app.channel.list.@this.Error,
                         global::app.data.@this.FromError(new ServiceError(
                             $"SSE message exceeds maximum buffer size of {maxBufferSize / (1024 * 1024)}MB",
                             "SSEBufferOverflow", 413)));
@@ -920,7 +920,7 @@ public sealed class Default : IHttp
             }
             catch (JsonException)
             {
-                await app.System.Channels.WriteAsync(global::app.channel.list.@this.Error,
+                await app.System.Channel.WriteAsync(global::app.channel.list.@this.Error,
                     global::app.data.@this.FromError(new ServiceError("Malformed NDJSON line in application/plang stream", "PlangStreamError", 400)));
                 continue;
             }
@@ -940,7 +940,7 @@ public sealed class Default : IHttp
                 continue;
             }
 
-            context.Variables.Set("!ServiceIdentity", data.Signature?.Identity);
+            context.Variable.Set("!ServiceIdentity", data.Signature?.Identity);
             await RunCallbackAsync(onStream, data, null, "chunk", app, context, ct);
         }
     }

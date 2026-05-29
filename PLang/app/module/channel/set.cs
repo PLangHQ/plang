@@ -48,7 +48,7 @@ public partial class Set : IContext
         var direction = ResolveDirection(name, Direction?.Value);
 
         // Upsert: dispose any existing channel under this name before re-registering.
-        await actor.Channels.RemoveAsync(name);
+        await actor.Channel.RemoveAsync(name);
 
         var ch = new app.channel.goal.@this(name, goalEntry, actor, direction)
         {
@@ -59,7 +59,7 @@ public partial class Set : IContext
             Encryption = Encryption?.Value?.Name,
             Signing = Signing?.Value?.Name ?? "auto"
         };
-        actor.Channels.Register(ch);
+        actor.Channel.Register(ch);
         return app.data.@this.Ok(ch);
     }
 

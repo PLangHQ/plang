@@ -53,7 +53,7 @@ public class TagActionTests
     {
         _app.Tester.CurrentTest = NewRun();
         var beforeResultCount = _app.Tester.Results.Count;
-        var beforeVarCount = _app.User.Context.Variables.GetNames().Count();
+        var beforeVarCount = _app.User.Context.Variable.GetNames().Count();
 
         var action = new Tag
         {
@@ -64,7 +64,7 @@ public class TagActionTests
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_app.Tester.Results.Count).IsEqualTo(beforeResultCount);
-        await Assert.That(_app.User.Context.Variables.GetNames().Count()).IsEqualTo(beforeVarCount);
+        await Assert.That(_app.User.Context.Variable.GetNames().Count()).IsEqualTo(beforeVarCount);
     }
 
     // Testing.CurrentTest == null (normal plang run, not --test mode) → test.tag is a

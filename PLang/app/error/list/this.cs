@@ -78,7 +78,7 @@ public sealed partial class @this
         var stack = _app.CallStack;
         var priorFlags = stack.Flags;
         stack.Flags = stack.Flags with { Diff = true };
-        stack.EnableDiffStream(_app.CurrentActor.Context.Variables);
+        stack.EnableDiffStream(_app.CurrentActor.Context.Variable);
 
         return new Restorer(_current, previous, stack, priorFlags);
     }

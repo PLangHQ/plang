@@ -21,7 +21,7 @@ public class AppSnapshotTests
     public async Task App_Restore_DispatchesEachSubtree_ToMatchingThisRestore()
     {
         var src = new global::app.@this("/src");
-        src.User.Context.Variables.Set("x", 1);
+        src.User.Context.Variable.Set("x", 1);
         src.Builder.IsEnabled = true;
         src.Tester.IsEnabled = true;
 
@@ -30,7 +30,7 @@ public class AppSnapshotTests
         var dst = new global::app.@this("/dst");
         dst.Restore(snap, dst.User.Context);
 
-        await Assert.That(dst.User.Context.Variables.Get("x")?.Value).IsEqualTo(1);
+        await Assert.That(dst.User.Context.Variable.Get("x")?.Value).IsEqualTo(1);
         await Assert.That(dst.Builder.IsEnabled).IsTrue();
         await Assert.That(dst.Tester.IsEnabled).IsTrue();
     }

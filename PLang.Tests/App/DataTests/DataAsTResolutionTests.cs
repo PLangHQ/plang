@@ -1,7 +1,7 @@
 namespace PLang.Tests.App.DataTests;
 
 // Contract tests for Data.As<T>(context) — the new resolution entry point in v4 Phase 2.
-// v4 contract: As<T> walks _value, substitutes %var% via context.Variables.Get/Resolve, converts to T via TypeMapping,
+// v4 contract: As<T> walks _value, substitutes %var% via context.Variable.Get/Resolve, converts to T via TypeMapping,
 //   and returns a fresh Data<T>. Every call resolves freshly. Data is stateless w.r.t. resolution.
 
 public class DataAsTResolutionTests
@@ -37,7 +37,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_FullVarMatch_ReturnsVariableValue()
     {
-        _app.User.Context.Variables.Set("path", "/tmp/x.txt");
+        _app.User.Context.Variable.Set("path", "/tmp/x.txt");
         var data = new Data("p", "%path%") { Context = _app.User.Context };
 
         var result = data.As<string>(_app.User.Context);
@@ -63,7 +63,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_Interpolation_CallsResolve()
     {
-        _app.User.Context.Variables.Set("name", "world");
+        _app.User.Context.Variable.Set("name", "world");
         var data = new Data("greeting", "Hello %name%") { Context = _app.User.Context };
 
         var result = data.As<string>(_app.User.Context);
@@ -75,7 +75,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_ListWithNestedVars_DeepResolvesAndTypes()
     {
-        _app.User.Context.Variables.Set("greeting", "hello");
+        _app.User.Context.Variable.Set("greeting", "hello");
         var raw = new List<object?> { "%greeting%", "world" };
         var data = new Data("list", raw) { Context = _app.User.Context };
 
@@ -90,7 +90,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_DictWithNestedVars_DeepResolvesAndTypes()
     {
-        _app.User.Context.Variables.Set("prompt", "You are a compiler");
+        _app.User.Context.Variable.Set("prompt", "You are a compiler");
         var raw = new Dictionary<string, object?> { ["role"] = "system", ["content"] = "%prompt%" };
         var data = new Data("dict", raw) { Context = _app.User.Context };
 
@@ -129,13 +129,13 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_CalledTwice_FreshResolutionEachCall()
     {
-        _app.User.Context.Variables.Set("x", "first");
+        _app.User.Context.Variable.Set("x", "first");
         var data = new Data("v", "%x%") { Context = _app.User.Context };
 
         var first = data.As<string>(_app.User.Context);
         await Assert.That(first.Value).IsEqualTo("first");
 
-        _app.User.Context.Variables.Set("x", "second");
+        _app.User.Context.Variable.Set("x", "second");
         var second = data.As<string>(_app.User.Context);
         await Assert.That(second.Value).IsEqualTo("second");
 
@@ -147,7 +147,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_DoesNotMutateOriginalDataValue()
     {
-        _app.User.Context.Variables.Set("x", "resolved");
+        _app.User.Context.Variable.Set("x", "resolved");
         var data = new Data("v", "%x%") { Context = _app.User.Context };
 
         var resolved = data.As<string>(_app.User.Context);
@@ -161,7 +161,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_ActionListElements_NotRecursedInto()
     {
-        _app.User.Context.Variables.Set("comment", "should-NOT-substitute");
+        _app.User.Context.Variable.Set("comment", "should-NOT-substitute");
         // A list of action-template-shaped dictionaries; sub-actions hold raw %var% for deferred resolution.
         var raw = new List<object?>
         {
@@ -194,7 +194,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_NonGenericArrayList_PassesThroughWithoutSubstitution()
     {
-        _app.User.Context.Variables.Set("x", "substituted");
+        _app.User.Context.Variable.Set("x", "substituted");
         var raw = new System.Collections.ArrayList { "%x%", "literal" };
         var data = new Data("list", raw) { Context = _app.User.Context };
 
@@ -210,7 +210,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_NonGenericHashtable_PassesThroughWithoutSubstitution()
     {
-        _app.User.Context.Variables.Set("x", "substituted");
+        _app.User.Context.Variable.Set("x", "substituted");
         var raw = new System.Collections.Hashtable { ["key"] = "%x%" };
         var data = new Data("dict", raw) { Context = _app.User.Context };
 
@@ -226,8 +226,8 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_StoredFullVarRef_ReturnedVerbatim_NoChain()
     {
-        _app.User.Context.Variables.Set("a", "%b%");
-        _app.User.Context.Variables.Set("b", "%a%");
+        _app.User.Context.Variable.Set("a", "%b%");
+        _app.User.Context.Variable.Set("b", "%a%");
         var data = new Data("ref", "%a%") { Context = _app.User.Context };
 
         var result = data.As<string>(_app.User.Context);
@@ -243,7 +243,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_StoredSelfRef_ReturnedVerbatim()
     {
-        _app.User.Context.Variables.Set("x", "%x%");
+        _app.User.Context.Variable.Set("x", "%x%");
         var data = new Data("ref", "%x%") { Context = _app.User.Context };
 
         var result = data.As<string>(_app.User.Context);
@@ -259,7 +259,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_PartialMatchInterpolatesOncesThenStops()
     {
-        _app.User.Context.Variables.Set("x", "%x%");
+        _app.User.Context.Variable.Set("x", "%x%");
         var data = new Data("greeting", "hello %x%") { Context = _app.User.Context };
 
         var result = data.As<string>(_app.User.Context);
@@ -276,8 +276,8 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_StoredVarRefWithSurroundingText_NotReResolved()
     {
-        _app.User.Context.Variables.Set("a", "X-%b%");
-        _app.User.Context.Variables.Set("b", "Y-%a%");
+        _app.User.Context.Variable.Set("a", "X-%b%");
+        _app.User.Context.Variable.Set("b", "Y-%a%");
         var data = new Data("ref", "%a%") { Context = _app.User.Context };
 
         var result = data.As<string>(_app.User.Context);
@@ -293,11 +293,11 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_DeepChain_NoTransitiveResolution()
     {
-        _app.User.Context.Variables.Set("a", "%b%");
-        _app.User.Context.Variables.Set("b", "%c%");
-        _app.User.Context.Variables.Set("c", "%d%");
-        _app.User.Context.Variables.Set("d", "%e%");
-        _app.User.Context.Variables.Set("e", "leaf-value");
+        _app.User.Context.Variable.Set("a", "%b%");
+        _app.User.Context.Variable.Set("b", "%c%");
+        _app.User.Context.Variable.Set("c", "%d%");
+        _app.User.Context.Variable.Set("d", "%e%");
+        _app.User.Context.Variable.Set("e", "leaf-value");
         var data = new Data("chain", "%a%") { Context = _app.User.Context };
 
         var result = data.As<string>(_app.User.Context);
@@ -313,7 +313,7 @@ public class DataAsTResolutionTests
         var data = new Data("v", "%x%");
 
         await using var app2 = new global::app.@this("/app2");
-        app2.User.Context.Variables.Set("x", "from-app2");
+        app2.User.Context.Variable.Set("x", "from-app2");
 
         var result = data.As<string>(app2.User.Context);
         await Assert.That(result.Value).IsEqualTo("from-app2");
@@ -332,8 +332,8 @@ public class DataAsTResolutionTests
     public async Task AsT_TypedContainerSlot_StoredLeavesNotReResolved()
     {
         var context = _app.User.Context;
-        context.Variables.Set("x", "BUILDER-X");
-        context.Variables.Set("y", "BUILDER-Y");
+        context.Variable.Set("x", "BUILDER-X");
+        context.Variable.Set("y", "BUILDER-Y");
 
         // Mirrors what variable.set produces after walking [{Content: "%goalForLlm%"}]:
         // Content holds the rendered template's literal text, with embedded %var% as bytes.
@@ -345,7 +345,7 @@ public class DataAsTResolutionTests
                 ["Content"] = "literal text with %x% and %y% inside"
             }
         };
-        context.Variables.Set(new global::app.data.@this<List<object?>>("messages", stored) { Context = context });
+        context.Variable.Set(new global::app.data.@this<List<object?>>("messages", stored) { Context = context });
 
         var paramData = new Data("Messages", "%messages%") { Context = context };
         var result = paramData.As<List<Dictionary<string, object?>>>(context);
@@ -367,8 +367,8 @@ public class DataAsTResolutionTests
     public async Task AsT_ListObjectSlot_AsListLlmMessage_StoredLeavesNotReResolved()
     {
         var context = _app.User.Context;
-        context.Variables.Set("goal", new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase) { ["Name"] = "BuildGoal" });
-        context.Variables.Set("buildStart", 999_999_999L);
+        context.Variable.Set("goal", new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase) { ["Name"] = "BuildGoal" });
+        context.Variable.Set("buildStart", 999_999_999L);
 
         // Mirrors what variable.set's MintTyped stores after walking the literal list.
         // Each element is a Dictionary<string, object?>, with Content carrying literal %var%.
@@ -380,7 +380,7 @@ public class DataAsTResolutionTests
                 ["Content"] = "literal text with %goal.Name% and %buildStart% inside"
             }
         };
-        context.Variables.Set(new global::app.data.@this<List<object?>>("fixerMessages", stored) { Context = context });
+        context.Variable.Set(new global::app.data.@this<List<object?>>("fixerMessages", stored) { Context = context });
 
         // Mirrors how llm.query reads %fixerMessages% — typed slot is List<LlmMessage>.
         var paramData = new Data("Messages", "%fixerMessages%") { Context = context };

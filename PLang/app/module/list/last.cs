@@ -9,7 +9,7 @@ public partial class Last : IContext
 
     public Task<data.@this<object>> Run()
     {
-        var data = Context.Variables.Get(ListName.Value);
+        var data = Context.Variable.Get(ListName.Value);
         var countData = data.GetChild("Count");
 
         if (countData.IsInitialized && countData.Value is int count && count > 0)

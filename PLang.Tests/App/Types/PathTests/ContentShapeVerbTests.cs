@@ -49,7 +49,7 @@ public class ContentShapeVerbTests
     [Test] public async Task ReadAsBase64_OutOfRoot_DeniedAnswer_DoesNotReadFile()
     {
         var app = NewApp(out _);
-        app.User.Channels.Register(new CannedChannel("n"));
+        app.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "secret.bin");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
@@ -65,7 +65,7 @@ public class ContentShapeVerbTests
     {
         var app = NewApp(out _);
         var canned = new CannedChannel("n");
-        app.User.Channels.Register(canned);
+        app.User.Channel.Register(canned);
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "data.bin");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
@@ -102,7 +102,7 @@ public class ContentShapeVerbTests
     [Test] public async Task ReadAsDataUri_OutOfRoot_DeniedAnswer_ReturnsDataFail()
     {
         var app = NewApp(out _);
-        app.User.Channels.Register(new CannedChannel("n"));
+        app.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "secret.png");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);

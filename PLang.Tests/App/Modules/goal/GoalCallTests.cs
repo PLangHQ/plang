@@ -12,7 +12,7 @@ public class GoalCallTests
     {
         _app = new global::app.@this("/app");
         // Register a stub goal that call.cs can find
-        _app.Goals.Add(new global::app.goal.@this
+        _app.Goal.Add(new global::app.goal.@this
         {
             Name = "TestGoal",
             Path = "/TestGoal.goal"
@@ -63,7 +63,7 @@ public class GoalCallTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var param = _app.User.Context.Variables.Get("myParam");
+        var param = _app.User.Context.Variable.Get("myParam");
         await Assert.That(param).IsNotNull();
         await Assert.That(param!.ToString()).IsEqualTo("myValue");
     }
@@ -71,7 +71,7 @@ public class GoalCallTests
     [Test]
     public async Task Call_NullActor_UsesCurrentContext()
     {
-        _app.User.Context.Variables.Set("marker", "fromCaller");
+        _app.User.Context.Variable.Set("marker", "fromCaller");
         var action = new Call
         {
             Context = _app.User.Context,
@@ -82,7 +82,7 @@ public class GoalCallTests
 
         await Assert.That(result.Success).IsTrue();
         // marker should still be visible on same context
-        var marker = _app.User.Context.Variables.Get("marker");
+        var marker = _app.User.Context.Variable.Get("marker");
         await Assert.That(marker).IsNotNull();
     }
 }

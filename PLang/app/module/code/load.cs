@@ -37,7 +37,7 @@ public partial class load : IContext
         // and ITypeRenderer implementations. The type-system additions outrank
         // built-in registrations at resolution + rendering, but cannot rewrite
         // what the source generator already baked into compiled handler slots.
-        var typeLoad = global::app.type.list.Loader.Register(assembly, Context.App.Types);
+        var typeLoad = global::app.type.list.Loader.Register(assembly, Context.App.Type);
         if (!typeLoad.Success)
             return Error(new ActionError(typeLoad.ErrorMessage ?? "Type load failed",
                 typeLoad.ErrorKey ?? "TypeLoadError", 500));

@@ -43,7 +43,7 @@ public partial class @this
     /// <c>app.variable.navigator</c> alongside other variable concerns.
     /// </summary>
     [JsonIgnore]
-    public navigator.list.@this Navigators => _context!.App.Navigators;
+    public navigator.list.@this Navigators => _context!.App.Navigator;
 
     /// <summary>
     /// Per-call parameter scopes. <see cref="Get"/> consults <c>Calls.Current</c> before

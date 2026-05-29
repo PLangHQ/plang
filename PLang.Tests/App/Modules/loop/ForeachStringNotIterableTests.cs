@@ -28,11 +28,11 @@ public class ForeachStringNotIterableTests
     public async Task Foreach_StringCollection_RunsBodyExactlyOnce()
     {
         var context = _app.User.Context;
-        context.Variables.Set("s", "hello");
+        context.Variable.Set("s", "hello");
 
         // Body goal runs once per iteration.
         var goal = new Goal { Name = "DoNothing", Path = "/DoNothing.goal", Steps = new GoalSteps() };
-        _app.Goals.Add(goal);
+        _app.Goal.Add(goal);
 
         var foreachAction = TestAction.Create("loop", "foreach",
             ("collection", "%s%"), ("itemname", "%item%"));
@@ -59,10 +59,10 @@ public class ForeachStringNotIterableTests
     public async Task Foreach_StringCollection_BodyReceivesWholeString()
     {
         var context = _app.User.Context;
-        context.Variables.Set("s", "hello");
+        context.Variable.Set("s", "hello");
 
         var goal = new Goal { Name = "DoNothing", Path = "/DoNothing.goal", Steps = new GoalSteps() };
-        _app.Goals.Add(goal);
+        _app.Goal.Add(goal);
 
         var foreachAction = TestAction.Create("loop", "foreach",
             ("collection", "%s%"), ("itemname", "%item%"));
@@ -79,7 +79,7 @@ public class ForeachStringNotIterableTests
 
         await step.RunAsync(context);
 
-        await Assert.That(context.Variables.GetValue("item")).IsEqualTo("hello");
+        await Assert.That(context.Variable.GetValue("item")).IsEqualTo("hello");
     }
 
     // Same single-iteration shape for non-iterable scalars in general.
@@ -87,10 +87,10 @@ public class ForeachStringNotIterableTests
     public async Task Foreach_NumberCollection_RunsBodyOnceWithNumber()
     {
         var context = _app.User.Context;
-        context.Variables.Set("n", 42);
+        context.Variable.Set("n", 42);
 
         var goal = new Goal { Name = "DoNothing", Path = "/DoNothing.goal", Steps = new GoalSteps() };
-        _app.Goals.Add(goal);
+        _app.Goal.Add(goal);
 
         var foreachAction = TestAction.Create("loop", "foreach",
             ("collection", "%n%"), ("itemname", "%item%"));
@@ -110,6 +110,6 @@ public class ForeachStringNotIterableTests
         await Assert.That(result.Success).IsTrue();
         var loopResult = result.Value as LoopResult;
         await Assert.That(loopResult!.itemCount).IsEqualTo(1);
-        await Assert.That(context.Variables.GetValue("item")).IsEqualTo(42);
+        await Assert.That(context.Variable.GetValue("item")).IsEqualTo(42);
     }
 }

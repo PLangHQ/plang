@@ -53,7 +53,7 @@ public class ConditionIfBranchIndexTests
                 new Step { Index = 0, Text = "if test", Actions = new StepActions { ifAction } }
             }
         };
-        _app.Goals.Add(goal);
+        _app.Goal.Add(goal);
 
         Data? captured = null;
         _app.User.Context.Events.Register(new EventBinding(
@@ -95,7 +95,7 @@ public class ConditionIfBranchIndexTests
     // Runs it, captures the orchestrating condition.if's final result (after sub-actions).
     private async Task<Data> RunMultiBranch(int xValue, params (string? op, object? right, string bodyVar, int bodyVal)[] branches)
     {
-        var vars = _app.User.Context.Variables;
+        var vars = _app.User.Context.Variable;
         vars.Set("x", xValue);
 
         var actions = new StepActions();
@@ -136,7 +136,7 @@ public class ConditionIfBranchIndexTests
                 new Step { Index = 0, Text = "multi", Actions = actions }
             }
         };
-        _app.Goals.Add(goal);
+        _app.Goal.Add(goal);
 
         Data? captured = null;
         // Capture the first-if's AfterAction (the orchestrator emits its result there).

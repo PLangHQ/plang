@@ -23,7 +23,7 @@ public class Stage4_ChannelResolutionTests
     {
         var app = new global::app.@this("/tmp/s4a");
         global::app.@this.WireDefaultConsoleChannels(app.User);
-        var ch = app.User.Channels.Resolve(null);
+        var ch = app.User.Channel.Resolve(null);
         await Assert.That(ch).IsNotNull();
         await Assert.That(ch!.Name).IsEqualTo("output");
     }
@@ -33,16 +33,16 @@ public class Stage4_ChannelResolutionTests
     {
         var app = new global::app.@this("/tmp/s4b");
         var logger = StreamChannel.Memory("logger");
-        app.User.Channels.Register(logger);
-        var ch = app.User.Channels.Resolve("logger");
-        await Assert.That(ch).IsEqualTo((Channel)logger);
+        app.User.Channel.Register(logger);
+        var ch = app.User.Channel.Resolve("logger");
+        await Assert.That((Channel?)ch).IsEqualTo((Channel)logger);
     }
 
     [Test]
     public async Task ChannelsResolve_UnknownName_ReturnsNull()
     {
         var app = new global::app.@this("/tmp/s4c");
-        var ch = app.User.Channels.Resolve("dbg");
+        var ch = app.User.Channel.Resolve("dbg");
         await Assert.That(ch).IsNull();
     }
 
@@ -51,14 +51,14 @@ public class Stage4_ChannelResolutionTests
     {
         var app = new global::app.@this("/tmp/s4d");
         var captured = new MemoryStream();
-        app.User.Channels.Register(new StreamChannel("output", captured, ChannelDirection.Output, ownsStream: false)
+        app.User.Channel.Register(new StreamChannel("output", captured, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
 
         var write = new global::app.module.output.Write
         {
             Context = app.User.Context,
             Data = Data.Ok("hello-default"),
-            Channel = app.User.Channels.Resolve(null)
+            Channel = app.User.Channel.Resolve(null)
         };
         // Direct Run skips ExecuteAsync's reset of init backing fields.
         await write.Run();
@@ -72,14 +72,14 @@ public class Stage4_ChannelResolutionTests
     {
         var app = new global::app.@this("/tmp/s4e");
         var loggerCapture = new MemoryStream();
-        app.User.Channels.Register(new StreamChannel("logger", loggerCapture, ChannelDirection.Output, ownsStream: false)
+        app.User.Channel.Register(new StreamChannel("logger", loggerCapture, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
 
         var write = new global::app.module.output.Write
         {
             Context = app.User.Context,
             Data = Data.Ok("targetted"),
-            Channel = app.User.Channels.Resolve("logger")
+            Channel = app.User.Channel.Resolve("logger")
         };
         await write.Run();
 
@@ -93,7 +93,7 @@ public class Stage4_ChannelResolutionTests
         // Plan rule 7: relay don't repackage. Channel.WriteAsync receives full Data.
         var app = new global::app.@this("/tmp/s4f");
         var probe = new EnvelopeProbeChannel();
-        app.User.Channels.Register(probe);
+        app.User.Channel.Register(probe);
 
         var data = Data.Ok("payload");
         data.Properties.Set("custom-prop", "x");

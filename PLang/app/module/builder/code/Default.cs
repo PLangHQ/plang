@@ -21,7 +21,7 @@ public class Default : IBuilder
 
     public async Task<data.@this> Actions(GetActions action)
     {
-        var catalog = await action.Context.App.Modules.Describe();
+        var catalog = await action.Context.App.Module.Describe();
 
         // Optional filter: restrict the catalog to the named module.action
         // entries. The Compile step passes the planner's action set so the
@@ -49,7 +49,7 @@ public class Default : IBuilder
         // discovered record/enum entries. It pre-renders TypeNames/TypeSchemas for
         // the Liquid template, and keeps Types/PrimitiveNames for introspection
         // (JSON, UI, trace viewer).
-        var modules = action.Context.App.Modules;
+        var modules = action.Context.App.Module;
         var schema = modules.Schema.Build();
 
         // Optional Actions filter: restrict the Types list to entries actually
@@ -254,7 +254,7 @@ public class Default : IBuilder
         var goal = action.Goal.Value!;
 
         // Apply LLM-generated description if available in Variables
-        var stepResults = context.Variables.Get("stepResults");
+        var stepResults = context.Variable.Get("stepResults");
         if (stepResults.Value is IDictionary<string, object?> resultsDict
             && resultsDict.TryGetValue("description", out var desc)
             && desc is string description
@@ -270,7 +270,7 @@ public class Default : IBuilder
         // Group modifier actions onto their preceding executable action — recursive so
         // sub-goals are grouped too. Without this, sub-goal steps serialize with flat
         // modifiers and fail at runtime (a modifier's no-op Run wipes %!data%).
-        goal.GroupModifiersRecursive(app.Modules);
+        goal.GroupModifiersRecursive(app.Module);
 
         // Final safety net before persisting. Re-runs structural validation against the
         // goal's current Steps — catches any mismatch (step count, missing actions on
@@ -291,7 +291,7 @@ public class Default : IBuilder
         var saveResult = await app.RunAction(saveAction, context);
 
         var elapsed = _buildTimer.Elapsed;
-        await app.CurrentActor.Channels.WriteTextAsync(global::app.channel.list.@this.Output,
+        await app.CurrentActor.Channel.WriteTextAsync(global::app.channel.list.@this.Output,
             $"  Saved {goal.Name} ({elapsed.TotalSeconds:F1}s){Environment.NewLine}");
         _buildTimer.Restart();
 
@@ -312,7 +312,7 @@ public class Default : IBuilder
             string planDetail = "(no plan was produced)";
             try
             {
-                var planValue = action.Context.Variables.Get("plan")?.Value;
+                var planValue = action.Context.Variable.Get("plan")?.Value;
                 if (planValue != null)
                 {
                     // Round-trip whatever shape the planner produced
@@ -347,7 +347,7 @@ public class Default : IBuilder
                 "BuilderPlannerFailed", 400));
         }
         var input = action.Actions.Value ?? new List<string>();
-        var modules = action.Context.App.Modules;
+        var modules = action.Context.App.Module;
 
         var result = new List<string>();
 
@@ -392,7 +392,7 @@ public class Default : IBuilder
 
         var app = action.Context.App;
         var context = action.Context;
-        var modules = app.Modules;
+        var modules = app.Module;
 
         if (action.Actions?.Value == null)
             return data.@this.Ok(true);
@@ -491,7 +491,7 @@ public class Default : IBuilder
                     // Hard reject CLR type names — these are the known leak vector
                     // (Fluid template rendering a typed object via ToString()). A goal
                     // Name can never legitimately match a loaded CLR type's FullName.
-                    if (app.Types.IsClrTypeName(goalCall.Name))
+                    if (app.Type.IsClrTypeName(goalCall.Name))
                         validationErrors.Add($"{a.Module}.{a.ActionName}: goal.call.Name '{goalCall.Name}' is a CLR type name. This is a build pipeline leak (likely a template rendering an object via ToString() instead of .Name). Use the actual goal name from the step text.");
                     else if (goalCall.Name.Contains('.'))
                         validationErrors.Add($"{a.Module}.{a.ActionName}: goal.call.Name '{goalCall.Name}' looks like a type name. Goal names are simple identifiers (e.g. 'BuildGoalCore', 'HandleValidationError'). Use the actual goal name from the @known mapping or the step text.");
@@ -794,7 +794,7 @@ public class Default : IBuilder
         }
 
         if (promoted > 0)
-            await action.Context.App.CurrentActor.Channels.WriteTextAsync(global::app.channel.list.@this.Output,
+            await action.Context.App.CurrentActor.Channel.WriteTextAsync(global::app.channel.list.@this.Output,
                 $"  Group promotion: {promoted} step(s) promoted to detail pass{Environment.NewLine}");
 
         return data.@this.Ok(action.Steps.Value);
@@ -878,7 +878,7 @@ public class Default : IBuilder
                     var schemaProp = props.FirstOrDefault(sp =>
                         string.Equals(sp.Name, p.Name, StringComparison.OrdinalIgnoreCase));
                     if (schemaProp == null) continue;
-                    var typeName = context.App.Types.GetTypeName(schemaProp.PropertyType);
+                    var typeName = context.App.Type.GetTypeName(schemaProp.PropertyType);
                     if (typeName != "object")
                         p.Type = new app.type.@this(typeName);
 
@@ -892,7 +892,7 @@ public class Default : IBuilder
                         var underlying = System.Nullable.GetUnderlyingType(declared) ?? declared;
                         if (underlying.IsGenericType && underlying.GetGenericTypeDefinition() == typeof(global::app.data.@this<>))
                             underlying = underlying.GetGenericArguments()[0];
-                        var kind = context.App.Types.Kinds.Of(underlying, p.Value);
+                        var kind = context.App.Type.Kinds.Of(underlying, p.Value);
                         if (kind != null) p.Kind = kind;
                     }
                 }
@@ -923,7 +923,7 @@ public class Default : IBuilder
                 // smoke test). Skip — coercing a description string to its declared type fails.
                 if (p.Value is string desc && IsCatalogDescription(desc, p.Type.Value)) continue;
 
-                var targetType = context.App.Types.Get(p.Type.Value);
+                var targetType = context.App.Type.Get(p.Type.Value);
                 if (targetType == null) continue;
 
                 // Scalar PlangType domain types (Path, etc.) carry their wire representation
@@ -939,7 +939,7 @@ public class Default : IBuilder
                 // (App.GetActor, ctor registry, ...). Eagerly constructing here would
                 // either fail (Actor has no usable string ctor) or produce a stateful
                 // object that doesn't round-trip cleanly. Same shape as the scalar carve-out.
-                if (context.App.Types.Choices.Has(targetType)) continue;
+                if (context.App.Type.Choices.Has(targetType)) continue;
 
                 // Already correctly typed? Skip (e.g. value is bool, target is bool).
                 if (targetType.IsInstanceOfType(p.Value)) continue;

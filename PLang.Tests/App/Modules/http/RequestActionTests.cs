@@ -41,7 +41,7 @@ public class RequestActionTests
 
         // Register stub goals for streaming callbacks — GoalCall needs to find them
         foreach (var name in new[] { "HandleLine", "HandleSSE", "HandleBytes", "HandleChunk", "ProcessChunk" })
-            _app.Goals.Add(new global::app.goal.@this { Name = name, Path = $"/{name}.goal" });
+            _app.Goal.Add(new global::app.goal.@this { Name = name, Path = $"/{name}.goal" });
     }
 
     [After(Test)]
@@ -500,7 +500,7 @@ public class RequestActionTests
         // Stream processed successfully (callback goal not found writes to stderr, doesn't abort)
         await Assert.That(result.Success).IsTrue();
         // Last line set on Variables
-        var lastValue = Ctx.Variables.Get("chunk");
+        var lastValue = Ctx.Variable.Get("chunk");
         await Assert.That(lastValue).IsNotNull();
         await Assert.That(lastValue!.ToString()).IsEqualTo("line3");
     }
@@ -524,7 +524,7 @@ public class RequestActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var lastValue = Ctx.Variables.Get("chunk");
+        var lastValue = Ctx.Variable.Get("chunk");
         await Assert.That(lastValue).IsNotNull();
         await Assert.That(lastValue!.ToString()).IsEqualTo("world");
     }
@@ -548,7 +548,7 @@ public class RequestActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var lastValue = Ctx.Variables.Get("chunk");
+        var lastValue = Ctx.Variable.Get("chunk");
         await Assert.That(lastValue!.ToString()).IsEqualTo("part1\npart2");
     }
 
@@ -575,7 +575,7 @@ public class RequestActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var lastData = Ctx.Variables.Get("chunk");
+        var lastData = Ctx.Variable.Get("chunk");
         await Assert.That(lastData).IsNotNull();
         // Verify byte content was delivered (last chunk contains the input bytes)
         await Assert.That(lastData!.Value).IsTypeOf<byte[]>();
@@ -627,7 +627,7 @@ public class RequestActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var lastValue = Ctx.Variables.Get("myChunk");
+        var lastValue = Ctx.Variable.Get("myChunk");
         await Assert.That(lastValue).IsNotNull();
         await Assert.That(lastValue!.ToString()).IsEqualTo("chunk1");
     }
@@ -696,7 +696,7 @@ public class RequestActionTests
 
         await Assert.That(result.Success).IsTrue();
         // Verify !ServiceIdentity was set and matches the signing key
-        var identity = Ctx.Variables.Get("!ServiceIdentity");
+        var identity = Ctx.Variable.Get("!ServiceIdentity");
         await Assert.That(identity).IsNotNull();
         await Assert.That(identity!.ToString()).IsEqualTo(signResult2.Signature!.Identity);
     }
@@ -738,7 +738,7 @@ public class RequestActionTests
         // NOTE: Weak assertion — verifying exact Variables state after failed plang stream
         // verification + failed goal callback is complex. The non-streaming test
         // (Get_PlangResponseInvalidSignature_ReturnsError) covers the verification error path.
-        var lastValue = Ctx.Variables.Get("chunk");
+        var lastValue = Ctx.Variable.Get("chunk");
         await Assert.That(lastValue).IsNotNull();
     }
 
@@ -872,7 +872,7 @@ public class RequestActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var identity = Ctx.Variables.Get("!ServiceIdentity");
+        var identity = Ctx.Variable.Get("!ServiceIdentity");
         await Assert.That(identity).IsNotNull();
         // Identity should match the signing key used (same as the one in the signed response)
         await Assert.That(identity!.ToString()).IsEqualTo(signResult.Signature!.Identity);
@@ -1001,7 +1001,7 @@ public class RequestActionTests
         // Stream completes (overflow is non-fatal — emits error to stderr, clears buffer, continues)
         await Assert.That(result.Success).IsTrue();
         // The second (small) message should still be delivered
-        var lastValue = Ctx.Variables.Get("chunk");
+        var lastValue = Ctx.Variable.Get("chunk");
         await Assert.That(lastValue).IsNotNull();
         await Assert.That(lastValue!.Value!.ToString()).IsEqualTo("ok");
     }

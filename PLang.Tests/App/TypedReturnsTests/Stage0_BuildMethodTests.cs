@@ -18,11 +18,11 @@ public class Stage0_BuildMethodTests
     public void Setup()
     {
         _app = new global::app.@this("/app");
-        _app.Modules.RegisterType("typedreturns", "noopbuild", typeof(NoopBuild));
-        _app.Modules.RegisterType("typedreturns", "buildreturnstype", typeof(BuildReturnsType));
-        _app.Modules.RegisterType("typedreturns", "buildfails", typeof(BuildFails));
-        _app.Modules.RegisterType("typedreturns", "buildbareok", typeof(BuildBareOk));
-        _app.Modules.RegisterType("typedreturns", "buildordered", typeof(BuildOrdered));
+        _app.Module.RegisterType("typedreturns", "noopbuild", typeof(NoopBuild));
+        _app.Module.RegisterType("typedreturns", "buildreturnstype", typeof(BuildReturnsType));
+        _app.Module.RegisterType("typedreturns", "buildfails", typeof(BuildFails));
+        _app.Module.RegisterType("typedreturns", "buildbareok", typeof(BuildBareOk));
+        _app.Module.RegisterType("typedreturns", "buildordered", typeof(BuildOrdered));
         BuildOrdered.InvocationLog.Clear();
     }
 
@@ -75,7 +75,7 @@ public class Stage0_BuildMethodTests
             Make("typedreturns", "buildordered", ("Marker", "second")),
             Make("typedreturns", "buildordered", ("Marker", "third")));
 
-        var errors = await Default.RunBuildPass(actions, _app.Modules, _app.User.Context);
+        var errors = await Default.RunBuildPass(actions, _app.Module, _app.User.Context);
 
         await Assert.That(errors).IsEmpty();
         await Assert.That(BuildOrdered.InvocationLog).IsEquivalentTo(new[] { "first", "second", "third" });
@@ -90,7 +90,7 @@ public class Stage0_BuildMethodTests
             Make("typedreturns", "buildreturnstype"),
             setAction);
 
-        var errors = await Default.RunBuildPass(actions, _app.Modules, _app.User.Context);
+        var errors = await Default.RunBuildPass(actions, _app.Module, _app.User.Context);
 
         await Assert.That(errors).IsEmpty();
         var typeParam = setAction.Parameters.FirstOrDefault(p =>
@@ -105,7 +105,7 @@ public class Stage0_BuildMethodTests
     {
         var actions = ActionsOf(Make("typedreturns", "buildfails"));
 
-        var errors = await Default.RunBuildPass(actions, _app.Modules, _app.User.Context);
+        var errors = await Default.RunBuildPass(actions, _app.Module, _app.User.Context);
 
         await Assert.That(errors).IsNotEmpty();
         await Assert.That(errors[0]).Contains("forced build failure");
@@ -120,7 +120,7 @@ public class Stage0_BuildMethodTests
             Make("typedreturns", "buildbareok"),
             setAction);
 
-        var errors = await Default.RunBuildPass(actions, _app.Modules, _app.User.Context);
+        var errors = await Default.RunBuildPass(actions, _app.Module, _app.User.Context);
 
         await Assert.That(errors).IsEmpty();
         var typeParam = setAction.Parameters.FirstOrDefault(p =>
@@ -134,7 +134,7 @@ public class Stage0_BuildMethodTests
     {
         var actions = ActionsOf(Make("typedreturns", "noopbuild"));
 
-        var errors = await Default.RunBuildPass(actions, _app.Modules, _app.User.Context);
+        var errors = await Default.RunBuildPass(actions, _app.Module, _app.User.Context);
 
         await Assert.That(errors).IsEmpty();
     }
@@ -150,7 +150,7 @@ public class Stage0_BuildMethodTests
             firstSet,
             lastSet);
 
-        var errors = await Default.RunBuildPass(actions, _app.Modules, _app.User.Context);
+        var errors = await Default.RunBuildPass(actions, _app.Module, _app.User.Context);
 
         await Assert.That(errors).IsEmpty();
         await Assert.That(firstSet.Parameters.Any(p =>

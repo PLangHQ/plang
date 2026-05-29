@@ -20,10 +20,10 @@ public class PrPipelineTests
         await using var engine = new global::app.@this(fixturesDir);
 
         var capture = new CapturingWriteHandler();
-        engine.Modules.Register("output", "write", capture);
+        engine.Module.Register("output", "write", capture);
 
         // Load the .pr file — full pipeline: filesystem → deserialize → goal
-        var loadResult = await engine.Goals.LoadFromFileAsync(engine,"FullPipeline.pr");
+        var loadResult = await engine.Goal.LoadFromFileAsync(engine,"FullPipeline.pr");
         await Assert.That(loadResult.Success).IsTrue();
 
         // Execute
@@ -32,15 +32,15 @@ public class PrPipelineTests
         await Assert.That(result.Success).IsTrue();
 
         // Variables set correctly
-        await Assert.That(context.Variables.GetValue("greeting")).IsEqualTo("Hello");
-        await Assert.That(context.Variables.GetValue("user")).IsEqualTo("World");
-        await Assert.That(context.Variables.GetValue("message")).IsEqualTo("Hello, World!");
+        await Assert.That(context.Variable.GetValue("greeting")).IsEqualTo("Hello");
+        await Assert.That(context.Variable.GetValue("user")).IsEqualTo("World");
+        await Assert.That(context.Variable.GetValue("message")).IsEqualTo("Hello, World!");
 
         // Output captured (variable interpolation in output.write)
         await Assert.That(capture.Lines).Contains("Hello, World!");
 
         // Defaults resolved — step 0 has defaults: [{ type: "string" }]
-        var greetingData = context.Variables.Get("greeting");
+        var greetingData = context.Variable.Get("greeting");
         await Assert.That(greetingData?.Type?.Value).IsEqualTo("string");
     }
 
@@ -53,10 +53,10 @@ public class PrPipelineTests
 
         // Capture output
         var capture = new CapturingWriteHandler();
-        engine.Modules.Register("output", "write", capture);
+        engine.Module.Register("output", "write", capture);
 
         // Load and execute
-        var loadResult = await engine.Goals.LoadFromFileAsync(engine,"ReadFile.pr");
+        var loadResult = await engine.Goal.LoadFromFileAsync(engine,"ReadFile.pr");
         await Assert.That(loadResult.Success).IsTrue();
 
         var context = engine.User.Context;
@@ -64,7 +64,7 @@ public class PrPipelineTests
         await Assert.That(result.Success).IsTrue();
 
         // Return mapping: file/read returns Data.Ok(file), return: [{ name: "content" }] maps it to %content%
-        var content = context.Variables.GetValue("content");
+        var content = context.Variable.GetValue("content");
         await Assert.That(content).IsNotNull();
 
         // The mapped value is a file object — its ToString() returns the file content
@@ -82,7 +82,7 @@ public class PrPipelineTests
         var fixturesDir = FindFixturesDir();
         await using var engine = new global::app.@this(fixturesDir);
 
-        var loadResult = await engine.Goals.LoadFromFileAsync(engine,"FilePathsFromRoot.pr");
+        var loadResult = await engine.Goal.LoadFromFileAsync(engine,"FilePathsFromRoot.pr");
         await Assert.That(loadResult.Success).IsTrue();
 
         var context = engine.User.Context;
@@ -90,16 +90,16 @@ public class PrPipelineTests
         await Assert.That(result.Success).IsTrue();
 
         // #1: testdata.txt — relative, same folder
-        await Assert.That(context.Variables.GetValue("relative")!.ToString()).IsEqualTo("Hello from test file");
+        await Assert.That(context.Variable.GetValue("relative")!.ToString()).IsEqualTo("Hello from test file");
 
         // #2: /testdata.txt — absolute from root
-        await Assert.That(context.Variables.GetValue("absolute")!.ToString()).IsEqualTo("Hello from test file");
+        await Assert.That(context.Variable.GetValue("absolute")!.ToString()).IsEqualTo("Hello from test file");
 
         // #4: sub/subdata.txt — subfolder relative
-        await Assert.That(context.Variables.GetValue("subfolder")!.ToString()).IsEqualTo("Hello from subfolder");
+        await Assert.That(context.Variable.GetValue("subfolder")!.ToString()).IsEqualTo("Hello from subfolder");
 
         // #7: ./testdata.txt — explicit current dir
-        await Assert.That(context.Variables.GetValue("dotslash")!.ToString()).IsEqualTo("Hello from test file");
+        await Assert.That(context.Variable.GetValue("dotslash")!.ToString()).IsEqualTo("Hello from test file");
     }
 
     [Test]
@@ -108,7 +108,7 @@ public class PrPipelineTests
         var fixturesDir = FindFixturesDir();
         await using var engine = new global::app.@this(fixturesDir);
 
-        var loadResult = await engine.Goals.LoadFromFileAsync(engine,System.IO.Path.Combine("sub", "FilePathsFromSub.pr"));
+        var loadResult = await engine.Goal.LoadFromFileAsync(engine,System.IO.Path.Combine("sub", "FilePathsFromSub.pr"));
         await Assert.That(loadResult.Success).IsTrue();
 
         var context = engine.User.Context;
@@ -118,7 +118,7 @@ public class PrPipelineTests
         // Step 1 (subdata.txt) fails — relative paths resolve against engine root, not goal folder
         //   so "subdata.txt" → {root}/subdata.txt (not found), NOT {root}/sub/subdata.txt
         // The goal fails on step 1, but step 0 already set %rootAbsolute%
-        await Assert.That(context.Variables.GetValue("rootAbsolute")!.ToString()).IsEqualTo("Hello from test file");
+        await Assert.That(context.Variable.GetValue("rootAbsolute")!.ToString()).IsEqualTo("Hello from test file");
     }
 
     [Test]
@@ -151,7 +151,7 @@ public class PrPipelineTests
                 }
             }
         };
-        engine.Goals.Add(goal);
+        engine.Goal.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
@@ -190,7 +190,7 @@ public class PrPipelineTests
                 }
             }
         };
-        engine.Goals.Add(goal);
+        engine.Goal.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
@@ -228,7 +228,7 @@ public class PrPipelineTests
                 }
             }
         };
-        engine.Goals.Add(goal);
+        engine.Goal.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
@@ -266,7 +266,7 @@ public class PrPipelineTests
                 }
             }
         };
-        engine.Goals.Add(goal);
+        engine.Goal.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
@@ -305,7 +305,7 @@ public class PrPipelineTests
                 }
             }
         };
-        engine.Goals.Add(goal);
+        engine.Goal.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
@@ -355,7 +355,7 @@ public class PrPipelineTests
             object? content = contentData?.Value;
             if (content is string str && str.Contains('%'))
             {
-                var resolved = context.Variables.Resolve(str);
+                var resolved = context.Variable.Resolve(str);
                 if (resolved != str)
                     content = resolved;
             }

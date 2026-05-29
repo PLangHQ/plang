@@ -57,7 +57,7 @@ public class MoveCopyBundledConsentTests
         // The bundled prompt should mention only the source.
         var app = NewApp(out var root);
         var ch = new CapturingChannel("a");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
 
         var srcDir = ForeignDir();
         var srcFile = System.IO.Path.Combine(srcDir, "x");
@@ -80,7 +80,7 @@ public class MoveCopyBundledConsentTests
     {
         var app = NewApp(out _);
         var ch = new CapturingChannel("a");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
 
         var srcDir = ForeignDir();
         var srcFile = System.IO.Path.Combine(srcDir, "x");
@@ -106,7 +106,7 @@ public class MoveCopyBundledConsentTests
     {
         var app = NewApp(out _);
         var ch = new CapturingChannel("a");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
 
         var srcDir = ForeignDir();
         var srcFile = System.IO.Path.Combine(srcDir, "x");
@@ -128,7 +128,7 @@ public class MoveCopyBundledConsentTests
     {
         var app = NewApp(out _);
         var ch = new CapturingChannel("a");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
 
         var srcDir = ForeignDir();
         var srcFile = System.IO.Path.Combine(srcDir, "x");
@@ -158,7 +158,7 @@ public class MoveCopyBundledConsentTests
     {
         var app = NewApp(out _);
         var ch = new CapturingChannel("n");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
 
         var srcDir = ForeignDir();
         var srcFile = System.IO.Path.Combine(srcDir, "x");
@@ -183,7 +183,7 @@ public class MoveCopyBundledConsentTests
     {
         var app = NewApp(out _);
         var ch = new CapturingChannel("n");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
 
         var srcDir = ForeignDir();
         var srcFile = System.IO.Path.Combine(srcDir, "x");
@@ -204,7 +204,7 @@ public class MoveCopyBundledConsentTests
     [Test] public async Task Move_StatelessChannel_BubblesDataAskUnchanged_NoFsMutation()
     {
         var app = NewApp(out _);
-        app.User.Channels.Register(new StatelessChannel());
+        app.User.Channel.Register(new StatelessChannel());
 
         var srcDir = ForeignDir();
         var srcFile = System.IO.Path.Combine(srcDir, "x");

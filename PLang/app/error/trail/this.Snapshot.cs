@@ -15,7 +15,7 @@ public sealed partial class @this : ISnapshot
     public static void Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
     {
         var entries = s.Read<List<IError>>("entries") ?? new List<IError>();
-        context.App.Errors.RestoreTrail(entries);
+        context.App.Error.RestoreTrail(entries);
     }
 
     /// <summary>

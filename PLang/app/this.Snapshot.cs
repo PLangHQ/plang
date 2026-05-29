@@ -16,8 +16,8 @@ public sealed partial class @this
     public snapshot.@this Snapshot()
     {
         var s = new snapshot.@this();
-        CurrentActor.Context.Variables.Capture(s.Section("Variables"));
-        Errors.Capture(s.Section("Errors"));
+        CurrentActor.Context.Variable.Capture(s.Section("Variables"));
+        Error.Capture(s.Section("Errors"));
         Code.Capture(s.Section("Providers"));
         Statics.Capture(s.Section("Statics"));
         Builder.Capture(s.Section("Build"));

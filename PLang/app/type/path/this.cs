@@ -84,7 +84,7 @@ public abstract partial class @this : module.IContext, global::app.data.IBoolean
     {
         ArgumentNullException.ThrowIfNull(rawPath);
         ArgumentNullException.ThrowIfNull(context);
-        return context.App.Types.Scheme.From(rawPath, context);
+        return context.App.Type.Scheme.From(rawPath, context);
     }
 
     // --- Path properties ---
@@ -129,7 +129,7 @@ public abstract partial class @this : module.IContext, global::app.data.IBoolean
     [LlmBuilder] public string FileNameWithoutExtension
         => _fileNameWithoutExtension ??= PathHelper.GetFileNameWithoutExtension(_absolutePath);
     [LlmBuilder] public string Directory => _directory ??= PathHelper.GetDirectoryName(_absolutePath) ?? _absolutePath;
-    [LlmBuilder] public string MimeType => Context?.App?.Formats?.Mime(Extension) ?? "application/octet-stream";
+    [LlmBuilder] public string MimeType => Context?.App?.Format?.Mime(Extension) ?? "application/octet-stream";
 
     [LlmBuilder] public bool IsFile => !string.IsNullOrEmpty(Extension);
     [LlmBuilder] public bool IsDirectory => string.IsNullOrEmpty(Extension);

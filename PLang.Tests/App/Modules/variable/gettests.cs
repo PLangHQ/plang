@@ -10,14 +10,14 @@ public class GetTests
     private (global::app.actor.context.@this context, Variables memory) CreateContext()
     {
         var app = new global::app.@this("/app");
-        return (app.User.Context, app.User.Context.Variables);
+        return (app.User.Context, app.User.Context.Variable);
     }
 
     [Test]
     public async Task Get_ReturnsRawValue()
     {
         var (context, _) = CreateContext();
-        context.Variables.Set("testVar", "testValue");
+        context.Variable.Set("testVar", "testValue");
 
         var action = new Get { Context = context, Name = new Variable("testVar") };
         var result = await action.Run();

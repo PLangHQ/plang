@@ -42,7 +42,7 @@ public partial class Read : IContext
 
         if (ResolveVariables.Value && read.Value is string content)
         {
-            var resolved = Context.Variables.Resolve(content, skipInfrastructure: true);
+            var resolved = Context.Variable.Resolve(content, skipInfrastructure: true);
             return new data.@this(read.Name, resolved, read.Type);
         }
         return read;
@@ -75,14 +75,14 @@ public partial class Read : IContext
         // string aliases that read more clearly than the generic "text".
         var ext = p.Extension.TrimStart('.').ToLowerInvariant();
         string typeName = ext;
-        var highLevel = Context.App.Formats.Kind(ext);
+        var highLevel = Context.App.Format.Kind(ext);
         if (highLevel != null
             && !string.Equals(highLevel, "text", System.StringComparison.OrdinalIgnoreCase)
-            && Context.App.Types.Get(highLevel) != null)
+            && Context.App.Type.Get(highLevel) != null)
         {
             typeName = highLevel;
         }
-        if (Context.App.Types.Get(typeName) == null) return data.@this.Ok();
+        if (Context.App.Type.Get(typeName) == null) return data.@this.Ok();
 
         // Best-effort missing-file warning. Channel("builder") falls back to a
         // no-op sink when no build is active, so this is safe outside builds.
@@ -93,7 +93,7 @@ public partial class Read : IContext
             {
                 var warning = new global::app.module.builder.warning.@this(
                     this, $"file.read: literal path '{raw}' does not exist on disk");
-                await Context.Actor.Channels.Channel("builder").WriteAsync(data.@this.Ok(warning));
+                await Context.Actor.Channel.Channel("builder").WriteAsync(data.@this.Ok(warning));
             }
         }
         catch (System.Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { /* best-effort warning — never block Build() */ }

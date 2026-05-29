@@ -53,7 +53,7 @@ public class AfterActionPayloadTests
                 }
             }
         };
-        _app.Goals.Add(goal);
+        _app.Goal.Add(goal);
         await _app.RunGoalAsync(goal, _app.User.Context);
     }
 
@@ -131,7 +131,7 @@ public class AfterActionPayloadTests
                 new Step { Index = 0, Text = "mod set", Actions = new StepActions { inner } }
             }
         };
-        _app.Goals.Add(goal);
+        _app.Goal.Add(goal);
 
         var observed = new List<(string Module, string ActionName)>();
         _app.User.Context.Events.Register(new EventBinding(
@@ -215,7 +215,7 @@ public class AfterActionPayloadTests
                 }
             }
         };
-        _app.Goals.Add(goal);
+        _app.Goal.Add(goal);
 
         Data? captured = null;
         _app.User.Context.Events.Register(new EventBinding(

@@ -268,7 +268,7 @@ public partial class @this
         // resolve when Value has no matching child.
         if (val != null)
         {
-            var navigator = _context?.App?.Navigators?.Get(val.GetType());
+            var navigator = _context?.App?.Navigator?.Get(val.GetType());
             if (navigator != null)
             {
                 var navResult = navigator.Navigate(this, key);

@@ -18,7 +18,7 @@ public partial class Any : IContext
 
     public async Task<data.@this<bool>> Run()
     {
-        var data = Context.Variables.Get(ListName.Value);
+        var data = Context.Variable.Get(ListName.Value);
         var key = Key.Value!;
         var right = Value.Value != null ? new data.@this("", Value.Value) : null;
 

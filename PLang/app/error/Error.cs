@@ -289,7 +289,7 @@ public class Error : IError
             var errorContext = (error as Error)?.Context;
             var fallbackContext = app.System.Context;
             var context = errorContext ?? fallbackContext;
-            var allVars = context?.Variables?.GetAll();
+            var allVars = context?.Variable?.GetAll();
             if (allVars != null)
             {
                 var ctxId = context?.Id ?? "?";

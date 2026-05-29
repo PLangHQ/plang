@@ -33,7 +33,7 @@ public class AbsoluteDisciplineTests
     [Test] public async Task TakeOverApi_AuthorizeFirst_OutOfRootDenial_PreventsAbsoluteUse()
     {
         var app = NewApp(out _);
-        app.User.Channels.Register(new CannedChannel("n"));
+        app.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "db.sqlite");
         var p = new FilePath(outOfRoot, app.User.Context);
@@ -57,7 +57,7 @@ public class AbsoluteDisciplineTests
         // removed, an out-of-root db path would open without permission. With
         // Authorize in place + a denied actor, it must throw.
         var app = NewApp(out _);
-        app.User.Channels.Register(new CannedChannel("n"));
+        app.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "db.sqlite");
         var dbPath = new FilePath(outOfRoot, app.User.Context);

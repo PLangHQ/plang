@@ -10,14 +10,14 @@ public class ExistsTests
     private (global::app.actor.context.@this context, Variables memory) CreateContext()
     {
         var app = new global::app.@this("/app");
-        return (app.User.Context, app.User.Context.Variables);
+        return (app.User.Context, app.User.Context.Variable);
     }
 
     [Test]
     public async Task Exists_ExistingVariable_ReturnsTrue()
     {
         var (context, _) = CreateContext();
-        context.Variables.Set("testVar", "testValue");
+        context.Variable.Set("testVar", "testValue");
 
         var action = new Exists { Context = context, Name = new Variable("testVar") };
         var result = await action.Run();

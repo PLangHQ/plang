@@ -44,7 +44,7 @@ public class HttpPathConsentFidelityTests
         System.IO.Directory.CreateDirectory(dir);
         var app = new AppEngine(dir);
         var ch = new CapturingChannel();
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
         return (app, app.User.Context, ch);
     }
 

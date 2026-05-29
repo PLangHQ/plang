@@ -35,8 +35,8 @@ public class Ed25519 : ISigning
         var hash = await app.RunAction<Hash>(new Hash { Data = action.Data, Algorithm = new data.@this<string>("", "keccak256") }, action.Context);
         if (!hash.Success) return global::app.data.@this<object>.From(hash);
 
-        var now = (DateTimeOffset)action.Context.Variables.GetValue("NowUtc")!;
-        var nonce = action.Context.Variables.GetValue("GUID")!.ToString()!;
+        var now = (DateTimeOffset)action.Context.Variable.GetValue("NowUtc")!;
+        var nonce = action.Context.Variable.GetValue("GUID")!.ToString()!;
 
         var signedData = new Signature
         {
@@ -67,7 +67,7 @@ public class Ed25519 : ISigning
 
         var signedData = action.Data.Signature;
         var app = action.Context.App;
-        var now = (DateTimeOffset)action.Context.Variables.GetValue("NowUtc")!;
+        var now = (DateTimeOffset)action.Context.Variable.GetValue("NowUtc")!;
         var signingSettings = app.Config.For<Config>(action.Context);
         var effectiveTimeout = action.TimeoutMs?.Value ?? signingSettings.Resolve<long>("TimeoutMs", 300_000);
         var skipFreshness = action.SkipFreshnessCheck?.Value ?? false;

@@ -30,7 +30,7 @@ public class SetTypeInferenceTests
         var action = TestAction.Create("variable", "set", ("name", "%s%"), ("value", "hello"));
         var result = await action.RunAsync(context);
         await Assert.That(result.Success).IsTrue();
-        var stored = context.Variables.Get("s");
+        var stored = context.Variable.Get("s");
         await Assert.That(stored).IsTypeOf<global::app.data.@this<string>>();
     }
 
@@ -41,7 +41,7 @@ public class SetTypeInferenceTests
         var action = TestAction.Create("variable", "set", ("name", "%n%"), ("value", 42));
         var result = await action.RunAsync(context);
         await Assert.That(result.Success).IsTrue();
-        var stored = context.Variables.Get("n");
+        var stored = context.Variable.Get("n");
         // The .pr/JSON pipeline normalizes integers to long; that's consistent with the
         // architect's hot-types if-chain (long arm fires for the LLM-emitted form).
         var t = stored.GetType();
@@ -57,7 +57,7 @@ public class SetTypeInferenceTests
         var action = TestAction.Create("variable", "set", ("name", "%n%"), ("value", 42L));
         var result = await action.RunAsync(context);
         await Assert.That(result.Success).IsTrue();
-        var stored = context.Variables.Get("n");
+        var stored = context.Variable.Get("n");
         await Assert.That(stored).IsTypeOf<global::app.data.@this<long>>();
     }
 
@@ -68,7 +68,7 @@ public class SetTypeInferenceTests
         var action = TestAction.Create("variable", "set", ("name", "%d%"), ("value", 3.14));
         var result = await action.RunAsync(context);
         await Assert.That(result.Success).IsTrue();
-        var stored = context.Variables.Get("d");
+        var stored = context.Variable.Get("d");
         await Assert.That(stored).IsTypeOf<global::app.data.@this<double>>();
     }
 
@@ -79,7 +79,7 @@ public class SetTypeInferenceTests
         var action = TestAction.Create("variable", "set", ("name", "%b%"), ("value", true));
         var result = await action.RunAsync(context);
         await Assert.That(result.Success).IsTrue();
-        var stored = context.Variables.Get("b");
+        var stored = context.Variable.Get("b");
         await Assert.That(stored).IsTypeOf<global::app.data.@this<bool>>();
     }
 
@@ -91,7 +91,7 @@ public class SetTypeInferenceTests
         var action = TestAction.Create("variable", "set", ("name", "%t%"), ("value", when));
         var result = await action.RunAsync(context);
         await Assert.That(result.Success).IsTrue();
-        var stored = context.Variables.Get("t");
+        var stored = context.Variable.Get("t");
         await Assert.That(stored).IsTypeOf<global::app.data.@this<DateTime>>();
     }
 
@@ -103,7 +103,7 @@ public class SetTypeInferenceTests
         var action = TestAction.Create("variable", "set", ("name", "%list%"), ("value", src));
         var result = await action.RunAsync(context);
         await Assert.That(result.Success).IsTrue();
-        var stored = context.Variables.Get("list");
+        var stored = context.Variable.Get("list");
         await Assert.That(stored).IsTypeOf<global::app.data.@this<List<object?>>>();
         // Snapshot-clone: stored.Value is a separate list instance.
         await Assert.That(ReferenceEquals(stored.Value, src)).IsFalse();
@@ -117,7 +117,7 @@ public class SetTypeInferenceTests
         var action = TestAction.Create("variable", "set", ("name", "%d%"), ("value", src));
         var result = await action.RunAsync(context);
         await Assert.That(result.Success).IsTrue();
-        var stored = context.Variables.Get("d");
+        var stored = context.Variable.Get("d");
         await Assert.That(stored).IsTypeOf<global::app.data.@this<Dictionary<string, object?>>>();
         await Assert.That(ReferenceEquals(stored.Value, src)).IsFalse();
     }
@@ -130,7 +130,7 @@ public class SetTypeInferenceTests
         var action = TestAction.Create("variable", "set", ("name", "%n%"), ("value", 42), ("type", "string"));
         var result = await action.RunAsync(context);
         await Assert.That(result.Success).IsTrue();
-        var stored = context.Variables.Get("n");
+        var stored = context.Variable.Get("n");
         await Assert.That(stored).IsTypeOf<global::app.data.@this<string>>();
         await Assert.That(stored.Value).IsEqualTo("42");
     }
@@ -152,7 +152,7 @@ public class SetTypeInferenceTests
         var action = TestAction.Create("variable", "set", ("name", "%x%"), ("value", null));
         var result = await action.RunAsync(context);
         await Assert.That(result.Success).IsTrue();
-        var stored = context.Variables.Get("x");
+        var stored = context.Variable.Get("x");
         // Plain Data (not Data<T>) — null can't be type-inferred.
         await Assert.That(stored.GetType()).IsEqualTo(typeof(global::app.data.@this));
     }
@@ -164,6 +164,6 @@ public class SetTypeInferenceTests
         await TestAction.Create("variable", "set", ("name", "%x%"), ("value", "first")).RunAsync(context);
         var result = await TestAction.Create("variable", "set", ("name", "%x%"), ("value", "second"), ("asdefault", true)).RunAsync(context);
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.Variables.GetValue("x")).IsEqualTo("first");
+        await Assert.That(context.Variable.GetValue("x")).IsEqualTo("first");
     }
 }

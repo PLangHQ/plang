@@ -104,8 +104,8 @@ public sealed class @this
         if (!IsEnabled) return Task.CompletedTask;
         // Debug surface routes via System actor's "error" channel (stderr equivalent).
         // Stage 6: was app.channels.WriteAsync; now per-actor.
-        var ch = _engine.System.Channels.Resolve(app.channel.list.@this.Debug)
-              ?? _engine.System.Channels.Resolve(app.channel.list.@this.Error);
+        var ch = _engine.System.Channel.Resolve(app.channel.list.@this.Debug)
+              ?? _engine.System.Channel.Resolve(app.channel.list.@this.Error);
         if (ch == null) return Task.CompletedTask;
         var envelope = message is app.data.@this d ? d : app.data.@this.Ok(message);
         return ch.WriteAsync(envelope);
@@ -156,7 +156,7 @@ public sealed class @this
                 v.Name = v.Name.Trim('%');
 
             // Create placeholder Data with event handlers for watched variables
-            var vars = _engine.User.Context.Variables;
+            var vars = _engine.User.Context.Variable;
             foreach (var v in Variables.Where(v => v.Event.HasValue))
             {
                 var placeholder = data.@this.Uninitialized(v.Name);
@@ -433,7 +433,7 @@ public sealed class @this
 
         var traceId = context.Trace.Id;
 
-        var goalData = context.Variables.Get("goal");
+        var goalData = context.Variable.Get("goal");
         var goalName = "unknown";
         if (goalData != null && goalData.Value != null)
         {
@@ -442,7 +442,7 @@ public sealed class @this
                 goalName = nameProp.GetValue(goalData.Value)?.ToString() ?? "unknown";
         }
 
-        var stepData = context.Variables.Get("step");
+        var stepData = context.Variable.Get("step");
         var stepKey = "goal";
         if (stepData != null && stepData.IsInitialized && stepData.Value != null)
         {
@@ -596,7 +596,7 @@ public sealed class @this
         sb.AppendLine($"  Variables ({varNames.Count}):");
         foreach (var name in varNames)
         {
-            var data = context.Variables.Get(name);
+            var data = context.Variable.Get(name);
             if (data == null || !data.IsInitialized)
             {
                 sb.AppendLine($"    %{name}% = (undefined)");

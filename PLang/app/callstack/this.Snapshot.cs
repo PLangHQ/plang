@@ -100,7 +100,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
 
     /// <summary>
     /// Reconstructs the captured chain into <see cref="RestoredChain"/> on the live App's
-    /// CallStack. For each captured frame, looks up the goal by PrPath in <c>app.Goals</c>,
+    /// CallStack. For each captured frame, looks up the goal by PrPath in <c>app.Goal</c>,
     /// hash-matches against the live goal, then resolves the Step + Action by index.
     /// Hard-errors on goal-not-found (<see cref="CallbackGoalNotFound"/>) or hash mismatch
     /// (<see cref="CallbackGoalHashMismatch"/>). Does not mutate the live AsyncLocal Current —
@@ -120,7 +120,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
             var actionIndex = frame.Read<int>("actionIndex");
             var id         = frame.Read<string>("id") ?? "";
 
-            var liveGoal = context.App.Goals.Get(goalPrPath);
+            var liveGoal = context.App.Goal.Get(goalPrPath);
             if (liveGoal == null)
                 throw new CallbackGoalNotFound(goalPrPath);
 

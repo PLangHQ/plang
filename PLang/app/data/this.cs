@@ -226,7 +226,7 @@ public partial class @this
         {
             if (_type != null) return _type;
             if (_value == null) return null;
-            var typeName = _context?.App.Types.Name(_value.GetType())
+            var typeName = _context?.App.Type.Name(_value.GetType())
                            ?? AppTypes.GetPrimitiveName(_value.GetType())
                            ?? _value.GetType().Name.ToLowerInvariant();
             var derived = new type(typeName);
@@ -392,7 +392,7 @@ public partial class @this
 
     /// <summary>
     /// Reads this Data as Data&lt;T&gt; — the v4 resolution entry point.
-    /// Walks _value, substitutes %variable% references via context.Variables,
+    /// Walks _value, substitutes %variable% references via context.Variable,
     /// converts to T via TypeMapping, returns a fresh Data&lt;T&gt;.
     /// Every call resolves freshly against the current context — there is nothing
     /// to cache and nothing to invalidate. Caching, if any, lives on the caller.
@@ -434,7 +434,7 @@ public partial class @this
                 "Data.As(typeName) requires a non-empty type name.", "InvalidTypeName", 400));
 
         context = context ?? _context;
-        var clr = context?.App.Types.Clr(typeName) ?? AppTypes.GetPrimitiveOrMime(typeName);
+        var clr = context?.App.Type.Clr(typeName) ?? AppTypes.GetPrimitiveOrMime(typeName);
         if (clr == null)
             return global::app.data.@this.FromError(new global::app.error.ServiceError(
                 $"No PLang type registered under name '{typeName}'.", "UnknownType", 400));
@@ -462,11 +462,11 @@ public partial class @this
         context = context ?? _context;
         var raw = Value;
 
-        if (raw is string strVal && strVal.Contains('%') && context?.Variables != null)
+        if (raw is string strVal && strVal.Contains('%') && context?.Variable != null)
         {
             if (TryFullVarMatch(strVal, out var varName))
             {
-                var resolved = context.Variables.Get(varName);
+                var resolved = context.Variable.Get(varName);
                 if (resolved == null || !resolved.IsInitialized)
                 {
                     var notFound = new @this(varName, null, null, Parent) { Context = context };
@@ -476,7 +476,7 @@ public partial class @this
                 return resolved;
             }
             // Partial — interpolate into a fresh value but keep slot Name + alias state from `this`.
-            var interpolated = context.Variables.Resolve(strVal);
+            var interpolated = context.Variable.Resolve(strVal);
             var transient = new @this(Name, interpolated, _type, Parent) { Context = context };
             transient.Properties = Properties;
             transient.OnCreate   = OnCreate;
@@ -549,7 +549,7 @@ public partial class @this
         // applies; otherwise the literal string is handed to TypeConverter which can't
         // convert "%var%" → StepActions and the build dies with "Cannot convert String to this".
         if (IsActionDestination(typeof(T))
-            && !(raw is string actStr && actStr.Contains('%') && context?.Variables != null))
+            && !(raw is string actStr && actStr.Contains('%') && context?.Variable != null))
             return WrapAs<T>(raw, context);
 
         // Raw-name carve-out: types like app.variable.Variable want the literal slot
@@ -574,7 +574,7 @@ public partial class @this
 
         // String with %var% — substitute first, BEFORE fast paths. Without this ordering,
         // T=object would always match `raw is T` and short-circuit substitution.
-        if (raw is string strVal && strVal.Contains('%') && context?.Variables != null)
+        if (raw is string strVal && strVal.Contains('%') && context?.Variable != null)
         {
             var resolving = _resolvingValues.Value;
             var isCycleRoot = resolving == null;
@@ -605,7 +605,7 @@ public partial class @this
 
                 if (TryFullVarMatch(strVal, out var varName))
                 {
-                    var resolved = context.Variables.Get(varName);
+                    var resolved = context.Variable.Get(varName);
                     if (resolved == null || !resolved.IsInitialized)
                     {
                         // Unset var — propagate the variable's name so handler diagnostics see it.
@@ -626,7 +626,7 @@ public partial class @this
                 // Partial match — interpolate once. The result is the final value; embedded
                 // %var% inside the substituted text is opaque payload (matches mainstream
                 // language semantics: assignment evaluates once, stored value is opaque).
-                var interpolated = context.Variables.Resolve(strVal);
+                var interpolated = context.Variable.Resolve(strVal);
                 return AsT_Convert<T>(interpolated, context);
             }
             finally
@@ -722,7 +722,7 @@ public partial class @this
             if (inner is global::app.type.path.scheme.SchemeNotRegistered snr)
                 return (null, @this<T>.FromError(new global::app.error.Error(snr.Message, "SchemeNotRegistered", 400)
                 {
-                    FixSuggestion = $"Register a factory for scheme '{snr.Scheme}' via app.Types.Scheme.Register, or use a bare/file:// path.",
+                    FixSuggestion = $"Register a factory for scheme '{snr.Scheme}' via app.Type.Scheme.Register, or use a bare/file:// path.",
                 }));
             return (null, @this<T>.FromError(new global::app.error.Error(inner.Message, "ResolveFailed", 400)));
         }
@@ -834,12 +834,12 @@ public partial class @this
                 // %var% read returns null and the parameter slots get nulled out).
                 // String.Resolve below already does this fallback for partial matches;
                 // this brings full-match parity.
-                var resolved = context.Variables.Get(varName);
+                var resolved = context.Variable.Get(varName);
                 return resolved?.IsInitialized == true && resolved.Value != null
                     ? resolved.Value
                     : (object?)s;
             }
-            return context.Variables.Resolve(s);
+            return context.Variable.Resolve(s);
         }
 
         if (value is IList<object?> innerList) return WalkList(innerList, context);

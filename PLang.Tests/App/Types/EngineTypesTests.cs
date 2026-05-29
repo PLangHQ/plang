@@ -612,7 +612,7 @@ public class EngineTypesTests
         var context = new global::app.actor.context.@this(engine);
 
         // Add a custom type mapping that static TypeMapping does NOT have
-        engine.Formats.Add(".custom", "custom-kind", "application/custom");
+        engine.Format.Add(".custom", "custom-kind", "application/custom");
 
         var data = new global::app.data.@this("test", new byte[] { 1 },
             global::app.type.@this.FromMime("application/custom"));
@@ -629,8 +629,8 @@ public class EngineTypesTests
     {
         await using var engine = new global::app.@this("/test");
 
-        await Assert.That(engine.Types).IsNotNull();
-        await Assert.That(engine.Types.Clr("string")).IsEqualTo(typeof(string));
+        await Assert.That(engine.Type).IsNotNull();
+        await Assert.That(engine.Type.Clr("string")).IsEqualTo(typeof(string));
     }
 
     // --- v5: Depth limit ---

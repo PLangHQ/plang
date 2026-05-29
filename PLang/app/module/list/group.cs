@@ -11,7 +11,7 @@ public partial class Group : IContext
 
     public Task<data.@this<type.list>> Run()
     {
-        var data = Context.Variables.Get(ListName.Value);
+        var data = Context.Variable.Get(ListName.Value);
         var key = Key.Value!;
 
         var groups = new Dictionary<string, List<object?>>();

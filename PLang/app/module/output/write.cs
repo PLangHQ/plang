@@ -17,7 +17,7 @@ public partial class Write : IContext, IChannel
         var outer = Data ?? app.data.@this.Ok();
         if (outer.Value is string str && str.Contains('%'))
         {
-            var resolved = Context.Variables.Resolve(str, skipInfrastructure: true);
+            var resolved = Context.Variable.Resolve(str, skipInfrastructure: true);
             outer = app.data.@this.Ok(resolved);
         }
         return await Channel.WriteAsync(outer);

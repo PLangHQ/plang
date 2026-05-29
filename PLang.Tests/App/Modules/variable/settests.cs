@@ -22,7 +22,7 @@ public class SetTests
         var result = await action.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.Variables.GetValue("testVar")).IsEqualTo("testValue");
+        await Assert.That(context.Variable.GetValue("testVar")).IsEqualTo("testValue");
     }
 
     [Test]
@@ -33,7 +33,7 @@ public class SetTests
         var result = await action.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.Variables.Get("count")!.Type!.ClrType).IsEqualTo(typeof(int));
+        await Assert.That(context.Variable.Get("count")!.Type!.ClrType).IsEqualTo(typeof(int));
     }
 
     [Test]
@@ -44,7 +44,7 @@ public class SetTests
         var result = await action.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.Variables.GetValue("testVar")).IsEqualTo("testValue");
+        await Assert.That(context.Variable.GetValue("testVar")).IsEqualTo("testValue");
         // F3-1: handler must return the stored value, not an empty Data.Ok().
         // Powers %!data% capture in goal.call → ReturnMapping / GoalCallReturn PLang tests.
         await Assert.That(result.Value).IsEqualTo("testValue");
@@ -58,7 +58,7 @@ public class SetTests
         var result = await action.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.Variables.Get("count")!.Type!.Value).IsEqualTo("int");
+        await Assert.That(context.Variable.Get("count")!.Type!.Value).IsEqualTo("int");
     }
 
     [Test]
@@ -75,7 +75,7 @@ public class SetTests
         var result = await defaultAction.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.Variables.GetValue("x")).IsEqualTo("original");
+        await Assert.That(context.Variable.GetValue("x")).IsEqualTo("original");
         // F3-1: when AsDefault hits an existing var, handler returns the existing Data,
         // not an empty Data.Ok(). Reverting that branch would surface here.
         await Assert.That(result.Value).IsEqualTo("original");
@@ -89,7 +89,7 @@ public class SetTests
         var result = await action.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.Variables.GetValue("y")).IsEqualTo("default");
+        await Assert.That(context.Variable.GetValue("y")).IsEqualTo("default");
     }
 
     [Test]
@@ -111,8 +111,8 @@ public class SetTests
 
         await Assert.That(result.Success).IsTrue();
 
-        var dataVar = context.Variables.Get("!data");
-        var myVar = context.Variables.Get("myVar");
+        var dataVar = context.Variable.Get("!data");
+        var myVar = context.Variable.Get("myVar");
 
         // Aliasing: same Data reachable under both keys.
         await Assert.That(ReferenceEquals(dataVar, result)).IsTrue();

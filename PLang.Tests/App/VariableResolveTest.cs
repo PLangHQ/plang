@@ -92,7 +92,7 @@ public class VariableResolveTest
             Value = global::app.data.@this.Ok(100),
         }, context);
 
-        var response = context.Variables.Get("response");
+        var response = context.Variable.Get("response");
         await Assert.That(response.Properties["cost"]).IsEqualTo(100);
     }
 

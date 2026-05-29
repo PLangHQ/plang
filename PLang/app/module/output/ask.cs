@@ -68,13 +68,13 @@ public partial class ask : IContext
     public async Task<data.@this<Ask>> Run()
     {
         // Resume path: channel pre-bound the answer under !ask.answer.
-        var answer = Context.Variables.Get(AnswerVariableName);
+        var answer = Context.Variable.Get(AnswerVariableName);
         if (answer != null && answer.IsInitialized)
         {
             // The sentinel rides as the "answer" property of the infra root
             // variable "!ask". Variables.Remove only takes flat keys; removing
             // the root consumes the marker. "!ask" is reserved for this use.
-            Context.Variables.Remove("!ask");
+            Context.Variable.Remove("!ask");
             return data.@this<Ask>.Ok(new Ask { Answer = answer.Value?.ToString() });
         }
 
@@ -82,7 +82,7 @@ public partial class ask : IContext
         // the user's typed answer as a string Data; Message returns a suspending
         // Ask with Snapshot attached. Coerce the wire shape into the Data<Ask>
         // contract here so callers never see the legacy string-bearing form.
-        var input = Context.Actor?.Channels.Resolve(global::app.channel.list.@this.Input)
+        var input = Context.Actor?.Channel.Resolve(global::app.channel.list.@this.Input)
             ?? throw new InvalidOperationException("No input channel registered on actor");
         var askResult = await input.AskAsync(this);
         if (!askResult.Success) return data.@this<Ask>.From(askResult);

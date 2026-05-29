@@ -33,7 +33,7 @@ public class HttpStaticFileDenialTests
     [Test] public async Task StaticFile_RequestWithDotDotTraversal_DeniedByAuthGate()
     {
         var app = NewApp(out _);
-        app.User.Channels.Register(new CannedChannel("n"));
+        app.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "secret.txt");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
@@ -59,7 +59,7 @@ public class HttpStaticFileDenialTests
     {
         var app = NewApp(out var root);
         var ch = new CannedChannel("UNEXPECTED");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
         var file = System.IO.Path.Combine(root, "public.txt");
         System.IO.File.WriteAllText(file, "hello");
         var result = await global::app.module.http.code.Default.CreateFileContentAsync(app, app.User.Context, file);

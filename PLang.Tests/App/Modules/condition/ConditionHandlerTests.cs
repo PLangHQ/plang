@@ -54,7 +54,7 @@ public class ConditionHandlerTests : IDisposable
     public async Task IfTrue_Orchestrate_RunsThenBranch()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new StreamChannel(
+        _app.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
@@ -93,7 +93,7 @@ public class ConditionHandlerTests : IDisposable
     public async Task IfFalse_Orchestrate_RunsElseBranch()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new StreamChannel(
+        _app.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });

@@ -12,7 +12,7 @@ public partial class Add : IContext
 
     public Task<data.@this<type.list>> Run()
     {
-        var data = Context.Variables.Get(ListName.Value);
+        var data = Context.Variable.Get(ListName.Value);
         var existing = data.Value;
         var list = existing as List<object?>;
 
@@ -32,7 +32,7 @@ public partial class Add : IContext
             {
                 list = new List<object?>();
             }
-            Context.Variables.Set(ListName.Value, list);
+            Context.Variable.Set(ListName.Value, list);
         }
 
         // Snapshot the Data so each list entry is independent — without this,

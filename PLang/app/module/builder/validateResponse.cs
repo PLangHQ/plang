@@ -159,7 +159,7 @@ public partial class validateResponse : IContext
                 {
                     if (p.Type?.Value == null || p.Value == null) continue;
 
-                    var targetType = (goal.App ?? app)?.Types.Get(p.Type.Value);
+                    var targetType = (goal.App ?? app)?.Type.Get(p.Type.Value);
                     if (targetType == null) continue;
                     if (!global::app.type.list.@this.IsScalarPlangType(targetType)) continue;
 
@@ -180,7 +180,7 @@ public partial class validateResponse : IContext
         // "module" key, lists of such), and types we can't resolve. Empty strings on
         // nullable parameters are normalized to null in-place so downstream stages
         // (NormalizeParameterTypes, runtime resolution) treat them like an unset slot.
-        var modules = (goal.App ?? app)?.Modules;
+        var modules = (goal.App ?? app)?.Module;
         foreach (var step in response.Steps)
         {
             if (step.Keep) continue;
@@ -214,7 +214,7 @@ public partial class validateResponse : IContext
                         }
                     }
 
-                    var targetType = (goal.App ?? app)?.Types.Get(p.Type.Value);
+                    var targetType = (goal.App ?? app)?.Type.Get(p.Type.Value);
                     if (targetType == null) continue;
                     // Scalar PlangTypes (path, tstring, ...) accept the raw primitive at
                     // build time — runtime wraps via Resolve. Already covered by the
@@ -227,7 +227,7 @@ public partial class validateResponse : IContext
                     // in the Choices list is the build-time contract; runtime materializes
                     // the chosen name however the type prefers (App.GetActor for Actor,
                     // ctor registry for Operator, ...).
-                    var choices = (goal.App ?? app)?.Types.Choices.Get(targetType);
+                    var choices = (goal.App ?? app)?.Type.Choices.Get(targetType);
                     if (choices != null)
                     {
                         var sval = p.Value as string;
@@ -241,7 +241,7 @@ public partial class validateResponse : IContext
                     var (_, error) = global::app.type.list.@this.TryConvertTo(p.Value, targetType);
                     if (error == null) continue;
 
-                    var validValues = (goal.App ?? app)?.Types.GetValidValues(targetType);
+                    var validValues = (goal.App ?? app)?.Type.GetValidValues(targetType);
                     var hint = validValues != null && validValues.Length > 0
                         ? $" Valid values: {string.Join(", ", validValues)}."
                         : "";

@@ -89,7 +89,7 @@ public class Stage2_MechanicalTypings_Part2Tests
     [Test]
     public async Task ModulesDescribe_MockIntercept_AdvertisesMockReturnType()
     {
-        var rendered = await _app.Modules.Describe();
+        var rendered = await _app.Module.Describe();
         var row = rendered.FirstOrDefault(a => a.Module == "mock" && a.ActionName == "intercept");
         await Assert.That(row).IsNotNull();
         await Assert.That(row!.ReturnTypeName).IsEqualTo("mock");
@@ -98,7 +98,7 @@ public class Stage2_MechanicalTypings_Part2Tests
     [Test]
     public async Task ModulesDescribe_BuilderRecordHandlers_AdvertiseConcreteReturnTypes()
     {
-        var rendered = await _app.Modules.Describe();
+        var rendered = await _app.Module.Describe();
         var types  = rendered.FirstOrDefault(a => a.Module == "builder" && a.ActionName == "type");
         var goals  = rendered.FirstOrDefault(a => a.Module == "builder" && a.ActionName == "goal");
         var acts   = rendered.FirstOrDefault(a => a.Module == "builder" && a.ActionName == "actions");

@@ -222,11 +222,11 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     /// <summary>
     /// Returns the inventory of channel names visible to the given actor at build time
-    /// (registered on actor.Channels). The builder catalog passes this to the LLM so it
+    /// (registered on actor.Channel). The builder catalog passes this to the LLM so it
     /// can pick a channel from real names — no `to <name>` pattern parsing.
     /// </summary>
     public IReadOnlyList<string> GetChannelInventory(global::app.actor.@this actor)
-        => actor.Channels.ChannelNames.ToList();
+        => actor.Channel.ChannelNames.ToList();
 
     // Capability interfaces — their declared properties are wired by the source generator
     // from the execution context (Step, Channels, Event, Static, Context) and are NOT
@@ -288,7 +288,7 @@ public sealed class @this : IAsyncDisposable
         foreach (var o in orphans)
         {
             var msg = $"Orphan teaching markdown: {o.Path} (no registered action '{o.Module}.{o.Stem}'). Rename the file, register the action, or delete the file.\n";
-            await actor.Channels.WriteTextAsync(global::app.channel.list.@this.Output, msg, cancellationToken);
+            await actor.Channel.WriteTextAsync(global::app.channel.list.@this.Output, msg, cancellationToken);
         }
 
         return orphans;
@@ -325,7 +325,7 @@ public sealed class @this : IAsyncDisposable
                     if (capabilityProps.Contains(prop.Name)) continue;
                     if (prop.GetCustomAttribute<CodeAttribute>() != null) continue;
 
-                    var typeName = (App?.Types.GetTypeName(prop.PropertyType) ?? global::app.type.list.@this.GetTypeNameStatic(prop.PropertyType));
+                    var typeName = (App?.Type.GetTypeName(prop.PropertyType) ?? global::app.type.list.@this.GetTypeNameStatic(prop.PropertyType));
 
                     bool isNullable = Nullable.GetUnderlyingType(prop.PropertyType) != null;
                     if (!isNullable && !prop.PropertyType.IsValueType)
@@ -490,7 +490,7 @@ public sealed class @this : IAsyncDisposable
         {
             var t = returnType.GetGenericArguments()[0];
             if (t == typeof(object)) return "data";
-            return App?.Types.GetTypeName(t) ?? global::app.type.list.@this.GetTypeNameStatic(t);
+            return App?.Type.GetTypeName(t) ?? global::app.type.list.@this.GetTypeNameStatic(t);
         }
 
         // Something else — not a Data variant; surface nothing.
@@ -523,7 +523,7 @@ public sealed class @this : IAsyncDisposable
         foreach (var prop in returnType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
             if (baseProps.Contains(prop.Name)) continue;
-            var typeName = (App?.Types.GetTypeName(prop.PropertyType) ?? global::app.type.list.@this.GetTypeNameStatic(prop.PropertyType));
+            var typeName = (App?.Type.GetTypeName(prop.PropertyType) ?? global::app.type.list.@this.GetTypeNameStatic(prop.PropertyType));
             properties.Add(new data.@this(prop.Name, typeName));
         }
 

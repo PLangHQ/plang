@@ -40,7 +40,7 @@ public sealed class @this : IDisposable
     /// <summary>
     /// Variables for this execution.
     /// </summary>
-    public Variables Variables { get; }
+    public Variables Variable { get; }
 
     /// <summary>
     /// The app's call tree. Read-through to <c>App.CallStack</c> — single tree per run,
@@ -140,7 +140,7 @@ public sealed class @this : IDisposable
     {
         Id = Guid.NewGuid().ToString("N")[..12];
         App = app;
-        Variables = variables ?? new Variables();
+        Variable = variables ?? new Variables();
         Parent = parent;
         CreatedAt = DateTime.UtcNow;
         var linkTo = parentToken ?? parent?.CancellationToken ?? app.ShutdownToken;
@@ -149,7 +149,7 @@ public sealed class @this : IDisposable
         Events.OnChanged = InvalidateEventCache;
 
         // Stamp context on Variables (propagates to all existing Data)
-        Variables.Context = this;
+        Variable.Context = this;
 
         // Register context variables on the Variables
         RegisterContextVariables();
@@ -160,24 +160,24 @@ public sealed class @this : IDisposable
     /// </summary>
     private void RegisterContextVariables()
     {
-        var vars = Variables;
+        var vars = Variable;
 
         // All context variables are lazy — context has app, fetch at request time
         vars.Set(new data.DynamicData("!app", () => App));
         vars.Set(new data.DynamicData("!context", () => this));
-        vars.Set(new data.DynamicData("!variables", () => Variables));
+        vars.Set(new data.DynamicData("!variables", () => Variable));
         vars.Set(new data.DynamicData("!callStack", () => CallStack));
         vars.Set(new data.DynamicData("!trace", () => Trace));
-        vars.Set(new data.DynamicData("!channels", () => Actor?.Channels));
-        vars.Set(new data.DynamicData("!serializers", () => Actor!.Channels.Serializers));
+        vars.Set(new data.DynamicData("!channels", () => Actor?.Channel));
+        vars.Set(new data.DynamicData("!serializers", () => Actor!.Channel.Serializers));
         vars.Set(new data.DynamicData("!goal", () => Goal));
         vars.Set(new data.DynamicData("!step", () => Step));
         // %!error% reads from App.Errors.@this — an AsyncLocal scope managed by
         // error.handle.Wrap via using(app.error.Push(caught)) { ... }. Null outside any
         // active recovery scope; in nested handlers each scope sees its own caught error
         // (LIFO restore on dispose). AsyncLocal is parallelism-safe by construction.
-        vars.Set(new data.DynamicData("!error", () => App.Errors.Error));
-        vars.Set(new data.DynamicData("!data", () => App.System.Context.Variables.GetValue("data")));
+        vars.Set(new data.DynamicData("!error", () => App.Error.Error));
+        vars.Set(new data.DynamicData("!data", () => App.System.Context.Variable.GetValue("data")));
         vars.Set(new data.DynamicData("!event", () => Event ?? App.System?.Context?.Event));
         vars.Set(new data.DynamicData("!test", () => Test));
     }
@@ -260,7 +260,7 @@ public sealed class @this : IDisposable
     /// </summary>
     public @this CreateChild(Variables? variables = null)
     {
-        return new @this(App, variables ?? Variables.Clone(), this);
+        return new @this(App, variables ?? Variable.Clone(), this);
     }
 
     /// <summary>
@@ -316,7 +316,7 @@ public sealed class @this : IDisposable
     /// </summary>
     public @this Clone(Variables? variables = null)
     {
-        var clone = new @this(App, variables ?? Variables.Clone(), Parent)
+        var clone = new @this(App, variables ?? Variable.Clone(), Parent)
         {
             IsAsync = IsAsync,
             Setup = Setup,

@@ -21,7 +21,7 @@ public class CanonicalizationTests
         // matches what a wire-driven canonicalization would produce.
         await using var app = NewSignedApp();
         var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var data = new global::app.data.@this("greeting", "hello") { Context = app.User.Context };
 
@@ -48,7 +48,7 @@ public class CanonicalizationTests
     {
         await using var app = NewSignedApp();
         var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var data = new global::app.data.@this("x", "y") { Context = app.User.Context };
 
@@ -68,7 +68,7 @@ public class CanonicalizationTests
     {
         await using var app = NewSignedApp();
         var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var inner = new global::app.data.@this("inner", "secret") { Context = app.User.Context };
         var outer = new global::app.data.@this("outer", inner) { Context = app.User.Context };
@@ -123,7 +123,7 @@ public class CanonicalizationTests
         var outer = new global::app.data.@this("outer", inner) { Context = app.User.Context };
 
         var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var outBytes = plang.Serialize(outer).Value!;
         await Assert.That(outBytes).DoesNotContain("PRIV-must-persist")
@@ -146,7 +146,7 @@ public class CanonicalizationTests
         var outer = new global::app.data.@this("outer", dict) { Context = app.User.Context };
 
         var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
         var json = plang.Serialize(outer).Value!;
 
         await Assert.That(inner.Signature).IsNotNull()

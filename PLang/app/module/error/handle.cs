@@ -148,7 +148,7 @@ public partial class Handle : IContext, IModifier
         actor.context.@this context,
         app.error.IError caughtError)
     {
-        using (context.App.Errors.Push(caughtError))
+        using (context.App.Error.Push(caughtError))
         {
             return await RunRecovery(actions, context);
         }

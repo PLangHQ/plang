@@ -30,7 +30,7 @@ public class DiscoverDenialPathTests
     [Test] public async Task Discover_WithTestPathOutsideRoot_DenialNotSilentEmpty()
     {
         var app = NewApp(out _);
-        app.User.Channels.Register(new CannedChannel("n"));
+        app.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = "//etc";
         var action = new global::app.module.test.discover
         {
@@ -48,7 +48,7 @@ public class DiscoverDenialPathTests
     [Test] public async Task Discover_WithDotDotTraversal_DeniedByAuthGate()
     {
         var app = NewApp(out _);
-        app.User.Channels.Register(new CannedChannel("n"));
+        app.User.Channel.Register(new CannedChannel("n"));
         var action = new global::app.module.test.discover
         {
             Context = app.User.Context,

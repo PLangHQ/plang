@@ -14,7 +14,7 @@ namespace PLang.Tests.App.Tester;
 /// <summary>
 /// Batch 5 — AssertionError.Variables + assert handlers.
 /// AssertionError gains a nullable Variables property (Dictionary&lt;string, object?&gt;).
-/// Each assert handler, on failure, populates this by calling Context.Variables.Snapshot().
+/// Each assert handler, on failure, populates this by calling Context.Variable.Snapshot().
 /// The runner then reads AssertionError.Variables to render the failure diagnostic with
 /// the variable state at the moment of failure.
 /// </summary>
@@ -42,7 +42,7 @@ public class AssertionErrorVariablesTests
         await Assert.That(err2.Variables).IsNull();
     }
 
-    // Property is settable and gettable — handlers assign Context.Variables.Snapshot()
+    // Property is settable and gettable — handlers assign Context.Variable.Snapshot()
     // on failure; readers (renderer, JSON export) pull the dict back out.
     [Test]
     public async Task AssertionError_Variables_PropertyRoundtrip()
@@ -55,13 +55,13 @@ public class AssertionErrorVariablesTests
     }
 
     // Canonical failure path: assert.equals fails → returned Data.Error is AssertionError
-    // with Variables populated from the current Context.Variables.Snapshot().
+    // with Variables populated from the current Context.Variable.Snapshot().
     [Test]
     public async Task EqualsHandler_OnFailure_PopulatesVariablesFromSnapshot()
     {
         var context = _app.User.Context;
-        context.Variables.Set("score", 42);
-        context.Variables.Set("label", "foo");
+        context.Variable.Set("score", 42);
+        context.Variable.Set("label", "foo");
 
         var action = new AssertEquals { Context = context, Expected = D(1), Actual = D(2) };
         var result = await action.Run();
@@ -80,7 +80,7 @@ public class AssertionErrorVariablesTests
     public async Task EqualsHandler_OnSuccess_VariablesNotPopulated()
     {
         var context = _app.User.Context;
-        context.Variables.Set("x", 1);
+        context.Variable.Set("x", 1);
 
         var action = new AssertEquals { Context = context, Expected = D(5), Actual = D(5) };
         var result = await action.Run();
@@ -98,7 +98,7 @@ public class AssertionErrorVariablesTests
     public async Task AllAssertHandlers_OnFailure_ConsistentlyPopulateVariables()
     {
         var context = _app.User.Context;
-        context.Variables.Set("watched", "sentinel");
+        context.Variable.Set("watched", "sentinel");
 
         var failures = new List<Data>
         {

@@ -32,7 +32,7 @@ public class Stage4_BuildMethodImplsTests
     private async Task<Data> Build(string module, string action, params (string name, object? value)[] parameters)
     {
         var a = Make(module, action, parameters);
-        var (handler, err) = _app.Modules.GetCodeGenerated(a);
+        var (handler, err) = _app.Module.GetCodeGenerated(a);
         await Assert.That(err).IsNull();
         var classified = (IClass)handler!;
         classified.SetAction(a, _app.User.Context);
@@ -77,7 +77,7 @@ public class Stage4_BuildMethodImplsTests
     public async Task FileRead_Build_LiteralMissingFile_WritesBuildWarning()
     {
         var channel = (global::app.channel.stream.@this)
-            _app.User.Channels.CreateMemoryChannel("builder");
+            _app.User.Channel.CreateMemoryChannel("builder");
 
         const string missing = "definitely-missing-stage4.csv";
         var result = await Build("file", "read", ("Path", missing));

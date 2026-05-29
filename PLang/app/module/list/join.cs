@@ -11,7 +11,7 @@ public partial class Join : IContext
 
     public Task<data.@this<string>> Run()
     {
-        var data = Context.Variables.Get(ListName.Value);
+        var data = Context.Variable.Get(ListName.Value);
         var strings = new List<string>();
 
         foreach (var (_, item) in data.EnumerateItems())

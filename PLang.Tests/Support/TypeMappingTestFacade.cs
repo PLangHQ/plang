@@ -1,6 +1,6 @@
 // Test-only compatibility facade for the former `App.Utils.TypeMapping` and
 // `App.Utils.Json` static classes. Production callers were migrated to
-// `app.Types.X(...)` (stage 26) and the dispersed Json bag homes (stage 27);
+// `app.Type.X(...)` (stage 26) and the dispersed Json bag homes (stage 27);
 // tests retain the flat static-call shape for ergonomics.
 
 namespace app.Utils;
@@ -12,19 +12,19 @@ internal static class TypeMapping
     /// <summary>For tests that need the live App backing this facade (e.g. Register that must persist across calls).</summary>
     internal static global::app.@this App => _app;
 
-    public static System.Type? GetType(string typeName) => _app.Types.Get(typeName);
+    public static System.Type? GetType(string typeName) => _app.Type.Get(typeName);
 
-    public static string GetTypeName(System.Type type) => _app.Types.GetTypeName(type);
+    public static string GetTypeName(System.Type type) => _app.Type.GetTypeName(type);
 
-    public static void Register(string plangName, System.Type clrType) => _app.Types.Register(plangName, clrType);
+    public static void Register(string plangName, System.Type clrType) => _app.Type.Register(plangName, clrType);
 
     public static string[]? GetValidValues(System.Type type, global::app.actor.context.@this? context = null)
-        => _app.Types.GetValidValues(type, context);
+        => _app.Type.GetValidValues(type, context);
 
-    public static List<string> GetBuilderTypeNames() => _app.Types.GetBuilderTypeNames();
+    public static List<string> GetBuilderTypeNames() => _app.Type.GetBuilderTypeNames();
 
     public static List<global::app.builder.type.Entry> BuildTypeEntries(global::app.module.@this? modules)
-        => _app.Types.BuildTypeEntries(modules);
+        => _app.Type.BuildTypeEntries(modules);
 
     public static bool IsScalarPlangType(System.Type type) => global::app.type.list.@this.IsScalarPlangType(type);
 

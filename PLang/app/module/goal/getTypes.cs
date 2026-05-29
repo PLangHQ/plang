@@ -36,7 +36,7 @@ public partial class getTypes : IContext
     public Task<data.@this<List<Dictionary<string, string>>>> Run()
     {
         var goal = Goal.Value!;
-        var modules = Context.App!.Modules;
+        var modules = Context.App!.Module;
 
         var perStep = new List<Dictionary<string, string>>(goal.Steps.Count);
         var working = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);

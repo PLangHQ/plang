@@ -12,7 +12,7 @@ public class MockTests
     private (global::app.actor.context.@this context, Variables memory, global::app.@this app) CreateContext()
     {
         var app = new global::app.@this("/app");
-        return (app.User.Context, app.User.Context.Variables, app);
+        return (app.User.Context, app.User.Context.Variable, app);
     }
 
     // --- mock.action: simple return ---

@@ -87,7 +87,7 @@ public class FileSystemPermissionFlowTests
     public async Task InRootPath_ReturnsOk_NoAskIssued(string method)
     {
         var app = NewApp(out var root);
-        app.User.Channels.Register(new CannedChannel("UNEXPECTED"));
+        app.User.Channel.Register(new CannedChannel("UNEXPECTED"));
         PrepareForRead(root, method);
         var targetPath = method switch
         {
@@ -107,7 +107,7 @@ public class FileSystemPermissionFlowTests
     public async Task OutOfRoot_StreamChannel_BlocksAndCompletes_GrantStored(string method)
     {
         var app = NewApp(out _);
-        app.User.Channels.Register(new CannedChannel("a"));
+        app.User.Channel.Register(new CannedChannel("a"));
 
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8]);
@@ -138,7 +138,7 @@ public class FileSystemPermissionFlowTests
     public async Task OutOfRoot_MessageChannel_ReturnsDataAsk_WithSnapshot(string method)
     {
         var app = NewApp(out _);
-        app.User.Channels.Register(new StatelessChannel());
+        app.User.Channel.Register(new StatelessChannel());
 
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8]);

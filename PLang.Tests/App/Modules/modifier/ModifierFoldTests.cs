@@ -62,7 +62,7 @@ public class ModifierFoldTests
         var result = await action.RunAsync(Ctx);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(Ctx.Variables.GetValue("x")).IsEqualTo("hello");
+        await Assert.That(Ctx.Variable.GetValue("x")).IsEqualTo("hello");
     }
 
     [Test]
@@ -90,7 +90,7 @@ public class ModifierFoldTests
         var result = await action.RunAsync(Ctx);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(Ctx.Variables.GetValue("y")).IsEqualTo("wrapped");
+        await Assert.That(Ctx.Variable.GetValue("y")).IsEqualTo("wrapped");
     }
 
     [Test]
@@ -124,7 +124,7 @@ public class ModifierFoldTests
         var result = await action.RunAsync(Ctx);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(Ctx.Variables.GetValue("z")).IsEqualTo("nested");
+        await Assert.That(Ctx.Variable.GetValue("z")).IsEqualTo("nested");
     }
 
     [Test]
@@ -166,7 +166,7 @@ public class ModifierFoldTests
         var result = await action.RunAsync(Ctx);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(Ctx.Variables.GetValue("q")).IsEqualTo("full");
+        await Assert.That(Ctx.Variable.GetValue("q")).IsEqualTo("full");
     }
 
     [Test]

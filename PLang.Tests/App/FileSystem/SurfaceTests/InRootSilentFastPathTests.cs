@@ -36,7 +36,7 @@ public class InRootSilentFastPathTests
     {
         var app = NewApp(out var root);
         var ch = new AskCountingChannel();
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
         var file = System.IO.Path.Combine(root, "f.txt");
         System.IO.File.WriteAllText(file, "hello");
         var p = new FilePath(file, app.User.Context);
@@ -49,7 +49,7 @@ public class InRootSilentFastPathTests
     {
         var app = NewApp(out var root);
         var ch = new AskCountingChannel();
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
         var file = System.IO.Path.Combine(root, "w.txt");
         var p = new FilePath(file, app.User.Context);
         var r = await p.WriteText("hello");
@@ -61,7 +61,7 @@ public class InRootSilentFastPathTests
     {
         var app = NewApp(out var root);
         var ch = new AskCountingChannel();
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
         for (int i = 0; i < 10; i++)
             System.IO.File.WriteAllText(System.IO.Path.Combine(root, $"f{i}.txt"), $"f{i}");
         var dir = new FilePath(root, app.User.Context);
@@ -76,7 +76,7 @@ public class InRootSilentFastPathTests
     {
         var app = NewApp(out var root);
         var ch = new AskCountingChannel();
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
         var srcAssembly = typeof(InRootSilentFastPathTests).Assembly.Location;
         var copyAt = System.IO.Path.Combine(root, "test.dll");
         System.IO.File.Copy(srcAssembly, copyAt, overwrite: true);

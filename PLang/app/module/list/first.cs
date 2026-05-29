@@ -9,7 +9,7 @@ public partial class First : IContext
 
     public Task<data.@this<object>> Run()
     {
-        var data = Context.Variables.Get(ListName.Value);
+        var data = Context.Variable.Get(ListName.Value);
         var first = data.GetChild("[0]");
 
         return Task.FromResult(first.IsInitialized ? global::app.data.@this<object>.Ok(first.Value) : new global::app.data.@this<object>());

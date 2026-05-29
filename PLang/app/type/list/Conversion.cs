@@ -254,12 +254,12 @@ public sealed partial class @this
         {
             try
             {
-                return (context.App.Types.Scheme.From(rawPath, context), null);
+                return (context.App.Type.Scheme.From(rawPath, context), null);
             }
             catch (global::app.type.path.scheme.SchemeNotRegistered snr)
             {
                 return (null, new error.Error(snr.Message, "SchemeNotRegistered", 400)
-                    { FixSuggestion = $"Register a factory for scheme '{snr.Scheme}' via app.Types.Scheme.Register, or use a bare/file:// path." });
+                    { FixSuggestion = $"Register a factory for scheme '{snr.Scheme}' via app.Type.Scheme.Register, or use a bare/file:// path." });
             }
             catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
             {
@@ -342,7 +342,7 @@ public sealed partial class @this
         {
             if (value is string goalName)
             {
-                if (context?.App.Types.IsClrTypeName(goalName) ?? false)
+                if (context?.App.Type.IsClrTypeName(goalName) ?? false)
                     return (null, new error.Error(
                         $"GoalCall.Name was set to a CLR type name '{goalName}' from a string source.",
                         "ClrTypeNameInGoalSlot", 500)
@@ -367,7 +367,7 @@ public sealed partial class @this
             if (value is IDictionary<string, object?> dict)
             {
                 var name = dict.TryGetValue("name", out var n) ? n?.ToString() ?? "" : "";
-                if (context?.App.Types.IsClrTypeName(name) ?? false)
+                if (context?.App.Type.IsClrTypeName(name) ?? false)
                     return (null, new error.Error(
                         $"GoalCall.Name was set to a CLR type name '{name}'.",
                         "ClrTypeNameInGoalSlot", 500)

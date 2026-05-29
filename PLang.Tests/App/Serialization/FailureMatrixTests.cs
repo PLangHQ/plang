@@ -33,7 +33,7 @@ public class FailureMatrixTests
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-fm-" + Guid.NewGuid().ToString("N")[..8]));
         var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var d = new global::app.data.@this("x", "untampered") { Context = app.User.Context };
         var wire = plang.Serialize(d).Value!;

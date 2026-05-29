@@ -9,6 +9,6 @@ public partial class Exists : IContext
 
     public Task<data.@this<bool>> Run()
     {
-        return Task.FromResult(global::app.data.@this<bool>.Ok(Context.Variables.Contains(Name.Value)));
+        return Task.FromResult(global::app.data.@this<bool>.Ok(Context.Variable.Contains(Name.Value)));
     }
 }

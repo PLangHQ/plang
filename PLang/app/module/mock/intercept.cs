@@ -35,12 +35,12 @@ public partial class intercept : IContext
             // Check parameter matching if specified
             if (paramMatchers != null && currentAction != null)
             {
-                if (!ParametersMatch(currentAction, context.Variables, paramMatchers))
+                if (!ParametersMatch(currentAction, context.Variable, paramMatchers))
                     return Data(); // no match, let real action run
             }
 
             // Record the call
-            var capturedParams = CaptureParameters(currentAction, context.Variables);
+            var capturedParams = CaptureParameters(currentAction, context.Variable);
             handle.RecordCall(capturedParams);
 
             // Goal-based mock — call the goal

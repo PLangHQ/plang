@@ -29,7 +29,7 @@ public class NamePropagationTests
     public async Task Name_FullVarMatch_PropagatesLiveVariableName()
     {
         var context = _app.User.Context;
-        context.Variables.Set(new global::app.data.@this<List<object?>>("products", new List<object?> { "a" }) { Context = context });
+        context.Variable.Set(new global::app.data.@this<List<object?>>("products", new List<object?> { "a" }) { Context = context });
 
         var paramData = new Data("List", "%products%") { Context = context };
         var result = paramData.As<System.Collections.IEnumerable>();
@@ -55,7 +55,7 @@ public class NamePropagationTests
     public async Task Name_PartialInterpolation_KeepsSlotName()
     {
         var context = _app.User.Context;
-        context.Variables.Set(new global::app.data.@this<string>("name", "world") { Context = context });
+        context.Variable.Set(new global::app.data.@this<string>("name", "world") { Context = context });
 
         var paramData = new Data("Greeting", "hello %name%!") { Context = context };
         var result = paramData.As<string>();
@@ -82,7 +82,7 @@ public class NamePropagationTests
     public async Task Name_NestedListResolution_PreservesSlotName()
     {
         var context = _app.User.Context;
-        context.Variables.Set(new global::app.data.@this<string>("b", "expanded") { Context = context });
+        context.Variable.Set(new global::app.data.@this<string>("b", "expanded") { Context = context });
 
         var paramData = new Data("Items", new List<object?> { "a", "%b%", "c" }) { Context = context };
         var result = paramData.As<System.Collections.IEnumerable>();
@@ -97,8 +97,8 @@ public class NamePropagationTests
     public async Task Name_FullMatch_StoredVarRef_PropagatesImmediateName_NoChain()
     {
         var context = _app.User.Context;
-        context.Variables.Set(new global::app.data.@this<int>("b", 42) { Context = context });
-        context.Variables.Set(new global::app.data.@this<string>("a", "%b%") { Context = context });
+        context.Variable.Set(new global::app.data.@this<int>("b", 42) { Context = context });
+        context.Variable.Set(new global::app.data.@this<string>("a", "%b%") { Context = context });
 
         var paramData = new Data("Slot", "%a%") { Context = context };
         var result = paramData.As<string>();

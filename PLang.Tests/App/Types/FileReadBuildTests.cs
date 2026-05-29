@@ -18,14 +18,14 @@ public class FileReadBuildTests
         // The action Build() returns the high-level type stamp. For .png the
         // formats registry maps the extension → "image".
         await using var app = NewApp();
-        var k = app.Formats.Kind("png");
+        var k = app.Format.Kind("png");
         await Assert.That(k).IsEqualTo("image");
     }
 
     [Test] public async Task FileReadBuild_TxtExtension_ReturnsHighLevelType_Text()
     {
         await using var app = NewApp();
-        var k = app.Formats.Kind("txt");
+        var k = app.Format.Kind("txt");
         await Assert.That(k).IsEqualTo("text");
     }
 
@@ -91,7 +91,7 @@ public class FileReadBuildTests
         // name. The action Build returns Ok() (no stamp) when even that isn't
         // a registered PLang type.
         await using var app = NewApp();
-        await Assert.That(app.Formats.Kind("xyz")).IsNull();
+        await Assert.That(app.Format.Kind("xyz")).IsNull();
     }
 
     [Test] public async Task FileReadRun_ReturnsBareDataPolymorphic_NotStaticDataImage()

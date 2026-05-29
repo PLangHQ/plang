@@ -112,8 +112,8 @@ public sealed partial class @this
     /// </summary>
     public @this Build()
     {
-        var primitives = _modules.App?.Types.GetBuilderTypeNames() ?? new List<string>();
-        var types = _modules.App?.Types.BuildTypeEntries(_modules) ?? new List<Entry>();
+        var primitives = _modules.App?.Type.GetBuilderTypeNames() ?? new List<string>();
+        var types = _modules.App?.Type.BuildTypeEntries(_modules) ?? new List<Entry>();
 
         return new @this(_modules)
         {

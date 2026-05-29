@@ -76,7 +76,7 @@ public class VariableResolveTests
     [Test]
     public async Task SlotData_PercentWrapped_AsVariable_IgnoresExistingValue()
     {
-        _app.User.Context.Variables.Set("x", 5);
+        _app.User.Context.Variable.Set("x", 5);
         var slot = new Data("Name", "%x%") { Context = _app.User.Context };
 
         var resolved = slot.As<Variable>(_app.User.Context);

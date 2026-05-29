@@ -41,7 +41,7 @@ public class Stage8_ChannelEventsTests
     {
         await using var app = new global::app.@this("/test", autoWireConsoleChannels: false);
         var ch = StreamChannel.Memory("logger");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
         Data? captured = null;
         ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, payload) =>
         {
@@ -77,7 +77,7 @@ public class Stage8_ChannelEventsTests
     {
         await using var app = new global::app.@this("/test", autoWireConsoleChannels: false);
         var ch = StreamChannel.Memory("c");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
         bool afterFired = false;
         ch.Events.Add(new EventBinding(EventType.AfterWrite, (_, _, _) =>
         {
@@ -112,7 +112,7 @@ public class Stage8_ChannelEventsTests
     {
         await using var app = new global::app.@this("/test", autoWireConsoleChannels: false);
         var ch = StreamChannel.Memory("c");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
         ch.Events.Add(new EventBinding(EventType.AfterWrite, (_, _, _) =>
             throw new InvalidOperationException("after fail")));
         var result = await ch.WriteAsync(Data.Ok("hi"));
@@ -140,7 +140,7 @@ public class Stage8_ChannelEventsTests
     {
         await using var app = new global::app.@this("/test", autoWireConsoleChannels: false);
         var ch = StreamChannel.Memory("c");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
         var order = new List<string>();
         ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, _) => { order.Add("A"); return Task.FromResult(Data.Ok()); }));
         ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, _) => { order.Add("B"); return Task.FromResult(Data.Ok()); }));
@@ -208,12 +208,12 @@ public class Stage8_ChannelEventsTests
         await using var app = new global::app.@this("/tmp/s8-cross");
         var userLogger = StreamChannel.Memory("logger");
         var serviceLogger = StreamChannel.Memory("logger");
-        app.User.Channels.Register(userLogger);
+        app.User.Channel.Register(userLogger);
         await using var svc = app.Services.New(parent: app.User);
         svc.Channels.Register(serviceLogger);
 
         var hits = 0;
-        app.Events.Register(new EventBinding(EventType.BeforeWrite,
+        app.Event.Register(new EventBinding(EventType.BeforeWrite,
             (_, _, _) => { hits++; return Task.FromResult(Data.Ok()); },
             channelName: "logger"));
 
@@ -227,10 +227,10 @@ public class Stage8_ChannelEventsTests
     {
         await using var app = new global::app.@this("/tmp/s8-iso");
         var ch = StreamChannel.Memory("c");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
 
         bool goalFired = false;
-        app.Events.Register(new EventBinding(EventType.BeforeGoal,
+        app.Event.Register(new EventBinding(EventType.BeforeGoal,
             (_, _, _) => { goalFired = true; return Task.FromResult(Data.Ok()); }));
 
         await ch.WriteAsync(Data.Ok("x"));

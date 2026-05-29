@@ -32,13 +32,13 @@ public class OutputAskRoutingTests
     {
         var app = NewApp();
         var context = app.User.Context;
-        context.Variables.Set(ask.AnswerVariableName, "Alice");
+        context.Variable.Set(ask.AnswerVariableName, "Alice");
 
         var handler = new ask { Context = context, Question = new global::app.data.@this<string>("", "name?") };
         var result = await handler.Run();
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value?.Answer).IsEqualTo("Alice");
-        await Assert.That(context.Variables.Get(ask.AnswerVariableName).IsInitialized).IsFalse();
+        await Assert.That(context.Variable.Get(ask.AnswerVariableName).IsInitialized).IsFalse();
     }
 
     [Test] public async Task OutputAsk_NoAnswerSentinel_DelegatesToChannelAsk()
@@ -47,7 +47,7 @@ public class OutputAskRoutingTests
         var context = app.User.Context;
 
         var msg = new TestMessageChannel("input");
-        app.User.Channels.Register(msg);
+        app.User.Channel.Register(msg);
 
         var handler = new ask { Context = context, Question = new global::app.data.@this<string>("", "name?") };
         var result = await handler.Run();

@@ -23,7 +23,7 @@ public class Stage0_NamedChannelsTests
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
 
-    private global::app.channel.list.@this Channels => _app.User.Channels;
+    private global::app.channel.list.@this Channels => _app.User.Channel;
 
     private Channel RegisterMemoryChannel(string name)
     {

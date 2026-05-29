@@ -118,7 +118,7 @@ public class FileHandlerTests : IDisposable
     public async Task Read_ResolveVariablesTrue_ResolvesVariableInContent()
     {
         System.IO.File.WriteAllText(TempPath("template.txt"), "Hello %name%, welcome");
-        _app.User.Context.Variables.Set("name", "Ingi");
+        _app.User.Context.Variable.Set("name", "Ingi");
 
         var action = new Read
         {
@@ -138,7 +138,7 @@ public class FileHandlerTests : IDisposable
         // Default value of ResolveVariables is false (per [Default(false)]). Even
         // when %var% is set, the literal must come back unresolved.
         System.IO.File.WriteAllText(TempPath("literal.txt"), "Hello %name%, welcome");
-        _app.User.Context.Variables.Set("name", "Ingi");
+        _app.User.Context.Variable.Set("name", "Ingi");
 
         var action = new Read
         {
@@ -438,7 +438,7 @@ public class FileHandlerTests : IDisposable
         System.IO.File.WriteAllText(TempPath("real.txt"), "I exist");
 
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new StreamChannel(
+        _app.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
@@ -495,13 +495,13 @@ public class FileHandlerTests : IDisposable
 
         await Assert.That(goalResult.Success).IsTrue();
 
-        var fileData = context.Variables.Get("fileResult");
+        var fileData = context.Variable.Get("fileResult");
         await Assert.That(fileData).IsNotNull();
         var fileObj = fileData!.Value as PLangPath;
         await Assert.That(fileObj).IsNotNull();
         await Assert.That(await fileObj!.AsBooleanAsync()).IsTrue();
 
-        var existsData = context.Variables.Get("fileResult.Exists");
+        var existsData = context.Variable.Get("fileResult.Exists");
         await Assert.That(existsData).IsNotNull();
         await Assert.That(existsData!.Value).IsEqualTo(true);
 
@@ -514,7 +514,7 @@ public class FileHandlerTests : IDisposable
     public async Task Integration_FileNotExists_FlowsThroughVariables_ToOutput()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new StreamChannel(
+        _app.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
@@ -571,7 +571,7 @@ public class FileHandlerTests : IDisposable
 
         await Assert.That(goalResult.Success).IsTrue();
 
-        var existsData = context.Variables.Get("fileResult.Exists");
+        var existsData = context.Variable.Get("fileResult.Exists");
         await Assert.That(existsData).IsNotNull();
         await Assert.That(existsData!.Value).IsEqualTo(false);
 

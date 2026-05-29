@@ -32,7 +32,7 @@ public partial class CacheWrap : IContext, IModifier
             if (cached != null)
             {
                 var hit = cached.ShallowClone();
-                context.Variables.Set("!data", hit);
+                context.Variable.Set("!data", hit);
                 return hit;
             }
 

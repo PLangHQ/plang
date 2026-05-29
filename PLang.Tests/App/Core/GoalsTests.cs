@@ -327,7 +327,7 @@ public class GoalsTests
             var json = """{"name":"SetupDb","isSetup":true,"path":"/SetupDb.goal","steps":[]}""";
             System.IO.File.WriteAllText(prPath, json);
 
-            var result = await engine.Goals.GetAsync("SetupDb");
+            var result = await engine.Goal.GetAsync("SetupDb");
 
             await Assert.That(result).IsNull();
         }
@@ -353,7 +353,7 @@ public class GoalsTests
             var json = """{"name":"NormalGoal","isSetup":false,"path":"/NormalGoal.goal","steps":[]}""";
             System.IO.File.WriteAllText(prPath, json);
 
-            var result = await engine.Goals.GetAsync("NormalGoal");
+            var result = await engine.Goal.GetAsync("NormalGoal");
 
             await Assert.That(result).IsNotNull();
             await Assert.That(result!.Name).IsEqualTo("NormalGoal");
@@ -380,7 +380,7 @@ public class GoalsTests
             var json = """{"name":"SetupDb","isSetup":true,"path":"/SetupDb.goal","steps":[]}""";
             System.IO.File.WriteAllText(prPath, json);
 
-            var result = await engine.Goals.GetByPrPathAsync(prPath);
+            var result = await engine.Goal.GetByPrPathAsync(prPath);
 
             await Assert.That(result).IsNull();
         }

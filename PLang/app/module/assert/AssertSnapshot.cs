@@ -16,7 +16,7 @@ internal static class AssertSnapshot
     {
         if (result.Success) return result;
         if (result.Error is AssertionError err && err.Variables == null)
-            err.Variables = context.Variables.Snapshot();
+            err.Variables = context.Variable.Snapshot();
         return result;
     }
 }

@@ -4,7 +4,7 @@ namespace app.format.list;
 
 /// <summary>
 /// File format characteristics: extension → Kind, extension → MIME, Kind →
-/// compressibility. Owned by App as <c>app.Formats</c>; one per app.
+/// compressibility. Owned by App as <c>app.Format</c>; one per app.
 ///
 /// Split out of <see cref="Types.@this"/> in stage 18 — Types is about
 /// PLang-name ↔ CLR type identity; format characteristics are a separate

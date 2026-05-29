@@ -40,7 +40,7 @@ public class Stage4_TypeHintPrecedenceTests
     [Test]
     public async Task SerializersGetByExtension_SingleSegment_Resolves()
     {
-        var json = _app.User.Channels.Serializers.GetByExtension(".json");
+        var json = _app.User.Channel.Serializers.GetByExtension(".json");
         await Assert.That(json).IsNotNull();
     }
 
@@ -60,9 +60,9 @@ public class Stage4_TypeHintPrecedenceTests
     public async Task SerializersGetByExtension_MultiSegment_Resolves()
     {
         var stub = new StubSerializer { Extension = ".junit.xml", Type = "application/junit+xml" };
-        _app.User.Channels.Serializers.Register(stub);
+        _app.User.Channel.Serializers.Register(stub);
 
-        var resolved = _app.User.Channels.Serializers.GetByExtension(".junit.xml");
+        var resolved = _app.User.Channel.Serializers.GetByExtension(".junit.xml");
         await Assert.That(resolved).IsEqualTo((global::app.channel.serializer.ISerializer)stub);
     }
 
@@ -73,9 +73,9 @@ public class Stage4_TypeHintPrecedenceTests
         // doesn't have its own registration must walk down to the trailing
         // segment and resolve there.
         var xml = new StubSerializer { Extension = ".xml", Type = "application/xml" };
-        _app.User.Channels.Serializers.Register(xml);
+        _app.User.Channel.Serializers.Register(xml);
 
-        var resolved = _app.User.Channels.Serializers.GetByExtension(".unknown.xml");
+        var resolved = _app.User.Channel.Serializers.GetByExtension(".unknown.xml");
         await Assert.That(resolved).IsEqualTo((global::app.channel.serializer.ISerializer)xml);
     }
 
@@ -97,7 +97,7 @@ public class Stage4_TypeHintPrecedenceTests
     }
 
     private static async Task<List<string>> RunBuildPass(StepActions actions, global::app.@this app)
-        => await Default.RunBuildPass(actions, app.Modules, app.User.Context);
+        => await Default.RunBuildPass(actions, app.Module, app.User.Context);
 
     [Test]
     public async Task BuilderValidate_UserHintWinsOverBuildInference()
@@ -152,7 +152,7 @@ public class Stage4_TypeHintPrecedenceTests
     public async Task OutputAsk_Build_ReturnsBareOk_DefersToHint()
     {
         var action = Make("output", "ask", ("Question", "?"));
-        var (handler, _) = _app.Modules.GetCodeGenerated(action);
+        var (handler, _) = _app.Module.GetCodeGenerated(action);
         var classified = (IClass)handler!;
         classified.SetAction(action, _app.User.Context);
         var result = await classified.Build();

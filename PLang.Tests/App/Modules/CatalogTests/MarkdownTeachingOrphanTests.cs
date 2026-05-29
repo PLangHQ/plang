@@ -32,11 +32,11 @@ public class MarkdownTeachingOrphanTests
         Directory.CreateDirectory(Path.Combine(_mdRoot, "fixturemod"));
 
         _app = new PLangEngine(_tempDir);
-        _app.Modules.MarkdownTeachingRoot = _mdRoot;
-        _app.Modules.RegisterType("fixturemod", "setvalue", typeof(FixtureAction));
+        _app.Module.MarkdownTeachingRoot = _mdRoot;
+        _app.Module.RegisterType("fixturemod", "setvalue", typeof(FixtureAction));
 
         _capture = new MemoryStream();
-        _app.User.Channels.Register(new StreamChannel(
+        _app.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, _capture,
             ChannelDirection.Output, ownsStream: false));
     }
@@ -67,7 +67,7 @@ public class MarkdownTeachingOrphanTests
     {
         Stage("unknownaction.notes.md");
 
-        var orphans = await _app.Modules.WarnOrphansAsync(_app.User);
+        var orphans = await _app.Module.WarnOrphansAsync(_app.User);
         await Assert.That(orphans.Count).IsEqualTo(1);
         await Assert.That(orphans[0].Stem).IsEqualTo("unknownaction");
 
@@ -75,7 +75,7 @@ public class MarkdownTeachingOrphanTests
         await Assert.That(output).Contains("unknownaction.notes.md");
 
         // Catalog still assembles — the registered fixture action is still there.
-        var catalog = await _app.Modules.Describe();
+        var catalog = await _app.Module.Describe();
         await Assert.That(catalog.Any(a => a.Module == "fixturemod" && a.ActionName == "setvalue")).IsTrue();
     }
 
@@ -86,7 +86,7 @@ public class MarkdownTeachingOrphanTests
         Stage("module.examples.md");
         Stage("module.description.md");
 
-        var orphans = await _app.Modules.WarnOrphansAsync(_app.User);
+        var orphans = await _app.Module.WarnOrphansAsync(_app.User);
         await Assert.That(orphans.Count).IsEqualTo(0);
         await Assert.That(CapturedOutput()).IsEmpty();
     }
@@ -97,7 +97,7 @@ public class MarkdownTeachingOrphanTests
         Stage("orphanA.notes.md");
         Stage("orphanB.description.md");
 
-        var orphans = await _app.Modules.WarnOrphansAsync(_app.User);
+        var orphans = await _app.Module.WarnOrphansAsync(_app.User);
         await Assert.That(orphans.Count).IsEqualTo(2);
 
         var output = CapturedOutput();

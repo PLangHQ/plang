@@ -91,7 +91,7 @@ public class Stage1_ChannelBaseTests
         var captureA = new MemoryStream();
         var jsonCh = new StreamChannel("json", captureA, ChannelDirection.Output, ownsStream: false)
         { Mime = "application/json" };
-        app.User.Channels.Register(jsonCh);
+        app.User.Channel.Register(jsonCh);
         await jsonCh.Write(Data.Ok(new { name = "x" }));
         await jsonCh.DisposeAsync();
         var jsonText = global::System.Text.Encoding.UTF8.GetString(captureA.ToArray());
@@ -100,7 +100,7 @@ public class Stage1_ChannelBaseTests
         var captureB = new MemoryStream();
         var textCh = new StreamChannel("txt", captureB, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" };
-        app.User.Channels.Register(textCh);
+        app.User.Channel.Register(textCh);
         await textCh.Write(Data.Ok("plain hello"));
         await textCh.DisposeAsync();
         var raw = global::System.Text.Encoding.UTF8.GetString(captureB.ToArray());

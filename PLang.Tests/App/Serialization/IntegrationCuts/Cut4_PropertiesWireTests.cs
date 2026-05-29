@@ -13,7 +13,7 @@ public class Cut4_PropertiesWireTests
     {
         var app = NewApp();
         var plang = (global::app.channel.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
         var d = new global::app.data.@this("response", "Hello!") { Context = app.User.Context };
         d.Properties["cost"] = 100;
         d.Properties["model"] = "claude-opus-4-7";
@@ -71,7 +71,7 @@ public class Cut4_PropertiesWireTests
             var tampered = wire.Replace("\"cost\":100", "\"cost\":999");
             await Assert.That(tampered).IsNotEqualTo(wire);
             var plang = (global::app.channel.serializer.plang.@this)
-                app.User.Channels.Serializers.GetByMimeType("application/plang");
+                app.User.Channel.Serializers.GetByMimeType("application/plang");
             var back = (global::app.data.@this)plang.Deserialize(tampered).Value!;
             back.Context = app.User.Context;
             var verify = await app.RunAction<global::app.module.signing.verify>(

@@ -40,7 +40,7 @@ public class FluidIncludeDenialTests
     [Test] public async Task FluidInclude_TemplateOutsideRoot_DeniedByAuthGate()
     {
         var app = NewApp(out var root);
-        app.User.Channels.Register(new CannedChannel("n"));
+        app.User.Channel.Register(new CannedChannel("n"));
         // Anchor the goal under the App root so GetTemplateBaseDir picks
         // the goal's parent; the include path "../../foreign/secret.liquid"
         // walks out and AuthGate denies.
@@ -74,7 +74,7 @@ public class FluidIncludeDenialTests
     {
         var app = NewApp(out var root);
         var ch = new CannedChannel("UNEXPECTED");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
         // In-root partial: goal at /host.goal, partial at /partials/footer.liquid.
         var partialsDir = System.IO.Path.Combine(root, "partials");
         System.IO.Directory.CreateDirectory(partialsDir);

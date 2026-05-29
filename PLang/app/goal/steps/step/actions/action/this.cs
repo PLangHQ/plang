@@ -264,7 +264,7 @@ public sealed partial class @this : module.IDataWrappable
             // whatever name the producing handler owns (e.g., variable.set's stored entry).
             // Override path (beforeResult.Handled) flows through the same write so
             // mocks and event.skipAction feed the next action like any real result.
-            context.Variables.Set("!data", result);
+            context.Variable.Set("!data", result);
         }
 
         var afterResult = await lifecycle.After.Run(context, app.@event.EventType.AfterAction, this, result);
@@ -291,7 +291,7 @@ public sealed partial class @this : module.IDataWrappable
         }
         else
         {
-            (handler, error) = app.Modules.GetCodeGenerated(this);
+            (handler, error) = app.Module.GetCodeGenerated(this);
             if (error != null) return global::app.data.@this.FromError(error);
         }
 
@@ -300,7 +300,7 @@ public sealed partial class @this : module.IDataWrappable
         // (returns Data, never throws) holds. Once Push succeeds the Call owns its
         // own try/catch via ExecuteAsync.
         global::app.callstack.call.@this call;
-        try { call = app.CallStack.Push(this, context.Variables); }
+        try { call = app.CallStack.Push(this, context.Variable); }
         catch (global::app.error.CallStackOverflowException ex)
         {
             var caller = app.CallStack.Current;
@@ -333,7 +333,7 @@ public sealed partial class @this : module.IDataWrappable
         Func<Task<global::app.data.@this>> next,
         actor.context.@this context)
     {
-        var (handler, error) = context.App!.Modules.GetCodeGenerated(this);
+        var (handler, error) = context.App!.Module.GetCodeGenerated(this);
         if (error != null) return (null, error);
         if (handler is not module.IModifier mod)
         {

@@ -15,11 +15,11 @@ public partial class Remove : IContext
     public Task<data.@this> Run()
     {
         var app = Context.App!;
-        if (!app.Modules.Contains(Name.Value!))
+        if (!app.Module.Contains(Name.Value!))
             return Task.FromResult(Error(
                 new app.error.ServiceError($"Module '{Name.Value}' not found", "NotFound", 404)));
 
-        app.Modules.Remove(Name.Value!);
+        app.Module.Remove(Name.Value!);
         return Task.FromResult(Data());
     }
 }

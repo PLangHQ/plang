@@ -30,7 +30,7 @@ public class SchemaTests
     [Test]
     public async Task Build_ReturnsPrimitiveNamesAndTypes()
     {
-        var schema = _app.Modules.Schema.Build();
+        var schema = _app.Module.Schema.Build();
 
         await Assert.That(schema.PrimitiveNames).IsNotEmpty();
         await Assert.That(schema.PrimitiveNames).Contains("string");
@@ -43,7 +43,7 @@ public class SchemaTests
     [Test]
     public async Task Build_SurfacesEnumAsKindEnumWithValues()
     {
-        var schema = _app.Modules.Schema.Build();
+        var schema = _app.Module.Schema.Build();
         var op = schema.Types.FirstOrDefault(t => t.Name == "operator");
 
         await Assert.That(op).IsNotNull();
@@ -58,7 +58,7 @@ public class SchemaTests
     [Test]
     public async Task Build_SurfacesRecordAsKindRecordWithFields()
     {
-        var schema = _app.Modules.Schema.Build();
+        var schema = _app.Module.Schema.Build();
         var goal = schema.Types.FirstOrDefault(t => t.Name == "goal");
 
         await Assert.That(goal).IsNotNull();
@@ -74,7 +74,7 @@ public class SchemaTests
     [Test]
     public async Task TypeSchemas_RendersRecordsAndEnumsInExpectedShape()
     {
-        var schema = _app.Modules.Schema.Build();
+        var schema = _app.Module.Schema.Build();
         var rendered = schema.TypeSchemas;
 
         await Assert.That(rendered).Contains("goal: {");        // record shape
@@ -88,7 +88,7 @@ public class SchemaTests
     [Test]
     public async Task ToJson_ProducesStructuredSchema()
     {
-        var schema = _app.Modules.Schema.Build();
+        var schema = _app.Module.Schema.Build();
         var json = schema.ToJson();
 
         using var doc = JsonDocument.Parse(json);

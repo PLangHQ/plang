@@ -162,7 +162,7 @@ public static class @this
             sb.Append("""
                         {
                             var __channelName = __action?.Parameters?.FirstOrDefault(d => string.Equals(d.Name, "channel", System.StringComparison.OrdinalIgnoreCase))?.Value as string;
-                            Channel = (context.Actor ?? app.User).Channels.Resolve(__channelName);
+                            Channel = (context.Actor ?? app.User).Channel.Resolve(__channelName);
                             if (Channel == null)
                                 return global::app.data.@this.FromError(new global::app.error.ServiceError(
                                     $"Channel '{__channelName ?? "output"}' not found", __step, __callFrames, "ChannelNotFound", 404));

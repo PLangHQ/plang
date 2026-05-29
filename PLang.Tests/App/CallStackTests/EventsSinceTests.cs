@@ -11,7 +11,7 @@ public class EventsSinceTests
         var step = new Step { Index = 0, Text = "step", Goal = goal };
         var action = new ActionEntity { Module = "test", ActionName = "test" };
         action.Step = step; step.Actions.Add(action); goal.Steps.Add(step);
-        app.Goals.Add(goal);
+        app.Goal.Add(goal);
         return (app, action);
     }
 
@@ -20,7 +20,7 @@ public class EventsSinceTests
     {
         var (app, action) = BuildLive("EvtA");
         var stack = app.CallStack;
-        var vars = app.User.Context.Variables;
+        var vars = app.User.Context.Variable;
         stack.Variables = vars;
         stack.Flags = stack.Flags with { Diff = true };
 
@@ -43,7 +43,7 @@ public class EventsSinceTests
         var (app, action) = BuildLive("EvtB");
         var stack = app.CallStack;
         stack.Flags = stack.Flags with { Diff = true };
-        await using var call = stack.Push(action, app.User.Context.Variables);
+        await using var call = stack.Push(action, app.User.Context.Variable);
 
         var future = DateTimeOffset.UtcNow.AddSeconds(10);
         var events = stack.EventsSince(future);

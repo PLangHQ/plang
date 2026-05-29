@@ -16,7 +16,7 @@ public class CallSnapshotTests
         action.Step = step;
         step.Actions.Add(action);
         goal.Steps.Add(step);
-        app.Goals.Add(goal);
+        app.Goal.Add(goal);
         return (app, action);
     }
 
@@ -71,7 +71,7 @@ public class CallSnapshotTests
             dstAction.Step = dstStep;
             dstStep.Actions.Add(dstAction);
             dstGoal.Steps.Add(dstStep);
-            dst.Goals.Add(dstGoal);
+            dst.Goal.Add(dstGoal);
 
             dst.Restore(snap, dst.User.Context);
 
@@ -116,7 +116,7 @@ public class CallSnapshotTests
             dstAction.Step = dstStep;
             dstStep.Actions.Add(dstAction);
             dstGoal.Steps.Add(dstStep);
-            dst.Goals.Add(dstGoal);
+            dst.Goal.Add(dstGoal);
 
             await Assert.ThrowsAsync<CallbackGoalHashMismatch>(async () =>
             {
@@ -141,7 +141,7 @@ public class CallSnapshotTests
             dstAction.Step = dstStep;
             dstStep.Actions.Add(dstAction);
             dstGoal.Steps.Add(dstStep);
-            dst.Goals.Add(dstGoal);
+            dst.Goal.Add(dstGoal);
 
             var goalBefore = dstGoal;
             var stepBefore = dstStep;
@@ -150,7 +150,7 @@ public class CallSnapshotTests
             dst.Restore(snap, dst.User.Context);
 
             // Same instances — Restore is read-only on the registry.
-            await Assert.That(dst.Goals.Get("PureGoal")).IsSameReferenceAs(goalBefore);
+            await Assert.That(dst.Goal.Get("PureGoal")).IsSameReferenceAs(goalBefore);
             await Assert.That(goalBefore.Steps[0]).IsSameReferenceAs(stepBefore);
             await Assert.That(stepBefore.Actions[0]).IsSameReferenceAs(actionBefore);
         }

@@ -68,7 +68,7 @@ public class PathAuthorizeTests
     [Test] public async Task Authorize_StatefulAnswerA_Signs_Adds_ReturnsOk()
     {
         var app = NewApp();
-        app.User.Channels.Register(new CannedAnswerChannel(new[] { "a" }));
+        app.User.Channel.Register(new CannedAnswerChannel(new[] { "a" }));
         var context = app.User.Context;
         var path = new Path("/p", context);
 
@@ -81,7 +81,7 @@ public class PathAuthorizeTests
     [Test] public async Task Authorize_StatefulAnswerY_SignsWithoutExpiry_Adds_ReturnsOk()
     {
         var app = NewApp();
-        app.User.Channels.Register(new CannedAnswerChannel(new[] { "y" }));
+        app.User.Channel.Register(new CannedAnswerChannel(new[] { "y" }));
         var context = app.User.Context;
         var path = new Path("/p", context);
 
@@ -93,7 +93,7 @@ public class PathAuthorizeTests
     [Test] public async Task Authorize_StatefulAnswerN_ReturnsFail_PermissionDenied()
     {
         var app = NewApp();
-        app.User.Channels.Register(new CannedAnswerChannel(new[] { "n" }));
+        app.User.Channel.Register(new CannedAnswerChannel(new[] { "n" }));
         var context = app.User.Context;
         var path = new Path("/p", context);
 
@@ -106,7 +106,7 @@ public class PathAuthorizeTests
     {
         var app = NewApp();
         // Garbage first, then "a" — pin recursion fires and second call accepts.
-        app.User.Channels.Register(new CannedAnswerChannel(new[] { "garbage", "a" }));
+        app.User.Channel.Register(new CannedAnswerChannel(new[] { "garbage", "a" }));
         var context = app.User.Context;
         var path = new Path("/p", context);
 
@@ -117,7 +117,7 @@ public class PathAuthorizeTests
     [Test] public async Task Authorize_StatelessChannel_BubblesDataAskUnchanged()
     {
         var app = NewApp();
-        app.User.Channels.Register(new StatelessChannel());
+        app.User.Channel.Register(new StatelessChannel());
         var context = app.User.Context;
         var path = new Path("/p", context);
 
@@ -130,7 +130,7 @@ public class PathAuthorizeTests
     [Test] public async Task Authorize_ConstructedPermission_HasExpectedActorPathVerbMatch()
     {
         var app = NewApp();
-        app.User.Channels.Register(new CannedAnswerChannel(new[] { "a" }));
+        app.User.Channel.Register(new CannedAnswerChannel(new[] { "a" }));
         var context = app.User.Context;
         var path = new Path("/apps/Email/file.txt", context);
         var verb = new Verb { Read = new Read() };
@@ -146,7 +146,7 @@ public class PathAuthorizeTests
     [Test] public async Task PermissionDenied_Error_CarriesConstructedPermission()
     {
         var app = NewApp();
-        app.User.Channels.Register(new CannedAnswerChannel(new[] { "n" }));
+        app.User.Channel.Register(new CannedAnswerChannel(new[] { "n" }));
         var context = app.User.Context;
         var path = new Path("/secret", context);
 
@@ -168,7 +168,7 @@ public class PathAuthorizeTests
         // "n" answers the prompt that IsInRoot=false forces — so we observe
         // PermissionDenied (out-of-root path → prompt → refused). Under the
         // OrdinalIgnoreCase bug, IsInRoot=true and Ok() comes back instead.
-        app.User.Channels.Register(new CannedAnswerChannel(new[] { "n" }));
+        app.User.Channel.Register(new CannedAnswerChannel(new[] { "n" }));
         var context = app.User.Context;
         var uppered = app.AbsolutePath.ToUpperInvariant() + "/file.txt";
         var path = new Path(uppered, context);

@@ -10,7 +10,7 @@ public partial class IndexOf : IContext
 
     public Task<data.@this<int>> Run()
     {
-        var data = Context.Variables.Get(ListName.Value);
+        var data = Context.Variable.Get(ListName.Value);
         var target = Value.Value;
 
         foreach (var (key, item) in data.EnumerateItems())

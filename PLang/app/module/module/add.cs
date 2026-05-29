@@ -25,7 +25,7 @@ public partial class Add : IContext
         var loadResult = await dllPath.LoadAssemblyAsync();
         if (!loadResult.Success) return Error(loadResult.Error!);
 
-        var count = app.Modules.Discover(loadResult.Value!, Namespace?.Value);
+        var count = app.Module.Discover(loadResult.Value!, Namespace?.Value);
         return Data(new type.module { name = dllPath.FileNameWithoutExtension, actions = count });
     }
 }

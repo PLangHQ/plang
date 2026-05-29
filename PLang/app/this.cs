@@ -129,18 +129,12 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Global event collection for the application.
     /// </summary>
-    public global::app.@event.list.@this Events { get; }
-
-    /// <summary>Singular accessor — see <see cref="Events"/>.</summary>
-    public global::app.@event.list.@this Event => Events;
+    public global::app.@event.list.@this Event { get; }
 
     /// <summary>
     /// Flat action registry. Discovers, registers, and resolves actions by module.action.
     /// Built-in actions from PLang assembly, external DLLs add via Discover().
     /// </summary>
-    public global::app.module.@this Modules => _modules;
-
-    /// <summary>Singular accessor — see <see cref="Modules"/>.</summary>
     public global::app.module.@this Module => _modules;
 
     /// <summary>
@@ -152,17 +146,11 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Per-type navigator registry for Data navigation.
     /// </summary>
-    public variable.navigator.list.@this Navigators { get; } = new();
-
-    /// <summary>Singular accessor — see <see cref="Navigators"/>.</summary>
-    public variable.navigator.list.@this Navigator => Navigators;
+    public variable.navigator.list.@this Navigator { get; } = new();
 
     /// <summary>
     /// The loaded goals.
     /// </summary>
-    public global::app.goal.list.@this Goals => _goals;
-
-    /// <summary>Singular accessor — see <see cref="Goals"/>.</summary>
     public global::app.goal.list.@this Goal => _goals;
 
     /// <summary>
@@ -207,10 +195,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Run-wide error scope. AsyncLocal-flowed current error (PLang <c>%!error%</c>) +
     /// audit list of every error pushed. Populated by error.handle.Wrap during recovery.
     /// </summary>
-    public global::app.error.list.@this Errors { get; }
-
-    /// <summary>Singular accessor — see <see cref="Errors"/>.</summary>
-    public global::app.error.list.@this Error => Errors;
+    public global::app.error.list.@this Error { get; }
 
     /// <summary>
     /// Test runner. Discovers and runs *.test.goal files with assertion tracking.
@@ -229,21 +214,15 @@ public sealed partial class @this : IAsyncDisposable
 
     /// <summary>
     /// Centralized type identity: PLang names ↔ CLR types. File-format
-    /// characteristics live on <see cref="Formats"/>.
+    /// characteristics live on <see cref="Format"/>.
     /// </summary>
-    public type.list.@this Types { get; }
-
-    /// <summary>Singular accessor — see <see cref="Types"/>.</summary>
-    public type.list.@this Type => Types;
+    public type.list.@this Type { get; }
 
     /// <summary>
     /// File-format characteristics: extension → Kind, extension → MIME,
     /// Kind → compressibility. One per app.
     /// </summary>
-    public format.list.@this Formats { get; } = new();
-
-    /// <summary>Singular accessor — see <see cref="Formats"/>.</summary>
-    public format.list.@this Format => Formats;
+    public format.list.@this Format { get; } = new();
 
     /// <summary>
     /// System actor — the root of the cancellation hierarchy.
@@ -325,11 +304,11 @@ public sealed partial class @this : IAsyncDisposable
         AbsolutePath = absolutePath;
         Environment = environment ?? "production";
         StartedAt = DateTime.UtcNow;
-        Events = new global::app.@event.list.@this();
+        Event = new global::app.@event.list.@this();
         Debug = new Debugging(this);
         Tester = new global::app.tester.@this(this);
         Builder = new global::app.module.builder.@this(this);
-        Types = new type.list.@this();
+        Type = new type.list.@this();
         Config = new config.@this();
         _settingsStore = new Lazy<global::app.module.settings.IStore>(CreateSettingsStore);
         Settings = new global::app.module.settings.@this(this);
@@ -337,14 +316,14 @@ public sealed partial class @this : IAsyncDisposable
         _modules.App = this;
         _goals = new global::app.goal.list.@this { App = this };
 
-        Errors = new global::app.error.list.@this(this);
+        Error = new global::app.error.list.@this(this);
 
         Code.RegisterDefaults();
-        Types.RegisterDomainTypes();
-        Types.Scheme.Register("file", (raw, context) => global::app.type.path.file.@this.Resolve(raw, context));
-        Types.Scheme.Register("http", (raw, context) => global::app.type.path.http.@this.Resolve(raw, context));
-        Types.Scheme.Register("https", (raw, context) => global::app.type.path.http.@this.Resolve(raw, context));
-        Navigators.RegisterDefaults();
+        Type.RegisterDomainTypes();
+        Type.Scheme.Register("file", (raw, context) => global::app.type.path.file.@this.Resolve(raw, context));
+        Type.Scheme.Register("http", (raw, context) => global::app.type.path.http.@this.Resolve(raw, context));
+        Type.Scheme.Register("https", (raw, context) => global::app.type.path.http.@this.Resolve(raw, context));
+        Navigator.RegisterDefaults();
 
         // Default actor is User — Start() switches to System for bootstrap
         CurrentActor = User;
@@ -374,16 +353,16 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public static void WireDefaultConsoleChannels(global::app.actor.@this actor)
     {
-        if (!actor.Channels.Contains(global::app.channel.list.@this.Output))
-            actor.Channels.Register(new global::app.channel.stream.@this(
+        if (!actor.Channel.Contains(global::app.channel.list.@this.Output))
+            actor.Channel.Register(new global::app.channel.stream.@this(
                 global::app.channel.list.@this.Output, Console.OpenStandardOutput(),
                 global::app.channel.ChannelDirection.Output, ownsStream: false));
-        if (!actor.Channels.Contains(global::app.channel.list.@this.Error))
-            actor.Channels.Register(new global::app.channel.stream.@this(
+        if (!actor.Channel.Contains(global::app.channel.list.@this.Error))
+            actor.Channel.Register(new global::app.channel.stream.@this(
                 global::app.channel.list.@this.Error, Console.OpenStandardError(),
                 global::app.channel.ChannelDirection.Output, ownsStream: false));
-        if (!actor.Channels.Contains(global::app.channel.list.@this.Input))
-            actor.Channels.Register(new global::app.channel.stream.@this(
+        if (!actor.Channel.Contains(global::app.channel.list.@this.Input))
+            actor.Channel.Register(new global::app.channel.stream.@this(
                 global::app.channel.list.@this.Input, Console.OpenStandardInput(),
                 global::app.channel.ChannelDirection.Input, ownsStream: false));
     }
@@ -524,7 +503,7 @@ public sealed partial class @this : IAsyncDisposable
         // by the entry point before goal execution. Surface a clear error otherwise.
         foreach (var actor in new[] { System, User })
         {
-            var invariant = actor.Channels.Verify();
+            var invariant = actor.Channel.Verify();
             if (!invariant.Success) return invariant;
         }
 
@@ -535,7 +514,7 @@ public sealed partial class @this : IAsyncDisposable
         if (Builder.IsEnabled) return await Builder.RunAsync();
 
         // Resolve goal file
-        var goalFile = context.Variables.GetValue("goalFile") as string;
+        var goalFile = context.Variable.GetValue("goalFile") as string;
         if (string.IsNullOrEmpty(goalFile))
             return app.data.@this.FromError(new global::app.error.ServiceError(
                 "No goal file specified. Use: plang <goalfile>", "NoGoalFile", 400));
@@ -573,7 +552,7 @@ public sealed partial class @this : IAsyncDisposable
         // isolated by whatever forked them.
         if (goalCall.Parameters != null)
             foreach (var param in goalCall.Parameters)
-                context.Variables.Set(param.Name, param);
+                context.Variable.Set(param.Name, param);
 
         return await ((Goal)goalResult.Value!).RunAsync(context);
     }

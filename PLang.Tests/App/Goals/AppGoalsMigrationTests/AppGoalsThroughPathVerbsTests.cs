@@ -28,10 +28,10 @@ public class AppGoalsThroughPathVerbsTests
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "a.pr"), "{\"name\":\"A\",\"path\":\"/A.goal\"}");
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "b.pr"), "{\"name\":\"B\",\"path\":\"/B.goal\"}");
 
-        var result = await app.Goals.LoadFromDirectoryAsync(app, root);
+        var result = await app.Goal.LoadFromDirectoryAsync(app, root);
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(app.Goals.Get("A")).IsNotNull();
-        await Assert.That(app.Goals.Get("B")).IsNotNull();
+        await Assert.That(app.Goal.Get("A")).IsNotNull();
+        await Assert.That(app.Goal.Get("B")).IsNotNull();
     }
 
     [Test] public async Task LoadFromDirectoryAsync_DeepTree_LoadsEveryGoalFile()
@@ -41,9 +41,9 @@ public class AppGoalsThroughPathVerbsTests
         System.IO.Directory.CreateDirectory(sub);
         System.IO.File.WriteAllText(System.IO.Path.Combine(sub, "deepgoal.pr"),
             "{\"name\":\"DeepGoal\",\"path\":\"/sub/deep/DeepGoal.goal\"}");
-        var result = await app.Goals.LoadFromDirectoryAsync(app, root);
+        var result = await app.Goal.LoadFromDirectoryAsync(app, root);
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(app.Goals.Get("DeepGoal")).IsNotNull();
+        await Assert.That(app.Goal.Get("DeepGoal")).IsNotNull();
     }
 
     [Test] public async Task LoadFromFileAsync_UsesPathReadTextNotFileReadAllText()
@@ -53,7 +53,7 @@ public class AppGoalsThroughPathVerbsTests
         System.IO.Directory.CreateDirectory(buildDir);
         var prAbs = System.IO.Path.Combine(buildDir, "start.pr");
         System.IO.File.WriteAllText(prAbs, "{\"name\":\"Start\",\"path\":\"/Start.goal\"}");
-        var result = await app.Goals.LoadFromFileAsync(app, "/.build/start.pr");
+        var result = await app.Goal.LoadFromFileAsync(app, "/.build/start.pr");
         await Assert.That(result.Success).IsTrue();
         var goal = result.Value as Goal;
         await Assert.That(goal!.Name).IsEqualTo("Start");
@@ -67,9 +67,9 @@ public class AppGoalsThroughPathVerbsTests
         var prAbs = System.IO.Path.Combine(buildDir, "start.pr");
         System.IO.File.WriteAllText(prAbs, "{\"name\":\"Start\",\"path\":\"/Start.goal\"}");
 
-        var byRel = await app.Goals.GetByPrPathAsync("/.build/start.pr");
+        var byRel = await app.Goal.GetByPrPathAsync("/.build/start.pr");
         await Assert.That(byRel).IsNotNull();
-        var byAbs = await app.Goals.GetByPrPathAsync(prAbs);
+        var byAbs = await app.Goal.GetByPrPathAsync(prAbs);
         await Assert.That(byAbs).IsNotNull();
     }
 
@@ -81,10 +81,10 @@ public class AppGoalsThroughPathVerbsTests
             Name = "ProcessData",
             Path = global::app.type.path.@this.Resolve("/processdata.goal", app.User.Context)
         };
-        app.Goals.Add(goal);
+        app.Goal.Add(goal);
         // Fuzzy by-name lookup: case-insensitive, picks up the goal.
-        await Assert.That(app.Goals.Get("ProcessData")).IsNotNull();
-        await Assert.That(app.Goals.Get("processdata")).IsNotNull();
+        await Assert.That(app.Goal.Get("ProcessData")).IsNotNull();
+        await Assert.That(app.Goal.Get("processdata")).IsNotNull();
     }
 
     [Test] public async Task AppLoad_OnColdStart_NoAppPr_ReturnsEmptyState_NoThrow()

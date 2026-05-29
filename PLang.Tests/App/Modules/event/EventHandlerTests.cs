@@ -170,10 +170,10 @@ public class EventHandlerTests
         var context = _app.User.Context;
 
         // Register the callback goal (empty — just needs to be found)
-        _app.Goals.Add(new Goal { Name = "OnBeforeCallback", Path = "/OnBeforeCallback.goal" });
+        _app.Goal.Add(new Goal { Name = "OnBeforeCallback", Path = "/OnBeforeCallback.goal" });
 
         // Register the target goal to run
-        _app.Goals.Add(new Goal { Name = "TargetGoal", Path = "/TargetGoal.goal" });
+        _app.Goal.Add(new Goal { Name = "TargetGoal", Path = "/TargetGoal.goal" });
 
         // Set a marker so we can detect the callback ran
         // The event handler passes GoalToCall with parameters — RunGoalAsync injects them
@@ -184,7 +184,7 @@ public class EventHandlerTests
         await Assert.That(regResult.Success).IsTrue();
 
         // Set a marker before running
-        context.Variables.Set("eventFired", false);
+        context.Variable.Set("eventFired", false);
 
         // Run the target goal — should trigger BeforeGoal event
         var goalCall = new GoalCall { Name = "TargetGoal" };
@@ -206,8 +206,8 @@ public class EventHandlerTests
 
         // The callback goal — when it runs, RunGoalAsync injects its parameters
         // We give it a parameter so we can verify it was called
-        _app.Goals.Add(new Goal { Name = "AfterCallback", Path = "/AfterCallback.goal" });
-        _app.Goals.Add(new Goal { Name = "MainGoal", Path = "/MainGoal.goal" });
+        _app.Goal.Add(new Goal { Name = "AfterCallback", Path = "/AfterCallback.goal" });
+        _app.Goal.Add(new Goal { Name = "MainGoal", Path = "/MainGoal.goal" });
 
         // Register AfterGoal event with a GoalCall that has a parameter
         var goalToCall = new GoalCall
@@ -227,8 +227,8 @@ public class EventHandlerTests
         // Run the main goal
         await _app.RunGoalAsync(new GoalCall { Name = "MainGoal" }, context);
 
-        // Verify the callback ran — parameter was injected on targetActor.Context.Variables
-        var callbackRan = _app.User.Context.Variables.Get("callbackRan");
+        // Verify the callback ran — parameter was injected on targetActor.Context.Variable
+        var callbackRan = _app.User.Context.Variable.Get("callbackRan");
         await Assert.That(callbackRan).IsNotNull();
         await Assert.That(callbackRan!.Value).IsEqualTo(true);
     }

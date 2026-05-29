@@ -195,7 +195,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
         // Channels have no Actor, so we navigate through Channels.App directly.
         if (Channels?.App is { } app)
         {
-            foreach (var b in app.Events.GetBindings(type))
+            foreach (var b in app.Event.GetBindings(type))
                 if (string.Equals(b.ChannelName, Name, StringComparison.OrdinalIgnoreCase))
                     yield return b;
         }

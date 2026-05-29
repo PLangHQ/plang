@@ -40,7 +40,7 @@ public class Default : ICrypto
             // "application/plang" (custom transport, test double, future format),
             // fail loud — hash and wire would diverge silently and signature
             // verification would behave inconsistently across the same payload.
-            var registered = action.Context?.Actor?.Channels.Serializers.GetByType("application/plang");
+            var registered = action.Context?.Actor?.Channel.Serializers.GetByType("application/plang");
             if (registered != null && registered is not global::app.channel.serializer.plang.@this)
                 return global::app.data.@this<byte[]>.FromError(new ActionError(
                     "Registered application/plang serializer is not the canonical plang.@this; hash bytes would diverge from wire bytes.",

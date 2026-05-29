@@ -69,7 +69,7 @@ public class Stage0_PlangTypeRemovalTests
     [Test]
     public async Task Results_PlangTypeName_DerivesFromClassNameLowercased()
     {
-        var name = _app.Types.Name(typeof(global::app.tester.Results));
+        var name = _app.Type.Name(typeof(global::app.tester.Results));
         await Assert.That(name).IsEqualTo("results");
     }
 
@@ -78,7 +78,7 @@ public class Stage0_PlangTypeRemovalTests
     [Test]
     public async Task Mock_PlangTypeName_DerivesFromClassName()
     {
-        var name = _app.Types.Name(typeof(global::app.mock.@this));
+        var name = _app.Type.Name(typeof(global::app.mock.@this));
         await Assert.That(name).IsEqualTo("mock");
     }
 
@@ -87,7 +87,7 @@ public class Stage0_PlangTypeRemovalTests
     [Test]
     public async Task Test_PlangTypeName_DerivesFromClassName_AfterRename()
     {
-        var name = _app.Types.Name(typeof(global::app.tester.test.@this));
+        var name = _app.Type.Name(typeof(global::app.tester.test.@this));
         await Assert.That(name).IsEqualTo("test")
             .Because("@this convention takes the last namespace segment as the PLang type name.");
     }
@@ -97,7 +97,7 @@ public class Stage0_PlangTypeRemovalTests
     [Test]
     public async Task PlangTypeDerivation_OBPSingleNameFolders_UseFolderNameNotThisLiteral()
     {
-        var name = _app.Types.Name(typeof(global::app.builder.type.@this));
+        var name = _app.Type.Name(typeof(global::app.builder.type.@this));
         await Assert.That(name).IsNotEqualTo("this");
         await Assert.That(name).IsEqualTo("type")
             .Because("The @this segment 'Types' derives cleanly to 'types' — no [PlangType] override needed.");

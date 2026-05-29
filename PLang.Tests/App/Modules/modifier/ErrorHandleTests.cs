@@ -72,7 +72,7 @@ public class ErrorHandleTests
         var result = await action.RunAsync(Ctx);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(Ctx.Variables.GetValue("ok")).IsEqualTo("v");
+        await Assert.That(Ctx.Variable.GetValue("ok")).IsEqualTo("v");
     }
 
     [Test]
@@ -295,7 +295,7 @@ public class ErrorHandleTests
         step.Actions.Add(prAction);
         var goal = new Goal { Name = name, Path = $"/{name}.goal" };
         goal.Steps.Add(step);
-        _app.Goals.Add(goal);
+        _app.Goal.Add(goal);
         return goal;
     }
 

@@ -37,8 +37,8 @@ public class MarkdownTeachingLoaderTests
         Directory.CreateDirectory(Path.Combine(_mdRoot, FixtureModule));
 
         _app = new PLangEngine(_tempDir);
-        _app.Modules.MarkdownTeachingRoot = _mdRoot;
-        _app.Modules.RegisterType(FixtureModule, FixtureAction1, typeof(FixtureAction));
+        _app.Module.MarkdownTeachingRoot = _mdRoot;
+        _app.Module.RegisterType(FixtureModule, FixtureAction1, typeof(FixtureAction));
     }
 
     [After(Test)]
@@ -57,7 +57,7 @@ public class MarkdownTeachingLoaderTests
 
     private async Task<global::app.goal.steps.step.actions.action.@this> Find(string action)
     {
-        var catalog = await _app.Modules.Describe();
+        var catalog = await _app.Module.Describe();
         var row = catalog.FirstOrDefault(a => a.Module == FixtureModule && a.ActionName == action);
         if (row == null)
             throw new InvalidOperationException($"catalog missing {FixtureModule}.{action}");
@@ -77,7 +77,7 @@ public class MarkdownTeachingLoaderTests
     public async Task Describe_ModuleNotesMarkdownPresent_PopulatesModuleNotes()
     {
         Stage("module.notes.md", "Module-wide rule.");
-        _app.Modules.RegisterType(FixtureModule, FixtureActionB, typeof(FixtureAction2));
+        _app.Module.RegisterType(FixtureModule, FixtureActionB, typeof(FixtureAction2));
 
         var a = await Find(FixtureAction1);
         var b = await Find(FixtureActionB);

@@ -27,7 +27,7 @@ public partial class Remove : IContext
                 "ChannelInvariantViolation", 400));
 
         var actor = Actor?.Value ?? Context.Actor;
-        var removed = await actor.Channels.RemoveAsync(name);
+        var removed = await actor.Channel.RemoveAsync(name);
         if (!removed)
             return global::app.data.@this.FromError(new ServiceError($"Channel '{name}' not found", "ChannelNotFound", 404));
         return global::app.data.@this.Ok();

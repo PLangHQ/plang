@@ -47,7 +47,7 @@ public class ModulesDescribeReturnTypeTests
 
     private async Task<global::app.goal.steps.step.actions.action.@this> Find(string module, string action)
     {
-        var catalog = await _app.Modules.Describe();
+        var catalog = await _app.Module.Describe();
         var row = catalog.FirstOrDefault(a => a.Module == module && a.ActionName == action);
         if (row == null)
             throw new InvalidOperationException($"catalog missing {module}.{action} — fixture stale");
@@ -116,7 +116,7 @@ public class ModulesDescribeReturnTypeTests
     [Test]
     public async Task ReturnTypeName_AllCatalogRows_HaveAValue()
     {
-        var catalog = await _app.Modules.Describe();
+        var catalog = await _app.Module.Describe();
         var missing = catalog.Where(a => string.IsNullOrEmpty(a.ReturnTypeName))
                              .Select(a => $"{a.Module}.{a.ActionName}")
                              .ToList();

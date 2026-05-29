@@ -302,7 +302,7 @@ public sealed class Default : IIdentity
         if (!keysResult.Success)
             return data.@this<Identity>.FromError(keysResult.Error!);
 
-        var now = (DateTimeOffset)action.Context.Variables.GetValue("NowUtc")!;
+        var now = (DateTimeOffset)action.Context.Variable.GetValue("NowUtc")!;
 
         var identity = new Identity(name)
         {

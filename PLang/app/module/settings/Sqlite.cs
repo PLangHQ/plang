@@ -317,7 +317,7 @@ public sealed class Sqlite : IStore
     {
         if (data.Value == null || data.Type == null) return;
 
-        var clrType = data.Context?.App.Types.Get(data.Type.Value)
+        var clrType = data.Context?.App.Type.Get(data.Type.Value)
                       ?? AppTypes.GetPrimitiveOrMime(data.Type.Value);
         if (clrType == null || clrType.IsAssignableFrom(data.Value.GetType())) return;
 

@@ -761,9 +761,9 @@ public class VariablesTests
         var context = new global::app.actor.context.@this(engine);
 
         // Variables set through global::app.actor.context.@this's Variables get context stamped
-        context.Variables.Set("name", "John");
+        context.Variable.Set("name", "John");
 
-        await Assert.That(context.Variables.Get("name")!.Context).IsEqualTo(context);
+        await Assert.That(context.Variable.Get("name")!.Context).IsEqualTo(context);
     }
 
     [Test]
@@ -773,7 +773,7 @@ public class VariablesTests
         var context = new global::app.actor.context.@this(engine);
 
         var data = new Data("test", "hello");
-        context.Variables.Set(data);
+        context.Variable.Set(data);
 
         await Assert.That(data.Context).IsEqualTo(context);
     }
@@ -801,9 +801,9 @@ public class VariablesTests
         await using var engine = new global::app.@this("/test");
         var context = new global::app.actor.context.@this(engine);
 
-        context.Variables.Set("name", "John");
+        context.Variable.Set("name", "John");
 
-        var clone = context.Variables.Clone();
+        var clone = context.Variable.Clone();
 
         // Clone preserves the context so Type.Kind/Compressible/ClrType still resolve
         await Assert.That(clone.Context).IsEqualTo(context);
@@ -814,12 +814,12 @@ public class VariablesTests
     {
         await using var engine = new global::app.@this("/test");
         var parentContext = new global::app.actor.context.@this(engine);
-        parentContext.Variables.Set("name", "John");
+        parentContext.Variable.Set("name", "John");
 
         var childContext = parentContext.CreateChild();
 
         // Child context stamps its own context on the cloned data
-        await Assert.That(childContext.Variables.Get("name")!.Context).IsEqualTo(childContext);
+        await Assert.That(childContext.Variable.Get("name")!.Context).IsEqualTo(childContext);
     }
 }
 
@@ -913,12 +913,12 @@ public class VariablesAccessorTests
     {
         var engine = new global::app.@this("/app");
         var context = new global::app.actor.context.@this(engine, new Variables());
-        context.Variables.Set("x", 1);
+        context.Variable.Set("x", 1);
 
-        var clone = context.Variables.Clone();
+        var clone = context.Variable.Clone();
 
         await Assert.That(clone.Context).IsNotNull();
-        await Assert.That(clone.Context).IsEqualTo(context.Variables.Context);
+        await Assert.That(clone.Context).IsEqualTo(context.Variable.Context);
     }
 
     [Test]

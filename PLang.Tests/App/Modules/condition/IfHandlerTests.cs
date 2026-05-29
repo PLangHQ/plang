@@ -60,7 +60,7 @@ public class IfHandlerTests : IDisposable
     public async Task Run_ConditionTrue_OrchestrateThenBranch()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new StreamChannel(
+        _app.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
@@ -100,7 +100,7 @@ public class IfHandlerTests : IDisposable
     public async Task Run_ConditionFalse_SkipsThenBranch()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new StreamChannel(
+        _app.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
@@ -139,7 +139,7 @@ public class IfHandlerTests : IDisposable
     public async Task Run_IfElse_TrueRunsThen()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new StreamChannel(
+        _app.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
@@ -192,7 +192,7 @@ public class IfHandlerTests : IDisposable
     public async Task Run_IfElse_FalseRunsElse()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new StreamChannel(
+        _app.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
@@ -363,13 +363,13 @@ public class IfHandlerTests : IDisposable
     /// <summary>
     /// Simulates: outer goal has if/else → then-branch calls inner goal →
     /// inner goal also has if/else. The inner condition must orchestrate independently.
-    /// Bug: shared guard variable on Context.Variables blocks inner orchestration.
+    /// Bug: shared guard variable on Context.Variable blocks inner orchestration.
     /// </summary>
     [Test]
     public async Task Run_InnerGoalCondition_OrchestatesIndependently()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new StreamChannel(
+        _app.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
@@ -414,7 +414,7 @@ public class IfHandlerTests : IDisposable
         // With the buggy code (Variables-based guard), the inner condition sees it
         // and skips orchestration — actions run sequentially instead of branched.
         var context = _app.User.Context;
-        context.Variables.Set(new Data("__condition_orchestrating__", true));
+        context.Variable.Set(new Data("__condition_orchestrating__", true));
 
         // Run the inner step (which shares the same context as the outer)
         var result = await innerStep.RunAsync(context);

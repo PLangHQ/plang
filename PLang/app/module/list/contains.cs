@@ -10,7 +10,7 @@ public partial class Contains : IContext
 
     public Task<data.@this<bool>> Run()
     {
-        var data = Context.Variables.Get(ListName.Value);
+        var data = Context.Variable.Get(ListName.Value);
         var target = Value.Value;
 
         foreach (var (_, item) in data.EnumerateItems())
