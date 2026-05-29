@@ -1,3 +1,5 @@
+using image = global::app.types.image.@this;
+
 namespace PLang.Tests.App.Types;
 
 // plang-types — Stage 5
@@ -7,30 +9,66 @@ namespace PLang.Tests.App.Types;
 
 public class ImageValueTests
 {
+    private static readonly byte[] PngHeader = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+
     [Test] public async Task Image_FromBytesAndMime_StoresBoth()
-        => throw new global::System.NotImplementedException();
+    {
+        var img = new image(PngHeader, "image/png");
+        await Assert.That(img.Bytes).IsEqualTo(PngHeader);
+        await Assert.That(img.Mime).IsEqualTo("image/png");
+    }
 
     [Test] public async Task Image_PathFacet_IsTypePath_NullableProperty()
-        => throw new global::System.NotImplementedException();
+    {
+        var prop = typeof(image).GetProperty("Path");
+        await Assert.That(prop).IsNotNull();
+        var nullableInfo = new System.Reflection.NullabilityInfoContext().Create(prop!);
+        await Assert.That(nullableInfo.ReadState).IsEqualTo(System.Reflection.NullabilityState.Nullable);
+        await Assert.That(prop!.PropertyType).IsEqualTo(typeof(global::app.types.path.@this));
+    }
 
     [Test] public async Task Image_Base64Constructed_PathIsNull()
-        => throw new global::System.NotImplementedException();
+    {
+        var img = new image(PngHeader, "image/png");
+        await Assert.That(img.Path).IsNull();
+    }
 
     [Test] public async Task Image_FromFileRead_PathReferencesSourceFile()
-        => throw new global::System.NotImplementedException();
+    {
+        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-img-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var raw = System.IO.Path.Combine(app.AbsolutePath, "photo.png");
+        var p = global::app.types.path.@this.Resolve(raw, app.User.Context);
+        var img = new image(PngHeader, "image/png", p);
+        await Assert.That(img.Path).IsNotNull();
+        await Assert.That(img.Path!.Raw).IsEqualTo(p.Raw);
+    }
 
     [Test] public async Task Image_WidthHeight_LazyEvaluation()
-        => throw new global::System.NotImplementedException();
+    {
+        // Width/Height computed on first access via SixLabors.ImageSharp.
+        // Empty/garbage bytes degrade to (0, 0) without throwing.
+        var img = new image(System.Array.Empty<byte>(), "image/png");
+        await Assert.That(img.Width).IsEqualTo(0);
+        await Assert.That(img.Height).IsEqualTo(0);
+    }
 
     [Test] public async Task Image_IBooleanResolvable_NonEmptyBytes_Truthy()
-        => throw new global::System.NotImplementedException();
+        => await Assert.That(await new image(PngHeader, "image/png").AsBooleanAsync()).IsTrue();
 
     [Test] public async Task Image_IBooleanResolvable_EmptyBytes_Falsy()
-        => throw new global::System.NotImplementedException();
+        => await Assert.That(await new image(System.Array.Empty<byte>(), "image/png").AsBooleanAsync()).IsFalse();
 
     [Test] public async Task Image_PlangTypeAttribute_Registered()
-        => throw new global::System.NotImplementedException();
+    {
+        var types = new EngineTypes();
+        await Assert.That(types.ResolveType("image")).IsEqualTo(typeof(image));
+    }
 
     [Test] public async Task Image_DoesNotUnionWithPath_RoutingKeyAlwaysImage()
-        => throw new global::System.NotImplementedException();
+    {
+        // image inherits from object (not path); it carries Path as a property.
+        await Assert.That(typeof(image).BaseType).IsEqualTo(typeof(object));
+        await Assert.That(typeof(global::app.types.path.@this).IsAssignableFrom(typeof(image))).IsFalse();
+    }
 }
