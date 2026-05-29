@@ -6,7 +6,7 @@
       "bot": "test-designer",
       "timestamp_start": "2026-05-29T11:58:42Z",
       "timestamp_end": "2026-05-29T12:14:59Z",
-      "intent": "Design test contract for plang-types — registry+kind, serializer dispatch, number/image/code values, primitive cleanups, runtime loading.",
+      "intent": "Design test contract for plang-types \u2014 registry+kind, serializer dispatch, number/image/code values, primitive cleanups, runtime loading.",
       "before": {
         "assumptions": "Architect plan settled and merged with runtime2; 7 stages carved + test-strategy.md + test-coverage.md present. Existing test infra at PLang.Tests/App/ (Serialization/, DataTests/, Types/) reusable; PLang goal tests live under Tests/ (uppercase).",
         "risk": "Scope is large (~50 matrix rows + 4 integration cuts + failure matrix). Risk of either over-fragmenting tests (one per row blindly) or grouping too much (losing the per-behavior pin). Mitigation: batch by surface so the contract reads forward."
@@ -23,7 +23,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Stage 1 — registry fold no-regression, optional `kind` field as separate .pr field, type Build(value) discovery, typed-property catalog rendering."
+          "context": "Stage 1 \u2014 registry fold no-regression, optional `kind` field as separate .pr field, type Build(value) discovery, typed-property catalog rendering."
         },
         {
           "paths": [
@@ -37,7 +37,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Stage 2 — TypeSerializers (typeName, formatToken) → Write dispatch; TypedValueNode tag-hook; IWriter.Format; path as first-mover absorbing this.JsonConverter; PLNG coverage gate."
+          "context": "Stage 2 \u2014 TypeSerializers (typeName, formatToken) \u2192 Write dispatch; TypedValueNode tag-hook; IWriter.Format; path as first-mover absorbing this.JsonConverter; PLNG coverage gate."
         },
         {
           "paths": [
@@ -51,7 +51,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Stage 3 — number value (sealed class, NumberKind, From, casts, lenient/exact equality, NaN, hash, parse narrowest-fit, Build literal-shape rule, operators policy-free lenient, Default.cs per Kind)."
+          "context": "Stage 3 \u2014 number value (sealed class, NumberKind, From, casts, lenient/exact equality, NaN, hash, parse narrowest-fit, Build literal-shape rule, operators policy-free lenient, Default.cs per Kind)."
         },
         {
           "paths": [
@@ -69,7 +69,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Stage 4 — arithmetic + policy via app.config (no Goal storage), divide-leaves-integer-track footgun + math.intdiv, power, MathHelper.ToDouble/PreserveType deletion, handler returns Data never throws."
+          "context": "Stage 4 \u2014 arithmetic + policy via app.config (no Goal storage), divide-leaves-integer-track footgun + math.intdiv, power, MathHelper.ToDouble/PreserveType deletion, handler returns Data never throws."
         },
         {
           "paths": [
@@ -84,7 +84,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Stage 5 — image (Bytes/Mime/nullable Path facet, composition over union), code (Source/Language), file.read.Build extension→high-level type, per-format serializer files (image text/protobuf/Default; code Default)."
+          "context": "Stage 5 \u2014 image (Bytes/Mime/nullable Path facet, composition over union), code (Source/Language), file.read.Build extension\u2192high-level type, per-format serializer files (image text/protobuf/Default; code Default)."
         },
         {
           "paths": [
@@ -95,7 +95,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Stage 6 — datetime→DateTimeOffset (DateTime banished), date→DateOnly, time→TimeOnly, duration→TimeSpan (timespan deprecated alias), no `this.Build.cs` on any (no kind)."
+          "context": "Stage 6 \u2014 datetime\u2192DateTimeOffset (DateTime banished), date\u2192DateOnly, time\u2192TimeOnly, duration\u2192TimeSpan (timespan deprecated alias), no `this.Build.cs` on any (no kind)."
         },
         {
           "paths": [
@@ -106,7 +106,7 @@
           "type": "create",
           "category": "test",
           "confidence": "medium",
-          "context": "Stage 7 — code.load-style runtime DLL scan registers [PlangType] + ITypeRenderer; overwrite precedence; honest-limit pin. Fixture DLL not committed — coder builds it under PLang.Tests/App/Fixtures/dlls/."
+          "context": "Stage 7 \u2014 code.load-style runtime DLL scan registers [PlangType] + ITypeRenderer; overwrite precedence; honest-limit pin. Fixture DLL not committed \u2014 coder builds it under PLang.Tests/App/Fixtures/dlls/."
         },
         {
           "paths": [
@@ -123,7 +123,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Cuts 1–3 — spine .goal (literal kind → arithmetic → output) + supporting .pr-inspection goals; C# harnesses for the two-channel image and Path facet navigation cuts. PlangTypes prefix on C# cuts dodges collision with data-normalize Cut1/2/3/4 in the same folder."
+          "context": "Cuts 1\u20133 \u2014 spine .goal (literal kind \u2192 arithmetic \u2192 output) + supporting .pr-inspection goals; C# harnesses for the two-channel image and Path facet navigation cuts. PlangTypes prefix on C# cuts dodges collision with data-normalize Cut1/2/3/4 in the same folder."
         },
         {
           "paths": [
@@ -133,7 +133,7 @@
           "type": "modify",
           "category": "test",
           "confidence": "high",
-          "context": "Mass-rewrote stub bodies from `await Task.FromResult(Assert.Fail(\"Not implemented\"))` to `throw new global::System.NotImplementedException()`. TUnit Assert.Fail returns void → Task.FromResult fails type inference; throw composes cleanly with async Task expression body. dotnet build PLang.Tests confirmed green (0 errors)."
+          "context": "Mass-rewrote stub bodies from `await Task.FromResult(Assert.Fail(\"Not implemented\"))` to `throw new global::System.NotImplementedException()`. TUnit Assert.Fail returns void \u2192 Task.FromResult fails type inference; throw composes cleanly with async Task expression body. dotnet build PLang.Tests confirmed green (0 errors)."
         },
         {
           "paths": [
@@ -151,7 +151,37 @@
       "after": {
         "status": "PASS",
         "health": "dotnet build PLang.Tests is green (0 errors). All 24 new C# test files compile; ~150 stubs land as failing tests pinning the contract. 14 new PLang .goal files land with `- throw \"not implemented\"` bodies pinning the developer-facing surface.",
-        "notes": "Coder runs next. Architect's stage dependency order: 1+2 together (machinery + path first mover) → 3 → 4 → 5 → 6 (parallelizable) → 7 (needs fixture DLL under PLang.Tests/App/Fixtures/dlls/). The PLNG_SerializerCoverage gate must land in Stage 2 so the runtime writer lookup stays total for built-in types. No fixture DLL was committed — Stage 7 coder builds it matching existing fixture pattern."
+        "notes": "Coder runs next. Architect's stage dependency order: 1+2 together (machinery + path first mover) \u2192 3 \u2192 4 \u2192 5 \u2192 6 (parallelizable) \u2192 7 (needs fixture DLL under PLang.Tests/App/Fixtures/dlls/). The PLNG_SerializerCoverage gate must land in Stage 2 so the runtime writer lookup stays total for built-in types. No fixture DLL was committed \u2014 Stage 7 coder builds it matching existing fixture pattern."
+      }
+    },
+    {
+      "id": "89e524a1-e310-4769-a66c-4be6364a5fd8",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-29T15:00:00Z",
+      "timestamp_end": "2026-05-29T15:12:00Z",
+      "intent": "Code-analysis pass on plang-types \u2014 registry+kind fold, per-(type,format) renderer dispatch, number/image/code/datetime/duration value types, runtime DLL loader (Stage 7), math handler retypes.",
+      "before": {
+        "assumptions": "Coder v1 reports 3598/3609 with 11 integration-cut stubs deferred. Branch is one commit past coder v1 (b28282ee4) which finished plang .goal tests + integration cuts. Architect 7-stage plan + test-designer's failing contract are landed.",
+        "risk": "Large surface area (~50 new files, ~5500 LOC). Risk is missing a subtle OBP smell on a noun introduced this branch (kinds, renderers, primitives) or a sync-over-async footgun in the IConvertible bridge. Mitigation: full diff stat first, then targeted reads of every new noun's @this.cs."
+      },
+      "plan": ".bot/plang-types/codeanalyzer/v1/report.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/plang-types/codeanalyzer/v1/report.md"
+          ],
+          "type": "create",
+          "category": "report",
+          "confidence": "high",
+          "context": "codeanalyzer v1 report \u2014 PASS with 2 minor findings + 4 notes."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "verdict": "pass (2 minor findings, none blocking)",
+        "health": "green \u2014 clean build (0 errors), 3609/3609 C# tests green; OBP shape clean across the 5 new types + 2 new dispatch nouns; System.IO/Console bans intact.",
+        "findings": "F1 (Minor): renderers.IndexAssembly dead initial-assignment + unreachable Convert.ChangeType branch. F2 (Minor): number.DoDivide dead conditional contradicts its own comment + the file-level docstring. 4 Notes: IConvertible.GetAwaiter().GetResult() (sealed-sync, safe), path.serializer absolute-fallback (in-envelope, document), kinds.@this.Of silent hook exceptions (documented contract), Loader.cs naming.",
+        "next": "tester"
       }
     }
   ]
