@@ -1,7 +1,7 @@
 namespace PLang.Tests.App.Types;
 
 // plang-types — Stage 1
-// The flat Primitives/PrimitiveNames dicts in app/types/this.cs fold into the
+// The flat Primitives/PrimitiveNames dicts in app/type/this.cs fold into the
 // [PlangType] registry — one source of truth for name↔type and IsPrimitive.
 // CLR primitives without a folder still resolve via a bootstrap RegisterRuntime.
 // Bar: no behavior regresses.
@@ -62,7 +62,7 @@ public class RegistryFoldTests
     [Test]
     public async Task ClrPrimitivesWithoutFolder_StillRegistered_ViaBootstrap()
     {
-        // string / int / decimal have no folder under app/types/ and carry no
+        // string / int / decimal have no folder under app/type/ and carry no
         // [PlangType] attribute. Registry.SeedClrPrimitives is what makes
         // ResolveType see them. KnownTypes() must include them.
         var known = new System.Collections.Generic.HashSet<System.Type>(_types.KnownTypes());

@@ -4,7 +4,7 @@ using PKind = global::app.type.number.NumberKind;
 namespace PLang.Tests.App.Types;
 
 // plang-types — Stage 3
-// app/types/number/this.cs — sealed class @this : IEquatable<@this>, IBooleanResolvable.
+// app/type/number/this.cs — sealed class @this : IEquatable<@this>, IBooleanResolvable.
 // Immutable; readonly slots _i / _d / _f; NumberKind { Int, Long, Float, Double, Decimal }.
 // int/long/decimal/double/float are KINDS of number — not separate top-level types.
 // No Context, no IContext stored.

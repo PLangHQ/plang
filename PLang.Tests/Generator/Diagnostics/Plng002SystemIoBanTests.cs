@@ -15,7 +15,7 @@ namespace PLang.Tests.Generator.Diagnostics;
 ///   <item><c>System.IO.Path.*</c> (pure name math) is allowed only from
 ///   <c>PLang/app/Utils/PathHelper.cs</c> — the single forwarder.</item>
 ///   <item><c>System.IO.File/Directory/FileInfo/FileStream/...</c> (actual
-///   IO) is allowed only under <c>PLang/app/types/path/**</c> — the gated
+///   IO) is allowed only under <c>PLang/app/type/path/**</c> — the gated
 ///   verb surface.</item>
 /// </list>
 /// </summary>
@@ -56,8 +56,8 @@ public class Plng002SystemIoBanTests
         return driver.RunGenerators(compilation).GetRunResult().Diagnostics;
     }
 
-    private const string ModulesPath = "/workspace/plang/PLang/app/modules/foo/Test.cs";
-    private const string PathTypesPath = "/workspace/plang/PLang/app/types/path/test/Test.cs";
+    private const string ModulesPath = "/workspace/plang/PLang/app/module/foo/Test.cs";
+    private const string PathTypesPath = "/workspace/plang/PLang/app/type/path/test/Test.cs";
     private const string PathHelperPath = "/workspace/plang/PLang/app/Utils/PathHelper.cs";
 
     [Test] public async Task Fires_OnFileReadAllText_UnderModulesNamespace()

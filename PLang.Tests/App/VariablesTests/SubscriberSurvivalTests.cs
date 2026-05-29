@@ -3,7 +3,7 @@ namespace PLang.Tests.App.VariablesTests;
 // Variables.Set contract — event subscribers follow the *name* across re-binding.
 //
 // Per Ingi (2026-05-01): subscribers attached to the placeholder Data for `%x%`
-// (e.g. `--debug={"variables":[{"name":"x"}]}`) need to fire on every assignment
+// (e.g. `--debug={"variable":[{"name":"x"}]}`) need to fire on every assignment
 // to %x%, not just the first. Since Variables.Set replaces the Data instance per
 // re-set (mints carry the concrete Data<T>), the events have to follow the name.
 //
@@ -170,7 +170,7 @@ public class SubscriberSurvivalTests
         await Assert.That(deleteCalls).IsEqualTo(1);
     }
 
-    // Regression: `--debug={"variables":[{"name":"x","event":"OnChange"}]}` attaches
+    // Regression: `--debug={"variable":[{"name":"x","event":"OnChange"}]}` attaches
     // OnChange to a placeholder and Set(placeholder)s under "x". Every subsequent
     // `set %x% = ...` must fire the placeholder's subscriber, not just the first.
     // Caught by auditor/v1: dumb storage broke this — placeholder events were lost

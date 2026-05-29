@@ -3,7 +3,7 @@ using code = global::app.type.code.@this;
 namespace PLang.Tests.App.Types;
 
 // plang-types — Stage 5
-// app/types/code/this.cs — Source, Language, IBooleanResolvable = source non-empty.
+// app/type/code/this.cs — Source, Language, IBooleanResolvable = source non-empty.
 // Kind is the language ("csharp"/"python"/…); text fallback when language not detected.
 
 public class CodeValueTests

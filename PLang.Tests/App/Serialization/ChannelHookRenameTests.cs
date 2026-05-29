@@ -61,7 +61,7 @@ public class ChannelHookRenameTests
     [Test] public async Task ChannelSubclass_Events_OverridesWriteReadAsk_NotCoreSuffixed()
     {
         // app.channel.@event.@this is the bindings holder, not a Channel
-        // subclass — there is no Write/Read/Ask override to scan. The "events"
+        // subclass — there is no Write/Read/Ask override to scan. The "@event"
         // channel kind in the architect's list refers to a per-channel events
         // collection, which lives by composition on every Channel.
         var t = typeof(global::app.channel.@event.@this);

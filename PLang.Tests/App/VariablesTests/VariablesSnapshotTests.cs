@@ -37,7 +37,7 @@ public class VariablesSnapshotTests
         vars.Set("!myInfra", "infra");    // !-prefixed — skipped
 
         var snap = src.Snapshot();
-        var captured = snap.Section("Variables").Read<List<Data>>("variables");
+        var captured = snap.Section("Variables").Read<List<Data>>("variable");
         await Assert.That(captured).IsNotNull();
 
         var names = captured!.Select(d => d.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);

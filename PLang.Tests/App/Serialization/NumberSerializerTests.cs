@@ -4,7 +4,7 @@ using number = global::app.type.number.@this;
 namespace PLang.Tests.App.Serialization;
 
 // plang-types — Stage 3
-// app/types/number/serializer/Default.cs — (number, *) → writer.Int/Long/Decimal/Double/Float
+// app/type/number/serializer/Default.cs — (number, *) → writer.Int/Long/Decimal/Double/Float
 // by Kind. Uniform across formats: number renders the same in every writer (the IWriter
 // primitive vocabulary is the cross-format contract).
 

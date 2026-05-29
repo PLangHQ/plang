@@ -99,11 +99,11 @@ public class Stage2_MechanicalTypings_Part2Tests
     public async Task ModulesDescribe_BuilderRecordHandlers_AdvertiseConcreteReturnTypes()
     {
         var rendered = await _app.Modules.Describe();
-        var types  = rendered.FirstOrDefault(a => a.Module == "builder" && a.ActionName == "types");
-        var goals  = rendered.FirstOrDefault(a => a.Module == "builder" && a.ActionName == "goals");
+        var types  = rendered.FirstOrDefault(a => a.Module == "builder" && a.ActionName == "type");
+        var goals  = rendered.FirstOrDefault(a => a.Module == "builder" && a.ActionName == "goal");
         var acts   = rendered.FirstOrDefault(a => a.Module == "builder" && a.ActionName == "actions");
 
-        await Assert.That(types!.ReturnTypeName).IsEqualTo("types");
+        await Assert.That(types!.ReturnTypeName).IsEqualTo("type");
         // goals/actions render as collection shapes — PLang's foreach over
         // them needs the list semantics, hence no wrapper record.
         await Assert.That(goals!.ReturnTypeName).IsEqualTo("list<goal>");

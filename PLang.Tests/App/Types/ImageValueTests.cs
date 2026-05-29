@@ -3,7 +3,7 @@ using image = global::app.type.image.@this;
 namespace PLang.Tests.App.Types;
 
 // plang-types — Stage 5
-// app/types/image/this.cs — Bytes, Mime, Path (type path, nullable), lazy Width/Height,
+// app/type/image/this.cs — Bytes, Mime, Path (type path, nullable), lazy Width/Height,
 // IBooleanResolvable = bytes.Length>0. Composition over union: an image carries a Path
 // facet rather than being typed as path|image.
 

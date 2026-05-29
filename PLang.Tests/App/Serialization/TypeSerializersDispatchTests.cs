@@ -2,7 +2,7 @@ namespace PLang.Tests.App.Serialization;
 
 // plang-types — Stage 2
 // app.type.renderer.@this — the (typeName, formatToken) → Write dispatch table.
-// Reflection-discovered from app/types/<name>/serializer/<format>.cs at first use,
+// Reflection-discovered from app/type/<name>/serializer/<format>.cs at first use,
 // with a Register(...) seam for runtime-loaded DLLs (Stage 7).
 // Lookup: specific (type, format) hit → fallback (type, "*") → null.
 

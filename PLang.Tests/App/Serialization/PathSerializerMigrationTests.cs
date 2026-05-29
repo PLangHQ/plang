@@ -3,7 +3,7 @@ using System.Text.Json;
 namespace PLang.Tests.App.Serialization;
 
 // plang-types — Stage 2 (path as first mover)
-// app/types/path/serializer/Default.cs ships the new dispatch entry for path.
+// app/type/path/serializer/Default.cs ships the new dispatch entry for path.
 // The wire shape (portable Relative / Raw / Absolute fallback) is preserved
 // exactly — byte-for-byte parity against the legacy JsonConverter.
 //
@@ -79,7 +79,7 @@ public class PathSerializerMigrationTests
     }
 
     // Placeholder removed; converter deletion is tracked in
-    // Documentation/v0.2/todos.md "Delete app/types/path/this.JsonConverter.cs"
+    // Documentation/v0.2/todos.md "Delete app/type/path/this.JsonConverter.cs"
     // (structural — requires ITypeRenderer.Read or a record-schema redesign).
     // The real "JsonConverter is absent" assertion lands with the migration.
 

@@ -47,7 +47,7 @@ public class Cut3_SignWireVerifyTests
         // Stage 1 migrated RawSignature → Signature. Reflection sanity: Ed25519
         // source no longer references RawSignature.
         var srcRoot = FindRepoRoot();
-        var src = global::System.IO.File.ReadAllText(global::System.IO.Path.Combine(srcRoot, "PLang/app/modules/signing/code/Ed25519.cs"));
+        var src = global::System.IO.File.ReadAllText(global::System.IO.Path.Combine(srcRoot, "PLang/app/module/signing/code/Ed25519.cs"));
         await Assert.That(src.Contains("RawSignature")).IsFalse();
     }
 
