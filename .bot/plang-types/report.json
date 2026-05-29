@@ -595,6 +595,78 @@
         "health": "C# 3636/3636 green, plang 248/248 green; all v4 findings resolved, mutation-confirmed",
         "notes": "F1 (renderer + inferred sealed gates) and F2 (sqrt key) each tester-mutation-confirmed; explicit-attr test held as control. F3 baseline + F4 doc done. F5 non-blocking: empty coder/v5/report.md."
       }
+    },
+    {
+      "id": "adb33855-a06e-440e-8a93-14d06a131ffa",
+      "bot": "security",
+      "timestamp_start": "2026-05-29T00:00:00Z",
+      "timestamp_end": "2026-05-29T18:27:37Z",
+      "intent": "security v2: verify coder v1-fix cycle (F1 power cap, F2 sealed names) and scan mathhelper-deletion merge for new attack surface.",
+      "before": {
+        "assumptions": "v1 PASS; coder v4+v5 + tester v4+v5 closed v1 F1/F2; mathhelper-deletion landed alongside.",
+        "risk": "gate-site partial coverage, math handlers escaping Wrap, F3 still latent"
+      },
+      "plan": ".bot/plang-types/security/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/plang-types/security/v2/plan.md",
+            ".bot/plang-types/security/v2/v1_review_summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 plan + v1 review summary"
+        },
+        {
+          "paths": [
+            "PLang/app/types/Loader.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F2 sealed-names gate at all 3 sites, OrdinalIgnoreCase soundness, Unicode bypass ruled out, partial-state on bail noted sub-Low"
+        },
+        {
+          "paths": [
+            "PLang/app/types/number/this.Arithmetic.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1 EnsureExponentInRange covers 3 CPU-loop branches; Math.Pow branches deliberately skip \u2014 sound"
+        },
+        {
+          "paths": [
+            "PLang/app/types/number/this.Unary.cs",
+            "PLang/app/modules/math/round.cs",
+            "PLang/app/modules/math/sqrt.cs",
+            "PLang/app/modules/math/max.cs",
+            "PLang/app/modules/math/min.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "mathhelper-deletion delta scan; F4 found in DoRound \u2014 ArgumentOutOfRangeException escapes Wrap"
+        },
+        {
+          "paths": [
+            ".bot/plang-types/security-report.json",
+            ".bot/plang-types/security/v2/result.md",
+            ".bot/plang-types/security/v2/verdict.json",
+            ".bot/plang-types/security/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 report state (F1+F2 fixed, F3 deferred, F4 open) + verdict PASS"
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "v1 F1+F2 closed mutation-confirmed; F3 still standing; F4 NEW Low non-blocking",
+        "notes": "Next: auditor"
+      }
     }
   ]
 }
