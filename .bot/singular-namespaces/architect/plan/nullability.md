@@ -42,11 +42,11 @@ Note: some of these chain into properties that are themselves legitimately nulla
 | Symbol | Disposition |
 |---|---|
 | `GetPrimitiveOrMime` — 4 external call sites (`data/this.cs:30,489`, `modules/variable/set.cs:30`, `modules/settings/Sqlite.cs:321`) | The `?? GetPrimitiveOrMime(...)` fallbacks come **out** — once context is non-null, `context.app.type[Value]` resolves primitives too (the registry holds them). |
-| `GetTypeNameStatic` — external fallbacks at `modules/this.cs:308,473,506` (`App?.Types... ?? GetTypeNameStatic`) | Come **out** — `App` is non-null, so the `App.Types.GetTypeName(...)` (→ `app.type[...].name` after stage 3/4) is enough. |
+| `GetTypeNameStatic` — external fallbacks at `modules/this.cs:308,473,506` (`App?.Types... ?? GetTypeNameStatic`) | Come **out** — `App` is non-null, so the `App.Types.GetTypeName(...)` (→ `app.type[...].name` after the accessor/entity work) is enough. |
 | `getTypes.cs:172` — direct `GetTypeNameStatic(returnType)` (no app in scope) | Route through app instead — confirm app is reachable here. |
-| `GetTypeNameStatic` — recursive internal calls inside `types/this.cs:133-166` | **Stay** for now — they are the static method's own implementation. Stage 4 (type-entity) may fold them into the entity; until then, leave the static method intact, only remove the *external nullable fallbacks*. |
+| `GetTypeNameStatic` — recursive internal calls inside `types/this.cs:133-166` | **Stay** for now — they are the static method's own implementation. The type-entity work may fold them into the entity; until then, leave the static method intact, only remove the *external nullable fallbacks*. |
 
-## Interaction with the other stages
+## Interaction with the other pieces
 
-- This stage is independent of the rename's *folder* moves, but it touches `types/this.cs` and `data/this.cs` which the rename also renames — sequence it **after** stage 1 so namespaces are stable, **before** stage 3 so the accessor work doesn't have to thread `App?.`.
-- `data.Type => context.app.type[Value]` (the clean one-line form) lands fully in stage 4 when `type[...]` returns the entity; in this stage the form is `data.Type => context.App.Types.Clr(Value)` with the `?.` and fallback removed. The non-null invariant is the prerequisite; the entity is the payoff.
+- This pass is independent of the rename's *folder* moves, but it touches `types/this.cs` and `data/this.cs` which the rename also renames — sequence it **after** the rename so namespaces are stable, **before** the accessor reshape so the accessor work doesn't have to thread `App?.`.
+- `data.Type => context.app.type[Value]` (the clean one-line form) lands fully with the type-entity work when `type[...]` returns the entity; in this pass the form is `data.Type => context.App.Types.Clr(Value)` with the `?.` and fallback removed. The non-null invariant is the prerequisite; the entity is the payoff.

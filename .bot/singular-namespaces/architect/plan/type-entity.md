@@ -1,6 +1,6 @@
 # Type entity — `type.@this` and `data.Type`
 
-The biggest and riskiest piece. It is here because the accessor model demands it: `app.type["int"]` is only worth the keystrokes if what comes back is *an object you work with*. Today it would be a raw `System.Type`, with the actual per-type knowledge scattered. This stage consolidates that knowledge into a real entity.
+The biggest and riskiest piece. It is here because the accessor model demands it: `app.type["int"]` is only worth the keystrokes if what comes back is *an object you work with*. Today it would be a raw `System.Type`, with the actual per-type knowledge scattered. This consolidates that knowledge into a real entity.
 
 ## The problem: "a type" is smeared across three places today
 
@@ -23,7 +23,7 @@ data.Type            → type.@this   the value's type — context.app.type[Valu
 
 `type.list.@this` (folder `type/list/`) becomes the registry; the current `types/this.cs` selection/conversion methods (`Get`, `Clr`, `GetTypeName`, `Name`, `Register`, `RegisterDomainTypes`) reshape into: the registry does selection (`[name]`, `of<T>()`) + lifecycle (`Register`), and per-type knowledge (name, clr, scheme, valid-values, the conversion the type knows how to do) moves onto `type.@this`. The `Choices` and `Scheme` sub-registries (`type/choice/`, `type/path/scheme/`) stay where they are, reached through the type or the registry as today.
 
-`builder.Types.Entry` is the existing rich shape — the entity absorbs what it carries (Fields/Shape/Example/Description become the type's own, or the builder reads them off the entity). The builder schema path (`BuildTypeEntries`, `ComplexSchemas`, `builder/Types/Render.cs`) reshapes to read from `type.@this` instead of constructing a parallel `Entry`. **This is the part that reshapes behavior** — treat the builder schema rendering as the integration risk and pin it with tests (see test-coverage.md).
+`builder.Types.Entry` is the existing rich shape — the entity absorbs what it carries (Fields/Shape/Example/Description become the type's own, or the builder reads them off the entity). The builder schema path (`BuildTypeEntries`, `ComplexSchemas`, `builder/Types/Render.cs`) reshapes to read from `type.@this` instead of constructing a parallel `Entry`. **This is the part that reshapes behavior** — treat the builder schema rendering as the integration risk and pin it with a golden test (capture the rendered LLM schema before, assert byte-identical after).
 
 ## `data.Type` is the natural home
 
@@ -31,7 +31,7 @@ Every value is a `data`; a type is never free-floating, it is always something a
 
 ```csharp
 // data/this.cs — was ClrType returning System.Type with a static fallback
-public type.@this Type => context.app.type[Value];   // context + app non-null (stage 2); registry holds primitives
+public type.@this Type => context.app.type[Value];   // context + app non-null; registry holds primitives
 ```
 
 `app.type[...]` is the registry door (used by the loader, the builder, conversion); `data.Type` is the door you hold. Both return the same entity.
@@ -52,6 +52,6 @@ public type.@this Type => context.app.type[Value];   // context + app non-null (
 
 ## Scope and sequencing
 
-- Depends on **stage 2** (non-null `context`, so `data.Type => context.app.type[...]` has no fallback) and **stage 3** (the `app.type` accessor exists).
-- This is the one stage that genuinely *moves logic* (the brief's original §7 scoped it out; Ingi pulled it in). Keep the registry's selection/lifecycle clean and put every per-type behavior on the entity, same rule as everywhere else.
+- Depends on the **non-null invariant** (so `data.Type => context.app.type[...]` has no fallback) and the **`app.type` accessor** existing.
+- This is the one piece that genuinely *moves logic* (the brief's original §7 scoped it out; Ingi pulled it in). Keep the registry's selection/lifecycle clean and put every per-type behavior on the entity, same rule as everywhere else.
 - If it proves too large to land safely with the rest, it is the natural cut point to split back out — but the goal is all four in one branch. Flag to Ingi if the builder schema reshape balloons.

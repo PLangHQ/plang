@@ -1,0 +1,14 @@
+{
+  "plan/accessor-model.md": [
+    {
+      "id": "eb6c91f221",
+      "line": 87,
+      "text": "I dont like this, loosing this.cs in module, btw, it should be 'module' not 'modules'",
+      "anchor": "- The flat action registry `modules/this.cs` leaves `app.@this`'s public surface and becomes `module/registry.cs` (no `this.cs`, so no `module.@this` claim). It's held on an internal field; the 6 `app.Modules.*` call sites (`GetCodeGenerated`, `Discover`, `Describe`, `Contains`, `Remove`) reach it through that field.",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-29T14:53:40"
+    }
+  ]
+}

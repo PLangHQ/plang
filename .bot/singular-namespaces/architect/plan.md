@@ -13,7 +13,7 @@ The visible symptom is four wrapper aliases on the app root: `AppGoals`, `AppCha
 
 ## You own this
 
-Every code snippet in this plan and its stage files is a **suggestion that pins the shape, not the final text**. The coder owns method bodies, names at the margin, and how the migration is sequenced within a stage. If a cleaner form preserves the contracts below, take it. What is *not* negotiable: the accessor surface (`app.X` is the collection node; `["name"]` selects; `.list` enumerates; `.current` only where execution has a current), the registry/element split (selection+lifecycle on the registry, behavior on the element), and the non-null `app`/`context` invariant.
+Every code snippet in this plan is a **suggestion that pins the shape, not the final text**. The coder owns method bodies, names at the margin, and how the migration is sequenced. If a cleaner form preserves the contracts below, take it. What is *not* negotiable: the accessor surface (`app.X` is the collection node; `["name"]` selects; `.list` enumerates; `.current` only where execution has a current), the registry/element split (selection+lifecycle on the registry, behavior on the element), and the non-null `app`/`context` invariant.
 
 ## The model (settled)
 
@@ -43,20 +43,20 @@ Rules that fell out of the design walk (full reasoning in `plan/accessor-model.m
 ## Cross-cutting decisions
 
 - **Index-miss is a defined policy, not a silent redirect.** `app.channel["nope"]` / `app.goal["nope"]` behavior (error / noop / create) is governed by a setting with a chosen default — not an implicit noop and not a hard throw baked into the indexer. Detail in `plan/accessor-model.md`.
-- **The generator is string-typed and the compiler won't protect it.** `PLang.Generators/Emission/Action/this.cs:177` holds `const string prefix = "app.modules."` and the emitted-code templates contain namespace literals (`app.channels.channel.@this`, `app.goals.goal.steps...`, `app.errors.ServiceError`, ...). `Discovery/this.cs` matches on `"app.modules"` string predicates. These fail at *consumer* compile time, not in the generator. They are in `stage-1` and must be verified by a clean rebuild, not assumed.
+- **The generator is string-typed and the compiler won't protect it.** `PLang.Generators/Emission/Action/this.cs:177` holds `const string prefix = "app.modules."` and the emitted-code templates contain namespace literals (`app.channels.channel.@this`, `app.goals.goal.steps...`, `app.errors.ServiceError`, ...). `Discovery/this.cs` matches on `"app.modules"` string predicates. These fail at *consumer* compile time, not in the generator. They are part of the rename and must be verified by a clean rebuild, not assumed.
 - **Module is the deliberate exception.** `modules/` → `module/`, but the flat action registry `modules/this.cs` is removed from `app.@this`'s public surface and becomes `module/registry.cs` (held on an internal field; 6 call sites reach it through that). Action modules are dispatched, not navigated — no `app.module.current`, no fake singular. See `plan/accessor-model.md`.
-- **Build-green strategy: subsystem-by-subsystem within the rename.** Because consumers go through aliases, renaming one subsystem (move folder → fix its namespace → fix that alias's RHS → fix its few direct refs + generator strings) keeps the build green per increment. Don't attempt the whole tree in one non-compiling sweep. Order detail in `stage-1-rename.md`.
+- **Build-green strategy: subsystem-by-subsystem within the rename.** Because consumers go through aliases, renaming one subsystem (move folder → fix its namespace → fix that alias's RHS → fix its few direct refs + generator strings) keeps the build green per increment. Don't attempt the whole tree in one non-compiling sweep.
 
-## Stages
+## Order
 
-| Stage | File | What | Size |
-|-------|------|------|------|
-| 1 | [Rename](stage-1-rename.md) | Folders + namespaces + both `GlobalUsings.cs` + generator strings/templates + test mirrors + doc refs. Singular+lowercase. Old property names + nullable shape unchanged. | ~190 files, alias-shielded |
-| 2 | [Non-null invariants](stage-2-nullability.md) | `app`/`context` non-null; drop ~39 defensive `?.`; remove the external static fallbacks; route the no-context type sites through app. Surfaces un-stamped-Data reads. | 3 back-refs, 9 ctx fields, ~39 sites |
-| 3 | [Accessor reshape](stage-3-accessor.md) | `app.X` → collection node; rename properties (`Goals`→`goal` …); add `[name]`/`.list`/`.current`/`.of<T>()`; registry=selection+lifecycle (push channel I/O to element); module demote; kill the four `App*` aliases; migrate ~286 call sites. | The heart |
-| 4 | [Type entity](stage-4-type-entity.md) | Promote `type.@this` to a rich entity (name+clr+scheme+valid-values), consolidating `System.Type` + `builder.Types.Entry` + scheme; `data.Type` returns it. | Reshapes builder schema path |
+The four pieces have a strict dependency order:
 
-Dependency order is strict: 1 → 2 → 3 → 4. Each stage should leave the build green and tests passing before the next begins (rebuild clean — `plang --test` runs off a pre-built binary; see the stale-binary trap in `/CLAUDE.md`).
+1. **Rename** — folders + namespaces + both `GlobalUsings.cs` + generator strings/templates + test mirrors + doc refs. Singular+lowercase; property names and the nullable shape unchanged. ~190 files, mostly alias-shielded. The foundation.
+2. **Non-null `app`/`context`** — drop ~39 defensive `?.`, remove the external static fallbacks, route the no-context type sites through app. After the rename (namespaces stable), before the accessor work (so it never threads `App?.`). Surfaces the un-stamped-`data` reads the `?.` hid.
+3. **Accessor reshape** — `app.X` → collection node; rename properties (`Goals`→`goal` …); add `[name]`/`.list`/`.current`/`.of<T>()`; registry=selection+lifecycle (push channel I/O to the element); module demote; delete the four `App*` aliases; migrate ~286 call sites. The heart.
+4. **Type entity** — promote `type.@this` to a rich entity (name+clr+scheme+valid-values), consolidating `System.Type` + `builder.Types.Entry` + scheme; `data.Type` returns it. Depends on 2 and 3; reshapes the builder schema path.
+
+Each piece should leave the build green and both suites passing before the next — rebuild clean, since `plang --test` runs off a pre-built binary (stale-binary trap in `/CLAUDE.md`).
 
 ## Deep dives
 
@@ -64,4 +64,3 @@ Dependency order is strict: 1 → 2 → 3 → 4. Each stage should leave the bui
 - [rename-map.md](plan/rename-map.md) — the corrected complete rename table, both GlobalUsings, generator strings, test mirrors, doc references.
 - [nullability.md](plan/nullability.md) — the non-null surface, what's removed vs what stays, the stamping invariant.
 - [type-entity.md](plan/type-entity.md) — the `type.@this` promotion and `data.Type`.
-- [test-strategy.md](plan/test-strategy.md) / [test-coverage.md](plan/test-coverage.md) — for test-designer.
