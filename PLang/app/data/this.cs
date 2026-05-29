@@ -305,6 +305,17 @@ public partial class @this
     }
 
     /// <summary>
+    /// Refinement of <see cref="Type"/> — the build-time kind a type's
+    /// <c>static string? Build(object?)</c> hook produces. Stays null for
+    /// types without a kind (plain string, polymorphic results). Separate
+    /// JSON field, never a "type:kind" string — splitting is runtime work.
+    /// </summary>
+    [JsonPropertyName("kind")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    [Out, Store]
+    public string? Kind { get; set; }
+
+    /// <summary>
     /// Gets the value cast to the specified type.
     /// </summary>
     public T? GetValue<T>()

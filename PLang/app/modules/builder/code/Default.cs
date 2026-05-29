@@ -881,6 +881,20 @@ public class Default : IBuilder
                     var typeName = context.App.Types.GetTypeName(schemaProp.PropertyType);
                     if (typeName != "object")
                         p.Type = new data.type(typeName);
+
+                    // plang-types: stamp kind alongside type when the declared
+                    // type carries a static Build(value) hook. Separate field
+                    // on the .pr — never "type:kind". Skip variable refs
+                    // (%var% values resolve at runtime).
+                    if (p.Value is not null && !(p.Value is string sv && sv.StartsWith('%') && sv.EndsWith('%')))
+                    {
+                        var declared = schemaProp.PropertyType;
+                        var underlying = System.Nullable.GetUnderlyingType(declared) ?? declared;
+                        if (underlying.IsGenericType && underlying.GetGenericTypeDefinition() == typeof(global::app.data.@this<>))
+                            underlying = underlying.GetGenericArguments()[0];
+                        var kind = context.App.Types.Kinds.Of(underlying, p.Value);
+                        if (kind != null) p.Kind = kind;
+                    }
                 }
             }
 

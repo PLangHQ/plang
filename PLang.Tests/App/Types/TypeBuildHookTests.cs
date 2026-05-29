@@ -7,15 +7,51 @@ namespace PLang.Tests.App.Types;
 
 public class TypeBuildHookTests
 {
-    [Test] public async Task TypeBuild_DiscoveredByReflection_LikeResolve()
-        => throw new global::System.NotImplementedException();
+    private global::app.types.kinds.@this _kinds = null!;
 
-    [Test] public async Task TypeBuild_DistinctFrom_ActionIClassBuild()
-        => throw new global::System.NotImplementedException();
+    [Before(Test)]
+    public void Setup() => _kinds = new global::app.types.kinds.@this();
 
-    [Test] public async Task TypeBuild_ReturnsNullForUnknownValue_DoesNotThrow()
-        => throw new global::System.NotImplementedException();
+    [Test]
+    public async Task TypeBuild_DiscoveredByReflection_LikeResolve()
+    {
+        // path.@this declares `public static string? Build(object? value)` in
+        // this.Build.cs. The dispatcher finds it by reflection (same shape as
+        // Resolve discovery) and invokes it.
+        await Assert.That(_kinds.Of(typeof(global::app.types.path.@this), "/srv/a.jpg")).IsEqualTo("file");
+        await Assert.That(_kinds.Of(typeof(global::app.types.path.@this), "https://x")).IsEqualTo("http");
+        await Assert.That(_kinds.Of(typeof(global::app.types.path.@this), "http://x")).IsEqualTo("http");
+    }
 
-    [Test] public async Task TypeBuild_NotInvoked_ForTypesWithoutKind_DateTimeDuration()
-        => throw new global::System.NotImplementedException();
+    [Test]
+    public async Task TypeBuild_DistinctFrom_ActionIClassBuild()
+    {
+        // The type-level Build is `static string? Build(object?)`, not the
+        // action's `IClass.Build()` (instance, no params, returns Data).
+        // Discovery must filter on the (object?)→string signature only — an
+        // action handler that implements IClass.Build() must NOT be picked up
+        // as if it were a kind hook.
+        var fileReadType = typeof(global::app.modules.file.Read);
+        await Assert.That(_kinds.Of(fileReadType, "/whatever")).IsNull();
+    }
+
+    [Test]
+    public async Task TypeBuild_ReturnsNullForUnknownValue_DoesNotThrow()
+    {
+        // Hook returning null is normal (path.Build returns null for non-strings,
+        // empty strings, %var% refs). Dispatcher passes the null through.
+        await Assert.That(_kinds.Of(typeof(global::app.types.path.@this), null)).IsNull();
+        await Assert.That(_kinds.Of(typeof(global::app.types.path.@this), "")).IsNull();
+        await Assert.That(_kinds.Of(typeof(global::app.types.path.@this), 42)).IsNull();
+        await Assert.That(_kinds.Of(typeof(global::app.types.path.@this), "%photo%")).IsNull();
+    }
+
+    [Test]
+    public async Task TypeBuild_NotInvoked_ForTypesWithoutKind_DateTimeDuration()
+    {
+        // datetime / TimeSpan have no kind concept — no Build hook ⇒ Of returns null.
+        await Assert.That(_kinds.Of(typeof(System.DateTime), System.DateTime.UtcNow)).IsNull();
+        await Assert.That(_kinds.Of(typeof(System.TimeSpan), System.TimeSpan.FromSeconds(1))).IsNull();
+        await Assert.That(_kinds.Of(typeof(string), "hello")).IsNull();
+    }
 }

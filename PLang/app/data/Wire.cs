@@ -206,6 +206,7 @@ public sealed class Wire : JsonConverter<@this>
         string name = "";
         object? value = null;
         type? typeRef = null;
+        string? kind = null;
         app.modules.signing.Signature? signature = null;
         Properties? properties = null;
 
@@ -214,6 +215,7 @@ public sealed class Wire : JsonConverter<@this>
             if (reader.TokenType == JsonTokenType.EndObject)
             {
                 var data = new @this(name, value, typeRef);
+                if (kind != null) data.Kind = kind;
                 if (signature != null) data.Signature = signature;
                 if (properties != null) data.Properties = properties;
                 return data;
@@ -235,6 +237,15 @@ public sealed class Wire : JsonConverter<@this>
                         typeRef = string.IsNullOrEmpty(typeStr) ? null : new type(typeStr);
                     }
                     else throw new JsonException("type field must be a JSON string");
+                    break;
+                case "kind":
+                    if (reader.TokenType == JsonTokenType.Null) kind = null;
+                    else if (reader.TokenType == JsonTokenType.String)
+                    {
+                        var kindStr = reader.GetString();
+                        kind = string.IsNullOrEmpty(kindStr) ? null : kindStr;
+                    }
+                    else throw new JsonException("kind field must be a JSON string");
                     break;
                 case "value":
                     // Peek at the token to see whether the value slot is a
@@ -379,6 +390,13 @@ public sealed class Wire : JsonConverter<@this>
         if (typeVal != null)
         {
             writer.WriteString("type", typeVal);
+        }
+
+        // kind — refinement of type, separate sibling field per plang-types design.
+        // Skipped entirely when null (types with no kind, polymorphic results).
+        if (!string.IsNullOrEmpty(data.Kind))
+        {
+            writer.WriteString("kind", data.Kind);
         }
 
         writer.WritePropertyName("value");

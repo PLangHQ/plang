@@ -8,21 +8,85 @@ namespace PLang.Tests.App.Types;
 
 public class RegistryFoldTests
 {
-    [Test] public async Task Get_NumberByName_ResolvesViaRegistry_NotFlatPrimitivesDict()
-        => throw new global::System.NotImplementedException();
+    private EngineTypes _types = null!;
 
-    [Test] public async Task IsPrimitive_AllPriorTrueAnswers_StillTrue()
-        => throw new global::System.NotImplementedException();
+    [Before(Test)]
+    public void Setup() => _types = new EngineTypes();
 
-    [Test] public async Task ResolveName_And_ResolveType_RoundTrip_PerBuiltIn()
-        => throw new global::System.NotImplementedException();
+    [Test]
+    public async Task Get_NumberByName_ResolvesViaRegistry_NotFlatPrimitivesDict()
+    {
+        // After the fold, Get(name) and ResolveType(name) share the registry's
+        // _nameToType map. Pre-fold "string" resolved via the flat dict but was
+        // invisible to ResolveType. Number proper lands Stage 3 — until then,
+        // the assertion is the routing rule, exercised on the primitive that
+        // historically lived in the flat dict only.
+        await Assert.That(_types.Get("string")).IsEqualTo(typeof(string));
+        await Assert.That(_types.ResolveType("string")).IsEqualTo(typeof(string));
+        await Assert.That(_types.Get("decimal")).IsEqualTo(typeof(decimal));
+        await Assert.That(_types.ResolveType("decimal")).IsEqualTo(typeof(decimal));
+    }
 
-    [Test] public async Task ClrPrimitivesWithoutFolder_StillRegistered_ViaBootstrap()
-        => throw new global::System.NotImplementedException();
+    [Test]
+    public async Task IsPrimitive_AllPriorTrueAnswers_StillTrue()
+    {
+        await Assert.That(EngineTypes.IsPrimitive(typeof(string))).IsTrue();
+        await Assert.That(EngineTypes.IsPrimitive(typeof(int))).IsTrue();
+        await Assert.That(EngineTypes.IsPrimitive(typeof(long))).IsTrue();
+        await Assert.That(EngineTypes.IsPrimitive(typeof(double))).IsTrue();
+        await Assert.That(EngineTypes.IsPrimitive(typeof(decimal))).IsTrue();
+        await Assert.That(EngineTypes.IsPrimitive(typeof(bool))).IsTrue();
+        await Assert.That(EngineTypes.IsPrimitive(typeof(System.DateTime))).IsTrue();
+        await Assert.That(EngineTypes.IsPrimitive(typeof(System.Guid))).IsTrue();
+    }
 
-    [Test] public async Task Conversion_TryConvertTo_RoutesThroughRegistry_NotPrimitivesDict()
-        => throw new global::System.NotImplementedException();
+    [Test]
+    public async Task ResolveName_And_ResolveType_RoundTrip_PerBuiltIn()
+    {
+        foreach (var (name, clr) in new (string, System.Type)[]
+        {
+            ("string", typeof(string)),
+            ("int", typeof(int)),
+            ("long", typeof(long)),
+            ("double", typeof(double)),
+            ("decimal", typeof(decimal)),
+            ("bool", typeof(bool)),
+            ("datetime", typeof(System.DateTime)),
+        })
+        {
+            await Assert.That(_types.ResolveType(name)).IsEqualTo(clr);
+            await Assert.That(_types.ResolveName(clr)).IsEqualTo(name);
+        }
+    }
 
-    [Test] public async Task Formats_ExtensionToPlangName_ReadsThroughRegistry()
-        => throw new global::System.NotImplementedException();
+    [Test]
+    public async Task ClrPrimitivesWithoutFolder_StillRegistered_ViaBootstrap()
+    {
+        // string / int / decimal have no folder under app/types/ and carry no
+        // [PlangType] attribute. Registry.SeedClrPrimitives is what makes
+        // ResolveType see them. KnownTypes() must include them.
+        var known = new System.Collections.Generic.HashSet<System.Type>(_types.KnownTypes());
+        await Assert.That(known.Contains(typeof(string))).IsTrue();
+        await Assert.That(known.Contains(typeof(int))).IsTrue();
+        await Assert.That(known.Contains(typeof(decimal))).IsTrue();
+    }
+
+    [Test]
+    public async Task Conversion_TryConvertTo_RoutesThroughRegistry_NotPrimitivesDict()
+    {
+        var (value, error) = global::app.types.@this.TryConvertTo("42", typeof(int));
+        await Assert.That(error).IsNull();
+        await Assert.That(value).IsEqualTo(42);
+    }
+
+    [Test]
+    public async Task Formats_ExtensionToPlangName_ReadsThroughRegistry()
+    {
+        // Once an extension like "csv" / "json" resolves to a PLang name, the
+        // registry's Get must accept that name. (app.formats produces the name;
+        // the registry resolves it — the two halves meet at the same lookup.)
+        await Assert.That(_types.Get("csv")).IsEqualTo(typeof(string));
+        await Assert.That(_types.Get("json")).IsEqualTo(typeof(System.Text.Json.Nodes.JsonNode));
+        await Assert.That(_types.Get("yaml")).IsEqualTo(typeof(string));
+    }
 }

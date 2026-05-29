@@ -1,0 +1,98 @@
+using System.Text.Json.Nodes;
+
+namespace app.types.primitives;
+
+/// <summary>
+/// The CLR-primitive entries seeded into <c>app.types.@this</c>'s registry
+/// at App init — the "no folder, no Resolve, no Build" types that still need
+/// a PLang name (<c>string</c>, <c>int</c>, <c>decimal</c>, …) plus their
+/// aliases (<c>text</c>, <c>integer</c>, <c>boolean</c>, …).
+///
+/// Owns three views:
+///   <see cref="Aliases"/> — every name (including aliases) → CLR type.
+///   <see cref="Canonical"/> — CLR type → canonical short PLang name.
+///   <see cref="MimeMap"/>  — MIME content-type → CLR type (read by
+///     <c>app.types.@this.ClrFromMime</c>, kept here so the seeded data
+///     stays in one place).
+///
+/// Pure data, no per-App divergence — exposed as static so the no-context
+/// fallback helpers on <c>app.types.@this</c> can read it without an
+/// instance.
+/// </summary>
+public static class @this
+{
+    public static IReadOnlyDictionary<string, System.Type> Aliases { get; } =
+        new Dictionary<string, System.Type>(System.StringComparer.OrdinalIgnoreCase)
+        {
+            ["string"] = typeof(string),
+            ["text"] = typeof(string),
+            ["int"] = typeof(int),
+            ["integer"] = typeof(int),
+            ["long"] = typeof(long),
+            ["float"] = typeof(float),
+            ["double"] = typeof(double),
+            ["decimal"] = typeof(decimal),
+            ["bool"] = typeof(bool),
+            ["boolean"] = typeof(bool),
+            ["datetime"] = typeof(System.DateTime),
+            ["date"] = typeof(System.DateTime),
+            ["time"] = typeof(System.TimeSpan),
+            ["timespan"] = typeof(System.TimeSpan),
+            ["guid"] = typeof(System.Guid),
+            ["byte"] = typeof(byte),
+            ["bytes"] = typeof(byte[]),
+            ["list"] = typeof(List<object>),
+            ["array"] = typeof(object[]),
+            ["dictionary"] = typeof(Dictionary<string, object>),
+            ["dict"] = typeof(Dictionary<string, object>),
+            ["map"] = typeof(Dictionary<string, object>),
+            ["object"] = typeof(object),
+            ["dynamic"] = typeof(object),
+            ["json"] = typeof(JsonNode),
+            // Text-shaped file extensions — registered as string aliases so
+            // file.read.Build()'s extension-derived Type stamp ("csv", "txt", ...)
+            // doesn't surface "Unknown type" at runtime. Annotation stays specific
+            // (goal.getTypes still reports "csv"); only the runtime conversion
+            // target degrades to string.
+            ["csv"] = typeof(string),
+            ["txt"] = typeof(string),
+            ["xml"] = typeof(string),
+            ["yaml"] = typeof(string),
+            ["yml"] = typeof(string),
+            ["int?"] = typeof(int?),
+            ["long?"] = typeof(long?),
+            ["double?"] = typeof(double?),
+            ["bool?"] = typeof(bool?),
+            ["datetime?"] = typeof(System.DateTime?),
+            ["guid?"] = typeof(System.Guid?),
+        };
+
+    public static IReadOnlyDictionary<System.Type, string> Canonical { get; } =
+        new Dictionary<System.Type, string>
+        {
+            [typeof(string)] = "string",
+            [typeof(int)] = "int",
+            [typeof(long)] = "long",
+            [typeof(float)] = "float",
+            [typeof(double)] = "double",
+            [typeof(decimal)] = "decimal",
+            [typeof(bool)] = "bool",
+            [typeof(System.DateTime)] = "datetime",
+            [typeof(System.TimeSpan)] = "timespan",
+            [typeof(System.Guid)] = "guid",
+            [typeof(byte)] = "byte",
+            [typeof(byte[])] = "bytes",
+            [typeof(object)] = "object",
+        };
+
+    /// <summary>
+    /// Names exposed to the LLM builder catalog — every alias-less canonical
+    /// name (no <c>?</c> suffixes). Domain types are surfaced separately via
+    /// schemas, not listed here.
+    /// </summary>
+    public static IReadOnlyList<string> BuilderNames { get; } = Aliases
+        .Where(kvp => !kvp.Key.EndsWith("?"))
+        .GroupBy(kvp => kvp.Value)
+        .Select(g => g.First().Key)
+        .ToList();
+}

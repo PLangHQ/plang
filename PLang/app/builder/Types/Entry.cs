@@ -55,6 +55,16 @@ public sealed class Entry
     /// <summary>Semantic description, from <c>[PlangType(Description = ...)]</c>. Optional.</summary>
     public string? Description { get; init; }
 
+    /// <summary>
+    /// Developer-meaningful kind vocabulary for this type — sourced from a static
+    /// <c>public static IReadOnlyList&lt;string&gt; Kinds</c> convention on the type
+    /// (the same shape as <c>Example</c>/<c>Shape</c>). Null when the type either
+    /// has no kind (e.g. <c>datetime</c>) or its kind is derivation-only and not
+    /// developer-meaningful (e.g. <c>image</c>'s jpg/png — Build derives them but
+    /// the LLM doesn't need the vocabulary).
+    /// </summary>
+    public IReadOnlyList<string>? Kinds { get; init; }
+
     /// <summary>The underlying CLR type, preserved for consumers that need it (e.g. deserialization).</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public System.Type? ClrType { get; init; }
