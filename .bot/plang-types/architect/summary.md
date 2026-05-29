@@ -1,3 +1,23 @@
+## 2026-05-29 — Stages carved + test handoff written (ready for test-designer)
+
+Design is settled (all comments resolved, both big threads decided, branch merged with runtime2). Carved all the work into 7 stage files at the bot root and wrote the test handoff. Ingi: "all, go" — runtime loading kept in this branch as stage 7 (additive, last) rather than split off.
+
+Stage 1 split into two reviewable halves: type-identity (registry fold + `kind` field + per-type `Build` + typed-property catalog) and serializer dispatch (`TypeSerializers` + `TypedValueNode` + `Normalize` hook + `IWriter.Format` + PLNG gate, with `path` as the first mover). Then number-value, number-arithmetic+policy, image+code, cleanups, runtime-loading.
+
+Test handoff per spec: `plan/test-strategy.md` (layer rule + 4 integration cuts — literal-kind→arithmetic→output, image-two-channels, composition navigation, runtime-loading) and `plan/test-coverage.md` (coverage matrix by topic file, failure matrix with three impossible-by-design exclusions, new-surfaces inventory).
+
+Stage status:
+
+| Stage | File | Status |
+|-------|------|--------|
+| 1 | [registry + kind + Build + catalog](stage-1-registry-and-kind.md) | pending |
+| 2 | [serializer dispatch](stage-2-serializer-dispatch.md) | pending |
+| 3 | [number value type](stage-3-number-value.md) | pending |
+| 4 | [number arithmetic + policy](stage-4-number-arithmetic.md) | pending |
+| 5 | [image + code](stage-5-image-and-code.md) | pending |
+| 6 | [primitive cleanups](stage-6-primitive-cleanups.md) | pending |
+| 7 | [runtime loading](stage-7-runtime-loading.md) | pending |
+
 ## 2026-05-29 — Surface `Build` as a first-class type method (review pass)
 
 Ingi flagged that the type's `Build` method was under-documented and invisible in the folder tree. Read over all files; while doing it, caught and fixed a real inaccuracy.

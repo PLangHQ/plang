@@ -1,7 +1,7 @@
 # `plang-types` — typed values that own their leaf behavior
 
 **Branch:** `plang-types` (off `runtime2`).
-**Status:** design settled; stage files to be carved next.
+**Status:** design settled; 7 stage files carved; test handoff written. Ready for test-designer.
 
 ## Why
 
@@ -185,15 +185,16 @@ Every PLang type is a folder under `app/types/`: the value (`this.cs`), the pars
 - **`/` and `^` promote out of the integer kinds.** `7 / 2 → 3.5`, not integer-divide `3` — the integer-division footgun is the wrong default for a non-programmer audience. Truncating division is the explicit `math.intdiv`. (Architect's call; flag on read-over if you'd rather keep C# integer semantics.)
 - **HTML deferred.** No HTML writer ships yet (`text/html` aliases JSON today); the `<img>`/`<pre>` markup renderings are footnotes until one does.
 
-## Stages (to carve next)
+## Stages
 
-The design is settled; these are the imperative units of work, in dependency order. Stage files come after your read-over.
+Carved, in dependency order. Original index-stage 1 split into two reviewable halves (type-identity and dispatch).
 
-1. **Registry + dispatch spine.** Fold the `Primitives` table into the `[PlangType]` registry; add `TypeSerializers`, `TypedValueNode`, the `Normalize` tag-hook, `IWriter.Format`, the writer's `TypedValueNode` case, the `PLNG_SerializerCoverage` gate, the separate **`kind` field** on `.pr` parameters, and the per-type **`Build(value)→kind`** hook (with the typed-property catalog so the LLM can navigate `.Path` etc.). No new types yet — `path` adopts `serializer/Default.cs` as the first mover and proves the path end-to-end.
-2. **`number` the value type.** The `sealed class`, storage, parse, `Build(value)→kind` (the literal-shape rule), operators, lenient/exact equality, `IBooleanResolvable`, `serializer/Default.cs`. [storage.md](storage.md).
-3. **`number` arithmetic + policy.** `NumberPolicy`, `number.Config : IConfig`, the `app.config` resolver, the `math.*` retype to `Data<number>`, `math.intdiv`. [policy.md](policy.md).
-4. **`image` + `code`.** The two non-numeric proving instances, their parse / `Build()` / serializer files, and `file.read`'s action `Build()` resolving extension → high-level type (type's `Build()` supplies the kind).
-5. **The cleanups.** `datetime`/`date`/`time`/`duration` rebinds and the two folders.
-6. **Runtime loading.** `code.load` extension for `[PlangType]` + `ITypeRenderer` registration, and the overwrite-precedence wiring.
+1. [Type identity — registry fold, `kind`, `Build`, typed-property catalog](stage-1-registry-and-kind.md)
+2. [Serializer dispatch — per-(type, format) files](stage-2-serializer-dispatch.md) (`path` first mover)
+3. [`number` — the value type](stage-3-number-value.md)
+4. [`number` — arithmetic + policy](stage-4-number-arithmetic.md)
+5. [`image` + `code` — the non-numeric proving instances](stage-5-image-and-code.md)
+6. [Primitive cleanups — datetime / date / time / duration](stage-6-primitive-cleanups.md) (parallelizable with 3–5)
+7. [Runtime type-loading](stage-7-runtime-loading.md) (additive; last)
 
-Test strategy and coverage are written once the stages are carved (`plan/test-strategy.md`, `plan/test-coverage.md`).
+Test handoff: [plan/test-strategy.md](plan/test-strategy.md) (narrative + 4 integration cuts) and [plan/test-coverage.md](plan/test-coverage.md) (coverage matrix, failure matrix, new-surfaces inventory).
