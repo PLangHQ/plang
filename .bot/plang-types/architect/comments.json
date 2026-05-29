@@ -9,7 +9,7 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-28T20:17:59",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "3b5b3c4510",
@@ -20,7 +20,7 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-29T09:41:19",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "b531430755",
@@ -31,7 +31,7 @@
       "status": "resolved",
       "parent_id": "3b5b3c4510",
       "ts": "2026-05-29T09:57:02",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "9835f01223",
@@ -42,7 +42,7 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-28T19:11:55",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "75dfd588b7",
@@ -65,6 +65,28 @@
       "parent_id": null,
       "ts": "2026-05-28T19:15:07",
       "drifted": true
+    },
+    {
+      "id": "05ca832faf",
+      "line": 47,
+      "text": "I feel like we need to visualize the flow of build and runtime. I see something like this\n\n' - read photo.jpg, write to %photo%'\nwhen llm reads this he sets type=\"image\", mimetype=\"jpg\"  //this part I am not sure\n\n\n'- set %x% = 3.5'\nwill llm say type=\"decimal\" or type=\"number/decimal\" or ...\n\nwe want to have the runtime do as litle work as possible, we shouldn´t need to parse a string (or at least very minimal) for each execution, just here is the pr, now run it",
+      "anchor": "Same Image instance, same step in the same goal, two channels, two wire shapes. The value was never re-materialized, the format mapping never lived in the channel, and the goal author never had to know about text vs. web — just \"write out the photo.\"",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-29T10:39:06",
+      "drifted": false
+    },
+    {
+      "id": "1945403c74",
+      "line": 47,
+      "text": "Visualized in a new deep-dive: plan/build-vs-runtime.md (linked from this section). It traces a goal through build → .pr → runtime as side-by-side columns and answers both your questions. Short version:\n\nYour principle is already half-real — the .pr stores values typed and JSON-native today: `set %total% = 0` compiles to `{value: 0, type: \"int\"}` (JSON number 0, not the string \"0\"), `[1,2,3]` to `{value:[1,2,3], type:\"list\"}`. The runtime loads those as numbers/lists with no string parsing. The whole design just generalizes that rule.\n\n1. **`read photo.jpg`** → build stamps `%photo%(image)` (the return type, read from file.read's `Data<image>` signature — not from sniffing the file). The **mime is NOT baked** — it's a runtime property of the Image value, derived from the extension/content when file.read actually opens the file. Reasons: the LLM vocab is bare `image` (no subtype), the file isn't read at build, and mime belongs to the value not the plan. So `.pr` carries `image`; the value carries `image/jpeg`.\n\n2. **`set %x% = 3.5`** → `type=\"decimal\"`. Concrete kind, NOT `number`, NOT `number/decimal`. `number` is only for the genuinely-runtime-polymorphic case (math.add can't know its kind until it runs). A literal's kind is known at build, so we bake the precise kind and keep the info. No hierarchical subtype tag (same decision as bare `image`). The value bakes as JSON `3.5`; the `type:\"decimal\"` field disambiguates (JSON has no decimal/double distinction). Runtime reads (3.5, decimal) → number{Decimal} with no decimal.Parse.\n\nThe coder rule: literals are baked value-native + concrete-kind (never a string to re-parse); number.Parse runs only for runtime-dynamic strings (file contents, http body, terminal input). 'Here is the pr, now run it' — build did the thinking.",
+      "anchor": "Same Image instance, same step in the same goal, two channels, two wire shapes. The value was never re-materialized, the format mapping never lived in the channel, and the goal author never had to know about text vs. web — just \"write out the photo.\"",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "05ca832faf",
+      "ts": "2026-05-29T10:43:56",
+      "drifted": false
     },
     {
       "id": "79c627312e",
@@ -266,7 +288,7 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-28T20:02:41",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "44d5dcea69",
@@ -277,7 +299,7 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-28T20:22:54",
-      "drifted": false
+      "drifted": true
     }
   ],
   "plan/types.md": [

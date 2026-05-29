@@ -46,6 +46,8 @@ The `.goal` says nothing about console vs. web — **the runtime state picks the
 
 Same Image instance, same step in the same goal, two channels, two wire shapes. The value was never re-materialized, the format mapping never lived in the channel, and the goal author never had to know about text vs. web — just "write out the photo."
 
+**Build resolves, runtime runs.** Every type the builder can decide, it bakes into the `.pr` — typed and value-native (`set %x% = 3.5` lands as JSON `3.5` + `type: "decimal"`, not the string `"3.5"`; `read photo.jpg` stamps `%photo%(image)` from `file.read`'s `Data<image>` signature). The runtime loads typed values and runs; it parses a string into a value only when the string is genuinely runtime-dynamic (a file's contents, an HTTP body, terminal input), never for a literal the builder already typed. The full build→`.pr`→runtime trace, and why mime is a runtime value-property while `image` is a baked type, is in [plan/build-vs-runtime.md](plan/build-vs-runtime.md).
+
 ## What's already there
 
 The pattern is partial in the codebase today; the branch completes it on real foundations:

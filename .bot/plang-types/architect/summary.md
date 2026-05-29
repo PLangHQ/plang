@@ -1,3 +1,14 @@
+## 2026-05-29 — build-vs-runtime visualization (new deep-dive)
+
+Ingi asked to visualize the build/runtime flow and settle two type-stamping questions. New file `plan/build-vs-runtime.md`, linked from the spine's movie section.
+
+Verified against real `.pr` output first: parameters already store values **typed and JSON-native** (`set %total% = 0` → `{value: 0, type: "int"}`, not the string `"0"`). Ingi's "don't parse a string per execution" principle is the existing shape; the design generalizes it.
+
+Answers:
+- **`read photo.jpg`** → build stamps `%photo%(image)` from `file.read`'s `Data<image>` signature; **mime is not baked** — it's a runtime property of the Image value (the `.pr` carries the bare type `image`, the value carries `image/jpeg`).
+- **`set %x% = 3.5`** → `type="decimal"` (concrete kind), not `number`, not `number/decimal`. `number` is reserved for runtime-polymorphic results (`math.add`); a literal's kind is known at build so we bake it. Value lands as JSON `3.5`; the `type` field disambiguates decimal-vs-double (JSON can't).
+- **Coder rule:** literals baked value-native + concrete-kind; `number.Parse` only for runtime-dynamic strings (file/http/terminal). Type comes from the action's typed signature, never runtime inspection (OBP Rule #9).
+
 ## 2026-05-29 — number → sealed class; money + display-formatting deferred
 
 Two decisions after the read-over:
