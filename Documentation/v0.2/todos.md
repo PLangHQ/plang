@@ -573,3 +573,49 @@ Data<enum> conversion fix lands), re-add the two `Overflow*` goal tests
 verbatim from this report's footnotes — the assertions are written and
 known to be correct. Same for `Base64ImagePathNull` once the
 `set %x%(type) = literal` annotation hits the Resolve.
+
+## 2026-05-29 — PLNG003: build-time serializer-coverage gate (deferred)
+
+Goal: every `[PlangType]`-decorated class must have wire-render coverage at
+build (Default.cs serializer OR per-format files covering every IWriter
+Format token). Replaces the runtime `RendererLookupMissed` throw with a
+build-time refusal.
+
+**Implementation prototyped on `plng003-coverage-gate` branch** (see
+`PLang.Generators/Diagnostics/Plng003.cs`). Cross-references
+`[PlangType]` classes vs sibling `serializer/` namespace classes vs
+`IWriter.Format` literals; emits PLNG003 diagnostic at error severity.
+
+**Why deferred:** strict gate fires on 7 real production classes that
+currently lack explicit serializers — `tstring`, `goal.call`, `info`,
+`identity`, `llmmessage`, `ask`, `results`. Their wire shape today
+comes from `NormalizeObject` reflection-based property-bag fallthrough.
+Writing explicit `Default.cs` for each changes what flows through the
+TypedValueNode dispatch and therefore **what gets signed** for the
+signing-load-bearing trio (`identity`, `signature`, `signedoperation`).
+
+**Signing risk:** any byte-shape drift between the explicit serializer
+and the existing reflection-bag output invalidates stored signed Data
+(callbacks, signedoperations) and breaks signature verification on
+persisted state.
+
+**Resume plan:**
+1. For each of the 7, write `Default.cs` that emits the property bag in
+   the exact order/shape `NormalizeObject` produces — verify byte-for-
+   byte against a captured test corpus.
+2. For `identity` / `signature` / `signedoperation`, additionally
+   re-sign the persisted test fixtures (signed `.json` blobs under
+   `PLang.Tests/App/Fixtures/`) with the new shape, OR demonstrate that
+   the existing signed corpus still verifies under the new shape.
+3. Land PLNG003 strict (the analyzer code is already written) plus the
+   serializers in a focused branch with security bot in the loop.
+
+**Alternative path** if signing parity proves intractable: register a
+generic "reflection-bag" fallback renderer that any `[PlangType]`
+without an explicit serializer auto-uses. Defeats explicit-per-type
+intent but preserves today's wire shape exactly.
+
+**Files involved (when resuming):**
+- `PLang.Generators/Diagnostics/Plng003.cs` (analyzer, already written)
+- `PLang.Generators/this.cs` (wire-in call)
+- New `serializer/Default.cs` for each of the 7 production PlangTypes.
