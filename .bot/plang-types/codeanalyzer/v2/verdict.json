@@ -1,0 +1,35 @@
+{
+  "branch": "plang-types",
+  "bot": "codeanalyzer",
+  "version": "v2",
+  "verdict": "PASS",
+  "next_bot": null,
+  "findings": [
+    { "id": "F1", "severity": "minor",         "title": "MaxPowerExponent cap fires on Double/Decimal base integer-exponent paths too" },
+    { "id": "F2", "severity": "cosmetic",      "title": "math/sqrt.cs double-validates negative input" },
+    { "id": "F3", "severity": "informational", "title": "SealedNames is forward-looking; add maintenance trigger to XML doc" },
+    { "id": "F4", "severity": "verified",      "title": "renderers/this.cs dead-store cleanup is correct" },
+    { "id": "F5", "severity": "verified",      "title": "DoDivide self-cancelling ternary removal is correct" }
+  ],
+  "scope": {
+    "since": "022ca0dc7",
+    "head": "fa3c7d4ac",
+    "files_reviewed": [
+      "PLang/app/types/Loader.cs",
+      "PLang/app/types/number/this.Arithmetic.cs",
+      "PLang/app/types/number/this.Unary.cs",
+      "PLang/app/types/renderers/this.cs",
+      "PLang/app/modules/math/abs.cs",
+      "PLang/app/modules/math/ceiling.cs",
+      "PLang/app/modules/math/floor.cs",
+      "PLang/app/modules/math/round.cs",
+      "PLang/app/modules/math/sqrt.cs",
+      "PLang/app/modules/math/min.cs",
+      "PLang/app/modules/math/max.cs",
+      "PLang/app/modules/math/MathPolicy.cs",
+      "PLang/app/modules/environment/number/Config.cs"
+    ]
+  },
+  "build": { "errors": 0, "warnings": "unchanged-from-v1-baseline" },
+  "banned_api_scan": { "system_io": "clean", "console": "clean" }
+}
