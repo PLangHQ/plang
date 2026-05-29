@@ -1,5 +1,5 @@
 using PLang.Tests.App.Fixtures;
-using app.modules.matrix.resolution;
+using app.module.matrix.resolution;
 
 namespace PLang.Tests.Generator.Matrix.Resolution;
 
@@ -108,7 +108,7 @@ public class DeepResolutionListTests
             parameters: new[] { ("messages", (object?)raw) },
             variables: new Dictionary<string, object?> { ["prompt"] = "You are a compiler" });
 
-        var typed = result.Data as global::app.data.@this<List<global::app.modules.llm.LlmMessage>>;
+        var typed = result.Data as global::app.data.@this<List<global::app.module.llm.LlmMessage>>;
         await Assert.That(typed!.Value).IsNotNull();
         await Assert.That(typed.Value![0].Content).IsEqualTo("You are a compiler");
     }
@@ -135,7 +135,7 @@ public class DeepResolutionListTests
             parameters: new[] { ("messages", (object?)raw) },
             variables: new Dictionary<string, object?> { ["a"] = "alpha", ["b"] = "beta" });
 
-        var typed = result.Data as global::app.data.@this<List<global::app.modules.llm.LlmMessage>>;
+        var typed = result.Data as global::app.data.@this<List<global::app.module.llm.LlmMessage>>;
         await Assert.That(typed!.Value![0].Content).IsEqualTo("alpha");
         await Assert.That(typed.Value![1].Content).IsEqualTo("beta");
     }

@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using app.Attributes;
 using app.@event;
-using app.modules;
+using app.module;
 using app.Utils;
 namespace app.goal;
 
@@ -19,13 +19,13 @@ public enum Visibility
 /// <summary>
 /// Represents a goal (a .goal file or sub-goal) for App.
 /// </summary>
-public sealed partial class @this : modules.IDataWrappable
+public sealed partial class @this : module.IDataWrappable
 {
-    private modules.Events? _events;
+    private module.Events? _events;
     [JsonIgnore]
-    public modules.Events Events
+    public module.Events Events
     {
-        get => _events ??= new modules.Events(this);
+        get => _events ??= new module.Events(this);
         set => _events = value;
     }
     [Store, LlmBuilder, Debug, Default]
@@ -332,7 +332,7 @@ public sealed partial class @this : modules.IDataWrappable
     /// files have modifiers correctly nested. Without recursion sub-goal steps keep
     /// modifiers flat and fail at runtime (flat modifiers' no-op Run wipes %!data%).
     /// </summary>
-    public void GroupModifiersRecursive(app.modules.@this modules)
+    public void GroupModifiersRecursive(app.module.@this modules)
     {
         Steps.GroupAllModifiers(modules);
         foreach (var subGoal in Goals)

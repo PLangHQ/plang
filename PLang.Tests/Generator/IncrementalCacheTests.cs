@@ -31,9 +31,9 @@ public class IncrementalCacheTests
     private static ActionClassInfo MakeInfo(string name = "Handler",
         params PropertyBase[] props)
         => new(
-            Namespace: "app.modules.test",
+            Namespace: "app.module.test",
             ClassName: name,
-            FullName: $"app.modules.test.{name}",
+            FullName: $"app.module.test.{name}",
             ImplementsIContext: true,
             ImplementsIChannel: false,
             ImplementsIAction: true,
@@ -153,7 +153,7 @@ public class IncrementalCacheTests
 
     private const string MinimalSource = """
         using System;
-        namespace app.modules {
+        namespace app.module {
             public class ActionAttribute : Attribute {}
             public class CodeAttribute : Attribute {}
             public interface IContext {}
@@ -208,7 +208,7 @@ public class IncrementalCacheTests
         }
 
         namespace app.Test {
-            [app.modules.Action]
+            [app.module.Action]
             public partial class TestHandler {
                 public partial app.data.@this<string> Foo { get; init; }
             }

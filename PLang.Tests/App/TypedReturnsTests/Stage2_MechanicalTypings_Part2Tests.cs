@@ -22,7 +22,7 @@ public class Stage2_MechanicalTypings_Part2Tests
     [Test]
     public async Task MockIntercept_Run_ReturnsTaskDataOfMock()
     {
-        var ret = RunReturnType<global::app.modules.mock.intercept>();
+        var ret = RunReturnType<global::app.module.mock.intercept>();
         var expected = typeof(Task<global::app.data.@this<global::app.mock.Mock.@this>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
@@ -38,7 +38,7 @@ public class Stage2_MechanicalTypings_Part2Tests
     [Test]
     public async Task BuilderTypes_Run_ReturnsTaskDataOfBuilderTypesRecord()
     {
-        var ret = RunReturnType<global::app.modules.builder.types>();
+        var ret = RunReturnType<global::app.module.builder.types>();
         var expected = typeof(Task<global::app.data.@this<global::app.builder.Types.@this>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
@@ -50,7 +50,7 @@ public class Stage2_MechanicalTypings_Part2Tests
     [Test]
     public async Task BuilderActions_Run_ReturnsTaskDataOfBuilderActionsRecord()
     {
-        var ret = RunReturnType<global::app.modules.builder.GetActions>();
+        var ret = RunReturnType<global::app.module.builder.GetActions>();
         var expected = typeof(Task<global::app.data.@this<global::app.goal.steps.step.actions.@this>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
@@ -58,7 +58,7 @@ public class Stage2_MechanicalTypings_Part2Tests
     [Test]
     public async Task BuilderGoals_Run_ReturnsTaskDataOfBuilderGoalsRecord()
     {
-        var ret = RunReturnType<global::app.modules.builder.goals>();
+        var ret = RunReturnType<global::app.module.builder.goals>();
         var expected = typeof(Task<global::app.data.@this<List<global::app.goal.@this>>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
@@ -76,7 +76,7 @@ public class Stage2_MechanicalTypings_Part2Tests
     [Test]
     public async Task TestTag_Run_ReturnsTaskDataOfBool_OrStaysVoidLike()
     {
-        var ret = RunReturnType<global::app.modules.test.Tag>();
+        var ret = RunReturnType<global::app.module.test.Tag>();
         var bareData = typeof(Task<Data>);
         var dataOfBool = typeof(Task<global::app.data.@this<bool>>);
         var dataOfObject = typeof(Task<global::app.data.@this<object>>);

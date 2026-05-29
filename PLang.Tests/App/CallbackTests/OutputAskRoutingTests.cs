@@ -1,7 +1,7 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using app.modules.output;
+using app.module.output;
 
 namespace PLang.Tests.App.CallbackTests;
 
@@ -89,8 +89,8 @@ public class OutputAskRoutingTests
             Question = new global::app.data.@this<string>("", "Allow X?")
         };
         var result = await ch.Ask(action);
-        await Assert.That(result.Value).IsTypeOf<global::app.modules.output.Ask>();
-        await Assert.That(((global::app.modules.output.Ask)result.Value!).Answer).IsNull();
+        await Assert.That(result.Value).IsTypeOf<global::app.module.output.Ask>();
+        await Assert.That(((global::app.module.output.Ask)result.Value!).Answer).IsNull();
         await Assert.That(result.Type?.Value).IsEqualTo("ask");
     }
 

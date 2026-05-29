@@ -23,9 +23,9 @@ namespace app.builder.Types;
 /// </summary>
 public sealed partial class @this
 {
-    private readonly app.modules.@this _modules;
+    private readonly app.module.@this _modules;
 
-    public @this(app.modules.@this modules) { _modules = modules; }
+    public @this(app.module.@this modules) { _modules = modules; }
 
     /// <summary>Ordered list of primitive type names exposed to the builder.</summary>
     [LlmBuilder]

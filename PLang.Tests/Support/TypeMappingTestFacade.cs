@@ -23,7 +23,7 @@ internal static class TypeMapping
 
     public static List<string> GetBuilderTypeNames() => _app.Types.GetBuilderTypeNames();
 
-    public static List<global::app.builder.Types.Entry> BuildTypeEntries(global::app.modules.@this? modules)
+    public static List<global::app.builder.Types.Entry> BuildTypeEntries(global::app.module.@this? modules)
         => _app.Types.BuildTypeEntries(modules);
 
     public static bool IsScalarPlangType(System.Type type) => global::app.type.list.@this.IsScalarPlangType(type);
@@ -69,6 +69,6 @@ internal static class Json
     public static System.Text.Json.JsonSerializerOptions CaseInsensitiveRead => global::app.type.list.@this.CaseInsensitiveRead;
 
     public static System.Text.Json.JsonSerializerOptions CamelCaseIndented => global::app.@this.CamelCaseIndented;
-    public static System.Text.Json.JsonSerializerOptions PrWrite => global::app.modules.builder.@this.PrWrite;
+    public static System.Text.Json.JsonSerializerOptions PrWrite => global::app.module.builder.@this.PrWrite;
     public static System.Text.Json.JsonSerializerOptions DiagnosticOutput => global::app.Diagnostics.Format.Options;
 }

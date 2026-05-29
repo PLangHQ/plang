@@ -1,8 +1,8 @@
-namespace app.modules.matrix.modifier;
+namespace app.module.matrix.modifier;
 
-[global::app.modules.Action("modifieraction", Cacheable = false)]
-[global::app.modules.Modifier(Order = 1)]
-public partial class ModifierAction : global::app.modules.IContext, global::app.modules.IModifier
+[global::app.module.Action("modifieraction", Cacheable = false)]
+[global::app.module.Modifier(Order = 1)]
+public partial class ModifierAction : global::app.module.IContext, global::app.module.IModifier
 {
     public partial global::app.data.@this<string> Tag { get; init; }
 

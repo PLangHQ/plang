@@ -2,7 +2,7 @@ using app.actor.context;
 using app;
 using app.variable;
 using app.@event;
-using app.modules.@event;
+using app.module.@event;
 
 namespace PLang.Tests.App.actions.EventTests;
 

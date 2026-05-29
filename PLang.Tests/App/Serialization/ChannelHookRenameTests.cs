@@ -34,7 +34,7 @@ public class ChannelHookRenameTests
         public override Task<global::app.data.@this> Read(CancellationToken ct = default)
             => Task.FromResult(global::app.data.@this.Ok());
 
-        public override Task<global::app.data.@this> Ask(global::app.modules.output.ask action, CancellationToken ct = default)
+        public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
             => Task.FromResult(global::app.data.@this.Ok());
     }
 

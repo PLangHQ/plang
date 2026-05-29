@@ -51,7 +51,7 @@ public partial class @this
             var hint = AuthorizationHint(verb);
             var hintSuffix = string.IsNullOrEmpty(hint) ? "" : " " + hint;
             var question = $"{prefix}Allow {actor.Name} to {VerbLabel(verb)} {Absolute}?{hintSuffix} (y/n/a)";
-            var askAction = new modules.output.ask
+            var askAction = new module.output.ask
             {
                 Context = Context,
                 Question = new data.@this<string>("", question),
@@ -66,7 +66,7 @@ public partial class @this
             if (!askResult.Success) return askResult;
 
             // output.ask returns Data<Ask>; the user's reply rides on Ask.Answer.
-            var ask = askResult.Value as modules.output.Ask;
+            var ask = askResult.Value as module.output.Ask;
             var answer = ask?.Answer?.Trim();
             switch (answer)
             {

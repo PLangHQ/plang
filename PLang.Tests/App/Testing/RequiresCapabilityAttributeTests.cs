@@ -68,14 +68,14 @@ public class RequiresCapabilityAttributeTests
     // Smoke test against real handler classes: http.request, http.download, http.upload
     // carry [RequiresCapability("network")]; llm.query carries [RequiresCapability("llm")].
     // (Test-designer's original plan wrote "llm.ask"; the real action is "llm.query" — same test, correct name.)
-    // Catches forgotten applications on future handlers in these modules.
+    // Catches forgotten applications on future handlers in these module.
     [Test]
     public async Task RealHandlers_HaveExpectedCapabilities_VerifiedByReflection()
     {
-        var request = typeof(global::app.modules.http.request).GetCustomAttribute<RequiresCapabilityAttribute>();
-        var download = typeof(global::app.modules.http.download).GetCustomAttribute<RequiresCapabilityAttribute>();
-        var upload = typeof(global::app.modules.http.upload).GetCustomAttribute<RequiresCapabilityAttribute>();
-        var llm = typeof(global::app.modules.llm.query).GetCustomAttribute<RequiresCapabilityAttribute>();
+        var request = typeof(global::app.module.http.request).GetCustomAttribute<RequiresCapabilityAttribute>();
+        var download = typeof(global::app.module.http.download).GetCustomAttribute<RequiresCapabilityAttribute>();
+        var upload = typeof(global::app.module.http.upload).GetCustomAttribute<RequiresCapabilityAttribute>();
+        var llm = typeof(global::app.module.llm.query).GetCustomAttribute<RequiresCapabilityAttribute>();
 
         await Assert.That(request?.Capabilities).IsEquivalentTo(new[] { "network" });
         await Assert.That(download?.Capabilities).IsEquivalentTo(new[] { "network" });

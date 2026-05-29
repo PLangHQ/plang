@@ -78,7 +78,7 @@ public class EdgeCaseTests
         // inner grandchild-runs).
 
         var emptyList = new List<global::app.tester.Test.@this>();
-        var outerAction = new global::app.modules.test.run
+        var outerAction = new global::app.module.test.run
         {
             Context = _app.User.Context,
             Tests = new global::app.data.@this<List<global::app.tester.Test.@this>>("Tests", emptyList),
@@ -97,7 +97,7 @@ public class EdgeCaseTests
     [Test]
     public async Task Discover_PathTraversal_OutsideProjectRoot_Rejected()
     {
-        var action = new global::app.modules.test.discover
+        var action = new global::app.module.test.discover
         {
             Context = _app.User.Context,
             Path = global::app.data.@this<global::app.type.path.@this>.Ok(
@@ -130,7 +130,7 @@ public class EdgeCaseTests
         run.Complete(global::app.tester.Status.Fail, new global::app.error.AssertionError(1, 2));
         _app.Tester.Results.Add(run);
 
-        var action = new global::app.modules.test.report { Context = _app.User.Context };
+        var action = new global::app.module.test.report { Context = _app.User.Context };
         await action.Run();
 
         var output = CapturedOutput();
@@ -161,7 +161,7 @@ public class EdgeCaseTests
         _app.Tester.Results.Add(run);
 
         // Report rendering must not throw on nested Data.
-        var action = new global::app.modules.test.report { Context = _app.User.Context };
+        var action = new global::app.module.test.report { Context = _app.User.Context };
         await action.Run();
 
         var jsonPath = System.IO.Path.Combine(_tempDir, ".test", "results.json");

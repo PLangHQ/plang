@@ -112,7 +112,7 @@ public class RuntimeTypeLoadingTests
         // baked in by the source generator at compile time; assert the generic
         // argument stays the built-in number type before AND after overriding
         // "number" in the runtime registry.
-        var runReturn = typeof(global::app.modules.math.Add).GetMethod("Run")!.ReturnType;
+        var runReturn = typeof(global::app.module.math.Add).GetMethod("Run")!.ReturnType;
         var dataGeneric = runReturn.GetGenericArguments()[0];
         await Assert.That(dataGeneric.IsGenericType).IsTrue();
         await Assert.That(dataGeneric.GetGenericTypeDefinition()).IsEqualTo(typeof(global::app.data.@this<>));
@@ -123,7 +123,7 @@ public class RuntimeTypeLoadingTests
         types.Register("number", typeof(System.Uri));
         await Assert.That(types.ResolveType("number")).IsEqualTo(typeof(System.Uri));
 
-        var slotAfter = typeof(global::app.modules.math.Add).GetMethod("Run")!
+        var slotAfter = typeof(global::app.module.math.Add).GetMethod("Run")!
             .ReturnType.GetGenericArguments()[0].GetGenericArguments()[0];
         await Assert.That(slotAfter).IsEqualTo(typeof(global::app.type.number.@this));
     }

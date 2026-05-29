@@ -25,37 +25,37 @@ public class MathHandlerDataReturnTests
 
     [Test] public async Task MathAdd_RunSignature_ReturnsDataNumber_NotDataObject()
     {
-        AssertRunReturnsDataNumber(typeof(global::app.modules.math.Add));
+        AssertRunReturnsDataNumber(typeof(global::app.module.math.Add));
         await Assert.That(true).IsTrue();
     }
 
     [Test] public async Task MathSubtract_RunSignature_ReturnsDataNumber()
     {
-        AssertRunReturnsDataNumber(typeof(global::app.modules.math.Subtract));
+        AssertRunReturnsDataNumber(typeof(global::app.module.math.Subtract));
         await Assert.That(true).IsTrue();
     }
 
     [Test] public async Task MathMultiply_RunSignature_ReturnsDataNumber()
     {
-        AssertRunReturnsDataNumber(typeof(global::app.modules.math.Multiply));
+        AssertRunReturnsDataNumber(typeof(global::app.module.math.Multiply));
         await Assert.That(true).IsTrue();
     }
 
     [Test] public async Task MathDivide_RunSignature_ReturnsDataNumber()
     {
-        AssertRunReturnsDataNumber(typeof(global::app.modules.math.Divide));
+        AssertRunReturnsDataNumber(typeof(global::app.module.math.Divide));
         await Assert.That(true).IsTrue();
     }
 
     [Test] public async Task MathIntDiv_RunSignature_ReturnsDataNumber()
     {
-        AssertRunReturnsDataNumber(typeof(global::app.modules.math.IntDiv));
+        AssertRunReturnsDataNumber(typeof(global::app.module.math.IntDiv));
         await Assert.That(true).IsTrue();
     }
 
     [Test] public async Task MathPower_RunSignature_ReturnsDataNumber()
     {
-        AssertRunReturnsDataNumber(typeof(global::app.modules.math.Power));
+        AssertRunReturnsDataNumber(typeof(global::app.module.math.Power));
         await Assert.That(true).IsTrue();
     }
 
@@ -78,8 +78,8 @@ public class MathHandlerDataReturnTests
 
     [Test] public async Task MathHandler_ReadsPolicyViaAppConfigForNumberConfig()
     {
-        // The Config record lives at app.modules.environment.number.Config.
-        var t = typeof(global::app.modules.environment.number.Config);
+        // The Config record lives at app.module.environment.number.Config.
+        var t = typeof(global::app.module.environment.number.Config);
         await Assert.That(typeof(global::app.config.IConfig).IsAssignableFrom(t)).IsTrue();
         await Assert.That(t.GetProperty("Overflow")).IsNotNull();
         await Assert.That(t.GetProperty("Precision")).IsNotNull();
@@ -87,7 +87,7 @@ public class MathHandlerDataReturnTests
 
     [Test] public async Task MathHandler_StepLevelOverflowParam_IsNullableNotOptionalAttribute()
     {
-        var overflowProp = typeof(global::app.modules.math.Add).GetProperty("Overflow");
+        var overflowProp = typeof(global::app.module.math.Add).GetProperty("Overflow");
         await Assert.That(overflowProp).IsNotNull();
         var pt = overflowProp!.PropertyType;
         // Data<POverflow>? — generic Data<T> nullable.
@@ -100,43 +100,43 @@ public class MathHandlerDataReturnTests
         // MathHelper.cs is deleted — unary/comparison handlers now route through
         // number.Abs / Floor / Ceiling / Sqrt / Round / Min / Max with the same
         // Wrap envelope that fronts the arithmetic family.
-        var asm = typeof(global::app.modules.math.Add).Assembly;
-        var helper = asm.GetType("app.modules.math.MathHelper");
+        var asm = typeof(global::app.module.math.Add).Assembly;
+        var helper = asm.GetType("app.module.math.MathHelper");
         await Assert.That(helper).IsNull();
     }
 
     [Test] public async Task MathAbs_RunSignature_ReturnsDataNumber()
     {
-        AssertRunReturnsDataNumber(typeof(global::app.modules.math.Abs));
+        AssertRunReturnsDataNumber(typeof(global::app.module.math.Abs));
     }
 
     [Test] public async Task MathFloor_RunSignature_ReturnsDataNumber()
     {
-        AssertRunReturnsDataNumber(typeof(global::app.modules.math.Floor));
+        AssertRunReturnsDataNumber(typeof(global::app.module.math.Floor));
     }
 
     [Test] public async Task MathCeiling_RunSignature_ReturnsDataNumber()
     {
-        AssertRunReturnsDataNumber(typeof(global::app.modules.math.Ceiling));
+        AssertRunReturnsDataNumber(typeof(global::app.module.math.Ceiling));
     }
 
     [Test] public async Task MathSqrt_RunSignature_ReturnsDataNumber()
     {
-        AssertRunReturnsDataNumber(typeof(global::app.modules.math.Sqrt));
+        AssertRunReturnsDataNumber(typeof(global::app.module.math.Sqrt));
     }
 
     [Test] public async Task MathRound_RunSignature_ReturnsDataNumber()
     {
-        AssertRunReturnsDataNumber(typeof(global::app.modules.math.Round));
+        AssertRunReturnsDataNumber(typeof(global::app.module.math.Round));
     }
 
     [Test] public async Task MathMin_RunSignature_ReturnsDataNumber()
     {
-        AssertRunReturnsDataNumber(typeof(global::app.modules.math.Min));
+        AssertRunReturnsDataNumber(typeof(global::app.module.math.Min));
     }
 
     [Test] public async Task MathMax_RunSignature_ReturnsDataNumber()
     {
-        AssertRunReturnsDataNumber(typeof(global::app.modules.math.Max));
+        AssertRunReturnsDataNumber(typeof(global::app.module.math.Max));
     }
 }

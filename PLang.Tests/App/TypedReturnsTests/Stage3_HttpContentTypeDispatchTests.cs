@@ -1,9 +1,9 @@
 using System.Net;
 using System.Net.Http;
 using System.Text;
-using app.modules.code;
-using app.modules.http;
-using app.modules.http.code;
+using app.module.code;
+using app.module.http;
+using app.module.http.code;
 using Response = global::app.http.Response.@this;
 
 namespace PLang.Tests.App.TypedReturnsTests;
@@ -147,7 +147,7 @@ public class Stage3_HttpContentTypeDispatchTests
     {
         // http.download writes to file; ParseResponseAsync is not invoked, so no
         // Response/Body wrapping happens. The signature itself encodes this.
-        var ret = typeof(global::app.modules.http.download)
+        var ret = typeof(global::app.module.http.download)
             .GetMethod("Run", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance, System.Type.EmptyTypes)!
             .ReturnType;
         await Assert.That(ret).IsEqualTo(typeof(Task<Data>));

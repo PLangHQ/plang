@@ -1,8 +1,8 @@
 using app.actor.context;
 using app;
 using app.variable;
-using app.modules;
-using app.modules.module;
+using app.module;
+using app.module.module;
 
 namespace PLang.Tests.App.Modules.module;
 
@@ -49,7 +49,7 @@ public class ModuleAddTests
             {
                 Context = context,
                 Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
-                Namespace = "app.modules"
+                Namespace = "app.module"
             };
 
             var countBefore = app.Modules.Count;
@@ -71,7 +71,7 @@ public class ModuleAddTests
             {
                 Context = context,
                 Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
-                Namespace = "app.modules"
+                Namespace = "app.module"
             };
 
             var result = await add.Run();
@@ -113,7 +113,7 @@ public class ModuleAddTests
             {
                 Context = context,
                 Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
-                Namespace = "app.modules"
+                Namespace = "app.module"
             };
 
             var result = await add.Run();
@@ -154,7 +154,7 @@ public class ModuleAddTests
             {
                 Context = context,
                 Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
-                Namespace = "app.modules"
+                Namespace = "app.module"
             };
 
             var result = await add.Run();

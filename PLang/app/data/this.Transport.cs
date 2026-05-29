@@ -20,7 +20,7 @@ public partial class @this
     /// </summary>
     private const long MaxDecompressedSize = 100 * 1024 * 1024;
 
-    private app.modules.signing.Signature? _signature;
+    private app.module.signing.Signature? _signature;
 
     /// <summary>
     /// Cryptographic signature attached to this Data. After stage 2a.7,
@@ -31,7 +31,7 @@ public partial class @this
     [JsonIgnore]
     [In]
     [Out, Store]
-    public app.modules.signing.Signature? Signature
+    public app.module.signing.Signature? Signature
     {
         get => _signature;
         set => _signature = value;
@@ -52,7 +52,7 @@ public partial class @this
                 "Data.Signature cannot be lazily populated without a Context — " +
                 "set Context (or use the Variables.Set path which wires it) before reading Signature.");
 
-        var action = new app.modules.signing.sign
+        var action = new app.module.signing.sign
         {
             Data = this,
         };

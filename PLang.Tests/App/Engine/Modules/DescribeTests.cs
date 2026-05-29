@@ -1,5 +1,5 @@
 using app.variable;
-using AppModules = global::app.modules.@this;
+using AppModules = global::app.module.@this;
 
 namespace PLang.Tests.App.Modules;
 
@@ -54,8 +54,8 @@ public class DescribeTests
 }
 
 // Fake action with Data<T> wrapped property
-[global::app.modules.Action("datapath")]
-public record FakeDataPathAction : global::app.modules.ICodeGenerated
+[global::app.module.Action("datapath")]
+public record FakeDataPathAction : global::app.module.ICodeGenerated
 {
     public global::app.data.@this<global::app.type.path.@this> Path { get; init; }
 
@@ -66,8 +66,8 @@ public record FakeDataPathAction : global::app.modules.ICodeGenerated
 }
 
 // Fake action with concrete return type
-[global::app.modules.Action("getpath")]
-public class FakeGetPath : global::app.modules.ICodeGenerated
+[global::app.module.Action("getpath")]
+public class FakeGetPath : global::app.module.ICodeGenerated
 {
     public Task<FakePathResult> Run() => Task.FromResult(new FakePathResult());
 
@@ -76,8 +76,8 @@ public class FakeGetPath : global::app.modules.ICodeGenerated
 }
 
 // Fake action returning plain Data
-[global::app.modules.Action("basic")]
-public class FakeBasicAction : global::app.modules.ICodeGenerated
+[global::app.module.Action("basic")]
+public class FakeBasicAction : global::app.module.ICodeGenerated
 {
     public Task<Data> Run() => Task.FromResult(Data.Ok("hello"));
 

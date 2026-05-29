@@ -226,7 +226,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Returns the handler's result (or a ServiceError-wrapped result on
     /// caught exception).
     /// </summary>
-    public async Task<data.@this> ExecuteAsync(modules.ICodeGenerated handler, actor.context.@this context)
+    public async Task<data.@this> ExecuteAsync(module.ICodeGenerated handler, actor.context.@this context)
     {
         try
         {

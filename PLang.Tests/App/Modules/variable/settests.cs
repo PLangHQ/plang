@@ -130,7 +130,7 @@ public class SetTests
     public async Task ValidateBuild_LiteralThis_ReturnsError()
     {
         var parameters = new List<Data> { new Data("Value", "this") };
-        var result = global::app.modules.variable.Set.ValidateBuild(parameters);
+        var result = global::app.module.variable.Set.ValidateBuild(parameters);
 
         await Assert.That(result).IsNotNull();
         await Assert.That(result!).Contains("this");
@@ -143,7 +143,7 @@ public class SetTests
         {
             new Data("Value", "%myVar%", global::app.data.type.FromName("int"))
         };
-        var result = global::app.modules.variable.Set.ValidateBuild(parameters);
+        var result = global::app.module.variable.Set.ValidateBuild(parameters);
 
         await Assert.That(result).IsNull();
     }
@@ -155,7 +155,7 @@ public class SetTests
         {
             new Data("Value", "not a number", global::app.data.type.FromName("int"))
         };
-        var result = global::app.modules.variable.Set.ValidateBuild(parameters);
+        var result = global::app.module.variable.Set.ValidateBuild(parameters);
 
         await Assert.That(result).IsNotNull();
         await Assert.That(result!).Contains("type=int");
@@ -168,7 +168,7 @@ public class SetTests
         {
             new Data("Value", 42, global::app.data.type.FromName("int"))
         };
-        var result = global::app.modules.variable.Set.ValidateBuild(parameters);
+        var result = global::app.module.variable.Set.ValidateBuild(parameters);
 
         await Assert.That(result).IsNull();
     }

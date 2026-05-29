@@ -2,9 +2,9 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using app.variable;
-using app.modules.http.code;
-using app.modules.llm;
-using app.modules.llm.code;
+using app.module.http.code;
+using app.module.llm;
+using app.module.llm.code;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.llm;

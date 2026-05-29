@@ -142,7 +142,7 @@ public partial class @this
         {
             _context = value;
             if (_type != null) _type.Context = value;
-            if (_value is modules.IContext contextual && value != null)
+            if (_value is module.IContext contextual && value != null)
                 contextual.Context = value;
         }
     }
@@ -235,7 +235,7 @@ public partial class @this
             Updated = System.DateTime.UtcNow;
             IsInitialized = true;
             _type = null;
-            if (_value is modules.IContext contextual && _context != null)
+            if (_value is module.IContext contextual && _context != null)
                 contextual.Context = _context;
             // Data owns OnChange — fires whenever the wrapped value mutates.
             // Constructors set _value directly and bypass this. SetValueDirect also bypasses.

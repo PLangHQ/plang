@@ -1,5 +1,5 @@
 using PLang.Tests.App.Fixtures;
-using app.modules.matrix.isnotnull;
+using app.module.matrix.isnotnull;
 
 namespace PLang.Tests.Generator.Matrix.IsNotNull;
 

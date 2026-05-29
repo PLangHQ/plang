@@ -211,8 +211,8 @@ public class PropertiesWireShapeTests
             var back = (global::app.data.@this)plang.Deserialize(tampered).Value!;
             back.Context = d.Context;
             var app = d.Context!.App;
-            var verify = await app.RunAction<global::app.modules.signing.verify>(
-                new global::app.modules.signing.verify
+            var verify = await app.RunAction<global::app.module.signing.verify>(
+                new global::app.module.signing.verify
                 {
                     Data = back,
                     SkipFreshnessCheck = new global::app.data.@this<bool>("", true)

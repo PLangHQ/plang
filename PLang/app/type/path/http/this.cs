@@ -432,7 +432,7 @@ public sealed partial class @this : global::app.type.path.@this
         if (Context == null) return;
         try
         {
-            var sign = new modules.signing.sign
+            var sign = new module.signing.sign
             {
                 Context = Context,
                 Data = new data.@this("", body ?? ""),
@@ -442,7 +442,7 @@ public sealed partial class @this : global::app.type.path.@this
                     ["method"] = method,
                 }),
             };
-            var signResult = await Context.App.RunAction<modules.signing.sign>(sign, Context);
+            var signResult = await Context.App.RunAction<module.signing.sign>(sign, Context);
             if (signResult.Success && signResult.Signature != null)
             {
                 var json = JsonSerializer.Serialize(signResult.Signature);

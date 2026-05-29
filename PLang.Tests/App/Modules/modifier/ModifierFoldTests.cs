@@ -1,4 +1,4 @@
-using app.modules;
+using app.module;
 using static PLang.Tests.TestAction;
 
 namespace PLang.Tests.App.Modules.modifier;
@@ -27,7 +27,7 @@ public class ModifierFoldTests
     public async Task ModifierAttribute_Order_IsSetAndReadable()
     {
         // Verify [Modifier(Order = N)] stores and exposes the Order value via reflection
-        var timeoutType = typeof(global::app.modules.timeout.After);
+        var timeoutType = typeof(global::app.module.timeout.After);
         var attr = timeoutType.GetCustomAttributes(typeof(ModifierAttribute), false)
             .Cast<ModifierAttribute>().FirstOrDefault();
 

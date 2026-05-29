@@ -1,4 +1,4 @@
-using app.modules.condition;
+using app.module.condition;
 
 namespace PLang.Tests.App.Tester;
 

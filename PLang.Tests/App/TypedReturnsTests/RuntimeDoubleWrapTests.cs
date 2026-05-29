@@ -1,7 +1,7 @@
 using System.Reflection;
-using app.modules.list;
+using app.module.list;
 using app.variable;
-using MathAdd = app.modules.math.Add;
+using MathAdd = app.module.math.Add;
 
 namespace PLang.Tests.App.TypedReturnsTests;
 
@@ -96,7 +96,7 @@ public class RuntimeDoubleWrapTests
     {
         var dataObjectHandlers = typeof(global::app.@this).Assembly
             .GetTypes()
-            .Where(t => t.IsClass && !t.IsAbstract && t.Namespace?.StartsWith("app.modules") == true)
+            .Where(t => t.IsClass && !t.IsAbstract && t.Namespace?.StartsWith("app.module") == true)
             .Select(t => (Type: t, Run: t.GetMethod("Run", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes)))
             .Where(x => x.Run != null && x.Run.ReturnType == typeof(Task<global::app.data.@this<object>>))
             .Select(x => x.Type.FullName!)
@@ -109,11 +109,11 @@ public class RuntimeDoubleWrapTests
         // is still Data<object> until it gets its own number retype.
         var expected = new[]
         {
-            "app.modules.list.First",
-            "app.modules.list.Get",
-            "app.modules.list.Last",
-            "app.modules.math.Random",
-            "app.modules.signing.sign",
+            "app.module.list.First",
+            "app.module.list.Get",
+            "app.module.list.Last",
+            "app.module.math.Random",
+            "app.module.signing.sign",
         };
         await Assert.That(dataObjectHandlers).IsEquivalentTo(expected)
             .Because(

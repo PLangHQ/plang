@@ -1,12 +1,12 @@
-namespace app.modules.matrix.provider;
+namespace app.module.matrix.provider;
 
 // Test provider interfaces — registered via app.Code.Register in the matrix runner.
-public interface IFakeProvider : global::app.modules.code.ICode
+public interface IFakeProvider : global::app.module.code.ICode
 {
     string Echo(string s);
 }
 
-public interface IUnregisteredProvider : global::app.modules.code.ICode
+public interface IUnregisteredProvider : global::app.module.code.ICode
 {
     string Hello();
 }
@@ -20,20 +20,20 @@ public sealed class FakeProvider : IFakeProvider
     public string Echo(string s) => $"echo:{s}";
 }
 
-[global::app.modules.Action("providerprop")]
-public partial class ProviderProp : global::app.modules.IContext
+[global::app.module.Action("providerprop")]
+public partial class ProviderProp : global::app.module.IContext
 {
-    [global::app.modules.Code]
+    [global::app.module.Code]
     public partial IFakeProvider Fake { get; }
 
     public Task<global::app.data.@this> Run() =>
         Task.FromResult(global::app.data.@this.Ok(Fake.Echo("hi")));
 }
 
-[global::app.modules.Action("providermissing")]
-public partial class ProviderMissing : global::app.modules.IContext
+[global::app.module.Action("providermissing")]
+public partial class ProviderMissing : global::app.module.IContext
 {
-    [global::app.modules.Code]
+    [global::app.module.Code]
     public partial IUnregisteredProvider Missing { get; }
 
     public Task<global::app.data.@this> Run() =>

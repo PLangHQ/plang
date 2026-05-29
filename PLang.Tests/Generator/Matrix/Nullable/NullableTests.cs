@@ -1,5 +1,5 @@
 using PLang.Tests.App.Fixtures;
-using app.modules.matrix.nullables;
+using app.module.matrix.nullables;
 
 namespace PLang.Tests.Generator.Matrix.Nullable;
 

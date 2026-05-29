@@ -1,6 +1,6 @@
 using app.actor.context;
 using app.variable;
-using app.modules;
+using app.module;
 
 namespace PLang.Tests.App.Core;
 

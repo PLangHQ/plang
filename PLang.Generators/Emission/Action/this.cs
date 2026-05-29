@@ -35,7 +35,7 @@ public static class @this
 
             namespace {{info.Namespace}};
 
-            partial class {{info.ClassName}} : global::app.modules.ICodeGenerated, global::app.modules.IClass
+            partial class {{info.ClassName}} : global::app.module.ICodeGenerated, global::app.module.IClass
             {
 
             """);
@@ -174,7 +174,7 @@ public static class @this
         if (info.ImplementsIStep) sb.AppendLine("        Step = __action?.Step!;");
         if (info.ImplementsIStatic)
         {
-            const string prefix = "app.modules.";
+            const string prefix = "app.module.";
             var moduleName = info.Namespace.StartsWith(prefix)
                 ? info.Namespace.Substring(prefix.Length).Split('.')[0]
                 : info.Namespace;

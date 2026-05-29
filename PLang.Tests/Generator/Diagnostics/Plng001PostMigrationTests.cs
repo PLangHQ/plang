@@ -39,7 +39,7 @@ public class Plng001PostMigrationTests
 
     private const string Stubs = """
         using System;
-        namespace app.modules {
+        namespace app.module {
             public class ActionAttribute : Attribute {}
             public class CodeAttribute : Attribute {}
             public interface IContext {}
@@ -57,7 +57,7 @@ public class Plng001PostMigrationTests
     {
         var source = Stubs + """
             namespace app.Test {
-                [app.modules.Action]
+                [app.module.Action]
                 public partial class GoodHandler {
                     public partial app.data.@this<int> Count { get; init; }
                 }
@@ -74,7 +74,7 @@ public class Plng001PostMigrationTests
     {
         var source = Stubs + """
             namespace app.Test {
-                [app.modules.Action]
+                [app.module.Action]
                 public partial class GoodHandler {
                     public partial app.data.@this Value { get; init; }
                 }
@@ -92,9 +92,9 @@ public class Plng001PostMigrationTests
         var source = Stubs + """
             namespace app.Test {
                 public interface IFooProvider {}
-                [app.modules.Action]
+                [app.module.Action]
                 public partial class GoodHandler {
-                    [app.modules.Code]
+                    [app.module.Code]
                     public partial IFooProvider Foo { get; init; }
                 }
             }
@@ -114,7 +114,7 @@ public class Plng001PostMigrationTests
         // Author who forgot to migrate — bare `partial string`, no Data wrap.
         var source = Stubs + """
             namespace app.Test {
-                [app.modules.Action]
+                [app.module.Action]
                 public partial class StaleHandler {
                     public partial string Name { get; init; }
                 }
@@ -134,7 +134,7 @@ public class Plng001PostMigrationTests
     {
         var source = Stubs + """
             namespace app.Test {
-                [app.modules.Action]
+                [app.module.Action]
                 public partial class RawScalarHandler {
                     public partial int RawCount { get; init; }
                 }

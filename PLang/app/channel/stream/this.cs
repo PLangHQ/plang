@@ -84,7 +84,7 @@ public sealed class @this : global::app.channel.session.@this
         }
     }
 
-    public override async Task<global::app.data.@this> Ask(modules.output.ask action, CancellationToken ct = default)
+    public override async Task<global::app.data.@this> Ask(module.output.ask action, CancellationToken ct = default)
     {
         // Two-call pattern across the actor's split output/input pair — per
         // CLAUDE.md's "Console.* Is Banned" rule: write the prompt via the

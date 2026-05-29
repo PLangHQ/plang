@@ -24,7 +24,7 @@ public sealed partial class @this
 
     /// <summary>
     /// Per-property gates for richer Call data capture. See <see cref="Flags"/>.
-    /// Settable so <see cref="app.modules.debug.@this.Apply"/> can update it from <c>--debug</c>
+    /// Settable so <see cref="app.module.debug.@this.Apply"/> can update it from <c>--debug</c>
     /// after construction; otherwise stays at <see cref="Flags.Default"/>.
     ///
     /// Concurrency note: <see cref="Flags"/> is a multi-field <c>record struct</c>;

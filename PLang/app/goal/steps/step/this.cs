@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 using app.actor.context;
 using app.data;
 using app.variable;
-using app.modules;
+using app.module;
 using Action = app.goal.steps.step.actions.action.@this;
 
 namespace app.goal.steps.step;
@@ -10,7 +10,7 @@ namespace app.goal.steps.step;
 /// <summary>
 /// Represents a step within a goal for App.
 /// </summary>
-public sealed partial class @this : modules.IDataWrappable
+public sealed partial class @this : module.IDataWrappable
 {
     [JsonIgnore]
     public actor.context.@this? Context { get; set; }
@@ -39,11 +39,11 @@ public sealed partial class @this : modules.IDataWrappable
 
     private string DisabledKey => $"step:{Goal?.PrPath}:{Index}:disabled";
 
-    private modules.Events? _events;
+    private module.Events? _events;
     [JsonIgnore]
-    public modules.Events Events
+    public module.Events Events
     {
-        get => _events ??= new modules.Events(this);
+        get => _events ??= new module.Events(this);
         set => _events = value;
     }
     [Store, LlmBuilder, Debug, Default]

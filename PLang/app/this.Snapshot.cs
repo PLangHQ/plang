@@ -40,11 +40,11 @@ public sealed partial class @this
     {
         var ctx = context ?? CurrentActor.Context;
 
-        if (s.HasSection("Providers")) global::app.modules.code.@this.Restore(s.Section("Providers"), ctx);
+        if (s.HasSection("Providers")) global::app.module.code.@this.Restore(s.Section("Providers"), ctx);
         if (s.HasSection("Variables")) global::app.variable.list.@this.Restore(s.Section("Variables"), ctx);
         if (s.HasSection("Errors"))    global::app.error.list.@this.Restore(s.Section("Errors"), ctx);
         if (s.HasSection("Statics"))   global::app.Statics.@this.Restore(s.Section("Statics"), ctx);
-        if (s.HasSection("Build"))     global::app.modules.builder.@this.Restore(s.Section("Build"), ctx);
+        if (s.HasSection("Build"))     global::app.module.builder.@this.Restore(s.Section("Build"), ctx);
         if (s.HasSection("Testing"))   global::app.tester.@this.Restore(s.Section("Testing"), ctx);
         if (s.HasSection("CallStack")) global::app.callstack.@this.Restore(s.Section("CallStack"), ctx);
     }

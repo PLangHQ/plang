@@ -1,8 +1,8 @@
 using app;
-using app.modules.settings;
+using app.module.settings;
 using app.variable;
-using app.modules.identity;
-using app.modules.identity.code;
+using app.module.identity;
+using app.module.identity.code;
 
 namespace app.actor;
 
@@ -101,7 +101,7 @@ public sealed class @this : IAsyncDisposable
         {
             var provider = app.Code.Get<IIdentity>();
             if (!provider.Success) return null;
-            var result = provider.Value!.GetOrCreateDefaultAsync(new global::app.modules.identity.Get { Context = app.System.Context }).GetAwaiter().GetResult();
+            var result = provider.Value!.GetOrCreateDefaultAsync(new global::app.module.identity.Get { Context = app.System.Context }).GetAwaiter().GetResult();
             return result.Success ? result.Value as Identity : null;
         }));
     }

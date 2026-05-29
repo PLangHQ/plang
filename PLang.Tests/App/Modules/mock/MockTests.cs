@@ -2,7 +2,7 @@ using app.actor.context;
 using app;
 using app.error;
 using app.variable;
-using app.modules.mock;
+using app.module.mock;
 
 
 namespace PLang.Tests.App.Modules.mock;

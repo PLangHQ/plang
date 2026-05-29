@@ -178,7 +178,7 @@ public class Stage8_ChannelEventsTests
             receivedData = payload;
             return Task.FromResult(Data.Ok());
         }));
-        var result = await ch.AskAsync(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "") });
+        var result = await ch.AskAsync(new global::app.module.output.ask { Question = new global::app.data.@this<string>("", "") });
         await Assert.That(result.Value as string).IsEqualTo("answer");
         await Assert.That(receivedData).IsNotNull();
         await Assert.That(receivedData!.Value as string).IsEqualTo("answer");
@@ -198,7 +198,7 @@ public class Stage8_ChannelEventsTests
             fired = true;
             return Task.FromResult(Data.Ok());
         }));
-        await ch.AskAsync(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "q?") });
+        await ch.AskAsync(new global::app.module.output.ask { Question = new global::app.data.@this<string>("", "q?") });
         await Assert.That(fired).IsTrue();
     }
 
@@ -279,7 +279,7 @@ public class Stage8_ChannelEventsTests
         public override Task<Data> Write(Data data, CancellationToken ct = default)
             => throw new IOException("boom");
         public override Task<Data> Read(CancellationToken ct = default) => Task.FromResult(Data.Ok());
-        public override Task<Data> Ask(global::app.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        public override Task<Data> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok());
     }
 
     private sealed class MessageProbeChannel : global::app.channel.message.@this
@@ -287,6 +287,6 @@ public class Stage8_ChannelEventsTests
         public MessageProbeChannel(string name) { Name = name; }
         public override Task<Data> Write(Data data, CancellationToken ct = default) => Task.FromResult(Data.Ok());
         public override Task<Data> Read(CancellationToken ct = default) => Task.FromResult(Data.Ok());
-        public override Task<Data> Ask(global::app.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok("answer-from-resume"));
+        public override Task<Data> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok("answer-from-resume"));
     }
 }

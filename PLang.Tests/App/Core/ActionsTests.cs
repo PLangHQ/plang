@@ -1,6 +1,6 @@
 using app;
 using app.variable;
-using app.modules;
+using app.module;
 
 namespace PLang.Tests.App.Core;
 
@@ -44,10 +44,10 @@ public class ActionsTests
         {
             Module = "variable",
             ActionName = "set",
-            ParameterSchema = typeof(global::app.modules.variable.Set)
+            ParameterSchema = typeof(global::app.module.variable.Set)
         };
 
-        await Assert.That(action.ParameterSchema).IsEqualTo(typeof(global::app.modules.variable.Set));
+        await Assert.That(action.ParameterSchema).IsEqualTo(typeof(global::app.module.variable.Set));
     }
 
     [Test]
@@ -88,7 +88,7 @@ public class ActionsTests
         var variableSet = actions.First(a => a.Module == "variable" && a.ActionName == "set");
 
         await Assert.That(variableSet.ParameterSchema).IsNotNull();
-        await Assert.That(variableSet.ParameterSchema).IsEqualTo(typeof(global::app.modules.variable.Set));
+        await Assert.That(variableSet.ParameterSchema).IsEqualTo(typeof(global::app.module.variable.Set));
     }
 
     [Test]

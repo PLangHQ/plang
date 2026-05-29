@@ -1,8 +1,8 @@
 using app.actor.context;
 using app.error;
 using app.variable;
-using app.modules.crypto;
-using app.modules.crypto.code;
+using app.module.crypto;
+using app.module.crypto.code;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.crypto;
@@ -53,13 +53,13 @@ public class ProviderResolutionTests
     [Test]
     public async Task Hash_NoProviderConfigured_FallsToBuiltInDefault()
     {
-        // Fresh engine, no crypto settings — should use global::app.modules.crypto.code.Default
+        // Fresh engine, no crypto settings — should use global::app.module.crypto.code.Default
         var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
         var hash = (byte[])result.Value!;
-        // Should not be all zeros (global::app.modules.crypto.code.Default produces real keccak256)
+        // Should not be all zeros (global::app.module.crypto.code.Default produces real keccak256)
         await Assert.That(hash).IsNotEquivalentTo(new byte[32]);
         await Assert.That(hash.Length).IsEqualTo(32);
     }

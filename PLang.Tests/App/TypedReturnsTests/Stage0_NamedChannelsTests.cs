@@ -1,4 +1,4 @@
-using BuildWarning = global::app.modules.builder.warning.@this;
+using BuildWarning = global::app.module.builder.warning.@this;
 using NoopChannel = global::app.channel.noop.@this;
 
 namespace PLang.Tests.App.TypedReturnsTests;
@@ -90,7 +90,7 @@ public class Stage0_NamedChannelsTests
     [Test]
     public async Task BuildWarning_RecordShape_CarriesActionAndMessage()
     {
-        var action = (global::app.modules.IClass)new global::app.modules.typedreturns.NoopBuild();
+        var action = (global::app.module.IClass)new global::app.module.typedreturns.NoopBuild();
         var w1 = new BuildWarning(action, "duplicate");
         var w2 = new BuildWarning(action, "duplicate");
 
@@ -108,7 +108,7 @@ public class Stage0_NamedChannelsTests
     public async Task BuildWarning_WriteToBuilderChannel_SubscriberReceivesPayload()
     {
         RegisterMemoryChannel("builder");
-        var action = (global::app.modules.IClass)new global::app.modules.typedreturns.NoopBuild();
+        var action = (global::app.module.IClass)new global::app.module.typedreturns.NoopBuild();
         var payload = new BuildWarning(action, "missing file");
 
         var writeResult = await Channels.WriteAsync("builder", payload);
@@ -125,7 +125,7 @@ public class Stage0_NamedChannelsTests
         var sink = Channels.Channel("builder");
         await Assert.That(sink).IsTypeOf<NoopChannel>();
 
-        var action = (global::app.modules.IClass)new global::app.modules.typedreturns.NoopBuild();
+        var action = (global::app.module.IClass)new global::app.module.typedreturns.NoopBuild();
         var result = await sink.WriteAsync(Data.Ok(new BuildWarning(action, "msg")));
 
         await Assert.That(result.Success).IsTrue();

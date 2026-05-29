@@ -1,11 +1,11 @@
-namespace app.modules.matrix.snapshot;
+namespace app.module.matrix.snapshot;
 
 // Handler that mixes a [Sensitive] parameter (e.g. an API key) with a non-sensitive
 // one. The snapshot captured on error must mask the sensitive one's PrValue and
 // FinalValue while leaving the non-sensitive one in plaintext.
 
-[global::app.modules.Action("sensitivesnapshot")]
-public partial class SensitiveSnapshot : global::app.modules.IContext
+[global::app.module.Action("sensitivesnapshot")]
+public partial class SensitiveSnapshot : global::app.module.IContext
 {
     [global::app.SensitiveAttribute]
     public partial global::app.data.@this<string> ApiKey { get; init; }

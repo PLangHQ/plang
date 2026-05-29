@@ -97,7 +97,7 @@ public class SettingsDataTests
     {
         // Use the settings.set action handler
         var context = _app.System.Context;
-        var handler = new global::app.modules.settings.Set
+        var handler = new global::app.module.settings.Set
         {
             Context = context,
             Key = "HandlerKey",
@@ -117,7 +117,7 @@ public class SettingsDataTests
     {
         await _app.SettingsStore.Set("settings", "TestKey", new global::app.data.@this("TestKey", "TestValue"));
 
-        var handler = new global::app.modules.settings.Get
+        var handler = new global::app.module.settings.Get
         {
             Context = _app.System.Context,
             Key = "TestKey"
@@ -131,7 +131,7 @@ public class SettingsDataTests
     [Test]
     public async Task SettingsHandler_Get_MissingKey_ReturnsAskError()
     {
-        var handler = new global::app.modules.settings.Get
+        var handler = new global::app.module.settings.Get
         {
             Context = _app.System.Context,
             Key = "MissingKey"
@@ -147,7 +147,7 @@ public class SettingsDataTests
     {
         await _app.SettingsStore.Set("settings", "ToRemove", new global::app.data.@this("ToRemove", "value"));
 
-        var handler = new global::app.modules.settings.Remove
+        var handler = new global::app.module.settings.Remove
         {
             Context = _app.System.Context,
             Key = "ToRemove"

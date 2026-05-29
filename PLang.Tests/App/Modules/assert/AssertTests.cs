@@ -2,15 +2,15 @@ using app.actor.context;
 using app;
 using app.error;
 using app.variable;
-using AssertEquals = global::app.modules.assert.Equals;
-using AssertNotEquals = global::app.modules.assert.NotEquals;
-using AssertIsTrue = global::app.modules.assert.IsTrue;
-using AssertIsFalse = global::app.modules.assert.IsFalse;
-using AssertIsNull = global::app.modules.assert.IsNull;
-using AssertIsNotNull = global::app.modules.assert.IsNotNull;
-using AssertContains = global::app.modules.assert.Contains;
-using AssertGreaterThan = global::app.modules.assert.GreaterThan;
-using AssertLessThan = global::app.modules.assert.LessThan;
+using AssertEquals = global::app.module.assert.Equals;
+using AssertNotEquals = global::app.module.assert.NotEquals;
+using AssertIsTrue = global::app.module.assert.IsTrue;
+using AssertIsFalse = global::app.module.assert.IsFalse;
+using AssertIsNull = global::app.module.assert.IsNull;
+using AssertIsNotNull = global::app.module.assert.IsNotNull;
+using AssertContains = global::app.module.assert.Contains;
+using AssertGreaterThan = global::app.module.assert.GreaterThan;
+using AssertLessThan = global::app.module.assert.LessThan;
 
 namespace PLang.Tests.App.actions.assert;
 

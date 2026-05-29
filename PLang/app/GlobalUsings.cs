@@ -20,7 +20,7 @@ global using Bindings = app.@event.lifecycle.binding.list.@this;
 // EventBinding: v1 PLang.Events conflict — use: using EventBinding = app.@event.lifecycle.binding.@this;
 
 // Modules subsystem (action registry)
-global using AppModules = app.modules.@this;
+global using AppModules = app.module.@this;
 
 // Channels subsystem
 global using AppChannels = app.channel.list.@this;
@@ -47,7 +47,7 @@ global using ConfigScope = app.config.Scope;
 global using AppTypes = app.type.list.@this;
 
 // Code subsystem (the runtime escape-hatch — was Providers)
-global using AppCode = app.modules.code.@this;
+global using AppCode = app.module.code.@this;
 
 // Variables (was MemoryStack)
 global using Variables = app.variable.list.@this;
@@ -61,18 +61,18 @@ global using ISnapshot = app.snapshot.ISnapshot;
 global using AppStatics = app.Statics.@this;
 
 // Standalone concepts
-global using ICache = app.modules.cache.ICache;
-global using Debugging = app.modules.debug.@this;
+global using ICache = app.module.cache.ICache;
+global using Debugging = app.module.debug.@this;
 global using Tester = app.tester.@this;
 
-// Call: not a global alias — app.modules.goal.Call (the goal.call action handler) collides.
+// Call: not a global alias — app.module.goal.Call (the goal.call action handler) collides.
 // Use app.callstack.call.@this fully qualified, or per-file alias.
 
 // Builder: can't be global alias — v1 PLang.Builder namespace conflict (legacy).
 // Inside app.@this: the `Builder` property shadows the `builder` namespace, so
-// type references must be fully qualified (global::app.modules.builder.@this).
+// type references must be fully qualified (global::app.module.builder.@this).
 // Inside other app.*: builder.@this resolves naturally.
-// Outside app.*: use app.modules.builder.@this or a per-file alias.
+// Outside app.*: use app.module.builder.@this or a per-file alias.
 
 // App: can't be global alias — app.@this IS the app root
 // Inside app.*: use app.@this (parent namespace resolves naturally)

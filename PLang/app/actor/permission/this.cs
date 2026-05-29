@@ -154,7 +154,7 @@ public sealed class @this
             // would expire "always allow" after 5 minutes and would reject
             // re-reads of the same stored nonce. The grant's own Expires
             // (null = permanent today) is the only time bound that applies.
-            var action = new global::app.modules.signing.verify
+            var action = new global::app.module.signing.verify
             {
                 Data = data,
                 SkipFreshnessCheck = new global::app.data.@this<bool>("", true),

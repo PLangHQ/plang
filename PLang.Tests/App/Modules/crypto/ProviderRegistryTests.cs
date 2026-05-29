@@ -1,8 +1,8 @@
 using app.variable;
-using app.modules.code;
-using app.modules.crypto;
-using app.modules.crypto.code;
-using EngineProviders = global::app.modules.code.@this;
+using app.module.code;
+using app.module.crypto;
+using app.module.crypto.code;
+using EngineProviders = global::app.module.code.@this;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.crypto;
@@ -28,7 +28,7 @@ public class ProviderRegistryTests
     [Test]
     public async Task Register_Then_Get_ReturnsSameInstance()
     {
-        var provider = new global::app.modules.crypto.code.Default();
+        var provider = new global::app.module.crypto.code.Default();
         _providers.Register<ICrypto>(provider);
 
         var result = _providers.Get<ICrypto>();
@@ -39,10 +39,10 @@ public class ProviderRegistryTests
     [Test]
     public async Task Register_DuplicateName_ReturnsError()
     {
-        var first = new global::app.modules.crypto.code.Default();
+        var first = new global::app.module.crypto.code.Default();
         _providers.Register<ICrypto>(first);
 
-        var second = new global::app.modules.crypto.code.Default();
+        var second = new global::app.module.crypto.code.Default();
         var result = _providers.Register<ICrypto>(second);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderExists");
@@ -57,14 +57,14 @@ public class ProviderRegistryTests
     [Test]
     public async Task Has_AfterRegistration_ReturnsTrue()
     {
-        _providers.Register<ICrypto>(new global::app.modules.crypto.code.Default());
+        _providers.Register<ICrypto>(new global::app.module.crypto.code.Default());
         await Assert.That(_providers.Has<ICrypto>()).IsTrue();
     }
 
     [Test]
     public async Task Remove_NonDefault_Succeeds()
     {
-        var first = new global::app.modules.crypto.code.Default();
+        var first = new global::app.module.crypto.code.Default();
         _providers.Register<ICrypto>(first);
         var second = new NamedCryptoProvider("second");
         _providers.Register<ICrypto>(second);
@@ -85,7 +85,7 @@ public class ProviderRegistryTests
     [Test]
     public async Task GetOrDefault_NoRegistration_ReturnsDefault()
     {
-        var fallback = new global::app.modules.crypto.code.Default();
+        var fallback = new global::app.module.crypto.code.Default();
         var result = _providers.GetOrDefault<ICrypto>(fallback);
         await Assert.That(result).IsSameReferenceAs(fallback);
     }
@@ -93,7 +93,7 @@ public class ProviderRegistryTests
     [Test]
     public async Task GetOrDefault_WithRegistration_ReturnsRegistered()
     {
-        var registered = new global::app.modules.crypto.code.Default();
+        var registered = new global::app.module.crypto.code.Default();
         var fallback = new NamedCryptoProvider("fallback");
         _providers.Register<ICrypto>(registered);
 

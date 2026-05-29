@@ -74,8 +74,8 @@ public class Cut4_PropertiesWireTests
                 app.User.Channels.Serializers.GetByMimeType("application/plang");
             var back = (global::app.data.@this)plang.Deserialize(tampered).Value!;
             back.Context = app.User.Context;
-            var verify = await app.RunAction<global::app.modules.signing.verify>(
-                new global::app.modules.signing.verify
+            var verify = await app.RunAction<global::app.module.signing.verify>(
+                new global::app.module.signing.verify
                 {
                     Data = back,
                     SkipFreshnessCheck = new global::app.data.@this<bool>("", true)

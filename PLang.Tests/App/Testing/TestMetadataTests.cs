@@ -83,7 +83,7 @@ public class TestMetadataTests
     {
         _app.Tester.Results.Add(NewRun("T", builderVersion: "v1.0"));
 
-        var action = new global::app.modules.test.report { Context = _app.User.Context };
+        var action = new global::app.module.test.report { Context = _app.User.Context };
         await action.Run();
 
         var jsonPath = System.IO.Path.Combine(_tempDir, ".test", "results.json");
@@ -105,7 +105,7 @@ public class TestMetadataTests
         _app.Version = "v2.0"; // current app builder version
         _app.Tester.Results.Add(NewRun("T", builderVersion: "v1.0")); // stale
 
-        var action = new global::app.modules.test.report { Context = _app.User.Context };
+        var action = new global::app.module.test.report { Context = _app.User.Context };
         await action.Run();
 
         var output = CapturedOutput();

@@ -372,7 +372,7 @@ public sealed partial class @this
             if (!destOk)   sb.Append("\n  - write ").Append(destination.Absolute);
             sb.Append("\n(y/n/a — covers all)");
 
-            var askAction = new modules.output.ask
+            var askAction = new module.output.ask
             {
                 Context = Context,
                 Question = new data.@this<string>("", sb.ToString()),
@@ -382,7 +382,7 @@ public sealed partial class @this
             if (askResult.ShouldExit()) return data.@this<global::app.type.path.@this>.From(askResult);
             if (!askResult.Success) return data.@this<global::app.type.path.@this>.From(askResult);
 
-            var ask = askResult.Value as global::app.modules.output.Ask;
+            var ask = askResult.Value as global::app.module.output.Ask;
             var answer = ask?.Answer?.Trim();
             switch (answer)
             {

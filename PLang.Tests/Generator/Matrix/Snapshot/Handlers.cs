@@ -1,7 +1,7 @@
-namespace app.modules.matrix.snapshot;
+namespace app.module.matrix.snapshot;
 
-[global::app.modules.Action("snapshotonerror")]
-public partial class SnapshotOnError : global::app.modules.IContext
+[global::app.module.Action("snapshotonerror")]
+public partial class SnapshotOnError : global::app.module.IContext
 {
     public partial global::app.data.@this<string> First { get; init; }
     public partial global::app.data.@this<int> Second { get; init; }

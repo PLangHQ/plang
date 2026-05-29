@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using app.Attributes;
-using app.modules;
+using app.module;
 
 namespace app.type.list;
 
@@ -82,7 +82,7 @@ public sealed partial class @this
     /// Static-friendly variant of <see cref="GetTypeName"/> — handles primitives, generics,
     /// nullable, arrays, Data&lt;T&gt; unwrap, and reads [PlangType] / @this convention names
     /// directly off the type via reflection (no per-App registry). For callers that don't
-    /// have an App in scope (e.g. <see cref="app.modules.@this"/> instances constructed
+    /// have an App in scope (e.g. <see cref="app.module.@this"/> instances constructed
     /// without an App backing in test fixtures).
     /// </summary>
     public static string GetTypeNameStatic(System.Type type)
@@ -416,7 +416,7 @@ public sealed partial class @this
     ///   - Record                → TypeEntry with Fields built from [LlmBuilder] props.
     ///   - Opaque (no markers)   → not surfaced.
     /// </summary>
-    public List<app.builder.Types.Entry> BuildTypeEntries(app.modules.@this? modules)
+    public List<app.builder.Types.Entry> BuildTypeEntries(app.module.@this? modules)
     {
         var entries = new List<app.builder.Types.Entry>();
         var seen = new HashSet<System.Type>();

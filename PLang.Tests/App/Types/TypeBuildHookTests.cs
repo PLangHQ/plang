@@ -31,7 +31,7 @@ public class TypeBuildHookTests
         // Discovery must filter on the (object?)→string signature only — an
         // action handler that implements IClass.Build() must NOT be picked up
         // as if it were a kind hook.
-        var fileReadType = typeof(global::app.modules.file.Read);
+        var fileReadType = typeof(global::app.module.file.Read);
         await Assert.That(_kinds.Of(fileReadType, "/whatever")).IsNull();
     }
 

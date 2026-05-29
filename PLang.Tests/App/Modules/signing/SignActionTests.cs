@@ -2,11 +2,11 @@ using System.Text.Json;
 using app.actor.context;
 using app.error;
 using app.variable;
-using app.modules.code;
-using app.modules.signing.code;
-using app.modules.crypto;
-using app.modules.identity;
-using app.modules.signing;
+using app.module.code;
+using app.module.signing.code;
+using app.module.crypto;
+using app.module.identity;
+using app.module.signing;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.signing;

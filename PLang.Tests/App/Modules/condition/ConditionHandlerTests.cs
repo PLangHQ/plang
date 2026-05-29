@@ -1,7 +1,7 @@
 using app.actor.context;
 using app;
 using app.variable;
-using app.modules.condition;
+using app.module.condition;
 using app.type.path;
 using Action = global::app.goal.steps.step.actions.action.@this;
 

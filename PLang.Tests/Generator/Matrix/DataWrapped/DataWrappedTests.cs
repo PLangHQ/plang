@@ -1,5 +1,5 @@
 using PLang.Tests.App.Fixtures;
-using app.modules.matrix.datawrapped;
+using app.module.matrix.datawrapped;
 
 namespace PLang.Tests.Generator.Matrix.DataWrapped;
 
@@ -51,7 +51,7 @@ public class DataWrappedListTests
         var result = await MatrixRunner.RunAsync<DataWrappedList>(app,
             parameters: new[] { ("messages", (object?)raw) },
             variables: new Dictionary<string, object?> { ["comment"] = "you are a compiler" });
-        var typed = result.Data as global::app.data.@this<List<global::app.modules.llm.LlmMessage>>;
+        var typed = result.Data as global::app.data.@this<List<global::app.module.llm.LlmMessage>>;
         await Assert.That(typed!.Value).IsNotNull();
         await Assert.That(typed.Value![0].Content).IsEqualTo("you are a compiler");
     }
@@ -62,7 +62,7 @@ public class DataWrappedListTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<DataWrappedList>(app,
             parameters: new[] { ("messages", (object?)new List<object?>()) });
-        var typed = result.Data as global::app.data.@this<List<global::app.modules.llm.LlmMessage>>;
+        var typed = result.Data as global::app.data.@this<List<global::app.module.llm.LlmMessage>>;
         await Assert.That(typed!.Value!.Count).IsEqualTo(0);
     }
 }

@@ -207,7 +207,7 @@ public sealed class Wire : JsonConverter<@this>
         object? value = null;
         type? typeRef = null;
         string? kind = null;
-        app.modules.signing.Signature? signature = null;
+        app.module.signing.Signature? signature = null;
         Properties? properties = null;
 
         while (reader.Read())
@@ -266,7 +266,7 @@ public sealed class Wire : JsonConverter<@this>
                     }
                     break;
                 case "signature":
-                    signature = JsonSerializer.Deserialize<app.modules.signing.Signature>(ref reader, options);
+                    signature = JsonSerializer.Deserialize<app.module.signing.Signature>(ref reader, options);
                     break;
                 case "properties":
                     properties = ReadPropertiesObject(ref reader);

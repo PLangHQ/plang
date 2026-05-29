@@ -1,5 +1,5 @@
 using PLang.Tests.App.Fixtures;
-using app.modules.matrix.withdefault;
+using app.module.matrix.withdefault;
 
 namespace PLang.Tests.Generator.Matrix.WithDefault;
 

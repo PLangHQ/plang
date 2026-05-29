@@ -1,8 +1,8 @@
 using app;
 using app.actor.context;
 using app.variable;
-using app.modules.ui;
-using app.modules.ui.code;
+using app.module.ui;
+using app.module.ui.code;
 
 namespace PLang.Tests.App.Modules.ui;
 
@@ -10,14 +10,14 @@ public class RenderTests : IDisposable
 {
     private readonly string _tempDir;
     private readonly global::app.@this _app;
-    private readonly global::app.modules.ui.code.Fluid _provider;
+    private readonly global::app.module.ui.code.Fluid _provider;
 
     public RenderTests()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_ui_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = new global::app.@this(_tempDir);
-        _provider = new global::app.modules.ui.code.Fluid();
+        _provider = new global::app.module.ui.code.Fluid();
     }
 
     public void Dispose()

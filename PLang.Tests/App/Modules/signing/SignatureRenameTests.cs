@@ -7,18 +7,18 @@ public class SignatureRenameTests
     {
         // The old SignedData type/alias is gone — assert via reflection that the name
         // doesn't resolve to a type in the signing module.
-        var asm = typeof(global::app.modules.signing.Signature).Assembly;
-        var resolved = asm.GetType("app.modules.signing.SignedData");
+        var asm = typeof(global::app.module.signing.Signature).Assembly;
+        var resolved = asm.GetType("app.module.signing.SignedData");
         await Assert.That(resolved).IsNull();
     }
 
     [Test]
     public async Task SigningSignatureType_ExistsUnderNewName()
     {
-        // The new name lives at App.modules.signing.Signature.
-        var asm = typeof(global::app.modules.signing.Signature).Assembly;
-        var resolved = asm.GetType("app.modules.signing.Signature");
+        // The new name lives at App.module.signing.Signature.
+        var asm = typeof(global::app.module.signing.Signature).Assembly;
+        var resolved = asm.GetType("app.module.signing.Signature");
         await Assert.That(resolved).IsNotNull();
-        await Assert.That(resolved!.FullName).IsEqualTo("app.modules.signing.Signature");
+        await Assert.That(resolved!.FullName).IsEqualTo("app.module.signing.Signature");
     }
 }

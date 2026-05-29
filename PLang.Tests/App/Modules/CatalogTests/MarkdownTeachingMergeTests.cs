@@ -1,4 +1,4 @@
-using app.modules;
+using app.module;
 
 namespace PLang.Tests.App.Modules.CatalogTests;
 

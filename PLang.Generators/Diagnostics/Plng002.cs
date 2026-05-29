@@ -199,7 +199,7 @@ public static class Plng002
         if (cls == null) return null;
         var isAction = cls.GetAttributes().Any(a =>
             a.AttributeClass?.Name == "ActionAttribute"
-            && a.AttributeClass.ContainingNamespace?.ToDisplayString() == "app.modules");
+            && a.AttributeClass.ContainingNamespace?.ToDisplayString() == "app.module");
         if (!isAction) return null;
 
         // Type must be Data<string>.

@@ -10,11 +10,11 @@ namespace app.goal;
 /// PrPath is nullable because dynamic goal names (containing %variable%) can't resolve at build time.
 /// </summary>
 [PlangType("goal.call")]
-public sealed class GoalCall : modules.IEvent
+public sealed class GoalCall : module.IEvent
 {
     /// <summary>Event context — set by Events.Stamp when this GoalCall is an event binding.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
-    public modules.EventContext? Event { get; set; }
+    public module.EventContext? Event { get; set; }
 
     /// <summary>Goal name to call (e.g., "ProcessData", "Setup/Init").</summary>
     [Store, LlmBuilder, Out]
@@ -120,7 +120,7 @@ public sealed class GoalCall : modules.IEvent
 
     private async Task<data.@this> LoadFromFile(string prPath, app.@this app, actor.context.@this context)
     {
-        var readAction = new modules.file.Read
+        var readAction = new module.file.Read
         {
             Context = context,
             Path = data.@this<path>.Ok(path.Resolve(prPath, context))

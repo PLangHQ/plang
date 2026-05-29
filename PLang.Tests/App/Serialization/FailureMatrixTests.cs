@@ -41,8 +41,8 @@ public class FailureMatrixTests
 
         var back = (global::app.data.@this)plang.Deserialize(tampered).Value!;
         back.Context = app.User.Context;
-        var verify = await app.RunAction<global::app.modules.signing.verify>(
-            new global::app.modules.signing.verify
+        var verify = await app.RunAction<global::app.module.signing.verify>(
+            new global::app.module.signing.verify
             {
                 Data = back,
                 SkipFreshnessCheck = new global::app.data.@this<bool>("", true)
@@ -83,8 +83,8 @@ public class FailureMatrixTests
 
     [Test] public async Task CryptoHash_WithUnsupportedAlgorithm_ReturnsDataWithUnsupportedAlgorithmError()
     {
-        var crypto = new global::app.modules.crypto.code.Default();
-        var action = new global::app.modules.crypto.Hash
+        var crypto = new global::app.module.crypto.code.Default();
+        var action = new global::app.module.crypto.Hash
         {
             Data = global::app.data.@this.Ok("x"),
             Algorithm = new global::app.data.@this<string>("", "md5")
@@ -115,7 +115,7 @@ public class FailureMatrixTests
         // Empty MemoryStream — ReadLineAsync returns null (EOF).
         var ch = new global::app.channel.stream.@this("input", new MemoryStream(),
             global::app.channel.ChannelDirection.Bidirectional);
-        var action = new global::app.modules.output.ask
+        var action = new global::app.module.output.ask
         {
             Question = new global::app.data.@this<string>("", "")
         };

@@ -1,5 +1,5 @@
 using app.tester;
-using Tag = global::app.modules.test.Tag;
+using Tag = global::app.module.test.Tag;
 
 namespace PLang.Tests.App.Tester;
 

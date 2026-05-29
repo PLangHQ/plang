@@ -77,7 +77,7 @@ public partial class @this
         if (!child.IsInitialized) return child;
 
         // Inject context on IContext values during traversal
-        if (child.Value is app.modules.IContext contextual && _context != null)
+        if (child.Value is app.module.IContext contextual && _context != null)
             contextual.Context = _context;
 
         if (string.IsNullOrEmpty(remaining))

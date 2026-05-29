@@ -1,7 +1,7 @@
 using System.Text.Json;
 using app.actor.context;
 using app.variable;
-using app.modules.builder;
+using app.module.builder;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.builder;

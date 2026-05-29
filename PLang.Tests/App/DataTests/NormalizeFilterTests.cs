@@ -70,7 +70,7 @@ public class NormalizeFilterTests
 
     [Test] public async Task Normalize_Identity_EmitsName_PublicKey_Only()
     {
-        var identity = new global::app.modules.identity.Identity
+        var identity = new global::app.module.identity.Identity
         {
             Name = "alice",
             PublicKey = "pk",
@@ -99,7 +99,7 @@ public class NormalizeFilterTests
 
     [Test] public async Task Normalize_Setting_EmitsKey_AndValueMaskedFourStars()
     {
-        var s = new global::app.modules.settings.types.setting { key = "API_KEY", value = "secret-token" };
+        var s = new global::app.module.settings.type.setting { key = "API_KEY", value = "secret-token" };
         var children = (List<Data>)new Data("", s).Normalize()!;
         await Assert.That(children.First(c => c.Name == "key").Value).IsEqualTo("API_KEY");
         await Assert.That(children.First(c => c.Name == "value").Value).IsEqualTo("****");

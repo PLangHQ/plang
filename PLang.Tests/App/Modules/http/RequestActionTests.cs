@@ -6,12 +6,12 @@ using System.Text.Json;
 using app.channel.serializer;
 using app.actor.context;
 using app.variable;
-using app.modules.code;
-using app.modules.http;
-using app.modules.http.code;
-using app.modules.signing;
+using app.module.code;
+using app.module.http;
+using app.module.http.code;
+using app.module.signing;
 using PLangEngine = global::app.@this;
-using HttpMethod = global::app.modules.http.HttpMethod;
+using HttpMethod = global::app.module.http.HttpMethod;
 
 namespace PLang.Tests.App.Modules.http;
 

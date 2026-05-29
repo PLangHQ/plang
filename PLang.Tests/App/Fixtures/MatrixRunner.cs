@@ -1,5 +1,5 @@
 using System.Reflection;
-using app.modules;
+using app.module;
 
 namespace PLang.Tests.App.Fixtures;
 
@@ -9,7 +9,7 @@ namespace PLang.Tests.App.Fixtures;
 /// are all exercised. Tests construct an Action with synthetic Parameters/Defaults,
 /// optionally seed Variables, and read back the result Data plus diagnostic context.
 ///
-/// Matrix handlers live in App.modules.matrix.* — not auto-registered by Modules.Discover
+/// Matrix handlers live in App.module.matrix.* — not auto-registered by Modules.Discover
 /// (which walks PLang.dll only). RunAsync registers the handler type on demand using
 /// its action attribute name and dispatches via App.Run.
 /// </summary>
@@ -120,14 +120,14 @@ public static class MatrixRunner
             t.GetCustomAttribute<ActionAttribute>() != null
             && typeof(ICodeGenerated).IsAssignableFrom(t)
             && !t.IsAbstract
-            && (t.Namespace?.StartsWith("app.modules.matrix.") ?? false));
+            && (t.Namespace?.StartsWith("app.module.matrix.") ?? false));
 
         foreach (var type in matrixTypes)
         {
             var attr = type.GetCustomAttribute<ActionAttribute>()!;
             var actionName = attr.Name ?? type.Name.ToLowerInvariant();
             var moduleNs = type.Namespace!;
-            var module = moduleNs.Substring("app.modules.".Length);
+            var module = moduleNs.Substring("app.module.".Length);
             if (!app.Modules.Contains(module, actionName))
                 app.Modules.RegisterType(module, actionName, type);
         }
@@ -141,8 +141,8 @@ public static class MatrixRunner
         var actionName = attr.Name ?? t.Name.ToLowerInvariant();
         var moduleNs = t.Namespace
             ?? throw new InvalidOperationException($"{t.FullName} has no namespace");
-        var module = moduleNs.StartsWith("app.modules.")
-            ? moduleNs.Substring("app.modules.".Length)
+        var module = moduleNs.StartsWith("app.module.")
+            ? moduleNs.Substring("app.module.".Length)
             : moduleNs;
         return (module, actionName);
     }

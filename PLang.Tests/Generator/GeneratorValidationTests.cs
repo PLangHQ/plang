@@ -63,11 +63,11 @@ public class GeneratorValidationTests
     {
         const string sourceWithRawScalar = """
             using System;
-            namespace app.modules {
+            namespace app.module {
                 public class ActionAttribute : Attribute {}
             }
             namespace app.Test {
-                [app.modules.Action]
+                [app.module.Action]
                 public partial class BadHandler {
                     // Raw int — not Data<T>, not [Code], not [VariableName]. Triggers PLNG001.
                     public partial int RawIntProperty { get; init; }
@@ -136,9 +136,9 @@ public class GeneratorValidationTests
     public async Task GeneratedPropertyShape_UniformAcrossDataTtypes()
     {
         var stringPlainSrc = File.ReadAllText(Path.Combine(GeneratedDir,
-            "app.modules.matrix.plain.StringPlain.Action.g.cs"));
+            "app.module.matrix.plain.StringPlain.Action.g.cs"));
         var intPlainSrc = File.ReadAllText(Path.Combine(GeneratedDir,
-            "app.modules.matrix.plain.IntPlain.Action.g.cs"));
+            "app.module.matrix.plain.IntPlain.Action.g.cs"));
 
         await Assert.That(stringPlainSrc).Contains("__ResolveData(\"path\").As<string>(Context)");
         await Assert.That(intPlainSrc).Contains("__ResolveData(\"count\").As<int>(Context)");

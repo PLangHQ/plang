@@ -384,7 +384,7 @@ public class DataAsTResolutionTests
 
         // Mirrors how llm.query reads %fixerMessages% — typed slot is List<LlmMessage>.
         var paramData = new Data("Messages", "%fixerMessages%") { Context = ctx };
-        var result = paramData.As<List<global::app.modules.llm.LlmMessage>>(ctx);
+        var result = paramData.As<List<global::app.module.llm.LlmMessage>>(ctx);
 
         await Assert.That(result.Success).IsTrue();
         var content = result.Value![0].Content!;

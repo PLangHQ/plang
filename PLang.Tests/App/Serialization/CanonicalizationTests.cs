@@ -31,8 +31,8 @@ public class CanonicalizationTests
             wireBytesWithoutOuterSig = JsonSerializer.SerializeToUtf8Bytes(data, plang.OutboundOptions);
         }
 
-        var hashResult = await app.RunAction<global::app.modules.crypto.Hash>(
-            new global::app.modules.crypto.Hash
+        var hashResult = await app.RunAction<global::app.module.crypto.Hash>(
+            new global::app.module.crypto.Hash
             {
                 Data = data,
                 Algorithm = new global::app.data.@this<string>("", "keccak256")
@@ -90,8 +90,8 @@ public class CanonicalizationTests
         await Assert.That(roundTripped).IsNotNull();
         roundTripped!.Context = app.User.Context;
 
-        var verifyResult = await app.RunAction<global::app.modules.signing.verify>(
-            new global::app.modules.signing.verify { Data = roundTripped, SkipFreshnessCheck = new global::app.data.@this<bool>("", true) },
+        var verifyResult = await app.RunAction<global::app.module.signing.verify>(
+            new global::app.module.signing.verify { Data = roundTripped, SkipFreshnessCheck = new global::app.data.@this<bool>("", true) },
             app.User.Context);
 
         await Assert.That(verifyResult.Success).IsFalse()
@@ -113,7 +113,7 @@ public class CanonicalizationTests
         var inner = new global::app.data.@this("inner", "v") { Context = app.User.Context };
         inner.Properties["meta"] = new List<object>
         {
-            new global::app.modules.identity.Identity
+            new global::app.module.identity.Identity
             {
                 Name = "alice",
                 PublicKey = "pk",

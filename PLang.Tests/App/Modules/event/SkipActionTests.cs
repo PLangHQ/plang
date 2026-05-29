@@ -1,6 +1,6 @@
 using app.actor.context;
 using app.variable;
-using app.modules.@event;
+using app.module.@event;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.EventTests;

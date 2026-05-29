@@ -33,12 +33,12 @@ public class Cut1_JsonRoundTripTests
 
     [Test] public async Task Cut1_Identity_RoundTrips_NameAndPublicKey_PrivateKeyAbsent()
     {
-        var original = new global::app.modules.identity.Identity
+        var original = new global::app.module.identity.Identity
         {
             Name = "alice", PublicKey = "pk", PrivateKey = "secret"
         };
         var normalized = new Data("", original).Normalize();
-        var rebuilt = new Data("", normalized).Reconstruct<global::app.modules.identity.Identity>();
+        var rebuilt = new Data("", normalized).Reconstruct<global::app.module.identity.Identity>();
         await Assert.That(rebuilt).IsNotNull();
         await Assert.That(rebuilt!.Name).IsEqualTo("alice");
         await Assert.That(rebuilt.PublicKey).IsEqualTo("pk");
@@ -61,7 +61,7 @@ public class Cut1_JsonRoundTripTests
 
     [Test] public async Task Cut1_Setting_RoundTrips_KeyVisible_ValueMasked()
     {
-        var s = new global::app.modules.settings.types.setting { key = "K", value = "secret" };
+        var s = new global::app.module.settings.type.setting { key = "K", value = "secret" };
         var json = NormalizePipelineHelper.SerializeValueSlot(s);
         await Assert.That(json).Contains("\"key\":\"K\"");
         await Assert.That(json).Contains("\"value\":\"****\"");
@@ -108,7 +108,7 @@ public class Cut1_JsonRoundTripTests
         // goal suites. Here, pin that a Data with an in-memory Signature emits
         // the signature field through the Normalize pipeline.
         var d = new Data("rec", "payload");
-        d.Signature = new global::app.modules.signing.Signature
+        d.Signature = new global::app.module.signing.Signature
         {
             Identity = "ident", Nonce = "n1", Algorithm = "ed25519"
         };

@@ -1,7 +1,7 @@
 using System.Reflection;
-using app.modules;
-using app.modules.builder.code;
-using app.modules.typedreturns;
+using app.module;
+using app.module.builder.code;
+using app.module.typedreturns;
 
 namespace PLang.Tests.App.TypedReturnsTests;
 

@@ -21,7 +21,7 @@ public class NumberPolicyResolutionTests
         var ctx = app.User.Context;
         // Context says Decimal; step override says Double.
         app.Config.Set("number.precision", PPrecision.Decimal, ctx);
-        var p = global::app.modules.math.MathPolicy.Resolve(ctx, stepOverflow: null, stepPrecision: PPrecision.Double);
+        var p = global::app.module.math.MathPolicy.Resolve(ctx, stepOverflow: null, stepPrecision: PPrecision.Double);
         await Assert.That(p.Precision).IsEqualTo(PPrecision.Double);
     }
 
@@ -31,7 +31,7 @@ public class NumberPolicyResolutionTests
         var ctx = app.User.Context;
         app.Config.Set("number.overflow", POverflow.Throw, ctx, isDefault: true);   // app default
         app.Config.Set("number.overflow", POverflow.Promote, ctx);                  // context override
-        var p = global::app.modules.math.MathPolicy.Resolve(ctx, null, null);
+        var p = global::app.module.math.MathPolicy.Resolve(ctx, null, null);
         await Assert.That(p.Overflow).IsEqualTo(POverflow.Promote);
     }
 
@@ -40,14 +40,14 @@ public class NumberPolicyResolutionTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         app.Config.Set("number.overflow", POverflow.Throw, ctx, isDefault: true);
-        var p = global::app.modules.math.MathPolicy.Resolve(ctx, null, null);
+        var p = global::app.module.math.MathPolicy.Resolve(ctx, null, null);
         await Assert.That(p.Overflow).IsEqualTo(POverflow.Throw);
     }
 
     [Test] public async Task Resolve_RecordDefault_LenientPromoteDouble_WhenNothingSet()
     {
         await using var app = NewApp();
-        var p = global::app.modules.math.MathPolicy.Resolve(app.User.Context, null, null);
+        var p = global::app.module.math.MathPolicy.Resolve(app.User.Context, null, null);
         await Assert.That(p.Overflow).IsEqualTo(POverflow.Promote);
         await Assert.That(p.Precision).IsEqualTo(PPrecision.Double);
     }
@@ -61,7 +61,7 @@ public class NumberPolicyResolutionTests
         app.Config.Set("number.overflow", POverflow.Throw, parent);
 
         var child = new global::app.actor.context.@this(app, parent: parent);
-        var p = global::app.modules.math.MathPolicy.Resolve(child, null, null);
+        var p = global::app.module.math.MathPolicy.Resolve(child, null, null);
         await Assert.That(p.Overflow).IsEqualTo(POverflow.Throw);
     }
 

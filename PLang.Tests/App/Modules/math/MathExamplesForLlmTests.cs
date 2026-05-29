@@ -1,4 +1,4 @@
-using app.modules.math;
+using app.module.math;
 using PLangEngine = global::app.@this;
 using ExampleSpec = global::app.builder.Types.Spec.Example;
 

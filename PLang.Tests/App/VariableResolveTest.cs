@@ -79,13 +79,13 @@ public class VariableResolveTest
         await using var app = new global::app.@this("/tmp/var-set-bang-" + System.Guid.NewGuid().ToString("N")[..8]);
         var ctx = app.User.Context;
 
-        await app.RunAction<global::app.modules.variable.Set>(new global::app.modules.variable.Set
+        await app.RunAction<global::app.module.variable.Set>(new global::app.module.variable.Set
         {
             Name = new global::app.data.@this<global::app.variable.Variable>("", new global::app.variable.Variable("response")),
             Value = global::app.data.@this.Ok("hello"),
         }, ctx);
 
-        await app.RunAction<global::app.modules.variable.Set>(new global::app.modules.variable.Set
+        await app.RunAction<global::app.module.variable.Set>(new global::app.module.variable.Set
         {
             Name = new global::app.data.@this<global::app.variable.Variable>("",
                 global::app.variable.Variable.Resolve("%response!cost%", ctx)),
@@ -101,13 +101,13 @@ public class VariableResolveTest
         await using var app = new global::app.@this("/tmp/var-set-malformed-" + System.Guid.NewGuid().ToString("N")[..8]);
         var ctx = app.User.Context;
 
-        await app.RunAction<global::app.modules.variable.Set>(new global::app.modules.variable.Set
+        await app.RunAction<global::app.module.variable.Set>(new global::app.module.variable.Set
         {
             Name = new global::app.data.@this<global::app.variable.Variable>("", new global::app.variable.Variable("response")),
             Value = global::app.data.@this.Ok("hello"),
         }, ctx);
 
-        var result = await app.RunAction<global::app.modules.variable.Set>(new global::app.modules.variable.Set
+        var result = await app.RunAction<global::app.module.variable.Set>(new global::app.module.variable.Set
         {
             Name = new global::app.data.@this<global::app.variable.Variable>("",
                 global::app.variable.Variable.Resolve("%response!!cost%", ctx)),

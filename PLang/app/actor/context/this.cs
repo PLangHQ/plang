@@ -120,7 +120,7 @@ public sealed class @this : IDisposable
     /// Accessible via %!event%. Contains .step (triggering step), .phase, etc.
     /// Null when not in an event handler.
     /// </summary>
-    public modules.EventContext? Event { get; set; }
+    public module.EventContext? Event { get; set; }
 
     /// <summary>
     /// Set during setup execution, null otherwise.
@@ -286,7 +286,7 @@ public sealed class @this : IDisposable
         private readonly Action _action;
         private readonly Step? _previousStep;
         private readonly Goal? _previousGoal;
-        private readonly modules.EventContext? _previousEvent;
+        private readonly module.EventContext? _previousEvent;
         private readonly @this? _previousStepContext;
 
         public AnchorScopeDisposable(@this ctx, Action action)
@@ -436,7 +436,7 @@ public sealed class @this : IDisposable
     /// Owner type determines scope: Step → step bindings, Goal → goal bindings.
     /// Used by Event resolver (IEvent) during dot-path traversal.
     /// </summary>
-    public List<GoalCall> GetEventBindings(object owner, modules.EventPhase phase)
+    public List<GoalCall> GetEventBindings(object owner, module.EventPhase phase)
     {
         var events = Events;
         var (beforeType, afterType) = owner switch
@@ -447,7 +447,7 @@ public sealed class @this : IDisposable
             _ => (EventType.BeforeStep, EventType.AfterStep) // fallback
         };
 
-        var eventType = phase == modules.EventPhase.Before ? beforeType : afterType;
+        var eventType = phase == module.EventPhase.Before ? beforeType : afterType;
 
         string? goalName = owner switch
         {
@@ -457,10 +457,10 @@ public sealed class @this : IDisposable
             _ => null
         };
         string? stepText = owner is Step s ? s.Text : null;
-        string? module = owner is Action a ? a.Module : null;
+        string? moduleName = owner is Action a ? a.Module : null;
         string? actionName = owner is Action a2 ? a2.ActionName : null;
 
-        var bindings = events.GetMatchingBindings(eventType, goalName: goalName, stepText: stepText, module: module, actionName: actionName);
+        var bindings = events.GetMatchingBindings(eventType, goalName: goalName, stepText: stepText, module: moduleName, actionName: actionName);
         return bindings
             .Where(b => b.GoalToCall != null)
             .Select(b => b.GoalToCall!)

@@ -1,7 +1,7 @@
 using app.actor.context;
 using app;
 using app.variable;
-using app.modules.math;
+using app.module.math;
 
 namespace PLang.Tests.App.actions.math;
 
@@ -228,7 +228,7 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new global::app.modules.math.Random { Context = context, Min = 1, Max = 10 };
+        var action = new global::app.module.math.Random { Context = context, Min = 1, Max = 10 };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();

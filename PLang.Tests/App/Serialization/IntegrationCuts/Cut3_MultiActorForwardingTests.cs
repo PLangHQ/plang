@@ -76,8 +76,8 @@ public class Cut3_MultiActorForwardingTests
         await using (chain.AppA) await using (chain.AppB) await using (chain.AppC)
         {
             chain.RoundTripped.Context = chain.AppB.User.Context;
-            var outerVerify = await chain.AppB.RunAction<global::app.modules.signing.verify>(
-                new global::app.modules.signing.verify
+            var outerVerify = await chain.AppB.RunAction<global::app.module.signing.verify>(
+                new global::app.module.signing.verify
                 {
                     Data = chain.RoundTripped,
                     SkipFreshnessCheck = new global::app.data.@this<bool>("", true)
@@ -86,8 +86,8 @@ public class Cut3_MultiActorForwardingTests
 
             var innerAfter = (global::app.data.@this)chain.RoundTripped.Value!;
             innerAfter.Context = chain.AppA.User.Context;
-            var innerVerify = await chain.AppA.RunAction<global::app.modules.signing.verify>(
-                new global::app.modules.signing.verify
+            var innerVerify = await chain.AppA.RunAction<global::app.module.signing.verify>(
+                new global::app.module.signing.verify
                 {
                     Data = innerAfter,
                     SkipFreshnessCheck = new global::app.data.@this<bool>("", true)
@@ -112,8 +112,8 @@ public class Cut3_MultiActorForwardingTests
             var restored = (global::app.data.@this)back.Value!;
             restored.Context = chain.AppB.User.Context;
 
-            var verify = await chain.AppB.RunAction<global::app.modules.signing.verify>(
-                new global::app.modules.signing.verify
+            var verify = await chain.AppB.RunAction<global::app.module.signing.verify>(
+                new global::app.module.signing.verify
                 {
                     Data = restored,
                     SkipFreshnessCheck = new global::app.data.@this<bool>("", true)

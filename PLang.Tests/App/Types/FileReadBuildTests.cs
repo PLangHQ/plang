@@ -50,7 +50,7 @@ public class FileReadBuildTests
         try
         {
             var p = global::app.type.path.@this.Resolve(abs, app.User.Context);
-            var action = new global::app.modules.file.Read
+            var action = new global::app.module.file.Read
             {
                 Context = app.User.Context,
                 Path = global::app.data.@this<global::app.type.path.@this>.Ok(p),
@@ -73,7 +73,7 @@ public class FileReadBuildTests
         try
         {
             var p = global::app.type.path.@this.Resolve(abs, app.User.Context);
-            var action = new global::app.modules.file.Read
+            var action = new global::app.module.file.Read
             {
                 Context = app.User.Context,
                 Path = global::app.data.@this<global::app.type.path.@this>.Ok(p),
@@ -98,7 +98,7 @@ public class FileReadBuildTests
     {
         // Run() signature is Task<Data> (bare), not Task<Data<image>>. The
         // image lift happens inside Run() based on MIME.
-        var rt = typeof(global::app.modules.file.Read).GetMethod("Run")!.ReturnType;
+        var rt = typeof(global::app.module.file.Read).GetMethod("Run")!.ReturnType;
         await Assert.That(rt).IsEqualTo(typeof(System.Threading.Tasks.Task<global::app.data.@this>));
     }
 }

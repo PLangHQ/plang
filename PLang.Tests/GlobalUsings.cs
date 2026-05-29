@@ -24,7 +24,7 @@ global using Lifecycle = app.@event.lifecycle.@this;
 global using Bindings = app.@event.lifecycle.binding.list.@this;
 
 // Modules subsystem (action registry)
-global using EngineModules = app.modules.@this;
+global using EngineModules = app.module.@this;
 
 // Channels subsystem
 global using EngineChannels = app.channel.list.@this;
@@ -55,12 +55,12 @@ global using httppath = app.type.path.http.@this;
 global using EngineTypes = app.type.list.@this;
 
 // Standalone concepts (no v1 conflicts in tests)
-global using ICache = app.modules.cache.ICache;
+global using ICache = app.module.cache.ICache;
 global using CallStack = app.callstack.@this;
 global using Flags = app.callstack.Flags;
-// Call: not a global alias — app.modules.goal.Call (the goal.call action handler)
+// Call: not a global alias — app.module.goal.Call (the goal.call action handler)
 // collides. Use app.callstack.call.@this fully qualified, or per-file alias.
-global using Debugging = app.modules.debug.@this;
+global using Debugging = app.module.debug.@this;
 global using Tester = app.tester.@this;
 global using Snapshot = app.snapshot.@this;
 global using ISnapshot = app.snapshot.ISnapshot;

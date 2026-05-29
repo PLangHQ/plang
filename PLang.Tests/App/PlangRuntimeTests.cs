@@ -89,7 +89,7 @@ public class PlangRuntimeTests : IDisposable
         var context = _app.User.Context;
 
         // Register a before-step event
-        var onAction = new global::app.modules.@event.On
+        var onAction = new global::app.module.@event.On
         {
             Context = context,
             Type = global::app.@event.EventType.BeforeStep,

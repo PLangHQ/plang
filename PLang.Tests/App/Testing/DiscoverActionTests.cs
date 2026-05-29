@@ -136,7 +136,7 @@ public class DiscoverActionTests
 
     private async Task<List<global::app.tester.Test.@this>> Discover(string path = ".", bool recursive = true)
     {
-        var action = new global::app.modules.test.discover
+        var action = new global::app.module.test.discover
         {
             Context = _app.User.Context,
             Path = global::app.data.@this<global::app.type.path.@this>.Ok(

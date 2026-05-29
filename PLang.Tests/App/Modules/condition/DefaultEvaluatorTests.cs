@@ -1,6 +1,6 @@
 using app.variable;
-using app.modules.condition;
-using app.modules.condition.code;
+using app.module.condition;
+using app.module.condition.code;
 
 namespace PLang.Tests.App.Modules.condition;
 

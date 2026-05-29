@@ -2,7 +2,7 @@ using System.Text.Json;
 using app;
 using app.channel.serializer;
 using app.error;
-using app.modules.identity;
+using app.module.identity;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Serializers;

@@ -1,6 +1,6 @@
 using app.actor.context;
 using app.variable;
-using app.modules;
+using app.module;
 
 namespace PLang.Tests.App.actions;
 
@@ -286,7 +286,7 @@ public class LibrariesTests
         var modules = new EngineModules();
         modules.Clear(); // start fresh
 
-        var count = modules.Discover(typeof(global::app.@this).Assembly, "app.modules");
+        var count = modules.Discover(typeof(global::app.@this).Assembly, "app.module");
 
         await Assert.That(modules.Contains("variable", "set")).IsTrue();
         await Assert.That(modules.Contains("output", "write")).IsTrue();

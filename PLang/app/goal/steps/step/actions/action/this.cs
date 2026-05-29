@@ -6,7 +6,7 @@ namespace app.goal.steps.step.actions.action;
 /// A single action within a step — the LLM-mapped unit of execution.
 /// Identifies the module and handler to invoke, with typed parameters, return mappings, and defaults.
 /// </summary>
-public sealed partial class @this : modules.IDataWrappable
+public sealed partial class @this : module.IDataWrappable
 {
     /// <summary>
     /// OBP: Action is responsible for its own Data representation.
@@ -70,7 +70,7 @@ public sealed partial class @this : modules.IDataWrappable
     /// path resolves a fresh handler per execution).
     /// </summary>
     [JsonIgnore]
-    public modules.ICodeGenerated? PreboundHandler { get; init; }
+    public module.ICodeGenerated? PreboundHandler { get; init; }
 
     /// <summary>
     /// True for any condition chain action: condition.if, condition.elseif, or condition.else.
@@ -104,11 +104,11 @@ public sealed partial class @this : modules.IDataWrappable
     [JsonIgnore]
     public Step? Step { get; set; }
 
-    private modules.Events? _events;
+    private module.Events? _events;
     [JsonIgnore]
-    public modules.Events Events
+    public module.Events Events
     {
-        get => _events ??= new modules.Events(this);
+        get => _events ??= new module.Events(this);
     }
 
     public List<global::app.data.@this> Examples { get; init; } = new();
@@ -173,7 +173,7 @@ public sealed partial class @this : modules.IDataWrappable
     /// </summary>
     [JsonIgnore]
     public string? NotesRendered
-        => global::app.modules.MarkdownTeaching.MergeLayers(ModuleNotes, Notes);
+        => global::app.module.MarkdownTeaching.MergeLayers(ModuleNotes, Notes);
 
     /// <summary>
     /// Concat of <see cref="ModuleDescription"/> + blank line + <see cref="Description"/>.
@@ -181,7 +181,7 @@ public sealed partial class @this : modules.IDataWrappable
     /// </summary>
     [JsonIgnore]
     public string? DescriptionRendered
-        => global::app.modules.MarkdownTeaching.MergeLayers(ModuleDescription, Description);
+        => global::app.module.MarkdownTeaching.MergeLayers(ModuleDescription, Description);
 
     /// <summary>
     /// Module markdown examples first, then action markdown examples (each entry one
@@ -282,7 +282,7 @@ public sealed partial class @this : modules.IDataWrappable
     private async Task<global::app.data.@this> DispatchAsync(actor.context.@this context)
     {
         var app = context.App!;
-        modules.ICodeGenerated? handler;
+        module.ICodeGenerated? handler;
         global::app.error.IError? error;
         if (PreboundHandler != null)
         {
@@ -335,7 +335,7 @@ public sealed partial class @this : modules.IDataWrappable
     {
         var (handler, error) = context.App!.Modules.GetCodeGenerated(this);
         if (error != null) return (null, error);
-        if (handler is not modules.IModifier mod)
+        if (handler is not module.IModifier mod)
         {
             // Pinpoint WHERE the misplaced "modifier" lives. Modifier Actions don't
             // have their own Step propagated from the host (the Actions container only

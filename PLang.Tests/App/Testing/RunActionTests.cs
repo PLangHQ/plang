@@ -84,7 +84,7 @@ public class RunActionTests
 
     private async Task<Results> RunTests(List<global::app.tester.Test.@this> tests, int? parallel = null, int? timeoutSec = null)
     {
-        var action = new global::app.modules.test.run
+        var action = new global::app.module.test.run
         {
             Context = _app.User.Context,
             Tests = new global::app.data.@this<List<global::app.tester.Test.@this>>("Tests", tests),
@@ -160,7 +160,7 @@ public class RunActionTests
                 stopOnError: false));
         }
 
-        global::app.modules.test.run.ChildAppCreated += Probe;
+        global::app.module.test.run.ChildAppCreated += Probe;
         try
         {
             var tests = new List<global::app.tester.Test.@this>();
@@ -182,7 +182,7 @@ public class RunActionTests
         }
         finally
         {
-            global::app.modules.test.run.ChildAppCreated -= Probe;
+            global::app.module.test.run.ChildAppCreated -= Probe;
         }
     }
 
@@ -264,7 +264,7 @@ public class RunActionTests
             if (childApp.AbsolutePath.StartsWith(_tempDir))
                 observedChildOsDir = childApp.OsDirectory;
         }
-        global::app.modules.test.run.ChildAppCreated += Probe;
+        global::app.module.test.run.ChildAppCreated += Probe;
         try
         {
             var test = BuildFixture("OsDir.test.goal", "S", new (string, string, List<Data>)[]
@@ -280,7 +280,7 @@ public class RunActionTests
         }
         finally
         {
-            global::app.modules.test.run.ChildAppCreated -= Probe;
+            global::app.module.test.run.ChildAppCreated -= Probe;
         }
     }
 
@@ -297,7 +297,7 @@ public class RunActionTests
             if (childApp.AbsolutePath.StartsWith(_tempDir))
                 observed = childApp.Tester.IsEnabled;
         }
-        global::app.modules.test.run.ChildAppCreated += Probe;
+        global::app.module.test.run.ChildAppCreated += Probe;
         try
         {
             var test = BuildFixture("IsEn.test.goal", "E", new (string, string, List<Data>)[]
@@ -313,7 +313,7 @@ public class RunActionTests
         }
         finally
         {
-            global::app.modules.test.run.ChildAppCreated -= Probe;
+            global::app.module.test.run.ChildAppCreated -= Probe;
         }
     }
 
@@ -332,7 +332,7 @@ public class RunActionTests
             if (childApp.AbsolutePath.StartsWith(_tempDir))
                 Interlocked.Increment(ref childAppsCreated);
         }
-        global::app.modules.test.run.ChildAppCreated += Probe;
+        global::app.module.test.run.ChildAppCreated += Probe;
         try
         {
             var ready = BuildFixture("Ready.test.goal", "R", new (string, string, List<Data>)[]
@@ -359,7 +359,7 @@ public class RunActionTests
         }
         finally
         {
-            global::app.modules.test.run.ChildAppCreated -= Probe;
+            global::app.module.test.run.ChildAppCreated -= Probe;
         }
     }
 
@@ -479,7 +479,7 @@ public class RunActionTests
                 EngineChannels.Error, errStream,
                 ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
         }
-        global::app.modules.test.run.ChildAppCreated += Probe;
+        global::app.module.test.run.ChildAppCreated += Probe;
         try
         {
             var test = BuildFixture("OutCap.test.goal", "OutCap", new (string, string, List<Data>)[]
@@ -505,7 +505,7 @@ public class RunActionTests
         }
         finally
         {
-            global::app.modules.test.run.ChildAppCreated -= Probe;
+            global::app.module.test.run.ChildAppCreated -= Probe;
         }
     }
 

@@ -34,7 +34,7 @@ public class PathAuthorizeTests
         public override Task<global::app.data.@this> Read(CancellationToken ct = default)
             => Task.FromResult(global::app.data.@this.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(
-            global::app.modules.output.ask action, CancellationToken ct = default)
+            global::app.module.output.ask action, CancellationToken ct = default)
         {
             var ans = _idx < Answers.Length ? Answers[_idx++] : "";
             return Task.FromResult(global::app.data.@this.Ok(ans));

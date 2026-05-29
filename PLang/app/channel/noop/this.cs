@@ -29,6 +29,6 @@ public sealed class @this : global::app.channel.@this
         => System.Threading.Tasks.Task.FromResult(global::app.data.@this.NotFound());
 
     public override System.Threading.Tasks.Task<global::app.data.@this> Ask(
-        global::app.modules.output.ask action, System.Threading.CancellationToken ct = default)
+        global::app.module.output.ask action, System.Threading.CancellationToken ct = default)
         => System.Threading.Tasks.Task.FromResult(global::app.data.@this.Ok());
 }

@@ -16,7 +16,7 @@ public class DiscoverDenialPathTests
         public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
-        public override Task<global::app.data.@this> Ask(global::app.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok(_answer));
+        public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok(_answer));
     }
 
     private static PLangEngine NewApp(out string root)
@@ -32,7 +32,7 @@ public class DiscoverDenialPathTests
         var app = NewApp(out _);
         app.User.Channels.Register(new CannedChannel("n"));
         var outOfRoot = "//etc";
-        var action = new global::app.modules.test.discover
+        var action = new global::app.module.test.discover
         {
             Context = app.User.Context,
             Path = global::app.data.@this<global::app.type.path.@this>.Ok(
@@ -49,7 +49,7 @@ public class DiscoverDenialPathTests
     {
         var app = NewApp(out _);
         app.User.Channels.Register(new CannedChannel("n"));
-        var action = new global::app.modules.test.discover
+        var action = new global::app.module.test.discover
         {
             Context = app.User.Context,
             Path = global::app.data.@this<global::app.type.path.@this>.Ok(

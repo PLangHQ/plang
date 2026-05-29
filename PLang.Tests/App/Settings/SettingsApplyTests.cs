@@ -1,7 +1,7 @@
 using app.actor.context;
 using app.variable;
 using app.config;
-using app.modules.http;
+using app.module.http;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Settings;

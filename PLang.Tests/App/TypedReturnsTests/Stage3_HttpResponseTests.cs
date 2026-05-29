@@ -53,7 +53,7 @@ public class Stage3_HttpResponseTests
     [Test]
     public async Task HttpRequest_Run_ReturnsTaskDataOfResponse()
     {
-        var ret = RunReturnType<global::app.modules.http.request>();
+        var ret = RunReturnType<global::app.module.http.request>();
         var expected = typeof(Task<global::app.data.@this<Response>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
@@ -61,7 +61,7 @@ public class Stage3_HttpResponseTests
     [Test]
     public async Task HttpUpload_Run_ReturnsTaskDataOfResponse()
     {
-        var ret = RunReturnType<global::app.modules.http.upload>();
+        var ret = RunReturnType<global::app.module.http.upload>();
         var expected = typeof(Task<global::app.data.@this<Response>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
@@ -69,7 +69,7 @@ public class Stage3_HttpResponseTests
     [Test]
     public async Task HttpDownload_Run_SignatureUnchanged()
     {
-        var ret = RunReturnType<global::app.modules.http.download>();
+        var ret = RunReturnType<global::app.module.http.download>();
         // http.download writes to disk; no body wrapping → bare Task<Data>.
         await Assert.That(ret).IsEqualTo(typeof(Task<Data>));
     }

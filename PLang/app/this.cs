@@ -4,10 +4,10 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Reflection;
 using app.actor.context;
-using app.modules.settings;
+using app.module.settings;
 using app.error;
 using app.variable;
-using app.modules;
+using app.module;
 using app.Utils;
 using Goal = app.goal.@this;
 
@@ -160,7 +160,7 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Pluggable step cache. Default: in-memory. Swap via: - use 'redis.dll' for caching
     /// </summary>
-    public ICache Cache { get; set; } = new global::app.modules.cache.Memory();
+    public ICache Cache { get; set; } = new global::app.module.cache.Memory();
 
     /// <summary>
     /// Strongly typed, goal-scoped module config.
@@ -175,16 +175,16 @@ public sealed partial class @this : IAsyncDisposable
     /// Created lazily on first access so tests with fictional paths and apps
     /// that never touch settings don't pay for SQLite-file creation at boot.
     /// </summary>
-    public global::app.modules.settings.IStore SettingsStore => _settingsStore.Value;
-    private Lazy<global::app.modules.settings.IStore> _settingsStore = null!;
+    public global::app.module.settings.IStore SettingsStore => _settingsStore.Value;
+    private Lazy<global::app.module.settings.IStore> _settingsStore = null!;
 
     /// <summary>
     /// Shared (one per app) settings collection. Holds Data values keyed by
     /// name, backed by <see cref="SettingsStore"/>. Registered on every actor's
     /// Variables via <see cref="Variables.@this.RegisterNavigable"/> so
-    /// <c>%Settings.X%</c> resolution dispatches into <see cref="app.modules.settings.@this.Get"/>.
+    /// <c>%Settings.X%</c> resolution dispatches into <see cref="app.module.settings.@this.Get"/>.
     /// </summary>
-    public global::app.modules.settings.@this Settings { get; }
+    public global::app.module.settings.@this Settings { get; }
 
     /// <summary>
     /// Debug mode controller. Registers event handlers for step/goal debug output.
@@ -205,7 +205,7 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Builder mode controller. When enabled, actors use in-memory datasources.
     /// </summary>
-    public global::app.modules.builder.@this Builder { get; }
+    public global::app.module.builder.@this Builder { get; }
 
     /// <summary>
     /// Allow creating a new app if none exists. Set via --app={"create":true}. Default false.
@@ -307,11 +307,11 @@ public sealed partial class @this : IAsyncDisposable
         Events = new AppEvents();
         Debug = new Debugging(this);
         Tester = new global::app.tester.@this(this);
-        Builder = new global::app.modules.builder.@this(this);
+        Builder = new global::app.module.builder.@this(this);
         Types = new type.list.@this();
         Config = new config.@this();
-        _settingsStore = new Lazy<global::app.modules.settings.IStore>(CreateSettingsStore);
-        Settings = new global::app.modules.settings.@this(this);
+        _settingsStore = new Lazy<global::app.module.settings.IStore>(CreateSettingsStore);
+        Settings = new global::app.module.settings.@this(this);
         _modules = modules ?? new AppModules();
         _modules.App = this;
         _goals = new AppGoals { App = this };
@@ -456,7 +456,7 @@ public sealed partial class @this : IAsyncDisposable
     /// be removed entirely when handlers grow their own RunAsync surface.
     /// </summary>
     public Task<data.@this> RunAction<TAction>(TAction handler, actor.context.@this context)
-        where TAction : modules.ICodeGenerated
+        where TAction : module.ICodeGenerated
     {
         var entity = new global::app.goal.steps.step.actions.action.@this
         {
@@ -471,7 +471,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Typed variant — same dispatch path, casts the result Value to TResult.
     /// </summary>
     public async Task<data.@this<TResult>> RunAction<TAction, TResult>(TAction handler, actor.context.@this context)
-        where TAction : modules.ICodeGenerated
+        where TAction : module.ICodeGenerated
     {
         var result = await RunAction(handler, context);
         if (!result.Success) return data.@this<TResult>.FromError(result.Error!);
@@ -487,7 +487,7 @@ public sealed partial class @this : IAsyncDisposable
 
     private static string ResolveActionName(System.Type handlerType)
     {
-        var attr = handlerType.GetCustomAttribute<modules.ActionAttribute>(inherit: false);
+        var attr = handlerType.GetCustomAttribute<module.ActionAttribute>(inherit: false);
         return attr?.Name ?? handlerType.Name.ToLowerInvariant();
     }
 
@@ -566,18 +566,18 @@ public sealed partial class @this : IAsyncDisposable
         return await goal.RunAsync(context);
     }
 
-    private global::app.modules.settings.IStore CreateSettingsStore()
+    private global::app.module.settings.IStore CreateSettingsStore()
     {
         // Testing: in-memory db scoped by App.Id so per-test Apps never share state.
         // SQLite's shared-cache merges in-memory dbs with identical DataSource names,
         // so the App.Id scoping is load-bearing.
         if (Tester.IsEnabled)
-            return global::app.modules.settings.Sqlite.InMemory($"system-{Id}");
+            return global::app.module.settings.Sqlite.InMemory($"system-{Id}");
 
         // Lift to Path: AuthGate fires inside the Sqlite ctor on Write,
         // parent dir creation via path.Mkdir.
         var dbPath = global::app.type.path.@this.Resolve("/.db/system.sqlite", System.Context!);
-        return new global::app.modules.settings.Sqlite(dbPath);
+        return new global::app.module.settings.Sqlite(dbPath);
     }
 
     public async ValueTask DisposeAsync()

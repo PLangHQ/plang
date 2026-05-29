@@ -10,7 +10,7 @@ namespace app.type.number;
 /// <para><c>sealed class</c> for codebase consistency with the rest of
 /// <c>app/types/</c>; value semantics by way of <see cref="IEquatable{T}"/>
 /// + value-equal <see cref="GetHashCode"/>. No <c>Context</c>, no
-/// <see cref="modules.IContext"/> — a number has no use for per-request state
+/// <see cref="module.IContext"/> — a number has no use for per-request state
 /// after construction.</para>
 ///
 /// <para>Storage is a tagged union over three slots (<c>_i</c>, <c>_d</c>,

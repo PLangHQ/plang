@@ -23,7 +23,7 @@ public class Plng002SystemIoBanTests
 {
     private const string Stubs = """
         using System;
-        namespace app.modules {
+        namespace app.module {
             public class ActionAttribute : Attribute {}
             public class CodeAttribute : Attribute {}
             public interface IContext {}
@@ -63,7 +63,7 @@ public class Plng002SystemIoBanTests
     [Test] public async Task Fires_OnFileReadAllText_UnderModulesNamespace()
     {
         var source = """
-            namespace app.modules.foo {
+            namespace app.module.foo {
                 public class Handler {
                     public string Read() => System.IO.File.ReadAllText("x.txt");
                 }
@@ -76,7 +76,7 @@ public class Plng002SystemIoBanTests
     [Test] public async Task Fires_OnDirectoryGetFiles_UnderModulesNamespace()
     {
         var source = """
-            namespace app.modules.foo {
+            namespace app.module.foo {
                 public class Handler {
                     public string[] Walk() => System.IO.Directory.GetFiles("/tmp");
                 }
@@ -89,7 +89,7 @@ public class Plng002SystemIoBanTests
     [Test] public async Task Fires_OnSystemIoPathCombine_UnderModulesNamespace()
     {
         var source = """
-            namespace app.modules.foo {
+            namespace app.module.foo {
                 public class Handler {
                     public string Join() => System.IO.Path.Combine("a", "b");
                 }
@@ -102,8 +102,8 @@ public class Plng002SystemIoBanTests
     [Test] public async Task Fires_OnDataOfString_NamedPath_InActionHandler()
     {
         var source = Stubs + """
-            namespace app.modules.foo {
-                [app.modules.Action]
+            namespace app.module.foo {
+                [app.module.Action]
                 public partial class Handler {
                     public partial app.data.@this<string> Path { get; init; }
                 }
@@ -119,7 +119,7 @@ public class Plng002SystemIoBanTests
         // any other System.IO.Path.* member, they must route through
         // PathHelper. Type-based exemption, not symbol-name allowlist.
         var source = """
-            namespace app.modules.foo {
+            namespace app.module.foo {
                 public class Handler {
                     public char Sep() => System.IO.Path.DirectorySeparatorChar;
                 }
@@ -195,8 +195,8 @@ public class Plng002SystemIoBanTests
         // Data<some-non-string> is the correct shape — must not trip PLNG002.
         var source = Stubs + """
             namespace app.type.path { public class @this {} }
-            namespace app.modules.foo {
-                [app.modules.Action]
+            namespace app.module.foo {
+                [app.module.Action]
                 public partial class Handler {
                     public partial app.data.@this<app.type.path.@this> Path { get; init; }
                 }
@@ -209,7 +209,7 @@ public class Plng002SystemIoBanTests
     [Test] public async Task DiagnosticLocation_UnderlinesOffendingMemberAccess()
     {
         var source = """
-            namespace app.modules.foo {
+            namespace app.module.foo {
                 public class Handler {
                     public string Read() => System.IO.File.ReadAllText("x.txt");
                 }

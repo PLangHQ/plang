@@ -107,11 +107,11 @@ public class DataResolutionTests
         var data = new Data("messages", raw) { Context = _app.User.Context };
 
         _app.User.Context.Variables.Set("comment", "value1");
-        var first = data.As<List<global::app.modules.llm.LlmMessage>>(_app.User.Context);
+        var first = data.As<List<global::app.module.llm.LlmMessage>>(_app.User.Context);
         await Assert.That(first.Value![0].Content).IsEqualTo("value1");
 
         _app.User.Context.Variables.Set("comment", "value2");
-        var second = data.As<List<global::app.modules.llm.LlmMessage>>(_app.User.Context);
+        var second = data.As<List<global::app.module.llm.LlmMessage>>(_app.User.Context);
         await Assert.That(second.Value![0].Content).IsEqualTo("value2");
     }
 

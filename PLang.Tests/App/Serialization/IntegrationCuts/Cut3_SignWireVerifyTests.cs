@@ -19,7 +19,7 @@ public class Cut3_SignWireVerifyTests
         // contract that Signature survives a Stage-2-pipeline round-trip
         // (record-level emission preserves it).
         var d = new Data("payload", "hello");
-        d.Signature = new global::app.modules.signing.Signature
+        d.Signature = new global::app.module.signing.Signature
         {
             Identity = "ident", Nonce = "n", Algorithm = "ed25519"
         };
@@ -31,7 +31,7 @@ public class Cut3_SignWireVerifyTests
     [Test] public async Task Cut3_Signature_BytesIntact_AfterJsonWriterRoundTrip()
     {
         var d = new Data("rec", "v");
-        d.Signature = new global::app.modules.signing.Signature
+        d.Signature = new global::app.module.signing.Signature
         {
             Identity = "pk", Nonce = "n", Algorithm = "ed25519"
         };
@@ -72,7 +72,7 @@ public class Cut3_SignWireVerifyTests
         // Pin the structural contract: the same Data emits identical bytes,
         // so any byte change is observable.
         var d = new Data("rec", "v");
-        d.Signature = new global::app.modules.signing.Signature
+        d.Signature = new global::app.module.signing.Signature
         {
             Identity = "pk", Nonce = "n", Algorithm = "ed25519"
         };
