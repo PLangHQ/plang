@@ -9,7 +9,7 @@ using app.error;
 using app.variable;
 using app.modules;
 using app.Utils;
-using Goal = app.goals.goal.@this;
+using Goal = app.goal.@this;
 
 namespace app;
 
@@ -458,7 +458,7 @@ public sealed partial class @this : IAsyncDisposable
     public Task<data.@this> RunAction<TAction>(TAction handler, actor.context.@this context)
         where TAction : modules.ICodeGenerated
     {
-        var entity = new goals.goal.steps.step.actions.action.@this
+        var entity = new global::app.goal.steps.step.actions.action.@this
         {
             Module = ResolveModuleName(typeof(TAction)),
             ActionName = ResolveActionName(typeof(TAction)),
@@ -542,7 +542,7 @@ public sealed partial class @this : IAsyncDisposable
         if (!goalResult.Success) return goalResult;
 
         // Inject parameters — GetGoalAsync only injects when loading from file,
-        // but goals found in memory (app.goals.Get) need parameters too.
+        // but goals found in memory (app.goal.Get) need parameters too.
         // Goal-call is *not* a fork: it stays in the caller's flow. Variables.Set
         // is overlay-aware — if a fork operator above us (channel fire, parallel
         // foreach iteration) pushed a Calls scope, these writes land in that

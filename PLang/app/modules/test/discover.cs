@@ -4,7 +4,7 @@ using app.error;
 using app.tester;
 using app.Utils;
 using app.variable;
-using Goal = app.goals.goal.@this;
+using Goal = app.goal.@this;
 using FilePath = app.types.path.file.@this;
 
 namespace app.modules.test;
@@ -236,7 +236,7 @@ public partial class discover : IContext
             ExtractAutoTags(sub, tags, visited, depth + 1);
     }
 
-    private static string? ResolveStaticGoalName(app.goals.goal.steps.step.actions.action.@this action)
+    private static string? ResolveStaticGoalName(app.goal.steps.step.actions.action.@this action)
     {
         var nameParam = action.Parameters.FirstOrDefault(p =>
             string.Equals(p.Name, "GoalName", StringComparison.OrdinalIgnoreCase));

@@ -86,7 +86,7 @@ public class IntegrationCutsTests
     private sealed class GoalChannelProbe : global::app.channel.goal.@this
     {
         private readonly Action _onInvoke;
-        public GoalChannelProbe(string name, global::app.goals.goal.@this goal, global::app.actor.@this actor, Action onInvoke)
+        public GoalChannelProbe(string name, global::app.goal.@this goal, global::app.actor.@this actor, Action onInvoke)
             : base(name, goal, actor) { _onInvoke = onInvoke; }
         public override Task<Data> Write(Data data, CancellationToken ct = default)
         {

@@ -1,6 +1,6 @@
 using System.Collections;
 
-namespace app.goals.goal.steps.step.actions;
+namespace app.goal.steps.step.actions;
 
 public sealed class @this : IList<action.@this>
 {

@@ -1,7 +1,7 @@
 using app;
 using app.variable;
 using app.modules.condition.code;
-using Action = app.goals.goal.steps.step.actions.action.@this;
+using Action = app.goal.steps.step.actions.action.@this;
 
 namespace app.modules.condition;
 
@@ -72,7 +72,7 @@ public partial class If : IContext, IStep
     /// Then evaluates conditions in order and runs the first matching branch.
     /// </summary>
     private async Task<data.@this> Orchestrate(
-        app.goals.goal.steps.step.actions.@this actions, bool firstConditionResult)
+        app.goal.steps.step.actions.@this actions, bool firstConditionResult)
     {
         int myIndex = actions.IndexOf(__action);
         if (myIndex < 0) myIndex = 0;

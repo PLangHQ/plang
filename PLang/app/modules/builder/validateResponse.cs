@@ -1,4 +1,4 @@
-using Goal = app.goals.goal.@this;
+using Goal = app.goal.@this;
 
 namespace app.modules.builder;
 

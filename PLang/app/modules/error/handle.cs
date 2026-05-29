@@ -1,6 +1,6 @@
 using app.error;
 using app.variable;
-using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
+using ActionEntity = app.goal.steps.step.actions.action.@this;
 using Call = app.callstack.call.@this;
 using ExampleSpec = app.builder.Types.Spec.Example;
 using ActionSpec = app.builder.Types.Spec.Action;

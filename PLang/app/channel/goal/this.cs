@@ -16,7 +16,7 @@ namespace app.channel.goal;
 public class @this : global::app.channel.session.@this
 {
     /// <summary>The goal this channel dispatches writes to.</summary>
-    public global::app.goals.goal.@this Goal { get; }
+    public global::app.goal.@this Goal { get; }
 
     private readonly AsyncLocal<bool> _executing = new();
 
@@ -28,7 +28,7 @@ public class @this : global::app.channel.session.@this
     /// </summary>
     public bool IsExecuting => _executing.Value;
 
-    public @this(string name, global::app.goals.goal.@this goal, global::app.actor.@this actor,
+    public @this(string name, global::app.goal.@this goal, global::app.actor.@this actor,
         ChannelDirection direction = ChannelDirection.Bidirectional)
     {
         Name = name;

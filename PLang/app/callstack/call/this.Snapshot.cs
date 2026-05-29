@@ -30,8 +30,8 @@ public sealed partial class @this
     }
 
     private static int IndexOfAction(
-        global::app.goals.goal.steps.step.actions.@this actions,
-        global::app.goals.goal.steps.step.actions.action.@this needle)
+        global::app.goal.steps.step.actions.@this actions,
+        global::app.goal.steps.step.actions.action.@this needle)
     {
         for (int i = 0; i < actions.Count; i++)
             if (ReferenceEquals(actions[i], needle))

@@ -1,4 +1,4 @@
-using Goal = app.goals.goal.@this;
+using Goal = app.goal.@this;
 using Call = app.callstack.call.@this;
 
 namespace app.error;

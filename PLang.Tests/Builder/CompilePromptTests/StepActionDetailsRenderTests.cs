@@ -1,5 +1,5 @@
 using Fluid;
-using PrAction2 = global::app.goals.goal.steps.step.actions.action.@this;
+using PrAction2 = global::app.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.Builder.CompilePromptTests;
 

@@ -3,7 +3,7 @@ using app.actor.context;
 using app.data;
 using app.modules;
 
-namespace app.goals.goal.steps;
+namespace app.goal.steps;
 
 public sealed class @this : IList<Step>, IContext
 {
@@ -15,7 +15,7 @@ public sealed class @this : IList<Step>, IContext
     public actor.context.@this Context { get; set; } = null!;
 
     [System.Text.Json.Serialization.JsonIgnore]
-    public global::app.goals.goal.@this? Goal { get; set; }
+    public global::app.goal.@this? Goal { get; set; }
 
     public List<Step> Value => _items;
 

@@ -4,7 +4,7 @@ using app.error;
 using app.variable;
 using Error = app.error.Error;
 
-namespace app.goals;
+namespace app.goal.list;
 
 /// <summary>
 /// Collection of goals for an application.

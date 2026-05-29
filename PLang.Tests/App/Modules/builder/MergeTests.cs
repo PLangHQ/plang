@@ -1,8 +1,8 @@
 using app;
-using app.goals.goal;
-using app.goals.goal.steps.step;
+using app.goal;
+using app.goal.steps.step;
 using app.variable;
-using Action = global::app.goals.goal.steps.step.actions.action.@this;
+using Action = global::app.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.Modules.builder;
 

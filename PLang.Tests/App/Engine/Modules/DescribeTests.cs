@@ -61,7 +61,7 @@ public record FakeDataPathAction : global::app.modules.ICodeGenerated
 
     public Task<Data> Run() => Task.FromResult(Data.Ok());
 
-    public Task<Data> ExecuteAsync(global::app.goals.goal.steps.step.actions.action.@this action,
+    public Task<Data> ExecuteAsync(global::app.goal.steps.step.actions.action.@this action,
         global::app.actor.context.@this context) => Task.FromResult(Data.Ok());
 }
 
@@ -71,7 +71,7 @@ public class FakeGetPath : global::app.modules.ICodeGenerated
 {
     public Task<FakePathResult> Run() => Task.FromResult(new FakePathResult());
 
-    public Task<Data> ExecuteAsync(global::app.goals.goal.steps.step.actions.action.@this action,
+    public Task<Data> ExecuteAsync(global::app.goal.steps.step.actions.action.@this action,
         global::app.actor.context.@this context) => Task.FromResult(Data.Ok());
 }
 
@@ -81,7 +81,7 @@ public class FakeBasicAction : global::app.modules.ICodeGenerated
 {
     public Task<Data> Run() => Task.FromResult(Data.Ok("hello"));
 
-    public Task<Data> ExecuteAsync(global::app.goals.goal.steps.step.actions.action.@this action,
+    public Task<Data> ExecuteAsync(global::app.goal.steps.step.actions.action.@this action,
         global::app.actor.context.@this context) => Task.FromResult(Data.Ok());
 }
 

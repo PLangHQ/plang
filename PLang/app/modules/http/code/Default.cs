@@ -7,7 +7,7 @@ using System.Text.Json.Serialization.Metadata;
 using app.channel.serializer;
 using app.actor.context;
 using app.error;
-using app.goals.goal;
+using app.goal;
 using app.variable;
 using PlangType = app.data.type;
 using app.config;

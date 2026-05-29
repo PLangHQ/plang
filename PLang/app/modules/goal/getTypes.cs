@@ -31,7 +31,7 @@ namespace app.modules.goal;
 [Action("getTypes")]
 public partial class getTypes : IContext
 {
-    public partial data.@this<global::app.goals.goal.@this> Goal { get; init; }
+    public partial data.@this<global::app.goal.@this> Goal { get; init; }
 
     public Task<data.@this<List<Dictionary<string, string>>>> Run()
     {
@@ -64,7 +64,7 @@ public partial class getTypes : IContext
     }
 
     private static void ProcessAction(
-        global::app.goals.goal.steps.step.actions.action.@this action,
+        global::app.goal.steps.step.actions.action.@this action,
         Dictionary<string, string> working,
         Dictionary<string, string> currentStepSnapshot,
         ref string? chainReturnType,
@@ -132,7 +132,7 @@ public partial class getTypes : IContext
     }
 
     private static global::app.data.@this? ParamByName(
-        global::app.goals.goal.steps.step.actions.action.@this action,
+        global::app.goal.steps.step.actions.action.@this action,
         string name)
         => action.Parameters?.FirstOrDefault(p =>
             string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
@@ -148,7 +148,7 @@ public partial class getTypes : IContext
     }
 
     private static string DetermineReturnType(
-        global::app.goals.goal.steps.step.actions.action.@this action,
+        global::app.goal.steps.step.actions.action.@this action,
         modules.@this modules)
     {
         var type = modules.GetActionType(action.Module, action.ActionName);

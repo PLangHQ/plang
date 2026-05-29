@@ -281,7 +281,7 @@ public class ErrorHandleTests
     // --- Goal path tests (CallErrorGoal coverage) ---
 
     /// <summary>
-    /// Creates an in-memory goal with a single action step and registers it in app.goals.
+    /// Creates an in-memory goal with a single action step and registers it in app.goal.
     /// </summary>
     private Goal RegisterGoal(string name, string module, string actionName,
         params (string name, object? value)[] parameters)

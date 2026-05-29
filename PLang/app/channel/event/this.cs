@@ -7,7 +7,7 @@ namespace app.channel.@event;
 /// Per-channel event bindings + recursion guard. Encapsulates the binding list,
 /// its lock discipline, the AsyncLocal "this binding is already firing" guard,
 /// and the per-channel filter — none of which leaked to <c>Channel.@this</c>
-/// before. Same shape spirit as <c>app.goals.goal.Events</c>: the type that owns
+/// before. Same shape spirit as <c>app.goal.Events</c>: the type that owns
 /// the data also owns its access rules.
 ///
 /// The cross-source firing orchestration (per-channel → per-actor → app-level)

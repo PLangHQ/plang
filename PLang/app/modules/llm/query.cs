@@ -1,5 +1,5 @@
 using app.Attributes;
-using app.goals.goal;
+using app.goal;
 using app.variable;
 using app.modules.llm.code;
 

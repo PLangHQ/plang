@@ -61,7 +61,7 @@ public sealed partial class @this
         if (typeInfo.Kind != JsonTypeInfoKind.Object) return;
 
         var ns = typeInfo.Type.Namespace;
-        if (ns == null || !ns.StartsWith("app.goals", StringComparison.Ordinal)) return;
+        if (ns == null || !ns.StartsWith("app.goal", StringComparison.Ordinal)) return;
 
         foreach (var prop in typeInfo.Properties)
         {

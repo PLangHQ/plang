@@ -77,7 +77,7 @@ public class EventCacheInvalidationTests
     {
         await using var engine = new global::app.@this("/app");
         using var context = new global::app.actor.context.@this(engine);
-        var action = new global::app.goals.goal.steps.step.actions.action.@this
+        var action = new global::app.goal.steps.step.actions.action.@this
         {
             Module = "variable",
             ActionName = "set"

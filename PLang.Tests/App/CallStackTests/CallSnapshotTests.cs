@@ -1,5 +1,5 @@
 using app.error;
-using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
+using ActionEntity = app.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.CallStackTests;
 

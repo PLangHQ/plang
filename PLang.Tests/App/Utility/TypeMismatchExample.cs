@@ -12,12 +12,12 @@ public class TypeMismatchExampleSnapshot
     {
         var (_, err) = TypeConverter.TryConvertTo(
             "%stepResult.actions%",
-            typeof(global::app.goals.goal.steps.step.actions.@this));
+            typeof(global::app.goal.steps.step.actions.@this));
 
         await Assert.That(err).IsNotNull();
         // The C# identifier `@this` renders in Type.FullName as just `this` (the `@`
         // is a source-only escape for using a keyword as an identifier).
-        await Assert.That(err!.Message).Contains("app.goals.goal.steps.step.actions.this");
+        await Assert.That(err!.Message).Contains("app.goal.steps.step.actions.this");
         await Assert.That(err.Message).Contains("%stepResult.actions%");
         await Assert.That(err.FixSuggestion).Contains("%var%");
 

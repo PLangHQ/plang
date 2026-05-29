@@ -911,17 +911,17 @@ public partial class @this
         // Non-recursion guards: don't walk into Data, Action templates, or typed Action lists.
         // Action templates retain raw %var% for deferred resolution at their own dispatch.
         if (value is @this) return value;
-        if (value is global::app.goals.goal.steps.step.actions.action.@this) return value;
-        if (value is global::System.Collections.Generic.IEnumerable<global::app.goals.goal.steps.step.actions.action.@this>) return value;
+        if (value is global::app.goal.steps.step.actions.action.@this) return value;
+        if (value is global::System.Collections.Generic.IEnumerable<global::app.goal.steps.step.actions.action.@this>) return value;
 
         return value;
     }
 
     private static bool IsActionDestination(System.Type t)
     {
-        var actionType = typeof(global::app.goals.goal.steps.step.actions.action.@this);
+        var actionType = typeof(global::app.goal.steps.step.actions.action.@this);
         if (t == actionType) return true;
-        return typeof(global::System.Collections.Generic.IEnumerable<global::app.goals.goal.steps.step.actions.action.@this>).IsAssignableFrom(t);
+        return typeof(global::System.Collections.Generic.IEnumerable<global::app.goal.steps.step.actions.action.@this>).IsAssignableFrom(t);
     }
 
     /// <summary>

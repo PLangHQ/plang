@@ -107,7 +107,7 @@ public sealed class @this : IAsyncDisposable
     /// Resolves a handler for a .pr action. Navigates the action for module/actionName.
     /// </summary>
     public (ICodeGenerated? Handler, IError? Error) GetCodeGenerated(
-        global::app.goals.goal.steps.step.actions.action.@this action)
+        global::app.goal.steps.step.actions.action.@this action)
     {
         if (!_modules.TryGetValue(action.Module, out var actions) ||
             !actions.TryGetValue(action.ActionName, out var entry))
@@ -404,7 +404,7 @@ public sealed class @this : IAsyncDisposable
                 var mergedDescription = teaching.Description ?? actionDescription;
                 var mergedModuleDescription = teaching.ModuleDescription ?? moduleDescription;
 
-                result.Add(new global::app.goals.goal.steps.step.actions.action.@this
+                result.Add(new global::app.goal.steps.step.actions.action.@this
                 {
                     Module = ns,
                     ActionName = actionName,

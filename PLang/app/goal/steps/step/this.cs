@@ -3,9 +3,9 @@ using app.actor.context;
 using app.data;
 using app.variable;
 using app.modules;
-using Action = app.goals.goal.steps.step.actions.action.@this;
+using Action = app.goal.steps.step.actions.action.@this;
 
-namespace app.goals.goal.steps.step;
+namespace app.goal.steps.step;
 
 /// <summary>
 /// Represents a step within a goal for App.
@@ -118,7 +118,7 @@ public sealed partial class @this : modules.IDataWrappable
     public bool HasSubSteps => Goal?.Steps.HasIndentedChildren(Index) ?? false;
 
     [JsonIgnore]
-    public global::app.goals.goal.@this? Goal { get; set; }
+    public global::app.goal.@this? Goal { get; set; }
 
     /// <summary>
     /// Runs this step: lifecycle events → actions.

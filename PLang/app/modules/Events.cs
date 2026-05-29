@@ -1,5 +1,5 @@
 using app.actor.context;
-using app.goals.goal;
+using app.goal;
 
 namespace app.modules;
 
@@ -40,9 +40,9 @@ public class Events : IContext
 
     private List<GoalCall> Stamp(List<GoalCall> calls, EventPhase phase)
     {
-        if (_owner is app.goals.goal.steps.step.@this step)
+        if (_owner is app.goal.steps.step.@this step)
         {
-            var placeholder = new app.goals.goal.steps.step.actions.action.@this { Step = step };
+            var placeholder = new app.goal.steps.step.actions.action.@this { Step = step };
             foreach (var gc in calls)
             {
                 gc.Action = placeholder;

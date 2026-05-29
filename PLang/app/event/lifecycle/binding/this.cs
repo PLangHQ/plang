@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 using app.actor.context;
 using app.@event;
 using app.variable;
-using Action = app.goals.goal.steps.step.actions.action.@this;
+using Action = app.goal.steps.step.actions.action.@this;
 
 namespace app.@event.lifecycle.binding;
 

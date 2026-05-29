@@ -68,12 +68,12 @@ public static class @this
                 """);
         if (info.ImplementsIAction)
             sb.Append("""
-                    public global::app.goals.goal.steps.step.actions.action.@this Action { get; set; } = null!;
+                    public global::app.goal.steps.step.actions.action.@this Action { get; set; } = null!;
 
                 """);
         if (info.ImplementsIStep)
             sb.Append("""
-                    public global::app.goals.goal.steps.step.@this Step { get; set; } = null!;
+                    public global::app.goal.steps.step.@this Step { get; set; } = null!;
 
                 """);
         if (info.ImplementsIStatic)
@@ -86,7 +86,7 @@ public static class @this
     private static void EmitResolutionState(StringBuilder sb)
     {
         sb.Append("""
-                private global::app.goals.goal.steps.step.actions.action.@this? __action;
+                private global::app.goal.steps.step.actions.action.@this? __action;
                 private global::app.@this? __app;
                 private global::app.data.@this? __resolutionError;
 
@@ -126,7 +126,7 @@ public static class @this
     {
         sb.Append("""
                 public async System.Threading.Tasks.Task<global::app.data.@this> ExecuteAsync(
-                    global::app.goals.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
+                    global::app.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
                 {
                     __action = action;
                     __app = context.App;
@@ -303,7 +303,7 @@ public static class @this
     {
         sb.Append("""
                 public void SetAction(
-                    global::app.goals.goal.steps.step.actions.action.@this action,
+                    global::app.goal.steps.step.actions.action.@this action,
                     global::app.actor.context.@this context)
                 {
                     __action = action;

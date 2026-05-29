@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Scriban;
 
-namespace app.goals.goal;
+namespace app.goal;
 
 public sealed partial class @this
 {

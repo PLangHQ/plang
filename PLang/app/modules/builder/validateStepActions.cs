@@ -23,7 +23,7 @@ namespace app.modules.builder;
 [Action("validateStepActions")]
 public partial class validateStepActions : IContext
 {
-    public partial data.@this<global::app.goals.goal.steps.step.@this> Step { get; init; }
+    public partial data.@this<global::app.goal.steps.step.@this> Step { get; init; }
     public partial data.@this<List<string>> Actions { get; init; }
 
     [Code]

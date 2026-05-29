@@ -29,6 +29,6 @@ public interface IClass
     /// can invoke through IClass without reflection.
     /// </summary>
     void SetAction(
-        global::app.goals.goal.steps.step.actions.action.@this action,
+        global::app.goal.steps.step.actions.action.@this action,
         global::app.actor.context.@this context);
 }

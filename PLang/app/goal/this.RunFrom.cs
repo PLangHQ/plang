@@ -1,6 +1,6 @@
 using app.data;
 
-namespace app.goals.goal;
+namespace app.goal;
 
 /// <summary>
 /// Continuation entry for Snapshot resume. Picks up at (stepIdx, actionIdx),

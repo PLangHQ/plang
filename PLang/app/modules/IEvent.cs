@@ -20,7 +20,7 @@ public interface IEvent
 public class EventContext
 {
     /// <summary>The step that triggered this event.</summary>
-    public app.goals.goal.steps.step.@this? Step { get; init; }
+    public app.goal.steps.step.@this? Step { get; init; }
 
     /// <summary>The event phase (before/after).</summary>
     public EventPhase Phase { get; init; }

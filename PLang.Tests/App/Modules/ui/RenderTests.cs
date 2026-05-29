@@ -695,7 +695,7 @@ public class RenderTests : IDisposable
             Text = text,
             Actions = new StepActions
             {
-                new global::app.goals.goal.steps.step.actions.action.@this
+                new global::app.goal.steps.step.actions.action.@this
                 {
                     Module = actionClass,
                     ActionName = method,

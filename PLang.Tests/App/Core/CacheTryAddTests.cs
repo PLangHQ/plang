@@ -1,5 +1,5 @@
 using app.modules.cache;
-using app.goals.goal.steps.step;
+using app.goal.steps.step;
 using app.variable;
 
 namespace PLang.Tests.App.Core;

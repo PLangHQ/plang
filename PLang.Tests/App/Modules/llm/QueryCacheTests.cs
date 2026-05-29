@@ -2,7 +2,7 @@ using app.actor.context;
 using app.variable;
 using app.modules.llm;
 using app.modules.llm.code;
-using app.goals.goal;
+using app.goal;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.llm;

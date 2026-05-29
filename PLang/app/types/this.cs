@@ -210,7 +210,7 @@ public sealed partial class @this
         if (mimeType.Equals("application/json", StringComparison.OrdinalIgnoreCase))
             return typeof(object);
         if (mimeType.Equals("application/plang-goal", StringComparison.OrdinalIgnoreCase))
-            return typeof(app.goals.goal.@this);
+            return typeof(app.goal.@this);
         if (mimeType.Equals("application/octet-stream", StringComparison.OrdinalIgnoreCase))
             return typeof(byte[]);
 

@@ -20,7 +20,7 @@ public class GoalTests
             IsSetup = true,
             IsEvent = false,
             InputParameters = new Dictionary<string, string> { { "param1", "string" } },
-            Goals = new List<global::app.goals.goal.@this> { new() { Name = "SubGoal1" }, new() { Name = "SubGoal2" } },
+            Goals = new List<global::app.goal.@this> { new() { Name = "SubGoal1" }, new() { Name = "SubGoal2" } },
             Steps = new GoalSteps
             {
                 new Step { Index = 0, Text = "first step" },
@@ -262,7 +262,7 @@ public class GoalTests
                     Text = "write out \"hello\"",
                     Actions = new StepActions(new[]
                     {
-                        new global::app.goals.goal.steps.step.actions.action.@this
+                        new global::app.goal.steps.step.actions.action.@this
                         {
                             Module = "output",
                             ActionName = "write",
@@ -331,13 +331,13 @@ public class GoalTests
                     Text = "select * from users, write to %users%",
                     Actions = new StepActions(new[]
                     {
-                        new global::app.goals.goal.steps.step.actions.action.@this
+                        new global::app.goal.steps.step.actions.action.@this
                         {
                             Module = "db",
                             ActionName = "select",
                             Parameters = new List<Data> { new("sql", "select * from users") },
                         },
-                        new global::app.goals.goal.steps.step.actions.action.@this
+                        new global::app.goal.steps.step.actions.action.@this
                         {
                             Module = "variable",
                             ActionName = "set",
@@ -372,7 +372,7 @@ public class GoalTests
                     Text = "write out \"hello\"",
                     Actions = new StepActions(new[]
                     {
-                        new global::app.goals.goal.steps.step.actions.action.@this
+                        new global::app.goal.steps.step.actions.action.@this
                         {
                             Module = "output",
                             ActionName = "write",

@@ -1,5 +1,5 @@
 using app;
-using app.goals.goal;
+using app.goal;
 using app.types.path;
 
 namespace PLang.Tests.App.Core;

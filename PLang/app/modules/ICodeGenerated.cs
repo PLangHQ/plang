@@ -1,6 +1,6 @@
 using app.actor.context;
 using app.error;
-using ActionType = app.goals.goal.steps.step.actions.action.@this;
+using ActionType = app.goal.steps.step.actions.action.@this;
 
 namespace app.modules;
 

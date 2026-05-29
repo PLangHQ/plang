@@ -2,19 +2,19 @@
 global using App = app.@this;
 
 // Goals subsystem — mirrors PLang/App/GlobalUsings.cs
-global using EngineGoals = app.goals.@this;
-global using GoalCall = app.goals.goal.GoalCall;
-global using GoalSteps = app.goals.goal.steps.@this;
-global using Step = app.goals.goal.steps.step.@this;
-global using ErrorOrder = app.goals.goal.steps.step.ErrorOrder;
-global using CacheSettings = app.goals.goal.steps.step.CacheSettings;
-global using StepActions = app.goals.goal.steps.step.actions.@this;
-global using PrAction = app.goals.goal.steps.step.actions.action.@this;
-global using ActionModifiers = app.goals.goal.steps.step.actions.action.modifiers.@this;
+global using EngineGoals = app.goal.list.@this;
+global using GoalCall = app.goal.GoalCall;
+global using GoalSteps = app.goal.steps.@this;
+global using Step = app.goal.steps.step.@this;
+global using ErrorOrder = app.goal.steps.step.ErrorOrder;
+global using CacheSettings = app.goal.steps.step.CacheSettings;
+global using StepActions = app.goal.steps.step.actions.@this;
+global using PrAction = app.goal.steps.step.actions.action.@this;
+global using ActionModifiers = app.goal.steps.step.actions.action.modifiers.@this;
 
 // Types that have v1 conflicts in PLang project but NOT in PLang.Tests (no Building.Model here)
-global using Goal = app.goals.goal.@this;
-global using Visibility = app.goals.goal.Visibility;
+global using Goal = app.goal.@this;
+global using Visibility = app.goal.Visibility;
 
 // Event types
 global using EventType = app.@event.EventType;

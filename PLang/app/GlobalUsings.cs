@@ -1,13 +1,13 @@
 
 // Goals subsystem
-global using AppGoals = app.goals.@this;
-global using GoalCall = app.goals.goal.GoalCall;
-global using GoalSteps = app.goals.goal.steps.@this;
-global using Step = app.goals.goal.steps.step.@this;
-global using ErrorOrder = app.goals.goal.steps.step.ErrorOrder;
-global using CacheSettings = app.goals.goal.steps.step.CacheSettings;
-global using StepActions = app.goals.goal.steps.step.actions.@this;
-global using ActionModifiers = app.goals.goal.steps.step.actions.action.modifiers.@this;
+global using AppGoals = app.goal.list.@this;
+global using GoalCall = app.goal.GoalCall;
+global using GoalSteps = app.goal.steps.@this;
+global using Step = app.goal.steps.step.@this;
+global using ErrorOrder = app.goal.steps.step.ErrorOrder;
+global using CacheSettings = app.goal.steps.step.CacheSettings;
+global using StepActions = app.goal.steps.step.actions.@this;
+global using ActionModifiers = app.goal.steps.step.actions.action.modifiers.@this;
 
 // Event types
 global using AppEvents = app.@event.list.@this;

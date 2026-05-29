@@ -3,7 +3,7 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.Modules;
 
 /// <summary>
-/// Guards <c>app.goals.goal.steps.step.actions.action.@this.ReturnTypeName</c>.
+/// Guards <c>app.goal.steps.step.actions.action.@this.ReturnTypeName</c>.
 ///
 /// The catalog row a built action carries surfaces the PLang name of T from
 /// <c>Run()</c>'s declared return type. Compile.llm uses this to pick the
@@ -45,7 +45,7 @@ public class ModulesDescribeReturnTypeTests
         catch { /* best effort */ }
     }
 
-    private async Task<global::app.goals.goal.steps.step.actions.action.@this> Find(string module, string action)
+    private async Task<global::app.goal.steps.step.actions.action.@this> Find(string module, string action)
     {
         var catalog = await _app.Modules.Describe();
         var row = catalog.FirstOrDefault(a => a.Module == module && a.ActionName == action);

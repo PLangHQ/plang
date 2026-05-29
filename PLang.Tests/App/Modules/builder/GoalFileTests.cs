@@ -1,4 +1,4 @@
-using app.goals.goal;
+using app.goal;
 
 namespace PLang.Tests.App.Modules.builder;
 

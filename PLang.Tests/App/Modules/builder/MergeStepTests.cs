@@ -1,7 +1,7 @@
 using app.actor.context;
 using app.variable;
 using app.modules.builder;
-using Action = global::app.goals.goal.steps.step.actions.action.@this;
+using Action = global::app.goal.steps.step.actions.action.@this;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.builder;

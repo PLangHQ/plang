@@ -1,7 +1,7 @@
 using System.Collections;
-using PrAction = global::app.goals.goal.steps.step.actions.action.@this;
+using PrAction = global::app.goal.steps.step.actions.action.@this;
 
-namespace app.goals.goal.steps.step.actions.action.modifiers;
+namespace app.goal.steps.step.actions.action.modifiers;
 
 /// <summary>
 /// Ordered list of modifier actions attached to an Action.

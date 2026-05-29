@@ -206,7 +206,7 @@ public class AppRunScaffoldingTests
 // Hand-written handler that throws — used to exercise App.Run's catch path.
 internal class ThrowingMatrixHandler : global::app.modules.IAction, global::app.modules.ICodeGenerated
 {
-    public global::app.goals.goal.steps.step.actions.action.@this Action { get; set; } = null!;
+    public global::app.goal.steps.step.actions.action.@this Action { get; set; } = null!;
     public global::app.@this App { get; private set; } = null!;
     public global::app.actor.context.@this Context { get; private set; } = null!;
     public System.Type? ParameterType => null;
@@ -215,7 +215,7 @@ internal class ThrowingMatrixHandler : global::app.modules.IAction, global::app.
     { App = engine; Context = context; }
 
     public Task<global::app.data.@this> ExecuteAsync(
-        global::app.goals.goal.steps.step.actions.action.@this action,
+        global::app.goal.steps.step.actions.action.@this action,
         global::app.actor.context.@this context)
     {
         throw new InvalidOperationException("forced throw");
@@ -225,7 +225,7 @@ internal class ThrowingMatrixHandler : global::app.modules.IAction, global::app.
 // Hand-written handler that throws OperationCanceledException — pins the timeout.after contract.
 internal class OceThrowingHandler : global::app.modules.IAction, global::app.modules.ICodeGenerated
 {
-    public global::app.goals.goal.steps.step.actions.action.@this Action { get; set; } = null!;
+    public global::app.goal.steps.step.actions.action.@this Action { get; set; } = null!;
     public global::app.@this App { get; private set; } = null!;
     public global::app.actor.context.@this Context { get; private set; } = null!;
     public System.Type? ParameterType => null;
@@ -234,7 +234,7 @@ internal class OceThrowingHandler : global::app.modules.IAction, global::app.mod
     { App = engine; Context = context; }
 
     public Task<global::app.data.@this> ExecuteAsync(
-        global::app.goals.goal.steps.step.actions.action.@this action,
+        global::app.goal.steps.step.actions.action.@this action,
         global::app.actor.context.@this context)
     {
         throw new OperationCanceledException("simulated cancellation");

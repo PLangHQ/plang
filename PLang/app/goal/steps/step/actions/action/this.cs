@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 using app.variable;
-namespace app.goals.goal.steps.step.actions.action;
+namespace app.goal.steps.step.actions.action;
 
 /// <summary>
 /// A single action within a step — the LLM-mapped unit of execution.

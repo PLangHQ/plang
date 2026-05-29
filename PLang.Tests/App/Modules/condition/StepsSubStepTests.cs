@@ -37,7 +37,7 @@ public class StepsSubStepTests : IDisposable
             Text = $"if condition = {conditionResult}",
             Actions = new StepActions
             {
-                new global::app.goals.goal.steps.step.actions.action.@this
+                new global::app.goal.steps.step.actions.action.@this
                 {
                     Module = "condition",
                     ActionName = "if",
@@ -64,7 +64,7 @@ public class StepsSubStepTests : IDisposable
             Text = $"write {marker}",
             Actions = new StepActions
             {
-                new global::app.goals.goal.steps.step.actions.action.@this
+                new global::app.goal.steps.step.actions.action.@this
                 {
                     Module = "output",
                     ActionName = "write",
@@ -86,7 +86,7 @@ public class StepsSubStepTests : IDisposable
             Text = $"set {varName} = {value}",
             Actions = new StepActions
             {
-                new global::app.goals.goal.steps.step.actions.action.@this
+                new global::app.goal.steps.step.actions.action.@this
                 {
                     Module = "variable",
                     ActionName = "set",

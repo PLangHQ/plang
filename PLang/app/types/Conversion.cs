@@ -338,7 +338,7 @@ public sealed partial class @this
         }
 
         // GoalCall: convert from string, JsonElement, or Dictionary (UnwrapJsonElement output)
-        if (targetType == typeof(app.goals.goal.GoalCall))
+        if (targetType == typeof(app.goal.GoalCall))
         {
             if (value is string goalName)
             {
@@ -347,13 +347,13 @@ public sealed partial class @this
                         $"GoalCall.Name was set to a CLR type name '{goalName}' from a string source.",
                         "ClrTypeNameInGoalSlot", 500)
                         { FixSuggestion = "Build pipeline leaked a typed object's ToString() into a goal-name slot." });
-                return (new app.goals.goal.GoalCall { Name = goalName }, null);
+                return (new app.goal.GoalCall { Name = goalName }, null);
             }
             if (value is JsonElement je)
             {
                 try
                 {
-                    return (JsonSerializer.Deserialize<app.goals.goal.GoalCall>(
+                    return (JsonSerializer.Deserialize<app.goal.GoalCall>(
                         je.GetRawText(),
                         _caseInsensitiveRead), null);
                 }
@@ -387,7 +387,7 @@ public sealed partial class @this
                             d.TryGetValue("value", out var dv) ? dv : null))
                         .ToList();
                 }
-                return (new app.goals.goal.GoalCall { Name = name, PrPath = prPath, Parameters = parameters }, null);
+                return (new app.goal.GoalCall { Name = name, PrPath = prPath, Parameters = parameters }, null);
             }
         }
 

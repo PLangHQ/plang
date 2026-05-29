@@ -3,7 +3,7 @@ using app.variable;
 using app.actor.context;
 using app.Attributes;
 
-namespace app.goals.goal;
+namespace app.goal;
 
 /// <summary>
 /// Strongly-typed reference to a goal, carrying name, parameters, and optional pre-resolved PrPath.

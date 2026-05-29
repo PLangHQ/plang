@@ -1,10 +1,10 @@
 using System.Diagnostics;
 using app.Utils;
 using System.Text.Json;
-using app.goals.goal;
+using app.goal;
 using app.variable;
-using Goal = app.goals.goal.@this;
-using Actions = app.goals.goal.steps.step.actions.@this;
+using Goal = app.goal.@this;
+using Actions = app.goal.steps.step.actions.@this;
 
 namespace app.modules.builder.code;
 
@@ -695,7 +695,7 @@ public class Default : IBuilder
         return string.Join(" | ", segments);
     }
 
-    private static string RenderActionFormal(app.goals.goal.steps.step.actions.action.@this a)
+    private static string RenderActionFormal(app.goal.steps.step.actions.action.@this a)
     {
         var sb = new System.Text.StringBuilder();
         sb.Append(a.Module).Append('.').Append(a.ActionName);
@@ -1060,7 +1060,7 @@ public class Default : IBuilder
     }
 
     private static async Task ResolveGoalCallsInAction(
-        global::app.goals.goal.steps.step.actions.action.@this action,
+        global::app.goal.steps.step.actions.action.@this action,
         app.@this app, actor.context.@this context)
     {
         if (action.Parameters == null) return;

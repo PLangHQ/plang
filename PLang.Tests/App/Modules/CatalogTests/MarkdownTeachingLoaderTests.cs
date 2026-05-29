@@ -55,7 +55,7 @@ public class MarkdownTeachingLoaderTests
     private void Stage(string fileName, string body)
         => File.WriteAllText(Path.Combine(_mdRoot, FixtureModule, fileName), body);
 
-    private async Task<global::app.goals.goal.steps.step.actions.action.@this> Find(string action)
+    private async Task<global::app.goal.steps.step.actions.action.@this> Find(string action)
     {
         var catalog = await _app.Modules.Describe();
         var row = catalog.FirstOrDefault(a => a.Module == FixtureModule && a.ActionName == action);

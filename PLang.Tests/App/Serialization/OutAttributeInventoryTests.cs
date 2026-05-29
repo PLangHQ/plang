@@ -132,7 +132,7 @@ public class OutAttributeInventoryTests
     // 7. GoalCall ------------------------------------------------------------
     [Test] public async Task GoalCall_Name_Parallel_Parameters_PrPath_HaveOut()
     {
-        var t = typeof(global::app.goals.goal.GoalCall);
+        var t = typeof(global::app.goal.GoalCall);
         await Assert.That(HasOut(t, "Name")).IsTrue();
         await Assert.That(HasOut(t, "Parallel")).IsTrue();
         await Assert.That(HasOut(t, "Parameters")).IsTrue();
@@ -140,7 +140,7 @@ public class OutAttributeInventoryTests
     }
     [Test] public async Task GoalCall_Event_Action_StayJsonIgnore_NoOut()
     {
-        var t = typeof(global::app.goals.goal.GoalCall);
+        var t = typeof(global::app.goal.GoalCall);
         await Assert.That(HasOut(t, "Event")).IsFalse();
         await Assert.That(HasOut(t, "Action")).IsFalse();
     }

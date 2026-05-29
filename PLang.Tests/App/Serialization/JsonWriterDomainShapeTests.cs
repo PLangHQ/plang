@@ -81,7 +81,7 @@ public class JsonWriterDomainShapeTests
 
     [Test] public async Task WireOutput_GoalCall_ExcludesEvent_Action_CycleRefs()
     {
-        var gc = new global::app.goals.goal.GoalCall { Name = "ProcessData", Parallel = false };
+        var gc = new global::app.goal.GoalCall { Name = "ProcessData", Parallel = false };
         var json = NormalizePipelineHelper.SerializeValueSlot(gc);
         await Assert.That(json).Contains("\"name\":\"ProcessData\"");
         await Assert.That(json).DoesNotContain("\"event\":");

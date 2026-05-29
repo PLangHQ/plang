@@ -4,7 +4,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using app.actor.context;
 using app.error;
-using app.goals.goal;
+using app.goal;
 using app.variable;
 using app.modules.settings;
 using app.types.path;

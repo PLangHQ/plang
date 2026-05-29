@@ -2,7 +2,7 @@ using app.actor.context;
 using app.error;
 using app.variable;
 
-namespace app.goals.setup;
+namespace app.goal.setup;
 
 /// <summary>
 /// Run-once setup execution system.

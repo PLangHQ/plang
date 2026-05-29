@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Text.Json;
 using app;
-using app.goals.goal;
+using app.goal;
 using app.variable;
 using app.modules.code;
 using app.modules.llm;

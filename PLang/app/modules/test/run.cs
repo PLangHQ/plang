@@ -154,7 +154,7 @@ public partial class run : IContext
         // fire until the sub-goal returns.
         var stepStarts = new Dictionary<int, long>();
         var entryGoalPath = test.Goal.Path?.ToString();
-        bool IsEntryGoalStep(global::app.goals.goal.steps.step.@this? step)
+        bool IsEntryGoalStep(global::app.goal.steps.step.@this? step)
             => step != null
             && string.Equals(step.Goal?.Path?.ToString(), entryGoalPath, StringComparison.Ordinal);
 
