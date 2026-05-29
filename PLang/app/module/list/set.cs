@@ -5,7 +5,7 @@ namespace app.module.list;
 [Action("set", Cacheable = false)]
 public partial class Set : IContext
 {
-    public partial data.@this<Variable> ListName { get; init; }
+    public partial data.@this<app.variable.@this> ListName { get; init; }
     public partial data.@this<int> Index { get; init; }
     public partial data.@this Value { get; init; }
 

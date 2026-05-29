@@ -5,7 +5,7 @@ namespace app.module.list;
 [Action("contains")]
 public partial class Contains : IContext
 {
-    public partial data.@this<Variable> ListName { get; init; }
+    public partial data.@this<app.variable.@this> ListName { get; init; }
     public partial data.@this Value { get; init; }
 
     public Task<data.@this<bool>> Run()

@@ -9,7 +9,7 @@ namespace app.module.list;
 [Action("any")]
 public partial class Any : IContext
 {
-    public partial data.@this<Variable> ListName { get; init; }
+    public partial data.@this<app.variable.@this> ListName { get; init; }
     [IsNotNull]
     public partial data.@this<string> Key { get; init; }
     [IsNotNull]

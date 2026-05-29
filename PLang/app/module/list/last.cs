@@ -5,7 +5,7 @@ namespace app.module.list;
 [Action("last")]
 public partial class Last : IContext
 {
-    public partial data.@this<Variable> ListName { get; init; }
+    public partial data.@this<app.variable.@this> ListName { get; init; }
 
     public Task<data.@this<object>> Run()
     {

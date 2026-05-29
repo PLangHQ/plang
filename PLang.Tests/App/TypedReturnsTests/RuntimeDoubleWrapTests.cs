@@ -37,7 +37,7 @@ public class RuntimeDoubleWrapTests
         var context = _app.User.Context;
         context.Variable.Set("xs", new List<object?> { 42L, "two", "three" });
 
-        var action = new First { Context = context, ListName = new Variable("xs") };
+        var action = new First { Context = context, ListName = new @this("xs") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -52,7 +52,7 @@ public class RuntimeDoubleWrapTests
         var context = _app.User.Context;
         context.Variable.Set("xs", new List<object?> { "a", "b", "c" });
 
-        var action = new Get { Context = context, ListName = new Variable("xs"), Index = 1 };
+        var action = new Get { Context = context, ListName = new @this("xs"), Index = 1 };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -66,7 +66,7 @@ public class RuntimeDoubleWrapTests
         var context = _app.User.Context;
         context.Variable.Set("xs", new List<object?> { 1L, 2L, 3L });
 
-        var action = new Last { Context = context, ListName = new Variable("xs") };
+        var action = new Last { Context = context, ListName = new @this("xs") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();

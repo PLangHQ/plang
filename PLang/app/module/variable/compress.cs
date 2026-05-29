@@ -16,7 +16,7 @@ public partial class Compress : IContext
 {
     /// <summary>The variable to compress.</summary>
     [IsNotNull]
-    public partial data.@this<Variable> Variable { get; init; }
+    public partial data.@this<app.variable.@this> Variable { get; init; }
 
     public async Task<data.@this> Run()
     {
@@ -39,7 +39,7 @@ public partial class Decompress : IContext
 {
     /// <summary>The variable holding the archived Data to decompress.</summary>
     [IsNotNull]
-    public partial data.@this<Variable> Variable { get; init; }
+    public partial data.@this<app.variable.@this> Variable { get; init; }
 
     public async Task<data.@this> Run()
     {

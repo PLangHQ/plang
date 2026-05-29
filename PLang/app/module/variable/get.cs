@@ -8,7 +8,7 @@ namespace app.module.variable;
 [Action("get")]
 public partial class Get : IContext
 {
-    public partial data.@this<Variable> Name { get; init; }
+    public partial data.@this<app.variable.@this> Name { get; init; }
 
     public Task<data.@this> Run()
     {

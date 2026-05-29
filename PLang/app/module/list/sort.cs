@@ -5,7 +5,7 @@ namespace app.module.list;
 [Action("sort", Cacheable = false)]
 public partial class Sort : IContext
 {
-    public partial data.@this<Variable> ListName { get; init; }
+    public partial data.@this<app.variable.@this> ListName { get; init; }
     [Default(false)]
     public partial data.@this<bool> Descending { get; init; }
 

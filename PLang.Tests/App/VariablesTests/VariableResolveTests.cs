@@ -1,5 +1,5 @@
 using app.variable;
-using Variable = global::app.variable.Variable;
+using @this = global::app.variable.@this;
 
 namespace PLang.Tests.App.VariablesTests;
 
@@ -21,7 +21,7 @@ public class VariableResolveTests
     [Test]
     public async Task Resolve_PercentWrapped_StripsAndFlags()
     {
-        var v = Variable.Resolve("%x%", _app.User.Context);
+        var v = @this.Resolve("%x%", _app.User.Context);
 
         await Assert.That(v.Name).IsEqualTo("x");
         await Assert.That(v.RawValue).IsEqualTo("%x%");
@@ -31,7 +31,7 @@ public class VariableResolveTests
     [Test]
     public async Task Resolve_BareName_KeepsNameSurfacesFlag()
     {
-        var v = Variable.Resolve("x", _app.User.Context);
+        var v = @this.Resolve("x", _app.User.Context);
 
         await Assert.That(v.Name).IsEqualTo("x");
         await Assert.That(v.RawValue).IsEqualTo("x");
@@ -41,7 +41,7 @@ public class VariableResolveTests
     [Test]
     public async Task Resolve_EmptyString_ProducesEmptyVariable()
     {
-        var v = Variable.Resolve("", _app.User.Context);
+        var v = @this.Resolve("", _app.User.Context);
 
         await Assert.That(v.Name).IsEqualTo("");
         await Assert.That(v.RawValue).IsEqualTo("");
@@ -59,7 +59,7 @@ public class VariableResolveTests
     {
         var slot = new Data("Name", "%x%") { Context = _app.User.Context };
 
-        var resolved = slot.As<Variable>(_app.User.Context);
+        var resolved = slot.As<@this>(_app.User.Context);
 
         await Assert.That(resolved.Success).IsTrue();
         await Assert.That(resolved.Value).IsNotNull();
@@ -79,7 +79,7 @@ public class VariableResolveTests
         _app.User.Context.Variable.Set("x", 5);
         var slot = new Data("Name", "%x%") { Context = _app.User.Context };
 
-        var resolved = slot.As<Variable>(_app.User.Context);
+        var resolved = slot.As<@this>(_app.User.Context);
 
         await Assert.That(resolved.Success).IsTrue();
         await Assert.That(resolved.Value!.Name).IsEqualTo("x");
@@ -93,7 +93,7 @@ public class VariableResolveTests
     {
         var slot = new Data("Name", "x") { Context = _app.User.Context };
 
-        var resolved = slot.As<Variable>(_app.User.Context);
+        var resolved = slot.As<@this>(_app.User.Context);
 
         await Assert.That(resolved.Success).IsTrue();
         await Assert.That(resolved.Value).IsNotNull();
@@ -105,7 +105,7 @@ public class VariableResolveTests
     [Test]
     public async Task ImplicitConversion_ToString_ReturnsName()
     {
-        Variable v = new Variable("x", "%x%", true);
+        @this v = new global::app.variable.@this("x", "%x%", true);
 
         string s = v;
 
@@ -117,7 +117,7 @@ public class VariableResolveTests
     [Test]
     public async Task ToString_ReturnsName_ForInterpolationFriendliness()
     {
-        var v = new Variable("listName", "%listName%", true);
+        var v = new global::app.variable.@this("listName", "%listName%", true);
 
         var formatted = $"Variable '{v}' was missing";
 

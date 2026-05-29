@@ -16,7 +16,7 @@ namespace app.variable;
 /// Provenance lives on the wrapper — <c>Data&lt;Variable&gt;.Signature</c> when signing
 /// lands. Variable itself is a value, not a wrapper.
 /// </summary>
-public sealed record Variable([property: Out] string Name, string RawValue, bool WasPercentWrapped) : IRawNameResolvable
+public sealed record @this([property: Out] string Name, string RawValue, bool WasPercentWrapped) : IRawNameResolvable
 {
     /// <summary>
     /// Optional Property suffix captured from the raw reference shape
@@ -36,16 +36,16 @@ public sealed record Variable([property: Out] string Name, string RawValue, bool
 
     /// <summary>
     /// Convenience for direct C# composition (tests, App.RunAction):
-    /// <c>new Variable("myList")</c> is equivalent to a bare-name slot.
+    /// <c>new global::app.variable.@this("myList")</c> is equivalent to a bare-name slot.
     /// Records' primary constructor is inherited; this overload chains into it.
     /// </summary>
-    public Variable(string name) : this(name ?? "", name ?? "", false) { }
+    public @this(string name) : this(name ?? "", name ?? "", false) { }
 
     /// <summary>
     /// Implicit conversion to string at any string-expecting boundary
     /// (e.g. <c>Variables.Get(name.Value)</c>). Returns the canonical name.
     /// </summary>
-    public static implicit operator string(Variable v) => v.Name;
+    public static implicit operator string(@this v) => v.Name;
 
     /// <summary>
     /// Source-generator convention: types declared as <c>Data&lt;T&gt;</c> on action
@@ -57,10 +57,10 @@ public sealed record Variable([property: Out] string Name, string RawValue, bool
     /// <c>Name = "x"</c>. <c>WasPercentWrapped</c> records which form was on the
     /// wire so a future validator can flag bare-name LLM emissions if needed.
     /// </summary>
-    public static Variable Resolve(string raw, actor.context.@this context)
+    public static @this Resolve(string raw, actor.context.@this context)
     {
         if (string.IsNullOrEmpty(raw))
-            return new Variable("", raw ?? "", false);
+            return new @this("", raw ?? "", false);
 
         var trimmed = raw.Trim('%');
         var wasPercentWrapped = raw.Length >= 2 && raw[0] == '%' && raw[^1] == '%';
@@ -126,13 +126,13 @@ public sealed record Variable([property: Out] string Name, string RawValue, bool
             name = (hasNegationPrefix ? "!" : "") + body;
         }
 
-        return new Variable(name, raw, wasPercentWrapped) { Property = property, IsMalformed = malformed };
+        return new @this(name, raw, wasPercentWrapped) { Property = property, IsMalformed = malformed };
     }
 
     /// <summary>
     /// String-interpolation friendliness: <c>$"variable '{name.Value}' missing"</c>
     /// reads as the canonical name rather than the synthesized record format.
-    /// Matches <see cref="op_Implicit(Variable)"/>'s string semantics.
+    /// Matches <see cref="op_Implicit(@this)"/>'s string semantics.
     /// </summary>
     public override string ToString() => Name;
 }

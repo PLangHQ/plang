@@ -5,7 +5,7 @@ namespace app.module.list;
 [Action("get")]
 public partial class Get : IContext
 {
-    public partial data.@this<Variable> ListName { get; init; }
+    public partial data.@this<app.variable.@this> ListName { get; init; }
     public partial data.@this<int> Index { get; init; }
 
     public Task<data.@this<object>> Run()

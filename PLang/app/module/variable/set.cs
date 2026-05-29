@@ -38,7 +38,7 @@ public partial class Set : IContext, IBuildValidatable
         return null;
     }
 
-    public partial data.@this<Variable> Name { get; init; }
+    public partial data.@this<app.variable.@this> Name { get; init; }
     public partial data.@this Value { get; init; }
     public partial data.@this<string>? Type { get; init; }
     [Default(false)]

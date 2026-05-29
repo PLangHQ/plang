@@ -13,8 +13,8 @@ namespace app.module.loop;
 public partial class Foreach : IContext, IStep
 {
     public partial data.@this Collection { get; init; }
-    public partial data.@this<Variable>? ItemName { get; init; }
-    public partial data.@this<Variable>? KeyName { get; init; }
+    public partial data.@this<app.variable.@this>? ItemName { get; init; }
+    public partial data.@this<app.variable.@this>? KeyName { get; init; }
 
     public async Task<data.@this> Run()
     {

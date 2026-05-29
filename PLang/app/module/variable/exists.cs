@@ -5,7 +5,7 @@ namespace app.module.variable;
 [Action("exists")]
 public partial class Exists : IContext
 {
-    public partial data.@this<Variable> Name { get; init; }
+    public partial data.@this<app.variable.@this> Name { get; init; }
 
     public Task<data.@this<bool>> Run()
     {

@@ -5,7 +5,7 @@ namespace app.module.list;
 [Action("remove", Cacheable = false)]
 public partial class Remove : IContext
 {
-    public partial data.@this<Variable> ListName { get; init; }
+    public partial data.@this<app.variable.@this> ListName { get; init; }
     public partial data.@this Value { get; init; }
     [Default(-1)]
     public partial data.@this<int> AtIndex { get; init; }

@@ -19,7 +19,7 @@ public class GetTests
         var (context, _) = CreateContext();
         context.Variable.Set("testVar", "testValue");
 
-        var action = new Get { Context = context, Name = new Variable("testVar") };
+        var action = new Get { Context = context, Name = new app.variable.@this("testVar") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -32,7 +32,7 @@ public class GetTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Get { Context = context, Name = new Variable("nonexistent") };
+        var action = new Get { Context = context, Name = new app.variable.@this("nonexistent") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
