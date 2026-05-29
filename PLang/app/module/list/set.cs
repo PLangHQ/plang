@@ -21,6 +21,6 @@ public partial class Set : IContext
                 new app.error.ValidationError($"Index {Index.Value} out of range (0..{list.Count - 1})")));
 
         list[Index.Value] = Value?.Value;
-        return Task.FromResult(global::app.data.@this<type.list>.Ok(new type.list { count = list.Count, value = list }, app.data.type.FromName("list")));
+        return Task.FromResult(global::app.data.@this<type.list>.Ok(new type.list { count = list.Count, value = list }, app.type.@this.FromName("list")));
     }
 }

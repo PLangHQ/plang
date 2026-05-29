@@ -86,9 +86,9 @@ public partial class @this
     public @this()
     {
         // Register system variables
-        Set("Now", new data.DynamicData("Now", () => DateTimeOffset.Now, data.type.DateTime));
-        Set("NowUtc", new data.DynamicData("NowUtc", () => DateTimeOffset.UtcNow, data.type.DateTime));
-        Set("GUID", new data.DynamicData("GUID", () => Guid.NewGuid(), data.type.FromName("guid")));
+        Set("Now", new data.DynamicData("Now", () => DateTimeOffset.Now, app.type.@this.DateTime));
+        Set("NowUtc", new data.DynamicData("NowUtc", () => DateTimeOffset.UtcNow, app.type.@this.DateTime));
+        Set("GUID", new data.DynamicData("GUID", () => Guid.NewGuid(), app.type.@this.FromName("guid")));
     }
 
     /// <summary>
@@ -108,7 +108,7 @@ public partial class @this
     /// For dot/bracket paths (e.g. "user.name"), the root Data is returned.
     /// Returns NotFound when the dot-path parent is absent or null.
     /// </summary>
-    public data.@this Set(string name, object? value, data.type? type = null)
+    public data.@this Set(string name, object? value, app.type.@this? type = null)
     {
         name = CleanName(name);
 

@@ -58,7 +58,7 @@ public static class Transport
 
             // Preserve any property-level [JsonConverter] — recreating the entry
             // from PropertyType alone would drop the custom converter and force
-            // STJ to serialize types like data.type (with non-serializable
+            // STJ to serialize types like app.type.@this (with non-serializable
             // System.Type members) through the default object path.
             var converterAttr = prop.GetCustomAttribute<JsonConverterAttribute>(inherit: true);
             if (converterAttr?.ConverterType != null)

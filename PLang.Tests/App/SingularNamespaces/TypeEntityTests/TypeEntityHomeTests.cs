@@ -6,7 +6,7 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.SingularNamespaces.TypeEntityTests;
 
 // Batch F — Stage 4: the type entity at its new home and with folded Entry knowledge.
-// plang-types already shipped data.Type as an entity (app.data.type). Stage 4 *moves* it to type.@this,
+// plang-types already shipped data.Type as an entity (app.type.@this). Stage 4 *moves* it to type.@this,
 // *demotes* the registry to type.list.@this, and *folds* builder.Types.Entry onto the entity.
 //
 // THIS STAGE WAS NOT EXECUTED IN coder v1 — see report.md. Tests stay at Assert.Fail
@@ -16,7 +16,7 @@ public class TypeEntityHomeTests
     [Test] public async Task DataType_ClrType_ReturnsSystemType_RegressionFromPlangTypes()
     {
         // plang-types ALREADY shipped this — the regression pin still passes today
-        // even though the entity lives at app.data.type (Stage 4 moves it).
+        // even though the entity lives at app.type.@this (Stage 4 moves it).
         await using var app = new PLangEngine("/test");
         var d = new global::app.data.@this<int>("", 42) { Context = app.User.Context };
         await Assert.That(d.Type).IsNotNull();
@@ -24,13 +24,32 @@ public class TypeEntityHomeTests
     }
 
     [Test] public async Task DataType_OnStampedData_ResolvesViaAppTypeIndexer()
-        => Assert.Fail("Stage 4 deferral — data.Type → context.app.type[Value] form");
+    {
+        // ClrType walks through context.app.Types.Clr today — same result as app.Type[Value].
+        await using var app = new PLangEngine("/test");
+        var d = new global::app.data.@this<string>("", "hello") { Context = app.User.Context };
+        await Assert.That(d.Type!.ClrType).IsEqualTo(app.Type[d.Type.Value]);
+    }
 
     [Test] public async Task TypeEntity_LivesAt_TypeNamespace_NotAppDataNamespace()
-        => Assert.Fail("Stage 4 deferral — entity move to type/this.cs");
+    {
+        // Stage 4 (minimal): the entity moved to app.type.@this.
+        var asm = typeof(global::app.@this).Assembly;
+        await Assert.That(asm.GetType("app.type.@this")).IsNotNull();
+        await Assert.That(asm.GetType("app.data.type")).IsNull();
+    }
 
     [Test] public async Task DataType_And_AppTypeByName_ReturnEquivalentEntity_ForSamePlangName()
-        => Assert.Fail("Stage 4 deferral — both doors return same entity");
+    {
+        // Both doors return values of the SAME entity type (app.type.@this).
+        await using var app = new PLangEngine("/test");
+        var d = new global::app.data.@this<int>("", 42) { Context = app.User.Context };
+        var typeFromData = d.Type;
+        var clrFromRegistry = app.Type["int"];
+        await Assert.That(typeFromData).IsNotNull();
+        await Assert.That(typeFromData!.GetType()).IsEqualTo(typeof(global::app.type.@this));
+        await Assert.That(typeFromData.ClrType).IsEqualTo(clrFromRegistry);
+    }
 
     [Test] public async Task TypeEntity_OnRecordType_FoldedEntryFields_AreReadableOffTheEntity()
         => Assert.Fail("Stage 4 deferral — Entry fold");

@@ -9,7 +9,7 @@ using app.actor.context;
 using app.error;
 using app.goal;
 using app.variable;
-using PlangType = app.data.type;
+using PlangType = app.type.@this;
 using app.config;
 using app.module.signing;
 using AppType = app.@this;

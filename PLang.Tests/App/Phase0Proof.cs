@@ -150,7 +150,7 @@ public class Phase0Proof
             count = 3,
             value = new List<object?> { 1, 2, 3 }
         };
-        var result = Data.Ok(listValue, R2.type.FromName("list"));
+        var result = Data.Ok(listValue, global::app.type.@this.FromName("list"));
 
         // OUTPUT: Type is "list", not the CLR type name
         await Assert.That(result.Type).IsNotNull();

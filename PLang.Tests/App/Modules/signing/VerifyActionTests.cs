@@ -170,7 +170,7 @@ public class VerifyActionTests
     {
         var signed = await SignHelper(new { amount = 100 }, contracts: new List<string> { "C0" });
         // Tamper the hash
-        signed.Signature!.Hash = Data.Ok(new byte[32], global::app.data.type.FromName("keccak256"));
+        signed.Signature!.Hash = Data.Ok(new byte[32], global::app.type.@this.FromName("keccak256"));
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
         await Assert.That(result.Success).IsFalse();

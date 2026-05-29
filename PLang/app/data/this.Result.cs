@@ -3,6 +3,8 @@ using app.error;
 
 namespace app.data;
 
+using type = global::app.type.@this;
+
 /// <summary>
 /// Data — result/error concern.
 /// Handled, Error, Warnings, Success, Ok/FromError factories, Merge.

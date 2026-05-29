@@ -10,70 +10,7 @@ using app.Utils;
 
 namespace app.data;
 
-/// <summary>
-/// PLang type descriptor. Value is a type string: "string", "long", "text/markdown", "image/jpeg", etc.
-/// CLR type is derived on the fly via TypeMapping.
-/// </summary>
-[System.ComponentModel.TypeConverter(typeof(global::app.data.Converter))]
-public sealed class type
-{
-    public string Value { get; }
-
-    [JsonIgnore]
-    internal actor.context.@this? Context { get; set; }
-
-    public type(string value) { Value = value; }
-
-    /// <summary>
-    /// Derive CLR type: navigate through context to App.Types, fall back to static TypeMapping.
-    /// </summary>
-    public System.Type? ClrType => Context?.App.Types.Clr(Value) ?? AppTypes.GetPrimitiveOrMime(Value);
-
-    /// <summary>
-    /// Kind of this type value (e.g. "image", "text"). Null for PLang type names like "string".
-    /// </summary>
-    public string? Kind => Context?.App.Formats.KindOf(Value);
-
-    /// <summary>
-    /// Whether content of this type benefits from compression.
-    /// </summary>
-    public bool Compressible => Kind != null && (Context?.App.Formats.Compressible(Kind) ?? false);
-
-    public static type String => new("string");
-    public static type Int => new("int");
-    public static type Long => new("long");
-    public static type Double => new("double");
-    public static type Bool => new("bool");
-    public static type DateTime => new("datetime");
-    public static type Object => new("object");
-
-    /// <summary>
-    /// Factory from MIME type (used by file handlers).
-    /// </summary>
-    public static type FromMime(string mimeType) => new(mimeType);
-
-    /// <summary>
-    /// Factory from PLang type name.
-    /// </summary>
-    public static type FromName(string typeName) => new(typeName);
-
-    public override string ToString() => Value;
-
-    /// <summary>
-    /// Converts a raw string value to the appropriate object based on this type.
-    /// Returns null if no conversion is needed or possible.
-    /// Called lazily on first navigation into a string-typed Data.
-    /// </summary>
-    public object? Convert(string raw)
-    {
-        return Value.ToLowerInvariant() switch
-        {
-            "json" => JsonSerializer.Deserialize<Dictionary<string, object?>>(raw,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }),
-            _ => AppTypes.TryConvertTo(raw, ClrType ?? typeof(object)).Value
-        };
-    }
-}
+using type = global::app.type.@this;
 
 /// <summary>
 /// Wraps a variable value in App with metadata.

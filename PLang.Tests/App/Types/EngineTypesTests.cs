@@ -615,7 +615,7 @@ public class EngineTypesTests
         engine.Formats.Add(".custom", "custom-kind", "application/custom");
 
         var data = new global::app.data.@this("test", new byte[] { 1 },
-            global::app.data.type.FromMime("application/custom"));
+            global::app.type.@this.FromMime("application/custom"));
         data.Context = context;
 
         // Type.Kind goes through Engine.Types.KindOf — which sees our custom mapping

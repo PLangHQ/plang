@@ -15,6 +15,6 @@ public partial class Reverse : IContext
                 new app.error.ValidationError($"Variable '{ListName.Value}' is not a list")));
 
         list.Reverse();
-        return Task.FromResult(global::app.data.@this<type.list>.Ok(new type.list { count = list.Count, value = list }, app.data.type.FromName("list")));
+        return Task.FromResult(global::app.data.@this<type.list>.Ok(new type.list { count = list.Count, value = list }, app.type.@this.FromName("list")));
     }
 }

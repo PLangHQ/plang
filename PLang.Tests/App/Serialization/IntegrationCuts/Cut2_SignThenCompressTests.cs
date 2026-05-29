@@ -10,7 +10,7 @@ public class Cut2_SignThenCompressTests
         "plang-cut2-" + Guid.NewGuid().ToString("N")[..8]));
 
     private static global::app.data.@this MakeCompressible(global::app.@this app, string payload)
-        => new global::app.data.@this("user", payload, global::app.data.type.FromMime("text/plain"))
+        => new global::app.data.@this("user", payload, global::app.type.@this.FromMime("text/plain"))
         { Context = app.User.Context };
 
     [Test] public async Task Cut2_OuterWireJson_HasArchivedTypeBytesValueAndSignature()

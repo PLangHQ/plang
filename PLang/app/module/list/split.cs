@@ -21,6 +21,6 @@ public partial class Split : IContext
         var list = parts.Cast<object?>().ToList();
 
         return Task.FromResult(global::app.data.@this<type.list>.Ok(
-            new type.list { count = list.Count, value = list }, app.data.type.FromName("list")));
+            new type.list { count = list.Count, value = list }, app.type.@this.FromName("list")));
     }
 }

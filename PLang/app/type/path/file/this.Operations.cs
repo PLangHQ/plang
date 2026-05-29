@@ -69,7 +69,7 @@ public sealed partial class @this
             var snapshot = Context!.App.Builder.GetPrSnapshot(Absolute);
             if (snapshot != null)
             {
-                var snapshotType = data.type.FromMime(Context!.App.Formats.Mime(Extension));
+                var snapshotType = app.type.@this.FromMime(Context!.App.Formats.Mime(Extension));
                 var snapshotClr = snapshotType.ClrType;
                 if (snapshotClr != null && snapshotClr != typeof(string))
                 {
@@ -87,7 +87,7 @@ public sealed partial class @this
         try
         {
             var mime = Context!.App.Formats.Mime(Extension);
-            var type = data.type.FromMime(mime);
+            var type = app.type.@this.FromMime(mime);
             object content;
 
             if (type.ClrType == typeof(byte[]))
@@ -116,7 +116,7 @@ public sealed partial class @this
                 }
             }
 
-            return new data.@this(Raw, content, data.type.FromMime(mime));
+            return new data.@this(Raw, content, app.type.@this.FromMime(mime));
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {

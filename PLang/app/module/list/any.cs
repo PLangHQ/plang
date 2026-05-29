@@ -26,9 +26,9 @@ public partial class Any : IContext
         {
             var left = item.GetChild(key);
             if (await Operator.Value!.Evaluate(left, right))
-                return global::app.data.@this<bool>.Ok(true, app.data.type.FromName("bool"));
+                return global::app.data.@this<bool>.Ok(true, app.type.@this.FromName("bool"));
         }
 
-        return global::app.data.@this<bool>.Ok(false, app.data.type.FromName("bool"));
+        return global::app.data.@this<bool>.Ok(false, app.type.@this.FromName("bool"));
     }
 }

@@ -37,7 +37,7 @@ public partial class Read : IContext
         if (read.Value is byte[] bytes && mime.StartsWith("image/", System.StringComparison.OrdinalIgnoreCase))
         {
             var image = new global::app.type.image.@this(bytes, mime, Path.Value);
-            return new data.@this(read.Name, image, data.type.FromName("image"));
+            return new data.@this(read.Name, image, app.type.@this.FromName("image"));
         }
 
         if (ResolveVariables.Value && read.Value is string content)

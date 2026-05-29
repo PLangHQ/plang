@@ -3,6 +3,8 @@ using System.Text.Json.Serialization;
 
 namespace app.data;
 
+using type = global::app.type.@this;
+
 /// <summary>
 /// Wire converter for <c>app.data.@this</c> — the single point where the
 /// canonical five-field shape <c>{name, type, value, properties, signature}</c>

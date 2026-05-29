@@ -62,7 +62,7 @@ public class Default : ICrypto
         if (hashBytes == null)
             return global::app.data.@this<byte[]>.FromError(new ActionError($"Algorithm '{action.Algorithm.Value}' is not supported", "UnsupportedAlgorithm", 400));
 
-        return global::app.data.@this<byte[]>.Ok(hashBytes, global::app.data.type.FromName(algorithm));
+        return global::app.data.@this<byte[]>.Ok(hashBytes, global::app.type.@this.FromName(algorithm));
     }
 
     public data.@this<bool> Verify(Verify action)

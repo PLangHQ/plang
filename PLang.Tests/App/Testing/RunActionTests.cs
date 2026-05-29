@@ -553,7 +553,7 @@ public class RunActionTests
             ("variable", "set", new List<Data> { new("Name", "a"), new("Value", 1) }),
             ("goal", "call", new List<Data>
             {
-                new("GoalName", new GoalCall { Name = "Helper" }, global::app.data.type.FromName("goal.call"))
+                new("GoalName", new GoalCall { Name = "Helper" }, global::app.type.@this.FromName("goal.call"))
             }),
             ("variable", "set", new List<Data> { new("Name", "b"), new("Value", 2) })
         });

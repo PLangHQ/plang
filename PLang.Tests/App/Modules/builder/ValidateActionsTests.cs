@@ -84,7 +84,7 @@ public class ValidateActionsTests
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "dosomething.pr"), prJson);
 
         var goalCallData = new Data("GoalName", new global::app.goal.GoalCall { Name = "DoSomething" });
-        goalCallData.Type = new global::app.data.type("goal.call");
+        goalCallData.Type = new global::app.type.@this("goal.call");
 
         var actions = new StepActions
         {
@@ -112,7 +112,7 @@ public class ValidateActionsTests
     public async Task ValidateActions_DynamicNames_Skipped()
     {
         var goalCallData = new Data("GoalName", new global::app.goal.GoalCall { Name = "%dynamicGoal%" });
-        goalCallData.Type = new global::app.data.type("goal.call");
+        goalCallData.Type = new global::app.type.@this("goal.call");
 
         var actions = new StepActions
         {
@@ -171,8 +171,8 @@ public class ValidateActionsTests
                 Parameters = new List<Data>
                 {
                     new("Left", "%flag%"),
-                    new("Operator", "==") { Type = new global::app.data.type("string") },
-                    new("Right", "false") { Type = new global::app.data.type("bool") }
+                    new("Operator", "==") { Type = new global::app.type.@this("string") },
+                    new("Right", "false") { Type = new global::app.type.@this("bool") }
                 }
             }
         };
@@ -198,8 +198,8 @@ public class ValidateActionsTests
                 Parameters = new List<Data>
                 {
                     new("Left", "%count%"),
-                    new("Operator", ">") { Type = new global::app.data.type("string") },
-                    new("Right", "5") { Type = new global::app.data.type("int") }
+                    new("Operator", ">") { Type = new global::app.type.@this("string") },
+                    new("Right", "5") { Type = new global::app.type.@this("int") }
                 }
             }
         };
@@ -223,9 +223,9 @@ public class ValidateActionsTests
                 ActionName = "if",
                 Parameters = new List<Data>
                 {
-                    new("Left", "%flag%") { Type = new global::app.data.type("bool") },
+                    new("Left", "%flag%") { Type = new global::app.type.@this("bool") },
                     new("Operator", "=="),
-                    new("Right", true) { Type = new global::app.data.type("bool") }
+                    new("Right", true) { Type = new global::app.type.@this("bool") }
                 }
             }
         };

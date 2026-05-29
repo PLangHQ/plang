@@ -618,7 +618,7 @@ public class Default : IBuilder
             var existing = a.Parameters.FirstOrDefault(p =>
                 string.Equals(p.Name, "Type", StringComparison.OrdinalIgnoreCase));
             if (existing != null) return;
-            a.Parameters.Add(new data.@this("Type", typeName) { Type = new data.type("string") });
+            a.Parameters.Add(new data.@this("Type", typeName) { Type = new app.type.@this("string") });
             return;
         }
     }
@@ -880,7 +880,7 @@ public class Default : IBuilder
                     if (schemaProp == null) continue;
                     var typeName = context.App.Types.GetTypeName(schemaProp.PropertyType);
                     if (typeName != "object")
-                        p.Type = new data.type(typeName);
+                        p.Type = new app.type.@this(typeName);
 
                     // plang-types: stamp kind alongside type when the declared
                     // type carries a static Build(value) hook. Separate field

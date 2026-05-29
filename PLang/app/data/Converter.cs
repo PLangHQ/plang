@@ -3,6 +3,8 @@ using System.Globalization;
 
 namespace app.data;
 
+using type = global::app.type.@this;
+
 /// <summary>
 /// Standard TypeConverter for <see cref="Type"/>.
 /// Newtonsoft.Json automatically discovers this via the [TypeConverter] attribute,

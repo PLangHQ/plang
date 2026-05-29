@@ -17,7 +17,7 @@ public partial class Flatten : IContext
         var result = new List<object?>();
         FlattenRecursive(list, result);
 
-        return Task.FromResult(global::app.data.@this<type.list>.Ok(new type.list { count = result.Count, value = result }, app.data.type.FromName("list")));
+        return Task.FromResult(global::app.data.@this<type.list>.Ok(new type.list { count = result.Count, value = result }, app.type.@this.FromName("list")));
     }
 
     private static void FlattenRecursive(System.Collections.IList source, List<object?> target)

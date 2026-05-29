@@ -18,6 +18,6 @@ public partial class Join : IContext
             strings.Add(item.Value?.ToString() ?? "");
 
         var result = string.Join(Separator.Value!, strings);
-        return Task.FromResult(global::app.data.@this<string>.Ok(result, app.data.type.String));
+        return Task.FromResult(global::app.data.@this<string>.Ok(result, app.type.@this.String));
     }
 }

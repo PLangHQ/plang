@@ -114,7 +114,7 @@ public partial class Set : IContext, IBuildValidatable
             // / `%x.Type%` consumers see the explicit value rather than the
             // runtime-inferred name (e.g. user wrote `type=text/plain`; the
             // CLR runtime type is `string` — we keep the MIME on the wire).
-            typedData.Type = global::app.data.type.FromName(Type.Value);
+            typedData.Type = global::app.type.@this.FromName(Type.Value);
             CopyProperties(Value, typedData);
             return Task.FromResult(Context.Variables.Set(typedData));
         }

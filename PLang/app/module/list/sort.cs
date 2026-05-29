@@ -21,6 +21,6 @@ public partial class Sort : IContext
         else
             list.Sort((a, b) => Comparer<object>.Default.Compare(a, b));
 
-        return Task.FromResult(global::app.data.@this<type.list>.Ok(new type.list { count = list.Count, value = list }, app.data.type.FromName("list")));
+        return Task.FromResult(global::app.data.@this<type.list>.Ok(new type.list { count = list.Count, value = list }, app.type.@this.FromName("list")));
     }
 }

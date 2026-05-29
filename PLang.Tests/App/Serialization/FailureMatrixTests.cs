@@ -67,7 +67,7 @@ public class FailureMatrixTests
 
     [Test] public async Task Decompress_OnNonArchivedType_ReturnsSelfNoError()
     {
-        var d = new global::app.data.@this("x", "y", global::app.data.type.FromName("text/plain"));
+        var d = new global::app.data.@this("x", "y", global::app.type.@this.FromName("text/plain"));
         var result = d.Decompress();
         await Assert.That(ReferenceEquals(d, result)).IsTrue();
         await Assert.That(result.Success).IsTrue();
@@ -75,7 +75,7 @@ public class FailureMatrixTests
 
     [Test] public async Task Decompress_OnArchivedWithoutByteArrayValue_ReturnsDataWithDecompressError()
     {
-        var d = new global::app.data.@this("x", "not bytes", global::app.data.type.FromName("archived"));
+        var d = new global::app.data.@this("x", "not bytes", global::app.type.@this.FromName("archived"));
         var result = d.Decompress();
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("DecompressError");

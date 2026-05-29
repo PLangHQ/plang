@@ -8,6 +8,8 @@ using app.error;
 
 namespace app.data;
 
+using type = global::app.type.@this;
+
 /// <summary>
 /// Data — transport-pipeline concern.
 /// Signature property for wire integrity.

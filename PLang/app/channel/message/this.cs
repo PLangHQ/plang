@@ -18,7 +18,7 @@ public abstract class @this : Channel
         // state for the channel to resume the goal once the user replies. Type="ask"
         // also satisfies the Type-side Exit check.
         var ask = new module.output.Ask();
-        var d = new data.@this<module.output.Ask>("", ask, new data.type("ask"))
+        var d = new data.@this<module.output.Ask>("", ask, new app.type.@this("ask"))
         {
             Context = action.Context,
             Snapshot = action.Snapshot(),

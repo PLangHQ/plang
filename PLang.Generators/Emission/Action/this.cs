@@ -107,7 +107,7 @@ public static class @this
             sb.Append("""
                     protected static global::app.data.@this Data() => global::app.data.@this.Ok();
                     protected static global::app.data.@this Data(object? value) => global::app.data.@this.Ok(value);
-                    protected static global::app.data.@this Data(object? value, global::app.data.type? type) => global::app.data.@this.Ok(value, type);
+                    protected static global::app.data.@this Data(object? value, global::app.type.@this? type) => global::app.data.@this.Ok(value, type);
 
                 """);
         }

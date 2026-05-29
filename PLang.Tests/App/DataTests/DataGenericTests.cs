@@ -1,6 +1,6 @@
 using app.error;
 using app.variable;
-using Type = global::app.data.type;
+using Type = global::app.type.@this;
 
 namespace PLang.Tests.App.DataTests;
 

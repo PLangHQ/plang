@@ -34,6 +34,6 @@ public partial class Group : IContext
         }).ToList();
 
         return Task.FromResult(global::app.data.@this<type.list>.Ok(
-            new type.list { count = result.Count, value = result }, app.data.type.FromName("list")));
+            new type.list { count = result.Count, value = result }, app.type.@this.FromName("list")));
     }
 }

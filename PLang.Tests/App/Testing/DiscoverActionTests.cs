@@ -269,7 +269,7 @@ public class DiscoverActionTests
             {
                 ("goal", "call", new List<Data>
                 {
-                    new("GoalName", new GoalCall { Name = "Helper" }, global::app.data.type.FromName("goal.call"))
+                    new("GoalName", new GoalCall { Name = "Helper" }, global::app.type.@this.FromName("goal.call"))
                 })
             });
 

@@ -45,6 +45,9 @@ global using ConfigScope = app.config.Scope;
 
 // Type system
 global using AppTypes = app.type.list.@this;
+// The type entity (moved to app.type.@this in Stage 4) was historically reached as `app.type.@this`.
+// Callers that wrote `app.type.@this.X` keep working via this alias. Stage 3b/5 may sweep the call
+// sites to bare `type` (collides with the contextual keyword sites, so opting for the qualified form).
 
 // Code subsystem (the runtime escape-hatch — was Providers)
 global using AppCode = app.module.code.@this;

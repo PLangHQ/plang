@@ -55,7 +55,7 @@ public class Signature
                 if (prop == "type") type = reader.GetString() ?? "";
                 else if (prop == "value") value = reader.GetString() ?? "";
             }
-            var typeObj = string.IsNullOrEmpty(type) ? null : data.type.FromName(type);
+            var typeObj = string.IsNullOrEmpty(type) ? null : app.type.@this.FromName(type);
             byte[] bytes;
             try { bytes = Convert.FromBase64String(value); } catch (FormatException) { bytes = Array.Empty<byte>(); }
             return app.data.@this.Ok(bytes, typeObj);
