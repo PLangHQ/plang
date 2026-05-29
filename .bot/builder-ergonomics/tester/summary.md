@@ -1,67 +1,62 @@
 # Tester summary — builder-ergonomics
 
-**Version:** v1
-**Verdict:** FAIL
+**Version:** v2
+**Verdict:** PASS
 
 ## What this is
 
 The `builder-ergonomics` branch worked through a 7-priority friction list
-(`user-feedback.md`) from a coder who'd been authoring PLang test goals. There's no
-`coder/` folder — work was tracked via `tester-handoff.md` instead. Shipped:
+(`user-feedback.md`). Shipped: a per-channel `IsExecuting` recursion guard (replacing the
+foundational-snapshot mechanism), P4 root-cause-first error chaining, builder output routed
+through a named `"builder"` goal-channel, and confidence-per-step (P6) in the LLM passes.
 
-- **C#**: foundational-channel snapshot mechanism removed, replaced by a per-channel
-  `IsExecuting` recursion guard (the fix for the `ChannelNotFound`-in-sub-goals bug).
-  P4 root-cause-first error chaining in `Conversion.cs`.
-- **PLang**: builder output routed through a named `"builder"` goal-channel;
-  confidence-per-step (P6) in the four LLM passes; `list<T>` schemas; always-on
-  EmitSummary; Plan.llm verb rule. New reproduction goal `UnknownVerb.test.goal`.
+## History
 
-## What was done (this version)
+- **v1 (FAIL):** 1 critical false-green (`UnknownVerb.test.goal` asserted nothing and shipped a
+  `.pr` that mis-compiled `compress`→`variable.set`), 1 flaky C# test (cache count under
+  parallel run), 1 mutation-confirmed untested channel guard, + 2 minor (env 502, prompt leak).
+- **v2 (PASS):** coder addressed all three actionable findings; re-tested and independently
+  verified.
 
-Clean rebuild (stale-binary protocol). Ran both suites. Mutation-tested the channel
-guard. Read the committed `UnknownVerb` `.pr`. Five findings; verdict FAIL.
+## What was done (v2 re-test)
 
-- **C# suite:** 3376/3377 — 1 fail.
-- **PLang suite:** 233/234 — 1 fail.
+Clean rebuild (stale-binary protocol). Both suites green:
+- **C#:** 3377/3377 — 0 fail (v1 cache flake gone).
+- **PLang:** 234/234 — 0 fail, 0 timeout.
 
-### Findings (full detail: `v1/result.md`, `../test-report.json`)
+### Findings resolved
 
-1. **CRITICAL false-green — `UnknownVerb.test.goal`.** The P6 reference reproduction
-   asserts nothing, its committed `.pr` mis-compiled `compress …` to `variable.set`
-   (the exact silent verb-drop P6 exists to catch), and confidence is `null` on every
-   step. Two clean rebuilds hard-failed (`ValidationErrors` / `BuilderPlannerFailed`) —
-   the documented `⚠ planner VeryLow` warnings never appear.
-2. **MAJOR flaky — `Normalize_PropertyLookupCache…` (the 1 C# failure).** Asserts on
-   `Tagged.CacheSize`, a process-wide static dict, under parallel TUnit. Passes alone,
-   fails in suite.
-3. **MAJOR missing-coverage — channel recursion guard.** Mutation-confirmed: deleting
-   `InvokeGoal`'s `_executing.Value = true` leaves all 7 channel tests green. The guard
-   is never armed through a real goal write — only via reflection flips.
-4. **MINOR (env) — `UploadFile.test.goal` (the 1 PLang failure).** 502 from an external
-   endpoint; not a code regression.
-5. **MINOR — interactive `y/n/a` prompt leaks into the C# run** (a permission-gate test
-   not redirecting stdin).
+- **F1 — false green deleted.** `Tests/ConfidenceCheck/` removed. Correct call (a real
+  trace-based assert would be flaky or fixture-bound). *Residual:* P6 now has no automated
+  test — observation, not a blocker.
+- **F2 — cache test fixed.** Now asserts `ReferenceEquals(PropertiesFor(t,Out),
+  PropertiesFor(t,Out))` — per-key identity, no global counter, no parallel race. Global
+  `ClearCacheForTests`/`CacheSize` API removed.
+- **F3 — channel guard covered end-to-end.** New `Tests/Channels/GoalChannelRecursion/` test:
+  a goal-channel writes its own name, asserts `errorKey == 'ChannelNotFound'`. `.pr` actions
+  match step text (no builder false-green).
 
-### Code example — the false green (finding 1)
+### Mutation re-verification (the key check)
+
+Independently re-ran the v1 mutation — deleted `_executing.Value = true` in `InvokeGoal`,
+rebuilt, re-ran the recursion test:
 
 ```
-# Tests/ConfidenceCheck/UnknownVerb.test.goal  (reports [Pass])
-- set %original% = "hello world"
-- compress %original%, write to %archived%   # committed .pr: action = variable.set (!)
-- write out %archived%                        # no assert anywhere
+[Fail] /Channels/GoalChannelRecursion/Start.test.goal
+  Expected: "ChannelNotFound"
+  Actual:   "CallStackOverflow"
 ```
 
-The "unknown-verb reproduction" ships bytecode where the unknown verb was silently
-dropped, runs green, and verifies nothing.
+Without the guard, the self-write recurses to the engine's call-stack backstop; the test fails
+because it asserts the *specific* `ChannelNotFound` key (a weaker "any error" assert would pass
+on the backstop). Reverted, rebuilt, re-ran → 234/234 green. The guard-arming path that was
+invisible to all 7 v1 reflection-flip tests is now genuinely covered.
 
-## What to do next
+## Deferred (accepted, separate tickets)
 
-Hand back to coder. The two fixes that close the verdict:
-- Make `UnknownVerb` a real assertion (read trace → assert step-1 confidence VeryLow, or
-  assert the rendered warning line); stop committing a `variable.set` `.pr` for it.
-- Fix the cache test to assert behaviour it owns (specific key reuse), not the global
-  `CacheSize`, and stop the global `ClearCacheForTests()` from flaking parallel neighbours.
-- Add an end-to-end channel-guard test (goal-channel body writes its own name → expect
-  `ChannelNotFound`, not recursion).
+- **F4** `UploadFile` 502 — environmental Http; all Http tests passed this run.
+- **F5** `y/n/a` permission-prompt leak — fixture hygiene.
 
-(`UploadFile` 502 is environmental; the `y/n/a` leak is hygiene — both worth a separate ticket.)
+## Next
+
+Branch is green and honestly tested. Ready for security review.

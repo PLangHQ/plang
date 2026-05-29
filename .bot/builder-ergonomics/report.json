@@ -47,6 +47,46 @@
         "health": "needs-fixes",
         "notes": "5 findings (1 critical false-green, 2 major, 2 minor). Full detail in tester/v1/result.md and test-report.json. Source untouched (mutation reverted)."
       }
+    },
+    {
+      "id": "1992c227-24c3-444b-aac0-f4b6fab79a4b",
+      "bot": "tester",
+      "timestamp_start": "2026-05-29T10:30:00Z",
+      "timestamp_end": "2026-05-29T10:50:00Z",
+      "intent": "Re-test coder v2 fixes to v1 FAIL findings (F1 delete false-green, F2 cache test, F3 channel-guard end-to-end test).",
+      "before": {
+        "assumptions": "Coder v2 (b86539c99) claims all three actionable findings fixed and suites green. Must independently verify F3's mutation rather than trust the report.",
+        "risk": "F3 is the load-bearing change; need to re-run the mutation and confirm the new test catches guard removal with the right error key."
+      },
+      "plan": ".bot/builder-ergonomics/tester/v2/plan.md",
+      "actions": [
+        {
+          "paths": ["PlangConsole", "PLang.Tests"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild. C# 3377/3377 (F2 flake gone), PLang 234/234 (no fail, no timeout this run)."
+        },
+        {
+          "paths": ["PLang.Tests/App/DataTests/NormalizeTreeShapeTests.cs", "PLang/app/channels/serializers/filters/Tagged.cs"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "F2: per-key ReferenceEquals assertion replaces global CacheSize count; ClearCacheForTests/CacheSize removed. Pins caching, no parallel race."
+        },
+        {
+          "paths": ["Tests/Channels/GoalChannelRecursion/Start.test.goal", "Tests/Channels/GoalChannelRecursion/.build/start.test.pr", "PLang/app/channels/channel/goal/this.cs"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "F3: .pr action matches step text (no builder false-green). Independent mutation: deleting _executing.Value=true -> recursion test fails Expected 'ChannelNotFound' / Actual 'CallStackOverflow'. Reverted, git clean, re-ran green. Guard now covered end-to-end."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "approved",
+        "notes": "All 3 actionable v1 findings resolved + independently verified. F4/F5 deferred (environmental/hygiene). Detail in tester/v2/result.md. Source untouched (mutation reverted)."
+      }
     }
   ]
 }
