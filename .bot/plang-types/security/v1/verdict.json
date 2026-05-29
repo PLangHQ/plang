@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "Three Low findings on the plang-types value-system spine (math.power exponent unbounded, Loader can shadow built-in [PlangType] names, image intake inherits standing byte-cap gap). No critical/high. Wire depth guard intact." }

@@ -1,0 +1,89 @@
+{
+  "analyst": "security",
+  "branch": "plang-types",
+  "timestamp": "2026-05-29T00:00:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "runtime-type-loading",
+      "exposure": "code.load → app.types.Loader.Register: scans an attacker-supplied (but Execute-gated) assembly for [PlangType] and ITypeRenderer types. Instantiates renderers via parameterless ctor; registers in name→CLR table (RuntimeWins precedence) and per-(type,format) renderer table.",
+      "trust_boundary": "FilePath.AuthGate(Execute) on the DLL path. Past that, every code path is user-sovereign per the PLang threat model.",
+      "mitigations": ["Execute-gate on DLL load (Unix r/w/x model)", "parameterless-ctor rule mirrors code.load", "coverage check: every newly-registered [PlangType] needs ≥1 renderer or load fails", "renderer wraps method.Invoke in try/catch except for OOM/SOF"],
+      "gaps": ["Runtime registrations can SHADOW built-in [PlangType] names — including 'identity' and 'signature' — because RegisterRuntime takes _runtimeNameToType precedence in ResolveType. Combined with renderer-table shadowing, a malicious DLL could replace the Identity wire body; the outer Data still gets EnsureSigned with the legitimate actor key, so the body is signed but its representation is renderer-controlled. Mitigated by the Execute trust boundary, but worth memorialising."]
+    },
+    {
+      "area": "image-value-intake",
+      "exposure": "app.types.image.@this constructed from bytes via (a) file.read MIME=image/*, (b) image.ResolveAsync(raw) with any path scheme path.@this supports, (c) FromDataUrl base64, (d) bare base64. Dimensions read lazily via SixLabors.ImageSharp.Image.Identify(Bytes).",
+      "trust_boundary": "file.read goes through FilePath.AuthGate (FileRead) / HttpPath authorisation. image.ResolveAsync delegates path resolution to path.@this.Resolve → AuthGate via ReadBytes.",
+      "mitigations": ["AuthGate on the path verb", "ImageSharp.Image.Identify is header-only (does not decode pixel data)", "Identify exceptions swallowed and (0,0) returned"],
+      "gaps": ["No max-bytes cap on ReadBytes (existing standing finding for OpenAiProvider; now extended to image type)", "No reachable handler binds Data<image> today, so the string-Resolve factory's HTTP-URL branch is latent — flips Medium when any handler exposes Data<image> string parameter"]
+    },
+    {
+      "area": "code-value-intake",
+      "exposure": "app.types.code.@this constructed from arbitrary string; stores Source + detected Language. No execution.",
+      "trust_boundary": "Value-only type; routing key, no eval surface.",
+      "mitigations": ["Source-of-truth is the string; no eval, no compile"],
+      "gaps": []
+    },
+    {
+      "area": "number-parse-and-arithmetic",
+      "exposure": "number.@this.Parse(string) accepts arbitrary string; arithmetic methods route through DoOp / DoPower; policy axes (PromoteOverflow, PrecisionMode).",
+      "trust_boundary": "Operates on values already inside the Data envelope. Source is action handler parameters and condition operators.",
+      "mitigations": ["InvariantCulture used throughout (no culture confusion)", "Overflow wrapped in MathOverflow Data.Fail", "Divide-by-zero wrapped in DivideByZero Data.Fail", "checked arithmetic in DoIntKind"],
+      "gaps": ["DoPower iterates 'for (long i = 0; i < expL; i++)' with attacker-influenced expL; no upper bound below long.MaxValue → unbounded CPU on large exponents"]
+    },
+    {
+      "area": "wire-rehydration",
+      "exposure": "Wire.Read processes incoming Data wire shape. LiftDataIfShaped restarts STJ via Deserialize<@this>(string, options) for sub-objects shaped {name, value, ...}.",
+      "trust_boundary": "All incoming Data crosses Wire before reaching the signing.verify gate.",
+      "mitigations": ["AsyncLocal _readDepth counter capped at MaxReadDepth=64 (v1 F1 fix on builder-ergonomics, regression suite in place)", "Inner Signature object deserialized but trust gating happens downstream at signing.verify, not at Read", "EnsureInnerSigned walks Value graph + dictionary keyspace correctly (no DictionaryEntry footgun)"],
+      "gaps": []
+    },
+    {
+      "area": "typed-value-render-dispatch",
+      "exposure": "Normalize tags registered-PlangType values as TypedValueNode; json.Writer routes them via renderers.Of(typeName, format).",
+      "trust_boundary": "Outbound only; renderers run with the canonicaliser's privileges.",
+      "mitigations": ["Fail-closed default: json.Writer throws NormalizeUnexpectedLeafType for any value not in the tree contract — no STJ reflection fallback that would bypass [Out]/[Sensitive]/[Masked]", "RendererLookupMissed thrown when a tagged TypedValueNode has no renderer (forces explicit registration)"],
+      "gaps": ["Inherits pattern_tagged_transparent_fallback.md concern: a runtime-registered renderer becomes the [Sensitive] gate for its type, with no enforcement"]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "math.power with a large integer exponent loops up to expL times synchronously. DoPower at PLang/app/types/number/this.Arithmetic.cs:208 ('for (long i = 0; i < expL; i++) r = checked(r * b);') has no upper bound below long.MaxValue. Same pattern in the negative-exponent decimal branch (lines 193-195: 'for (long i = 0; i < -expL; i++) acc /= baseD'), the decimal-base branch (lines 223-226), and the integer-promotion catch branch (lines 215-217).",
+      "preconditions": "User script calls math.power with an attacker-influenced exponent value (LLM JSON, HTTP form input, untrusted file content reaching a %var% used as Exp). Even a 10^9 exponent ties up CPU for seconds; 10^15 effectively hangs the worker.",
+      "impact": "Synchronous CPU spin within the actor's process — local DoS. Not a privilege escalation. Becomes channel-DoS only when math.power is exposed through a channel-bound goal whose Exp is wire-derived.",
+      "affected_files": ["PLang/app/types/number/this.Arithmetic.cs"],
+      "exploit_sketch": "1. Author or LLM-generate a goal that performs math.power on user-influenced data: `- compute power Base=2 Exp=%user_exp%, write to %r%`. 2. Feed `%user_exp%=1000000000`. 3. Observe DoOp loop spin. Throw mode does not help — the loop completes silently before overflow on long.MaxValue boundary cases.",
+      "proposed_fix": "Cap |expL| at a configurable bound (Config.MaxPowerExponent, default 64 — beyond that any meaningful result already needs Double/IEEE math). Anything past the cap surfaces a typed PowerExponentTooLarge Data.Fail. Cheap one-liner at the top of DoPower; preserves the existing Wrap envelope.",
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "code.load → Loader.Register lets a loaded DLL re-register built-in [PlangType] names (e.g. 'identity', 'signature', 'int', 'path') because RegisterRuntime → _runtimeNameToType wins over generator-emitted _nameToType at ResolveType. Renderer dispatch follows the same precedence (renderers.@this.Of: _runtime before _generated). Outer Data.EnsureSigned still runs on the canonicalised body, so the actor's legitimate signing key signs whatever the runtime-registered renderer emitted for that type's body.",
+      "preconditions": "User must run `code.load 'evil.dll'`. Execute gate prompts. Past that, every value whose runtime CLR type the malicious DLL claims as e.g. 'identity' will route through DLL-supplied Write.",
+      "impact": "User-sovereign — the user authorised the DLL load. The risk is that the trust transfer is non-obvious: 'I loaded a DLL to add a number kind' silently confers the right to rewrite how Identity (and any other built-in [PlangType]) renders on the wire. Downstream verifiers will see a valid signature over a body the DLL controls; signature == authentic, body == DLL-shaped.",
+      "affected_files": ["PLang/app/types/Loader.cs", "PLang/app/types/Registry.cs", "PLang/app/types/renderers/this.cs"],
+      "exploit_sketch": "Hostile DLL exports `[PlangType(\"identity\")] public sealed class @this { … }` + `class IdRenderer : ITypeRenderer { TypeName=\"identity\"; Format=\"*\"; Write(value, w) => w.String(\"impostor\"); }`. Loader.Register replaces the built-in routing. From then on, every Data whose body holds the legitimate Identity emits 'impostor' as its wire body, gets signed with the actor's real key, and round-trips verifiably.",
+      "proposed_fix": "Defense-in-depth, not a bug today: reserve a small allowlist of 'sealed' built-in names (identity, signature, signedoperation, callback, channel) that Loader.Register refuses to shadow — return a TypeLoadCollision error key so the user sees the rejection. Out-of-scope built-in primitives (int, string, …) can stay overridable since their wire body is fully constrained by the type itself. Documented accepted-risk otherwise.",
+      "status": "open"
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "image.@this byte-array storage has no max-bytes guard at intake. file.read stamps any image/* MIME read result as image — the bytes come straight from path.ReadText (renamed; reads bytes when binary) without a size cap. image.ResolveAsync's HTTP-URL branch calls path.ReadBytes() with no cap. The image is held in memory; Width/Height probe via SixLabors.ImageSharp.Image.Identify(Bytes) is header-only (safe), but the underlying byte[] is the OOM vector.",
+      "preconditions": "(a) A goal performs `read %image%` against a large file or HTTP URL that the actor has AuthGate(Read) on. (b) Future handler exposes Data<image> with string input — the latent ResolveAsync HTTP-URL branch becomes reachable from any value that lands in that parameter slot.",
+      "impact": "Actor process OOM. Local DoS scope today (file.read is user-initiated). The latent branch (Data<image> string parameter) flips this to channel-shaped intake the moment any such handler ships.",
+      "affected_files": ["PLang/app/modules/file/read.cs", "PLang/app/types/image/this.Parse.cs", "PLang/app/types/image/this.cs"],
+      "exploit_sketch": "`- read https://attacker/huge.jpg`. AuthGate(HttpRead) prompt approved. ReadBytes returns 10 GB into byte[]. image.@this stores the reference. SniffMime sees JPEG magic; Width/Height probe Identify reads the SOF block and returns dimensions. The 10 GB array stays live in the variable. Subsequent variable.set / channels.write multiplies the residency.",
+      "proposed_fix": "(a) Read-side cap: ReadBytes accepts an optional maxBytes; image construction in file.read passes the configured image-byte cap (default 64 MB) and surfaces ImageTooLarge Data.Fail past it. (b) Stream-shape image instead of byte[] for very large inputs — bigger refactor, deferred. Pre-existing standing finding for the OpenAiProvider case applies here too; consolidate the fix at the path-verb layer when it lands.",
+      "status": "open"
+    }
+  ],
+  "summary": "PASS. Three Low-severity findings: math.power has no exponent bound (CPU DoS, easy fix), Loader.Register can shadow built-in [PlangType] names like 'identity' (accepted-risk under user-sovereign model but worth a small allowlist), image byte intake inherits the existing no-cap standing finding from path.ReadBytes. The runtime type-loading spine is well-shaped: Execute-gated, fail-closed renderer dispatch, runtime-wins precedence is by-design and documented. The Wire.LiftDataIfShaped restart vector remains bounded by the AsyncLocal _readDepth counter (v1 F1 fix from builder-ergonomics is intact). Semgrep baseline unchanged (15 known serializer-hygiene findings, no new blockers). No critical/high. Branch is safe to merge with the three Lows tracked."
+}

@@ -373,6 +373,91 @@
         "health": "All v1/v2 findings resolved. Critical DLL-roundtrip + runtime-wins mutation-verified (v2); deferrals honestly [Skip]'d; policy resolution thoroughly covered; step-level Overflow now distinguished end-to-end via a mutually-validating goal pair, independently mutation-confirmed.",
         "notes": "plang 248/248, C# 3604/10skip/0fail. Tree clean; mutation reverted; no source committed. Branch test quality is honest. Next: security review."
       }
+    },
+    {
+      "id": "d94d65d5-5f89-4f1c-9be1-1a90d81dea08",
+      "bot": "security",
+      "timestamp_start": "2026-05-29T00:00:00Z",
+      "timestamp_end": "2026-05-29T16:46:29Z",
+      "intent": "Security review of plang-types value-system spine (Loader, image, code, number, Wire integration).",
+      "before": {
+        "assumptions": "Coder v3 + tester v3 PASS; reviewing net-new attack surface.",
+        "risk": "runtime DLL loading, image/HTTP intake, wire dispatch"
+      },
+      "plan": ".bot/plang-types/security/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/plang-types/security/v1/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "review plan"
+        },
+        {
+          "paths": [
+            "PLang/app/types/Loader.cs",
+            "PLang/app/types/Registry.cs",
+            "PLang/app/types/renderers/this.cs",
+            "PLang/app/modules/code/load.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "runtime DLL loading; F2 \u2014 Loader.Register can shadow built-in [PlangType] names"
+        },
+        {
+          "paths": [
+            "PLang/app/types/image/this.cs",
+            "PLang/app/types/image/this.Parse.cs",
+            "PLang/app/modules/file/read.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "image intake; F3 \u2014 byte[] no size cap (standing finding extension)"
+        },
+        {
+          "paths": [
+            "PLang/app/types/number/this.Arithmetic.cs",
+            "PLang/app/types/number/this.Parse.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1 \u2014 DoPower unbounded exponent CPU DoS"
+        },
+        {
+          "paths": [
+            "PLang/app/data/Wire.cs",
+            "PLang/app/data/this.Normalize.cs",
+            "PLang/app/data/TypedValueNode.cs",
+            "PLang/app/channels/serializers/json/writer.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "wire integration confirmed: builder-ergonomics depth-guard intact, fail-closed renderer dispatch"
+        },
+        {
+          "paths": [
+            ".bot/plang-types/security-report.json",
+            ".bot/plang-types/security/v1/result.md",
+            ".bot/plang-types/security/v1/verdict.json",
+            ".bot/plang-types/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "security report + verdict (PASS, 3 Low)"
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "3 Low findings, none merge-blocking",
+        "notes": "Next: auditor"
+      }
     }
   ]
 }
