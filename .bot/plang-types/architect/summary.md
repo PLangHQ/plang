@@ -1,3 +1,13 @@
+## 2026-05-29 — OPEN design thread: refinement model + multi-type (awaiting Ingi)
+
+Ingi's comments on build-vs-runtime.md surfaced two real tensions. Replied with positions; left open pending his decisions. **Docs not yet changed** — this is a discuss-first fork.
+
+1. **"number is special" is a wart (comments L58/L81).** I'd framed number as concrete (`decimal`) and image as bare (`image`) — an asymmetry that isn't real. Proposed unification: **every type is a high-level type + an optional refinement, captured at build when the source provides it.** `number`'s Kind (`decimal`) and `image`'s Mime (`gif`) are the *same thing* — a refinement. Captured from literal shape (`3.5`→number:decimal), extension (`.jpg`→image:jpeg), or developer annotation (`%image%(gif)`, `%gps%(ISO 6709)`). The refinement triple-serves: subtype label, precision tag, and parse hint. Routing key/serialization always the high-level type; refinement is passenger metadata. → ONE rule, no number footnote. **Awaiting:** (a) does the LLM see the refinement in scope (`%x%(number:decimal)`) or only in the .pr value; (b) is `(...)` the annotation syntax.
+
+2. **A value can carry two type identities (comment L48).** `%photo%` from `read photo.jpg` answers both `%photo.Exists%` (path) and `%photo.Exif%` (image). Ingi framed it as `path|image` union. I argued **composition, not union**: `%photo%` is one `image` whose value carries `SourcePath: path` (already in the design); `.Exists` delegates, `.Exif` is native, routing key stays `image`. Union would buy "pass %photo% to a path slot" at the cost of facet-ambiguity + serializer-ambiguity. **Awaiting:** union vs composition — I lean composition hard.
+
+If Ingi accepts the unified refinement model, the rewrite touches build-vs-runtime.md (drop number-special framing), the spine cross-cutting "bare type not subtype" bullet (becomes "high-level + optional refinement"), and types.md.
+
 ## 2026-05-29 — build-vs-runtime visualization (new deep-dive)
 
 Ingi asked to visualize the build/runtime flow and settle two type-stamping questions. New file `plan/build-vs-runtime.md`, linked from the spine's movie section.

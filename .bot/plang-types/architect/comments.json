@@ -571,5 +571,72 @@
       "ts": "2026-05-29T09:37:17",
       "drifted": false
     }
+  ],
+  "plan/build-vs-runtime.md": [
+    {
+      "id": "7248075dfb",
+      "line": 48,
+      "text": "shit.... I am realizing here, %photo% is actually two types, it´s path and image, so %photo%(path|image)\nbecause we can still do \n'- if %photo.Exists% then' <-- Exists is a path thingy\n'- write out %photo.Exif%' <- Exif is a photo thingy (we dont have it now, but will in future)\n\nthis fucks us a bit",
+      "anchor": "- The **input** parameter: `{ Path: { value: \"photo.jpg\", type: \"path\" } }`.",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-29T10:50:50",
+      "drifted": false
+    },
+    {
+      "id": "8e78482388",
+      "line": 48,
+      "text": "Good catch, but I think it's less scary than a union type — it's composition. `%photo%` is ONE type, `image`, whose value carries a `SourcePath: path` (that field is already in the image design). So:\n- `%photo.Exif%` → native image member.\n- `%photo.Exists%` → delegates to the source path (does the file still exist).\n- `%photo.SourcePath%` → the path itself, for explicit path ops (`copy %photo.SourcePath% to backup/`).\n\nRouting key stays single: `Data.Type = image`. Serialization is image's. The path-ness is a *facet it has*, not a co-equal type it *is*. 'File-backed' is a trait any read-from-file type shares (a `code` read from disk carries its source path too) — so it's a reusable composition, not an image-specific hack.\n\nWhy I'd avoid a true `path|image` union:\n- **Facet ambiguity.** If `%photo%` can pass to a `Data<path>` slot AND a `Data<image>` slot, then `copy %photo%` (file) and `resize %photo%` (bytes) both typecheck and a reader can't tell which facet a step used. Composition forces the honest `%photo.SourcePath%` for file ops — explicit beats clever here.\n- **Serializer ambiguity.** A union value still has one wire shape; `path|image` doesn't say which serializer fires. `image` (with a source path) is unambiguous.\n- **Vocabulary blowup.** Unions multiply the scope display and member-resolution rules for marginal ergonomic gain.\n\nThe one thing composition costs you: `%photo.Exists%` as sugar needs image to surface a delegated `Exists` (or you write `%photo.SourcePath.Exists%`). I'd add the sugar for file-backed types — cheap, and keeps your ergonomics.\n\nYour call though, since it's your language: do you want true union typing (`%photo%` servable as either path or image to action slots), or composition (one `image` type, path reachable via `.SourcePath`, a few delegated conveniences)? I lean composition hard.",
+      "anchor": "- The **input** parameter: `{ Path: { value: \"photo.jpg\", type: \"path\" } }`.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "7248075dfb",
+      "ts": "2026-05-29T11:05:33"
+    },
+    {
+      "id": "db6e950bf6",
+      "line": 58,
+      "text": "why does number type behave differently the image? is that because we know the type at build time for numbers, but we dont really know the mimetype until we read the file?  It just feel like two different behaviour for what should be the same thing. \"number\" is higher level type, just like \"image\" is higher level type. So it means we need to know this special thing for number while all other types stay at the high level.\n\nbut now I am thinking, lets say I have this\n'- set %x% = %gps%(ISO 6709)' <-- this would become type=\"gis\" but very usefull info is provided by developer how to parse it. \n\nand what if say\n'- set %y% = %image%(gif)' <-- now we \"known\" that it's going to be gif",
+      "anchor": "### `- set %x% = 3.5` → type `decimal` (concrete), not `number`, not `number/decimal`",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-29T10:57:02",
+      "drifted": false
+    },
+    {
+      "id": "032c845c1d",
+      "line": 58,
+      "text": "You're right, and this bugs me too now that you put it that way — I created an asymmetry that isn't real. Here's the unification:\n\n**Every type is a high-level type + an optional refinement, captured at build when the source provides it.** number's Kind (decimal) IS a refinement — exactly like image's Mime (gif) is a refinement. They are the *same thing*; I was just presenting one as 'concrete' and the other as 'bare'. That was the wart.\n\nThe refinement is captured whenever the source gives it, by the same rule for every type:\n- literal shape: `3.5` → number:decimal\n- file extension: `photo.jpg` → image:jpeg\n- developer annotation: `%image%(gif)` → image:gif, `%gps%(ISO 6709)` → gis:ISO-6709\n\nAnd notice the refinement does triple duty — it's a subtype label, a precision tag, AND a parse hint. `ISO 6709` literally tells the runtime how to parse the gps string; `decimal` tells it which Kind to build; `gif` tells it how to read the bytes. That's the same 'build bakes the parse decision so runtime doesn't guess' principle, generalized. Your two examples are the proof that it's uniform.\n\nSo: **one rule, no 'watch out for numbers'.** Routing key / serialization is always the high-level type (number, image, gis); the refinement rides as passenger metadata and as the construction hint.\n\nTwo sub-decisions I need from you before I rewrite the doc around this:\n1. Does the LLM *see* the refinement in scope — `%x%(number:decimal)` / `%photo%(image:jpeg)` — or only the high-level `%x%(number)` with the refinement living in the .pr value? (I lean: show it; it's developer intent and precision info, throwing it away is the original sin here.)\n2. The annotation syntax `%image%(gif)` / `%gps%(ISO 6709)` — is that real/proposed, and is `(...)` the spelling you want for 'refine this value's type'?",
+      "anchor": "### `- set %x% = 3.5` → type `decimal` (concrete), not `number`, not `number/decimal`",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "db6e950bf6",
+      "ts": "2026-05-29T11:04:54",
+      "drifted": false
+    },
+    {
+      "id": "edf04f48f4",
+      "line": 81,
+      "text": "here we need 2 rules, to seperate the types, this is what bugs me. it saying to llm 'hey, here are the types, but watch for numbers because they are special\", just bugs me",
+      "anchor": "Net: \"here is the `.pr`, now run it\" is the right mental model. Build did the thinking; runtime does the doing.",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-29T11:00:59",
+      "drifted": false
+    },
+    {
+      "id": "c516aa2e5e",
+      "line": 81,
+      "text": "Same thing that bugged you on L58, and you're right — the 'two rules' framing is the bug, not the design. Under the unified model (my reply above): there is ONE rule. Every type is high-level + optional refinement, captured at build when the source provides it. number follows it identically to image — `decimal` is number's refinement the way `gif` is image's. The LLM is told 'here are the types' with no special-case footnote; numbers aren't special, they just happen to get their refinement from literal-shape instead of a file extension. Once you sign off on the unified model I'll rewrite this section so the 'watch for numbers' framing is gone entirely.",
+      "anchor": "Net: \"here is the `.pr`, now run it\" is the right mental model. Build did the thinking; runtime does the doing.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "edf04f48f4",
+      "ts": "2026-05-29T11:04:54",
+      "drifted": false
+    }
   ]
 }
