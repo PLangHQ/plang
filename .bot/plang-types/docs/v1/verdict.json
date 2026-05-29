@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "All identified gaps filled: math.md (intdiv, divide promotion, Number Policy), modules/index.md, code.md (load extended to [PlangType] + ITypeRenderer + sealed names), intdiv.description.md, good_to_know.md typed-values entry, /CLAUDE.md OBP Smell #7. Branch ready to merge." }

@@ -667,6 +667,77 @@
         "health": "v1 F1+F2 closed mutation-confirmed; F3 still standing; F4 NEW Low non-blocking",
         "notes": "Next: auditor"
       }
+    },
+    {
+      "id": "9aebbd60-6990-461f-84da-e4c6631832c7",
+      "bot": "docs",
+      "timestamp_start": "2026-05-29T13:00:00Z",
+      "intent": "Final docs gate on plang-types \u2014 fill user/teaching/architecture gaps, apply CLAUDE.md proposal #7.",
+      "before": {
+        "assumptions": "XML docs strong on new code; gaps are user-facing (math/intdiv, code.load extension), teaching (intdiv.description.md), architecture (good_to_know.md typed-values entry).",
+        "risk": "Stale docs are worse than no docs \u2014 math.md without intdiv misleads, code.md without [PlangType]/ITypeRenderer hides the new load behaviour."
+      },
+      "plan": ".bot/plang-types/docs/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "CLAUDE.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Applied architect v1 CLAUDE.md proposal \u2014 added item 7 to OBP Shape Smells (Courier reaches into Data.Value), pointing at object_pattern_formal.md Rule #9."
+        },
+        {
+          "paths": [
+            "os/system/modules/math/intdiv.description.md",
+            "os/system/modules/math/divide.description.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "intdiv teaching file new; divide extended to make 7/2 \u2192 3.5 promotion explicit and cross-reference intdiv."
+        },
+        {
+          "paths": [
+            "docs/modules/math.md",
+            "docs/modules/index.md",
+            "docs/modules/code.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "math: intdiv section, divide promotion, Number Policy (Overflow/Precision, power cap), DivisionByZero\u2192DivideByZero key fix. index: intdiv in math row. code: load now scans [PlangType] + ITypeRenderer; sealed-names with TypeLoadCollision; honest limit on compiled slots / shipped .pr stamps."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/good_to_know.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Appended Typed values entry \u2014 folder contract, two Builds (action vs type), per-(type,format) dispatch, composition-not-union, runtime DLL loading + sealed names, OBP Rule #9 pointer. Discoverability hook into architect plan; not duplicating it."
+        },
+        {
+          "paths": [
+            ".bot/plang-types/docs/v1/plan.md",
+            ".bot/plang-types/docs/v1/result.md",
+            ".bot/plang-types/docs/v1/verdict.json",
+            ".bot/plang-types/docs/summary.md",
+            ".bot/plang-types/docs-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Bot output: plan, result, verdict (PASS), summary, docs-report (decisions on architect CLAUDE.md proposal: applied)."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "green",
+        "notes": "All gaps filled. CLAUDE.md proposal #7 applied. Branch ready to merge. F4 (round Decimals OOR) noted as outstanding security finding; not docs-actionable until coder lands clamp."
+      },
+      "timestamp_end": "2026-05-29T13:35:00Z"
     }
   ]
 }
