@@ -16,7 +16,7 @@ public class EventsTests
     [Test]
     public async Task Count_EmptyCollection_ReturnsZero()
     {
-        var events = new EngineEvents();
+        var events = new global::app.@event.list.@this();
 
         await Assert.That(events.Count).IsEqualTo(0);
     }
@@ -24,7 +24,7 @@ public class EventsTests
     [Test]
     public async Task Register_Binding_IncreasesCount()
     {
-        var events = new EngineEvents();
+        var events = new global::app.@event.list.@this();
         var binding = new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()));
 
         events.Register(binding);
@@ -35,7 +35,7 @@ public class EventsTests
     [Test]
     public async Task Register_Binding_ReturnsBindingId()
     {
-        var events = new EngineEvents();
+        var events = new global::app.@event.list.@this();
         var binding = new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()));
 
         var id = events.Register(binding);
@@ -46,7 +46,7 @@ public class EventsTests
     [Test]
     public async Task Register_WithHandler_ReturnsId()
     {
-        var events = new EngineEvents();
+        var events = new global::app.@event.list.@this();
 
         var id = events.Register(new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok())));
 
@@ -57,7 +57,7 @@ public class EventsTests
     [Test]
     public async Task Unregister_ById_RemovesBinding()
     {
-        var events = new EngineEvents();
+        var events = new global::app.@event.list.@this();
         var id = events.Register(new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok())));
 
         var removed = events.Unregister(id);
@@ -69,7 +69,7 @@ public class EventsTests
     [Test]
     public async Task Unregister_NonexistentId_ReturnsFalse()
     {
-        var events = new EngineEvents();
+        var events = new global::app.@event.list.@this();
 
         var removed = events.Unregister("nonexistent");
 
@@ -79,7 +79,7 @@ public class EventsTests
     [Test]
     public async Task Clear_RemovesAllBindings()
     {
-        var events = new EngineEvents();
+        var events = new global::app.@event.list.@this();
         events.Register(new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok())));
         events.Register(new EventBinding(EventType.AfterGoal, (_, _, _) => Task.FromResult(Data.Ok())));
 
@@ -91,7 +91,7 @@ public class EventsTests
     [Test]
     public async Task GetBindings_ReturnsBindingsOfType()
     {
-        var events = new EngineEvents();
+        var events = new global::app.@event.list.@this();
         events.Register(new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok())));
         events.Register(new EventBinding(EventType.AfterGoal, (_, _, _) => Task.FromResult(Data.Ok())));
         events.Register(new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok())));
@@ -104,7 +104,7 @@ public class EventsTests
     [Test]
     public async Task GetBindings_NoMatchingType_ReturnsEmpty()
     {
-        var events = new EngineEvents();
+        var events = new global::app.@event.list.@this();
         events.Register(new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok())));
 
         var bindings = events.GetBindings(EventType.OnError);
@@ -115,7 +115,7 @@ public class EventsTests
     [Test]
     public async Task GetMatchingBindings_MatchesGoalPattern()
     {
-        var events = new EngineEvents();
+        var events = new global::app.@event.list.@this();
         events.Register(new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()), goalNamePattern: "Start"));
         events.Register(new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()), goalNamePattern: "Other"));
 
@@ -127,7 +127,7 @@ public class EventsTests
     [Test]
     public async Task GetMatchingBindings_WildcardPattern_MatchesAll()
     {
-        var events = new EngineEvents();
+        var events = new global::app.@event.list.@this();
         events.Register(new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()), goalNamePattern: "*"));
 
         var bindings = events.GetMatchingBindings(EventType.BeforeGoal, "AnyGoal");
@@ -138,7 +138,7 @@ public class EventsTests
     [Test]
     public async Task GetMatchingBindings_PrefixPattern_MatchesPrefix()
     {
-        var events = new EngineEvents();
+        var events = new global::app.@event.list.@this();
         events.Register(new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()), goalNamePattern: "User*"));
 
         var matchUser = events.GetMatchingBindings(EventType.BeforeGoal, "UserLogin");
@@ -151,7 +151,7 @@ public class EventsTests
     [Test]
     public async Task GetMatchingBindings_NullGoalPattern_MatchesAll()
     {
-        var events = new EngineEvents();
+        var events = new global::app.@event.list.@this();
         events.Register(new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok())));
 
         var bindings = events.GetMatchingBindings(EventType.BeforeGoal, "AnyGoal");
@@ -162,7 +162,7 @@ public class EventsTests
     [Test]
     public async Task GetMatchingBindings_StepPattern_MatchesContaining()
     {
-        var events = new EngineEvents();
+        var events = new global::app.@event.list.@this();
         events.Register(new EventBinding(EventType.BeforeStep, (_, _, _) => Task.FromResult(Data.Ok()), stepPattern: "http"));
 
         var matchHttp = events.GetMatchingBindings(EventType.BeforeStep, stepText: "call http endpoint");

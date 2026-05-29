@@ -34,12 +34,12 @@ public class TypedPropertyCatalogTests
         public static string Shape => "string";
     }
 
-    private EngineTypes _types = null!;
+    private global::app.type.list.@this _types = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _types = new EngineTypes();
+        _types = new global::app.type.list.@this();
         _types.Assemblies.Add(typeof(TypedPropertyCatalogTests).Assembly);
     }
 

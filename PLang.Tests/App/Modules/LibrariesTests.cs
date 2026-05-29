@@ -9,9 +9,9 @@ public class LibrariesTests
     [Test]
     public async Task Constructor_DiscoversBultInHandlers()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
 
-        // EngineModules constructor auto-discovers built-in handlers
+        // global::app.module.@this constructor auto-discovers built-in handlers
         await Assert.That(modules.Contains("variable", "set")).IsTrue();
         await Assert.That(modules.Contains("output", "write")).IsTrue();
     }
@@ -19,7 +19,7 @@ public class LibrariesTests
     [Test]
     public async Task Register_AddsHandler()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
         var handler = new MockHandler();
 
         modules.Register("test", "do", handler);
@@ -30,7 +30,7 @@ public class LibrariesTests
     [Test]
     public async Task Register_CaseInsensitive()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
         var handler = new MockHandler();
         modules.Register("Test", "Do", handler);
 
@@ -41,7 +41,7 @@ public class LibrariesTests
     [Test]
     public async Task Contains_WithModuleAndAction_ReturnsTrue()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
         modules.Register("test", "do", new MockHandler());
 
         await Assert.That(modules.Contains("test", "do")).IsTrue();
@@ -50,7 +50,7 @@ public class LibrariesTests
     [Test]
     public async Task Contains_WithModuleOnly_ReturnsTrue()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
         modules.Register("test", "do", new MockHandler());
 
         await Assert.That(modules.Contains("test")).IsTrue();
@@ -59,7 +59,7 @@ public class LibrariesTests
     [Test]
     public async Task Contains_NonexistentModule_ReturnsFalse()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
 
         await Assert.That(modules.Contains("nonexistent_xyz_123")).IsFalse();
     }
@@ -67,7 +67,7 @@ public class LibrariesTests
     [Test]
     public async Task GetActions_ReturnsAllActionsInModule()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
         modules.Register("custom", "alpha", new MockHandler());
         modules.Register("custom", "beta", new MockHandler());
 
@@ -80,7 +80,7 @@ public class LibrariesTests
     [Test]
     public async Task GetActions_NonexistentModule_ReturnsEmpty()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
 
         var actions = modules.GetActions("nonexistent_xyz_123").ToList();
 
@@ -90,7 +90,7 @@ public class LibrariesTests
     [Test]
     public async Task Names_ReturnsAllModules()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
 
         var names = modules.Names.ToList();
 
@@ -102,7 +102,7 @@ public class LibrariesTests
     [Test]
     public async Task Clear_RemovesAllHandlers()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
         modules.Register("custom", "do", new MockHandler());
 
         modules.Clear();
@@ -115,7 +115,7 @@ public class LibrariesTests
     [Test]
     public async Task Register_SameKeyTwice_ReplacesHandler()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
         var handler1 = new MockHandler();
         var handler2 = new MockHandler();
         modules.Register("test", "do", handler1);
@@ -130,7 +130,7 @@ public class LibrariesTests
     [Test]
     public async Task BuiltIn_DiscoversFindHandlers()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
 
         // Should discover variable.set, variable.get, etc.
         await Assert.That(modules.Contains("variable", "set")).IsTrue();
@@ -150,7 +150,7 @@ public class LibrariesTests
     [Test]
     public async Task All_ReturnsRegisteredHandlers()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
         var handler1 = new MockHandler();
         var handler2 = new MockHandler();
         modules.Register("ns1", "cls1", handler1);
@@ -165,18 +165,18 @@ public class LibrariesTests
     [Test]
     public async Task Register_DirectlyOnModules()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
         modules.Register("custom", "magic", new MockHandler());
 
         await Assert.That(modules.Contains("custom", "magic")).IsTrue();
     }
 
-    #region EngineModules.GetCodeGenerated
+    #region global::app.module.@this.GetCodeGenerated
 
     [Test]
     public async Task GetCodeGenerated_BuiltInAction_ReturnsAction()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
         await using var engine = new global::app.@this("/app", modules);
         var context = engine.User.Context;
 
@@ -189,7 +189,7 @@ public class LibrariesTests
     [Test]
     public async Task GetCodeGenerated_ExplicitCodeGenAction_ReturnsAction()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
         var action = new MockCodeGenHandler();
         modules.Register("custom", "run", action);
         await using var engine = new global::app.@this("/app", modules);
@@ -204,7 +204,7 @@ public class LibrariesTests
     [Test]
     public async Task GetCodeGenerated_NonICodeGeneratedAction_ReturnsActionError()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
         modules.Register("legacy", "do", new MockHandler());
         await using var engine = new global::app.@this("/app", modules);
         var context = engine.User.Context;
@@ -219,7 +219,7 @@ public class LibrariesTests
     [Test]
     public async Task GetCodeGenerated_NotFound_ReturnsActionNotFound()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
         await using var engine = new global::app.@this("/app", modules);
         var context = engine.User.Context;
 
@@ -233,7 +233,7 @@ public class LibrariesTests
     [Test]
     public async Task GetCodeGenerated_RegisteredTwice_LastWins()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
         var handler1 = new MockCodeGenHandler { Tag = "first" };
         var handler2 = new MockCodeGenHandler { Tag = "second" };
         modules.Register("custom", "run", handler1);
@@ -251,7 +251,7 @@ public class LibrariesTests
     [Test]
     public async Task GetCodeGenerated_TypeBased_CreatesNewInstance()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
         await using var engine = new global::app.@this("/app", modules);
         var context = engine.User.Context;
 
@@ -272,7 +272,7 @@ public class LibrariesTests
     [Test]
     public async Task Discover_NonMatchingNamespace_FindsNothing()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
         modules.Clear(); // start fresh
 
         var count = modules.Discover(typeof(global::app.@this).Assembly, "Some.Completely.Wrong.Namespace");
@@ -283,7 +283,7 @@ public class LibrariesTests
     [Test]
     public async Task Discover_CorrectNamespace_FindsHandlers()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
         modules.Clear(); // start fresh
 
         var count = modules.Discover(typeof(global::app.@this).Assembly, "app.module");
@@ -300,7 +300,7 @@ public class LibrariesTests
     [Test]
     public async Task Count_IncludesBuiltInAndRegistered()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
         var countBefore = modules.Count;
 
         modules.Register("custom", "one", new MockHandler());
@@ -312,7 +312,7 @@ public class LibrariesTests
     [Test]
     public async Task GetActionType_ReturnsTypeForBuiltIn()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
 
         var type = modules.GetActionType("variable", "set");
 
@@ -322,7 +322,7 @@ public class LibrariesTests
     [Test]
     public async Task GetActionType_ReturnsTypeForExplicitHandler()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
         var handler = new MockCodeGenHandler();
         modules.Register("custom", "run", handler);
 
@@ -334,7 +334,7 @@ public class LibrariesTests
     [Test]
     public async Task GetActionType_NonexistentAction_ReturnsNull()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
 
         var type = modules.GetActionType("nonexistent_xyz", "nope");
 
@@ -344,7 +344,7 @@ public class LibrariesTests
     [Test]
     public async Task RegisterType_RegistersTypeEntry()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
         modules.RegisterType("custom", "run", typeof(MockCodeGenHandler));
 
         await Assert.That(modules.Contains("custom", "run")).IsTrue();
@@ -354,7 +354,7 @@ public class LibrariesTests
     [Test]
     public async Task Names_IncludesRegistered_NoDuplicates()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
         // "variable" already exists from built-in discovery
         modules.Register("variable", "custom_action", new MockHandler());
         modules.Register("exotic", "magic", new MockHandler());
@@ -370,7 +370,7 @@ public class LibrariesTests
     [Test]
     public async Task GetActions_IncludesAll_NoDuplicates()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
         // "variable.set" already exists from built-in
         modules.Register("variable", "set", new MockHandler()); // overwrites
         modules.Register("variable", "custom_action", new MockHandler()); // new

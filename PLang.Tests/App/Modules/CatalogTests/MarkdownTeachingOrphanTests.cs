@@ -37,7 +37,7 @@ public class MarkdownTeachingOrphanTests
 
         _capture = new MemoryStream();
         _app.User.Channels.Register(new StreamChannel(
-            EngineChannels.Output, _capture,
+            global::app.channel.list.@this.Output, _capture,
             ChannelDirection.Output, ownsStream: false));
     }
 

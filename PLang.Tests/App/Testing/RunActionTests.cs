@@ -473,10 +473,10 @@ public class RunActionTests
         {
             if (!childApp.AbsolutePath.StartsWith(_tempDir)) return;
             childApp.User.Channels.Register(new StreamChannel(
-                EngineChannels.Output, outStream,
+                global::app.channel.list.@this.Output, outStream,
                 ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
             childApp.User.Channels.Register(new StreamChannel(
-                EngineChannels.Error, errStream,
+                global::app.channel.list.@this.Error, errStream,
                 ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
         }
         global::app.module.test.run.ChildAppCreated += Probe;

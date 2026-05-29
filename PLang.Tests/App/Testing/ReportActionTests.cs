@@ -28,7 +28,7 @@ public class ReportActionTests
         _app = new global::app.@this(_tempDir);
         _captureStream = new System.IO.MemoryStream();
         _app.User.Channels.Register(new StreamChannel(
-            EngineChannels.Output, _captureStream,
+            global::app.channel.list.@this.Output, _captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
     }

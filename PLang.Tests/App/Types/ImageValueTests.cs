@@ -61,7 +61,7 @@ public class ImageValueTests
 
     [Test] public async Task Image_PlangTypeAttribute_Registered()
     {
-        var types = new EngineTypes();
+        var types = new global::app.type.list.@this();
         await Assert.That(types.ResolveType("image")).IsEqualTo(typeof(image));
     }
 

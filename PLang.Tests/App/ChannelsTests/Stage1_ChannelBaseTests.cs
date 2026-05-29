@@ -60,9 +60,9 @@ public class Stage1_ChannelBaseTests
     [Test]
     public async Task Channels_DefaultsContains_OutputErrorInput()
     {
-        await Assert.That(EngineChannels.Defaults).Contains("output");
-        await Assert.That(EngineChannels.Defaults).Contains("error");
-        await Assert.That(EngineChannels.Defaults).Contains("input");
+        await Assert.That(global::app.channel.list.@this.Defaults).Contains("output");
+        await Assert.That(global::app.channel.list.@this.Defaults).Contains("error");
+        await Assert.That(global::app.channel.list.@this.Defaults).Contains("input");
     }
 
     [Test]

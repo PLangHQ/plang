@@ -1,6 +1,5 @@
 
 // Goals subsystem
-global using AppGoals = app.goal.list.@this;
 global using GoalCall = app.goal.GoalCall;
 global using GoalSteps = app.goal.steps.@this;
 global using Step = app.goal.steps.step.@this;
@@ -10,20 +9,15 @@ global using StepActions = app.goal.steps.step.actions.@this;
 global using ActionModifiers = app.goal.steps.step.actions.action.modifiers.@this;
 
 // Event types
-global using AppEvents = app.@event.list.@this;
 global using Lifecycle = app.@event.lifecycle.@this;
 global using Bindings = app.@event.lifecycle.binding.list.@this;
 
 // Event types WITH conflicts — require per-file handling:
-// AppEvents alias (not "Events") avoids collision with PLang.Events namespace
+// global::app.@event.list.@this alias (not "Events") avoids collision with PLang.Events namespace
 // EventType: v1 PLang.Events conflict — use: using app.@event; or per-file alias
 // EventBinding: v1 PLang.Events conflict — use: using EventBinding = app.@event.lifecycle.binding.@this;
 
-// Modules subsystem (action registry)
-global using AppModules = app.module.@this;
-
 // Channels subsystem
-global using AppChannels = app.channel.list.@this;
 global using Channel = app.channel.@this;
 global using ChannelDirection = app.channel.ChannelDirection;
 global using Serializers = app.channel.serializer.list.@this;

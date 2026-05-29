@@ -34,8 +34,9 @@ public class TypeEntityHomeTests
     [Test] public async Task TypeEntity_LivesAt_TypeNamespace_NotAppDataNamespace()
     {
         // Stage 4 (minimal): the entity moved to app.type.@this.
+        // (Reflection name is "app.type.this" — @ is a source-level keyword escape, stripped in metadata.)
         var asm = typeof(global::app.@this).Assembly;
-        await Assert.That(asm.GetType("app.type.@this")).IsNotNull();
+        await Assert.That(typeof(global::app.type.@this)).IsNotNull();
         await Assert.That(asm.GetType("app.data.type")).IsNull();
     }
 

@@ -48,7 +48,7 @@ public class RuntimeTypeLoadingTests
 
     [Test] public async Task LoadDll_PlangTypeClass_RegistersViaRegistryRegisterRuntime()
     {
-        var types = new EngineTypes();
+        var types = new global::app.type.list.@this();
         var result = global::app.type.list.Loader.Register(TestAssembly, types);
         // The fixture types in this file should appear in RegisteredTypes.
         await Assert.That(result.RegisteredTypes).Contains("runtime-fixture-only");
@@ -57,7 +57,7 @@ public class RuntimeTypeLoadingTests
 
     [Test] public async Task LoadDll_ITypeRenderer_RegistersIntoTypeSerializers()
     {
-        var types = new EngineTypes();
+        var types = new global::app.type.list.@this();
         var result = global::app.type.list.Loader.Register(TestAssembly, types);
         await Assert.That(types.Renderers.Has("runtime-fixture-only")).IsTrue();
         await Assert.That(types.Renderers.Of("runtime-fixture-only", "json")).IsNotNull();
@@ -67,7 +67,7 @@ public class RuntimeTypeLoadingTests
     {
         // Register a runtime entry under "int" — runtime should shadow the
         // bootstrap-seeded primitive.
-        var types = new EngineTypes();
+        var types = new global::app.type.list.@this();
         types.Register("int", typeof(System.Uri));
         await Assert.That(types.ResolveType("int")).IsEqualTo(typeof(System.Uri));
     }
@@ -77,7 +77,7 @@ public class RuntimeTypeLoadingTests
         // "path" has a generator-emitted Default.cs renderer; register a runtime
         // one over it and assert the runtime delegate wins. Captures both
         // outputs so a regression that resolved generated first would fail.
-        var types = new EngineTypes();
+        var types = new global::app.type.list.@this();
         var generatedWriter = new FakeWriter("json");
         var baseline = types.Renderers.Of("path", "json");
         await Assert.That(baseline).IsNotNull();
@@ -99,7 +99,7 @@ public class RuntimeTypeLoadingTests
         // Loader registers all [PlangType] classes in pass 1, then enforces the
         // coverage gate. The fixture-norenderer type must register, and the
         // gate must surface a TypeLoadCoverage failure for it.
-        var result = global::app.type.list.Loader.Register(TestAssembly, new EngineTypes());
+        var result = global::app.type.list.Loader.Register(TestAssembly, new global::app.type.list.@this());
         await Assert.That(result.RegisteredTypes).Contains("runtime-fixture-norenderer");
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.ErrorKey).IsEqualTo("TypeLoadCoverage");
@@ -119,7 +119,7 @@ public class RuntimeTypeLoadingTests
         var slotBefore = dataGeneric.GetGenericArguments()[0];
         await Assert.That(slotBefore).IsEqualTo(typeof(global::app.type.number.@this));
 
-        var types = new EngineTypes();
+        var types = new global::app.type.list.@this();
         types.Register("number", typeof(System.Uri));
         await Assert.That(types.ResolveType("number")).IsEqualTo(typeof(System.Uri));
 
@@ -143,7 +143,7 @@ public class RuntimeTypeLoadingTests
         // identity's CLR type would let a runtime DLL compose the body that
         // gets signed under the actor's key.
         var asm = System.Reflection.Assembly.LoadFrom(IdentityShadowDll);
-        var result = global::app.type.list.Loader.Register(asm, new EngineTypes());
+        var result = global::app.type.list.Loader.Register(asm, new global::app.type.list.@this());
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.ErrorKey).IsEqualTo("TypeLoadCollision");
         await Assert.That(result.ErrorMessage).Contains("identity");
@@ -158,7 +158,7 @@ public class RuntimeTypeLoadingTests
         // has only the renderer, no [PlangType], so pass-1 passes and the
         // gate fires on pass-2.
         var asm = System.Reflection.Assembly.LoadFrom(SignatureRendererShadowDll);
-        var result = global::app.type.list.Loader.Register(asm, new EngineTypes());
+        var result = global::app.type.list.Loader.Register(asm, new global::app.type.list.@this());
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.ErrorKey).IsEqualTo("TypeLoadCollision");
         await Assert.That(result.ErrorMessage).Contains("signature");
@@ -171,7 +171,7 @@ public class RuntimeTypeLoadingTests
         // InferName yields "callback" (a sealed name). The gate refuses
         // before the registry is touched.
         var asm = System.Reflection.Assembly.LoadFrom(CallbackInferredShadowDll);
-        var result = global::app.type.list.Loader.Register(asm, new EngineTypes());
+        var result = global::app.type.list.Loader.Register(asm, new global::app.type.list.@this());
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.ErrorKey).IsEqualTo("TypeLoadCollision");
         await Assert.That(result.ErrorMessage).Contains("callback");

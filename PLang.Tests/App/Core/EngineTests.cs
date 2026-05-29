@@ -193,7 +193,7 @@ public class EngineTests
     [Test]
     public async Task Constructor_AcceptsCustomModules()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
         await using var engine = new global::app.@this("/app", modules);
 
         await Assert.That(engine.Modules).IsEqualTo(modules);

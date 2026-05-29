@@ -12,10 +12,10 @@ namespace app.goal.setup;
 /// </summary>
 public sealed class @this
 {
-    private readonly AppGoals _goals;
+    private readonly global::app.goal.list.@this _goals;
     private const string Table = "setup";
 
-    public @this(AppGoals goals)
+    public @this(global::app.goal.list.@this goals)
     {
         _goals = goals;
     }

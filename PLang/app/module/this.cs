@@ -218,7 +218,7 @@ public sealed class @this : IAsyncDisposable
 
     /// <summary>
     /// Describes all registered actions with parameter metadata for the LLM builder prompt.
-    /// AppModules owns this because it knows its own types.
+    /// global::app.module.@this owns this because it knows its own types.
     /// </summary>
     /// <summary>
     /// Returns the inventory of channel names visible to the given actor at build time

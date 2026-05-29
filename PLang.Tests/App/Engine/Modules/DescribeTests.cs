@@ -1,5 +1,4 @@
 using app.variable;
-using AppModules = global::app.module.@this;
 
 namespace PLang.Tests.App.Modules;
 
@@ -8,7 +7,7 @@ public class DescribeTests
     [Test]
     public async Task Describe_ActionWithConcreteReturnType_IncludesReturnTypeProperties()
     {
-        var modules = new AppModules();
+        var modules = new global::app.module.@this();
         modules.RegisterType("testmod", "getpath", typeof(FakeGetPath));
 
         var actions = await modules.Describe();
@@ -29,7 +28,7 @@ public class DescribeTests
     [Test]
     public async Task Describe_ActionReturningData_HasNullReturnType()
     {
-        var modules = new AppModules();
+        var modules = new global::app.module.@this();
         modules.RegisterType("testmod", "basic", typeof(FakeBasicAction));
 
         var actions = await modules.Describe();
@@ -41,7 +40,7 @@ public class DescribeTests
     [Test]
     public async Task Describe_DataWrappedProperty_ShowsInnerTypeName()
     {
-        var modules = new AppModules();
+        var modules = new global::app.module.@this();
         modules.RegisterType("testmod", "datapath", typeof(FakeDataPathAction));
 
         var actions = await modules.Describe();

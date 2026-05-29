@@ -13,10 +13,10 @@ namespace PLang.Tests.App.Types;
 
 public class CleanupBindingsTests
 {
-    private EngineTypes _types = null!;
+    private global::app.type.list.@this _types = null!;
 
     [Before(Test)]
-    public void Setup() => _types = new EngineTypes();
+    public void Setup() => _types = new global::app.type.list.@this();
 
     [Test] public async Task DateTime_PlangName_ResolvesToDateTimeOffset_NotSystemDateTime()
     {

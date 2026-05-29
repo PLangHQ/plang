@@ -35,7 +35,7 @@ public class PlangRuntimeTests : IDisposable
     {
         var captureStream = new System.IO.MemoryStream();
         _app.User.Channels.Register(new StreamChannel(
-            EngineChannels.Output, captureStream,
+            global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 
@@ -113,7 +113,7 @@ public class PlangRuntimeTests : IDisposable
     {
         var captureStream = new System.IO.MemoryStream();
         _app.User.Channels.Register(new StreamChannel(
-            EngineChannels.Output, captureStream,
+            global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 

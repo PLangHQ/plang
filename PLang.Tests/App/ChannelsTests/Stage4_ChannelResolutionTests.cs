@@ -113,7 +113,7 @@ public class Stage4_ChannelResolutionTests
     [Test]
     public async Task ChannelsThis_WriteAsyncWriteOverload_IsRemoved()
     {
-        var channelsType = typeof(EngineChannels);
+        var channelsType = typeof(global::app.channel.list.@this);
         var writeOverload = channelsType.GetMethods()
             .FirstOrDefault(m => m.Name == "WriteAsync"
                 && m.GetParameters().Length == 1

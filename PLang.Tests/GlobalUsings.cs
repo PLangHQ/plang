@@ -2,7 +2,6 @@
 global using App = app.@this;
 
 // Goals subsystem — mirrors PLang/App/GlobalUsings.cs
-global using EngineGoals = app.goal.list.@this;
 global using GoalCall = app.goal.GoalCall;
 global using GoalSteps = app.goal.steps.@this;
 global using Step = app.goal.steps.step.@this;
@@ -18,16 +17,13 @@ global using Visibility = app.goal.Visibility;
 
 // Event types
 global using EventType = app.@event.EventType;
-global using EngineEvents = app.@event.list.@this;
 global using EventBinding = app.@event.lifecycle.binding.@this;
 global using Lifecycle = app.@event.lifecycle.@this;
 global using Bindings = app.@event.lifecycle.binding.list.@this;
 
 // Modules subsystem (action registry)
-global using EngineModules = app.module.@this;
 
 // Channels subsystem
-global using EngineChannels = app.channel.list.@this;
 global using Channel = app.channel.@this;
 global using StreamChannel = app.channel.stream.@this;
 global using ChannelDirection = app.channel.ChannelDirection;
@@ -52,7 +48,6 @@ global using filepath = app.type.path.file.@this;
 global using httppath = app.type.path.http.@this;
 
 // Type system
-global using EngineTypes = app.type.list.@this;
 
 // Standalone concepts (no v1 conflicts in tests)
 global using ICache = app.module.cache.ICache;

@@ -8,10 +8,10 @@ namespace PLang.Tests.App.Types;
 
 public class RegistryFoldTests
 {
-    private EngineTypes _types = null!;
+    private global::app.type.list.@this _types = null!;
 
     [Before(Test)]
-    public void Setup() => _types = new EngineTypes();
+    public void Setup() => _types = new global::app.type.list.@this();
 
     [Test]
     public async Task Get_NumberByName_ResolvesViaRegistry_NotFlatPrimitivesDict()
@@ -30,14 +30,14 @@ public class RegistryFoldTests
     [Test]
     public async Task IsPrimitive_AllPriorTrueAnswers_StillTrue()
     {
-        await Assert.That(EngineTypes.IsPrimitive(typeof(string))).IsTrue();
-        await Assert.That(EngineTypes.IsPrimitive(typeof(int))).IsTrue();
-        await Assert.That(EngineTypes.IsPrimitive(typeof(long))).IsTrue();
-        await Assert.That(EngineTypes.IsPrimitive(typeof(double))).IsTrue();
-        await Assert.That(EngineTypes.IsPrimitive(typeof(decimal))).IsTrue();
-        await Assert.That(EngineTypes.IsPrimitive(typeof(bool))).IsTrue();
-        await Assert.That(EngineTypes.IsPrimitive(typeof(System.DateTime))).IsTrue();
-        await Assert.That(EngineTypes.IsPrimitive(typeof(System.Guid))).IsTrue();
+        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(string))).IsTrue();
+        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(int))).IsTrue();
+        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(long))).IsTrue();
+        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(double))).IsTrue();
+        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(decimal))).IsTrue();
+        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(bool))).IsTrue();
+        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(System.DateTime))).IsTrue();
+        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(System.Guid))).IsTrue();
     }
 
     [Test]

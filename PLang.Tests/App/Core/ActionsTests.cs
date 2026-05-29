@@ -62,7 +62,7 @@ public class ActionsTests
         await Assert.That(action.ParameterSchema).IsNull();
     }
 
-    // --- GetActions integration tests (uses real EngineModules + assembly discovery) ---
+    // --- GetActions integration tests (uses real global::app.module.@this + assembly discovery) ---
 
     [Test]
     public async Task GetActions_ReturnsNonEmptyActions()
@@ -142,7 +142,7 @@ public class ActionsTests
         await Assert.That(noParams.Count).IsGreaterThanOrEqualTo(0);
     }
 
-    // --- ValidateActions tests (uses real EngineModules + assembly discovery) ---
+    // --- ValidateActions tests (uses real global::app.module.@this + assembly discovery) ---
 
     [Test]
     public async Task ValidateActions_NullActions_ReturnsError()
@@ -355,7 +355,7 @@ public class ActionsTests
         if (actions == null || actions.Count == 0)
             return (false, new global::app.error.ProgramError("No actions provided", key: "NoActionsProvided"));
 
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
 
         var notFound = new List<string>();
         foreach (var action in actions)
@@ -372,11 +372,11 @@ public class ActionsTests
     }
 
     /// <summary>
-    /// Mimics what GetActions() in PlangModule does — uses EngineModules to discover handlers.
+    /// Mimics what GetActions() in PlangModule does — uses global::app.module.@this to discover handlers.
     /// </summary>
     private static StepActions DiscoverActions()
     {
-        var modules = new EngineModules();
+        var modules = new global::app.module.@this();
 
         var actions = new StepActions();
 

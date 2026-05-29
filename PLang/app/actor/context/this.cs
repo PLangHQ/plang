@@ -90,7 +90,7 @@ public sealed class @this : IDisposable
     /// Event bindings registered on this context.
     /// Each actor's context has its own event collection.
     /// </summary>
-    public AppEvents Events { get; } = new();
+    public global::app.@event.list.@this Events { get; } = new();
 
     /// <summary>
     /// The goal currently being executed.

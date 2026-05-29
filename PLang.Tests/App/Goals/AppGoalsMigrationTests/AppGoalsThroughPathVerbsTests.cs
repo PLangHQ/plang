@@ -6,7 +6,7 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.Goals.AppGoalsMigrationTests;
 
 /// <summary>
-/// Batch 5. AppGoals + App.Load/Save through Path verbs.
+/// Batch 5. global::app.goal.list.@this + App.Load/Save through Path verbs.
 /// </summary>
 public class AppGoalsThroughPathVerbsTests
 {

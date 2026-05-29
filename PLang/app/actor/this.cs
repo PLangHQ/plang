@@ -31,17 +31,17 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     public permission.@this Permission { get; private set; } = null!;
 
-    private readonly AppChannels _channels;
+    private readonly global::app.channel.list.@this _channels;
 
     /// <summary>
     /// Named channels owned by this actor. Goal-channel recursion isolation lives
     /// on <see cref="channel.goal.@this.IsExecuting"/> — the registry's <c>Get</c>
     /// treats an executing goal-channel as not-found.
     /// </summary>
-    public AppChannels Channels => _channels;
+    public global::app.channel.list.@this Channels => _channels;
 
     /// <summary>Singular accessor — see <see cref="Channels"/>.</summary>
-    public AppChannels Channel => _channels;
+    public global::app.channel.list.@this Channel => _channels;
 
     /// <summary>
     /// Back-reference to the app.
@@ -88,7 +88,7 @@ public sealed class @this : IAsyncDisposable
         Permission = new permission.@this(this);
         // Per-Actor Serializers: bound to this actor's Context so PathJsonConverter
         // produces Context-wired Paths on deserialize without any ambient state.
-        _channels = new AppChannels(app, new global::app.channel.serializer.list.@this(Context)) { Actor = this };
+        _channels = new global::app.channel.list.@this(app, new global::app.channel.serializer.list.@this(Context)) { Actor = this };
 
         // Register %Settings.X% as a navigable mount on this actor's Variables.
         // Resolution dispatches to app.Settings.Get(path, this.Context); the

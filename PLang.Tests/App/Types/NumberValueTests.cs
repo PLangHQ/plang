@@ -113,7 +113,7 @@ public class NumberValueTests
     [Test]
     public async Task PlangTypeAttribute_Number_IsRegistered()
     {
-        var types = new EngineTypes();
+        var types = new global::app.type.list.@this();
         await Assert.That(types.ResolveType("number")).IsEqualTo(typeof(number));
         await Assert.That(types.ResolveName(typeof(number))).IsEqualTo("number");
     }

@@ -9,7 +9,7 @@ public class GoalsTests
     [Test]
     public async Task Constructor_StartsEmpty()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
 
         await Assert.That(goals.Count).IsEqualTo(0);
     }
@@ -17,7 +17,7 @@ public class GoalsTests
     [Test]
     public async Task Add_AddsGoal()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
 
         goals.Add(goal);
@@ -28,7 +28,7 @@ public class GoalsTests
     [Test]
     public async Task Add_RegistersByName()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
 
         goals.Add(goal);
@@ -39,7 +39,7 @@ public class GoalsTests
     [Test]
     public async Task Add_RegistersByPath()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         var goal = new Goal { Name = "TestGoal", Path = "/goals/test.goal" };
 
         goals.Add(goal);
@@ -50,7 +50,7 @@ public class GoalsTests
     [Test]
     public async Task Get_ByName_ReturnsGoal()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
         goals.Add(goal);
 
@@ -62,7 +62,7 @@ public class GoalsTests
     [Test]
     public async Task Get_CaseInsensitive()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
         goals.Add(goal);
 
@@ -73,7 +73,7 @@ public class GoalsTests
     [Test]
     public async Task Get_EmptyOrNull_ReturnsNull()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
 
         await Assert.That(goals.Get(null!)).IsNull();
         await Assert.That(goals.Get("")).IsNull();
@@ -82,7 +82,7 @@ public class GoalsTests
     [Test]
     public async Task Get_NonexistentName_ReturnsNull()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
 
         var result = goals.Get("NonexistentGoal");
 
@@ -92,7 +92,7 @@ public class GoalsTests
     [Test]
     public async Task Get_TriesVariations_WithGoalExtension()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         var goal = new Goal { Name = "TestGoal.goal", Path = "/TestGoal.goal" };
         goals.Add(goal);
 
@@ -104,7 +104,7 @@ public class GoalsTests
     [Test]
     public async Task Get_TriesVariations_WithLeadingSlash()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         var goal = new Goal { Name = "/goals/test", Path = "/goals/test" };
         goals.Add(goal);
 
@@ -116,7 +116,7 @@ public class GoalsTests
     [Test]
     public async Task Get_TriesVariations_SlashConversion()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         var goal = new Goal { Name = "goals/test", Path = "/goals/test.goal" };
         goals.Add(goal);
 
@@ -128,7 +128,7 @@ public class GoalsTests
     [Test]
     public async Task Indexer_ReturnsGoal()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
         goals.Add(goal);
 
@@ -140,7 +140,7 @@ public class GoalsTests
     [Test]
     public async Task Indexer_NonexistentName_ThrowsKeyNotFound()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
 
         await Assert.That(() => { _ = goals["NonexistentGoal"]; return Task.CompletedTask; })
             .Throws<KeyNotFoundException>();
@@ -149,7 +149,7 @@ public class GoalsTests
     [Test]
     public async Task Contains_ExistingGoal_ReturnsTrue()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         goals.Add(new Goal { Name = "TestGoal", Path = "/TestGoal.goal" });
 
         await Assert.That(goals.Contains("TestGoal")).IsTrue();
@@ -158,7 +158,7 @@ public class GoalsTests
     [Test]
     public async Task Contains_NonexistentGoal_ReturnsFalse()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
 
         await Assert.That(goals.Contains("NonexistentGoal")).IsFalse();
     }
@@ -166,7 +166,7 @@ public class GoalsTests
     [Test]
     public async Task Remove_RemovesGoal()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         goals.Add(new Goal { Name = "TestGoal", Path = "/TestGoal.goal" });
 
         var removed = goals.Remove("TestGoal");
@@ -178,7 +178,7 @@ public class GoalsTests
     [Test]
     public async Task Remove_RemovesPathLookups()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         goals.Add(new Goal { Name = "TestGoal", Path = "/TestGoal.goal" });
 
         goals.Remove("TestGoal");
@@ -189,7 +189,7 @@ public class GoalsTests
     [Test]
     public async Task Remove_NonexistentGoal_ReturnsFalse()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
 
         var removed = goals.Remove("NonexistentGoal");
 
@@ -199,7 +199,7 @@ public class GoalsTests
     [Test]
     public async Task Clear_RemovesAllGoals()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         goals.Add(new Goal { Name = "Goal1", Path = "/Goal1.goal" });
         goals.Add(new Goal { Name = "Goal2", Path = "/Goal2.goal" });
 
@@ -211,7 +211,7 @@ public class GoalsTests
     [Test]
     public async Task Names_ReturnsAllNames()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         goals.Add(new Goal { Name = "Goal1", Path = "/Goal1.goal" });
         goals.Add(new Goal { Name = "Goal2", Path = "/Goal2.goal" });
 
@@ -224,7 +224,7 @@ public class GoalsTests
     [Test]
     public async Task All_ReturnsAllGoals()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         var goal1 = new Goal { Name = "Goal1", Path = "/Goal1.goal" };
         var goal2 = new Goal { Name = "Goal2", Path = "/Goal2.goal" };
         goals.Add(goal1);
@@ -239,7 +239,7 @@ public class GoalsTests
     [Test]
     public async Task Public_ReturnsOnlyPublicGoals()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         goals.Add(new Goal { Name = "PublicGoal", Path = "/PublicGoal.goal", Visibility = Visibility.Public });
         goals.Add(new Goal { Name = "PrivateGoal", Path = "/PrivateGoal.goal", Visibility = Visibility.Private });
 
@@ -252,7 +252,7 @@ public class GoalsTests
     [Test]
     public async Task Setup_ReturnsOnlySetupGoals()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         goals.Add(new Goal { Name = "SetupGoal", Path = "/SetupGoal.goal", IsSetup = true });
         goals.Add(new Goal { Name = "NormalGoal", Path = "/NormalGoal.goal", IsSetup = false });
 
@@ -265,7 +265,7 @@ public class GoalsTests
     [Test]
     public async Task Events_ReturnsOnlyEventGoals()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         goals.Add(new Goal { Name = "EventGoal", Path = "/EventGoal.goal", IsEvent = true });
         goals.Add(new Goal { Name = "NormalGoal", Path = "/NormalGoal.goal", IsEvent = false });
 
@@ -278,7 +278,7 @@ public class GoalsTests
     [Test]
     public async Task Add_SamePathTwice_ReplacesGoal()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         var goal1 = new Goal { Name = "TestGoal", Path = "/TestGoal.goal", Description = "First" };
         var goal2 = new Goal { Name = "TestGoal", Path = "/TestGoal.goal", Description = "Second" };
         goals.Add(goal1);
@@ -292,7 +292,7 @@ public class GoalsTests
     [Test]
     public async Task Count_ReturnsCorrectCount()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         goals.Add(new Goal { Name = "Goal1", Path = "/Goal1.goal" });
         goals.Add(new Goal { Name = "Goal2", Path = "/Goal2.goal" });
         goals.Add(new Goal { Name = "Goal3", Path = "/Goal3.goal" });
@@ -303,7 +303,7 @@ public class GoalsTests
     [Test]
     public async Task Get_ExcludesSetupGoals()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         goals.Add(new Goal { Name = "SetupDb", Path = "/SetupDb.goal", IsSetup = true });
         goals.Add(new Goal { Name = "NormalGoal", Path = "/NormalGoal.goal", IsSetup = false });
 
@@ -393,7 +393,7 @@ public class GoalsTests
     [Test]
     public async Task GetByPrPathAsync_ReturnsNull_ForCachedSetupGoal()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         var setupGoal = new Goal { Name = "SetupDb", IsSetup = true, Path = "/SetupDb.goal" };
         goals.Add(setupGoal);
 
@@ -408,7 +408,7 @@ public class GoalsTests
     [Test]
     public async Task Add_KeysByPrPath_PreventsSameNameCollision()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         var goal1 = new Goal { Name = "Setup", IsSetup = true, Path = "/Setup.goal" };
         var goal2 = new Goal { Name = "Setup", IsSetup = true, Path = "/Setup/Setup.goal" };
 
@@ -422,7 +422,7 @@ public class GoalsTests
     [Test]
     public async Task Get_FindsGoalKeyedByPrPath()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         var goal = new Goal { Name = "Start", Path = "/Start.goal" };
         goals.Add(goal);
 
@@ -435,7 +435,7 @@ public class GoalsTests
     [Test]
     public async Task Get_FindsCorrectGoal_WhenMultipleSameNameDifferentPrPath()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         var goal1 = new Goal { Name = "Helper", Path = "/a/Helper.goal" };
         var goal2 = new Goal { Name = "Helper", Path = "/b/Helper.goal" };
         goals.Add(goal1);
@@ -450,7 +450,7 @@ public class GoalsTests
     [Test]
     public async Task Remove_ByName_WorksWhenKeyedByPrPath()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
         goals.Add(goal);
 
@@ -464,7 +464,7 @@ public class GoalsTests
     [Test]
     public async Task Remove_ByName_ClearsPathIndex()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
         goals.Add(goal);
 
@@ -476,7 +476,7 @@ public class GoalsTests
     [Test]
     public async Task Add_SamePrPath_ReplacesGoal()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         var goal1 = new Goal { Name = "Start", Path = "/Start.goal", Description = "First" };
         var goal2 = new Goal { Name = "Start", Path = "/Start.goal", Description = "Second" };
 
@@ -490,7 +490,7 @@ public class GoalsTests
     [Test]
     public async Task Add_ThrowsWhenNoPrPath()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         var goal = new Goal { Name = "TestGoal" };
 
         await Assert.That(() => goals.Add(goal)).ThrowsException();
@@ -499,7 +499,7 @@ public class GoalsTests
     [Test]
     public async Task Add_ThrowsWhenPathIsEmptyString()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         var goal = new Goal { Name = "TestGoal", Path = "" };
 
         await Assert.That(() => goals.Add(goal)).ThrowsException();
@@ -508,7 +508,7 @@ public class GoalsTests
     [Test]
     public async Task Names_ExcludesSetupGoals()
     {
-        var goals = new EngineGoals();
+        var goals = new global::app.goal.list.@this();
         goals.Add(new Goal { Name = "SetupDb", IsSetup = true, Path = "/SetupDb.goal" });
         goals.Add(new Goal { Name = "NormalGoal", IsSetup = false, Path = "/NormalGoal.goal" });
 

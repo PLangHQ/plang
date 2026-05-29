@@ -21,8 +21,8 @@ namespace app;
 public sealed partial class @this : IAsyncDisposable
 {
     private readonly CancellationTokenSource _shutdownCts = new();
-    private readonly AppModules _modules;
-    private readonly AppGoals _goals;
+    private readonly global::app.module.@this _modules;
+    private readonly global::app.goal.list.@this _goals;
     private bool _disposed;
 
     private actor.@this? _system;
@@ -129,19 +129,19 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Global event collection for the application.
     /// </summary>
-    public AppEvents Events { get; }
+    public global::app.@event.list.@this Events { get; }
 
     /// <summary>Singular accessor — see <see cref="Events"/>.</summary>
-    public AppEvents Event => Events;
+    public global::app.@event.list.@this Event => Events;
 
     /// <summary>
     /// Flat action registry. Discovers, registers, and resolves actions by module.action.
     /// Built-in actions from PLang assembly, external DLLs add via Discover().
     /// </summary>
-    public AppModules Modules => _modules;
+    public global::app.module.@this Modules => _modules;
 
     /// <summary>Singular accessor — see <see cref="Modules"/>.</summary>
-    public AppModules Module => _modules;
+    public global::app.module.@this Module => _modules;
 
     /// <summary>
     /// Type-keyed provider registry for pluggable module implementations.
@@ -160,10 +160,10 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// The loaded goals.
     /// </summary>
-    public AppGoals Goals => _goals;
+    public global::app.goal.list.@this Goals => _goals;
 
     /// <summary>Singular accessor — see <see cref="Goals"/>.</summary>
-    public AppGoals Goal => _goals;
+    public global::app.goal.list.@this Goal => _goals;
 
     /// <summary>
     /// The file system abstraction.
@@ -314,7 +314,7 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public callstack.@this CallStack { get; } = new();
 
-    public @this(string absolutePath, AppModules? modules = null,
+    public @this(string absolutePath, global::app.module.@this? modules = null,
         string? environment = null,
         bool autoWireConsoleChannels = true)
     {
@@ -325,7 +325,7 @@ public sealed partial class @this : IAsyncDisposable
         AbsolutePath = absolutePath;
         Environment = environment ?? "production";
         StartedAt = DateTime.UtcNow;
-        Events = new AppEvents();
+        Events = new global::app.@event.list.@this();
         Debug = new Debugging(this);
         Tester = new global::app.tester.@this(this);
         Builder = new global::app.module.builder.@this(this);
@@ -333,9 +333,9 @@ public sealed partial class @this : IAsyncDisposable
         Config = new config.@this();
         _settingsStore = new Lazy<global::app.module.settings.IStore>(CreateSettingsStore);
         Settings = new global::app.module.settings.@this(this);
-        _modules = modules ?? new AppModules();
+        _modules = modules ?? new global::app.module.@this();
         _modules.App = this;
-        _goals = new AppGoals { App = this };
+        _goals = new global::app.goal.list.@this { App = this };
 
         Errors = new global::app.error.list.@this(this);
 
