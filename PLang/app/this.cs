@@ -131,11 +131,17 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public AppEvents Events { get; }
 
+    /// <summary>Singular accessor — see <see cref="Events"/>.</summary>
+    public AppEvents Event => Events;
+
     /// <summary>
     /// Flat action registry. Discovers, registers, and resolves actions by module.action.
     /// Built-in actions from PLang assembly, external DLLs add via Discover().
     /// </summary>
     public AppModules Modules => _modules;
+
+    /// <summary>Singular accessor — see <see cref="Modules"/>.</summary>
+    public AppModules Module => _modules;
 
     /// <summary>
     /// Type-keyed provider registry for pluggable module implementations.
@@ -148,10 +154,16 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public variable.navigator.list.@this Navigators { get; } = new();
 
+    /// <summary>Singular accessor — see <see cref="Navigators"/>.</summary>
+    public variable.navigator.list.@this Navigator => Navigators;
+
     /// <summary>
     /// The loaded goals.
     /// </summary>
     public AppGoals Goals => _goals;
+
+    /// <summary>Singular accessor — see <see cref="Goals"/>.</summary>
+    public AppGoals Goal => _goals;
 
     /// <summary>
     /// The file system abstraction.
@@ -197,6 +209,9 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public global::app.error.list.@this Errors { get; }
 
+    /// <summary>Singular accessor — see <see cref="Errors"/>.</summary>
+    public global::app.error.list.@this Error => Errors;
+
     /// <summary>
     /// Test runner. Discovers and runs *.test.goal files with assertion tracking.
     /// </summary>
@@ -218,11 +233,17 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public type.list.@this Types { get; }
 
+    /// <summary>Singular accessor — see <see cref="Types"/>.</summary>
+    public type.list.@this Type => Types;
+
     /// <summary>
     /// File-format characteristics: extension → Kind, extension → MIME,
     /// Kind → compressibility. One per app.
     /// </summary>
     public format.list.@this Formats { get; } = new();
+
+    /// <summary>Singular accessor — see <see cref="Formats"/>.</summary>
+    public format.list.@this Format => Formats;
 
     /// <summary>
     /// System actor — the root of the cancellation hierarchy.

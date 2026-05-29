@@ -133,6 +133,26 @@ public sealed class @this : IAsyncDisposable
     public IEnumerable<string> Names
         => _modules.Keys;
 
+    // --- Stage 3 accessor surface ---
+
+    /// <summary>Index by module name. Throws on miss.</summary>
+    public IReadOnlyDictionary<string, Type> this[string moduleName]
+    {
+        get
+        {
+            if (!_modules.TryGetValue(moduleName, out var actions))
+                throw new KeyNotFoundException($"No module named '{moduleName}'.");
+            // Project the (Type type, ...) entry to just the Type for the consumer.
+            var projected = new Dictionary<string, Type>(actions.Count, StringComparer.OrdinalIgnoreCase);
+            foreach (var kvp in actions)
+                if (kvp.Value.Type != null) projected[kvp.Key] = kvp.Value.Type;
+            return projected;
+        }
+    }
+
+    /// <summary>Enumerate module names.</summary>
+    public IEnumerable<string> list => _modules.Keys;
+
     public IEnumerable<string> GetActions(string module)
         => _modules.TryGetValue(module, out var actions) ? actions.Keys : Enumerable.Empty<string>();
 

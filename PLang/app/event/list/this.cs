@@ -15,6 +15,14 @@ public sealed class @this
     /// </summary>
     public System.Action? OnChanged { get; set; }
 
+    // --- Stage 3 accessor surface ---
+
+    /// <summary>Enumerate registered bindings (snapshot — caller-safe for iteration).</summary>
+    public IReadOnlyList<EventBinding> list
+    {
+        get { lock (_lock) return _bindings.ToList(); }
+    }
+
     /// <summary>
     /// Registers an event binding.
     /// </summary>

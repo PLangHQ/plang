@@ -485,6 +485,11 @@ public partial class @this
     /// <summary>
     /// Gets a variable by name (supports dot notation path).
     /// </summary>
+    // --- Stage 3 accessor surface ---
+
+    /// <summary>Index by name. Returns the Data (NotFound shape when absent — Get is the canonical method).</summary>
+    public data.@this this[string name] => Get(name);
+
     public data.@this Get(string name)
     {
         if (string.IsNullOrEmpty(name))

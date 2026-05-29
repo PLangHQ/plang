@@ -139,6 +139,15 @@ public sealed class @this : IAsyncDisposable
 
     public bool Contains(string name) => _channels.ContainsKey(name);
 
+    // --- Stage 3 accessor surface ---
+
+    /// <summary>Index by name. Throws on miss — index-miss is a hard error.</summary>
+    public channel.@this this[string name]
+        => Get(name) ?? throw new KeyNotFoundException($"No channel named '{name}'.");
+
+    /// <summary>Enumerate registered channels.</summary>
+    public IEnumerable<channel.@this> list => _channels.Values;
+
     public IEnumerable<string> ChannelNames => _channels.Keys;
 
     /// <summary>All registered channels.</summary>

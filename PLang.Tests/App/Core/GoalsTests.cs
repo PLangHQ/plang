@@ -138,13 +138,12 @@ public class GoalsTests
     }
 
     [Test]
-    public async Task Indexer_NonexistentName_ReturnsNull()
+    public async Task Indexer_NonexistentName_ThrowsKeyNotFound()
     {
         var goals = new EngineGoals();
 
-        var result = goals["NonexistentGoal"];
-
-        await Assert.That(result).IsNull();
+        await Assert.That(() => { _ = goals["NonexistentGoal"]; return Task.CompletedTask; })
+            .Throws<KeyNotFoundException>();
     }
 
     [Test]

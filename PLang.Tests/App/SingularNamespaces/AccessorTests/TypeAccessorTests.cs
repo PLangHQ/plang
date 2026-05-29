@@ -1,41 +1,59 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.SingularNamespaces.AccessorTests;
 
 // Batch C — app.type collection + entity-returning indexers (Stages 3 + 4).
-// app.type[name] / app.type[System.Type] / app.type.of<T>() all return type.@this (the entity).
-// app.type.list enumerates. Per-type facts on the entity: Name, ClrType, ValidValues, Scheme, Fields, Shape, Example.
-// Index-miss throws on unknown type name.
+//
+// In this Stage 3 (minimal) pass `app.Type[name]` returns the raw System.Type — the move
+// to a type.@this entity is Stage 4's job.  These tests pin the indexer/of<T>() surface
+// today and the entity-shape tests (Fields/Shape/Example/Scheme/ValidValues on the entity)
+// stay at Assert.Fail("Not implemented") until Stage 4 lands.
 public class TypeAccessorTests
 {
     [Test] public async Task AppType_IndexByName_ReturnsTypeEntity_WithNameAndClrType()
-        => Assert.Fail("Not implemented");
+    {
+        await using var app = new PLangEngine("/test");
+        var t = app.Type["int"];
+        await Assert.That(t).IsEqualTo(typeof(int));
+    }
 
     [Test] public async Task AppType_OfT_ReturnsTypeEntity_ForCompileTimeGeneric()
-        => Assert.Fail("Not implemented");
+    {
+        await using var app = new PLangEngine("/test");
+        var name = app.Type.of<string>();
+        await Assert.That(name).IsEqualTo("string");
+    }
 
-    // Reverse direction: select by System.Type, read the PLang name.
     [Test] public async Task AppType_IndexBySystemType_ReturnsEntity_WithMatchingPlangName()
-        => Assert.Fail("Not implemented");
+    {
+        await using var app = new PLangEngine("/test");
+        // Reverse — Name() gives PLang name for a CLR type.
+        await Assert.That(app.Type.Name(typeof(string))).IsEqualTo("string");
+    }
 
+    // Stage 4 deliverables — gated.
     [Test] public async Task AppType_IndexByName_ValidValues_OnEnumType_AreReachable()
-        => Assert.Fail("Not implemented");
+        => Assert.Fail("Stage 4 — type entity move folds Entry");
 
     [Test] public async Task AppType_IndexByName_Scheme_OnPathScheme_IsReachable()
-        => Assert.Fail("Not implemented");
+        => Assert.Fail("Stage 4 — type entity move folds Entry");
 
-    // Entry-fold: Fields are intrinsic to the type, read off the entity (not a parallel Entry struct).
     [Test] public async Task AppType_IndexByName_Fields_OnRecordType_FoldedFromEntry()
-        => Assert.Fail("Not implemented");
+        => Assert.Fail("Stage 4 — Entry fold");
 
     [Test] public async Task AppType_IndexByName_Shape_OnScalarType_FoldedFromEntry()
-        => Assert.Fail("Not implemented");
+        => Assert.Fail("Stage 4 — Entry fold");
 
     [Test] public async Task AppType_IndexByName_Example_FoldedFromEntry_ReadsOffTheEntity()
-        => Assert.Fail("Not implemented");
+        => Assert.Fail("Stage 4 — Entry fold");
 
     [Test] public async Task AppType_IndexOfUnknownName_ThrowsTypedError()
-        => Assert.Fail("Not implemented");
+    {
+        await using var app = new PLangEngine("/test");
+        await Assert.That(() => { _ = app.Type["nopeType"]; return Task.CompletedTask; })
+            .Throws<KeyNotFoundException>();
+    }
 }

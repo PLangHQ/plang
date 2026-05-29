@@ -152,6 +152,15 @@ public sealed partial class @this
     /// <summary>Alias for <see cref="Get(string)"/> — preserves existing <c>app.type.Clr</c> caller habit.</summary>
     public System.Type? Clr(string plangName) => Get(plangName);
 
+    // --- Stage 3 accessor surface ---
+
+    /// <summary>Index by PLang type name. Throws on miss — index-miss is a hard error.</summary>
+    public System.Type this[string typeName]
+        => Get(typeName) ?? throw new KeyNotFoundException($"No PLang type registered under name '{typeName}'.");
+
+    /// <summary>Compile-time generic lookup — returns the PLang name for T.</summary>
+    public string of<T>() => GetTypeName(typeof(T));
+
     private System.Type? Get(string typeName, int depth)
     {
         if (string.IsNullOrWhiteSpace(typeName)) return null;

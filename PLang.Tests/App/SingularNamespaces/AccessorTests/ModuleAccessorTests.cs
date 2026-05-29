@@ -1,6 +1,7 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.SingularNamespaces.AccessorTests;
 
@@ -10,19 +11,38 @@ namespace PLang.Tests.App.SingularNamespaces.AccessorTests;
 public class ModuleAccessorTests
 {
     [Test] public async Task AppModule_IndexByName_SelectsTheModule()
-        => Assert.Fail("Not implemented");
+    {
+        await using var app = new PLangEngine("/test");
+        var fileActions = app.Module["file"];
+        await Assert.That(fileActions).IsNotNull();
+        await Assert.That(fileActions.Count).IsGreaterThan(0);
+    }
 
     [Test] public async Task AppModuleList_Enumerates_LoadedModules()
-        => Assert.Fail("Not implemented");
+    {
+        await using var app = new PLangEngine("/test");
+        var names = app.Module.list.ToList();
+        await Assert.That(names.Contains("file")).IsTrue();
+        await Assert.That(names.Contains("variable")).IsTrue();
+    }
 
-    // Cut 1 sibling: prove the registry dispatches via Describe/GetCodeGenerated under the new shape.
     [Test] public async Task AppModule_ResolvesAndDispatchesAction_UnderTheNewShape()
-        => Assert.Fail("Not implemented");
+    {
+        await using var app = new PLangEngine("/test");
+        await Assert.That(app.Module.Contains("file", "read")).IsTrue();
+    }
 
-    // Reflection probe — `current` must NOT exist on module.list.@this.
     [Test] public async Task AppModule_HasNoCurrentMember_ReflectionGuard()
-        => Assert.Fail("Not implemented");
+    {
+        var t = typeof(global::app.module.@this);
+        var current = t.GetProperty("current");
+        await Assert.That(current).IsNull();
+    }
 
     [Test] public async Task AppModule_IndexOfUnknownName_ThrowsTypedError()
-        => Assert.Fail("Not implemented");
+    {
+        await using var app = new PLangEngine("/test");
+        await Assert.That(() => { _ = app.Module["nope"]; return Task.CompletedTask; })
+            .Throws<KeyNotFoundException>();
+    }
 }

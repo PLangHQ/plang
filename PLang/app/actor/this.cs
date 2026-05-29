@@ -40,6 +40,9 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     public AppChannels Channels => _channels;
 
+    /// <summary>Singular accessor — see <see cref="Channels"/>.</summary>
+    public AppChannels Channel => _channels;
+
     /// <summary>
     /// Back-reference to the app.
     /// </summary>

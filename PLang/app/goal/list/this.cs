@@ -224,6 +224,39 @@ public sealed class @this
     /// </summary>
     public bool Contains(string name) => Get(name) != null;
 
+    // --- Stage 3 accessor surface ---
+
+    /// <summary>
+    /// Index by name or path. Throws KeyNotFoundException on miss — index-miss
+    /// is a hard error (`app.goal["nope"]` is a bug at the call site).
+    /// </summary>
+    public goal.@this this[string nameOrPath]
+        => Get(nameOrPath) ?? throw new KeyNotFoundException($"No goal named '{nameOrPath}'.");
+
+    /// <summary>
+    /// Index by path instance. Same hard-miss semantics.
+    /// </summary>
+    public goal.@this this[global::app.type.path.@this path]
+    {
+        get
+        {
+            if (_byPath.TryGetValue(path, out var byPath) && !byPath.IsSetup) return byPath;
+            if (_goals.TryGetValue(path, out var byPr) && !byPr.IsSetup) return byPr;
+            throw new KeyNotFoundException($"No goal at path '{path}'.");
+        }
+    }
+
+    /// <summary>
+    /// Enumerate the loaded goals (excludes setup goals — matches Get's filter).
+    /// </summary>
+    public IEnumerable<goal.@this> list => _goals.Values.Where(g => !g.IsSetup);
+
+    /// <summary>
+    /// The goal currently executing — reads CallStack.Current.Action.Step.Goal.
+    /// Null at rest (no execution in flight).
+    /// </summary>
+    public goal.@this? current => App?.CallStack?.Current?.Action?.Step?.Goal;
+
     /// <summary>
     /// Removes a goal.
     /// </summary>
@@ -284,11 +317,6 @@ public sealed class @this
     /// Gets event goals only.
     /// </summary>
     public IEnumerable<goal.@this> Events => _goals.Values.Where(g => g.IsEvent);
-
-    /// <summary>
-    /// Indexer for getting goals by name.
-    /// </summary>
-    public goal.@this? this[string name] => Get(name);
 
     /// <summary>
     /// Gets a goal by its .pr file path. Loads from disk if not cached.

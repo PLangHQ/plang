@@ -21,6 +21,11 @@ public sealed class @this
     /// Get the navigator for a type. Returns the registered navigator or the CLR reflection fallback.
     /// Checks the type hierarchy — if no exact match, checks base types and interfaces.
     /// </summary>
+    // --- Stage 3 accessor surface ---
+
+    /// <summary>Index by type. Falls through to <see cref="Get(System.Type)"/>'s hierarchy walk.</summary>
+    public INavigator this[System.Type type] => Get(type);
+
     public INavigator Get(System.Type type)
     {
         if (_navigators.TryGetValue(type, out var nav))

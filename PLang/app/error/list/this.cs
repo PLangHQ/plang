@@ -34,6 +34,12 @@ public sealed partial class @this
     /// </summary>
     public IError? Error => _current.Value;
 
+    /// <summary>Count of errors in the trail.</summary>
+    public int Count => Trail.Count;
+
+    /// <summary>Enumerate the trail.</summary>
+    public IEnumerable<IError> list => Trail;
+
     /// <summary>
     /// Run-wide trail of every error pushed into scope. Survives Pop.
     /// See <see cref="trail.@this"/> for thread-safety + lifecycle.

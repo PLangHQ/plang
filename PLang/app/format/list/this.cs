@@ -360,6 +360,12 @@ public sealed class @this
         return _extensionToKind.TryGetValue(ext, out var kind) ? kind : null;
     }
 
+    // --- Stage 3 accessor surface ---
+
+    /// <summary>Index by extension. Throws on miss.</summary>
+    public string this[string extension]
+        => Kind(extension) ?? throw new KeyNotFoundException($"No format kind known for extension '{extension}'.");
+
     /// <summary>
     /// File extension → MIME content type (e.g. ".jpg" → "image/jpeg").
     /// Returns "application/octet-stream" for unknown or null extensions.
