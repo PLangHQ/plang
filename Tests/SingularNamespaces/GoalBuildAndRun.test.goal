@@ -1,0 +1,5 @@
+TestGoalBuildAndRunAfterRename
+/ Cut 1 surface in PLang. Builds and runs after the singular-namespace rename — proves the
+/ generator's string literals and emitted templates ride the new namespaces (a miss surfaces
+/ here as "Action '<module>.<action>' not found", not in the generator project).
+- throw "not implemented"

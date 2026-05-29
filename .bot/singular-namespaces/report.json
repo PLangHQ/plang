@@ -6,46 +6,74 @@
       "bot": "architect",
       "timestamp_start": "2026-05-29T14:39:35Z",
       "timestamp_end": "2026-05-29T14:46:23Z",
-      "intent": "Carve the singular-namespaces plan: rename app/** to singular+lowercase AND reshape app.X into collection-node accessors that kill the App* OBP wrappers, make app/context non-null, and promote type.@this to an entity owned by data.Type — all in one branch.",
+      "intent": "Carve the singular-namespaces plan: rename app/** to singular+lowercase AND reshape app.X into collection-node accessors that kill the App* OBP wrappers, make app/context non-null, and promote type.@this to an entity owned by data.Type \u2014 all in one branch.",
       "before": {
         "assumptions": "Started as a folder/namespace rename (brief scope: PLang/app/** only, no logic). Design conversation with Ingi expanded it: the four App* wrapper aliases (AppGoals/AppChannels/AppEvents/AppModules) are OBP violations, so the rename must also reshape app.X into a collection node with [name]/.list/.current selectors; data owns its type; app and context are non-null invariants; type.@this should become a real entity behind data.Type. Ingi chose one branch for all four pieces.",
-        "risk": "Large blast radius. Rename touches ~190 files (mostly alias-shielded). Accessor reshape touches ~286 registry call sites (Types 80, Variables 63, Channels 37 are the heavy ones). Source generator has STRING-LITERAL namespace refs and a tracking-name constant (prefix=\"app.modules.\") the compiler won't catch — a miss there breaks generated-code compilation at consumer sites, not in the generator. Making app/context non-null will surface real un-stamped-Data reads as NREs (intended: they are the bugs the ?. hid). type.@this promotion reshapes the builder schema path."
+        "risk": "Large blast radius. Rename touches ~190 files (mostly alias-shielded). Accessor reshape touches ~286 registry call sites (Types 80, Variables 63, Channels 37 are the heavy ones). Source generator has STRING-LITERAL namespace refs and a tracking-name constant (prefix=\"app.modules.\") the compiler won't catch \u2014 a miss there breaks generated-code compilation at consumer sites, not in the generator. Making app/context non-null will surface real un-stamped-Data reads as NREs (intended: they are the bugs the ?. hid). type.@this promotion reshapes the builder schema path."
       },
       "plan": ".bot/singular-namespaces/architect/plan.md",
       "actions": [
         {
-          "paths": [".bot/singular-namespaces/user/brief.md", "PLang/app", "PLang/app/GlobalUsings.cs", "PLang/app/this.cs", "PLang.Generators"],
+          "paths": [
+            ".bot/singular-namespaces/user/brief.md",
+            "PLang/app",
+            "PLang/app/GlobalUsings.cs",
+            "PLang/app/this.cs",
+            "PLang.Generators"
+          ],
           "type": "review",
           "category": "doc",
           "confidence": "high",
-          "context": "Pulled origin/singular-namespaces, read the brief, merged origin/runtime2 in (clean; touched channels/actor/this.cs only — no plan impact). Verified the brief's rename tables and the App* wrapper claims against the live tree. Found the generator does NOT auto-wire app nav properties (hand-written in app/this.cs), and the App* names are referenced in only 3-4 files each (alias-shielded)."
+          "context": "Pulled origin/singular-namespaces, read the brief, merged origin/runtime2 in (clean; touched channels/actor/this.cs only \u2014 no plan impact). Verified the brief's rename tables and the App* wrapper claims against the live tree. Found the generator does NOT auto-wire app nav properties (hand-written in app/this.cs), and the App* names are referenced in only 3-4 files each (alias-shielded)."
         },
         {
-          "paths": ["PLang/app/goals/this.cs", "PLang/app/types/this.cs", "PLang/app/channels/this.cs", "PLang/app/channels/channel/this.cs", "PLang/app/events/this.cs", "PLang/app/callstack/this.cs", "PLang/app/data/this.cs"],
+          "paths": [
+            "PLang/app/goals/this.cs",
+            "PLang/app/types/this.cs",
+            "PLang/app/channels/this.cs",
+            "PLang/app/channels/channel/this.cs",
+            "PLang/app/events/this.cs",
+            "PLang/app/callstack/this.cs",
+            "PLang/app/data/this.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "Deep design walk with Ingi across type, channel, goal. Settled: app.X = collection node; .current only where execution has a current (callstack); registry=selection+lifecycle, behavior on element; data owns its type; app+context non-null. Resolved the 'where does the list live' knot: bare app.goal can't be the current without orphaning the collection — current rides as .current. _goals/_byPath are NOT duplicate (PrPath vs Path keys) — kept."
+          "context": "Deep design walk with Ingi across type, channel, goal. Settled: app.X = collection node; .current only where execution has a current (callstack); registry=selection+lifecycle, behavior on element; data owns its type; app+context non-null. Resolved the 'where does the list live' knot: bare app.goal can't be the current without orphaning the collection \u2014 current rides as .current. _goals/_byPath are NOT duplicate (PrPath vs Path keys) \u2014 kept."
         },
         {
-          "paths": [".bot/singular-namespaces/architect/plan.md", ".bot/singular-namespaces/architect/plan/accessor-model.md", ".bot/singular-namespaces/architect/plan/rename-map.md", ".bot/singular-namespaces/architect/plan/nullability.md", ".bot/singular-namespaces/architect/plan/type-entity.md"],
+          "paths": [
+            ".bot/singular-namespaces/architect/plan.md",
+            ".bot/singular-namespaces/architect/plan/accessor-model.md",
+            ".bot/singular-namespaces/architect/plan/rename-map.md",
+            ".bot/singular-namespaces/architect/plan/nullability.md",
+            ".bot/singular-namespaces/architect/plan/type-entity.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
           "context": "Wrote the spine + four deep-dive topic files. Inventory gathered via four parallel read-only scans (rename map, ~286 accessor call sites by subsystem, ~39 nullability sites + 3 nullable App back-refs + 9 nullable Context fields, generator strings + test mirrors + doc refs). Corrected two brief errors (PascalCase infra folders stay; serializers/channel-events collapse to singular)."
         },
         {
-          "paths": [".bot/singular-namespaces/architect/stage-1-rename.md", ".bot/singular-namespaces/architect/stage-2-nullability.md", ".bot/singular-namespaces/architect/stage-3-accessor.md", ".bot/singular-namespaces/architect/stage-4-type-entity.md", ".bot/singular-namespaces/architect/plan/test-strategy.md", ".bot/singular-namespaces/architect/plan/test-coverage.md", ".bot/singular-namespaces/architect/summary.md"],
+          "paths": [
+            ".bot/singular-namespaces/architect/stage-1-rename.md",
+            ".bot/singular-namespaces/architect/stage-2-nullability.md",
+            ".bot/singular-namespaces/architect/stage-3-accessor.md",
+            ".bot/singular-namespaces/architect/stage-4-type-entity.md",
+            ".bot/singular-namespaces/architect/plan/test-strategy.md",
+            ".bot/singular-namespaces/architect/plan/test-coverage.md",
+            ".bot/singular-namespaces/architect/summary.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Carved four stages in strict dependency order (1 rename → 2 non-null → 3 accessor → 4 type-entity), build green between each. Wrote test handoff: strategy (regression floor + 4 integration cuts) + coverage matrix/failure matrix/new-surfaces. Stage 4 (type-entity, builder schema reshape) flagged as the integration risk and natural cut point."
+          "context": "Carved four stages in strict dependency order (1 rename \u2192 2 non-null \u2192 3 accessor \u2192 4 type-entity), build green between each. Wrote test handoff: strategy (regression floor + 4 integration cuts) + coverage matrix/failure matrix/new-surfaces. Stage 4 (type-entity, builder schema reshape) flagged as the integration risk and natural cut point."
         }
       ],
       "after": {
         "status": "complete",
-        "health": "green — plan carved, no code changed",
-        "notes": "Plan is design-complete and ready for test-designer then coder. Open item for coder+test-designer: the index-miss policy setting (name + default). Stage 4 is the integration risk (builder LLM schema must be golden-pinned). The generator string literals are the highest-risk mechanical item in stage 1 — verify by clean rebuild. CLAUDE.md OBP-block token updates filed for the docs bot (do not edit CLAUDE.md directly)."
+        "health": "green \u2014 plan carved, no code changed",
+        "notes": "Plan is design-complete and ready for test-designer then coder. Open item for coder+test-designer: the index-miss policy setting (name + default). Stage 4 is the integration risk (builder LLM schema must be golden-pinned). The generator string literals are the highest-risk mechanical item in stage 1 \u2014 verify by clean rebuild. CLAUDE.md OBP-block token updates filed for the docs bot (do not edit CLAUDE.md directly)."
       }
     },
     {
@@ -56,19 +84,33 @@
       "intent": "Address Ingi's review comments on the plan, then recreate the stage files and test-handoff files with the review changes baked in.",
       "before": {
         "assumptions": "Ingi reviewed the five plan files via the review server and left comments; he then deleted the stage/test files for a focused design review and, once comments were addressed, asked to recreate them.",
-        "risk": "Stage/test files must stay consistent with the revised design (module not demoted; ctx→context + extra nullable back-refs; type=PLang System.Type with data.Type.ClrType). Any drift between the deep dives and the stage files would mislead the coder."
+        "risk": "Stage/test files must stay consistent with the revised design (module not demoted; ctx\u2192context + extra nullable back-refs; type=PLang System.Type with data.Type.ClrType). Any drift between the deep dives and the stage files would mislead the coder."
       },
       "plan": ".bot/singular-namespaces/architect/plan.md",
       "actions": [
         {
-          "paths": [".bot/singular-namespaces/architect/plan/accessor-model.md", ".bot/singular-namespaces/architect/plan/nullability.md", ".bot/singular-namespaces/architect/plan/type-entity.md", ".bot/singular-namespaces/architect/plan/rename-map.md", ".bot/singular-namespaces/architect/plan.md", ".bot/singular-namespaces/architect/claude-md-proposals.md"],
+          "paths": [
+            ".bot/singular-namespaces/architect/plan/accessor-model.md",
+            ".bot/singular-namespaces/architect/plan/nullability.md",
+            ".bot/singular-namespaces/architect/plan/type-entity.md",
+            ".bot/singular-namespaces/architect/plan/rename-map.md",
+            ".bot/singular-namespaces/architect/plan.md",
+            ".bot/singular-namespaces/architect/claude-md-proposals.md"
+          ],
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Addressed 5 review comments (all agreed): module keeps this.cs as a no-.current service at app.module (reversed my demote); ctx→context everywhere + swept for other over-nullable back-refs (5 structural flip, 2 init-only held); type.@this = PLang's System.Type; data.Type.ClrType (CLR type lives on the entity). Replied + resolved each via the review-server API."
+          "context": "Addressed 5 review comments (all agreed): module keeps this.cs as a no-.current service at app.module (reversed my demote); ctx\u2192context everywhere + swept for other over-nullable back-refs (5 structural flip, 2 init-only held); type.@this = PLang's System.Type; data.Type.ClrType (CLR type lives on the entity). Replied + resolved each via the review-server API."
         },
         {
-          "paths": [".bot/singular-namespaces/architect/stage-1-rename.md", ".bot/singular-namespaces/architect/stage-2-nullability.md", ".bot/singular-namespaces/architect/stage-3-accessor.md", ".bot/singular-namespaces/architect/stage-4-type-entity.md", ".bot/singular-namespaces/architect/plan/test-strategy.md", ".bot/singular-namespaces/architect/plan/test-coverage.md"],
+          "paths": [
+            ".bot/singular-namespaces/architect/stage-1-rename.md",
+            ".bot/singular-namespaces/architect/stage-2-nullability.md",
+            ".bot/singular-namespaces/architect/stage-3-accessor.md",
+            ".bot/singular-namespaces/architect/stage-4-type-entity.md",
+            ".bot/singular-namespaces/architect/plan/test-strategy.md",
+            ".bot/singular-namespaces/architect/plan/test-coverage.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
@@ -77,8 +119,95 @@
       ],
       "after": {
         "status": "complete",
-        "health": "green — plan + stages + tests consistent, no code changed",
-        "notes": "Plan is complete and ready for test-designer. All review comments resolved. Stage files and test handoff reflect the revised design (module not demoted, ctx→context, type entity = PLang System.Type with data.Type.ClrType)."
+        "health": "green \u2014 plan + stages + tests consistent, no code changed",
+        "notes": "Plan is complete and ready for test-designer. All review comments resolved. Stage files and test handoff reflect the revised design (module not demoted, ctx\u2192context, type entity = PLang System.Type with data.Type.ClrType)."
+      }
+    },
+    {
+      "id": "cc01e972-0079-4da8-b901-a2bdfa1709b8",
+      "bot": "test-designer",
+      "timestamp_start": "2026-05-29T16:00:00Z",
+      "timestamp_end": "2026-05-29T16:30:00Z",
+      "intent": "Translate architect's 4-stage singular-namespaces plan into test contracts: C# TUnit + PLang .test.goal signatures with Assert.Fail / throw 'not implemented' bodies covering accessor reshape, non-null invariant, type entity move, channel I/O relocation, index-miss errors, and rename integration.",
+      "before": {
+        "assumptions": "Architect plan complete and consistent (plan.md + 4 stage files + 4 deep dives + test-strategy + test-coverage). plang-types already shipped the type entity at app.data.type with .ClrType, so stage 4 is primarily a move+fold (regression-pinned). Existing C# tests use TUnit Assert.That fluent. PLang test infrastructure under Tests/ with .test.goal naming.",
+        "risk": "Coverage gaps if I only mirror the architect's matrix without thinking independently \u2014 per memory rule, I should go slow with new areas. The accessor surface has many small selectors; risk of low-value tests that just exercise indexers. Real risk lies in: index-miss negative tests across all collections, channel I/O after registry switch removal, non-null surfacing un-stamped data bugs, builder schema golden parity."
+      },
+      "plan": ".bot/singular-namespaces/test-designer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/singular-namespaces/architect/plan.md",
+            ".bot/singular-namespaces/architect/plan/test-strategy.md",
+            ".bot/singular-namespaces/architect/plan/test-coverage.md",
+            ".bot/singular-namespaces/architect/plan/accessor-model.md",
+            ".bot/singular-namespaces/architect/plan/nullability.md",
+            ".bot/singular-namespaces/architect/plan/type-entity.md",
+            ".bot/singular-namespaces/architect/stage-1-rename.md",
+            ".bot/singular-namespaces/architect/stage-2-nullability.md",
+            ".bot/singular-namespaces/architect/stage-3-accessor.md",
+            ".bot/singular-namespaces/architect/stage-4-type-entity.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Read the architect's full plan: spine + 4 deep dives + 4 stage files + 2 test-handoff files. Surveyed existing test directories (PLang.Tests/App/** and Tests/**) \u2014 saw TUnit `[Test]` + `Assert.That(...)` fluent + `PLangEngine = global::app.@this` alias as the established style. Confirmed coverage matrix has 17 accessor rows + 6 nullability + 7 type-entity + 4 rename + 6 failure modes + 4 integration cuts."
+        },
+        {
+          "paths": [
+            ".bot/singular-namespaces/test-designer/v1/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote the test-designer plan. 8 batches (~52 C# + 5 PLang + 1 schema golden). Layer mapping: C# pins internal @this surface, PLang pins developer-facing observable behavior, integration cut for builder schema. Flagged 4 open items for Ingi: index-miss exception type, app.module.current absence guard, golden baseline location, goal-registry-no-IO sibling test."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/SingularNamespaces/AccessorTests/GoalAccessorTests.cs",
+            "PLang.Tests/App/SingularNamespaces/AccessorTests/ChannelAccessorTests.cs",
+            "PLang.Tests/App/SingularNamespaces/AccessorTests/TypeAccessorTests.cs",
+            "PLang.Tests/App/SingularNamespaces/AccessorTests/ModuleAccessorTests.cs",
+            "PLang.Tests/App/SingularNamespaces/AccessorTests/OtherAccessorsTests.cs",
+            "PLang.Tests/App/SingularNamespaces/NullabilityTests/NonNullInvariantTests.cs",
+            "PLang.Tests/App/SingularNamespaces/TypeEntityTests/TypeEntityHomeTests.cs",
+            "PLang.Tests/App/SingularNamespaces/BuilderSchemaTests/BuilderSchemaGoldenTests.cs",
+            "PLang.Tests/App/SingularNamespaces/RenameIntegrationTests/BuildAndRunGoalTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "52 C# TUnit tests across 9 files. All bodies are Assert.Fail('Not implemented'); names + comments are the spec. Covers: app.goal/channel/type/module/event/format/variable/error/navigator accessors; index-miss negatives across goal/channel/type/module; non-null app/context invariant + un-stamped data.Type throws + static fallback removed + structural back-refs + app.Parent stays nullable; type entity at type.@this with folded Entry fields + data/Converter.cs deleted; builder schema golden (integration cut 3); rename build+run end-to-end (integration cut 1). Open items resolved with judgment: index-miss exception left as Throws<Exception> for coder to pin; module.current absence as reflection probe; golden baseline inline."
+        },
+        {
+          "paths": [
+            "Tests/SingularNamespaces/GoalBuildAndRun.test.goal",
+            "Tests/SingularNamespaces/SubGoalCallResolves.test.goal",
+            "Tests/SingularNamespaces/ChannelWriteThroughAccessor.test.goal",
+            "Tests/SingularNamespaces/ChannelIndexMissThrows.test.goal",
+            "Tests/SingularNamespaces/DataTypeReadsEntity.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "5 PLang .test.goal files for developer-facing observable surface. One goal per file (memory rule: builder overwrites multi-goal files). Bodies = `- throw 'not implemented'`; second-line comment is the spec. Covers cuts 1+2+4 surface from PLang author perspective."
+        },
+        {
+          "paths": [
+            ".bot/singular-namespaces/test-designer/v1/test-plan.md",
+            ".bot/singular-namespaces/test-designer/v1/verdict.json",
+            ".bot/singular-namespaces/test-designer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Test-plan documents files written + coverage mapping + open-item resolutions + coder notes. Verdict pass:true. Summary written per character convention."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green \u2014 test contract complete, ready for coder",
+        "notes": "52 C# tests + 5 PLang test goals + 1 builder schema golden contract. All bodies are Assert.Fail / throw 'not implemented'. Coder owns: pinning index-miss exception type, the builder schema baseline (inline or extend existing Tests/Types/ golden), test implementations stage-by-stage following architect's strict dependency order (1\u21922\u21923\u21924)."
       }
     }
   ]

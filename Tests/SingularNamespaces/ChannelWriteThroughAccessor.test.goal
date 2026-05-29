@@ -1,0 +1,5 @@
+TestChannelWriteThroughNewAccessor
+/ Cut 2 surface in PLang. A PLang `write to %channelName%` step lands on the new
+/ actor.channel[name].Write(data) path — the registry no longer holds WriteText/WriteAsync,
+/ and the type-switch on channel.stream.@this moved onto the element as a virtual.
+- throw "not implemented"

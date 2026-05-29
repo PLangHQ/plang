@@ -1,0 +1,5 @@
+TestSubGoalCallResolvesAfterRename
+/ Cut 1 sibling: a goal.call from one goal to another resolves through app.goal["name"]
+/ after the accessor reshape (Stage 3). Proves the call-site migration on the goals
+/ subsystem — about 9 sites in the architect scan — landed cleanly.
+- throw "not implemented"
