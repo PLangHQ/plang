@@ -1,0 +1,52 @@
+{
+  "branch": "singular-namespaces",
+  "sessions": [
+    {
+      "id": "a4a12396-dbba-47d8-8c8d-1c7c559a6813",
+      "bot": "architect",
+      "timestamp_start": "2026-05-29T14:39:35Z",
+      "timestamp_end": "2026-05-29T14:46:23Z",
+      "intent": "Carve the singular-namespaces plan: rename app/** to singular+lowercase AND reshape app.X into collection-node accessors that kill the App* OBP wrappers, make app/context non-null, and promote type.@this to an entity owned by data.Type — all in one branch.",
+      "before": {
+        "assumptions": "Started as a folder/namespace rename (brief scope: PLang/app/** only, no logic). Design conversation with Ingi expanded it: the four App* wrapper aliases (AppGoals/AppChannels/AppEvents/AppModules) are OBP violations, so the rename must also reshape app.X into a collection node with [name]/.list/.current selectors; data owns its type; app and context are non-null invariants; type.@this should become a real entity behind data.Type. Ingi chose one branch for all four pieces.",
+        "risk": "Large blast radius. Rename touches ~190 files (mostly alias-shielded). Accessor reshape touches ~286 registry call sites (Types 80, Variables 63, Channels 37 are the heavy ones). Source generator has STRING-LITERAL namespace refs and a tracking-name constant (prefix=\"app.modules.\") the compiler won't catch — a miss there breaks generated-code compilation at consumer sites, not in the generator. Making app/context non-null will surface real un-stamped-Data reads as NREs (intended: they are the bugs the ?. hid). type.@this promotion reshapes the builder schema path."
+      },
+      "plan": ".bot/singular-namespaces/architect/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/singular-namespaces/user/brief.md", "PLang/app", "PLang/app/GlobalUsings.cs", "PLang/app/this.cs", "PLang.Generators"],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Pulled origin/singular-namespaces, read the brief, merged origin/runtime2 in (clean; touched channels/actor/this.cs only — no plan impact). Verified the brief's rename tables and the App* wrapper claims against the live tree. Found the generator does NOT auto-wire app nav properties (hand-written in app/this.cs), and the App* names are referenced in only 3-4 files each (alias-shielded)."
+        },
+        {
+          "paths": ["PLang/app/goals/this.cs", "PLang/app/types/this.cs", "PLang/app/channels/this.cs", "PLang/app/channels/channel/this.cs", "PLang/app/events/this.cs", "PLang/app/callstack/this.cs", "PLang/app/data/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Deep design walk with Ingi across type, channel, goal. Settled: app.X = collection node; .current only where execution has a current (callstack); registry=selection+lifecycle, behavior on element; data owns its type; app+context non-null. Resolved the 'where does the list live' knot: bare app.goal can't be the current without orphaning the collection — current rides as .current. _goals/_byPath are NOT duplicate (PrPath vs Path keys) — kept."
+        },
+        {
+          "paths": [".bot/singular-namespaces/architect/plan.md", ".bot/singular-namespaces/architect/plan/accessor-model.md", ".bot/singular-namespaces/architect/plan/rename-map.md", ".bot/singular-namespaces/architect/plan/nullability.md", ".bot/singular-namespaces/architect/plan/type-entity.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote the spine + four deep-dive topic files. Inventory gathered via four parallel read-only scans (rename map, ~286 accessor call sites by subsystem, ~39 nullability sites + 3 nullable App back-refs + 9 nullable Context fields, generator strings + test mirrors + doc refs). Corrected two brief errors (PascalCase infra folders stay; serializers/channel-events collapse to singular)."
+        },
+        {
+          "paths": [".bot/singular-namespaces/architect/stage-1-rename.md", ".bot/singular-namespaces/architect/stage-2-nullability.md", ".bot/singular-namespaces/architect/stage-3-accessor.md", ".bot/singular-namespaces/architect/stage-4-type-entity.md", ".bot/singular-namespaces/architect/plan/test-strategy.md", ".bot/singular-namespaces/architect/plan/test-coverage.md", ".bot/singular-namespaces/architect/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Carved four stages in strict dependency order (1 rename → 2 non-null → 3 accessor → 4 type-entity), build green between each. Wrote test handoff: strategy (regression floor + 4 integration cuts) + coverage matrix/failure matrix/new-surfaces. Stage 4 (type-entity, builder schema reshape) flagged as the integration risk and natural cut point."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green — plan carved, no code changed",
+        "notes": "Plan is design-complete and ready for test-designer then coder. Open item for coder+test-designer: the index-miss policy setting (name + default). Stage 4 is the integration risk (builder LLM schema must be golden-pinned). The generator string literals are the highest-risk mechanical item in stage 1 — verify by clean rebuild. CLAUDE.md OBP-block token updates filed for the docs bot (do not edit CLAUDE.md directly)."
+      }
+    }
+  ]
+}
