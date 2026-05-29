@@ -73,11 +73,15 @@ await actor.channel["output"].Write(someData);
 public goal.@this? current => App.CallStack.Current?.Action?.Step?.Goal;
 ```
 
-`current` can be null when nothing is executing — that is correct (there *is* no current goal at rest). This is the one place a null is legitimate on the accessor; selection and enumeration are not null. (`app.goal["Start"]` is null until Start.goal loads — that's a miss, governed by the policy below.)
+`current` can be null when nothing is executing — that is correct (there *is* no current goal at rest). This is the one place a null is legitimate on the accessor; selection and enumeration are not null. (`app.goal["Start"]` before Start.goal is loaded is an index-miss → it throws, per the policy below. A goal you haven't selected is absent, not null.)
 
-## Index-miss is a defined policy
+## Index-miss is a hard error (Ingi)
 
-`app.X["nope"]` must not silently noop and must not hard-throw from the indexer. The miss behavior (error / noop / create-on-demand) is a setting with a chosen default. Mechanically: the indexer returns the element, so "miss = error" surfaces through the returned element's `Write`/`Read`/`Run` returning a typed `data.Fail` (an indexer can't return `data`). The coder decides the concrete carrier with test-designer; the contract is: **miss behavior is configurable and defaulted, never implicit.**
+`app.X["nope"]` **throws a typed error** — uniform across every collection (goal, channel, type, …). No setting, no silent noop, no null-and-hope, no create-on-demand. Selecting a name that isn't registered is a bug at the call site, and it surfaces there immediately.
+
+This is the simplest contract and the most consistent: the indexer's job is selection, and selecting something absent is a failure, not a value. (Distinguish from `app.goal.current`, which is *legitimately* null at rest — there is no current goal when nothing executes. That null is a real state; an index-miss is not.)
+
+Mechanically the indexer can throw directly — it returns the element, so there's no `data.Fail` carrier needed. The coder picks the exact exception/typed-error shape with test-designer; the contract is: **index-miss is always an error, never implicit.** The earlier "configurable policy with a default" framing is dropped.
 
 ## Module — a service like the rest (not an exception)
 

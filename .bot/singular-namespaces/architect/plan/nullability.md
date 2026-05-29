@@ -4,6 +4,18 @@ The invariant: `app.@this` and `actor.context.@this` are non-null at runtime. Ev
 
 Doing this surfaces real bugs. Some `data` is read for its `.Type`/`.Kind` before the pipeline stamped its context; today that silently takes the static fallback branch, after it throws. That throw is the bug, now visible at its site. Expect a handful — that is the work, and it is good work.
 
+## Post-merge findings (plang-types)
+
+The merge confirmed three things that make this stage *easier* than the original draft assumed:
+
+- **`module.@this` always has an App** (Ingi). So the `App?.Types.GetTypeName(...) ?? @this.GetTypeNameStatic(...)` fallbacks at `modules/this.cs:308,473,506` and the direct `GetTypeNameStatic` at `modules/goal/getTypes.cs:172` are dead defensiveness — they come **out clean** once `module.@this.App` is non-null, with no behavior to preserve.
+- **The only context-free mint left is deserialization, and it's already plumbed.** The `type` entity is minted context-free in `data/Json.cs` (`new type(value)` during System.Text.Json read) — but `Data`'s `Context` setter propagates into it: `data/this.cs:144` → `if (_type != null) _type.Context = value;`. So a deserialized `type` gets its context the moment its owning `Data` is stamped. The invariant Stage 2 needs is just *"stamp the `Data` before reading `.Type.ClrType`"* — the plumbing to honor it exists. A read-before-stamp becomes a visible throw, exactly as intended.
+- **Newtonsoft is gone**, so `data/Converter.cs` (the `[TypeConverter]` on `type`) is dead — delete it with the Stage 4 entity move; it has no bearing on the non-null work.
+
+Net: the static fallbacks all come out, and the deserialization path holds the invariant via the existing `Context`-setter propagation rather than via a guard.
+
+> **Line numbers below are pre-merge** and drifted with plang-types. Treat them as locators, not coordinates — the coder re-finds each site. The shape of the work is unchanged.
+
 ## Nullable App back-references → make non-null
 
 | File:line | Declaration | Action |
@@ -43,8 +55,9 @@ Note: some of these chain into properties that are themselves legitimately nulla
 |---|---|
 | `GetPrimitiveOrMime` — 4 external call sites (`data/this.cs:30,489`, `modules/variable/set.cs:30`, `modules/settings/Sqlite.cs:321`) | The `?? GetPrimitiveOrMime(...)` fallbacks come **out** — once context is non-null, `context.app.type[Value]` resolves primitives too (the registry holds them). |
 | `GetTypeNameStatic` — external fallbacks at `modules/this.cs:308,473,506` (`App?.Types... ?? GetTypeNameStatic`) | Come **out** — `App` is non-null, so the `App.Types.GetTypeName(...)` (→ `app.type[...].name` after the accessor/entity work) is enough. |
-| `getTypes.cs:172` — direct `GetTypeNameStatic(returnType)` (no app in scope) | Route through app instead — confirm app is reachable here. |
-| `GetTypeNameStatic` — recursive internal calls inside `types/this.cs:133-166` | **Stay** for now — they are the static method's own implementation. The type-entity work may fold them into the entity; until then, leave the static method intact, only remove the *external nullable fallbacks*. |
+| `getTypes.cs:172` — direct `GetTypeNameStatic(returnType)` | Route through `App.Types` — `module.@this` always has an App (Ingi confirmed), so the "no app in scope" justification is false; the static call is unnecessary. |
+| `GetTypeNameStatic` — recursive internal calls inside `types/this.cs` (the `GetTypeNameStatic` body) | **Stay** for now — they are the static method's own implementation. Stage 4's entity work may fold them onto `type.@this`; until then, leave the static method intact and only remove the *external nullable fallbacks*. |
+| `GetPrimitiveOrMime` / `GetPrimitiveName` static surface (`types/this.cs`) | **Stay as a method**, but the *external `?? ...` fallbacks* come out. The static path still backs the no-context fallback the static method itself documents; Stage 2 only removes the callers that lean on it because `App`/`Context` *might* be null. |
 
 ## Other over-nullable back-references (checked, per Ingi's ask)
 

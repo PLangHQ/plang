@@ -20,4 +20,10 @@ Read each `?.` site before stripping it — some chain through `App`/`Context` i
 
 **`ctx`→`context`:** one name across the codebase. Mechanical, but do it as its own reviewable change within the stage (it touches 36 files) so it doesn't tangle with the semantic non-null flips in review.
 
+**Post-merge — this got simpler, not harder** (full detail in `plan/nullability.md` "Post-merge findings"):
+
+- `module.@this` always has an App (Ingi), so the `App?.Types … ?? GetTypeNameStatic` fallbacks at `modules/this.cs:308,473,506` and `getTypes.cs:172` are dead defensiveness — they come out clean, no behavior to preserve.
+- The only context-free mint left is deserialization (`data/Json.cs` mints a `type` context-free), and it's already plumbed: `data/this.cs:144` propagates context into the `type` when the owning `Data` is stamped. So the invariant Stage 2 needs is just "stamp the `Data` before reading `.Type.ClrType`" — no new plumbing, and a read-before-stamp throws as intended.
+- `data/Converter.cs` (the Newtonsoft `[TypeConverter]`) is dead — but it's deleted with the Stage 4 entity move, not here.
+
 `data.Type` in this stage reads `context.App.Types.Clr(Value)` with the `?.` and the `?? GetPrimitiveOrMime` removed — *not yet* the `context.app.type[Value]` entity form. That lands in Stage 4. Stage 2's job is only to make the invariant true.

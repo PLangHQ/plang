@@ -4,9 +4,9 @@
 
 **Goal:** Turn `app.X` from a wrapper alias into the collection node with verb-less selectors — `app.X["name"]` (select), `app.X.list` (enumerate), `app.X.current` (only where execution has a current), `app.type.of<T>()` — move all per-element behavior off the registries onto the elements, delete the four `App*` aliases, and migrate the ~286 call sites.
 
-**Scope.** Included: property renames (`Goals`→`goal`, `Channels`→`channel`, `Events`→`event`, `Modules`→`module`, `Types`→`type`, `Formats`→`format`, `Errors`→`error`, `Variables`→`variable`, `Navigators`→`navigator`); the selector surface on each `X.list.@this`; `.current` on `goal` only; the channel I/O relocation onto `channel.@this`; deletion of `AppGoals`/`AppChannels`/`AppEvents`/`AppModules`; the call-site migration. Excluded: the `type.@this` entity promotion (stage 4 — here `app.type[...]` may still return today's shape). The deferred module action-renames stay deferred.
+**Scope.** Included: property renames (`Goals`→`goal`, `Channels`→`channel`, `Events`→`event`, `Modules`→`module`, `Types`→`type`, `Formats`→`format`, `Errors`→`error`, `Variables`→`variable`, `Navigators`→`navigator`); the selector surface on each `X.list.@this`; `.current` on `goal` only; the channel I/O relocation onto `channel.@this`; deletion of `AppGoals`/`AppChannels`/`AppEvents`/`AppModules`; the call-site migration. **`app.type[name]` returns the type entity** (Ingi), not a bare `System.Type` — the entity is `app.data.type` at this point; Stage 4 relocates it to `type.@this` (the indexer's return type follows, same entity). Excluded: the entity *move* + Entry fold + registry/builder reshape (all Stage 4). The deferred module action-renames stay deferred.
 
-**Deliverables:** each registry reshaped to selection + lifecycle + enumeration (+ `.current` for goal); behavior moved onto elements (channel `Write(data)`/`Read()` polymorphic, no registry type-switch); `module` reachable as `app.module` (`app.module["file"]`, `app.module.list`), no `.current`, the 6 ops kept as methods; the four aliases gone; ~286 sites migrated; index-miss policy wired to a setting with a chosen default; clean rebuild + both suites green.
+**Deliverables:** each registry reshaped to selection + lifecycle + enumeration (+ `.current` for goal); behavior moved onto elements (channel `Write(data)`/`Read()` polymorphic, no registry type-switch); `app.type[name]` returns the type entity; `module` reachable as `app.module` (`app.module["file"]`, `app.module.list`), no `.current`, the 6 ops kept as methods; the four aliases gone; ~286 sites migrated; index-miss throws a typed error (hard, uniform); clean rebuild + both suites green.
 
 **Dependencies:** Stage 1 (rename), Stage 2 (non-null — so the accessor never threads `App?.`).
 
@@ -16,7 +16,7 @@ Full model and rules in `plan/accessor-model.md`. The migration surface by subsy
 
 | Subsystem | Sites | Shape of the migration |
 |---|---|---|
-| `type` | 80 | `Get`/`Clr`→`[name]`, `GetTypeName`/`Name`→`[Type].name`, sub-registries (`Spec` 19, `Scheme` 5, `Choices` 2) reached via `app.type.*`. Heaviest; `Spec`/`Entry` reshape is mostly stage 4. |
+| `type` | ~30 + 12 | `App.Types.*` ~30 sites: `Get`/`Clr`→`[name]` (returns the entity), `GetTypeName`/`Name`→`[Type].Name`, `GetValidValues`→`[t].ValidValues`; child registries (`Scheme`, `Choices`, `Kinds`, `Renderers`) reached via `app.type.*`; `IsClrTypeName` stays a registry query. Plus the 12 `builder.Types.Entry` sites — those fold onto the entity in **Stage 4**, not here. |
 | `variable` | 63 | `Get`/`Set`/`GetValue`/`Resolve`/`Remove` on `context.variable`. `Get(name)`→`["name"]` where it reads cleaner; `Set` stays a verb (mutation, not selection). Largest by count. |
 | `channel` | 37 | `WriteTextAsync`/`WriteAsync`→`["name"].Write(data)`; `Register`/`Contains`/`Resolve`/`Get`→registry selection+lifecycle; `Serializers` sub-registry unchanged. |
 | `event` | 12 | `Register`/`Unregister`/`GetBindings` — lifecycle + query on the binding registry; no `.current`. |
@@ -35,4 +35,4 @@ Two judgment calls you own (guided by the memory rule — `GetX`/`IsX` are smell
 
 **Module** is a no-`.current` service, not an exception: `module/this.cs` = `module.@this` is the action registry, reached at `app.module`. `app.module["file"]` selects, `app.module.list` enumerates. The `.list`-vs-`list`-action collision isn't real (member vs indexer key). Earlier draft demoted it — dropped.
 
-**Index-miss** is governed by a setting with a chosen default (see `plan/accessor-model.md`) — not a silent noop, not a hard throw baked into the indexer. Wire it with test-designer; the contract is "configurable and defaulted."
+**Index-miss throws a typed error** (Ingi) — uniform across every collection, no setting, no silent noop, no create-on-demand. `app.X["nope"]` selecting an absent name is a bug at the call site, surfaced immediately. The indexer throws directly (no `data.Fail` carrier needed). Distinguish from `app.goal.current` being null at rest, which is a legitimate state. Coder picks the exact error shape with test-designer. See `plan/accessor-model.md`.

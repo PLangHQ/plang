@@ -26,9 +26,9 @@ The crossing rule that makes the whole thing recoverable: aliases shield consume
 | `app/errors` + `app/errors/trail` | `app/error` + `app/error/trail` | rename |
 | `app/formats` | `app/format` | rename |
 | `app/variables` (+ `/calls`, `/calls/call`, `/navigators`) | `app/variable` (+ ride-along) | rename |
-| `app/types` (+ `/choices`) | `app/type` (+ `/choice`) | rename (path subtree `type/path/**` unchanged below `type/`) |
+| `app/types` (+ `/choices`) | `app/type` (+ `/choice`) | rename. The plang-types subtree rides along below `type/` unchanged: value types `number/`, `image/`, `code/`, `datetime/`, `duration/`, `path/**`, and machinery `kinds/`, `renderers/`, `primitives/` (apply the singular rule → `kind/`, `renderer/`, `primitive/`). Top-level `Registry.cs`, `Conversion.cs`, `Loader.cs`, `Exit.cs`, `ITypeRenderer.cs` are registry partials/children — they move with `this.cs` (see Registry file moves). |
 | `app/modules` | `app/module` | module-special (see below) |
-| `app/builder/Types` (+ `/Spec`) | `app/builder/type` (+ collapse `Spec`'s 2 records into `builder/type/`) | pascalcase |
+| `app/builder/Types` (+ `/Spec`) | `app/builder/type` (+ collapse `Spec`'s 2 records into `builder/type/`) | pascalcase. **Stage 1 is the rename only.** In **Stage 4**, `Entry.cs` (`Entry`/`Field`/`EntryKind`, 12 use sites) folds into `type.@this` and dissolves; `Render.cs` stays and renders off the entity. See `type-entity.md`. |
 | `app/tester/Test` | `app/tester/test` | pascalcase |
 | `app/http/Response` | `app/http/response` | pascalcase |
 | `app/mock/Mock` | `app/mock` (collapse inner `Mock/this.cs` up) | pascalcase + collapse |
@@ -53,9 +53,10 @@ The crossing rule that makes the whole thing recoverable: aliases shield consume
 | `variables/this.cs` | `variable/list/this.cs` |
 | `variables/navigators/this.cs` | `variable/navigator/list/this.cs` |
 | `types/choices/this.cs` | `type/choice/list/this.cs` |
+| `types/this.cs` (+ partials `Registry.cs`, `Conversion.cs`, `Loader.cs`) | `type/list/this.cs` (= `type.list.@this`, the registry — selection + lifecycle + DLL load + catalog walk). `app.Types` returns it. |
 | `modules/this.cs` | `module/this.cs` (= `module.@this`, the action registry; stays on the public surface as `app.module`) |
 
-`types/this.cs` itself stays `type/this.cs` (the registry is the concept node; see `type-entity.md` for its promotion).
+**Type subsystem — the one asymmetry.** For goal/channel, registry → `X/list/` and the existing element → `X/this.cs` collapse together in Stage 1. For type, the element/entity doesn't live in the type namespace yet — plang-types put it at `app.data.type`. So Stage 1 collapses the *registry* to `type/list/this.cs` (above), and `type/this.cs` (the entity) does not exist until **Stage 4** moves `app.data.type` into it and folds `builder.Types.Entry` onto it. Until then `type/` holds `list/` + the value-type folders but no `type/this.cs`. See `type-entity.md`.
 
 ## Module
 
