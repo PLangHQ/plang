@@ -53,7 +53,7 @@ namespace app.types.image.serializer;
 public static class text
 {
     public static void Write(image.@this value, IWriter writer)
-        => writer.String(value.SourcePath ?? $"[image: {value.Mime} {value.Bytes.Length}B]");
+        => writer.String(value.Path?.Relative ?? $"[image: {value.Mime} {value.Bytes.Length}B]");
 }
 ```
 

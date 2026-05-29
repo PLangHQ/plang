@@ -1,4 +1,13 @@
-## 2026-05-29 — OPEN design thread: refinement model + multi-type (awaiting Ingi)
+## 2026-05-29 — Unified type+kind model ratified; landed in the docs
+
+Ingi ruled on both open threads. Decisions, now reflected across plan.md / build-vs-runtime.md / storage.md / types.md / dispatch.md:
+
+- **Unified `type` + `kind`, killing the "number is special" wart.** Every value is a high-level `type` (routing key) plus an optional `kind` refinement, stored as **separate `.pr` fields** (never a `type:kind` string — splitting is runtime work). The `kind` is set at build by the type's own **`Build(value)→kind`** method — the build-time sibling of `Resolve`. `number.Build(3.5)→decimal`, `image.Build("a.jpg")→jpg`, `path.Build("https://…")→http`. **int/decimal/double are kinds of `number`, not top-level types** (`decimal` : `number` :: `jpg` : `image`). The LLM is shown a type's kinds only when developer-meaningful (number's precision); otherwise `Build()` derives the kind silently. One uniform mechanism, per-type catalog visibility.
+- **Multi-faceted values compose, not union.** Ingi rejected `path|image` ("dangerous, like multiple inheritance"). A file-backed `image` carries a `Path` property of type `path` (nullable; `SourcePath` renamed → `Path`). `%photo.Path.Exists%` navigates because the catalog is typed-property (`image(path) => Exif, …, Path(path)`). No delegated `.Exists` sugar on image — explicit navigation. Routing key stays `image`.
+
+All four comments resolved. The model needs a fuller migration at stage-carving (the flat `Primitives` numeric entries → number kinds; `Modules.Describe` emitting `type`+`kind`; the typed-property catalog format) — captured in stage 1 of the spine index.
+
+## 2026-05-29 — OPEN design thread: refinement model + multi-type (superseded above)
 
 Ingi's comments on build-vs-runtime.md surfaced two real tensions. Replied with positions; left open pending his decisions. **Docs not yet changed** — this is a discuss-first fork.
 

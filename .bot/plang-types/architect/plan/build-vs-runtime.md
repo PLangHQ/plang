@@ -40,42 +40,48 @@ GOAL (.goal)                BUILD  (once)                        .pr (artifact) 
 
 Read the columns as a pipeline: the **build** column is where every "what type is this?" question is answered. By the time the `.pr` exists, the runtime never asks that question again — it either loads a baked value or runs a typed C# action that produces a `Data` already tagged by its signature.
 
-## Answering the two questions
+## Answering the two questions — one rule, no special case
 
-### `- read photo.jpg, write to %photo%` → type `image`; mime is *not* in the `.pr`
+Both questions resolve to a single rule, so number stops being special:
 
-The builder stamps two things:
-- The **input** parameter: `{ Path: { value: "photo.jpg", type: "path" } }`.
-- The **return type** for `%photo%`: `image`. It doesn't sniff the file — it reads `file.read`'s C# signature (`Task<Data<image>>` once the extension resolves to `image`) via `Modules.Describe()`. Scope for the next step shows `%photo%(image)`.
+> **Every type is a high-level type plus an optional `kind` refinement. `type` and `kind` are separate `.pr` fields. The `kind` is set at build by the type's own `Build(value)` method whenever the value determines it.**
 
-The **mime (`image/jpeg`) is deliberately not baked**, for three reasons:
-1. The LLM vocabulary is the bare type (`image`), not the subtype (`image/jpeg`) — that's a settled cross-cutting decision. Baking a subtype the LLM never sees would be dead weight in the `.pr`.
-2. The file isn't read at build. Its real content type is only known when `file.read` actually opens it.
-3. Mime is a property of the *value*, not the *plan*. At runtime `file.read.Run()` constructs `image.@this(bytes, mime)`, deriving the mime from the extension (or a content sniff) at that one moment. The `image` instance carries `Mime`; the `.pr` carries only `Type = image`.
+`Build(value)` is the build-time sibling of `Resolve(value, context)` (runtime construction): each type owns how it reads a kind off a value, the same way it owns how it constructs one. `number.Build(3.5) → decimal`; `image.Build("photo.jpg") → jpg`; `path.Build("https://…") → http`. The `.pr` stores `type` and `kind` as **separate fields** — never a `type:kind` string, because splitting a string is runtime work and the entire principle is that the runtime does none.
 
-So: **`.pr` → `image`** (the routing key, baked at build, drives LLM scope and serializer dispatch). **value → `image/jpeg`** (a runtime property, set when the bytes are read). Deriving mime from an extension at runtime is a dictionary lookup, not the "parse a string on every execution" cost the principle is about — and it happens at the unavoidable moment we're touching the file anyway.
-
-### `- set %x% = 3.5` → type `decimal` (concrete), not `number`, not `number/decimal`
-
-`3.5` is an unambiguous decimal literal, so the builder stamps the **concrete kind**:
+### `- set %x% = 3.5`
 
 ```jsonc
-{ "name": "Value", "value": 3.5, "type": "decimal" }
+{ "name": "Value", "value": 3.5, "type": "number", "kind": "decimal" }
 ```
 
-- Not `number`. `number` is the umbrella for the case where the kind is *only knowable at runtime* — `math.add(int, decimal)` can't say which kind it returns until it runs, so its signature is `Data<number>`. A literal's kind is known at build, so we bake the precise kind. Stamping `number` here would *throw away* information the builder already has.
-- Not `number/decimal`. We don't use hierarchical subtype tags in the LLM-facing vocabulary (same decision as bare `image` over `image/png`). The kind *is* the type name here: `decimal`.
+The type is `number`; `decimal` is its **kind**, set by `number.Build(3.5)` (decimal point → decimal; `e`/exponent → double; no point → int/long). So **`int` / `decimal` / `double` / `long` are kinds of `number`, not separate top-level types** — `decimal` is to `number` exactly what `jpg` is to `image`. JSON has no decimal-vs-double distinction (`3.5` is just a JSON number), so the `kind` field is what disambiguates: `(number, decimal)` loads as `number{Decimal}`, `(number, double)` as `number{Double}` — no `decimal.Parse("3.5")`, ever.
 
-JSON has no decimal-vs-double distinction — `3.5` is just a JSON number. The `type: "decimal"` field is what disambiguates: `(3.5, decimal)` loads as `number{Decimal}`, `(3.5, double)` would load as `number{Double}`. That's exactly why the literal-shape rule matters at build (decimal-point → `decimal`, exponent/`e` → `double`): it sets the `type` field once, and the JSON number carries the magnitude. **The runtime reads `(3.5, decimal)` and wraps it into a `number` — no `decimal.Parse("3.5")`, ever.**
+The LLM **is** shown number's kinds (int/decimal/double/long), because precision is developer-meaningful — `%x% == %y%` and arithmetic reasoning depend on it. A polymorphic result like `math.add` is `{ "type": "number" }` with **no kind** — the kind is decided at runtime by promotion, so the field is simply absent until then.
 
-The clean rule that falls out: **literals carry their concrete kind (`int`/`decimal`/`double`); `number` appears only as the declared return of a polymorphic action.** A literal is never `number` — its kind is always decided at build.
+### `- read photo.jpg, write to %photo%`
+
+```jsonc
+// the step's return → %photo%
+{ "type": "image", "kind": "jpg" }
+```
+
+`type=image` from `file.read`'s `Data<image>` signature (read via `Modules.Describe()`, not by sniffing the file). `kind=jpg` from `image.Build("photo.jpg")` reading the extension (no dot). The LLM is **not** shown image's kinds — it doesn't pick them; `Build()` derives `jpg` silently. So the difference from number isn't a different *rule* — it's the same rule, with the kind derived by the type instead of advertised to the LLM. (At runtime `file.read` may confirm or correct the kind from the actual bytes; the build-time kind is the extension's claim.)
+
+### `%photo%` is one type with a path facet — composition, not union
+
+`%photo%` answers both `%photo.Exif%` (image data) and `%photo.Path.Exists%` (its source file), but it is **one** `image`, never a `path|image` union — unions are multiple-inheritance-dangerous (which slot does `copy %photo%` target? which serializer fires?). Instead the image carries a `Path` **property** of type `path`. The LLM navigates it because the type catalog is typed-property:
+
+```
+path(string)  => Exists, Size, Extension, …
+image(path)   => Exif, Width, Height, Path(path)
+```
+
+`Path(path)` tells the LLM that member is itself a `path`, so `%photo.Path.Exists%` resolves cleanly down the chain. `Path` is **nullable** — an image decoded from base64 has no source file, so `%photo.Path%` is null there (`.Exists` on null is a typed null, not a crash). Routing key and serialization stay `image`. (The `(path)` after `image` in the catalog is what the type *resolves from* — `image.Resolve(path)` — doubling as "image has a path"; it's distinct from the per-value `kind`.)
 
 ## The rule for the coder
 
-Two invariants keep the runtime cheap:
+1. **`type` + `kind` are separate baked fields; neither is re-parsed at runtime.** Literals land value-native (`3.5` as JSON `3.5`, not `"3.5"`); `type` comes from the producing action's typed signature, `kind` from the type's `Build(value)`. `Resolve`/`Parse` of a *string* runs only for genuinely runtime-dynamic input — `file.read` of a text file, an HTTP body, terminal input, a `%var%` that resolved to a string — never for a literal the builder already typed.
 
-1. **Literals are baked value-native + concrete-kind, never as a string to re-parse.** A number literal lands in the `.pr` as a JSON number plus a `type` of `int`/`decimal`/`double` (per the literal-shape rule). `number.Parse(string)` exists for *runtime-dynamic* strings only — `file.read` of a text file, an HTTP body, terminal input, a `%var%` that resolved to a string. It is never on the hot path for a literal the builder already typed.
+2. **Each type owns two siblings: `Build(value) → kind` (build-time) and `Resolve(value, context) → @this` (runtime).** The type decides its own kind and its own construction; the runtime just carries `{type, kind, value}` and only the leaf reaches in. That's the [OBP Rule #9](../../../Documentation/v0.2/object_pattern_formal.md) courier principle: nobody re-opens the package to re-derive what build already stamped.
 
-2. **A value's PLang type comes from the action's typed signature, not from runtime inspection.** `file.read`'s `Data<image>` makes the result `Type = image` for free; `math.add`'s `Data<number>` makes its result `Type = number`. The runtime never reflects over a value to ask "what are you?" — the producing action's signature already said so, and that flowed into both the `.pr` (next-step scope at build) and the `Data.Type` tag (at runtime). This is the [OBP Rule #9](../../../Documentation/v0.2/object_pattern_formal.md) courier principle in action: the type tag rides on the package; nobody re-opens it to re-derive it.
-
-Net: "here is the `.pr`, now run it" is the right mental model. Build did the thinking; runtime does the doing.
+Net: "here is the `.pr`, now run it." Build did the thinking — including which kind — and stored it in a field, not a string to split.

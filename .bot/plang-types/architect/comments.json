@@ -579,7 +579,7 @@
       "text": "shit.... I am realizing here, %photo% is actually two types, it´s path and image, so %photo%(path|image)\nbecause we can still do \n'- if %photo.Exists% then' <-- Exists is a path thingy\n'- write out %photo.Exif%' <- Exif is a photo thingy (we dont have it now, but will in future)\n\nthis fucks us a bit",
       "anchor": "- The **input** parameter: `{ Path: { value: \"photo.jpg\", type: \"path\" } }`.",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-29T10:50:50",
       "drifted": false
@@ -592,7 +592,30 @@
       "author": "architect",
       "status": "open",
       "parent_id": "7248075dfb",
-      "ts": "2026-05-29T11:05:33"
+      "ts": "2026-05-29T11:05:33",
+      "drifted": false
+    },
+    {
+      "id": "a53b7bcda5",
+      "line": 48,
+      "text": "no union, you are right, it becomes dangerous. it is like inherting from multiple classes. I thing %photo.Path% would then give the type=\"path\" back, allowing for %photo.Path.Exists%, I dont think image type needs Exists on it, but all images are made from a path, so Path property on image is some we need. so when we send to llm the types we have it is something like this\n\nType info\n- int, decima.....\n- path(string) => Properties: Exists, Size\n- image(path) => Properties: Exif, Path(path) <-- llm see it is path type\n\nso when it sees me write code like this\n\n'- write out %photo.path.exists%' \n\nit can see that it's accessing the path object which has the exist, happy results",
+      "anchor": "- The **input** parameter: `{ Path: { value: \"photo.jpg\", type: \"path\" } }`.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "8e78482388",
+      "ts": "2026-05-29T11:13:10",
+      "drifted": false
+    },
+    {
+      "id": "85632e792d",
+      "line": 48,
+      "text": "Locked — composition, no union. Landing it as a `Path` property of type `path` on image (renaming the design's `SourcePath` → `Path` to match your notation). No delegated `.Exists` on image — agreed, explicit `%photo.Path.Exists%` is the honest navigation. The type catalog the LLM gets becomes typed-property so it can navigate:\n\n    path(string)  => Exists, Size, Extension, …\n    image(path)   => Exif, Width, Height, Path(path)\n\nThe `(path)` after the `Path` member tells the LLM that property is itself a `path`, so `%photo.Path.Exists%` type-checks all the way down. One note: `Path` is nullable — an image decoded from base64 has no source file — so on a non-file image `%photo.Path%` is null (`.Exists` on null is a typed null, not a crash). Routing key / serialization stay `image`.",
+      "anchor": "- The **input** parameter: `{ Path: { value: \"photo.jpg\", type: \"path\" } }`.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "a53b7bcda5",
+      "ts": "2026-05-29T11:24:43",
+      "drifted": false
     },
     {
       "id": "db6e950bf6",
@@ -600,7 +623,7 @@
       "text": "why does number type behave differently the image? is that because we know the type at build time for numbers, but we dont really know the mimetype until we read the file?  It just feel like two different behaviour for what should be the same thing. \"number\" is higher level type, just like \"image\" is higher level type. So it means we need to know this special thing for number while all other types stay at the high level.\n\nbut now I am thinking, lets say I have this\n'- set %x% = %gps%(ISO 6709)' <-- this would become type=\"gis\" but very usefull info is provided by developer how to parse it. \n\nand what if say\n'- set %y% = %image%(gif)' <-- now we \"known\" that it's going to be gif",
       "anchor": "### `- set %x% = 3.5` → type `decimal` (concrete), not `number`, not `number/decimal`",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-29T10:57:02",
       "drifted": false
@@ -617,12 +640,34 @@
       "drifted": false
     },
     {
+      "id": "d13cd96853",
+      "line": 58,
+      "text": "one note, it should be seperate property in pr, not seperated by \":\", that would mean parsing at runtime, we want to do minimal work at runtime\n\nllm sees the numbers refinement, we tell him number has int, decimal,....\nbut I dont thing we really need to do that for most other, i think the builder should do that, each type should know how to determine the \"kind\" (is that the property we are choosing), so when we validate the step, each type would have \"build\" method, that takes in the value and sets the kind.\n\nso if I do\n\n'- set %x% = \"myphoto.jpg\" => builder would see it's image => image.build() => inside image build we check extension and set kind=extension (no dot) => kind=\"jpg\"",
+      "anchor": "### `- set %x% = 3.5` → type `decimal` (concrete), not `number`, not `number/decimal`",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "032c845c1d",
+      "ts": "2026-05-29T11:19:11",
+      "drifted": false
+    },
+    {
+      "id": "f9cc83de42",
+      "line": 58,
+      "text": "All three landed, and this is what kills the 'number is special' wart:\n\n1. **Separate `kind` field in the .pr**, never a `type:kind` string. A param becomes `{name, value, type, kind?}` (kind omitted when none). No runtime split — your minimal-runtime principle.\n2. **Per-type `Build(value)` sets the kind** — the build-time sibling of `Resolve`. `image.Build(\"myphoto.jpg\")` → kind=jpg (extension, no dot); `number.Build(3.5)` → kind=decimal (literal shape); `path.Build(\"https://…\")` → kind=http (path's file/http variants become kinds too). Each type owns its kind determination.\n3. **LLM is shown number's kinds** (int/decimal/double/long) because precision is developer-meaningful; for image/path/etc. the kind is derived silently by Build() and the LLM never picks it. Uniform mechanism (every type.Build sets kind), per-type catalog visibility — no 'watch out for numbers' footnote.\n\nThe consequence worth naming out loud: **int/decimal/double stop being top-level PLang types — they're number's kinds.** Type is always `number`; `kind` says which. (CLR int/decimal/double stay as storage; `Data<int>` maps to number kind=int, `Data<number>` to number kind=runtime-decided.) `decimal` is to `number` exactly what `jpg` is to `image`. 'kind' is the field name — it already matches number's NumberKind enum. Updating the docs around this now.",
+      "anchor": "### `- set %x% = 3.5` → type `decimal` (concrete), not `number`, not `number/decimal`",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "d13cd96853",
+      "ts": "2026-05-29T11:24:44",
+      "drifted": false
+    },
+    {
       "id": "edf04f48f4",
       "line": 81,
       "text": "here we need 2 rules, to seperate the types, this is what bugs me. it saying to llm 'hey, here are the types, but watch for numbers because they are special\", just bugs me",
       "anchor": "Net: \"here is the `.pr`, now run it\" is the right mental model. Build did the thinking; runtime does the doing.",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-29T11:00:59",
       "drifted": false
@@ -633,7 +678,7 @@
       "text": "Same thing that bugged you on L58, and you're right — the 'two rules' framing is the bug, not the design. Under the unified model (my reply above): there is ONE rule. Every type is high-level + optional refinement, captured at build when the source provides it. number follows it identically to image — `decimal` is number's refinement the way `gif` is image's. The LLM is told 'here are the types' with no special-case footnote; numbers aren't special, they just happen to get their refinement from literal-shape instead of a file extension. Once you sign off on the unified model I'll rewrite this section so the 'watch for numbers' framing is gone entirely.",
       "anchor": "Net: \"here is the `.pr`, now run it\" is the right mental model. Build did the thinking; runtime does the doing.",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "edf04f48f4",
       "ts": "2026-05-29T11:04:54",
       "drifted": false

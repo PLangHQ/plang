@@ -7,8 +7,10 @@ This file goes deep on what types ship on this branch, what each owns, the regis
 Every PLang type lives at `app/types/<name>/`:
 
 - `this.cs` — the value. A `sealed class` for most types (`number`, `image`, `code`), `abstract` for variant families (`path` — file vs http have different storage and dispatch). `number` is a class for codebase consistency though it's a *value* semantically (immutable, value equality). Carries `[PlangType("name")]` and implements `app.data.IBooleanResolvable` (truthiness); types that need the runtime may also implement `app.modules.IContext` (`number`, a value, does not).
-- `this.cs` (or `this.Parse.cs`) exposes `public static @this Resolve(string raw, app.actor.context.@this context)` — the single coercion factory. `app.types.Conversion.TryConvertTo` dispatches here. A binary type adds a `Resolve(byte[], context)` overload.
+- **`static Resolve(value, context) → @this`** — the runtime construction factory (`Resolve(string,…)`, plus `Resolve(byte[],…)` for binary types). `app.types.Conversion.TryConvertTo` dispatches here.
+- **`static Build(value) → kind`** — the *build-time* sibling of `Resolve`: reads the value's refinement (`kind`) for the `.pr` without constructing the value. `number.Build(3.5)→"decimal"`, `image.Build("a.jpg")→"jpg"`, `path.Build("https://…")→"http"`. The `kind` is a separate `.pr` field, never a `type:kind` string (no runtime split). Each type owns its kind determination; the LLM is shown a type's kinds only when developer-meaningful (number's precision), otherwise `Build()` derives it silently.
 - `serializer/<format>.cs` — one file per (type, format) rendering; `Default.cs` is the uniform fallback. Serialization is **not** an interface on the value; it's these files (see [dispatch.md](dispatch.md)).
+- **Properties carry their own types**, so the LLM navigates: an `image` exposes `Path(path)` (nullable), and the type catalog reads `image(path) => Exif, Width, Height, Path(path)`. `%photo.Path.Exists%` resolves because the catalog says `Path` is a `path` and `path` has `Exists`. Composition, not a `path|image` union.
 - Sub-files at the type's discretion: variant subfolders (`path/file/`, `path/http/`), surface partials (`this.Operations`, `this.Authorize`).
 
 The type does **not** depend on any channel, and no channel depends on a type. The bridge is the writer's `Format` token: `Normalize` tags a registered value as `TypedValueNode`, the writer looks up `(Data.Type, Format)` and calls the type's serializer file.
@@ -20,7 +22,7 @@ The type does **not** depend on any channel, and no channel depends on a type. T
 **Folder:** `app/types/number/`
 **Files this branch creates:**
 - `this.cs` — `sealed class @this` (immutable), `NumberKind` enum + storage slots (`_i`, `_d`, `_f`), `Kind`, `static From(int|long|decimal|float|double)`, implicit-IN operators.
-- `this.Parse.cs` — `static Resolve` / `Parse` / `TryParse`.
+- `this.Parse.cs` — `static Resolve` / `Parse` / `TryParse`, and `static Build(value)→kind` (decimal point → decimal, `e` → double, else int/long).
 - `this.Operators.cs` — operator overloads `+ - * / %` (lenient default).
 - `this.Arithmetic.cs` — `static Add(@this, @this, NumberPolicy)` and siblings; policy-aware, `Data`-returning; called by `math.*` handlers.
 - `this.Equality.cs` — lenient `Equals` + `ExactEquals` + canonical `GetHashCode`.
@@ -39,7 +41,7 @@ The type does **not** depend on any channel, and no channel depends on a type. T
 
 **Folder:** `app/types/image/`
 **Files this branch creates:**
-- `this.cs` — `Bytes`, `Mime`, optional `SourcePath`, `Width`/`Height` (lazy from bytes), constructors, `IBooleanResolvable` (bytes.Length > 0).
+- `this.cs` — `Bytes`, `Mime`, `Path` (type `path`, nullable — null for a base64-decoded image), `Width`/`Height` (lazy from bytes), constructors, `IBooleanResolvable` (bytes.Length > 0). `Build("a.jpg") → kind "jpg"` from the extension.
 - `this.Parse.cs` — `static Resolve(string raw, context)` interpreting path / data URL / base64; `static Resolve(byte[] raw, context)` from-bytes.
 - `serializer/text.cs` (path placeholder), `serializer/protobuf.cs` (raw bytes, when that writer ships), `serializer/Default.cs` (base64 — covers json + plang).
 

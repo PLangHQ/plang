@@ -46,7 +46,7 @@ The `.goal` says nothing about console vs. web — **the runtime state picks the
 
 Same Image instance, same step in the same goal, two channels, two wire shapes. The value was never re-materialized, the format mapping never lived in the channel, and the goal author never had to know about text vs. web — just "write out the photo."
 
-**Build resolves, runtime runs.** Every type the builder can decide, it bakes into the `.pr` — typed and value-native (`set %x% = 3.5` lands as JSON `3.5` + `type: "decimal"`, not the string `"3.5"`; `read photo.jpg` stamps `%photo%(image)` from `file.read`'s `Data<image>` signature). The runtime loads typed values and runs; it parses a string into a value only when the string is genuinely runtime-dynamic (a file's contents, an HTTP body, terminal input), never for a literal the builder already typed. The full build→`.pr`→runtime trace, and why mime is a runtime value-property while `image` is a baked type, is in [plan/build-vs-runtime.md](plan/build-vs-runtime.md).
+**Build resolves, runtime runs.** Every type the builder can decide, it bakes into the `.pr` — typed and value-native, as two separate fields `type` + `kind` (`set %x% = 3.5` lands as JSON `3.5` with `type:"number", kind:"decimal"`, not the string `"3.5"`; `read photo.jpg` stamps `type:"image", kind:"jpg"` — the `kind` set by the type's own `Build(value)` method). The runtime loads typed values and runs; it parses a string into a value only when the string is genuinely runtime-dynamic (a file's contents, an HTTP body, terminal input), never for a literal the builder already typed. The full build→`.pr`→runtime trace, the `type`+`kind`+`Build()` model, and why `%photo%` composes a `path` rather than union-typing it, are in [plan/build-vs-runtime.md](plan/build-vs-runtime.md).
 
 ## What's already there
 
@@ -123,7 +123,7 @@ PLang/
         serializer/Default.cs  (new) — writer.String(Relative); absorbs this.JsonConverter
       number/                  (new — sealed class @this, immutable value)
         this.cs                  NumberKind enum, storage slots, IEquatable, IBooleanResolvable
-        this.Parse.cs            Parse / TryParse / Resolve(string,ctx) / Resolve(byte[],ctx)
+        this.Parse.cs            Parse / TryParse / Resolve(string,ctx) / Build(value)→kind
         this.Operators.cs        + - * / % == != (lenient default)
         this.Arithmetic.cs       Add/Sub/Mul/Div/Mod/Pow (policy-aware, Data-returning)
         this.Equality.cs         lenient Equals + ExactEquals + canonical GetHashCode
@@ -131,8 +131,8 @@ PLang/
         NumberPolicy.cs          the resolved struct passed into Arithmetic
         serializer/Default.cs    (number, *) → writer.Int/Long/Decimal/Double
       image/                   (new)
-        this.cs                  Bytes, Mime, SourcePath, IBooleanResolvable
-        this.Parse.cs            Resolve(string) path/data-url/base64; Resolve(byte[])
+        this.cs                  Bytes, Mime, Path(path, nullable), IBooleanResolvable
+        this.Parse.cs            Resolve(string) path/data-url/base64; Resolve(byte[]); Build("a.jpg")→"jpg"
         serializer/
           text.cs                (image, text)     → path placeholder
           protobuf.cs            (image, protobuf) → raw bytes (when that writer ships)
@@ -169,7 +169,8 @@ Every PLang type is a folder under `app/types/`: the value (`this.cs`), the pars
 
 ## Cross-cutting decisions
 
-- **LLM scope shows the bare type, not the subtype.** `%photo%(image)`, never `%photo%(image/png)`. Subtype precision lives at the runtime layer (the Image carries `Mime`) and is hidden from the compile prompt.
+- **`type` + `kind`, as separate fields.** Every value carries a high-level `type` (the routing key) and an optional `kind` refinement, stored as a **separate `.pr` field** (never a `type:kind` string — splitting it would be runtime work). The `kind` is set at build by the type's own `Build(value)` method — `number.Build(3.5)→decimal`, `image.Build("a.jpg")→jpg`, `path.Build("https://…")→http` — the build-time sibling of `Resolve`. So **`int`/`decimal`/`double` are kinds of `number`, `jpg`/`png` kinds of `image`**: number isn't special. The LLM is shown a type's kinds only when they're developer-meaningful (number's precision); otherwise `Build()` derives the kind silently and the LLM never picks it. Full trace in [plan/build-vs-runtime.md](plan/build-vs-runtime.md).
+- **Multi-faceted values compose; they don't union.** A file-backed `image` carries a `Path` property of type `path` (nullable — base64-decoded images have none); `%photo.Path.Exists%` navigates to the path's own members. No `path|image` union (multiple-inheritance-dangerous: ambiguous action slot, ambiguous serializer). The type catalog is typed-property (`image(path) => …, Path(path)`) so the LLM can navigate the chain. Routing key stays single (`image`).
 - **Channel never branches on type; type never knows about channels.** The bridge is the writer's `Format` token. Adding a channel/writer doesn't force every type to grow a renderer; adding a type doesn't force every writer to change.
 - **Unregistered types fall back to reflection.** A value whose CLR type isn't a `[PlangType]` is reflected into a property bag exactly as today. Only registered types are tagged and dispatched to serializer files. Identity, Signature, user records — untouched, backwards-compatible.
 - **The registry subsumes the flat `Primitives` table.** The dictionary at `app/types/this.cs:34` folds into the `[PlangType]` registry. `app.formats` becomes the extension→name helper that the parse-in side uses to stamp `Data.Type`, not a parallel universe.
@@ -182,7 +183,7 @@ Every PLang type is a folder under `app/types/`: the value (`this.cs`), the pars
 
 The design is settled; these are the imperative units of work, in dependency order. Stage files come after your read-over.
 
-1. **Registry + dispatch spine.** Fold the `Primitives` table into the `[PlangType]` registry; add `TypeSerializers`, `TypedValueNode`, the `Normalize` tag-hook, `IWriter.Format`, the writer's `TypedValueNode` case, and the `PLNG_SerializerCoverage` gate. No new types yet — `path` adopts `serializer/Default.cs` as the first mover and proves the path end-to-end.
+1. **Registry + dispatch spine.** Fold the `Primitives` table into the `[PlangType]` registry; add `TypeSerializers`, `TypedValueNode`, the `Normalize` tag-hook, `IWriter.Format`, the writer's `TypedValueNode` case, the `PLNG_SerializerCoverage` gate, the separate **`kind` field** on `.pr` parameters, and the per-type **`Build(value)→kind`** hook (with the typed-property catalog so the LLM can navigate `.Path` etc.). No new types yet — `path` adopts `serializer/Default.cs` as the first mover and proves the path end-to-end.
 2. **`number` the value type.** The `sealed class`, storage, parse, operators, lenient/exact equality, `IBooleanResolvable`, `serializer/Default.cs`. [storage.md](storage.md).
 3. **`number` arithmetic + policy.** `NumberPolicy`, `number.Config : IConfig`, the `app.config` resolver, the `math.*` retype to `Data<number>`, `math.intdiv`. [policy.md](policy.md).
 4. **`image` + `code`.** The two non-numeric proving instances, their parse/serializer files, `file.read` type-stamping.

@@ -47,7 +47,7 @@ It implements `IEquatable<@this>` for value equality and `IBooleanResolvable` be
 | `float`, `double` | `_f` (double) | `Float` / `Double` | Float widens; Double is native. |
 | `decimal` | `_d` (decimal) | `Decimal` | Native fit. |
 
-The catalog vocabulary the LLM sees is the union of the **NumberKind tag** column, not the **CLR type** column. So a developer who writes `set %x% = 4294967295` (uint max) sees `%x%(long)` in scope — the LLM never has to think in `uint`. Concrete C# at action sites that genuinely takes `uint` casts via `(uint)x` at the boundary; same discipline as today's `int`/`long`/`decimal` cross-walks.
+**`NumberKind` is number's `kind` refinement** — the universal "high-level type + `kind`" model applied to `number`. The PLang `type` is always `number`; the `kind` (`int`/`long`/`decimal`/`double`) is a separate `.pr` field, exactly as `image` is `type=image, kind=jpg`. So `int`/`decimal`/`double`/`long` are **kinds of `number`, not separate top-level PLang types** — `decimal` is to `number` what `jpg` is to `image`. (CLR `int`/`decimal`/`double` remain as storage; `Data<int>` maps to `number` kind=int, `Data<number>` to `number` with the kind decided at runtime by promotion.) `number.Build(value)` sets the kind at build (decimal point → decimal, `e` → double, no point → int/long); the LLM **is** shown these kinds (unlike most types, whose kind is derived silently) because numeric precision is developer-meaningful. A developer who writes `set %x% = 4294967295` (uint max) sees `%x%(number)` kind=long; the LLM never has to think in `uint`. C# at action sites that genuinely takes `uint` casts via `(uint)x` at the boundary.
 
 ### Bigger than `decimal` — `BigInteger`, arbitrary precision
 
@@ -116,10 +116,13 @@ So an overflow from a strict cast becomes `Data.Error("MathOverflow")` that the 
 ## `Parse` — the single string-coercion home
 
 ```csharp
-public static @this? Parse(string s);
-public static bool   TryParse(string s, out @this? n);
-public static @this  Resolve(string raw, actor.context.@this context);
+public static @this?  Parse(string s);
+public static bool    TryParse(string s, out @this? n);
+public static @this   Resolve(string raw, actor.context.@this context);   // runtime construction
+public static string  Build(object? value);                               // build-time: returns the kind ("int"/"decimal"/…)
 ```
+
+`Build` is the build-time sibling of `Resolve` — it reads the kind for the `.pr` without constructing the value (decimal point → `"decimal"`, `e`/exponent → `"double"`, no point fitting int → `"int"` else `"long"`). The builder calls it once per literal; the runtime never re-derives.
 
 `Parse` picks the narrowest kind that fits losslessly:
 
