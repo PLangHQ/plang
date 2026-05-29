@@ -323,6 +323,56 @@
         "health": "Massively improved: critical DLL roundtrip + runtime-wins are now real and mutation-verified; deferrals honestly [Skip]'d; policy resolution thoroughly covered in C#. One new false green remains: the OverflowThrowSettingHonored plang goal's Overflow=Throw is not load-bearing (decimal overflow is policy-independent).",
         "notes": "FAIL per strict-red (confirmed false green), but it is a single ~5-min goal fix: change input to int.MaxValue+int.MaxValue so Promote(success) vs Throw(error) diverge, or assert a sibling-default-no-error. Tree clean; mutation reverted; no source committed."
       }
+    },
+    {
+      "id": "7a28409c-5078-4e5b-8338-827e9e14c1a8",
+      "bot": "tester",
+      "timestamp_start": "2026-05-29T16:38:45Z",
+      "timestamp_end": "2026-05-29T16:38:45Z",
+      "intent": "Verify coder v3 fix to the single v2 false green (OverflowThrowSettingHonored).",
+      "before": {
+        "assumptions": "Coder v3 switched the overflow goal to long.MaxValue + added a Promote sibling; reports plang 248/248.",
+        "risk": "Need to confirm the pair actually distinguishes Throw vs Promote and that the param is load-bearing \u2014 not trust the coder's mutation claim."
+      },
+      "plan": ".bot/plang-types/tester/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "Tests/Math/OverflowThrowSettingHonored.test.goal",
+            "Tests/Math/OverflowPromoteWidens.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "plang 248/248; both goals pass. .pr carries Overflow=Throw/Promote (overflowmode) \u2014 no builder false-green. Pair is mutually validating (same inputs, opposite Overflow, opposite outcome)."
+        },
+        {
+          "paths": [
+            "Tests/Math/OverflowThrowSettingHonored.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Independent mutation: stripped Overflow=Throw, rebuilt cache:false, ran -> [Fail] (default policy widens silently, %err% unset). Param confirmed load-bearing. Reverted via git checkout."
+        },
+        {
+          "paths": [
+            ".bot/plang-types/tester/v3/result.md",
+            ".bot/plang-types/tester/v3/verdict.json",
+            ".bot/plang-types/test-report.json",
+            ".bot/plang-types/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "tester v3 outputs. Verdict PASS \u2014 no remaining false greens."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "All v1/v2 findings resolved. Critical DLL-roundtrip + runtime-wins mutation-verified (v2); deferrals honestly [Skip]'d; policy resolution thoroughly covered; step-level Overflow now distinguished end-to-end via a mutually-validating goal pair, independently mutation-confirmed.",
+        "notes": "plang 248/248, C# 3604/10skip/0fail. Tree clean; mutation reverted; no source committed. Branch test quality is honest. Next: security review."
+      }
     }
   ]
 }

@@ -1,11 +1,11 @@
 {
   "tester": "tester",
   "branch": "plang-types",
-  "timestamp": "2026-05-29T16:05:00Z",
-  "tested_version": "v2",
+  "timestamp": "2026-05-29T16:30:00Z",
+  "tested_version": "v3",
   "test_run": {
     "csharp": { "total": 3614, "passed": 3604, "failed": 0, "skipped": 10 },
-    "plang": { "total": 247, "passed": 247, "failed": 0, "skipped": 0 }
+    "plang": { "total": 248, "passed": 248, "failed": 0, "skipped": 0 }
   },
   "coverage": {
     "changed_files_covered": 52,
@@ -15,31 +15,12 @@
       "PLang/app/types/ITypeRenderer.cs"
     ]
   },
-  "v1_findings_resolution": {
-    "1_critical_cut4_roundtrip": "FIXED — TypeProviderDllRoundtripTests.cs loads the real DLL, renders Money->'USD 10' / CustomInt->'CUSTOM-INT' via Renderers.Of, asserts runtime-wins ResolveType. Mutation-confirmed (reversing ResolveType precedence fails the CustomInt test).",
-    "2_tautology_handlerslot": "FIXED — reflects math.Add.Run() IL slot before/after overriding 'number'; mutation-confirmed.",
-    "3_kind_stamping": "FIXED — BuilderKindStampingTests pins path->kind=file and polymorphic Value->no-kind against committed .pr; goal comments trimmed.",
-    "4_noop_deferrals": "FIXED — 10 tests now [Skip]; confirmed 10 skips in the run.",
-    "5_durationroundtrip": "FIXED — both forms + %iso% equals %dotcolon%.",
-    "6_failsload_guard": "FIXED — assertions now unconditional.",
-    "7_policy_resolution": "PARTIAL — C# NumberPolicyResolutionTests now thorough (step/context/app-default/parent-climb, Config.cs covered). BUT the new plang goal is a false green (see findings[1]).",
-    "8_readphoto_weak": "FIXED — Mime assertion added.",
-    "9_renderer_shadow": "FIXED — baseline capture + different-instance + fired assertions.",
-    "10_baseline_process": "FIXED — coder/v2/baseline-tests.md written."
+  "history": {
+    "v1": "FAIL — 10 findings (Cut4 stubs, kind-stamping false greens, ~10 no-op deferrals, NumberPolicy 0% coverage).",
+    "v2": "FAIL — 9/10 fixed & mutation-verified; 1 new false green (OverflowThrowSettingHonored used decimal.MaxValue, Overflow=Throw not load-bearing).",
+    "v3": "PASS — the single v2 finding fixed and independently mutation-confirmed."
   },
-  "findings": [
-    {
-      "id": 1,
-      "severity": "major",
-      "type": "false-green",
-      "test_file": "Tests/Math/OverflowThrowSettingHonored.test.goal",
-      "code_file": "PLang/app/types/number/this.Arithmetic.cs:85-97",
-      "issue": "The goal asserts that step-level `Overflow=Throw` is honored using `math.add A=decimal.MaxValue B=decimal.MaxValue Overflow=Throw, on error set %err%=true` + `assert %err% is true`. But decimal+decimal overflow has no wider-kind promotion path — DoOp's overflow-recovery catch only widens Promote&&Int->Long and Promote&&Long->Decimal; there is no Decimal->Double. So decimal overflow surfaces MathOverflow under EVERY policy (Throw, Promote, Lenient). The `Overflow=Throw` parameter is not load-bearing.",
-      "impact": "The goal passes for a policy-independent reason; it would pass even if the Overflow parameter were ignored entirely. Its name ('SettingHonored') promises it verifies the Throw setting changes outcome — it does not. Narrow: the underlying behavior (step override reaching the handler, policy resolution) IS covered in C# NumberPolicyResolutionTests, so this is a misnamed/non-distinguishing goal, not an untested code path.",
-      "evidence": "Empirically built (cache:false) and ran the identical add WITHOUT Overflow=Throw — %err% still became true and the goal passed.",
-      "suggestion": "Use an input where Throw and Promote diverge, e.g. `math.add A=2147483647 B=2147483647 Overflow=Throw` (int.MaxValue+int.MaxValue): Promote widens to Long (no error), Throw surfaces MathOverflow. Ideally pair with a sibling that omits Overflow=Throw (or sets Promote) and asserts %err% is null, so the goal distinguishes the setting."
-    }
-  ],
-  "verdict": "needs-fixes",
-  "summary": "Coder v2 is a large, genuine improvement: 9/10 v1 findings are verified real, and the critical DLL roundtrip + runtime-wins precedence are mutation-confirmed to bite (reversing ResolveType precedence fails the CustomInt/RuntimeWins/HandlerSlot tests). The 10 deferred no-op tests are now honestly [Skip]'d, and NumberPolicy resolution is thoroughly covered in C#. FAIL stands on the strict-red rule for ONE new false green introduced in the fix: OverflowThrowSettingHonored.test.goal uses decimal.MaxValue, which overflows under every policy, so Overflow=Throw is not load-bearing (empirically confirmed). A ~5-minute single-goal fix. C# 3604/10skip/0fail, plang 247/247; tree clean, mutation reverted, no source committed."
+  "findings": [],
+  "verdict": "approved",
+  "summary": "Coder v3 fixed the last finding. OverflowThrowSettingHonored.test.goal now uses long.MaxValue (Promote widens Long->Decimal silently; Throw surfaces MathOverflow), paired with a new OverflowPromoteWidens sibling. The pair is mutually validating (identical inputs, opposite Overflow, opposite expected outcome — both can't pass unless the param changes behavior), and I independently mutation-confirmed it: stripping Overflow=Throw makes the goal [Fail]. .pr carries the correct Overflow param (no builder false-green). All v1/v2 findings resolved; the headline DLL-roundtrip and runtime-wins coverage were mutation-verified in v2. No remaining false greens. plang 248/248, C# 3604/10skip/0fail. Tree clean, no source committed."
 }

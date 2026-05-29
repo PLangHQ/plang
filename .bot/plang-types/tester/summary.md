@@ -1,6 +1,19 @@
 # tester — plang-types — summary
 
-**Latest version:** v2 — **VERDICT: FAIL (one new false green; ~5-min fix)**
+**Latest version:** v3 — **VERDICT: PASS (no remaining false greens)**
+
+## v3 (PASS) — the last finding fixed
+
+Coder v3 fixed the single v2 false green. `OverflowThrowSettingHonored.test.goal` now uses
+`long.MaxValue + long.MaxValue` (Promote widens Long→Decimal silently; Throw → MathOverflow),
+paired with a new `OverflowPromoteWidens.test.goal`. The pair is **mutually validating**
+(identical inputs, opposite `Overflow`, opposite expected outcome — both can't pass unless
+the param changes behavior), and I **independently mutation-confirmed** it: stripping
+`Overflow=Throw` makes the goal `[Fail]`. `.pr` carries the correct `Overflow` param.
+**plang 248/248, C# 3604/10skip/0fail.** All v1/v2 findings resolved; no remaining false greens.
+
+---
+
 
 ## What this is
 
