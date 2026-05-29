@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "Rename is clean (Entry dissolved, no registry type-switching, build clean), but app.Type[name]/of<T>() return a contextless half-entity with silently-null catalog props while the doc claims door-equivalence and the test masks it with a manual Context stamp; plus two dead enumerators." }

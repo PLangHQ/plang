@@ -209,6 +209,88 @@
         "health": "green \u2014 test contract complete, ready for coder",
         "notes": "52 C# tests + 5 PLang test goals + 1 builder schema golden contract. All bodies are Assert.Fail / throw 'not implemented'. Coder owns: pinning index-miss exception type, the builder schema baseline (inline or extend existing Tests/Types/ golden), test implementations stage-by-stage following architect's strict dependency order (1\u21922\u21923\u21924)."
       }
+    },
+    {
+      "id": "c0de4a17-5159-4a1a-9a1a-codeanalyzv1",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-29T23:45:00Z",
+      "timestamp_end": "2026-05-30T00:25:00Z",
+      "intent": "Five-pass review of the singular-namespace rename branch at HEAD.",
+      "before": {
+        "assumptions": "Coder v1 report listed Stage-4 fold-dissolve and property sweep as deferred; expected a partial, inconsistent state.",
+        "risk": "825 files changed; risk concentrated in new accessor registries and the type-entity Entry fold, not the mechanical renames."
+      },
+      "plan": ".bot/singular-namespaces/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/singular-namespaces/coder/v1/report.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Reconciled coder report vs HEAD \u2014 report is STALE; 4 commits land after it. Entry/EntryKind structs gone, plural App.* props gone, Variable->@this done. Analyzed actual HEAD f7790b3a6."
+        },
+        {
+          "paths": [
+            "PlangConsole"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Clean rebuild: 0 errors, 510 pre-existing nullability warnings (deferred Stage-2). No new warning classes."
+        },
+        {
+          "paths": [
+            "PLang/app/goal/list/this.cs",
+            "PLang/app/channel/list/this.cs",
+            "PLang/app/type/list/this.cs",
+            "PLang/app/format/list/this.cs",
+            "PLang/app/module/this.cs",
+            "PLang/app/variable/list/this.cs",
+            "PLang/app/variable/navigator/list/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Surveyed all 16 list-registries. CLEAN: no type-switching in any registry (architect's main risk resolved); index-miss hard-throw (KeyNotFoundException) consistent across selection registries goal/channel/format/type/module; variable/navigator soft-return is correct PLang semantics."
+        },
+        {
+          "paths": [
+            "PLang/app/type/this.cs",
+            "PLang/app/type/list/this.cs",
+            "PLang.Tests/App/SingularNamespaces/AccessorTests/TypeAccessorTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "FINDING (NEEDS WORK): app.Type[name]/of<T>() return new @this(typeName) with no Context (type/list/this.cs:161,172). All catalog props route through Context -> silently null off that door; ClrType falls to static map (null for DLL types). data.Type door DOES stamp (data/this.cs:81) -> doors diverge despite type/this.cs:13 doc claiming equivalence. TypeAccessorTests passes only by manual t.Context=app.User.Context on every fold case -> test asserts the workaround. Root: catalog data is App-global but reached via actor Context; registry has no Context anchor."
+        },
+        {
+          "paths": [
+            "PLang/app/type/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "LOW: Promote() re-walks entire action catalog + linear self-scan per stamped entity not built by BuildTypeEntries; BuildTypeEntries not memoized. Re-derive smell in time."
+        },
+        {
+          "paths": [
+            "PLang/app/goal/list/this.cs",
+            "PLang/app/channel/list/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "LOW (deletion test): redundant enumerators beside new canonical `list` \u2014 goal/list.Value (:299, unused) and channel/list.All (:154, unused, born redundant in Stage-3 commit 273f51ad4)."
+        }
+      ],
+      "after": {
+        "status": "fail",
+        "health": "Build clean, rename well-executed (Entry dissolved, no registry type-switching, index-miss consistent). One undisclosed behavioral gap blocks: type-entity door asymmetry with silent-null catalog props + test asserting the workaround. Two dead enumerators.",
+        "notes": "Verdict FAIL -> next bot coder. See v1/report.md + v1/verdict.json."
+      }
     }
   ]
 }
