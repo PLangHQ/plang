@@ -45,6 +45,49 @@ public sealed partial class @this
         _ => false,
     };
 
+    /// <summary>
+    /// IComparable&lt;@this&gt; — promotes both sides and compares in the
+    /// widest common numeric space. NaN compares as greater than any other
+    /// number (consistent with CLR <see cref="double.CompareTo(double)"/>).
+    /// </summary>
+    public int CompareTo(@this? other)
+    {
+        if (other is null) return 1;
+        if (IsNaN(this)) return IsNaN(other) ? 0 : 1;
+        if (IsNaN(other)) return -1;
+
+        // Same-kind fast paths.
+        if (Kind == other.Kind)
+        {
+            return Kind switch
+            {
+                NumberKind.Int or NumberKind.Long => _i.CompareTo(other._i),
+                NumberKind.Decimal => _d.CompareTo(other._d),
+                NumberKind.Double or NumberKind.Float => _f.CompareTo(other._f),
+                _ => 0,
+            };
+        }
+
+        // Cross-kind: prefer decimal-route when both fit, else double.
+        if (TryToDecimal(this, out var ad) && TryToDecimal(other, out var bd))
+            return ad.CompareTo(bd);
+        return AsDouble().CompareTo(other.AsDouble());
+    }
+
+    /// <summary>
+    /// Non-generic IComparable for callers that hold an <see cref="object"/>
+    /// reference. Accepts another <see cref="@this"/> or a CLR numeric
+    /// primitive (via <see cref="FromObject"/>).
+    /// </summary>
+    public int CompareTo(object? obj) => obj switch
+    {
+        null => 1,
+        @this n => CompareTo(n),
+        int or long or decimal or float or double or sbyte or byte or short or ushort or uint or ulong
+            => CompareTo(FromObject(obj)),
+        _ => throw new System.ArgumentException($"Cannot compare number to {obj.GetType()}"),
+    };
+
     public bool ExactEquals(@this? other)
     {
         if (other is null) return false;

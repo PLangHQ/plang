@@ -1,0 +1,178 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %x% = 1",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": "Integration cut 1 \u2014 the spine: literal kind \u2192 arithmetic \u2192 output.\nBuilds a .pr where %x% has type=number kind=int and %z% has type=number kind=decimal\n(separate fields, never \u0022number:decimal\u0022). The math.add step result %b% has type=number\nwith NO kind (runtime-decided). Runtime executes; output is 4.5 (and 0.1\u002B0.2 round-trips\nas documented for decimal precision).",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%x%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": 1,
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%x%, Value=1)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %z% = 3.5",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%z%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": 3.5,
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%z%, Value=3.5, Type=object)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "math.add A=%x% B=%z%, write to %b%",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "math",
+          "action": "add",
+          "parameters": [
+            {
+              "name": "A",
+              "value": "%x%",
+              "type": "object"
+            },
+            {
+              "name": "B",
+              "value": "%z%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%b%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "number"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "math.add(A=%x%, B=%z%) | variable.set(Name=%b%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %b% equals 4.5",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 4.5,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%b%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=4.5, Actual=%b%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Cut1_LiteralKindArithmeticOutput.test.goal",
+  "prPath": "/.build/cut1_literalkindarithmeticoutput.test.pr",
+  "hash": "297839431795b7c0b98907cfa0eca41c5ccc32e496985bdb85200909b7dc243a",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

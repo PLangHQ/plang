@@ -1,0 +1,86 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %z% = 3.5",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "\u0060set %z% = 3.5\u0060 produces a .pr parameter shaped as { name, value: 3.5, type: \u0022number\u0022,\nkind: \u0022decimal\u0022 } \u2014 value is JSON-native (not the string \u00223.5\u0022), and type\u002Bkind are\nseparate fields. The literal-shape rule fires at build, not at runtime.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%z%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": 3.5,
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%z%, Value=3.5, Type=object)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %z% equals 3.5",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 3.5,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%z%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=3.5, Actual=%z%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Types/SetDecimalLiteralStampsKind.test.goal",
+  "prPath": "/Types/.build/setdecimalliteralstampskind.test.pr",
+  "hash": "a65fd5a89ca900eadf9dfd5fab94d9212e18caf6d9e3747d7a17b2465231c714",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

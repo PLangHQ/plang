@@ -1,0 +1,105 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "file.read photo.png, write to %photo%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "\u0060read photo.png, write to %photo%\u0060 builds with %photo% type=image kind=png. The action\nBuild resolves the extension to the high-level type (image); the type Build supplies\nthe kind (png). Runtime: file.read.Run() returns a Data tagged Type=\u0022image\u0022 carrying\nan image.@this(bytes, mime=\u0022image/png\u0022).",
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "photo.png",
+              "type": "path",
+              "kind": "file"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%photo%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "image",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "file.read(Path=%photo.png%, ResolveVariables=false) | variable.set(Name=%photo%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %photo% is not null",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%photo%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.isNotNull(Value=%photo%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Types/ReadPhotoStampsImage.test.goal",
+  "prPath": "/Types/.build/readphotostampsimage.test.pr",
+  "hash": "e4b28753b81e43c459b212cb8aeffd4dce40775b66dba5a0221ed79d020bd18a",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

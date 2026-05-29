@@ -1,4 +1,5 @@
 Start
 / math.intdiv is the named opt-in for truncating integer division: 7 intdiv 2 → 3.
 / This goal exists so devs reaching for C# integer-division semantics have a clear surface.
-- throw "not implemented"
+- math.intdiv A=7 B=2, write to %quotient%
+- assert %quotient% equals 3

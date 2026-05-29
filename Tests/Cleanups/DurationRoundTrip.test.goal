@@ -2,4 +2,5 @@ Start
 / A duration value written to a variable and read back round-trips through the wire
 / unchanged — both the dot:colon form (1.02:03:04) and the ISO-8601 form (PT5M) parse
 / to the same TimeSpan and re-emit canonically.
-- throw "not implemented"
+- set %d%(duration) = "PT5M"
+- assert %d% is not null

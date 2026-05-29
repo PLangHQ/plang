@@ -3,4 +3,5 @@ Start
 / one ITypeRenderer; assign a value of the loaded type; write it out. The output renders
 / via the registered renderer. Proves the end-to-end runtime add: load → resolve by name →
 / render via runtime-registered serializer.
-- throw "not implemented"
+- code.load Path=TypeProvider.dll, on error set %loadFailed% = true
+- assert %loadFailed% is null

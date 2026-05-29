@@ -20,7 +20,7 @@ namespace app.types.number;
 /// re-narrows at the explicit-OUT cast; the Float label keeps round-trip
 /// identity for catalog/print.</para>
 /// </summary>
-public sealed partial class @this : System.IEquatable<@this>, global::app.data.IBooleanResolvable, System.IConvertible
+public sealed partial class @this : System.IEquatable<@this>, System.IComparable<@this>, System.IComparable, global::app.data.IBooleanResolvable, System.IConvertible
 {
     public NumberKind Kind { get; }
 

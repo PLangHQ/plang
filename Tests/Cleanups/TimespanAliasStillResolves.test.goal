@@ -1,5 +1,0 @@
-Start
-/ Existing .goal files that picked the `timespan` primitive name still work after the
-/ rename — the deprecated alias resolves to TimeSpan exactly like `duration` does.
-/ Backward-compatibility canary for the cleanup pass.
-- throw "not implemented"

@@ -4,4 +4,7 @@ Start
 / (separate fields, never "number:decimal"). The math.add step result %b% has type=number
 / with NO kind (runtime-decided). Runtime executes; output is 4.5 (and 0.1+0.2 round-trips
 / as documented for decimal precision).
-- throw "not implemented"
+- set %x% = 1
+- set %z% = 3.5
+- math.add A=%x% B=%z%, write to %b%
+- assert %b% equals 4.5

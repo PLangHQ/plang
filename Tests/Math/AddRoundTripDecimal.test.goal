@@ -2,4 +2,5 @@ Start
 / Documented round-trip: 0.1 + 0.2 under default policy (Promote/Double) produces the
 / same value the LLM-facing docs cite. Pins that "lenient default" doesn't quietly
 / become "doubles eat your decimals" — kinds stay decimal when both operands are decimal.
-- throw "not implemented"
+- math.add A=0.1 B=0.2, write to %sum%
+- assert %sum% equals 0.3

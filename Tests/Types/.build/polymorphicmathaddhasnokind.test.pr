@@ -1,0 +1,178 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %x% = 2",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "\u0060set %b% = %x% \u002B %z%\u0060 compiles to math.add whose result %b% carries type=number with\nNO kind in the .pr \u2014 kind is runtime-decided. Pins the \u0022polymorphic result has no kind\u0022\nrule against accidental build-time kind-stamping.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%x%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": 2,
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%x%, Value=2)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %z% = 3.5",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%z%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": 3.5,
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%z%, Value=3.5, Type=object)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "math.add A=%x% B=%z%, write to %b%",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "math",
+          "action": "add",
+          "parameters": [
+            {
+              "name": "A",
+              "value": "%x%",
+              "type": "object"
+            },
+            {
+              "name": "B",
+              "value": "%z%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%b%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "math.add(A=%x%, B=%z%) | variable.set(Name=%b%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %b% equals 5.5",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 5.5,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%b%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=5.5, Actual=%b%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Types/PolymorphicMathAddHasNoKind.test.goal",
+  "prPath": "/Types/.build/polymorphicmathaddhasnokind.test.pr",
+  "hash": "d75a241e072f4db7939cbb91314548fc2e69eb27dfc885354102bce80971e882",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

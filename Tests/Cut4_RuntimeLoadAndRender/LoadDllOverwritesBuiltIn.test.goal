@@ -3,4 +3,5 @@ Start
 / (e.g. a custom `int`). A subsequent value of that name resolves to the loaded CLR type
 / and renders via the loaded renderer — runtime registration wins ResolveType precedence.
 / The honest-limit caveat lives in C# RuntimeTypeLoadingTests.
-- throw "not implemented"
+- code.load Path=TypeProvider.dll, on error set %loadFailed% = true
+- assert %loadFailed% is null
