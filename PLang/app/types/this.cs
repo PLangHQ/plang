@@ -389,6 +389,8 @@ public sealed partial class @this
             || underlying == typeof(decimal)
             || underlying == typeof(DateTime)
             || underlying == typeof(DateTimeOffset)
+            || underlying == typeof(DateOnly)
+            || underlying == typeof(TimeOnly)
             || underlying == typeof(TimeSpan)
             || underlying == typeof(Guid);
     }

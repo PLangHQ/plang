@@ -34,10 +34,14 @@ public static class @this
             ["decimal"] = typeof(decimal),
             ["bool"] = typeof(bool),
             ["boolean"] = typeof(bool),
-            ["datetime"] = typeof(System.DateTime),
-            ["date"] = typeof(System.DateTime),
-            ["time"] = typeof(System.TimeSpan),
-            ["timespan"] = typeof(System.TimeSpan),
+            // plang-types Stage 6: temporal rebinds.
+            // datetime → DateTimeOffset (DateTime banished from PLang type bindings);
+            // date → DateOnly, time → TimeOnly (trivial CLR wrappers);
+            // duration → TimeSpan, with timespan kept as a deprecated alias.
+            ["datetime"] = typeof(System.DateTimeOffset),
+            ["date"] = typeof(System.DateOnly),
+            ["time"] = typeof(System.TimeOnly),
+            ["duration"] = typeof(System.TimeSpan),
             ["guid"] = typeof(System.Guid),
             ["byte"] = typeof(byte),
             ["bytes"] = typeof(byte[]),
@@ -63,7 +67,7 @@ public static class @this
             ["long?"] = typeof(long?),
             ["double?"] = typeof(double?),
             ["bool?"] = typeof(bool?),
-            ["datetime?"] = typeof(System.DateTime?),
+            ["datetime?"] = typeof(System.DateTimeOffset?),
             ["guid?"] = typeof(System.Guid?),
         };
 
@@ -77,8 +81,11 @@ public static class @this
             [typeof(double)] = "double",
             [typeof(decimal)] = "decimal",
             [typeof(bool)] = "bool",
-            [typeof(System.DateTime)] = "datetime",
-            [typeof(System.TimeSpan)] = "timespan",
+            [typeof(System.DateTime)] = "datetime",   // legacy; new code targets DateTimeOffset
+            [typeof(System.DateTimeOffset)] = "datetime",
+            [typeof(System.DateOnly)] = "date",
+            [typeof(System.TimeOnly)] = "time",
+            [typeof(System.TimeSpan)] = "duration",
             [typeof(System.Guid)] = "guid",
             [typeof(byte)] = "byte",
             [typeof(byte[])] = "bytes",

@@ -1259,7 +1259,8 @@ public class DynamicDataTests
         var dov = new DynamicData("now", () => DateTime.Now, Type.DateTime);
 
         await Assert.That(dov.Type).IsNotNull();
-        await Assert.That(dov.Type!.ClrType).IsEqualTo(typeof(DateTime));
+        // plang-types Stage 6: datetime rebound to DateTimeOffset.
+        await Assert.That(dov.Type!.ClrType).IsEqualTo(typeof(DateTimeOffset));
     }
 
     [Test]

@@ -51,7 +51,7 @@ public class RegistryFoldTests
             ("double", typeof(double)),
             ("decimal", typeof(decimal)),
             ("bool", typeof(bool)),
-            ("datetime", typeof(System.DateTime)),
+            ("datetime", typeof(System.DateTimeOffset)),
         })
         {
             await Assert.That(_types.ResolveType(name)).IsEqualTo(clr);
