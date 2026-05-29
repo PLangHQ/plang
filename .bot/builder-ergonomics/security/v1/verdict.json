@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "Channel recursion guard (per-channel AsyncLocal IsExecuting) is sound; one Low — AppChannels.Channel(name) bypasses the guard, no reachable caller today." }

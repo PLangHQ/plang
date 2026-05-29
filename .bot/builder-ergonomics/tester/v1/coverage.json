@@ -1,0 +1,40 @@
+{
+  "note": "Analysis-based coverage of changed production files (not a full coverlet run). Assessed via reading tests + mutation testing the load-bearing path.",
+  "changed_csharp_files": [
+    {
+      "file": "PLang/app/channels/channel/goal/this.cs",
+      "covered": "partial",
+      "by": "Stage3_GoalChannelTests",
+      "gap": "InvokeGoal's `_executing.Value = true` (guard arming) is NOT covered — mutation-confirmed: deleting it keeps all 7 tests green. Tests flip the AsyncLocal via reflection, never via a real goal-channel self-write."
+    },
+    {
+      "file": "PLang/app/channels/this.cs",
+      "covered": "yes",
+      "by": "Stage3_GoalChannelTests (Get treats-executing-as-not-found, late-registered-visible)"
+    },
+    {
+      "file": "PLang/app/actor/this.cs",
+      "covered": "indirect",
+      "by": "FoundationalChannels/FreezeFoundational removed; compiles + channel tests pass with no references remaining"
+    },
+    {
+      "file": "PLang/app/types/Conversion.cs",
+      "covered": "yes",
+      "by": "ErrorBuryingReproTest (P4 error-chain + Format() header ordering)"
+    },
+    {
+      "file": "PLang/app/modules/test/run.cs",
+      "covered": "indirect",
+      "by": "FreezeFoundational calls removed; build + suite green"
+    },
+    {
+      "file": "PLang/app/this.cs",
+      "covered": "indirect",
+      "by": "FreezeFoundational calls removed; build + suite green"
+    }
+  ],
+  "changed_plang_files": {
+    "UnknownVerb.test.goal": "false-green: zero assertions; committed .pr mis-compiled compress->variable.set; confidence not persisted. See finding 1.",
+    "Build.goal / EmitBuildEvent.goal / BuilderChannel.goal / build-output.template": "exercised at runtime by every plang --test build, but no assertion verifies the 'builder' channel routing or the rendered output content."
+  }
+}

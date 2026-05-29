@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "Coder v2 resolved all 3 actionable v1 findings; both suites green from clean rebuild (C# 3377/3377, PLang 234/234), channel guard mutation-confirmed covered (fails with ChannelNotFound vs CallStackOverflow when guard removed)." }

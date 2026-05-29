@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "Stale FoundationalChannels references rewritten across io-channels.md / app-tree.md / check-app-tree.sh; build.md gains confidence-per-step + builder routing sections; good_to_know.md gets the 'recursion guard on the value, not the context' lesson." }

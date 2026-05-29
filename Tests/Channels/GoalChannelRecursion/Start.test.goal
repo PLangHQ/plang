@@ -1,0 +1,7 @@
+Start
+/ Arms the IsExecuting recursion guard end-to-end and asserts on the
+/ specific error key — guard surfaces ChannelNotFound, recursion-depth
+/ backstop surfaces RecursionDepthExceeded.
+- set channel "echo" call EchoBack
+- write 'hello' to echo, on error call InspectError
+- assert %errorKey% equals 'ChannelNotFound'
