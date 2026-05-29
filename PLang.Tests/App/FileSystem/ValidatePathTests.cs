@@ -28,7 +28,7 @@ public class ValidatePathTests
     [Test] public async Task PlangRootedPath_GetsRootPrefix()
     {
         var app = NewApp(out var root);
-        var resolved = global::app.types.path.file.@this.ValidatePath("/data/file.txt", app);
+        var resolved = global::app.type.path.file.@this.ValidatePath("/data/file.txt", app);
         // /data/file.txt → prefixed with root → <root>/data/file.txt
         await Assert.That(resolved.StartsWith(root)).IsTrue();
         await Assert.That(resolved.EndsWith("data/file.txt") || resolved.EndsWith("data\\file.txt")).IsTrue();
@@ -38,7 +38,7 @@ public class ValidatePathTests
     {
         if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS()) return; // Unix form only
         var app = NewApp(out _);
-        var resolved = global::app.types.path.file.@this.ValidatePath("//tmp/foo.txt", app);
+        var resolved = global::app.type.path.file.@this.ValidatePath("//tmp/foo.txt", app);
         // // form must NOT be stripped — preserved so re-validation stays idempotent.
         await Assert.That(resolved).IsEqualTo("//tmp/foo.txt");
     }
@@ -47,8 +47,8 @@ public class ValidatePathTests
     {
         if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS()) return;
         var app = NewApp(out _);
-        var first = global::app.types.path.file.@this.ValidatePath("//tmp/foo.txt", app);
-        var second = global::app.types.path.file.@this.ValidatePath(first, app);
+        var first = global::app.type.path.file.@this.ValidatePath("//tmp/foo.txt", app);
+        var second = global::app.type.path.file.@this.ValidatePath(first, app);
         // PLangFile wraps every File.X call with another ValidatePath; the
         // second pass must NOT re-prefix RootDirectory.
         await Assert.That(second).IsEqualTo(first);
@@ -60,14 +60,14 @@ public class ValidatePathTests
         // Previously this threw UnauthorizedAccessException via the
         // fileAccesses gate. Now ValidatePath is just a normaliser;
         // Permission.Authorize handles gating at the action-handler level.
-        var resolved = global::app.types.path.file.@this.ValidatePath("//tmp/elsewhere.txt", app);
+        var resolved = global::app.type.path.file.@this.ValidatePath("//tmp/elsewhere.txt", app);
         await Assert.That(resolved).IsNotNull();
     }
 
     [Test] public async Task RelativePath_GetsRootPrefix()
     {
         var app = NewApp(out var root);
-        var resolved = global::app.types.path.file.@this.ValidatePath("data/file.txt", app);
+        var resolved = global::app.type.path.file.@this.ValidatePath("data/file.txt", app);
         await Assert.That(resolved.StartsWith(root)).IsTrue();
     }
 
@@ -88,7 +88,7 @@ public class ValidatePathTests
         if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS()) return;
         var app = NewApp(out var root);
         var uppered = root.ToUpperInvariant() + "/file.txt";
-        var resolved = global::app.types.path.file.@this.ValidatePath(uppered, app);
+        var resolved = global::app.type.path.file.@this.ValidatePath(uppered, app);
         // Observed contract: the upper-cased version is unrecognised as the
         // current root and ValidatePath joins it onto the real root.
         await Assert.That(resolved.StartsWith(root)).IsTrue();
@@ -99,7 +99,7 @@ public class ValidatePathTests
     {
         var app = NewApp(out var root);
         var inRoot = System.IO.Path.Combine(root, "subdir", "file.txt");
-        var resolved = global::app.types.path.file.@this.ValidatePath(inRoot, app);
+        var resolved = global::app.type.path.file.@this.ValidatePath(inRoot, app);
         await Assert.That(resolved).IsEqualTo(inRoot);
     }
 }

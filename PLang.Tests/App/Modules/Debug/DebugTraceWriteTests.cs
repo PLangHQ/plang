@@ -12,7 +12,7 @@ namespace PLang.Tests.App.Modules.Debug;
 /// the actual handler methods. A mutation that reverted
 /// <c>_currentLlmFilePath.Append(...)</c> to <c>System.IO.File.AppendAllText</c>
 /// would not flip these tests (both end up writing to disk), so we also
-/// assert the underlying path is a <see cref="global::app.types.path.@this"/>
+/// assert the underlying path is a <see cref="global::app.type.path.@this"/>
 /// instance — the typed channel is the audit-gate.
 /// </summary>
 public class DebugTraceWriteTests
@@ -34,7 +34,7 @@ public class DebugTraceWriteTests
         // .Absolute reach is auth-gated). A future mutation reverting to
         // System.IO.Path.Combine + string would break this signature.
         await Assert.That(resolved).IsNotNull();
-        await Assert.That(resolved is global::app.types.path.@this).IsTrue();
+        await Assert.That(resolved is global::app.type.path.@this).IsTrue();
         // And the derivation lands under .build/traces.
         await Assert.That(resolved.Absolute.Replace('\\', '/'))
             .Contains(".build/traces/");

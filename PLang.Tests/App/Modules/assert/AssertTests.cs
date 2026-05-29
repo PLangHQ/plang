@@ -212,7 +212,7 @@ public class AssertTests
         var (app, root) = MakeAppRoot("istrue-yes");
         var filePath = System.IO.Path.Combine(root, "exists.txt");
         System.IO.File.WriteAllText(filePath, "x");
-        var fp = new global::app.types.path.file.@this(filePath, app.User.Context);
+        var fp = new global::app.type.path.file.@this(filePath, app.User.Context);
         var action = new AssertIsTrue { Context = app.User.Context, Value = D(fp) };
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
@@ -224,7 +224,7 @@ public class AssertTests
     {
         var (app, root) = MakeAppRoot("istrue-no");
         var missing = System.IO.Path.Combine(root, "nope.txt");
-        var fp = new global::app.types.path.file.@this(missing, app.User.Context);
+        var fp = new global::app.type.path.file.@this(missing, app.User.Context);
         var action = new AssertIsTrue { Context = app.User.Context, Value = D(fp) };
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();
@@ -237,7 +237,7 @@ public class AssertTests
     {
         var (app, root) = MakeAppRoot("isfalse-yes");
         var missing = System.IO.Path.Combine(root, "still-nope.txt");
-        var fp = new global::app.types.path.file.@this(missing, app.User.Context);
+        var fp = new global::app.type.path.file.@this(missing, app.User.Context);
         var action = new AssertIsFalse { Context = app.User.Context, Value = D(fp) };
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
@@ -250,7 +250,7 @@ public class AssertTests
         var (app, root) = MakeAppRoot("isfalse-no");
         var filePath = System.IO.Path.Combine(root, "really-here.txt");
         System.IO.File.WriteAllText(filePath, "x");
-        var fp = new global::app.types.path.file.@this(filePath, app.User.Context);
+        var fp = new global::app.type.path.file.@this(filePath, app.User.Context);
         var action = new AssertIsFalse { Context = app.User.Context, Value = D(fp) };
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();

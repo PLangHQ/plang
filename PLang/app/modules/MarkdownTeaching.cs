@@ -91,7 +91,7 @@ public static class MarkdownTeaching
             if (moduleDir == null) continue;
             var grand = moduleDir.Parent;
             if (grand == null) continue;
-            if (!string.Equals(grand.Absolute, rootAbs, global::app.types.path.@this.RootComparison)) continue;
+            if (!string.Equals(grand.Absolute, rootAbs, global::app.type.path.@this.RootComparison)) continue;
 
             var fileName = file.FileName;
             if (!IsTeachingFile(fileName, out var stem)) continue;

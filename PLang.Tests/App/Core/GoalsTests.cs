@@ -1,6 +1,6 @@
 using app;
 using app.goal;
-using app.types.path;
+using app.type.path;
 
 namespace PLang.Tests.App.Core;
 

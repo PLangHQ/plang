@@ -782,7 +782,7 @@ public partial class @this
         catch (System.Reflection.TargetInvocationException tie) when (tie.InnerException != null)
         {
             var inner = tie.InnerException;
-            if (inner is global::app.types.path.scheme.SchemeNotRegistered snr)
+            if (inner is global::app.type.path.scheme.SchemeNotRegistered snr)
                 return (null, @this<T>.FromError(new global::app.error.Error(snr.Message, "SchemeNotRegistered", 400)
                 {
                     FixSuggestion = $"Register a factory for scheme '{snr.Scheme}' via app.Types.Scheme.Register, or use a bare/file:// path.",

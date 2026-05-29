@@ -254,7 +254,7 @@ public partial class @this
         // so Resolve recovers the scheme without consulting the field. The
         // wire field exists for receivers that want to dispatch without
         // parsing; this hook doesn't.
-        if (typeof(app.types.path.@this).IsAssignableFrom(targetType))
+        if (typeof(app.type.path.@this).IsAssignableFrom(targetType))
         {
             return (data, ctx) =>
             {
@@ -286,7 +286,7 @@ public partial class @this
                         $"Reconstructing {targetType.Name}: normalized tree has no 'relative' child.",
                         "NormalizeMissingRelative");
 
-                return app.types.path.@this.Resolve(relative, ctx);
+                return app.type.path.@this.Resolve(relative, ctx);
             };
         }
 

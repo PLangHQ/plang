@@ -1,5 +1,6 @@
 using app.variable;
-using app.types;
+using app.type;
+using app.type.list;
 
 namespace app.modules.file;
 
@@ -21,7 +22,7 @@ public partial class Read : IContext
     public partial data.@this<bool> ResolveVariables { get; init; }
 
     // Bare Data — polymorphic by MIME (text → string, binary → byte[], json → structured,
-    // image → app.types.image.@this). The Type stamp carries the high-level type; the
+    // image → app.type.image.@this). The Type stamp carries the high-level type; the
     // value is the typed instance.
     public async Task<data.@this> Run()
     {
@@ -35,7 +36,7 @@ public partial class Read : IContext
         var mime = read.Type?.Value ?? "";
         if (read.Value is byte[] bytes && mime.StartsWith("image/", System.StringComparison.OrdinalIgnoreCase))
         {
-            var image = new global::app.types.image.@this(bytes, mime, Path.Value);
+            var image = new global::app.type.image.@this(bytes, mime, Path.Value);
             return new data.@this(read.Name, image, data.type.FromName("image"));
         }
 

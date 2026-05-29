@@ -1,5 +1,5 @@
 using System.Text.Json;
-using code = global::app.types.code.@this;
+using code = global::app.type.code.@this;
 
 namespace PLang.Tests.App.Serialization;
 
@@ -40,7 +40,7 @@ public class CodeSerializerTests
     {
         var c = new code("hello", "text");
         var w = new CaptureWriter("json");
-        global::app.types.code.serializer.Default.Write(c, w);
+        global::app.type.code.serializer.Default.Write(c, w);
         await Assert.That(w.LastMethod).IsEqualTo("String");
         await Assert.That(w.Last).IsEqualTo("hello");
     }
@@ -48,7 +48,7 @@ public class CodeSerializerTests
     [Test] public async Task Code_JsonFormat_ViaStar_RoundTripsSourceAndLanguage()
     {
         // The (code, *) wildcard handles json. Round-trip Source via the writer.
-        var renderers = new global::app.types.renderers.@this();
+        var renderers = new global::app.type.renderer.@this();
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
@@ -63,7 +63,7 @@ public class CodeSerializerTests
     [Test] public async Task Code_PlangFormat_ViaStar_RoundTripsSourceAndLanguage()
     {
         // plang format falls through to wildcard "*" → Default.
-        var renderers = new global::app.types.renderers.@this();
+        var renderers = new global::app.type.renderer.@this();
         var write = renderers.Of("code", "plang");
         await Assert.That(write).IsNotNull();
         var w = new CaptureWriter("plang");
@@ -75,7 +75,7 @@ public class CodeSerializerTests
     {
         // text Format falls through to wildcard — no HTML wrap (the HTML
         // writer is a follow-up).
-        var renderers = new global::app.types.renderers.@this();
+        var renderers = new global::app.type.renderer.@this();
         var write = renderers.Of("code", "text");
         await Assert.That(write).IsNotNull();
         var w = new CaptureWriter("text");
@@ -86,7 +86,7 @@ public class CodeSerializerTests
 
     [Test] public async Task Code_SerializerCoverage_PassesPlngGate()
     {
-        var renderers = new global::app.types.renderers.@this();
+        var renderers = new global::app.type.renderer.@this();
         await Assert.That(renderers.Has("code")).IsTrue();
         await Assert.That(renderers.Of("code", "json")).IsNotNull();
         await Assert.That(renderers.Of("code", "plang")).IsNotNull();

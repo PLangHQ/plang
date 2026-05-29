@@ -1,4 +1,4 @@
-using image = global::app.types.image.@this;
+using image = global::app.type.image.@this;
 
 namespace PLang.Tests.App.Types;
 
@@ -49,11 +49,11 @@ public class FileReadBuildTests
         System.IO.File.WriteAllBytes(abs, pngBytes);
         try
         {
-            var p = global::app.types.path.@this.Resolve(abs, app.User.Context);
+            var p = global::app.type.path.@this.Resolve(abs, app.User.Context);
             var action = new global::app.modules.file.Read
             {
                 Context = app.User.Context,
-                Path = global::app.data.@this<global::app.types.path.@this>.Ok(p),
+                Path = global::app.data.@this<global::app.type.path.@this>.Ok(p),
             };
             var result = await action.Run();
             await Assert.That(result.Success).IsTrue();
@@ -72,11 +72,11 @@ public class FileReadBuildTests
         System.IO.File.WriteAllText(abs, "hello");
         try
         {
-            var p = global::app.types.path.@this.Resolve(abs, app.User.Context);
+            var p = global::app.type.path.@this.Resolve(abs, app.User.Context);
             var action = new global::app.modules.file.Read
             {
                 Context = app.User.Context,
-                Path = global::app.data.@this<global::app.types.path.@this>.Ok(p),
+                Path = global::app.data.@this<global::app.type.path.@this>.Ok(p),
             };
             var result = await action.Run();
             await Assert.That(result.Success).IsTrue();

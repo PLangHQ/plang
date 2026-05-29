@@ -17,10 +17,10 @@ public sealed class Writer : IWriter
     private readonly Utf8JsonWriter _writer;
     private readonly JsonSerializerOptions _options;
     private readonly app.View _view;
-    private readonly app.types.renderers.@this? _renderers;
+    private readonly app.type.renderer.@this? _renderers;
 
     public Writer(Utf8JsonWriter writer, JsonSerializerOptions? options = null,
-        app.View view = app.View.Out, app.types.renderers.@this? renderers = null)
+        app.View view = app.View.Out, app.type.renderer.@this? renderers = null)
     {
         _writer = writer;
         _options = options ?? new JsonSerializerOptions();

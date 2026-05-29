@@ -1,5 +1,5 @@
 using app.variable;
-using number = global::app.types.number.@this;
+using number = global::app.type.number.@this;
 
 namespace app.modules.math;
 

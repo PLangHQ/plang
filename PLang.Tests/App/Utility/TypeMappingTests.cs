@@ -673,7 +673,7 @@ public class TypeMappingTests
     [Test]
     public async Task GetTypeName_DataOfPath_ReturnsPath()
     {
-        var name = TypeMapping.GetTypeName(typeof(global::app.data.@this<global::app.types.path.@this>));
+        var name = TypeMapping.GetTypeName(typeof(global::app.data.@this<global::app.type.path.@this>));
 
         await Assert.That(name).IsEqualTo("path");
     }

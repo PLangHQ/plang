@@ -1,7 +1,7 @@
 using app.actor.context;
 using app.variable;
 using app.modules;
-using app.types.path;
+using app.type.path;
 using File = System.IO.File;
 using Directory = System.IO.Directory;
 

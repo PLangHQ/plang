@@ -29,7 +29,7 @@ public class ModuleAddTests
         var add = new Add
         {
             Context = context,
-            Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve("nonexistent_mylib.dll", context)),
+            Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve("nonexistent_mylib.dll", context)),
             Namespace = null
         };
 
@@ -48,7 +48,7 @@ public class ModuleAddTests
             var add = new Add
             {
                 Context = context,
-                Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve(assemblyPath, context)),
+                Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
                 Namespace = "app.modules"
             };
 
@@ -70,7 +70,7 @@ public class ModuleAddTests
             var add = new Add
             {
                 Context = context,
-                Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve(assemblyPath, context)),
+                Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
                 Namespace = "app.modules"
             };
 
@@ -91,7 +91,7 @@ public class ModuleAddTests
             var add = new Add
             {
                 Context = context,
-                Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve(assemblyPath, context)),
+                Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
                 Namespace = "Some.Completely.Wrong.Namespace"
             };
 
@@ -112,7 +112,7 @@ public class ModuleAddTests
             var add = new Add
             {
                 Context = context,
-                Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve(assemblyPath, context)),
+                Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
                 Namespace = "app.modules"
             };
 
@@ -132,7 +132,7 @@ public class ModuleAddTests
             var add = new Add
             {
                 Context = context,
-                Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve(assemblyPath, context)),
+                Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
                 Namespace = null
             };
 
@@ -153,7 +153,7 @@ public class ModuleAddTests
             var add = new Add
             {
                 Context = context,
-                Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve(assemblyPath, context)),
+                Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
                 Namespace = "app.modules"
             };
 

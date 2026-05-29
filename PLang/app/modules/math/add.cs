@@ -1,10 +1,10 @@
 using app.variable;
 using ExampleSpec = app.builder.Types.Spec.Example;
 using ActionSpec = app.builder.Types.Spec.Action;
-using number = global::app.types.number.@this;
+using number = global::app.type.number.@this;
 
-using POverflow = global::app.types.number.OverflowMode;
-using PPrecision = global::app.types.number.PrecisionMode;
+using POverflow = global::app.type.number.OverflowMode;
+using PPrecision = global::app.type.number.PrecisionMode;
 
 namespace app.modules.math;
 

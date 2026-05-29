@@ -89,10 +89,10 @@ public class LlmTypeTests
             Name = "MyGoal",
             Parallel = true,
             Parameters = new List<Data> { new Data("param1", "value1") },
-            PrPath = global::app.types.path.@this.Resolve("/test/.build/mygoal.pr", ctx)
+            PrPath = global::app.type.path.@this.Resolve("/test/.build/mygoal.pr", ctx)
         };
 
-        var opts = new JsonSerializerOptions { Converters = { new global::app.types.path.JsonConverter(ctx) } };
+        var opts = new JsonSerializerOptions { Converters = { new global::app.type.path.JsonConverter(ctx) } };
         var json = JsonSerializer.Serialize(gc, opts);
         var deserialized = JsonSerializer.Deserialize<GoalCall>(json, opts)!;
 

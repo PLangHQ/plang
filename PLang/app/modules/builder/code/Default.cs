@@ -150,7 +150,7 @@ public class Default : IBuilder
         else
             // Lift to path verbs — Resolve handles normalization, no
             // System.IO.Path arithmetic needed.
-            rootRelative = global::app.types.path.@this.Resolve(searchPath, context).Absolute;
+            rootRelative = global::app.type.path.@this.Resolve(searchPath, context).Absolute;
 
         var listAction = new file.List
         {
@@ -932,7 +932,7 @@ public class Default : IBuilder
                 // fully reflected record (Raw, Absolute, FileName, ...) that round-trips
                 // poorly. Leave the primitive in the .pr; runtime auto-wraps via the source
                 // generator's Resolve convention when the action actually executes.
-                if (global::app.types.@this.IsScalarPlangType(targetType)) continue;
+                if (global::app.type.list.@this.IsScalarPlangType(targetType)) continue;
 
                 // [Choices]-bearing types (Actor, Operator, ...) keep their string form in
                 // the .pr — runtime resolves the chosen name via the type's own path
@@ -947,7 +947,7 @@ public class Default : IBuilder
                 // Convert in either direction: string → bool/int/double/etc., or
                 // numeric/bool → string when the parameter is declared string. The LLM
                 // emitting `Key=404 (int)` for a string-declared Key gets normalized here.
-                var (converted, error) = global::app.types.@this.TryConvertTo(p.Value, targetType, context);
+                var (converted, error) = global::app.type.list.@this.TryConvertTo(p.Value, targetType, context);
                 if (converted != null)
                     p.Value = converted;
                 else if (error != null)
@@ -1103,6 +1103,6 @@ public class Default : IBuilder
     private static GoalCall? ToGoalCall(object? value)
     {
         if (value is GoalCall gc) return gc;
-        return global::app.types.@this.ConvertTo<GoalCall>(value);
+        return global::app.type.list.@this.ConvertTo<GoalCall>(value);
     }
 }

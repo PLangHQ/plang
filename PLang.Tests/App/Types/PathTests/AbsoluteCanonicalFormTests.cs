@@ -1,12 +1,12 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using FilePath = global::app.types.path.file.@this;
-using HttpPath = global::app.types.path.http.@this;
-using PermissionRecord = global::app.types.path.permission.@this;
-using MatchMode = global::app.types.path.permission.Match;
-using Verb = global::app.types.path.permission.verb.@this;
-using ReadVerb = global::app.types.path.permission.verb.Read;
+using FilePath = global::app.type.path.file.@this;
+using HttpPath = global::app.type.path.http.@this;
+using PermissionRecord = global::app.type.path.permission.@this;
+using MatchMode = global::app.type.path.permission.Match;
+using Verb = global::app.type.path.permission.verb.@this;
+using ReadVerb = global::app.type.path.permission.verb.Read;
 
 namespace PLang.Tests.App.Types.PathTests;
 

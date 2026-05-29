@@ -14,7 +14,7 @@ public class JsonWriterDomainShapeTests
 {
     [Test] public async Task WireOutput_Path_IsPropertyBag_SchemeAndRelative_NotBareString()
     {
-        global::app.types.path.@this p = "/foo/bar.txt";
+        global::app.type.path.@this p = "/foo/bar.txt";
         var json = NormalizePipelineHelper.SerializeValueSlot(p);
         await Assert.That(json.StartsWith("{")).IsTrue();
         await Assert.That(json).Contains("\"scheme\":");
@@ -23,14 +23,14 @@ public class JsonWriterDomainShapeTests
 
     [Test] public async Task WireOutput_FilePath_HasScheme_File()
     {
-        global::app.types.path.@this p = "/foo/bar.txt";
+        global::app.type.path.@this p = "/foo/bar.txt";
         var json = NormalizePipelineHelper.SerializeValueSlot(p);
         await Assert.That(json).Contains("\"scheme\":\"file\"");
     }
 
     [Test] public async Task WireOutput_HttpPath_HasScheme_Http()
     {
-        var p = new global::app.types.path.http.@this("https://example.com");
+        var p = new global::app.type.path.http.@this("https://example.com");
         var json = NormalizePipelineHelper.SerializeValueSlot(p);
         await Assert.That(json).Contains("\"scheme\":\"https\"").Or.Contains("\"scheme\":\"http\"");
     }
@@ -93,7 +93,7 @@ public class JsonWriterDomainShapeTests
         // Stage 2b: PathJsonConverter still exists for read-side compatibility,
         // but the Normalize + JsonWriter pipeline does NOT invoke its Write —
         // path on the wire is the property-bag shape produced here.
-        global::app.types.path.@this p = "/foo";
+        global::app.type.path.@this p = "/foo";
         var json = NormalizePipelineHelper.SerializeValueSlot(p);
         // Bespoke string form would be just "\"/foo\"" (a JSON string); the
         // property-bag form is a JSON object starting with "{".

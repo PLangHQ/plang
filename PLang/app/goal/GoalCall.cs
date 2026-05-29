@@ -1,4 +1,4 @@
-using app.types.path;
+using app.type.path;
 using app.variable;
 using app.actor.context;
 using app.Attributes;
@@ -29,7 +29,7 @@ public sealed class GoalCall : modules.IEvent
     public List<data.@this>? Parameters { get; set; }
     /// <summary>Pre-resolved .pr file path. Null when the goal name contains %variables%.</summary>
     [Store, Out]
-    public global::app.types.path.@this? PrPath { get; set; }
+    public global::app.type.path.@this? PrPath { get; set; }
 
     /// <summary>The action this GoalCall originated from. Set during parameter resolution.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
@@ -148,7 +148,7 @@ public sealed class GoalCall : modules.IEvent
         // so file.read with a relative path resolves against the goal's actual
         // on-disk directory (works in child Apps where Path was set under a
         // different root and would otherwise mis-resolve).
-        var prPathResolved = global::app.types.path.@this.Resolve(prPath, context);
+        var prPathResolved = global::app.type.path.@this.Resolve(prPath, context);
         goal.LoadedFromPrPath = prPathResolved;
         foreach (var subGoal in goal.Goals)
             subGoal.LoadedFromPrPath = prPathResolved;

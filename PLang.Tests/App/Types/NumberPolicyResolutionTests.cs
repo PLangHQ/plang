@@ -1,6 +1,6 @@
-using POverflow = global::app.types.number.OverflowMode;
-using PPrecision = global::app.types.number.PrecisionMode;
-using PPolicy = global::app.types.number.NumberPolicy;
+using POverflow = global::app.type.number.OverflowMode;
+using PPrecision = global::app.type.number.PrecisionMode;
+using PPolicy = global::app.type.number.NumberPolicy;
 
 namespace PLang.Tests.App.Types;
 

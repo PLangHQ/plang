@@ -1,6 +1,6 @@
-using NumberPolicy = global::app.types.number.NumberPolicy;
-using POverflow = global::app.types.number.OverflowMode;
-using PPrecision = global::app.types.number.PrecisionMode;
+using NumberPolicy = global::app.type.number.NumberPolicy;
+using POverflow = global::app.type.number.OverflowMode;
+using PPrecision = global::app.type.number.PrecisionMode;
 
 namespace app.modules.math;
 

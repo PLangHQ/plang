@@ -1,5 +1,5 @@
 using Microsoft.Data.Sqlite;
-using app.types.path;
+using app.type.path;
 using app.channel.serializer;
 using app.error;
 using app.variable;
@@ -27,13 +27,13 @@ public sealed class Sqlite : IStore
     /// Absolute string to the connection string. Out-of-root paths the
     /// actor hasn't granted bubble up as an exception — sqlite never sees them.
     /// </summary>
-    public Sqlite(global::app.types.path.@this dbPath)
+    public Sqlite(global::app.type.path.@this dbPath)
     {
         // Take-over API: authorize before passing .Absolute. Sync-wait
         // — Sqlite ctor is sync and the gate is the bootstrap path.
-        var verb = new global::app.types.path.permission.verb.@this
+        var verb = new global::app.type.path.permission.verb.@this
         {
-            Write = new global::app.types.path.permission.verb.Write()
+            Write = new global::app.type.path.permission.verb.Write()
         };
         var auth = dbPath.Authorize(verb).GetAwaiter().GetResult();
         if (!auth.Success)

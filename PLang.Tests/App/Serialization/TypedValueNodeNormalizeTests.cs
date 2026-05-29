@@ -30,7 +30,7 @@ public class TypedValueNodeNormalizeTests
         _types.Assemblies.Add(typeof(TypedValueNodeNormalizeTests).Assembly);
         _types.Renderers.Assemblies.Add(typeof(TypedValueNodeNormalizeTests).Assembly);
         _types.Renderers.Register("normalize-fixture-with-renderer",
-            global::app.types.renderers.@this.AnyFormat,
+            global::app.type.renderer.@this.AnyFormat,
             (v, w) => w.String("rendered"));
     }
 

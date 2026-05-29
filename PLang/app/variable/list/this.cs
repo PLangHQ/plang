@@ -364,7 +364,7 @@ public partial class @this
                             : typeof(object);
                         if (!elementType.IsAssignableFrom(value.GetType()))
                         {
-                            var (typedValue, _) = types.@this.TryConvertTo(value, elementType);
+                            var (typedValue, _) = type.list.@this.TryConvertTo(value, elementType);
                             if (typedValue != null) value = typedValue;
                         }
                     }
@@ -383,7 +383,7 @@ public partial class @this
                         {
                             if (value != null && !indexer.PropertyType.IsAssignableFrom(value.GetType()))
                             {
-                                var (typedValue, _) = types.@this.TryConvertTo(value, indexer.PropertyType);
+                                var (typedValue, _) = type.list.@this.TryConvertTo(value, indexer.PropertyType);
                                 if (typedValue != null) value = typedValue;
                             }
                             indexer.SetValue(collection, value, new object[] { gIdx });
@@ -401,7 +401,7 @@ public partial class @this
         {
             if (value != null && !clrProp.PropertyType.IsAssignableFrom(value.GetType()))
             {
-                var (typedValue, _) = types.@this.TryConvertTo(value, clrProp.PropertyType);
+                var (typedValue, _) = type.list.@this.TryConvertTo(value, clrProp.PropertyType);
                 if (typedValue != null) value = typedValue;
             }
             clrProp.SetValue(target, value);
@@ -478,7 +478,7 @@ public partial class @this
             }
         }
 
-        var (typedValue, _) = types.@this.TryConvertTo(value, slotType);
+        var (typedValue, _) = type.list.@this.TryConvertTo(value, slotType);
         return typedValue ?? value;
     }
 

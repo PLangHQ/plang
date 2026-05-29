@@ -22,7 +22,7 @@ public class GoalPathTypingTests
     {
         var prop = typeof(Goal).GetProperty("Path");
         await Assert.That(prop).IsNotNull();
-        await Assert.That(prop!.PropertyType).IsEqualTo(typeof(global::app.types.path.@this));
+        await Assert.That(prop!.PropertyType).IsEqualTo(typeof(global::app.type.path.@this));
     }
 
     [Test] public async Task GoalPrPath_IsDerivedFromPath_ViaInBuildFolder()
@@ -32,7 +32,7 @@ public class GoalPathTypingTests
         var goal = new Goal
         {
             Name = "Test",
-            Path = global::app.types.path.@this.Resolve("/Cache/Start.goal", ctx)
+            Path = global::app.type.path.@this.Resolve("/Cache/Start.goal", ctx)
         };
         await Assert.That(goal.PrPath).IsNotNull();
         var rel = goal.PrPath!.Relative.Replace('\\', '/');
@@ -48,8 +48,8 @@ public class GoalPathTypingTests
         var goal = new Goal
         {
             Name = "Test",
-            Path = global::app.types.path.@this.Resolve("/Start.goal", ctx),
-            PrPath = global::app.types.path.@this.Resolve("/SomeOther/junk.pr", ctx)
+            Path = global::app.type.path.@this.Resolve("/Start.goal", ctx),
+            PrPath = global::app.type.path.@this.Resolve("/SomeOther/junk.pr", ctx)
         };
         var rel = goal.PrPath!.Relative.Replace('\\', '/');
         // Init was a no-op — derived from Path, not the explicitly-passed PrPath.
@@ -61,7 +61,7 @@ public class GoalPathTypingTests
         var (app, root) = MakeApp();
         var ctx = app.User.Context;
         var goal = new Goal { Name = "Test" };
-        goal.LoadedFromPrPath = global::app.types.path.@this.Resolve("/Cache/.build/test.pr", ctx);
+        goal.LoadedFromPrPath = global::app.type.path.@this.Resolve("/Cache/.build/test.pr", ctx);
         goal.App = app;
         var dir = goal.GetRuntimeDirectory();
         await Assert.That(dir).IsNotNull();
@@ -76,13 +76,13 @@ public class GoalPathTypingTests
         var goal = new Goal
         {
             Name = "Test",
-            Path = global::app.types.path.@this.Resolve("/Cache/Start.goal", ctx)
+            Path = global::app.type.path.@this.Resolve("/Cache/Start.goal", ctx)
         };
         var options = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             PropertyNameCaseInsensitive = true,
-            Converters = { new global::app.types.path.JsonConverter(ctx) }
+            Converters = { new global::app.type.path.JsonConverter(ctx) }
         };
         var json = JsonSerializer.Serialize(goal, options);
         await Assert.That(json).Contains("Cache/Start.goal");
@@ -95,12 +95,12 @@ public class GoalPathTypingTests
         var goal = new Goal
         {
             Name = "Test",
-            Path = global::app.types.path.@this.Resolve("/Start.goal", ctx1)
+            Path = global::app.type.path.@this.Resolve("/Start.goal", ctx1)
         };
         var opts1 = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            Converters = { new global::app.types.path.JsonConverter(ctx1) }
+            Converters = { new global::app.type.path.JsonConverter(ctx1) }
         };
         var json = JsonSerializer.Serialize(goal, opts1);
         // Load under a different App / Context.
@@ -109,7 +109,7 @@ public class GoalPathTypingTests
         var opts2 = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
-            Converters = { new global::app.types.path.JsonConverter(ctx2) }
+            Converters = { new global::app.type.path.JsonConverter(ctx2) }
         };
         var loaded = JsonSerializer.Deserialize<Goal>(json, opts2);
         await Assert.That(loaded).IsNotNull();
@@ -124,13 +124,13 @@ public class GoalPathTypingTests
         var goal = new Goal
         {
             Name = "Test",
-            Path = global::app.types.path.@this.Resolve("/Start.goal", ctx)
+            Path = global::app.type.path.@this.Resolve("/Start.goal", ctx)
         };
         var opts = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             PropertyNameCaseInsensitive = true,
-            Converters = { new global::app.types.path.JsonConverter(ctx) }
+            Converters = { new global::app.type.path.JsonConverter(ctx) }
         };
         var json = JsonSerializer.Serialize(goal, opts);
         var loaded = JsonSerializer.Deserialize<Goal>(json, opts);
@@ -144,18 +144,18 @@ public class GoalPathTypingTests
         var gc = new GoalCall
         {
             Name = "Foo",
-            PrPath = global::app.types.path.@this.Resolve("/Cache/.build/foo.pr", ctx)
+            PrPath = global::app.type.path.@this.Resolve("/Cache/.build/foo.pr", ctx)
         };
         var opts = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            Converters = { new global::app.types.path.JsonConverter(ctx) }
+            Converters = { new global::app.type.path.JsonConverter(ctx) }
         };
         var json = JsonSerializer.Serialize(gc, opts);
         await Assert.That(json).Contains("Cache/.build/foo.pr");
         var loaded = JsonSerializer.Deserialize<GoalCall>(json,
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true,
-                Converters = { new global::app.types.path.JsonConverter(ctx) } });
+                Converters = { new global::app.type.path.JsonConverter(ctx) } });
         await Assert.That(loaded!.PrPath).IsNotNull();
     }
 
@@ -164,9 +164,9 @@ public class GoalPathTypingTests
         // The context-less converter produces a stub Path with Context=null.
         var opts = new JsonSerializerOptions
         {
-            Converters = { new global::app.types.path.JsonConverter() }
+            Converters = { new global::app.type.path.JsonConverter() }
         };
-        var p = JsonSerializer.Deserialize<global::app.types.path.@this>("\"/Start.goal\"", opts);
+        var p = JsonSerializer.Deserialize<global::app.type.path.@this>("\"/Start.goal\"", opts);
         await Assert.That(p).IsNotNull();
         await Assert.That(p!.Context).IsNull();
     }

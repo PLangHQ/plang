@@ -56,18 +56,18 @@ public class ProviderModuleTests
     {
         // Use the exact resolved path so the grant's Path key matches the
         // canonical-form path that AuthGate compares against.
-        var resolved = global::app.types.path.@this.Resolve("/" + dllPath, Ctx);
-        var verb = new global::app.types.path.permission.verb.@this
+        var resolved = global::app.type.path.@this.Resolve("/" + dllPath, Ctx);
+        var verb = new global::app.type.path.permission.verb.@this
         {
-            Read = new global::app.types.path.permission.verb.Read(),
-            Execute = new global::app.types.path.permission.verb.Execute()
+            Read = new global::app.type.path.permission.verb.Read(),
+            Execute = new global::app.type.path.permission.verb.Execute()
         };
-        var permission = new global::app.types.path.permission.@this(
+        var permission = new global::app.type.path.permission.@this(
             Actor: _app.System.Name,
             Path: resolved.Absolute,
             Verb: verb,
-            Match: global::app.types.path.permission.Match.Exact);
-        var data = new global::app.data.@this<global::app.types.path.permission.@this>("", permission) { Context = Ctx };
+            Match: global::app.type.path.permission.Match.Exact);
+        var data = new global::app.data.@this<global::app.type.path.permission.@this>("", permission) { Context = Ctx };
         await _app.System.Permission.Add(data);
     }
 
@@ -101,7 +101,7 @@ public class ProviderModuleTests
         var action = new global::app.modules.code.load
         {
             Context = Ctx,
-            Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve("/nonexistent/path/fake.dll", Ctx))
+            Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve("/nonexistent/path/fake.dll", Ctx))
         };
         var result = await action.Run();
 
@@ -137,7 +137,7 @@ public class ProviderModuleTests
         var action = new global::app.modules.code.load
         {
             Context = Ctx,
-            Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve("/" + dllPath, Ctx)),
+            Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve("/" + dllPath, Ctx)),
         };
         var result = await action.Run();
 
@@ -161,7 +161,7 @@ public class ProviderModuleTests
         var action = new global::app.modules.code.load
         {
             Context = Ctx,
-            Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve("/" + dllPath, Ctx)),
+            Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve("/" + dllPath, Ctx)),
         };
         var result = await action.Run();
 
@@ -183,7 +183,7 @@ public class ProviderModuleTests
         var action = new global::app.modules.code.load
         {
             Context = Ctx,
-            Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve("/" + dllPath, Ctx)),
+            Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve("/" + dllPath, Ctx)),
         };
         var result = await action.Run();
 

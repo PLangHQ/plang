@@ -57,7 +57,7 @@ public class DescribeTests
 [global::app.modules.Action("datapath")]
 public record FakeDataPathAction : global::app.modules.ICodeGenerated
 {
-    public global::app.data.@this<global::app.types.path.@this> Path { get; init; }
+    public global::app.data.@this<global::app.type.path.@this> Path { get; init; }
 
     public Task<Data> Run() => Task.FromResult(Data.Ok());
 

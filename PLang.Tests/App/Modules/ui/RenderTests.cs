@@ -666,7 +666,7 @@ public class RenderTests : IDisposable
         var goal = new Goal
         {
             Name = "SubGoal",
-            Path = global::app.types.path.@this.Resolve("/goals/SubGoal.goal", ctx)
+            Path = global::app.type.path.@this.Resolve("/goals/SubGoal.goal", ctx)
         };
         _app.Goals.Add(goal);
         ctx.Goal = goal;

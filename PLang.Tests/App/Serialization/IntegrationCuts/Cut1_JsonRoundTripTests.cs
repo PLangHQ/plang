@@ -13,7 +13,7 @@ public class Cut1_JsonRoundTripTests
 {
     [Test] public async Task Cut1_Path_RoundTrips_AsScheme_Relative_PropertyBag()
     {
-        global::app.types.path.@this p = "/foo/bar.txt";
+        global::app.type.path.@this p = "/foo/bar.txt";
         var json = NormalizePipelineHelper.SerializeValueSlot(p);
         // Wire shape carries scheme + relative — both fields present and lowercased.
         await Assert.That(json).Contains("\"scheme\":\"file\"");
@@ -25,7 +25,7 @@ public class Cut1_JsonRoundTripTests
         });
         var ex = await Assert.ThrowsAsync<NormalizeException>(async () =>
         {
-            carrier.Reconstruct<global::app.types.path.@this>();
+            carrier.Reconstruct<global::app.type.path.@this>();
             await Task.CompletedTask;
         });
         await Assert.That(ex!.Key).IsEqualTo("NormalizeContextRequired");

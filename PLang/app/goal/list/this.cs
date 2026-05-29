@@ -15,8 +15,8 @@ public sealed class @this
     // Path-keyed dicts. Path's own Equals/GetHashCode uses RootComparison
     // (OrdinalIgnoreCase on Windows, Ordinal on Linux) — no separate
     // StringComparer needed; the canonical-form keying lives on Path itself.
-    private readonly ConcurrentDictionary<global::app.types.path.@this, goal.@this> _goals = new();
-    private readonly ConcurrentDictionary<global::app.types.path.@this, goal.@this> _byPath = new();
+    private readonly ConcurrentDictionary<global::app.type.path.@this, goal.@this> _goals = new();
+    private readonly ConcurrentDictionary<global::app.type.path.@this, goal.@this> _byPath = new();
     // Separate by-name index for fuzzy `Get("Name")` — name lookups are
     // a different question from Path equality and want OrdinalIgnoreCase
     // semantics regardless of OS.
@@ -173,7 +173,7 @@ public sealed class @this
 
         // 1. Try user's root via path verbs (gated). Anchor at "/" (App root),
         // append dir, then .build/<file>.pr. ExistsAsync fast-passes in-root.
-        var rootCandidate = global::app.types.path.@this.Resolve("/", ctx);
+        var rootCandidate = global::app.type.path.@this.Resolve("/", ctx);
         if (!string.IsNullOrEmpty(dir)) rootCandidate = rootCandidate.Combine(dir);
         rootCandidate = rootCandidate.Combine(".build").Combine(prFile);
         var rootExists = await rootCandidate.ExistsAsync();
@@ -200,7 +200,7 @@ public sealed class @this
         if (normalized.StartsWith("system/", StringComparison.OrdinalIgnoreCase)
             || normalized.Equals("system", StringComparison.OrdinalIgnoreCase))
         {
-            var sysCandidate = global::app.types.path.@this.Resolve(
+            var sysCandidate = global::app.type.path.@this.Resolve(
                 "/" + normalized + "/.build/" + prFile, ctx);
             var sysExists = await sysCandidate.ExistsAsync();
             if (sysExists.Success && sysExists.Value == true)
@@ -301,8 +301,8 @@ public sealed class @this
         // Resolve the raw string through the scheme registry when App is wired
         // so dict lookups key on the canonical Path. Test fixtures often skip
         // App wiring — fall back to the implicit string→Path stub.
-        global::app.types.path.@this key = App?.System?.Context is { } ctx
-            ? global::app.types.path.@this.Resolve(prPath, ctx)
+        global::app.type.path.@this key = App?.System?.Context is { } ctx
+            ? global::app.type.path.@this.Resolve(prPath, ctx)
             : prPath;
         if (_goals.TryGetValue(key, out var cached))
             return cached.IsSetup ? null : cached;
@@ -310,7 +310,7 @@ public sealed class @this
             return cached.IsSetup ? null : cached;
 
         if (App == null) return null;
-        var resolved = global::app.types.path.@this.Resolve(prPath, App.System.Context!);
+        var resolved = global::app.type.path.@this.Resolve(prPath, App.System.Context!);
         var exists = await resolved.ExistsAsync();
         if (!exists.Success || exists.Value != true)
             return null;
@@ -338,7 +338,7 @@ public sealed class @this
             // (anchored against the App root) and the /system/* → <OsDirectory>
             // fallback.
             var deserializeCtx = context ?? app.System.Context!;
-            var prPath = global::app.types.path.@this.Resolve(prFilePath, deserializeCtx);
+            var prPath = global::app.type.path.@this.Resolve(prFilePath, deserializeCtx);
             var readResult = await prPath.ReadBytes();
             if (!readResult.Success || readResult.Value == null)
                 return data.@this.FromError(readResult.Error ?? new Error($"Failed to read goal file: {prFilePath}"));
@@ -402,7 +402,7 @@ public sealed class @this
             // Lift to path.List — gated through AuthGate(Read). In-root walks
             // fast-pass; out-of-root would prompt or deny.
             var ctx = context ?? app.System.Context!;
-            var dirPath = global::app.types.path.@this.Resolve(directory, ctx);
+            var dirPath = global::app.type.path.@this.Resolve(directory, ctx);
             var listed = await dirPath.List(pattern, recursive: true);
             if (!listed.Success || listed.Value == null)
                 return data.@this.Ok(0);

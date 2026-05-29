@@ -1,17 +1,17 @@
 namespace PLang.Tests.App.Serialization;
 
 // plang-types — Stage 2
-// app.types.renderers.@this — the (typeName, formatToken) → Write dispatch table.
+// app.type.renderer.@this — the (typeName, formatToken) → Write dispatch table.
 // Reflection-discovered from app/types/<name>/serializer/<format>.cs at first use,
 // with a Register(...) seam for runtime-loaded DLLs (Stage 7).
 // Lookup: specific (type, format) hit → fallback (type, "*") → null.
 
 public class TypeSerializersDispatchTests
 {
-    private global::app.types.renderers.@this _r = null!;
+    private global::app.type.renderer.@this _r = null!;
 
     [Before(Test)]
-    public void Setup() => _r = new global::app.types.renderers.@this();
+    public void Setup() => _r = new global::app.type.renderer.@this();
 
     [Test]
     public async Task Lookup_SpecificTypeFormat_HitsRegisteredWriter()
@@ -28,7 +28,7 @@ public class TypeSerializersDispatchTests
     public async Task Lookup_NoSpecific_FallsBackToStarDefault()
     {
         bool called = false;
-        _r.Register("dispatch-fixture", global::app.types.renderers.@this.AnyFormat, (v, w) => called = true);
+        _r.Register("dispatch-fixture", global::app.type.renderer.@this.AnyFormat, (v, w) => called = true);
         var write = _r.Of("dispatch-fixture", "anything");
         await Assert.That(write).IsNotNull();
         write!(new object(), new FakeWriter("anything"));
@@ -46,7 +46,7 @@ public class TypeSerializersDispatchTests
     public async Task RegisterRuntime_AddsEntry_LookupSucceedsAfter()
     {
         await Assert.That(_r.Has("late-fixture")).IsFalse();
-        _r.Register("late-fixture", global::app.types.renderers.@this.AnyFormat, (v, w) => { });
+        _r.Register("late-fixture", global::app.type.renderer.@this.AnyFormat, (v, w) => { });
         await Assert.That(_r.Has("late-fixture")).IsTrue();
         await Assert.That(_r.Of("late-fixture", "json")).IsNotNull();
     }
@@ -58,7 +58,7 @@ public class TypeSerializersDispatchTests
         // (path, "*") must shadow it — Stage 7's overwrite story depends on
         // this precedence.
         bool runtimeFired = false;
-        _r.Register("path", global::app.types.renderers.@this.AnyFormat, (v, w) => runtimeFired = true);
+        _r.Register("path", global::app.type.renderer.@this.AnyFormat, (v, w) => runtimeFired = true);
         var write = _r.Of("path", "json");
         await Assert.That(write).IsNotNull();
         write!(new object(), new FakeWriter("json"));

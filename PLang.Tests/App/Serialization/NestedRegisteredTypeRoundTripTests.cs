@@ -21,8 +21,8 @@ public class NestedRegisteredTypeRoundTripTests
         // whose Value is a list containing two path-typed Datas.
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var p1 = global::app.types.path.@this.Resolve("/srv/a.txt", ctx);
-        var p2 = global::app.types.path.@this.Resolve("/srv/b.txt", ctx);
+        var p1 = global::app.type.path.@this.Resolve("/srv/a.txt", ctx);
+        var p2 = global::app.type.path.@this.Resolve("/srv/b.txt", ctx);
         var outer = new global::app.data.@this("outer", new[] {
             new global::app.data.@this("p1", p1) { Context = ctx },
             new global::app.data.@this("p2", p2) { Context = ctx },
@@ -48,8 +48,8 @@ public class NestedRegisteredTypeRoundTripTests
         var ctx = app.User.Context;
         var paths = new[]
         {
-            global::app.types.path.@this.Resolve("/srv/x.json", ctx),
-            global::app.types.path.@this.Resolve("/srv/y.json", ctx),
+            global::app.type.path.@this.Resolve("/srv/x.json", ctx),
+            global::app.type.path.@this.Resolve("/srv/y.json", ctx),
         };
 
         using var ms = new System.IO.MemoryStream();
@@ -77,7 +77,7 @@ public class NestedRegisteredTypeRoundTripTests
         var ctx = app.User.Context;
         var wrapper = new InnerWrapper
         {
-            Path = global::app.types.path.@this.Resolve("/srv/wrap.json", ctx),
+            Path = global::app.type.path.@this.Resolve("/srv/wrap.json", ctx),
         };
 
         using var ms = new System.IO.MemoryStream();
@@ -120,7 +120,7 @@ public class NestedRegisteredTypeRoundTripTests
 
     public sealed class InnerWrapper
     {
-        [global::app.LlmBuilder] public global::app.types.path.@this? Path { get; set; }
+        [global::app.LlmBuilder] public global::app.type.path.@this? Path { get; set; }
         [global::app.LlmBuilder] public InnerWrapper? Nested { get; set; }
     }
 }

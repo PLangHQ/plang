@@ -239,7 +239,7 @@ public static class JsonString
 /// <summary>
 /// Handles empty strings for nullable enum properties during JSON deserialization.
 /// LLMs produce "" for unset enum fields — this converts them to null instead of failing.
-/// Used by <see cref="app.types.@this"/>'s case-insensitive read options and by HTTP transport.
+/// Used by <see cref="app.type.list.@this"/>'s case-insensitive read options and by HTTP transport.
 /// </summary>
 public class EmptyStringToNullEnumConverterFactory : JsonConverterFactory
 {

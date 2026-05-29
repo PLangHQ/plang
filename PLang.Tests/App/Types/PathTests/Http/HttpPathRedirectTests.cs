@@ -1,10 +1,10 @@
 using System.Text.Json;
-using HttpPath = global::app.types.path.http.@this;
+using HttpPath = global::app.type.path.http.@this;
 using AppEngine = global::app.@this;
 using Ctx = global::app.actor.context.@this;
-using PathPermission = global::app.types.path.permission.@this;
-using PermVerb = global::app.types.path.permission.verb.@this;
-using PermMatch = global::app.types.path.permission.Match;
+using PathPermission = global::app.type.path.permission.@this;
+using PermVerb = global::app.type.path.permission.verb.@this;
+using PermMatch = global::app.type.path.permission.Match;
 using PLang.Tests.App.Types.PathTests.Contract;
 
 namespace PLang.Tests.App.Types.PathTests.Http;

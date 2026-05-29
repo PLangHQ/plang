@@ -236,14 +236,14 @@ public sealed class @this : IAsyncDisposable
     /// Context) so every downstream read goes through <c>AuthGate</c>, even
     /// when the override points outside the app root.
     /// </summary>
-    public global::app.types.path.@this? ResolveMarkdownTeachingRoot()
+    public global::app.type.path.@this? ResolveMarkdownTeachingRoot()
     {
         if (App?.System?.Context == null) return null;
         if (!string.IsNullOrEmpty(MarkdownTeachingRoot))
-            return global::app.types.path.@this.Resolve(MarkdownTeachingRoot!, App.System.Context);
+            return global::app.type.path.@this.Resolve(MarkdownTeachingRoot!, App.System.Context);
         // FilePath's ValidatePath redirects /system/* to <OsDirectory>/system/*
         // when the path isn't present under the App root.
-        return global::app.types.path.@this.Resolve("/system/modules", App.System.Context);
+        return global::app.type.path.@this.Resolve("/system/modules", App.System.Context);
     }
 
     /// <summary>
@@ -305,7 +305,7 @@ public sealed class @this : IAsyncDisposable
                     if (capabilityProps.Contains(prop.Name)) continue;
                     if (prop.GetCustomAttribute<modules.CodeAttribute>() != null) continue;
 
-                    var typeName = (App?.Types.GetTypeName(prop.PropertyType) ?? global::app.types.@this.GetTypeNameStatic(prop.PropertyType));
+                    var typeName = (App?.Types.GetTypeName(prop.PropertyType) ?? global::app.type.list.@this.GetTypeNameStatic(prop.PropertyType));
 
                     bool isNullable = Nullable.GetUnderlyingType(prop.PropertyType) != null;
                     if (!isNullable && !prop.PropertyType.IsValueType)
@@ -470,7 +470,7 @@ public sealed class @this : IAsyncDisposable
         {
             var t = returnType.GetGenericArguments()[0];
             if (t == typeof(object)) return "data";
-            return App?.Types.GetTypeName(t) ?? global::app.types.@this.GetTypeNameStatic(t);
+            return App?.Types.GetTypeName(t) ?? global::app.type.list.@this.GetTypeNameStatic(t);
         }
 
         // Something else — not a Data variant; surface nothing.
@@ -503,7 +503,7 @@ public sealed class @this : IAsyncDisposable
         foreach (var prop in returnType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
             if (baseProps.Contains(prop.Name)) continue;
-            var typeName = (App?.Types.GetTypeName(prop.PropertyType) ?? global::app.types.@this.GetTypeNameStatic(prop.PropertyType));
+            var typeName = (App?.Types.GetTypeName(prop.PropertyType) ?? global::app.type.list.@this.GetTypeNameStatic(prop.PropertyType));
             properties.Add(new data.@this(prop.Name, typeName));
         }
 

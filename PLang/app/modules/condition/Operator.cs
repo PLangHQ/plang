@@ -196,7 +196,7 @@ public sealed class Operator
         // plang-types Stage 4: number@this is the canonical numeric value type.
         // Recognise it so cross-comparison (number vs CLR primitive) normalises
         // through the widening path instead of failing the IComparable check.
-        || value is global::app.types.number.@this;
+        || value is global::app.type.number.@this;
 
     private static readonly System.Type[] NumericOrder =
         [typeof(byte), typeof(short), typeof(int), typeof(long), typeof(float), typeof(double), typeof(decimal)];

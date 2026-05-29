@@ -54,7 +54,7 @@ public class Cut2_DebugModeTests
         // Wire filter directly. Walking the actual value cycles through path.Parent
         // (an abstract property returning another path), so the wire emission
         // sticks to View.Out for path; the filter inventory is the contract.
-        var fileType = typeof(global::app.types.path.file.@this);
+        var fileType = typeof(global::app.type.path.file.@this);
         var outEntries = global::app.channel.serializer.filter.Tagged.PropertiesFor(fileType, global::app.View.Out);
         var debugEntries = global::app.channel.serializer.filter.Tagged.PropertiesFor(fileType, global::app.View.Debug);
         await Assert.That(debugEntries.Count).IsGreaterThan(outEntries.Count);

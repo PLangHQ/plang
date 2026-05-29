@@ -27,10 +27,10 @@ public partial class Set : IContext, IBuildValidatable
             if (value.HasVariableReference) return null;
 
             var targetType = value.Context?.App.Types.Get(value.Type.Value)
-                             ?? global::app.types.@this.GetPrimitiveOrMime(value.Type.Value);
+                             ?? global::app.type.list.@this.GetPrimitiveOrMime(value.Type.Value);
             if (targetType != null && !targetType.IsInstanceOfType(value.Value))
             {
-                var (_, error) = global::app.types.@this.TryConvertTo(value.Value, targetType);
+                var (_, error) = global::app.type.list.@this.TryConvertTo(value.Value, targetType);
                 if (error != null)
                     return $"Parameter 'Value' has type={value.Type.Value} but value cannot be converted: {error.Message}";
             }
@@ -104,7 +104,7 @@ public partial class Set : IContext, IBuildValidatable
             object? converted = Value.Value;
             if (converted != null && !targetType.IsInstanceOfType(converted))
             {
-                var (c, err) = global::app.types.@this.TryConvertTo(converted, targetType, Context);
+                var (c, err) = global::app.type.list.@this.TryConvertTo(converted, targetType, Context);
                 if (err != null)
                     return Task.FromResult(global::app.data.@this.FromError(err));
                 converted = c;

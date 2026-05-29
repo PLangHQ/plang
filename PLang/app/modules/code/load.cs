@@ -13,7 +13,7 @@ namespace app.modules.code;
 public partial class load : IContext
 {
     /// <summary>Path to the DLL to load (relative to app root or absolute).</summary>
-    public partial data.@this<global::app.types.path.@this>? Path { get; init; }
+    public partial data.@this<global::app.type.path.@this>? Path { get; init; }
 
     /// <summary>Optional display name for the provider (not currently used — provider supplies its own Name).</summary>
     public partial data.@this<string>? Name { get; init; }
@@ -37,7 +37,7 @@ public partial class load : IContext
         // and ITypeRenderer implementations. The type-system additions outrank
         // built-in registrations at resolution + rendering, but cannot rewrite
         // what the source generator already baked into compiled handler slots.
-        var typeLoad = global::app.types.Loader.Register(assembly, Context.App.Types);
+        var typeLoad = global::app.type.list.Loader.Register(assembly, Context.App.Types);
         if (!typeLoad.Success)
             return Error(new ActionError(typeLoad.ErrorMessage ?? "Type load failed",
                 typeLoad.ErrorKey ?? "TypeLoadError", 500));

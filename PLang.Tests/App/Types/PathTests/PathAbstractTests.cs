@@ -2,8 +2,8 @@ using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using System.Reflection;
-using PLangPath = global::app.types.path.@this;
-using FilePath = global::app.types.path.file.@this;
+using PLangPath = global::app.type.path.@this;
+using FilePath = global::app.type.path.file.@this;
 
 namespace PLang.Tests.App.Types.PathTests;
 

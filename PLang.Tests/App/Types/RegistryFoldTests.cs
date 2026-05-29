@@ -74,7 +74,7 @@ public class RegistryFoldTests
     [Test]
     public async Task Conversion_TryConvertTo_RoutesThroughRegistry_NotPrimitivesDict()
     {
-        var (value, error) = global::app.types.@this.TryConvertTo("42", typeof(int));
+        var (value, error) = global::app.type.list.@this.TryConvertTo("42", typeof(int));
         await Assert.That(error).IsNull();
         await Assert.That(value).IsEqualTo(42);
     }

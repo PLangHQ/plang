@@ -1,9 +1,9 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using FilePath = global::app.types.path.file.@this;
-using Verb = global::app.types.path.permission.verb.@this;
-using Write = global::app.types.path.permission.verb.Write;
+using FilePath = global::app.type.path.file.@this;
+using Verb = global::app.type.path.permission.verb.@this;
+using Write = global::app.type.path.permission.verb.Write;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.FileSystem.SurfaceTests;

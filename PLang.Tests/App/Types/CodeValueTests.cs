@@ -1,4 +1,4 @@
-using code = global::app.types.code.@this;
+using code = global::app.type.code.@this;
 
 namespace PLang.Tests.App.Types;
 

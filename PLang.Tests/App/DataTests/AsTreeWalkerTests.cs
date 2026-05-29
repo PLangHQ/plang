@@ -132,7 +132,7 @@ public class AsTreeWalkerTests
         var carrier = new Data("", children);
         var ex = await Assert.ThrowsAsync<NormalizeException>(async () =>
         {
-            carrier.Reconstruct<global::app.types.path.@this>();
+            carrier.Reconstruct<global::app.type.path.@this>();
             await Task.CompletedTask;
         });
         await Assert.That(ex!.Key).IsEqualTo("NormalizeContextRequired");

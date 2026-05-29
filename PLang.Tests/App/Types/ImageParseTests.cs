@@ -1,4 +1,4 @@
-using image = global::app.types.image.@this;
+using image = global::app.type.image.@this;
 
 namespace PLang.Tests.App.Types;
 

@@ -45,14 +45,14 @@ global using TString = global::app.data.TString;
 global using Variables = app.variable.list.@this;
 
 // Path types (formerly FileSystem)
-global using FileSystem = app.types.path;
+global using FileSystem = app.type.path;
 // Lowercase path aliases — match PLang concept names, no System.IO.Path clash.
-global using path = app.types.path.@this;
-global using filepath = app.types.path.file.@this;
-global using httppath = app.types.path.http.@this;
+global using path = app.type.path.@this;
+global using filepath = app.type.path.file.@this;
+global using httppath = app.type.path.http.@this;
 
 // Type system
-global using EngineTypes = app.types.@this;
+global using EngineTypes = app.type.list.@this;
 
 // Standalone concepts (no v1 conflicts in tests)
 global using ICache = app.modules.cache.ICache;

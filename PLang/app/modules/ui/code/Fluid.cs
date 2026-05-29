@@ -4,9 +4,9 @@ using Fluid.Ast;
 using Fluid.Values;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Primitives;
-using app.types.path;
+using app.type.path;
 using app.error;
-using app.types.path;
+using app.type.path;
 using app.goal;
 using app.variable;
 
@@ -190,7 +190,7 @@ public class Fluid : ITemplate
     /// Gets the base directory for template file resolution (includes).
     /// Resolves from the calling goal's directory, or app root as fallback.
     /// </summary>
-    private static global::app.types.path.@this GetTemplateBaseDir(Render action)
+    private static global::app.type.path.@this GetTemplateBaseDir(Render action)
     {
         var ctx = action.Context;
         var goalPath = ctx.Goal?.Path;
@@ -199,7 +199,7 @@ public class Fluid : ITemplate
             var goalDir = goalPath.Parent;
             if (goalDir != null) return goalDir;
         }
-        return global::app.types.path.@this.Resolve("/", ctx);
+        return global::app.type.path.@this.Resolve("/", ctx);
     }
 
     /// <summary>
@@ -251,10 +251,10 @@ public class Fluid : ITemplate
     private sealed class PlangFileProvider : IFileProvider
     {
         private readonly global::app.@this _app;
-        private readonly global::app.types.path.@this _basePath;
+        private readonly global::app.type.path.@this _basePath;
         private readonly global::app.actor.context.@this _context;
 
-        public PlangFileProvider(global::app.@this app, global::app.types.path.@this basePath, global::app.actor.context.@this context)
+        public PlangFileProvider(global::app.@this app, global::app.type.path.@this basePath, global::app.actor.context.@this context)
         {
             _app = app;
             _basePath = basePath;
@@ -280,7 +280,7 @@ public class Fluid : ITemplate
             return new NotFoundFileInfo(subpath);
         }
 
-        private global::app.types.path.@this? TryResolvePath(string candidate)
+        private global::app.type.path.@this? TryResolvePath(string candidate)
         {
             try
             {
@@ -309,9 +309,9 @@ public class Fluid : ITemplate
 
     private sealed class PlangFileInfo : IFileInfo
     {
-        private readonly global::app.types.path.@this _path;
+        private readonly global::app.type.path.@this _path;
 
-        public PlangFileInfo(global::app.types.path.@this path, string name)
+        public PlangFileInfo(global::app.type.path.@this path, string name)
         {
             _path = path;
             Name = name;

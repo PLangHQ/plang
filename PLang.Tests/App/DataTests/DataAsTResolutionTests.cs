@@ -106,11 +106,11 @@ public class DataAsTResolutionTests
     {
         var data = new Data("file", "subdir/file.txt") { Context = _app.User.Context };
 
-        var result = data.As<global::app.types.path.@this>(_app.User.Context);
+        var result = data.As<global::app.type.path.@this>(_app.User.Context);
 
         // FileSystem.path.Resolve returned a Path instance — Value should be one.
         await Assert.That(result.Value).IsNotNull();
-        await Assert.That(result.Value is global::app.types.path.@this).IsTrue();
+        await Assert.That(result.Value is global::app.type.path.@this).IsTrue();
     }
 
     // TypeMapping conversion failure → Data.FromError with structured error.

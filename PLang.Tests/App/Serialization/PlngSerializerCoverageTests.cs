@@ -19,7 +19,7 @@ public class PlngSerializerCoverageTests
     {
         // path has app/types/path/serializer/Default.cs ⇒ the would-be gate
         // accepts it. Today's runtime equivalent: renderers.Has("path") == true.
-        var r = new global::app.types.renderers.@this();
+        var r = new global::app.type.renderer.@this();
         await Assert.That(r.Has("path")).IsTrue();
     }
 

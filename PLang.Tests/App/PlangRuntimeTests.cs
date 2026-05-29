@@ -1,7 +1,7 @@
 using app;
 using app.actor.context;
 using app.variable;
-using app.types.path;
+using app.type.path;
 
 namespace PLang.Tests.App;
 

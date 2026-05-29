@@ -7,7 +7,7 @@ using app.error;
 using app.goal;
 using app.variable;
 using app.modules.settings;
-using app.types.path;
+using app.type.path;
 using app.modules.http;
 using PlangHttpMethod = app.modules.http.HttpMethod;
 
@@ -716,7 +716,7 @@ public sealed class OpenAi : ILlm
         // formatting is sync and the bytes-then-encode pipeline is cheap.
         try
         {
-            var imgPath = global::app.types.path.@this.Resolve(image, context);
+            var imgPath = global::app.type.path.@this.Resolve(image, context);
             var dataUri = imgPath.ReadAsDataUri().GetAwaiter().GetResult();
             if (dataUri.Success && !string.IsNullOrEmpty(dataUri.Value))
             {

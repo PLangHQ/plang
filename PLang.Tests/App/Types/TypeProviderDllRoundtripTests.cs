@@ -18,7 +18,7 @@ public class TypeProviderDllRoundtripTests
     {
         var asm = LoadFixture();
         var types = new EngineTypes();
-        var result = global::app.types.Loader.Register(asm, types);
+        var result = global::app.type.list.Loader.Register(asm, types);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.RegisteredTypes).Contains("money");
@@ -48,7 +48,7 @@ public class TypeProviderDllRoundtripTests
         var beforeType = types.ResolveType("int");
         await Assert.That(beforeType).IsEqualTo(typeof(int));
 
-        var result = global::app.types.Loader.Register(asm, types);
+        var result = global::app.type.list.Loader.Register(asm, types);
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.RegisteredTypes).Contains("int");
 

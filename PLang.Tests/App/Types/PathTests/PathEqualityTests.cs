@@ -21,7 +21,7 @@ public class PathEqualityTests
         return (new global::app.@this(root), root);
     }
 
-    private static global::app.types.path.file.@this Make(global::app.@this app, string abs)
+    private static global::app.type.path.file.@this Make(global::app.@this app, string abs)
         => new(abs, app.User.Context);
 
     [Test] public async Task FilePath_SameAbsolute_EqualsTrue_HashEqual()

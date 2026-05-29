@@ -1,13 +1,13 @@
-using Path = global::app.types.path.file.@this;
+using Path = global::app.type.path.file.@this;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using PermissionRecord = global::app.types.path.permission.@this;
-using Verb = global::app.types.path.permission.verb.@this;
-using Read = global::app.types.path.permission.verb.Read;
-using Write = global::app.types.path.permission.verb.Write;
-using Delete = global::app.types.path.permission.verb.Delete;
-using MatchMode = global::app.types.path.permission.Match;
+using PermissionRecord = global::app.type.path.permission.@this;
+using Verb = global::app.type.path.permission.verb.@this;
+using Read = global::app.type.path.permission.verb.Read;
+using Write = global::app.type.path.permission.verb.Write;
+using Delete = global::app.type.path.permission.verb.Delete;
+using MatchMode = global::app.type.path.permission.Match;
 
 namespace PLang.Tests.App.FileSystem.PermissionTests.StorageTests;
 

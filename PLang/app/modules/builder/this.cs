@@ -47,7 +47,7 @@ public sealed partial class @this
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = true,
-        Converters = { new global::app.types.path.JsonConverter() },
+        Converters = { new global::app.type.path.JsonConverter() },
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
             Modifiers = { StoreOnlyModifier }
@@ -107,7 +107,7 @@ public sealed partial class @this
     /// </summary>
     public async Task<data.@this> RunAsync()
     {
-        var appPrPath = global::app.types.path.@this.Resolve("/.build/app.pr", _app.System.Context!);
+        var appPrPath = global::app.type.path.@this.Resolve("/.build/app.pr", _app.System.Context!);
         var appPrExists = await appPrPath.ExistsAsync();
         // No app marker on disk → confirm creation (or error when headless).
         // Was inverted (fired when the marker DID exist) — that forced every
@@ -138,7 +138,7 @@ public sealed partial class @this
         }
 
         _app.CurrentActor = _app.User;
-        var buildCall = new GoalCall { Name = "Build", PrPath = global::app.types.path.@this.Resolve("/system/builder/.build/build.pr", _app.User.Context) };
+        var buildCall = new GoalCall { Name = "Build", PrPath = global::app.type.path.@this.Resolve("/system/builder/.build/build.pr", _app.User.Context) };
         return await _app.RunGoalAsync(buildCall, _app.User.Context);
     }
 }

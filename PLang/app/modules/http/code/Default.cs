@@ -1042,7 +1042,7 @@ public sealed class Default : IHttp
             // Out-of-root probes prompt or deny; in-root fast-passes. Any failure
             // (including denial) falls through to "treat as a string body" —
             // matches the prior "if not a file, send as string" shape.
-            var p = global::app.types.path.@this.Resolve(str, ctx);
+            var p = global::app.type.path.@this.Resolve(str, ctx);
             var exists = await p.ExistsAsync();
             if (exists.Success && exists.Value == true)
                 return await CreateFileContentAsync(app, ctx, str);
@@ -1063,7 +1063,7 @@ public sealed class Default : IHttp
     {
         // Gated read via path verb. AuthGate(Read) fires inside ReadBytes;
         // out-of-root paths the actor hasn't granted bubble up as Fail.
-        var resolved = global::app.types.path.@this.Resolve(path, context);
+        var resolved = global::app.type.path.@this.Resolve(path, context);
         var read = await resolved.ReadBytes();
         if (!read.Success || read.Value == null)
             return data.@this<HttpContent>.FromError(read.Error
@@ -1105,7 +1105,7 @@ public sealed class Default : IHttp
                 // Gated read via path verb. AuthGate(Read) fires; out-of-root
                 // form fields the actor hasn't authorized get denied at the
                 // gate, not silently exfiltrated.
-                var fp = global::app.types.path.@this.Resolve(value[1..], context);
+                var fp = global::app.type.path.@this.Resolve(value[1..], context);
                 var read = await fp.ReadBytes();
                 if (!read.Success || read.Value == null)
                     return data.@this<HttpContent>.FromError(read.Error

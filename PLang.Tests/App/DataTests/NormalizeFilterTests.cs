@@ -88,7 +88,7 @@ public class NormalizeFilterTests
     {
         // FilePath is the concrete impl; constructed without Context so derived
         // properties fall back to raw/absolute. Wire-view filter still drops them.
-        global::app.types.path.@this path = "/foo/bar.txt";
+        global::app.type.path.@this path = "/foo/bar.txt";
         var children = (List<Data>)new Data("", path).Normalize()!;
         await Assert.That(children.Any(c => c.Name == "scheme")).IsTrue();
         await Assert.That(children.Any(c => c.Name == "relative")).IsTrue();

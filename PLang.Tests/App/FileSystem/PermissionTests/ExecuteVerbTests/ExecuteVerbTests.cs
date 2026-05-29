@@ -2,10 +2,10 @@ using System.Text.Json;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using FilePath = global::app.types.path.file.@this;
-using Verb = global::app.types.path.permission.verb.@this;
-using Read = global::app.types.path.permission.verb.Read;
-using ExecuteVerb = global::app.types.path.permission.verb.Execute;
+using FilePath = global::app.type.path.file.@this;
+using Verb = global::app.type.path.permission.verb.@this;
+using Read = global::app.type.path.permission.verb.Read;
+using ExecuteVerb = global::app.type.path.permission.verb.Execute;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.FileSystem.PermissionTests.ExecuteVerbTests;
@@ -83,12 +83,12 @@ public class ExecuteVerbTests
         var p = new FilePath(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "lib.dll"), app.User.Context);
         // Grant Read only.
-        var permission = new global::app.types.path.permission.@this(
+        var permission = new global::app.type.path.permission.@this(
             Actor: app.User.Name,
             Path: p.Absolute,
             Verb: new Verb { Read = new Read() },
-            Match: global::app.types.path.permission.Match.Exact);
-        var grantData = new global::app.data.@this<global::app.types.path.permission.@this>("", permission) { Context = app.User.Context };
+            Match: global::app.type.path.permission.Match.Exact);
+        var grantData = new global::app.data.@this<global::app.type.path.permission.@this>("", permission) { Context = app.User.Context };
         await app.User.Permission.Add(grantData);
         // Execute should NOT be covered.
         var executeMatch = await app.User.Permission.Find(p, new Verb { Execute = new ExecuteVerb() });

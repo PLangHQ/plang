@@ -37,10 +37,10 @@ public sealed class @this
     private async Task<data.@this> DiscoverAsync(app.@this app, CancellationToken ct = default)
     {
         var ctx = app.System.Context!;
-        var candidates = new global::app.types.path.@this[]
+        var candidates = new global::app.type.path.@this[]
         {
-            global::app.types.path.@this.Resolve("/.build/setup.pr", ctx),
-            global::app.types.path.@this.Resolve("/Setup/.build/setup.pr", ctx),
+            global::app.type.path.@this.Resolve("/.build/setup.pr", ctx),
+            global::app.type.path.@this.Resolve("/Setup/.build/setup.pr", ctx),
         };
 
         foreach (var file in candidates)

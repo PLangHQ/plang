@@ -49,16 +49,16 @@ public partial class report : IContext
         var ctx = Context;
         string reportFile;
         string content;
-        global::app.types.path.@this writeTarget;
+        global::app.type.path.@this writeTarget;
         switch (format)
         {
             case "junit":
                 content = BuildJUnit(results);
-                writeTarget = global::app.types.path.@this.Resolve("/.test/junit.xml", ctx);
+                writeTarget = global::app.type.path.@this.Resolve("/.test/junit.xml", ctx);
                 break;
             default: // "json"
                 content = BuildJson(results, testing);
-                writeTarget = global::app.types.path.@this.Resolve("/.test/results.json", ctx);
+                writeTarget = global::app.type.path.@this.Resolve("/.test/results.json", ctx);
                 break;
         }
         // WriteText creates parent dirs via EnsureParentDir; AuthGate(Write)

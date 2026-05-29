@@ -32,7 +32,7 @@ public class AsReconstructionHookTests
         var carrier = new Data("", children);
         var ex = await Assert.ThrowsAsync<NormalizeException>(async () =>
         {
-            carrier.Reconstruct<global::app.types.path.@this>();
+            carrier.Reconstruct<global::app.type.path.@this>();
             await Task.CompletedTask;
         });
         await Assert.That(ex!.Key).IsEqualTo("NormalizeContextRequired");
@@ -58,7 +58,7 @@ public class AsReconstructionHookTests
         var carrier = new Data("", children);
         var ex = await Assert.ThrowsAsync<NormalizeException>(async () =>
         {
-            carrier.Reconstruct<global::app.types.path.file.@this>();
+            carrier.Reconstruct<global::app.type.path.file.@this>();
             await Task.CompletedTask;
         });
         await Assert.That(ex!.Key).IsEqualTo("NormalizeContextRequired");
@@ -70,7 +70,7 @@ public class AsReconstructionHookTests
         var carrier = new Data("", children);
         var ex = await Assert.ThrowsAsync<NormalizeException>(async () =>
         {
-            carrier.Reconstruct<global::app.types.path.http.@this>();
+            carrier.Reconstruct<global::app.type.path.http.@this>();
             await Task.CompletedTask;
         });
         await Assert.That(ex!.Key).IsEqualTo("NormalizeContextRequired");
@@ -82,7 +82,7 @@ public class AsReconstructionHookTests
         var carrier = new Data("", children);
         var ex = await Assert.ThrowsAsync<NormalizeException>(async () =>
         {
-            carrier.Reconstruct<global::app.types.path.@this>(context: null);
+            carrier.Reconstruct<global::app.type.path.@this>(context: null);
             await Task.CompletedTask;
         });
         await Assert.That(ex!.Key).IsEqualTo("NormalizeContextRequired");
@@ -102,7 +102,7 @@ public class AsReconstructionHookTests
         // Stage 2 deferred — path.JsonConverter still owns Read. Once
         // Wire routes through Normalize + Reconstruct, this
         // converter goes away or delegates. Today the converter file exists.
-        var converterType = System.Type.GetType("app.types.path.JsonConverter, PLang", throwOnError: false);
+        var converterType = System.Type.GetType("app.type.path.JsonConverter, PLang", throwOnError: false);
         // Either: converter is gone (Read-deletion path), or it exists and the
         // path hook owns wire reconstruction (deferred-wiring path).
         await Assert.That(converterType == null || Data.HookCacheSize >= 0).IsTrue();

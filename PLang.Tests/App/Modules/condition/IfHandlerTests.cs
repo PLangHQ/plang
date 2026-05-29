@@ -2,7 +2,7 @@ using app;
 using app.actor.context;
 using app.variable;
 using app.modules.condition;
-using app.types.path;
+using app.type.path;
 using Action = global::app.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.Modules.condition;

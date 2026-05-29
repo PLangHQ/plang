@@ -1,4 +1,4 @@
-using number = global::app.types.number.@this;
+using number = global::app.type.number.@this;
 
 namespace PLang.Tests.App.Types;
 
@@ -63,7 +63,7 @@ public class MathHandlerDataReturnTests
     {
         // Covered end-to-end by NumberArithmeticTests.Overflow_Throw_HandlerPathReturnsDataError.
         var r = number.Add(number.From(decimal.MaxValue), number.From(decimal.MaxValue),
-            global::app.types.number.NumberPolicy.Strict);
+            global::app.type.number.NumberPolicy.Strict);
         await Assert.That(r.Success).IsFalse();
         await Assert.That(r.Error?.Key).IsEqualTo("MathOverflow");
     }
@@ -71,7 +71,7 @@ public class MathHandlerDataReturnTests
     [Test] public async Task MathHandler_DivByZero_ReturnsDataFail_NotException()
     {
         var r = number.Divide(number.From(7), number.From(0),
-            global::app.types.number.NumberPolicy.Lenient);
+            global::app.type.number.NumberPolicy.Lenient);
         await Assert.That(r.Success).IsFalse();
         await Assert.That(r.Error?.Key).IsEqualTo("DivideByZero");
     }

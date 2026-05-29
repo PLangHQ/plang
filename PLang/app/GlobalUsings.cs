@@ -32,19 +32,19 @@ global using DeserializeOptions = app.channel.serializer.list.DeserializeOptions
 
 // Path types (formerly FileSystem)
 // Lowercase aliases — match the PLang concept names, and (unlike PascalCase
-// `Path`) do not collide with System.IO.Path. Inside `namespace app.types`
-// the bare name `path` is ambiguous with the child namespace `app.types.path`;
-// those few files qualify with `global::app.types.path.@this`.
-global using path = app.types.path.@this;
-global using filepath = app.types.path.file.@this;
-global using httppath = app.types.path.http.@this;
+// `Path`) do not collide with System.IO.Path. Inside `namespace app.type`
+// the bare name `path` is ambiguous with the child namespace `app.type.path`;
+// those few files qualify with `global::app.type.path.@this`.
+global using path = app.type.path.@this;
+global using filepath = app.type.path.file.@this;
+global using httppath = app.type.path.http.@this;
 
 // Config subsystem
 global using AppConfig = app.config.@this;
 global using ConfigScope = app.config.Scope;
 
 // Type system
-global using AppTypes = app.types.@this;
+global using AppTypes = app.type.list.@this;
 
 // Code subsystem (the runtime escape-hatch — was Providers)
 global using AppCode = app.modules.code.@this;

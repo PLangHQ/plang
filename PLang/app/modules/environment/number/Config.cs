@@ -3,7 +3,7 @@ using app.config;
 namespace app.modules.environment.number;
 
 /// <summary>
-/// Arithmetic policy config for <see cref="app.types.number.@this"/>.
+/// Arithmetic policy config for <see cref="app.type.number.@this"/>.
 /// Resolution: step (nullable action param) → context.ConfigScope →
 /// parent.ConfigScope → … → App.Config.Defaults → record default.
 ///
@@ -15,9 +15,9 @@ namespace app.modules.environment.number;
 /// </summary>
 public partial class Config : IConfig
 {
-    public global::app.types.number.OverflowMode Overflow { get; set; }
-        = global::app.types.number.OverflowMode.Promote;
+    public global::app.type.number.OverflowMode Overflow { get; set; }
+        = global::app.type.number.OverflowMode.Promote;
 
-    public global::app.types.number.PrecisionMode Precision { get; set; }
-        = global::app.types.number.PrecisionMode.Double;
+    public global::app.type.number.PrecisionMode Precision { get; set; }
+        = global::app.type.number.PrecisionMode.Double;
 }

@@ -161,7 +161,7 @@ public partial class validateResponse : IContext
 
                     var targetType = (goal.App ?? app)?.Types.Get(p.Type.Value);
                     if (targetType == null) continue;
-                    if (!global::app.types.@this.IsScalarPlangType(targetType)) continue;
+                    if (!global::app.type.list.@this.IsScalarPlangType(targetType)) continue;
 
                     if (p.Value is not string)
                         errors.Add(
@@ -219,7 +219,7 @@ public partial class validateResponse : IContext
                     // Scalar PlangTypes (path, tstring, ...) accept the raw primitive at
                     // build time — runtime wraps via Resolve. Already covered by the
                     // shape check above.
-                    if (global::app.types.@this.IsScalarPlangType(targetType)) continue;
+                    if (global::app.type.list.@this.IsScalarPlangType(targetType)) continue;
 
                     // [Choices]-bearing types: vocabulary check, not type construction.
                     // Stateful runtime types (Actor) cannot honestly be constructed from
@@ -238,7 +238,7 @@ public partial class validateResponse : IContext
                         continue;
                     }
 
-                    var (_, error) = global::app.types.@this.TryConvertTo(p.Value, targetType);
+                    var (_, error) = global::app.type.list.@this.TryConvertTo(p.Value, targetType);
                     if (error == null) continue;
 
                     var validValues = (goal.App ?? app)?.Types.GetValidValues(targetType);

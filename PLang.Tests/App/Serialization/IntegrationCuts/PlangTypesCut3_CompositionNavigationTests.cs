@@ -1,4 +1,4 @@
-using image = global::app.types.image.@this;
+using image = global::app.type.image.@this;
 
 namespace PLang.Tests.App.Serialization.IntegrationCuts;
 
@@ -15,13 +15,13 @@ public class PlangTypesCut3_CompositionNavigationTests
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut3a-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var p = global::app.types.path.@this.Resolve("/srv/photo.png", app.User.Context);
+        var p = global::app.type.path.@this.Resolve("/srv/photo.png", app.User.Context);
         var img = new image(PngBytes, "image/png", p);
 
         // The Path property is typed as path.@this (composition, not a
         // string passthrough); reflection confirms the declared type.
         var pathProp = typeof(image).GetProperty("Path");
-        await Assert.That(pathProp!.PropertyType).IsEqualTo(typeof(global::app.types.path.@this));
+        await Assert.That(pathProp!.PropertyType).IsEqualTo(typeof(global::app.type.path.@this));
         await Assert.That(img.Path).IsNotNull();
     }
 
@@ -34,12 +34,12 @@ public class PlangTypesCut3_CompositionNavigationTests
         System.IO.File.WriteAllBytes(abs, PngBytes);
         try
         {
-            var p = global::app.types.path.@this.Resolve(abs, app.User.Context) as global::app.types.path.file.@this;
+            var p = global::app.type.path.@this.Resolve(abs, app.User.Context) as global::app.type.path.file.@this;
             await Assert.That(p).IsNotNull();
             var img = new image(PngBytes, "image/png", p);
             // image.Path.Exists navigates through the path facet — the file
             // exists, so Exists is true.
-            await Assert.That(((global::app.types.path.file.@this)img.Path!).Exists).IsTrue();
+            await Assert.That(((global::app.type.path.file.@this)img.Path!).Exists).IsTrue();
         }
         finally { try { System.IO.File.Delete(abs); } catch { } }
     }
@@ -51,9 +51,9 @@ public class PlangTypesCut3_CompositionNavigationTests
         System.IO.Directory.CreateDirectory(app.AbsolutePath);
         var abs = System.IO.Path.Combine(app.AbsolutePath, "missing-" + System.Guid.NewGuid().ToString("N")[..8] + ".png");
         // Don't create the file.
-        var p = global::app.types.path.@this.Resolve(abs, app.User.Context) as global::app.types.path.file.@this;
+        var p = global::app.type.path.@this.Resolve(abs, app.User.Context) as global::app.type.path.file.@this;
         var img = new image(PngBytes, "image/png", p);
-        await Assert.That(((global::app.types.path.file.@this)img.Path!).Exists).IsFalse();
+        await Assert.That(((global::app.type.path.file.@this)img.Path!).Exists).IsFalse();
     }
 
     [Test] public async Task ImageFromBase64_PathIsNull_NoCrashOnNavigation()
@@ -77,7 +77,7 @@ public class PlangTypesCut3_CompositionNavigationTests
         await Assert.That(types.ResolveType("path|image")).IsNull();
         await Assert.That(types.ResolveType("image|path")).IsNull();
         // image's CLR type doesn't inherit from path — no union via inheritance.
-        await Assert.That(typeof(global::app.types.path.@this).IsAssignableFrom(typeof(image))).IsFalse();
+        await Assert.That(typeof(global::app.type.path.@this).IsAssignableFrom(typeof(image))).IsFalse();
     }
 
     [Test] public async Task CatalogRendering_ImagePathProperty_HasTypePathAnnotation()

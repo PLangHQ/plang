@@ -1,4 +1,4 @@
-using HttpPath = global::app.types.path.http.@this;
+using HttpPath = global::app.type.path.http.@this;
 using AppEngine = global::app.@this;
 using Ctx = global::app.actor.context.@this;
 
@@ -82,7 +82,7 @@ public class HttpPathPromptHintTests
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8],
             "x.txt");
 
-        _ = await new global::app.types.path.file.@this(outOfRoot, ctx).ReadText();
+        _ = await new global::app.type.path.file.@this(outOfRoot, ctx).ReadText();
 
         await Assert.That(ch.LastQuestion).DoesNotContain("query string");
     }

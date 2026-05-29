@@ -6,7 +6,7 @@ namespace app.modules.module;
 [Action("add", Cacheable = false)]
 public partial class Add : IContext
 {
-    public partial data.@this<global::app.types.path.@this> Path { get; init; }
+    public partial data.@this<global::app.type.path.@this> Path { get; init; }
     public partial data.@this<string>? Namespace { get; init; }
 
     public async Task<data.@this> Run()

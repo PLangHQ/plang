@@ -216,7 +216,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Centralized type identity: PLang names ↔ CLR types. File-format
     /// characteristics live on <see cref="Formats"/>.
     /// </summary>
-    public types.@this Types { get; }
+    public type.list.@this Types { get; }
 
     /// <summary>
     /// File-format characteristics: extension → Kind, extension → MIME,
@@ -308,7 +308,7 @@ public sealed partial class @this : IAsyncDisposable
         Debug = new Debugging(this);
         Tester = new global::app.tester.@this(this);
         Builder = new global::app.modules.builder.@this(this);
-        Types = new types.@this();
+        Types = new type.list.@this();
         Config = new config.@this();
         _settingsStore = new Lazy<global::app.modules.settings.IStore>(CreateSettingsStore);
         Settings = new global::app.modules.settings.@this(this);
@@ -320,9 +320,9 @@ public sealed partial class @this : IAsyncDisposable
 
         Code.RegisterDefaults();
         Types.RegisterDomainTypes();
-        Types.Scheme.Register("file", (raw, ctx) => global::app.types.path.file.@this.Resolve(raw, ctx));
-        Types.Scheme.Register("http", (raw, ctx) => global::app.types.path.http.@this.Resolve(raw, ctx));
-        Types.Scheme.Register("https", (raw, ctx) => global::app.types.path.http.@this.Resolve(raw, ctx));
+        Types.Scheme.Register("file", (raw, ctx) => global::app.type.path.file.@this.Resolve(raw, ctx));
+        Types.Scheme.Register("http", (raw, ctx) => global::app.type.path.http.@this.Resolve(raw, ctx));
+        Types.Scheme.Register("https", (raw, ctx) => global::app.type.path.http.@this.Resolve(raw, ctx));
         Navigators.RegisterDefaults();
 
         // Default actor is User — Start() switches to System for bootstrap
@@ -373,7 +373,7 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public async Task Load()
     {
-        var prPath = global::app.types.path.@this.Resolve("/.build/app.pr", System.Context!);
+        var prPath = global::app.type.path.@this.Resolve("/.build/app.pr", System.Context!);
         var exists = await prPath.ExistsAsync();
         if (!exists.Success || exists.Value != true) return;
         var readResult = await prPath.ReadText();
@@ -417,7 +417,7 @@ public sealed partial class @this : IAsyncDisposable
         WriteIndented = true,
         Converters = {
             new global::app.channel.serializer.TimeSpanIso8601(),
-            new global::app.types.path.JsonConverter()
+            new global::app.type.path.JsonConverter()
         }
     };
 
@@ -428,7 +428,7 @@ public sealed partial class @this : IAsyncDisposable
         var json = JsonSerializer.Serialize(
             new { id = Id, name = Name, created = Created, updated = Updated, version = Version },
             CamelCaseIndented);
-        var prPath = global::app.types.path.@this.Resolve("/.build/app.pr", System.Context!);
+        var prPath = global::app.type.path.@this.Resolve("/.build/app.pr", System.Context!);
         var written = await prPath.WriteText(json);
         if (!written.Success) return written;
         return app.data.@this.Ok(this);
@@ -519,7 +519,7 @@ public sealed partial class @this : IAsyncDisposable
             return app.data.@this.FromError(new global::app.error.ServiceError(
                 "No goal file specified. Use: plang <goalfile>", "NoGoalFile", 400));
 
-        var goalCall = new GoalCall { PrPath = global::app.types.path.@this.Resolve(goalFile, context) };
+        var goalCall = new GoalCall { PrPath = global::app.type.path.@this.Resolve(goalFile, context) };
         var goalResult = await goalCall.GetGoalAsync(this, context);
         if (!goalResult.Success) return goalResult;
 
@@ -576,7 +576,7 @@ public sealed partial class @this : IAsyncDisposable
 
         // Lift to Path: AuthGate fires inside the Sqlite ctor on Write,
         // parent dir creation via path.Mkdir.
-        var dbPath = global::app.types.path.@this.Resolve("/.db/system.sqlite", System.Context!);
+        var dbPath = global::app.type.path.@this.Resolve("/.db/system.sqlite", System.Context!);
         return new global::app.modules.settings.Sqlite(dbPath);
     }
 

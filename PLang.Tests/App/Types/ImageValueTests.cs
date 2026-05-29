@@ -1,4 +1,4 @@
-using image = global::app.types.image.@this;
+using image = global::app.type.image.@this;
 
 namespace PLang.Tests.App.Types;
 
@@ -24,7 +24,7 @@ public class ImageValueTests
         await Assert.That(prop).IsNotNull();
         var nullableInfo = new System.Reflection.NullabilityInfoContext().Create(prop!);
         await Assert.That(nullableInfo.ReadState).IsEqualTo(System.Reflection.NullabilityState.Nullable);
-        await Assert.That(prop!.PropertyType).IsEqualTo(typeof(global::app.types.path.@this));
+        await Assert.That(prop!.PropertyType).IsEqualTo(typeof(global::app.type.path.@this));
     }
 
     [Test] public async Task Image_Base64Constructed_PathIsNull()
@@ -38,7 +38,7 @@ public class ImageValueTests
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-img-" + System.Guid.NewGuid().ToString("N")[..8]));
         var raw = System.IO.Path.Combine(app.AbsolutePath, "photo.png");
-        var p = global::app.types.path.@this.Resolve(raw, app.User.Context);
+        var p = global::app.type.path.@this.Resolve(raw, app.User.Context);
         var img = new image(PngHeader, "image/png", p);
         await Assert.That(img.Path).IsNotNull();
         await Assert.That(img.Path!.Raw).IsEqualTo(p.Raw);
@@ -69,6 +69,6 @@ public class ImageValueTests
     {
         // image inherits from object (not path); it carries Path as a property.
         await Assert.That(typeof(image).BaseType).IsEqualTo(typeof(object));
-        await Assert.That(typeof(global::app.types.path.@this).IsAssignableFrom(typeof(image))).IsFalse();
+        await Assert.That(typeof(global::app.type.path.@this).IsAssignableFrom(typeof(image))).IsFalse();
     }
 }

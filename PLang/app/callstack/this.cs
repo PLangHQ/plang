@@ -130,7 +130,7 @@ public sealed partial class @this
     /// goal Name alone can collide across an app's goal tree. Used by Push to enforce
     /// indirect goal-cycle detection.
     /// </summary>
-    public bool ContainsGoal(global::app.types.path.@this prPath)
+    public bool ContainsGoal(global::app.type.path.@this prPath)
     {
         var node = _current.Value;
         while (node != null)
