@@ -1,0 +1,63 @@
+{
+  "analyst": "security",
+  "branch": "builder-ergonomics",
+  "timestamp": "2026-05-29T11:30:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "channel-recursion-guard",
+      "exposure": "Goal-channel body can write back to its own (or a cycling) channel name; without isolation this re-enters InvokeGoal to stack-overflow.",
+      "trust_boundary": "Runtime call graph; no external ingress on this branch.",
+      "mitigations": [
+        "Per-channel AsyncLocal<bool> _executing on channel.goal.@this",
+        "AppChannels.Get returns null when an executing goal-channel resolves, surfacing ChannelNotFound at the writer",
+        "try/finally restores prev across awaited goal body and on catchable exceptions",
+        "Per-channel flag, not per-actor — concurrent calls to different goal channels isolate"
+      ],
+      "gaps": [
+        "AppChannels.Channel(string) opportunistic-write API does not consult IsExecuting; bypass-able if any caller writes to its own goal-channel name."
+      ]
+    },
+    {
+      "area": "removed-foundational-channels-layer",
+      "exposure": "Stale callers of FreezeFoundational/Snapshot/PushChannelsOverride would silently break or bypass the new guard.",
+      "trust_boundary": "Internal API surface.",
+      "mitigations": [
+        "Source-tree grep clean across PLang, PLang.Tests, PlangConsole (only stale obj/ metadata remains)."
+      ],
+      "gaps": []
+    },
+    {
+      "area": "conversion-error-chaining",
+      "exposure": "PrimitiveConversionFailed now mutates the inbound errors.Error.ErrorChain when source is an Error.",
+      "trust_boundary": "Internal — error already in flight.",
+      "mitigations": [
+        "Mutation is on the inbound Error instance, no shared accumulator concurrency",
+        "Message format unchanged; no new sensitive-data egress paths"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "tagged-cache-test-helpers-removed",
+      "exposure": "Test-only ClearCacheForTests/CacheSize APIs deleted.",
+      "trust_boundary": "Internal.",
+      "mitigations": ["No production callers; surface shrinks."],
+      "gaps": ["Tagged._cache remains unbounded (pre-existing, tracked in branch memory)."]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "AppChannels.Channel(name) — the NoOp-fallback opportunistic-write variant — resolves channels via raw _channels.TryGetValue, skipping the IsExecuting check. A caller writing via this API to the same goal-channel that hosts the current execution recurses past the guard until the CallStack backstop fires.",
+      "preconditions": "Caller writes via Channels.Channel(name) (not Get/Resolve) AND that name is registered as a goal-channel AND the current async context is already executing that goal channel's body.",
+      "impact": "Local DoS — unbounded call-frame churn during a build, contained by RecursionDepthExceeded backstop. No code execution, no data egress.",
+      "affected_files": ["PLang/app/channels/this.cs"],
+      "exploit_sketch": "Today: not reachable. Only caller is file/read.cs:76 writing 'builder' warnings, and BuilderChannel.goal body is '- write out %!data%' (does not read files). Adding any future Channels.Channel(name) caller whose name overlaps with a goal-channel that may execute file IO closes the loop.",
+      "proposed_fix": "In AppChannels.Channel(name): if (channel is channel.goal.@this g && g.IsExecuting) return NoOp; — mirror the Get-side guard, fall through to the existing no-op sink rather than the executing channel.",
+      "status": "open"
+    }
+  ],
+  "summary": "Branch is a security improvement. Channel recursion guard re-implemented with per-channel AsyncLocal<bool> IsExecuting observed at AppChannels.Get; the AppChannels.Snapshot / actor-override layer is deleted with no source-tree stragglers. Mutation evidence (tester v2) corroborates the guard arms the regression test. One Low — Channels.Channel(name) is parity-gapped vs Get and could be armed by a future caller; close before any new opportunistic-write site lands."
+}

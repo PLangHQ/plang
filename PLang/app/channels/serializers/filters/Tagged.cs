@@ -120,9 +120,4 @@ public static class Tagged
         return entries.ToArray();
     }
 
-    /// <summary>Test-only — clears the per-type cache.</summary>
-    internal static void ClearCacheForTests() => _cache.Clear();
-
-    /// <summary>Test-only — current cache size.</summary>
-    internal static int CacheSize => _cache.Count;
 }

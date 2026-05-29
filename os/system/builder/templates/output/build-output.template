@@ -1,0 +1,16 @@
+{% case kind -%}
+{% when "build-path" %}Building path: {{ path }}
+{% when "goals-found" %}Found {{ goals.Count }} goals
+{% when "goalHeader" %}Building goal: {{ goal.Name }}
+{% when "subGoalHeader" %}  Building sub-goal: {{ goal.Name }}
+{% when "subGoalDone" %}  Sub-goal {{ goal.Name }} done ({{ subgoalMs }}ms)
+{% when "goalError" %}  Build error in {{ goal.Name }}: {{ errorMessage }}
+{% when "planner-validation-failed" %}  Planner validation failed: {{ errorMessage }} — retrying...
+{% when "step-missing-actions" %}  Step {{ step.Index }} missing-actions — expanding set
+{% when "step-validation-error" %}  Step {{ step.Index }} validation error — retrying: {{ errorMessage }}
+{% when "step-build-error" %}  Step {{ step.Index }} build error: {{ errorMessage }}
+{% when "step-cached" %}  [≡] {{ step.Text }}
+{% when "step-fresh" %}  [✓] {{ step.Text }}
+{% when "confidence-warning-planner" %}      ⚠ planner {{ planStep.confidence }}: {{ planStep.explanation }}
+{% when "confidence-warning-compiler" %}      ⚠ compiler {{ compileResult.confidence }}: {{ compileResult.explanation }}
+{%- endcase %}

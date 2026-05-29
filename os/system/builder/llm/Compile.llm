@@ -64,10 +64,24 @@ If the planner's set doesn't include an action the step text obviously requires,
 {
   "formal": "module.action(Param=value, ...) [| modifier.action(...)] [, peer.action(...)]",
   "actions": [...],     // ordered chain, modifiers nested under their host action's `modifiers` array
+  "confidence": "VeryHigh|High|Medium|Low|VeryLow",
+  "explanation": "...", // OMIT when confidence is High/VeryHigh; otherwise one short sentence on what you were unsure about
   "errors": [...],
   "warnings": [...]
 }
 ```
+
+### Confidence
+
+Rate your confidence in the whole compilation — chain order, parameter mapping, value placement.
+
+- **VeryHigh** — step text gave every parameter a clear value; chain order is obvious.
+- **High** — clear mapping with no real ambiguity.
+- **Medium** — some parameters mapped by guess; another reasonable mapping exists.
+- **Low** — you settled for an action that doesn't really fit the verb; mapped parameters by best-effort.
+- **VeryLow** — the action set probably doesn't cover the step; output is a fallback.
+
+Drop `confidence` to `Low` or `VeryLow` whenever you find yourself thinking "the verb in the step text doesn't really match any action I was given" — even if you produce a syntactically valid mapping. That's exactly the case the dev needs to see at build time. Put what you were unsure about in `explanation`.
 
 Each action: `{module, action, parameters: [{name, value, type}], modifiers?: [...]}`. Modifiers (e.g. `error.handle`, `cache.wrap`, `timeout.after`) go in the host action's `modifiers` array, NOT as peer entries in the top-level `actions`.
 

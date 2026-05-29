@@ -1,0 +1,144 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set channel \u0022echo\u0022 call EchoBack",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Arms the IsExecuting recursion guard end-to-end and asserts on the\nspecific error key \u2014 guard surfaces ChannelNotFound, recursion-depth\nbackstop surfaces RecursionDepthExceeded.",
+      "actions": [
+        {
+          "module": "channel",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "echo",
+              "type": "string"
+            },
+            {
+              "name": "Goal",
+              "value": {
+                "name": "EchoBack",
+                "parallel": false,
+                "parameters": null,
+                "prPath": null
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "channel.set(Name=\u0022echo\u0022, Goal={name:\u0022EchoBack\u0022})",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write \u0027hello\u0027 to echo, on error call InspectError",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "hello",
+              "type": "object"
+            },
+            {
+              "name": "channel",
+              "value": "echo",
+              "type": "channel"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "goal",
+                      "action": "call",
+                      "parameters": [
+                        {
+                          "name": "GoalName",
+                          "value": {
+                            "name": "InspectError"
+                          },
+                          "type": "goal.call"
+                        }
+                      ]
+                    }
+                  ],
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "formal": "output.write(Data=\u0022hello\u0022, channel=\u0022echo\u0022) | error.handle(Actions=[goal.call(GoalName={name:\u0022InspectError\u0022})])",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %errorKey% equals \u0027ChannelNotFound\u0027",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "ChannelNotFound",
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%errorKey%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022ChannelNotFound\u0022, Actual=%errorKey%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Channels/GoalChannelRecursion/Start.test.goal",
+  "prPath": "/Channels/GoalChannelRecursion/.build/start.test.pr",
+  "hash": "8ac72d7429efe02df41e37dc9c051fdb5f9bcc7ab93bcb9998de0a7036074df7",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

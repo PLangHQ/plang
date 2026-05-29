@@ -1,0 +1,55 @@
+{
+  "name": "InspectError",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %errorKey% = %!error.Key%",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%errorKey%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!error.Key%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%errorKey%, Value=%!error.Key%, Type=object)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Channels/GoalChannelRecursion/InspectError.goal",
+  "prPath": "/Channels/GoalChannelRecursion/.build/inspecterror.pr",
+  "hash": "dae69cf10e6699bf128dc69c9b6cd3bb0457568f6c025ceb08ada523ff367fe0",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

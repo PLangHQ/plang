@@ -1,0 +1,269 @@
+{
+  "branch": "builder-ergonomics",
+  "sessions": [
+    {
+      "id": "7da73311-2f42-491b-b8b9-970aea083d7d",
+      "bot": "tester",
+      "timestamp_start": "2026-05-29T09:10:00Z",
+      "timestamp_end": "2026-05-29T09:26:00Z",
+      "intent": "Validate test quality for the builder-ergonomics branch (channel recursion guard, P4 error chaining, builder-channel routing, P6 confidence reproduction).",
+      "before": {
+        "assumptions": "No coder/ folder; work driven from user-feedback.md + tester-handoff.md. No baseline-tests.md (process gap). Mostly PLang builder goals + 6 C# files.",
+        "risk": "New .test.goal (UnknownVerb) flagged in handoff as asserting nothing; channel guard is the load-bearing change."
+      },
+      "plan": ".bot/builder-ergonomics/tester/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PlangConsole",
+            "PLang.Tests",
+            "Tests/ConfidenceCheck/UnknownVerb.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild (stale-binary protocol). Ran C# suite (3376/3377) and plang suite (233/234). Isolated both failures."
+        },
+        {
+          "paths": [
+            "Tests/ConfidenceCheck/.build/unknownverb.test.pr",
+            "Tests/ConfidenceCheck/UnknownVerb.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Committed .pr mis-compiled compress->variable.set; no assertions; confidence null on all steps. Two clean rebuilds hard-failed (ValidationErrors / BuilderPlannerFailed) \u2014 documented confidence warnings do not reproduce. CRITICAL false-green."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/DataTests/NormalizeTreeShapeTests.cs",
+            "PLang/app/channels/serializers/filters/Tagged.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "PropertyLookupCache test asserts on a static ConcurrentDictionary count under parallel TUnit; passes isolated, fails in suite. MAJOR flaky/shared-static finding."
+        },
+        {
+          "paths": [
+            "PLang/app/channels/channel/goal/this.cs",
+            "PLang.Tests/App/ChannelsTests/Stage3_GoalChannelTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Mutation test: deleted InvokeGoal's `_executing.Value = true`; all 7 channel tests still green. Guard arming untested end-to-end (tests flip AsyncLocal via reflection). Source reverted, git clean. MAJOR missing-coverage."
+        }
+      ],
+      "after": {
+        "status": "FAIL",
+        "health": "needs-fixes",
+        "notes": "5 findings (1 critical false-green, 2 major, 2 minor). Full detail in tester/v1/result.md and test-report.json. Source untouched (mutation reverted)."
+      }
+    },
+    {
+      "id": "1992c227-24c3-444b-aac0-f4b6fab79a4b",
+      "bot": "tester",
+      "timestamp_start": "2026-05-29T10:30:00Z",
+      "timestamp_end": "2026-05-29T10:50:00Z",
+      "intent": "Re-test coder v2 fixes to v1 FAIL findings (F1 delete false-green, F2 cache test, F3 channel-guard end-to-end test).",
+      "before": {
+        "assumptions": "Coder v2 (b86539c99) claims all three actionable findings fixed and suites green. Must independently verify F3's mutation rather than trust the report.",
+        "risk": "F3 is the load-bearing change; need to re-run the mutation and confirm the new test catches guard removal with the right error key."
+      },
+      "plan": ".bot/builder-ergonomics/tester/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PlangConsole",
+            "PLang.Tests"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild. C# 3377/3377 (F2 flake gone), PLang 234/234 (no fail, no timeout this run)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/DataTests/NormalizeTreeShapeTests.cs",
+            "PLang/app/channels/serializers/filters/Tagged.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "F2: per-key ReferenceEquals assertion replaces global CacheSize count; ClearCacheForTests/CacheSize removed. Pins caching, no parallel race."
+        },
+        {
+          "paths": [
+            "Tests/Channels/GoalChannelRecursion/Start.test.goal",
+            "Tests/Channels/GoalChannelRecursion/.build/start.test.pr",
+            "PLang/app/channels/channel/goal/this.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "F3: .pr action matches step text (no builder false-green). Independent mutation: deleting _executing.Value=true -> recursion test fails Expected 'ChannelNotFound' / Actual 'CallStackOverflow'. Reverted, git clean, re-ran green. Guard now covered end-to-end."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "approved",
+        "notes": "All 3 actionable v1 findings resolved + independently verified. F4/F5 deferred (environmental/hygiene). Detail in tester/v2/result.md. Source untouched (mutation reverted)."
+      }
+    },
+    {
+      "id": "bd8ab55d-80ad-4721-a15a-6316b22593af",
+      "bot": "security",
+      "timestamp_start": "2026-05-29T11:23:00Z",
+      "timestamp_end": "2026-05-29T11:30:00Z",
+      "intent": "Security review of builder-ergonomics \u2014 channel recursion guard, foundational-snapshot removal, error chaining, Tagged cleanup.",
+      "before": {
+        "assumptions": "Tester v2 PASS. Net delta vs runtime2: per-channel IsExecuting AsyncLocal replaces FreezeFoundational/PushChannelsOverride/Snapshot; deletions on Tagged.ClearCacheForTests; error chaining in Conversion; builder LLM/goal pipeline updates.",
+        "risk": "AsyncLocal flow vs Task.Run, registry-Channel(name) bypass of IsExecuting guard, removed test-only APIs, error-chain potentially exposing original value."
+      },
+      "plan": ".bot/builder-ergonomics/security/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/channels/this.cs",
+            "PLang/app/channels/channel/goal/this.cs",
+            "PLang/app/actor/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Recursion guard via AsyncLocal<bool> _executing on channel.goal.@this; Channels.Get returns null when goal-channel is executing. Cycles A\u2192B\u2192A surface ChannelNotFound. AsyncLocal correctly flows into RunGoalAsync; finally restores prev. Task.Run copy-on-write preserves true value for spawned children. Sound."
+        },
+        {
+          "paths": [
+            "PLang/app/channels/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Channels.Channel(name) opportunistic API bypasses the IsExecuting guard (raw _channels.TryGetValue). Today only file/read.cs uses it for the builder warning sink and BuilderChannel.goal body does not loop. Latent: any future caller writing to its own goal-channel name via Channel() recurses past the guard until the CallStack backstop. Flagged Low."
+        },
+        {
+          "paths": [
+            "PLang/app/this.cs",
+            "PLang/app/actor/this.cs",
+            "PLang/app/modules/test/run.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "FreezeFoundational/FoundationalChannels/PushChannelsOverride/Snapshot removed; no live callers remain (grep clean across PLang, PlangConsole, PLang.Tests source; only stale generated metadata under obj/). Surface shrinks."
+        },
+        {
+          "paths": [
+            "PLang/app/types/Conversion.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Error chaining: when conversion fails on an inbound errors.Error, the new convErr is appended to sourceErr.ErrorChain and sourceErr is returned. Exception=ex captured. Error message embeds value.ToString() (pre-existing behavior). No new sensitive-data egress; ErrorChain mutation is on the inbound Error, no shared accumulator concurrency."
+        },
+        {
+          "paths": [
+            "PLang/app/channels/serializers/filters/Tagged.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Removed internal test-only ClearCacheForTests / CacheSize. No production-callable behavior changed. Unbounded _cache pre-existing; not a regression."
+        },
+        {
+          "paths": [
+            "Tests/Channels/GoalChannelRecursion/"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Regression test arms IsExecuting and asserts ChannelNotFound specifically; tester v2 independently re-ran mutation (delete _executing.Value=true \u2192 CallStackOverflow). Coverage genuine."
+        },
+        {
+          "paths": [
+            ".semgrep/"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "scripts/semgrep-scan.sh: 15 findings, all on baseline serializer-hygiene list. No new architectural-rule violations from this branch."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "No critical/high findings open. One Low: Channels.Channel(name) bypasses IsExecuting guard \u2014 latent recursion hole.",
+        "notes": "Net change is a security improvement: AsyncLocal channel-override layer + Snapshot path deleted; recursion guard is local to the resolving party and per-channel."
+      }
+    },
+    {
+      "id": "25063114-378c-4ddc-bbd9-4f91f6bd6559",
+      "bot": "docs",
+      "timestamp_start": "2026-05-29T10:00:00Z",
+      "timestamp_end": "2026-05-29T10:35:00Z",
+      "intent": "Close documentation gaps from the IsExecuting-replaces-FoundationalChannels refactor and the builder confidence/channel-routing additions.",
+      "before": {
+        "assumptions": "Auditor PASS, security PASS, tester v2 PASS. Stale FoundationalChannels references in io-channels.md / app-tree.md / check-app-tree.sh. No claude-md or character proposals on branch.",
+        "risk": "A reader following io-channels.md today lands on deleted APIs (FoundationalChannels / PushChannelsOverride). Highest-impact gap on the branch."
+      },
+      "plan": ".bot/builder-ergonomics/docs/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "Documentation/v0.2/io-channels.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Rewrote three sections referencing deleted FoundationalChannels / PushChannelsOverride / FreezeFoundational. Channel.Goal.@this paragraph now describes the AsyncLocal _executing guard with the registry Get() branch quoted from PLang/app/channels/this.cs. Actor-resolution block collapsed to the direct registry. Replace-output example rewritten as a sibling fan-out (the old example would fail under IsExecuting)."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/app-tree.md",
+            "Documentation/v0.2/scripts/check-app-tree.sh"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Dropped FreezeFoundational from the actor tree and the matching skip regex from the canary script."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/build.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added 'Confidence per step' section (level table, warning shape, trace file paths) and 'Builder output routing' section (BuilderChannel.goal / EmitBuildEvent.goal / templates/output/build-output.template architecture, redirection seam, EmitSummary gate-removal note)."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/good_to_know.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Appended 'Recursion guards belong on the value, not on a parallel context layer'. Worked example (channels migration), failure mode of the deleted shape (foundational-snapshot bug), tells for drifting back, when overlay shape IS the right answer (different-values vs hide-the-caller)."
+        },
+        {
+          "paths": [
+            ".bot/builder-ergonomics/docs/v1/plan.md",
+            ".bot/builder-ergonomics/docs/v1/verdict.json",
+            ".bot/builder-ergonomics/docs/summary.md",
+            ".bot/builder-ergonomics/docs-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Docs v1 bookkeeping \u2014 plan, verdict, summary, structured report."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "ready-to-merge",
+        "notes": "Five documentation gaps closed (3 stale-doc, 2 missing-doc). No PLang examples needed, no XML doc gaps detected, no claude-md or character proposals on branch. Branch ready to merge per docs gate."
+      }
+    }
+  ]
+}
