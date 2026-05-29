@@ -17,7 +17,7 @@
       "text": "Agreed — reversed the demote. module/this.cs = module.@this stays at app.module (app.module[\"file\"], app.module.list); the 6 registry ops stay methods on it. The .list-vs-list-action collision isn't real (member vs indexer key). No app.module.current since modules are dispatched, not navigated — so it's a no-.current service, not an exception. Fixed the modules→module wording too.",
       "anchor": "- **No `app.module.current`** — action modules are dispatched, not navigated; nothing is ever \"the current module.\" That is the *only* way module differs from goal, and it's the same way type/channel/event/format differ. So module is not special — it is a no-`.current` service.",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "eb6c91f221",
       "ts": "2026-05-29T15:07:43",
       "drifted": false
@@ -41,7 +41,7 @@
       "text": "Both done. ctx→context everywhere folded into this pass (214 identifiers across 36 files). And I checked the others: 5 more structural back-refs are over-nullable and should flip too — steps→Goal, step→Goal, channel→Actor, channel→Channels, channels→Actor. 2 are init-only and need a lifecycle check before flipping (GoalCall.Action, IEvent.Step) — a call/binding may legitimately exist unbound. Added a table. app.Parent stays nullable (root has no parent).",
       "anchor": "- **`App?.` → `App.`** — 15 sites (e.g. `data/this.Navigation.cs:271`, `builder/Types/this.cs:113-114`, `builder/Types/Render.cs:181`, `modules/debug/this.cs:493,523,529,589`, `modules/this.cs` schema sites).",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "6fac8af7b1",
       "ts": "2026-05-29T15:07:43",
       "drifted": false
@@ -68,6 +68,28 @@
       "status": "open",
       "parent_id": "332068c79a",
       "ts": "2026-05-29T15:07:43",
+      "drifted": false
+    },
+    {
+      "id": "40bb6500a2",
+      "line": 3,
+      "text": "the plang 'type', could would then have the ClrType property, so data.type.clrType",
+      "anchor": "The biggest and riskiest piece. The frame (Ingi's, and it's the right one): **`type.@this` is PLang's version of `System.Type`** — a real object that knows its own name, CLR type, scheme, and valid-values — and `data.Type` returns *that*, not a raw `System.Type`. That's exactly what `data.Type` *should* do; today it doesn't (`data.ClrType` hands back a bare `System.Type?`), and the per-type knowledge is scattered across `System.Type` + `builder.Types.Entry` + scheme strings. This consolidates it into the entity. The accessor model demands it too: `app.type[\"int\"]` is only worth the keystrokes if what comes back is an object you work with.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "cbddc974b7",
+      "ts": "2026-05-29T15:10:32",
+      "drifted": false
+    },
+    {
+      "id": "e4ab289ebe",
+      "line": 3,
+      "text": "Yes — ClrType becomes a property of the PLang type, so data.Type.ClrType returns the System.Type. Today's flat data.ClrType (raw System.Type?) relocates onto the entity. Added that to the doc + the call-site table: data.ClrType → data.Type.ClrType. The entity owns Name, ClrType, Scheme, ValidValues, and the conversion method.",
+      "anchor": "The biggest and riskiest piece. The frame (Ingi's, and it's the right one): **`type.@this` is PLang's version of `System.Type`** — a real object that knows its own name, CLR type, scheme, and valid-values — and `data.Type` returns *that*, not a raw `System.Type`. That's exactly what `data.Type` *should* do; today it doesn't (`data.ClrType` hands back a bare `System.Type?`), and the per-type knowledge is scattered across `System.Type` + `builder.Types.Entry` + scheme strings. This consolidates it into the entity. The accessor model demands it too: `app.type[\"int\"]` is only worth the keystrokes if what comes back is an object you work with.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "40bb6500a2",
+      "ts": "2026-05-29T15:11:59",
       "drifted": false
     }
   ]

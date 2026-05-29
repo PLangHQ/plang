@@ -15,7 +15,7 @@ So there is no single object representing one PLang type. `app.type["int"]` retu
 `type.@this` becomes the entity for **one PLang type**, owning its own knowledge:
 
 ```
-app.type["int"]      → type.@this   (name "int", clr typeof(int), scheme, valid-values, …)
+app.type["int"]      → type.@this   (Name "int", ClrType typeof(int), Scheme, ValidValues, …)
 app.type.of<int>()   → type.@this   (same, selected by CLR type)
 app.type.list        → enumerate
 data.Type            → type.@this   the value's type — context.app.type[Value]
@@ -36,11 +36,14 @@ public type.@this Type => context.app.type[Value];   // context + app non-null; 
 
 `app.type[...]` is the registry door (used by the loader, the builder, conversion); `data.Type` is the door you hold. Both return the same entity.
 
+The CLR type then lives *on the PLang type*, not as a flat field on `data`: `data.Type.ClrType` returns the `System.Type`. So today's `data.ClrType` (a raw `System.Type?` with a static fallback) becomes `data.Type.ClrType` — you navigate through the entity, which is where that knowledge belongs. `type.@this` owns `ClrType`, `Name`, `Scheme`, `ValidValues`; the conversion the type knows how to do is a method on it too.
+
 ## What the 80 `Types` call sites become
 
 | Today | After |
 |---|---|
-| `app.Types.Get("int")` / `.Clr(name)` (8) | `app.type[name]` (→ `.clr` if the CLR type is what's wanted) |
+| `app.Types.Get("int")` / `.Clr(name)` (8) | `app.type[name]` (→ `.ClrType` if the `System.Type` is what's wanted) |
+| `data.ClrType` (flat `System.Type?`) | `data.Type.ClrType` — CLR type reached through the entity |
 | `app.Types.GetTypeName(runtimeType)` / `.Name(t)` (6) | `app.type[t].name` (reverse selection by `System.Type` + `.name` on the entity) |
 | `app.Types.GetValidValues(t)` (1) | `app.type[t].validValues` |
 | `app.Types.IsClrTypeName(name)` (3) | `app.type.contains(name)` or `app.type[name] != null` |
