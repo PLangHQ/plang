@@ -1,0 +1,86 @@
+{
+  "name": "TestGoalBuildAndRunAfterRename",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %greeting% = \u0022hello\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Cut 1 surface in PLang. Builds and runs after the singular-namespace rename \u2014 proves the\ngenerator\u0027s string literals and emitted templates ride the new namespaces (a miss surfaces\nhere as \u0022Action \u0027\u003Cmodule\u003E.\u003Caction\u003E\u0027 not found\u0022, not in the generator project).",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%greeting%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "hello",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%greeting%, Value=\u0022hello\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %greeting% equals \u0022hello\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "hello",
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%greeting%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022hello\u0022, Actual=%greeting%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/SingularNamespaces/GoalBuildAndRun.test.goal",
+  "prPath": "/SingularNamespaces/.build/goalbuildandrun.test.pr",
+  "hash": "9d3a82faf29bfe7a7377bc1f5d8d27eed0904c1011628707ccbee44b86ceb57b",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

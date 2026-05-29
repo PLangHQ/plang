@@ -2,4 +2,6 @@ TestUnknownChannelThrowsTypedError
 / Failure matrix: actor.channel["nope"] selecting an absent channel from PLang code raises
 / a typed error — uniform with goal/type index-miss, no silent noop, no implicit create.
 / Surfaces to the PLang author at the call site as the bug it is.
-- throw "not implemented"
+- set %sawError% = false
+- write to %nonexistentChannel% "ping", on error set %sawError% = true
+- assert %sawError% equals true

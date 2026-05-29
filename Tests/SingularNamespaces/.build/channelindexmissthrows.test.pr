@@ -1,0 +1,148 @@
+{
+  "name": "TestUnknownChannelThrowsTypedError",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %sawError% = false",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Failure matrix: actor.channel[\u0022nope\u0022] selecting an absent channel from PLang code raises\na typed error \u2014 uniform with goal/type index-miss, no silent noop, no implicit create.\nSurfaces to the PLang author at the call site as the bug it is.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%sawError%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%sawError%, Value=false)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write to %nonexistentChannel% \u0022ping\u0022, on error set %sawError% = true",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "ping",
+              "type": "object"
+            },
+            {
+              "name": "channel",
+              "value": "%nonexistentChannel%",
+              "type": "channel"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "variable",
+                      "action": "set",
+                      "parameters": [
+                        {
+                          "name": "Name",
+                          "value": "%sawError%",
+                          "type": "string"
+                        },
+                        {
+                          "name": "Value",
+                          "value": true,
+                          "type": "bool"
+                        }
+                      ]
+                    }
+                  ],
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "formal": "output.write(Data=%!data%, channel=%nonexistentChannel%) | error.handle(Actions=[variable.set(Name=%sawError%, Value=true, Type=bool)])",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %sawError% equals true",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": true,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%sawError%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=true, Actual=%sawError%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/SingularNamespaces/ChannelIndexMissThrows.test.goal",
+  "prPath": "/SingularNamespaces/.build/channelindexmissthrows.test.pr",
+  "hash": "88df157971c703e129839646397073e43d35ec927d383c949c48da6eafa00a35",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

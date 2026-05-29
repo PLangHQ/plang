@@ -1,0 +1,44 @@
+{
+  "name": "TestChannelWriteThroughNewAccessor",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \u0022hello from channel accessor\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Cut 2 surface in PLang. A PLang \u0060write to %channelName%\u0060 step lands on the new\nactor.channel[name].Write(data) path \u2014 the registry no longer holds WriteText/WriteAsync,\nand the type-switch on channel.stream.@this moved onto the element as a virtual.",
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "hello from channel accessor",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "output.write(Data=\u0022hello from channel accessor\u0022(tstring))",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/SingularNamespaces/ChannelWriteThroughAccessor.test.goal",
+  "prPath": "/SingularNamespaces/.build/channelwritethroughaccessor.test.pr",
+  "hash": "9f51ac3f672d685c6600a6c199c970ba0a5813ae02e3c592239ce1f59b971c0f",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

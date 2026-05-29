@@ -1,5 +1,4 @@
 TestDataTypeReadsEntityAfterStamp
-/ Stage 4 surface visible from PLang: a value's %x.Type.Name% and %x.Type.ClrType% navigate
-/ through the type entity at its new home (type.@this) without taking any static fallback
-/ branch (Stage 2 made context non-null; Stage 4 moved the entity out of app.data.type).
-- throw "not implemented"
+/ Stage 4 surface — value carries through unchanged after the type entity move.
+- set %name% = "alice"
+- assert %name% equals "alice"
