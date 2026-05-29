@@ -1,0 +1,743 @@
+{
+  "branch": "plang-types",
+  "sessions": [
+    {
+      "id": "00ce921d-6873-4d37-9449-5f36247fbd67",
+      "bot": "test-designer",
+      "timestamp_start": "2026-05-29T11:58:42Z",
+      "timestamp_end": "2026-05-29T12:14:59Z",
+      "intent": "Design test contract for plang-types \u2014 registry+kind, serializer dispatch, number/image/code values, primitive cleanups, runtime loading.",
+      "before": {
+        "assumptions": "Architect plan settled and merged with runtime2; 7 stages carved + test-strategy.md + test-coverage.md present. Existing test infra at PLang.Tests/App/ (Serialization/, DataTests/, Types/) reusable; PLang goal tests live under Tests/ (uppercase).",
+        "risk": "Scope is large (~50 matrix rows + 4 integration cuts + failure matrix). Risk of either over-fragmenting tests (one per row blindly) or grouping too much (losing the per-behavior pin). Mitigation: batch by surface so the contract reads forward."
+      },
+      "plan": ".bot/plang-types/test-designer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/Types/RegistryFoldTests.cs",
+            "PLang.Tests/App/Types/KindFieldTests.cs",
+            "PLang.Tests/App/Types/TypeBuildHookTests.cs",
+            "PLang.Tests/App/Types/TypedPropertyCatalogTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 1 \u2014 registry fold no-regression, optional `kind` field as separate .pr field, type Build(value) discovery, typed-property catalog rendering."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Serialization/TypeSerializersDispatchTests.cs",
+            "PLang.Tests/App/Serialization/TypedValueNodeNormalizeTests.cs",
+            "PLang.Tests/App/Serialization/IWriterFormatTests.cs",
+            "PLang.Tests/App/Serialization/PathSerializerMigrationTests.cs",
+            "PLang.Tests/App/Serialization/PlngSerializerCoverageTests.cs",
+            "PLang.Tests/App/Serialization/NestedRegisteredTypeRoundTripTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 2 \u2014 TypeSerializers (typeName, formatToken) \u2192 Write dispatch; TypedValueNode tag-hook; IWriter.Format; path as first-mover absorbing this.JsonConverter; PLNG coverage gate."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/NumberValueTests.cs",
+            "PLang.Tests/App/Types/NumberParseTests.cs",
+            "PLang.Tests/App/Types/NumberBuildKindTests.cs",
+            "PLang.Tests/App/Types/NumberEqualityTests.cs",
+            "PLang.Tests/App/Types/NumberOperatorsTests.cs",
+            "PLang.Tests/App/Serialization/NumberSerializerTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 3 \u2014 number value (sealed class, NumberKind, From, casts, lenient/exact equality, NaN, hash, parse narrowest-fit, Build literal-shape rule, operators policy-free lenient, Default.cs per Kind)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/NumberArithmeticTests.cs",
+            "PLang.Tests/App/Types/NumberDivideTests.cs",
+            "PLang.Tests/App/Types/NumberPowerTests.cs",
+            "PLang.Tests/App/Types/NumberPolicyResolutionTests.cs",
+            "PLang.Tests/App/Types/MathHandlerDataReturnTests.cs",
+            "Tests/Math/DivideSevenByTwoIsThreeHalves.test.goal",
+            "Tests/Math/IntDivSevenByTwoIsThree.test.goal",
+            "Tests/Math/OverflowThrowSettingHonored.test.goal",
+            "Tests/Math/SubGoalInheritsParentPolicy.test.goal",
+            "Tests/Math/AddRoundTripDecimal.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 4 \u2014 arithmetic + policy via app.config (no Goal storage), divide-leaves-integer-track footgun + math.intdiv, power, MathHelper.ToDouble/PreserveType deletion, handler returns Data never throws."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/ImageValueTests.cs",
+            "PLang.Tests/App/Types/ImageParseTests.cs",
+            "PLang.Tests/App/Types/ImageBuildKindTests.cs",
+            "PLang.Tests/App/Types/CodeValueTests.cs",
+            "PLang.Tests/App/Types/FileReadBuildTests.cs",
+            "PLang.Tests/App/Serialization/ImageSerializerTests.cs",
+            "PLang.Tests/App/Serialization/CodeSerializerTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 5 \u2014 image (Bytes/Mime/nullable Path facet, composition over union), code (Source/Language), file.read.Build extension\u2192high-level type, per-format serializer files (image text/protobuf/Default; code Default)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/CleanupBindingsTests.cs",
+            "Tests/Cleanups/TimespanAliasStillResolves.test.goal",
+            "Tests/Cleanups/DurationRoundTrip.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 6 \u2014 datetime\u2192DateTimeOffset (DateTime banished), date\u2192DateOnly, time\u2192TimeOnly, duration\u2192TimeSpan (timespan deprecated alias), no `this.Build.cs` on any (no kind)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/RuntimeTypeLoadingTests.cs",
+            "Tests/Cut4_RuntimeLoadAndRender/LoadDllRegistersType.test.goal",
+            "Tests/Cut4_RuntimeLoadAndRender/LoadDllOverwritesBuiltIn.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "medium",
+          "context": "Stage 7 \u2014 code.load-style runtime DLL scan registers [PlangType] + ITypeRenderer; overwrite precedence; honest-limit pin. Fixture DLL not committed \u2014 coder builds it under PLang.Tests/App/Fixtures/dlls/."
+        },
+        {
+          "paths": [
+            "Tests/Cut1_LiteralKindArithmeticOutput.test.goal",
+            "Tests/Types/SetDecimalLiteralStampsKind.test.goal",
+            "Tests/Types/PolymorphicMathAddHasNoKind.test.goal",
+            "Tests/Types/ReadPhotoStampsImage.test.goal",
+            "Tests/Types/PhotoPathExistsNavigation.test.goal",
+            "Tests/Types/PhotoPathExistsMissingFile.test.goal",
+            "Tests/Types/Base64ImagePathNull.test.goal",
+            "PLang.Tests/App/Serialization/IntegrationCuts/PlangTypesCut2_ImageTwoChannelsTests.cs",
+            "PLang.Tests/App/Serialization/IntegrationCuts/PlangTypesCut3_CompositionNavigationTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Cuts 1\u20133 \u2014 spine .goal (literal kind \u2192 arithmetic \u2192 output) + supporting .pr-inspection goals; C# harnesses for the two-channel image and Path facet navigation cuts. PlangTypes prefix on C# cuts dodges collision with data-normalize Cut1/2/3/4 in the same folder."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/*.cs",
+            "PLang.Tests/App/Serialization/*.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Mass-rewrote stub bodies from `await Task.FromResult(Assert.Fail(\"Not implemented\"))` to `throw new global::System.NotImplementedException()`. TUnit Assert.Fail returns void \u2192 Task.FromResult fails type inference; throw composes cleanly with async Task expression body. dotnet build PLang.Tests confirmed green (0 errors)."
+        },
+        {
+          "paths": [
+            ".bot/plang-types/test-designer/v1/plan.md",
+            ".bot/plang-types/test-designer/v1/verdict.json",
+            ".bot/plang-types/test-designer/summary.md",
+            ".bot/plang-types/report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v1 plan + verdict + summary + this report."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "dotnet build PLang.Tests is green (0 errors). All 24 new C# test files compile; ~150 stubs land as failing tests pinning the contract. 14 new PLang .goal files land with `- throw \"not implemented\"` bodies pinning the developer-facing surface.",
+        "notes": "Coder runs next. Architect's stage dependency order: 1+2 together (machinery + path first mover) \u2192 3 \u2192 4 \u2192 5 \u2192 6 (parallelizable) \u2192 7 (needs fixture DLL under PLang.Tests/App/Fixtures/dlls/). The PLNG_SerializerCoverage gate must land in Stage 2 so the runtime writer lookup stays total for built-in types. No fixture DLL was committed \u2014 Stage 7 coder builds it matching existing fixture pattern."
+      }
+    },
+    {
+      "id": "89e524a1-e310-4769-a66c-4be6364a5fd8",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-29T15:00:00Z",
+      "timestamp_end": "2026-05-29T15:12:00Z",
+      "intent": "Code-analysis pass on plang-types \u2014 registry+kind fold, per-(type,format) renderer dispatch, number/image/code/datetime/duration value types, runtime DLL loader (Stage 7), math handler retypes.",
+      "before": {
+        "assumptions": "Coder v1 reports 3598/3609 with 11 integration-cut stubs deferred. Branch is one commit past coder v1 (b28282ee4) which finished plang .goal tests + integration cuts. Architect 7-stage plan + test-designer's failing contract are landed.",
+        "risk": "Large surface area (~50 new files, ~5500 LOC). Risk is missing a subtle OBP smell on a noun introduced this branch (kinds, renderers, primitives) or a sync-over-async footgun in the IConvertible bridge. Mitigation: full diff stat first, then targeted reads of every new noun's @this.cs."
+      },
+      "plan": ".bot/plang-types/codeanalyzer/v1/report.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/plang-types/codeanalyzer/v1/report.md"
+          ],
+          "type": "create",
+          "category": "report",
+          "confidence": "high",
+          "context": "codeanalyzer v1 report \u2014 PASS with 2 minor findings + 4 notes."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "verdict": "pass (2 minor findings, none blocking)",
+        "health": "green \u2014 clean build (0 errors), 3609/3609 C# tests green; OBP shape clean across the 5 new types + 2 new dispatch nouns; System.IO/Console bans intact.",
+        "findings": "F1 (Minor): renderers.IndexAssembly dead initial-assignment + unreachable Convert.ChangeType branch. F2 (Minor): number.DoDivide dead conditional contradicts its own comment + the file-level docstring. 4 Notes: IConvertible.GetAwaiter().GetResult() (sealed-sync, safe), path.serializer absolute-fallback (in-envelope, document), kinds.@this.Of silent hook exceptions (documented contract), Loader.cs naming.",
+        "next": "tester"
+      }
+    },
+    {
+      "id": "6942a831-5345-4fcd-96c4-14b6b7081163",
+      "bot": "tester",
+      "timestamp_start": "2026-05-29T15:19:02Z",
+      "timestamp_end": "2026-05-29T15:36:37Z",
+      "intent": "Validate test quality for plang-types: 7-stage type+kind model, serializer dispatch, number/image/code values, runtime DLL loading. Hunt false greens.",
+      "before": {
+        "assumptions": "Coder reports 3609/3609 C# green, codeanalyzer PASS with 2 minor dead-code findings. No coder summary.md/plan.md/baseline-tests.md present (only report.md) \u2014 baseline missing = process violation to flag.",
+        "risk": "Large surface (93 prod .cs, 40 C# test files, ~20 plang goals). Two codeanalyzer dead-branch findings (renderers IndexAssembly, number DoDivide) are prime false-green candidates: tests may cement always-Decimal/collapsed-delegate without pinning intent. Runtime DLL roundtrip + builder false greens in plang .pr files need direct inspection."
+      },
+      "plan": ".bot/plang-types/tester/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PlangConsole",
+            "PLang.Tests"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild + full suites. C# 3609/3609, plang 246/246, no regressions. Coverage 51/54 changed prod files >0%; Config.cs 0%."
+        },
+        {
+          "paths": [
+            "Tests/Types/SetDecimalLiteralStampsKind.test.goal",
+            "Tests/Cut1_LiteralKindArithmeticOutput.test.goal",
+            "Tests/Types/PolymorphicMathAddHasNoKind.test.goal",
+            "PLang/app/modules/builder/code/Default.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "cache:false rebuild proved .pr carries type:object/no-kind for set-literals; builder stamps kind only for typed params (Default.cs:881-896). Goals assert runtime values only -> false green (finding 3)."
+        },
+        {
+          "paths": [
+            "Tests/Cut4_RuntimeLoadAndRender/LoadDllRegistersType.test.goal",
+            "Tests/Cut4_RuntimeLoadAndRender/LoadDllOverwritesBuiltIn.test.goal",
+            "PLang/app/types/Loader.cs",
+            "PLang.Tests/App/Types/RuntimeTypeLoadingTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Cut4 goals are load-only stubs (no render/overwrite); RuntimeTypeLoading AlreadyCompiledHandlerSlot is a tautology; FailsLoad assertions if-guarded. Findings 1,2,6."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Serialization/PlngSerializerCoverageTests.cs",
+            "PLang.Tests/App/Serialization/IWriterFormatTests.cs",
+            "PLang.Tests/App/Types/MathHandlerDataReturnTests.cs",
+            "PLang.Tests/App/Types/NumberPolicyResolutionTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "~10 deferred no-op Assert.That(true) tests pass green with coverage-implying names. NumberPolicy Config.cs 0% covered. Findings 4,7."
+        },
+        {
+          "paths": [
+            ".bot/plang-types/test-report.json",
+            ".bot/plang-types/tester/v1/result.md",
+            ".bot/plang-types/tester/v1/verdict.json",
+            ".bot/plang-types/tester/v1/coverage.json",
+            ".bot/plang-types/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote tester v1 outputs. Verdict FAIL on strict-red (confirmed false greens)."
+        }
+      ],
+      "after": {
+        "status": "fail",
+        "health": "All-green suite but dishonest: headline runtime-DLL roundtrip and build-time kind-stamping surfaces are green-but-empty; ~10 deferrals pass as no-op tests; NumberPolicy resolution uncovered. Branch itself has no reds/regressions and the mechanism unit tests are honest.",
+        "notes": "10 findings (1 critical, 5 major, 3 minor, 1 process). No source mutated; builder verified via cache:false; no builder false-greens. Next: coder to fix tests (mark deferrals [Skip], add real assertions, cover policy resolution)."
+      }
+    },
+    {
+      "id": "3aff037a-40fa-4c08-b127-bd8ce98a5d12",
+      "bot": "tester",
+      "timestamp_start": "2026-05-29T16:28:45Z",
+      "timestamp_end": "2026-05-29T16:28:45Z",
+      "intent": "Verify coder v2 fixes to the 10 tester v1 findings are load-bearing, not green-restating-the-bug. Mutation-test headline new coverage.",
+      "before": {
+        "assumptions": "Coder v2 reports all 10 findings addressed; C# 3604/10skip, plang 247. Two new C# test files are the headline. Review-driven fixes are highest false-green risk.",
+        "risk": "New tests may pass for the wrong reason. The #7 overflow goal and the .pr-shape and DLL-roundtrip tests need mutation/empirical checks to confirm they bite."
+      },
+      "plan": ".bot/plang-types/tester/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/Types/TypeProviderDllRoundtripTests.cs",
+            "PLang/app/types/Registry.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Mutation test: reversed ResolveType runtime-first precedence; confirmed LoadDll_ExistingName_RuntimeWinsAtResolveType, AlreadyCompiledHandlerSlot, and TypeProviderDllRoundtrip.CustomInt all FAIL. Runtime-wins + DLL roundtrip coverage is load-bearing. Reverted."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/BuilderKindStampingTests.cs",
+            "PLang.Tests/App/Types/RuntimeTypeLoadingTests.cs",
+            "PLang.Tests/App/Types/NumberPolicyResolutionTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "#2/#6/#9 rewrites verified real; #3 pins path->kind=file + polymorphic-no-kind against committed .pr; #7 C# resolution tests (step/context/app-default/parent-climb) thorough. 10 deferred tests now [Skip] (confirmed in run)."
+        },
+        {
+          "paths": [
+            "Tests/Math/OverflowThrowSettingHonored.test.goal",
+            "PLang/app/types/number/this.Arithmetic.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "NEW false green: decimal.MaxValue overflows under every policy (no Decimal->wider promotion). Empirically built+ran the same add without Overflow=Throw -> %err% still true -> param not load-bearing. Goal does not verify the Throw setting is honored."
+        },
+        {
+          "paths": [
+            ".bot/plang-types/tester/v2/result.md",
+            ".bot/plang-types/tester/v2/verdict.json",
+            ".bot/plang-types/test-report.json",
+            ".bot/plang-types/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "tester v2 outputs. Verdict FAIL on one confirmed false green (single-goal fix); 9/10 v1 fixes verified real and mutation-confirmed."
+        }
+      ],
+      "after": {
+        "status": "fail",
+        "health": "Massively improved: critical DLL roundtrip + runtime-wins are now real and mutation-verified; deferrals honestly [Skip]'d; policy resolution thoroughly covered in C#. One new false green remains: the OverflowThrowSettingHonored plang goal's Overflow=Throw is not load-bearing (decimal overflow is policy-independent).",
+        "notes": "FAIL per strict-red (confirmed false green), but it is a single ~5-min goal fix: change input to int.MaxValue+int.MaxValue so Promote(success) vs Throw(error) diverge, or assert a sibling-default-no-error. Tree clean; mutation reverted; no source committed."
+      }
+    },
+    {
+      "id": "7a28409c-5078-4e5b-8338-827e9e14c1a8",
+      "bot": "tester",
+      "timestamp_start": "2026-05-29T16:38:45Z",
+      "timestamp_end": "2026-05-29T16:38:45Z",
+      "intent": "Verify coder v3 fix to the single v2 false green (OverflowThrowSettingHonored).",
+      "before": {
+        "assumptions": "Coder v3 switched the overflow goal to long.MaxValue + added a Promote sibling; reports plang 248/248.",
+        "risk": "Need to confirm the pair actually distinguishes Throw vs Promote and that the param is load-bearing \u2014 not trust the coder's mutation claim."
+      },
+      "plan": ".bot/plang-types/tester/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "Tests/Math/OverflowThrowSettingHonored.test.goal",
+            "Tests/Math/OverflowPromoteWidens.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "plang 248/248; both goals pass. .pr carries Overflow=Throw/Promote (overflowmode) \u2014 no builder false-green. Pair is mutually validating (same inputs, opposite Overflow, opposite outcome)."
+        },
+        {
+          "paths": [
+            "Tests/Math/OverflowThrowSettingHonored.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Independent mutation: stripped Overflow=Throw, rebuilt cache:false, ran -> [Fail] (default policy widens silently, %err% unset). Param confirmed load-bearing. Reverted via git checkout."
+        },
+        {
+          "paths": [
+            ".bot/plang-types/tester/v3/result.md",
+            ".bot/plang-types/tester/v3/verdict.json",
+            ".bot/plang-types/test-report.json",
+            ".bot/plang-types/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "tester v3 outputs. Verdict PASS \u2014 no remaining false greens."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "All v1/v2 findings resolved. Critical DLL-roundtrip + runtime-wins mutation-verified (v2); deferrals honestly [Skip]'d; policy resolution thoroughly covered; step-level Overflow now distinguished end-to-end via a mutually-validating goal pair, independently mutation-confirmed.",
+        "notes": "plang 248/248, C# 3604/10skip/0fail. Tree clean; mutation reverted; no source committed. Branch test quality is honest. Next: security review."
+      }
+    },
+    {
+      "id": "d94d65d5-5f89-4f1c-9be1-1a90d81dea08",
+      "bot": "security",
+      "timestamp_start": "2026-05-29T00:00:00Z",
+      "timestamp_end": "2026-05-29T16:46:29Z",
+      "intent": "Security review of plang-types value-system spine (Loader, image, code, number, Wire integration).",
+      "before": {
+        "assumptions": "Coder v3 + tester v3 PASS; reviewing net-new attack surface.",
+        "risk": "runtime DLL loading, image/HTTP intake, wire dispatch"
+      },
+      "plan": ".bot/plang-types/security/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/plang-types/security/v1/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "review plan"
+        },
+        {
+          "paths": [
+            "PLang/app/types/Loader.cs",
+            "PLang/app/types/Registry.cs",
+            "PLang/app/types/renderers/this.cs",
+            "PLang/app/modules/code/load.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "runtime DLL loading; F2 \u2014 Loader.Register can shadow built-in [PlangType] names"
+        },
+        {
+          "paths": [
+            "PLang/app/types/image/this.cs",
+            "PLang/app/types/image/this.Parse.cs",
+            "PLang/app/modules/file/read.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "image intake; F3 \u2014 byte[] no size cap (standing finding extension)"
+        },
+        {
+          "paths": [
+            "PLang/app/types/number/this.Arithmetic.cs",
+            "PLang/app/types/number/this.Parse.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1 \u2014 DoPower unbounded exponent CPU DoS"
+        },
+        {
+          "paths": [
+            "PLang/app/data/Wire.cs",
+            "PLang/app/data/this.Normalize.cs",
+            "PLang/app/data/TypedValueNode.cs",
+            "PLang/app/channels/serializers/json/writer.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "wire integration confirmed: builder-ergonomics depth-guard intact, fail-closed renderer dispatch"
+        },
+        {
+          "paths": [
+            ".bot/plang-types/security-report.json",
+            ".bot/plang-types/security/v1/result.md",
+            ".bot/plang-types/security/v1/verdict.json",
+            ".bot/plang-types/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "security report + verdict (PASS, 3 Low)"
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "3 Low findings, none merge-blocking",
+        "notes": "Next: auditor"
+      }
+    },
+    {
+      "id": "38da5887-6507-41c4-b8b2-1012ed07f8ff",
+      "bot": "tester",
+      "timestamp_start": "2026-05-29T17:56:25.769020+00:00",
+      "timestamp_end": "2026-05-29T18:10:04.061810+00:00",
+      "intent": "Validate test quality for coder v4 work: math.power CPU-DoS cap, Loader sealed-name allowlist, sqrt error-key unification, unary retype merge.",
+      "before": {
+        "assumptions": "Coder v4 addressed security v1 (power cap F1, loader allowlist F2; image cap F3 deferred) and codeanalyzer v2 minors (cap-on-MathPow-paths F1, sqrt double-guard F2, doc F3). mathhelper-deletion merge retyped unary/comparison handlers through number.*.",
+        "risk": "Security-driven gate code (3 sealed-name sites, only 1 likely tested) and an error-key change on sqrt (handler test may assert only Success) are the highest false-green risk."
+      },
+      "plan": ".bot/plang-types/tester/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/plang-types/tester/v4/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Scoped review of coder v4 + mathhelper-deletion merge; 3 false-green hypotheses."
+        },
+        {
+          "paths": [
+            "PLang.Tests"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild (stale-binary protocol). C# 3634/3634 green. plang green run1, run2 one external 502 on StreamCallback (flaky, non-HTTP coder change)."
+        },
+        {
+          "paths": [
+            "PLang/app/types/Loader.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mutation test: neutralized ITypeRenderer-pass (:122) and inferred-name (:101) sealed checks -> all 9 RuntimeTypeLoadingTests still green. F1 major: 2 of 3 security gate sites untested. Reverted."
+        },
+        {
+          "paths": [
+            "PLang/app/types/number/this.Unary.cs",
+            "PLang/app/modules/math/sqrt.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mutation test: DoSqrt threw DivideByZeroException -> handler test Sqrt_NegativeInput_Fails stayed green (asserts only Success), number-layer test went red. F2 minor weak-assertion; coverage exists at number layer. Reverted."
+        },
+        {
+          "paths": [
+            ".bot/plang-types/test-report.json",
+            ".bot/plang-types/tester/v4/result.md",
+            ".bot/plang-types/tester/v4/verdict.json",
+            ".bot/plang-types/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote findings F1-F4, verdict needs-fixes, summary."
+        }
+      ],
+      "after": {
+        "status": "needs-fixes",
+        "health": "C# 3634/3634 green; plang flaky-502 external; 1 major + 3 minor test-quality findings",
+        "notes": "F1 (major): Loader sealed-name security gate tested at 1 of 3 enforcement sites (mutation-confirmed). F2 (minor): sqrt handler test asserts only Success.IsFalse, key pinned only at number layer. F3 missing baseline v3/v4. F4 stale Unary docstring. plang 502 is external flake, not coder-v4."
+      }
+    },
+    {
+      "id": "9d44d9bb-03bc-4633-a0b2-66893833e62f",
+      "bot": "tester",
+      "timestamp_start": "2026-05-29T18:17:22.203863+00:00",
+      "timestamp_end": "2026-05-29T18:21:56.672811+00:00",
+      "intent": "Verify coder v5 fixes to tester v4 findings (F1 sealed-gate coverage, F2 sqrt-key, F3 baseline, F4 doc) \u2014 independently mutation-confirm the two new sealed-gate tests.",
+      "before": {
+        "assumptions": "Coder v5 added SignatureRendererShadow (pass-2 renderer gate) + CallbackInferredShadow (pass-1 inferred-name gate) fixtures and 2 tests, strengthened Sqrt handler test with Error.Key assert, fixed Unary docstring, wrote v5 baseline. Coder claims mutation-confirmed.",
+        "risk": "Review-driven tests are highest false-green risk. Must independently confirm each new test fails when its specific gate is neutralized \u2014 not trust the coder's claim. Watch for a test that passes for the wrong reason (e.g. fails on TypeLoadCoverage instead of TypeLoadCollision)."
+      },
+      "plan": ".bot/plang-types/tester/v5/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/plang-types/tester/v5/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plan to independently mutation-verify coder v5's 3 review-driven test changes."
+        },
+        {
+          "paths": [
+            "PLang.Tests"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild. C# 3636/3636, plang 248/248. v4 StreamCallback 502 did not recur."
+        },
+        {
+          "paths": [
+            "PLang/app/types/Loader.cs",
+            "PLang.Tests/App/Types/RuntimeTypeLoadingTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mutation A+B: neutralized renderer gate :122 + inferred gate :101 (left explicit :88 intact) -> exactly LoadDll_SealedNameAsRendererTypeName + LoadDll_InferredSealedName failed (2/11); explicit-attr test green as control. F1 resolved. Reverted."
+        },
+        {
+          "paths": [
+            "PLang/app/types/number/this.Unary.cs",
+            "PLang.Tests/App/Modules/math/MathTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mutation C: DoSqrt throws DivideByZeroException -> Sqrt_NegativeInput_Fails now fails at Error.Key assert (green under same mutation in v4). F2 resolved. Reverted."
+        },
+        {
+          "paths": [
+            ".bot/plang-types/test-report.json",
+            ".bot/plang-types/tester/v5/result.md",
+            ".bot/plang-types/tester/v5/verdict.json",
+            ".bot/plang-types/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Verdict PASS; F1-F4 resolved, F5 empty-report nit."
+        }
+      ],
+      "after": {
+        "status": "approved",
+        "health": "C# 3636/3636 green, plang 248/248 green; all v4 findings resolved, mutation-confirmed",
+        "notes": "F1 (renderer + inferred sealed gates) and F2 (sqrt key) each tester-mutation-confirmed; explicit-attr test held as control. F3 baseline + F4 doc done. F5 non-blocking: empty coder/v5/report.md."
+      }
+    },
+    {
+      "id": "adb33855-a06e-440e-8a93-14d06a131ffa",
+      "bot": "security",
+      "timestamp_start": "2026-05-29T00:00:00Z",
+      "timestamp_end": "2026-05-29T18:27:37Z",
+      "intent": "security v2: verify coder v1-fix cycle (F1 power cap, F2 sealed names) and scan mathhelper-deletion merge for new attack surface.",
+      "before": {
+        "assumptions": "v1 PASS; coder v4+v5 + tester v4+v5 closed v1 F1/F2; mathhelper-deletion landed alongside.",
+        "risk": "gate-site partial coverage, math handlers escaping Wrap, F3 still latent"
+      },
+      "plan": ".bot/plang-types/security/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/plang-types/security/v2/plan.md",
+            ".bot/plang-types/security/v2/v1_review_summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 plan + v1 review summary"
+        },
+        {
+          "paths": [
+            "PLang/app/types/Loader.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F2 sealed-names gate at all 3 sites, OrdinalIgnoreCase soundness, Unicode bypass ruled out, partial-state on bail noted sub-Low"
+        },
+        {
+          "paths": [
+            "PLang/app/types/number/this.Arithmetic.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1 EnsureExponentInRange covers 3 CPU-loop branches; Math.Pow branches deliberately skip \u2014 sound"
+        },
+        {
+          "paths": [
+            "PLang/app/types/number/this.Unary.cs",
+            "PLang/app/modules/math/round.cs",
+            "PLang/app/modules/math/sqrt.cs",
+            "PLang/app/modules/math/max.cs",
+            "PLang/app/modules/math/min.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "mathhelper-deletion delta scan; F4 found in DoRound \u2014 ArgumentOutOfRangeException escapes Wrap"
+        },
+        {
+          "paths": [
+            ".bot/plang-types/security-report.json",
+            ".bot/plang-types/security/v2/result.md",
+            ".bot/plang-types/security/v2/verdict.json",
+            ".bot/plang-types/security/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 report state (F1+F2 fixed, F3 deferred, F4 open) + verdict PASS"
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "v1 F1+F2 closed mutation-confirmed; F3 still standing; F4 NEW Low non-blocking",
+        "notes": "Next: auditor"
+      }
+    },
+    {
+      "id": "9aebbd60-6990-461f-84da-e4c6631832c7",
+      "bot": "docs",
+      "timestamp_start": "2026-05-29T13:00:00Z",
+      "intent": "Final docs gate on plang-types \u2014 fill user/teaching/architecture gaps, apply CLAUDE.md proposal #7.",
+      "before": {
+        "assumptions": "XML docs strong on new code; gaps are user-facing (math/intdiv, code.load extension), teaching (intdiv.description.md), architecture (good_to_know.md typed-values entry).",
+        "risk": "Stale docs are worse than no docs \u2014 math.md without intdiv misleads, code.md without [PlangType]/ITypeRenderer hides the new load behaviour."
+      },
+      "plan": ".bot/plang-types/docs/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "CLAUDE.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Applied architect v1 CLAUDE.md proposal \u2014 added item 7 to OBP Shape Smells (Courier reaches into Data.Value), pointing at object_pattern_formal.md Rule #9."
+        },
+        {
+          "paths": [
+            "os/system/modules/math/intdiv.description.md",
+            "os/system/modules/math/divide.description.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "intdiv teaching file new; divide extended to make 7/2 \u2192 3.5 promotion explicit and cross-reference intdiv."
+        },
+        {
+          "paths": [
+            "docs/modules/math.md",
+            "docs/modules/index.md",
+            "docs/modules/code.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "math: intdiv section, divide promotion, Number Policy (Overflow/Precision, power cap), DivisionByZero\u2192DivideByZero key fix. index: intdiv in math row. code: load now scans [PlangType] + ITypeRenderer; sealed-names with TypeLoadCollision; honest limit on compiled slots / shipped .pr stamps."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/good_to_know.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Appended Typed values entry \u2014 folder contract, two Builds (action vs type), per-(type,format) dispatch, composition-not-union, runtime DLL loading + sealed names, OBP Rule #9 pointer. Discoverability hook into architect plan; not duplicating it."
+        },
+        {
+          "paths": [
+            ".bot/plang-types/docs/v1/plan.md",
+            ".bot/plang-types/docs/v1/result.md",
+            ".bot/plang-types/docs/v1/verdict.json",
+            ".bot/plang-types/docs/summary.md",
+            ".bot/plang-types/docs-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Bot output: plan, result, verdict (PASS), summary, docs-report (decisions on architect CLAUDE.md proposal: applied)."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "green",
+        "notes": "All gaps filled. CLAUDE.md proposal #7 applied. Branch ready to merge. F4 (round Decimals OOR) noted as outstanding security finding; not docs-actionable until coder lands clamp."
+      },
+      "timestamp_end": "2026-05-29T13:35:00Z"
+    }
+  ]
+}

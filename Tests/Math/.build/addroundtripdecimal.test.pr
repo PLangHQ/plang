@@ -1,0 +1,104 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "math.add A=0.1 B=0.2, write to %sum%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Documented round-trip: 0.1 \u002B 0.2 under default policy (Promote/Double) produces the\nsame value the LLM-facing docs cite. Pins that \u0022lenient default\u0022 doesn\u0027t quietly\nbecome \u0022doubles eat your decimals\u0022 \u2014 kinds stay decimal when both operands are decimal.",
+      "actions": [
+        {
+          "module": "math",
+          "action": "add",
+          "parameters": [
+            {
+              "name": "A",
+              "value": 0.1,
+              "type": "object"
+            },
+            {
+              "name": "B",
+              "value": 0.2,
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%sum%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "math.add(A=0.1, B=0.2) | variable.set(Name=%sum%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %sum% equals 0.3",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 0.3,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%sum%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=0.3, Actual=%sum%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Math/AddRoundTripDecimal.test.goal",
+  "prPath": "/Math/.build/addroundtripdecimal.test.pr",
+  "hash": "6012b9e27bd200b4f9f4ff789875db46550cadf0e55ebdca5ea06ac4edc416fa",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

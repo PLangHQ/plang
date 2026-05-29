@@ -91,6 +91,8 @@ public sealed partial class @this
                         sb.Append(t.Shape);
                     }
                 }
+                if (t.Kinds != null && t.Kinds.Count > 0)
+                    sb.Append(" (kinds: ").Append(string.Join(" | ", t.Kinds)).Append(')');
                 if (!string.IsNullOrEmpty(t.Description))
                     sb.Append(" — ").Append(t.Description);
                 if (!string.IsNullOrEmpty(t.Example))

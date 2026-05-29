@@ -1,0 +1,8 @@
+Start
+/ Integration cut 3 (composition over union): `read photo.png, write to %photo%` followed
+/ by an if on `%photo.Path.Exists%` against a real on-disk file evaluates true. Proves
+/ the typed-property catalog lets the LLM navigate image → Path(path) → Exists, and that
+/ the file-backed image carries a non-null Path facet.
+- file.read photo.png, write to %photo%
+- set %exists% = %photo.Path.Exists%
+- assert %exists% is true

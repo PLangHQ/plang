@@ -1,0 +1,7 @@
+Start
+/ Smoke: same load as LoadDllRegistersType, distinct goal name to pin that the
+/ overwrite path (CustomInt re-registers built-in `int`) does not crash on load.
+/ The actual runtime-wins precedence assertion (ResolveType("int") returns
+/ CustomInt; renderer emits "CUSTOM-INT") lives in C# TypeProviderDllRoundtripTests.
+- code.load Path=TypeProvider.dll, on error set %loadFailed% = true
+- assert %loadFailed% is null

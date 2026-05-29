@@ -1,0 +1,8 @@
+Start
+/ Smoke: load TypeProvider.dll cleanly (no parse / no auth / no scan failures).
+/ The full register-and-render roundtrip (Money → assert wire output via the
+/ loaded renderer) lives in C# TypeProviderDllRoundtripTests — the plang goal
+/ language has no surface for constructing arbitrary CLR instances to feed the
+/ renderer table from a goal.
+- code.load Path=TypeProvider.dll, on error set %loadFailed% = true
+- assert %loadFailed% is null

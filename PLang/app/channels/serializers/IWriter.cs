@@ -18,6 +18,16 @@ namespace app.channels.serializers;
 /// </summary>
 public interface IWriter
 {
+    /// <summary>
+    /// Short format token — <c>"json"</c>, <c>"plang"</c>, <c>"text"</c>,
+    /// <c>"protobuf"</c>, … Used as the dispatch key when looking up a
+    /// per-(type, format) renderer for a <see cref="app.data.TypedValueNode"/>.
+    /// Each <see cref="IWriter"/> impl returns its own constant token; the
+    /// channel-layer serializer registry maps mime → writer instance, but
+    /// type-renderer dispatch keys off this short token, never the mime.
+    /// </summary>
+    string Format { get; }
+
     void Null();
     void Bool(bool value);
     void Int(int value);

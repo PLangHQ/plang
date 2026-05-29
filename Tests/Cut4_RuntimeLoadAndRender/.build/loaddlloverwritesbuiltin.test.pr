@@ -1,0 +1,102 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "code.load Path=TypeProvider.dll, on error set %loadFailed% = true",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "Smoke: same load as LoadDllRegistersType, distinct goal name to pin that the\noverwrite path (CustomInt re-registers built-in \u0060int\u0060) does not crash on load.\nThe actual runtime-wins precedence assertion (ResolveType(\u0022int\u0022) returns\nCustomInt; renderer emits \u0022CUSTOM-INT\u0022) lives in C# TypeProviderDllRoundtripTests.",
+      "actions": [
+        {
+          "module": "code",
+          "action": "load",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "TypeProvider.dll",
+              "type": "path",
+              "kind": "file"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "variable",
+                      "action": "set",
+                      "parameters": [
+                        {
+                          "name": "Name",
+                          "value": "%loadFailed%",
+                          "type": "string"
+                        },
+                        {
+                          "name": "Value",
+                          "value": true,
+                          "type": "bool"
+                        }
+                      ]
+                    }
+                  ],
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "formal": "code.load(Path=%!data%, Name=%!data%) | error.handle(Actions=[variable.set(Name=%loadFailed%, Value=true)])",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %loadFailed% is null",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%loadFailed%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.isNull(Value=%loadFailed%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Cut4_RuntimeLoadAndRender/LoadDllOverwritesBuiltIn.test.goal",
+  "prPath": "/Cut4_RuntimeLoadAndRender/.build/loaddlloverwritesbuiltin.test.pr",
+  "hash": "a211f9b1c75cff0f08831baf09782cc86bccd1fbfd4561c90a509d2c8756d9a7",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

@@ -54,7 +54,7 @@
         }
       ],
       "intent": null,
-      "formal": "math.add(A=%total%, B=%item%) , variable.set(Name=%total%, Value=%!data%)",
+      "formal": "math.add(A=%total%, B=%item%) | variable.set(Name=%total%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     }

@@ -1,0 +1,8 @@
+Start
+/ Sibling of OverflowThrowSettingHonored: identical inputs, Overflow=Promote.
+/ long.MaxValue + long.MaxValue overflows the Long kind; under Promote the
+/ handler widens Long→Decimal silently and returns the sum without error.
+/ Together the pair pins that the Overflow axis distinguishes outcome.
+- math.add A=9223372036854775807 B=9223372036854775807 Overflow=Promote, write to %sum%, on error set %err% = true
+- assert %err% is null
+- assert %sum% is not null

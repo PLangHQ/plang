@@ -1,0 +1,1 @@
+Truncating integer division of A by B (7 intdiv 2 → 3); the explicit opt-in for C# integer-divide semantics — plain math.divide promotes to decimal so 7/2 → 3.5. Pairs with math.modulo. Fails on division by zero.

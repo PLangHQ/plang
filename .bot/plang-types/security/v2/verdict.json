@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "v1 F1 + F2 closed with mutation-confirmed coverage. One new Low (F4: math.round ArgumentOutOfRange escapes Wrap), F3 (image byte cap) standing deferral. No critical/high." }

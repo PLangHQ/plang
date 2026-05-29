@@ -192,7 +192,11 @@ public sealed class Operator
     }
 
     private static bool IsNumeric(object? value) =>
-        value is int or long or double or float or decimal or short or byte;
+        value is int or long or double or float or decimal or short or byte
+        // plang-types Stage 4: number@this is the canonical numeric value type.
+        // Recognise it so cross-comparison (number vs CLR primitive) normalises
+        // through the widening path instead of failing the IComparable check.
+        || value is global::app.types.number.@this;
 
     private static readonly System.Type[] NumericOrder =
         [typeof(byte), typeof(short), typeof(int), typeof(long), typeof(float), typeof(double), typeof(decimal)];

@@ -1,0 +1,9 @@
+Start
+/ Both the ISO-8601 form (PT5M) and the dot:colon form (0.00:05:00) parse to
+/ the same TimeSpan. duration values compare structurally — ToString collapses
+/ to canonical "00:05:00", so equals across the two input forms passes.
+- set %iso%(duration) = "PT5M"
+- set %dotcolon%(duration) = "0.00:05:00"
+- assert %iso% is not null
+- assert %dotcolon% is not null
+- assert %iso% equals %dotcolon%

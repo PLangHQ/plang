@@ -726,7 +726,10 @@ function renderSidebar() {
     }
     li.appendChild(document.createTextNode(f));
     if (f === currentFile) li.className = 'active';
-    const count = (comments[f] || []).length;
+    // Count only OPEN comments that need the user's attention — i.e. user-authored.
+    // Architect replies are answers, not action items; they shouldn't inflate the badge
+    // (and an open architect reply nested under a resolved user comment is invisible in the UI).
+    const count = (comments[f] || []).filter(c => (c.status || 'open') === 'open' && c.author === 'user').length;
     if (count) {
       const b = document.createElement('span');
       b.className = 'badge'; b.textContent = count;
