@@ -1,0 +1,52 @@
+{
+  "branch": "builder-ergonomics",
+  "sessions": [
+    {
+      "id": "7da73311-2f42-491b-b8b9-970aea083d7d",
+      "bot": "tester",
+      "timestamp_start": "2026-05-29T09:10:00Z",
+      "timestamp_end": "2026-05-29T09:26:00Z",
+      "intent": "Validate test quality for the builder-ergonomics branch (channel recursion guard, P4 error chaining, builder-channel routing, P6 confidence reproduction).",
+      "before": {
+        "assumptions": "No coder/ folder; work driven from user-feedback.md + tester-handoff.md. No baseline-tests.md (process gap). Mostly PLang builder goals + 6 C# files.",
+        "risk": "New .test.goal (UnknownVerb) flagged in handoff as asserting nothing; channel guard is the load-bearing change."
+      },
+      "plan": ".bot/builder-ergonomics/tester/v1/plan.md",
+      "actions": [
+        {
+          "paths": ["PlangConsole", "PLang.Tests", "Tests/ConfidenceCheck/UnknownVerb.test.goal"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild (stale-binary protocol). Ran C# suite (3376/3377) and plang suite (233/234). Isolated both failures."
+        },
+        {
+          "paths": ["Tests/ConfidenceCheck/.build/unknownverb.test.pr", "Tests/ConfidenceCheck/UnknownVerb.test.goal"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Committed .pr mis-compiled compress->variable.set; no assertions; confidence null on all steps. Two clean rebuilds hard-failed (ValidationErrors / BuilderPlannerFailed) — documented confidence warnings do not reproduce. CRITICAL false-green."
+        },
+        {
+          "paths": ["PLang.Tests/App/DataTests/NormalizeTreeShapeTests.cs", "PLang/app/channels/serializers/filters/Tagged.cs"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "PropertyLookupCache test asserts on a static ConcurrentDictionary count under parallel TUnit; passes isolated, fails in suite. MAJOR flaky/shared-static finding."
+        },
+        {
+          "paths": ["PLang/app/channels/channel/goal/this.cs", "PLang.Tests/App/ChannelsTests/Stage3_GoalChannelTests.cs"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Mutation test: deleted InvokeGoal's `_executing.Value = true`; all 7 channel tests still green. Guard arming untested end-to-end (tests flip AsyncLocal via reflection). Source reverted, git clean. MAJOR missing-coverage."
+        }
+      ],
+      "after": {
+        "status": "FAIL",
+        "health": "needs-fixes",
+        "notes": "5 findings (1 critical false-green, 2 major, 2 minor). Full detail in tester/v1/result.md and test-report.json. Source untouched (mutation reverted)."
+      }
+    }
+  ]
+}
