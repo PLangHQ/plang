@@ -115,16 +115,7 @@ public sealed class @this
             if (parameters.Length != 2) continue;
             if (parameters[1].ParameterType != typeof(app.channels.serializers.IWriter)) continue;
 
-            var valueParamType = parameters[0].ParameterType;
-            Write del = (value, writer) =>
-            {
-                method.Invoke(null, new[] { System.Convert.ChangeType(value, valueParamType) ?? value, writer });
-            };
-            // Fast-path: value type is object → no Convert needed.
-            if (valueParamType == typeof(object))
-                del = (value, writer) => method.Invoke(null, new[] { value, writer });
-            else
-                del = (value, writer) => method.Invoke(null, new object?[] { value, writer });
+            Write del = (value, writer) => method.Invoke(null, new object?[] { value, writer });
 
             _generated[(typeName, format)] = del;
             _hasAny[typeName] = true;

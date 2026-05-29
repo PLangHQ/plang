@@ -12,9 +12,10 @@ namespace app.types.number;
 ///   either Double → Double. Decimal × Double promotes by
 ///   <see cref="PrecisionMode"/>.</para>
 ///
-/// <para>Divide leaves the integer track — <c>7 / 2 → 3.5</c> as Decimal
-/// (lenient) or Double (when precision is Double-leaning). Truncating
-/// division is the explicit <c>math.intdiv</c> action.</para>
+/// <para>Divide leaves the integer track — <c>7 / 2 → 3.5</c> always
+/// promotes Int/Long to Decimal regardless of <see cref="PrecisionMode"/>;
+/// the policy axis only matters once an operand is already Decimal or
+/// Double. Truncating division is the explicit <c>math.intdiv</c> action.</para>
 ///
 /// <para>Power promotes by exponent shape: integer base + non-negative
 /// integer exponent stays integer (overflow per policy); negative exponent
@@ -145,11 +146,8 @@ public sealed partial class @this
     private static @this DoDivide(@this a, @this b, NumberPolicy policy)
     {
         var kind = PromoteKind(a.Kind, b.Kind, policy);
-        // Divide leaves the integer track — promote Int/Long.
         if (kind == NumberKind.Int || kind == NumberKind.Long)
-            kind = policy.Precision == PrecisionMode.Decimal
-                ? NumberKind.Decimal
-                : NumberKind.Decimal; // lenient: prefer Decimal for 7/2 → 3.5
+            kind = NumberKind.Decimal;
 
         return kind switch
         {
