@@ -1,0 +1,5 @@
+EchoBack
+/ Body writes back to its own channel name. The IsExecuting guard makes the
+/ registry treat "echo" as not-found while this body is running, so this
+/ inner write surfaces ChannelNotFound rather than recursing.
+- write %!data% to echo
