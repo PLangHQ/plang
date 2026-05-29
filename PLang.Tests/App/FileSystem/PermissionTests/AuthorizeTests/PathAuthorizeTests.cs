@@ -53,12 +53,12 @@ public class PathAuthorizeTests
     [Test] public async Task Authorize_GrantExists_ReturnsOk_NoChannelAsk()
     {
         var app = NewApp();
-        var ctx = app.User.Context;
-        var path = new Path("/p", ctx);
+        var context = app.User.Context;
+        var path = new Path("/p", context);
 
         // Pre-seed a grant covering the request.
         var grant = new PermissionRecord(app.User.Name, "/p", Verb.AllowAll(), MatchMode.Exact);
-        var grantData = new global::app.data.@this<PermissionRecord>("", grant) { Context = ctx };
+        var grantData = new global::app.data.@this<PermissionRecord>("", grant) { Context = context };
         await app.User.Permission.Add(grantData);
 
         var result = await path.Authorize(new Verb { Read = new Read() });
@@ -69,8 +69,8 @@ public class PathAuthorizeTests
     {
         var app = NewApp();
         app.User.Channels.Register(new CannedAnswerChannel(new[] { "a" }));
-        var ctx = app.User.Context;
-        var path = new Path("/p", ctx);
+        var context = app.User.Context;
+        var path = new Path("/p", context);
 
         var result = await path.Authorize(new Verb { Read = new Read() });
         await Assert.That(result.Success).IsTrue();
@@ -82,8 +82,8 @@ public class PathAuthorizeTests
     {
         var app = NewApp();
         app.User.Channels.Register(new CannedAnswerChannel(new[] { "y" }));
-        var ctx = app.User.Context;
-        var path = new Path("/p", ctx);
+        var context = app.User.Context;
+        var path = new Path("/p", context);
 
         var result = await path.Authorize(new Verb { Read = new Read() });
         await Assert.That(result.Success).IsTrue();
@@ -94,8 +94,8 @@ public class PathAuthorizeTests
     {
         var app = NewApp();
         app.User.Channels.Register(new CannedAnswerChannel(new[] { "n" }));
-        var ctx = app.User.Context;
-        var path = new Path("/p", ctx);
+        var context = app.User.Context;
+        var path = new Path("/p", context);
 
         var result = await path.Authorize(new Verb { Read = new Read() });
         await Assert.That(result.Success).IsFalse();
@@ -107,8 +107,8 @@ public class PathAuthorizeTests
         var app = NewApp();
         // Garbage first, then "a" — pin recursion fires and second call accepts.
         app.User.Channels.Register(new CannedAnswerChannel(new[] { "garbage", "a" }));
-        var ctx = app.User.Context;
-        var path = new Path("/p", ctx);
+        var context = app.User.Context;
+        var path = new Path("/p", context);
 
         var result = await path.Authorize(new Verb { Read = new Read() });
         await Assert.That(result.Success).IsTrue();
@@ -118,8 +118,8 @@ public class PathAuthorizeTests
     {
         var app = NewApp();
         app.User.Channels.Register(new StatelessChannel());
-        var ctx = app.User.Context;
-        var path = new Path("/p", ctx);
+        var context = app.User.Context;
+        var path = new Path("/p", context);
 
         var result = await path.Authorize(new Verb { Read = new Read() });
         // Stateless: bubble the Exit-typed Data up so the step loop short-circuits.
@@ -131,8 +131,8 @@ public class PathAuthorizeTests
     {
         var app = NewApp();
         app.User.Channels.Register(new CannedAnswerChannel(new[] { "a" }));
-        var ctx = app.User.Context;
-        var path = new Path("/apps/Email/file.txt", ctx);
+        var context = app.User.Context;
+        var path = new Path("/apps/Email/file.txt", context);
         var verb = new Verb { Read = new Read() };
 
         await path.Authorize(verb);
@@ -147,8 +147,8 @@ public class PathAuthorizeTests
     {
         var app = NewApp();
         app.User.Channels.Register(new CannedAnswerChannel(new[] { "n" }));
-        var ctx = app.User.Context;
-        var path = new Path("/secret", ctx);
+        var context = app.User.Context;
+        var path = new Path("/secret", context);
 
         var result = await path.Authorize(new Verb { Read = new Read() });
         var denied = (global::app.error.PermissionDenied)result.Error!;
@@ -169,9 +169,9 @@ public class PathAuthorizeTests
         // PermissionDenied (out-of-root path → prompt → refused). Under the
         // OrdinalIgnoreCase bug, IsInRoot=true and Ok() comes back instead.
         app.User.Channels.Register(new CannedAnswerChannel(new[] { "n" }));
-        var ctx = app.User.Context;
+        var context = app.User.Context;
         var uppered = app.AbsolutePath.ToUpperInvariant() + "/file.txt";
-        var path = new Path(uppered, ctx);
+        var path = new Path(uppered, context);
 
         var result = await path.Authorize(new Verb { Read = new Read() });
         await Assert.That(result.Success).IsFalse();
@@ -186,10 +186,10 @@ public class PathAuthorizeTests
         var app = NewApp();
         // No channel registered — if Authorize tried to prompt, it would
         // throw or return non-Ok. Auto-grant means Ok with no ask.
-        var ctx = app.User.Context;
+        var context = app.User.Context;
         var osDir = app.OsAbsolutePath;
         var osPath = System.IO.Path.Combine(osDir, "system", "test", "fixture.goal");
-        var path = new Path(osPath, ctx);
+        var path = new Path(osPath, context);
 
         var result = await path.Authorize(new Verb { Read = new Read() });
         await Assert.That(result.Success).IsTrue();

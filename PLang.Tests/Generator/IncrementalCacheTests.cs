@@ -171,7 +171,7 @@ public class IncrementalCacheTests
                 public static @this Ok(object? v, Type? t) => null!;
                 public static @this NotFound(string n) => null!;
                 public static @this FromError(object e) => null!;
-                public T? As<T>(object? ctx) => default;
+                public T? As<T>(object? context) => default;
                 public class Type {}
             }
             public partial class @this<T> : @this {}
@@ -194,7 +194,7 @@ public class IncrementalCacheTests
                                         public Steps.Step.@this? Step;
                                         public System.Collections.Generic.List<data.@this>? Parameters;
                                         public System.Collections.Generic.List<data.@this>? Defaults;
-                                        public data.@this? GetParameter(string name, Actor.Context.@this ctx) => null;
+                                        public data.@this? GetParameter(string name, Actor.Context.@this context) => null;
                                     }
                                 }
                             }

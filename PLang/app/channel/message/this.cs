@@ -7,7 +7,7 @@ namespace app.channel.message;
 /// Ask returns <see cref="module.output.Ask"/>-typed Data with a Snapshot
 /// attached — the engine short-circuits via <c>Data.ShouldExit()</c>, the
 /// channel layer serialises the Snapshot to the wire, and resume re-enters
-/// via <c>Data.Snapshot.Resume(ctx)</c>. Web extends Message (when shipped).
+/// via <c>Data.Snapshot.Resume(context)</c>. Web extends Message (when shipped).
 /// </summary>
 public abstract class @this : Channel
 {

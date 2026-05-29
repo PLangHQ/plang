@@ -50,9 +50,9 @@ public class RootComparisonKeyingTests
     [Test] public async Task CycleDetection_GoalPrPath_UsesPathEquality_NotStringInterpolation()
     {
         var app = NewApp(out _);
-        var ctx = app.User.Context;
-        var a = global::app.type.path.@this.Resolve("/Cache/Foo.goal", ctx);
-        var b = global::app.type.path.@this.Resolve("/Cache/Foo.goal", ctx);
+        var context = app.User.Context;
+        var a = global::app.type.path.@this.Resolve("/Cache/Foo.goal", context);
+        var b = global::app.type.path.@this.Resolve("/Cache/Foo.goal", context);
         // Same absolute path → Path equality returns true → cycle detection
         // would correctly identify these as the same goal.
         await Assert.That(a.Equals(b)).IsTrue();
@@ -61,13 +61,13 @@ public class RootComparisonKeyingTests
     [Test] public async Task StepDisabledKey_InterpolatesPrPathRelative_NotRawObject()
     {
         var app = NewApp(out _);
-        var ctx = app.User.Context;
+        var context = app.User.Context;
         var goal = new Goal
         {
             Name = "Test",
-            Path = global::app.type.path.@this.Resolve("/Start.goal", ctx)
+            Path = global::app.type.path.@this.Resolve("/Start.goal", context)
         };
-        var step = new Step { Index = 0, Text = "noop", Goal = goal, Context = ctx };
+        var step = new Step { Index = 0, Text = "noop", Goal = goal, Context = context };
         // step.DisabledKey is private — test indirectly: Disabled get/set roundtrips.
         // The key shape is `step:<PrPath>:<index>:disabled` — Goal?.PrPath inside
         // interpolation needs to render as a string, not "@this { ... }".

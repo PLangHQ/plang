@@ -72,7 +72,7 @@ public class Fluid : ITemplate
         // become compact JSON, scalars use their literal form. Used by templates that
         // serialize action parameters into the formal "module.action Name([type] value)"
         // shape the builder LLM is trained on.
-        options.Filters.AddFilter("formal", (input, args, ctx) =>
+        options.Filters.AddFilter("formal", (input, args, context) =>
             new StringValue(FormatFormalValue(input.ToObjectValue())));
 
         // Configure file provider for {% include %} / {% render %} tags
@@ -192,14 +192,14 @@ public class Fluid : ITemplate
     /// </summary>
     private static global::app.type.path.@this GetTemplateBaseDir(Render action)
     {
-        var ctx = action.Context;
-        var goalPath = ctx.Goal?.Path;
+        var context = action.Context;
+        var goalPath = context.Goal?.Path;
         if (goalPath != null)
         {
             var goalDir = goalPath.Parent;
             if (goalDir != null) return goalDir;
         }
-        return global::app.type.path.@this.Resolve("/", ctx);
+        return global::app.type.path.@this.Resolve("/", context);
     }
 
     /// <summary>

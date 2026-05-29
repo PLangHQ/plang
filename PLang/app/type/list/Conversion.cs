@@ -137,7 +137,7 @@ public sealed partial class @this
         if (value is string jsonStr && !targetType.IsPrimitive && targetType != typeof(string))
         {
             // Context-bound options when the caller passed one — deserialised
-            // Paths get path.Resolve(raw, ctx) treatment so they land Context-
+            // Paths get path.Resolve(raw, context) treatment so they land Context-
             // wired. Falls back to the static stub-Path options otherwise.
             var readOpts = context != null ? ContextualReadOptions(context) : _caseInsensitiveRead;
             try

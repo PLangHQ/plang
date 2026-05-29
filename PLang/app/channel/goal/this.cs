@@ -58,7 +58,7 @@ public class @this : global::app.channel.session.@this
         if (!IsOpen)
             return global::app.data.@this.FromError(new ServiceError($"Channel '{Name}' is closed", "ChannelClosed", 400));
 
-        var ctx = Actor.Context;
+        var context = Actor.Context;
 
         // Channels are not a fork — `write out %x%` is just a function call from
         // the user's POV, and the channel layer is the plumbing under it. Whatever
@@ -67,13 +67,13 @@ public class @this : global::app.channel.session.@this
         // and AsyncLocal carries it down to here. Variables.Set("!data", ...)
         // lands in that overlay if there is one, in the actor-shared dict
         // otherwise — and either way subsequent goal-body sets behave the same.
-        ctx.Variables.Set("!data", new data.@this("!data", data.Value, data.Type));
+        context.Variables.Set("!data", new data.@this("!data", data.Value, data.Type));
 
         var prev = _executing.Value;
         _executing.Value = true;
         try
         {
-            return await Actor.App.RunGoalAsync(Goal, ctx, ct);
+            return await Actor.App.RunGoalAsync(Goal, context, ct);
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {

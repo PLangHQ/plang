@@ -69,9 +69,9 @@ public sealed partial class @this : ISnapshot
     ///   2) Apply default-selection overrides — hard error if the named provider isn't registered.
     /// The fresh App boot has already run RegisterDefaults so built-ins are present.
     /// </summary>
-    public static void Restore(global::app.snapshot.@this s, global::app.actor.context.@this ctx)
+    public static void Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
     {
-        var providers = ctx.App.Code;
+        var providers = context.App.Code;
 
         var registrations = s.Read<List<Registration>>("registrations") ?? new();
         var overrides = s.Read<List<DefaultOverride>>("defaultOverrides") ?? new();
@@ -101,7 +101,7 @@ public sealed partial class @this : ISnapshot
                 // OS-rooted (// convention on Linux) instead of anchoring against
                 // the new App's root.
                 var sourceForResolve = reg.Source.StartsWith("/") ? "/" + reg.Source : reg.Source;
-                var dllPath = global::app.type.path.@this.Resolve(sourceForResolve, ctx);
+                var dllPath = global::app.type.path.@this.Resolve(sourceForResolve, context);
                 var loadResult = dllPath.LoadAssemblyAsync().GetAwaiter().GetResult();
                 if (!loadResult.Success)
                     throw new System.IO.FileNotFoundException(

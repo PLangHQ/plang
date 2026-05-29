@@ -54,7 +54,7 @@ public class FullVarMatchTests
 
 public class InterpolationTests
 {
-    // Parameter Value "Hello %name%" (partial %var%) → As<string> calls Variables.Resolve(str, ctx), returns interpolated.
+    // Parameter Value "Hello %name%" (partial %var%) → As<string> calls Variables.Resolve(str, context), returns interpolated.
     [Test]
     public async Task Interpolation_PartialVar_CallsResolve()
     {

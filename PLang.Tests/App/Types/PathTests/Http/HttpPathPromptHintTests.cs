@@ -37,7 +37,7 @@ public class HttpPathPromptHintTests
         }
     }
 
-    private static (AppEngine app, Ctx ctx, CapturingChannel ch) MakeApp()
+    private static (AppEngine app, Ctx context, CapturingChannel ch) MakeApp()
     {
         var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-http-hint-" + System.Guid.NewGuid().ToString("N"));
@@ -51,11 +51,11 @@ public class HttpPathPromptHintTests
     [Test]
     public async Task Prompt_WithQueryString_IncludesPersistenceWarning()
     {
-        var (_, ctx, ch) = MakeApp();
+        var (_, context, ch) = MakeApp();
         // Use a host the gate won't auto-grant (out of root, not loopback-magic).
         var url = "https://api.example.com/files?token=secret123abc";
 
-        _ = await new HttpPath(url, ctx).ReadText();
+        _ = await new HttpPath(url, context).ReadText();
 
         await Assert.That(ch.LastQuestion).Contains("query string");
         await Assert.That(ch.LastQuestion).Contains("'a'");
@@ -64,10 +64,10 @@ public class HttpPathPromptHintTests
     [Test]
     public async Task Prompt_WithoutQueryString_OmitsPersistenceWarning()
     {
-        var (_, ctx, ch) = MakeApp();
+        var (_, context, ch) = MakeApp();
         var url = "https://api.example.com/files";
 
-        _ = await new HttpPath(url, ctx).ReadText();
+        _ = await new HttpPath(url, context).ReadText();
 
         await Assert.That(ch.LastQuestion).DoesNotContain("query string");
     }
@@ -75,14 +75,14 @@ public class HttpPathPromptHintTests
     [Test]
     public async Task Prompt_FilePath_OmitsHttpWarning()
     {
-        var (_, ctx, ch) = MakeApp();
+        var (_, context, ch) = MakeApp();
         // Out-of-root file path also goes through the same gate.
         var outOfRoot = System.IO.Path.Combine(
             System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8],
             "x.txt");
 
-        _ = await new global::app.type.path.file.@this(outOfRoot, ctx).ReadText();
+        _ = await new global::app.type.path.file.@this(outOfRoot, context).ReadText();
 
         await Assert.That(ch.LastQuestion).DoesNotContain("query string");
     }

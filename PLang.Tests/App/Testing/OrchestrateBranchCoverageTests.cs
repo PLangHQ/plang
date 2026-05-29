@@ -44,7 +44,7 @@ public class OrchestrateBranchCoverageTests
         var observed = new List<(PrAction action, bool isIfHead)>();
         _app.User.Context.Events.Register(new EventBinding(
             EventType.AfterAction,
-            (ctx, action, result) =>
+            (context, action, result) =>
             {
                 if (action != null)
                 {

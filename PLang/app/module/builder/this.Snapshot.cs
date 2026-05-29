@@ -12,6 +12,6 @@ public sealed partial class @this : ISnapshot
     /// <summary>
     /// Restores the build-mode bit on the live App.Builder instance.
     /// </summary>
-    public static void Restore(global::app.snapshot.@this s, global::app.actor.context.@this ctx)
-        => ctx.App.Builder.IsEnabled = s.Read<bool>("isEnabled");
+    public static void Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
+        => context.App.Builder.IsEnabled = s.Read<bool>("isEnabled");
 }

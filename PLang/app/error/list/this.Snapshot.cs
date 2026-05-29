@@ -12,9 +12,9 @@ public sealed partial class @this : ISnapshot
     /// Dispatches to Trail.Restore, which replaces the live Errors.Trail with
     /// a frozen one populated from the snapshot.
     /// </summary>
-    public static void Restore(global::app.snapshot.@this s, global::app.actor.context.@this ctx)
+    public static void Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
     {
         if (!s.HasSection("trail")) return;
-        global::app.error.trail.@this.Restore(s.Section("trail"), ctx);
+        global::app.error.trail.@this.Restore(s.Section("trail"), context);
     }
 }

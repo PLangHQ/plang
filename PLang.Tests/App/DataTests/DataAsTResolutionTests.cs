@@ -331,9 +331,9 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_TypedContainerSlot_StoredLeavesNotReResolved()
     {
-        var ctx = _app.User.Context;
-        ctx.Variables.Set("x", "BUILDER-X");
-        ctx.Variables.Set("y", "BUILDER-Y");
+        var context = _app.User.Context;
+        context.Variables.Set("x", "BUILDER-X");
+        context.Variables.Set("y", "BUILDER-Y");
 
         // Mirrors what variable.set produces after walking [{Content: "%goalForLlm%"}]:
         // Content holds the rendered template's literal text, with embedded %var% as bytes.
@@ -345,10 +345,10 @@ public class DataAsTResolutionTests
                 ["Content"] = "literal text with %x% and %y% inside"
             }
         };
-        ctx.Variables.Set(new global::app.data.@this<List<object?>>("messages", stored) { Context = ctx });
+        context.Variables.Set(new global::app.data.@this<List<object?>>("messages", stored) { Context = context });
 
-        var paramData = new Data("Messages", "%messages%") { Context = ctx };
-        var result = paramData.As<List<Dictionary<string, object?>>>(ctx);
+        var paramData = new Data("Messages", "%messages%") { Context = context };
+        var result = paramData.As<List<Dictionary<string, object?>>>(context);
 
         await Assert.That(result.Success).IsTrue();
         var content = (string)result.Value![0]["Content"]!;
@@ -366,9 +366,9 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_ListObjectSlot_AsListLlmMessage_StoredLeavesNotReResolved()
     {
-        var ctx = _app.User.Context;
-        ctx.Variables.Set("goal", new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase) { ["Name"] = "BuildGoal" });
-        ctx.Variables.Set("buildStart", 999_999_999L);
+        var context = _app.User.Context;
+        context.Variables.Set("goal", new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase) { ["Name"] = "BuildGoal" });
+        context.Variables.Set("buildStart", 999_999_999L);
 
         // Mirrors what variable.set's MintTyped stores after walking the literal list.
         // Each element is a Dictionary<string, object?>, with Content carrying literal %var%.
@@ -380,11 +380,11 @@ public class DataAsTResolutionTests
                 ["Content"] = "literal text with %goal.Name% and %buildStart% inside"
             }
         };
-        ctx.Variables.Set(new global::app.data.@this<List<object?>>("fixerMessages", stored) { Context = ctx });
+        context.Variables.Set(new global::app.data.@this<List<object?>>("fixerMessages", stored) { Context = context });
 
         // Mirrors how llm.query reads %fixerMessages% — typed slot is List<LlmMessage>.
-        var paramData = new Data("Messages", "%fixerMessages%") { Context = ctx };
-        var result = paramData.As<List<global::app.module.llm.LlmMessage>>(ctx);
+        var paramData = new Data("Messages", "%fixerMessages%") { Context = context };
+        var result = paramData.As<List<global::app.module.llm.LlmMessage>>(context);
 
         await Assert.That(result.Success).IsTrue();
         var content = result.Value![0].Content!;

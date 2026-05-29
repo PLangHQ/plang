@@ -359,7 +359,7 @@ public sealed partial class @this
         var isThisClass = string.Equals(type.Name, "this", System.StringComparison.Ordinal);
         if (!hasPlangName && !isThisClass) return false;
 
-        // Resolve(input, ctx) factory → catalog derives the wire shape from the
+        // Resolve(input, context) factory → catalog derives the wire shape from the
         // first parameter. Marks the type as scalar without further checks.
         if (type.GetMethod("Resolve", BindingFlags.Public | BindingFlags.Static) != null)
             return true;
@@ -517,7 +517,7 @@ public sealed partial class @this
                 Enqueue(UnwrapType(prop.PropertyType));
             }
 
-            // Scalar discriminant: either has a Resolve(input, ctx) factory (so the
+            // Scalar discriminant: either has a Resolve(input, context) factory (so the
             // wire shape is derivable), declares a static Shape property, or is
             // catalog-named but has no LLM-builder properties (a domain wrapper around
             // a primitive). Records have llmProps; scalars don't.

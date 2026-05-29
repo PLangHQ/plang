@@ -288,11 +288,11 @@ public class Error : IError
         {
             var errorContext = (error as Error)?.Context;
             var fallbackContext = app.System.Context;
-            var ctx = errorContext ?? fallbackContext;
-            var allVars = ctx?.Variables?.GetAll();
+            var context = errorContext ?? fallbackContext;
+            var allVars = context?.Variables?.GetAll();
             if (allVars != null)
             {
-                var ctxId = ctx?.Id ?? "?";
+                var ctxId = context?.Id ?? "?";
                 var ctxSource = errorContext != null ? "error context" : "app context (error context not captured)";
                 sb.AppendLine();
                 sb.AppendLine($"{indent}📋 Variables in scope ({ctxSource}, id={ctxId}):");

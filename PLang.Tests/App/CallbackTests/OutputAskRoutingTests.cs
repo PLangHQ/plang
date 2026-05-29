@@ -31,25 +31,25 @@ public class OutputAskRoutingTests
     [Test] public async Task OutputAsk_AnswerSentinelPresent_ReturnsOkAndConsumesIt()
     {
         var app = NewApp();
-        var ctx = app.User.Context;
-        ctx.Variables.Set(ask.AnswerVariableName, "Alice");
+        var context = app.User.Context;
+        context.Variables.Set(ask.AnswerVariableName, "Alice");
 
-        var handler = new ask { Context = ctx, Question = new global::app.data.@this<string>("", "name?") };
+        var handler = new ask { Context = context, Question = new global::app.data.@this<string>("", "name?") };
         var result = await handler.Run();
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value?.Answer).IsEqualTo("Alice");
-        await Assert.That(ctx.Variables.Get(ask.AnswerVariableName).IsInitialized).IsFalse();
+        await Assert.That(context.Variables.Get(ask.AnswerVariableName).IsInitialized).IsFalse();
     }
 
     [Test] public async Task OutputAsk_NoAnswerSentinel_DelegatesToChannelAsk()
     {
         var app = NewApp();
-        var ctx = app.User.Context;
+        var context = app.User.Context;
 
         var msg = new TestMessageChannel("input");
         app.User.Channels.Register(msg);
 
-        var handler = new ask { Context = ctx, Question = new global::app.data.@this<string>("", "name?") };
+        var handler = new ask { Context = context, Question = new global::app.data.@this<string>("", "name?") };
         var result = await handler.Run();
         await Assert.That(result.Type?.Value).IsEqualTo("ask");
         await Assert.That(result.Snapshot).IsNotNull();

@@ -13,6 +13,6 @@ public sealed partial class @this : ISnapshot
     /// <summary>
     /// Restores the test-mode bit on the live App.Tester instance.
     /// </summary>
-    public static void Restore(snapshot.@this s, actor.context.@this ctx)
-        => ctx.App.Tester.IsEnabled = s.Read<bool>("isEnabled");
+    public static void Restore(snapshot.@this s, actor.context.@this context)
+        => context.App.Tester.IsEnabled = s.Read<bool>("isEnabled");
 }

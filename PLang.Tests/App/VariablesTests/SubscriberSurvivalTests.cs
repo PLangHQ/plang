@@ -34,14 +34,14 @@ public class SubscriberSurvivalTests
     [Test]
     public async Task Set_NewVariable_FiresOnCreate_NotOnChange()
     {
-        var ctx = _app.User.Context;
-        var dv = new global::app.data.@this<int>("count", 1) { Context = ctx };
+        var context = _app.User.Context;
+        var dv = new global::app.data.@this<int>("count", 1) { Context = context };
         var createCalls = 0;
         var changeCalls = 0;
         dv.OnCreate.Add(_ => createCalls++);
         dv.OnChange.Add((_, _) => changeCalls++);
 
-        ctx.Variables.Set(dv);
+        context.Variables.Set(dv);
 
         await Assert.That(createCalls).IsEqualTo(1);
         await Assert.That(changeCalls).IsEqualTo(0);
@@ -53,16 +53,16 @@ public class SubscriberSurvivalTests
     [Test]
     public async Task Set_Replace_FiresOnChange_OnPrev_WithDvAsNewData()
     {
-        var ctx = _app.User.Context;
-        var prev = new global::app.data.@this<int>("n", 1) { Context = ctx };
-        ctx.Variables.Set(prev);
+        var context = _app.User.Context;
+        var prev = new global::app.data.@this<int>("n", 1) { Context = context };
+        context.Variables.Set(prev);
 
         Data? receivedOld = null;
         Data? receivedNew = null;
         prev.OnChange.Add((o, n) => { receivedOld = o; receivedNew = n; });
 
-        var dv = new global::app.data.@this<int>("n", 2) { Context = ctx };
-        ctx.Variables.Set(dv);
+        var dv = new global::app.data.@this<int>("n", 2) { Context = context };
+        context.Variables.Set(dv);
 
         await Assert.That(ReferenceEquals(receivedOld, prev)).IsTrue();
         await Assert.That(ReferenceEquals(receivedNew, dv)).IsTrue();
@@ -72,13 +72,13 @@ public class SubscriberSurvivalTests
     [Test]
     public async Task Set_Replace_AliasesPrevOnChangeOntoDv()
     {
-        var ctx = _app.User.Context;
-        var prev = new global::app.data.@this<int>("n", 1) { Context = ctx };
-        ctx.Variables.Set(prev);
+        var context = _app.User.Context;
+        var prev = new global::app.data.@this<int>("n", 1) { Context = context };
+        context.Variables.Set(prev);
         var prevOnChangeRef = prev.OnChange;
 
-        var dv = new global::app.data.@this<int>("n", 2) { Context = ctx };
-        ctx.Variables.Set(dv);
+        var dv = new global::app.data.@this<int>("n", 2) { Context = context };
+        context.Variables.Set(dv);
 
         await Assert.That(ReferenceEquals(prevOnChangeRef, dv.OnChange)).IsTrue();
     }
@@ -87,12 +87,12 @@ public class SubscriberSurvivalTests
     [Test]
     public async Task Set_Replace_AliasesAllEventLists()
     {
-        var ctx = _app.User.Context;
-        var prev = new global::app.data.@this<int>("n", 1) { Context = ctx };
-        ctx.Variables.Set(prev);
+        var context = _app.User.Context;
+        var prev = new global::app.data.@this<int>("n", 1) { Context = context };
+        context.Variables.Set(prev);
 
-        var dv = new global::app.data.@this<int>("n", 2) { Context = ctx };
-        ctx.Variables.Set(dv);
+        var dv = new global::app.data.@this<int>("n", 2) { Context = context };
+        context.Variables.Set(dv);
 
         await Assert.That(ReferenceEquals(prev.OnCreate, dv.OnCreate)).IsTrue();
         await Assert.That(ReferenceEquals(prev.OnChange, dv.OnChange)).IsTrue();
@@ -105,19 +105,19 @@ public class SubscriberSurvivalTests
     [Test]
     public async Task Set_PostReplacement_SubscribeViaPrev_FiresOnFurtherReplacements()
     {
-        var ctx = _app.User.Context;
-        var prev = new global::app.data.@this<int>("n", 1) { Context = ctx };
-        ctx.Variables.Set(prev);
+        var context = _app.User.Context;
+        var prev = new global::app.data.@this<int>("n", 1) { Context = context };
+        context.Variables.Set(prev);
         var calls = 0;
         prev.OnChange.Add((_, _) => calls++);
 
-        var dv = new global::app.data.@this<int>("n", 2) { Context = ctx };
-        ctx.Variables.Set(dv);
+        var dv = new global::app.data.@this<int>("n", 2) { Context = context };
+        context.Variables.Set(dv);
         await Assert.That(calls).IsEqualTo(1);
 
         // Further re-set fires the same subscriber (alias means dv.OnChange === prev.OnChange).
-        var dv2 = new global::app.data.@this<int>("n", 3) { Context = ctx };
-        ctx.Variables.Set(dv2);
+        var dv2 = new global::app.data.@this<int>("n", 3) { Context = context };
+        context.Variables.Set(dv2);
         await Assert.That(calls).IsEqualTo(2);
     }
 
@@ -126,13 +126,13 @@ public class SubscriberSurvivalTests
     [Test]
     public async Task Set_SameInstance_NoFire()
     {
-        var ctx = _app.User.Context;
-        var dv = new global::app.data.@this<int>("n", 1) { Context = ctx };
-        ctx.Variables.Set(dv);
+        var context = _app.User.Context;
+        var dv = new global::app.data.@this<int>("n", 1) { Context = context };
+        context.Variables.Set(dv);
 
         var changeCalls = 0;
         dv.OnChange.Add((_, _) => changeCalls++);
-        ctx.Variables.Set(dv); // same instance
+        context.Variables.Set(dv); // same instance
 
         await Assert.That(changeCalls).IsEqualTo(0);
     }
@@ -142,13 +142,13 @@ public class SubscriberSurvivalTests
     [Test]
     public async Task Set_PropertiesNotAliased_NewBindingHasOwnProperties()
     {
-        var ctx = _app.User.Context;
-        var prev = new global::app.data.@this<int>("n", 1) { Context = ctx };
+        var context = _app.User.Context;
+        var prev = new global::app.data.@this<int>("n", 1) { Context = context };
         prev.Properties.Set("annot", "from-prev");
-        ctx.Variables.Set(prev);
+        context.Variables.Set(prev);
 
-        var dv = new global::app.data.@this<int>("n", 2) { Context = ctx };
-        ctx.Variables.Set(dv);
+        var dv = new global::app.data.@this<int>("n", 2) { Context = context };
+        context.Variables.Set(dv);
 
         await Assert.That(ReferenceEquals(prev.Properties, dv.Properties)).IsFalse();
         await Assert.That(dv.Properties["annot"]).IsNull();
@@ -160,13 +160,13 @@ public class SubscriberSurvivalTests
     [Test]
     public async Task Remove_FiresOnDelete_OnRemovedData()
     {
-        var ctx = _app.User.Context;
-        var dv = new global::app.data.@this<int>("doomed", 1) { Context = ctx };
-        ctx.Variables.Set(dv);
+        var context = _app.User.Context;
+        var dv = new global::app.data.@this<int>("doomed", 1) { Context = context };
+        context.Variables.Set(dv);
         var deleteCalls = 0;
         dv.OnDelete.Add(_ => deleteCalls++);
 
-        ctx.Variables.Remove("doomed");
+        context.Variables.Remove("doomed");
         await Assert.That(deleteCalls).IsEqualTo(1);
     }
 
@@ -178,15 +178,15 @@ public class SubscriberSurvivalTests
     [Test]
     public async Task DebugWatch_OnChange_FiresOnEveryReplacement()
     {
-        var ctx = _app.User.Context;
+        var context = _app.User.Context;
         var placeholder = global::app.data.@this.Uninitialized("x");
         var calls = 0;
         placeholder.OnChange.Add((_, _) => calls++);
-        ctx.Variables.Set(placeholder);
+        context.Variables.Set(placeholder);
 
-        ctx.Variables.Set(new global::app.data.@this<int>("x", 1) { Context = ctx });
-        ctx.Variables.Set(new global::app.data.@this<int>("x", 2) { Context = ctx });
-        ctx.Variables.Set(new global::app.data.@this<int>("x", 3) { Context = ctx });
+        context.Variables.Set(new global::app.data.@this<int>("x", 1) { Context = context });
+        context.Variables.Set(new global::app.data.@this<int>("x", 2) { Context = context });
+        context.Variables.Set(new global::app.data.@this<int>("x", 3) { Context = context });
 
         await Assert.That(calls).IsEqualTo(3);
     }
@@ -198,13 +198,13 @@ public class SubscriberSurvivalTests
     [Test]
     public async Task Set_Replace_DoesNotCarryProperties()
     {
-        var ctx = _app.User.Context;
-        var prev = new global::app.data.@this<int>("n", 1) { Context = ctx };
+        var context = _app.User.Context;
+        var prev = new global::app.data.@this<int>("n", 1) { Context = context };
         prev.Properties.Set("branchIndex", 0);
-        ctx.Variables.Set(prev);
+        context.Variables.Set(prev);
 
-        var dv = new global::app.data.@this<int>("n", 2) { Context = ctx };
-        ctx.Variables.Set(dv);
+        var dv = new global::app.data.@this<int>("n", 2) { Context = context };
+        context.Variables.Set(dv);
 
         await Assert.That(dv.Properties.Contains("branchIndex")).IsFalse();
     }
@@ -215,9 +215,9 @@ public class SubscriberSurvivalTests
     [Test]
     public async Task ValueSetter_FiresOnChange()
     {
-        var ctx = _app.User.Context;
-        var dv = new global::app.data.@this<int>("n", 1) { Context = ctx };
-        ctx.Variables.Set(dv);
+        var context = _app.User.Context;
+        var dv = new global::app.data.@this<int>("n", 1) { Context = context };
+        context.Variables.Set(dv);
         var calls = 0;
         dv.OnChange.Add((_, _) => calls++);
 

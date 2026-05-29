@@ -169,11 +169,11 @@ public sealed class @this
     private async Task<goal.@this?> TryLoadPr(string dir, string file, string name, CancellationToken ct)
     {
         var prFile = file.ToLowerInvariant() + ".pr";
-        var ctx = App.System.Context!;
+        var context = App.System.Context!;
 
         // 1. Try user's root via path verbs (gated). Anchor at "/" (App root),
         // append dir, then .build/<file>.pr. ExistsAsync fast-passes in-root.
-        var rootCandidate = global::app.type.path.@this.Resolve("/", ctx);
+        var rootCandidate = global::app.type.path.@this.Resolve("/", context);
         if (!string.IsNullOrEmpty(dir)) rootCandidate = rootCandidate.Combine(dir);
         rootCandidate = rootCandidate.Combine(".build").Combine(prFile);
         var rootExists = await rootCandidate.ExistsAsync();
@@ -201,7 +201,7 @@ public sealed class @this
             || normalized.Equals("system", StringComparison.OrdinalIgnoreCase))
         {
             var sysCandidate = global::app.type.path.@this.Resolve(
-                "/" + normalized + "/.build/" + prFile, ctx);
+                "/" + normalized + "/.build/" + prFile, context);
             var sysExists = await sysCandidate.ExistsAsync();
             if (sysExists.Success && sysExists.Value == true)
             {
@@ -301,8 +301,8 @@ public sealed class @this
         // Resolve the raw string through the scheme registry when App is wired
         // so dict lookups key on the canonical Path. Test fixtures often skip
         // App wiring — fall back to the implicit string→Path stub.
-        global::app.type.path.@this key = App?.System?.Context is { } ctx
-            ? global::app.type.path.@this.Resolve(prPath, ctx)
+        global::app.type.path.@this key = App?.System?.Context is { } context
+            ? global::app.type.path.@this.Resolve(prPath, context)
             : prPath;
         if (_goals.TryGetValue(key, out var cached))
             return cached.IsSetup ? null : cached;
@@ -401,8 +401,8 @@ public sealed class @this
         {
             // Lift to path.List — gated through AuthGate(Read). In-root walks
             // fast-pass; out-of-root would prompt or deny.
-            var ctx = context ?? app.System.Context!;
-            var dirPath = global::app.type.path.@this.Resolve(directory, ctx);
+            context = context ?? app.System.Context!;
+            var dirPath = global::app.type.path.@this.Resolve(directory, context);
             var listed = await dirPath.List(pattern, recursive: true);
             if (!listed.Success || listed.Value == null)
                 return data.@this.Ok(0);

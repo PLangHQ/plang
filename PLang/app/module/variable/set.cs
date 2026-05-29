@@ -155,36 +155,36 @@ public partial class Set : IContext, IBuildValidatable
     /// Mutable refs (List, Dict) snapshot-cloned via JSON roundtrip so later mutation of
     /// the source doesn't bleed through. null produces plain Data (un-typed).
     /// </summary>
-    private static data.@this MintTyped(string name, object? raw, actor.context.@this ctx)
+    private static data.@this MintTyped(string name, object? raw, actor.context.@this context)
     {
         return raw switch
         {
-            null                                 => new data.@this(name, null) { Context = ctx },
-            string s                             => new data.@this<string>(name, s) { Context = ctx },
-            bool b                               => new data.@this<bool>(name, b) { Context = ctx },
-            int i                                => new data.@this<int>(name, i) { Context = ctx },
-            long l                               => new data.@this<long>(name, l) { Context = ctx },
-            double d                             => new data.@this<double>(name, d) { Context = ctx },
-            decimal m                            => new data.@this<decimal>(name, m) { Context = ctx },
-            float f                              => new data.@this<float>(name, f) { Context = ctx },
-            DateTime t                           => new data.@this<DateTime>(name, t) { Context = ctx },
-            DateTimeOffset to                    => new data.@this<DateTimeOffset>(name, to) { Context = ctx },
-            Guid g                               => new data.@this<Guid>(name, g) { Context = ctx },
-            byte[] ba                            => new data.@this<byte[]>(name, ba) { Context = ctx },
-            List<object?> list                   => new data.@this<List<object?>>(name, (List<object?>?)global::app.data.@this.SnapshotClone(list) ?? new List<object?>()) { Context = ctx },
-            Dictionary<string, object?> dict     => new data.@this<Dictionary<string, object?>>(name, (Dictionary<string, object?>?)global::app.data.@this.SnapshotClone(dict) ?? new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)) { Context = ctx },
-            _                                    => ConstructDataOfT(name, raw.GetType(), raw, ctx)
+            null                                 => new data.@this(name, null) { Context = context },
+            string s                             => new data.@this<string>(name, s) { Context = context },
+            bool b                               => new data.@this<bool>(name, b) { Context = context },
+            int i                                => new data.@this<int>(name, i) { Context = context },
+            long l                               => new data.@this<long>(name, l) { Context = context },
+            double d                             => new data.@this<double>(name, d) { Context = context },
+            decimal m                            => new data.@this<decimal>(name, m) { Context = context },
+            float f                              => new data.@this<float>(name, f) { Context = context },
+            DateTime t                           => new data.@this<DateTime>(name, t) { Context = context },
+            DateTimeOffset to                    => new data.@this<DateTimeOffset>(name, to) { Context = context },
+            Guid g                               => new data.@this<Guid>(name, g) { Context = context },
+            byte[] ba                            => new data.@this<byte[]>(name, ba) { Context = context },
+            List<object?> list                   => new data.@this<List<object?>>(name, (List<object?>?)global::app.data.@this.SnapshotClone(list) ?? new List<object?>()) { Context = context },
+            Dictionary<string, object?> dict     => new data.@this<Dictionary<string, object?>>(name, (Dictionary<string, object?>?)global::app.data.@this.SnapshotClone(dict) ?? new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)) { Context = context },
+            _                                    => ConstructDataOfT(name, raw.GetType(), raw, context)
         };
     }
 
     /// <summary>
     /// Reflection construction of Data&lt;T&gt; for a runtime type not in the hot if-chain.
     /// </summary>
-    private static data.@this ConstructDataOfT(string name, System.Type t, object? value, actor.context.@this ctx)
+    private static data.@this ConstructDataOfT(string name, System.Type t, object? value, actor.context.@this context)
     {
         var generic = typeof(data.@this<>).MakeGenericType(t);
         var instance = (data.@this)Activator.CreateInstance(generic, name, value, null, null)!;
-        instance.Context = ctx;
+        instance.Context = context;
         return instance;
     }
 

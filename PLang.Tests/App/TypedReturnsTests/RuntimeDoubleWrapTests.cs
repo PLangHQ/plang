@@ -34,10 +34,10 @@ public class RuntimeDoubleWrapTests
     [Test]
     public async Task ListFirst_OnPopulatedList_ValueIsRawNotData()
     {
-        var ctx = _app.User.Context;
-        ctx.Variables.Set("xs", new List<object?> { 42L, "two", "three" });
+        var context = _app.User.Context;
+        context.Variables.Set("xs", new List<object?> { 42L, "two", "three" });
 
-        var action = new First { Context = ctx, ListName = new Variable("xs") };
+        var action = new First { Context = context, ListName = new Variable("xs") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -49,10 +49,10 @@ public class RuntimeDoubleWrapTests
     [Test]
     public async Task ListGet_OnPopulatedList_ValueIsRawNotData()
     {
-        var ctx = _app.User.Context;
-        ctx.Variables.Set("xs", new List<object?> { "a", "b", "c" });
+        var context = _app.User.Context;
+        context.Variables.Set("xs", new List<object?> { "a", "b", "c" });
 
-        var action = new Get { Context = ctx, ListName = new Variable("xs"), Index = 1 };
+        var action = new Get { Context = context, ListName = new Variable("xs"), Index = 1 };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -63,10 +63,10 @@ public class RuntimeDoubleWrapTests
     [Test]
     public async Task ListLast_OnPopulatedList_ValueIsRawNotData()
     {
-        var ctx = _app.User.Context;
-        ctx.Variables.Set("xs", new List<object?> { 1L, 2L, 3L });
+        var context = _app.User.Context;
+        context.Variables.Set("xs", new List<object?> { 1L, 2L, 3L });
 
-        var action = new Last { Context = ctx, ListName = new Variable("xs") };
+        var action = new Last { Context = context, ListName = new Variable("xs") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -77,8 +77,8 @@ public class RuntimeDoubleWrapTests
     [Test]
     public async Task MathAdd_OnLongs_ValueIsRawNotData()
     {
-        var ctx = _app.User.Context;
-        var action = new MathAdd { Context = ctx, A = new Data("", 5L), B = new Data("", 3L) };
+        var context = _app.User.Context;
+        var action = new MathAdd { Context = context, A = new Data("", 5L), B = new Data("", 3L) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();

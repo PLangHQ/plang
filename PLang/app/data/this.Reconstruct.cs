@@ -34,7 +34,7 @@ public partial class @this
     /// </summary>
     public T? Reconstruct<T>(actor.context.@this? context = null)
     {
-        var ctx = context ?? _context;
+        context = context ?? _context;
         // Skip Normalize when Value is already a tree-native leaf — those
         // cases (null, primitives, byte[], BCL leaf structs, enums, nested
         // Data) re-walk to themselves in Normalize. Domain objects and raw
@@ -42,7 +42,7 @@ public partial class @this
         // shape Walk consumes.
         var raw = Value;
         var tree = IsLeafShape(raw) ? raw : Normalize();
-        var result = Walk(tree, typeof(T), ctx);
+        var result = Walk(tree, typeof(T), context);
         if (result is null) return default;
         if (result is T typed) return typed;
         // Final coercion through TypeMapping for primitive-to-T conversions
@@ -59,7 +59,7 @@ public partial class @this
         || v is byte[] || v is System.Enum
         || v is @this;
 
-    private static object? Walk(object? value, System.Type targetType, actor.context.@this? ctx)
+    private static object? Walk(object? value, System.Type targetType, actor.context.@this? context)
     {
         if (value is null) return null;
 
@@ -79,7 +79,7 @@ public partial class @this
         {
             // The hook expects a Data envelope, not the bare tree.
             var envelope = value is @this d ? d : new @this("", value);
-            return hook(envelope, ctx);
+            return hook(envelope, context);
         }
 
         // List<X> — walk the tree's IList and convert per element.
@@ -92,7 +92,7 @@ public partial class @this
                 foreach (var item in seq)
                 {
                     var elementValue = item is @this child ? child.Value : item;
-                    listInstance.Add(Walk(elementValue, elementType, ctx));
+                    listInstance.Add(Walk(elementValue, elementType, context));
                 }
             }
             return listInstance;
@@ -116,7 +116,7 @@ public partial class @this
                             $"Reconstruct can't convert dictionary key '{child.Name}' to {keyType.Name}.",
                             "NormalizeReconstructFailed");
                     }
-                    var v = Walk(child.Value, valueType, ctx);
+                    var v = Walk(child.Value, valueType, context);
                     dictInstance[k] = v;
                 }
             }
@@ -124,10 +124,10 @@ public partial class @this
         }
 
         // Generic property-bag reconstruction.
-        return ReconstructObject(value, underlying, ctx);
+        return ReconstructObject(value, underlying, context);
     }
 
-    private static object? ReconstructObject(object? value, System.Type targetType, actor.context.@this? ctx)
+    private static object? ReconstructObject(object? value, System.Type targetType, actor.context.@this? context)
     {
         if (value is null) return null;
 
@@ -156,7 +156,7 @@ public partial class @this
             {
                 var pname = pars[i].Name ?? "";
                 if (byName.TryGetValue(pname.ToLowerInvariant(), out var c))
-                    args[i] = Walk(c.Value, pars[i].ParameterType, ctx);
+                    args[i] = Walk(c.Value, pars[i].ParameterType, context);
                 else if (pars[i].HasDefaultValue)
                     args[i] = pars[i].DefaultValue;
                 else
@@ -209,7 +209,7 @@ public partial class @this
             if (!byName.TryGetValue(prop.Name.ToLowerInvariant(), out var child)) continue;
             try
             {
-                var v = Walk(child.Value, prop.PropertyType, ctx);
+                var v = Walk(child.Value, prop.PropertyType, context);
                 prop.SetValue(instance, v);
             }
             catch (NormalizeException) { throw; }
@@ -245,10 +245,10 @@ public partial class @this
             new[] { typeof(@this), typeof(actor.context.@this) },
             null);
         if (fromNormalized != null)
-            return (data, ctx) => fromNormalized.Invoke(null, new object?[] { data, ctx });
+            return (data, context) => fromNormalized.Invoke(null, new object?[] { data, context });
 
         // Convention 2 — path.@this and subclasses: read the "relative" child
-        // from the normalized tree and call Resolve(relative, ctx).
+        // from the normalized tree and call Resolve(relative, context).
         // Note: the "scheme" child on the wire is informational only — path
         // strings carry their scheme prefix ("http://…", absolute file paths)
         // so Resolve recovers the scheme without consulting the field. The
@@ -256,9 +256,9 @@ public partial class @this
         // parsing; this hook doesn't.
         if (typeof(app.type.path.@this).IsAssignableFrom(targetType))
         {
-            return (data, ctx) =>
+            return (data, context) =>
             {
-                if (ctx == null)
+                if (context == null)
                     throw new NormalizeException(
                         $"Reconstructing {targetType.Name} requires a Context — pass one to As<>/Reconstruct<>.",
                         "NormalizeContextRequired");
@@ -286,7 +286,7 @@ public partial class @this
                         $"Reconstructing {targetType.Name}: normalized tree has no 'relative' child.",
                         "NormalizeMissingRelative");
 
-                return app.type.path.@this.Resolve(relative, ctx);
+                return app.type.path.@this.Resolve(relative, context);
             };
         }
 

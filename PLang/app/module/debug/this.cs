@@ -183,37 +183,37 @@ public sealed class @this
             var provider = _engine.Code.Get<global::app.module.llm.code.ILlm>();
             if (provider.Success && provider.Value is global::app.module.llm.code.OpenAi oai)
             {
-                var ctx = _engine.User.Context;
+                var context = _engine.User.Context;
                 var toFile = string.Equals(Llm.Output, "file", StringComparison.OrdinalIgnoreCase);
 
                 oai.OnBeforeRequest += (messages, schema) =>
                 {
                     // Resolve file path *once* per call so request + response share it.
-                    if (toFile) _currentLlmFilePath = ResolveLlmFilePath(ctx);
+                    if (toFile) _currentLlmFilePath = ResolveLlmFilePath(context);
 
                     if (Llm.System)
                     {
                         var sys = messages
                             .Where(m => string.Equals(m.Role, "system", StringComparison.OrdinalIgnoreCase))
                             .Select(m => m.Content ?? "(null)");
-                        EmitLlmBlock("LLM SYSTEM", sys, ctx, toFile);
+                        EmitLlmBlock("LLM SYSTEM", sys, context, toFile);
                     }
                     if (Llm.User)
                     {
                         var users = messages
                             .Where(m => string.Equals(m.Role, "user", StringComparison.OrdinalIgnoreCase))
                             .Select(m => m.Content ?? "(null)");
-                        EmitLlmBlock("LLM USER", users, ctx, toFile);
+                        EmitLlmBlock("LLM USER", users, context, toFile);
                     }
                     if (Llm.Schema && !string.IsNullOrEmpty(schema))
                     {
-                        EmitLlmBlock("LLM SCHEMA", new[] { schema }, ctx, toFile);
+                        EmitLlmBlock("LLM SCHEMA", new[] { schema }, context, toFile);
                     }
                 };
                 if (Llm.Response)
                 {
                     oai.OnAfterResponse += (rawResponse) =>
-                        EmitLlmBlock("LLM RESPONSE", new[] { rawResponse ?? "(null)" }, ctx, toFile);
+                        EmitLlmBlock("LLM RESPONSE", new[] { rawResponse ?? "(null)" }, context, toFile);
                 }
             }
         }
@@ -420,7 +420,7 @@ public sealed class @this
     /// Builds the file path for the current LLM call. Reads:
     /// - <c>trace.id</c> from <see cref="actor.context.@this.Trace"/> (C#-owned, born with Context).
     /// - <c>%goal%</c> PLang variable (the user goal being built — set by the builder).
-    ///   Different from <c>ctx.Goal</c>, which is the *runtime* goal currently executing
+    ///   Different from <c>context.Goal</c>, which is the *runtime* goal currently executing
     ///   (typically the builder's own goal, e.g. BuildGoal — not what we want to label by).
     /// - <c>%step%</c> PLang variable when present (BuildStep sets it for per-step LLM calls);
     ///   absent for goal-level calls (BuildGoalCore), which use the literal "goal" as stepKey.

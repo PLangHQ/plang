@@ -28,10 +28,10 @@ public class NamePropagationTests
     [Test]
     public async Task Name_FullVarMatch_PropagatesLiveVariableName()
     {
-        var ctx = _app.User.Context;
-        ctx.Variables.Set(new global::app.data.@this<List<object?>>("products", new List<object?> { "a" }) { Context = ctx });
+        var context = _app.User.Context;
+        context.Variables.Set(new global::app.data.@this<List<object?>>("products", new List<object?> { "a" }) { Context = context });
 
-        var paramData = new Data("List", "%products%") { Context = ctx };
+        var paramData = new Data("List", "%products%") { Context = context };
         var result = paramData.As<System.Collections.IEnumerable>();
 
         await Assert.That(result.Name).IsEqualTo("products");
@@ -43,8 +43,8 @@ public class NamePropagationTests
     [Test]
     public async Task Name_LiteralValue_KeepsSlotName()
     {
-        var ctx = _app.User.Context;
-        var paramData = new Data("Variable", "user") { Context = ctx };
+        var context = _app.User.Context;
+        var paramData = new Data("Variable", "user") { Context = context };
         var result = paramData.As<string>();
         await Assert.That(result.Name).IsEqualTo("Variable");
     }
@@ -54,10 +54,10 @@ public class NamePropagationTests
     [Test]
     public async Task Name_PartialInterpolation_KeepsSlotName()
     {
-        var ctx = _app.User.Context;
-        ctx.Variables.Set(new global::app.data.@this<string>("name", "world") { Context = ctx });
+        var context = _app.User.Context;
+        context.Variables.Set(new global::app.data.@this<string>("name", "world") { Context = context });
 
-        var paramData = new Data("Greeting", "hello %name%!") { Context = ctx };
+        var paramData = new Data("Greeting", "hello %name%!") { Context = context };
         var result = paramData.As<string>();
         await Assert.That(result.Name).IsEqualTo("Greeting");
         await Assert.That(result.Value).IsEqualTo("hello world!");
@@ -68,8 +68,8 @@ public class NamePropagationTests
     [Test]
     public async Task Name_UnsetVariable_PropagatesVarName_NotInitialized()
     {
-        var ctx = _app.User.Context;
-        var paramData = new Data("X", "%missing%") { Context = ctx };
+        var context = _app.User.Context;
+        var paramData = new Data("X", "%missing%") { Context = context };
         var result = paramData.As<string>();
         await Assert.That(result.Name).IsEqualTo("missing");
         await Assert.That(result.IsInitialized).IsFalse();
@@ -81,10 +81,10 @@ public class NamePropagationTests
     [Test]
     public async Task Name_NestedListResolution_PreservesSlotName()
     {
-        var ctx = _app.User.Context;
-        ctx.Variables.Set(new global::app.data.@this<string>("b", "expanded") { Context = ctx });
+        var context = _app.User.Context;
+        context.Variables.Set(new global::app.data.@this<string>("b", "expanded") { Context = context });
 
-        var paramData = new Data("Items", new List<object?> { "a", "%b%", "c" }) { Context = ctx };
+        var paramData = new Data("Items", new List<object?> { "a", "%b%", "c" }) { Context = context };
         var result = paramData.As<System.Collections.IEnumerable>();
         await Assert.That(result.Name).IsEqualTo("Items");
     }
@@ -96,11 +96,11 @@ public class NamePropagationTests
     [Test]
     public async Task Name_FullMatch_StoredVarRef_PropagatesImmediateName_NoChain()
     {
-        var ctx = _app.User.Context;
-        ctx.Variables.Set(new global::app.data.@this<int>("b", 42) { Context = ctx });
-        ctx.Variables.Set(new global::app.data.@this<string>("a", "%b%") { Context = ctx });
+        var context = _app.User.Context;
+        context.Variables.Set(new global::app.data.@this<int>("b", 42) { Context = context });
+        context.Variables.Set(new global::app.data.@this<string>("a", "%b%") { Context = context });
 
-        var paramData = new Data("Slot", "%a%") { Context = ctx };
+        var paramData = new Data("Slot", "%a%") { Context = context };
         var result = paramData.As<string>();
         await Assert.That(result.Name).IsEqualTo("a");
         await Assert.That(result.Value).IsEqualTo("%b%");

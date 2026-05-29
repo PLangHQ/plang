@@ -81,13 +81,13 @@ public class MultiMarkerHandlerTests
         await using var app = new global::app.@this("/app");
         global::app.@this.WireDefaultConsoleChannels(app.User);
 
-        var ctx = await MatrixRunner.RunAsync<IContextHandler>(app);
+        var context = await MatrixRunner.RunAsync<IContextHandler>(app);
         var ch = await MatrixRunner.RunAsync<IChannelHandler>(app);
         var act = await MatrixRunner.RunAsync<IActionHandler>(app);
         var step = await MatrixRunner.RunAsync<IStepHandler>(app, step: new Step { Index = 0 });
         var stc = await MatrixRunner.RunAsync<IStaticHandler>(app);
 
-        await Assert.That(ctx.Data.Value).IsEqualTo(true);
+        await Assert.That(context.Data.Value).IsEqualTo(true);
         await Assert.That(ch.Data.Value).IsEqualTo(true);
         await Assert.That(act.Data.Value).IsEqualTo(true);
         await Assert.That(step.Data.Value).IsEqualTo(true);

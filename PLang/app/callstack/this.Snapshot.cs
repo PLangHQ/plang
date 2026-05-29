@@ -106,7 +106,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     /// (<see cref="CallbackGoalHashMismatch"/>). Does not mutate the live AsyncLocal Current —
     /// the resumed action is dispatched separately via App.Run from <see cref="BottomFrame"/>.
     /// </summary>
-    public static void Restore(global::app.snapshot.@this s, global::app.actor.context.@this ctx)
+    public static void Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
     {
         var captured = s.Read<List<global::app.snapshot.@this>>("frames")
                        ?? new List<global::app.snapshot.@this>();
@@ -120,7 +120,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
             var actionIndex = frame.Read<int>("actionIndex");
             var id         = frame.Read<string>("id") ?? "";
 
-            var liveGoal = ctx.App.Goals.Get(goalPrPath);
+            var liveGoal = context.App.Goals.Get(goalPrPath);
             if (liveGoal == null)
                 throw new CallbackGoalNotFound(goalPrPath);
 
@@ -139,7 +139,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
             restored.Add(new call.Position(liveAction, liveGoal, stepIndex, actionIndex, id));
         }
 
-        ctx.App.CallStack._restoredChain = restored;
+        context.App.CallStack._restoredChain = restored;
     }
 
     /// <summary>

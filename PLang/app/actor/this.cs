@@ -63,7 +63,7 @@ public sealed class @this : IAsyncDisposable
     /// Resolves an actor by name using the app.
     /// Convention: types with this signature are auto-resolved by the source generator.
     /// </summary>
-    public static @this? Resolve(string name, context.@this ctx) => ctx.App.GetActor(name).Actor;
+    public static @this? Resolve(string name, context.@this context) => context.App.GetActor(name).Actor;
 
     /// <summary>
     /// Closed list of actor names the LLM may emit for an Actor-typed slot.
@@ -71,7 +71,7 @@ public sealed class @this : IAsyncDisposable
     /// chosen name via <see cref="Resolve"/> → <c>App.GetActor</c>.
     /// </summary>
     [app.Attributes.Choices]
-    public static string[] Choices(context.@this? ctx) => ["user", "system"];
+    public static string[] Choices(context.@this? context) => ["user", "system"];
 
     public @this(string name, app.@this app, CancellationToken parentToken = default)
     {
@@ -89,7 +89,7 @@ public sealed class @this : IAsyncDisposable
 
         // Register %Settings.X% as a navigable mount on this actor's Variables.
         // Resolution dispatches to app.Settings.Get(path, this.Context); the
-        // lambda captures *this* actor's Context so per-actor ctx propagates.
+        // lambda captures *this* actor's Context so per-actor context propagates.
         Context.Variables.RegisterNavigable("Settings", path => app.Settings.Get(path, Context));
 
         // Register %!app% — navigates the App object graph (e.g., %!app.tester.IsEnabled%)

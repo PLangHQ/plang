@@ -81,12 +81,12 @@ public class MyIdentityResolverTests
     [Test]
     public async Task MyIdentity_UpdatedAfterSetDefault()
     {
-        var ctx = _app.System.Context;
+        var context = _app.System.Context;
 
         // Create two identities
-        var h1 = new Create { Context = ctx, Name = "first", SetAsDefault = true };
+        var h1 = new Create { Context = context, Name = "first", SetAsDefault = true };
         await h1.Run();
-        var h2 = new Create { Context = ctx, Name = "second", SetAsDefault = false };
+        var h2 = new Create { Context = context, Name = "second", SetAsDefault = false };
         await h2.Run();
 
         // Verify %MyIdentity% is "first" — DynamicData re-evaluates on each access
@@ -95,7 +95,7 @@ public class MyIdentityResolverTests
         await Assert.That(id1!.Name).IsEqualTo("first");
 
         // Switch default
-        var setDefault = new SetDefault { Context = ctx, Name = "second" };
+        var setDefault = new SetDefault { Context = context, Name = "second" };
         await setDefault.Run();
 
         // %MyIdentity% should now be "second" — DynamicData lambda calls provider again

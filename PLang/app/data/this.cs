@@ -469,9 +469,9 @@ public partial class @this
     /// </summary>
     internal @this<T> As<T>(actor.context.@this? context = null)
     {
-        var ctx = context ?? _context;
+        context = context ?? _context;
         var raw = Value; // factory-resolved if any; never %var% substituted
-        return AsT_Impl<T>(raw, ctx);
+        return AsT_Impl<T>(raw, context);
     }
 
     /// <summary>
@@ -496,8 +496,8 @@ public partial class @this
             return global::app.data.@this.FromError(new global::app.error.ServiceError(
                 "Data.As(typeName) requires a non-empty type name.", "InvalidTypeName", 400));
 
-        var ctx = context ?? _context;
-        var clr = ctx?.App.Types.Clr(typeName) ?? AppTypes.GetPrimitiveOrMime(typeName);
+        context = context ?? _context;
+        var clr = context?.App.Types.Clr(typeName) ?? AppTypes.GetPrimitiveOrMime(typeName);
         if (clr == null)
             return global::app.data.@this.FromError(new global::app.error.ServiceError(
                 $"No PLang type registered under name '{typeName}'.", "UnknownType", 400));
@@ -506,7 +506,7 @@ public partial class @this
         var converted = raw is string s
             ? AppTypes.TryConvertTo(s, clr).Value
             : AppTypes.ConvertTo(raw, clr);
-        return new @this(Name, converted, new type(typeName), Parent) { Context = ctx };
+        return new @this(Name, converted, new type(typeName), Parent) { Context = context };
     }
 
     /// <summary>
@@ -522,25 +522,25 @@ public partial class @this
     /// </summary>
     public @this AsCanonical(actor.context.@this? context = null)
     {
-        var ctx = context ?? _context;
+        context = context ?? _context;
         var raw = Value;
 
-        if (raw is string strVal && strVal.Contains('%') && ctx?.Variables != null)
+        if (raw is string strVal && strVal.Contains('%') && context?.Variables != null)
         {
             if (TryFullVarMatch(strVal, out var varName))
             {
-                var resolved = ctx.Variables.Get(varName);
+                var resolved = context.Variables.Get(varName);
                 if (resolved == null || !resolved.IsInitialized)
                 {
-                    var notFound = new @this(varName, null, null, Parent) { Context = ctx };
+                    var notFound = new @this(varName, null, null, Parent) { Context = context };
                     notFound.IsInitialized = false;
                     return notFound;
                 }
                 return resolved;
             }
             // Partial — interpolate into a fresh value but keep slot Name + alias state from `this`.
-            var interpolated = ctx.Variables.Resolve(strVal);
-            var transient = new @this(Name, interpolated, _type, Parent) { Context = ctx };
+            var interpolated = context.Variables.Resolve(strVal);
+            var transient = new @this(Name, interpolated, _type, Parent) { Context = context };
             transient.Properties = Properties;
             transient.OnCreate   = OnCreate;
             transient.OnChange   = OnChange;
@@ -552,10 +552,10 @@ public partial class @this
         // Data and Data<T> resolve nested vars by the same rule. Without this, handlers
         // that take plain `data.@this` (e.g. variable.set) see literal "%var%" strings
         // inside lists/dicts loaded from the .pr.
-        if (ctx != null && IsWalkableContainer(raw))
+        if (context != null && IsWalkableContainer(raw))
         {
-            var walked = WalkContainerVars(raw, ctx);
-            var transient = new @this(Name, walked, _type, Parent) { Context = ctx };
+            var walked = WalkContainerVars(raw, context);
+            var transient = new @this(Name, walked, _type, Parent) { Context = context };
             transient.Properties = Properties;
             transient.OnCreate   = OnCreate;
             transient.OnChange   = OnChange;
@@ -578,10 +578,10 @@ public partial class @this
     // allocate). Strings are NOT handled here — full-match vs. partial-interpolation
     // semantics differ between AsCanonical (returns live var Data) and AsT_Impl (recurses
     // typed), so each owns its own string path.
-    private static object? WalkContainerVars(object? raw, actor.context.@this ctx)
+    private static object? WalkContainerVars(object? raw, actor.context.@this context)
     {
-        if (raw is IList<object?> list) return WalkList(list, ctx);
-        if (raw is IDictionary<string, object?> dict) return WalkDict(dict, ctx);
+        if (raw is IList<object?> list) return WalkList(list, context);
+        if (raw is IDictionary<string, object?> dict) return WalkDict(dict, context);
         return raw;
     }
 
@@ -602,7 +602,7 @@ public partial class @this
     private const int ResolveDepthLimit = 32;
     private static readonly AsyncLocal<HashSet<string>?> _resolvingValues = new();
 
-    private @this<T> AsT_Impl<T>(object? raw, actor.context.@this? ctx)
+    private @this<T> AsT_Impl<T>(object? raw, actor.context.@this? context)
     {
         // Action-destination carve-out: when T is or contains Action.@this, sub-actions
         // hold raw %var% for deferred resolution at their own dispatch time. Skip the walk
@@ -612,15 +612,15 @@ public partial class @this
         // applies; otherwise the literal string is handed to TypeConverter which can't
         // convert "%var%" → StepActions and the build dies with "Cannot convert String to this".
         if (IsActionDestination(typeof(T))
-            && !(raw is string actStr && actStr.Contains('%') && ctx?.Variables != null))
-            return WrapAs<T>(raw, ctx);
+            && !(raw is string actStr && actStr.Contains('%') && context?.Variables != null))
+            return WrapAs<T>(raw, context);
 
         // Raw-name carve-out: types like app.variable.Variable want the literal slot
         // string — `%x%` means "the variable named x" not "x's value". Bypass the
-        // %var% substitution branch and dispatch to T.Resolve(raw, ctx) directly.
+        // %var% substitution branch and dispatch to T.Resolve(raw, context) directly.
         // Variable.Resolve strips the % and produces { Name="x" } regardless of whether
         // x is initialized — symmetric for both `%x%` and bare `x` slot forms.
-        if (raw is string rawNameStr && ctx != null
+        if (raw is string rawNameStr && context != null
             && typeof(app.variable.IRawNameResolvable).IsAssignableFrom(typeof(T)))
         {
             var resolveMethod = ResolveMethodCache.GetOrAdd(typeof(T), t =>
@@ -629,15 +629,15 @@ public partial class @this
                     null, new[] { typeof(string), typeof(actor.context.@this) }, null));
             if (resolveMethod != null)
             {
-                var resolvedObj = resolveMethod.Invoke(null, new object[] { rawNameStr, ctx });
+                var resolvedObj = resolveMethod.Invoke(null, new object[] { rawNameStr, context });
                 if (resolvedObj is T result)
-                    return ConstructWrap<T>(result, ctx);
+                    return ConstructWrap<T>(result, context);
             }
         }
 
         // String with %var% — substitute first, BEFORE fast paths. Without this ordering,
         // T=object would always match `raw is T` and short-circuit substitution.
-        if (raw is string strVal && strVal.Contains('%') && ctx?.Variables != null)
+        if (raw is string strVal && strVal.Contains('%') && context?.Variables != null)
         {
             var resolving = _resolvingValues.Value;
             var isCycleRoot = resolving == null;
@@ -668,13 +668,13 @@ public partial class @this
 
                 if (TryFullVarMatch(strVal, out var varName))
                 {
-                    var resolved = ctx.Variables.Get(varName);
+                    var resolved = context.Variables.Get(varName);
                     if (resolved == null || !resolved.IsInitialized)
                     {
                         // Unset var — propagate the variable's name so handler diagnostics see it.
                         // Mark as not-initialized so callers can detect the difference between
                         // "value is null" and "var doesn't exist".
-                        var notFound = new @this<T>(varName, default, null, Parent) { Context = ctx };
+                        var notFound = new @this<T>(varName, default, null, Parent) { Context = context };
                         notFound.IsInitialized = false;
                         return notFound;
                     }
@@ -684,13 +684,13 @@ public partial class @this
                     // re-scan the resolved value's text for further %var% references. Calling
                     // on `resolved` (the live variable) preserves identity: WrapAs sees `resolved`
                     // as `this` and propagates Name + Properties + event lists.
-                    return resolved.AsT_Convert<T>(resolved.Value, ctx);
+                    return resolved.AsT_Convert<T>(resolved.Value, context);
                 }
                 // Partial match — interpolate once. The result is the final value; embedded
                 // %var% inside the substituted text is opaque payload (matches mainstream
                 // language semantics: assignment evaluates once, stored value is opaque).
-                var interpolated = ctx.Variables.Resolve(strVal);
-                return AsT_Convert<T>(interpolated, ctx);
+                var interpolated = context.Variables.Resolve(strVal);
+                return AsT_Convert<T>(interpolated, context);
             }
             finally
             {
@@ -711,13 +711,13 @@ public partial class @this
         // when %x% isn't set. The `if (value is @this) return value` guard inside
         // SubstitutePrimitive only fires for already-typed Data, not for the dict
         // representation that comes off the LLM response.
-        if (ctx != null && IsWalkableContainer(raw) && !IsActionDestination(typeof(T)))
-            return WrapAs<T>(WalkContainerVars(raw, ctx), ctx);
+        if (context != null && IsWalkableContainer(raw) && !IsActionDestination(typeof(T)))
+            return WrapAs<T>(WalkContainerVars(raw, context), context);
 
         // T has static Resolve(string, Context.@this) — Path-style domain types. Done before
         // the variance/wrap path because Resolve produces a fresh T from a string, not a
         // cast of an existing value.
-        if (raw is string srStr && ctx != null && raw is not T)
+        if (raw is string srStr && context != null && raw is not T)
         {
             var resolveMethod = ResolveMethodCache.GetOrAdd(typeof(T), t =>
                 t.GetMethod("Resolve",
@@ -725,16 +725,16 @@ public partial class @this
                     null, new[] { typeof(string), typeof(actor.context.@this) }, null));
             if (resolveMethod != null)
             {
-                var (resolvedObj, resolveError) = InvokeResolve<T>(resolveMethod, srStr, ctx);
+                var (resolvedObj, resolveError) = InvokeResolve<T>(resolveMethod, srStr, context);
                 if (resolveError != null) return resolveError;
                 if (resolvedObj is T result)
-                    return ConstructWrap<T>(result, ctx);
+                    return ConstructWrap<T>(result, context);
             }
         }
 
         // No more substitution to do — `this` is the canonical. Apply identity-preserving
         // wrap rules (same-type fast path → variance → cross-type with conversion).
-        return WrapAs<T>(raw, ctx);
+        return WrapAs<T>(raw, context);
     }
 
     /// <summary>
@@ -744,9 +744,9 @@ public partial class @this
     /// Keeps the static-Resolve(string) carve-out for Path-style domain types, then delegates to
     /// WrapAs for identity-preserving wrap + conversion.
     /// </summary>
-    private @this<T> AsT_Convert<T>(object? raw, actor.context.@this? ctx)
+    private @this<T> AsT_Convert<T>(object? raw, actor.context.@this? context)
     {
-        if (raw is string srStr && ctx != null && raw is not T)
+        if (raw is string srStr && context != null && raw is not T)
         {
             var resolveMethod = ResolveMethodCache.GetOrAdd(typeof(T), t =>
                 t.GetMethod("Resolve",
@@ -754,13 +754,13 @@ public partial class @this
                     null, new[] { typeof(string), typeof(actor.context.@this) }, null));
             if (resolveMethod != null)
             {
-                var (resolvedObj, resolveError) = InvokeResolve<T>(resolveMethod, srStr, ctx);
+                var (resolvedObj, resolveError) = InvokeResolve<T>(resolveMethod, srStr, context);
                 if (resolveError != null) return resolveError;
                 if (resolvedObj is T result)
-                    return ConstructWrap<T>(result, ctx);
+                    return ConstructWrap<T>(result, context);
             }
         }
-        return WrapAs<T>(raw, ctx);
+        return WrapAs<T>(raw, context);
     }
 
     /// <summary>
@@ -773,11 +773,11 @@ public partial class @this
     /// error the handler can surface.
     /// </summary>
     private static (object? value, @this<T>? error) InvokeResolve<T>(
-        System.Reflection.MethodInfo resolveMethod, string raw, actor.context.@this ctx)
+        System.Reflection.MethodInfo resolveMethod, string raw, actor.context.@this context)
     {
         try
         {
-            return (resolveMethod.Invoke(null, new object[] { raw, ctx }), null);
+            return (resolveMethod.Invoke(null, new object[] { raw, context }), null);
         }
         catch (System.Reflection.TargetInvocationException tie) when (tie.InnerException != null)
         {
@@ -804,7 +804,7 @@ public partial class @this
     /// Caller passes the substituted/walked `value` separately because raw value is what we wrap,
     /// while `this` is the canonical Data whose Name + Properties + event lists we propagate.
     /// </summary>
-    private @this<T> WrapAs<T>(object? value, actor.context.@this? ctx)
+    private @this<T> WrapAs<T>(object? value, actor.context.@this? context)
     {
         // Rule 1 — same-type fast path. If `this` is already Data<T> AND its raw value is T,
         // return `this`. No allocation, full identity (Name, Properties, events all native).
@@ -817,12 +817,12 @@ public partial class @this
         // is not Data<T> (e.g. plain Data, or Data<U> for U:T). Construct a new Data<T> sharing
         // .Value by ref (cast-only) and alias Properties + events from `this`.
         if (value is T fast && IsPlangAssignable(typeof(T), value.GetType()))
-            return ConstructWrap<T>(fast, ctx);
+            return ConstructWrap<T>(fast, context);
 
         // Null arrives here only when raw was null (or substitution produced null). Construct a
         // not-initialized Data<T> with default value, aliased state from `this`.
         if (value == null)
-            return ConstructWrap<T>(default, ctx);
+            return ConstructWrap<T>(default, context);
 
         // Rule 3 — cross-type with conversion. T=IEnumerable (the non-generic interface itself,
         // not arbitrary subtypes) delegates to AsEnumerable so the string-not-iterable carve-out
@@ -834,13 +834,13 @@ public partial class @this
             // value != null guaranteed above, so the AsEnumerable contract collapses to:
             // iterable → use as-is; non-iterable → wrap as one-element array.
             object convertedEnum = IsPlangIterable(value) ? value : new[] { value };
-            return ConstructWrap<T>((T?)convertedEnum, ctx);
+            return ConstructWrap<T>((T?)convertedEnum, context);
         }
 
-        var (converted, error) = AppTypes.TryConvertTo(value, typeof(T), ctx);
+        var (converted, error) = AppTypes.TryConvertTo(value, typeof(T), context);
         if (error != null)
             return @this<T>.FromError(error);
-        return ConstructWrap<T>((T?)converted, ctx);
+        return ConstructWrap<T>((T?)converted, context);
     }
 
     /// <summary>
@@ -848,9 +848,9 @@ public partial class @this
     /// inherited; Properties + the three event lists are aliased by reference (shared list refs
     /// so subscribers and metadata mutations are visible through both source and view).
     /// </summary>
-    private @this<T> ConstructWrap<T>(T? value, actor.context.@this? ctx)
+    private @this<T> ConstructWrap<T>(T? value, actor.context.@this? context)
     {
-        var wrapped = new @this<T>(Name, value, _type, Parent) { Context = ctx };
+        var wrapped = new @this<T>(Name, value, _type, Parent) { Context = context };
         wrapped.Properties = Properties;
         wrapped.OnCreate   = OnCreate;
         wrapped.OnChange   = OnChange;
@@ -858,19 +858,19 @@ public partial class @this
         return wrapped;
     }
 
-    private static List<object?> WalkList(IList<object?> list, actor.context.@this ctx)
+    private static List<object?> WalkList(IList<object?> list, actor.context.@this context)
     {
         var result = new List<object?>(list.Count);
         foreach (var item in list)
-            result.Add(SubstitutePrimitive(item, ctx));
+            result.Add(SubstitutePrimitive(item, context));
         return result;
     }
 
-    private static Dictionary<string, object?> WalkDict(IDictionary<string, object?> dict, actor.context.@this ctx)
+    private static Dictionary<string, object?> WalkDict(IDictionary<string, object?> dict, actor.context.@this context)
     {
         var result = new Dictionary<string, object?>(dict.Count, StringComparer.OrdinalIgnoreCase);
         foreach (var kvp in dict)
-            result[kvp.Key] = SubstitutePrimitive(kvp.Value, ctx);
+            result[kvp.Key] = SubstitutePrimitive(kvp.Value, context);
         return result;
     }
 
@@ -879,7 +879,7 @@ public partial class @this
     // or IDictionary (Hashtable) passes through to the fall-through and is returned as-is —
     // no %var% substitution. JSON ingestion is normalized to the typed forms via
     // UnwrapJsonElement / UnwrapNewtonsoftToken upstream, so this is safe in practice.
-    private static object? SubstitutePrimitive(object? value, actor.context.@this ctx)
+    private static object? SubstitutePrimitive(object? value, actor.context.@this context)
     {
         if (value == null) return null;
 
@@ -897,16 +897,16 @@ public partial class @this
                 // %var% read returns null and the parameter slots get nulled out).
                 // String.Resolve below already does this fallback for partial matches;
                 // this brings full-match parity.
-                var resolved = ctx.Variables.Get(varName);
+                var resolved = context.Variables.Get(varName);
                 return resolved?.IsInitialized == true && resolved.Value != null
                     ? resolved.Value
                     : (object?)s;
             }
-            return ctx.Variables.Resolve(s);
+            return context.Variables.Resolve(s);
         }
 
-        if (value is IList<object?> innerList) return WalkList(innerList, ctx);
-        if (value is IDictionary<string, object?> innerDict) return WalkDict(innerDict, ctx);
+        if (value is IList<object?> innerList) return WalkList(innerList, context);
+        if (value is IDictionary<string, object?> innerDict) return WalkDict(innerDict, context);
 
         // Non-recursion guards: don't walk into Data, Action templates, or typed Action lists.
         // Action templates retain raw %var% for deferred resolution at their own dispatch.

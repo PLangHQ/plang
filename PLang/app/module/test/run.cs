@@ -89,7 +89,7 @@ public partial class run : IContext
         // Site key for branches = "goalName:stepIndex"; matches what the report renders.
         var coverageBinding = new EventBinding(
             app.@event.EventType.AfterAction,
-            (ctx, action, result) =>
+            (context, action, result) =>
             {
                 if (action != null)
                 {
@@ -134,7 +134,7 @@ public partial class run : IContext
         var outputBuf = new StringBuilder();
         var outputBinding = new EventBinding(
             app.@event.EventType.BeforeWrite,
-            (ctx, _, written) =>
+            (context, _, written) =>
             {
                 // Append newline per write — the stream-channel's text serializer
                 // adds one on flush, so this matches "what stdout sees". A
@@ -160,9 +160,9 @@ public partial class run : IContext
 
         var beforeStepBinding = new EventBinding(
             app.@event.EventType.BeforeStep,
-            (ctx, _, _) =>
+            (context, _, _) =>
             {
-                var step = ctx.Step;
+                var step = context.Step;
                 if (IsEntryGoalStep(step))
                     stepStarts[step!.Index] = Stopwatch.GetTimestamp();
                 return Task.FromResult(app.data.@this.Ok());
@@ -171,9 +171,9 @@ public partial class run : IContext
             stopOnError: false);
         var afterStepBinding = new EventBinding(
             app.@event.EventType.AfterStep,
-            (ctx, _, _) =>
+            (context, _, _) =>
             {
-                var step = ctx.Step;
+                var step = context.Step;
                 if (IsEntryGoalStep(step) && stepStarts.Remove(step!.Index, out var start))
                 {
                     var ms = (Stopwatch.GetTimestamp() - start) * 1000.0 / Stopwatch.Frequency;

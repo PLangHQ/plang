@@ -77,42 +77,42 @@ public class VariableResolveTest
     [Test] public async Task VariableSet_BangSyntax_WritesProperty()
     {
         await using var app = new global::app.@this("/tmp/var-set-bang-" + System.Guid.NewGuid().ToString("N")[..8]);
-        var ctx = app.User.Context;
+        var context = app.User.Context;
 
         await app.RunAction<global::app.module.variable.Set>(new global::app.module.variable.Set
         {
             Name = new global::app.data.@this<global::app.variable.Variable>("", new global::app.variable.Variable("response")),
             Value = global::app.data.@this.Ok("hello"),
-        }, ctx);
+        }, context);
 
         await app.RunAction<global::app.module.variable.Set>(new global::app.module.variable.Set
         {
             Name = new global::app.data.@this<global::app.variable.Variable>("",
-                global::app.variable.Variable.Resolve("%response!cost%", ctx)),
+                global::app.variable.Variable.Resolve("%response!cost%", context)),
             Value = global::app.data.@this.Ok(100),
-        }, ctx);
+        }, context);
 
-        var response = ctx.Variables.Get("response");
+        var response = context.Variables.Get("response");
         await Assert.That(response.Properties["cost"]).IsEqualTo(100);
     }
 
     [Test] public async Task VariableSet_MalformedBangSyntax_ReturnsTypedError()
     {
         await using var app = new global::app.@this("/tmp/var-set-malformed-" + System.Guid.NewGuid().ToString("N")[..8]);
-        var ctx = app.User.Context;
+        var context = app.User.Context;
 
         await app.RunAction<global::app.module.variable.Set>(new global::app.module.variable.Set
         {
             Name = new global::app.data.@this<global::app.variable.Variable>("", new global::app.variable.Variable("response")),
             Value = global::app.data.@this.Ok("hello"),
-        }, ctx);
+        }, context);
 
         var result = await app.RunAction<global::app.module.variable.Set>(new global::app.module.variable.Set
         {
             Name = new global::app.data.@this<global::app.variable.Variable>("",
-                global::app.variable.Variable.Resolve("%response!!cost%", ctx)),
+                global::app.variable.Variable.Resolve("%response!!cost%", context)),
             Value = global::app.data.@this.Ok(100),
-        }, ctx);
+        }, context);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("InvalidVariableReference");

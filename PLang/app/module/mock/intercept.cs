@@ -27,30 +27,30 @@ public partial class intercept : IContext
         var goalToCall = Call?.Value;
         var paramMatchers = Parameters?.Value;
 
-        Func<actor.context.@this, app.goal.steps.step.actions.action.@this?, data.@this?, Task<data.@this>> handler = async (ctx, _, _) =>
+        Func<actor.context.@this, app.goal.steps.step.actions.action.@this?, data.@this?, Task<data.@this>> handler = async (context, _, _) =>
         {
             // Find the current action being executed from the step
-            var currentAction = FindCurrentAction(ctx);
+            var currentAction = FindCurrentAction(context);
 
             // Check parameter matching if specified
             if (paramMatchers != null && currentAction != null)
             {
-                if (!ParametersMatch(currentAction, ctx.Variables, paramMatchers))
+                if (!ParametersMatch(currentAction, context.Variables, paramMatchers))
                     return Data(); // no match, let real action run
             }
 
             // Record the call
-            var capturedParams = CaptureParameters(currentAction, ctx.Variables);
+            var capturedParams = CaptureParameters(currentAction, context.Variables);
             handle.RecordCall(capturedParams);
 
             // Goal-based mock — call the goal
             if (goalToCall != null)
-                return await ctx.App!.RunGoalAsync(goalToCall, ctx, ctx.CancellationToken);
+                return await context.App!.RunGoalAsync(goalToCall, context, context.CancellationToken);
 
             // Return value mock — skip action and return the value
             if (returnValue != null)
             {
-                ctx.EventOverride = Data(returnValue);
+                context.EventOverride = Data(returnValue);
                 return Data(returnValue);
             }
 
@@ -73,9 +73,9 @@ public partial class intercept : IContext
         return Task.FromResult(data.@this<global::app.mock.@this>.Ok(handle));
     }
 
-    private static app.goal.steps.step.actions.action.@this? FindCurrentAction(actor.context.@this ctx)
+    private static app.goal.steps.step.actions.action.@this? FindCurrentAction(actor.context.@this context)
     {
-        var step = ctx.Step;
+        var step = context.Step;
         if (step == null) return null;
 
         // Return the first action (or find the one currently executing)

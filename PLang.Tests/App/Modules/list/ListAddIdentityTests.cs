@@ -25,7 +25,7 @@ public class ListAddIdentityTests
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
 
-    private (global::app.actor.context.@this ctx, Variables vars) Ctx() => (_app.User.Context, _app.User.Context.Variables);
+    private (global::app.actor.context.@this context, Variables vars) Ctx() => (_app.User.Context, _app.User.Context.Variables);
 
     // Mutation IS visible through Variables.Get because list.add mutates the live
     // List<object?> reference held by the variable's Data. No Variables.Set("products", list)
@@ -33,13 +33,13 @@ public class ListAddIdentityTests
     [Test]
     public async Task ListAdd_PlainDataList_MutatesLiveVariableValueDirectly()
     {
-        var (ctx, vars) = Ctx();
+        var (context, vars) = Ctx();
         var existing = new List<object?> { "a", "b" };
         vars.Set("products", existing);
 
         var action = new Add
         {
-            Context = ctx,
+            Context = context,
             ListName = new Variable("products"),
             Value = new Data("", "c")
         };
@@ -60,13 +60,13 @@ public class ListAddIdentityTests
     [Test]
     public async Task ListAdd_ReturnsLiveVariableData_NotNewData()
     {
-        var (ctx, vars) = Ctx();
+        var (context, vars) = Ctx();
         var live = new List<object?> { 1, 2 };
         vars.Set("products", live);
 
         var action = new Add
         {
-            Context = ctx,
+            Context = context,
             ListName = new Variable("products"),
             Value = new Data("", 3)
         };
@@ -86,7 +86,7 @@ public class ListAddIdentityTests
     [Test]
     public async Task ListAdd_ItemAsLiveVarRef_AppendsCurrentValue()
     {
-        var (ctx, vars) = Ctx();
+        var (context, vars) = Ctx();
         vars.Set("products", new List<object?>());
 
         // C# direct-composition path bypasses the .pr resolver, so we wrap "hello"
@@ -96,7 +96,7 @@ public class ListAddIdentityTests
 
         var action = new Add
         {
-            Context = ctx,
+            Context = context,
             ListName = new Variable("products"),
             Value = liveItem
         };
@@ -118,7 +118,7 @@ public class ListAddIdentityTests
     [Test]
     public async Task ListAdd_AfterReplacement_HandlerSeesNewValue()
     {
-        var (ctx, vars) = Ctx();
+        var (context, vars) = Ctx();
         var orphan = new List<object?> { "x" };
         vars.Set("products", orphan);
 
@@ -128,7 +128,7 @@ public class ListAddIdentityTests
 
         var action = new Add
         {
-            Context = ctx,
+            Context = context,
             ListName = new Variable("products"),
             Value = new Data("", "z")
         };

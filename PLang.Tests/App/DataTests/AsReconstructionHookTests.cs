@@ -6,14 +6,14 @@ namespace PLang.Tests.App.DataTests;
 // Per-type reconstruction hook. Some types can't be populated by setting public properties:
 // path is the canonical case — abstract, no parameterless ctor, needs Context to wire FileSystem.
 // Two discovery conventions: explicit `static T FromNormalized(Data, Context)` on T, and a
-// built-in path hook that calls `path.Resolve(relative, ctx)`.
+// built-in path hook that calls `path.Resolve(relative, context)`.
 
 public class AsReconstructionHookTests
 {
     private sealed class HasHook
     {
         public string? Tag { get; private set; }
-        public static HasHook FromNormalized(Data tree, global::app.actor.context.@this? ctx)
+        public static HasHook FromNormalized(Data tree, global::app.actor.context.@this? context)
             => new() { Tag = "via-hook" };
     }
 

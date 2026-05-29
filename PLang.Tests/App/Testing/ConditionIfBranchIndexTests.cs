@@ -58,7 +58,7 @@ public class ConditionIfBranchIndexTests
         Data? captured = null;
         _app.User.Context.Events.Register(new EventBinding(
             EventType.AfterAction,
-            (ctx, action, result) =>
+            (context, action, result) =>
             {
                 if (action?.Module == "condition" && action.ActionName == "if")
                     captured = result;
@@ -143,7 +143,7 @@ public class ConditionIfBranchIndexTests
         var first = actions[0];
         _app.User.Context.Events.Register(new EventBinding(
             EventType.AfterAction,
-            (ctx, action, result) =>
+            (context, action, result) =>
             {
                 if (ReferenceEquals(action, first))
                     captured = result;

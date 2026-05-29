@@ -12,10 +12,10 @@ public sealed partial class @this : ISnapshot
     /// Replaces the live App's Errors.Trail with one populated from the snapshot
     /// and freezes it — historic record, not a live append target.
     /// </summary>
-    public static void Restore(global::app.snapshot.@this s, global::app.actor.context.@this ctx)
+    public static void Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
     {
         var entries = s.Read<List<IError>>("entries") ?? new List<IError>();
-        ctx.App.Errors.RestoreTrail(entries);
+        context.App.Errors.RestoreTrail(entries);
     }
 
     /// <summary>

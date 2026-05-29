@@ -31,12 +31,12 @@ public partial class @this : ISnapshot
     /// — the snapshot only carries user-visible state, so adding restored entries
     /// on top is the correct merge.
     /// </summary>
-    public static void Restore(snapshot.@this s, actor.context.@this ctx)
+    public static void Restore(snapshot.@this s, actor.context.@this context)
     {
         var captured = s.Read<List<data.@this>>("variables");
         if (captured == null) return;
 
-        var target = ctx.Variables;
+        var target = context.Variables;
         foreach (var data in captured)
         {
             // Clone again so the snapshot can be re-Restored independently.

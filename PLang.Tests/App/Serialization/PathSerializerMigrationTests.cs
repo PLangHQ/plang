@@ -21,9 +21,9 @@ public class PathSerializerMigrationTests
     public async Task PathFile_Wire_RendersAsRelativeString_ViaDefaultSerializer()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
-        var p = global::app.type.path.@this.Resolve("/some/file.json", ctx);
-        var data = new global::app.data.@this("x", p) { Context = ctx };
+        var context = app.User.Context;
+        var p = global::app.type.path.@this.Resolve("/some/file.json", context);
+        var data = new global::app.data.@this("x", p) { Context = context };
 
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channels.Serializers.GetByMimeType("application/plang");
@@ -43,9 +43,9 @@ public class PathSerializerMigrationTests
     public async Task PathHttp_Wire_RendersAsAbsoluteString_ViaDefaultSerializer()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
-        var p = global::app.type.path.@this.Resolve("https://example.test/a/b", ctx);
-        var data = new global::app.data.@this("x", p) { Context = ctx };
+        var context = app.User.Context;
+        var p = global::app.type.path.@this.Resolve("https://example.test/a/b", context);
+        var data = new global::app.data.@this("x", p) { Context = context };
 
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channels.Serializers.GetByMimeType("application/plang");
@@ -90,8 +90,8 @@ public class PathSerializerMigrationTests
         // (Relative ?? Raw ?? Absolute). Drive the same path through both
         // paths and compare the produced JSON string.
         await using var app = NewApp();
-        var ctx = app.User.Context;
-        var p = global::app.type.path.@this.Resolve("/srv/myapp/r.json", ctx);
+        var context = app.User.Context;
+        var p = global::app.type.path.@this.Resolve("/srv/myapp/r.json", context);
 
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
@@ -105,7 +105,7 @@ public class PathSerializerMigrationTests
         using var ms2 = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms2))
         {
-            var converter = new global::app.type.path.JsonConverter(ctx);
+            var converter = new global::app.type.path.JsonConverter(context);
             converter.Write(utf, p, new JsonSerializerOptions());
         }
         var fromLegacy = System.Text.Encoding.UTF8.GetString(ms2.ToArray());

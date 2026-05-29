@@ -12,7 +12,7 @@ namespace PLang.Tests.App.Types.PathTests;
 /// </summary>
 public class PathTypeMapperTests
 {
-    private static (global::app.@this app, global::app.actor.context.@this ctx) MakeApp()
+    private static (global::app.@this app, global::app.actor.context.@this context) MakeApp()
     {
         var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-tm-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(dir);
@@ -22,26 +22,26 @@ public class PathTypeMapperTests
 
     [Test] public async Task PathParameter_SchemedFileValue_ResolvesTo_FilePath()
     {
-        var (_, ctx) = MakeApp();
-        var (value, error) = Conversion.TryConvertTo("file:///abs/x.txt", typeof(PLangPath), ctx);
+        var (_, context) = MakeApp();
+        var (value, error) = Conversion.TryConvertTo("file:///abs/x.txt", typeof(PLangPath), context);
         await Assert.That(error).IsNull();
         await Assert.That(value).IsTypeOf<FilePath>();
     }
 
     [Test] public async Task PathParameter_BareValue_ResolvesTo_FilePath()
     {
-        var (_, ctx) = MakeApp();
-        var (value, error) = Conversion.TryConvertTo("/abs/x.txt", typeof(PLangPath), ctx);
+        var (_, context) = MakeApp();
+        var (value, error) = Conversion.TryConvertTo("/abs/x.txt", typeof(PLangPath), context);
         await Assert.That(error).IsNull();
         await Assert.That(value).IsTypeOf<FilePath>();
     }
 
     [Test] public async Task PathParameter_UnknownScheme_BecomesDataFail_NoExceptionEscape()
     {
-        var (_, ctx) = MakeApp();
+        var (_, context) = MakeApp();
         // s3 is not registered — the type-mapper must catch SchemeNotRegistered
         // and shape it as an Error, never let the exception escape.
-        var (value, error) = Conversion.TryConvertTo("s3://bucket/key", typeof(PLangPath), ctx);
+        var (value, error) = Conversion.TryConvertTo("s3://bucket/key", typeof(PLangPath), context);
         await Assert.That(value).IsNull();
         await Assert.That(error).IsNotNull();
         await Assert.That(error!.Key).IsEqualTo("SchemeNotRegistered");
@@ -49,8 +49,8 @@ public class PathTypeMapperTests
 
     [Test] public async Task PathParameter_RelativeValue_ResolvesAgainstGoalDirectory()
     {
-        var (_, ctx) = MakeApp();
-        var (value, error) = Conversion.TryConvertTo("rel.txt", typeof(PLangPath), ctx);
+        var (_, context) = MakeApp();
+        var (value, error) = Conversion.TryConvertTo("rel.txt", typeof(PLangPath), context);
         await Assert.That(error).IsNull();
         var fp = (FilePath)value!;
         // Relative resolution preserves Raw and produces an absolute path.
@@ -60,15 +60,15 @@ public class PathTypeMapperTests
 
     [Test] public async Task FileReadStep_StringPathParameter_StillRuns_AfterRegistryRewire()
     {
-        var (app, ctx) = MakeApp();
-        var filePath = FilePath.Resolve("greeting.txt", ctx);
+        var (app, context) = MakeApp();
+        var filePath = FilePath.Resolve("greeting.txt", context);
         await filePath.WriteText("hello from a string param");
 
         // Resolve a Path the way a handler parameter does, then run file.read.
-        var (value, _) = Conversion.TryConvertTo("greeting.txt", typeof(PLangPath), ctx);
+        var (value, _) = Conversion.TryConvertTo("greeting.txt", typeof(PLangPath), context);
         var read = new global::app.module.file.Read
         {
-            Context = ctx,
+            Context = context,
             Path = new global::app.data.@this<PLangPath>("", (PLangPath)value!),
         };
         var result = await read.Run();

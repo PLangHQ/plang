@@ -23,7 +23,7 @@ namespace PLang.Tests.App.Types.PathTests.Http;
 /// </summary>
 public class HttpPathRedirectTests
 {
-    private static (AppEngine app, Ctx ctx) MakeApp()
+    private static (AppEngine app, Ctx context) MakeApp()
     {
         var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-http-redirect-" + System.Guid.NewGuid().ToString("N"));
@@ -32,20 +32,20 @@ public class HttpPathRedirectTests
         return (app, app.User.Context);
     }
 
-    private static async Task Grant(Ctx ctx, string url)
+    private static async Task Grant(Ctx context, string url)
     {
         var perm = new PathPermission(
-            "User", new HttpPath(url, ctx).Absolute,
+            "User", new HttpPath(url, context).Absolute,
             PermVerb.AllowAll(),
             PermMatch.Exact);
-        await ctx.Actor!.Permission.Add(new global::app.data.@this<PathPermission>("", perm) { Context = ctx });
+        await context.Actor!.Permission.Add(new global::app.data.@this<PathPermission>("", perm) { Context = context });
     }
 
     [Test]
     public async Task Redirect_ToUnauthorizedHost_DeniedByGate_NotFollowed()
     {
         using var server = new HttpTestServer();
-        var (_, ctx) = MakeApp();
+        var (_, context) = MakeApp();
 
         // Seed the "IMDS secret" directly into the server store — bypasses
         // the PLang gate, so the actor never holds a grant for this URL.
@@ -54,10 +54,10 @@ public class HttpPathRedirectTests
         // Origin 302s to the secret. Only the origin is granted; the
         // redirect target must hit the gate and get denied by the canned 'n'.
         var origin = server.MapRedirect(302, secret);
-        await Grant(ctx, origin);
-        ctx.Actor!.Channels.Register(new CannedAnswerChannel("n"));
+        await Grant(context, origin);
+        context.Actor!.Channels.Register(new CannedAnswerChannel("n"));
 
-        var result = await new HttpPath(origin, ctx).ReadText();
+        var result = await new HttpPath(origin, context).ReadText();
 
         await Assert.That(result.Success).IsFalse();
         // The deny comes from PermissionDenied on the redirect target —
@@ -71,15 +71,15 @@ public class HttpPathRedirectTests
     public async Task Redirect_ToAuthorizedHost_FollowsAndReturnsTargetBody()
     {
         using var server = new HttpTestServer();
-        var (_, ctx) = MakeApp();
+        var (_, context) = MakeApp();
 
         var target = server.MapStoredBody(System.Text.Encoding.UTF8.GetBytes("target-body"));
 
         var origin = server.MapRedirect(302, target);
-        await Grant(ctx, origin);
-        await Grant(ctx, target);
+        await Grant(context, origin);
+        await Grant(context, target);
 
-        var result = await new HttpPath(origin, ctx).ReadText();
+        var result = await new HttpPath(origin, context).ReadText();
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsEqualTo("target-body");
@@ -89,12 +89,12 @@ public class HttpPathRedirectTests
     public async Task Redirect_ToUnsupportedScheme_RejectedTypedError()
     {
         using var server = new HttpTestServer();
-        var (_, ctx) = MakeApp();
+        var (_, context) = MakeApp();
 
         var origin = server.MapRedirect(302, "ftp://example.invalid/etc/passwd");
-        await Grant(ctx, origin);
+        await Grant(context, origin);
 
-        var result = await new HttpPath(origin, ctx).ReadText();
+        var result = await new HttpPath(origin, context).ReadText();
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("UnsupportedRedirectScheme");
@@ -104,7 +104,7 @@ public class HttpPathRedirectTests
     public async Task Redirect_Loop_ExhaustsHopCap_ReturnsTooManyRedirects()
     {
         using var server = new HttpTestServer();
-        var (_, ctx) = MakeApp();
+        var (_, context) = MakeApp();
 
         // A chain of 7 redirects, each pre-granted. Cap is 5 hops; the 6th
         // FollowRedirect call has hopsLeft=0 and returns TooManyRedirects.
@@ -117,9 +117,9 @@ public class HttpPathRedirectTests
         }
 
         for (int i = 0; i < 7; i++)
-            await Grant(ctx, chain[i]);
+            await Grant(context, chain[i]);
 
-        var result = await new HttpPath(chain[0], ctx).ReadText();
+        var result = await new HttpPath(chain[0], context).ReadText();
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("TooManyRedirects");
@@ -135,20 +135,20 @@ public class HttpPathRedirectTests
         // old shape because the second POST silently sends no body — target
         // store ends up with an empty entry instead of "preserved-body".
         using var server = new HttpTestServer();
-        var (_, ctx) = MakeApp();
+        var (_, context) = MakeApp();
 
         // Target — an unwritten URL the server's POST handler will populate.
         var target = server.NewResourceUrl();
         var origin = server.MapRedirect(307, target);
 
-        await Grant(ctx, origin);
-        await Grant(ctx, target);
+        await Grant(context, origin);
+        await Grant(context, target);
 
-        var writeResult = await new HttpPath(origin, ctx).WriteText("preserved-body");
+        var writeResult = await new HttpPath(origin, context).WriteText("preserved-body");
         await Assert.That(writeResult.Success).IsTrue();
 
         // Round-trip: the target should now hold the body that 307 carried.
-        var readResult = await new HttpPath(target, ctx).ReadText();
+        var readResult = await new HttpPath(target, context).ReadText();
         await Assert.That(readResult.Success).IsTrue();
         await Assert.That(readResult.Value).IsEqualTo("preserved-body");
     }
@@ -157,15 +157,15 @@ public class HttpPathRedirectTests
     public async Task Redirect_Signature_IsFreshForDestination_NotOriginalUrl()
     {
         using var server = new HttpTestServer();
-        var (_, ctx) = MakeApp();
+        var (_, context) = MakeApp();
 
         var target = server.MapStoredBody(System.Text.Encoding.UTF8.GetBytes("payload"));
 
         var origin = server.MapRedirect(302, target);
-        await Grant(ctx, origin);
-        await Grant(ctx, target);
+        await Grant(context, origin);
+        await Grant(context, target);
 
-        var result = await new HttpPath(origin, ctx).ReadText();
+        var result = await new HttpPath(origin, context).ReadText();
         await Assert.That(result.Success).IsTrue();
 
         // The second non-write request is the GET that followed the redirect.

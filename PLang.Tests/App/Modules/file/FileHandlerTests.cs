@@ -80,12 +80,12 @@ public class FileHandlerTests : IDisposable
         // unregistered s3:// scheme) is a non-Success data.@this<path>. The
         // handler must surface that typed SchemeNotRegistered error, not NRE
         // on Path.Value.
-        var ctx = _app.User.Context;
-        var failedPath = new Data("path", "s3://bucket/key") { Context = ctx }
-            .As<PLangPath>(ctx);
+        var context = _app.User.Context;
+        var failedPath = new Data("path", "s3://bucket/key") { Context = context }
+            .As<PLangPath>(context);
         await Assert.That(failedPath.Success).IsFalse();   // conversion already failed
 
-        var action = new Read { Context = ctx, Path = failedPath };
+        var action = new Read { Context = context, Path = failedPath };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();

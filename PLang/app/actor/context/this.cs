@@ -289,13 +289,13 @@ public sealed class @this : IDisposable
         private readonly module.EventContext? _previousEvent;
         private readonly @this? _previousStepContext;
 
-        public AnchorScopeDisposable(@this ctx, Action action)
+        public AnchorScopeDisposable(@this context, Action action)
         {
-            _ctx = ctx;
+            _ctx = context;
             _action = action;
-            _previousStep = ctx.Step;
-            _previousGoal = ctx.Goal;
-            _previousEvent = ctx.Event;
+            _previousStep = context.Step;
+            _previousGoal = context.Goal;
+            _previousEvent = context.Event;
             _previousStepContext = action.Step?.Context;
         }
 

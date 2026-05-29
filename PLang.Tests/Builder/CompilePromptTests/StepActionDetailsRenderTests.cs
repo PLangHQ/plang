@@ -47,12 +47,12 @@ public class StepActionDetailsRenderTests
 
         var options = new TemplateOptions { MemberAccessStrategy = new UnsafeMemberAccessStrategy() };
         options.MemberAccessStrategy.IgnoreCasing = true;
-        var ctx = new TemplateContext(options);
-        ctx.SetValue("actions", actions);
-        ctx.SetValue("planStep", new { actions = plannerSet });
+        var context = new TemplateContext(options);
+        context.SetValue("actions", actions);
+        context.SetValue("planStep", new { actions = plannerSet });
 
         var writer = new StringWriter();
-        await fluidTemplate.RenderAsync(writer, Fluid.NullEncoder.Default, ctx);
+        await fluidTemplate.RenderAsync(writer, Fluid.NullEncoder.Default, context);
         return writer.ToString();
     }
 

@@ -1014,14 +1014,14 @@ public sealed class Default : IHttp
         upload action, global::app.@this app, string encoding)
     {
         var content = action.Content.Value;
-        var ctx = action.Context;
+        var context = action.Context;
         if (action.As?.Value is ContentAs contentAs)
         {
             return contentAs switch
             {
-                ContentAs.File => await CreateFileContentAsync(app, ctx, content!.ToString()!),
+                ContentAs.File => await CreateFileContentAsync(app, context, content!.ToString()!),
                 ContentAs.Base64 => data.@this<HttpContent>.Ok(CreateBase64Content(content!.ToString()!)),
-                ContentAs.Form => await CreateFormContentAsync(app, ctx, content!),
+                ContentAs.Form => await CreateFormContentAsync(app, context, content!),
                 ContentAs.Text => data.@this<HttpContent>.Ok(new StringContent(
                     content is string s ? s : JsonSerializer.Serialize(content),
                     Encoding.GetEncoding(encoding))),
@@ -1033,7 +1033,7 @@ public sealed class Default : IHttp
         if (content is Dictionary<string, object> ||
             content is JsonElement je && je.ValueKind == JsonValueKind.Object)
         {
-            return await CreateFormContentAsync(app, ctx, content);
+            return await CreateFormContentAsync(app, context, content);
         }
 
         if (content is string str)
@@ -1042,10 +1042,10 @@ public sealed class Default : IHttp
             // Out-of-root probes prompt or deny; in-root fast-passes. Any failure
             // (including denial) falls through to "treat as a string body" —
             // matches the prior "if not a file, send as string" shape.
-            var p = global::app.type.path.@this.Resolve(str, ctx);
+            var p = global::app.type.path.@this.Resolve(str, context);
             var exists = await p.ExistsAsync();
             if (exists.Success && exists.Value == true)
-                return await CreateFileContentAsync(app, ctx, str);
+                return await CreateFileContentAsync(app, context, str);
 
             return data.@this<HttpContent>.Ok(new StringContent(str, Encoding.GetEncoding(encoding)));
         }

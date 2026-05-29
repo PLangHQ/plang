@@ -48,7 +48,7 @@ public class VariableResolveTests
         await Assert.That(v.WasPercentWrapped).IsFalse();
     }
 
-    // Slot Data carrying "%x%" must resolve through As<Variable>(ctx) to a Variable
+    // Slot Data carrying "%x%" must resolve through As<Variable>(context) to a Variable
     // whose Name is "x". This is the load-bearing contract for the migration:
     // every former [VariableName] slot will be Data<Variable> after Phase 2. The
     // raw-name carve-out in data.AsT_Impl bypasses %var% substitution for

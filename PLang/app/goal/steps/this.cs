@@ -120,12 +120,12 @@ public sealed class @this : IList<Step>, IContext
     /// Walks forward from parent.Index until a sibling-or-lower-indent step is found.
     /// Used by condition.if to gate its sub-steps on the evaluation result.
     /// </summary>
-    public void DisableChildrenOf(Step parent, bool disabled, actor.context.@this ctx)
+    public void DisableChildrenOf(Step parent, bool disabled, actor.context.@this context)
     {
         for (int i = parent.Index + 1; i < _items.Count; i++)
         {
             if (_items[i].Indent <= parent.Indent) break;
-            _items[i].Context = ctx;
+            _items[i].Context = context;
             _items[i].Disabled = disabled;
         }
     }

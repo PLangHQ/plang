@@ -113,12 +113,12 @@ internal static class LlmTestHelper
     /// <summary>
     /// Creates a basic query action with system + user messages.
     /// </summary>
-    internal static query MakeQuery(global::app.actor.context.@this ctx,
+    internal static query MakeQuery(global::app.actor.context.@this context,
         string systemText = "You are helpful", string userText = "Hello")
     {
         return new query
         {
-            Context = ctx,
+            Context = context,
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "system", Content = systemText },

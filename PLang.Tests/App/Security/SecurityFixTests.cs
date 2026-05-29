@@ -52,7 +52,7 @@ public class SecurityFixTests
         var ranAgain = false;
         var testBinding = new EventBinding(
             EventType.BeforeGoal,
-            handler: (ctx, _, _) =>
+            handler: (context, _, _) =>
             {
                 ranAgain = true;
                 return Task.FromResult(Data.Ok());

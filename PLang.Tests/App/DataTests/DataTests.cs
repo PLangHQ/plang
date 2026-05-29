@@ -1110,9 +1110,9 @@ public class DataTests
 
         // Stage 3: archived.Value is the gzip byte[] directly (no inner gzip Data).
         await using var engine = new global::app.@this("/test");
-        var ctx = new global::app.actor.context.@this(engine);
+        var context = new global::app.actor.context.@this(engine);
         var archived = new Data("", compressed, Type.FromName("archived"));
-        archived.Context = ctx;
+        archived.Context = context;
 
         var result = archived.Decompress();
 

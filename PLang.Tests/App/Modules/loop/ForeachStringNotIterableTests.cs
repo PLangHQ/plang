@@ -27,8 +27,8 @@ public class ForeachStringNotIterableTests
     [Test]
     public async Task Foreach_StringCollection_RunsBodyExactlyOnce()
     {
-        var ctx = _app.User.Context;
-        ctx.Variables.Set("s", "hello");
+        var context = _app.User.Context;
+        context.Variables.Set("s", "hello");
 
         // Body goal runs once per iteration.
         var goal = new Goal { Name = "DoNothing", Path = "/DoNothing.goal", Steps = new GoalSteps() };
@@ -47,7 +47,7 @@ public class ForeachStringNotIterableTests
         foreachAction.Step = step;
         goalCallAction.Step = step;
 
-        var result = await step.RunAsync(ctx);
+        var result = await step.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
         var loopResult = result.Value as LoopResult;
@@ -58,8 +58,8 @@ public class ForeachStringNotIterableTests
     [Test]
     public async Task Foreach_StringCollection_BodyReceivesWholeString()
     {
-        var ctx = _app.User.Context;
-        ctx.Variables.Set("s", "hello");
+        var context = _app.User.Context;
+        context.Variables.Set("s", "hello");
 
         var goal = new Goal { Name = "DoNothing", Path = "/DoNothing.goal", Steps = new GoalSteps() };
         _app.Goals.Add(goal);
@@ -77,17 +77,17 @@ public class ForeachStringNotIterableTests
         foreachAction.Step = step;
         goalCallAction.Step = step;
 
-        await step.RunAsync(ctx);
+        await step.RunAsync(context);
 
-        await Assert.That(ctx.Variables.GetValue("item")).IsEqualTo("hello");
+        await Assert.That(context.Variables.GetValue("item")).IsEqualTo("hello");
     }
 
     // Same single-iteration shape for non-iterable scalars in general.
     [Test]
     public async Task Foreach_NumberCollection_RunsBodyOnceWithNumber()
     {
-        var ctx = _app.User.Context;
-        ctx.Variables.Set("n", 42);
+        var context = _app.User.Context;
+        context.Variables.Set("n", 42);
 
         var goal = new Goal { Name = "DoNothing", Path = "/DoNothing.goal", Steps = new GoalSteps() };
         _app.Goals.Add(goal);
@@ -105,11 +105,11 @@ public class ForeachStringNotIterableTests
         foreachAction.Step = step;
         goalCallAction.Step = step;
 
-        var result = await step.RunAsync(ctx);
+        var result = await step.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
         var loopResult = result.Value as LoopResult;
         await Assert.That(loopResult!.itemCount).IsEqualTo(1);
-        await Assert.That(ctx.Variables.GetValue("item")).IsEqualTo(42);
+        await Assert.That(context.Variables.GetValue("item")).IsEqualTo(42);
     }
 }

@@ -240,15 +240,15 @@ public abstract class @this : IAsyncDisposable, IDisposable
         // Bindings receive (context, action=null, result=data). The context comes
         // from the channel's owning Actor when the channel went through
         // Channels.Register; tests sometimes construct a channel directly without
-        // an Actor. Most handlers don't read ctx (they capture what they need at
+        // an Actor. Most handlers don't read context (they capture what they need at
         // registration), so we forward null rather than skip — handlers that *do*
-        // need ctx (notably the one event.on installs to dispatch a goal) can
+        // need context (notably the one event.on installs to dispatch a goal) can
         // guard locally. The diagnostic surfaces the case so production paths
         // can be spotted in --debug output.
-        var ctx = Actor?.Context;
-        if (ctx == null)
-            _ = Channels?.App?.Debug?.Write($"[Channel '{Name}'] binding {binding.Id} firing with no Actor — handlers receive null ctx");
-        return binding.Handler(ctx!, null, data);
+        var context = Actor?.Context;
+        if (context == null)
+            _ = Channels?.App?.Debug?.Write($"[Channel '{Name}'] binding {binding.Id} firing with no Actor — handlers receive null context");
+        return binding.Handler(context!, null, data);
     }
 
     /// <summary>Closes the channel and any owned resources.</summary>

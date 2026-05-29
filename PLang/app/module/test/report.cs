@@ -46,7 +46,7 @@ public partial class report : IContext
 
         // Write the file artefact through path verbs (gated). .test/ lives
         // at the app root.
-        var ctx = Context;
+        var context = Context;
         string reportFile;
         string content;
         global::app.type.path.@this writeTarget;
@@ -54,11 +54,11 @@ public partial class report : IContext
         {
             case "junit":
                 content = BuildJUnit(results);
-                writeTarget = global::app.type.path.@this.Resolve("/.test/junit.xml", ctx);
+                writeTarget = global::app.type.path.@this.Resolve("/.test/junit.xml", context);
                 break;
             default: // "json"
                 content = BuildJson(results, testing);
-                writeTarget = global::app.type.path.@this.Resolve("/.test/results.json", ctx);
+                writeTarget = global::app.type.path.@this.Resolve("/.test/results.json", context);
                 break;
         }
         // WriteText creates parent dirs via EnsureParentDir; AuthGate(Write)
