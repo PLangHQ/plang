@@ -757,3 +757,9 @@ just returned with X."
 Revisit when stage 2a's coder gets to the implementation — the recursive
 shape may obviously be the wrong abstraction in code form even though
 it works on paper.
+
+## 2026-05-29 — audio transcription module: review real-time voice-agent reference
+
+When we build a module that can transcribe audio, check out
+https://nemorize.com/roadmaps/building-real-time-voice-agents-from-scratch
+as a reference for the design (real-time voice agent architecture).
