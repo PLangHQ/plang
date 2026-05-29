@@ -1,6 +1,6 @@
 using app;
 using app.actor.context;
-using app.variables;
+using app.variable;
 using app.types.path;
 
 namespace PLang.Tests.App;
@@ -92,7 +92,7 @@ public class PlangRuntimeTests : IDisposable
         var onAction = new global::app.modules.@event.On
         {
             Context = context,
-            Type = global::app.events.EventType.BeforeStep,
+            Type = global::app.@event.EventType.BeforeStep,
             GoalToCall = new GoalCall { Name = "LogBefore" },
             StepPattern = "*"
         };

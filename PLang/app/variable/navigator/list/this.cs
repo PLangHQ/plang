@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace app.variables.navigators;
+namespace app.variable.navigator.list;
 
 /// <summary>
 /// Registry of navigators by type. Each type can have a registered navigator
@@ -9,7 +9,7 @@ namespace app.variables.navigators;
 public sealed class @this
 {
     private readonly ConcurrentDictionary<System.Type, INavigator> _navigators = new();
-    private readonly INavigator _fallback = new global::app.variables.navigators.Object();
+    private readonly INavigator _fallback = new global::app.variable.navigator.Object();
 
     /// <summary>
     /// Register a navigator for a specific type.
@@ -56,8 +56,8 @@ public sealed class @this
     /// </summary>
     public void RegisterDefaults()
     {
-        Register(typeof(System.Collections.IList), new global::app.variables.navigators.List());
-        Register(typeof(IDictionary<string, object?>), new global::app.variables.navigators.Dictionary());
-        Register(typeof(IDictionary<,>), new global::app.variables.navigators.Dictionary());
+        Register(typeof(System.Collections.IList), new global::app.variable.navigator.List());
+        Register(typeof(IDictionary<string, object?>), new global::app.variable.navigator.Dictionary());
+        Register(typeof(IDictionary<,>), new global::app.variable.navigator.Dictionary());
     }
 }

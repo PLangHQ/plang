@@ -2,7 +2,7 @@ using app;
 using app.actor.context;
 using app.error;
 using app.goals.goal;
-using app.variables;
+using app.variable;
 
 namespace PLang.Tests.App.Goals.Setup;
 

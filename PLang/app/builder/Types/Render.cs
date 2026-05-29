@@ -176,7 +176,7 @@ public sealed partial class @this
         var unwrapped = UnwrapDataAndNullable(prop.PropertyType);
         // Variable-name slots advertise as "string" — the LLM emits a name, not the
         // type-marker token. Same convention as Modules.@this.Describe().
-        if (typeof(app.variables.IRawNameResolvable).IsAssignableFrom(unwrapped))
+        if (typeof(app.variable.IRawNameResolvable).IsAssignableFrom(unwrapped))
             return "string";
         return _modules.App?.Types.GetTypeName(unwrapped)
                ?? unwrapped.Name.ToLowerInvariant();

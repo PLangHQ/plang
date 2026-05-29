@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using app;
 using app.error;
-using app.variables;
+using app.variable;
 namespace app.channels;
 
 /// <summary>

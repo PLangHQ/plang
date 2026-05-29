@@ -10,14 +10,14 @@ global using StepActions = app.goals.goal.steps.step.actions.@this;
 global using ActionModifiers = app.goals.goal.steps.step.actions.action.modifiers.@this;
 
 // Event types
-global using AppEvents = app.events.@this;
-global using Lifecycle = app.events.lifecycle.@this;
-global using Bindings = app.events.lifecycle.bindings.@this;
+global using AppEvents = app.@event.list.@this;
+global using Lifecycle = app.@event.lifecycle.@this;
+global using Bindings = app.@event.lifecycle.binding.list.@this;
 
 // Event types WITH conflicts — require per-file handling:
 // AppEvents alias (not "Events") avoids collision with PLang.Events namespace
-// EventType: v1 PLang.Events conflict — use: using app.events; or per-file alias
-// EventBinding: v1 PLang.Events conflict — use: using EventBinding = app.events.lifecycle.bindings.binding.@this;
+// EventType: v1 PLang.Events conflict — use: using app.@event; or per-file alias
+// EventBinding: v1 PLang.Events conflict — use: using EventBinding = app.@event.lifecycle.binding.@this;
 
 // Modules subsystem (action registry)
 global using AppModules = app.modules.@this;
@@ -50,7 +50,7 @@ global using AppTypes = app.types.@this;
 global using AppCode = app.modules.code.@this;
 
 // Variables (was MemoryStack)
-global using Variables = app.variables.@this;
+global using Variables = app.variable.list.@this;
 
 // Snapshot subsystem
 global using Snapshot = app.snapshot.@this;

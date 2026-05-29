@@ -8,7 +8,7 @@ using app.types.path;
 using app.error;
 using app.types.path;
 using app.goals.goal;
-using app.variables;
+using app.variable;
 
 namespace app.modules.ui.code;
 

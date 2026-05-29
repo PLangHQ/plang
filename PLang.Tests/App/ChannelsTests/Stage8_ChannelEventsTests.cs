@@ -1,5 +1,5 @@
-using app.events;
-using app.events.lifecycle.bindings.binding;
+using app.@event;
+using app.@event.lifecycle.binding;
 
 namespace PLang.Tests.App.ChannelsTests;
 

@@ -1,4 +1,4 @@
-namespace app.variables;
+namespace app.variable;
 
 /// <summary>
 /// Identifies a variable by name. Used as the wrapped type in <c>Data&lt;Variable&gt;</c>

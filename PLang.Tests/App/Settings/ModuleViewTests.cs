@@ -1,6 +1,6 @@
 using app;
 using app.actor.context;
-using app.variables;
+using app.variable;
 using app.config;
 using SigningConfig = global::app.modules.signing.Config;
 using EngineType = global::app.@this;

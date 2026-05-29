@@ -1,5 +1,5 @@
 using app.actor.context;
-using app.variables;
+using app.variable;
 using app.modules;
 
 namespace PLang.Tests.App.actions;

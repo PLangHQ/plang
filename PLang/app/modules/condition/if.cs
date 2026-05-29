@@ -1,5 +1,5 @@
 using app;
-using app.variables;
+using app.variable;
 using app.modules.condition.code;
 using Action = app.goals.goal.steps.step.actions.action.@this;
 

@@ -1,7 +1,7 @@
 using app.actor.context;
 using app.modules.settings;
 using app.error;
-using app.variables;
+using app.variable;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.datasource;

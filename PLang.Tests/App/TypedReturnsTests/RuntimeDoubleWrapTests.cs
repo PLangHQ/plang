@@ -1,6 +1,6 @@
 using System.Reflection;
 using app.modules.list;
-using app.variables;
+using app.variable;
 using MathAdd = app.modules.math.Add;
 
 namespace PLang.Tests.App.TypedReturnsTests;

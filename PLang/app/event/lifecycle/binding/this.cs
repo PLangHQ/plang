@@ -1,10 +1,10 @@
 using System.Text.RegularExpressions;
 using app.actor.context;
-using app.events;
-using app.variables;
+using app.@event;
+using app.variable;
 using Action = app.goals.goal.steps.step.actions.action.@this;
 
-namespace app.events.lifecycle.bindings.binding;
+namespace app.@event.lifecycle.binding;
 
 /// <summary>
 /// Represents an event binding in App.

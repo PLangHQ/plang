@@ -1,5 +1,5 @@
 using app.error;
-using app.variables;
+using app.variable;
 using Type = global::app.data.type;
 
 namespace PLang.Tests.App.DataTests;

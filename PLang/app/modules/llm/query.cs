@@ -1,6 +1,6 @@
 using app.Attributes;
 using app.goals.goal;
-using app.variables;
+using app.variable;
 using app.modules.llm.code;
 
 namespace app.modules.llm;

@@ -1,4 +1,4 @@
-using app.variables;
+using app.variable;
 using ExampleSpec = app.builder.Types.Spec.Example;
 using ActionSpec = app.builder.Types.Spec.Action;
 using number = global::app.types.number.@this;

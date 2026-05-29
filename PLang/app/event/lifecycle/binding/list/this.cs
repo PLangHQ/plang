@@ -1,10 +1,10 @@
 using app.actor.context;
-using app.events;
-using app.variables;
+using app.@event;
+using app.variable;
 using Action = app.goals.goal.steps.step.actions.action.@this;
-using EventBinding = app.events.lifecycle.bindings.binding.@this;
+using EventBinding = app.@event.lifecycle.binding.@this;
 
-namespace app.events.lifecycle.bindings;
+namespace app.@event.lifecycle.binding.list;
 
 public sealed class @this
 {

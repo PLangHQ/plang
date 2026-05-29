@@ -1,4 +1,4 @@
-using app.variables;
+using app.variable;
 using app.modules.module;
 using PLangEngine = global::app.@this;
 

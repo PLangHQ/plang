@@ -1,4 +1,4 @@
-using app.variables;
+using app.variable;
 using number = global::app.types.number.@this;
 
 namespace app.modules.math;

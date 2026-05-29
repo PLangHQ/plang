@@ -1,8 +1,8 @@
 using System.Text.RegularExpressions;
 using app;
-using app.variables;
-using app.events;
-using EventBinding = app.events.lifecycle.bindings.binding.@this;
+using app.variable;
+using app.@event;
+using EventBinding = app.@event.lifecycle.binding.@this;
 
 namespace app.modules.mock;
 
@@ -88,7 +88,7 @@ public partial class intercept : IContext
         return null;
     }
 
-    private static Dictionary<string, object?> CaptureParameters(app.goals.goal.steps.step.actions.action.@this? action, variables.@this variables)
+    private static Dictionary<string, object?> CaptureParameters(app.goals.goal.steps.step.actions.action.@this? action, global::app.variable.list.@this variables)
     {
         var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         if (action == null) return result;
@@ -102,7 +102,7 @@ public partial class intercept : IContext
     }
 
     private static bool ParametersMatch(
-        app.goals.goal.steps.step.actions.action.@this action, variables.@this variables, Dictionary<string, object?> matchers)
+        app.goals.goal.steps.step.actions.action.@this action, global::app.variable.list.@this variables, Dictionary<string, object?> matchers)
     {
         foreach (var (name, expected) in matchers)
         {
@@ -117,7 +117,7 @@ public partial class intercept : IContext
         return true;
     }
 
-    private static object? ResolveParamValue(data.@this param, variables.@this variables)
+    private static object? ResolveParamValue(data.@this param, global::app.variable.list.@this variables)
     {
         if (param.Value is string s && s.Contains('%'))
             return variables.Resolve(s);

@@ -1,6 +1,6 @@
 using app;
 using app.actor.context;
-using app.variables;
+using app.variable;
 
 namespace app.modules.goal;
 

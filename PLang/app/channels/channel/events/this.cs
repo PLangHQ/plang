@@ -1,5 +1,5 @@
-using EventBinding = global::app.events.lifecycle.bindings.binding.@this;
-using EventType = global::app.events.EventType;
+using EventBinding = global::app.@event.lifecycle.binding.@this;
+using EventType = global::app.@event.EventType;
 
 namespace app.channels.channel.events;
 

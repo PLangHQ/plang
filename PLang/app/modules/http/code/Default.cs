@@ -8,7 +8,7 @@ using app.channels.serializers;
 using app.actor.context;
 using app.error;
 using app.goals.goal;
-using app.variables;
+using app.variable;
 using PlangType = app.data.type;
 using app.config;
 using app.modules.signing;

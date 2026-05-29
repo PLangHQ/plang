@@ -1,4 +1,4 @@
-namespace app.variables.navigators;
+namespace app.variable.navigator;
 
 /// <summary>
 /// Navigates a Data object's content by key.

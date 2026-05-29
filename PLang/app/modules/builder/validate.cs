@@ -1,4 +1,4 @@
-using app.variables;
+using app.variable;
 using app.modules.builder.code;
 using Actions = app.goals.goal.steps.step.actions.@this;
 

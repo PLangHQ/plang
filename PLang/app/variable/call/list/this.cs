@@ -1,10 +1,10 @@
-namespace app.variables.calls;
+namespace app.variable.call.list;
 
 /// <summary>
-/// Per-call parameter scopes for <see cref="app.variables.@this"/>.
+/// Per-call parameter scopes for <see cref="app.variable.list.@this"/>.
 ///
 /// Goal-call boundaries (and any other code that wants per-call name binding) push a
-/// <see cref="call.@this"/> frame here. <see cref="app.variables.@this.Get"/> consults
+/// <see cref="call.@this"/> frame here. <see cref="app.variable.list.@this.Get"/> consults
 /// <see cref="Current"/> first, then falls back to the actor-shared dictionary.
 ///
 /// AsyncLocal scoping means concurrent calls on the same actor each see their own

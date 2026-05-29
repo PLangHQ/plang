@@ -1,6 +1,6 @@
 using System.Text.Json;
 using app.actor.context;
-using app.variables;
+using app.variable;
 using app.modules.code;
 using app.modules.llm;
 using app.modules.llm.code;

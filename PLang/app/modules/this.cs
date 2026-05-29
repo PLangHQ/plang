@@ -565,7 +565,7 @@ public sealed class @this : IAsyncDisposable
 
     /// <summary>
     /// True when <paramref name="propType"/> is <c>Data&lt;T&gt;</c> (or its nullable
-    /// wrap) for a T that implements <see cref="app.variables.IRawNameResolvable"/>.
+    /// wrap) for a T that implements <see cref="app.variable.IRawNameResolvable"/>.
     /// The property type is the carrier of "this slot names a variable" — the catalog
     /// builder uses this to mark <c>%var%</c>-shape parameters in the LLM prompt.
     /// </summary>
@@ -575,7 +575,7 @@ public sealed class @this : IAsyncDisposable
         if (!underlying.IsGenericType) return false;
         if (underlying.GetGenericTypeDefinition() != typeof(data.@this<>)) return false;
         var inner = underlying.GetGenericArguments()[0];
-        return typeof(app.variables.IRawNameResolvable).IsAssignableFrom(inner);
+        return typeof(app.variable.IRawNameResolvable).IsAssignableFrom(inner);
     }
 }
 

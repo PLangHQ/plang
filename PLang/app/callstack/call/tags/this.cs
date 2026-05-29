@@ -6,7 +6,7 @@ namespace app.callstack.call.tags;
 ///
 /// Owns its lock; parallel foreach branches dispatching <c>tag</c> resolve to the same
 /// caller's frame and Set lands safely. Implements <see cref="IDictionary{TKey,TValue}"/>
-/// for natural PLang access via global::app.variables.navigators.Dictionary (<c>%!callStack.Caller.Tags.foo%</c>);
+/// for natural PLang access via global::app.variable.navigator.Dictionary (<c>%!callStack.Caller.Tags.foo%</c>);
 /// mutation methods other than <see cref="Set"/> throw — only the writer pattern this
 /// type owns is allowed, and external <c>Add/Remove/Clear</c> would bypass the lock.
 /// Iteration takes a snapshot so readers don't race writes.

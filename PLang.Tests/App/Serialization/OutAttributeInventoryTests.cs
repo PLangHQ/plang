@@ -88,11 +88,11 @@ public class OutAttributeInventoryTests
     // 4. Variable ------------------------------------------------------------
     [Test] public async Task Variable_Name_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.variables.Variable), "Name")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.variable.Variable), "Name")).IsTrue();
     }
     [Test] public async Task Variable_RawValue_WasPercentWrapped_NotOut()
     {
-        var t = typeof(global::app.variables.Variable);
+        var t = typeof(global::app.variable.Variable);
         await Assert.That(HasOut(t, "RawValue")).IsFalse();
         await Assert.That(HasOut(t, "WasPercentWrapped")).IsFalse();
     }

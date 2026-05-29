@@ -1,5 +1,5 @@
 using app;
-using app.variables;
+using app.variable;
 using Action = app.goals.goal.steps.step.actions.action.@this;
 
 namespace app.modules.loop;

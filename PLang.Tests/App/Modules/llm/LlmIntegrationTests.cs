@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using app.actor.context;
 using app.goals.goal;
-using app.variables;
+using app.variable;
 using app.modules.http.code;
 using app.modules.llm;
 using app.modules.llm.code;

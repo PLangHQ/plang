@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 using app.error;
-using app.variables;
+using app.variable;
 
 namespace app.modules.condition.code;
 

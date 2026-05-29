@@ -1,6 +1,6 @@
 using app.actor.context;
 using app;
-using app.variables;
+using app.variable;
 using app.modules.math;
 
 namespace PLang.Tests.App.actions.math;

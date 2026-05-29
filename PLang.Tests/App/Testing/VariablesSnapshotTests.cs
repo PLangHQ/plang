@@ -1,4 +1,4 @@
-using app.variables;
+using app.variable;
 
 namespace PLang.Tests.App.Tester;
 

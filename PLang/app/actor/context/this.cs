@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using app;
-using app.variables;
-using app.events;
+using app.variable;
+using app.@event;
 using Goal = app.goals.goal.@this;
 using Action = app.goals.goal.steps.step.actions.action.@this;
 using Setup = app.goals.setup.@this;

@@ -1,5 +1,5 @@
 using app;
-using app.variables;
+using app.variable;
 
 namespace app.modules.module;
 

@@ -2,7 +2,7 @@ using Microsoft.Data.Sqlite;
 using app.types.path;
 using app.channels.serializers.serializer;
 using app.error;
-using app.variables;
+using app.variable;
 using app.Utils;
 
 namespace app.modules.settings;

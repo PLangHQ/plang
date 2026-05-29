@@ -1,5 +1,5 @@
 using System.ComponentModel;
-using app.variables;
+using app.variable;
 
 namespace app.modules.goal;
 

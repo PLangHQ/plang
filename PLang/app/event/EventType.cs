@@ -1,4 +1,4 @@
-namespace app.events;
+namespace app.@event;
 
 /// <summary>
 /// Types of events in the PLang runtime lifecycle.

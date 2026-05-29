@@ -1,4 +1,4 @@
-using app.variables;
+using app.variable;
 
 using POverflow = global::app.types.number.OverflowMode;
 using number = global::app.types.number.@this;

@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-using app.variables;
+using app.variable;
 namespace app.goals.goal.steps.step.actions.action;
 
 /// <summary>
@@ -238,7 +238,7 @@ public sealed partial class @this : modules.IDataWrappable
     {
         var lifecycle = context.LifecycleFor(this);
 
-        var beforeResult = await lifecycle.Before.Run(context, app.events.EventType.BeforeAction);
+        var beforeResult = await lifecycle.Before.Run(context, app.@event.EventType.BeforeAction);
         if (!beforeResult.Success) return beforeResult;
 
         global::app.data.@this result;
@@ -267,7 +267,7 @@ public sealed partial class @this : modules.IDataWrappable
             context.Variables.Set("!data", result);
         }
 
-        var afterResult = await lifecycle.After.Run(context, app.events.EventType.AfterAction, this, result);
+        var afterResult = await lifecycle.After.Run(context, app.@event.EventType.AfterAction, this, result);
         if (!afterResult.Success) return afterResult;
 
         return result;

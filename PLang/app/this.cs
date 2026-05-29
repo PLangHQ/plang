@@ -6,7 +6,7 @@ using System.Reflection;
 using app.actor.context;
 using app.modules.settings;
 using app.error;
-using app.variables;
+using app.variable;
 using app.modules;
 using app.Utils;
 using Goal = app.goals.goal.@this;
@@ -146,7 +146,7 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Per-type navigator registry for Data navigation.
     /// </summary>
-    public variables.navigators.@this Navigators { get; } = new();
+    public variable.navigator.list.@this Navigators { get; } = new();
 
     /// <summary>
     /// The loaded goals.

@@ -1,4 +1,4 @@
-namespace app.variables;
+namespace app.variable.list;
 
 public partial class @this : ISnapshot
 {

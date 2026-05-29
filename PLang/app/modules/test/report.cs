@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using app.error;
 using app.tester;
-using app.variables;
+using app.variable;
 
 namespace app.modules.test;
 

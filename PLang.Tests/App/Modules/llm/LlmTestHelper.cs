@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using app.variables;
+using app.variable;
 using app.modules.http.code;
 using app.modules.llm;
 using app.modules.llm.code;

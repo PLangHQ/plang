@@ -1,7 +1,7 @@
 using app;
-using app.variables;
-using app.events;
-using EventBinding = app.events.lifecycle.bindings.binding.@this;
+using app.variable;
+using app.@event;
+using EventBinding = app.@event.lifecycle.binding.@this;
 
 namespace app.modules.@event;
 

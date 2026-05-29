@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 using Force.DeepCloner;
 using app.actor.context;
 
-namespace app.variables;
+namespace app.variable.list;
 
 /// <summary>
 /// Thread-safe variable storage for App.
@@ -40,10 +40,10 @@ public partial class @this
     /// Per-type navigator registry for Data navigation. Delegates to the
     /// shared App-level instance — navigators are app-wide infrastructure;
     /// the property is exposed here so the canonical access path is
-    /// <c>app.variables.navigators</c> alongside other variable concerns.
+    /// <c>app.variable.navigator</c> alongside other variable concerns.
     /// </summary>
     [JsonIgnore]
-    public navigators.@this Navigators => _context!.App.Navigators;
+    public navigator.list.@this Navigators => _context!.App.Navigators;
 
     /// <summary>
     /// Per-call parameter scopes. <see cref="Get"/> consults <c>Calls.Current</c> before
@@ -52,7 +52,7 @@ public partial class @this
     /// the same actor.
     /// </summary>
     [JsonIgnore]
-    public calls.@this Calls { get; } = new();
+    public call.list.@this Calls { get; } = new();
 
     [JsonIgnore]
     internal actor.context.@this? Context

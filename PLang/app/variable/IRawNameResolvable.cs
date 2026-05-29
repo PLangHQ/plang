@@ -1,4 +1,4 @@
-namespace app.variables;
+namespace app.variable;
 
 /// <summary>
 /// Marker for types whose <c>static Resolve(string, Context.@this)</c> wants the
@@ -14,7 +14,7 @@ namespace app.variables;
 /// <para>
 /// For name-like Ts (Variable), <c>%x%</c> means "the variable named x" — the slot is
 /// asking for the <em>identity</em>, not the value. The marker tells <c>AsT_Impl</c> to
-/// hand the raw <c>"%x%"</c> straight to <see cref="app.variables.Variable.Resolve"/>,
+/// hand the raw <c>"%x%"</c> straight to <see cref="app.variable.Variable.Resolve"/>,
 /// which strips the <c>%</c> and produces <c>Variable { Name = "x" }</c> regardless of
 /// whether x is initialized.
 /// </para>

@@ -14,7 +14,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     private readonly object _streamLock = new();
     private Action<string, object?, object?>? _streamHandler;
     private Action<string, object?>? _streamCreateHandler;
-    private global::app.variables.@this? _streamVariables;
+    private global::app.variable.list.@this? _streamVariables;
 
     /// <summary>
     /// Wires OnSet + OnCreate on <paramref name="vars"/> so every variable change appends to
@@ -22,7 +22,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     /// a no-op. Both events get captured because Variables.Set fires OnCreate for first-time
     /// names and OnSet only for replace; both are mutations the diff stream cares about.
     /// </summary>
-    internal void EnableDiffStream(global::app.variables.@this? vars)
+    internal void EnableDiffStream(global::app.variable.list.@this? vars)
     {
         if (vars == null || _streamHandler != null) return;
         _streamHandler = (name, before, _) =>

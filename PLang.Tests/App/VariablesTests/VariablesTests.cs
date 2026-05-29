@@ -1,4 +1,4 @@
-using app.variables;
+using app.variable;
 using Type = global::app.data.type;
 
 namespace PLang.Tests.App.VariablesTests;
@@ -890,7 +890,7 @@ public class VariablesAccessorTests
     [Test]
     public async Task Current_ReturnsNewStackIfNotSet()
     {
-        var accessor = new global::app.variables.@thisAccessor();
+        var accessor = new global::app.variable.list.@thisAccessor();
 
         var stack = accessor.Current;
 
@@ -900,7 +900,7 @@ public class VariablesAccessorTests
     [Test]
     public async Task Current_SetAndGet_ReturnsSameStack()
     {
-        var accessor = new global::app.variables.@thisAccessor();
+        var accessor = new global::app.variable.list.@thisAccessor();
         var stack = new Variables();
 
         accessor.Current = stack;

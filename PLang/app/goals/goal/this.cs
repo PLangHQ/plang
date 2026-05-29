@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Serialization;
 using app.Attributes;
-using app.events;
+using app.@event;
 using app.modules;
 using app.Utils;
 namespace app.goals.goal;

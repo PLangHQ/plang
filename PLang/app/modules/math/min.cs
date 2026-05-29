@@ -1,4 +1,4 @@
-using app.variables;
+using app.variable;
 using number = global::app.types.number.@this;
 using POverflow = global::app.types.number.OverflowMode;
 using PPrecision = global::app.types.number.PrecisionMode;

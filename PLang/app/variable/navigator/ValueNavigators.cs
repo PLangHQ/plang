@@ -1,4 +1,4 @@
-namespace app.variables.navigators;
+namespace app.variable.navigator;
 
 /// <summary>
 /// Static fallback chain of navigators in priority order.
@@ -9,10 +9,10 @@ internal static class ValueNavigators
 {
     private static readonly INavigator[] _navigators =
     [
-        new global::app.variables.navigators.Dictionary(),
-        new global::app.variables.navigators.List(),
-        new global::app.variables.navigators.JsonString(),
-        new global::app.variables.navigators.Object(),
+        new global::app.variable.navigator.Dictionary(),
+        new global::app.variable.navigator.List(),
+        new global::app.variable.navigator.JsonString(),
+        new global::app.variable.navigator.Object(),
     ];
 
     public static global::app.data.@this Navigate(global::app.data.@this data, string key)

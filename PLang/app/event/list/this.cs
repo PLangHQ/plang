@@ -1,6 +1,6 @@
-using EventBinding = app.events.lifecycle.bindings.binding.@this;
+using EventBinding = app.@event.lifecycle.binding.@this;
 
-namespace app.events;
+namespace app.@event.list;
 
 /// <summary>
 /// Manages event bindings and dispatching for App.

@@ -17,11 +17,11 @@ global using Goal = app.goals.goal.@this;
 global using Visibility = app.goals.goal.Visibility;
 
 // Event types
-global using EventType = app.events.EventType;
-global using EngineEvents = app.events.@this;
-global using EventBinding = app.events.lifecycle.bindings.binding.@this;
-global using Lifecycle = app.events.lifecycle.@this;
-global using Bindings = app.events.lifecycle.bindings.@this;
+global using EventType = app.@event.EventType;
+global using EngineEvents = app.@event.list.@this;
+global using EventBinding = app.@event.lifecycle.binding.@this;
+global using Lifecycle = app.@event.lifecycle.@this;
+global using Bindings = app.@event.lifecycle.binding.list.@this;
 
 // Modules subsystem (action registry)
 global using EngineModules = app.modules.@this;
@@ -42,7 +42,7 @@ global using DynamicData = global::app.data.DynamicData;
 global using TString = global::app.data.TString;
 
 // Variables (was MemoryStack)
-global using Variables = app.variables.@this;
+global using Variables = app.variable.list.@this;
 
 // Path types (formerly FileSystem)
 global using FileSystem = app.types.path;

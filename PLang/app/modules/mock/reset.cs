@@ -1,5 +1,5 @@
-using app.variables;
-using app.events;
+using app.variable;
+using app.@event;
 
 namespace app.modules.mock;
 

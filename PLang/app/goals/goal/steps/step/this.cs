@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using app.actor.context;
 using app.data;
-using app.variables;
+using app.variable;
 using app.modules;
 using Action = app.goals.goal.steps.step.actions.action.@this;
 
@@ -129,7 +129,7 @@ public sealed partial class @this : modules.IDataWrappable
         context.Step = this;
         var lifecycle = context.LifecycleFor(this);
 
-        var beforeResult = await lifecycle.Before.Run(context, app.events.EventType.BeforeStep);
+        var beforeResult = await lifecycle.Before.Run(context, app.@event.EventType.BeforeStep);
         if (!beforeResult.Success) return beforeResult;
         if (beforeResult.Handled) return beforeResult;
 
@@ -159,7 +159,7 @@ public sealed partial class @this : modules.IDataWrappable
                 ex.Message, key, 400) { Exception = ex });
         }
 
-        var afterResult = await lifecycle.After.Run(context, app.events.EventType.AfterStep);
+        var afterResult = await lifecycle.After.Run(context, app.@event.EventType.AfterStep);
         if (!afterResult.Success) return afterResult;
 
         return result;

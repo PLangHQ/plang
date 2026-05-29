@@ -2,7 +2,7 @@ using System.Diagnostics;
 using app.Utils;
 using System.Text.Json;
 using app.goals.goal;
-using app.variables;
+using app.variable;
 using Goal = app.goals.goal.@this;
 using Actions = app.goals.goal.steps.step.actions.@this;
 

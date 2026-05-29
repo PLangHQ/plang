@@ -1,5 +1,5 @@
 using app.error;
-using app.variables;
+using app.variable;
 
 namespace app.modules.settings;
 

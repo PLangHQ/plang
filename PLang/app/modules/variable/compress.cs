@@ -1,5 +1,5 @@
 using app.Attributes;
-using app.variables;
+using app.variable;
 
 namespace app.modules.variable;
 

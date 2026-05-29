@@ -4,7 +4,7 @@ namespace PLang.Tests.App.Modules.goal;
 
 public class GoalReturnTests
 {
-    private (global::app.actor.context.@this context, global::app.variables.@this memory) CreateContext()
+    private (global::app.actor.context.@this context, global::app.variable.list.@this memory) CreateContext()
     {
         var app = new global::app.@this("/app");
         return (app.User.Context, app.User.Context.Variables);

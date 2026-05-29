@@ -4,7 +4,7 @@ public class VariableResolveTest
 {
     [Test] public async Task Resolve_Bang_SplitsNameAndProperty()
     {
-        var v = global::app.variables.Variable.Resolve("%response!cost%", null!);
+        var v = global::app.variable.Variable.Resolve("%response!cost%", null!);
         await Assert.That(v.Name).IsEqualTo("response");
         await Assert.That(v.Property).IsEqualTo("cost");
         await Assert.That(v.IsMalformed).IsFalse();
@@ -12,7 +12,7 @@ public class VariableResolveTest
 
     [Test] public async Task Resolve_NegationPrefix_KeepsBangInName()
     {
-        var v = global::app.variables.Variable.Resolve("%!flag%", null!);
+        var v = global::app.variable.Variable.Resolve("%!flag%", null!);
         await Assert.That(v.Name).IsEqualTo("!flag");
         await Assert.That(v.Property).IsNull();
         await Assert.That(v.IsMalformed).IsFalse();
@@ -23,42 +23,42 @@ public class VariableResolveTest
         // Negation prefix + property suffix together (`%!x!cost%`) has no
         // defined semantics — caught at parse time so write paths fail with
         // a typed syntax error instead of VariableNotFound on "!x".
-        var v = global::app.variables.Variable.Resolve("%!response!cost%", null!);
+        var v = global::app.variable.Variable.Resolve("%!response!cost%", null!);
         await Assert.That(v.IsMalformed).IsTrue();
         await Assert.That(v.Property).IsNull();
     }
 
     [Test] public async Task Resolve_DoubleBang_FlagsMalformed_NoSplit()
     {
-        var v = global::app.variables.Variable.Resolve("%x!!cost%", null!);
+        var v = global::app.variable.Variable.Resolve("%x!!cost%", null!);
         await Assert.That(v.IsMalformed).IsTrue();
         await Assert.That(v.Property).IsNull();
     }
 
     [Test] public async Task Resolve_TripleBang_FlagsMalformed_NoSplit()
     {
-        var v = global::app.variables.Variable.Resolve("%x!!!cost%", null!);
+        var v = global::app.variable.Variable.Resolve("%x!!!cost%", null!);
         await Assert.That(v.IsMalformed).IsTrue();
         await Assert.That(v.Property).IsNull();
     }
 
     [Test] public async Task Resolve_ChainedBang_FlagsMalformed_NoSplit()
     {
-        var v = global::app.variables.Variable.Resolve("%x!a!b%", null!);
+        var v = global::app.variable.Variable.Resolve("%x!a!b%", null!);
         await Assert.That(v.IsMalformed).IsTrue();
         await Assert.That(v.Property).IsNull();
     }
 
     [Test] public async Task Resolve_EmptyPropertyKey_FlagsMalformed_NoSplit()
     {
-        var v = global::app.variables.Variable.Resolve("%x!%", null!);
+        var v = global::app.variable.Variable.Resolve("%x!%", null!);
         await Assert.That(v.IsMalformed).IsTrue();
         await Assert.That(v.Property).IsNull();
     }
 
     [Test] public async Task Resolve_BangAfterDot_FlagsMalformed_NoSplit()
     {
-        var v = global::app.variables.Variable.Resolve("%x.kind!cost%", null!);
+        var v = global::app.variable.Variable.Resolve("%x.kind!cost%", null!);
         await Assert.That(v.IsMalformed).IsTrue();
         await Assert.That(v.Property).IsNull();
     }
@@ -68,7 +68,7 @@ public class VariableResolveTest
         // Pre-Stage-4 behaviour preserved: `%x.y%` lands as Name="x.y" with no
         // property suffix. The parser's '!' split is the only thing that
         // shortens Name; '.'/'[' paths ride along on Name verbatim.
-        var v = global::app.variables.Variable.Resolve("%planStep.actions%", null!);
+        var v = global::app.variable.Variable.Resolve("%planStep.actions%", null!);
         await Assert.That(v.Name).IsEqualTo("planStep.actions");
         await Assert.That(v.Property).IsNull();
         await Assert.That(v.IsMalformed).IsFalse();
@@ -81,14 +81,14 @@ public class VariableResolveTest
 
         await app.RunAction<global::app.modules.variable.Set>(new global::app.modules.variable.Set
         {
-            Name = new global::app.data.@this<global::app.variables.Variable>("", new global::app.variables.Variable("response")),
+            Name = new global::app.data.@this<global::app.variable.Variable>("", new global::app.variable.Variable("response")),
             Value = global::app.data.@this.Ok("hello"),
         }, ctx);
 
         await app.RunAction<global::app.modules.variable.Set>(new global::app.modules.variable.Set
         {
-            Name = new global::app.data.@this<global::app.variables.Variable>("",
-                global::app.variables.Variable.Resolve("%response!cost%", ctx)),
+            Name = new global::app.data.@this<global::app.variable.Variable>("",
+                global::app.variable.Variable.Resolve("%response!cost%", ctx)),
             Value = global::app.data.@this.Ok(100),
         }, ctx);
 
@@ -103,14 +103,14 @@ public class VariableResolveTest
 
         await app.RunAction<global::app.modules.variable.Set>(new global::app.modules.variable.Set
         {
-            Name = new global::app.data.@this<global::app.variables.Variable>("", new global::app.variables.Variable("response")),
+            Name = new global::app.data.@this<global::app.variable.Variable>("", new global::app.variable.Variable("response")),
             Value = global::app.data.@this.Ok("hello"),
         }, ctx);
 
         var result = await app.RunAction<global::app.modules.variable.Set>(new global::app.modules.variable.Set
         {
-            Name = new global::app.data.@this<global::app.variables.Variable>("",
-                global::app.variables.Variable.Resolve("%response!!cost%", ctx)),
+            Name = new global::app.data.@this<global::app.variable.Variable>("",
+                global::app.variable.Variable.Resolve("%response!!cost%", ctx)),
             Value = global::app.data.@this.Ok(100),
         }, ctx);
 

@@ -1,10 +1,10 @@
-using app.variables;
+using app.variable;
 
 using System.Text;
 using System.Text.RegularExpressions;
 using app.actor.context;
-using app.events;
-using EventBinding = app.events.lifecycle.bindings.binding.@this;
+using app.@event;
+using EventBinding = app.@event.lifecycle.binding.@this;
 
 namespace app.modules.debug;
 

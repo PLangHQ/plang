@@ -2,8 +2,8 @@ using System.Diagnostics;
 using System.Text;
 using app.error;
 using app.tester;
-using app.variables;
-using EventBinding = app.events.lifecycle.bindings.binding.@this;
+using app.variable;
+using EventBinding = app.@event.lifecycle.binding.@this;
 
 namespace app.modules.test;
 
@@ -88,7 +88,7 @@ public partial class run : IContext
         // Coverage subscriber — records every handler fire and every branch index observed.
         // Site key for branches = "goalName:stepIndex"; matches what the report renders.
         var coverageBinding = new EventBinding(
-            app.events.EventType.AfterAction,
+            app.@event.EventType.AfterAction,
             (ctx, action, result) =>
             {
                 if (action != null)
@@ -133,7 +133,7 @@ public partial class run : IContext
         // don't get captured.
         var outputBuf = new StringBuilder();
         var outputBinding = new EventBinding(
-            app.events.EventType.BeforeWrite,
+            app.@event.EventType.BeforeWrite,
             (ctx, _, written) =>
             {
                 // Append newline per write — the stream-channel's text serializer
@@ -159,7 +159,7 @@ public partial class run : IContext
             && string.Equals(step.Goal?.Path?.ToString(), entryGoalPath, StringComparison.Ordinal);
 
         var beforeStepBinding = new EventBinding(
-            app.events.EventType.BeforeStep,
+            app.@event.EventType.BeforeStep,
             (ctx, _, _) =>
             {
                 var step = ctx.Step;
@@ -170,7 +170,7 @@ public partial class run : IContext
             priority: int.MaxValue,
             stopOnError: false);
         var afterStepBinding = new EventBinding(
-            app.events.EventType.AfterStep,
+            app.@event.EventType.AfterStep,
             (ctx, _, _) =>
             {
                 var step = ctx.Step;

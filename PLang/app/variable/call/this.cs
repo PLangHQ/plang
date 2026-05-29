@@ -1,4 +1,4 @@
-namespace app.variables.calls.call;
+namespace app.variable.call;
 
 /// <summary>
 /// One forked flow's variable scope — a mutable overlay over the actor-shared
@@ -18,12 +18,12 @@ public sealed class @this : IAsyncDisposable
 {
     private readonly Dictionary<string, data.@this> _entries =
         new(StringComparer.OrdinalIgnoreCase);
-    private readonly calls.@this _owner;
+    private readonly call.list.@this _owner;
 
     /// <summary>Outer Call (the one that was Current when this was pushed). Null at root.</summary>
     public @this? Caller { get; }
 
-    internal @this(IEnumerable<data.@this>? parameters, @this? caller, calls.@this owner)
+    internal @this(IEnumerable<data.@this>? parameters, @this? caller, call.list.@this owner)
     {
         Caller = caller;
         _owner = owner;
