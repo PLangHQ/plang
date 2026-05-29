@@ -90,6 +90,71 @@ That prints `=== LLM REQUEST ===` blocks for each `llm.query` call, including th
 
 `pass1.response` in the trace files at `.build/traces/` is captured AFTER `builder.validateResponse` + `builder.enrichResponse` run — it's post-pipeline state, not the raw LLM emission. For diagnosing "what the LLM actually returned," use `llmTrace`, not the trace files.
 
+## Confidence per step
+
+All four LLM passes inside the builder — planner (`Plan.llm`), compiler
+(`Compile.llm`), and the two recovery prompts (`RefineActions`,
+`FixValidation`) — emit a `confidence` field with their result:
+
+| Level | Meaning |
+|---|---|
+| `VeryHigh` | The model is certain about every action and every parameter. |
+| `High` | Confident on the verb; minor uncertainty on a single parameter or shape. |
+| `Medium` | Picked one of several plausible actions / shapes; reader should verify. |
+| `Low` | Settled for a fallback. An action the step text implied may be missing from the catalog, or the parameter mapping is ambiguous. |
+| `VeryLow` | No good match for the verb / shape — the result is almost certainly wrong. |
+
+`Medium` and below also carry an `explanation` string. `Low` / `VeryLow`
+surface in build output as warning lines beneath the offending step:
+
+```
+  [✓] compress %original%, write to %archived%
+      ⚠ planner VeryLow: No action matches verb 'compress'.
+      ⚠ compiler VeryLow: The step text requires a 'compress' operation, but the provided action set contains only variable.set.
+```
+
+Both numbers are also persisted to the trace file at
+`.build/traces/<run>/<goal>.json` under `plan.steps[].confidence` and
+`stepPasses[].value.response.confidence` — useful for asserting against
+in tests, though there's currently no automated test that does so.
+
+`VeryHigh` / `High` are silent. They are not always right (the LLM can
+be confidently wrong), but they are the noise floor.
+
+## Builder output routing
+
+Build-time output does not call `Console.WriteLine` and does not write
+directly to `"output"`. The builder registers its own named channel,
+`"builder"`, at the top of `Build.goal` and routes every per-step
+line through it.
+
+```
+os/system/builder/
+  Build.goal               // - set channel "builder" call BuilderChannel
+                           //   ... foreach %goals%, call BuildGoal goal=%item%
+  BuilderChannel.goal      // - write out %!data%
+  EmitBuildEvent.goal      // - render template "/system/builder/templates/output/build-output.template"
+                           //   - write out %msg% channel: "builder"
+  templates/output/build-output.template   // Liquid case-block per event kind
+```
+
+Every call site that previously did `write out "..."` now does
+`call /system/builder/EmitBuildEvent kind="...", <fields>`. The kind
+discriminator is what selects a branch of the template (`build-path`,
+`goalHeader`, `subGoalHeader`, `subGoalDone`, `goalError`, summary etc.).
+
+The point of the indirection is the redirection seam. To replace the
+plain `write out %!data%` sink with a file logger, a structured
+JSON-Lines stream, or a TUI consumer, edit `BuilderChannel.goal` only —
+no PLang source, no template, no other goal changes. The shape of each
+event is fixed by `EmitBuildEvent`'s named parameters; the rendering
+and the routing are decoupled.
+
+`EmitSummary` (per-step `[≡]` cached / `[✓]` fresh marker + any
+confidence warning) is always invoked — the historical gate
+`if %!build.summary% is true` was dropped because the variable was
+never propagated to sub-goal scope, suppressing all per-step output.
+
 ## Builder Version
 
 Each built `.pr` file includes a `version` field set by the builder. This tracks which builder version produced the file.

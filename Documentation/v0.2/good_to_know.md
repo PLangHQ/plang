@@ -1359,3 +1359,70 @@ public sealed class Ask : IExitsGoal
 The carve-out: `Data` with only `Type` set (no Value) still triggers the **Type-side** exit check. The Value-side `ShouldExit()` only fires when a Value is present.
 
 Pattern to copy when adding another resolved-sentinel type: implement `IExitsGoal`, expose a nullable "answer-like" field, override `ShouldExit()` to return false when that field is bound. Don't reach for a separate "ResolvedAsk" subclass — one record, two states, the override carries the semantics.
+
+## Recursion guards belong on the value, not on a parallel context layer
+
+When a type's instance can re-enter itself through its own body (a goal
+channel whose body writes to channels, a step orchestrator that may
+evaluate sub-steps, an event binding that fires on a hook the binding
+itself triggers), the question is *where the "I'm already running" bit
+lives*. Two shapes appear:
+
+1. **Push a parallel view onto the owning context, resolve against it.**
+   Snapshot the registry at boot, override it during the call, swap it
+   back. The lookup site asks "which view am I in?" and walks the
+   resulting collection.
+2. **Put the bit on the instance itself, branch at the lookup site.**
+   One `AsyncLocal<bool> _executing` (private) on the instance, one
+   public `IsExecuting` getter, one `if … return null` at the registry
+   lookup. The registry stays single-view; the instance carries its
+   own discipline.
+
+Default to **#2**. It is the OBP-aligned shape: the type that owns the
+data owns the rule that guards it.
+
+`channels` on `builder-ergonomics` migrated from #1 to #2:
+- **What was deleted** — `Actor.FoundationalChannels`,
+  `FreezeFoundational`, `PushChannelsOverride`,
+  `AsyncLocal<AppChannels?> _channelsOverride`, `AppChannels.Snapshot`,
+  the foundational-lazy-init in the actor.
+- **What replaced it** — `Channel.Goal.@this._executing` +
+  `IsExecuting` (private field, public getter), one branch in
+  `AppChannels.Get`:
+  `if (channel is channel.goal.@this g && g.IsExecuting) return null;`
+
+The shipped bug that forced the migration is the canonical failure mode
+of shape #1: a foundational snapshot taken on first access froze the
+registry to whatever was registered at that moment, making everything
+registered later invisible to writes from inside a goal-channel body.
+The "boot-snapshot" approach also conflated "guard against
+self-recursion" with "see only the boot view of the world", which are
+unrelated concerns. The repro is `.bot/builder-ergonomics/foundational-channels-snapshot-bug.md`.
+
+### Tells that you're drifting back into shape #1
+
+- "The lookup needs to know which view it's in" → add a flag on the
+  resolved object, branch at the lookup instead.
+- "I need an AsyncLocal stack of registries / channels / contexts to
+  swap during the call" → if the *only* reason the stack exists is to
+  hide the calling instance, an AsyncLocal `bool` on the instance is
+  enough.
+- "The snapshot is lazy on first access" → a lazy snapshot ties the
+  view to whatever wall-clock event happened to fire first. Future
+  registrations are silently invisible.
+
+### When shape #1 IS the right answer
+
+If the override needs to expose a **different set of values** (different
+channels, different bindings) — not just hide the calling instance —
+then a real overlay layer earns its keep. The smell-test: can you
+describe the override as "everything stays the same except instance X
+acts as if it weren't here"? If yes, shape #2. If you actually need to
+substitute X with a different X (mocking, scoped-fixture tests, a real
+permission override), shape #1.
+
+Cycle A→B→A under shape #2: A is executing (its `_executing` is true),
+A's body writes to B (B is free), B is executing (its `_executing` is
+true), B's body writes to A — A is now executing on the same async
+context, lookup returns null, `ChannelNotFound` surfaces. The bit flows
+down the await chain; no central registry view to swap.

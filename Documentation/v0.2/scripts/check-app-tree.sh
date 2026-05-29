@@ -86,9 +86,7 @@ mapfile -t actor_props < <(
     | sed -E 's/.*\s([A-Z][A-Za-z0-9_]*)\s*(\{|=>).*/\1/' \
     | sort -u
 )
-actor_skip_regex='^(FoundationalChannels)$'
 for p in "${actor_props[@]}"; do
-  [[ "$p" =~ $actor_skip_regex ]] && continue
   in_doc "$p" || note "actor.@this property '$p' not mentioned in app-tree.md"
 done
 

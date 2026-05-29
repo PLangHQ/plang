@@ -196,6 +196,74 @@
         "health": "No critical/high findings open. One Low: Channels.Channel(name) bypasses IsExecuting guard \u2014 latent recursion hole.",
         "notes": "Net change is a security improvement: AsyncLocal channel-override layer + Snapshot path deleted; recursion guard is local to the resolving party and per-channel."
       }
+    },
+    {
+      "id": "25063114-378c-4ddc-bbd9-4f91f6bd6559",
+      "bot": "docs",
+      "timestamp_start": "2026-05-29T10:00:00Z",
+      "timestamp_end": "2026-05-29T10:35:00Z",
+      "intent": "Close documentation gaps from the IsExecuting-replaces-FoundationalChannels refactor and the builder confidence/channel-routing additions.",
+      "before": {
+        "assumptions": "Auditor PASS, security PASS, tester v2 PASS. Stale FoundationalChannels references in io-channels.md / app-tree.md / check-app-tree.sh. No claude-md or character proposals on branch.",
+        "risk": "A reader following io-channels.md today lands on deleted APIs (FoundationalChannels / PushChannelsOverride). Highest-impact gap on the branch."
+      },
+      "plan": ".bot/builder-ergonomics/docs/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "Documentation/v0.2/io-channels.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Rewrote three sections referencing deleted FoundationalChannels / PushChannelsOverride / FreezeFoundational. Channel.Goal.@this paragraph now describes the AsyncLocal _executing guard with the registry Get() branch quoted from PLang/app/channels/this.cs. Actor-resolution block collapsed to the direct registry. Replace-output example rewritten as a sibling fan-out (the old example would fail under IsExecuting)."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/app-tree.md",
+            "Documentation/v0.2/scripts/check-app-tree.sh"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Dropped FreezeFoundational from the actor tree and the matching skip regex from the canary script."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/build.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added 'Confidence per step' section (level table, warning shape, trace file paths) and 'Builder output routing' section (BuilderChannel.goal / EmitBuildEvent.goal / templates/output/build-output.template architecture, redirection seam, EmitSummary gate-removal note)."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/good_to_know.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Appended 'Recursion guards belong on the value, not on a parallel context layer'. Worked example (channels migration), failure mode of the deleted shape (foundational-snapshot bug), tells for drifting back, when overlay shape IS the right answer (different-values vs hide-the-caller)."
+        },
+        {
+          "paths": [
+            ".bot/builder-ergonomics/docs/v1/plan.md",
+            ".bot/builder-ergonomics/docs/v1/verdict.json",
+            ".bot/builder-ergonomics/docs/summary.md",
+            ".bot/builder-ergonomics/docs-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Docs v1 bookkeeping \u2014 plan, verdict, summary, structured report."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "ready-to-merge",
+        "notes": "Five documentation gaps closed (3 stale-doc, 2 missing-doc). No PLang examples needed, no XML doc gaps detected, no claude-md or character proposals on branch. Branch ready to merge per docs gate."
+      }
     }
   ]
 }
