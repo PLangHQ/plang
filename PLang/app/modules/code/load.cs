@@ -33,12 +33,23 @@ public partial class load : IContext
             return Error(new ActionError(loadResult.Error?.Message ?? "Load failed", "LoadError", 500));
         var assembly = loadResult.Value!;
 
+        // plang-types Stage 7: scan the same assembly for [PlangType] classes
+        // and ITypeRenderer implementations. The type-system additions outrank
+        // built-in registrations at resolution + rendering, but cannot rewrite
+        // what the source generator already baked into compiled handler slots.
+        var typeLoad = global::app.types.Loader.Register(assembly, Context.App.Types);
+        if (!typeLoad.Success)
+            return Error(new ActionError(typeLoad.ErrorMessage ?? "Type load failed",
+                typeLoad.ErrorKey ?? "TypeLoadError", 500));
+
         var providerTypes = assembly.GetExportedTypes()
             .Where(t => typeof(ICode).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
             .ToList();
 
-        if (providerTypes.Count == 0)
-            return Error(new ActionError("No ICode implementations found in assembly", "NoProviders", 400));
+        // A type-only DLL (registers [PlangType] classes but no ICode providers)
+        // is valid — return Ok if either side produced registrations.
+        if (providerTypes.Count == 0 && typeLoad.RegisteredTypes.Count == 0)
+            return Error(new ActionError("No ICode or [PlangType] entries found in assembly", "NoProviders", 400));
 
         var registered = new List<ICode>();
         foreach (var type in providerTypes)
