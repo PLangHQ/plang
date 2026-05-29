@@ -42,10 +42,10 @@ public class TypeAccessorTests
         // Enum types surface ValidValues; find one from the catalog.
         await using var app = new PLangEngine("/test");
         var entries = app.Type.BuildTypeEntries(app.Module);
-        var enumEntry = entries.FirstOrDefault(e => e.Kind == global::app.builder.type.EntryKind.Enum && e.Values != null && e.Values.Count > 0);
+        var enumEntry = entries.FirstOrDefault(e => e.Values != null && e.Values.Count > 0);
         await Assert.That(enumEntry).IsNotNull();
 
-        var t = app.Type[enumEntry!.Name];
+        var t = app.Type[enumEntry!.Value];
         t.Context = app.User.Context;
         await Assert.That(t.ValidValues).IsNotNull();
         await Assert.That(t.ValidValues!.Count).IsGreaterThan(0);

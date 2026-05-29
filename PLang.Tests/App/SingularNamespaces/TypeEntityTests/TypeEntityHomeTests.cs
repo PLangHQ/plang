@@ -56,10 +56,22 @@ public class TypeEntityHomeTests
     }
 
     [Test] public async Task TypeEntity_OnRecordType_FoldedEntryFields_AreReadableOffTheEntity()
-        => Assert.Fail("Stage 4 deferral — Entry fold");
+    {
+        await using var app = new PLangEngine("/test");
+        var entries = app.Type.BuildTypeEntries(app.Module);
+        var record = entries.FirstOrDefault(e => e.Fields != null && e.Fields.Count > 0);
+        await Assert.That(record).IsNotNull();
+        await Assert.That(record!.Fields).IsNotNull();
+        await Assert.That(record.Fields!.Count).IsGreaterThan(0);
+    }
 
     [Test] public async Task BuilderTypesEntry_FieldAndEntryKind_TypesDoNotExist_AfterFold()
-        => Assert.Fail("Stage 4 deferral — Entry fold dissolves these types");
+    {
+        var asm = typeof(global::app.@this).Assembly;
+        await Assert.That(asm.GetType("app.builder.type.Entry")).IsNull();
+        await Assert.That(asm.GetType("app.builder.type.Field")).IsNull();
+        await Assert.That(asm.GetType("app.builder.type.EntryKind")).IsNull();
+    }
 
     [Test] public async Task DataConverter_NewtonsoftTypeConverter_DoesNotExist_AfterMove()
     {

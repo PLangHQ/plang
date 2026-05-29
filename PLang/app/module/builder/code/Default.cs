@@ -60,7 +60,7 @@ public class Default : IBuilder
         if (filter is { Count: > 0 })
         {
             var allTypeNames = new HashSet<string>(
-                schema.Types.Select(t => t.Name), StringComparer.OrdinalIgnoreCase);
+                schema.Types.Select(t => t.Value), StringComparer.OrdinalIgnoreCase);
             var refs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var tokenRx = new System.Text.RegularExpressions.Regex(@"\b[a-zA-Z][\w]*\b");
             var wantedActions = new HashSet<string>(filter, StringComparer.OrdinalIgnoreCase);
@@ -94,7 +94,7 @@ public class Default : IBuilder
                 changed = false;
                 foreach (var t in schema.Types)
                 {
-                    if (!refs.Contains(t.Name)) continue;
+                    if (!refs.Contains(t.Value)) continue;
                     var pieces = new[] { t.ConstructorSignature ?? "" };
                     foreach (var s in pieces)
                         foreach (System.Text.RegularExpressions.Match m in tokenRx.Matches(s))
@@ -111,7 +111,7 @@ public class Default : IBuilder
                 }
             }
 
-            var filteredTypes = schema.Types.Where(t => refs.Contains(t.Name)).ToList();
+            var filteredTypes = schema.Types.Where(t => refs.Contains(t.Value)).ToList();
             schema = new global::app.builder.type.@this(modules)
             {
                 PrimitiveNames = schema.PrimitiveNames,

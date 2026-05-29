@@ -33,7 +33,7 @@ public sealed partial class @this
 
     /// <summary>Record and enum entries referenced by the action catalog.</summary>
     [LlmBuilder]
-    public IReadOnlyList<Entry> Types { get; init; } = System.Array.Empty<Entry>();
+    public IReadOnlyList<global::app.type.@this> Types { get; init; } = System.Array.Empty<global::app.type.@this>();
 
     // ---- Template conveniences (pre-rendered views the Liquid prompt consumes) ----
 
@@ -55,12 +55,12 @@ public sealed partial class @this
             var sb = new StringBuilder();
             foreach (var t in Types)
             {
-                sb.Append("  ").Append(t.Name).Append(": ");
-                if (t.Kind == EntryKind.Enum && t.Values != null)
+                sb.Append("  ").Append(t.Value).Append(": ");
+                if (t.Values != null)
                 {
                     sb.Append(string.Join(" | ", t.Values));
                 }
-                else if (t.Kind == EntryKind.Record && t.Fields != null)
+                else if (t.Fields != null)
                 {
                     sb.Append("{ ");
                     for (int i = 0; i < t.Fields.Count; i++)
@@ -70,7 +70,7 @@ public sealed partial class @this
                     }
                     sb.Append(" }");
                 }
-                else if (t.Kind == EntryKind.Scalar)
+                else
                 {
                     // Scalar: emit just the constructor-input type, not the
                     // `constructor(name: type), properties: ...` verbose form.
@@ -113,7 +113,7 @@ public sealed partial class @this
     public @this Build()
     {
         var primitives = _modules.App?.Type.GetBuilderTypeNames() ?? new List<string>();
-        var types = _modules.App?.Type.BuildTypeEntries(_modules) ?? new List<Entry>();
+        var types = _modules.App?.Type.BuildTypeEntries(_modules) ?? new List<global::app.type.@this>();
 
         return new @this(_modules)
         {
@@ -135,8 +135,6 @@ public sealed partial class @this
             PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
         };
-        // EntryKind emits as "Record" / "Enum" — more useful than the numeric default.
-        options.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
         return System.Text.Json.JsonSerializer.Serialize(this, options);
     }
 }

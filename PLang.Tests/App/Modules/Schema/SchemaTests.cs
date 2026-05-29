@@ -38,32 +38,30 @@ public class SchemaTests
         await Assert.That(schema.Types).IsNotEmpty();
     }
 
-    // The schema surfaces enums as EntryKind.Enum entries with their Values. A
-    // classic case: the `operator` enum reached via condition.if's Operator param.
+    // The schema surfaces enum-shape types as entities with Values populated.
+    // The `operator` enum reached via condition.if's Operator param is the canonical case.
     [Test]
     public async Task Build_SurfacesEnumAsKindEnumWithValues()
     {
         var schema = _app.Module.Schema.Build();
-        var op = schema.Types.FirstOrDefault(t => t.Name == "operator");
+        var op = schema.Types.FirstOrDefault(t => t.Value == "operator");
 
         await Assert.That(op).IsNotNull();
-        await Assert.That(op!.Kind).IsEqualTo(EntryKind.Enum);
-        await Assert.That(op.Values).IsNotNull();
+        await Assert.That(op!.Values).IsNotNull();
         await Assert.That(op.Values!).Contains("==");
         await Assert.That(op.Fields).IsNull();
     }
 
-    // Record types surface as EntryKind.Record with Fields. Goal is the canonical
-    // example — five [LlmBuilder]-marked fields on the Goal.@this class.
+    // Record-shape types surface with Fields populated. Goal is the canonical example —
+    // five [LlmBuilder]-marked fields on the Goal.@this class.
     [Test]
     public async Task Build_SurfacesRecordAsKindRecordWithFields()
     {
         var schema = _app.Module.Schema.Build();
-        var goal = schema.Types.FirstOrDefault(t => t.Name == "goal");
+        var goal = schema.Types.FirstOrDefault(t => t.Value == "goal");
 
         await Assert.That(goal).IsNotNull();
-        await Assert.That(goal!.Kind).IsEqualTo(EntryKind.Record);
-        await Assert.That(goal.Fields).IsNotNull();
+        await Assert.That(goal!.Fields).IsNotNull();
         await Assert.That(goal.Fields!.Any(f => f.Name == "name")).IsTrue();
         await Assert.That(goal.Values).IsNull();
     }
@@ -107,8 +105,10 @@ public class SchemaTests
             if (t.GetProperty("name").GetString() == "operator") { opEntry = t; break; }
         }
         await Assert.That(opEntry).IsNotNull();
-        await Assert.That(opEntry!.Value.GetProperty("kind").GetString()).IsEqualTo("Enum");
-        await Assert.That(opEntry.Value.TryGetProperty("values", out _)).IsTrue();
+        // After Stage 4 Entry-dissolve: enum-shape entries surface via `values` being
+        // populated.  No discriminator enum — the data is the shape.
+        await Assert.That(opEntry!.Value.TryGetProperty("values", out _)).IsTrue();
+        await Assert.That(opEntry.Value.TryGetProperty("fields", out _)).IsFalse();
 
         // ClrType must NOT leak — it's a CLR System.Type, not meaningful to consumers.
         await Assert.That(opEntry.Value.TryGetProperty("clrType", out _)).IsFalse();
