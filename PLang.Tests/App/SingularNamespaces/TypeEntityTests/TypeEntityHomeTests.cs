@@ -25,10 +25,12 @@ public class TypeEntityHomeTests
 
     [Test] public async Task DataType_OnStampedData_ResolvesViaAppTypeIndexer()
     {
-        // ClrType walks through context.app.Types.Clr today — same result as app.Type[Value].
+        // ClrType walks through context.app.Type.Clr today — same result as app.Type[Value].ClrType.
         await using var app = new PLangEngine("/test");
         var d = new global::app.data.@this<string>("", "hello") { Context = app.User.Context };
-        await Assert.That(d.Type!.ClrType).IsEqualTo(app.Type[d.Type.Value]);
+        var fromRegistry = app.Type[d.Type!.Value];
+        fromRegistry.Context = app.User.Context;
+        await Assert.That(d.Type.ClrType).IsEqualTo(fromRegistry.ClrType);
     }
 
     [Test] public async Task TypeEntity_LivesAt_TypeNamespace_NotAppDataNamespace()
@@ -46,10 +48,11 @@ public class TypeEntityHomeTests
         await using var app = new PLangEngine("/test");
         var d = new global::app.data.@this<int>("", 42) { Context = app.User.Context };
         var typeFromData = d.Type;
-        var clrFromRegistry = app.Type["int"];
+        var entityFromRegistry = app.Type["int"];
+        entityFromRegistry.Context = app.User.Context;
         await Assert.That(typeFromData).IsNotNull();
         await Assert.That(typeFromData!.GetType()).IsEqualTo(typeof(global::app.type.@this));
-        await Assert.That(typeFromData.ClrType).IsEqualTo(clrFromRegistry);
+        await Assert.That(typeFromData.ClrType).IsEqualTo(entityFromRegistry.ClrType);
     }
 
     [Test] public async Task TypeEntity_OnRecordType_FoldedEntryFields_AreReadableOffTheEntity()
@@ -59,5 +62,8 @@ public class TypeEntityHomeTests
         => Assert.Fail("Stage 4 deferral — Entry fold dissolves these types");
 
     [Test] public async Task DataConverter_NewtonsoftTypeConverter_DoesNotExist_AfterMove()
-        => Assert.Fail("Stage 4 deferral — Converter.cs deleted with entity move");
+    {
+        var asm = typeof(global::app.@this).Assembly;
+        await Assert.That(asm.GetType("app.data.Converter")).IsNull();
+    }
 }

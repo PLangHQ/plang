@@ -154,12 +154,22 @@ public sealed partial class @this
 
     // --- Stage 3 accessor surface ---
 
-    /// <summary>Index by PLang type name. Throws on miss — index-miss is a hard error.</summary>
-    public System.Type this[string typeName]
-        => Get(typeName) ?? throw new KeyNotFoundException($"No PLang type registered under name '{typeName}'.");
+    /// <summary>
+    /// Index by PLang type name. Returns the type entity (<see cref="app.type.@this"/>);
+    /// throws on miss — index-miss is a hard error.
+    /// </summary>
+    public app.type.@this this[string typeName]
+    {
+        get
+        {
+            if (Get(typeName) == null)
+                throw new KeyNotFoundException($"No PLang type registered under name '{typeName}'.");
+            return new app.type.@this(typeName);
+        }
+    }
 
-    /// <summary>Compile-time generic lookup — returns the PLang name for T.</summary>
-    public string of<T>() => GetTypeName(typeof(T));
+    /// <summary>Compile-time generic lookup — returns the entity for T.</summary>
+    public app.type.@this of<T>() => new app.type.@this(GetTypeName(typeof(T)));
 
     private System.Type? Get(string typeName, int depth)
     {

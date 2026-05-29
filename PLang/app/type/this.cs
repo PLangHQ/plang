@@ -66,4 +66,52 @@ public sealed class @this
             _ => AppTypes.TryConvertTo(raw, ClrType ?? typeof(object)).Value
         };
     }
+
+    // --- Stage 4 Entry-fold properties (computed lazily; sourced from BuildTypeEntries) ---
+
+    // The entry is found on first access and cached per-instance.  Requires Context to
+    // be set so we can reach the App's type registry.
+    [JsonIgnore]
+    private app.builder.type.Entry? _entry;
+    [JsonIgnore]
+    private bool _entryLoaded;
+
+    [JsonIgnore]
+    private app.builder.type.Entry? Entry
+    {
+        get
+        {
+            if (_entryLoaded) return _entry;
+            if (Context?.App?.Type == null) return null;
+            var entries = Context.App.Type.BuildTypeEntries(Context.App.Module);
+            _entry = entries.FirstOrDefault(e => string.Equals(e.Name, Value, System.StringComparison.OrdinalIgnoreCase));
+            _entryLoaded = true;
+            return _entry;
+        }
+    }
+
+    /// <summary>Record fields. Null when this type is not a record.</summary>
+    public IReadOnlyList<app.builder.type.Field>? Fields => Entry?.Fields;
+
+    /// <summary>Enum values. Null when this type is not an enum.</summary>
+    public IReadOnlyList<string>? ValidValues => Entry?.Values;
+
+    /// <summary>Scalar shape (the underlying primitive form, e.g. "string" for path).</summary>
+    public string? Shape => Entry?.Shape;
+
+    /// <summary>Constructor signature for scalar types.</summary>
+    public string? ConstructorSignature => Entry?.ConstructorSignature;
+
+    /// <summary>Canonical example from [PlangType(Example = ...)].</summary>
+    public string? Example => Entry?.Example;
+
+    /// <summary>Semantic description from [PlangType(Description = ...)].</summary>
+    public string? Description => Entry?.Description;
+
+    /// <summary>Developer-meaningful kind vocabulary.</summary>
+    public IReadOnlyList<string>? Kinds => Entry?.Kinds;
+
+    /// <summary>Path-scheme registry for the path entity. Null when this type is not path.</summary>
+    public global::app.type.path.scheme.@this? Scheme
+        => Value == "path" ? Context?.App?.Type?.Scheme : null;
 }
