@@ -5,10 +5,10 @@
   "steps": [
     {
       "index": 0,
-      "text": "math.add A=9223372036854775807 B=9223372036854775807 Overflow=Throw, on error set %err% = true",
+      "text": "math.add A=9223372036854775807 B=9223372036854775807 Overflow=Promote, write to %sum%, on error set %err% = true",
       "lineNumber": 6,
       "indent": 0,
-      "comment": "Step-level Overflow=Throw routes through MathPolicy.Resolve into the handler.\nlong.MaxValue \u002B long.MaxValue overflows the Long kind. Under default\nLenient/Promote the handler widens Long\u2192Decimal silently (covered by sibling\nOverflowPromoteWidens); under Throw the overflow surfaces as MathOverflow.",
+      "comment": "Sibling of OverflowThrowSettingHonored: identical inputs, Overflow=Promote.\nlong.MaxValue \u002B long.MaxValue overflows the Long kind; under Promote the\nhandler widens Long\u2192Decimal silently and returns the sum without error.\nTogether the pair pins that the Overflow axis distinguishes outcome.",
       "actions": [
         {
           "module": "math",
@@ -26,7 +26,7 @@
             },
             {
               "name": "Overflow",
-              "value": "Throw",
+              "value": "Promote",
               "type": "overflowmode"
             }
           ],
@@ -52,6 +52,11 @@
                           "name": "Value",
                           "value": true,
                           "type": "bool"
+                        },
+                        {
+                          "name": "Type",
+                          "value": "bool",
+                          "type": "string"
                         }
                       ]
                     }
@@ -63,23 +68,47 @@
               "modifiers": []
             }
           ]
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%sum%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "formal": "math.add(A=9223372036854775807, B=9223372036854775807, Overflow=Throw) | error.handle(Actions=[variable.set(Name=%err%, Value=true, Type=bool)])",
+      "formal": "math.add(A=9223372036854775807, B=9223372036854775807, Overflow=Promote) | error.handle(Actions=[variable.set(Name=%err%, Value=true, Type=bool)]) , variable.set(Name=%sum%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "assert %err% is true",
+      "text": "assert %err% is null",
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
       "actions": [
         {
           "module": "assert",
-          "action": "isTrue",
+          "action": "isNull",
           "parameters": [
             {
               "name": "Value",
@@ -92,16 +121,42 @@
         }
       ],
       "intent": null,
-      "formal": "assert.isTrue(Value=%err%)",
+      "formal": "assert.isNull(Value=%err%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %sum% is not null",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%sum%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.isNotNull(Value=%sum%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Math/OverflowThrowSettingHonored.test.goal",
-  "prPath": "/Math/.build/overflowthrowsettinghonored.test.pr",
-  "hash": "8e6941a7c9afaf1b04f1c6dd6b08ce3335ece2879b7bf623d6ed24debf4e0300",
+  "path": "/Math/OverflowPromoteWidens.test.goal",
+  "prPath": "/Math/.build/overflowpromotewidens.test.pr",
+  "hash": "3182788f1a6f1e94679fdb3816f8964a24d04fe7eb5271fe47dccd64acd4d704",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
