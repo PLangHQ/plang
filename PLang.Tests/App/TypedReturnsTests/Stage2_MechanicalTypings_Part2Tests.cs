@@ -99,8 +99,8 @@ public class Stage2_MechanicalTypings_Part2Tests
     public async Task ModulesDescribe_BuilderRecordHandlers_AdvertiseConcreteReturnTypes()
     {
         var rendered = await _app.Module.Describe();
-        var types  = rendered.FirstOrDefault(a => a.Module == "builder" && a.ActionName == "type");
-        var goals  = rendered.FirstOrDefault(a => a.Module == "builder" && a.ActionName == "goal");
+        var types  = rendered.FirstOrDefault(a => a.Module == "builder" && a.ActionName == "types");
+        var goals  = rendered.FirstOrDefault(a => a.Module == "builder" && a.ActionName == "goals");
         var acts   = rendered.FirstOrDefault(a => a.Module == "builder" && a.ActionName == "actions");
 
         await Assert.That(types!.ReturnTypeName).IsEqualTo("type");
