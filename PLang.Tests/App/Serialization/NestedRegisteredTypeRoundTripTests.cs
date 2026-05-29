@@ -28,9 +28,9 @@ public class NestedRegisteredTypeRoundTripTests
             new global::app.data.@this("p2", p2) { Context = ctx },
         }) { Context = ctx };
 
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
+        var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channels.Serializers.GetByMimeType("application/plang");
-        var options = (JsonSerializerOptions)typeof(global::app.channels.serializers.serializer.plang.@this)
+        var options = (JsonSerializerOptions)typeof(global::app.channel.serializer.plang.@this)
             .GetField("_outbound", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .GetValue(plang)!;
         var json = JsonSerializer.Serialize(outer, options);
@@ -55,7 +55,7 @@ public class NestedRegisteredTypeRoundTripTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.channels.serializers.json.Writer(utf, options: null,
+            var w = new global::app.channel.serializer.json.Writer(utf, options: null,
                 view: global::app.View.Out, renderers: app.Types.Renderers);
             var visited = new HashSet<object>(System.Collections.Generic.ReferenceEqualityComparer.Instance);
             var normalized = global::app.data.@this.NormalizeValue(paths, global::app.View.Out, visited, 0, app.Types);
@@ -83,7 +83,7 @@ public class NestedRegisteredTypeRoundTripTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.channels.serializers.json.Writer(utf, options: null,
+            var w = new global::app.channel.serializer.json.Writer(utf, options: null,
                 view: global::app.View.Out, renderers: app.Types.Renderers);
             var visited = new HashSet<object>(System.Collections.Generic.ReferenceEqualityComparer.Instance);
             var normalized = global::app.data.@this.NormalizeValue(wrapper, global::app.View.Out, visited, 0, app.Types);

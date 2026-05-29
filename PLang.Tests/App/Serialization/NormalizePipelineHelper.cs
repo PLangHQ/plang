@@ -1,6 +1,6 @@
 using System.Text;
 using System.Text.Json;
-using app.channels.serializers;
+using app.channel.serializer;
 
 namespace PLang.Tests.App.Serialization;
 
@@ -16,7 +16,7 @@ internal static class NormalizePipelineHelper
         var ms = new MemoryStream();
         using (var jw = new Utf8JsonWriter(ms))
         {
-            var writer = new global::app.channels.serializers.json.Writer(jw);
+            var writer = new global::app.channel.serializer.json.Writer(jw);
             var carrier = new app.data.@this("", rawValue);
             var normalized = carrier.Normalize(mode);
             writer.Value(normalized);
@@ -33,7 +33,7 @@ internal static class NormalizePipelineHelper
         var ms = new MemoryStream();
         using (var jw = new Utf8JsonWriter(ms))
         {
-            var writer = new global::app.channels.serializers.json.Writer(jw);
+            var writer = new global::app.channel.serializer.json.Writer(jw);
             writer.BeginRecord(record);
             var normalized = record.Normalize(mode);
             writer.Value(normalized);

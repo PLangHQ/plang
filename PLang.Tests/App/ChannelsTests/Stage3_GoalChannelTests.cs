@@ -1,5 +1,5 @@
 using System.Reflection;
-using GoalChannel = global::app.channels.channel.goal.@this;
+using GoalChannel = global::app.channel.goal.@this;
 using EngineGoal = global::app.goals.goal.@this;
 
 namespace PLang.Tests.App.ChannelsTests;

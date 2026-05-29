@@ -144,7 +144,7 @@ public partial class run : IContext
                     outputBuf.Append(written.Value).Append('\n');
                 return Task.FromResult(app.data.@this.Ok());
             },
-            channelName: app.channels.@this.Output,
+            channelName: app.channel.list.@this.Output,
             priority: int.MaxValue,
             stopOnError: false);
         childApp.User.Context.Events.Register(outputBinding);

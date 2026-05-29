@@ -75,7 +75,7 @@ public class TypeSerializersDispatchTests
         await Assert.That(_r.Of("path", "plang")).IsNotNull();
     }
 
-    private sealed class FakeWriter : global::app.channels.serializers.IWriter
+    private sealed class FakeWriter : global::app.channel.serializer.IWriter
     {
         public FakeWriter(string format) { Format = format; }
         public string Format { get; }

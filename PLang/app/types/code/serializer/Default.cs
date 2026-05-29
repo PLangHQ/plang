@@ -8,7 +8,7 @@ namespace app.types.code.serializer;
 /// </summary>
 public static class Default
 {
-    public static void Write(global::app.types.code.@this value, global::app.channels.serializers.IWriter writer)
+    public static void Write(global::app.types.code.@this value, global::app.channel.serializer.IWriter writer)
     {
         if (value == null) { writer.Null(); return; }
         writer.String(value.Source);

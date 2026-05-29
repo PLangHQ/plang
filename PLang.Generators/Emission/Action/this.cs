@@ -63,7 +63,7 @@ public static class @this
                 """);
         if (info.ImplementsIChannel)
             sb.Append("""
-                    public global::app.channels.channel.@this Channel { get; set; } = null!;
+                    public global::app.channel.@this Channel { get; set; } = null!;
 
                 """);
         if (info.ImplementsIAction)

@@ -268,7 +268,7 @@ public sealed class @this : IAsyncDisposable
         foreach (var o in orphans)
         {
             var msg = $"Orphan teaching markdown: {o.Path} (no registered action '{o.Module}.{o.Stem}'). Rename the file, register the action, or delete the file.\n";
-            await actor.Channels.WriteTextAsync(channels.@this.Output, msg, cancellationToken);
+            await actor.Channels.WriteTextAsync(global::app.channel.list.@this.Output, msg, cancellationToken);
         }
 
         return orphans;

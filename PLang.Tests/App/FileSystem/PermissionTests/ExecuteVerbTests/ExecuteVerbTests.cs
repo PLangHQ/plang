@@ -23,12 +23,12 @@ public class ExecuteVerbTests
         return new PLangEngine(root);
     }
 
-    private sealed class CannedChannel : global::app.channels.channel.@this
+    private sealed class CannedChannel : global::app.channel.@this
     {
         private readonly string _answer;
         private readonly System.Collections.Generic.List<string> _prompts = new();
         public System.Collections.Generic.IReadOnlyList<string> Prompts => _prompts;
-        public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channels.channel.ChannelDirection.Bidirectional; }
+        public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.modules.output.ask action, CancellationToken ct = default)
@@ -38,9 +38,9 @@ public class ExecuteVerbTests
         }
     }
 
-    private sealed class StatelessChannel : global::app.channels.channel.message.@this
+    private sealed class StatelessChannel : global::app.channel.message.@this
     {
-        public StatelessChannel() { Name = "input"; Direction = global::app.channels.channel.ChannelDirection.Bidirectional; }
+        public StatelessChannel() { Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
     }

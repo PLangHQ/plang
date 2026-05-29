@@ -1,6 +1,6 @@
 using System.Collections;
 using app;
-using app.channels.serializers.filters;
+using app.channel.serializer.filter;
 
 namespace app.data;
 
@@ -174,7 +174,7 @@ public partial class @this
             throw CycleError(obj);
         try
         {
-            var entries = app.channels.serializers.filters.Tagged.PropertiesFor(obj.GetType(), mode);
+            var entries = app.channel.serializer.filter.Tagged.PropertiesFor(obj.GetType(), mode);
             var children = new List<@this>(entries.Count);
 
             foreach (var entry in entries)

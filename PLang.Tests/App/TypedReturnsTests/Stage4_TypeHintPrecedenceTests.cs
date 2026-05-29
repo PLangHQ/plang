@@ -44,7 +44,7 @@ public class Stage4_TypeHintPrecedenceTests
         await Assert.That(json).IsNotNull();
     }
 
-    private sealed class StubSerializer : global::app.channels.serializers.serializer.ISerializer
+    private sealed class StubSerializer : global::app.channel.serializer.ISerializer
     {
         public string Type { get; init; } = "";
         public string Extension { get; init; } = "";
@@ -63,7 +63,7 @@ public class Stage4_TypeHintPrecedenceTests
         _app.User.Channels.Serializers.Register(stub);
 
         var resolved = _app.User.Channels.Serializers.GetByExtension(".junit.xml");
-        await Assert.That(resolved).IsEqualTo((global::app.channels.serializers.serializer.ISerializer)stub);
+        await Assert.That(resolved).IsEqualTo((global::app.channel.serializer.ISerializer)stub);
     }
 
     [Test]
@@ -76,7 +76,7 @@ public class Stage4_TypeHintPrecedenceTests
         _app.User.Channels.Serializers.Register(xml);
 
         var resolved = _app.User.Channels.Serializers.GetByExtension(".unknown.xml");
-        await Assert.That(resolved).IsEqualTo((global::app.channels.serializers.serializer.ISerializer)xml);
+        await Assert.That(resolved).IsEqualTo((global::app.channel.serializer.ISerializer)xml);
     }
 
     [Test]

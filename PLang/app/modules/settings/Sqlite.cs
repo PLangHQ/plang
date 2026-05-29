@@ -1,6 +1,6 @@
 using Microsoft.Data.Sqlite;
 using app.types.path;
-using app.channels.serializers.serializer;
+using app.channel.serializer;
 using app.error;
 using app.variable;
 using app.Utils;
@@ -9,7 +9,7 @@ namespace app.modules.settings;
 
 /// <summary>
 /// SQLite-backed persistent settings store.
-/// Two-column schema per table: key TEXT PRIMARY KEY, data TEXT (Data via global::app.channels.serializers.serializer.plang.@this).
+/// Two-column schema per table: key TEXT PRIMARY KEY, data TEXT (Data via global::app.channel.serializer.plang.@this).
 /// WAL mode for concurrent reads. Tables auto-created on first write.
 /// Connection per operation (SQLite pools internally via connection string).
 /// </summary>
@@ -17,7 +17,7 @@ public sealed class Sqlite : IStore
 {
     private readonly string _connectionString;
     private readonly SqliteConnection? _sentinel;
-    private readonly global::app.channels.serializers.serializer.plang.@this _serializer = new();
+    private readonly global::app.channel.serializer.plang.@this _serializer = new();
     private bool _disposed;
 
     /// <summary>

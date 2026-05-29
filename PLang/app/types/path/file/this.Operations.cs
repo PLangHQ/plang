@@ -220,7 +220,7 @@ public sealed partial class @this
             else
             {
                 await using var stream = System.IO.File.Create(Absolute);
-                var serResult = await Context!.Actor.Channels.Serializers.SerializeAsync(new global::app.channels.serializers.SerializeOptions
+                var serResult = await Context!.Actor.Channels.Serializers.SerializeAsync(new global::app.channel.serializer.list.SerializeOptions
                     { Stream = stream, Data = value!, Extension = Extension });
                 if (!serResult.Success)
                     return data.@this<global::app.types.path.@this>.FromError(serResult.Error!);

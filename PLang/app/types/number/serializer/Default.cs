@@ -2,7 +2,7 @@ namespace app.types.number.serializer;
 
 /// <summary>
 /// Wire renderer for <see cref="app.types.number.@this"/> — emits the
-/// matching <see cref="app.channels.serializers.IWriter"/> numeric primitive
+/// matching <see cref="app.channel.serializer.IWriter"/> numeric primitive
 /// by <see cref="app.types.number.NumberKind"/>. Uniform across formats:
 /// the <c>IWriter</c> primitive vocabulary IS the cross-format contract for
 /// numeric values (every format encoder knows what an Int is). One file,
@@ -10,7 +10,7 @@ namespace app.types.number.serializer;
 /// </summary>
 public static class Default
 {
-    public static void Write(global::app.types.number.@this value, global::app.channels.serializers.IWriter writer)
+    public static void Write(global::app.types.number.@this value, global::app.channel.serializer.IWriter writer)
     {
         if (value == null) { writer.Null(); return; }
         switch (value.Kind)

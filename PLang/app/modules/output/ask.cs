@@ -82,7 +82,7 @@ public partial class ask : IContext
         // the user's typed answer as a string Data; Message returns a suspending
         // Ask with Snapshot attached. Coerce the wire shape into the Data<Ask>
         // contract here so callers never see the legacy string-bearing form.
-        var input = Context.Actor?.Channels.Resolve(global::app.channels.@this.Input)
+        var input = Context.Actor?.Channels.Resolve(global::app.channel.list.@this.Input)
             ?? throw new InvalidOperationException("No input channel registered on actor");
         var askResult = await input.AskAsync(this);
         if (!askResult.Success) return data.@this<Ask>.From(askResult);

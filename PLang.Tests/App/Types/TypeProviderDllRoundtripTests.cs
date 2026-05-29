@@ -66,7 +66,7 @@ public class TypeProviderDllRoundtripTests
         await Assert.That(captured.Captured).IsEqualTo("CUSTOM-INT");
     }
 
-    private sealed class CapturingWriter : global::app.channels.serializers.IWriter
+    private sealed class CapturingWriter : global::app.channel.serializer.IWriter
     {
         public CapturingWriter(string format) { Format = format; }
         public string Format { get; }

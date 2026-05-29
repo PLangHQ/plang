@@ -4,7 +4,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using app.channels.serializers;
+using app.channel.serializer;
 using app.actor.context;
 using app.error;
 using app.goals.goal;
@@ -46,7 +46,7 @@ public sealed class Default : IHttp
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
-            Modifiers = { global::app.channels.serializers.filters.Transport.ForInbound }
+            Modifiers = { global::app.channel.serializer.filter.Transport.ForInbound }
         }
     };
 
@@ -55,7 +55,7 @@ public sealed class Default : IHttp
     private readonly JsonSerializerOptions _caseInsensitiveRead = new()
     {
         PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter(allowIntegerValues: true), new app.data.EmptyStringToNullEnumConverterFactory(), new global::app.channels.serializers.TimeSpanIso8601() },
+        Converters = { new JsonStringEnumConverter(allowIntegerValues: true), new app.data.EmptyStringToNullEnumConverterFactory(), new global::app.channel.serializer.TimeSpanIso8601() },
         NumberHandling = JsonNumberHandling.AllowReadingFromString
     };
 

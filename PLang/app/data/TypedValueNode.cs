@@ -6,8 +6,8 @@ namespace app.data;
 /// name AND has at least one entry in <see cref="app.types.renderers.@this"/>.
 ///
 /// <para>The marker is format-agnostic: it carries the value and its PLang type
-/// name, nothing about how to render. The <see cref="app.channels.serializers.IWriter"/>
-/// implementation (which knows its own <see cref="app.channels.serializers.IWriter.Format"/>)
+/// name, nothing about how to render. The <see cref="app.channel.serializer.IWriter"/>
+/// implementation (which knows its own <see cref="app.channel.serializer.IWriter.Format"/>)
 /// resolves the marker against the renderer dispatch and invokes the
 /// per-(type, format) <c>Write</c>.</para>
 ///

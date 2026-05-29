@@ -24,5 +24,5 @@ public interface ITypeRenderer
     string Format { get; }
 
     /// <summary>Renders <paramref name="value"/> via <paramref name="writer"/>'s primitive surface.</summary>
-    void Write(object value, app.channels.serializers.IWriter writer);
+    void Write(object value, app.channel.serializer.IWriter writer);
 }

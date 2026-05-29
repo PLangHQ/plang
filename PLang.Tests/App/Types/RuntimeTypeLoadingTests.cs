@@ -22,7 +22,7 @@ public class RuntimeTypeLoadingTests
     {
         public string TypeName => "runtime-fixture-only";
         public string Format => global::app.types.renderers.@this.AnyFormat;
-        public void Write(object value, global::app.channels.serializers.IWriter writer)
+        public void Write(object value, global::app.channel.serializer.IWriter writer)
             => writer.String("[runtime-fixture-only]");
     }
 
@@ -36,7 +36,7 @@ public class RuntimeTypeLoadingTests
     {
         public string TypeName => "int";
         public string Format => global::app.types.renderers.@this.AnyFormat;
-        public void Write(object value, global::app.channels.serializers.IWriter writer)
+        public void Write(object value, global::app.channel.serializer.IWriter writer)
             => writer.String("OVERRIDDEN");
     }
 
@@ -204,10 +204,10 @@ public class RuntimeTypeLoadingTests
         var writeParams = t.GetMethod("Write")!.GetParameters();
         await Assert.That(writeParams.Length).IsEqualTo(2);
         await Assert.That(writeParams[0].ParameterType).IsEqualTo(typeof(object));
-        await Assert.That(writeParams[1].ParameterType).IsEqualTo(typeof(global::app.channels.serializers.IWriter));
+        await Assert.That(writeParams[1].ParameterType).IsEqualTo(typeof(global::app.channel.serializer.IWriter));
     }
 
-    private sealed class FakeWriter : global::app.channels.serializers.IWriter
+    private sealed class FakeWriter : global::app.channel.serializer.IWriter
     {
         public FakeWriter(string format) { Format = format; }
         public string Format { get; }

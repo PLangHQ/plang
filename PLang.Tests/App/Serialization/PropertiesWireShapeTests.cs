@@ -12,11 +12,11 @@ public class PropertiesWireShapeTests
     private static global::app.@this NewApp() => new(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
         "plang-prop-" + Guid.NewGuid().ToString("N")[..8]));
 
-    private static (global::app.channels.serializers.serializer.plang.@this plang, global::app.data.@this data, Action dispose)
+    private static (global::app.channel.serializer.plang.@this plang, global::app.data.@this data, Action dispose)
         SeedData(string name = "thing", object? value = null)
     {
         var app = NewApp();
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
+        var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channels.Serializers.GetByMimeType("application/plang");
         var d = new global::app.data.@this(name, value ?? "v") { Context = app.User.Context };
         return (plang, d, () => app.DisposeAsync().GetAwaiter().GetResult());

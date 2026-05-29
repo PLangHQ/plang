@@ -31,7 +31,7 @@ public sealed partial class @this
         Converters = {
             new JsonStringEnumConverter(allowIntegerValues: true),
             new app.data.EmptyStringToNullEnumConverterFactory(),
-            new global::app.channels.serializers.TimeSpanIso8601(),
+            new global::app.channel.serializer.TimeSpanIso8601(),
             // Context-less PathJsonConverter — produces stub Paths. Callers
             // with a Context in scope use ContextualReadOptions instead so
             // deserialized Paths are wired immediately.
@@ -56,7 +56,7 @@ public sealed partial class @this
             Converters = {
                 new JsonStringEnumConverter(allowIntegerValues: true),
                 new app.data.EmptyStringToNullEnumConverterFactory(),
-                new global::app.channels.serializers.TimeSpanIso8601(),
+                new global::app.channel.serializer.TimeSpanIso8601(),
                 new global::app.types.path.JsonConverter(context),
             },
             NumberHandling = JsonNumberHandling.AllowReadingFromString

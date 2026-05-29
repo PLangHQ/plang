@@ -9,7 +9,7 @@ namespace PLang.Tests.App.Types.PathTests.Contract;
 /// "input" channel by the contract suite to drive the Permission gate
 /// deterministically.
 /// </summary>
-internal sealed class CannedAnswerChannel : global::app.channels.channel.@this
+internal sealed class CannedAnswerChannel : global::app.channel.@this
 {
     private readonly string _answer;
 
@@ -17,7 +17,7 @@ internal sealed class CannedAnswerChannel : global::app.channels.channel.@this
     {
         _answer = answer;
         Name = "input";
-        Direction = global::app.channels.channel.ChannelDirection.Bidirectional;
+        Direction = global::app.channel.ChannelDirection.Bidirectional;
     }
 
     public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)

@@ -1,6 +1,6 @@
 using System.Text.Json;
 using app;
-using app.channels.serializers.serializer;
+using app.channel.serializer;
 using app.error;
 using app.modules.identity;
 using PLangEngine = global::app.@this;
@@ -59,7 +59,7 @@ public class SensitivePropertyFilterTests
             Created = DateTime.UtcNow
         };
 
-        var serializer = new global::app.channels.serializers.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json();
         var json = serializer.Serialize(Data.Ok(identity)).Value!;
 
         await Assert.That(json).Contains("pubkey123");
@@ -78,7 +78,7 @@ public class SensitivePropertyFilterTests
             IsDefault = true
         };
 
-        // Raw JsonSerializer (used by DataSource) has no global::app.channels.serializers.filters.Sensitive
+        // Raw JsonSerializer (used by DataSource) has no global::app.channel.serializer.filter.Sensitive
         var json = JsonSerializer.Serialize(identity);
 
         await Assert.That(json).Contains("pubkey123");
@@ -91,7 +91,7 @@ public class SensitivePropertyFilterTests
         // A type without [Sensitive] should serialize normally
         var obj = new { Name = "test", Value = 42 };
 
-        var serializer = new global::app.channels.serializers.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json();
         var json = serializer.Serialize(Data.Ok(obj)).Value!;
 
         await Assert.That(json).Contains("test");
@@ -110,7 +110,7 @@ public class SensitivePropertyFilterTests
         };
 
         // ForView should also strip [Sensitive] in addition to view filtering
-        var serializer = new global::app.channels.serializers.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json();
         var storeSerializer = serializer.ForView(View.Store);
         var storeJson = storeSerializer.Serialize(Data.Ok(identity)).Value!;
 
@@ -203,7 +203,7 @@ public class SensitivePropertyFilterTests
         var result = await create.Run();
         var identity = result.Value as Identity;
 
-        var serializer = new global::app.channels.serializers.serializer.Json();
+        var serializer = new global::app.channel.serializer.Json();
         var json = serializer.Serialize(Data.Ok(identity)).Value!;
 
         // Deserialize back to check values — raw Contains() fails when base64 '+' is escaped to '\u002B'

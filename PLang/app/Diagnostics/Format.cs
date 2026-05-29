@@ -31,7 +31,7 @@ public static class Format
         Converters = { new global::app.types.path.JsonConverter() },
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
-            Modifiers = { app.channels.serializers.filters.Sensitive.Mask }
+            Modifiers = { app.channel.serializer.filter.Sensitive.Mask }
         }
     };
 

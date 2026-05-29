@@ -20,7 +20,7 @@ public class CanonicalizationTests
         // plang serializer. If Hash uses the wire options, the produced hash
         // matches what a wire-driven canonicalization would produce.
         await using var app = NewSignedApp();
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
+        var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channels.Serializers.GetByMimeType("application/plang");
 
         var data = new global::app.data.@this("greeting", "hello") { Context = app.User.Context };
@@ -47,7 +47,7 @@ public class CanonicalizationTests
     [Test] public async Task CryptoHash_BytesMatch_WireSerializerBytesMinusOuterSignature()
     {
         await using var app = NewSignedApp();
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
+        var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channels.Serializers.GetByMimeType("application/plang");
 
         var data = new global::app.data.@this("x", "y") { Context = app.User.Context };
@@ -67,7 +67,7 @@ public class CanonicalizationTests
     [Test] public async Task OuterSignature_BindsInnerSignature_TamperingInnerFailsOuterVerify()
     {
         await using var app = NewSignedApp();
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
+        var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channels.Serializers.GetByMimeType("application/plang");
 
         var inner = new global::app.data.@this("inner", "secret") { Context = app.User.Context };
@@ -122,7 +122,7 @@ public class CanonicalizationTests
         };
         var outer = new global::app.data.@this("outer", inner) { Context = app.User.Context };
 
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
+        var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channels.Serializers.GetByMimeType("application/plang");
 
         var outBytes = plang.Serialize(outer).Value!;
@@ -145,7 +145,7 @@ public class CanonicalizationTests
         var dict = new Dictionary<string, object?> { ["payload"] = inner };
         var outer = new global::app.data.@this("outer", dict) { Context = app.User.Context };
 
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
+        var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channels.Serializers.GetByMimeType("application/plang");
         var json = plang.Serialize(outer).Value!;
 

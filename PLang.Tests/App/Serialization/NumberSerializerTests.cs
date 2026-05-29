@@ -10,7 +10,7 @@ namespace PLang.Tests.App.Serialization;
 
 public class NumberSerializerTests
 {
-    private sealed class CaptureWriter : global::app.channels.serializers.IWriter
+    private sealed class CaptureWriter : global::app.channel.serializer.IWriter
     {
         public string Format { get; }
         public object? Last { get; private set; }
@@ -84,7 +84,7 @@ public class NumberSerializerTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.channels.serializers.json.Writer(utf, options: null,
+            var w = new global::app.channel.serializer.json.Writer(utf, options: null,
                 view: global::app.View.Out, renderers: renderers);
             w.Value(new global::app.data.TypedValueNode(number.From(42), "number"));
         }
@@ -111,7 +111,7 @@ public class NumberSerializerTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.channels.serializers.json.Writer(utf, options: null,
+            var w = new global::app.channel.serializer.json.Writer(utf, options: null,
                 view: global::app.View.Out, renderers: renderers);
             w.Value(new global::app.data.TypedValueNode(number.From(0.1m), "number"));
         }

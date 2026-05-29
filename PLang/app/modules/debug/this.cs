@@ -104,8 +104,8 @@ public sealed class @this
         if (!IsEnabled) return Task.CompletedTask;
         // Debug surface routes via System actor's "error" channel (stderr equivalent).
         // Stage 6: was app.channels.WriteAsync; now per-actor.
-        var ch = _engine.System.Channels.Resolve(app.channels.@this.Debug)
-              ?? _engine.System.Channels.Resolve(app.channels.@this.Error);
+        var ch = _engine.System.Channels.Resolve(app.channel.list.@this.Debug)
+              ?? _engine.System.Channels.Resolve(app.channel.list.@this.Error);
         if (ch == null) return Task.CompletedTask;
         var envelope = message is app.data.@this d ? d : app.data.@this.Ok(message);
         return ch.WriteAsync(envelope);
@@ -661,7 +661,7 @@ public sealed class @this
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
         TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
         {
-            Modifiers = { global::app.channels.serializers.filters.Sensitive.Strip }
+            Modifiers = { global::app.channel.serializer.filter.Sensitive.Strip }
         }
     };
 

@@ -21,7 +21,7 @@ public class MoveCopyBundledConsentTests
         return new global::app.@this(root);
     }
 
-    private sealed class CapturingChannel : global::app.channels.channel.@this
+    private sealed class CapturingChannel : global::app.channel.@this
     {
         public string LastQuestion { get; private set; } = "";
         public int AskCount { get; private set; }
@@ -29,7 +29,7 @@ public class MoveCopyBundledConsentTests
         public CapturingChannel(string answer)
         {
             _answer = answer; Name = "input";
-            Direction = global::app.channels.channel.ChannelDirection.Bidirectional;
+            Direction = global::app.channel.ChannelDirection.Bidirectional;
         }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
             => Task.FromResult(global::app.data.@this.Ok());
@@ -145,9 +145,9 @@ public class MoveCopyBundledConsentTests
         await Assert.That(await app.User.Permission.Find(dst, new Verb { Write = new Write() })).IsNotNull();
     }
 
-    private sealed class StatelessChannel : global::app.channels.channel.message.@this
+    private sealed class StatelessChannel : global::app.channel.message.@this
     {
-        public StatelessChannel() { Name = "input"; Direction = global::app.channels.channel.ChannelDirection.Bidirectional; }
+        public StatelessChannel() { Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
             => Task.FromResult(global::app.data.@this.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default)

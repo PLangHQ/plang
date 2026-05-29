@@ -8,7 +8,7 @@ namespace app.types.image.serializer;
 /// </summary>
 public static class text
 {
-    public static void Write(global::app.types.image.@this value, global::app.channels.serializers.IWriter writer)
+    public static void Write(global::app.types.image.@this value, global::app.channel.serializer.IWriter writer)
     {
         if (value == null) { writer.Null(); return; }
         if (value.Path != null)

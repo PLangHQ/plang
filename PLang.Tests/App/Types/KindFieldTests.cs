@@ -9,10 +9,10 @@ namespace PLang.Tests.App.Types;
 public class KindFieldTests
 {
     private static JsonSerializerOptions Options
-        => global::app.channels.serializers.serializer.plang.@this.ContextLessFallback
+        => global::app.channel.serializer.plang.@this.ContextLessFallback
             .GetType()
             .GetField("_outbound", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
-            .GetValue(global::app.channels.serializers.serializer.plang.@this.ContextLessFallback)
+            .GetValue(global::app.channel.serializer.plang.@this.ContextLessFallback)
             as JsonSerializerOptions
             ?? throw new System.InvalidOperationException("could not access plang outbound options");
 

@@ -22,7 +22,7 @@ public sealed class @this : IAsyncDisposable
     public global::app.actor.@this Parent { get; }
 
     /// <summary>This service's per-call channel set.</summary>
-    public global::app.channels.@this Channels { get; }
+    public global::app.channel.list.@this Channels { get; }
 
     /// <summary>
     /// Always the System actor's identity. Outbound calls go under the app's
@@ -34,7 +34,7 @@ public sealed class @this : IAsyncDisposable
     {
         _collection = collection;
         Parent = parent;
-        Channels = new global::app.channels.@this(parent.App);
+        Channels = new global::app.channel.list.@this(parent.App);
     }
 
     public async ValueTask DisposeAsync()

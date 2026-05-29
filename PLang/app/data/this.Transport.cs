@@ -3,7 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using app;
-using app.channels.serializers;
+using app.channel.serializer;
 using app.error;
 
 namespace app.data;
@@ -110,7 +110,7 @@ public partial class @this
             return this;
 
         var serializer = _context.Actor?.Channels.Serializers.GetByType("application/plang")
-                         ?? (global::app.channels.serializers.serializer.ISerializer)global::app.channels.serializers.serializer.plang.@this.ContextLessFallback;
+                         ?? (global::app.channel.serializer.ISerializer)global::app.channel.serializer.plang.@this.ContextLessFallback;
 
         using var ms = new MemoryStream();
         await serializer.SerializeAsync(ms, this, ct);
@@ -179,7 +179,7 @@ public partial class @this
             var decompressed = GZipDecompress(compressed);
 
             var serializer = _context?.Actor?.Channels.Serializers.GetByType("application/plang")
-                             ?? (global::app.channels.serializers.serializer.ISerializer)global::app.channels.serializers.serializer.plang.@this.ContextLessFallback;
+                             ?? (global::app.channel.serializer.ISerializer)global::app.channel.serializer.plang.@this.ContextLessFallback;
 
             using var ms = new MemoryStream(decompressed);
             var deser = await serializer.DeserializeAsync(ms, ct);

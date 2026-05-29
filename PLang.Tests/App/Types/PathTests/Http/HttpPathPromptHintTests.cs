@@ -13,7 +13,7 @@ namespace PLang.Tests.App.Types.PathTests.Http;
 /// </summary>
 public class HttpPathPromptHintTests
 {
-    private sealed class CapturingChannel : global::app.channels.channel.@this
+    private sealed class CapturingChannel : global::app.channel.@this
     {
         public string LastQuestion = "";
         public string Answer = "n";
@@ -21,7 +21,7 @@ public class HttpPathPromptHintTests
         public CapturingChannel()
         {
             Name = "input";
-            Direction = global::app.channels.channel.ChannelDirection.Bidirectional;
+            Direction = global::app.channel.ChannelDirection.Bidirectional;
         }
 
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)

@@ -242,8 +242,8 @@ public class Stage8_ChannelEventsTests
     {
         // Regression probe for B1: `_active` is an instance field, not static.
         // If it ever becomes static, evB sees evA's active set.
-        var evA = new global::app.channels.channel.events.@this();
-        var evB = new global::app.channels.channel.events.@this();
+        var evA = new global::app.channel.@event.@this();
+        var evB = new global::app.channel.@event.@this();
         using var _ = evA.Enter("X");
         await Assert.That(evA.IsActive("X")).IsTrue();
         await Assert.That(evB.IsActive("X")).IsFalse();
@@ -256,7 +256,7 @@ public class Stage8_ChannelEventsTests
         // If a child mutates the parent's HashSet in place, the parent flow
         // sees the child's id while the child is still inside its scope.
         // (Naive Task.WhenAll passes either way — children Add then Remove.)
-        var ev = new global::app.channels.channel.events.@this();
+        var ev = new global::app.channel.@event.@this();
         using var _ = ev.Enter("A");
         var inside = new TaskCompletionSource();
         var release = new TaskCompletionSource();
@@ -282,7 +282,7 @@ public class Stage8_ChannelEventsTests
         public override Task<Data> Ask(global::app.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok());
     }
 
-    private sealed class MessageProbeChannel : global::app.channels.channel.message.@this
+    private sealed class MessageProbeChannel : global::app.channel.message.@this
     {
         public MessageProbeChannel(string name) { Name = name; }
         public override Task<Data> Write(Data data, CancellationToken ct = default) => Task.FromResult(Data.Ok());

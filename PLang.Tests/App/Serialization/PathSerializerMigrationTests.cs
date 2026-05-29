@@ -25,10 +25,10 @@ public class PathSerializerMigrationTests
         var p = global::app.types.path.@this.Resolve("/some/file.json", ctx);
         var data = new global::app.data.@this("x", p) { Context = ctx };
 
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
+        var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channels.Serializers.GetByMimeType("application/plang");
         var json = JsonSerializer.Serialize(data,
-            (JsonSerializerOptions)typeof(global::app.channels.serializers.serializer.plang.@this)
+            (JsonSerializerOptions)typeof(global::app.channel.serializer.plang.@this)
                 .GetField("_outbound", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
                 .GetValue(plang)!);
         // The wire emits the value as a string. The exact content depends on
@@ -47,9 +47,9 @@ public class PathSerializerMigrationTests
         var p = global::app.types.path.@this.Resolve("https://example.test/a/b", ctx);
         var data = new global::app.data.@this("x", p) { Context = ctx };
 
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
+        var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channels.Serializers.GetByMimeType("application/plang");
-        var options = (JsonSerializerOptions)typeof(global::app.channels.serializers.serializer.plang.@this)
+        var options = (JsonSerializerOptions)typeof(global::app.channel.serializer.plang.@this)
             .GetField("_outbound", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .GetValue(plang)!;
         var json = JsonSerializer.Serialize(data, options);
@@ -96,7 +96,7 @@ public class PathSerializerMigrationTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.channels.serializers.json.Writer(utf, options: null,
+            var w = new global::app.channel.serializer.json.Writer(utf, options: null,
                 view: global::app.View.Out, renderers: app.Types.Renderers);
             w.Value(new global::app.data.TypedValueNode(p, "path"));
         }

@@ -291,7 +291,7 @@ public class Default : IBuilder
         var saveResult = await app.RunAction(saveAction, context);
 
         var elapsed = _buildTimer.Elapsed;
-        await app.CurrentActor.Channels.WriteTextAsync(global::app.channels.@this.Output,
+        await app.CurrentActor.Channels.WriteTextAsync(global::app.channel.list.@this.Output,
             $"  Saved {goal.Name} ({elapsed.TotalSeconds:F1}s){Environment.NewLine}");
         _buildTimer.Restart();
 
@@ -794,7 +794,7 @@ public class Default : IBuilder
         }
 
         if (promoted > 0)
-            await action.Context.App.CurrentActor.Channels.WriteTextAsync(global::app.channels.@this.Output,
+            await action.Context.App.CurrentActor.Channels.WriteTextAsync(global::app.channel.list.@this.Output,
                 $"  Group promotion: {promoted} step(s) promoted to detail pass{Environment.NewLine}");
 
         return data.@this.Ok(action.Steps.Value);

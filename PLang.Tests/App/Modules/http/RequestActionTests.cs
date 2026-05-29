@@ -3,7 +3,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using app.channels.serializers;
+using app.channel.serializer;
 using app.actor.context;
 using app.variable;
 using app.modules.code;
@@ -663,7 +663,7 @@ public class RequestActionTests
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
             TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
             {
-                Modifiers = { global::app.channels.serializers.filters.Transport.ForOutbound }
+                Modifiers = { global::app.channel.serializer.filter.Transport.ForOutbound }
             }
         };
 
@@ -711,7 +711,7 @@ public class RequestActionTests
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
             TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
             {
-                Modifiers = { global::app.channels.serializers.filters.Transport.ForOutbound }
+                Modifiers = { global::app.channel.serializer.filter.Transport.ForOutbound }
             }
         };
 
@@ -853,7 +853,7 @@ public class RequestActionTests
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
             TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
             {
-                Modifiers = { global::app.channels.serializers.filters.Transport.ForOutbound }
+                Modifiers = { global::app.channel.serializer.filter.Transport.ForOutbound }
             }
         };
         var responseBody = JsonSerializer.Serialize(responseData, transportOptions);
@@ -894,7 +894,7 @@ public class RequestActionTests
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
             TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
             {
-                Modifiers = { global::app.channels.serializers.filters.Transport.ForOutbound }
+                Modifiers = { global::app.channel.serializer.filter.Transport.ForOutbound }
             }
         };
         var responseBody = JsonSerializer.Serialize(responseData, transportOptions);

@@ -1,5 +1,5 @@
 using BuildWarning = global::app.modules.builder.warning.@this;
-using NoopChannel = global::app.channels.channel.noop.@this;
+using NoopChannel = global::app.channel.noop.@this;
 
 namespace PLang.Tests.App.TypedReturnsTests;
 

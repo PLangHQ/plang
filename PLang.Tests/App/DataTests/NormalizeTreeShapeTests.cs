@@ -134,8 +134,8 @@ public class NormalizeTreeShapeTests
         // CacheSize counter races with parallel Normalize tests; the
         // per-key reference identity is the behaviour this filter owns.
         System.Type t = typeof(global::app.modules.identity.Identity);
-        var first = global::app.channels.serializers.filters.Tagged.PropertiesFor(t, global::app.View.Out);
-        var second = global::app.channels.serializers.filters.Tagged.PropertiesFor(t, global::app.View.Out);
+        var first = global::app.channel.serializer.filter.Tagged.PropertiesFor(t, global::app.View.Out);
+        var second = global::app.channel.serializer.filter.Tagged.PropertiesFor(t, global::app.View.Out);
         await Assert.That(object.ReferenceEquals(first, second)).IsTrue()
             .Because("second call for the same (Type, Mode) key must hand back the cached reference");
     }

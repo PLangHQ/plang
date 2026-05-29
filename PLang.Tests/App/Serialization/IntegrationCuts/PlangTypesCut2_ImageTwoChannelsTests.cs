@@ -12,7 +12,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
 {
     private static readonly byte[] PngBytes = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 
-    private sealed class CaptureWriter : global::app.channels.serializers.IWriter
+    private sealed class CaptureWriter : global::app.channel.serializer.IWriter
     {
         public string Format { get; }
         public string LastMethod { get; private set; } = "";
@@ -63,7 +63,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.channels.serializers.json.Writer(utf, options: null,
+            var w = new global::app.channel.serializer.json.Writer(utf, options: null,
                 view: global::app.View.Out, renderers: app.Types.Renderers);
             w.Value(new global::app.data.TypedValueNode(img, "image"));
         }
@@ -93,7 +93,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         // switch. Verify by reflection: json.Writer.Value(object?) is the
         // only place writer ever sees the typed value, and the case it
         // takes is TypedValueNode — not image/number/code branches.
-        var writerType = typeof(global::app.channels.serializers.json.Writer);
+        var writerType = typeof(global::app.channel.serializer.json.Writer);
         var valueMethod = writerType.GetMethod("Value",
             new[] { typeof(object) });
         await Assert.That(valueMethod).IsNotNull();

@@ -18,8 +18,8 @@ public class Default : ICrypto
     // Transport.Compress and crypto.Hash never drift. Used by Hash when called
     // outside of an actor scope (test fixtures, raw ICrypto consumers);
     // production goes through the registered serializer.
-    private static global::app.channels.serializers.serializer.plang.@this _fallbackPlang
-        => global::app.channels.serializers.serializer.plang.@this.ContextLessFallback;
+    private static global::app.channel.serializer.plang.@this _fallbackPlang
+        => global::app.channel.serializer.plang.@this.ContextLessFallback;
 
     public data.@this<byte[]> Hash(Hash action)
     {
@@ -41,11 +41,11 @@ public class Default : ICrypto
             // fail loud — hash and wire would diverge silently and signature
             // verification would behave inconsistently across the same payload.
             var registered = action.Context?.Actor?.Channels.Serializers.GetByType("application/plang");
-            if (registered != null && registered is not global::app.channels.serializers.serializer.plang.@this)
+            if (registered != null && registered is not global::app.channel.serializer.plang.@this)
                 return global::app.data.@this<byte[]>.FromError(new ActionError(
                     "Registered application/plang serializer is not the canonical plang.@this; hash bytes would diverge from wire bytes.",
                     "SerializerMismatch", 500));
-            var serializer = (registered as global::app.channels.serializers.serializer.plang.@this) ?? _fallbackPlang;
+            var serializer = (registered as global::app.channel.serializer.plang.@this) ?? _fallbackPlang;
             using (global::app.data.Wire.MarkOuterForHash(data))
             {
                 bytes = JsonSerializer.SerializeToUtf8Bytes(data, serializer.OutboundOptions);

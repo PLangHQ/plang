@@ -25,7 +25,7 @@ public sealed class @this
     /// <summary>Wildcard format token — covers any format the type renders uniformly.</summary>
     public const string AnyFormat = "*";
 
-    public delegate void Write(object value, app.channels.serializers.IWriter writer);
+    public delegate void Write(object value, app.channel.serializer.IWriter writer);
 
     private readonly ConcurrentDictionary<(string Type, string Format), Write> _generated = new();
     private readonly ConcurrentDictionary<(string Type, string Format), Write> _runtime = new();
@@ -113,7 +113,7 @@ public sealed class @this
             if (method == null) continue;
             var parameters = method.GetParameters();
             if (parameters.Length != 2) continue;
-            if (parameters[1].ParameterType != typeof(app.channels.serializers.IWriter)) continue;
+            if (parameters[1].ParameterType != typeof(app.channel.serializer.IWriter)) continue;
 
             Write del = (value, writer) => method.Invoke(null, new object?[] { value, writer });
 

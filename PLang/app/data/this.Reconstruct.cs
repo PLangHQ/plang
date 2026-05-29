@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using System.Reflection;
-using app.channels.serializers.filters;
+using app.channel.serializer.filter;
 
 namespace app.data;
 

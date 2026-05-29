@@ -1,5 +1,5 @@
-using app.channels.serializers;
-using app.channels.serializers.serializer;
+using app.channel.serializer;
+using app.channel.serializer;
 
 namespace PLang.Tests.App.Serializers;
 
@@ -13,9 +13,9 @@ public class MimeRegistrationTests
         var plang = app.User.Channels.Serializers.GetByMimeType("application/plang");
         var text = app.User.Channels.Serializers.GetByMimeType("text/plain");
 
-        await Assert.That(json).IsTypeOf<global::app.channels.serializers.serializer.Json>();
-        await Assert.That(plang).IsTypeOf<global::app.channels.serializers.serializer.plang.@this>();
-        await Assert.That(text).IsTypeOf<global::app.channels.serializers.serializer.Text>();
+        await Assert.That(json).IsTypeOf<global::app.channel.serializer.Json>();
+        await Assert.That(plang).IsTypeOf<global::app.channel.serializer.plang.@this>();
+        await Assert.That(text).IsTypeOf<global::app.channel.serializer.Text>();
     }
 
     [Test]

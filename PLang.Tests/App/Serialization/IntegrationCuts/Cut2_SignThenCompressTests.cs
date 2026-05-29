@@ -18,7 +18,7 @@ public class Cut2_SignThenCompressTests
         await using var app = NewApp();
         var d1 = MakeCompressible(app, "Ingi");
         var d2 = d1.Compress();
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
+        var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channels.Serializers.GetByMimeType("application/plang");
         var wire = plang.Serialize(d2).Value!;
 
@@ -61,7 +61,7 @@ public class Cut2_SignThenCompressTests
         await using var app = NewApp();
         var d1 = MakeCompressible(app, "Ingi");
         var d2 = d1.Compress();
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
+        var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channels.Serializers.GetByMimeType("application/plang");
         var wire = plang.Serialize(d2).Value!;
 

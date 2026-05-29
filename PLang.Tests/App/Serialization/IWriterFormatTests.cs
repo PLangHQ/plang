@@ -8,11 +8,11 @@ namespace PLang.Tests.App.Serialization;
 
 public class IWriterFormatTests
 {
-    private static global::app.channels.serializers.json.Writer MakeJsonWriter(
+    private static global::app.channel.serializer.json.Writer MakeJsonWriter(
         System.IO.Stream stream, global::app.types.renderers.@this? renderers = null)
     {
         var utf = new Utf8JsonWriter(stream);
-        return new global::app.channels.serializers.json.Writer(utf, options: null,
+        return new global::app.channel.serializer.json.Writer(utf, options: null,
             view: global::app.View.Out, renderers: renderers);
     }
 
@@ -38,7 +38,7 @@ public class IWriterFormatTests
 
         using var ms = new System.IO.MemoryStream();
         var utf = new Utf8JsonWriter(ms);
-        var w = new global::app.channels.serializers.json.Writer(utf, options: null,
+        var w = new global::app.channel.serializer.json.Writer(utf, options: null,
             view: global::app.View.Out, renderers: r);
         w.Value(new global::app.data.TypedValueNode(new object(), "fmtcheck"));
         utf.Flush();
@@ -56,7 +56,7 @@ public class IWriterFormatTests
 
         using var ms = new System.IO.MemoryStream();
         var utf = new Utf8JsonWriter(ms);
-        var w = new global::app.channels.serializers.json.Writer(utf, options: null,
+        var w = new global::app.channel.serializer.json.Writer(utf, options: null,
             view: global::app.View.Out, renderers: r);
         w.Value(new global::app.data.TypedValueNode(new object(), "fallback-fixture"));
         utf.Flush();

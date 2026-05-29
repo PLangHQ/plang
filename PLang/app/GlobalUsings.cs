@@ -23,12 +23,12 @@ global using Bindings = app.@event.lifecycle.binding.list.@this;
 global using AppModules = app.modules.@this;
 
 // Channels subsystem
-global using AppChannels = app.channels.@this;
-global using Channel = app.channels.channel.@this;
-global using ChannelDirection = app.channels.channel.ChannelDirection;
-global using Serializers = app.channels.serializers.@this;
-global using SerializeOptions = app.channels.serializers.SerializeOptions;
-global using DeserializeOptions = app.channels.serializers.DeserializeOptions;
+global using AppChannels = app.channel.list.@this;
+global using Channel = app.channel.@this;
+global using ChannelDirection = app.channel.ChannelDirection;
+global using Serializers = app.channel.serializer.list.@this;
+global using SerializeOptions = app.channel.serializer.list.SerializeOptions;
+global using DeserializeOptions = app.channel.serializer.list.DeserializeOptions;
 
 // Path types (formerly FileSystem)
 // Lowercase aliases — match the PLang concept names, and (unlike PascalCase

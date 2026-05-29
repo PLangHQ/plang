@@ -13,7 +13,7 @@ public class ImageSerializerTests
 {
     private static readonly byte[] PngBytes = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 
-    private sealed class CaptureWriter : global::app.channels.serializers.IWriter
+    private sealed class CaptureWriter : global::app.channel.serializer.IWriter
     {
         public string Format { get; }
         public object? Last { get; private set; }
@@ -100,7 +100,7 @@ public class ImageSerializerTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.channels.serializers.json.Writer(utf, options: null,
+            var w = new global::app.channel.serializer.json.Writer(utf, options: null,
                 view: global::app.View.Out, renderers: renderers);
             w.Value(new global::app.data.TypedValueNode(img, "image"));
         }

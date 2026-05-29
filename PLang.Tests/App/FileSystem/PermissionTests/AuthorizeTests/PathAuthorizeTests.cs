@@ -19,14 +19,14 @@ public class PathAuthorizeTests
             "plang-auth-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     /// Stub stateful channel — answers Ask with a pre-set canned line.
-    private sealed class CannedAnswerChannel : global::app.channels.channel.@this
+    private sealed class CannedAnswerChannel : global::app.channel.@this
     {
         public string[] Answers { get; }
         private int _idx;
         public CannedAnswerChannel(string[] answers)
         {
             Name = "input";
-            Direction = global::app.channels.channel.ChannelDirection.Bidirectional;
+            Direction = global::app.channel.ChannelDirection.Bidirectional;
             Answers = answers;
         }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
@@ -41,9 +41,9 @@ public class PathAuthorizeTests
         }
     }
 
-    private sealed class StatelessChannel : global::app.channels.channel.message.@this
+    private sealed class StatelessChannel : global::app.channel.message.@this
     {
-        public StatelessChannel() { Name = "input"; Direction = global::app.channels.channel.ChannelDirection.Bidirectional; }
+        public StatelessChannel() { Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
             => Task.FromResult(global::app.data.@this.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default)

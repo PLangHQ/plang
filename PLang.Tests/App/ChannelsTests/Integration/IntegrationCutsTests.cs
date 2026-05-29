@@ -83,7 +83,7 @@ public class IntegrationCutsTests
         await Assert.That(metricsText.Contains("+1")).IsTrue();
     }
 
-    private sealed class GoalChannelProbe : global::app.channels.channel.goal.@this
+    private sealed class GoalChannelProbe : global::app.channel.goal.@this
     {
         private readonly Action _onInvoke;
         public GoalChannelProbe(string name, global::app.goals.goal.@this goal, global::app.actor.@this actor, Action onInvoke)

@@ -49,7 +49,7 @@ public class Stage7_AppServicesTests
     {
         await using var app = new global::app.@this("/tmp/s7e");
         AppService captured;
-        global::app.channels.channel.@this disposedCh;
+        global::app.channel.@this disposedCh;
         {
             await using var s = app.Services.New(parent: app.User);
             captured = s;
