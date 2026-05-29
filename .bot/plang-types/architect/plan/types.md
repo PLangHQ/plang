@@ -6,7 +6,7 @@ This file goes deep on what types ship on this branch, what each owns, the regis
 
 Every PLang type lives at `app/types/<name>/`:
 
-- `this.cs` — the value. A `readonly struct` for pure values (`number`), a `sealed class` for reference-shaped values (`image`, `code`), an `abstract` class for variant families (`path` — file vs http have different storage and dispatch). Carries `[PlangType("name")]` and implements `app.data.IBooleanResolvable` (truthiness); class-shaped types may also implement `app.modules.IContext` to reach the runtime (`number`, a value, does not).
+- `this.cs` — the value. A `sealed class` for most types (`number`, `image`, `code`), `abstract` for variant families (`path` — file vs http have different storage and dispatch). `number` is a class for codebase consistency though it's a *value* semantically (immutable, value equality). Carries `[PlangType("name")]` and implements `app.data.IBooleanResolvable` (truthiness); types that need the runtime may also implement `app.modules.IContext` (`number`, a value, does not).
 - `this.cs` (or `this.Parse.cs`) exposes `public static @this Resolve(string raw, app.actor.context.@this context)` — the single coercion factory. `app.types.Conversion.TryConvertTo` dispatches here. A binary type adds a `Resolve(byte[], context)` overload.
 - `serializer/<format>.cs` — one file per (type, format) rendering; `Default.cs` is the uniform fallback. Serialization is **not** an interface on the value; it's these files (see [dispatch.md](dispatch.md)).
 - Sub-files at the type's discretion: variant subfolders (`path/file/`, `path/http/`), surface partials (`this.Operations`, `this.Authorize`).
@@ -19,7 +19,7 @@ The type does **not** depend on any channel, and no channel depends on a type. T
 
 **Folder:** `app/types/number/`
 **Files this branch creates:**
-- `this.cs` — `readonly struct @this`, `NumberKind` enum + storage slots (`_i`, `_d`, `_f`), `Kind`, `static From(int|long|decimal|float|double)`, implicit-IN operators.
+- `this.cs` — `sealed class @this` (immutable), `NumberKind` enum + storage slots (`_i`, `_d`, `_f`), `Kind`, `static From(int|long|decimal|float|double)`, implicit-IN operators.
 - `this.Parse.cs` — `static Resolve` / `Parse` / `TryParse`.
 - `this.Operators.cs` — operator overloads `+ - * / %` (lenient default).
 - `this.Arithmetic.cs` — `static Add(@this, @this, NumberPolicy)` and siblings; policy-aware, `Data`-returning; called by `math.*` handlers.
@@ -118,7 +118,7 @@ public sealed class @this : app.data.IBooleanResolvable, app.modules.IContext
 }
 ```
 
-Serialization is **not** an interface on the class — it lives in `serializer/<format>.cs` files beside it (see [dispatch.md](dispatch.md)). `number`, being a `readonly struct` value, drops `IContext` (no stored Context); class-shaped types like `image` may keep it.
+Serialization is **not** an interface on the class — it lives in `serializer/<format>.cs` files beside it (see [dispatch.md](dispatch.md)). `number` drops `IContext` (it's a value — no stored Context); types that genuinely need the runtime may keep it.
 
 `[PlangType]` takes just the PLang-facing name — the CLR type *is* the class the attribute is on, so the generator picks it up from the symbol it's scanning. No redundant `typeof(image.@this)` argument. (`[PlangType]` and the discovery scan already exist in `Registry.cs`.)
 

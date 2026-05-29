@@ -2,14 +2,14 @@
 
 This file goes deep on the C# shape of `app.types.number.@this`: storage layout, construction, parsing, arithmetic, equality, `IBooleanResolvable`. The spine ([../plan.md](../plan.md)) locks the architectural decision; this locks the surface.
 
-## The shape — `readonly struct`
+## The shape — `sealed class`
 
-`number` is a **`readonly struct` named `@this`** — so it's `app.types.number.@this`, the `@this` folder convention holds, and it reads like every other type in `app/types/`:
+`number` is a **`sealed class` named `@this`** — `app.types.number.@this`, immutable, reading like every other type under `app/types/`:
 
 ```csharp
 namespace app.types.number;
 
-public readonly struct @this : System.IEquatable<@this>, global::app.data.IBooleanResolvable
+public sealed class @this : System.IEquatable<@this>, global::app.data.IBooleanResolvable
 {
     public NumberKind Kind { get; }
 
@@ -27,13 +27,13 @@ public readonly struct @this : System.IEquatable<@this>, global::app.data.IBoole
 public enum NumberKind { Int, Long, Float, Double, Decimal }
 ```
 
-A struct because a number is a *value*: no identity, immutable, two `5`s are the same — exactly like `int`/`decimal`/`double`, which are all structs. It implements `IEquatable<@this>` for value equality and `IBooleanResolvable` because zero (and NaN) is falsy.
+A number is still a *value* semantically — immutable (readonly fields, no setters), value equality, no identity, two `5`s are the same — but it lives as a `sealed class` for **codebase consistency**: every other type under `app/types/` is a class, and one struct exception isn't worth its weight this early in the runtime's life. A struct would save heap allocations only in pure-C# arithmetic that never crosses into `Data` (a `list.sum` accumulator), because `Data.Value` is typed `object` (`app/data/this.cs:86`) and boxes any value type the moment it's stored — and that store-into-`Data` path is most of the runtime. The win is C#-internal, unobservable to any PLang app, and a one-keyword flip to capture later if profiling ever flags `number` allocation. Consistency wins now.
+
+It implements `IEquatable<@this>` for value equality and `IBooleanResolvable` because zero (and NaN) is falsy.
 
 `Float` is a *label* (for `ToString`, catalog fidelity, round-trip identity) widened to `double` on entry — single-precision shares the `_f` slot. Standard VM practice: saves a slot and a code path. Re-narrowing to `float` happens at the explicit-OUT cast.
 
 **No `Context`, no `IContext`.** A number has no use for Context after construction. `Resolve(raw, context)` keeps the parameter for factory-signature consistency with other types but never stores it; `From(5)` and the internal factories never see it. A value carrying per-request state that could get parked in the memory stack across requests is an OBP Rule #4 violation — keeping `number` Context-free makes it a genuine value.
-
-**One caveat to know about the struct, for the coder.** `Data` stores its value as `object` (`app/data/this.cs:86`), so a `number` **boxes the moment it lands in `Data.Value`** — the dominant runtime path. There a struct allocates the same as a class would; the struct's stack-allocation win is real only for pure-C# arithmetic intermediates that never enter `Data` (e.g. a `list.sum` accumulator). So pick `struct` for the value-semantics, not for an allocation win that mostly doesn't materialize. `IBooleanResolvable` dispatch reads the already-boxed `Data.Value`, so truthiness adds no boxing beyond what `Data` already did.
 
 ### Which CLR kinds collapse into which slots
 
@@ -82,7 +82,7 @@ public static implicit operator @this(float v)   => From(v);
 public static implicit operator @this(double v)  => From(v);
 ```
 
-Implicit IN lets handlers write `Data<number>.Ok(5)` without ceremony — the primitive sits in the struct's slot, no boxing until the value is stored into `Data.Value`.
+Implicit IN lets handlers write `Data<number>.Ok(5)` without ceremony — the primitive sits in the matching slot, no re-boxing of the primitive itself.
 
 ## Going back out — explicit only
 

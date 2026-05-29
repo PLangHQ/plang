@@ -1,3 +1,12 @@
+## 2026-05-29 — number → sealed class; money + display-formatting deferred
+
+Two decisions after the read-over:
+
+- **`number` reverts struct → `sealed class`.** The struct's only win is C#-internal allocation, which mostly boxes away anyway (`Data.Value` is `object`), is unobservable to any PLang app, and is a one-keyword flip to revisit later. Codebase consistency (every `app/types/` entry is a class) wins this early in the runtime. Still an immutable value semantically. Updated across plan.md / storage.md / types.md.
+- **No arithmetic-scale default** (confirmed): division stays full-precision (`1/1000000` must not silently become `0`). **Display decimals** (print `3.33` not `3.3333…`) is the right idea but belongs to the deferred locale/formatting concern (`app.Culture`), not a standalone setting now — its home is `number/serializer/text.cs` (the human path, already separate from the lossless wire). **`money`** is a *future sibling type* (number + currency code + time-varying-rate conversion + locale formatting), adjacent to `quantity` but distinct; it's the natural owner of "always 2 decimals," so currency doesn't tax every `number`. Both added to the spine's "deferred, by design" list.
+
+Nothing new ships this branch from these — the deltas are "class for consistency," "money/quantity deferred," "display-formatting rides the culture pass." Plan docs unchanged in scope; stage index still the next step.
+
 ## 2026-05-29 — Consolidation pass: clean plan docs for read-over
 
 All review comments resolved — the design is settled. Rewrote the plan documents to read forward as a settled design, stripping the process scaffolding (dates, "Ingi flagged", "Opus 4.8 point N", "earlier draft / withdrawn", "pending / open question" where the call is made).

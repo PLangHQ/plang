@@ -71,7 +71,11 @@ Plus four mechanical cleanups that retire half-states: `datetime` → `DateTimeO
 Deferred to later branches, by design — each needs a driving action surface before the type earns its place:
 - **`video`, `audio`, `document`, `archive`, `font`, `executable`** — structurally identical to `image`; lift them when there's a `video.thumbnail` / `document.extract-text` / `archive.list` to consume them.
 - **`BigInteger` / arbitrary precision** — a fifth `NumberKind` slot the umbrella is designed to absorb; add it when a real arithmetic consumer needs >28 digits ([plan/storage.md](plan/storage.md)).
-- **`rational`** (`- set %x% = 7/8` kept exact) — a *separate sibling type* under `app/types/rational/`, not a `NumberKind` (its arithmetic rules differ: GCD, lowest-terms, no IEEE). Parallel to a future `quantity` (units of measure: `5kg`).
+- **`rational`** (`- set %x% = 7/8` kept exact) — a *separate sibling type* under `app/types/rational/`, not a `NumberKind` (its arithmetic rules differ: GCD, lowest-terms, no IEEE).
+- **`quantity`** (`5kg`, `30m/s`) — number + unit, converting by fixed ratios. The sibling-type shape `rational` also follows.
+- **`money`** — number + currency code + locale formatting. Adjacent to `quantity` but distinct: currencies convert by *external, time-varying rates*, so it drags in a rate-provider subsystem. It's the natural home for "always 2 decimals" — currency wants it, so `money` defaults to it rather than taxing every `number`. Needs a rate source and an action surface before it earns a folder.
+
+Number itself stays **lossless and arithmetic-pure**: division and inexact ops keep full precision (no default rounding — `1/1000000` must not silently become `0`), and the wire formats round-trip exactly. **Human-facing formatting** — decimal places shown on print, decimal/thousands separators, currency symbols — is a single locale-tied concern deferred to the culture/formatting pass (`app.Culture`). In-branch, `number` renders shortest-round-trip invariant; `number/serializer/text.cs` (the human path, already separate from the lossless `Default.cs`) is where a display-decimals setting lands when that pass ships. We don't split decimal-count off from the rest of formatting now.
 
 Per-type detail, ownership matrix, and registration shape: [plan/types.md](plan/types.md).
 
@@ -115,7 +119,7 @@ PLang/
         this.cs  this.Authorize.cs  this.Operations.cs  this.Derivation.cs
         file/  http/  scheme/  permission/
         serializer/Default.cs  (new) — writer.String(Relative); absorbs this.JsonConverter
-      number/                  (new — readonly struct @this)
+      number/                  (new — sealed class @this, immutable value)
         this.cs                  NumberKind enum, storage slots, IEquatable, IBooleanResolvable
         this.Parse.cs            Parse / TryParse / Resolve(string,ctx) / Resolve(byte[],ctx)
         this.Operators.cs        + - * / % == != (lenient default)
@@ -167,7 +171,7 @@ Every PLang type is a folder under `app/types/`: the value (`this.cs`), the pars
 - **Channel never branches on type; type never knows about channels.** The bridge is the writer's `Format` token. Adding a channel/writer doesn't force every type to grow a renderer; adding a type doesn't force every writer to change.
 - **Unregistered types fall back to reflection.** A value whose CLR type isn't a `[PlangType]` is reflected into a property bag exactly as today. Only registered types are tagged and dispatched to serializer files. Identity, Signature, user records — untouched, backwards-compatible.
 - **The registry subsumes the flat `Primitives` table.** The dictionary at `app/types/this.cs:34` folds into the `[PlangType]` registry. `app.formats` becomes the extension→name helper that the parse-in side uses to stamp `Data.Type`, not a parallel universe.
-- **`number` is a `readonly struct`** named `@this` (convention intact), with lenient-by-default equality and an error model that throws inside C# but returns `Data.Error` at the handler boundary. Rationale and the one caveat (struct boxes when stored in `Data.Value`) in [plan/storage.md](plan/storage.md).
+- **`number` is a `sealed class`** named `@this` — a *value* semantically (immutable, value equality) but a class for codebase consistency (every other `app/types/` entry is a class; a struct's only win is C#-internal allocation that mostly boxes away when stored in `Data.Value`, so it's not worth the one-off shape this early — reversible later). Lenient-by-default equality; error model throws inside C# but returns `Data.Error` at the handler boundary. [plan/storage.md](plan/storage.md).
 - **Arithmetic policy reuses `app.config`** (`number.Config : IConfig`) — context→parent→app-default walk, no `Goal`-stored state, no ambient `AsyncLocal`. [plan/policy.md](plan/policy.md).
 - **`/` and `^` promote out of the integer kinds.** `7 / 2 → 3.5`, not integer-divide `3` — the integer-division footgun is the wrong default for a non-programmer audience. Truncating division is the explicit `math.intdiv`. (Architect's call; flag on read-over if you'd rather keep C# integer semantics.)
 - **HTML deferred.** No HTML writer ships yet (`text/html` aliases JSON today); the `<img>`/`<pre>` markup renderings are footnotes until one does.
@@ -177,7 +181,7 @@ Every PLang type is a folder under `app/types/`: the value (`this.cs`), the pars
 The design is settled; these are the imperative units of work, in dependency order. Stage files come after your read-over.
 
 1. **Registry + dispatch spine.** Fold the `Primitives` table into the `[PlangType]` registry; add `TypeSerializers`, `TypedValueNode`, the `Normalize` tag-hook, `IWriter.Format`, the writer's `TypedValueNode` case, and the `PLNG_SerializerCoverage` gate. No new types yet — `path` adopts `serializer/Default.cs` as the first mover and proves the path end-to-end.
-2. **`number` the value type.** The `readonly struct`, storage, parse, operators, lenient/exact equality, `IBooleanResolvable`, `serializer/Default.cs`. [storage.md](storage.md).
+2. **`number` the value type.** The `sealed class`, storage, parse, operators, lenient/exact equality, `IBooleanResolvable`, `serializer/Default.cs`. [storage.md](storage.md).
 3. **`number` arithmetic + policy.** `NumberPolicy`, `number.Config : IConfig`, the `app.config` resolver, the `math.*` retype to `Data<number>`, `math.intdiv`. [policy.md](policy.md).
 4. **`image` + `code`.** The two non-numeric proving instances, their parse/serializer files, `file.read` type-stamping.
 5. **The cleanups.** `datetime`/`date`/`time`/`duration` rebinds and the two folders.
