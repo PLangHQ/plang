@@ -24,13 +24,9 @@ public class IWriterFormatTests
         await Assert.That(w.Format).IsEqualTo("json");
     }
 
-    [Test, Skip("deferred: PlangWriter not yet shipped — plang mime reuses json.Writer")]
-    public async Task PlangWriter_Format_IsPlangToken()
-        => await Assert.That(true).IsTrue();
-
-    [Test, Skip("deferred: TextWriter not yet shipped — added when first format-asymmetric type lands")]
-    public async Task TextWriter_Format_IsTextToken()
-        => await Assert.That(true).IsTrue();
+    // Placeholders for PlangWriter / TextWriter Format-token tests were removed;
+    // their deferral is captured in Documentation/v0.2/todos.md
+    // "Ship PlangWriter / TextWriter". Real tests land when the writers do.
 
     [Test]
     public async Task Writer_TypedValueNodeCase_CallsLookup_WithOwnFormatToken()

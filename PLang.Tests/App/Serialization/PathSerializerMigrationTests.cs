@@ -78,9 +78,10 @@ public class PathSerializerMigrationTests
         await Assert.That(global::app.types.path.@this.Build("%var%")).IsNull();
     }
 
-    [Test, Skip("deferred: legacy JsonConverter still backs STJ-direct path reads; per-call-site migration is a follow-up")]
-    public async Task LegacyJsonConverter_FileDoesNotExist_AfterMigration()
-        => await Assert.That(true).IsTrue();
+    // Placeholder removed; converter deletion is tracked in
+    // Documentation/v0.2/todos.md "Delete app/types/path/this.JsonConverter.cs"
+    // (structural — requires ITypeRenderer.Read or a record-schema redesign).
+    // The real "JsonConverter is absent" assertion lands with the migration.
 
     [Test]
     public async Task Path_Wire_ByteForByteParity_BeforeAndAfter_Migration()

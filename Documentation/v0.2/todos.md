@@ -576,46 +576,212 @@ known to be correct. Same for `Base64ImagePathNull` once the
 
 ## 2026-05-29 — PLNG003: build-time serializer-coverage gate (deferred)
 
-Goal: every `[PlangType]`-decorated class must have wire-render coverage at
-build (Default.cs serializer OR per-format files covering every IWriter
-Format token). Replaces the runtime `RendererLookupMissed` throw with a
-build-time refusal.
+**Goal.** Every `[PlangType]`-decorated class must have wire-render
+coverage at build: either `app/types/<name>/serializer/Default.cs` (a
+wildcard static class with `Write(T, IWriter)`) OR per-format files
+(`json.cs`, future `text.cs`, etc.) that together cover every
+`IWriter.Format` literal in the compilation. Replaces the runtime
+`RendererLookupMissed` throw at first emit with a build-time refusal.
 
-**Implementation prototyped on `plng003-coverage-gate` branch** (see
-`PLang.Generators/Diagnostics/Plng003.cs`). Cross-references
-`[PlangType]` classes vs sibling `serializer/` namespace classes vs
-`IWriter.Format` literals; emits PLNG003 diagnostic at error severity.
+**Status.** Analyzer was prototyped on a branch that has been deleted.
+Implementation pattern (when rewriting): a Roslyn
+`IIncrementalGenerator` with three `SyntaxProvider`s — collect
+`[PlangType]` decls, collect static classes in
+`app.types.<X>.serializer` namespaces, collect `IWriter` impls with
+string-literal `Format` properties — `.Combine(...)` them and emit
+`Diagnostic.Create(Plng003Descriptor, ...)` for each PlangType missing
+coverage. Mirror the wiring in `PLang.Generators/Diagnostics/Plng002.cs`
+(register a public static `Register(IncrementalGeneratorInitializationContext)`
+called from `PLang.Generators/this.cs`'s `Initialize`).
 
-**Why deferred:** strict gate fires on 7 real production classes that
-currently lack explicit serializers — `tstring`, `goal.call`, `info`,
-`identity`, `llmmessage`, `ask`, `results`. Their wire shape today
-comes from `NormalizeObject` reflection-based property-bag fallthrough.
-Writing explicit `Default.cs` for each changes what flows through the
-TypedValueNode dispatch and therefore **what gets signed** for the
-signing-load-bearing trio (`identity`, `signature`, `signedoperation`).
+**Why deferred — signing risk.** Strict gate fires on 7 real production
+classes that currently have no explicit serializer:
 
-**Signing risk:** any byte-shape drift between the explicit serializer
-and the existing reflection-bag output invalidates stored signed Data
-(callbacks, signedoperations) and breaks signature verification on
-persisted state.
+```
+[PlangType("tstring")]    PLang/app/data/TString.cs
+[PlangType("goal.call")]  PLang/app/goals/goal/GoalCall.cs
+[PlangType("info")]       PLang/app/Info.cs
+[PlangType("identity")]   PLang/app/modules/identity/types.cs
+[PlangType("llmmessage")] PLang/app/modules/llm/LlmMessage.cs
+[PlangType("ask")]        PLang/app/modules/output/ask.cs
+[PlangType("results")]    PLang/app/tester/Results.cs
+```
 
-**Resume plan:**
-1. For each of the 7, write `Default.cs` that emits the property bag in
-   the exact order/shape `NormalizeObject` produces — verify byte-for-
-   byte against a captured test corpus.
-2. For `identity` / `signature` / `signedoperation`, additionally
-   re-sign the persisted test fixtures (signed `.json` blobs under
-   `PLang.Tests/App/Fixtures/`) with the new shape, OR demonstrate that
-   the existing signed corpus still verifies under the new shape.
-3. Land PLNG003 strict (the analyzer code is already written) plus the
-   serializers in a focused branch with security bot in the loop.
+Their wire shape today comes from `NormalizeObject`'s reflection-based
+property-bag fallthrough (see `app/data/this.Normalize.cs:156-164` —
+when `types.Renderers.Has(name)` is false, the value falls through to
+the property-bag walk instead of being wrapped as a `TypedValueNode`).
+Writing explicit `Default.cs` for any of `identity`, `signature`,
+`signedoperation` changes what flows through `TypedValueNode` dispatch
+and therefore **what bytes get signed** — any drift from the existing
+reflection-bag output invalidates stored signed Data
+(`SignedOperation` blobs in callback persistence, signed test fixtures
+under `PLang.Tests/App/Fixtures/`) and breaks verification.
+
+**Resume plan.**
+1. Reimplement the PLNG003 analyzer (pattern above). Keep severity =
+   `DiagnosticSeverity.Error`.
+2. For each of the 7 PlangTypes, decide the explicit wire shape. For
+   non-signing-load-bearing types (`tstring`, `goal.call`, `info`,
+   `llmmessage`, `ask`, `results`), the property-bag shape is fine —
+   write `Default.cs` that emits the same property order as
+   `NormalizeObject` produces today and capture a byte-for-byte test
+   against the current output.
+3. For `identity`, `signature`, `signedoperation`, additionally verify
+   that the persisted signed corpus (`PLang.Tests/App/Fixtures/`) still
+   verifies under the new shape, OR re-sign the corpus.
+4. Coordinate with security bot — runtime-loaded DLLs cannot shadow
+   these names today (see `app/types/Loader.cs` `SealedNames`); ensure
+   the gate respects that distinction.
 
 **Alternative path** if signing parity proves intractable: register a
 generic "reflection-bag" fallback renderer that any `[PlangType]`
-without an explicit serializer auto-uses. Defeats explicit-per-type
-intent but preserves today's wire shape exactly.
+without an explicit serializer auto-uses. Defeats the explicit-per-type
+intent but preserves today's wire shape exactly. Tracked separately if
+chosen.
 
-**Files involved (when resuming):**
-- `PLang.Generators/Diagnostics/Plng003.cs` (analyzer, already written)
-- `PLang.Generators/this.cs` (wire-in call)
-- New `serializer/Default.cs` for each of the 7 production PlangTypes.
+**Test landing.** When this ships, replace the comment block in
+`PLang.Tests/App/Serialization/PlngSerializerCoverageTests.cs` with the
+real tests (the four test names removed there describe the assertions
+the analyzer must pass: default-cs gate, per-format gate, missing-format
+fail, no-serializer fail, diagnostic-id-is-PLNG003-Error).
+
+## 2026-05-29 — Delete `app/types/path/this.JsonConverter.cs` (deferred — structural)
+
+**Goal.** Remove the legacy STJ converter at
+`PLang/app/types/path/this.JsonConverter.cs` and route path
+deserialization through the same per-(type, format) dispatch as the
+write side. Once the file is gone, the assertion to land is "type
+`app.types.path.JsonConverter` is not present in the production
+assembly" — see "Test landing" below.
+
+**Why the original "per-call-site migration" framing was wrong.** The
+converter's `Read` method already routes through `path.Resolve(raw,
+ctx)` — it's a thin context-bound wrapper, not legacy logic. It's the
+*seam* STJ uses to deserialize any record property typed `path.@this`
+(without it, STJ can't turn `"path":"foo.txt"` into a `path.@this`
+instance). Every site that registers it needs a substitute
+read-dispatch — but the new renderer system today is **write-only**
+(`ITypeRenderer.Write(object, IWriter)`); there is no equivalent
+`Read` path.
+
+**Two ways forward (pick at design time):**
+
+1. **`ITypeRenderer` grows a `Read` method** symmetric to `Write` —
+   e.g. `object? Read(string raw, actor.context.@this ctx)`. STJ's
+   converter chain keeps one general entry-point that delegates to the
+   renderer registry by typeName; `path.serializer.Default` implements
+   both directions. **Touches the renderer interface shape — coordinate
+   with anyone else extending it.** Read-dispatch on `path` touches
+   `AuthGate` ordering, so loop in the security bot.
+
+2. **Change record schemas to hold `string`, not `path.@this`.** Resolve
+   at use, not at deserialization. Largest blast radius — touches
+   `Goal`, `Step`, `file/save/list/etc.` handler records, every Data
+   path-typed slot. Probably wrong: loses the "Path is in scope"
+   guarantee `path.@this` provides at every call site, and any caller
+   that forgets to `Resolve` immediately bypasses `AuthGate`.
+
+(1) is the right design path.
+
+**Registration sites that need updating** (grep targets — line numbers
+as of `plang-types` HEAD `1bb5224b6`):
+```
+PLang/app/this.cs:420
+PLang/app/types/Conversion.cs:38, 60
+PLang/app/Diagnostics/Format.cs:31
+PLang/app/channels/serializers/serializer/Json.cs:47-48
+PLang/app/channels/serializers/serializer/plang/this.cs:50-51, 71
+PLang/app/modules/builder/this.cs:50
+```
+
+Plus 8 test files under `PLang.Tests/App/...` that construct
+`JsonSerializerOptions` directly — they'll follow whichever pattern
+production picks.
+
+**Test landing.** Replace the comment block in
+`PLang.Tests/App/Serialization/PathSerializerMigrationTests.cs` with
+the real assertion when shipping:
+```csharp
+[Test] public async Task LegacyJsonConverter_FileDoesNotExist_AfterMigration()
+{
+    var asm = typeof(global::app.types.path.@this).Assembly;
+    var converter = asm.GetType("app.types.path.JsonConverter");
+    await Assert.That(converter).IsNull();
+}
+```
+
+## 2026-05-29 — Ship `PlangWriter` / `TextWriter` (deferred — YAGNI)
+
+**Goal.** Add dedicated `IWriter` implementations for the `"plang"`
+and `"text"` format tokens, so a renderer registered for a specific
+`(typeName, "plang")` or `(typeName, "text")` pair gets its
+format-specific delegate at write time. Until then both format tokens
+resolve through `json.Writer`'s wildcard fallback (which works because
+no renderer today registers a per-format entry for `plang`/`text`).
+
+**Why deferred.** YAGNI. Splitting the writer adds files without
+adding behavior: every shipped renderer today produces identical
+output regardless of which writer drives it. Real motivation arrives
+when a single PLang type wants asymmetric output across formats — the
+canonical example would be `code`: `json` emits the source as a JSON
+string, `text` emits raw source without quotes, an eventual `html`
+writer wraps in `<pre><code>`.
+
+**Resume when.** A renderer needs format-asymmetric output. Concretely:
+when someone files a `serializer/plang.cs` or `serializer/text.cs`
+under any `app/types/<T>/` folder, the matching writer must exist or
+the format-specific renderer never fires.
+
+**Test landing.** Replace the comment in
+`PLang.Tests/App/Serialization/IWriterFormatTests.cs` with the actual
+shape:
+```csharp
+[Test] public async Task PlangWriter_Format_IsPlangToken()
+{
+    using var ms = new System.IO.MemoryStream();
+    var w = new global::app.channels.serializers.plang.Writer(...);
+    await Assert.That(w.Format).IsEqualTo("plang");
+}
+// (same shape for TextWriter, Format = "text")
+```
+
+## 2026-05-29 — `image.@this` HTTP fetch via `ResolveAsync` (deferred — latent)
+
+**Goal.** Wire and test the `http://` / `https://` branch in
+`PLang/app/types/image/this.cs`'s `ResolveAsync(string, ctx)` — fetch
+the bytes via `path.http.ReadBytes`, construct an `image` value with
+the response's MIME type, and assert the round-trip in
+`ImageParseTests`.
+
+**Why deferred.** No shipping action exposes `Data<image>` from a string
+parameter today. The factory branch exists but is unreachable from
+PLang code, so adding a mock HTTP server fixture for the test would
+verify a code path no one calls.
+
+**Resume when.** A handler that consumes an image URL ships. Concrete
+examples: `vision.describe Url=https://example.com/photo.jpg` or
+`image.read URL` action. The trigger is the moment a `data.@this<image>`
+parameter accepts a URL string.
+
+**Coordinate with security finding F3** (`image.@this` byte intake
+size cap, from `.bot/plang-types/security-report.json`). The fix for
+F3 belongs at the path-verb layer — `path.@this.ReadBytes(maxBytes?)`
+with `Data.Fail("ImageTooLarge")` past the cap. Land both together so
+the HTTP fetch and the size guard land in one focused branch.
+
+**Test landing.** Replace the comment in
+`PLang.Tests/App/Types/ImageParseTests.cs` with the real assertion
+(needs a mock HTTP server — see how `HttpPathRedirectTests` or
+`HttpPathTests` already set one up). Expected shape:
+```csharp
+[Test] public async Task Resolve_HttpUrl_FetchesAndConstructs()
+{
+    using var server = new HttpTestServer();
+    server.Respond("/photo.png", PngBytes, "image/png");
+    await using var app = NewApp();
+    var img = await image.ResolveAsync(server.UrlFor("/photo.png"), app.User.Context);
+    await Assert.That(img!.Mime).IsEqualTo("image/png");
+    await Assert.That(img.Path).IsNotNull();
+}
+```

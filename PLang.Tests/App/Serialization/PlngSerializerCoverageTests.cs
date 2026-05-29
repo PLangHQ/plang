@@ -23,19 +23,8 @@ public class PlngSerializerCoverageTests
         await Assert.That(r.Has("path")).IsTrue();
     }
 
-    [Test, Skip("deferred: needs fixture type with all-format serializer folder once PLNG003 gate ships")]
-    public async Task Coverage_PlangTypeWithEveryFormatFile_PassesGate_NoDefaultCs()
-        => await Assert.That(true).IsTrue();
-
-    [Test, Skip("deferred: needs Roslyn analyzer with PLNG003 diagnostic")]
-    public async Task Coverage_PlangTypeWithNoSerializer_FailsBuild()
-        => await Assert.That(true).IsTrue();
-
-    [Test, Skip("deferred: needs Roslyn analyzer with PLNG003 diagnostic")]
-    public async Task Coverage_PlangTypeMissingOneFormat_WithoutDefault_FailsBuild()
-        => await Assert.That(true).IsTrue();
-
-    [Test, Skip("deferred: PLNG003 analyzer not yet shipped")]
-    public async Task Coverage_DiagnosticIdIsPLNG_ErrorSeverity()
-        => await Assert.That(true).IsTrue();
+    // Build-time gate placeholders (PLNG003 analyzer, per-format coverage,
+    // synthetic-fixture diagnostics) were removed; the deferral is tracked in
+    // Documentation/v0.2/todos.md "PLNG003: build-time serializer-coverage gate".
+    // When the analyzer ships, the real tests land alongside it.
 }

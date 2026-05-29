@@ -55,9 +55,10 @@ public class ImageParseTests
         await Assert.That(img!.Mime).IsEqualTo("image/png");
     }
 
-    [Test, Skip("deferred: needs mock HTTP server — ResolveAsync.http branch fetches via path.http.ReadBytes")]
-    public async Task Resolve_HttpUrl_FetchesAndConstructs()
-        => await Assert.That(true).IsTrue();
+    // image.ResolveAsync's http branch is latent (no shipping handler binds an
+    // image from a URL string). Deferral tracked in Documentation/v0.2/todos.md
+    // "image.@this HTTP fetch via ResolveAsync". Real test + mock HTTP server
+    // land when a handler that consumes Data<image> from a URL ships.
 
     [Test] public async Task Resolve_ByteArray_PngMagicBytes_PicksImagePng()
     {
