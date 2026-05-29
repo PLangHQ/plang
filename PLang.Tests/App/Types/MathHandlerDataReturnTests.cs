@@ -2,11 +2,11 @@ using number = global::app.types.number.@this;
 
 namespace PLang.Tests.App.Types;
 
-// plang-types — Stage 4
+// plang-types — Stage 4 + unary retype follow-up
 // math.* actions retype Run() from Task<Data<object>> to Task<Data<number>>.
 // The handler RELAYS Data, never throws — overflows/divide-by-zero arrive as Data.Fail.
-// MathHelper.ToDouble and MathHelper.PreserveType are slated for deletion once the
-// non-arithmetic math handlers (abs/floor/etc.) follow the same retype — a follow-up.
+// Arithmetic AND unary/comparison families (abs/floor/ceiling/sqrt/round/min/max)
+// route through number.*. MathHelper.ToDouble and MathHelper.PreserveType are deleted.
 
 public class MathHandlerDataReturnTests
 {
@@ -78,8 +78,8 @@ public class MathHandlerDataReturnTests
 
     [Test] public async Task MathHandler_ReadsPolicyViaAppConfigForNumberConfig()
     {
-        // The Config record lives at app.modules.math.number.Config.
-        var t = typeof(global::app.modules.math.number.Config);
+        // The Config record lives at app.modules.environment.number.Config.
+        var t = typeof(global::app.modules.environment.number.Config);
         await Assert.That(typeof(global::app.config.IConfig).IsAssignableFrom(t)).IsTrue();
         await Assert.That(t.GetProperty("Overflow")).IsNotNull();
         await Assert.That(t.GetProperty("Precision")).IsNotNull();
@@ -95,11 +95,48 @@ public class MathHandlerDataReturnTests
         await Assert.That(pt.GetGenericTypeDefinition() == typeof(global::app.data.@this<>)).IsTrue();
     }
 
-    [Test, Skip("deferred: MathHelper.ToDouble still backs abs/ceiling/floor/min/max/round/sqrt")]
-    public async Task MathHelper_ToDouble_NotPresentInProductionAssembly()
-        => await Assert.That(true).IsTrue();
+    [Test] public async Task MathHelper_NotPresentInProductionAssembly()
+    {
+        // MathHelper.cs is deleted — unary/comparison handlers now route through
+        // number.Abs / Floor / Ceiling / Sqrt / Round / Min / Max with the same
+        // Wrap envelope that fronts the arithmetic family.
+        var asm = typeof(global::app.modules.math.Add).Assembly;
+        var helper = asm.GetType("app.modules.math.MathHelper");
+        await Assert.That(helper).IsNull();
+    }
 
-    [Test, Skip("deferred: MathHelper.PreserveType still backs the non-arithmetic math handlers")]
-    public async Task MathHelper_PreserveType_NotPresentInProductionAssembly()
-        => await Assert.That(true).IsTrue();
+    [Test] public async Task MathAbs_RunSignature_ReturnsDataNumber()
+    {
+        AssertRunReturnsDataNumber(typeof(global::app.modules.math.Abs));
+    }
+
+    [Test] public async Task MathFloor_RunSignature_ReturnsDataNumber()
+    {
+        AssertRunReturnsDataNumber(typeof(global::app.modules.math.Floor));
+    }
+
+    [Test] public async Task MathCeiling_RunSignature_ReturnsDataNumber()
+    {
+        AssertRunReturnsDataNumber(typeof(global::app.modules.math.Ceiling));
+    }
+
+    [Test] public async Task MathSqrt_RunSignature_ReturnsDataNumber()
+    {
+        AssertRunReturnsDataNumber(typeof(global::app.modules.math.Sqrt));
+    }
+
+    [Test] public async Task MathRound_RunSignature_ReturnsDataNumber()
+    {
+        AssertRunReturnsDataNumber(typeof(global::app.modules.math.Round));
+    }
+
+    [Test] public async Task MathMin_RunSignature_ReturnsDataNumber()
+    {
+        AssertRunReturnsDataNumber(typeof(global::app.modules.math.Min));
+    }
+
+    [Test] public async Task MathMax_RunSignature_ReturnsDataNumber()
+    {
+        AssertRunReturnsDataNumber(typeof(global::app.modules.math.Max));
+    }
 }
