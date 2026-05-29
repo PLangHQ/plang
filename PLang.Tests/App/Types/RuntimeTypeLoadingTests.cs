@@ -128,21 +128,53 @@ public class RuntimeTypeLoadingTests
         await Assert.That(slotAfter).IsEqualTo(typeof(global::app.types.number.@this));
     }
 
-    private static readonly string IdentityShadowDll = System.IO.Path.GetFullPath(
+    private static string FixtureDll(string name) => System.IO.Path.GetFullPath(
         System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..",
-            "App", "Fixtures", "dlls", "IdentityShadow.dll"));
+            "App", "Fixtures", "dlls", name));
+
+    private static readonly string IdentityShadowDll = FixtureDll("IdentityShadow.dll");
+    private static readonly string SignatureRendererShadowDll = FixtureDll("SignatureRendererShadow.dll");
+    private static readonly string CallbackInferredShadowDll = FixtureDll("CallbackInferredShadow.dll");
 
     [Test] public async Task LoadDll_AttemptToShadowSealedName_FailsWith_TypeLoadCollision()
     {
-        // A loaded DLL may not replace `identity`'s CLR type — the body it
-        // signs would otherwise be attacker-composed under an authentic
-        // outer signature. Loader.Register refuses the registration with a
-        // typed TypeLoadCollision error before touching the registry.
+        // Pass-1 explicit [PlangType("identity")] — sealed-name gate refuses
+        // with TypeLoadCollision before the registry sees the type. Replacing
+        // identity's CLR type would let a runtime DLL compose the body that
+        // gets signed under the actor's key.
         var asm = System.Reflection.Assembly.LoadFrom(IdentityShadowDll);
         var result = global::app.types.Loader.Register(asm, new EngineTypes());
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.ErrorKey).IsEqualTo("TypeLoadCollision");
         await Assert.That(result.ErrorMessage).Contains("identity");
+    }
+
+    [Test] public async Task LoadDll_SealedNameAsRendererTypeName_FailsWith_TypeLoadCollision()
+    {
+        // Pass-2 ITypeRenderer registration — a renderer whose TypeName is
+        // sealed ("signature") is refused before it can replace the wire
+        // shape of an existing built-in. This is the renderer-substitution
+        // attack the SealedNames docstring names explicitly. Fixture assembly
+        // has only the renderer, no [PlangType], so pass-1 passes and the
+        // gate fires on pass-2.
+        var asm = System.Reflection.Assembly.LoadFrom(SignatureRendererShadowDll);
+        var result = global::app.types.Loader.Register(asm, new EngineTypes());
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.ErrorKey).IsEqualTo("TypeLoadCollision");
+        await Assert.That(result.ErrorMessage).Contains("signature");
+    }
+
+    [Test] public async Task LoadDll_InferredSealedName_FailsWith_TypeLoadCollision()
+    {
+        // Pass-1 @this-convention inferred-name branch — the loaded assembly
+        // declares a `this`-named class in namespace `*.callback`, so
+        // InferName yields "callback" (a sealed name). The gate refuses
+        // before the registry is touched.
+        var asm = System.Reflection.Assembly.LoadFrom(CallbackInferredShadowDll);
+        var result = global::app.types.Loader.Register(asm, new EngineTypes());
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.ErrorKey).IsEqualTo("TypeLoadCollision");
+        await Assert.That(result.ErrorMessage).Contains("callback");
     }
 
     [Test] public async Task SealedNames_AreCaseInsensitive_AndCoverCoreSigningTypes()

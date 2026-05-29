@@ -142,6 +142,9 @@ public class MathTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
+        // Pin the handler-boundary contract: negative input surfaces as
+        // ArithmeticError (via number.Sqrt → Wrap), one canonical key.
+        await Assert.That(result.Error?.Key).IsEqualTo("ArithmeticError");
     }
 
     // --- Abs ---

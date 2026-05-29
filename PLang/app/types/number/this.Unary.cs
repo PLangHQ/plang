@@ -11,10 +11,12 @@ namespace app.types.number;
 /// <para>Abs preserves Kind; <c>Int.MinValue</c> would overflow as <c>int</c>
 /// (checked) so the conversion lifts to Long first. Floor/Ceiling are
 /// no-ops on Int/Long. Sqrt always returns Double (real-valued surface);
-/// negative input surfaces a typed validation error inside the handler,
-/// not this method. Round preserves Kind for Int/Long; rounds Decimal/
-/// Double to <c>decimals</c> places. Min/Max promote per
-/// <see cref="NumberPolicy"/> exactly like the arithmetic family.</para>
+/// negative input throws <c>ArithmeticException</c> which <c>Wrap</c>
+/// surfaces as <c>Data.Fail("ArithmeticError")</c> — one canonical error
+/// key across both the direct call and the math.sqrt handler boundary.
+/// Round preserves Kind for Int/Long; rounds Decimal/Double to
+/// <c>decimals</c> places. Min/Max promote per <see cref="NumberPolicy"/>
+/// exactly like the arithmetic family.</para>
 /// </summary>
 public sealed partial class @this
 {
