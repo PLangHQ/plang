@@ -33,7 +33,7 @@ Nine declarations across the tree:
 
 - **`App?.` → `App.`** — 15 sites (e.g. `data/this.Navigation.cs:271`, `builder/Types/this.cs:113-114`, `builder/Types/Render.cs:181`, `modules/debug/this.cs:493,523,529,589`, `modules/this.cs` schema sites).
 - **`Context?.` → `Context.`** — 18 sites (e.g. `data/this.cs:30,35,40`, `data/Wire.cs:161,361`, `types/path/this.Authorize.cs:33,110`, `modules/variable/set.cs:29`, `modules/settings/Sqlite.cs:320`).
-- **`ctx?.` → `ctx.`** — 6 sites (`data/this.cs:489,517,604,629`, `errors/Error.cs:292,295`).
+- **`ctx?.` → `context.`** — 6 sites (`data/this.cs:489,517,604,629`, `errors/Error.cs:292,295`). While here, **rename the local `ctx` → `context` everywhere** — one name across the codebase (214 identifiers in 36 files). Mechanical, folded into this pass (Ingi's call).
 
 Note: some of these chain into properties that are themselves legitimately nullable (e.g. `Context.App.Debug?.MaxLength` — `Debug` may be off). Only strip the `?` on `App`/`Context`/`ctx`; leave `?` on genuinely-optional downstream members. The coder reads each site, doesn't blanket-replace.
 
@@ -45,6 +45,27 @@ Note: some of these chain into properties that are themselves legitimately nulla
 | `GetTypeNameStatic` — external fallbacks at `modules/this.cs:308,473,506` (`App?.Types... ?? GetTypeNameStatic`) | Come **out** — `App` is non-null, so the `App.Types.GetTypeName(...)` (→ `app.type[...].name` after the accessor/entity work) is enough. |
 | `getTypes.cs:172` — direct `GetTypeNameStatic(returnType)` (no app in scope) | Route through app instead — confirm app is reachable here. |
 | `GetTypeNameStatic` — recursive internal calls inside `types/this.cs:133-166` | **Stay** for now — they are the static method's own implementation. The type-entity work may fold them into the entity; until then, leave the static method intact, only remove the *external nullable fallbacks*. |
+
+## Other over-nullable back-references (checked, per Ingi's ask)
+
+Beyond `App` and `Context`, the same late-set-but-never-null smell appears on these structural back-references. Each is set by a parent/registrar and is non-null in normal operation — flip them too:
+
+| File:line | Back-ref | Disposition |
+|---|---|---|
+| `goals/goal/steps/this.cs:18` | `steps → goal.@this? Goal` | non-null — steps always belong to a goal |
+| `goals/goal/steps/step/this.cs:121` | `step → goal.@this? Goal` | non-null — same |
+| `channels/channel/this.cs:72` | `channel → actor.@this? Actor` | non-null once registered |
+| `channels/channel/this.cs:80` | `channel → channels.@this? Channels` | non-null once registered |
+| `channels/this.cs:34` | `channels → actor.@this? Actor` | non-null once owned by an actor |
+
+Judgment-needed — do **not** blanket-flip; these may be legitimately optional by lifecycle:
+
+| File:line | Back-ref | Why hold |
+|---|---|---|
+| `goals/goal/GoalCall.cs:36` | `GoalCall → action.@this? Action` | init-only; a call may exist before it's bound to an action — confirm |
+| `modules/IEvent.cs:23` | `IEvent → step.@this? Step` | init-only; an event binding may have no step — confirm |
+
+The rule is the same as App/Context: never-null-in-runtime → make it non-null and let a null-ref be the bug; null during a real transient (pre-registration, unbound call) → stays nullable. The coder confirms each against its lifecycle. The structural five above are the clear wins. (`app.Parent` is the explicit *legitimate* nullable — the root app has no parent.)
 
 ## Interaction with the other pieces
 

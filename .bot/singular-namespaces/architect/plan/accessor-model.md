@@ -79,11 +79,11 @@ public goal.@this? current => App.CallStack.Current?.Action?.Step?.Goal;
 
 `app.X["nope"]` must not silently noop and must not hard-throw from the indexer. The miss behavior (error / noop / create-on-demand) is a setting with a chosen default. Mechanically: the indexer returns the element, so "miss = error" surfaces through the returned element's `Write`/`Read`/`Run` returning a typed `data.Fail` (an indexer can't return `data`). The coder decides the concrete carrier with test-designer; the contract is: **miss behavior is configurable and defaulted, never implicit.**
 
-## Module is the exception
+## Module — a service like the rest (not an exception)
 
-`modules/` → `module/`, but action modules are *dispatched*, not navigated. So:
+`modules/` → `module/`, and it keeps its `this.cs`: `module/this.cs` = `module.@this` is the action registry, reached as `app.module` like every other collection node. (An earlier draft demoted it to `module/registry.cs` off `app.@this`; dropped at Ingi's call — the registry stays a normal node.)
 
-- No `app.module.current`, no fake singular entity.
-- The flat action registry `modules/this.cs` leaves `app.@this`'s public surface and becomes `module/registry.cs` (no `this.cs`, so no `module.@this` claim). It's held on an internal field; the 6 `app.Modules.*` call sites (`GetCodeGenerated`, `Discover`, `Describe`, `Contains`, `Remove`) reach it through that field.
-- This also removes the collision between a `module.list` accessor and the `list` action module.
-- Folding `modules/module` (the action module *about* modules) into `module/environment`, and the `app.run`→`environment.run` / `builder.app`→`builder.load` action renames, are noted but **deferred** — they are PLang action renames, not part of the namespace shape, and CLAUDE.md already marks them as a deferred naming pass. Do not bundle them here unless Ingi asks.
+- `app.module["file"]` selects the file module; `app.module.list` enumerates; the 6 registry operations (`GetCodeGenerated`, `Discover`, `Describe`, `Contains`, `Remove`) stay as methods on `module.@this`.
+- **No `app.module.current`** — action modules are dispatched, not navigated; nothing is ever "the current module." That is the *only* way module differs from goal, and it's the same way type/channel/event/format differ. So module is not special — it is a no-`.current` service.
+- The collision the demote was meant to avoid (a `.list` accessor vs the `list` action module) isn't real: `app.module.list` is a member, `app.module["list"]` is an indexer key — they don't clash.
+- Folding `modules/module` (the action module *about* modules) into `module/environment`, and the `app.run`→`environment.run` / `builder.app`→`builder.load` action renames, are noted but **deferred** — PLang action renames, not namespace shape; CLAUDE.md already marks them a deferred pass. Don't bundle them unless Ingi asks.

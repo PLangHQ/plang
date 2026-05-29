@@ -53,14 +53,14 @@ The crossing rule that makes the whole thing recoverable: aliases shield consume
 | `variables/this.cs` | `variable/list/this.cs` |
 | `variables/navigators/this.cs` | `variable/navigator/list/this.cs` |
 | `types/choices/this.cs` | `type/choice/list/this.cs` |
-| `modules/this.cs` | `module/registry.cs` (NOT a `this.cs` — see module-special) |
+| `modules/this.cs` | `module/this.cs` (= `module.@this`, the action registry; stays on the public surface as `app.module`) |
 
 `types/this.cs` itself stays `type/this.cs` (the registry is the concept node; see `type-entity.md` for its promotion).
 
-## Module-special
+## Module
 
 - `modules/` → `module/`; action-module subfolders keep their names (`module/file`, `module/llm`, `module/loop`, …).
-- `modules/this.cs` (flat action registry) → `module/registry.cs`. Removed from `app.@this` public surface; held on an internal field. 6 call sites (`GetCodeGenerated`, `Discover`, `Describe`, `Contains`, `Remove`) reach it through that field.
+- `modules/this.cs` (flat action registry) → `module/this.cs` = `module.@this`, kept on `app.@this`'s public surface as `app.module` (the earlier demote to `module/registry.cs` was dropped). The 6 operations (`GetCodeGenerated`, `Discover`, `Describe`, `Contains`, `Remove`) stay as methods on it. No `app.module.current` — see `accessor-model.md`.
 - `modules/*/types.cs` (per-module return-shape record) → `module/*/type/` (singular folder, record name unchanged): `loop`, `list`, `math`, `output`, `identity`, `http`, `settings`, `module`, `builder`.
 - `app.modules.@event` (keyword-escaped) → `app.module.@event` (`@` stays).
 - Deferred (do not bundle): folding `modules/module` into `module/environment`; `app.run`→`environment.run`; `builder.app`→`builder.load`.

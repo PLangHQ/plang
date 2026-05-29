@@ -6,9 +6,69 @@
       "text": "I dont like this, loosing this.cs in module, btw, it should be 'module' not 'modules'",
       "anchor": "- The flat action registry `modules/this.cs` leaves `app.@this`'s public surface and becomes `module/registry.cs` (no `this.cs`, so no `module.@this` claim). It's held on an internal field; the 6 `app.Modules.*` call sites (`GetCodeGenerated`, `Discover`, `Describe`, `Contains`, `Remove`) reach it through that field.",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
-      "ts": "2026-05-29T14:53:40"
+      "ts": "2026-05-29T14:53:40",
+      "drifted": true
+    },
+    {
+      "id": "82ce6bd0d8",
+      "line": 87,
+      "text": "Agreed — reversed the demote. module/this.cs = module.@this stays at app.module (app.module[\"file\"], app.module.list); the 6 registry ops stay methods on it. The .list-vs-list-action collision isn't real (member vs indexer key). No app.module.current since modules are dispatched, not navigated — so it's a no-.current service, not an exception. Fixed the modules→module wording too.",
+      "anchor": "- **No `app.module.current`** — action modules are dispatched, not navigated; nothing is ever \"the current module.\" That is the *only* way module differs from goal, and it's the same way type/channel/event/format differ. So module is not special — it is a no-`.current` service.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "eb6c91f221",
+      "ts": "2026-05-29T15:07:43",
+      "drifted": false
+    }
+  ],
+  "plan/nullability.md": [
+    {
+      "id": "6fac8af7b1",
+      "line": 34,
+      "text": "lets change ctx to context, keep the same name everywhere.\n\nwhile we are at it, are the other objects that nullable but shouldn´t really be?? maybe check that.",
+      "anchor": "- **`App?.` → `App.`** — 15 sites (e.g. `data/this.Navigation.cs:271`, `builder/Types/this.cs:113-114`, `builder/Types/Render.cs:181`, `modules/debug/this.cs:493,523,529,589`, `modules/this.cs` schema sites).",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-29T14:57:42",
+      "drifted": false
+    },
+    {
+      "id": "9b5dbfccbb",
+      "line": 34,
+      "text": "Both done. ctx→context everywhere folded into this pass (214 identifiers across 36 files). And I checked the others: 5 more structural back-refs are over-nullable and should flip too — steps→Goal, step→Goal, channel→Actor, channel→Channels, channels→Actor. 2 are init-only and need a lifecycle check before flipping (GoalCall.Action, IEvent.Step) — a call/binding may legitimately exist unbound. Added a table. app.Parent stays nullable (root has no parent).",
+      "anchor": "- **`App?.` → `App.`** — 15 sites (e.g. `data/this.Navigation.cs:271`, `builder/Types/this.cs:113-114`, `builder/Types/Render.cs:181`, `modules/debug/this.cs:493,523,529,589`, `modules/this.cs` schema sites).",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "6fac8af7b1",
+      "ts": "2026-05-29T15:07:43",
+      "drifted": false
+    }
+  ],
+  "plan/type-entity.md": [
+    {
+      "id": "332068c79a",
+      "line": 3,
+      "text": "my feeling is that instead of returnin System.Type, we would be returning 'type', a plang version of System.Type, isn´t that what Data.Type does?",
+      "anchor": "The biggest and riskiest piece. It is here because the accessor model demands it: `app.type[\"int\"]` is only worth the keystrokes if what comes back is *an object you work with*. Today it would be a raw `System.Type`, with the actual per-type knowledge scattered. This consolidates that knowledge into a real entity.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-29T15:03:23",
+      "drifted": true
+    },
+    {
+      "id": "cbddc974b7",
+      "line": 3,
+      "text": "Exactly that — and you named it better than I did. type.@this IS PLang's System.Type, and data.Type returns it. Today data.ClrType hands back a raw System.Type?; the promotion makes data.Type return the entity instead. Sharpened the opening to lead with that framing.",
+      "anchor": "The biggest and riskiest piece. The frame (Ingi's, and it's the right one): **`type.@this` is PLang's version of `System.Type`** — a real object that knows its own name, CLR type, scheme, and valid-values — and `data.Type` returns *that*, not a raw `System.Type`. That's exactly what `data.Type` *should* do; today it doesn't (`data.ClrType` hands back a bare `System.Type?`), and the per-type knowledge is scattered across `System.Type` + `builder.Types.Entry` + scheme strings. This consolidates it into the entity. The accessor model demands it too: `app.type[\"int\"]` is only worth the keystrokes if what comes back is an object you work with.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "332068c79a",
+      "ts": "2026-05-29T15:07:43",
+      "drifted": false
     }
   ]
 }

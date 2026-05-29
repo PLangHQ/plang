@@ -1,6 +1,6 @@
 # Type entity — `type.@this` and `data.Type`
 
-The biggest and riskiest piece. It is here because the accessor model demands it: `app.type["int"]` is only worth the keystrokes if what comes back is *an object you work with*. Today it would be a raw `System.Type`, with the actual per-type knowledge scattered. This consolidates that knowledge into a real entity.
+The biggest and riskiest piece. The frame (Ingi's, and it's the right one): **`type.@this` is PLang's version of `System.Type`** — a real object that knows its own name, CLR type, scheme, and valid-values — and `data.Type` returns *that*, not a raw `System.Type`. That's exactly what `data.Type` *should* do; today it doesn't (`data.ClrType` hands back a bare `System.Type?`), and the per-type knowledge is scattered across `System.Type` + `builder.Types.Entry` + scheme strings. This consolidates it into the entity. The accessor model demands it too: `app.type["int"]` is only worth the keystrokes if what comes back is an object you work with.
 
 ## The problem: "a type" is smeared across three places today
 
