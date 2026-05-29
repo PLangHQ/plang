@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 using System.Reflection;
 using app.actor.context;
 using app.modules.settings;
-using app.errors;
+using app.error;
 using app.variables;
 using app.modules;
 using app.Utils;
@@ -195,7 +195,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Run-wide error scope. AsyncLocal-flowed current error (PLang <c>%!error%</c>) +
     /// audit list of every error pushed. Populated by error.handle.Wrap during recovery.
     /// </summary>
-    public global::app.errors.@this Errors { get; }
+    public global::app.error.list.@this Errors { get; }
 
     /// <summary>
     /// Test runner. Discovers and runs *.test.goal files with assertion tracking.
@@ -222,7 +222,7 @@ public sealed partial class @this : IAsyncDisposable
     /// File-format characteristics: extension → Kind, extension → MIME,
     /// Kind → compressibility. One per app.
     /// </summary>
-    public formats.@this Formats { get; } = new();
+    public format.list.@this Formats { get; } = new();
 
     /// <summary>
     /// System actor — the root of the cancellation hierarchy.
@@ -316,7 +316,7 @@ public sealed partial class @this : IAsyncDisposable
         _modules.App = this;
         _goals = new AppGoals { App = this };
 
-        Errors = new global::app.errors.@this(this);
+        Errors = new global::app.error.list.@this(this);
 
         Code.RegisterDefaults();
         Types.RegisterDomainTypes();
@@ -516,7 +516,7 @@ public sealed partial class @this : IAsyncDisposable
         // Resolve goal file
         var goalFile = context.Variables.GetValue("goalFile") as string;
         if (string.IsNullOrEmpty(goalFile))
-            return app.data.@this.FromError(new global::app.errors.ServiceError(
+            return app.data.@this.FromError(new global::app.error.ServiceError(
                 "No goal file specified. Use: plang <goalfile>", "NoGoalFile", 400));
 
         var goalCall = new GoalCall { PrPath = global::app.types.path.@this.Resolve(goalFile, context) };

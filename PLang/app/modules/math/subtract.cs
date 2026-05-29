@@ -41,7 +41,7 @@ public partial class Subtract : IContext
         var bn = number.FromObject(B.Value);
         if (an == null || bn == null)
             return Task.FromResult(data.@this<number>.FromError(
-                new errors.ValidationError("math.subtract requires two numbers", "InvalidInput")));
+                new global::app.error.ValidationError("math.subtract requires two numbers", "InvalidInput")));
         return Task.FromResult(number.Subtract(an, bn, policy));
     }
 }

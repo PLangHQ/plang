@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace app.errors;
+namespace app.error;
 
 /// <summary>
 /// Error for assertion failures in PLang tests.

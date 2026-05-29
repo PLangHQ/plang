@@ -23,7 +23,7 @@ public partial class Compress : IContext
         var target = Context.Variables.Get(Variable.Value!.Name);
         if (target == null || !target.IsInitialized)
             return data.@this.FromError(
-                new errors.ServiceError($"Variable '{Variable.Value.Name}' is not set",
+                new global::app.error.ServiceError($"Variable '{Variable.Value.Name}' is not set",
                     "VariableNotFound", 400));
         return await target.CompressAsync();
     }
@@ -46,7 +46,7 @@ public partial class Decompress : IContext
         var target = Context.Variables.Get(Variable.Value!.Name);
         if (target == null || !target.IsInitialized)
             return data.@this.FromError(
-                new errors.ServiceError($"Variable '{Variable.Value.Name}' is not set",
+                new global::app.error.ServiceError($"Variable '{Variable.Value.Name}' is not set",
                     "VariableNotFound", 400));
         return await target.DecompressAsync();
     }

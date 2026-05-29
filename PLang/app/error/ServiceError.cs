@@ -1,7 +1,7 @@
 using app.actor.context;
 using Call = app.callstack.call.@this;
 
-namespace app.errors;
+namespace app.error;
 
 /// <summary>
 /// Error that occurred inside a service/handler implementation.

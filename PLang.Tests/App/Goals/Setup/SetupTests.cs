@@ -1,6 +1,6 @@
 using app;
 using app.actor.context;
-using app.errors;
+using app.error;
 using app.goals.goal;
 using app.variables;
 

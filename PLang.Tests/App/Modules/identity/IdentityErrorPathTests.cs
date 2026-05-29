@@ -1,7 +1,7 @@
 using System.Reflection;
 using app.actor.context;
 using app.modules.settings;
-using app.errors;
+using app.error;
 using app.variables;
 using app.modules.identity;
 using PLangEngine = global::app.@this;

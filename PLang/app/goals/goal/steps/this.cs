@@ -166,7 +166,7 @@ public sealed class @this : IList<Step>, IContext
             }
 
             if (context.CancellationToken.IsCancellationRequested)
-                return data.@this.FromError(new app.errors.Error("Operation was cancelled", "Cancelled", 499));
+                return data.@this.FromError(new app.error.Error("Operation was cancelled", "Cancelled", 499));
         }
 
         return result;

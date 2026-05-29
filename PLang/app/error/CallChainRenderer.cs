@@ -1,6 +1,6 @@
 using Call = app.callstack.call.@this;
 
-namespace app.errors;
+namespace app.error;
 
 /// <summary>
 /// Folds a call chain (failing → root) into human-readable lines for error reports.

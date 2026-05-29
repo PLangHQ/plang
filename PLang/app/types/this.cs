@@ -13,7 +13,7 @@ namespace app.types;
 /// indexing for [PlangType] and the @this convention.
 ///
 /// File-format characteristics (extension → Kind, extension → MIME, Kind →
-/// compressibility) live separately on <see cref="app.formats.@this"/> at
+/// compressibility) live separately on <see cref="app.format.list.@this"/> at
 /// <c>app.Formats</c>.
 /// </summary>
 public sealed partial class @this

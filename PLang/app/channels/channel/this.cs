@@ -124,7 +124,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
         try { result = await Write(data, ct); }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
-            result = global::app.data.@this.FromError(new global::app.errors.ServiceError(
+            result = global::app.data.@this.FromError(new global::app.error.ServiceError(
                 $"Channel '{Name}' write failed: {ex.Message}", "WriteError") { Exception = ex });
         }
 
@@ -145,7 +145,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
         try { result = await Read(ct); }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
-            result = global::app.data.@this.FromError(new global::app.errors.ServiceError(
+            result = global::app.data.@this.FromError(new global::app.error.ServiceError(
                 $"Channel '{Name}' read failed: {ex.Message}", "ReadError") { Exception = ex });
         }
 
@@ -163,7 +163,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
         try { result = await Ask(action, ct); }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
-            result = global::app.data.@this.FromError(new global::app.errors.ServiceError(
+            result = global::app.data.@this.FromError(new global::app.error.ServiceError(
                 $"Channel '{Name}' ask failed: {ex.Message}", "AskError") { Exception = ex });
         }
 
@@ -214,7 +214,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
             }
             catch (Exception ex)
             {
-                return global::app.data.@this.FromError(new global::app.errors.ServiceError(
+                return global::app.data.@this.FromError(new global::app.error.ServiceError(
                     $"Channel event handler for {type} on '{Name}' threw: {ex.Message}",
                     "ChannelEventAborted") { Exception = ex });
             }

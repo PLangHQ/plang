@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using app.errors;
+using app.error;
 using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
 
 namespace app.callstack.call;

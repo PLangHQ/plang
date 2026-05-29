@@ -55,7 +55,7 @@ public partial class validateResponse : IContext
                             : "Goal parameter is uninitialized (%goal% not in scope when builder.validateResponse ran)");
             }
             return Task.FromResult(app.data.@this.FromError(
-                new errors.ActionError(string.Join("; ", problems), "ValidationError", 400)));
+                new global::app.error.ActionError(string.Join("; ", problems), "ValidationError", 400)));
         }
         return Task.FromResult(Validate(response, goal, Context.App));
     }
@@ -254,7 +254,7 @@ public partial class validateResponse : IContext
         if (errors.Count > 0)
         {
             var message = string.Join("\n", errors.Select(e => $"- {e}"));
-            return global::app.data.@this.FromError(new errors.ActionError(message, "ValidationErrors", 400));
+            return global::app.data.@this.FromError(new global::app.error.ActionError(message, "ValidationErrors", 400));
         }
 
         return global::app.data.@this.Ok(true);

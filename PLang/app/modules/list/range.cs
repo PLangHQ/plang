@@ -14,7 +14,7 @@ public partial class Range : IContext
     {
         if (Step.Value == 0)
             return Task.FromResult(global::app.data.@this<types.list>.FromError(
-                new app.errors.ValidationError("Step cannot be zero", "InvalidStep")));
+                new app.error.ValidationError("Step cannot be zero", "InvalidStep")));
 
         var list = new List<object?>();
         if (Step.Value > 0)

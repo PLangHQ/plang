@@ -16,7 +16,7 @@ public class ErrorBuryingReproTest
     [Test] public async Task ErrorAsStringSlot_OriginalErrorStaysPrimary_ConversionFailureGoesOnChain()
     {
         var nre = ThrownNRE();
-        var rootError = new global::app.errors.ServiceError(
+        var rootError = new global::app.error.ServiceError(
             $"builder.validateStepActions: NullReferenceException: {nre.Message}",
             "NullReferenceException", 500)
         { Exception = nre };

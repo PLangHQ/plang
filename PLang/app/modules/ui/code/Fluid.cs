@@ -5,7 +5,7 @@ using Fluid.Values;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Primitives;
 using app.types.path;
-using app.errors;
+using app.error;
 using app.types.path;
 using app.goals.goal;
 using app.variables;

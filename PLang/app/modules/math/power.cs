@@ -41,7 +41,7 @@ public partial class Power : IContext
         var bn = number.FromObject(Exponent.Value);
         if (an == null || bn == null)
             return Task.FromResult(data.@this<number>.FromError(
-                new errors.ValidationError("math.power requires base and exponent", "InvalidInput")));
+                new global::app.error.ValidationError("math.power requires base and exponent", "InvalidInput")));
         return Task.FromResult(number.Power(an, bn, policy));
     }
 }

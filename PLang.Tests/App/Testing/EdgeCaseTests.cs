@@ -127,7 +127,7 @@ public class EdgeCaseTests
     {
         var run = new global::app.tester.Run(new global::app.tester.Test.@this { Goal = new Goal { Name = "X", Path = "/Tests/X.test.goal" } });
         run.Output = "\x1B[32mFAKE OK\x1B[0m\x1B[2JCLEARED";
-        run.Complete(global::app.tester.Status.Fail, new global::app.errors.AssertionError(1, 2));
+        run.Complete(global::app.tester.Status.Fail, new global::app.error.AssertionError(1, 2));
         _app.Tester.Results.Add(run);
 
         var action = new global::app.modules.test.report { Context = _app.User.Context };
@@ -149,7 +149,7 @@ public class EdgeCaseTests
         var inner = new global::app.data.@this("inner", 42);
         var outer = new global::app.data.@this("outer", inner);
 
-        var err = new global::app.errors.AssertionError(1, 2)
+        var err = new global::app.error.AssertionError(1, 2)
         {
             Variables = new Dictionary<string, object?>
             {

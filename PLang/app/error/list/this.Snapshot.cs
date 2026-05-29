@@ -1,4 +1,4 @@
-namespace app.errors;
+namespace app.error.list;
 
 public sealed partial class @this : ISnapshot
 {
@@ -15,6 +15,6 @@ public sealed partial class @this : ISnapshot
     public static void Restore(global::app.snapshot.@this s, global::app.actor.context.@this ctx)
     {
         if (!s.HasSection("trail")) return;
-        global::app.errors.Trail.@this.Restore(s.Section("trail"), ctx);
+        global::app.error.trail.@this.Restore(s.Section("trail"), ctx);
     }
 }

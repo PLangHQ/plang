@@ -17,7 +17,7 @@ public partial class Remove : IContext
         var app = Context.App!;
         if (!app.Modules.Contains(Name.Value!))
             return Task.FromResult(Error(
-                new app.errors.ServiceError($"Module '{Name.Value}' not found", "NotFound", 404)));
+                new app.error.ServiceError($"Module '{Name.Value}' not found", "NotFound", 404)));
 
         app.Modules.Remove(Name.Value!);
         return Task.FromResult(Data());

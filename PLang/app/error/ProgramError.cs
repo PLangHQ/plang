@@ -1,6 +1,6 @@
 using app.actor.context;
 
-namespace app.errors;
+namespace app.error;
 
 /// <summary>
 /// Legacy error type kept for backward compatibility.

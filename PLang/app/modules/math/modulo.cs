@@ -21,7 +21,7 @@ public partial class Modulo : IContext
         var bn = number.FromObject(B.Value);
         if (an == null || bn == null)
             return Task.FromResult(data.@this<number>.FromError(
-                new errors.ValidationError("math.modulo requires two numbers", "InvalidInput")));
+                new global::app.error.ValidationError("math.modulo requires two numbers", "InvalidInput")));
         return Task.FromResult(number.Modulo(an, bn, policy));
     }
 }

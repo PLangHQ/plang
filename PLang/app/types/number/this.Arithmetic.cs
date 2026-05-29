@@ -63,22 +63,22 @@ public sealed partial class @this
         catch (System.DivideByZeroException ex)
         {
             return global::app.data.@this<@this>.FromError(
-                new global::app.errors.ServiceError(ex.Message, "DivideByZero", 400) { Exception = ex });
+                new global::app.error.ServiceError(ex.Message, "DivideByZero", 400) { Exception = ex });
         }
         catch (System.OverflowException ex)
         {
             return global::app.data.@this<@this>.FromError(
-                new global::app.errors.ServiceError(ex.Message, "MathOverflow", 400) { Exception = ex });
+                new global::app.error.ServiceError(ex.Message, "MathOverflow", 400) { Exception = ex });
         }
         catch (System.ArithmeticException ex)
         {
             return global::app.data.@this<@this>.FromError(
-                new global::app.errors.ServiceError(ex.Message, "ArithmeticError", 400) { Exception = ex });
+                new global::app.error.ServiceError(ex.Message, "ArithmeticError", 400) { Exception = ex });
         }
         catch (PowerExponentTooLargeException ex)
         {
             return global::app.data.@this<@this>.FromError(
-                new global::app.errors.ServiceError(ex.Message, "PowerExponentTooLarge", 400) { Exception = ex });
+                new global::app.error.ServiceError(ex.Message, "PowerExponentTooLarge", 400) { Exception = ex });
         }
     }
 

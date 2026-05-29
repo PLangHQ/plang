@@ -19,7 +19,7 @@ public partial class list : IContext
 
         var providerType = Context.App.Code.ResolveType(Type.Value!);
         if (providerType == null)
-            return Error(new errors.ActionError($"Unknown provider type '{Type.Value}'", "UnknownType", 400));
+            return Error(new global::app.error.ActionError($"Unknown provider type '{Type.Value}'", "UnknownType", 400));
 
         return Context.App.Code.List(providerType);
     }

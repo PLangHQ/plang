@@ -4,7 +4,7 @@ using Force.DeepCloner;
 using app.Attributes;
 using app;
 using app.channels.serializers;
-using app.errors;
+using app.error;
 using app.actor.context;
 using app.Utils;
 
@@ -493,13 +493,13 @@ public partial class @this
     public @this As(string typeName, actor.context.@this? context = null)
     {
         if (string.IsNullOrWhiteSpace(typeName))
-            return global::app.data.@this.FromError(new global::app.errors.ServiceError(
+            return global::app.data.@this.FromError(new global::app.error.ServiceError(
                 "Data.As(typeName) requires a non-empty type name.", "InvalidTypeName", 400));
 
         var ctx = context ?? _context;
         var clr = ctx?.App.Types.Clr(typeName) ?? AppTypes.GetPrimitiveOrMime(typeName);
         if (clr == null)
-            return global::app.data.@this.FromError(new global::app.errors.ServiceError(
+            return global::app.data.@this.FromError(new global::app.error.ServiceError(
                 $"No PLang type registered under name '{typeName}'.", "UnknownType", 400));
 
         var raw = Value;
@@ -783,11 +783,11 @@ public partial class @this
         {
             var inner = tie.InnerException;
             if (inner is global::app.types.path.scheme.SchemeNotRegistered snr)
-                return (null, @this<T>.FromError(new global::app.errors.Error(snr.Message, "SchemeNotRegistered", 400)
+                return (null, @this<T>.FromError(new global::app.error.Error(snr.Message, "SchemeNotRegistered", 400)
                 {
                     FixSuggestion = $"Register a factory for scheme '{snr.Scheme}' via app.Types.Scheme.Register, or use a bare/file:// path.",
                 }));
-            return (null, @this<T>.FromError(new global::app.errors.Error(inner.Message, "ResolveFailed", 400)));
+            return (null, @this<T>.FromError(new global::app.error.Error(inner.Message, "ResolveFailed", 400)));
         }
     }
 

@@ -1,5 +1,5 @@
 using System.Xml.Linq;
-using app.errors;
+using app.error;
 using app.tester;
 
 namespace PLang.Tests.App.Tester;

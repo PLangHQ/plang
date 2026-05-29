@@ -12,7 +12,7 @@ public partial class Unique : IContext
         var existing = Context.Variables.Get(ListName.Value).Value;
         if (existing is not List<object?> list)
             return Task.FromResult(global::app.data.@this<types.list>.FromError(
-                new app.errors.ValidationError($"Variable '{ListName.Value}' is not a list")));
+                new app.error.ValidationError($"Variable '{ListName.Value}' is not a list")));
 
         var distinct = list.Distinct().Cast<object?>().ToList();
         return Task.FromResult(global::app.data.@this<types.list>.Ok(

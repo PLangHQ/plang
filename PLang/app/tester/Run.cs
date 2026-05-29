@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using app.errors;
+using app.error;
 
 namespace app.tester;
 

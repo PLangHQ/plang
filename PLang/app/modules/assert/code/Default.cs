@@ -1,6 +1,6 @@
 using System.Collections;
 using System.Threading.Tasks;
-using app.errors;
+using app.error;
 using app.variables;
 
 namespace app.modules.assert.code;

@@ -386,11 +386,11 @@ public class RunActionTests
 
         await Assert.That(run.Status).IsEqualTo(global::app.tester.Status.Fail);
         await Assert.That(run.Error).IsNotNull();
-        await Assert.That(run.Error is global::app.errors.AssertionError).IsTrue();
+        await Assert.That(run.Error is global::app.error.AssertionError).IsTrue();
 
         // Variables snapshot flowed from assert handler → provider → test.run's
         // failure path → global::app.tester.Run.Error. Batch 5's headline feature.
-        var assertionError = (global::app.errors.AssertionError)run.Error!;
+        var assertionError = (global::app.error.AssertionError)run.Error!;
         await Assert.That(assertionError.Variables).IsNotNull();
         await Assert.That(assertionError.Variables!.ContainsKey("score")).IsTrue();
         // Value roundtrips through JSON (int→long via System.Text.Json);

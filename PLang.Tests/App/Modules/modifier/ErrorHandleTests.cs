@@ -194,7 +194,7 @@ public class ErrorHandleTests
         {
             callCount++;
             return Task.FromResult(global::app.data.@this.FromError(
-                new global::app.errors.ServiceError("persistent failure", "TransientError", 503)));
+                new global::app.error.ServiceError("persistent failure", "TransientError", 503)));
         };
 
         var modifiers = new ActionModifiers
@@ -218,7 +218,7 @@ public class ErrorHandleTests
         {
             callCount++;
             return Task.FromResult(global::app.data.@this.FromError(
-                new global::app.errors.ServiceError("failure", "TransientError", 503)));
+                new global::app.error.ServiceError("failure", "TransientError", 503)));
         };
 
         var modifiers = new ActionModifiers
@@ -241,7 +241,7 @@ public class ErrorHandleTests
         {
             callCount++;
             return Task.FromResult(global::app.data.@this.FromError(
-                new global::app.errors.ServiceError("always fails", "TransientError", 503)));
+                new global::app.error.ServiceError("always fails", "TransientError", 503)));
         };
 
         var modifiers = new ActionModifiers { ErrorHandler(("retryCount", 3)) };
@@ -263,7 +263,7 @@ public class ErrorHandleTests
             callCount++;
             if (callCount == 1)
                 return Task.FromResult(global::app.data.@this.FromError(
-                    new global::app.errors.ServiceError("transient failure", "TransientError", 503)));
+                    new global::app.error.ServiceError("transient failure", "TransientError", 503)));
             return Task.FromResult(global::app.data.@this.Ok());
         };
 

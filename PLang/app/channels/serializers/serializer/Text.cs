@@ -35,7 +35,7 @@ public sealed class Text : ISerializer
         }
         catch (Exception ex) when (ex is IOException)
         {
-            return global::app.data.@this.FromError(new errors.ServiceError(
+            return global::app.data.@this.FromError(new error.ServiceError(
                 $"Text serialize failed: {ex.Message}", "TextSerializeError", 400) { Exception = ex });
         }
     }
@@ -50,7 +50,7 @@ public sealed class Text : ISerializer
         }
         catch (Exception ex) when (ex is IOException)
         {
-            return global::app.data.@this.FromError(new errors.ServiceError(
+            return global::app.data.@this.FromError(new error.ServiceError(
                 $"Text deserialize failed: {ex.Message}", "TextDeserializeError", 400) { Exception = ex });
         }
     }

@@ -171,7 +171,7 @@ public class MoveCopyBundledConsentTests
 
         var result = await src.MoveTo(dst, overwrite: true);
         await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error).IsTypeOf<global::app.errors.PermissionDenied>();
+        await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>();
         // No grants stored, no filesystem mutation.
         await Assert.That(await app.User.Permission.Find(src, new Verb { Read = new Read() })).IsNull();
         await Assert.That(await app.User.Permission.Find(dst, new Verb { Write = new Write() })).IsNull();
@@ -196,7 +196,7 @@ public class MoveCopyBundledConsentTests
 
         var result = await src.CopyTo(dst, overwrite: true, includeSubfolders: true);
         await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error).IsTypeOf<global::app.errors.PermissionDenied>();
+        await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>();
         await Assert.That(System.IO.File.Exists(srcFile)).IsTrue();
         await Assert.That(System.IO.File.Exists(dstFile)).IsFalse();
     }

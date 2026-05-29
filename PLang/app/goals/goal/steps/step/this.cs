@@ -155,7 +155,7 @@ public sealed partial class @this : modules.IDataWrappable
                 : (typeName.EndsWith("Exception", StringComparison.Ordinal)
                     ? typeName[..^"Exception".Length]
                     : typeName);
-            result = data.@this.FromError(new global::app.errors.ServiceError(
+            result = data.@this.FromError(new global::app.error.ServiceError(
                 ex.Message, key, 400) { Exception = ex });
         }
 

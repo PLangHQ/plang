@@ -1,4 +1,4 @@
-using app.errors;
+using app.error;
 
 namespace app.variables;
 

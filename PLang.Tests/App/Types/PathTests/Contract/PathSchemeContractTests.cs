@@ -125,7 +125,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
         {
             var read = await p.ReadText();
             await Assert.That(read.Success).IsFalse();
-            await Assert.That(read.Error).IsTypeOf<global::app.errors.PermissionDenied>();
+            await Assert.That(read.Error).IsTypeOf<global::app.error.PermissionDenied>();
         }
         finally { await Fixture.Cleanup(p); }
     }
@@ -137,7 +137,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
         {
             var write = await p.WriteText("should not land");
             await Assert.That(write.Success).IsFalse();
-            await Assert.That(write.Error).IsTypeOf<global::app.errors.PermissionDenied>();
+            await Assert.That(write.Error).IsTypeOf<global::app.error.PermissionDenied>();
         }
         finally { await Fixture.Cleanup(p); }
     }

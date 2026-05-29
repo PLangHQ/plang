@@ -11,6 +11,6 @@ public partial class SnapshotOnError : global::app.modules.IContext
     {
         var _ = First.Value; // accessed
         return Task.FromResult(global::app.data.@this.FromError(
-            new global::app.errors.ServiceError("forced failure", "TestError", 500)));
+            new global::app.error.ServiceError("forced failure", "TestError", 500)));
     }
 }

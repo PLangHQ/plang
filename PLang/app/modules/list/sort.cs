@@ -14,7 +14,7 @@ public partial class Sort : IContext
         var data = Context.Variables.Get(ListName.Value);
         if (data.Value is not List<object?> list)
             return Task.FromResult(global::app.data.@this<types.list>.FromError(
-                new app.errors.ValidationError($"Variable '{ListName.Value}' is not a list")));
+                new app.error.ValidationError($"Variable '{ListName.Value}' is not a list")));
 
         if (Descending.Value)
             list.Sort((a, b) => Comparer<object>.Default.Compare(b, a));

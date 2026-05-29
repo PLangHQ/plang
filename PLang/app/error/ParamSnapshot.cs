@@ -1,4 +1,4 @@
-namespace app.errors;
+namespace app.error;
 
 /// <summary>
 /// Per-parameter snapshot captured at the point a handler returned an error.

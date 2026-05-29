@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace app.formats;
+namespace app.format.list;
 
 /// <summary>
 /// File format characteristics: extension → Kind, extension → MIME, Kind →

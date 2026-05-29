@@ -1,4 +1,4 @@
-using app.errors;
+using app.error;
 using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.Errors;
@@ -69,7 +69,7 @@ public class CallChainRendererTests
         await using var outerA = stack.Push(action);
         await using var outerB = stack.Push(action);
         await using var failing = stack.Push(action);
-        failing.Errors.Add(new global::app.errors.Error("boom", "Crash", 500));
+        failing.Errors.Add(new global::app.error.Error("boom", "Crash", 500));
 
         var lines = CallChainRenderer.Render(failing.SnapshotChain());
         await Assert.That(lines.Count).IsEqualTo(2);

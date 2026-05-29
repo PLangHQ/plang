@@ -1,6 +1,6 @@
-using app.errors;
+using app.error;
 
-namespace app.errors.Trail;
+namespace app.error.trail;
 
 /// <summary>
 /// Run-wide trail of every error pushed into <see cref="Errors.@this.Push"/>'s scope.

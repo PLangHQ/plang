@@ -1,4 +1,4 @@
-namespace app.errors;
+namespace app.error;
 
 /// <summary>
 /// Base exception for App errors.

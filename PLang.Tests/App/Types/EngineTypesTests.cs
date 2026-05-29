@@ -3,13 +3,13 @@ namespace PLang.Tests.App.Types;
 public class EngineTypesTests
 {
     private EngineTypes _types = null!;
-    private global::app.formats.@this _formats = null!;
+    private global::app.format.list.@this _formats = null!;
 
     [Before(Test)]
     public void Setup()
     {
         _types = new EngineTypes();
-        _formats = new global::app.formats.@this();
+        _formats = new global::app.format.list.@this();
     }
 
     // --- Clr: PLang name → CLR type ---

@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using app;
 using app.channels.serializers;
-using app.errors;
+using app.error;
 
 namespace app.data;
 

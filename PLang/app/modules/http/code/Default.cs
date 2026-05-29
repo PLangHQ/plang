@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using app.channels.serializers;
 using app.actor.context;
-using app.errors;
+using app.error;
 using app.goals.goal;
 using app.variables;
 using PlangType = app.data.type;

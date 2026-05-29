@@ -247,7 +247,7 @@ public sealed partial class @this : modules.IDataWrappable
         context.Goal = this;
 
         if (context.CancellationToken.IsCancellationRequested)
-            return data.@this.FromError(new global::app.errors.Error("Operation was cancelled", "Cancelled", 499));
+            return data.@this.FromError(new global::app.error.Error("Operation was cancelled", "Cancelled", 499));
 
         var lifecycle = context.LifecycleFor(this);
 
@@ -292,7 +292,7 @@ public sealed partial class @this : modules.IDataWrappable
 
             return result;
         }
-        catch (global::app.errors.CallStackOverflowException ex)
+        catch (global::app.error.CallStackOverflowException ex)
         {
             // Cycle detection (depth limit or ContainsGoal) trips at Push, before the
             // goal frame is on the stack. Convert to ServiceError so Goal.RunAsync's
@@ -301,7 +301,7 @@ public sealed partial class @this : modules.IDataWrappable
             var stack = context.App.CallStack;
             var caller = stack.Current;
             var chain = caller != null ? caller.SnapshotChain() : Array.Empty<global::app.callstack.call.@this>();
-            var serviceErr = new global::app.errors.ServiceError(
+            var serviceErr = new global::app.error.ServiceError(
                 ex.Message, goalEntryAction.Step!, chain, "CallStackOverflow", 500) { Exception = ex };
             stack.Audit.Add(serviceErr);
             return data.@this.FromError(serviceErr);

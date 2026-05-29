@@ -323,12 +323,12 @@ public class ActionsTests
     /// <summary>
     /// Mirrors PlangModule.MergeStep logic for unit testing without DI.
     /// </summary>
-    private static (Step? step, global::app.errors.IError? error) MergeStep(Step step, Step stepFromLlm)
+    private static (Step? step, global::app.error.IError? error) MergeStep(Step step, Step stepFromLlm)
     {
         if (step == null)
-            return (null, new global::app.errors.ProgramError("Step cannot be null", key: "MergeError"));
+            return (null, new global::app.error.ProgramError("Step cannot be null", key: "MergeError"));
         if (stepFromLlm == null)
-            return (null, new global::app.errors.ProgramError("Step result from LLM cannot be null", key: "MergeError"));
+            return (null, new global::app.error.ProgramError("Step result from LLM cannot be null", key: "MergeError"));
 
         step.Actions.Clear();
         step.Actions.AddRange(stepFromLlm.Actions);
@@ -350,10 +350,10 @@ public class ActionsTests
     /// <summary>
     /// Mirrors PlangModule.ValidateActions logic for unit testing without DI.
     /// </summary>
-    private static (bool isValid, global::app.errors.IError? error) ValidateActions(StepActions actions)
+    private static (bool isValid, global::app.error.IError? error) ValidateActions(StepActions actions)
     {
         if (actions == null || actions.Count == 0)
-            return (false, new global::app.errors.ProgramError("No actions provided", key: "NoActionsProvided"));
+            return (false, new global::app.error.ProgramError("No actions provided", key: "NoActionsProvided"));
 
         var modules = new EngineModules();
 
@@ -365,7 +365,7 @@ public class ActionsTests
         }
 
         if (notFound.Count > 0)
-            return (false, new global::app.errors.ProgramError(
+            return (false, new global::app.error.ProgramError(
                 $"Actions not found: {string.Join(", ", notFound)}", key: "ActionNotFound"));
 
         return (true, null);

@@ -1,5 +1,5 @@
 using System.Reflection;
-using app.errors;
+using app.error;
 
 namespace app.modules.code;
 

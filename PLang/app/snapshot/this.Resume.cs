@@ -20,7 +20,7 @@ public sealed partial class @this
         context.App.Restore(this, context);
         var chain = context.App.CallStack.RestoredChain;
         if (chain == null || chain.Count == 0)
-            return data.@this.FromError(new global::app.errors.ServiceError(
+            return data.@this.FromError(new global::app.error.ServiceError(
                 "Resume has no frames after Restore", "NoPosition", 400));
         return await ResumeChain(chain, 0, context);
     }

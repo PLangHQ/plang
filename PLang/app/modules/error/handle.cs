@@ -1,4 +1,4 @@
-using app.errors;
+using app.error;
 using app.variables;
 using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
 using Call = app.callstack.call.@this;
@@ -91,7 +91,7 @@ public partial class Handle : IContext, IModifier
             // Failing Call comes from the error's CallFrames snapshot — App.Run pushed and
             // popped the action's Call inside next(), so we can't read it from stack.Current
             // anymore. CallFrames[0] is the failing Call itself (post-Push snapshot).
-            var erroredCall = result.Error is global::app.errors.Error errWithFrames
+            var erroredCall = result.Error is global::app.error.Error errWithFrames
                 && errWithFrames.CallFrames.Count > 0
                 ? errWithFrames.CallFrames[0]
                 : null;
@@ -146,7 +146,7 @@ public partial class Handle : IContext, IModifier
     private static async Task<global::app.data.@this> RunRecoveryWithErrorScope(
         List<ActionEntity> actions,
         actor.context.@this context,
-        app.errors.IError caughtError)
+        app.error.IError caughtError)
     {
         using (context.App.Errors.Push(caughtError))
         {

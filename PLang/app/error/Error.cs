@@ -3,7 +3,7 @@ using app.actor.context;
 using Goal = app.goals.goal.@this;
 using Call = app.callstack.call.@this;
 
-namespace app.errors;
+namespace app.error;
 
 /// <summary>
 /// Generic base error class implementing IError.

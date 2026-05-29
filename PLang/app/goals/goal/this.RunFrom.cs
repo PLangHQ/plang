@@ -13,7 +13,7 @@ public partial class @this
     public async Task<data.@this> RunFrom(actor.context.@this context, int stepIdx, int actionIdx)
     {
         if (stepIdx < 0 || stepIdx >= Steps.Count)
-            return data.@this.FromError(new errors.ServiceError(
+            return data.@this.FromError(new error.ServiceError(
                 $"RunFrom: stepIdx {stepIdx} out of range [0, {Steps.Count})",
                 "InvalidPosition", 400));
 
@@ -29,7 +29,7 @@ public partial class @this
             s.Goal ??= this;
 
             if (context.CancellationToken.IsCancellationRequested)
-                return data.@this.FromError(new errors.Error("Operation was cancelled", "Cancelled", 499));
+                return data.@this.FromError(new error.Error("Operation was cancelled", "Cancelled", 499));
 
             result = await s.RunAsync(context);
             if (result.ShouldExit()) return result;

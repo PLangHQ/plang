@@ -1,5 +1,5 @@
 using app.channels.serializers;
-using app.errors;
+using app.error;
 
 namespace app.channels.channel.stream;
 

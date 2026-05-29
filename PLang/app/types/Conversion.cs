@@ -105,7 +105,7 @@ public sealed partial class @this
     /// Returns the converted value and null error on success,
     /// or null value and an Error describing what went wrong.
     /// </summary>
-    public static (object? Value, errors.Error? Error) TryConvertTo(object? value, System.Type targetType,
+    public static (object? Value, error.Error? Error) TryConvertTo(object? value, System.Type targetType,
         actor.context.@this? context = null)
     {
         if (value == null)
@@ -128,7 +128,7 @@ public sealed partial class @this
         if (targetType == typeof(JsonNode) && value is string jsonNodeStr)
         {
             var (node, jsonError) = jsonNodeStr.ToJson();
-            if (jsonError is errors.Error err) return (null, err);
+            if (jsonError is error.Error err) return (null, err);
             return (node, null);
         }
 
@@ -200,13 +200,13 @@ public sealed partial class @this
             if (value is System.Collections.IList sourceList)
             {
                 var targetList = (System.Collections.IList)System.Activator.CreateInstance(targetType)!;
-                var errors = new List<errors.Error>();
+                var errors = new List<error.Error>();
                 for (int i = 0; i < sourceList.Count; i++)
                 {
                     var (convertedItem, itemError) = TryConvertTo(sourceList[i], listElementType, context);
                     if (itemError != null)
                     {
-                        itemError = new errors.Error(
+                        itemError = new error.Error(
                             $"[{i}]: {itemError.Message}", "ElementConversionFailed", 400)
                             { FixSuggestion = itemError.FixSuggestion };
                         errors.Add(itemError);
@@ -217,7 +217,7 @@ public sealed partial class @this
                 }
                 if (errors.Count > 0)
                 {
-                    var error = new errors.Error(
+                    var error = new error.Error(
                         $"Failed converting {errors.Count}/{sourceList.Count} elements from {sourceType.Name} to {targetType.Name}",
                         "ListConversionFailed", 400)
                         { FixSuggestion = $"Element type: {listElementType.Name}" };
@@ -258,12 +258,12 @@ public sealed partial class @this
             }
             catch (global::app.types.path.scheme.SchemeNotRegistered snr)
             {
-                return (null, new errors.Error(snr.Message, "SchemeNotRegistered", 400)
+                return (null, new error.Error(snr.Message, "SchemeNotRegistered", 400)
                     { FixSuggestion = $"Register a factory for scheme '{snr.Scheme}' via app.Types.Scheme.Register, or use a bare/file:// path." });
             }
             catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
             {
-                return (null, new errors.Error(ex.Message, "PathConstructionFailed", 400));
+                return (null, new error.Error(ex.Message, "PathConstructionFailed", 400));
             }
         }
 
@@ -296,7 +296,7 @@ public sealed partial class @this
                 }
                 catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
                 {
-                    return (null, new errors.Error(ex.InnerException?.Message ?? ex.Message, "ConstructorFailed", 400));
+                    return (null, new error.Error(ex.InnerException?.Message ?? ex.Message, "ConstructorFailed", 400));
                 }
             }
         }
@@ -311,7 +311,7 @@ public sealed partial class @this
             {
                 if (TimeSpan.TryParse(tsStr, System.Globalization.CultureInfo.InvariantCulture, out var ts))
                     return (ts, null);
-                return (null, new errors.Error(
+                return (null, new error.Error(
                     $"Cannot parse '{tsStr}' as TimeSpan — expected ISO 8601 (e.g. PT30S) or .NET format (e.g. 00:00:30).",
                     "TimeSpanParseFailed", 400));
             }
@@ -324,7 +324,7 @@ public sealed partial class @this
             {
                 if (System.Enum.TryParse(targetType, s, ignoreCase: true, out var parsed))
                     return (parsed, null);
-                return (null, new errors.Error(
+                return (null, new error.Error(
                     $"Cannot parse '{s}' as {targetType.Name}",
                     "EnumParseFailed", 400)
                     { FixSuggestion = $"Valid values: {string.Join(", ", System.Enum.GetNames(targetType))}" });
@@ -332,7 +332,7 @@ public sealed partial class @this
             if (value.GetType().IsEnum)
                 return (value, null);
             try { return (System.Enum.ToObject(targetType, value), null); }
-            catch (System.ArgumentException) { return (null, new errors.Error(
+            catch (System.ArgumentException) { return (null, new error.Error(
                 $"Cannot convert {sourceType.Name} to enum {targetType.Name}",
                 "EnumConversionFailed", 400)); }
         }
@@ -343,7 +343,7 @@ public sealed partial class @this
             if (value is string goalName)
             {
                 if (context?.App.Types.IsClrTypeName(goalName) ?? false)
-                    return (null, new errors.Error(
+                    return (null, new error.Error(
                         $"GoalCall.Name was set to a CLR type name '{goalName}' from a string source.",
                         "ClrTypeNameInGoalSlot", 500)
                         { FixSuggestion = "Build pipeline leaked a typed object's ToString() into a goal-name slot." });
@@ -359,7 +359,7 @@ public sealed partial class @this
                 }
                 catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
                 {
-                    return (null, new errors.Error(
+                    return (null, new error.Error(
                         $"Failed to deserialize GoalCall from JSON: {ex.Message}",
                         "GoalCallDeserializationFailed", 400));
                 }
@@ -368,7 +368,7 @@ public sealed partial class @this
             {
                 var name = dict.TryGetValue("name", out var n) ? n?.ToString() ?? "" : "";
                 if (context?.App.Types.IsClrTypeName(name) ?? false)
-                    return (null, new errors.Error(
+                    return (null, new error.Error(
                         $"GoalCall.Name was set to a CLR type name '{name}'.",
                         "ClrTypeNameInGoalSlot", 500)
                         { FixSuggestion = "Build pipeline leaked a typed object's ToString() into a goal-name slot " +
@@ -401,11 +401,11 @@ public sealed partial class @this
             }
             catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
             {
-                var convErr = new errors.Error(
+                var convErr = new error.Error(
                     $"Cannot convert '{value}' ({sourceType.Name}) to {targetType.Name}: {ex.Message}",
                     "PrimitiveConversionFailed", 400)
                 { Exception = ex };
-                if (value is errors.Error sourceErr)
+                if (value is error.Error sourceErr)
                 {
                     sourceErr.ErrorChain.Add(convErr);
                     return (null, sourceErr);
@@ -444,7 +444,7 @@ public sealed partial class @this
                     var maxLen = context?.App?.Debug?.MaxLength ?? 500;
                     jsonPreview = json.Length > maxLen ? json[..maxLen] + $"... ({json.Length} chars)" : json;
                 }
-                return (null, new errors.Error(
+                return (null, new error.Error(
                     $"Failed to deserialize {sourceType.Name} to {targetType.Name}: {ex.Message}",
                     "DeserializationFailed", 400)
                     { FixSuggestion = $"JSON around error: {jsonPreview}" });
@@ -454,7 +454,7 @@ public sealed partial class @this
         // Last resort: type mismatch
         if (!targetType.IsAssignableFrom(sourceType))
         {
-            return (null, new errors.Error(
+            return (null, new error.Error(
                 FormatTypeMismatch(value, sourceType, targetType),
                 "TypeMismatch", 400)
                 { FixSuggestion = TypeMismatchHint(value, sourceType, targetType) });

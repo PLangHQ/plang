@@ -283,7 +283,7 @@ public sealed partial class @this : modules.IDataWrappable
     {
         var app = context.App!;
         modules.ICodeGenerated? handler;
-        global::app.errors.IError? error;
+        global::app.error.IError? error;
         if (PreboundHandler != null)
         {
             handler = PreboundHandler;
@@ -301,11 +301,11 @@ public sealed partial class @this : modules.IDataWrappable
         // own try/catch via ExecuteAsync.
         global::app.callstack.call.@this call;
         try { call = app.CallStack.Push(this, context.Variables); }
-        catch (global::app.errors.CallStackOverflowException ex)
+        catch (global::app.error.CallStackOverflowException ex)
         {
             var caller = app.CallStack.Current;
             var chain = caller != null ? caller.SnapshotChain() : Array.Empty<global::app.callstack.call.@this>();
-            var overflowErr = new global::app.errors.ServiceError(ex.Message, this.Step!, chain, "CallStackOverflow", 500) { Exception = ex };
+            var overflowErr = new global::app.error.ServiceError(ex.Message, this.Step!, chain, "CallStackOverflow", 500) { Exception = ex };
             app.CallStack.Audit.Add(overflowErr);
             return global::app.data.@this.FromError(overflowErr);
         }
@@ -329,7 +329,7 @@ public sealed partial class @this : modules.IDataWrappable
     /// handler, verifies it implements IModifier, and runs ExecuteAsync so the source-generated
     /// properties are populated before Wrap() reads them. Called by Modifiers.RunAsync.
     /// </summary>
-    public async Task<(Func<Task<global::app.data.@this>>? Wrapped, global::app.errors.IError? Error)> WrapAround(
+    public async Task<(Func<Task<global::app.data.@this>>? Wrapped, global::app.error.IError? Error)> WrapAround(
         Func<Task<global::app.data.@this>> next,
         actor.context.@this context)
     {
@@ -353,7 +353,7 @@ public sealed partial class @this : modules.IDataWrappable
                 (_, _, { } t, { } i) => $" — in step [{i}] \"{t}\"",
                 _ => ""
             };
-            return (null, new global::app.errors.ActionError(
+            return (null, new global::app.error.ActionError(
                 $"{Module}.{ActionName} is not a modifier (it was placed in a modifiers array but isn't one). " +
                 $"Move it out as a peer action in the step's top-level actions array.{loc}",
                 "ModifierError", 400));

@@ -21,7 +21,7 @@ public partial class Max : IContext
         var bn = number.FromObject(B.Value);
         if (an == null || bn == null)
             return Task.FromResult(data.@this<number>.FromError(
-                new errors.ValidationError("math.max requires two numbers", "InvalidInput")));
+                new global::app.error.ValidationError("math.max requires two numbers", "InvalidInput")));
         return Task.FromResult(number.Max(an, bn, policy));
     }
 }

@@ -33,7 +33,7 @@ public partial class @this
                 : (typeName.EndsWith("Exception", StringComparison.Ordinal)
                     ? typeName[..^"Exception".Length]
                     : typeName);
-            result = data.@this.FromError(new errors.ServiceError(
+            result = data.@this.FromError(new error.ServiceError(
                 ex.Message, key, 400) { Exception = ex });
         }
 

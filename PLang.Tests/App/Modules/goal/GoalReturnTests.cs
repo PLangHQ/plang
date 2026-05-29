@@ -71,7 +71,7 @@ public class GoalReturnTests
     {
         var (context, _) = CreateContext();
         var error = global::app.data.@this.FromError(
-            new global::app.errors.Error("something broke", "TestError", 500));
+            new global::app.error.Error("something broke", "TestError", 500));
         var action = new Return { Context = context, Data = error };
         var result = await action.Run();
 

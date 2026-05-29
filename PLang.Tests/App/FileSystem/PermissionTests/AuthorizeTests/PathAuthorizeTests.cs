@@ -99,7 +99,7 @@ public class PathAuthorizeTests
 
         var result = await path.Authorize(new Verb { Read = new Read() });
         await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error).IsTypeOf<global::app.errors.PermissionDenied>();
+        await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>();
     }
 
     [Test] public async Task Authorize_StatefulAnswerGarbage_RecursesWithInvalidPrefix()
@@ -151,7 +151,7 @@ public class PathAuthorizeTests
         var path = new Path("/secret", ctx);
 
         var result = await path.Authorize(new Verb { Read = new Read() });
-        var denied = (global::app.errors.PermissionDenied)result.Error!;
+        var denied = (global::app.error.PermissionDenied)result.Error!;
         await Assert.That(denied.Permission.Path).IsEqualTo("/secret");
         await Assert.That(denied.Permission.Actor).IsEqualTo(app.User.Name);
     }
@@ -175,7 +175,7 @@ public class PathAuthorizeTests
 
         var result = await path.Authorize(new Verb { Read = new Read() });
         await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error).IsTypeOf<global::app.errors.PermissionDenied>();
+        await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>();
     }
 
     /// IsInRoot's second clause: OsDirectory (system-built-in goals like
@@ -198,7 +198,7 @@ public class PathAuthorizeTests
     [Test] public async Task PermissionDenied_Error_RoundTripsThroughErrorShape()
     {
         var perm = new PermissionRecord("user", "/p", Verb.AllowAll(), MatchMode.Exact);
-        var err = new global::app.errors.PermissionDenied(perm);
+        var err = new global::app.error.PermissionDenied(perm);
         await Assert.That(err.Key).IsEqualTo("PermissionDenied");
         await Assert.That(err.StatusCode).IsEqualTo(403);
         await Assert.That(err.Permission).IsSameReferenceAs(perm);

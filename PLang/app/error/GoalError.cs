@@ -1,6 +1,6 @@
 using app.actor.context;
 
-namespace app.errors;
+namespace app.error;
 
 /// <summary>
 /// Error at the goal level.

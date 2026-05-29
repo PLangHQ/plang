@@ -1,5 +1,5 @@
 using System.Collections.Concurrent;
-using app.errors;
+using app.error;
 using app.variables;
 using app.modules.crypto.code;
 using app.modules.identity.code;

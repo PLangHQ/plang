@@ -112,7 +112,7 @@ public sealed class @this : ISerializer
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
         {
-            return global::app.data.@this.FromError(new errors.ServiceError(
+            return global::app.data.@this.FromError(new error.ServiceError(
                 $"Plang serialize failed: {ex.Message}", "PlangSerializeError", 400) { Exception = ex });
         }
     }
@@ -127,7 +127,7 @@ public sealed class @this : ISerializer
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
         {
-            return global::app.data.@this.FromError(new errors.ServiceError(
+            return global::app.data.@this.FromError(new error.ServiceError(
                 $"Plang deserialize failed: {ex.Message}", "PlangDeserializeError", 400) { Exception = ex });
         }
     }
@@ -142,7 +142,7 @@ public sealed class @this : ISerializer
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
         {
-            return global::app.data.@this<T>.FromError(new errors.ServiceError(
+            return global::app.data.@this<T>.FromError(new error.ServiceError(
                 $"Plang deserialize failed: {ex.Message}", "PlangDeserializeError", 400) { Exception = ex });
         }
     }
@@ -155,7 +155,7 @@ public sealed class @this : ISerializer
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {
-            return global::app.data.@this<string>.FromError(new errors.ServiceError(
+            return global::app.data.@this<string>.FromError(new error.ServiceError(
                 $"Plang serialize failed: {ex.Message}", "PlangSerializeError", 400) { Exception = ex });
         }
     }
@@ -176,7 +176,7 @@ public sealed class @this : ISerializer
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {
-            return global::app.data.@this<string>.FromError(new errors.ServiceError(
+            return global::app.data.@this<string>.FromError(new error.ServiceError(
                 $"Plang Store failed: {ex.Message}", "PlangSerializeError", 400) { Exception = ex });
         }
     }
@@ -197,7 +197,7 @@ public sealed class @this : ISerializer
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {
-            return global::app.data.@this<global::app.data.@this>.FromError(new errors.ServiceError(
+            return global::app.data.@this<global::app.data.@this>.FromError(new error.ServiceError(
                 $"Plang Load failed: {ex.Message}", "PlangDeserializeError", 400) { Exception = ex });
         }
     }
@@ -216,7 +216,7 @@ public sealed class @this : ISerializer
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {
-            return global::app.data.@this<T>.FromError(new errors.ServiceError(
+            return global::app.data.@this<T>.FromError(new error.ServiceError(
                 $"Plang Load failed: {ex.Message}", "PlangDeserializeError", 400) { Exception = ex });
         }
     }
@@ -230,7 +230,7 @@ public sealed class @this : ISerializer
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {
-            return global::app.data.@this.FromError(new errors.ServiceError(
+            return global::app.data.@this.FromError(new error.ServiceError(
                 $"Plang deserialize failed: {ex.Message}", "PlangDeserializeError", 400) { Exception = ex });
         }
     }
@@ -244,7 +244,7 @@ public sealed class @this : ISerializer
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {
-            return global::app.data.@this<T>.FromError(new errors.ServiceError(
+            return global::app.data.@this<T>.FromError(new error.ServiceError(
                 $"Plang deserialize failed: {ex.Message}", "PlangDeserializeError", 400) { Exception = ex });
         }
     }

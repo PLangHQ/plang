@@ -129,7 +129,7 @@ public sealed class GoalCall : modules.IEvent
         if (!result.Success) return result;
 
         if (result.Value is not @this goal)
-            return data.@this.FromError(new global::app.errors.ActionError(
+            return data.@this.FromError(new global::app.error.ActionError(
                 $"File '{prPath}' did not deserialize to a Goal", "InvalidPrFile", 400));
 
         // Wire back-references: Goal.App, Step.Goal for root and sub-goals
@@ -167,7 +167,7 @@ public sealed class GoalCall : modules.IEvent
             found = goal.Goals.FirstOrDefault(g => string.Equals(g.Name, matchName, StringComparison.OrdinalIgnoreCase));
 
         if (found == null)
-            return data.@this.FromError(new global::app.errors.ActionError(
+            return data.@this.FromError(new global::app.error.ActionError(
                 $"Goal '{Name}' not found in '{prPath}'", "GoalNotFound", 404));
 
         return data.@this.Ok(found);

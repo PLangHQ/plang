@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 using NSec.Cryptography;
-using app.errors;
+using app.error;
 using app.variables;
 using app.config;
 using app.modules.code;

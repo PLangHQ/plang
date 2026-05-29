@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using app.actor.context;
-using app.errors;
+using app.error;
 using app.goals.goal;
 using app.variables;
 using app.modules.settings;

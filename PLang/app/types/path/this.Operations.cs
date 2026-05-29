@@ -68,7 +68,7 @@ public abstract partial class @this
     /// </summary>
     public virtual Task<data.@this<System.Reflection.Assembly>> LoadAssemblyAsync() =>
         Task.FromResult(data.@this<System.Reflection.Assembly>.FromError(
-            new errors.ServiceError(
+            new error.ServiceError(
                 $"Scheme '{Scheme}' does not support assembly loading.", "NotSupported", 400)));
 
     // Content-shape verbs: when a third-party API needs the file's content
@@ -134,7 +134,7 @@ public abstract partial class @this
         var read = await ReadBytes();
         if (!read.Success || read.Type?.ClrType.Exit() == true) return data.@this<@this>.From(read);
         if (read.Value is not byte[] bytes)
-            return data.@this<@this>.FromError(new errors.Error("CopyTo: source ReadBytes did not return bytes.", "CopyToReadShape", 500));
+            return data.@this<@this>.FromError(new error.Error("CopyTo: source ReadBytes did not return bytes.", "CopyToReadShape", 500));
         return await destination.WriteBytes(bytes);
     }
 

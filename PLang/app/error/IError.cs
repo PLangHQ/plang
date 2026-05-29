@@ -1,7 +1,7 @@
 using Goal = app.goals.goal.@this;
 using Call = app.callstack.call.@this;
 
-namespace app.errors;
+namespace app.error;
 
 /// <summary>
 /// Interface for all App error types.

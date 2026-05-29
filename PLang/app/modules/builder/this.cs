@@ -115,7 +115,7 @@ public sealed partial class @this
         if ((!appPrExists.Success || appPrExists.Value != true) && !_app.Create)
         {
             if (Console.IsInputRedirected)
-                return data.@this.FromError(new global::app.errors.ServiceError(
+                return data.@this.FromError(new global::app.error.ServiceError(
                     $"No app found at {_app.AbsolutePath}. Run plang build from your app's root directory, or use --app={{\"create\":true}}.", "NoAppFound", 400));
 
             // Channels are wired by the entry point (PlangConsole) before Run.
@@ -126,14 +126,14 @@ public sealed partial class @this
             var outputChannel = _app.User.Channels.Get(global::app.channels.@this.Output) as global::app.channels.channel.stream.@this;
             var inputChannel = _app.User.Channels.Get(global::app.channels.@this.Input) as global::app.channels.channel.stream.@this;
             if (outputChannel == null || inputChannel == null)
-                return data.@this.FromError(new global::app.errors.ServiceError(
+                return data.@this.FromError(new global::app.error.ServiceError(
                     "Default channels not wired — cannot prompt for app creation.", "MissingRequiredChannelAtBoot", 500));
 
             await outputChannel.WriteTextAsync($"No app found at {_app.AbsolutePath}. Create new app? (y/n): ");
             using var reader = new StreamReader(inputChannel.Stream, leaveOpen: true);
             var answer = (await reader.ReadLineAsync())?.Trim().ToLowerInvariant();
             if (answer != "y" && answer != "yes")
-                return data.@this.FromError(new global::app.errors.ServiceError(
+                return data.@this.FromError(new global::app.error.ServiceError(
                     "Build cancelled. Run plang build from your app's root directory.", "BuildCancelled", 400));
         }
 

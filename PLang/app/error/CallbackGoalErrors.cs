@@ -1,4 +1,4 @@
-namespace app.errors;
+namespace app.error;
 
 /// <summary>
 /// Hard referent-integrity error raised by <c>App.CallStack.@this.Restore</c> when

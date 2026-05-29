@@ -6,7 +6,7 @@ using Goal = app.goals.goal.@this;
 using Action = app.goals.goal.steps.step.actions.action.@this;
 using Setup = app.goals.setup.@this;
 using TraceContext = app.actor.context.trace.@this;
-using app.errors;
+using app.error;
 using ActorType = app.actor.@this;
 using CallStackType = app.callstack.@this;
 namespace app.actor.context;
@@ -173,7 +173,7 @@ public sealed class @this : IDisposable
         vars.Set(new data.DynamicData("!goal", () => Goal));
         vars.Set(new data.DynamicData("!step", () => Step));
         // %!error% reads from App.Errors.@this — an AsyncLocal scope managed by
-        // error.handle.Wrap via using(app.errors.Push(caught)) { ... }. Null outside any
+        // error.handle.Wrap via using(app.error.Push(caught)) { ... }. Null outside any
         // active recovery scope; in nested handlers each scope sees its own caught error
         // (LIFO restore on dispose). AsyncLocal is parallelism-safe by construction.
         vars.Set(new data.DynamicData("!error", () => App.Errors.Error));

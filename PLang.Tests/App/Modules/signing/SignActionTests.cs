@@ -1,6 +1,6 @@
 using System.Text.Json;
 using app.actor.context;
-using app.errors;
+using app.error;
 using app.variables;
 using app.modules.code;
 using app.modules.signing.code;

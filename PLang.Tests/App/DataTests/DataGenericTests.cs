@@ -1,4 +1,4 @@
-using app.errors;
+using app.error;
 using app.variables;
 using Type = global::app.data.type;
 

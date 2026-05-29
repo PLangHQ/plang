@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
-using app.errors;
+using app.error;
 using Verb = global::app.types.path.permission.verb.@this;
 using ReadVerb = global::app.types.path.permission.verb.Read;
 using WriteVerb = global::app.types.path.permission.verb.Write;

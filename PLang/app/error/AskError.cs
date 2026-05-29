@@ -1,4 +1,4 @@
-namespace app.errors;
+namespace app.error;
 
 /// <summary>
 /// Error indicating a required value is missing and needs to be provided by the user.

@@ -52,7 +52,7 @@ public partial class Set : IContext, IBuildValidatable
         // with a junk Name.
         if (Name.Value!.IsMalformed)
             return Task.FromResult(global::app.data.@this.FromError(
-                new errors.ServiceError(
+                new global::app.error.ServiceError(
                     $"Variable reference '{Name.Value.RawValue}' is not a valid name — only a single '!' separates a variable from its Property key, and the suffix may not appear after '.' or '['.",
                     "InvalidVariableReference", 400)));
 
@@ -66,7 +66,7 @@ public partial class Set : IContext, IBuildValidatable
             var target = Context.Variables.Get(Name.Value.Name);
             if (target == null || !target.IsInitialized)
                 return Task.FromResult(global::app.data.@this.FromError(
-                    new errors.ServiceError($"Variable '{Name.Value.Name}' is not set",
+                    new global::app.error.ServiceError($"Variable '{Name.Value.Name}' is not set",
                         "VariableNotFound", 400)));
             try
             {
@@ -75,7 +75,7 @@ public partial class Set : IContext, IBuildValidatable
             catch (ArgumentException ex)
             {
                 return Task.FromResult(global::app.data.@this.FromError(
-                    new errors.ServiceError(ex.Message, "InvalidPropertyValue", 400)));
+                    new global::app.error.ServiceError(ex.Message, "InvalidPropertyValue", 400)));
             }
             return Task.FromResult(target);
         }
@@ -99,7 +99,7 @@ public partial class Set : IContext, IBuildValidatable
             if (targetType == null)
             {
                 return Task.FromResult(global::app.data.@this.FromError(
-                    new errors.ServiceError($"Unknown type '{Type.Value}'", "UnknownType", 400)));
+                    new global::app.error.ServiceError($"Unknown type '{Type.Value}'", "UnknownType", 400)));
             }
             object? converted = Value.Value;
             if (converted != null && !targetType.IsInstanceOfType(converted))

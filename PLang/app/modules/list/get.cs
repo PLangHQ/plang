@@ -15,7 +15,7 @@ public partial class Get : IContext
 
         if (!item.IsInitialized)
             return Task.FromResult(global::app.data.@this<object>.FromError(
-                new app.errors.ValidationError($"Index {Index.Value} out of range for '{ListName.Value}'")));
+                new app.error.ValidationError($"Index {Index.Value} out of range for '{ListName.Value}'")));
 
         return Task.FromResult(global::app.data.@this<object>.Ok(item.Value));
     }

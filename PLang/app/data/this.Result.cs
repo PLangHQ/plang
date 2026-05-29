@@ -1,5 +1,5 @@
 using System.Text.Json.Serialization;
-using app.errors;
+using app.error;
 
 namespace app.data;
 

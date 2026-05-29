@@ -1,6 +1,6 @@
 using PermissionRecord = global::app.types.path.permission.@this;
 
-namespace app.errors;
+namespace app.error;
 
 /// <summary>
 /// Raised by <c>path.Authorize</c> when the actor refuses a permission ("n"

@@ -1,4 +1,4 @@
-namespace app.errors.Trail;
+namespace app.error.trail;
 
 public sealed partial class @this : ISnapshot
 {

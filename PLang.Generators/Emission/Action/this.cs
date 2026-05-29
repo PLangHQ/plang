@@ -115,7 +115,7 @@ public static class @this
         if (!hasErrorProp)
         {
             sb.Append("""
-                    protected static global::app.data.@this Error(global::app.errors.IError error) => global::app.data.@this.FromError(error);
+                    protected static global::app.data.@this Error(global::app.error.IError error) => global::app.data.@this.FromError(error);
 
                 """);
         }
@@ -164,7 +164,7 @@ public static class @this
                             var __channelName = __action?.Parameters?.FirstOrDefault(d => string.Equals(d.Name, "channel", System.StringComparison.OrdinalIgnoreCase))?.Value as string;
                             Channel = (context.Actor ?? app.User).Channels.Resolve(__channelName);
                             if (Channel == null)
-                                return global::app.data.@this.FromError(new global::app.errors.ServiceError(
+                                return global::app.data.@this.FromError(new global::app.error.ServiceError(
                                     $"Channel '{__channelName ?? "output"}' not found", __step, __callFrames, "ChannelNotFound", 404));
                         }
 
@@ -213,7 +213,7 @@ public static class @this
                 var lower = name.ToLowerInvariant();
                 sb.Append($$"""
                                 if (__action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Value == null)
-                                    return global::app.data.@this.FromError(new global::app.errors.ServiceError(
+                                    return global::app.data.@this.FromError(new global::app.error.ServiceError(
                                         "'{{lower}}' must have a value", __step, __callFrames, "ValueRequired", 400));
 
                     """);
@@ -241,7 +241,7 @@ public static class @this
                 var lower = prop.Name.ToLowerInvariant();
                 sb.Append($$"""
                                 if (__action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Value == null)
-                                    return global::app.data.@this.FromError(new global::app.errors.ServiceError(
+                                    return global::app.data.@this.FromError(new global::app.error.ServiceError(
                                         "Required parameter '{{lower}}' is missing or null", __step, __callFrames, "MissingRequiredParameter", 400));
 
                     """);
@@ -263,7 +263,7 @@ public static class @this
                         // C# stack stays available for diagnostic display.
                         var mod = __action?.Module ?? "?";
                         var act = __action?.ActionName ?? "?";
-                        return global::app.data.@this.FromError(new global::app.errors.ServiceError(
+                        return global::app.data.@this.FromError(new global::app.error.ServiceError(
                             $"{mod}.{act}: {ex.GetType().Name}: {ex.Message}",
                             __step!, __callFrames, ex.GetType().Name, 500)
                         { Exception = ex });
@@ -285,7 +285,7 @@ public static class @this
                     if (__action == null || err.Error == null) return err;
                     var orig = err.Error;
                     var msg = $"{__action.Module}.{__action.ActionName}: {orig.Message}";
-                    return global::app.data.@this.FromError(new global::app.errors.ActionError(msg, orig.Key ?? "ActionError", orig.StatusCode));
+                    return global::app.data.@this.FromError(new global::app.error.ActionError(msg, orig.Key ?? "ActionError", orig.StatusCode));
                 }
 
             """);
@@ -343,7 +343,7 @@ public static class @this
     {
         // Public surface for App.Run's catch path.
         sb.Append("""
-                public System.Collections.Generic.List<global::app.errors.ParamSnapshot> SnapshotParams()
+                public System.Collections.Generic.List<global::app.error.ParamSnapshot> SnapshotParams()
                     => __SnapshotParams();
 
             """);
@@ -369,9 +369,9 @@ public static class @this
     private static void EmitSnapshotInternal(StringBuilder sb, ActionClassInfo info)
     {
         sb.Append("""
-                private System.Collections.Generic.List<global::app.errors.ParamSnapshot> __SnapshotParams()
+                private System.Collections.Generic.List<global::app.error.ParamSnapshot> __SnapshotParams()
                 {
-                    var __list = new System.Collections.Generic.List<global::app.errors.ParamSnapshot>();
+                    var __list = new System.Collections.Generic.List<global::app.error.ParamSnapshot>();
             """);
         sb.AppendLine();
         foreach (var prop in info.Properties)

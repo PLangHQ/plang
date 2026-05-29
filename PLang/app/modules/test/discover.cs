@@ -1,6 +1,6 @@
 using System.Reflection;
 using app.Attributes;
-using app.errors;
+using app.error;
 using app.tester;
 using app.Utils;
 using app.variables;

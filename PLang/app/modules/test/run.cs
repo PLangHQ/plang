@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Text;
-using app.errors;
+using app.error;
 using app.tester;
 using app.variables;
 using EventBinding = app.events.lifecycle.bindings.binding.@this;

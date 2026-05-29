@@ -13,7 +13,7 @@ public partial class Floor : IContext
         var n = number.FromObject(Value.Value);
         if (n == null)
             return Task.FromResult(data.@this<number>.FromError(
-                new errors.ValidationError("math.floor requires a number", "InvalidInput")));
+                new global::app.error.ValidationError("math.floor requires a number", "InvalidInput")));
         return Task.FromResult(number.Floor(n));
     }
 }

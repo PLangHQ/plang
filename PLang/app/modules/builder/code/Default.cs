@@ -265,7 +265,7 @@ public class Default : IBuilder
 
         var prPath = goal.PrPath;
         if (prPath == null)
-            return data.@this.FromError(new errors.ActionError("Goal has no Path set, cannot derive PrPath", "NoPrPath", 400));
+            return data.@this.FromError(new global::app.error.ActionError("Goal has no Path set, cannot derive PrPath", "NoPrPath", 400));
 
         // Group modifier actions onto their preceding executable action — recursive so
         // sub-goals are grouped too. Without this, sub-goal steps serialize with flat
@@ -339,7 +339,7 @@ public class Default : IBuilder
             }
             catch (System.Exception) { /* fall through with the default planDetail */ }
 
-            return data.@this.FromError(new global::app.errors.ActionError(
+            return data.@this.FromError(new global::app.error.ActionError(
                 "The LLM couldn't produce a usable plan for this goal — its proposed step count didn't match the goal, and the retry didn't recover. " +
                 "Try running plang build again (the LLM is non-deterministic). " +
                 "If it keeps failing, simplify or reword your goal text — long quoted strings or phrases that look like instructions can confuse the planner.\n\n" +
@@ -453,7 +453,7 @@ public class Default : IBuilder
 
         if (notFound.Count > 0)
         {
-            return data.@this.FromError(new errors.ActionError(
+            return data.@this.FromError(new global::app.error.ActionError(
                 $"Actions not found: {string.Join("; ", notFound)}",
                 "ActionNotFound", 400));
         }
@@ -552,7 +552,7 @@ public class Default : IBuilder
 
         if (validationErrors.Count > 0)
         {
-            return data.@this.FromError(new errors.ActionError(
+            return data.@this.FromError(new global::app.error.ActionError(
                 string.Join("; ", validationErrors),
                 "BuildValidation", 400));
         }
@@ -562,7 +562,7 @@ public class Default : IBuilder
         var buildErrors = await RunBuildPass(actions, modules, context);
         if (buildErrors.Count > 0)
         {
-            return data.@this.FromError(new errors.ActionError(
+            return data.@this.FromError(new global::app.error.ActionError(
                 string.Join("; ", buildErrors),
                 "BuildValidation", 400));
         }
@@ -785,7 +785,7 @@ public class Default : IBuilder
             if (string.Equals(currentLevel, "high", StringComparison.OrdinalIgnoreCase))
             {
                 if (!SetValue(step, "level", groupLevel))
-                    return data.@this.FromError(new errors.ActionError(
+                    return data.@this.FromError(new global::app.error.ActionError(
                         $"PromoteGroups received a step as JsonElement (immutable) — expected IDictionary. " +
                         $"Step type: {step.GetType().FullName}. Group: '{group}'.",
                         "PromoteGroupsImmutableStep", 500));

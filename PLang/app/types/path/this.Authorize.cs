@@ -73,7 +73,7 @@ public partial class @this
                 case "a": return await SignAndStore(actor, verb, persist: true);
                 case "y": return await SignAndStore(actor, verb, persist: false);
                 case "n": return data.@this.FromError(
-                    new global::app.errors.PermissionDenied(BuildRequest(actor, verb)));
+                    new global::app.error.PermissionDenied(BuildRequest(actor, verb)));
                 default:
                     prefix = $"Invalid answer '{answer}'. ";
                     continue;

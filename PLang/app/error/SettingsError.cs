@@ -1,7 +1,7 @@
 using System.Text;
 using app.actor.context;
 
-namespace app.errors;
+namespace app.error;
 
 /// <summary>
 /// Error that occurred during a Settings operation (SQLite read/write/delete).

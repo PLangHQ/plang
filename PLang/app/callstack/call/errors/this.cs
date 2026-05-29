@@ -1,4 +1,4 @@
-using IError = app.errors.IError;
+using IError = app.error.IError;
 
 namespace app.callstack.call.Errors;
 

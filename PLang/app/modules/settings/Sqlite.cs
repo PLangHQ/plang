@@ -1,7 +1,7 @@
 using Microsoft.Data.Sqlite;
 using app.types.path;
 using app.channels.serializers.serializer;
-using app.errors;
+using app.error;
 using app.variables;
 using app.Utils;
 

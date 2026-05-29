@@ -43,7 +43,7 @@ public partial class Divide : IContext
         var bn = number.FromObject(B.Value);
         if (an == null || bn == null)
             return Task.FromResult(data.@this<number>.FromError(
-                new errors.ValidationError("math.divide requires two numbers", "InvalidInput")));
+                new global::app.error.ValidationError("math.divide requires two numbers", "InvalidInput")));
         return Task.FromResult(number.Divide(an, bn, policy));
     }
 }

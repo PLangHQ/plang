@@ -1,6 +1,6 @@
 using app.actor.context;
 using app;
-using app.errors;
+using app.error;
 using app.variables;
 using AssertEquals = global::app.modules.assert.Equals;
 using AssertNotEquals = global::app.modules.assert.NotEquals;

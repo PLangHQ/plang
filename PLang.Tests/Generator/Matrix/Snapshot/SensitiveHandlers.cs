@@ -17,6 +17,6 @@ public partial class SensitiveSnapshot : global::app.modules.IContext
         var _ = ApiKey.Value;
         var __ = Endpoint.Value;
         return Task.FromResult(global::app.data.@this.FromError(
-            new global::app.errors.ServiceError("forced failure", "TestError", 500)));
+            new global::app.error.ServiceError("forced failure", "TestError", 500)));
     }
 }

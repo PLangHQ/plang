@@ -1,8 +1,8 @@
 using System.Collections.Concurrent;
 using app.actor.context;
-using app.errors;
+using app.error;
 using app.variables;
-using Error = app.errors.Error;
+using Error = app.error.Error;
 
 namespace app.goals;
 

@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using app;
-using app.errors;
+using app.error;
 using app.variables;
 namespace app.channels;
 

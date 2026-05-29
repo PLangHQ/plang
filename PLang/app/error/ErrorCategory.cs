@@ -1,4 +1,4 @@
-namespace app.errors;
+namespace app.error;
 
 /// <summary>
 /// Classifies the origin/intent of an error.

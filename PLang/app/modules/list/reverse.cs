@@ -12,7 +12,7 @@ public partial class Reverse : IContext
         var data = Context.Variables.Get(ListName.Value);
         if (data.Value is not List<object?> list)
             return Task.FromResult(global::app.data.@this<types.list>.FromError(
-                new app.errors.ValidationError($"Variable '{ListName.Value}' is not a list")));
+                new app.error.ValidationError($"Variable '{ListName.Value}' is not a list")));
 
         list.Reverse();
         return Task.FromResult(global::app.data.@this<types.list>.Ok(new types.list { count = list.Count, value = list }, app.data.type.FromName("list")));

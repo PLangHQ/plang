@@ -30,7 +30,7 @@ public partial class BuildFails : global::app.modules.IContext
     public partial global::app.data.@this<string>? Tag { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
     public Task<global::app.data.@this> Build() => Task.FromResult(
-        global::app.data.@this.FromError(new global::app.errors.ActionError("forced build failure", "BuildFail", 400)));
+        global::app.data.@this.FromError(new global::app.error.ActionError("forced build failure", "BuildFail", 400)));
 }
 
 /// <summary>Build() returns bare Ok() — exercises the "no value, no stamp" path.</summary>

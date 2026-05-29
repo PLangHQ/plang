@@ -38,8 +38,8 @@ public class SnapshotParamsTests
         var snapshotSrc = ReadGenerated("app.modules.matrix.snapshot.SnapshotOnError.Action.g.cs");
         // SnapshotOnError has two parameter properties (First, Second). __SnapshotParams should
         // contain two ParamSnapshot entries.
-        var entryCount = (snapshotSrc.Length - snapshotSrc.Replace("new global::app.errors.ParamSnapshot", "").Length)
-            / "new global::app.errors.ParamSnapshot".Length;
+        var entryCount = (snapshotSrc.Length - snapshotSrc.Replace("new global::app.error.ParamSnapshot", "").Length)
+            / "new global::app.error.ParamSnapshot".Length;
         await Assert.That(entryCount).IsEqualTo(2);
     }
 
@@ -117,7 +117,7 @@ public class SnapshotParamsTests
         // empty (just an empty list).
         await Assert.That(providerSrc).Contains("__SnapshotParams()");
         // No ParamSnapshot entry for the Provider property.
-        var entryCount = providerSrc.Split(new[] { "new global::app.errors.ParamSnapshot" },
+        var entryCount = providerSrc.Split(new[] { "new global::app.error.ParamSnapshot" },
             System.StringSplitOptions.None).Length - 1;
         await Assert.That(entryCount).IsEqualTo(0);
     }

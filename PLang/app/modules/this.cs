@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Reflection;
 using app.modules;
 using app.actor.context;
-using app.errors;
+using app.error;
 
 namespace app.modules;
 

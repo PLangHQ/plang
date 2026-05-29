@@ -33,7 +33,7 @@ public sealed class Object : INavigator
         }
         catch (TargetInvocationException ex)
         {
-            return global::app.data.@this.FromError(new global::app.errors.ServiceError(
+            return global::app.data.@this.FromError(new global::app.error.ServiceError(
                 $"Failed to read '{key}': {(ex.InnerException ?? ex).Message}",
                 "NavigationError", 500) { Exception = ex });
         }

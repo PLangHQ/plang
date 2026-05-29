@@ -1,7 +1,7 @@
 using System.Text.Json;
 using app;
 using app.channels.serializers.serializer;
-using app.errors;
+using app.error;
 using app.modules.identity;
 using PLangEngine = global::app.@this;
 
