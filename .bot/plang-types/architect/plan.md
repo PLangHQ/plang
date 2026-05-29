@@ -18,7 +18,7 @@ Everything between — variable memory, callstack frames, goal-to-goal handoff, 
 
 **Type-as-router with leaf-owned behavior.** Three commitments:
 
-1. **Every PLang type lives at `app/types/<name>/`.** `this.cs` carries the value, lifecycle (`static Resolve(string, context)`, value-based equality), and the leaf surfaces it owns. Sub-files at the type's discretion (`path` already has `this.Authorize`, `this.Operations`, `this.Derivation`). A new type is a new folder; it registers once and immediately participates in the catalog, the LLM vocabulary, the wire pipeline, and channel routing.
+1. **Every PLang type lives at `app/types/<name>/`** and owns a small contract: `this.cs` (the value + `[PlangType]` + truthiness via `IBooleanResolvable`), `static Resolve(value, context)` (runtime construction), `static Build(value) → kind` (build-time kind determination — its own `this.Build.cs`), and a `serializer/` subfolder (commitment #2). Properties carry their own types so the LLM can navigate (`image` exposes `Path(path)`). A new type is a new folder; it registers once and immediately participates in the catalog, the LLM vocabulary, the wire pipeline, and channel routing. (`Build` is the build-time half of the "build resolves, runtime runs" split — it sets the `.pr`'s `kind` field without constructing the value, so the runtime never re-derives. Distinct from the action-handler `IClass.Build()` hook, which decides an *action's* return type; the two cooperate — see [plan/build-vs-runtime.md](plan/build-vs-runtime.md).)
 
 2. **The type owns its serialization — one file per (type, format).** Each type has a `serializer/` subfolder: one `Default.cs` for the uniform rendering, plus a file per format that genuinely differs. `image/serializer/text.cs` renders a path placeholder, `image/serializer/protobuf.cs` raw bytes, `image/serializer/Default.cs` base64. No interface on the value, no mime switch inside a method — the file name **is** the format selector, the folder name **is** the type. The source generator wires a `(typeName, formatToken) → Write` table; the writer carries its `Format` token and does the lookup.
 
@@ -36,9 +36,9 @@ Start
 
 The `.goal` says nothing about console vs. web — **the runtime state picks the serializer.** A CLI run uses the text serializer; a web-request handler uses the html serializer. Same goal, same step.
 
-**Builder.** The LLM picks `file.read` for step 1. The return signature is `Data<image>` — the extension `.png` resolves to `image` via the registry, and `file.read.Build()` stamps the action's return type. Scope after step 1: `%photo%(image)`. For step 2 the LLM picks `output.write`, which takes a polymorphic `Data` and needs no type-specific awareness.
+**Builder.** The LLM picks `file.read` for step 1. `file.read.Run()` is polymorphic (bare `Data` — text/image/json by MIME), so its return type isn't static: the action's compile-time `file.read.Build()` reads the `.png` extension and resolves it through the registry to return type `image`, and the type's own `image.Build()` supplies `kind = png`. Scope after step 1: `%photo%(image)`. For step 2 the LLM picks `output.write`, which takes a polymorphic `Data` and needs no type-specific awareness.
 
-**Runtime, step 1.** `file.read.Run()` reads bytes and returns `Data<image>.Ok(new image.@this(bytes, mime: "image/png"))`. The Image owns `Bytes` and `Mime`; the Data wrapper carries `Type = "image"`. Memory stores `%photo% = Data{Type="image", Value=<Image>}`.
+**Runtime, step 1.** `file.read.Run()` reads bytes and returns a `Data` tagged `Type = "image"` carrying `new image.@this(bytes, mime: "image/png")` (the type/kind were already decided at build; `Run()` just constructs the value). The Image owns `Bytes` and `Mime`. Memory stores `%photo% = Data{Type="image", Value=<Image>}`.
 
 **Runtime, step 2 — CLI.** `output.write` hands the Data to the active channel (`stdout`, text serializer). The channel never looks inside `Value`. The wire pipeline keys on `(Data.Type=image, Format=text)` → `image/serializer/text.cs` → a path placeholder. The console gets a readable line.
 
@@ -117,13 +117,15 @@ PLang/
       PlangTypeAttribute.cs    (existing)
       TypeSerializers.cs       (new) — (typeName, formatToken) → Write delegate; generated + runtime-registered
       ITypeRenderer.cs         (new) — interface a loaded DLL implements per format (mirrors ICode)
-      path/                    (existing) — gains serializer/, sheds this.JsonConverter
+      path/                    (existing) — gains serializer/ + this.Build, sheds this.JsonConverter
         this.cs  this.Authorize.cs  this.Operations.cs  this.Derivation.cs
+        this.Build.cs            (new) — Build("https://…")→kind "http" (scheme is path's kind)
         file/  http/  scheme/  permission/
-        serializer/Default.cs  (new) — writer.String(Relative); absorbs this.JsonConverter
+        serializer/Default.cs    (new) — writer.String(Relative); absorbs this.JsonConverter
       number/                  (new — sealed class @this, immutable value)
         this.cs                  NumberKind enum, storage slots, IEquatable, IBooleanResolvable
-        this.Parse.cs            Parse / TryParse / Resolve(string,ctx) / Build(value)→kind
+        this.Parse.cs            Parse / TryParse / Resolve(string,ctx)
+        this.Build.cs            Build(value)→kind  (decimal point→decimal, e→double, else int/long)
         this.Operators.cs        + - * / % == != (lenient default)
         this.Arithmetic.cs       Add/Sub/Mul/Div/Mod/Pow (policy-aware, Data-returning)
         this.Equality.cs         lenient Equals + ExactEquals + canonical GetHashCode
@@ -132,7 +134,8 @@ PLang/
         serializer/Default.cs    (number, *) → writer.Int/Long/Decimal/Double
       image/                   (new)
         this.cs                  Bytes, Mime, Path(path, nullable), IBooleanResolvable
-        this.Parse.cs            Resolve(string) path/data-url/base64; Resolve(byte[]); Build("a.jpg")→"jpg"
+        this.Parse.cs            Resolve(string) path/data-url/base64; Resolve(byte[])
+        this.Build.cs            Build("a.jpg")→kind "jpg"  (extension, no dot)
         serializer/
           text.cs                (image, text)     → path placeholder
           protobuf.cs            (image, protobuf) → raw bytes (when that writer ships)
@@ -140,17 +143,20 @@ PLang/
       code/                    (new)
         this.cs                  Source, Language, IBooleanResolvable
         this.Parse.cs            Resolve(string) with language detection
+        this.Build.cs            Build(src)→kind "csharp"/"python"/… (language)
         serializer/Default.cs    (code, *) → writer.String(source)   (html.cs later)
-      datetime/                (new) this.cs wraps DateTimeOffset; this.Parse.cs ISO-8601 tz-aware
-      duration/                (new) this.cs wraps TimeSpan; this.Parse.cs 1.02:03:04 + ISO-8601
+      datetime/                (new) this.cs wraps DateTimeOffset; this.Parse.cs ISO-8601 tz-aware  (no kind → no this.Build)
+      duration/                (new) this.cs wraps TimeSpan; this.Parse.cs 1.02:03:04 + ISO-8601    (no kind → no this.Build)
       (date, time, string, int, long, decimal, bool, bytes, guid, …) — table-only in app/types/this.cs
+                               (note: int/decimal/double/long are NOT here — they're kinds of number)
     modules/
       math/                    (existing — actions grow Config + use NumberPolicy)
         add.cs                 (modified) — returns Data<number>; reads config via app.config.For<number.Config>
         … subtract/multiply/divide/modulo/abs/ceiling/floor/round/max/min/power/sqrt/random
         intdiv.cs              (new) — truncating integer division (opt-in; see storage.md)
       file/
-        read.cs                (modified) — Build() stamps Data.Type from extension via registry
+        read.cs                (modified) — action IClass.Build() resolves the extension to the high-level
+                               return type (image/text/…); the type's own Build() supplies the kind (jpg)
         write.cs               (modified) — accepts Data<number|image|code|…> uniformly
       output/write.cs          (existing) — already polymorphic; unchanged
       code/load.cs             (modified) — also registers [PlangType] classes + ITypeRenderers from the DLL
@@ -184,9 +190,9 @@ Every PLang type is a folder under `app/types/`: the value (`this.cs`), the pars
 The design is settled; these are the imperative units of work, in dependency order. Stage files come after your read-over.
 
 1. **Registry + dispatch spine.** Fold the `Primitives` table into the `[PlangType]` registry; add `TypeSerializers`, `TypedValueNode`, the `Normalize` tag-hook, `IWriter.Format`, the writer's `TypedValueNode` case, the `PLNG_SerializerCoverage` gate, the separate **`kind` field** on `.pr` parameters, and the per-type **`Build(value)→kind`** hook (with the typed-property catalog so the LLM can navigate `.Path` etc.). No new types yet — `path` adopts `serializer/Default.cs` as the first mover and proves the path end-to-end.
-2. **`number` the value type.** The `sealed class`, storage, parse, operators, lenient/exact equality, `IBooleanResolvable`, `serializer/Default.cs`. [storage.md](storage.md).
+2. **`number` the value type.** The `sealed class`, storage, parse, `Build(value)→kind` (the literal-shape rule), operators, lenient/exact equality, `IBooleanResolvable`, `serializer/Default.cs`. [storage.md](storage.md).
 3. **`number` arithmetic + policy.** `NumberPolicy`, `number.Config : IConfig`, the `app.config` resolver, the `math.*` retype to `Data<number>`, `math.intdiv`. [policy.md](policy.md).
-4. **`image` + `code`.** The two non-numeric proving instances, their parse/serializer files, `file.read` type-stamping.
+4. **`image` + `code`.** The two non-numeric proving instances, their parse / `Build()` / serializer files, and `file.read`'s action `Build()` resolving extension → high-level type (type's `Build()` supplies the kind).
 5. **The cleanups.** `datetime`/`date`/`time`/`duration` rebinds and the two folders.
 6. **Runtime loading.** `code.load` extension for `[PlangType]` + `ITypeRenderer` registration, and the overwrite-precedence wiring.
 

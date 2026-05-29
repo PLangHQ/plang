@@ -22,7 +22,8 @@ The type does **not** depend on any channel, and no channel depends on a type. T
 **Folder:** `app/types/number/`
 **Files this branch creates:**
 - `this.cs` — `sealed class @this` (immutable), `NumberKind` enum + storage slots (`_i`, `_d`, `_f`), `Kind`, `static From(int|long|decimal|float|double)`, implicit-IN operators.
-- `this.Parse.cs` — `static Resolve` / `Parse` / `TryParse`, and `static Build(value)→kind` (decimal point → decimal, `e` → double, else int/long).
+- `this.Parse.cs` — `static Resolve` / `Parse` / `TryParse` (runtime construction).
+- `this.Build.cs` — `static Build(value)→kind`: the build-time kind determiner (decimal point → decimal, `e` → double, else int/long). Distinct from the action `IClass.Build()` hook.
 - `this.Operators.cs` — operator overloads `+ - * / %` (lenient default).
 - `this.Arithmetic.cs` — `static Add(@this, @this, NumberPolicy)` and siblings; policy-aware, `Data`-returning; called by `math.*` handlers.
 - `this.Equality.cs` — lenient `Equals` + `ExactEquals` + canonical `GetHashCode`.
@@ -41,8 +42,9 @@ The type does **not** depend on any channel, and no channel depends on a type. T
 
 **Folder:** `app/types/image/`
 **Files this branch creates:**
-- `this.cs` — `Bytes`, `Mime`, `Path` (type `path`, nullable — null for a base64-decoded image), `Width`/`Height` (lazy from bytes), constructors, `IBooleanResolvable` (bytes.Length > 0). `Build("a.jpg") → kind "jpg"` from the extension.
+- `this.cs` — `Bytes`, `Mime`, `Path` (type `path`, nullable — null for a base64-decoded image), `Width`/`Height` (lazy from bytes), constructors, `IBooleanResolvable` (bytes.Length > 0).
 - `this.Parse.cs` — `static Resolve(string raw, context)` interpreting path / data URL / base64; `static Resolve(byte[] raw, context)` from-bytes.
+- `this.Build.cs` — `static Build("a.jpg") → kind "jpg"` from the extension.
 - `serializer/text.cs` (path placeholder), `serializer/protobuf.cs` (raw bytes, when that writer ships), `serializer/Default.cs` (base64 — covers json + plang).
 
 **Leaf-action consumers:** not part of this branch (image module actions are a follow-up). `file.read` ships the construction path (extension `.png`/`.jpg`/`.gif` → `Type = image`). `output.write` consumes via the dispatch.
@@ -54,7 +56,8 @@ The type does **not** depend on any channel, and no channel depends on a type. T
 **Folder:** `app/types/code/`
 **Files this branch creates:**
 - `this.cs` — `Source`, `Language`, `IBooleanResolvable` (source non-empty).
-- `this.Parse.cs` — `static Resolve(string raw, context)` — heuristic language detect (shebang, fenced-block header) or default `text`.
+- `this.Parse.cs` — `static Resolve(string raw, context)`.
+- `this.Build.cs` — `static Build(src) → kind` (the language: `csharp`/`python`/… by heuristic — shebang, fenced-block header — or `text`).
 - `serializer/Default.cs` — `writer.String(Source)`. (An `html.cs` that wraps in `<pre><code>` lands once an HTML writer exists.)
 
 **Leaf-action consumers:** `code.run`, `code.validate`, `code.format` (follow-up branches). Not part of this branch's deliverable; `code` ships as a vocabulary entry first.
@@ -137,6 +140,8 @@ The cross-cutting interfaces and surfaces each type-folder owns:
 | Surface | number | image | code | path (retro) | datetime / duration (cleanups) |
 |---|---|---|---|---|---|
 | `static Resolve(string, context)` | ✓ | ✓ | ✓ | ✓ (exists) | ✓ if folder; else via Conversion |
+| `static Build(value)→kind` | ✓ (decimal/int/…) | ✓ (jpg/png/…) | ✓ (csharp/…) | ✓ (file/http) | — (no kind) |
+| LLM shown the kinds? | ✓ (precision) | — (derived) | — (derived) | — (derived) | — |
 | `IBooleanResolvable` | ✓ (0/NaN false) | ✓ (empty bytes false) | ✓ (empty source false) | ✓ (exists) | — |
 | `serializer/` files | `Default.cs` (Kind→primitive) | `text` + `protobuf` + `Default` | `Default.cs` (+`html` later) | `Default.cs` (Relative string) | — (CLR primitives flow through IWriter directly) |
 | `[PlangType]` registration | ✓ | ✓ | ✓ | retro-add | retro-add for folder cases |

@@ -1,3 +1,11 @@
+## 2026-05-29 — Surface `Build` as a first-class type method (review pass)
+
+Ingi flagged that the type's `Build` method was under-documented and invisible in the folder tree. Read over all files; while doing it, caught and fixed a real inaccuracy.
+
+- **`Build` is now first-class.** It's a dedicated `this.Build.cs` file in each type folder that has a kind (number, image, code, path), shown in the tree; named in commitment #1 of the spine as part of the type contract; has a row in the types.md ownership matrix; and is split out from `this.Parse.cs`. `path.Build("https://…")→http` (scheme is path's kind); `code.Build(src)→csharp` (language); datetime/duration have no kind so no `this.Build`.
+- **Two `Build`s, clarified.** The **action** `IClass.Build()` (exists — `file.read.Build()`) decides an *action's* return type when it's dynamic; the **type** `Build(value)` decides a *value's* kind. Documented the distinction (build-vs-runtime.md "Two Builds, don't confuse them") and how they cooperate. Flagged the name collision (type method could become `KindOf` if it bites) — not blocking.
+- **Inaccuracy fixed (verified against code):** `file.read.Run()` returns **bare `Data`** (polymorphic by MIME — confirmed in `PLang/app/modules/file/read.cs:25`), not a static `Data<image>`. Its return type is set at build by `file.read.Build()` reading the extension (`read.cs:46`). Corrected the movie (plan.md), the build-vs-runtime diagram + prose, and the runtime-step-1 line that wrongly wrote `Data<image>.Ok(...)`. (Today `file.read.Build()` stamps the extension *as* the type; the unified model makes it resolve extension → high-level type, kind from the type's Build — noted for stage 4.)
+
 ## 2026-05-29 — Unified type+kind model ratified; landed in the docs
 
 Ingi ruled on both open threads. Decisions, now reflected across plan.md / build-vs-runtime.md / storage.md / types.md / dispatch.md:

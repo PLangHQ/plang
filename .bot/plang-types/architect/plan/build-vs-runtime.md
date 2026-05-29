@@ -24,10 +24,11 @@ GOAL (.goal)                BUILD  (once)                        .pr (artifact) 
                             → kind "decimal" (decimal point).     type:"number", kind:"decimal" } → number{Decimal, 3.5m}. NO parse.
                             scope now: %x%(number) kind=decimal
 
-- read photo.jpg,           LLM: picks file.read.                 step: file.read                 file.read.Run() reads bytes,
-  write to %photo%          signature Data<image> → type image.   { Path: {value:"photo.jpg",     builds image{bytes, mime}.
-                            image.Build("photo.jpg") → kind        type:"path"} }                  Data.Type="image" from the
-                            "jpg" (extension).                    return type:"image", kind:"jpg" signature; kind already baked.
+- read photo.jpg,           LLM: picks file.read. file.read       step: file.read                 file.read.Run() reads bytes,
+  write to %photo%          .Build() reads ext → return           { Path: {value:"photo.jpg",     builds image{bytes, mime}.
+                            type "image"; image.Build("a.jpg")    type:"path"} }                  Type/kind already baked at
+                            → kind "jpg". (Run() is bare Data,     return type:"image", kind:"jpg" build — runtime just constructs.
+                            polymorphic — type isn't static.)
                             scope now: %photo%(image) kind=jpg
 
 - set %y% = %x% + 1         LLM: sees %x%(number), 1 is int.      step: math.add(%x%, 1)          math.add(3.5m, 1) → number{Decimal}.
@@ -66,7 +67,9 @@ The LLM **is** shown number's kinds (int/decimal/double/long), because precision
 { "type": "image", "kind": "jpg" }
 ```
 
-`type=image` from `file.read`'s `Data<image>` signature (read via `Modules.Describe()`, not by sniffing the file). `kind=jpg` from `image.Build("photo.jpg")` reading the extension (no dot). The LLM is **not** shown image's kinds — it doesn't pick them; `Build()` derives `jpg` silently. So the difference from number isn't a different *rule* — it's the same rule, with the kind derived by the type instead of advertised to the LLM. (At runtime `file.read` may confirm or correct the kind from the actual bytes; the build-time kind is the extension's claim.)
+`file.read.Run()` returns a **bare `Data`** — it's polymorphic by MIME (text→string, image→image, json→structured), so its return type is *not* a static `Data<image>`. The type is determined at build by **`file.read.Build()`** (the action hook, `IClass.Build()`): it peeks the literal path, reads the extension, and resolves it through the registry to the high-level return type `image`. The **kind** (`jpg`) comes from the type's own `image.Build("photo.jpg")` reading the extension (no dot). The LLM is **not** shown image's kinds — it doesn't pick them; the type's `Build()` derives `jpg` silently. So the difference from number isn't a different *rule* — it's the same rule, with the kind derived by the type instead of advertised to the LLM. (At runtime `file.read` may confirm or correct the kind from the actual bytes; the build-time kind is the extension's claim.)
+
+> **Two `Build`s, don't confuse them.** The **action** `IClass.Build()` (compile-time hook on a handler — `file.read.Build()`) decides *that action's return type* when it isn't static. The **type** `Build(value)` (on `app/types/<name>/this.cs`) decides *a value's kind*. They cooperate: for a literal (`set %x% = 3.5`) the builder calls the type's `number.Build(3.5)` directly (no action involved); for an action with a dynamic return (`file.read`) the action's `Build()` picks the high-level type and the type's `Build()` supplies the kind. For an action with a static return (`math.add → Data<number>`) the type is read straight off the signature and the kind is left for runtime. (Naming note: both are "Build" because both are build-time determination; if the collision bites during implementation, the type method can become `KindOf(value)` — flagging it, not blocking on it.)
 
 ### `%photo%` is one type with a path facet — composition, not union
 
@@ -81,7 +84,7 @@ image(path)   => Exif, Width, Height, Path(path)
 
 ## The rule for the coder
 
-1. **`type` + `kind` are separate baked fields; neither is re-parsed at runtime.** Literals land value-native (`3.5` as JSON `3.5`, not `"3.5"`); `type` comes from the producing action's typed signature, `kind` from the type's `Build(value)`. `Resolve`/`Parse` of a *string* runs only for genuinely runtime-dynamic input — `file.read` of a text file, an HTTP body, terminal input, a `%var%` that resolved to a string — never for a literal the builder already typed.
+1. **`type` + `kind` are separate baked fields; neither is re-parsed at runtime.** Literals land value-native (`3.5` as JSON `3.5`, not `"3.5"`); `type` comes from the producing action (its static `Data<T>` signature, or its `Build()` hook when the return is dynamic like `file.read`), `kind` from the type's `Build(value)`. `Resolve`/`Parse` of a *string* runs only for genuinely runtime-dynamic input — `file.read` of a text file, an HTTP body, terminal input, a `%var%` that resolved to a string — never for a literal the builder already typed.
 
 2. **Each type owns two siblings: `Build(value) → kind` (build-time) and `Resolve(value, context) → @this` (runtime).** The type decides its own kind and its own construction; the runtime just carries `{type, kind, value}` and only the leaf reaches in. That's the [OBP Rule #9](../../../Documentation/v0.2/object_pattern_formal.md) courier principle: nobody re-opens the package to re-derive what build already stamped.
 
