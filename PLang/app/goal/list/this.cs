@@ -294,12 +294,9 @@ public sealed class @this
     internal IEnumerable<goal.@this> AllIncludingSetup => _goals.Values;
 
     /// <summary>
-    /// Gets all non-setup goals as a list.
-    /// </summary>
-    public IReadOnlyList<goal.@this> Value => _goals.Values.Where(g => !g.IsSetup).ToList();
-
-    /// <summary>
     /// Gets all non-setup goals. Consistent with Get() which excludes setup goals.
+    /// Canonical enumerator is <c>list</c> (added in Stage 3 for the accessor surface);
+    /// <c>All</c> stays as a non-IEnumerable alias for compatibility callers.
     /// </summary>
     public IEnumerable<goal.@this> All => _goals.Values.Where(g => !g.IsSetup);
 

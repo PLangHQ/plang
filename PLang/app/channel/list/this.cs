@@ -150,9 +150,6 @@ public sealed class @this : IAsyncDisposable
 
     public IEnumerable<string> ChannelNames => _channels.Keys;
 
-    /// <summary>All registered channels.</summary>
-    public IEnumerable<channel.@this> All => _channels.Values;
-
     private (channel.@this? Channel, data.@this? Error) GetChannel(string name, bool? requireRead = null, bool? requireWrite = null)
     {
         var channel = Get(name);

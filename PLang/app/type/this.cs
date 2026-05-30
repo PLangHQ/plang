@@ -131,9 +131,10 @@ public sealed class @this
         }
         _foldLoaded = true;
         if (Context?.App?.Type == null) return this;
-        var entries = Context.App.Type.BuildTypeEntries(Context.App.Module);
-        var match = entries.FirstOrDefault(e => string.Equals(e.Value, Value, System.StringComparison.OrdinalIgnoreCase));
-        if (match == null) return this;
+        // Hit the registry's memoized catalog instead of re-walking BuildTypeEntries
+        // per-entity (codeanalyzer v1 Pass 2 — re-derive-what-upstream-knew smell
+        // in time form).  ComplexSchemas() returns the cached Lazy<Dict> built once.
+        if (!Context.App.Type.ComplexSchemas().TryGetValue(Value, out var match)) return this;
         _fields = match._fields;
         _values = match._values;
         _properties = match._properties;

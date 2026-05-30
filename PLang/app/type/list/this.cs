@@ -154,22 +154,64 @@ public sealed partial class @this
 
     // --- Stage 3 accessor surface ---
 
+    // Catalog cache keyed by PLang type name.  The no-module catalog walk is
+    // App-global (only the KnownTypes() seed varies, and that seed is identity
+    // to this registry instance), so a single Lazy is enough: BuildTypeEntries
+    // runs once per registry instance and every fold-property read of
+    // app.Type[name] then comes from the cache.
+    //
+    // The (modules)-overload of BuildTypeEntries stays uncached — its input is
+    // the App's module set which can change at runtime via code.load.
+    private readonly Lazy<Dictionary<string, app.type.@this>> _catalogByName;
+
+    private Dictionary<string, app.type.@this> CatalogByName => _catalogByName.Value;
+
+    public @this()
+    {
+        _catalogByName = new Lazy<Dictionary<string, app.type.@this>>(() =>
+        {
+            var dict = new Dictionary<string, app.type.@this>(StringComparer.OrdinalIgnoreCase);
+            foreach (var entry in BuildTypeEntries(null))
+                dict.TryAdd(entry.Value, entry);
+            return dict;
+        });
+    }
+
     /// <summary>
-    /// Index by PLang type name. Returns the type entity (<see cref="app.type.@this"/>);
-    /// throws on miss — index-miss is a hard error.
+    /// Index by PLang type name.  Returns the catalog-built entity — fully
+    /// populated with Fields / Values / Shape / Example / Description / Kinds
+    /// / ClrType.  Throws on miss; index-miss is a hard error.
     /// </summary>
+    /// <remarks>
+    /// Both doors (<c>app.Type[name]</c> and <c>data.Type</c>) hand back
+    /// equivalent entities — same catalog fold data, same ClrType.  Per
+    /// codeanalyzer v1 finding #1: returning <c>new app.type.@this(name)</c>
+    /// here would ship a contextless half-entity whose fold properties
+    /// silently null; cached catalog lookup closes that gap.
+    /// </remarks>
     public app.type.@this this[string typeName]
     {
         get
         {
+            if (CatalogByName.TryGetValue(typeName, out var built)) return built;
             if (Get(typeName) == null)
                 throw new KeyNotFoundException($"No PLang type registered under name '{typeName}'.");
-            return new app.type.@this(typeName);
+            // Primitive / MIME / generic-shape: not in the catalog (catalog covers
+            // domain types only) but the name resolves.  Hand back a bare entity
+            // with ClrType pre-stamped from the static path — no Promote() rebuild
+            // can populate fold data for primitives, so this is the right answer.
+            return new app.type.@this(typeName, Get(typeName));
         }
     }
 
-    /// <summary>Compile-time generic lookup — returns the entity for T.</summary>
-    public app.type.@this of<T>() => new app.type.@this(GetTypeName(typeof(T)));
+    /// <summary>Compile-time generic lookup — returns the catalog-built entity for T.</summary>
+    public app.type.@this of<T>()
+    {
+        var name = GetTypeName(typeof(T));
+        return CatalogByName.TryGetValue(name, out var built)
+            ? built
+            : new app.type.@this(name, typeof(T));
+    }
 
     private System.Type? Get(string typeName, int depth)
     {
@@ -579,13 +621,7 @@ public sealed partial class @this
     /// <c>ResolveName</c> follows the same first-wins rule so consumers stay
     /// consistent across the catalog and the type lookup.
     /// </summary>
-    public Dictionary<string, app.type.@this> ComplexSchemas()
-    {
-        var dict = new Dictionary<string, app.type.@this>();
-        foreach (var entry in BuildTypeEntries(null))
-            dict.TryAdd(entry.Value, entry);
-        return dict;
-    }
+    public Dictionary<string, app.type.@this> ComplexSchemas() => CatalogByName;
 
     /// <summary>
     /// Reads a public-static string property by name from <paramref name="type"/>.
