@@ -1,0 +1,7 @@
+Start
+/ `as text` without strict → builds clean; text.Build("a") returns null
+/ (no extension); kind stays null; no validation runs.
+- set %x% = "a" as text
+- throw "not implemented"
+- assert %x.Type.Name% equals "text"
+- assert %x.Type.Kind% is empty

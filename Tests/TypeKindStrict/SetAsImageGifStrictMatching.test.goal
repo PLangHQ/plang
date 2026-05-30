@@ -1,0 +1,7 @@
+Start
+/ Strict + literal + matching bytes → builds clean, runs clean.
+/ Requires fixture real.gif (1x1 transparent GIF, committed alongside).
+- set %img% = "real.gif" as image/gif strict
+- throw "not implemented"
+- assert %img.Type.Name% equals "image"
+- assert %img.Type.Kind% equals "gif"

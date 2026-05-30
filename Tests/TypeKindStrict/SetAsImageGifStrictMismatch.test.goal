@@ -1,0 +1,11 @@
+Start
+/ Strict + literal + mismatched bytes → BUILD error (not runtime).
+/ Requires fixture photo.png (1x1 transparent PNG). The build step itself
+/ must fail with a BuildValidation error; this .test.goal is structured so
+/ that the test runner sees the build failure as the success signal.
+/
+/ The exact test-runner shape for "expects build to fail" is open; if the
+/ runner doesn't have it, this test asserts via a wrapper goal that runs
+/ the builder and checks the error.
+- set %img% = "photo.png" as image/gif strict
+- throw "not implemented"

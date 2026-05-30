@@ -1,0 +1,9 @@
+Start
+/ Strict without a kind → no byte probe runs (nothing to check against);
+/ builds clean. Soft-degradation contract: strict implies "match what was
+/ asked", and nothing was asked for kind.
+- set %x% = "irrelevant" as image strict
+- throw "not implemented"
+- assert %x.Type.Name% equals "image"
+- assert %x.Type.Kind% is empty
+- assert %x.Type.Strict% equals true

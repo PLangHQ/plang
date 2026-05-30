@@ -44,7 +44,7 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Wrote the spine (plan.md) and three topic deep-dives (type value model, kind derivation/validation, LLM type representation). Stage files were drafted then removed at Ingi's request — he wants to comment on the design before the implementation stages are carved; the sequence is sketched in plan.md and becomes stage-N-*.md after review."
+          "context": "Wrote the spine (plan.md) and three topic deep-dives (type value model, kind derivation/validation, LLM type representation). Stage files were drafted then removed at Ingi's request \u2014 he wants to comment on the design before the implementation stages are carved; the sequence is sketched in plan.md and becomes stage-N-*.md after review."
         },
         {
           "paths": [
@@ -64,13 +64,140 @@
           "type": "decision",
           "category": "doc",
           "confidence": "high",
-          "context": "Merged latest runtime2 (d96ec269f) into the branch (clean, .bot-only) and rebased the entire plan onto the singular-namespaces world. The merge promoted the type descriptor to an entity (app.type.@this) that absorbed the catalog — so the descriptor↔catalog unification the plan reached for is already done. Reconciled all paths/namespaces (types→type, formats→format, modules→module, variables→variable), reframed Stage 1 around the promoted entity, adjusted Stage 5 for the folded catalog + app.builder.type renderer, and resolved the now three-way kind-naming knot (name=family, kind=subtype, Kinds=vocabulary, dispatcher→KindHooks). Design substance unchanged; all five stages still needed."
+          "context": "Merged latest runtime2 (d96ec269f) into the branch (clean, .bot-only) and rebased the entire plan onto the singular-namespaces world. The merge promoted the type descriptor to an entity (app.type.@this) that absorbed the catalog \u2014 so the descriptor\u2194catalog unification the plan reached for is already done. Reconciled all paths/namespaces (types\u2192type, formats\u2192format, modules\u2192module, variables\u2192variable), reframed Stage 1 around the promoted entity, adjusted Stage 5 for the folded catalog + app.builder.type renderer, and resolved the now three-way kind-naming knot (name=family, kind=subtype, Kinds=vocabulary, dispatcher\u2192KindHooks). Design substance unchanged; all five stages still needed."
         }
       ],
       "after": {
         "status": "Design approved; plan rebased onto latest runtime2 (singular-namespaces + type-entity promotion). Five stages + test prep all reconciled to the new paths/structure. Nothing built; ready for test-designer / coder.",
         "health": "green",
         "notes": "Branch now descends from runtime2 d96ec269f via merge 67792cf00. The type descriptor is now the promoted entity app.type.@this (folded catalog); the plan adds Name/Kind/Strict + folds Data.Kind + resolves the three-way kind-naming knot. Numerics resolved as {number, kind} per Ingi."
+      }
+    },
+    {
+      "id": "db1b76a7-d3a6-48be-95f2-efaa5861a8b1",
+      "bot": "test-designer",
+      "timestamp_start": "2026-05-30T13:00:00Z",
+      "timestamp_end": "2026-05-30T16:13:39Z",
+      "intent": "Translate the architect's 5-stage type-kind-strict plan into failing-test contracts: C# TUnit + PLang .test.goal signatures covering the structured type value model (Name/Kind/Strict + Data.Kind fold + IKindValidatable marker + ClrType reroute), the text type, kind canonicalisation, image byte-sniff, variable.set strict ValidateBuild + Run, LLM representation, and three integration cuts. Add 16 rows beyond the architect's matrix (case insensitivity, null-safety, soft-degradation contracts, build/runtime convergence).",
+      "before": {
+        "assumptions": "Architect plan complete on rebased-onto-singular-namespaces base (plan.md + 5 stage files + 4 deep dives + test-strategy + test-coverage). The type entity already exists at app.type.@this with the folded catalog (plang-types/singular-namespaces work); current state has type.Value (renaming to Name), a stored Data.Kind (folding to Type.Kind), public ClrType (going non-public), App.Type.Kinds dispatcher (renaming KindHooks), no IKindValidatable, no text type, no Strict, primitive.Canonical[string]==\"string\" and BuilderNames includes string+int+long+decimal+double. TUnit convention: Assert.Fail(\"Not implemented\") + await Task.CompletedTask. PLang convention: Start goal + - throw \"not implemented\" + comments as spec.",
+        "risk": "Coverage gaps if I only translate the architect's coverage matrix. The architect listed ~50 rows; many are surface confirmations. Real risk lies in: case-insensitivity at the factory/parser boundary, null-safety on the new text.Build hook, the Data.Kind setter contract (must pin one behaviour to avoid silent no-op), legacy .pr.json backward-compat, strict-without-a-kind soft-degradation, build/runtime convergence on numeric inference, negative-presence on IKindValidatable for number, and a sibling Cut-3 assertion that the constructor teaching for `type(name, kind?, strict?)` reaches the LLM."
+      },
+      "plan": ".bot/type-kind-strict/test-designer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/type-kind-strict/architect/plan.md",
+            ".bot/type-kind-strict/architect/summary.md",
+            ".bot/type-kind-strict/architect/stage-1-type-value-model.md",
+            ".bot/type-kind-strict/architect/stage-2-text-type-and-names.md",
+            ".bot/type-kind-strict/architect/stage-3-kind-derivation.md",
+            ".bot/type-kind-strict/architect/stage-4-set-and-strict.md",
+            ".bot/type-kind-strict/architect/stage-5-llm-representation.md",
+            ".bot/type-kind-strict/architect/plan/test-strategy.md",
+            ".bot/type-kind-strict/architect/plan/test-coverage.md",
+            "PLang/app/type/this.cs",
+            "PLang/app/data/this.cs",
+            "PLang/app/data/Wire.cs",
+            "PLang/app/type/primitive/this.cs",
+            "PLang/app/type/number/this.cs",
+            "PLang/app/type/number/this.Build.cs",
+            "PLang/app/type/image/this.cs",
+            "PLang/app/type/image/this.Build.cs",
+            "PLang/app/type/kind/this.cs",
+            "PLang/app/format/list/this.cs",
+            "PLang/app/module/variable/set.cs",
+            "PLang/app/type/list/this.cs",
+            "PLang/app/data/IBooleanResolvable.cs",
+            "PLang/app/builder/type/this.cs",
+            "PLang.Tests/GlobalUsings.cs",
+            "PLang.Tests/App/Types/KindFieldTests.cs",
+            "Tests/Types/SetDecimalLiteralStampsKind.test.goal"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mapped the architect's 5-stage plan against current code surfaces via Explore subagent. Confirmed: type.Value (renaming Name), type.Kind exists today as family-derived (going away), stored Data.Kind (folding), public ClrType (going non-public), App.Type.Kinds dispatcher (renaming KindHooks), App.Format.KindOf (renaming FamilyOf), no IKindValidatable yet, no text type yet, no Strict yet, primitive.Canonical[string]==string + BuilderNames includes numerics. Sampled existing KindFieldTests.cs for the wire-test convention (System.Text.Json options accessed via reflection on plang serializer's _outbound). Confirmed TUnit + PLang test placement convention (PLang.Tests/App/<Topic>Tests/ and Tests/<Topic>/)."
+        },
+        {
+          "paths": [
+            ".bot/type-kind-strict/test-designer/v1/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote the test-designer plan: 8 batches (TypeValueModelTests, TextTypeTests, PrimitiveTableTests, KindDerivationTests, SetAndStrictTests, LlmRepresentationTests, Tests/TypeKindStrict/ goals, IntegrationCutsTests). Listed 16 independent additions beyond the architect's matrix with reasons. Flagged 3 open items where one contract is pinned and either alternative is acceptable: Data.Kind setter behaviour, empty-Name rejection, strict-without-a-kind degradation."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/TypeFactoryTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/TypeEntityShapeTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/DataKindFoldTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/WireKindShapeTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/IKindValidatableMarkerTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/ClrTypeRerouteTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/DispatcherRenameTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TextTypeTests/TextBuildHookTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TextTypeTests/TextTypeShapeTests.cs",
+            "PLang.Tests/App/TypeKindStrict/PrimitiveTableTests/PrimitiveTableTests.cs",
+            "PLang.Tests/App/TypeKindStrict/KindDerivationTests/NumberBuildHookTests.cs",
+            "PLang.Tests/App/TypeKindStrict/KindDerivationTests/KindCanonicalisationTests.cs",
+            "PLang.Tests/App/TypeKindStrict/KindDerivationTests/ImageValidateKindTests.cs",
+            "PLang.Tests/App/TypeKindStrict/KindDerivationTests/FamilyOfRenameTests.cs",
+            "PLang.Tests/App/TypeKindStrict/KindDerivationTests/NumericInferenceTests.cs",
+            "PLang.Tests/App/TypeKindStrict/SetAndStrictTests/VariableSetTypeParamTests.cs",
+            "PLang.Tests/App/TypeKindStrict/SetAndStrictTests/StrictValidateBuildTests.cs",
+            "PLang.Tests/App/TypeKindStrict/SetAndStrictTests/StrictRunTests.cs",
+            "PLang.Tests/App/TypeKindStrict/SetAndStrictTests/SetMintCarriesKindTests.cs",
+            "PLang.Tests/App/TypeKindStrict/LlmRepresentationTests/TypeSchemasRendererTests.cs",
+            "PLang.Tests/App/TypeKindStrict/LlmRepresentationTests/BuilderNamesTests.cs",
+            "PLang.Tests/App/TypeKindStrict/IntegrationCutsTests/Cut1_TypedSetRoundTripsKind.cs",
+            "PLang.Tests/App/TypeKindStrict/IntegrationCutsTests/Cut2_StrictMismatchFailsAtRightLayer.cs",
+            "PLang.Tests/App/TypeKindStrict/IntegrationCutsTests/Cut3_LlmSeesOneUnifiedVocabulary.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Wrote 24 C# TUnit test files / 107 test signatures. Bodies are Assert.Fail(\"Not implemented\") + await Task.CompletedTask; names + comments are the contract. dotnet build PLang.Tests is green (0 errors, 347 pre-existing warnings). Comments are contract-focused \u2014 no stage references, no timeline pointers, per the no-stage-or-task-refs-in-comments feedback rule."
+        },
+        {
+          "paths": [
+            "Tests/TypeKindStrict/SetIntLiteralIsNumberInt.test.goal",
+            "Tests/TypeKindStrict/SetAsTextWithMdExtension.test.goal",
+            "Tests/TypeKindStrict/SetAsTextSlashMarkdownNormalises.test.goal",
+            "Tests/TypeKindStrict/SetAsImageGifStrictMatching.test.goal",
+            "Tests/TypeKindStrict/SetAsImageGifStrictMismatch.test.goal",
+            "Tests/TypeKindStrict/SetAsImageGifStrictRuntimeVarMismatch.test.goal",
+            "Tests/TypeKindStrict/SetAsTextSlashMarkdownStrictUnverifiable.test.goal",
+            "Tests/TypeKindStrict/SetAsTextDefaultNoValidation.test.goal",
+            "Tests/TypeKindStrict/SetAsTextUppercase.test.goal",
+            "Tests/TypeKindStrict/SetAsImageStrictNoKind.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Wrote 10 PLang .test.goal files covering the developer-facing surfaces: `as text` with extension-derived kind, `as text/markdown` slash-form, strict matching/mismatching for image, strict unverifiable for text, case-insensitivity (TEXT), strict-without-a-kind soft degradation, bare numeric literal binding to {number, int}. Strict + image mismatch tests need real.gif and photo.png fixtures the coder generates at implementation."
+        },
+        {
+          "paths": [
+            ".bot/type-kind-strict/test-designer/summary.md",
+            ".bot/type-kind-strict/test-designer/v1/verdict.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote summary.md + verdict.json. Verdict PASS: 24 C# files / 107 tests + 10 PLang goals on disk, build green, 0 introduced warnings. Coder is unblocked to start stage 1."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "summary_path": ".bot/type-kind-strict/test-designer/summary.md",
+        "verdict_path": ".bot/type-kind-strict/test-designer/v1/verdict.json",
+        "build_status": "dotnet build PLang.Tests \u2014 0 errors, 347 pre-existing warnings (none introduced)",
+        "test_files_csharp": 24,
+        "test_signatures_csharp": 107,
+        "test_files_plang": 10,
+        "ready_for": "coder"
       }
     }
   ]

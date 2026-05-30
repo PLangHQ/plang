@@ -1,0 +1,8 @@
+Start
+/ Strict on text — text doesn't implement IKindValidatable, so strict
+/ degrades to "kind name accepted"; no byte probe runs; builds clean.
+- set %x% = "a" as text/markdown strict
+- throw "not implemented"
+- assert %x.Type.Name% equals "text"
+- assert %x.Type.Kind% equals "md"
+- assert %x.Type.Strict% equals true
