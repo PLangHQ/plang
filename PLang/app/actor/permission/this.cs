@@ -64,6 +64,11 @@ public sealed class @this
             {
                 foreach (var grantData in list)
                 {
+                    // Stamp Context on grants freshly rehydrated from SQLite — the store
+                    // returns Data without a Context wired, and downstream signature/
+                    // type-resolution paths require it.  Per the architecture: every
+                    // producer stamps Context; SettingsStore is a producer.
+                    grantData.Context = _actor.Context;
                     if (grantData.Value is null) continue;
                     if (!string.Equals(grantData.Value.Actor, _actor.Name, StringComparison.Ordinal)) continue;
                     if (await TryCover(grantData, request)) return grantData;

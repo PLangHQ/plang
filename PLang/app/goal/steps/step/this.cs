@@ -118,7 +118,7 @@ public sealed partial class @this : module.IDataWrappable
     public bool HasSubSteps => Goal?.Steps.HasIndentedChildren(Index) ?? false;
 
     [JsonIgnore]
-    public global::app.goal.@this? Goal { get; set; }
+    public global::app.goal.@this Goal { get; set; } = null!;
 
     /// <summary>
     /// Runs this step: lifecycle events → actions.

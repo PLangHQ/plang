@@ -69,7 +69,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
     /// (the same place <c>event.on</c> writes to). Channels live per-actor;
     /// the actor is the natural scope for channel-bound bindings.
     /// </summary>
-    public global::app.actor.@this? Actor { get; internal set; }
+    public global::app.actor.@this Actor { get; internal set; } = null!;
 
     /// <summary>
     /// The Channels collection this channel belongs to — set by
@@ -77,7 +77,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
     /// this to reach their parent Channels' Serializers registry; the per-actor
     /// Channels owns the single Serializers home.
     /// </summary>
-    public global::app.channel.list.@this? Channels { get; internal set; }
+    public global::app.channel.list.@this Channels { get; internal set; } = null!;
 
     /// <summary>
     /// Whether reading is supported. Default tracks Direction + IsOpen; concretes can override.

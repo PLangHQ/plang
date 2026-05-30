@@ -317,8 +317,10 @@ public sealed class Sqlite : IStore
     {
         if (data.Value == null || data.Type == null) return;
 
-        var clrType = data.Context?.App.Type.Get(data.Type.Value)
-                      ?? AppTypes.GetPrimitiveOrMime(data.Type.Value);
+        // Rehydrate hits the entity's own no-context surface (Context?.X ?? static) —
+        // the entity is the documented resolver, callers don't chain a second fallback.
+        // type.@this.ClrType handles the primitive/registry split internally.
+        var clrType = data.Type.ClrType;
         if (clrType == null || clrType.IsAssignableFrom(data.Value.GetType())) return;
 
         var converted = AppTypes.ConvertTo(data.Value, clrType);

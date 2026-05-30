@@ -41,7 +41,7 @@ public class Error : IError
     /// invoke <c>app.Snapshot()</c> for an ErrorCallback materialisation.
     /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
-    internal global::app.@this? App { get; set; }
+    internal global::app.@this App { get; set; } = null!;
 
     private global::app.data.@this<global::app.snapshot.@this>? _callback;
 

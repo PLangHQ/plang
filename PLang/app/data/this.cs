@@ -433,8 +433,8 @@ public partial class @this
             return global::app.data.@this.FromError(new global::app.error.ServiceError(
                 "Data.As(typeName) requires a non-empty type name.", "InvalidTypeName", 400));
 
-        context = context ?? _context;
-        var clr = context?.App.Type.Clr(typeName) ?? AppTypes.GetPrimitiveOrMime(typeName);
+        context = context ?? _context!;
+        var clr = context.App.Type.Clr(typeName);
         if (clr == null)
             return global::app.data.@this.FromError(new global::app.error.ServiceError(
                 $"No PLang type registered under name '{typeName}'.", "UnknownType", 400));

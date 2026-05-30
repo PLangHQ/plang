@@ -15,7 +15,7 @@ public sealed class @this : IList<Step>, IContext
     public actor.context.@this Context { get; set; } = null!;
 
     [System.Text.Json.Serialization.JsonIgnore]
-    public global::app.goal.@this? Goal { get; set; }
+    public global::app.goal.@this Goal { get; set; } = null!;
 
     public List<Step> Value => _items;
 

@@ -26,8 +26,10 @@ public partial class Set : IContext, IBuildValidatable
             // Skip validation when value contains %variable% references — they resolve at runtime
             if (value.HasVariableReference) return null;
 
-            var targetType = value.Context?.App.Type.Get(value.Type.Value)
-                             ?? global::app.type.list.@this.GetPrimitiveOrMime(value.Type.Value);
+            // Route through the entity's own resolver — falls back to the static
+            // primitive table when Context is null (e.g. build-time validation paths
+            // and unit tests), routes through the registry when stamped.
+            var targetType = value.Type.ClrType;
             if (targetType != null && !targetType.IsInstanceOfType(value.Value))
             {
                 var (_, error) = global::app.type.list.@this.TryConvertTo(value.Value, targetType);

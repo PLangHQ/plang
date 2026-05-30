@@ -31,7 +31,7 @@ public sealed class @this : IAsyncDisposable
     /// channel so channel-event firing can read from <c>Actor.Context.Events</c>.
     /// Null for Service-owned Channels (Service is not an Actor).
     /// </summary>
-    internal global::app.actor.@this? Actor { get; set; }
+    internal global::app.actor.@this Actor { get; set; } = null!;
 
     /// <summary>
     /// The serializer registry — content-type routing for I/O. Per-actor:

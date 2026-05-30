@@ -29,14 +29,22 @@ public sealed class @this
     [JsonPropertyName("name")]
     public string Value { get; }
 
+    // Context is the *runtime* invariant — once a Data is stamped (Variables.Set,
+    // Action.RunAsync), the entity reads through the registry.  Before stamping,
+    // the entity falls through to the static primitive surface so type-entity
+    // instantiated purely for its identity (e.g. `new type("string")`, file
+    // mime-deriving an extension before any Data wraps it) still answers the
+    // ClrType question without an App in scope.  This is the entity's own
+    // documented no-context surface; external consumer sites do NOT chain
+    // `?? GetPrimitiveOrMime` themselves — that pattern is gone (see
+    // NonNullInvariantTests).
     [JsonIgnore]
     internal actor.context.@this? Context { get; set; }
 
     public @this(string value) { Value = value; }
 
     [JsonIgnore]
-    public System.Type? ClrType
-        => _clrType ?? Context?.App.Type.Clr(Value) ?? AppTypes.GetPrimitiveOrMime(Value);
+    public System.Type? ClrType => _clrType ?? Context?.App.Type.Clr(Value) ?? AppTypes.GetPrimitiveOrMime(Value);
     private System.Type? _clrType;
 
     /// <summary>Format kind for this type value (e.g. "image", "text"). Null for PLang type names like "string".</summary>
@@ -113,10 +121,18 @@ public sealed class @this
     /// <summary>Path-scheme registry for the path entity. Null when this type is not path.</summary>
     [JsonIgnore]
     public global::app.type.path.scheme.@this? Scheme
-        => Value == "path" ? Context?.App?.Type?.Scheme : null;
+        => Value == "path" ? Context.App.Type.Scheme : null;
 
-    // Construct with a stamped ClrType (used by BuildTypeEntries; spares the registry round-trip).
-    internal @this(string value, System.Type? clrType) : this(value) { _clrType = clrType; }
+    // Construct with a stamped ClrType (used by BuildTypeEntries and by the
+    // type-list indexer's primitive fallback path; both spare the registry
+    // round-trip).  The primitive path also has no fold data — primitives are
+    // not in ComplexSchemas — so mark fold as already-loaded; that keeps
+    // Promote()'s Context check from firing for `app.Type["string"]`.
+    internal @this(string value, System.Type? clrType) : this(value)
+    {
+        _clrType = clrType;
+        _foldLoaded = true;
+    }
 
     private @this Promote()
     {
@@ -130,10 +146,19 @@ public sealed class @this
             return this;
         }
         _foldLoaded = true;
-        if (Context?.App?.Type == null) return this;
-        // Hit the registry's memoized catalog instead of re-walking BuildTypeEntries
-        // per-entity (codeanalyzer v1 Pass 2 — re-derive-what-upstream-knew smell
-        // in time form).  ComplexSchemas() returns the cached Lazy<Dict> built once.
+        // Fold properties (Fields/Values/Example/Shape/...) are App-keyed —
+        // resolving them requires the registry, which requires Context. An
+        // unstamped entity reaching this point means a producer forgot to
+        // propagate Context onto a `type.@this` minted from FromName(...);
+        // returning null silently would mask the bug at the read site and
+        // surface it as wrong LLM prompts / wrong schema decisions far away.
+        if (Context == null)
+            throw new System.InvalidOperationException(
+                $"type.@this(\"{Value}\") has no Context — schema properties "
+                + "(Fields/Values/Example/Shape/etc.) require a stamped entity. "
+                + "This is a producer bug: whoever minted this type via FromName "
+                + "did not propagate Context. Primitive identity reads "
+                + "(.Value/.ClrType) do not hit this path.");
         if (!Context.App.Type.ComplexSchemas().TryGetValue(Value, out var match)) return this;
         _fields = match._fields;
         _values = match._values;

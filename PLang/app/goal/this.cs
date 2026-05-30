@@ -175,7 +175,7 @@ public sealed partial class @this : module.IDataWrappable
 
     [LlmIgnore]
     [JsonIgnore]
-    public app.@this? App { get; set; }
+    public app.@this App { get; set; } = null!;
 
     [Debug]
     public List<Info> Errors { get; init; } = new();
