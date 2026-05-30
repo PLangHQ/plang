@@ -1,25 +1,46 @@
 # Code Analyzer — summary (singular-namespaces)
 
-**Version:** v3 (re-review of coder's fix for the v2 blocker)
+**Version:** v4 (review of coder v2's "fundamental changes" responding to tester v1)
 
 ## What this is
-Review of the `singular-namespaces` refactor (plural→singular `PLang/app/**` namespaces, `X/list/this.cs` registries, Stage-4 type-entity Entry fold). History on this branch:
-- **v1 (FAIL):** type-entity door asymmetry — `app.Type[name]` returned a contextless half-entity with silently-null catalog props; doc claimed door-equivalence; test asserted a manual-stamp workaround. Plus dead enumerators.
-- **v2 (FAIL):** coder's door fix (memoized catalog cache) replaced the silent null with a **non-deterministic** null — first-wins `TryAdd` over an unordered type set, so a name collision (`"goal"`) let a barren entry shadow the `Fields`-bearing one. Proof-test failed 8/8 in isolation.
-- **v3 (this — PASS):** coder added deterministic collision resolution.
+Review of the `singular-namespaces` refactor's value-system reshape. Branch history:
+- **v1 (FAIL):** type-entity door asymmetry (`app.Type[name]` contextless half-entity) + dead enumerators.
+- **v2 (FAIL):** door fix was non-deterministic (first-wins cache over unordered types).
+- **v3 (PASS):** deterministic collision resolution by richness rank.
+- **tester v1 (FAIL):** green-but-dishonest — Stage 2 nullability tests inverted "Per Ingi", Stage 4 golden a tautology, +5.
+- **coder v2:** addressed all 7 tester findings + flipped `Data.Context`/`Data.Type` non-null, added `type.Null` sentinel, made `Promote()` throw on unstamped fold reads, added producer stamping.
+- **v4 (this — PASS):** review of those fundamentals.
 
-## v3 result: **PASS**
+## v4 result: **PASS** (4 minor/latent notes, no blockers)
 
-### v2 blocker — FIXED
-Cache build now breaks same-name ties by richness rank (`type/list/this.cs:172–205`): Record(Fields)=3 > Enum(Values)=2 > Scalar(Shape/CtorSig)=1 > barren=0; richer entry wins regardless of reflection order. `Rank()` reading fold getters during cache build with `Context==null` is safe (Promote short-circuits, no re-entry).
+### The interaction that mattered — verified safe
+My v3 PASS said cache build was safe *because `Promote()` short-circuits on null Context*.
+Coder v2 made `Promote()` **throw** in that case. Safety now rides on `_foldLoaded` instead:
+every catalog entry uses the 2-arg ctor (`new type(name, clr)`) which sets `_foldLoaded=true`,
+so `Rank()`→`Fields`→`Promote()` early-returns at line 152 before the Context check. The coder
+added that `_foldLoaded=true` line as part of this change — without it, cache build would crash.
+Confirmed green via clean rebuild + golden/nullability/data subsets.
 
-**Verified the way it failed:** `AppType_IndexByName_Fields_OnRecordType_FoldedFromEntry` in **isolation ×8 → 8 PASS / 0 FAIL** (was 0/8). Clean rebuild; full suite **3694/3694**, both projects build clean.
+### Green is real (ran it myself)
+Build 0 errors; `BuilderSchema*` 2/2 (F2 golden is a real SHA256 compare, not a tautology);
+`NullabilityTests` 7/7 (F1 rewrites assert the architect's spec direction, not the inverted
+"Per Ingi"); `DataTests` 310/310.
 
-### v2 finding #2 — was MY false positive
-`goal/list.All` is not dead — `GoalsTests.cs:233` (`goals.All`) calls it; my v2 grep was too narrow. Coder corrected the comment accurately. Owned and dropped.
+### Findings (full: `v4/report.md`)
+- **F1 (recommend fix):** `type.IsNull => Value == "null"` is string-magic. `Null` is a
+  singleton always returned by the getter, so `ReferenceEquals(this, Null)` is exact and free —
+  kills the `new type("null")` / user `type=null` collision footgun. One line. Latent today.
+- **F2 (minor):** test `DataType_OnUnstampedData_ThrowsHard_NoSilentFallback` asserts `.IsNull()` —
+  nothing throws. Name overpromises (same shape tester flagged). Rename. Assertion is honest.
+- **F3 (latent):** `Data.As(string typeName)` dropped its `?? GetPrimitiveOrMime` fallback,
+  contradicting the ValidateBuild/Sqlite reasoning that kept it. No production caller today.
+- **F4 (minor):** `Scheme` getter `Context.App.Type.Scheme` lost null-safety (was `?.`) — bare
+  NRE on an unstamped path entity instead of Promote's helpful producer-bug message.
 
-### Latent non-blocking edge
-Tiebreak resolves cross-rank only; two equal-rank entries under one name would stay first-wins. Doesn't occur today; both would satisfy `Fields != null` anyway. Optional one-line guard if a second populated type ever claims an existing name.
+### Genuinely good
+Producer stamping (Permission, Sqlite, set.cs route through the entity's own resolver) is
+root-cause-at-the-producer, not consumer patching. Promote throw is fail-loud-at-source. F1
+nullability tests honestly flipped to match the architect's spec.
 
 ## Next (PASS → tester)
 `run.ps1 tester singular-namespaces "Review the code on branch singular-namespaces" -b singular-namespaces`

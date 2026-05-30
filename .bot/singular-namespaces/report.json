@@ -468,6 +468,69 @@
         "health": "green-but-dishonest",
         "notes": "8 findings (2 critical, 4 major, 2 minor). Stage 1 + Stage 4 structural move genuine; behavioral contracts inverted/tautological. F1 needs Ingi ruling on whether Stage 2 is cut."
       }
+    },
+    {
+      "id": "587a7749-918f-4f75-a595-4ff903fd6d37",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-30T10:20:40.124391+00:00",
+      "timestamp_end": "2026-05-30T10:22:33.168327+00:00",
+      "intent": "Review coder v2's fundamental changes (non-null Context/Type, type.Null sentinel, Promote throw, producer stamping) responding to tester v1.",
+      "before": {
+        "assumptions": "Coder v2 flipped Data.Context + Data.Type non-null via null!/sentinel, made Promote() throw on unstamped fold reads, and rewrote tester's false-green tests. Need to confirm the non-null invariant holds at all production read sites and the test rewrites are honest, not re-greened.",
+        "risk": "Non-null-via-null! lies to the compiler; a missed producer NREs. Promote throw could fire during cache build (codeanalyzer v3 relied on it short-circuiting). String-magic Null sentinel could collide with user type names."
+      },
+      "plan": ".bot/singular-namespaces/codeanalyzer/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/type/this.cs",
+            "PLang/app/type/list/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified the Promote() throw is safe during cache build: every BuildTypeEntries entry uses the 2-arg ctor (_foldLoaded=true) so Rank()->Fields->Promote() early-returns before the Context check. My v3 PASS safety claim still holds via _foldLoaded. F1: IsNull uses string-magic Value=='null' instead of ReferenceEquals(this,Null) \u2014 latent literal-name footgun, recommend one-line fix. F4: Scheme getter lost null-safety (bare NRE)."
+        },
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/data/Wire.cs",
+            "PLang/app/data/this.Transport.cs",
+            "PLang/app/data/this.Navigation.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Data.Context flipped non-null via null! (field genuinely holds null in unstamped test fixtures \u2014 acceptable set-after-construction pattern). Null-sentinel Type getter/setter consistent. F3: As(string typeName) dropped its GetPrimitiveOrMime fallback, contradicting ValidateBuild/Sqlite which kept it; no production caller so latent."
+        },
+        {
+          "paths": [
+            "PLang/app/actor/permission/this.cs",
+            "PLang/app/module/settings/Sqlite.cs",
+            "PLang/app/module/variable/set.cs",
+            "PLang/app/module/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Producer stamping is root-cause at the producer (Permission stamps Context on rehydrated grants; Sqlite/set route through entity's own ClrType resolver) \u2014 not consumer patching. Correct OBP direction."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/SingularNamespaces/NullabilityTests/NonNullInvariantTests.cs",
+            "PLang.Tests/App/SingularNamespaces/BuilderSchemaTests/BuilderSchemaGoldenTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Verified tester's false-greens are fixed not re-greened. F2 golden is real SHA256 compare with length guards. F1 nullability tests honestly flipped to architect spec direction. Ran subsets myself: golden 2/2, nullability 7/7, DataTests 310/310, build 0 errors. F2-finding: one test name (ThrowsHard) overpromises vs its IsNull assertion."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "green",
+        "notes": "Fundamentals (non-null Context/Type, type.Null sentinel, Promote throw, producer stamping) sound; cache-build safe via _foldLoaded; build clean + affected subsets green (verified, not claimed). 4 minor/latent notes; F1 ReferenceEquals for sentinel worth a one-liner. Next: tester."
+      }
     }
   ]
 }
