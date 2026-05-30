@@ -593,8 +593,14 @@ public class Default : IBuilder
                 errors.Add($"{a.Module}.{a.ActionName}: {buildResult.Error?.Message ?? "Build() failed"}");
                 break;
             }
-            if (buildResult.Value is string typeName && !string.IsNullOrEmpty(typeName))
-                StampOnTerminalVariableSet(actions, typeName);
+            // Build() may return either the structured type entity (file.read,
+            // post-Stage-6) or a bare type-name string (llm.query → "json",
+            // legacy handlers). Normalize a string to the structured form so
+            // the terminal variable.set always gets a {name, kind?} Type.
+            if (buildResult.Value is global::app.type.@this typeEntity)
+                StampOnTerminalVariableSet(actions, typeEntity);
+            else if (buildResult.Value is string typeName && !string.IsNullOrEmpty(typeName))
+                StampOnTerminalVariableSet(actions, app.type.@this.Create(typeName, context: context));
         }
         return errors;
     }
@@ -604,7 +610,7 @@ public class Default : IBuilder
     /// stamps the inferred typeName on its "Type" parameter (replace-or-insert).
     /// Last-write wins when multiple Build()s in the same step produce types.
     /// </summary>
-    private static void StampOnTerminalVariableSet(Actions actions, string typeName)
+    private static void StampOnTerminalVariableSet(Actions actions, app.type.@this inferred)
     {
         for (int i = actions.Count - 1; i >= 0; i--)
         {
@@ -619,7 +625,9 @@ public class Default : IBuilder
             var existing = a.Parameters.FirstOrDefault(p =>
                 string.Equals(p.Name, "Type", StringComparison.OrdinalIgnoreCase));
             if (existing != null) return;
-            a.Parameters.Add(new data.@this("Type", typeName) { Type = new app.type.@this("string") });
+            // The Type parameter VALUE is the structured type entity; the
+            // parameter's own type is "type" (post-Stage-4 shape).
+            a.Parameters.Add(new data.@this("Type", inferred) { Type = new app.type.@this("type") });
             return;
         }
     }

@@ -30,14 +30,15 @@ public partial class Read : IContext
         var read = await Path.Value!.ReadText();
         if (!read.Success || read.Type?.ClrType.Exit() == true) return read;
 
-        // plang-types Stage 5: when the read result is image-MIME bytes, lift
-        // to an image value. Bytes are loaded once here; image is the leaf
-        // owner of width/height/mime — width/height stay lazy until accessed.
-        var mime = read.Type?.Name ?? "";
-        if (read.Value is byte[] bytes && mime.StartsWith("image/", System.StringComparison.OrdinalIgnoreCase))
+        // When the read result is image bytes, lift to an image value. The
+        // producer derivation already stamped {name:image, kind:<ext>}; keep
+        // that whole type (kind included) — don't flatten to FromName("image").
+        // image is the leaf owner of width/height/mime — lazy until accessed.
+        if (read.Value is byte[] bytes && read.Type?.Name == "image")
         {
+            var mime = Path.Value!.MimeType;
             var image = new global::app.type.image.@this(bytes, mime, Path.Value);
-            return new data.@this(read.Name, image, app.type.@this.FromName("image"));
+            return new data.@this(read.Name, image, read.Type);
         }
 
         if (ResolveVariables.Value && read.Value is string content)
@@ -68,21 +69,14 @@ public partial class Read : IContext
         if (p == null || string.IsNullOrEmpty(p.Extension)) return data.@this.Ok();
         if (p.MimeType == "application/octet-stream") return data.@this.Ok();
 
-        // plang-types Stage 5: resolve extension → HIGH-LEVEL type (image, code,
-        // …) via app.formats when the high-level name is a registered typed
-        // value (image has Build/kind/serializer). For text-shaped extensions
-        // (csv/json/xml/yaml/md/txt/ini) keep the extension stamp — they're
-        // string aliases that read more clearly than the generic "text".
-        var ext = p.Extension.TrimStart('.').ToLowerInvariant();
-        string typeName = ext;
-        var highLevel = Context.App.Format.Kind(ext);
-        if (highLevel != null
-            && !string.Equals(highLevel, "text", System.StringComparison.OrdinalIgnoreCase)
-            && Context.App.Type.Get(highLevel) != null)
-        {
-            typeName = highLevel;
-        }
-        if (Context.App.Type.Get(typeName) == null) return data.@this.Ok();
+        // Stage 6: the SAME shared derivation the runtime (FilePath.ReadText)
+        // uses — so the build-time stamp and the runtime stamp can't drift.
+        // `read foo.md` → {text, md}, `read data.json` → {object, json},
+        // `read pic.png` → {image, png}. The terminal variable.set carries the
+        // structured type, not a bare extension string.
+        var inferred = Context.App.Format.TypeFromExtension(p.Extension);
+        if (inferred.IsNull || Context.App.Type.Get(inferred.Name) == null) return data.@this.Ok();
+        inferred.Context = Context;
 
         // Best-effort missing-file warning. Channel("builder") falls back to a
         // no-op sink when no build is active, so this is safe outside builds.
@@ -98,6 +92,6 @@ public partial class Read : IContext
         }
         catch (System.Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { /* best-effort warning — never block Build() */ }
 
-        return data.@this.Ok(typeName);
+        return data.@this.Ok(inferred);
     }
 }

@@ -41,12 +41,20 @@ public class Stage4_BuildMethodImplsTests
 
     // --- file.read.Build() ---
 
+    // The producer stamps a structured {name, kind} type entity, not a bare
+    // extension string — so the build-time stamp and the runtime stamp share
+    // the same shape and can't drift. ".csv" → {text, csv}, ".json" → {object,
+    // json}: the name is the materialized CLR family, the kind is the extension.
+    private static global::app.type.@this AsType(Data result)
+        => (global::app.type.@this)result.Value!;
+
     [Test]
     public async Task FileRead_Build_LiteralCsvPath_ReturnsOkWithCsv()
     {
         var result = await Build("file", "read", ("Path", "foo.csv"));
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo("csv");
+        await Assert.That(AsType(result).Name).IsEqualTo("text");
+        await Assert.That(AsType(result).Kind).IsEqualTo("csv");
     }
 
     [Test]
@@ -54,7 +62,8 @@ public class Stage4_BuildMethodImplsTests
     {
         var result = await Build("file", "read", ("Path", "data.json"));
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo("json");
+        await Assert.That(AsType(result).Name).IsEqualTo("object");
+        await Assert.That(AsType(result).Kind).IsEqualTo("json");
     }
 
     [Test]
@@ -94,8 +103,9 @@ public class Stage4_BuildMethodImplsTests
     {
         var result = await Build("file", "read", ("Path", "definitely-missing-stage4b.csv"));
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo("csv")
+        await Assert.That(AsType(result).Name).IsEqualTo("text")
             .Because("Missing file is non-fatal at build time — the inferred type still surfaces.");
+        await Assert.That(AsType(result).Kind).IsEqualTo("csv");
     }
 
     // --- llm.query.Build() ---
@@ -134,17 +144,21 @@ public class Stage4_BuildMethodImplsTests
     {
         var result = await Build("http", "request", ("Url", "https://api/x.json"));
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo("json");
+        await Assert.That(AsType(result).Name).IsEqualTo("object");
+        await Assert.That(AsType(result).Kind).IsEqualTo("json");
     }
 
     [Test]
-    public async Task HttpRequest_Build_LiteralUrlWithUnregisteredExtension_ReturnsBareOk()
+    public async Task HttpRequest_Build_LiteralUrlWithUnregisteredExtension_InfersObjectWithExtensionKind()
     {
-        // .pdf has a known mime but is not a registered PLang type. Stamping
-        // "pdf" would make the trailing variable.set fail with "Unknown type 'pdf'".
+        // .pdf has a known mime (application/pdf) that materializes to object;
+        // the extension is the kind. The name "object" is a registered type, so
+        // the stamp is safe — and it matches what the runtime response-body
+        // derivation produces for the same Content-Type (no build/runtime drift).
         var result = await Build("http", "request", ("Url", "https://x/report.pdf"));
         await result.IsSuccess();
-        await Assert.That(result.Value).IsNull();
+        await Assert.That(AsType(result).Name).IsEqualTo("object");
+        await Assert.That(AsType(result).Kind).IsEqualTo("pdf");
     }
 
     [Test]

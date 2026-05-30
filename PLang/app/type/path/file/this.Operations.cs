@@ -69,8 +69,10 @@ public sealed partial class @this
             var snapshot = Context!.App.Builder.GetPrSnapshot(Absolute);
             if (snapshot != null)
             {
-                var snapshotType = app.type.@this.FromMime(Context!.App.Format.Mime(Extension));
-                var snapshotClr = snapshotType.ClrType;
+                var mime = Context!.App.Format.Mime(Extension);
+                var snapshotType = Context!.App.Format.TypeFromMime(mime);
+                snapshotType.Context = Context;
+                var snapshotClr = global::app.type.list.@this.ClrFromMime(mime);
                 if (snapshotClr != null && snapshotClr != typeof(string))
                 {
                     var (converted, _) = global::app.type.list.@this.TryConvertTo(snapshot, snapshotClr, Context!);
@@ -87,10 +89,16 @@ public sealed partial class @this
         try
         {
             var mime = Context!.App.Format.Mime(Extension);
-            var type = app.type.@this.FromMime(mime);
+            // Structured {name, kind} stamp — the SAME derivation the build-time
+            // file.read.Build() calls, so build and runtime agree. The name is
+            // the high-level type (text/object/image/...); binary-vs-text is a
+            // separate decision keyed off the materialized CLR, below.
+            var type = Context!.App.Format.TypeFromMime(mime);
+            type.Context = Context;
+            var materialized = global::app.type.list.@this.ClrFromMime(mime);
             object content;
 
-            if (type.ClrType == typeof(byte[]))
+            if (materialized == typeof(byte[]))
             {
                 content = await System.IO.File.ReadAllBytesAsync(Absolute);
             }
@@ -101,13 +109,12 @@ public sealed partial class @this
                 if (Context!.App.Builder.IsEnabled && Extension == ".pr")
                     Context!.App.Builder.SnapshotPrFile(Absolute, text);
 
-                var clr = type.ClrType;
-                if (clr != null && clr != typeof(string))
+                if (materialized != null && materialized != typeof(string))
                 {
                     // Pass Context so the per-call options bag uses a Context-
                     // bound PathJsonConverter — Path fields inside the result
                     // (Goal.Path, GoalCall.PrPath, ...) land fully wired.
-                    var (converted, _) = global::app.type.list.@this.TryConvertTo(text, clr, Context!);
+                    var (converted, _) = global::app.type.list.@this.TryConvertTo(text, materialized, Context!);
                     content = converted ?? text;
                 }
                 else
@@ -116,7 +123,7 @@ public sealed partial class @this
                 }
             }
 
-            return new data.@this(Raw, content, app.type.@this.FromMime(mime));
+            return new data.@this(Raw, content, type);
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {

@@ -400,6 +400,58 @@ public sealed class @this
     }
 
     /// <summary>
+    /// The structured <c>{name, kind}</c> a read producer (file/http) stamps
+    /// for content of this MIME. ONE derivation both build and runtime call so
+    /// they can't drift (the bug this replaces: build said <c>type=md</c>,
+    /// runtime said <c>type=text/markdown</c>).
+    ///
+    /// <para><c>name</c> is the family for media (image/audio/video — the value
+    /// is a typed blob, not raw bytes) and otherwise the materialized CLR
+    /// type's canonical PLang name (text/object/bytes/...). <c>kind</c> is the
+    /// MIME subtype, canonicalised to the file-extension form
+    /// (<c>markdown→md</c>). Returns the <c>type.@this.Null</c> sentinel for an
+    /// unknown/octet-stream MIME so callers stamp nothing.</para>
+    /// </summary>
+    public global::app.type.@this TypeFromMime(string mime)
+    {
+        if (string.IsNullOrWhiteSpace(mime) || mime == "application/octet-stream")
+            return global::app.type.@this.Null;
+
+        var slash = mime.IndexOf('/');
+        var family = slash > 0 ? mime[..slash].ToLowerInvariant() : "";
+        var subtype = slash >= 0 && slash < mime.Length - 1 ? mime[(slash + 1)..] : null;
+        var kind = subtype != null ? CanonicaliseKind(subtype) : null;
+
+        // Media families name the value by family — the read lifts the bytes to
+        // a typed value (image today; audio/video are bytes-backed blobs that
+        // still read cleaner as their family than as "bytes").
+        if (family is "image" or "audio" or "video")
+            return new global::app.type.@this(family, kind);
+
+        // Everything else: name = the CLR type the content materializes to,
+        // canonicalised (string→text, object→object, byte[]→bytes).
+        var clr = global::app.type.list.@this.ClrFromMime(mime);
+        var name = clr != null
+            ? (global::app.type.list.@this.GetPrimitiveName(clr) ?? "object")
+            : "object";
+        return new global::app.type.@this(name, kind);
+    }
+
+    /// <summary>
+    /// <see cref="TypeFromMime"/> keyed by file extension — the kind is the
+    /// extension itself (the authoritative subtype for a file), the name comes
+    /// from the extension's MIME. <c>.md → {text, md}</c>, <c>.json → {object,
+    /// json}</c>, <c>.png → {image, png}</c>.
+    /// </summary>
+    public global::app.type.@this TypeFromExtension(string extension)
+    {
+        if (string.IsNullOrEmpty(extension)) return global::app.type.@this.Null;
+        var t = TypeFromMime(Mime(extension));
+        if (t.IsNull) return t;
+        return new global::app.type.@this(t.Name, CanonicaliseKind(NormalizeExtension(extension).TrimStart('.')));
+    }
+
+    /// <summary>
     /// Whether content of this Kind benefits from compression. Image, video,
     /// audio, archive are already compressed — returns false.
     /// </summary>

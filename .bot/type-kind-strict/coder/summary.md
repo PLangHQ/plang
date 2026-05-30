@@ -1,7 +1,40 @@
-# coder — type-kind-strict (v1–v5)
+# coder — type-kind-strict (v1–v6)
 
 ## Version
-v5 (covers all five stages — one version per stage)
+v6 (Stages 6 & 7 — see `v6/plan.md`). v1–v5 below cover the original 5 stages.
+
+## v6 — Stages 6 & 7
+
+**Stage 7 (committed `62a23c4e7`): the hash type.** A hash gets its own scalar
+type whose *kind is the algorithm* (`{name:"hash", kind:"keccak256"|"sha256"}`).
+`hash.@this` owns byte⇄base64 (`ToBase64`/`FromBase64`/`DigestEquals`).
+`crypto` stamps `Create("hash", kind: algorithm)`; `Verify` and Ed25519 rehash
+read the algorithm from `Type.Kind` (was `Type.Name`). Schema `Kinds` now derive
+from all known types' static `Kinds` so the return-only `hash` advertises its
+algorithms to the LLM.
+
+**Stage 6 (this commit): structured type at the producers.** One shared
+derivation — `Format.TypeFromMime` / `TypeFromExtension` — that both build and
+runtime call, so they can't drift. Producers stamp `{name, kind}` (e.g. a `.md`
+read → `{text, md}`, `.json` → `{object, json}`) instead of a muddy MIME or a
+bare extension. Migrated `file/read.cs` (Build + Run image-lift),
+`path/file/this.Operations.cs` (ReadText), `http/HttpBuildHelpers.cs`
+(InferTypeFromUrl), and `builder/code/Default.cs` (stamp the entity on the
+terminal `variable.set`).
+
+*Decision I owned (architect delegated):* an unregistered-but-known-MIME
+extension (`.pdf`) now stamps `{object, pdf}` rather than bailing — because the
+runtime produces exactly that for the same Content-Type, and bailing at build
+would re-create the drift the stage kills.
+
+*Deferred (per Ingi):* lazy materialization for non-string CLR targets; the
+http runtime response-body type stamp (the `Body` is a bare `object?` with no
+typed-Data seam — needs a wrapper restructure).
+
+**Final: C# 3810/3810, PLang 263/263 (0 stale).**
+
+---
+
 
 ## What this is
 

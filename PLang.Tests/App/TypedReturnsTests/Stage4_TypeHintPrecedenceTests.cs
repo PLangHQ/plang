@@ -128,7 +128,10 @@ public class Stage4_TypeHintPrecedenceTests
         var typeParam = setAction.Parameters.FirstOrDefault(p =>
             string.Equals(p.Name, "Type", System.StringComparison.OrdinalIgnoreCase));
         await Assert.That(typeParam).IsNotNull();
-        await Assert.That(typeParam!.Value).IsEqualTo("csv");
+        // foo.csv infers the structured {text, csv} entity (name = materialized
+        // family, kind = extension), stamped on the terminal variable.set.
+        await Assert.That(((global::app.type.@this)typeParam!.Value!).Name).IsEqualTo("text");
+        await Assert.That(((global::app.type.@this)typeParam!.Value!).Kind).IsEqualTo("csv");
     }
 
     [Test]

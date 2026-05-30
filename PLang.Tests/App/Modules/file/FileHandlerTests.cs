@@ -404,7 +404,10 @@ public class FileHandlerTests : IDisposable
         var action = new Read { Context = _app.User.Context, Path = MakePath("doc.md") };
         var result = await action.Run();
 
-        await Assert.That(result.Type!.Name).IsEqualTo("text/markdown");
+        // Structured type: name is the materialized family (text), kind is the
+        // file extension (md) — not the raw MIME "text/markdown".
+        await Assert.That(result.Type!.Name).IsEqualTo("text");
+        await Assert.That(result.Type!.Kind).IsEqualTo("md");
     }
 
     [Test]
