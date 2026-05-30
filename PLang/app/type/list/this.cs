@@ -172,9 +172,35 @@ public sealed partial class @this
         {
             var dict = new Dictionary<string, app.type.@this>(StringComparer.OrdinalIgnoreCase);
             foreach (var entry in BuildTypeEntries(null))
-                dict.TryAdd(entry.Value, entry);
+            {
+                // Collision resolution: when two CLR types map to the same PLang
+                // name (e.g. `app.goal.@this` the goal entity and
+                // `app.channel.goal.@this` the goal-channel both lowercase to
+                // "goal" via the @this convention), prefer the catalog-richer
+                // entry.  First-wins TryAdd over reflection-ordered types is
+                // non-deterministic — a Scalar entry could shadow a Record with
+                // populated Fields depending on assembly load order.
+                // Richness rank: Record (has Fields) > Enum (has Values) > Scalar.
+                // (codeanalyzer v2 finding #1.)
+                if (!dict.TryGetValue(entry.Value, out var existing))
+                {
+                    dict[entry.Value] = entry;
+                    continue;
+                }
+                if (Rank(entry) > Rank(existing))
+                    dict[entry.Value] = entry;
+            }
             return dict;
         });
+    }
+
+    // Higher = catalog-richer.  Used to break same-name ties deterministically.
+    private static int Rank(app.type.@this entry)
+    {
+        if (entry.Fields != null && entry.Fields.Count > 0) return 3;  // Record
+        if (entry.Values != null && entry.Values.Count > 0) return 2;  // Enum
+        if (entry.Shape != null || entry.ConstructorSignature != null) return 1;  // Scalar
+        return 0;  // barren
     }
 
     /// <summary>
