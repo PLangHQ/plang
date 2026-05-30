@@ -1,26 +1,22 @@
 # Code Analyzer — summary (singular-namespaces)
 
-**Version:** v1
+**Version:** v2 (re-review of coder's fix for v1 + fresh-eye pass)
 
 ## What this is
-Review of the `singular-namespaces` refactor: `PLang/app/**` folders/namespaces moved from plural to singular ("an entity's home is singular; a collection over it is a child"), each concept gaining an `X/list/this.cs` registry reached via a singular `app.X` accessor, and the Stage-4 fold of the old `builder.type.Entry` parallel struct into the `app.type.@this` entity.
+Review of the `singular-namespaces` refactor (plural→singular `PLang/app/**` namespaces, `X/list/this.cs` registries, Stage-4 type-entity Entry fold). v1 found one blocker (type-entity door asymmetry) + minor dead enumerators. The coder addressed them in commit `3a4f9a616`. This version re-reviews that fix.
 
-## What was done (this review)
-- Pulled the branch, reconciled the coder v1 report against HEAD — **the report is stale**: four commits land after it. The Entry/EntryKind structs are genuinely gone, plural `App.Goals`-style properties are gone, `Variable` is now `@this`. Analyzed what actually shipped at `f7790b3a6`.
-- Clean build verified: 0 errors, 510 pre-existing nullability warnings.
-- Surveyed all 16 list-registries + `module/this.cs` + `type/this.cs`.
+## v2 result: **FAIL**
 
-### Verdict: **NEEDS WORK** (FAIL)
+### The fix for v1 finding #1 is non-deterministic
+The coder made `app.Type[name]`/`of<T>()` return a memoized catalog-built entity (so fold props no longer need a Context stamp) and rewired `Promote()` to read the same cache. Correct intent — but the cache is populated by **first-wins `dict.TryAdd(entry.Value, entry)` over an unordered type set** (`type/list/this.cs:175`; seed `KnownTypes()`→`.Distinct()` and `SafeGetTypes()`→`assembly.GetTypes()`, neither order-stable). When two CLR types map to one PLang name (`"goal"` does), a barren entry can shadow the `Fields`-bearing one depending on reflection order.
 
-**Clean:** Entry struct dissolved (central OBP smell closed), no type-switching in any registry (architect's main risk resolved), index-miss hard-throw consistent across selection registries, build clean.
+**Reproduction (clean build):** `AppType_IndexByName_Fields_OnRecordType_FoldedFromEntry` fails **8/8 in isolation**; passes sometimes when co-executed with sibling tests (process state perturbs the order). `data.Type` inherits the same flaw — `Promote()` reads the same cache via `ComplexSchemas()` (`type/this.cs:137`). The coder's "green" was a stale-binary / lucky-order artifact.
 
-**Blocker (one finding, undisclosed — not on coder's deferral list):**
-`app.Type[name]` and `of<T>()` return `new app.type.@this(typeName)` with **no Context** (`type/list/this.cs:161,172`). All catalog properties (`Fields`/`Description`/`Example`/`Scheme`/`Kind`/…) route through `Context` and are therefore silently null off that door, and `ClrType` falls to the static map (null for DLL/user types). The `data.Type` door *does* stamp Context (`data/this.cs:81`) — so the two doors diverge, despite the `type/this.cs:13` doc comment promising they're equivalent. `TypeAccessorTests` only passes because every fold case manually does `t.Context = app.User.Context` — **the test asserts the workaround**, not the contract. Root: catalog/fold data is App-global but reached through an actor `Context`; the registry has no Context to stamp.
+**Fix direction:** deterministic, shape-preferring collision resolution — on duplicate name keep the entry whose `Fields`/`Values`/`Shape` is non-null; order the seed stably. Re-verify the test **in isolation**, not just in a full-suite run.
 
-**Low:** `Promote()` re-walks the whole catalog + linear self-scan per stamped entity (`BuildTypeEntries` not memoized). Two dead enumerators: goal/list `Value` (beside new `list`), channel/list `All` (beside new `list`).
-
-## Fix direction for the coder
-Make the indexer return the catalog-built entity (cached), or back the type entity by `App` instead of actor-`Context` so global type metadata resolves without a stamp — then the doc comment is true and the six `.Context =` lines in the test delete. Drop the two dead enumerators.
+### Other
+- **Clean:** `channel/list.All` deleted; `goal/list.Value` deleted; Promote perf memoized; generator `?`-on-nullable-partial fix correct and minimal; primitive door (`ClrType` pre-stamp) correct; Scheme's residual Context stamp honestly documented.
+- **Low residual:** `goal/list.All` was kept (zero callers) behind a misleading comment ("non-IEnumerable alias" — it is `IEnumerable`). Delete it or fix the comment.
 
 ## Next
-`run.ps1 coder singular-namespaces "Fix the type-entity door asymmetry (app.Type[name]/of<T>() return contextless entities with silently-null catalog props; data.Type door stamps Context, indexer does not; test asserts the manual-stamp workaround) and drop dead enumerators goal/list.Value and channel/list.All" -b singular-namespaces`
+`run.ps1 coder singular-namespaces "Fix non-deterministic type-entity fold props: the _catalogByName cache (type/list/this.cs:175) is first-wins TryAdd over an unordered type set, so name collisions (e.g. 'goal') let a barren entry shadow the Fields-bearing one — app.Type['goal'].Fields fails 8/8 in isolation. Make collision resolution deterministic and prefer the entry carrying fold data; verify AppType_IndexByName_Fields_OnRecordType_FoldedFromEntry in isolation. Also delete dead goal/list.All." -b singular-namespaces`

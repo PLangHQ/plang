@@ -291,6 +291,64 @@
         "health": "Build clean, rename well-executed (Entry dissolved, no registry type-switching, index-miss consistent). One undisclosed behavioral gap blocks: type-entity door asymmetry with silent-null catalog props + test asserting the workaround. Two dead enumerators.",
         "notes": "Verdict FAIL -> next bot coder. See v1/report.md + v1/verdict.json."
       }
+    },
+    {
+      "id": "c0de4a17-5159-4a1a-9a1a-codeanalyzv2",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-30T01:10:00Z",
+      "timestamp_end": "2026-05-30T01:55:00Z",
+      "intent": "Re-review the coder's fix for v1 findings + fresh-eye pass, grounded by running tests.",
+      "before": {
+        "assumptions": "Coder fixed v1 door asymmetry + dead enumerators; expected door fix to be sound.",
+        "risk": "The fix introduced a memoized cache; caches over reflection-ordered sets are a determinism risk."
+      },
+      "plan": ".bot/singular-namespaces/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/type/list/this.cs",
+            "PLang/app/type/this.cs",
+            "PLang.Tests/App/SingularNamespaces/AccessorTests/TypeAccessorTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "FINDING (FAIL): door fix is non-deterministic. _catalogByName built by first-wins dict.TryAdd(entry.Value,entry) (this.cs:175) over BuildTypeEntries(null)->KnownTypes()->.Distinct() and SafeGetTypes()->assembly.GetTypes() (no stable order). Name collision 'goal' -> barren entry can shadow Fields-bearing one. data.Type inherits via Promote->ComplexSchemas (type/this.cs:137)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/SingularNamespaces/AccessorTests/TypeAccessorTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "EMPIRICAL: clean rebuild PlangConsole+PLang.Tests (0 errors). Full suite 3693/3694. AppType_IndexByName_Fields_OnRecordType_FoldedFromEntry fails 8/8 in isolation; passes sometimes co-executed with siblings (process-order dependent). BuilderValidate_CallsBuildOnEachAction_InOrder is a pre-existing parallel-ordering flake (passes isolated)."
+        },
+        {
+          "paths": [
+            "PLang/app/channel/list/this.cs",
+            "PLang/app/goal/list/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "v1 finding #3: channel/list.All deleted OK, goal/list.Value deleted OK. RESIDUAL (low): goal/list.All kept with zero callers behind a misleading comment ('non-IEnumerable alias' but it IS IEnumerable). Delete or fix comment."
+        },
+        {
+          "paths": [
+            "PLang.Generators/Emission/Property/Data/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "CLEAN: emit {TypeName}? on public partial when IsNullable while backing field stays non-? for init. Correctly matches hand-written partial declaration. Minimal, well-scoped."
+        }
+      ],
+      "after": {
+        "status": "fail",
+        "health": "Reshape sound; door fix for v1#1 traded a silent null for a non-deterministic null. Proof-test fails 8/8 isolated on clean build. One dead enumerator (goal/list.All) remains. Generator + perf fixes clean.",
+        "notes": "Verdict FAIL -> next bot coder. Root: first-wins cache over unordered type set with name collisions. See v2/report.md + v2/verdict.json."
+      }
     }
   ]
 }
