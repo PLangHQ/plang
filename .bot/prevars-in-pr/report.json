@@ -1,0 +1,52 @@
+{
+  "branch": "prevars-in-pr",
+  "sessions": [
+    {
+      "id": "f3a91c7e-2b48-4d16-9c0a-1e7d5a0b6f22",
+      "bot": "architect",
+      "timestamp_start": "2026-05-30T10:05:00Z",
+      "timestamp_end": "2026-05-30T10:22:00Z",
+      "intent": "Review the pre-parsed-variables proposal, merge latest runtime2, and capture the design direction it surfaced.",
+      "before": {
+        "assumptions": "Proposal framed pre-parsed %var% spans in the .pr as a perf + clarity refactor, claiming the builder already parses variable names.",
+        "risk": "Premise unverified; a span block in the .pr risks a second parser and a dual source of truth."
+      },
+      "plan": ".bot/prevars-in-pr/architect/plan.md",
+      "actions": [
+        {
+          "paths": ["PLang/app/data/this.cs", "PLang/app/variables/this.cs", "os/system/builder/BuildStep/Start.goal", "os/system/builder/BuildGoal/Validate.goal", "PLang/app/builder/Types/Spec/Action.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified the proposal's premise. Runtime resolution (AsT_Impl, Variables.Resolve, TryFullVarMatch) is the only %var% parser; the builder does no variable parsing. Premise false -> perf/span direction is a no-go."
+        },
+        {
+          "paths": [".bot/prevars-in-pr/"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Merged origin/runtime2 into the branch (clean, pushed as e6221c5f9). Re-checked: confidence/build-event pipeline and %x!cost% property-suffix grammar landed, but still zero build-time %var% parsing. Verdict held."
+        },
+        {
+          "paths": ["os/system/modules/MapVariables.goal", "os/system/modules/MapVariablesSystem.llm", "PLang/app/data/this.Navigation.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Found MapVariables (orphan, unwired) sketching variable->pipeline. Navigation already executes chained method calls. This is the mechanism the real idea rides on: builder feeds type surface to the LLM, transform lives in the parameter value as a navigation expression."
+        },
+        {
+          "paths": [".bot/prevars-in-pr/architect/plan.md", ".bot/prevars-in-pr/architect/plan/examples.md", ".bot/prevars-in-pr/architect/summary.md", ".bot/prevars-in-pr/proposal.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Captured the reframed direction (build-time value transforms via type-surface-fed navigation), the deciding principle (store in .pr only what re-deriving needs the LLM), the two-paths rules, open decisions, and an example ladder with real .pr snippets. Added a redirect banner to the original proposal."
+        }
+      ],
+      "after": {
+        "status": "Design direction captured; nothing built. Open decisions deferred by Ingi (navigable surface, routing tie-break, collection-query frontier, purity boundary).",
+        "health": "green",
+        "notes": "Branch carries the runtime2 merge plus architect docs. Orphan MapVariables files left in place pending Ingi's call on deletion."
+      }
+    }
+  ]
+}

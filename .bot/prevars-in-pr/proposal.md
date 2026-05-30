@@ -1,6 +1,8 @@
 # Proposal: Pre-parsed `%variables%` in .pr files
 
-**Status:** for architect review
+> **Architect note (2026-05-30):** Reviewed and reframed. The perf/span direction below is a **no-go** — the builder does no `%var%` parsing today, so the spans are not free to harvest and storing them creates a second parser plus a sync obligation. The piping instinct underneath it is the real idea, but it is not about storage: the builder compiles natural-language value-transforms into navigation expressions. See `architect/plan.md` for the verdict and the live direction. This file is kept as the original input.
+
+**Status:** superseded — see `architect/plan.md`
 **Branch:** `prevars-in-pr`
 **Author:** Ingi (drafted with Claude)
 
