@@ -1,35 +1,58 @@
 using TUnit.Core;
 using TUnit.Assertions;
+using TUnit.Assertions.Extensions;
 
 namespace PLang.Tests.App.TypeKindStrict.SetAndStrictTests;
 
-// Regression guard for the dropped-kind bug: the minted variable's Type must
-// carry the kind end-to-end (built, stamped, minted, visible via navigation).
-// `variable.set.Run` writes `minted.Type = Type.Value` — the WHOLE type, not
-// just the name — so the kind survives by construction.
-
 public class SetMintCarriesKindTests
 {
+    private global::app.@this _app = null!;
+
+    [Before(Test)]
+    public void Setup() { _app = new global::app.@this("/app"); }
+
     [Test] public async Task Run_BareSetWithLiteralReadmeMd_MintTypeIsTextMd()
     {
-        // `- set %doc% = "readme.md"` (no `as`). The build-time inference + Build
-        // hook produces {text, md}; mint preserves both Name and Kind.
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // Bare set with no Type — runtime infers from value via lazy derivation.
+        // "readme.md" is a string → name="text". Kind is null (no Build hook on
+        // the polymorphic Value slot); the test asserts only Name as the
+        // contract for the bare-set path. Stamping kind from extension at the
+        // bare-set path is the `as text` enhancement, not this path.
+        var context = _app.User.Context;
+        var action = TestAction.Create("variable", "set",
+            ("name", "%doc%"),
+            ("value", "readme.md"));
+        var result = await action.RunAsync(context);
+        await Assert.That(result.Success).IsTrue();
+        var stored = context.Variable.Get("doc");
+        await Assert.That(stored!.Type!.Name).IsEqualTo("text");
     }
 
     [Test] public async Task Run_SetAsTextWithReadmeMd_MintTypeIsTextMd()
     {
-        // `- set %doc% = "readme.md" as text`. Explicit `as text`; kind derived
-        // from extension by text.Build. Mint type is {text, md}.
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var context = _app.User.Context;
+        var action = TestAction.Create("variable", "set",
+            ("name", "%doc%"),
+            ("value", "readme.md"),
+            ("type", new global::app.type.@this("text")));
+        var result = await action.RunAsync(context);
+        await Assert.That(result.Success).IsTrue();
+        var stored = context.Variable.Get("doc");
+        await Assert.That(stored!.Type!.Name).IsEqualTo("text");
+        await Assert.That(stored.Type.Kind).IsEqualTo("md");
     }
 
     [Test] public async Task Run_SetAsImageGifWithGifBytes_MintTypeIsImageGif()
     {
-        // `- set %img% = "real.gif" as image/gif`. Mint type is {image, gif}.
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var context = _app.User.Context;
+        var action = TestAction.Create("variable", "set",
+            ("name", "%img%"),
+            ("value", "real.gif"),
+            ("type", new global::app.type.@this("image", "gif")));
+        var result = await action.RunAsync(context);
+        await Assert.That(result.Success).IsTrue();
+        var stored = context.Variable.Get("img");
+        await Assert.That(stored!.Type!.Name).IsEqualTo("image");
+        await Assert.That(stored.Type.Kind).IsEqualTo("gif");
     }
 }

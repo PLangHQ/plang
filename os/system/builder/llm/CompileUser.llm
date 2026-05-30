@@ -18,9 +18,9 @@
 
 ## Type reference
 
-**Primitive type names** (use these as the top-level `name` in a parameter `type` field): {{ typeInfo.TypeNames }}
+**Primitive type names** (use these as the top-level `name` in a parameter `type` field): {% for n in typeInfo.PrimitiveNames %}{{ n }}{% unless forloop.last %}, {% endunless %}{% endfor %}
 
-**Every parameter wrapper has three fields:** `name` (the parameter name), `value` (the actual value), `type` (the value's PLang type as a structured `{name, kind?, strict?}` dict). `type` is ONE field — never split into sibling `type` + `kind` keys.
+**Every parameter wrapper has three fields**: `name` (the parameter name), `value` (the actual value), `type` (the value's PLang type as a structured `{name, kind?, strict?}` dict). `type` is ONE field — never split into sibling `type` + `kind` keys.
 
 Examples of complete wrappers:
 
@@ -34,19 +34,20 @@ Examples of complete wrappers:
 
 When a string literal has a recognisable file extension (`.md`, `.csv`, `.json`, `.gif`, `.jpg`, etc.) and its family is `text` / `image` / `audio` / `video`, populate `kind` with that extension.
 
-The `type` dict describes what the VALUE IS, not the declared schema type. For `variable.set.Type` (a parameter whose own value is a type entity), the `value` slot itself carries `{name, kind?, strict?}` — see step-text mapping below.
-
 A parameter whose DECLARED schema type is `type` (e.g. `variable.set.Type`) carries a type entity AS ITS VALUE. The wrapper is:
 
 ```
 {"name":"Type","value":{"name":"text","kind":"md"},"type":{"name":"type"}}
 ```
 
-`value` is the type entity `{name, kind?, strict?}`; `type` is the wrapper's own type field, set to `{"name":"type"}` (telling the runtime the value is itself a type-entity).
+`value` is the type entity `{name, kind?, strict?}`; `type` is the wrapper's own type field, set to `{"name":"type"}`.
 
 **Kind vocabulary** — for each `name`, the kinds you may emit under it (a kind is the file extension or numeric precision):
 
-{{ typeInfo.KindsCatalog }}
+| name | kind |
+|---|---|
+{% for entry in typeInfo.Kinds %}| {{ entry[0] }} | {% for k in entry[1] %}{{ k }}{% unless forloop.last %}, {% endunless %}{% endfor %} |
+{% endfor %}
 
 Rules:
 - `string` is NOT a name — use `text`. `int`/`long`/`decimal`/`double` are NOT names — use `number` with the precision as the kind.
@@ -55,11 +56,10 @@ Rules:
 - Step-text `as <name>/<kind> strict` → adds `"strict":true`. Strict on a name with no kind is allowed (no-op).
 - Step-text `(<kind>)` after a write target → match the kind to its name in the table above. `(json)`/`(csv)`/`(xml)` → `text`; `(int)`/`(long)` → `number`; `(gif)`/`(jpg)` → `image`. Unknown free strings pass through as `{"name":"<that>"}`.
 
-{% if typeInfo.TypeSchemas != "" %}
-**Catalog types referenced by this step's actions** (record/enum field shapes for the parameter types listed above):
+{% if typeInfo.Types.size > 0 %}
+**Catalog types referenced by this step's actions** (record/enum field shapes; primitives stay in the Primitive list above, kinds in the table above):
 
-```
-{{ typeInfo.TypeSchemas }}
-```{% endif %}
+{% for t in typeInfo.Types %}- `{{ t.Name }}`{% if t.Values %}: {% for v in t.Values %}{{ v }}{% unless forloop.last %} | {% endunless %}{% endfor %}{% elsif t.Fields %}: { {% for f in t.Fields %}{{ f.Name }}: {{ f.TypeName }}{% unless forloop.last %}, {% endunless %}{% endfor %} }{% elsif t.ConstructorSignature %} ({{ t.ConstructorSignature }}){% elsif t.Shape %} ({{ t.Shape }}){% endif %}{% if t.Description %} — {{ t.Description }}{% endif %}{% if t.Example %} (e.g. `{{ t.Example }}`){% endif %}
+{% endfor %}{% endif %}
 
 Produce the actions for this step.

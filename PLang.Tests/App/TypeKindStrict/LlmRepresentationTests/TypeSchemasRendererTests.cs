@@ -1,64 +1,63 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.TypeKindStrict.LlmRepresentationTests;
 
+// The schema exposes Types/PrimitiveNames/Kinds as strongly-typed lists +
+// dictionary. The CompileUser.llm Liquid template renders them. These tests
+// pin the structured shape; rendering is the template's concern.
 public class TypeSchemasRendererTests
 {
-    [Test] public async Task Render_AdvertisedKinds_NumberRendersWithPipeList()
+    [Test] public async Task Schema_Kinds_AdvertisesNumberPrecisions()
     {
-        await using var app = new PLangEngine("/test");
-        var schemas = app.Module.Schema.Build().TypeSchemas;
-        // Closed kind list — "number — kinds: int | long | decimal | double"
-        await Assert.That(schemas.Contains("number")).IsTrue();
-        await Assert.That(schemas.Contains("kinds:")).IsTrue();
-        await Assert.That(schemas.Contains("int")).IsTrue();
-        await Assert.That(schemas.Contains("decimal")).IsTrue();
+        await using var app = new global::app.@this("/test");
+        var kinds = app.Module.Schema.Build().Kinds;
+        await Assert.That(kinds.ContainsKey("number")).IsTrue();
+        await Assert.That(kinds["number"]).Contains("int");
+        await Assert.That(kinds["number"]).Contains("decimal");
     }
 
-    [Test] public async Task Render_ExtensionDerivedKinds_TextRendersWithExtensionTeaching()
+    [Test] public async Task Schema_Kinds_AdvertisesTextExtensions()
     {
-        await using var app = new PLangEngine("/test");
-        var schemas = app.Module.Schema.Build().TypeSchemas;
-        // Stage 5: text appears in the catalog when an action references it
-        // (variable.set.Type is `type`, not `text`, so text shows only if
-        // surfaced indirectly). The teaching format is the contract we pin.
-        await Assert.That(schemas.Contains("kind = extension") || schemas.Contains("text")).IsTrue();
+        await using var app = new global::app.@this("/test");
+        var kinds = app.Module.Schema.Build().Kinds;
+        await Assert.That(kinds.ContainsKey("text")).IsTrue();
+        await Assert.That(kinds["text"]).Contains("md");
     }
 
-    [Test] public async Task Render_ExtensionDerivedKinds_ImageRendersWithExtensionTeaching()
+    [Test] public async Task Schema_Kinds_AdvertisesImageExtensions()
     {
-        await using var app = new PLangEngine("/test");
-        var schemas = app.Module.Schema.Build().TypeSchemas;
-        await Assert.That(schemas.Contains("image")).IsTrue();
+        await using var app = new global::app.@this("/test");
+        var kinds = app.Module.Schema.Build().Kinds;
+        await Assert.That(kinds.ContainsKey("image")).IsTrue();
+        await Assert.That(kinds["image"]).Contains("gif");
+        await Assert.That(kinds["image"]).Contains("png");
     }
 
-    [Test] public async Task Render_RecordType_StillRendersFieldsAsBeforeRefactor()
+    [Test] public async Task Schema_Types_StillCarriesRecordFields()
     {
-        await using var app = new PLangEngine("/test");
-        var schemas = app.Module.Schema.Build().TypeSchemas;
-        // Record format: `name: { k: T, ... }`.
-        await Assert.That(schemas.Contains("{ ") && schemas.Contains(": ")).IsTrue();
+        await using var app = new global::app.@this("/test");
+        var record = app.Module.Schema.Build().Types
+            .FirstOrDefault(t => t.Fields != null && t.Fields.Count > 0);
+        await Assert.That(record).IsNotNull();
     }
 
-    [Test] public async Task Render_EnumType_StillRendersValuesAsBeforeRefactor()
+    [Test] public async Task Schema_Types_StillCarriesEnumValues()
     {
-        await using var app = new PLangEngine("/test");
-        var schemas = app.Module.Schema.Build().TypeSchemas;
-        // Enum format: `name: v1 | v2 | ...` (pipe-joined).
-        await Assert.That(schemas.Contains(" | ")).IsTrue();
+        await using var app = new global::app.@this("/test");
+        var anEnum = app.Module.Schema.Build().Types
+            .FirstOrDefault(t => t.Values != null && t.Values.Count > 0);
+        await Assert.That(anEnum).IsNotNull();
     }
 
-    [Test] public async Task Render_TypeEntry_AsConstructor()
+    [Test] public async Task Schema_Types_DoesNotIncludeTheTypeEntity()
     {
-        await using var app = new PLangEngine("/test");
-        var schemas = app.Module.Schema.Build().TypeSchemas;
-        // The `type` entry shows up once variable.set.Type references it.
-        // The teaching for `type(name, kind?, strict?)` lives in
-        // app.type.@this.TypeDescription; the rendered block carries the
-        // dict-shape signal so the LLM emits {name, kind, strict} not "text/md".
-        await Assert.That(schemas.Contains("type") || schemas.Contains("name")).IsTrue();
+        // The `type` entity is taught explicitly in the prompt — it does NOT
+        // appear as a record/scalar entry (rendering it as a catalog scalar
+        // confuses the LLM).
+        await using var app = new global::app.@this("/test");
+        var schema = app.Module.Schema.Build();
+        await Assert.That(schema.Types.Any(t => t.Name == "type")).IsFalse();
     }
 }

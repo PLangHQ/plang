@@ -23,7 +23,8 @@ public class Cut2_SignThenCompressTests
         var wire = plang.Serialize(d2).Value!;
 
         using var doc = JsonDocument.Parse(wire);
-        await Assert.That(doc.RootElement.GetProperty("type").GetString()).IsEqualTo("archived");
+        // `type` is the structured entity {name, kind?, strict?} on the wire.
+        await Assert.That(doc.RootElement.GetProperty("type").GetProperty("name").GetString()).IsEqualTo("archived");
         await Assert.That(doc.RootElement.GetProperty("value").ValueKind).IsEqualTo(JsonValueKind.String);
         await Assert.That(doc.RootElement.TryGetProperty("signature", out _)).IsTrue();
     }

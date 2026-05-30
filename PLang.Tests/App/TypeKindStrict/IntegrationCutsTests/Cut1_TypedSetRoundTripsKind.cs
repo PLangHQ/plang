@@ -1,35 +1,45 @@
 using TUnit.Core;
 using TUnit.Assertions;
+using TUnit.Assertions.Extensions;
 
 namespace PLang.Tests.App.TypeKindStrict.IntegrationCutsTests;
 
-// Integration cut 1 — a typed `set` round-trips its kind end-to-end.
-// Build → run → variable inspection. Pins that structured type, the text type,
-// extension→kind derivation, and mint-carries-kind all fire together and the
-// LLM-emitted `as text` lands at the right Type.Kind on the minted variable.
-// This is the regression guard for the dropped-kind bug.
-
 public class Cut1_TypedSetRoundTripsKind
 {
+    private global::app.@this _app = null!;
+
+    [Before(Test)]
+    public void Setup() { _app = new global::app.@this("/app"); }
+
     [Test] public async Task SetReadmeMdAsText_DocTypeIsTextWithKindMd()
     {
-        // Goal contains a single step:
-        //   - set %doc% = "readme.md" as text
-        // Build the goal, run it, then assert via the real Variables:
-        //   - %doc% exists, %doc.Type.Name% == "text", %doc.Type.Kind% == "md"
-        //   - %doc.Kind% == "md" (sourced from Type.Kind)
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var context = _app.User.Context;
+        var action = TestAction.Create("variable", "set",
+            ("name", "%doc%"),
+            ("value", "readme.md"),
+            ("type", new global::app.type.@this("text")));
+        var result = await action.RunAsync(context);
+        await Assert.That(result.Success).IsTrue();
+
+        var stored = context.Variable.Get("doc");
+        await Assert.That(stored!.Type!.Name).IsEqualTo("text");
+        await Assert.That(stored.Type.Kind).IsEqualTo("md");
+        await Assert.That(stored.Kind).IsEqualTo("md");
     }
 
     [Test] public async Task SetReadmeMdAsText_NavigationResolvesKindFromVariableExpression()
     {
-        // After the above goal runs, a second step:
-        //   - write out %doc.Type.Name%
-        // produces "text" on the channel; %doc.Type.Kind% produces "md".
-        // The navigation must walk through the entity (folded; not via a separate
-        // Data.Kind property reach).
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var context = _app.User.Context;
+        var action = TestAction.Create("variable", "set",
+            ("name", "%doc%"),
+            ("value", "readme.md"),
+            ("type", new global::app.type.@this("text")));
+        await action.RunAsync(context);
+
+        // Navigation via the same engine path used by `%doc.Type.Name%` in goal text.
+        var name = context.Variable.Get("doc")!.GetChild("Type.Name");
+        var kind = context.Variable.Get("doc")!.GetChild("Type.Kind");
+        await Assert.That(name.Value).IsEqualTo("text");
+        await Assert.That(kind.Value).IsEqualTo("md");
     }
 }

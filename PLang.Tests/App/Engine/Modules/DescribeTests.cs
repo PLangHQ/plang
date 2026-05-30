@@ -22,7 +22,8 @@ public class DescribeTests
 
         var sizeProp = action.ReturnType!.FirstOrDefault(d => d.Name == "Size");
         await Assert.That(sizeProp).IsNotNull();
-        await Assert.That(sizeProp!.Value!.ToString()).IsEqualTo("long");
+        // long → number (post-Stage-2: numerics surface as kinds of number).
+        await Assert.That(sizeProp!.Value!.ToString()).IsEqualTo("number");
     }
 
     [Test]

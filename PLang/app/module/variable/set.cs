@@ -137,8 +137,15 @@ public partial class Set : IContext, IBuildValidatable
                 var canon = Context.App.Format.CanonicaliseKind(typeEntity.Kind);
                 if (canon != null) typeEntity.Kind = canon;
             }
+            // Stamp the entity's Context so ClrType resolves through the
+            // registry when the entity wasn't minted with a CLR mate.
+            typeEntity.Context ??= Context;
             var typeName = typeEntity.Name;
-            var targetType = Context.App.Type.Get(typeName);
+            // Resolve the CLR target from the ENTITY, not Get(name). For
+            // `number` the name resolves to the number.@this domain class, but
+            // a numeric value is a CLR primitive (int/long/...) — the entity's
+            // ClrType carries the right mate (typeof(int) for {number, int}).
+            var targetType = typeEntity.ClrType ?? Context.App.Type.Get(typeName);
 
             // Stamp kind from the value when the type has a Build(object?) hook
             // and the user didn't supply an explicit kind. Mirrors what
@@ -184,23 +191,23 @@ public partial class Set : IContext, IBuildValidatable
 
             object? converted = Value.Value;
             // CLR target type that can construct from the raw value (string→int,
-            // string→DateTime, dict→record) — convert in place. When the target
-            // can't be constructed from a literal string (e.g. `as image/gif` on
-            // a "real.gif" path string — image is byte-backed, not path-backed),
-            // keep the raw value and let the Type entity carry the meaning.
-            // Downstream consumers that need the bytes can resolve via the path.
+            // string→DateTime, dict→record) — convert in place. Conversion
+            // failure is a real error UNLESS the target is byte-backed
+            // (IKindValidatable family like image), in which case a literal
+            // path-string is a legitimate value the Type entity annotates;
+            // mint as Data<string> and let downstream consumers resolve.
             System.Type? mintType = targetType;
             if (converted != null && !targetType.IsInstanceOfType(converted))
             {
                 var (c, err) = global::app.type.list.@this.TryConvertTo(converted, targetType, Context);
                 if (err == null)
                     converted = c;
-                else
-                    // Convert failed: fall back to the value's own CLR type so
-                    // ConstructDataOfT mints a Data<actualClr> rather than trying
-                    // to wrap a string inside Data<image>. Type entity stays as
-                    // the user-declared annotation.
+                else if (typeof(global::app.data.IKindValidatable).IsAssignableFrom(targetType))
+                    // Byte-backed family — keep the raw value, the Type entity
+                    // (with its kind/strict) carries the user-declared meaning.
                     mintType = converted.GetType();
+                else
+                    return Task.FromResult(global::app.data.@this.FromError(err));
             }
             var typedData = ConstructDataOfT(Name.Value, mintType, converted, Context);
             // Pin the whole user-named Type entity onto the Data — kind and

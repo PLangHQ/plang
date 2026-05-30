@@ -32,7 +32,7 @@ public class TypeAccessorTests
     {
         await using var app = new PLangEngine("/test");
         // Reverse — Name() gives PLang name for a CLR type.
-        await Assert.That(app.Type.Name(typeof(string))).IsEqualTo("string");
+        await Assert.That(app.Type.Name(typeof(string))).IsEqualTo("text");
     }
 
     // Stage 4 — Entry-fold properties are populated at construction by BuildTypeEntries.

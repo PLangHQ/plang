@@ -4,12 +4,20 @@ using System.Text.Json.Serialization;
 namespace app.type;
 
 /// <summary>
-/// Wire shape for <c>app.type.@this</c>. Two valid input forms — a plain
-/// string (the legacy form, `"text"` / `"image/jpeg"`; the slash splits in
-/// <see cref="@this.Create"/>) and a dict (`{name, kind?, strict?}`, the
-/// LLM-emitted form for structured `type` parameters). Output is always
-/// the dict form, omitting fields that are null/false so the serialized
-/// shape stays compact for primitives.
+/// STJ converter for <see cref="@this"/> — the JSON wire/`.pr` shape. Mirrors
+/// the <c>path</c> convention (<see cref="app.type.path.JsonConverter"/>): the
+/// entity owns a controlled, compact JSON form, distinct from its in-memory
+/// catalog navigation surface.
+///
+/// <para>Read accepts BOTH forms STJ-default cannot express in one type:
+/// a bare string (<c>"text"</c> / <c>"image/jpeg"</c> — the slash splits in
+/// <see cref="@this.Create"/>) and the dict (<c>{name, kind?, strict?}</c>).
+/// Write always emits the dict, omitting kind/strict when not informative so
+/// primitives stay compact.</para>
+///
+/// <para>Format-pluggability (protobuf, etc.) for a <em>type value crossing a
+/// channel</em> lives in <c>serializer/Default.cs</c> (the IWriter renderer) —
+/// this converter is the JSON-specific door (the `.pr` is JSON on disk).</para>
 /// </summary>
 public sealed class JsonConverter : JsonConverter<@this?>
 {
@@ -25,8 +33,7 @@ public sealed class JsonConverter : JsonConverter<@this?>
 
         if (reader.TokenType == JsonTokenType.StartObject)
         {
-            string? name = null;
-            string? kind = null;
+            string? name = null, kind = null;
             bool strict = false;
             while (reader.Read())
             {
@@ -37,25 +44,17 @@ public sealed class JsonConverter : JsonConverter<@this?>
                 reader.Read();
                 switch (key.ToLowerInvariant())
                 {
-                    case "name":
-                        name = reader.TokenType == JsonTokenType.Null ? null : reader.GetString();
-                        break;
-                    case "kind":
-                        kind = reader.TokenType == JsonTokenType.Null ? null : reader.GetString();
-                        break;
+                    case "name": name = reader.TokenType == JsonTokenType.Null ? null : reader.GetString(); break;
+                    case "kind": kind = reader.TokenType == JsonTokenType.Null ? null : reader.GetString(); break;
                     case "strict":
                         if (reader.TokenType == JsonTokenType.True) strict = true;
-                        else if (reader.TokenType == JsonTokenType.False) strict = false;
                         else if (reader.TokenType == JsonTokenType.String
                                  && bool.TryParse(reader.GetString(), out var b)) strict = b;
                         break;
-                    default:
-                        reader.Skip();
-                        break;
+                    default: reader.Skip(); break;
                 }
             }
-            if (string.IsNullOrWhiteSpace(name)) return null;
-            return @this.Create(name, kind, strict);
+            return string.IsNullOrWhiteSpace(name) ? null : @this.Create(name!, kind, strict);
         }
 
         throw new JsonException($"Expected string or object for app.type.@this, got {reader.TokenType}");
@@ -64,14 +63,10 @@ public sealed class JsonConverter : JsonConverter<@this?>
     public override void Write(Utf8JsonWriter writer, @this? value, JsonSerializerOptions options)
     {
         if (value == null) { writer.WriteNullValue(); return; }
-        // Always emit the dict form so kind/strict round-trip when present.
-        // Omit kind/strict when not informative so primitives stay compact.
         writer.WriteStartObject();
         writer.WriteString("name", value.Name);
-        if (!string.IsNullOrEmpty(value.Kind))
-            writer.WriteString("kind", value.Kind);
-        if (value.Strict)
-            writer.WriteBoolean("strict", true);
+        if (!string.IsNullOrEmpty(value.Kind)) writer.WriteString("kind", value.Kind);
+        if (value.Strict) writer.WriteBoolean("strict", true);
         writer.WriteEndObject();
     }
 }

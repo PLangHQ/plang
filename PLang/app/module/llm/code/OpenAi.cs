@@ -819,7 +819,7 @@ public sealed class OpenAi : ILlm
         {
             props[param.Name] = new Dictionary<string, string>
             {
-                ["type"] = MapPlangTypeToJsonSchema(param.Type?.Name)
+                ["type"] = MapPlangTypeToJsonSchema(param.Type?.Name, param.Type?.Kind)
             };
             if (param.Value == null)
                 required.Add(param.Name);
@@ -836,8 +836,18 @@ public sealed class OpenAi : ILlm
         return result;
     }
 
-    private static string MapPlangTypeToJsonSchema(string? typeName)
+    private static string MapPlangTypeToJsonSchema(string? typeName, string? kind = null)
     {
+        // Post-Stage-2: typeName "number" with kind discriminates precision.
+        // int/long → integer; decimal/double/float → number.
+        if (string.Equals(typeName, "number", System.StringComparison.OrdinalIgnoreCase))
+        {
+            return kind?.ToLowerInvariant() switch
+            {
+                "int" or "long" => "integer",
+                _ => "number"
+            };
+        }
         return typeName?.ToLowerInvariant() switch
         {
             "int" or "long" or "int32" or "int64" => "integer",

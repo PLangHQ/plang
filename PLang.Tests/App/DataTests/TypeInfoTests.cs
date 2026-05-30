@@ -177,11 +177,12 @@ public class TypeTests
     [Test]
     public async Task ToString_ReturnsValue()
     {
+        // Constructor canonicalises "string" → "text" (post-Stage-2).
         var type = new Type("string");
 
         var str = type.ToString();
 
-        await Assert.That(str).IsEqualTo("string");
+        await Assert.That(str).IsEqualTo("text");
     }
 
     [Test]

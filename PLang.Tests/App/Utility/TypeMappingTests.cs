@@ -268,7 +268,8 @@ public class TypeMappingTests
     [Test]
     public async Task GetType_GenericDictStringInt_ReturnsDictionary()
     {
-        var type = TypeMapping.GetType("dict<text,number>");
+        // Legacy short form still resolves via the alias table.
+        var type = TypeMapping.GetType("dict<string,int>");
 
         await Assert.That(type).IsEqualTo(typeof(Dictionary<string, int>));
     }

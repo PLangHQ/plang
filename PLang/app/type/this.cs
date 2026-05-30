@@ -34,21 +34,16 @@ public sealed class @this
     /// <summary>
     /// Build-time subtype refinement ("md", "gif", "int"). Null when the type
     /// has no sub-kind. Mutable: <c>Data.Kind</c> delegates set-through to this
-    /// slot so the entity is the single owner. <c>[JsonIgnore]</c> — the wire
-    /// emits <c>kind</c> separately from the type entity (Wire.cs writes it
-    /// alongside the <c>type</c> key) — but when the entity stands alone as a
-    /// value (e.g. <c>variable.set.Type</c>), STJ-default serialization emits
-    /// it as part of the dict <c>{name, kind?, strict?}</c>.
+    /// slot so the entity is the single owner. Serialized as part of the
+    /// entity's <c>{name, kind?, strict?}</c> JSON form (see
+    /// <see cref="JsonConverter"/>).
     /// </summary>
     public string? Kind { get; set; }
 
     /// <summary>
     /// When true, <see cref="Kind"/> is a requirement (enforced at build for
     /// literals via <c>app.data.IKindValidatable</c>; deferred to runtime for
-    /// <c>%var%</c>). Default false — kind is a hint. Build-only — not on the
-    /// wire (a serialised type only describes what it is, not whether the
-    /// reader is strict about it). When the entity is a standalone value
-    /// (e.g. variable.set.Type), STJ defaults emit it as part of the dict.
+    /// <c>%var%</c>). Default false — kind is a hint.
     /// </summary>
     public bool Strict { get; init; }
 
@@ -93,6 +88,16 @@ public sealed class @this
         Kind = kind;
         Strict = strict;
         StampPrimitive(name);
+        // Numeric precision tokens collapse into Kind when used as a name.
+        // `new type("int")` → {Name:"number", Kind:"int"}: the precision
+        // wasn't lost in the canonicalisation. Only applies when the caller
+        // didn't supply an explicit kind.
+        if (Kind == null && Name == "number")
+        {
+            var lower = name.ToLowerInvariant();
+            if (lower is "int" or "integer" or "long" or "float" or "double" or "decimal")
+                Kind = lower == "integer" ? "int" : lower;
+        }
     }
 
     private void StampPrimitive(string rawName)
@@ -238,6 +243,11 @@ public sealed class @this
     private string? _description;
     private IReadOnlyList<string>? _kinds;
     private bool _foldLoaded;
+
+    // --- Catalog fold props ---
+    // The entity's JSON wire form is owned by JsonConverter ({name, kind?,
+    // strict?}); STJ never reflects these. They are in-memory catalog
+    // navigation (%x.Type.Fields%) + the builder schema's typed reads.
 
     /// <summary>Record fields. Non-null marks this as a record-shape type.</summary>
     public IReadOnlyList<Field>? Fields { get => Promote()._fields; init => _fields = value; }

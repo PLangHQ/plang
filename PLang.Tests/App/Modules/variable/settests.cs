@@ -158,7 +158,7 @@ public class SetTests
         var result = global::app.module.variable.Set.ValidateBuild(parameters);
 
         await Assert.That(result).IsNotNull();
-        await Assert.That(result!).Contains("type=int");
+        await Assert.That(result!).Contains("type=number");
     }
 
     [Test]
