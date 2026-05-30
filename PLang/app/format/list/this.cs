@@ -390,10 +390,13 @@ public sealed class @this
     }
 
     /// <summary>
-    /// PLang type value → Kind. Recognizes known kind names and MIME types.
-    /// Returns null for PLang type names (string, int, etc.) and unknown values.
+    /// PLang type value → Family ("image", "text", "spreadsheet"). Recognizes
+    /// known family names and MIME types. Returns null for PLang type names
+    /// (string, int, etc.) and unknown values. Renamed from <c>KindOf</c> —
+    /// the formats registry called the family the "kind"; under the new
+    /// vocabulary the family is the *name*, and the kind is the subtype.
     /// </summary>
-    public string? KindOf(string typeValue)
+    public string? FamilyOf(string typeValue)
     {
         if (string.IsNullOrEmpty(typeValue))
             return null;
@@ -408,8 +411,41 @@ public sealed class @this
     }
 
     /// <summary>
+    /// Canonicalises a kind token to its file-extension form. Accepts both
+    /// long and short kind forms (<c>markdown</c> → <c>md</c>, <c>jpeg</c> →
+    /// <c>jpg</c>). Derived from the extension→MIME registry — the inverse of
+    /// the registry's MIME-subtype mapping, with the primary extension winning
+    /// when two share a MIME (the <c>.jpg</c>/<c>.jpeg</c> case → <c>"jpg"</c>).
+    /// Unknown free-string kinds pass through unchanged. Null/empty → null.
+    /// </summary>
+    public string? CanonicaliseKind(string? kind)
+    {
+        if (string.IsNullOrWhiteSpace(kind)) return null;
+        var lower = kind.Trim().ToLowerInvariant();
+        // Already an extension we know? Return as-is.
+        if (_extensionToMime.ContainsKey(lower)) return lower;
+        // Otherwise: is this a MIME subtype (e.g. "markdown" for text/markdown,
+        // "jpeg" for image/jpeg)? Find every extension whose MIME subtype
+        // matches, pick the shortest (jpg < jpeg) — the primary extension wins
+        // when two share a MIME.
+        string? best = null;
+        foreach (var kvp in _extensionToMime)
+        {
+            var mime = kvp.Value;
+            var slash = mime.IndexOf('/');
+            if (slash < 0) continue;
+            var sub = mime[(slash + 1)..];
+            if (!string.Equals(sub, lower, System.StringComparison.OrdinalIgnoreCase)) continue;
+            var ext = kvp.Key;
+            if (ext.StartsWith('.')) ext = ext[1..];
+            if (best == null || ext.Length < best.Length) best = ext;
+        }
+        return best ?? lower;
+    }
+
+    /// <summary>
     /// Add a file extension mapping at runtime. Updates derived lookup
-    /// structures (_allKinds, _mimeToKind) so KindOf() sees the new mapping.
+    /// structures (_allKinds, _mimeToKind) so FamilyOf() sees the new mapping.
     /// </summary>
     public void Add(string extension, string kind, string? mime = null)
     {

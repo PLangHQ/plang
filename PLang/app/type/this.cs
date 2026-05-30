@@ -107,7 +107,7 @@ public sealed class @this
             // Resolve family from Name through the format registry (the
             // family-Kind accessor went away with the rename; family-lookup
             // is now an explicit registry call). Null family → not compressible.
-            var family = Context?.App.Format.KindOf(Name);
+            var family = Context?.App.Format.FamilyOf(Name);
             return family != null && (Context?.App.Format.Compressible(family) ?? false);
         }
     }
@@ -149,7 +149,8 @@ public sealed class @this
     /// empty/whitespace names. Multi-slash splits on the first; the rest is a
     /// free-string <paramref name="kind"/>.
     /// </summary>
-    public static @this Create(string name, string? kind = null, bool strict = false)
+    public static @this Create(string name, string? kind = null, bool strict = false,
+        actor.context.@this? context = null)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new System.ArgumentException("type name is required (empty or whitespace not allowed).", nameof(name));
@@ -168,11 +169,15 @@ public sealed class @this
         }
 
         // Canonicalise name through the primitive alias table — `Text`→`text`,
-        // `STRING`→`string`. Unknown names pass through (domain types,
-        // unrecognised primitives).
+        // `STRING`→`text` (post-Stage-2). Unknown names lowercase through.
         name = Canonicalise(name);
 
-        return new @this(name, kind, strict);
+        // Canonicalise kind through the format registry when a context is
+        // available — `markdown`→`md`, `jpeg`→`jpg`. Unknown kinds pass through.
+        if (kind != null && context != null)
+            kind = context.App.Format.CanonicaliseKind(kind);
+
+        return new @this(name, kind, strict) { Context = context };
     }
 
     private static string Canonicalise(string name)

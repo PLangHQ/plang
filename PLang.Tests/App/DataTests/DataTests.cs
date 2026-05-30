@@ -456,7 +456,7 @@ public class DataTests
 
         // Family is no longer on Type.Kind (Kind is the subtype). It lives on
         // the format registry, keyed by the type's Name.
-        await Assert.That(engine.Format.KindOf(ov.Type!.Name)).IsEqualTo("image");
+        await Assert.That(engine.Format.FamilyOf(ov.Type!.Name)).IsEqualTo("image");
     }
 
     [Test]
@@ -534,7 +534,7 @@ public class DataTests
         ov.Type = newType;
 
         // Type gets context from Data — family is resolvable via registry.
-        await Assert.That(engine.Format.KindOf(newType.Name)).IsEqualTo("text");
+        await Assert.That(engine.Format.FamilyOf(newType.Name)).IsEqualTo("text");
     }
 
     [Test]
@@ -546,7 +546,7 @@ public class DataTests
         var data = new Data("img", new byte[] { 1, 2 }, Type.FromMime("image/jpeg"));
         data.Context = context;
 
-        await Assert.That(engine.Format.KindOf(data.Type!.Name)).IsEqualTo("image");
+        await Assert.That(engine.Format.FamilyOf(data.Type!.Name)).IsEqualTo("image");
         await Assert.That(data.Type!.Compressible).IsFalse();
     }
 
@@ -569,7 +569,7 @@ public class DataTests
         var data = new Data("txt", "hello", Type.FromMime("text/plain"));
         data.Context = context;
 
-        await Assert.That(engine.Format.KindOf(data.Type!.Name)).IsEqualTo("text");
+        await Assert.That(engine.Format.FamilyOf(data.Type!.Name)).IsEqualTo("text");
         await Assert.That(data.Type!.Compressible).IsTrue();
     }
 

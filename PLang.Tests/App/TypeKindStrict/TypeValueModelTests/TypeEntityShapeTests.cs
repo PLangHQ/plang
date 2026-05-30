@@ -41,7 +41,7 @@ public class TypeEntityShapeTests
 
     [Test] public async Task Entity_FamilyKindAccessor_Removed()
     {
-        // The old `type.Kind` that resolved via App.Format.KindOf(Value) is gone.
+        // The old `type.Kind` that resolved via App.Format.FamilyOf(Value) is gone.
         // Pin: `type("image", null).Kind` reads null (no family-derivation), and
         // a `type("image/jpeg")` factory splits to {Name:"image", Kind:"jpeg"}
         // — Name carries the family directly; Kind is the subtype.

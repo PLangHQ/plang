@@ -79,7 +79,7 @@ public partial class @this
         // family-Kind accessor is gone — the family lives on the format registry
         // under the type's Name. The wrap outer carries the family ("image" for
         // an "image/jpeg" body).
-        var family = _context?.App.Format.KindOf(Type.Name);
+        var family = _context?.App.Format.FamilyOf(Type.Name);
         if (family == null)
             return this;
 
