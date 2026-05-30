@@ -21,7 +21,7 @@ public class Stage3_GoalChannelTests
         var ch = new GoalChannel("logger", goal, app.User);
         var dataIn = Data.Ok("payload-A");
         var result = await ch.Write(dataIn);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         var captured = app.User.Context.Variable.Get("!data");
         await Assert.That(captured).IsNotNull();
@@ -34,7 +34,7 @@ public class Stage3_GoalChannelTests
         var goal = new EngineGoal { Name = "ReturnsOk", Path = "Returns.goal", PrPath = "/R.pr" };
         var ch = new GoalChannel("c", goal, app.User);
         var result = await ch.Write(Data.Ok("x"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -116,7 +116,7 @@ public class Stage3_GoalChannelTests
         var goal = new EngineGoal { Name = "Asker", Path = "Asker.goal", PrPath = "/A.pr" };
         var ch = new GoalChannel("input", goal, app.User);
         var result = await ch.Ask(new global::app.module.output.ask { Question = new global::app.data.@this<string>("", "q?") });
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -129,6 +129,6 @@ public class Stage3_GoalChannelTests
         // Goal still usable — re-register as a different channel.
         var ch2 = new GoalChannel("c2", goal, app.User);
         var result = await ch2.Write(Data.Ok("x"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 }

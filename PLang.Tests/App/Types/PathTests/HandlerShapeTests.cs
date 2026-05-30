@@ -136,7 +136,7 @@ public class HandlerShapeTests
             Path = new global::app.data.@this<global::app.type.path.@this>("", fp),
         };
         var result = await handler.Run();
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
     }
 
     [Test] public async Task FilePath_AsBooleanAsync_OutOfRoot_DeniedPermission_AnswersFalse()

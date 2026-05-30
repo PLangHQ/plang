@@ -28,7 +28,7 @@ public class MockTests
             Return = new global::app.data.@this("", "test content")        };
 
         var result = await action.Run();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsNotNull();
         await Assert.That(result.Value is global::app.mock.@this).IsTrue();
 
@@ -49,7 +49,7 @@ public class MockTests
         };
 
         var result = await action.Run();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         var handle = (global::app.mock.@this)result.Value!;
         await Assert.That(handle.IsSpy).IsTrue();
@@ -111,7 +111,7 @@ public class MockTests
         };
 
         var result = await verify.Run();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -133,7 +133,7 @@ public class MockTests
         };
 
         var result = await verify.Run();
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error is AssertionError).IsTrue();
     }
 
@@ -156,7 +156,7 @@ public class MockTests
         };
 
         var result = await verify.Run();
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         var error = result.Error as AssertionError;
         await Assert.That(error).IsNotNull();
         await Assert.That(error!.UserMessage).IsEqualTo("file.read should be called once");
@@ -187,7 +187,7 @@ public class MockTests
             Mock = handle
         };
         var resetResult = await reset.Run();
-        await Assert.That(resetResult.Success).IsTrue();
+        await resetResult.IsSuccess();
         await Assert.That(context.Events.Count).IsEqualTo(countBefore - 1);
     }
 
@@ -220,7 +220,7 @@ public class MockTests
             Mock = null
         };
         var resetResult = await reset.Run();
-        await Assert.That(resetResult.Success).IsTrue();
+        await resetResult.IsSuccess();
         await Assert.That(context.Events.Count).IsEqualTo(0);
     }
 

@@ -24,7 +24,7 @@ public class Phase0Proof
         var result = Data.FromError(error);
 
         // OUTPUT: Data has error, is not successful
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Message).IsEqualTo("File not found");
         await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
@@ -37,7 +37,7 @@ public class Phase0Proof
         var result = Data.Ok("hello world");
 
         // OUTPUT: Data has value, is successful
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Error).IsNull();
         await Assert.That(result.Value).IsEqualTo("hello world");
     }
@@ -49,7 +49,7 @@ public class Phase0Proof
         var result = global::app.data.@this<string>.FromError(new Error("oops"));
 
         // OUTPUT: typed error result
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Message).IsEqualTo("oops");
     }
 

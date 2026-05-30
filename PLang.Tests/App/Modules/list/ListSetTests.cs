@@ -21,7 +21,7 @@ public class ListSetTests
         var action = new Set { Context = context, ListName = new app.variable.@this("myList"), Index = 1, Value = new global::app.data.@this("", "replaced")};
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var list = memory.GetValue("myList") as List<object?>;
         await Assert.That(list![1]).IsEqualTo("replaced");
     }
@@ -35,7 +35,7 @@ public class ListSetTests
         var action = new Set { Context = context, ListName = new app.variable.@this("myList"), Index = 0, Value = new global::app.data.@this("", "new")};
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var list = memory.GetValue("myList") as List<object?>;
         await Assert.That(list![0]).IsEqualTo("new");
         await Assert.That(list[1]).IsEqualTo("keep");
@@ -50,7 +50,7 @@ public class ListSetTests
         var action = new Set { Context = context, ListName = new app.variable.@this("myList"), Index = 5, Value = new global::app.data.@this("", "x")};
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("out of range");
     }
 
@@ -63,7 +63,7 @@ public class ListSetTests
         var action = new Set { Context = context, ListName = new app.variable.@this("myList"), Index = -1, Value = new global::app.data.@this("", "x")};
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("out of range");
     }
 
@@ -76,7 +76,7 @@ public class ListSetTests
         var action = new Set { Context = context, ListName = new app.variable.@this("myList"), Index = 0, Value = new global::app.data.@this("", "x")};
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("not a list");
     }
 
@@ -88,7 +88,7 @@ public class ListSetTests
         var action = new Set { Context = context, ListName = new app.variable.@this("missing"), Index = 0, Value = new global::app.data.@this("", "x")};
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
     }
 
     [Test]
@@ -100,7 +100,7 @@ public class ListSetTests
         var action = new Set { Context = context, ListName = new app.variable.@this("myList"), Index = 0, Value = null };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var list = memory.GetValue("myList") as List<object?>;
         await Assert.That(list![0]).IsNull();
     }

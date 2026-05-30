@@ -44,7 +44,7 @@ public class ProviderResolutionTests
         var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var hash = (byte[])result.Value!;
         // Mock returns all-zero bytes
         await Assert.That(hash).IsEquivalentTo(new byte[32]);
@@ -57,7 +57,7 @@ public class ProviderResolutionTests
         var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var hash = (byte[])result.Value!;
         // Should not be all zeros (global::app.module.crypto.code.Default produces real keccak256)
         await Assert.That(hash).IsNotEquivalentTo(new byte[32]);
@@ -75,7 +75,7 @@ public class ProviderResolutionTests
         var action = new Verify { Context = Ctx, Data = Data.Ok("hello"), Hash = Convert.ToBase64String(new byte[32]), Algorithm = "keccak256" };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That((bool)result.Value!).IsTrue();
     }
 

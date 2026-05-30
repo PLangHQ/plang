@@ -11,7 +11,7 @@ public class IsNotNullPropTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<IsNotNullProp>(app,
             parameters: new[] { ("required", (object?)"value") });
-        await Assert.That(result.Data.Success).IsTrue();
+        await result.Data.IsSuccess();
         var typed = result.Data as global::app.data.@this<string>;
         await Assert.That(typed!.Value).IsEqualTo("value");
     }
@@ -22,7 +22,7 @@ public class IsNotNullPropTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<IsNotNullProp>(app,
             parameters: new[] { ("required", (object?)null) });
-        await Assert.That(result.Data.Success).IsFalse();
+        await result.Data.IsFailure();
         await Assert.That(result.Data.Error!.Key).IsEqualTo("ValueRequired");
     }
 
@@ -36,7 +36,7 @@ public class IsNotNullPropTests
         // success for this contract test — assert the result is NOT successful.
         var result = await MatrixRunner.RunAsync<IsNotNullProp>(app,
             parameters: new[] { ("required", (object?)null) });
-        await Assert.That(result.Data.Success).IsFalse();
+        await result.Data.IsFailure();
     }
 
     [Test]

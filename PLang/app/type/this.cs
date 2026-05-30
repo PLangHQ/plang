@@ -25,7 +25,7 @@ namespace app.type;
 /// Entities minted outside <c>BuildTypeEntries</c> lazily resolve the catalog
 /// properties on first read via <see cref="Promote"/>.</para>
 /// </summary>
-[JsonConverter(typeof(JsonConverter))]
+[JsonConverter(typeof(json))]
 public sealed class @this
 {
     [JsonPropertyName("name")]
@@ -36,7 +36,7 @@ public sealed class @this
     /// has no sub-kind. Mutable: <c>Data.Kind</c> delegates set-through to this
     /// slot so the entity is the single owner. Serialized as part of the
     /// entity's <c>{name, kind?, strict?}</c> JSON form (see
-    /// <see cref="JsonConverter"/>).
+    /// <see cref="json"/>).
     /// </summary>
     public string? Kind { get; set; }
 

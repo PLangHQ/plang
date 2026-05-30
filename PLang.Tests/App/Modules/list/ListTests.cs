@@ -30,7 +30,7 @@ public class ListTests
         var action = new Add { Context = context, ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "first")};
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var list = memory.GetValue("myList") as List<object?>;
         await Assert.That(list).IsNotNull();
         await Assert.That(list!.Count).IsEqualTo(1);
@@ -46,7 +46,7 @@ public class ListTests
         var action = new Add { Context = context, ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "c")};
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var list = memory.GetValue("myList") as List<object?>;
         await Assert.That(list!.Count).IsEqualTo(3);
         await Assert.That(Unwrap(list[2])).IsEqualTo("c");
@@ -61,7 +61,7 @@ public class ListTests
         var action = new Add { Context = context, ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "b"), AtIndex = 1 };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var list = memory.GetValue("myList") as List<object?>;
         await Assert.That(Unwrap(list![1])).IsEqualTo("b");
     }
@@ -77,7 +77,7 @@ public class ListTests
         var action = new Remove { Context = context, ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "b")};
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var list = memory.GetValue("myList") as List<object?>;
         await Assert.That(list!.Count).IsEqualTo(2);
     }
@@ -91,7 +91,7 @@ public class ListTests
         var action = new Remove { Context = context, ListName = new app.variable.@this("myList"), AtIndex = 0 };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var list = memory.GetValue("myList") as List<object?>;
         await Assert.That(list![0]).IsEqualTo("b");
     }
@@ -107,7 +107,7 @@ public class ListTests
         var action = new Get { Context = context, ListName = new app.variable.@this("myList"), Index = 1 };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo("b");
     }
 
@@ -120,7 +120,7 @@ public class ListTests
         var action = new Get { Context = context, ListName = new app.variable.@this("myList"), Index = 5 };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
         await Assert.That(result.Error!.Message).Contains("out of range");
     }
@@ -136,7 +136,7 @@ public class ListTests
         var action = new Count { Context = context, ListName = new app.variable.@this("myList") };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo(2);
     }
 
@@ -151,7 +151,7 @@ public class ListTests
         var action = new Contains { Context = context, ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "a")};
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo(true);
     }
 
@@ -218,7 +218,7 @@ public class ListTests
         var action = new Sort { Context = context, ListName = new app.variable.@this("myList"), Descending = false };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var list = memory.GetValue("myList") as List<object?>;
         await Assert.That(list![0]).IsEqualTo("a");
         await Assert.That(list[2]).IsEqualTo("c");
@@ -248,7 +248,7 @@ public class ListTests
         var action = new Split { Context = context, Value = "a,b,c", Separator = "," };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var list = (result.Value as global::app.module.list.type.list)?.value as System.Collections.IList;
         await Assert.That(list!.Count).IsEqualTo(3);
     }
@@ -324,7 +324,7 @@ public class ListTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo(true);
     }
 
@@ -348,7 +348,7 @@ public class ListTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo(false);
     }
 
@@ -368,7 +368,7 @@ public class ListTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo(false);
     }
 
@@ -392,7 +392,7 @@ public class ListTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo(true);
     }
 
@@ -412,7 +412,7 @@ public class ListTests
         var action = new Group { Context = context, ListName = new app.variable.@this("orders"), Key = "customer" };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var groups = (result.Value as global::app.module.list.type.list)?.value as List<Dictionary<string, object?>>;
         await Assert.That(groups).IsNotNull();
         await Assert.That(groups!.Count).IsEqualTo(2);
@@ -435,7 +435,7 @@ public class ListTests
         var action = new Group { Context = context, ListName = new app.variable.@this("items"), Key = "category" };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var groups = (result.Value as global::app.module.list.type.list)?.value as List<Dictionary<string, object?>>;
         await Assert.That(groups!.Count).IsEqualTo(0);
     }
@@ -453,7 +453,7 @@ public class ListTests
         var action = new Group { Context = context, ListName = new app.variable.@this("items"), Key = "category" };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var groups = (result.Value as global::app.module.list.type.list)?.value as List<Dictionary<string, object?>>;
         // All items grouped under empty key since "category" doesn't exist
         await Assert.That(groups!.Count).IsEqualTo(1);

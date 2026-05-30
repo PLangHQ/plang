@@ -42,7 +42,7 @@ public class GetActionsTests
         var action = new GetActions { Context = _app.User.Context };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var actions = result.Value as StepActions;
         await Assert.That(actions).IsNotNull();
         await Assert.That(actions!.Count).IsGreaterThan(0);
@@ -152,7 +152,7 @@ public class GetActionsTests
         };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var actions = result.Value as StepActions;
         await Assert.That(actions).IsNotNull();
         await Assert.That(actions!.Count).IsEqualTo(2);
@@ -177,7 +177,7 @@ public class GetActionsTests
         };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var actions = result.Value as StepActions;
         await Assert.That(actions).IsNotNull();
         await Assert.That(actions!.Count).IsEqualTo(fullCount);
@@ -193,7 +193,7 @@ public class GetActionsTests
         };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var actions = result.Value as StepActions;
         await Assert.That(actions).IsNotNull();
         await Assert.That(actions!.Count).IsEqualTo(0);

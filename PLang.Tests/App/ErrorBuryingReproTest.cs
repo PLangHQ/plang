@@ -24,7 +24,7 @@ public class ErrorBuryingReproTest
         var d = new global::app.data.@this("!error", rootError);
         var resolved = d.As<string>(null);
 
-        await Assert.That(resolved.Success).IsFalse();
+        await resolved.IsFailure();
         // The primary error is the original IError, not the conversion wrapper.
         await Assert.That(resolved.Error!.Key).IsEqualTo("NullReferenceException");
         // The conversion failure rides on the chain — visible but demoted.

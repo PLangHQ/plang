@@ -38,7 +38,7 @@ public class CanonicalizationTests
                 Algorithm = new global::app.data.@this<string>("", "keccak256")
             }, app.User.Context);
 
-        await Assert.That(hashResult.Success).IsTrue();
+        await hashResult.IsSuccess();
         // The hash is 32 bytes; the wire-bytes are the input to the hash.
         var expectedHash = new Nethereum.Util.Sha3Keccack().CalculateHash(wireBytesWithoutOuterSig);
         await Assert.That(((byte[])hashResult.Value!).SequenceEqual(expectedHash)).IsTrue();
@@ -85,7 +85,7 @@ public class CanonicalizationTests
         await Assert.That(tampered).IsNotEqualTo(json);
 
         var back = plang.Deserialize(tampered);
-        await Assert.That(back.Success).IsTrue();
+        await back.IsSuccess();
         var roundTripped = back.Value as global::app.data.@this;
         await Assert.That(roundTripped).IsNotNull();
         roundTripped!.Context = app.User.Context;

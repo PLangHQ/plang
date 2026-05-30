@@ -58,7 +58,7 @@ public class PlangRuntimeTests : IDisposable
         var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
@@ -144,7 +144,7 @@ public class PlangRuntimeTests : IDisposable
         var context = _app.User.Context;
         var result = await _app.RunGoalAsync(goal, context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();

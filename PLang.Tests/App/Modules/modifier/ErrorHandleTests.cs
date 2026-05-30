@@ -71,7 +71,7 @@ public class ErrorHandleTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(Ctx.Variable.GetValue("ok")).IsEqualTo("v");
     }
 
@@ -83,7 +83,7 @@ public class ErrorHandleTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -97,7 +97,7 @@ public class ErrorHandleTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -111,7 +111,7 @@ public class ErrorHandleTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
     }
 
@@ -126,7 +126,7 @@ public class ErrorHandleTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -140,7 +140,7 @@ public class ErrorHandleTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -154,7 +154,7 @@ public class ErrorHandleTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Timeout");
     }
 
@@ -169,7 +169,7 @@ public class ErrorHandleTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Message).IsEqualTo("disk full");
     }
 
@@ -181,7 +181,7 @@ public class ErrorHandleTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -204,7 +204,7 @@ public class ErrorHandleTests
 
         var result = await modifiers.RunAsync(persistentlyFailing, Ctx);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Message).IsEqualTo("persistent failure");
         await Assert.That(callCount).IsEqualTo(3); // 1 initial + 2 retries
     }
@@ -228,7 +228,7 @@ public class ErrorHandleTests
 
         var result = await modifiers.RunAsync(persistentlyFailing, Ctx);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(callCount).IsEqualTo(2); // 1 initial + 1 retry
     }
 
@@ -248,7 +248,7 @@ public class ErrorHandleTests
 
         var result = await modifiers.RunAsync(persistentlyFailing, Ctx);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(callCount).IsEqualTo(4); // 1 initial + 3 retries
     }
 
@@ -274,7 +274,7 @@ public class ErrorHandleTests
 
         var result = await modifiers.RunAsync(statefulNext, Ctx);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(callCount).IsEqualTo(2);
     }
 
@@ -312,7 +312,7 @@ public class ErrorHandleTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -328,7 +328,7 @@ public class ErrorHandleTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.ErrorChain.Count).IsGreaterThan(0);
         await Assert.That(result.Error.ErrorChain[0].Message).IsEqualTo("goal failed");
     }
@@ -346,7 +346,7 @@ public class ErrorHandleTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -362,7 +362,7 @@ public class ErrorHandleTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.ErrorChain.Count).IsGreaterThan(0);
         await Assert.That(result.Error.ErrorChain[0].Message).IsEqualTo("goal also failed");
     }

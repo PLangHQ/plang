@@ -108,7 +108,7 @@ public class ExecuteVerbTests
         System.IO.File.Copy(srcAssembly, copyAt, overwrite: true);
         var p = new FilePath(copyAt, app.User.Context);
         var result = await p.LoadAssemblyAsync();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(canned.Prompts.Count).IsEqualTo(0);
     }
 
@@ -136,7 +136,7 @@ public class ExecuteVerbTests
         System.IO.File.WriteAllText(outOfRoot, "stub");
         var p = new FilePath(outOfRoot, app.User.Context);
         var result = await p.LoadAssemblyAsync();
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         // The fail must be a permission decision — not file-not-found or a
         // malformed-DLL throw. Differentiate via Error.Key.
         await Assert.That(result.Error).IsNotNull();

@@ -62,7 +62,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
             ("value", "%upload%"),
             ("type", Type("image", "gif", true)));
         var result = await action.RunAsync(context);
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error?.Message ?? "").Contains("gif");
     }
 
@@ -81,7 +81,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
             ("value", GifBytes),
             ("type", Type("image", "gif", true)));
         var result = await action.RunAsync(context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var stored = context.Variable.Get("img");
         await Assert.That(stored!.Type!.Name).IsEqualTo("image");
         await Assert.That(stored.Type.Kind).IsEqualTo("gif");

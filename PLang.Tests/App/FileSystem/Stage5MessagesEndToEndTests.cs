@@ -76,7 +76,7 @@ public class Stage5MessagesEndToEndTests
         var (app, foreignFile) = Setup("a");
         var path = new Path(foreignFile, app.User.Context);
         var result = await path.ReadText();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // Grant landed and is signed (persisted).
         var found = await app.User.Permission.Find(path, new Verb { Read = new Read() });
         await Assert.That(found).IsNotNull();
@@ -93,7 +93,7 @@ public class Stage5MessagesEndToEndTests
         var asksAfterFirst = ch.AskCount;
         var result = await path.ReadText(); // no prompt — grant covers
         await Assert.That(ch.AskCount).IsEqualTo(asksAfterFirst);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test] public async Task Scenario4_RestartStillNoPrompt_PersistedGrantSurvivesNewApp()
@@ -106,7 +106,7 @@ public class Stage5MessagesEndToEndTests
         var root = app1.AbsolutePath;
         var path1 = new Path(foreignFile, app1.User.Context);
         var firstRead = await path1.ReadText();
-        await Assert.That(firstRead.Success).IsTrue();
+        await firstRead.IsSuccess();
 
         // App #2 on the same root. Channel here has zero "a" answers — any
         // prompt that fires means the persisted grant was missed.
@@ -115,7 +115,7 @@ public class Stage5MessagesEndToEndTests
         app2.User.Channel.Register(statelessProbe);
         var path2 = new Path(foreignFile, app2.User.Context);
         var secondRead = await path2.ReadText();
-        await Assert.That(secondRead.Success).IsTrue();
+        await secondRead.IsSuccess();
         // No Exit-typed bubble (no prompt) — the grant covered the request.
         await Assert.That(secondRead.Type?.Name).IsNotEqualTo("ask");
     }
@@ -131,7 +131,7 @@ public class Stage5MessagesEndToEndTests
         var root = app1.AbsolutePath;
         var path1 = new Path(foreignFile, app1.User.Context);
         var firstRead = await path1.ReadText();
-        await Assert.That(firstRead.Success).IsTrue();
+        await firstRead.IsSuccess();
 
         // Advance clock by 10 minutes — past the default 5-minute
         // Config.TimeoutMs window that would otherwise expire the signature.
@@ -147,7 +147,7 @@ public class Stage5MessagesEndToEndTests
 
         var path2 = new Path(foreignFile, app2.User.Context);
         var secondRead = await path2.ReadText();
-        await Assert.That(secondRead.Success).IsTrue();
+        await secondRead.IsSuccess();
         await Assert.That(secondRead.Type?.Name).IsNotEqualTo("ask");
     }
 
@@ -163,7 +163,7 @@ public class Stage5MessagesEndToEndTests
         var (app1, foreignFile) = Setup("a");
         var root = app1.AbsolutePath;
         var path1 = new Path(foreignFile, app1.User.Context);
-        await Assert.That((await path1.ReadText()).Success).IsTrue();   // create persisted grant
+        await (await path1.ReadText()).IsSuccess();   // create persisted grant
 
         // app2: two reads. Each Find re-deserializes the grant → two real
         // VerifySignature passes → step 4 would NonceReplay the second.
@@ -172,9 +172,9 @@ public class Stage5MessagesEndToEndTests
         var path2 = new Path(foreignFile, app2.User.Context);
         var read1 = await path2.ReadText();   // verify #1 — nonce cached
         var read2 = await path2.ReadText();   // verify #2 — nonce replay if step 4 active
-        await Assert.That(read1.Success).IsTrue();
+        await read1.IsSuccess();
         await Assert.That(read1.Type?.Name).IsNotEqualTo("ask");
-        await Assert.That(read2.Success).IsTrue();
+        await read2.IsSuccess();
         await Assert.That(read2.Type?.Name).IsNotEqualTo("ask");
     }
 
@@ -212,7 +212,7 @@ public class Stage5MessagesEndToEndTests
         var path = new Path(foreignFile, app.User.Context);
         var ch = (CannedChannel)app.User.Channel.Resolve("input")!;
         var statResult = await path.Stat();
-        await Assert.That(statResult.Success).IsTrue();
+        await statResult.IsSuccess();
         await Assert.That(ch.AskCount).IsGreaterThan(0); // prompt fired despite the narrow grant
     }
 }

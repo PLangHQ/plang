@@ -19,7 +19,7 @@ public class NumberArithmeticTests
     [Test] public async Task Add_IntInt_ReturnsInt()
     {
         var r = number.Add(number.From(2), number.From(3), Lenient);
-        await Assert.That(r.Success).IsTrue();
+        await r.IsSuccess();
         await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Int);
     }
 
@@ -45,21 +45,21 @@ public class NumberArithmeticTests
     [Test] public async Task Overflow_Promote_IntOverflowWidensToLong()
     {
         var r = number.Add(number.From(int.MaxValue), number.From(int.MaxValue), Lenient);
-        await Assert.That(r.Success).IsTrue();
+        await r.IsSuccess();
         await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Long);
     }
 
     [Test] public async Task Overflow_Promote_LongOverflowWidensToDecimal()
     {
         var r = number.Add(number.From(long.MaxValue), number.From(long.MaxValue), Lenient);
-        await Assert.That(r.Success).IsTrue();
+        await r.IsSuccess();
         await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Decimal);
     }
 
     [Test] public async Task Overflow_Throw_IntPlusInt_SurfacesDataFailMathOverflow()
     {
         var r = number.Add(number.From(int.MaxValue), number.From(int.MaxValue), Strict);
-        await Assert.That(r.Success).IsFalse();
+        await r.IsFailure();
         await Assert.That(r.Error?.Key).IsEqualTo("MathOverflow");
     }
 
@@ -68,7 +68,7 @@ public class NumberArithmeticTests
         await Assert.That(() => { var _ = number.From(decimal.MaxValue) + number.From(decimal.MaxValue); })
             .Throws<System.OverflowException>();
         var r = number.Add(number.From(decimal.MaxValue), number.From(decimal.MaxValue), Strict);
-        await Assert.That(r.Success).IsFalse();
+        await r.IsFailure();
         await Assert.That(r.Error?.Key).IsEqualTo("MathOverflow");
     }
 

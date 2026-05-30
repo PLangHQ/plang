@@ -244,7 +244,7 @@ public class EngineTests
 
         var result = await engine.RunGoalAsync(new GoalCall { Name = "NonexistentGoal" });
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
     }
 
@@ -257,7 +257,7 @@ public class EngineTests
 
         var result = await engine.RunGoalAsync(new GoalCall { Name = "EmptyGoal" });
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -282,7 +282,7 @@ public class EngineTests
 
         var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" });
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Cancelled");
     }
 
@@ -336,7 +336,7 @@ public class EngineTests
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(context.Variable.GetValue("test")).IsEqualTo("hello");
     }
 
@@ -359,7 +359,7 @@ public class EngineTests
 
         var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" });
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
     }
 
     [Test]
@@ -372,7 +372,7 @@ public class EngineTests
         var steps = new GoalSteps { step };
         var result = await steps.RunAsync(context);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ActionNotFound");
     }
 
@@ -407,7 +407,7 @@ public class EngineTests
         // catch still exists for non-handler failures (event handlers, iteration logic).
         var steps = new GoalSteps { step };
         var result = await steps.RunAsync(context);
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ServiceError");
     }
 
@@ -425,7 +425,7 @@ public class EngineTests
         var steps = new GoalSteps { step };
         var result = await steps.RunAsync(context);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ActionError");
     }
 
@@ -517,7 +517,7 @@ public class EngineTests
 
         var result = await engine.RunGoalAsync(goal, engine.System.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(engine.System.Context.Variable.GetValue("test")).IsEqualTo("hello");
         // User context should NOT have the variable
         await Assert.That(engine.User.Context.Variable.GetValue("test")).IsNull();
@@ -543,7 +543,7 @@ public class EngineTests
 
         var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" }, engine.System.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(engine.System.Context.Variable.GetValue("test")).IsEqualTo("system-value");
     }
 

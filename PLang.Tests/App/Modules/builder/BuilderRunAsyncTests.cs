@@ -72,7 +72,7 @@ public class BuilderRunAsyncTests
 
         var result = await _app.Builder.RunAsync();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("NoAppFound");
     }

@@ -17,7 +17,7 @@ public class GoalReturnTests
         var action = new Return { Context = context, Data = null };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Returned).IsTrue();
         await Assert.That(result.ReturnDepth).IsEqualTo(1);
     }
@@ -30,7 +30,7 @@ public class GoalReturnTests
         var action = new Return { Context = context, Data = data };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Returned).IsTrue();
         await Assert.That(result.Value!.ToString()).IsEqualTo("hello");
     }
@@ -75,7 +75,7 @@ public class GoalReturnTests
         var action = new Return { Context = context, Data = error };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Returned).IsTrue();
         await Assert.That(result.Error!.Key).IsEqualTo("TestError");
     }

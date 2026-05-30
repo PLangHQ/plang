@@ -364,7 +364,7 @@ public class TextStreamSerializerTests
 
         var result = await serializer.DeserializeAsync<string>(stream);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("TextDeserializeError");
     }
 
@@ -377,7 +377,7 @@ public class TextStreamSerializerTests
         // Simple-type path: Text writes bytes directly and the write throws.
         var result = await serializer.SerializeAsync(stream, Data.Ok("value"));
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("TextSerializeError");
     }
 

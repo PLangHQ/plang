@@ -37,7 +37,7 @@ public class EventHandlerTests
         var context = _app.User.Context;
         var result = await MakeOn(context, global::app.@event.EventType.BeforeGoal, "LogGoal", goalPattern: "TestGoal").Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value is string).IsTrue(); // returns binding id
         await Assert.That(context.Events.Count).IsEqualTo(1);
     }
@@ -48,7 +48,7 @@ public class EventHandlerTests
         var context = _app.User.Context;
         var result = await MakeOn(context, global::app.@event.EventType.AfterGoal, "LogGoal", goalPattern: "*").Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(context.Events.Count).IsEqualTo(1);
     }
 
@@ -58,7 +58,7 @@ public class EventHandlerTests
         var context = _app.User.Context;
         var result = await MakeOn(context, global::app.@event.EventType.BeforeStep, "LogStep", goalPattern: "TestGoal", stepPattern: "set*").Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(context.Events.Count).IsEqualTo(1);
     }
 
@@ -68,7 +68,7 @@ public class EventHandlerTests
         var context = _app.User.Context;
         var result = await MakeOn(context, global::app.@event.EventType.AfterStep, "LogStep", priority: 5).Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(context.Events.Count).IsEqualTo(1);
     }
 
@@ -78,7 +78,7 @@ public class EventHandlerTests
         var context = _app.User.Context;
         var result = await MakeOn(context, global::app.@event.EventType.BeforeAction, "OnVarSet", actionPattern: "variable.set").Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(context.Events.Count).IsEqualTo(1);
     }
 
@@ -88,7 +88,7 @@ public class EventHandlerTests
         var context = _app.User.Context;
         var result = await MakeOn(context, global::app.@event.EventType.AfterAction, "OnAfterAction", actionPattern: "variable.*").Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(context.Events.Count).IsEqualTo(1);
     }
 
@@ -107,7 +107,7 @@ public class EventHandlerTests
         var removeHandler = new Remove { Context = context, EventId = eventId };
         var removeResult = await removeHandler.Run();
 
-        await Assert.That(removeResult.Success).IsTrue();
+        await removeResult.IsSuccess();
         await Assert.That(context.Events.Count).IsEqualTo(0);
     }
 
@@ -181,7 +181,7 @@ public class EventHandlerTests
         // Register BeforeGoal event, run TargetGoal, check that the callback goal was resolved
         var onAction = MakeOn(context, global::app.@event.EventType.BeforeGoal, "OnBeforeCallback", goalPattern: "TargetGoal");
         var regResult = await onAction.Run();
-        await Assert.That(regResult.Success).IsTrue();
+        await regResult.IsSuccess();
 
         // Set a marker before running
         context.Variable.Set("eventFired", false);

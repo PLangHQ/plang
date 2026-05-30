@@ -68,7 +68,7 @@ public class Stage8_ChannelEventsTests
         }));
 
         var result = await ch.WriteAsync(Data.Ok("hi"));
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(afterFired).IsFalse();
     }
 
@@ -85,7 +85,7 @@ public class Stage8_ChannelEventsTests
             return Task.FromResult(Data.Ok());
         }));
         var result = await ch.WriteAsync(Data.Ok("hi"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(afterFired).IsTrue();
     }
 
@@ -102,9 +102,9 @@ public class Stage8_ChannelEventsTests
             return Task.FromResult(Data.Ok());
         }));
         var result = await ch.WriteAsync(Data.Ok("hi"));
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(afterFired).IsTrue();
-        await Assert.That(receivedData!.Success).IsFalse();
+        await receivedData!.IsFailure();
     }
 
     [Test]
@@ -116,7 +116,7 @@ public class Stage8_ChannelEventsTests
         ch.Events.Add(new EventBinding(EventType.AfterWrite, (_, _, _) =>
             throw new InvalidOperationException("after fail")));
         var result = await ch.WriteAsync(Data.Ok("hi"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -162,7 +162,7 @@ public class Stage8_ChannelEventsTests
         }));
         ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, _) => { order.Add("C"); return Task.FromResult(Data.Ok()); }));
         var result = await ch.WriteAsync(Data.Ok("x"));
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(order).IsEquivalentTo(new[] { "A", "B" });
     }
 

@@ -66,7 +66,7 @@ public class LlmIntegrationTests
         });
         if (result == null) return; // skipped, no API key
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value?.ToString() ?? "").Contains("42");
         await Assert.That(result.Properties["TotalTokens"]).IsNotNull();
     }
@@ -93,7 +93,7 @@ public class LlmIntegrationTests
         });
         if (result == null) return;
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // Value should be parsed JSON (JsonElement)
         await Assert.That(result.Value).IsNotNull();
         var json = result.Value is JsonElement je ? je : JsonSerializer.SerializeToElement(result.Value);
@@ -123,7 +123,7 @@ public class LlmIntegrationTests
         });
         if (result == null) return;
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var code = result.Value?.ToString() ?? "";
         await Assert.That(code).Contains("def ");
         await Assert.That(code).Contains("return");
@@ -151,7 +151,7 @@ public class LlmIntegrationTests
             Cache = false
         });
         if (result1 == null) return;
-        await Assert.That(result1.Success).IsTrue();
+        await result1.IsSuccess();
 
         // Second query continues the conversation
         var messages2 = new List<LlmMessage>
@@ -170,7 +170,7 @@ public class LlmIntegrationTests
         });
         if (result2 == null) return;
 
-        await Assert.That(result2.Success).IsTrue();
+        await result2.IsSuccess();
         await Assert.That(result2.Value?.ToString() ?? "").Contains("Alice");
     }
 
@@ -201,7 +201,7 @@ public class LlmIntegrationTests
         var result = await RunToolCallWithSnapshot("ToolCallWeather", messages, tools);
         if (result == null) return;
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // The LLM should have attempted the tool, got an error (goal doesn't exist),
         // and then responded with something about not being able to get the weather
         await Assert.That(result.Value?.ToString() ?? "").IsNotEmpty();

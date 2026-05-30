@@ -356,7 +356,7 @@ public class JsonStreamSerializerTests
 
         var result = await serializer.DeserializeAsync<TestClass>(stream);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("JsonDeserializeError");
     }
@@ -369,7 +369,7 @@ public class JsonStreamSerializerTests
 
         var result = await serializer.DeserializeAsync<TestClass>(stream);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("JsonDeserializeError");
     }
 
@@ -380,7 +380,7 @@ public class JsonStreamSerializerTests
 
         var result = serializer.Deserialize<TestClass>("{not valid");
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("JsonDeserializeError");
     }
 
@@ -391,7 +391,7 @@ public class JsonStreamSerializerTests
 
         var result = serializer.Deserialize<TestClass>("{not valid");
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("JsonDeserializeError");
     }
 

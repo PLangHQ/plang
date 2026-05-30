@@ -52,7 +52,7 @@ public class SaveGoalsTests
         var action = new goalsSave { Context = _app.User.Context, Goal = goal };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         // Verify file content
         var prPath = System.IO.Path.Combine(_tempDir, ".build", "start.pr");
@@ -105,7 +105,7 @@ public class SaveGoalsTests
         var action = new goalsSave { Context = _app.User.Context, Goal = goal };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         var prPath = System.IO.Path.Combine(_tempDir, ".build", "multi.pr");
         var json = System.IO.File.ReadAllText(prPath);
@@ -125,7 +125,7 @@ public class SaveGoalsTests
         var action = new goalsSave { Context = _app.User.Context, Goal = goal };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NoPrPath");
     }
 }

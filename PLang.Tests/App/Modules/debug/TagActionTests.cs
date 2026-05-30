@@ -57,7 +57,7 @@ public class TagActionTests
             Label = new global::app.data.@this<string>("Label", "x")
         };
         var result = await action.Run();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]

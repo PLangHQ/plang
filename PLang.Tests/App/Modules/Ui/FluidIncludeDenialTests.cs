@@ -95,7 +95,7 @@ public class FluidIncludeDenialTests
             IsFile = new global::app.data.@this<bool>("IsFile", false)
         };
         var result = await fluid.Render(action);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value!).Contains("Hello footer");
         await Assert.That(ch.AskCount).IsEqualTo(0);
     }

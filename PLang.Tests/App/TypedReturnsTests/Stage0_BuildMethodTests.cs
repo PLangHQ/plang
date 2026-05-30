@@ -67,7 +67,7 @@ public class Stage0_BuildMethodTests
     {
         var handler = (IClass)new NoopBuild();
         var result = await handler.Build();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsNull();
     }
 

@@ -23,6 +23,6 @@ public class SleepTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 }

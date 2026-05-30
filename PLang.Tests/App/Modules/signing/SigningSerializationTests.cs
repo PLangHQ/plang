@@ -159,7 +159,7 @@ public class SigningSerializationTests
                 Contracts = new List<string> { "C0" }
             };
             var result = await action.Run();
-            await Assert.That(result.Success).IsFalse();
+            await result.IsFailure();
             await engine.DisposeAsync();
         }
         finally

@@ -72,8 +72,8 @@ public class IntegrationCutsTests
         var ok = await audit.WriteAsync(Data.Ok("ok-payload"));
         var bad = await audit.WriteAsync(Data.Ok("REJECT-this"));
 
-        await Assert.That(ok.Success).IsTrue();
-        await Assert.That(bad.Success).IsFalse();
+        await ok.IsSuccess();
+        await bad.IsFailure();
 
         var auditText = global::System.Text.Encoding.UTF8.GetString(auditCapture.ToArray());
         await Assert.That(auditText.Contains("ok-payload")).IsTrue();

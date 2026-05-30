@@ -48,7 +48,7 @@ public class GetGoalsTests
         var action = new goals { Context = _app.User.Context, Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var goals = result.Value as List<Goal>;
         await Assert.That(goals).IsNotNull();
         await Assert.That(goals!.Count).IsGreaterThanOrEqualTo(1);
@@ -150,7 +150,7 @@ public class GetGoalsTests
         var action = new goals { Context = _app.User.Context, Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var goals = result.Value as List<Goal>;
         await Assert.That(goals).IsNotNull();
         await Assert.That(goals!.Count).IsEqualTo(1);
@@ -170,7 +170,7 @@ public class GetGoalsTests
         var action = new goals { Context = _app.User.Context, Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var goals = result.Value as List<Goal>;
         await Assert.That(goals).IsNotNull();
         await Assert.That(goals!.Count).IsEqualTo(1);
@@ -190,7 +190,7 @@ public class GetGoalsTests
         var action = new goals { Context = _app.User.Context, Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var goals = result.Value as List<Goal>;
         await Assert.That(goals).IsNotNull();
         await Assert.That(goals!.Count).IsEqualTo(0);
@@ -215,7 +215,7 @@ public class GetGoalsTests
         var action = new goals { Context = _app.User.Context, Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var goals = result.Value as List<Goal>;
         await Assert.That(goals).IsNotNull();
         await Assert.That(goals!.Count).IsEqualTo(2);
@@ -229,7 +229,7 @@ public class GetGoalsTests
         var action = new goals { Context = _app.User.Context, Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var goals = result.Value as List<Goal>;
         await Assert.That(goals).IsNotNull();
         await Assert.That(goals!.Count).IsEqualTo(0);
@@ -253,7 +253,7 @@ public class GetGoalsTests
         var action = new goals { Context = _app.User.Context, Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var goals = result.Value as List<Goal>;
         await Assert.That(goals).IsNotNull();
         await Assert.That(goals!.Count).IsGreaterThanOrEqualTo(1);

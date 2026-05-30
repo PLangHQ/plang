@@ -10,7 +10,7 @@ public class StringNullableTests
     {
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<StringNullable>(app);
-        await Assert.That(result.Data.Success).IsTrue();
+        await result.Data.IsSuccess();
         await Assert.That(result.Data.Value).IsNull();
     }
 

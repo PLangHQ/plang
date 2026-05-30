@@ -78,7 +78,7 @@ public class SecurityFixTests
 
         // Second call should succeed (ExitEvent ran in finally block)
         var result = await fragileBinding.Run(context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(callCount).IsEqualTo(2);
     }
 

@@ -19,7 +19,7 @@ public class Cut1_TypedSetRoundTripsKind
             ("value", "readme.md"),
             ("type", new global::app.type.@this("text")));
         var result = await action.RunAsync(context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         var stored = context.Variable.Get("doc");
         await Assert.That(stored!.Type!.Name).IsEqualTo("text");

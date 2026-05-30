@@ -42,7 +42,7 @@ public class StartGoalTests
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         // Check variables
         await Assert.That(context.Variable.GetValue("name")).IsEqualTo("Plang");
@@ -81,7 +81,7 @@ public class StartGoalTests
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(context.Variable.GetValue("result")).IsEqualTo("Hello");
     }
 
@@ -112,7 +112,7 @@ public class StartGoalTests
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(capture.Lines).Contains("Hello World!");
     }
 
@@ -140,7 +140,7 @@ public class StartGoalTests
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(capture.Lines).Contains("no variables here");
     }
 
@@ -168,7 +168,7 @@ public class StartGoalTests
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(capture.Lines).Contains("Value: ");
     }
 
@@ -193,7 +193,7 @@ public class StartGoalTests
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(context.Variable.GetValue("result")).IsNull();
     }
 
@@ -225,7 +225,7 @@ public class StartGoalTests
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(context.Variable.GetValue("greeting")).IsEqualTo("hello");
 
         // Type should be "string" — resolved from defaults, not null
@@ -256,7 +256,7 @@ public class StartGoalTests
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // "long" from parameters, not "string" from defaults
         var data = context.Variable.Get("count");
         await Assert.That(data?.Type?.Name).IsEqualTo("number");
@@ -284,7 +284,7 @@ public class StartGoalTests
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // Type is derived from value ("y" is a string), not from defaults or [Default] attribute
         // This proves the fallback chain works: no defaults → no attribute → auto-derive
         var data = context.Variable.Get("x");

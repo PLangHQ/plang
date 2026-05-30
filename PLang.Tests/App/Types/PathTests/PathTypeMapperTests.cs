@@ -72,7 +72,7 @@ public class PathTypeMapperTests
             Path = new global::app.data.@this<PLangPath>("", (PLangPath)value!),
         };
         var result = await read.Run();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo("hello from a string param");
     }
 }

@@ -139,7 +139,7 @@ public class AsTIdentityTests
         var source = new global::app.data.@this<string>("messy", "not-a-number") { Context = _app.User.Context };
         source.Properties.Set("extra", "leak-check");
         var wrapped = source.As<int>();
-        await Assert.That(wrapped.Success).IsFalse();
+        await wrapped.IsFailure();
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsFalse();
         await Assert.That(ReferenceEquals(source.OnChange, wrapped.OnChange)).IsFalse();
     }

@@ -4,10 +4,8 @@ using System.Text.Json.Serialization;
 namespace app.type;
 
 /// <summary>
-/// STJ converter for <see cref="@this"/> — the JSON wire/`.pr` shape. Mirrors
-/// the <c>path</c> convention (<see cref="app.type.path.JsonConverter"/>): the
-/// entity owns a controlled, compact JSON form, distinct from its in-memory
-/// catalog navigation surface.
+/// JSON wire/`.pr` shape for <see cref="@this"/>. The entity owns a controlled,
+/// compact JSON form, distinct from its in-memory catalog navigation surface.
 ///
 /// <para>Read accepts BOTH forms STJ-default cannot express in one type:
 /// a bare string (<c>"text"</c> / <c>"image/jpeg"</c> — the slash splits in
@@ -17,9 +15,9 @@ namespace app.type;
 ///
 /// <para>Format-pluggability (protobuf, etc.) for a <em>type value crossing a
 /// channel</em> lives in <c>serializer/Default.cs</c> (the IWriter renderer) —
-/// this converter is the JSON-specific door (the `.pr` is JSON on disk).</para>
+/// this is the JSON-specific door (the `.pr` is JSON on disk).</para>
 /// </summary>
-public sealed class JsonConverter : JsonConverter<@this?>
+public sealed class json : JsonConverter<@this?>
 {
     public override @this? Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
     {

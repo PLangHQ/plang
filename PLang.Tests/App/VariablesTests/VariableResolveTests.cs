@@ -61,7 +61,7 @@ public class VariableResolveTests
 
         var resolved = slot.As<@this>(_app.User.Context);
 
-        await Assert.That(resolved.Success).IsTrue();
+        await resolved.IsSuccess();
         await Assert.That(resolved.Value).IsNotNull();
         await Assert.That(resolved.Value!.Name).IsEqualTo("x");
         await Assert.That(resolved.Value!.WasPercentWrapped).IsTrue();
@@ -81,7 +81,7 @@ public class VariableResolveTests
 
         var resolved = slot.As<@this>(_app.User.Context);
 
-        await Assert.That(resolved.Success).IsTrue();
+        await resolved.IsSuccess();
         await Assert.That(resolved.Value!.Name).IsEqualTo("x");
         await Assert.That(resolved.Value!.WasPercentWrapped).IsTrue();
     }
@@ -95,7 +95,7 @@ public class VariableResolveTests
 
         var resolved = slot.As<@this>(_app.User.Context);
 
-        await Assert.That(resolved.Success).IsTrue();
+        await resolved.IsSuccess();
         await Assert.That(resolved.Value).IsNotNull();
         await Assert.That(resolved.Value!.Name).IsEqualTo("x");
     }

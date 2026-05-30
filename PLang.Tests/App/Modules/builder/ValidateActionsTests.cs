@@ -48,7 +48,7 @@ public class ValidateActionsTests
         var action = new validate { Context = _app.User.Context, Actions = actions };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That((bool)result.Value!).IsTrue();
     }
 
@@ -63,7 +63,7 @@ public class ValidateActionsTests
         var action = new validate { Context = _app.User.Context, Actions = actions };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("nonexistent.fake");
     }
 
@@ -100,7 +100,7 @@ public class ValidateActionsTests
         var action = new validate { Context = _app.User.Context, Actions = actions };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // Verify PrPath was actually resolved
         var resolvedCall = actions[0].Parameters[0].Value as global::app.goal.GoalCall;
         await Assert.That(resolvedCall).IsNotNull();
@@ -127,7 +127,7 @@ public class ValidateActionsTests
         var action = new validate { Context = _app.User.Context, Actions = actions };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -147,7 +147,7 @@ public class ValidateActionsTests
         var action = new validate { Context = _app.User.Context, Actions = actions };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // Defaults should be filled for missing params
         var fileList = actions[0];
         await Assert.That(fileList.Defaults).IsNotNull();
@@ -180,7 +180,7 @@ public class ValidateActionsTests
         var action = new validate { Context = _app.User.Context, Actions = actions };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var rightParam = actions[0].Parameters.First(p => p.Name == "Right");
         await Assert.That(rightParam.Value).IsEqualTo(false);
         await Assert.That(rightParam.Value is bool).IsTrue();
@@ -211,7 +211,7 @@ public class ValidateActionsTests
         var action = new validate { Context = _app.User.Context, Actions = actions };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var rightParam = actions[0].Parameters.First(p => p.Name == "Right");
         // The kind="int" carries the precision intent; the value either gets
         // coerced to a number primitive at validate-time OR stays as a string
@@ -240,7 +240,7 @@ public class ValidateActionsTests
         var action = new validate { Context = _app.User.Context, Actions = actions };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // %flag% should NOT be converted — it's a variable reference
         var leftParam = actions[0].Parameters.First(p => p.Name == "Left");
         await Assert.That(leftParam.Value).IsEqualTo("%flag%");
@@ -263,7 +263,7 @@ public class ValidateActionsTests
         var action = new validate { Context = _app.User.Context, Actions = actions };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var httpConfigure = actions[0];
         await Assert.That(httpConfigure.Defaults).IsNotNull();
         await Assert.That(httpConfigure.Defaults!.Count).IsGreaterThan(0);

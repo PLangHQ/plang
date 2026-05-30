@@ -79,9 +79,9 @@ public class ProviderModuleTests
         var provider = new MockSigningProvider("mock");
         var result = _app.Code.Register<ISigning>(provider);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var retrieved = _app.Code.Get<ISigning>("mock");
-        await Assert.That(retrieved.Success).IsTrue();
+        await retrieved.IsSuccess();
         await Assert.That(retrieved.Value!.Name).IsEqualTo("mock");
     }
 
@@ -91,7 +91,7 @@ public class ProviderModuleTests
         _app.Code.Register<ISigning>(new MockSigningProvider("mock"));
         var result = _app.Code.Register<ISigning>(new MockSigningProvider("mock"));
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderExists");
     }
 
@@ -105,7 +105,7 @@ public class ProviderModuleTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("LoadError");
     }
 
@@ -119,7 +119,7 @@ public class ProviderModuleTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
     }
 
@@ -141,9 +141,9 @@ public class ProviderModuleTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var loaded = _app.Code.Get<ISigning>("test-signing");
-        await Assert.That(loaded.Success).IsTrue();
+        await loaded.IsSuccess();
         await Assert.That(loaded.Value!.Name).IsEqualTo("test-signing");
     }
 
@@ -165,7 +165,7 @@ public class ProviderModuleTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NoProviders");
     }
 
@@ -187,7 +187,7 @@ public class ProviderModuleTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderConstructor");
     }
 
@@ -209,8 +209,8 @@ public class ProviderModuleTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
-        await Assert.That(_app.Code.Get<ISigning>("second").Success).IsFalse();
+        await result.IsSuccess();
+        await _app.Code.Get<ISigning>("second").IsFailure();
     }
 
     [Test]
@@ -225,7 +225,7 @@ public class ProviderModuleTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("CannotRemoveDefault");
     }
 
@@ -240,7 +240,7 @@ public class ProviderModuleTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
     }
 
@@ -255,7 +255,7 @@ public class ProviderModuleTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("UnknownType");
     }
 
@@ -279,7 +279,7 @@ public class ProviderModuleTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(second.IsDefault).IsTrue();
         await Assert.That(first.IsDefault).IsFalse();
     }
@@ -297,7 +297,7 @@ public class ProviderModuleTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
     }
 
@@ -312,7 +312,7 @@ public class ProviderModuleTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("UnknownType");
     }
 
@@ -356,7 +356,7 @@ public class ProviderModuleTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // Returns all providers across all types
         var providers = (IReadOnlyList<ICode>)result.Value!;
         await Assert.That(providers.Count).IsGreaterThanOrEqualTo(2);
@@ -374,7 +374,7 @@ public class ProviderModuleTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -387,7 +387,7 @@ public class ProviderModuleTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("UnknownType");
     }
 

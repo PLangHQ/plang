@@ -71,7 +71,7 @@ public class AppTests
 
         var result = await _app.Save();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         // Verify file content
         var appPrPath = System.IO.Path.Combine(_tempDir, ".build", "app.pr");

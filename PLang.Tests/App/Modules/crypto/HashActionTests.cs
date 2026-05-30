@@ -42,7 +42,7 @@ public class HashActionTests
         var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value is byte[]).IsTrue();
         await Assert.That(result.Type!.Name).IsEqualTo("keccak256");
         await Assert.That(((byte[])result.Value!).Length).IsEqualTo(32);
@@ -56,7 +56,7 @@ public class HashActionTests
         var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That((byte[])result.Value!).IsEquivalentTo((byte[])refHash.Value!);
     }
 
@@ -66,7 +66,7 @@ public class HashActionTests
         var action = new Hash { Context = Ctx, Data = Data.Ok(new byte[] { 1, 2, 3 }), Algorithm = "keccak256" };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value is byte[]).IsTrue();
         await Assert.That(result.Type!.Name).IsEqualTo("keccak256");
     }
@@ -80,8 +80,8 @@ public class HashActionTests
         var keccakResult = await keccakAction.Run();
         var sha256Result = await sha256Action.Run();
 
-        await Assert.That(keccakResult.Success).IsTrue();
-        await Assert.That(sha256Result.Success).IsTrue();
+        await keccakResult.IsSuccess();
+        await sha256Result.IsSuccess();
         await Assert.That(sha256Result.Type!.Name).IsEqualTo("sha256");
         await Assert.That(keccakResult.Type!.Name).IsEqualTo("keccak256");
         await Assert.That((byte[])sha256Result.Value!).IsNotEquivalentTo((byte[])keccakResult.Value!);
@@ -97,7 +97,7 @@ public class HashActionTests
         };
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("ValueRequired");
         await Assert.That(result.Error.StatusCode).IsEqualTo(400);
@@ -109,7 +109,7 @@ public class HashActionTests
         var action = new Hash { Context = Ctx, Data = Data.Ok("test"), Algorithm = "md5" };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("UnsupportedAlgorithm");
     }
@@ -123,7 +123,7 @@ public class HashActionTests
         var action = new Hash { Context = Ctx, Data = Data.Ok("test"), Algorithm = "keccak256" };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderError");
     }
@@ -140,7 +140,7 @@ public class HashActionTests
         var verifyAction = new Verify { Context = Ctx, Data = Data.Ok("hello"), Hash = hash, Algorithm = "keccak256" };
         var result = await verifyAction.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That((bool)result.Value!).IsTrue();
     }
 
@@ -155,7 +155,7 @@ public class HashActionTests
         var verifyAction = new Verify { Context = Ctx, Data = Data.Ok("hello"), Hash = wrongHash, Algorithm = "keccak256" };
         var result = await verifyAction.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That((bool)result.Value!).IsFalse();
     }
 
@@ -165,7 +165,7 @@ public class HashActionTests
         var verifyAction = new Verify { Context = Ctx, Data = Data.Ok("hello"), Hash = "not-a-valid-base64!!!", Algorithm = "keccak256" };
         var result = await verifyAction.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("InvalidHash");
     }
@@ -176,7 +176,7 @@ public class HashActionTests
         var verifyAction = new Verify { Data = Data.Ok("hello"), Hash = null!, Algorithm = "keccak256" };
         var result = await verifyAction.ExecuteAsync(new PrAction { Module = "crypto", ActionName = "verify" }, Ctx);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         // [IsNotNull] validation catches the null Hash
         await Assert.That(result.Error!.Key).IsEqualTo("ValueRequired");
@@ -192,7 +192,7 @@ public class HashActionTests
         };
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("ValueRequired");
         await Assert.That(result.Error.StatusCode).IsEqualTo(400);
@@ -207,7 +207,7 @@ public class HashActionTests
         var verifyAction = new Verify { Context = Ctx, Data = Data.Ok("test"), Hash = Convert.ToBase64String(new byte[32]), Algorithm = "keccak256" };
         var result = await verifyAction.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderError");
     }

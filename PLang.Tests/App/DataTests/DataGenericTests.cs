@@ -12,7 +12,7 @@ public class DataGenericTests
         var data = global::app.data.@this<string>.Ok("hello");
 
         await Assert.That(data.Value).IsEqualTo("hello");
-        await Assert.That(data.Success).IsTrue();
+        await data.IsSuccess();
     }
 
     [Test]
@@ -51,7 +51,7 @@ public class DataGenericTests
         var error = new ServiceError("something failed", "TestError", 500);
         var data = global::app.data.@this<string>.FromError(error);
 
-        await Assert.That(data.Success).IsFalse();
+        await data.IsFailure();
         await Assert.That(data.Error).IsNotNull();
         await Assert.That(data.Error!.Message).IsEqualTo("something failed");
     }
@@ -62,7 +62,7 @@ public class DataGenericTests
         global::app.data.@this<string> typed = global::app.data.@this<string>.Ok("test");
         Data untyped = typed;
 
-        await Assert.That(untyped.Success).IsTrue();
+        await untyped.IsSuccess();
         await Assert.That(untyped.Value).IsEqualTo("test");
     }
 
@@ -72,7 +72,7 @@ public class DataGenericTests
         Task<Data> task = Task.FromResult<Data>(global::app.data.@this<int>.Ok(99));
         var result = await task;
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo(99);
     }
 }

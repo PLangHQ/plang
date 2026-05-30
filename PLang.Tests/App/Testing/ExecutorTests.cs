@@ -76,7 +76,7 @@ public class ExecutorTests
         var (engine, error) = executor.Configure(new[] { "--test={\"timeout\":-1}" });
 
         await Assert.That(error).IsNotNull();
-        await Assert.That(error!.Success).IsFalse();
+        await error!.IsFailure();
         await Assert.That(engine).IsNull();
     }
 
@@ -182,7 +182,7 @@ public class ExecutorTests
         var executor = NewExecutor();
         var result = await executor.Run(new[] { "--test={\"timeout\":-1}" });
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("InvalidTestConfig");
     }

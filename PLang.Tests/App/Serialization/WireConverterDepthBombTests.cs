@@ -28,7 +28,7 @@ public class WireConverterDepthBombTests
         var plang = new global::app.channel.serializer.plang.@this();
         var json = DeeplyNestedWireJson(16);
         var result = plang.Deserialize(json);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test] public async Task Deserialize_DepthBomb_RejectsAsTypedError_NotCrash()
@@ -39,7 +39,7 @@ public class WireConverterDepthBombTests
         var plang = new global::app.channel.serializer.plang.@this();
         var json = DeeplyNestedWireJson(200);
         var result = plang.Deserialize(json);
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("PlangDeserializeError");
     }
 
@@ -51,7 +51,7 @@ public class WireConverterDepthBombTests
         var bytes = Encoding.UTF8.GetBytes(json);
         using var ms = new MemoryStream(bytes);
         var result = await plang.DeserializeAsync(ms);
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("PlangDeserializeError");
     }
 }

@@ -87,7 +87,7 @@ public class GoalCallResolutionTests
         var call = new GoalCall { Name = "BuildStep/Start", Action = caller };
         var result = await call.GetGoalAsync(_app, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value is PLangGoal).IsTrue();
         await Assert.That(((PLangGoal)result.Value!).Name).IsEqualTo("Start");
     }
@@ -106,7 +106,7 @@ public class GoalCallResolutionTests
         var call = new GoalCall { Name = "BuildStep/Start", Action = caller };
         var result = await call.GetGoalAsync(_app, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value is PLangGoal).IsTrue();
         await Assert.That(((PLangGoal)result.Value!).Name).IsEqualTo("Start");
     }
@@ -123,7 +123,7 @@ public class GoalCallResolutionTests
         var call = new GoalCall { Name = "Other", Action = caller };
         var result = await call.GetGoalAsync(_app, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value is PLangGoal).IsTrue();
         await Assert.That(((PLangGoal)result.Value!).Name).IsEqualTo("Other");
     }
@@ -149,7 +149,7 @@ public class GoalCallResolutionTests
         };
         var result = await call.GetGoalAsync(_app, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value is PLangGoal).IsTrue();
         await Assert.That(((PLangGoal)result.Value!).Name).IsEqualTo("Start");
     }

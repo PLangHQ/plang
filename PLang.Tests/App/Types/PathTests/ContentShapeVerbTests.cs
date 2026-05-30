@@ -42,7 +42,7 @@ public class ContentShapeVerbTests
         System.IO.File.WriteAllBytes(file, bytes);
         var p = new FilePath(file, app.User.Context);
         var result = await p.ReadAsBase64();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo(System.Convert.ToBase64String(bytes));
     }
 
@@ -56,7 +56,7 @@ public class ContentShapeVerbTests
         System.IO.File.WriteAllBytes(outOfRoot, new byte[] { 42, 43 });
         var p = new FilePath(outOfRoot, app.User.Context);
         var result = await p.ReadAsBase64();
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         // Differentiate denial from file-not-found / other IO errors.
         await Assert.That(result.Error!.Key).IsEqualTo("PermissionDenied");
     }
@@ -84,7 +84,7 @@ public class ContentShapeVerbTests
         System.IO.File.WriteAllBytes(file, bytes);
         var p = new FilePath(file, app.User.Context);
         var result = await p.ReadAsDataUri();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value!).StartsWith("data:image/png;base64,");
     }
 
@@ -95,7 +95,7 @@ public class ContentShapeVerbTests
         System.IO.File.WriteAllBytes(file, new byte[] { 1, 2, 3 });
         var p = new FilePath(file, app.User.Context);
         var result = await p.ReadAsDataUri();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value!).StartsWith("data:application/octet-stream;base64,");
     }
 
@@ -109,7 +109,7 @@ public class ContentShapeVerbTests
         System.IO.File.WriteAllBytes(outOfRoot, new byte[] { 1 });
         var p = new FilePath(outOfRoot, app.User.Context);
         var result = await p.ReadAsDataUri();
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("PermissionDenied");
     }
 }

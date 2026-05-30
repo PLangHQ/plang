@@ -74,7 +74,7 @@ public class Cut2_SignThenCompressTests
         await Assert.That(tampered).IsNotEqualTo(wire);
 
         var back = plang.Deserialize(tampered);
-        await Assert.That(back.Success).IsTrue();
+        await back.IsSuccess();
         var restored = (global::app.data.@this)back.Value!;
         restored.Context = app.User.Context;
 
@@ -84,6 +84,6 @@ public class Cut2_SignThenCompressTests
                 Data = restored,
                 SkipFreshnessCheck = new global::app.data.@this<bool>("", true)
             }, app.User.Context);
-        await Assert.That(verify.Success).IsFalse();
+        await verify.IsFailure();
     }
 }

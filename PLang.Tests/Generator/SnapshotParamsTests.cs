@@ -93,7 +93,7 @@ public class SnapshotParamsTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<SnapshotOnError>(app,
             parameters: new[] { ("first", (object?)"a"), ("second", (object?)42) });
-        await Assert.That(result.Data.Success).IsFalse();
+        await result.Data.IsFailure();
         await Assert.That(result.Snapshot).IsNotNull();
     }
 
@@ -103,7 +103,7 @@ public class SnapshotParamsTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<StringPlain>(app,
             parameters: new[] { ("path", (object?)"hello") });
-        await Assert.That(result.Data.Success).IsTrue();
+        await result.Data.IsSuccess();
         await Assert.That(result.Snapshot).IsNull();
     }
 

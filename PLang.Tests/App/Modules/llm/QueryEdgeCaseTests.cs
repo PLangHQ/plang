@@ -51,7 +51,7 @@ public class QueryEdgeCaseTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error?.Key).IsEqualTo("ValidationError");
     }
 
@@ -133,7 +133,7 @@ public class QueryEdgeCaseTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -145,7 +145,7 @@ public class QueryEdgeCaseTests
         var action = LlmTestHelper.MakeQuery(Ctx);
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value?.ToString()).IsEqualTo("");
     }
 
@@ -163,7 +163,7 @@ public class QueryEdgeCaseTests
         try
         {
             var providerResult = engine2.Code.Get<ILlm>();
-            await Assert.That(providerResult.Success).IsTrue();
+            await providerResult.IsSuccess();
             await Assert.That(providerResult.Value).IsTypeOf<OpenAi>();
         }
         finally

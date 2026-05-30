@@ -45,7 +45,7 @@ public class Stage4_BuildMethodImplsTests
     public async Task FileRead_Build_LiteralCsvPath_ReturnsOkWithCsv()
     {
         var result = await Build("file", "read", ("Path", "foo.csv"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo("csv");
     }
 
@@ -53,7 +53,7 @@ public class Stage4_BuildMethodImplsTests
     public async Task FileRead_Build_LiteralJsonPath_ReturnsOkWithJson()
     {
         var result = await Build("file", "read", ("Path", "data.json"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo("json");
     }
 
@@ -61,7 +61,7 @@ public class Stage4_BuildMethodImplsTests
     public async Task FileRead_Build_LiteralUnknownExtension_FallsBackToOk()
     {
         var result = await Build("file", "read", ("Path", "foo.zzz"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsNull();
     }
 
@@ -69,7 +69,7 @@ public class Stage4_BuildMethodImplsTests
     public async Task FileRead_Build_NonLiteralPath_ReturnsBareOk()
     {
         var result = await Build("file", "read", ("Path", "%p%"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsNull();
     }
 
@@ -81,7 +81,7 @@ public class Stage4_BuildMethodImplsTests
 
         const string missing = "definitely-missing-stage4.csv";
         var result = await Build("file", "read", ("Path", missing));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         channel.Stream.Position = 0;
         var written = await channel.ReadAllTextAsync();
@@ -93,7 +93,7 @@ public class Stage4_BuildMethodImplsTests
     public async Task FileRead_Build_LiteralMissingFile_StillReturnsOkWithInferredType()
     {
         var result = await Build("file", "read", ("Path", "definitely-missing-stage4b.csv"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo("csv")
             .Because("Missing file is non-fatal at build time — the inferred type still surfaces.");
     }
@@ -105,7 +105,7 @@ public class Stage4_BuildMethodImplsTests
     {
         var result = await Build("llm", "query",
             ("System", "you are a bot"), ("User", "hi"), ("Schema", "{\"type\":\"object\"}"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo("json");
     }
 
@@ -114,7 +114,7 @@ public class Stage4_BuildMethodImplsTests
     {
         var result = await Build("llm", "query",
             ("System", "you are a bot"), ("User", "hi"), ("Format", "md"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo("md");
     }
 
@@ -123,7 +123,7 @@ public class Stage4_BuildMethodImplsTests
     {
         var result = await Build("llm", "query",
             ("System", "you are a bot"), ("User", "hi"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsNull();
     }
 
@@ -133,7 +133,7 @@ public class Stage4_BuildMethodImplsTests
     public async Task HttpRequest_Build_LiteralUrlWithExtension_InfersTypeFromExtension()
     {
         var result = await Build("http", "request", ("Url", "https://api/x.json"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo("json");
     }
 
@@ -143,7 +143,7 @@ public class Stage4_BuildMethodImplsTests
         // .pdf has a known mime but is not a registered PLang type. Stamping
         // "pdf" would make the trailing variable.set fail with "Unknown type 'pdf'".
         var result = await Build("http", "request", ("Url", "https://x/report.pdf"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsNull();
     }
 
@@ -153,7 +153,7 @@ public class Stage4_BuildMethodImplsTests
         var result = await Build("http", "upload",
             ("Url", "%endpoint%"),
             ("FilePath", "/tmp/dummy.txt"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsNull();
     }
 }

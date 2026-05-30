@@ -53,7 +53,7 @@ public class IdentityErrorPathTests
             _app.SettingsStore));
 
         var result = await new global::app.module.identity.Get { Context = Ctx, Name = null }.Run();
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("IOError");
     }
 
@@ -63,14 +63,14 @@ public class IdentityErrorPathTests
         // Create a non-default, non-archived identity first (using real DataSource)
         var create = new Create { Context = Ctx, Name = "candidate", SetAsDefault = false };
         var createResult = await create.Run();
-        await Assert.That(createResult.Success).IsTrue();
+        await createResult.IsSuccess();
 
         // Now swap to failing DataSource — GetAll still works (delegates), but Set fails
         SwapDataSource(_app, new FailingSaveDataSource(
             _app.SettingsStore));
 
         var result = await new global::app.module.identity.Get { Context = Ctx, Name = null }.Run();
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("IOError");
     }
 
@@ -86,7 +86,7 @@ public class IdentityErrorPathTests
         var handler = new global::app.module.identity.Get { Context = Ctx, Name = null };
         var result = await handler.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("IOError");
     }
@@ -101,7 +101,7 @@ public class IdentityErrorPathTests
         var handler = new Export { Context = Ctx, Name = null };
         var result = await handler.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("IOError");
     }
@@ -135,7 +135,7 @@ public class IdentityErrorPathTests
         var handler = new Create { Context = Ctx, Name = "new", SetAsDefault = true };
         var result = await handler.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("IOError");
     }
@@ -150,7 +150,7 @@ public class IdentityErrorPathTests
         var handler = new Create { Context = Ctx, Name = "newid", SetAsDefault = false };
         var result = await handler.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("IOError");
     }
@@ -171,7 +171,7 @@ public class IdentityErrorPathTests
         var handler = new SetDefault { Context = Ctx, Name = "new" };
         var result = await handler.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("IOError");
     }
@@ -190,7 +190,7 @@ public class IdentityErrorPathTests
         var handler = new SetDefault { Context = Ctx, Name = "target" };
         var result = await handler.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("IOError");
     }
@@ -208,7 +208,7 @@ public class IdentityErrorPathTests
         var handler = new Rename { Context = Ctx, Name = "oldname", NewName = "newname" };
         var result = await handler.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("IOError");
     }
@@ -226,7 +226,7 @@ public class IdentityErrorPathTests
         var handler = new Rename { Context = Ctx, Name = "oldname", NewName = "newname" };
         var result = await handler.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("IOError");
     }
@@ -244,7 +244,7 @@ public class IdentityErrorPathTests
         var handler = new Archive { Context = Ctx, Name = "toarchive" };
         var result = await handler.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("IOError");
     }
@@ -265,7 +265,7 @@ public class IdentityErrorPathTests
         var handler = new Unarchive { Context = Ctx, Name = "tounarchive" };
         var result = await handler.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("IOError");
     }
@@ -279,7 +279,7 @@ public class IdentityErrorPathTests
 
         var handler = new list { Context = Ctx };
         var result = await handler.Run();
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
     }
 
@@ -294,7 +294,7 @@ public class IdentityErrorPathTests
 
         var result = await new global::app.module.identity.Get { Context = Ctx, Name = "weird" }.Run();
         // Identity deserializes but has empty PublicKey — valid but useless
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var identity = result.Value as Identity;
         await Assert.That(identity!.PublicKey).IsEqualTo("");
     }
@@ -313,7 +313,7 @@ public class IdentityErrorPathTests
 
         var handler = new list { Context = Ctx };
         var result = await handler.Run();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         var list = result.Value as List<Identity>;
         // Both deserialize as Identity — no type filtering anymore

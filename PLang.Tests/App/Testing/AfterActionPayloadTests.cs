@@ -91,7 +91,7 @@ public class AfterActionPayloadTests
         await RunSimpleGoal();
 
         await Assert.That(captured).IsNotNull();
-        await Assert.That(captured!.Success).IsTrue();
+        await captured!.IsSuccess();
     }
 
     // timeout.after wrapping http.request emits two AfterAction events — one for the
@@ -227,7 +227,7 @@ public class AfterActionPayloadTests
         await _app.RunGoalAsync(goal, _app.User.Context);
 
         await Assert.That(captured).IsNotNull();
-        await Assert.That(captured!.Success).IsFalse();
+        await captured!.IsFailure();
         await Assert.That(captured.Error).IsNotNull();
     }
 

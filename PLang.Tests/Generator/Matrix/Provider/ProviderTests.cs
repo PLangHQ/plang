@@ -12,7 +12,7 @@ public class ProviderPropTests
         app.Code.Register<IFakeProvider>(new FakeProvider());
 
         var result = await MatrixRunner.RunAsync<ProviderProp>(app);
-        await Assert.That(result.Data.Success).IsTrue();
+        await result.Data.IsSuccess();
         await Assert.That(result.Data.Value).IsEqualTo("echo:hi");
     }
 
@@ -42,7 +42,7 @@ public class ProviderMissingTests
         // IUnregisteredProvider is NOT registered.
 
         var result = await MatrixRunner.RunAsync<ProviderMissing>(app);
-        await Assert.That(result.Data.Success).IsFalse();
+        await result.Data.IsFailure();
         await Assert.That(result.Data.Error).IsNotNull();
     }
 

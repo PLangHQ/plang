@@ -24,12 +24,12 @@ public class PrPipelineTests
 
         // Load the .pr file — full pipeline: filesystem → deserialize → goal
         var loadResult = await engine.Goal.LoadFromFileAsync(engine,"FullPipeline.pr");
-        await Assert.That(loadResult.Success).IsTrue();
+        await loadResult.IsSuccess();
 
         // Execute
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(new GoalCall { Name = "FullPipeline" }, context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         // Variables set correctly
         await Assert.That(context.Variable.GetValue("greeting")).IsEqualTo("Hello");
@@ -57,11 +57,11 @@ public class PrPipelineTests
 
         // Load and execute
         var loadResult = await engine.Goal.LoadFromFileAsync(engine,"ReadFile.pr");
-        await Assert.That(loadResult.Success).IsTrue();
+        await loadResult.IsSuccess();
 
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(new GoalCall { Name = "ReadFile" }, context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         // Return mapping: file/read returns Data.Ok(file), return: [{ name: "content" }] maps it to %content%
         var content = context.Variable.GetValue("content");
@@ -83,11 +83,11 @@ public class PrPipelineTests
         await using var engine = new global::app.@this(fixturesDir);
 
         var loadResult = await engine.Goal.LoadFromFileAsync(engine,"FilePathsFromRoot.pr");
-        await Assert.That(loadResult.Success).IsTrue();
+        await loadResult.IsSuccess();
 
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(new GoalCall { Name = "FilePathsFromRoot" }, context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         // #1: testdata.txt — relative, same folder
         await Assert.That(context.Variable.GetValue("relative")!.ToString()).IsEqualTo("Hello from test file");
@@ -109,7 +109,7 @@ public class PrPipelineTests
         await using var engine = new global::app.@this(fixturesDir);
 
         var loadResult = await engine.Goal.LoadFromFileAsync(engine,System.IO.Path.Combine("sub", "FilePathsFromSub.pr"));
-        await Assert.That(loadResult.Success).IsTrue();
+        await loadResult.IsSuccess();
 
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(new GoalCall { Name = "FilePathsFromSub" }, context);
@@ -157,7 +157,7 @@ public class PrPipelineTests
         var result = await engine.RunGoalAsync(goal, context);
 
         // File found — relative resolves to {root}/sub/subdata.txt (goal folder)
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value!.ToString()).IsEqualTo("Hello from subfolder");
     }
 
@@ -195,7 +195,7 @@ public class PrPipelineTests
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value!.ToString()).IsEqualTo("Hello from test file");
     }
 
@@ -233,7 +233,7 @@ public class PrPipelineTests
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value!.ToString()).IsEqualTo("Hello from subfolder");
     }
 
@@ -272,7 +272,7 @@ public class PrPipelineTests
         var result = await engine.RunGoalAsync(goal, context);
 
         // file/read returns Data.FromError for missing files
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
     }
 
@@ -311,7 +311,7 @@ public class PrPipelineTests
         var result = await engine.RunGoalAsync(goal, context);
 
         // PLangFileSystem should block path escape — either throws FileAccessException or returns error
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
     }
 
     #endregion

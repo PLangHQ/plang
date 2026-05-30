@@ -35,7 +35,7 @@ public class ModuleAddTests
 
         var result = await add.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("Module not found");
     }
 
@@ -55,7 +55,7 @@ public class ModuleAddTests
             var countBefore = app.Module.Count;
             var result = await add.Run();
 
-            await Assert.That(result.Success).IsTrue();
+            await result.IsSuccess();
             // Discover re-registers the same built-in types, count stays same
             // but no error should occur
         }
@@ -75,7 +75,7 @@ public class ModuleAddTests
             };
 
             var result = await add.Run();
-            await Assert.That(result.Success).IsTrue();
+            await result.IsSuccess();
 
             // After adding, actions should be discoverable via the flat registry
             await Assert.That(app.Module.Contains("variable", "set")).IsTrue();
@@ -96,7 +96,7 @@ public class ModuleAddTests
             };
 
             var result = await add.Run();
-            await Assert.That(result.Success).IsTrue();
+            await result.IsSuccess();
 
             // The result value should report 0 actions discovered
             await Assert.That(result.Value).IsNotNull();
@@ -118,7 +118,7 @@ public class ModuleAddTests
 
             var result = await add.Run();
 
-            await Assert.That(result.Success).IsTrue();
+            await result.IsSuccess();
             await Assert.That(result.Value).IsNotNull();
         }
     }
@@ -137,7 +137,7 @@ public class ModuleAddTests
             };
 
             var result = await add.Run();
-            await Assert.That(result.Success).IsTrue();
+            await result.IsSuccess();
 
             // With null namespace, Discover defaults to App.modules
             await Assert.That(app.Module.Contains("variable", "set")).IsTrue();
@@ -158,7 +158,7 @@ public class ModuleAddTests
             };
 
             var result = await add.Run();
-            await Assert.That(result.Success).IsTrue();
+            await result.IsSuccess();
 
             // Actions registered via Discover should be resolvable
             var (action, error) = app.Module.GetCodeGenerated(new PrAction { Module = "variable", ActionName = "set" });

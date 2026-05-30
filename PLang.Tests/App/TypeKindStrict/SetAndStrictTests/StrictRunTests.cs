@@ -35,7 +35,7 @@ public class StrictRunTests
             ("value", "%upload%"),
             ("type", new global::app.type.@this("image", "gif", true)));
         var result = await action.RunAsync(context);
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error?.Message ?? "").Contains("gif");
     }
 
@@ -48,7 +48,7 @@ public class StrictRunTests
             ("value", "%upload%"),
             ("type", new global::app.type.@this("image", "gif", true)));
         var result = await action.RunAsync(context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var stored = context.Variable.Get("img");
         await Assert.That(stored!.Type!.Name).IsEqualTo("image");
         await Assert.That(stored.Type.Kind).IsEqualTo("gif");
@@ -62,7 +62,7 @@ public class StrictRunTests
             ("value", "readme.md"),
             ("type", new global::app.type.@this("text")));
         var result = await action.RunAsync(context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var stored = context.Variable.Get("x");
         await Assert.That(stored!.Type!.Name).IsEqualTo("text");
         await Assert.That(stored.Type.Kind).IsEqualTo("md");

@@ -23,7 +23,7 @@ public class SetMintCarriesKindTests
             ("name", "%doc%"),
             ("value", "readme.md"));
         var result = await action.RunAsync(context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var stored = context.Variable.Get("doc");
         await Assert.That(stored!.Type!.Name).IsEqualTo("text");
     }
@@ -36,7 +36,7 @@ public class SetMintCarriesKindTests
             ("value", "readme.md"),
             ("type", new global::app.type.@this("text")));
         var result = await action.RunAsync(context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var stored = context.Variable.Get("doc");
         await Assert.That(stored!.Type!.Name).IsEqualTo("text");
         await Assert.That(stored.Type.Kind).IsEqualTo("md");
@@ -50,7 +50,7 @@ public class SetMintCarriesKindTests
             ("value", "real.gif"),
             ("type", new global::app.type.@this("image", "gif")));
         var result = await action.RunAsync(context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var stored = context.Variable.Get("img");
         await Assert.That(stored!.Type!.Name).IsEqualTo("image");
         await Assert.That(stored.Type.Kind).IsEqualTo("gif");

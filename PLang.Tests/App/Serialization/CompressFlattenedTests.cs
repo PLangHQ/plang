@@ -95,7 +95,7 @@ public class CompressFlattenedTests
         var d = NewCompressibleData(app, "via plang serializer");
         var archived = d.Compress();
         var restored = archived.Decompress();
-        await Assert.That(restored.Success).IsTrue();
+        await restored.IsSuccess();
         await Assert.That(restored.Value as string).IsEqualTo("via plang serializer");
     }
 

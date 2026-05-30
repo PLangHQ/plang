@@ -21,7 +21,7 @@ public class ProviderRegistryTests
     public async Task Get_NoRegistration_ReturnsError()
     {
         var result = _providers.Get<ICrypto>();
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
     }
 
@@ -32,7 +32,7 @@ public class ProviderRegistryTests
         _providers.Register<ICrypto>(provider);
 
         var result = _providers.Get<ICrypto>();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsSameReferenceAs(provider);
     }
 
@@ -44,7 +44,7 @@ public class ProviderRegistryTests
 
         var second = new global::app.module.crypto.code.Default();
         var result = _providers.Register<ICrypto>(second);
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderExists");
     }
 
@@ -70,15 +70,15 @@ public class ProviderRegistryTests
         _providers.Register<ICrypto>(second);
 
         var removed = _providers.Remove<ICrypto>("second");
-        await Assert.That(removed.Success).IsTrue();
-        await Assert.That(_providers.Get<ICrypto>("second").Success).IsFalse();
+        await removed.IsSuccess();
+        await _providers.Get<ICrypto>("second").IsFailure();
     }
 
     [Test]
     public async Task Remove_NoRegistration_ReturnsError()
     {
         var removed = _providers.Remove<ICrypto>("unknown");
-        await Assert.That(removed.Success).IsFalse();
+        await removed.IsFailure();
         await Assert.That(removed.Error!.Key).IsEqualTo("ProviderNotFound");
     }
 

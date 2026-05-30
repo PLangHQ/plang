@@ -793,7 +793,7 @@ public class DataTests
         var compressed = wrapped.Compress();
         var decompressed = compressed.Decompress();
 
-        await Assert.That(decompressed.Success).IsTrue();
+        await decompressed.IsSuccess();
         await Assert.That(decompressed.Type!.Name).IsEqualTo("text");
         await Assert.That(decompressed.Value).IsTypeOf<Data>();
         var decompressedInner = (Data)decompressed.Value!;
@@ -825,7 +825,7 @@ public class DataTests
         compressed.Context = context;
         var decompressed = compressed.Decompress();
 
-        await Assert.That(decompressed.Success).IsTrue();
+        await decompressed.IsSuccess();
         await Assert.That(decompressed.Type!.Name).IsEqualTo("text");
 
         // Unwrap to get back to the content
@@ -896,7 +896,7 @@ public class DataTests
         // Inbound: Decrypt → Decompress → Unwrap
         var inbound = outbound.Decrypt().Decompress().Unwrap();
 
-        await Assert.That(inbound.Success).IsTrue();
+        await inbound.IsSuccess();
         await Assert.That(inbound.Value).IsEqualTo("Report content here");
     }
 
@@ -911,7 +911,7 @@ public class DataTests
 
         var result = data.Decompress();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("DecompressError");
         await Assert.That(result.Error!.Message).Contains("byte[] value");
     }
@@ -924,7 +924,7 @@ public class DataTests
 
         var result = archived.Decompress();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("DecompressError");
         await Assert.That(result.Error!.Message).Contains("byte[] value");
     }
@@ -940,7 +940,7 @@ public class DataTests
 
         var result = archived.Decompress();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("DecompressError");
         await Assert.That(result.Error!.Message).Contains("Decompression failed");
     }
@@ -967,7 +967,7 @@ public class DataTests
 
         var result = archived.Decompress();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("DecompressError");
         await Assert.That(result.Error!.Message).Contains("Deserialization failed");
     }
@@ -991,7 +991,7 @@ public class DataTests
         compressed.Context = context;
         var decompressed = compressed.Decompress();
 
-        await Assert.That(decompressed.Success).IsTrue();
+        await decompressed.IsSuccess();
         await Assert.That(decompressed.Type!.Name).IsEqualTo("document");
         await Assert.That(decompressed.Value).IsTypeOf<Data>();
 
@@ -1019,7 +1019,7 @@ public class DataTests
         compressed.Context = context;
         var decompressed = compressed.Decompress();
 
-        await Assert.That(decompressed.Success).IsTrue();
+        await decompressed.IsSuccess();
         // Stage 4: Properties now ride on the wire — they round-trip.
         await Assert.That(decompressed.Properties["metadata"]).IsEqualTo("some value");
     }
@@ -1090,7 +1090,7 @@ public class DataTests
         var result = data.GetChild(path);
 
         await Assert.That(result).IsNotNull();
-        await Assert.That(result!.Success).IsFalse();
+        await result!.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NavigationDepthExceeded");
         await Assert.That(result.Error!.StatusCode).IsEqualTo(400);
     }
@@ -1123,7 +1123,7 @@ public class DataTests
 
         var result = archived.Decompress();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("DecompressError");
         await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
         await Assert.That(result.Error!.Message).Contains("size limit");

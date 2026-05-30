@@ -50,14 +50,14 @@ public class QueryCacheTests
         var action = LlmTestHelper.MakeQuery(Ctx, userText: "cache test");
 
         var result1 = await action.Run();
-        await Assert.That(result1.Success).IsTrue();
+        await result1.IsSuccess();
         await Assert.That(_handler.CallCount).IsEqualTo(1);
 
         // Second call — should hit cache
         var action2 = LlmTestHelper.MakeQuery(Ctx, userText: "cache test");
         var result2 = await action2.Run();
 
-        await Assert.That(result2.Success).IsTrue();
+        await result2.IsSuccess();
         await Assert.That(_handler.CallCount).IsEqualTo(1); // No additional HTTP call
         await Assert.That(result2.Properties["Cached"]).IsEqualTo(true);
     }
@@ -160,14 +160,14 @@ public class QueryCacheTests
 
         var action = LlmTestHelper.MakeQuery(Ctx, userText: "props test");
         var result1 = await action.Run();
-        await Assert.That(result1.Success).IsTrue();
+        await result1.IsSuccess();
 
         // Cache hit — goes through RestoreFromCache which deserializes cached value + metadata
         var action2 = LlmTestHelper.MakeQuery(Ctx, userText: "props test");
         var result2 = await action2.Run();
 
         // Verify the cached result value matches original
-        await Assert.That(result2.Success).IsTrue();
+        await result2.IsSuccess();
         await Assert.That(result2.Value?.ToString()).IsEqualTo("preserved");
         // Verify metadata was restored from cache
         await Assert.That(result2.Properties["Cached"]).IsEqualTo(true);

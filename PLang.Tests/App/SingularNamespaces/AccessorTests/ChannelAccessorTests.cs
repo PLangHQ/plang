@@ -32,7 +32,7 @@ public class ChannelAccessorTests
         await using var app = new PLangEngine("/test");
         var channel = app.User.Channel["output"];
         var result = await channel.WriteAsync(new global::app.data.@this<string>("", "hello"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test] public async Task ChannelEntity_Read_ReturnsTheLastWrittenData()

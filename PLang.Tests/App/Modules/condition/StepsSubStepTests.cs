@@ -127,7 +127,7 @@ public class StepsSubStepTests : IDisposable
         var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(getOutput()).DoesNotContain("should-be-skipped");
     }
 
@@ -143,7 +143,7 @@ public class StepsSubStepTests : IDisposable
         var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(getOutput()).Contains("child-executed");
     }
 
@@ -160,7 +160,7 @@ public class StepsSubStepTests : IDisposable
         var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var output = getOutput();
         await Assert.That(output).DoesNotContain("child-skipped");
         await Assert.That(output).Contains("next-runs");
@@ -180,7 +180,7 @@ public class StepsSubStepTests : IDisposable
         var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var output = getOutput();
         await Assert.That(output).DoesNotContain("inner-skipped");
         await Assert.That(output).Contains("outer-runs");
@@ -198,7 +198,7 @@ public class StepsSubStepTests : IDisposable
         var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(getOutput()).Contains("next-runs");
     }
 
@@ -216,7 +216,7 @@ public class StepsSubStepTests : IDisposable
         var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var output = getOutput();
         await Assert.That(output).DoesNotContain("child-A-skipped");
         await Assert.That(output).Contains("child-B-runs");
@@ -235,7 +235,7 @@ public class StepsSubStepTests : IDisposable
         var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(getOutput()).Contains("leaf-runs");
     }
 
@@ -254,7 +254,7 @@ public class StepsSubStepTests : IDisposable
         var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // variable.set returns Data.Ok({name, value, type}) — Value is a variable object, not bool false
         // So HasIndentedChildren check passes but Value is not bool false → children execute
         await Assert.That(getOutput()).Contains("child-runs");

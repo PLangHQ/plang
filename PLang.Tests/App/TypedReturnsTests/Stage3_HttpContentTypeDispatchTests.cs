@@ -55,7 +55,7 @@ public class Stage3_HttpContentTypeDispatchTests
         };
         var action = new request { Context = _app.User.Context, Url = url, Unsigned = true };
         var result = await action.Run();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         return result.Value!;
     }
 

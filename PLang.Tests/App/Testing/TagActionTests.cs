@@ -41,7 +41,7 @@ public class TagActionTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(_app.Tester.CurrentTest.UserTags.Contains("http")).IsTrue();
         await Assert.That(_app.Tester.CurrentTest.UserTags.Contains("fast")).IsTrue();
     }
@@ -62,7 +62,7 @@ public class TagActionTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(_app.Tester.Results.Count).IsEqualTo(beforeResultCount);
         await Assert.That(_app.User.Context.Variable.GetNames().Count()).IsEqualTo(beforeVarCount);
     }
@@ -82,7 +82,7 @@ public class TagActionTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(_app.Tester.CurrentTest).IsNull();
     }
 

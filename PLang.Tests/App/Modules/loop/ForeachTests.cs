@@ -46,7 +46,7 @@ public class ForeachTests
 
         var result = await step.RunAsync(context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(context.Variable.GetValue("item")).IsEqualTo("c");
     }
 
@@ -60,7 +60,7 @@ public class ForeachTests
             ("collection", "%items%"), ("itemname", "%item%"));
         var result = await action.RunAsync(context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var loopResult = result.Value as LoopResult;
         await Assert.That(loopResult!.itemCount).IsEqualTo(0);
         await Assert.That(loopResult.completed).IsTrue();
@@ -91,7 +91,7 @@ public class ForeachTests
 
         var result = await step.RunAsync(context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(context.Variable.GetValue("myItem")).IsEqualTo("hello");
     }
 
@@ -121,7 +121,7 @@ public class ForeachTests
 
         var result = await step.RunAsync(context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -151,7 +151,7 @@ public class ForeachTests
 
         var result = await step.RunAsync(context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // %key% should be the dictionary key (string "greeting"), not numeric index (0)
         var key = context.Variable.GetValue("key");
         await Assert.That(key).IsEqualTo("greeting");
@@ -169,7 +169,7 @@ public class ForeachTests
             ("collection", null), ("itemname", "%item%"));
         var result = await action.RunAsync(context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var loopResult = result.Value as LoopResult;
         await Assert.That(loopResult!.itemCount).IsEqualTo(0);
         await Assert.That(loopResult.completed).IsTrue();
@@ -189,7 +189,7 @@ public class ForeachTests
             ("collection", "%items%"), ("itemname", "%item%"));
         var result = await action.RunAsync(context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var loopResult = result.Value as LoopResult;
         await Assert.That(loopResult!.completed).IsFalse();
         await Assert.That(loopResult.itemCount).IsEqualTo(0);

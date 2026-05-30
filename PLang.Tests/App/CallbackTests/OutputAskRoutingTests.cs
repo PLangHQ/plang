@@ -36,7 +36,7 @@ public class OutputAskRoutingTests
 
         var handler = new ask { Context = context, Question = new global::app.data.@this<string>("", "name?") };
         var result = await handler.Run();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value?.Answer).IsEqualTo("Alice");
         await Assert.That(context.Variable.Get(ask.AnswerVariableName).IsInitialized).IsFalse();
     }
@@ -66,7 +66,7 @@ public class OutputAskRoutingTests
         // without needing a registered Channels collection for the serializer.
         var action = new ask { Context = app.User.Context, Question = new global::app.data.@this<string>("", "") };
         var result = await ch.Ask(action);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value as string).IsEqualTo("Alice");
     }
 

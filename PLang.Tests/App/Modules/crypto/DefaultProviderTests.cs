@@ -22,7 +22,7 @@ public class DefaultCryptoProviderTests
         var result = _provider.Hash(HashAction(new byte[] { 116, 101, 115, 116 })); // "test" as raw bytes
         var hex = Convert.ToHexString((byte[])result.Value!).ToLowerInvariant();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(hex).IsEqualTo("9c22ff5f21f0b81b113e63f7db6da94fedef11b2119b4088b89664fb9a3cb658");
     }
 
@@ -32,7 +32,7 @@ public class DefaultCryptoProviderTests
         var result = _provider.Hash(HashAction(new byte[] { 116, 101, 115, 116 }, "sha256"));
         var hex = Convert.ToHexString((byte[])result.Value!).ToLowerInvariant();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(hex).IsEqualTo("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08");
     }
 
@@ -41,7 +41,7 @@ public class DefaultCryptoProviderTests
     {
         var result = _provider.Hash(HashAction("test", "md5"));
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("UnsupportedAlgorithm");
     }
 
@@ -50,7 +50,7 @@ public class DefaultCryptoProviderTests
     {
         var result = _provider.Hash(HashAction(Array.Empty<byte>()));
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(((byte[])result.Value!).Length).IsGreaterThan(0);
     }
 
@@ -87,7 +87,7 @@ public class DefaultCryptoProviderTests
         var base64 = Convert.ToBase64String((byte[])hashResult.Value!);
         var result = _provider.Verify(VerifyAction(new byte[] { 104, 101, 108, 108, 111 }, base64));
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That((bool)result.Value!).IsTrue();
     }
 
@@ -98,7 +98,7 @@ public class DefaultCryptoProviderTests
         var base64 = Convert.ToBase64String((byte[])hashResult.Value!);
         var result = _provider.Verify(VerifyAction(new byte[] { 119, 114, 111, 110, 103 }, base64)); // "wrong"
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That((bool)result.Value!).IsFalse();
     }
 
@@ -109,7 +109,7 @@ public class DefaultCryptoProviderTests
         var base64 = Convert.ToBase64String((byte[])hashResult.Value!);
         var result = _provider.Verify(VerifyAction(new byte[] { 104, 101, 108, 108, 111 }, base64, "sha256"));
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That((bool)result.Value!).IsTrue();
     }
 
@@ -121,7 +121,7 @@ public class DefaultCryptoProviderTests
         hashBytes[0] ^= 0xFF;
         var result = _provider.Verify(VerifyAction(new byte[] { 104, 101, 108, 108, 111 }, Convert.ToBase64String(hashBytes), "sha256"));
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That((bool)result.Value!).IsFalse();
     }
 
@@ -130,7 +130,7 @@ public class DefaultCryptoProviderTests
     {
         var result = _provider.Verify(VerifyAction("test", Convert.ToBase64String(new byte[32]), "md5"));
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("UnsupportedAlgorithm");
     }
 }
