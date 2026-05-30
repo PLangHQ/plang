@@ -1,0 +1,62 @@
+{
+  "branch": "type-kind-strict",
+  "sessions": [
+    {
+      "id": "4bb00ef3-1dd1-4a3d-8396-43cfb77a81ef",
+      "bot": "architect",
+      "timestamp_start": "2026-05-30T11:42:40+00:00",
+      "timestamp_end": "2026-05-30T11:55:00+00:00",
+      "intent": "Design the structured type value {name, kind, strict}, the text type, build-time kind derivation + strict validation, and the restructured LLM type representation.",
+      "before": {
+        "assumptions": "The plang-types merge already added app.data.type (a flat string wrapper), Data.Kind (separate field stamped at build via the Build(value) hook), number (advertises kinds int|long|decimal|double), image (kind extension-derived), the formats registry, and the catalog TypeSchemas renderer with (kinds: ...). variable.set.Type is a bare string?; 'as text' is taught purely as prose in the action's Notes. The type vocabulary reaches the LLM in three disagreeing places: a hardcoded list in the Compile.llm system prompt, a flat 'Primitive types:' line repeated per step, and a scoped catalog block.",
+        "risk": "Folding Data.Kind into type, dropping string in favour of text globally, and moving int/long/... under number all change the wire/.pr shape and the catalog the LLM sees. Broad blast radius across builder prompts, tests asserting type=='string', and the formats registry's 'kind'-means-family naming. Mitigated by routing through the existing ValidateBuild + NormalizeParameterTypes seams rather than new passes."
+      },
+      "plan": ".bot/type-kind-strict/architect/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/modules/variable/set.cs",
+            "PLang/app/types/number/this.cs",
+            "PLang/app/types/image/this.cs",
+            "PLang/app/types/primitives/this.cs",
+            "PLang/app/formats/this.cs",
+            "PLang/app/builder/Types/this.cs",
+            "PLang/app/builder/Types/Entry.cs",
+            "PLang/app/modules/builder/code/Default.cs",
+            "os/system/builder/llm/Compile.llm",
+            "os/system/builder/llm/CompileUser.llm",
+            "os/system/builder/BuildStep/Start.goal"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read the type system end-to-end and captured a fresh compile trace (Tests/Simple, --build cache:false) to ground the design in the actual prompt the LLM receives rather than assumptions. Confirmed: number already advertises kinds, image's kind is extension-derived, variable.set.Type is a bare string with 'as text' taught only in prose, and the type vocabulary reaches the LLM in three disagreeing surfaces. Reverted the build churn (start.test.pr) and removed the scratch trace dir."
+        },
+        {
+          "paths": [
+            ".bot/type-kind-strict/architect/plan.md",
+            ".bot/type-kind-strict/architect/plan/type-value-model.md",
+            ".bot/type-kind-strict/architect/plan/kind-derivation-and-validation.md",
+            ".bot/type-kind-strict/architect/plan/llm-type-representation.md",
+            ".bot/type-kind-strict/architect/stage-1-type-value-model.md",
+            ".bot/type-kind-strict/architect/stage-2-text-type-and-names.md",
+            ".bot/type-kind-strict/architect/stage-3-kind-derivation.md",
+            ".bot/type-kind-strict/architect/stage-4-set-and-strict.md",
+            ".bot/type-kind-strict/architect/stage-5-llm-representation.md",
+            ".bot/type-kind-strict/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote the spine (plan.md), three topic deep-dives (type value model, kind derivation/validation, LLM type representation), and five stage files for the coder. Design is settled across the conversation; awaiting Ingi's review comments before suggesting test-designer."
+        }
+      ],
+      "after": {
+        "status": "Design written, nothing built. Awaiting review.",
+        "health": "green",
+        "notes": "Branch off runtime2 (d782fe2b5) for a clean base. Test strategy deferred until design confirmed. Open question logged: whether Data.Type.Kind reads back number's NumberKind for full consistency."
+      }
+    }
+  ]
+}
