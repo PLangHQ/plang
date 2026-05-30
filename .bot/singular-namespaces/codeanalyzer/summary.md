@@ -1,22 +1,25 @@
 # Code Analyzer — summary (singular-namespaces)
 
-**Version:** v2 (re-review of coder's fix for v1 + fresh-eye pass)
+**Version:** v3 (re-review of coder's fix for the v2 blocker)
 
 ## What this is
-Review of the `singular-namespaces` refactor (plural→singular `PLang/app/**` namespaces, `X/list/this.cs` registries, Stage-4 type-entity Entry fold). v1 found one blocker (type-entity door asymmetry) + minor dead enumerators. The coder addressed them in commit `3a4f9a616`. This version re-reviews that fix.
+Review of the `singular-namespaces` refactor (plural→singular `PLang/app/**` namespaces, `X/list/this.cs` registries, Stage-4 type-entity Entry fold). History on this branch:
+- **v1 (FAIL):** type-entity door asymmetry — `app.Type[name]` returned a contextless half-entity with silently-null catalog props; doc claimed door-equivalence; test asserted a manual-stamp workaround. Plus dead enumerators.
+- **v2 (FAIL):** coder's door fix (memoized catalog cache) replaced the silent null with a **non-deterministic** null — first-wins `TryAdd` over an unordered type set, so a name collision (`"goal"`) let a barren entry shadow the `Fields`-bearing one. Proof-test failed 8/8 in isolation.
+- **v3 (this — PASS):** coder added deterministic collision resolution.
 
-## v2 result: **FAIL**
+## v3 result: **PASS**
 
-### The fix for v1 finding #1 is non-deterministic
-The coder made `app.Type[name]`/`of<T>()` return a memoized catalog-built entity (so fold props no longer need a Context stamp) and rewired `Promote()` to read the same cache. Correct intent — but the cache is populated by **first-wins `dict.TryAdd(entry.Value, entry)` over an unordered type set** (`type/list/this.cs:175`; seed `KnownTypes()`→`.Distinct()` and `SafeGetTypes()`→`assembly.GetTypes()`, neither order-stable). When two CLR types map to one PLang name (`"goal"` does), a barren entry can shadow the `Fields`-bearing one depending on reflection order.
+### v2 blocker — FIXED
+Cache build now breaks same-name ties by richness rank (`type/list/this.cs:172–205`): Record(Fields)=3 > Enum(Values)=2 > Scalar(Shape/CtorSig)=1 > barren=0; richer entry wins regardless of reflection order. `Rank()` reading fold getters during cache build with `Context==null` is safe (Promote short-circuits, no re-entry).
 
-**Reproduction (clean build):** `AppType_IndexByName_Fields_OnRecordType_FoldedFromEntry` fails **8/8 in isolation**; passes sometimes when co-executed with sibling tests (process state perturbs the order). `data.Type` inherits the same flaw — `Promote()` reads the same cache via `ComplexSchemas()` (`type/this.cs:137`). The coder's "green" was a stale-binary / lucky-order artifact.
+**Verified the way it failed:** `AppType_IndexByName_Fields_OnRecordType_FoldedFromEntry` in **isolation ×8 → 8 PASS / 0 FAIL** (was 0/8). Clean rebuild; full suite **3694/3694**, both projects build clean.
 
-**Fix direction:** deterministic, shape-preferring collision resolution — on duplicate name keep the entry whose `Fields`/`Values`/`Shape` is non-null; order the seed stably. Re-verify the test **in isolation**, not just in a full-suite run.
+### v2 finding #2 — was MY false positive
+`goal/list.All` is not dead — `GoalsTests.cs:233` (`goals.All`) calls it; my v2 grep was too narrow. Coder corrected the comment accurately. Owned and dropped.
 
-### Other
-- **Clean:** `channel/list.All` deleted; `goal/list.Value` deleted; Promote perf memoized; generator `?`-on-nullable-partial fix correct and minimal; primitive door (`ClrType` pre-stamp) correct; Scheme's residual Context stamp honestly documented.
-- **Low residual:** `goal/list.All` was kept (zero callers) behind a misleading comment ("non-IEnumerable alias" — it is `IEnumerable`). Delete it or fix the comment.
+### Latent non-blocking edge
+Tiebreak resolves cross-rank only; two equal-rank entries under one name would stay first-wins. Doesn't occur today; both would satisfy `Fields != null` anyway. Optional one-line guard if a second populated type ever claims an existing name.
 
-## Next
-`run.ps1 coder singular-namespaces "Fix non-deterministic type-entity fold props: the _catalogByName cache (type/list/this.cs:175) is first-wins TryAdd over an unordered type set, so name collisions (e.g. 'goal') let a barren entry shadow the Fields-bearing one — app.Type['goal'].Fields fails 8/8 in isolation. Make collision resolution deterministic and prefer the entry carrying fold data; verify AppType_IndexByName_Fields_OnRecordType_FoldedFromEntry in isolation. Also delete dead goal/list.All." -b singular-namespaces`
+## Next (PASS → tester)
+`run.ps1 tester singular-namespaces "Review the code on branch singular-namespaces" -b singular-namespaces`

@@ -349,6 +349,53 @@
         "health": "Reshape sound; door fix for v1#1 traded a silent null for a non-deterministic null. Proof-test fails 8/8 isolated on clean build. One dead enumerator (goal/list.All) remains. Generator + perf fixes clean.",
         "notes": "Verdict FAIL -> next bot coder. Root: first-wins cache over unordered type set with name collisions. See v2/report.md + v2/verdict.json."
       }
+    },
+    {
+      "id": "c0de4a17-5159-4a1a-9a1a-codeanalyzv3",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-30T02:30:00Z",
+      "timestamp_end": "2026-05-30T03:05:00Z",
+      "intent": "Re-review the coder's fix for the v2 non-determinism blocker; verify in isolation.",
+      "before": {
+        "assumptions": "Coder added deterministic collision resolution + corrected goal/list.All comment.",
+        "risk": "Determinism fixes must be verified the way they failed \u2014 in isolation, not just full-suite."
+      },
+      "plan": ".bot/singular-namespaces/codeanalyzer/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/type/list/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "v2 blocker FIXED: first-wins TryAdd replaced by richness-rank tiebreak (Record>Enum>Scalar>barren, this.cs:172-205). Richer entry wins regardless of reflection order. Rank() reading fold getters during cache build with Context==null is safe (Promote short-circuits, no re-entry)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/SingularNamespaces/AccessorTests/TypeAccessorTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "VERIFIED the v2 failure mode: clean rebuild; AppType_IndexByName_Fields_OnRecordType_FoldedFromEntry isolation x8 -> 8 PASS/0 FAIL (was 0/8). Types namespace 290/290. Full suite 3694/3694, 0 failed. PlangConsole + PLang.Tests build clean."
+        },
+        {
+          "paths": [
+            "PLang/app/goal/list/this.cs",
+            "PLang.Tests/App/Core/GoalsTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "v2 finding #2 was MY false positive: goal/list.All has a caller (GoalsTests.cs:233 goals.All); my v2 grep missed the local-var call site. Coder corrected the comment accurately. Owned, dropped."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "Build clean, suite 3694/3694, formerly non-deterministic fold-prop contract now deterministic (8/8 isolated). Singular-namespace reshape clean. One latent non-blocking edge (equal-rank same-name collision).",
+        "notes": "Verdict PASS -> next bot tester. See v3/report.md + v3/verdict.json."
+      }
     }
   ]
 }
