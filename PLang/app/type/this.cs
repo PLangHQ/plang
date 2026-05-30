@@ -55,6 +55,19 @@ public sealed class @this
     [JsonIgnore]
     public bool Compressible => Kind != null && (Context?.App.Format.Compressible(Kind) ?? false);
 
+    /// <summary>
+    /// The "null" type — the type of a Data whose Value is null and no explicit
+    /// Type was set.  Replaces the historical <c>Data.Type == null</c> sentinel
+    /// so the property can be non-null end-to-end.  Wire serialization skips it
+    /// (no "type": "null" emitted) to keep the wire shape identical to the
+    /// pre-flip world.  ClrType is <c>typeof(object)</c>, the closest CLR mate.
+    /// </summary>
+    public static @this Null { get; } = new("null", typeof(object));
+
+    /// <summary>True when this is the <see cref="Null"/> sentinel type.</summary>
+    [JsonIgnore]
+    public bool IsNull => Value == "null";
+
     public static @this String => new("string");
     public static @this Int => new("int");
     public static @this Long => new("long");

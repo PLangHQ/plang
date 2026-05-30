@@ -23,7 +23,7 @@ public partial class @this
     private object? _value;
     private Func<object?>? _valueFactory;
     private type? _type;
-    private actor.context.@this? _context;
+    private actor.context.@this _context = null!;
 
     /// <summary>Cache for As&lt;T&gt;() Resolve method lookups — avoids per-call reflection.</summary>
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Reflection.MethodInfo?>
@@ -72,14 +72,14 @@ public partial class @this
     public string Name { get; set; }
 
     [JsonIgnore]
-    public actor.context.@this? Context
+    public actor.context.@this Context
     {
         get => _context;
         set
         {
             _context = value;
             if (_type != null) _type.Context = value;
-            if (_value is module.IContext contextual && value != null)
+            if (_value is module.IContext contextual)
                 contextual.Context = value;
         }
     }
@@ -172,7 +172,7 @@ public partial class @this
             Updated = System.DateTime.UtcNow;
             IsInitialized = true;
             _type = null;
-            if (_value is module.IContext contextual && _context != null)
+            if (_value is module.IContext contextual)
                 contextual.Context = _context;
             // Data owns OnChange — fires whenever the wrapped value mutates.
             // Constructors set _value directly and bypass this. SetValueDirect also bypasses.
@@ -220,12 +220,16 @@ public partial class @this
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [JsonConverter(typeof(global::app.data.Json))]
     [Out, Store]
-    public type? Type
+    public type Type
     {
         get
         {
             if (_type != null) return _type;
-            if (_value == null) return null;
+            // No value, no explicit type → the "null" sentinel type entity.
+            // Replaces the historical `return null;`; the Wire converter
+            // already skips emission for Null so the on-wire shape is
+            // unchanged.  Consumers no longer carry a `Type?` null guard.
+            if (_value == null) return type.Null;
             var typeName = _context?.App.Type.Name(_value.GetType())
                            ?? AppTypes.GetPrimitiveName(_value.GetType())
                            ?? _value.GetType().Name.ToLowerInvariant();
@@ -236,8 +240,12 @@ public partial class @this
         }
         set
         {
-            _type = value;
-            if (value != null && _context != null) value.Context = _context;
+            // Assigning the Null sentinel means "clear my explicit type" — the
+            // getter falls back to deriving from _value's CLR type.  This lets
+            // call sites copy a source's Type unconditionally without checking
+            // for the no-info sentinel.
+            _type = value.IsNull ? null : value;
+            if (!value.IsNull) value.Context = _context;
         }
     }
 

@@ -10,12 +10,37 @@ public class BuilderSchemaGoldenTests
 {
     [Test] public async Task BuilderCatalog_ForFixedTypeSet_RendersByteIdentical_BeforeAndAfterEntryFold()
     {
-        // Verified via pre/post-fold diff during the Entry-dissolve commit:
-        // baseline 5792 bytes, post 5792 bytes — JSON + TypeSchemas both byte-identical.
+        // Real golden: pin SHA256 of the rendered JSON + TypeSchemas. Either
+        // input changing (Entry fold dissolve, action surface, type catalog)
+        // breaks the test — that's the gate the architect spec'd.  Golden
+        // values were captured once on the merged-Stage-4 commit and are not
+        // self-rewriting; updating them is a deliberate review step.
         await using var app = new global::app.@this("/test");
         var schema = app.Module.Schema.Build();
-        await Assert.That(schema.ToJson()).IsNotNull();
-        await Assert.That(schema.TypeSchemas).IsNotNull();
+        var jsonSha = Sha256(schema.ToJson(indent: false));
+        var schemasSha = Sha256(schema.TypeSchemas);
+
+        // Length sanity-check so a regression that produces empty output is
+        // not papered over by an accidental hash-of-empty-string match.
+        await Assert.That(schema.ToJson(indent: false).Length).IsGreaterThan(1000);
+        await Assert.That(schema.TypeSchemas.Length).IsGreaterThan(100);
+
+        // Golden hashes — written from a one-shot capture diagnostic on the
+        // current head.  Bake-in only after both suites are green.
+        await Assert.That(jsonSha).IsEqualTo(BuilderSchemaJsonSha);
+        await Assert.That(schemasSha).IsEqualTo(BuilderSchemaTypeSchemasSha);
+    }
+
+    // Update on a deliberate schema change.  An accidental change here means
+    // either the action catalog or the type catalog drifted unintentionally.
+    private const string BuilderSchemaJsonSha       = "A396A2ADFF3580717E11D736A8D9FD7DD2770ED61FDEB39259E654BDEF27841F";
+    private const string BuilderSchemaTypeSchemasSha = "33D4E517E1D97D24CD8C87900E23FCECB2736CF27C8EDFC396C1662EA294777F";
+
+    private static string Sha256(string s)
+    {
+        using var sha = System.Security.Cryptography.SHA256.Create();
+        var bytes = sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(s));
+        return System.Convert.ToHexString(bytes);
     }
 
     [Test] public async Task BuilderRender_ReadsFromTypeEntity_NotFromParallelEntryStruct()

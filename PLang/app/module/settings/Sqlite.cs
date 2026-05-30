@@ -315,7 +315,7 @@ public sealed class Sqlite : IStore
     /// </summary>
     private static void RehydrateValue(data.@this data)
     {
-        if (data.Value == null || data.Type == null) return;
+        if (data.Value == null || data.Type.IsNull) return;
 
         // Rehydrate hits the entity's own no-context surface (Context?.X ?? static) —
         // the entity is the documented resolver, callers don't chain a second fallback.

@@ -10,6 +10,11 @@ namespace PLang.Tests.App.TypedReturnsTests;
 // type on the step's terminal variable.set, Data.Fail to abort validation,
 // or bare Data.Ok() to contribute nothing.
 
+// [NotInParallel]: BuildOrdered.InvocationLog is a process-static List that all
+// instances of this fixture share.  TUnit parallelises siblings by default;
+// without this, the Clear() in [Before(Test)] races a sibling test's Add() and
+// BuilderValidate_CallsBuildOnEachAction_InOrder reads an empty log.
+[NotInParallel]
 public class Stage0_BuildMethodTests
 {
     private global::app.@this _app = null!;

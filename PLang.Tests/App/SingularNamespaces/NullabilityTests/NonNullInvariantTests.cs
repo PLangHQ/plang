@@ -31,12 +31,27 @@ public class NonNullInvariantTests
         await Assert.That(d.Type!.ClrType).IsNull();
     }
 
-    [Test] public async Task DataType_OnStampedData_ResolvesPrimitive_WithoutStaticFallback()
+    [Test] public async Task DataType_OnStampedData_ResolvesDomainType_ViaRegistry_NotStaticFallback()
     {
-        // A stamped Data resolves through the per-App registry (single source of truth).
+        // Asserting on `int` would be meaningless — both the registry and the
+        // static GetPrimitiveOrMime path return typeof(int) for "int", so the
+        // assertion couldn't distinguish them.  Use a domain type registered
+        // only in the per-App catalog: `path` lives in the registry, has no
+        // entry in the static primitive/MIME table, so resolving its ClrType
+        // proves the read went through Context.App.Type.Clr — not the static
+        // fallback (which would return null).
         await using var app = new PLangEngine("/test");
-        var d = new global::app.data.@this<int>("", 42) { Context = app.User.Context };
-        await Assert.That(d.Type!.ClrType).IsEqualTo(typeof(int));
+        var staticAnswer = global::app.type.list.@this.GetPrimitiveOrMime("path");
+        await Assert.That(staticAnswer).IsNull()
+            .Because("guard: if the static path ever learns about 'path', this test no longer proves what its name claims.");
+
+        var d = new global::app.data.@this("", "any/raw/value",
+            new global::app.type.@this("path")) { Context = app.User.Context };
+        await Assert.That(d.Type.ClrType).IsNotNull()
+            .Because("registry knows 'path' → typeof(global::app.type.path.@this); static fallback returns null.");
+        await Assert.That(d.Type.ClrType!.Name).IsEqualTo("this")
+            .Because("the registered CLR type for 'path' is app.type.path.@this — Type.Name strips the @-escape.");
+        await Assert.That(d.Type.ClrType!.Namespace).IsEqualTo("app.type.path");
     }
 
     [Test] public async Task GetPrimitiveOrMime_ExternalFallbackCallSites_AllRemoved()

@@ -1,0 +1,49 @@
+{
+  "name": "Capture",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %captured% = \u0022hello from channel accessor\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%captured%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "hello from channel accessor",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%captured%, Value=\u0022hello from channel accessor\u0022)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/SingularNamespaces/ChannelWriteThroughAccessor/Capture.goal",
+  "prPath": "/SingularNamespaces/ChannelWriteThroughAccessor/.build/capture.pr",
+  "hash": "73068e4392d1e0a21605305cb23d9330508d6c26aa62f677994d4658676b2c55",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

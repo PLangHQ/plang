@@ -5,10 +5,10 @@
   "steps": [
     {
       "index": 0,
-      "text": "set %name% = \u0022alice\u0022",
-      "lineNumber": 3,
+      "text": "set %name% = \u0022alice\u0022, type=text/plain",
+      "lineNumber": 2,
       "indent": 0,
-      "comment": "Stage 4 surface \u2014 value carries through unchanged after the type entity move.",
+      "comment": null,
       "actions": [
         {
           "module": "variable",
@@ -17,33 +17,32 @@
             {
               "name": "Name",
               "value": "%name%",
-              "type": "variable"
+              "type": "string"
             },
             {
               "name": "Value",
               "value": "alice",
               "type": "string"
-            }
-          ],
-          "defaults": [
+            },
             {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "name": "Type",
+              "value": "text/plain",
+              "type": "string"
             }
           ],
+          "defaults": null,
           "modifiers": []
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%name%, Value=\u0022alice\u0022)",
+      "formal": "variable.set(Name=%name%, Value=\u0022alice\u0022, Type=\u0022text/plain\u0022)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "assert %name% equals \u0022alice\u0022",
-      "lineNumber": 4,
+      "text": "assert %name!Type% equals \u0022text/plain\u0022",
+      "lineNumber": 3,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -53,12 +52,12 @@
           "parameters": [
             {
               "name": "Expected",
-              "value": "alice",
+              "value": "text/plain",
               "type": "string"
             },
             {
               "name": "Actual",
-              "value": "%name%",
+              "value": "%name!Type%",
               "type": "object"
             }
           ],
@@ -67,7 +66,7 @@
         }
       ],
       "intent": null,
-      "formal": "assert.equals(Expected=\u0022alice\u0022, Actual=%name%)",
+      "formal": "assert.equals(Expected=\u0022text/plain\u0022, Actual=%name!Type%)",
       "source": null,
       "waitForExecution": true
     }
@@ -76,7 +75,7 @@
   "visibility": 1,
   "path": "/SingularNamespaces/DataTypeReadsEntity.test.goal",
   "prPath": "/SingularNamespaces/.build/datatypereadsentity.test.pr",
-  "hash": "595180388a159b2e94eeecfb57011c8a6c6d496550e680bd3bee908d27f06219",
+  "hash": "f9d648a170d6f7fe10b120c66390b1fd3fd4a3c03204159328e94d5373765b93",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

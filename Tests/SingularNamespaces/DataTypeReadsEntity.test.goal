@@ -1,4 +1,3 @@
 TestDataTypeReadsEntityAfterStamp
-/ Stage 4 surface — value carries through unchanged after the type entity move.
-- set %name% = "alice"
-- assert %name% equals "alice"
+- set %name% = "alice", type=text/plain
+- assert %name!Type% equals "text/plain"

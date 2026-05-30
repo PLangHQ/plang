@@ -497,11 +497,15 @@ public class DataTests
     }
 
     [Test]
-    public async Task Type_NullValue_ReturnsNull()
+    public async Task Type_NullValue_ReturnsNullSentinel()
     {
+        // Type is non-null end-to-end; the "no value, no explicit type" state
+        // is carried as the synthetic Null entity instead of a literal null,
+        // so consumers don't need a Type? null guard.  Wire serialization
+        // skips the Null sentinel so the on-wire shape is unchanged.
         var ov = new Data("test");
 
-        await Assert.That(ov.Type).IsNull();
+        await Assert.That(ov.Type.IsNull).IsTrue();
     }
 
     [Test]

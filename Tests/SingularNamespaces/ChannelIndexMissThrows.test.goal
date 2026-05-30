@@ -1,7 +1,7 @@
 TestUnknownChannelThrowsTypedError
 / Failure matrix: actor.channel["nope"] selecting an absent channel from PLang code raises
 / a typed error — uniform with goal/type index-miss, no silent noop, no implicit create.
-/ Surfaces to the PLang author at the call site as the bug it is.
-- set %sawError% = false
-- write to %nonexistentChannel% "ping", on error set %sawError% = true
-- assert %sawError% equals true
+/ Asserts the typed Error.Key, not just "any error" — proves the registry index-miss path,
+/ not a null-channel coincidence.
+- write 'ping' to absent-channel-xyz, on error set %errorKey% = %!error.Key%
+- assert %errorKey% equals 'ChannelNotFound'

@@ -1,0 +1,2 @@
+Capture
+- set %captured% = "hello from channel accessor"

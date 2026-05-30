@@ -386,12 +386,12 @@ public sealed class Wire : JsonConverter<@this>
         writer.WriteString("name", data.Name);
 
         // type — emit as a plain JSON string (the data.@this.Type's wire form).
-        // Skipped entirely when null to match the legacy [JsonIgnore(WhenWritingNull)]
-        // discipline so the wire stays compact.
-        var typeVal = data.Type?.Value;
-        if (typeVal != null)
+        // Skipped for the Null sentinel (the type entity that replaces the
+        // historical `Type == null` state) — keeps the wire shape compact and
+        // identical to the pre-Null-type world.
+        if (!data.Type.IsNull)
         {
-            writer.WriteString("type", typeVal);
+            writer.WriteString("type", data.Type.Value);
         }
 
         // kind — refinement of type, separate sibling field per plang-types design.

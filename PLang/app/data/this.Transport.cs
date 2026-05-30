@@ -73,7 +73,7 @@ public partial class @this
     /// </summary>
     public @this Wrap()
     {
-        if (_context == null || Type == null)
+        if (Type == null)
             return this;
 
         var kind = Type.Kind;
@@ -105,7 +105,7 @@ public partial class @this
     /// </summary>
     public async Task<@this> CompressAsync(CancellationToken ct = default)
     {
-        if (_context == null || Type == null)
+        if (Type == null)
             return this;
 
         if (!Type.Compressible)

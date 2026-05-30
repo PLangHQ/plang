@@ -132,7 +132,7 @@ public partial class Set : IContext, IBuildValidatable
         // type label, losing the transport marker). Preserve the source's Type
         // when it has one — Properties already get copied below for the same
         // "carry source metadata across the binding-mint" reason.
-        if (Value.Type != null) minted.Type = Value.Type;
+        minted.Type = Value.Type;
         CopyProperties(Value, minted);
         return Task.FromResult(Context.Variable.Set(minted));
     }
