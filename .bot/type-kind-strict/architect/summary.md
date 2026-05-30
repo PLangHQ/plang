@@ -1,5 +1,11 @@
 # Architect — type-kind-strict
 
+## 2026-05-30 — rebased onto runtime2 (singular-namespaces + type-entity promotion)
+
+Merged latest `runtime2` (`d96ec269f`) into the branch — clean (my work was `.bot/`-only). That merge brought the singular-namespaces rename (`types`→`type`, `formats`→`format`, `modules`→`module`, `variables`→`variable`) and, more importantly, **promoted the type descriptor to an entity**: `app.type.@this` (`PLang/app/type/this.cs`) is now both doors (`data.Type` and `app.Type[name]`) and has absorbed the old `app.builder.type.Entry` catalog (`Fields`/`Values`/`Kinds`/`Shape`/… via lazy `Promote()`). So the descriptor↔catalog unification this plan reached for is already done — differently.
+
+Reconciled the whole plan onto the new base: rebased every path/namespace, reframed Stage 1 (now adds `Name`/`Kind`/`Strict` to the promoted entity rather than restructuring a flat wrapper), and adjusted Stage 5 (catalog folded; renderer is `app.builder.type.@this`). The design is unchanged in substance — all five stages still needed (entity still keyed on flat `Value`, `Data.Kind` still separate, `variable.set.Type` still `string`, primitive `Canonical` still `string`). The merge sharpened the kind-naming knot into a three-way one (`type.Kind` family / `type.Kinds` vocabulary / `Data.Kind` subtype, plus the `App.Type.Kinds` dispatcher), now resolved in the plan: `name`=family, `kind`=subtype, `Kinds`=vocabulary, dispatcher renamed `KindHooks`.
+
 ## 2026-05-30 — initial design: structured type values `{name, kind, strict}`
 
 Designed the finish of the type-value model the `plang-types` merge started. A PLang value's type becomes a structured `{name, kind, strict}` instead of a flat string: `name` is the family/primitive (`text`, `number`, `image`), `kind` is the sub-format (`md`, `gif`, `int`), `strict` says whether the kind is a requirement or a hint. Triggered by Ingi creating the `text` type and wanting `variable.set` to take a `type` instead of a `string`.

@@ -32,5 +32,5 @@ The matrix picks up beneath the cuts:
 - **Negative paths** — unknown type name, value-not-convertible, malformed multi-slash type string, and the *impossible-by-design* ones (strict byte-check on `text` — there's no probe, so no failure to assert).
 - **The `Data.Kind` fold** — no stored field; `Data.Kind` reads `Type.Kind`; wire still two keys.
 - **The primitives table** — `BuilderNames` includes `text`, excludes `string`/`int`/`long`/`decimal`/`double`.
-- **The formats rename** — `FamilyOf` (was `KindOf`) still maps `image/jpeg`→`image`.
+- **The format-registry rename** — `App.Format.FamilyOf` (was `KindOf`) still maps `image/jpeg`→`image`; the `App.Type.Kinds`→`KindHooks` dispatcher rename.
 - **The runtime strict issuer** — cut 2 proves build strict and one runtime case; the matrix covers the runtime path per family.

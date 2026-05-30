@@ -1,8 +1,8 @@
 # Test coverage
 
-The heavy reference behind [test-strategy.md](test-strategy.md). Test-designer reads the coverage matrix top-to-bottom and writes one test per row; the failure matrix and surface inventory keep the negative paths and naming honest. Coder also reads this while implementing per-stage tests.
+The heavy reference behind [test-strategy.md](test-strategy.md). Test-designer reads the coverage matrix top-to-bottom and writes one test per row; the failure matrix and surface inventory keep the negative paths and naming honest. Coder also reads this while implementing per-stage tests. Paths are post singular-namespaces merge.
 
-C# test placement follows the repo convention: mirror `app/` under `PLang.Tests/App/` with a `*Tests` PascalCase folder (e.g. `PLang.Tests/App/DataTests/`, `PLang.Tests/App/TypesTests/`) — and **never** create a `PLang.Tests.App.Data`/`Variables` namespace (it shadows the `Data`/`Variables` aliases, CS0118). PLang `.goal` tests live under `Tests/` (uppercase).
+C# test placement follows the repo convention: mirror `app/` under `PLang.Tests/App/` with a `*Tests` PascalCase folder (e.g. `PLang.Tests/App/DataTests/`, `PLang.Tests/App/TypeTests/`) — and **never** create a `PLang.Tests.App.Data`/`Variable` namespace (it shadows the aliases, CS0118). PLang `.goal` tests live under `Tests/` (uppercase).
 
 ## 1. Coverage matrix
 
@@ -13,15 +13,18 @@ C# test placement follows the repo convention: mirror `app/` under `PLang.Tests/
 | `type("string")` canonicalises Name to `text` | C# | green |
 | `type(name, kind, strict)` carries all three fields | C# | green |
 | Single-string `"text/markdown"` splits to `{name:text, kind:markdown}` (then canonicalised) | C# | green |
-| Single-string with no slash → `{name, kind:null}` | C# | green |
+| Single-string with no slash → `{name, kind:null}`; multi-slash splits on first | C# | green |
 | `type` exposes no public `ClrType` (PLang surface is runtime-independent) | C# | green |
 | `Data` has no stored `Kind` field; `Data.Kind` reads `Type.Kind` | C# | green |
+| Family-`Kind` accessor (`App.Format.KindOf`) removed from the entity | C# | green |
+| `type.Kinds` (advertised vocabulary) still populated for `number` | C# | green |
 | `Strict` defaults to false | C# | green |
-| `Compressible` derives from Name's family (not the old "kind") | C# | green |
-| Wire writes two flat keys `type` + `kind` (no `type:kind` string) | C# | green |
+| `Compressible` derives from Name's family (not the old family-`Kind`) | C# | green |
+| Wire writes two flat keys `type` + `kind` (no `type:kind`, no `"type":"null"`) | C# | green |
 | `type` round-trips through the wire (Name/Kind/Strict intact) | C# | green |
 | `Type.Kind` null → `kind` key omitted on the wire | C# | green |
-| `file/read.cs` Exit detection still works after `ClrType` reroute | C# | green |
+| `App.Type.Kinds` dispatcher renamed (`KindHooks`) — no `Kind`/`Kinds`/dispatcher collision | C# | green |
+| `ClrType` reroute: `file/read`, `variable/set`, `settings/Sqlite` still resolve their CLR type | C# | green |
 
 ### Topic: kind derivation + validation ([kind-derivation-and-validation.md](kind-derivation-and-validation.md))
 
@@ -39,8 +42,8 @@ C# test placement follows the repo convention: mirror `app/` under `PLang.Tests/
 | Canonicalise `"jpeg"` → `"jpg"` | C# | green |
 | Canonicalise unknown `"frobnicate"` → unchanged (free string) | C# | green |
 | Canonicalise a subtype shared by two extensions → primary (`jpg`) | C# | green |
-| `formats.FamilyOf("image/jpeg")` → `"image"` (renamed from `KindOf`) | C# | green |
-| Build stamps `text` kind from a literal `.md` value (via `Kinds.Of`/`NormalizeParameterTypes`) | integration | green |
+| `App.Format.FamilyOf("image/jpeg")` → `"image"` (renamed from `KindOf`) | C# | green |
+| Build stamps `text` kind from a literal `.md` value (via `App.Type.Kinds`/`NormalizeParameterTypes`) | integration | green |
 | `image.ValidateKind(gifBytes, "gif")` → `(true, "gif")` | C# | green |
 | `image.ValidateKind(pngBytes, "gif")` → `(false, "png")` | C# | negative |
 | `set %x% = "readme.md" as text` → variable type `{text, md}` | goal | green |
@@ -73,9 +76,10 @@ Each row is a way the system *should* fail — the test asserts the failure is h
 |--------------|-------------|------------|-------|
 | Strict kind mismatch, literal sniffable value | `variable.set.ValidateBuild` → `image.ValidateKind` | build error (BuildValidation) | build / goal |
 | Strict kind mismatch, `%var%` sniffable value | `variable.set.Run` → `image.ValidateKind` | typed runtime `ServiceError` | runtime / goal |
-| Unknown type name | `variable.set.Run` (`App.Types.Get` → null) | `UnknownType` ServiceError 400 (existing — preserve) | runtime / goal |
+| Unknown type name | `variable.set.Run` (`App.Type.Get` → null) | `UnknownType` ServiceError 400 (existing — preserve) | runtime / goal |
 | Value not convertible to declared type | `variable.set.ValidateBuild` (existing path) | build error (existing — preserve) | build / goal |
 | Malformed multi-slash type string `"a/b/c"` | `type` factory | **not an error** — split on first slash, rest is the (free-string) kind; canonicalises or passes through | C# |
+| Unstamped `type.@this` reads a catalog prop without `Context` | `Promote()` | `InvalidOperationException` (existing producer-bug guard — preserve; adding Name/Kind/Strict must not trip it) | C# |
 
 Impossible-by-design — **do not** write tests asserting these fail:
 
@@ -85,17 +89,18 @@ Impossible-by-design — **do not** write tests asserting these fail:
 
 ### Interfaces and types
 
-- **`IKindValidatable`** (new marker) — `(bool ok, string? actualKind) ValidateKind(object value, string requiredKind)`. Sibling to `IBooleanResolvable`; likely `PLang/app/data/IKindValidatable.cs`. Coder picks the home.
-- **`app.types.text.@this`** (new type) — `PLang/app/types/text/this.cs` + `this.Build.cs`. `static string? Build(object?)` (extension→kind), `static string Shape => "string"`, **no** static `Kinds`. Mirrors `image`, text-backed.
-- **`app.data.type`** (restructured) — `string Name`, `string? Kind`, `bool Strict`; normalising factory `type(name, kind?, strict?)` + tolerant single-string. `Value`, the family-`Kind`, and public `ClrType` are gone.
+- **`IKindValidatable`** (new marker) — `(bool ok, string? actualKind) ValidateKind(object value, string requiredKind)`. Sibling to `IBooleanResolvable`; `PLang/app/data/IKindValidatable.cs`.
+- **`app.type.text.@this`** (new type) — `PLang/app/type/text/this.cs` + `this.Build.cs`. `static string? Build(object?)` (extension→kind), `static string Shape => "string"`, **no** static `Kinds`. Mirrors `image`, text-backed.
+- **`app.type.@this`** (restructured entity, `PLang/app/type/this.cs`) — `string Name`, `string? Kind`, `bool Strict`; normalising factory `type(name, kind?, strict?)` + tolerant single-string. `Value` renamed to `Name`; the family-`Kind` accessor and public `ClrType` are gone. Folded catalog props (`Fields`/`Values`/`Kinds`/`Shape`/…) unchanged.
 
 ### New methods on existing types
 
-- **`app.types.image.@this.ValidateKind(value, requiredKind)`** — implements `IKindValidatable` via byte-sniff (reuse the ImageSharp `Identify` path).
-- **`app.formats.@this`** — `KindOf` → `FamilyOf`/`NameOf`; `_extensionToKind` → extension→family map; new kind-canonicalisation helper (subtype→extension, derived from the existing extension↔MIME data).
-- **`app.data.@this.Kind`** — delegating accessor onto `Type?.Kind` (or removed); **must not** be a stored field.
-- **`app.builder.Types.@this.TypeSchemas`** — second render mode (advertised vs extension-derived).
-- **`app.types.primitives.@this`** — `Canonical[typeof(string)] = "text"`; `BuilderNames` picks `text`, excludes `int/long/decimal/double`.
+- **`app.type.image.@this.ValidateKind(...)`** — implements `IKindValidatable` via byte-sniff (reuse the ImageSharp `Identify` path). `PLang/app/type/image/`.
+- **`app.format.list.@this`** (`PLang/app/format/list/this.cs`) — `KindOf` → `FamilyOf`/`NameOf`; `_extensionToKind` → extension→family map; new kind-canonicalisation helper (subtype→extension, derived from the existing extension↔MIME data).
+- **`app.data.@this.Kind`** — delegating accessor onto `Type?.Kind` (or removed); **must not** be a stored field. `PLang/app/data/this.cs`.
+- **`app.builder.type.@this.TypeSchemas`** (`PLang/app/builder/type/this.cs`) — second render mode (advertised vs extension-derived), reading off `type.@this`.
+- **`app.type.primitive.@this`** (`PLang/app/type/primitive/this.cs`) — `Canonical[typeof(string)] = "text"` and `typeof(int)/long/decimal/double/float` → `number`; `BuilderNames` picks `text`, excludes `int/long/decimal/double`.
+- **`app.type.kind.@this`** (`PLang/app/type/kind/this.cs`) — the build-hook dispatcher, reached at `App.Type` renamed `Kinds`→`KindHooks`.
 
 ### New PLang actions
 
@@ -103,12 +108,12 @@ Impossible-by-design — **do not** write tests asserting these fail:
 
 ### New registrations
 
-- None (no new MIME types). The formats rename is internal.
+- None (no new MIME types). The `KindOf`→`FamilyOf` and `Kinds`→`KindHooks` renames are internal.
 
 ### Existing surfaces this branch touches by reference
 
-- `variable.set` — `PLang/app/modules/variable/set.cs` (`Type` param, `Run`, `ValidateBuild`).
-- `NormalizeParameterTypes` — `PLang/app/modules/builder/code/Default.cs` (text kind stamping at build).
+- `variable.set` — `PLang/app/module/variable/set.cs` (`Type` param, `Run`, `ValidateBuild`).
+- `NormalizeParameterTypes` — `PLang/app/module/builder/code/Default.cs` (~895; text kind stamping at build).
 - `Wire.Write` — `PLang/app/data/Wire.cs` (reads `Type.Name`/`Type.Kind`).
 - `Compile.llm` / `CompileUser.llm` — `os/system/builder/llm/` (prompt restructure).
-- `file/read.cs` — `PLang/app/modules/file/read.cs` (`ClrType` reroute).
+- `ClrType` reroute sites — `PLang/app/module/file/read.cs`, `PLang/app/module/variable/set.cs`, `PLang/app/module/settings/Sqlite.cs`.

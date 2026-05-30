@@ -45,12 +45,32 @@
           "category": "doc",
           "confidence": "high",
           "context": "Wrote the spine (plan.md) and three topic deep-dives (type value model, kind derivation/validation, LLM type representation). Stage files were drafted then removed at Ingi's request — he wants to comment on the design before the implementation stages are carved; the sequence is sketched in plan.md and becomes stage-N-*.md after review."
+        },
+        {
+          "paths": [
+            ".bot/type-kind-strict/architect/plan.md",
+            ".bot/type-kind-strict/architect/plan/type-value-model.md",
+            ".bot/type-kind-strict/architect/plan/kind-derivation-and-validation.md",
+            ".bot/type-kind-strict/architect/plan/llm-type-representation.md",
+            ".bot/type-kind-strict/architect/plan/test-coverage.md",
+            ".bot/type-kind-strict/architect/plan/test-strategy.md",
+            ".bot/type-kind-strict/architect/stage-1-type-value-model.md",
+            ".bot/type-kind-strict/architect/stage-2-text-type-and-names.md",
+            ".bot/type-kind-strict/architect/stage-3-kind-derivation.md",
+            ".bot/type-kind-strict/architect/stage-4-set-and-strict.md",
+            ".bot/type-kind-strict/architect/stage-5-llm-representation.md",
+            ".bot/type-kind-strict/architect/summary.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Merged latest runtime2 (d96ec269f) into the branch (clean, .bot-only) and rebased the entire plan onto the singular-namespaces world. The merge promoted the type descriptor to an entity (app.type.@this) that absorbed the catalog — so the descriptor↔catalog unification the plan reached for is already done. Reconciled all paths/namespaces (types→type, formats→format, modules→module, variables→variable), reframed Stage 1 around the promoted entity, adjusted Stage 5 for the folded catalog + app.builder.type renderer, and resolved the now three-way kind-naming knot (name=family, kind=subtype, Kinds=vocabulary, dispatcher→KindHooks). Design substance unchanged; all five stages still needed."
         }
       ],
       "after": {
-        "status": "Design approved by Ingi with no comments. Five stage files carved and test-designer prep (test-strategy.md + test-coverage.md) written. Nothing built; ready for test-designer / coder.",
+        "status": "Design approved; plan rebased onto latest runtime2 (singular-namespaces + type-entity promotion). Five stages + test prep all reconciled to the new paths/structure. Nothing built; ready for test-designer / coder.",
         "health": "green",
-        "notes": "Branch off runtime2 (d782fe2b5) for a clean base. Stage files were drafted, removed for review, then re-carved after approval. Open question logged: whether Data.Type.Kind reads back number's NumberKind for full consistency."
+        "notes": "Branch now descends from runtime2 d96ec269f via merge 67792cf00. The type descriptor is now the promoted entity app.type.@this (folded catalog); the plan adds Name/Kind/Strict + folds Data.Kind + resolves the three-way kind-naming knot. Numerics resolved as {number, kind} per Ingi."
       }
     }
   ]
