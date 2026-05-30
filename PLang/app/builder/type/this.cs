@@ -91,8 +91,19 @@ public sealed partial class @this
                         sb.Append(t.Shape);
                     }
                 }
+                // Dual-mode kind teaching: advertised (closed list) vs extension-derived (open).
                 if (t.Kinds != null && t.Kinds.Count > 0)
-                    sb.Append(" (kinds: ").Append(string.Join(" | ", t.Kinds)).Append(')');
+                {
+                    // Advertised vocabulary — closed set; the LLM picks one.
+                    sb.Append(" — kinds: ").Append(string.Join(" | ", t.Kinds));
+                }
+                else if (HasBuildHook(t))
+                {
+                    // Extension-derived kind — the kind is the file extension.
+                    sb.Append(" — kind = extension");
+                    var examples = ExtensionExamples(t.Name);
+                    if (examples != null) sb.Append(" (").Append(examples).Append(')');
+                }
                 if (!string.IsNullOrEmpty(t.Description))
                     sb.Append(" — ").Append(t.Description);
                 if (!string.IsNullOrEmpty(t.Example))
@@ -110,6 +121,32 @@ public sealed partial class @this
     /// resolution, enum handling, and [LlmBuilder]-filtered fields all live in
     /// TypeMapping — Build just assembles the result.
     /// </summary>
+    // Heuristic: does the type advertise a build-time kind hook via the
+    // dispatcher? Mirrors what app.type.kind.@this.Discover looks for.
+    private bool HasBuildHook(global::app.type.@this t)
+    {
+        var clr = t.ClrType;
+        if (clr == null) return false;
+        var m = clr.GetMethod("Build",
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
+            | System.Reflection.BindingFlags.FlattenHierarchy,
+            binder: null,
+            types: new[] { typeof(object) },
+            modifiers: null);
+        return m != null && m.ReturnType == typeof(string);
+    }
+
+    // Small, stable example list for extension-derived kinds; falls back to
+    // null when we don't have curated examples (so the renderer omits the parens).
+    private static string? ExtensionExamples(string typeName) => typeName switch
+    {
+        "text"  => "md, txt, csv, html, ...",
+        "image" => "jpg, png, gif, webp, ...",
+        "audio" => "mp3, wav, flac, ...",
+        "video" => "mp4, webm, mov, ...",
+        _ => null,
+    };
+
     public @this Build()
     {
         var primitives = _modules.App?.Type.GetBuilderTypeNames() ?? new List<string>();

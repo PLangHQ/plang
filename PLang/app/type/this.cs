@@ -28,6 +28,7 @@ namespace app.type;
 public sealed class @this
 {
     [JsonPropertyName("name")]
+    [LlmBuilder]
     public string Name { get; }
 
     /// <summary>
@@ -36,9 +37,11 @@ public sealed class @this
     /// slot so the entity is the single owner. <c>[JsonIgnore]</c> — the wire
     /// emits <c>kind</c> separately from the type entity (Wire.cs writes it
     /// alongside the <c>type</c> key), so STJ-default serialisation of the
-    /// entity itself never carries it.
+    /// entity itself never carries it. <c>[LlmBuilder]</c> — the LLM may emit
+    /// it as part of a <c>type</c> constructor dict.
     /// </summary>
     [JsonIgnore]
+    [LlmBuilder]
     public string? Kind { get; set; }
 
     /// <summary>
@@ -49,7 +52,21 @@ public sealed class @this
     /// reader is strict about it).
     /// </summary>
     [JsonIgnore]
+    [LlmBuilder]
     public bool Strict { get; init; }
+
+    /// <summary>
+    /// Catalog teaching for the <c>type</c> entry — the LLM-facing description
+    /// surfaced through <c>app.builder.type.TypeSchemas</c>. The instance
+    /// property pulls from <see cref="Promote"/>'s catalog fold; for the entity
+    /// itself there's no catalog row, so the LLM teaching falls into the static
+    /// renderer via <see cref="TypeDescription"/> below.
+    /// </summary>
+    public const string TypeDescription =
+        "A PLang type value: { name, kind?, strict? }. name is the family or primitive "
+        + "(text, number, image, datetime, ...). kind is the optional subtype "
+        + "(md/jpg/int/...). strict=true makes kind a requirement (enforced at build "
+        + "for verifiable formats). Emit as a dict — never as 'text/md'.";
 
     // Context is the *runtime* invariant — once a Data is stamped (Variables.Set,
     // Action.RunAsync), the entity reads through the registry.  Before stamping,
