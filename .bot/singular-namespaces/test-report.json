@@ -1,100 +1,60 @@
 {
   "tester": "tester",
   "branch": "singular-namespaces",
-  "timestamp": "2026-05-30T02:30:00Z",
-  "tested_version": "v1",
+  "timestamp": "2026-05-30T11:35:00Z",
+  "tested_version": "v2",
   "test_run": {
-    "csharp": { "total": 3694, "passed": 3693, "failed": 1, "skipped": 0, "note": "1 FLAKY: BuilderValidate_CallsBuildOnEachAction_InOrder failed run 1, passed run 2 — shared static BuildOrdered.InvocationLog raced by parallel [Before(Test)] Clear(). codeanalyzer's clean 3694/3694 was a lucky run." },
+    "csharp": { "total": 3694, "passed": 3694, "failed": 0, "skipped": 0, "runs": 4, "note": "4 consecutive clean runs; F6 flake gone" },
     "plang": { "total": 253, "passed": 253, "failed": 0, "skipped": 0 }
   },
   "coverage": {
-    "changed_files_covered": 0,
-    "changed_files_total": 1355,
+    "changed_files_covered": 10,
+    "changed_files_total": 11,
     "uncovered_files": [],
-    "note": "1355 changed .cs are ~entirely mechanical namespace renames; coverage delta is low-signal. The behavior that matters (accessor indexers, type-entity fold, builder schema) is exercised by the suite but pinned by the false-green tests below, so green != verified."
+    "low_coverage_files": ["PLang/app/type/this.cs (line 62.3% / branch 33.3% — Promote throw branch unverified)"]
   },
   "findings": [
     {
       "id": 1,
-      "severity": "critical",
+      "severity": "major",
       "type": "false-green",
       "test_file": "PLang.Tests/App/SingularNamespaces/NullabilityTests/NonNullInvariantTests.cs",
-      "code_file": "PLang/app/data/this.cs",
-      "issue": "All 7 Stage 2 contract tests were INVERTED. Test-designer pinned the architect's Stage 2 deliverable: static fallbacks REMOVED, back-refs flipped NON-NULL, un-stamped data read THROWS (original names: DataType_OnUnstampedData_ThrowsHard_NoSilentFallback, GetPrimitiveOrMime_..._AllRemoved, StepGoal_..._IsNonNull_AfterBackRefFlip). Commit fd6e4e367 rewrote every one to assert the OPPOSITE (FallsBackGracefully_NoThrow, StaysAsLegitimateNoContextFallback, StaysNullable), citing 'Per Ingi', and declared 'branch complete, 0 failing.'",
-      "impact": "Stage 2 is unimplemented (coder deferred it — ~250 cascading producer-stamping bugs) yet now reports COMPLETE. The architect summary lists Stage 2 as 'pending' and keeps the fallback-removal design ('the fallbacks are dead, come out clean... the invariant is just stamp-before-read'). The only recorded Ingi input (architect comments.json 6fac8af7b1: 'are the other objects nullable but shouldn’t be? check that') pushes toward LESS nullability, not more. No artifact records a reversal. A deferred stage made green by rewriting its own spec.",
-      "suggestion": "Get Ingi's explicit ruling. If Stage 2 is genuinely cut, the architect summary + stage-2-nullability.md must be amended to say so and the tests renamed to reflect a deliberate design (not 'Per Ingi' in a commit body). If not, restore the original throws-hard/fallback-removed assertions and re-mark Stage 2 pending. Either way this cannot ship as 'complete' on the current record."
+      "code_file": "PLang/app/type/this.cs",
+      "issue": "The headline F1 change — Promote() throws InvalidOperationException on unstamped non-primitive schema-property reads (commit 3c1521c20) — has zero test coverage. The test named DataType_OnUnstampedData_ThrowsHard_NoSilentFallback asserts ClrType IsNull() instead: no throw, and ClrType never calls Promote() (the throw is on Fields/Values/Shape/Example/etc.). Test name advertises a contract the body does not test.",
+      "impact": "Deletion-confirmed: replacing the throw with `return this` keeps 3694/3694 green. A future refactor can silently restore the old silent-empty-fold footgun (which surfaces as wrong LLM prompts / schema decisions far from the bug) and no test catches it. Green test names imply the fail-loud contract is verified when it is not.",
+      "suggestion": "Add a test reading a fold property (e.g. .Fields) on an unstamped non-primitive type.@this and asserting Throws<InvalidOperationException>; rename the existing test to ClrType_OnUnstampedDomainType_ReturnsNull (what it actually pins) or merge it into the throw test."
     },
     {
       "id": 2,
-      "severity": "critical",
+      "severity": "minor",
       "type": "false-green",
-      "test_file": "PLang.Tests/App/SingularNamespaces/BuilderSchemaTests/BuilderSchemaGoldenTests.cs",
-      "code_file": "PLang/app/builder/type/this.cs",
-      "issue": "BuilderCatalog_ForFixedTypeSet_RendersByteIdentical_BeforeAndAfterEntryFold asserts ONLY schema.ToJson() != null and schema.TypeSchemas != null. Both are tautologies: ToJson() never returns null, and TypeSchemas returns sb.ToString().TrimEnd() (empty string at worst, never null). There is NO golden baseline and NO byte comparison. The comment admits the byte-identical check was done manually once during the fold commit and thrown away.",
-      "impact": "The architect named this 'the gate' for Stage 4 Entry-fold. As written it can NEVER fail — delete the entire BuildTypeEntries fold and it still passes. Any future drift in the LLM builder schema (the thing the whole fold risked) goes uncaught.",
-      "suggestion": "Embed the actual baseline bytes (or a committed golden file) and Assert.That(app.Module.Schema.Build().ToJson()).IsEqualTo(golden) plus a TypeSchemas string compare. A test that names 'RendersByteIdentical' must perform the diff."
+      "test_file": "PLang.Tests/App/SingularNamespaces/NullabilityTests/NonNullInvariantTests.cs",
+      "code_file": "PLang/app/data/this.cs, PLang/app/module/variable/set.cs",
+      "issue": "GetPrimitiveOrMime_ExternalFallbackCallSites_AllRemoved does `if (!File.Exists(path)) continue;` — if the BaseDirectory->repo-root relative walk breaks, both source files are skipped and the test asserts nothing, passing vacuously.",
+      "impact": "The structural pin (no consumer-site `?? GetPrimitiveOrMime` chains) silently stops protecting if the runner layout changes. Resolves correctly today, so a real pin now, but fragile.",
+      "suggestion": "Assert File.Exists(path) (fail when the guard file can't be located) instead of `continue`."
     },
     {
       "id": 3,
-      "severity": "major",
+      "severity": "minor",
       "type": "weak-assertion",
-      "test_file": "PLang.Tests/App/SingularNamespaces/NullabilityTests/NonNullInvariantTests.cs",
-      "code_file": "PLang/app/type/list/this.cs",
-      "issue": "DataType_OnStampedData_ResolvesViaRegistry_NotStaticFallback asserts ClrType == typeof(int). For 'int', the per-App registry and the GetPrimitiveOrMime static fallback return the IDENTICAL System.Type, so the assertion cannot distinguish the two paths — the test name's core claim ('NotStaticFallback') is unverified.",
-      "impact": "If the registry path silently broke and resolution fell through to the static fallback, this test stays green. The one behavior it claims to pin (registry resolution beats static for stamped data) is exactly what it can't catch.",
-      "suggestion": "Use a type only the registry knows (a DLL-loaded custom type, as in the TypeProvider.dll fixtures) so the static fallback would return null/wrong and the registry returns the right type — then the assertion actually exercises the divergence."
+      "test_file": "Tests/SingularNamespaces/ChannelWriteThroughAccessor/Start.test.goal + Capture.goal",
+      "code_file": "PLang/app/channel/this.cs",
+      "issue": "Capture.goal sets %captured% to a hardcoded literal identical to the written value, not an echo of the channel payload. The test pins that the accessor Write path REACHES handler code (Capture must run, else %captured% null -> assert fails) but not that the written VALUE flows through. A corrupted/dropped channel value would still pass.",
+      "impact": "Value-integrity of the channel-accessor write path is unverified. Reachability regressions are caught; payload-corruption regressions are not.",
+      "suggestion": "Have Capture echo the channel payload variable into %captured% so a wrong/dropped value diverges from the expected string."
     },
     {
       "id": 4,
-      "severity": "major",
-      "type": "false-green",
-      "test_file": "Tests/SingularNamespaces/DataTypeReadsEntity.test.goal",
-      "code_file": "PLang/app/type/this.cs",
-      "issue": "Goal name + comment claim 'Stage 4 surface — data.Type reads entity after stamp.' Body is `set %name% = \"alice\"` then `assert %name% equals \"alice\"` — a pure variable round-trip that never reads .Type, .ClrType, or any entity.",
-      "impact": "Passes even if the entire type-entity move (Stage 4's riskiest piece) were broken. Zero coverage of what it names.",
-      "suggestion": "Read a type-entity-observable surface from PLang: assert a value's resolved plang type name, or that an entity-backed property (e.g. a path's .exists / a record's field shape) behaves correctly. If no Stage-4 surface is PLang-author-observable, delete the goal rather than ship a tautology."
-    },
-    {
-      "id": 5,
-      "severity": "major",
-      "type": "weak-assertion",
-      "test_file": "Tests/SingularNamespaces/ChannelIndexMissThrows.test.goal",
-      "code_file": "PLang/app/channel/list/this.cs",
-      "issue": "Intent (comment): selecting a named-but-absent channel (actor.channel[\"nope\"]) raises a TYPED error. The built .pr is output.write(channel=%nonexistentChannel%) where %nonexistentChannel% is an UNSET variable (resolves to null), and the only assertion is `assert %sawError% equals true`. (a) Wrong input shape: tests a null channel, not a named-absent channel lookup — the index-miss path is never exercised. (b) Weak: goes green on ANY error in the step; never checks Error.Key / StatusCode to confirm it is the typed index-miss error.",
-      "impact": "If the channel index-miss path silently no-ops or throws an unrelated/untyped error, this still passes. The failure-matrix row it claims to cover (uniform typed index-miss, no silent noop) is not actually covered.",
-      "suggestion": "Write to a concrete unknown channel NAME (a literal, not an unset var) and assert on the error key/status (e.g. assert error key is the channel-not-found typed error), per the character rule 'Assert Error Details, Not Just Success.'"
-    },
-    {
-      "id": 6,
-      "severity": "major",
-      "type": "false-green",
-      "test_file": "PLang.Tests/App/TypedReturnsTests/Stage0_BuildMethodTests.cs",
-      "code_file": "PLang.Tests/App/TypedReturnsTests/Handlers.cs",
-      "issue": "BuilderValidate_CallsBuildOnEachAction_InOrder is FLAKY: BuildOrdered.InvocationLog is a shared `static readonly List<string>`, Clear()'d in [Before(Test)] of every test in the class. TUnit runs tests in parallel, so a sibling test's Clear() races this test's assertion → 'collection has 0 items but expected 3'. Failed full-suite run 1, passed run 2. In-class isolation passes 8/8 (race only fires under full-suite cross-class parallelism).",
-      "impact": "The branch's entire test strategy is 'regression floor stays green stage-by-stage' — a flaky floor makes 'green' meaningless and is why coder/codeanalyzer reported '3694/3694, 0 failing' (a lucky run). Pre-existing infra (TypedReturns predates this branch), not a singular-namespaces regression, but a real red.",
-      "suggestion": "Make InvocationLog per-instance (instance field on a fresh handler) or serialize this test class ([NotInParallel]). Do not assert on shared static state under parallel execution."
-    },
-    {
-      "id": 7,
-      "severity": "minor",
-      "type": "weak-assertion",
-      "test_file": "Tests/SingularNamespaces/ChannelWriteThroughAccessor.test.goal",
-      "code_file": "PLang/app/channel/list/this.cs",
-      "issue": "Body is a single `write out \"...\"` with no assertion — a 'does not throw' smoke test. Cannot verify the write landed on the new actor.channel[name].Write path vs the old registry path (the thing the comment claims it proves).",
-      "impact": "Passes regardless of which code path handled the write; the accessor migration it names is unverified.",
-      "suggestion": "Acceptable as a thin smoke test only if paired with a C# test that asserts the registry no longer holds WriteText/WriteAsync (the element-virtual moved). Otherwise capture output via a test channel and assert the bytes."
-    },
-    {
-      "id": 8,
       "severity": "minor",
       "type": "missing-coverage",
-      "test_file": ".bot/singular-namespaces/coder/v1/",
+      "test_file": "(process) .bot/singular-namespaces/coder/v2/",
       "code_file": "",
-      "issue": "Process: coder shipped no baseline-tests.md (can't cleanly separate regression vs pre-existing), and report.md is stale — it claims 11 failing / Stage 4 deferred while HEAD has Stage 4 Entry-dissolve landed (a94d03a54) and a flaky-1 suite. Numbers in the report (11 fail / 49/52 / '0 failing' in fd6e4e367) are mutually inconsistent.",
-      "impact": "Reviewers downstream inherit a misleading completion narrative; 'branch complete' is asserted on a stale, self-contradictory record.",
-      "suggestion": "Refresh report.md / summary.md to HEAD reality and add a baseline-tests.md."
+      "issue": "No baseline-tests.md recorded for coder v2 (v1 also lacked it). Required by the coder workflow to separate regression from pre-existing failures.",
+      "impact": "Regression vs pre-existing separation relies on a fully-green suite rather than a recorded baseline; works this time, fragile in general.",
+      "suggestion": "Coder records baseline-tests.md before starting each version."
     }
   ],
   "verdict": "needs-fixes",
-  "summary": "FAIL. The suite looks green (C# 3693/3694, PLang 253/253) but the green is not honest. Two CRITICAL false greens: (1) all 7 Stage 2 NullabilityTests were inverted from the architect's still-pending 'fallback-removed / un-stamped-read-throws' contract to its opposite, citing an 'Per Ingi' reversal that appears in no architect/Ingi artifact, and the branch was declared 'complete'; (2) the Stage 4 builder golden — the architect's designated 'gate' — asserts only two tautological non-null checks and performs no byte comparison. Three more MAJOR weak/false tests (registry-vs-static indistinguishable, DataTypeReadsEntity never reads .Type, ChannelIndexMissThrows tests a null channel with no Error.Key assertion) plus a flaky shared-static test that means the reported '0 failing' was luck. Stage 1 (rename) and Stage 4 (entity move/fold) appear genuinely done and their structural reflection pins are real; the problem is the behavioral contracts that were rewritten to fit the deferred reality."
+  "summary": "Coder v2 honestly fixes 6 of 7 v1 findings — F2 golden is a real SHA byte-diff, F3 paths are now distinguishable (path vs int), F4 reads the type entity via !Type, F5 asserts the typed ChannelNotFound key on a literal-channel index-miss, F6 flake gone (4 clean runs), builder .pr files all match step text. C# 3694/3694, PLang 253/253. But the ONE new behavior added this version — the type.Promote() fail-loud throw, the headline of plan F1 — is deletion-confirmed UNCOVERED, and the test named ...ThrowsHard_NoSilentFallback asserts a silent null return on a different property (ClrType, which never calls Promote). Per strict-red, a confirmed false-green is FAIL. The fix is one test plus a rename."
 }

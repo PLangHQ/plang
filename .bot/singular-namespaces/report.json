@@ -531,6 +531,56 @@
         "health": "green",
         "notes": "Fundamentals (non-null Context/Type, type.Null sentinel, Promote throw, producer stamping) sound; cache-build safe via _foldLoaded; build clean + affected subsets green (verified, not claimed). 4 minor/latent notes; F1 ReferenceEquals for sentinel worth a one-liner. Next: tester."
       }
+    },
+    {
+      "id": "5bfc92aa-a7fb-4234-a60f-7ed7adcb08ff",
+      "bot": "tester",
+      "timestamp_start": "2026-05-30T11:25:00Z",
+      "timestamp_end": "2026-05-30T11:38:00Z",
+      "intent": "Validate coder v2 fixes to tester v1's 7 findings are honest green, not false green.",
+      "before": {
+        "assumptions": "Coder claims F1-F7 fixed, C# 3694/3694, PLang 253/253. codeanalyzer v4 PASS.",
+        "risk": "Review-driven fixes are highest false-green risk; the new Promote() throw is the headline change most likely to be untested."
+      },
+      "plan": ".bot/singular-namespaces/tester/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests",
+            "Tests"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild then C# 3694/3694 x4 (F6 flake gone) + PLang 253/253. Read every changed test and .pr; builder false-green sweep clean."
+        },
+        {
+          "paths": [
+            "PLang/app/type/this.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Deletion test: replaced Promote() Context==null throw with `return this` -> 3694/3694 still pass. Headline F1 fail-loud contract is uncovered; reverted, git clean."
+        },
+        {
+          "paths": [
+            ".bot/singular-namespaces/tester/v2/result.md",
+            ".bot/singular-namespaces/tester/v2/coverage.json",
+            ".bot/singular-namespaces/test-report.json",
+            ".bot/singular-namespaces/tester/v2/verdict.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "FAIL verdict: 1 MAJOR false-green (uncovered Promote throw + misnamed test) + 3 minor. 6 of 7 v1 findings honestly fixed."
+        }
+      ],
+      "after": {
+        "status": "FAIL",
+        "health": "green-but-one-dishonest",
+        "notes": "Suite green (C# 3694/3694 x4, PLang 253/253). Single surgical fix: cover the Promote() throw and rename DataType_OnUnstampedData_ThrowsHard_NoSilentFallback."
+      }
     }
   ]
 }
