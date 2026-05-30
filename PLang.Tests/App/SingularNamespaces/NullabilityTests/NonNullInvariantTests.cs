@@ -20,15 +20,43 @@ namespace PLang.Tests.App.SingularNamespaces.NullabilityTests;
 // the App back-refs on module/goal/error) are flipped non-null.
 public class NonNullInvariantTests
 {
-    [Test] public async Task DataType_OnUnstampedData_ThrowsHard_NoSilentFallback()
+    [Test] public async Task ClrType_OnUnstampedDomainType_ReturnsNull()
     {
-        // An un-stamped Data with a DOMAIN (non-primitive) type name can't resolve
-        // ClrType — the registry would know, the static primitive table doesn't.
-        // No silent half-answer; the read returns null and the stamping bug is
-        // visible to the caller.
+        // ClrType has its own resolver chain (_clrType ?? Context?... ?? GetPrimitiveOrMime)
+        // — it does NOT go through Promote().  For a non-primitive name with no Context,
+        // the chain falls off the end and returns null.  This pins the ClrType behaviour
+        // alone; the fail-loud Promote() contract is pinned by the next two tests.
         var d = new global::app.data.@this<int>("", 0,
             new global::app.type.@this("not-a-primitive-domain-name"));
-        await Assert.That(d.Type!.ClrType).IsNull();
+        await Assert.That(d.Type.ClrType).IsNull();
+    }
+
+    [Test] public async Task TypeFoldRead_OnUnstampedDomainEntity_ThrowsHard()
+    {
+        // Promote() guards Fields/Values/Properties/Shape/ConstructorSignature/Example/
+        // Description/Kinds — every schema-fold property routes through it.  An entity
+        // minted via FromName (no Context, no fold data) hitting any of these has to
+        // throw, not silently return null — silent null would surface as wrong LLM
+        // prompts far from the producer-stamping bug.
+        var t = new global::app.type.@this("not-a-primitive-domain-name"); // no Context
+
+        await Assert.That(() => { _ = t.Fields; return Task.CompletedTask; })
+            .Throws<System.InvalidOperationException>()
+            .Because("Promote() must fail-loud when an unstamped non-primitive entity is read.");
+    }
+
+    [Test] public async Task TypeFoldRead_OnPrimitiveEntity_DoesNotThrow_EvenWithoutContext()
+    {
+        // The primitive-fallback path (the 2-arg ctor with a CLR type) marks
+        // _foldLoaded=true at construction, so primitives stay reachable through
+        // `app.Type["string"].Example` without an App stamped — that no-Context
+        // identity surface is the documented carve-out the throw above is built
+        // around.  This deletion-confirms: remove the `_foldLoaded = true` line in
+        // the 2-arg ctor and this test goes red.
+        await using var app = new PLangEngine("/test");
+        var prim = app.Type["string"]; // primitive path: new type("string", typeof(string))
+        await Assert.That(() => { _ = prim.Example; return Task.CompletedTask; })
+            .ThrowsNothing();
     }
 
     [Test] public async Task DataType_OnStampedData_ResolvesDomainType_ViaRegistry_NotStaticFallback()
@@ -63,14 +91,16 @@ public class NonNullInvariantTests
         // lookup of their own.
         var sources = new[] {
             "PLang/app/data/this.cs",
-            
             "PLang/app/module/variable/set.cs",
         };
         var repo = System.IO.Path.GetFullPath(System.IO.Path.Combine(System.AppContext.BaseDirectory, "..", "..", "..", ".."));
         foreach (var rel in sources)
         {
             var path = System.IO.Path.Combine(repo, rel);
-            if (!System.IO.File.Exists(path)) continue;
+            // Fail loud if the guard file is missing — otherwise a CI layout change
+            // would silently skip both sources and the test would pass vacuously.
+            await Assert.That(System.IO.File.Exists(path)).IsTrue()
+                .Because($"guard file {rel} not found at {path} — relative-walk from BaseDirectory broke.");
             var text = await System.IO.File.ReadAllTextAsync(path);
             await Assert.That(text.Contains("?? AppTypes.GetPrimitiveOrMime") || text.Contains("?? global::app.type.list.@this.GetPrimitiveOrMime"))
                 .IsFalse().Because($"{rel} still has a `?? GetPrimitiveOrMime` fallback chain");

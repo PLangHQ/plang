@@ -5,10 +5,10 @@
   "steps": [
     {
       "index": 0,
-      "text": "set %captured% = \u0022hello from channel accessor\u0022",
-      "lineNumber": 2,
+      "text": "set %captured% = %!data%",
+      "lineNumber": 5,
       "indent": 0,
-      "comment": null,
+      "comment": "Echo whatever the channel delivered so the assertion in Start.test.goal pins value-flow,\nnot just reachability. \u0060%!data%\u0060 is the channel payload \u2014 if the accessor delivers wrong\nbytes (corruption, swap, drop), %captured% diverges from the expected literal.",
       "actions": [
         {
           "module": "variable",
@@ -17,20 +17,26 @@
             {
               "name": "Name",
               "value": "%captured%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
-              "value": "hello from channel accessor",
-              "type": "string"
+              "value": "%!data%",
+              "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%captured%, Value=\u0022hello from channel accessor\u0022)",
+      "formal": "variable.set(Name=%captured%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     }
@@ -39,7 +45,7 @@
   "visibility": 1,
   "path": "/SingularNamespaces/ChannelWriteThroughAccessor/Capture.goal",
   "prPath": "/SingularNamespaces/ChannelWriteThroughAccessor/.build/capture.pr",
-  "hash": "73068e4392d1e0a21605305cb23d9330508d6c26aa62f677994d4658676b2c55",
+  "hash": "323ea55b20db1ed9d72dfefe79724c8d66443ffb1789b8791343a7dc09fde2e3",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
