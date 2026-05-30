@@ -152,21 +152,7 @@ Rule of thumb: when the planner's set contains `condition.if` AND `goal.call` (o
 
 ### `(type)` hint on a write target
 
-When a variable reference or string literal is followed by `(type)` in a write-target position (e.g. `write to %answer%(json)`, `set %x%(csv)`), use that `type` as the `Type` parameter on the step's terminal `variable.set`. PLang's parser does not interpret `(type)` — it is prose the LLM reads here.
-
-Example (`output.ask "format?", write to %fmt%(json)`):
-```json
-{"actions": [
-  {"module":"output","action":"ask","parameters":[{"name":"Question","value":"format?","type":"string"}],"modifiers":[]},
-  {"module":"variable","action":"set","parameters":[
-    {"name":"Name","value":"%fmt%","type":"string"},
-    {"name":"Value","value":"%!data%","type":"object"},
-    {"name":"Type","value":"json","type":"string"}
-  ]}
-]}
-```
-
-Unknown type names pass through unchanged; the runtime materializer surfaces a clear error on first access if the type is unsupported.
+When a variable reference or string literal is followed by `(<kind>)` in a write-target position (e.g. `write to %answer%(json)`, `set %x%(csv)`), use that token as the `Type` parameter on the step's terminal `variable.set`. PLang's parser does not interpret `(...)` — it is prose the LLM reads. See "The `type` parameter shape" in the per-step user message for the dict shape and the kind vocabulary; the parenthesised token maps to the right `kind` under the right `name` (file-format tokens are kinds of `text`/`image`/`audio`/…, numeric tokens are kinds of `number`).
 
 ### `write to %var%` is ALWAYS a separate peer `variable.set`
 
@@ -232,7 +218,7 @@ Action-level (on individual action):
 - `return` includes the `%` signs (e.g. `"%signature%"`); omit when no return.
 - Use exactly the action names in the action detail above. Never invent. Common hallucinations: `list.append` (use `list.add`), `list.push`, `list.prepend`, `list.insert` — none exist.
 - `module` is a SINGLE identifier with no dots. The dot in `ui.render` is the SEPARATOR between module and action — `{"module": "ui", "action": "render"}`, NEVER `{"module": "ui.render", "action": "render"}`. Same for every action: `file.read` → `{"module":"file","action":"read"}`, `goal.call` → `{"module":"goal","action":"call"}`, `loop.foreach` → `{"module":"loop","action":"foreach"}`.
-- Valid type names: `string`, `int`, `long`, `float`, `double`, `decimal`, `bool`, `datetime`, `timespan`, `guid`, `json`, `list`, `dict`, `bytes`, `object`, `actor`, `goal`, `goal.call`, `path`, `tstring`, `llmmessage`. Lists: `list<T>` (e.g. `list<string>`).
+- **Valid type names come from the per-step type information** (the `Primitive types:` line + the `Catalog types referenced…` block in the user message). Do not invent a name outside that list. Lists: `list<T>` (e.g. `list<text>`). Numeric values are `number` — the precision (`int`, `long`, `decimal`, `double`) is carried as the kind, not as the top-level name. Textual values are `text` — `string` is accepted on input but renders as `text`.
 - **Use the type the catalog declares verbatim.** If the catalog says `Goal([goal])`, the type is `goal` (the Goal entity), NOT `goal.call` (a goal-call payload). They look similar; they're different. The catalog is the single source of truth — don't substitute one type for another just because the parameter name resembles a known type.
 - `tstring` is a runtime hint for value strings that contain `%var%` interpolations; the JSON value is a plain string with the literal `%var%` tokens preserved.
 - Omit nullable parameters (types ending `?`) when not applicable. NEVER emit `""` as a placeholder; leave the slot out entirely. Constrained types (`actor`, enums) reject empty strings.

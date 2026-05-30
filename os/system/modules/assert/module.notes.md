@@ -5,8 +5,8 @@
 Correct (`assert %message% equals 'hello plang'`):
 ```json
 {"module":"assert","action":"equals","parameters":[
-  {"name":"Expected","value":"hello plang","type":"string"},
-  {"name":"Actual","value":"%message%","type":"object"}
+  {"name":"Expected","value":"hello plang","type":{"name":"text"}},
+  {"name":"Actual","value":"%message%","type":{"name":"object"}}
 ]}
 ```
 formal: `assert.equals(Expected="hello plang", Actual=%message%)` — no `Message`.
@@ -14,8 +14,8 @@ formal: `assert.equals(Expected="hello plang", Actual=%message%)` — no `Messag
 Correct (`assert %message% equals 'hello plang', message: "greeting wrong"`):
 ```json
 {"module":"assert","action":"equals","parameters":[
-  {"name":"Expected","value":"hello plang","type":"string"},
-  {"name":"Actual","value":"%message%","type":"object"},
-  {"name":"Message","value":"greeting wrong","type":"string"}
+  {"name":"Expected","value":"hello plang","type":{"name":"text"}},
+  {"name":"Actual","value":"%message%","type":{"name":"object"}},
+  {"name":"Message","value":"greeting wrong","type":{"name":"text"}}
 ]}
 ```

@@ -25,10 +25,10 @@ namespace app.type;
 /// Entities minted outside <c>BuildTypeEntries</c> lazily resolve the catalog
 /// properties on first read via <see cref="Promote"/>.</para>
 /// </summary>
+[JsonConverter(typeof(JsonConverter))]
 public sealed class @this
 {
     [JsonPropertyName("name")]
-    [LlmBuilder]
     public string Name { get; }
 
     /// <summary>
@@ -36,12 +36,10 @@ public sealed class @this
     /// has no sub-kind. Mutable: <c>Data.Kind</c> delegates set-through to this
     /// slot so the entity is the single owner. <c>[JsonIgnore]</c> — the wire
     /// emits <c>kind</c> separately from the type entity (Wire.cs writes it
-    /// alongside the <c>type</c> key), so STJ-default serialisation of the
-    /// entity itself never carries it. <c>[LlmBuilder]</c> — the LLM may emit
-    /// it as part of a <c>type</c> constructor dict.
+    /// alongside the <c>type</c> key) — but when the entity stands alone as a
+    /// value (e.g. <c>variable.set.Type</c>), STJ-default serialization emits
+    /// it as part of the dict <c>{name, kind?, strict?}</c>.
     /// </summary>
-    [JsonIgnore]
-    [LlmBuilder]
     public string? Kind { get; set; }
 
     /// <summary>
@@ -49,10 +47,9 @@ public sealed class @this
     /// literals via <c>app.data.IKindValidatable</c>; deferred to runtime for
     /// <c>%var%</c>). Default false — kind is a hint. Build-only — not on the
     /// wire (a serialised type only describes what it is, not whether the
-    /// reader is strict about it).
+    /// reader is strict about it). When the entity is a standalone value
+    /// (e.g. variable.set.Type), STJ defaults emit it as part of the dict.
     /// </summary>
-    [JsonIgnore]
-    [LlmBuilder]
     public bool Strict { get; init; }
 
     /// <summary>
@@ -63,10 +60,22 @@ public sealed class @this
     /// renderer via <see cref="TypeDescription"/> below.
     /// </summary>
     public const string TypeDescription =
-        "A PLang type value: { name, kind?, strict? }. name is the family or primitive "
-        + "(text, number, image, datetime, ...). kind is the optional subtype "
-        + "(md/jpg/int/...). strict=true makes kind a requirement (enforced at build "
-        + "for verifiable formats). Emit as a dict — never as 'text/md'.";
+        "A PLang type value, emitted as a JSON dict {name, kind?, strict?}. "
+        + "`name` is the canonical family/primitive — text, number, bool, datetime, image, "
+        + "etc. — drawn from the per-step `Primitive types:` list. NEVER a CLR name like "
+        + "`string`, `int`, or `long` (use `text` and `number` instead — int/long/decimal/"
+        + "double are kinds of number, not top-level names). "
+        + "`kind` is the optional subtype: a file extension for text/image/audio/video "
+        + "(`md`, `csv`, `jpg`, `mp3`), the numeric precision for number (`int`, `long`, "
+        + "`decimal`, `double`), or a free string. For literals, the runtime stamps the "
+        + "kind from the value when possible (a `.md` filename → kind `md`); only include "
+        + "`kind` when the step text spells it out (`as text/markdown`). "
+        + "`strict` (default false) turns kind into a build-time requirement for "
+        + "verifiable formats (image checks magic bytes); a `%var%` value defers the "
+        + "check to runtime; unverifiable families like `text` accept the kind name "
+        + "without probing content. "
+        + "Emit as a JSON object, NEVER a slash string. Wrong: `\"text/md\"`. "
+        + "Right: `{\"name\":\"text\",\"kind\":\"md\"}`. The slash form leaks past the wire.";
 
     // Context is the *runtime* invariant — once a Data is stamped (Variables.Set,
     // Action.RunAsync), the entity reads through the registry.  Before stamping,
@@ -77,13 +86,8 @@ public sealed class @this
     [JsonIgnore]
     internal actor.context.@this? Context { get; set; }
 
-    public @this(string name)
-    {
-        Name = Canonicalise(name);
-        StampPrimitive(name);
-    }
-
-    public @this(string name, string? kind, bool strict = false)
+    [JsonConstructor]
+    public @this(string name, string? kind = null, bool strict = false)
     {
         Name = Canonicalise(name);
         Kind = kind;

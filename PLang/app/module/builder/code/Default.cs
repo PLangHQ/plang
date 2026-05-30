@@ -116,6 +116,7 @@ public class Default : IBuilder
             {
                 PrimitiveNames = schema.PrimitiveNames,
                 Types = filteredTypes,
+                Kinds = schema.Kinds,
             };
         }
 

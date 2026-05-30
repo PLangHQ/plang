@@ -535,7 +535,7 @@ public class EngineTypesTests
     {
         // Set/HashSet/IEnumerable all normalize to list<T> per catalog conventions
         // (commit 197729d "Catalog: normalize collection type names").
-        await Assert.That(_types.Name(typeof(HashSet<string>))).IsEqualTo("list<string>");
+        await Assert.That(_types.Name(typeof(HashSet<string>))).IsEqualTo("list<text>");
     }
 
     [Test]
@@ -562,7 +562,7 @@ public class EngineTypesTests
         var names = _types.BuilderNames();
 
         await Assert.That(names).Contains("text");
-        await Assert.That(names).Contains("int");
+        await Assert.That(names).Contains("number");
         await Assert.That(names).Contains("bool");
         await Assert.That(names).Contains("datetime");
     }

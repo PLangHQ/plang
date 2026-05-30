@@ -1,0 +1,179 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %x% = \u0022a\u0022 as text/markdown strict",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "Strict on text \u2014 text doesn\u0027t implement IKindValidatable, so strict\ndegrades to \u0022kind name accepted\u0022; no byte probe runs; builds clean.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%x%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": "a",
+              "type": {
+                "name": "text"
+              }
+            },
+            {
+              "name": "Type",
+              "value": {
+                "name": "text",
+                "kind": "markdown",
+                "strict": true
+              },
+              "type": {
+                "name": "type"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%x%, Value=\u0022a\u0022, Type={\u0022name\u0022:\u0022text\u0022,\u0022kind\u0022:\u0022markdown\u0022,\u0022strict\u0022:true})",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %x.Type.Name% equals \u0022text\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "text",
+              "type": {
+                "name": "text"
+              }
+            },
+            {
+              "name": "Actual",
+              "value": "%x.Type.Name%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022text\u0022, Actual=%x.Type.Name%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %x.Type.Kind% equals \u0022md\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "%x.Type.Kind%",
+              "type": {
+                "name": "text",
+                "kind": "md"
+              },
+              "kind": "md"
+            },
+            {
+              "name": "Actual",
+              "value": "md",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=%x.Type.Kind%, Actual=\u0022md\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %x.Type.Strict% equals true",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "%x.Type.Strict%",
+              "type": {
+                "name": "object"
+              }
+            },
+            {
+              "name": "Actual",
+              "value": true,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=%x.Type.Strict%, Actual=true)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/TypeKindStrict/SetAsTextSlashMarkdownStrictUnverifiable.test.goal",
+  "prPath": "/TypeKindStrict/.build/setastextslashmarkdownstrictunverifiable.test.pr",
+  "hash": "fb1e88588b7c6e1d55028859a2bc577cabdbd0fca7515a71b80e06f1b1b635fb",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

@@ -549,6 +549,16 @@ public sealed partial class @this
 
             var typeName = GetTypeName(type);
 
+            // Skip the type entity itself — its wire shape ({name, kind?, strict?})
+            // and kind vocabulary are taught explicitly in the compile prompt's
+            // "Type reference" block. Rendering it as a catalog scalar
+            // ("type: string") confuses the LLM.
+            if (type == typeof(app.type.@this)) continue;
+            // Skip `data.@this` — actions with polymorphic Value slots (variable.set
+            // etc.) declare it as `object`; surfacing it again as a scalar
+            // ("object: string") in the catalog is redundant and confusing.
+            if (type == typeof(data.@this)) continue;
+
             // Catalog metadata sourced from static-property convention on the type:
             //   public static string Example => "...";
             //   public static string Description => "...";
@@ -593,7 +603,11 @@ public sealed partial class @this
             {
                 if (!prop.CanRead || prop.Name == "EqualityContract") continue;
                 if (!Attribute.IsDefined(prop, typeof(LlmBuilderAttribute))) continue;
-                if (Attribute.IsDefined(prop, typeof(JsonIgnoreAttribute))) continue;
+                // [LlmBuilder] is the explicit opt-in for catalog visibility;
+                // [JsonIgnore] only governs STJ wire shape. A property can be
+                // both (e.g. type.Kind: not on the entity's own wire — the
+                // wire emits `kind` from data.Type.Kind via Wire.cs — but
+                // discoverable as a builder field).
 
                 llmProps.Add(new app.type.Field
                 {

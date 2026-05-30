@@ -129,8 +129,31 @@ public partial class Set : IContext, IBuildValidatable
         if (Type?.Value != null)
         {
             var typeEntity = Type.Value;
+            // Canonicalise kind through the format registry — `markdown` → `md`,
+            // `jpeg` → `jpg`. The factory does this when a context is passed;
+            // the .pr round-trip loses the context, so we run it again here.
+            if (typeEntity.Kind != null)
+            {
+                var canon = Context.App.Format.CanonicaliseKind(typeEntity.Kind);
+                if (canon != null) typeEntity.Kind = canon;
+            }
             var typeName = typeEntity.Name;
             var targetType = Context.App.Type.Get(typeName);
+
+            // Stamp kind from the value when the type has a Build(object?) hook
+            // and the user didn't supply an explicit kind. Mirrors what
+            // NormalizeParameterTypes does at build for known-typed slots;
+            // here we run it on the resolved CLR type at runtime so literals
+            // like `set %x% = "readme.md" as text` pick up kind=md without
+            // the LLM having to spell it out.
+            if (typeEntity.Kind == null && targetType != null)
+            {
+                var derivedKind = Context.App.Type.KindHooks.Of(targetType, Value.Value)
+                                  ?? (Context.App.Type[typeName] is { ClrType: { } familyClr }
+                                      ? Context.App.Type.KindHooks.Of(familyClr, Value.Value)
+                                      : null);
+                if (derivedKind != null) typeEntity.Kind = derivedKind;
+            }
             if (targetType == null)
             {
                 return Task.FromResult(global::app.data.@this.FromError(
@@ -160,14 +183,26 @@ public partial class Set : IContext, IBuildValidatable
             }
 
             object? converted = Value.Value;
+            // CLR target type that can construct from the raw value (string→int,
+            // string→DateTime, dict→record) — convert in place. When the target
+            // can't be constructed from a literal string (e.g. `as image/gif` on
+            // a "real.gif" path string — image is byte-backed, not path-backed),
+            // keep the raw value and let the Type entity carry the meaning.
+            // Downstream consumers that need the bytes can resolve via the path.
+            System.Type? mintType = targetType;
             if (converted != null && !targetType.IsInstanceOfType(converted))
             {
                 var (c, err) = global::app.type.list.@this.TryConvertTo(converted, targetType, Context);
-                if (err != null)
-                    return Task.FromResult(global::app.data.@this.FromError(err));
-                converted = c;
+                if (err == null)
+                    converted = c;
+                else
+                    // Convert failed: fall back to the value's own CLR type so
+                    // ConstructDataOfT mints a Data<actualClr> rather than trying
+                    // to wrap a string inside Data<image>. Type entity stays as
+                    // the user-declared annotation.
+                    mintType = converted.GetType();
             }
-            var typedData = ConstructDataOfT(Name.Value, targetType, converted, Context);
+            var typedData = ConstructDataOfT(Name.Value, mintType, converted, Context);
             // Pin the whole user-named Type entity onto the Data — kind and
             // strict survive the binding-mint. (The dropped-kind bug fixed
             // by construction: we no longer copy just the name.)
@@ -185,9 +220,14 @@ public partial class Set : IContext, IBuildValidatable
         // type of its Value (e.g. `data.Compress()` returns a Data<byte[]> tagged
         // type=archived; MintTyped would otherwise produce Data<byte[]> with no
         // type label, losing the transport marker). Preserve the source's Type
-        // when it has one — Properties already get copied below for the same
-        // "carry source metadata across the binding-mint" reason.
-        minted.Type = Value.Type;
+        // when it has one AND when it carries real information — skip the
+        // "object" catch-all so a literal `5` lazy-derives to {number, int}
+        // instead of being pinned to `object` by the parameter schema's
+        // polymorphic Value-slot annotation. Properties already get copied
+        // below for the same "carry source metadata across the binding-mint"
+        // reason.
+        if (Value.Type is { } sourceType && !sourceType.IsNull && sourceType.Name != "object")
+            minted.Type = sourceType;
         CopyProperties(Value, minted);
         return Task.FromResult(Context.Variable.Set(minted));
     }

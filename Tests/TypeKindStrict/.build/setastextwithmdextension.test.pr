@@ -1,0 +1,143 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %doc% = \u0022readme.md\u0022 as text",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "\u0060as text\u0060 triggers text.Build on the literal value; the .md extension\nbecomes the Type.Kind. End-to-end pin of the dropped-kind regression guard.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%doc%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": "readme.md",
+              "type": {
+                "name": "text"
+              }
+            },
+            {
+              "name": "Type",
+              "value": {
+                "name": "text",
+                "kind": "md"
+              },
+              "type": {
+                "name": "type"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%doc%, Value=\u0022readme.md\u0022, Type={\u0022name\u0022:\u0022text\u0022,\u0022kind\u0022:\u0022md\u0022})",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %doc.Type.Name% equals \u0022text\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "text",
+              "type": {
+                "name": "text"
+              }
+            },
+            {
+              "name": "Actual",
+              "value": "%doc.Type.Name%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022text\u0022, Actual=%doc.Type.Name%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %doc.Type.Kind% equals \u0022md\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "md",
+              "type": {
+                "name": "text",
+                "kind": "md"
+              },
+              "kind": "md"
+            },
+            {
+              "name": "Actual",
+              "value": "%doc.Type.Kind%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022md\u0022, Actual=%doc.Type.Kind%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/TypeKindStrict/SetAsTextWithMdExtension.test.goal",
+  "prPath": "/TypeKindStrict/.build/setastextwithmdextension.test.pr",
+  "hash": "982988fe935e0b320b6df7978b86dc1591ef6cd23fecc994582d55aca69d71ff",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

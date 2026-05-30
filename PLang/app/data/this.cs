@@ -218,7 +218,6 @@ public partial class @this
 
     [JsonPropertyName("type")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    [JsonConverter(typeof(global::app.data.Json))]
     [Out, Store]
     public type Type
     {

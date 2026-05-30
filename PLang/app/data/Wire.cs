@@ -208,7 +208,6 @@ public sealed class Wire : JsonConverter<@this>
         string name = "";
         object? value = null;
         type? typeRef = null;
-        string? kind = null;
         app.module.signing.Signature? signature = null;
         Properties? properties = null;
 
@@ -217,22 +216,6 @@ public sealed class Wire : JsonConverter<@this>
             if (reader.TokenType == JsonTokenType.EndObject)
             {
                 var data = new @this(name, value, typeRef);
-                // Hydrate kind onto Type.Kind (the entity is the single owner).
-                // typeRef may be null on legacy wire reads with no `type` key;
-                // we mint a passthrough type so the kind isn't lost.
-                if (kind != null)
-                {
-                    if (typeRef == null)
-                    {
-                        var derived = new type("object");
-                        derived.Kind = kind;
-                        data.Type = derived;
-                    }
-                    else
-                    {
-                        typeRef.Kind = kind;
-                    }
-                }
                 if (signature != null) data.Signature = signature;
                 if (properties != null) data.Properties = properties;
                 return data;
@@ -247,22 +230,12 @@ public sealed class Wire : JsonConverter<@this>
                     name = reader.TokenType == JsonTokenType.Null ? "" : reader.GetString() ?? "";
                     break;
                 case "type":
+                    // The structured entity {name, kind?, strict?} — its own
+                    // JsonConverter handles both string-form ("text") and
+                    // dict-form. No sibling `kind` key on the wire — the
+                    // entity owns its full identity in one slot.
                     if (reader.TokenType == JsonTokenType.Null) typeRef = null;
-                    else if (reader.TokenType == JsonTokenType.String)
-                    {
-                        var typeStr = reader.GetString();
-                        typeRef = string.IsNullOrEmpty(typeStr) ? null : new type(typeStr);
-                    }
-                    else throw new JsonException("type field must be a JSON string");
-                    break;
-                case "kind":
-                    if (reader.TokenType == JsonTokenType.Null) kind = null;
-                    else if (reader.TokenType == JsonTokenType.String)
-                    {
-                        var kindStr = reader.GetString();
-                        kind = string.IsNullOrEmpty(kindStr) ? null : kindStr;
-                    }
-                    else throw new JsonException("kind field must be a JSON string");
+                    else typeRef = JsonSerializer.Deserialize<type>(ref reader, options);
                     break;
                 case "value":
                     // Peek at the token to see whether the value slot is a
@@ -400,22 +373,14 @@ public sealed class Wire : JsonConverter<@this>
         writer.WriteStartObject();
         writer.WriteString("name", data.Name);
 
-        // type — emit as a plain JSON string (the data.@this.Type's wire form).
-        // Skipped for the Null sentinel (the type entity that replaces the
-        // historical `Type == null` state) — keeps the wire shape compact and
-        // identical to the pre-Null-type world.
+        // type — emit as the structured entity {name, kind?, strict?} via the
+        // type's own JsonConverter. ONE field carrying the full identity; the
+        // historical flat sibling-key shape (`type` string + `kind` string)
+        // is gone. Null sentinel is skipped entirely so the wire stays compact.
         if (!data.Type.IsNull)
         {
-            writer.WriteString("type", data.Type.Name);
-        }
-
-        // kind — refinement of type, separate sibling field per plang-types design.
-        // Sourced from Type.Kind (the single owner since the Data.Kind fold).
-        // Skipped entirely when null (types with no kind, polymorphic results).
-        var kindForWire = data.Type.Kind;
-        if (!string.IsNullOrEmpty(kindForWire))
-        {
-            writer.WriteString("kind", kindForWire);
+            writer.WritePropertyName("type");
+            JsonSerializer.Serialize(writer, data.Type, options);
         }
 
         writer.WritePropertyName("value");

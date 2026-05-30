@@ -349,6 +349,27 @@ public sealed class @this
     }
 
     /// <summary>
+    /// Family → list of extension kinds the LLM may emit for it (e.g.
+    /// "image" → ["jpg","jpeg","png","gif",...]). Inverted from the
+    /// extension→family map; the LLM teaching surface for "what kinds
+    /// belong to what type name." Dots are stripped; original casing of
+    /// the extension keys preserved.
+    /// </summary>
+    public IReadOnlyDictionary<string, IReadOnlyList<string>> KindsByFamily()
+    {
+        var byFamily = new Dictionary<string, List<string>>(System.StringComparer.OrdinalIgnoreCase);
+        foreach (var kvp in _extensionToKind)
+        {
+            var family = kvp.Value;
+            if (!byFamily.TryGetValue(family, out var list))
+                byFamily[family] = list = new List<string>();
+            var ext = kvp.Key.StartsWith('.') ? kvp.Key[1..] : kvp.Key;
+            list.Add(ext);
+        }
+        return byFamily.ToDictionary(k => k.Key, k => (IReadOnlyList<string>)k.Value);
+    }
+
+    /// <summary>
     /// File extension → Kind (e.g. ".jpg" → "image", ".xlsx" → "spreadsheet").
     /// Returns null for unknown or null extensions.
     /// </summary>

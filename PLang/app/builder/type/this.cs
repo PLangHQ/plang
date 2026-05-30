@@ -35,11 +35,48 @@ public sealed partial class @this
     [LlmBuilder]
     public IReadOnlyList<global::app.type.@this> Types { get; init; } = System.Array.Empty<global::app.type.@this>();
 
+    /// <summary>
+    /// Per-family kind vocabulary the LLM may emit for the <c>type</c> parameter.
+    /// Inverted from the format registry's extension→family map — e.g.
+    /// <c>image → [jpg, jpeg, png, gif, ...]</c>, <c>text → [txt, json, csv,
+    /// md, ...]</c>. Numerics (kinds of <c>number</c>) are added explicitly
+    /// since they aren't extensions. Stable, catalog-derived — teaches the
+    /// LLM what (name, kind) combos are valid without a per-action override.
+    /// </summary>
+    [LlmBuilder]
+    public IReadOnlyDictionary<string, IReadOnlyList<string>> Kinds { get; init; }
+        = new Dictionary<string, IReadOnlyList<string>>();
+
     // ---- Template conveniences (pre-rendered views the Liquid prompt consumes) ----
 
     /// <summary>Comma-joined primitive names — the string the builder template drops in.</summary>
     [JsonIgnore]
     public string TypeNames => string.Join(", ", PrimitiveNames);
+
+    /// <summary>
+    /// Pre-rendered LLM teaching for the <c>type</c> parameter shape and the
+    /// kind vocabulary per name. The compiler prompt drops this in when an
+    /// action declares a <c>type</c>-shaped parameter (today: <c>variable.set</c>).
+    /// </summary>
+    [JsonIgnore]
+    public string KindsCatalog
+    {
+        get
+        {
+            if (Kinds.Count == 0) return "";
+            var sb = new StringBuilder();
+            sb.AppendLine("| name | kind |");
+            sb.AppendLine("|---|---|");
+            foreach (var name in Kinds.Keys.OrderBy(k => k))
+            {
+                var kinds = Kinds[name];
+                if (kinds.Count == 0) continue;
+                sb.Append("| ").Append(name).Append(" | ")
+                  .Append(string.Join(", ", kinds)).AppendLine(" |");
+            }
+            return sb.ToString().TrimEnd();
+        }
+    }
 
     /// <summary>
     /// The full schema block rendered as the markdown shape the builder prompt expects:
@@ -152,10 +189,22 @@ public sealed partial class @this
         var primitives = _modules.App?.Type.GetBuilderTypeNames() ?? new List<string>();
         var types = _modules.App?.Type.BuildTypeEntries(_modules) ?? new List<global::app.type.@this>();
 
+        // Family → kind vocabulary, inverted from the format registry's
+        // extension→family map. number's kinds aren't extensions, so we add
+        // them explicitly — the source of truth is app.type.number.@this.Kinds.
+        var kindsByName = new Dictionary<string, IReadOnlyList<string>>(System.StringComparer.OrdinalIgnoreCase);
+        if (_modules.App?.Format is { } fmt)
+        {
+            foreach (var kvp in fmt.KindsByFamily())
+                kindsByName[kvp.Key] = kvp.Value;
+        }
+        kindsByName["number"] = new[] { "int", "long", "decimal", "double" };
+
         return new @this(_modules)
         {
             PrimitiveNames = primitives,
             Types = types,
+            Kinds = kindsByName,
         };
     }
 

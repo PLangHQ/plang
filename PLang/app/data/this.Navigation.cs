@@ -286,13 +286,15 @@ public partial class @this
         var prop = Properties[key];
         if (prop != null) return new @this(key, prop, parent: this);
 
-        // Fallback: whitelisted Data base properties (Success, Error, Name)
-        // These are checked last so %user.name% navigates to the Value's "name"
-        // property rather than Data.Name.
+        // Fallback: whitelisted Data base properties (Success, Error, Name, Type).
+        // Checked last so %user.name% navigates to the Value's "name" property
+        // rather than Data.Name. `Type` joins the whitelist post-Stage-4 so
+        // %x.Type.Name% / %x.Type.Kind% reads the entity from any Data.
         if (ownProp != null && (
             key.Equals("Success", StringComparison.OrdinalIgnoreCase)
             || key.Equals("Error", StringComparison.OrdinalIgnoreCase)
-            || key.Equals("Name", StringComparison.OrdinalIgnoreCase)))
+            || key.Equals("Name", StringComparison.OrdinalIgnoreCase)
+            || key.Equals("Type", StringComparison.OrdinalIgnoreCase)))
         {
             return new @this(key, ownProp.GetValue(this), parent: this);
         }

@@ -2,6 +2,5 @@ Start
 / `as TEXT` (uppercase) → case-insensitive at the parser→factory boundary.
 / Type.Name lowercases to "text".
 - set %x% = "readme.md" as TEXT
-- throw "not implemented"
 - assert %x.Type.Name% equals "text"
 - assert %x.Type.Kind% equals "md"

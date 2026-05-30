@@ -2,6 +2,5 @@ Start
 / `as text` triggers text.Build on the literal value; the .md extension
 / becomes the Type.Kind. End-to-end pin of the dropped-kind regression guard.
 - set %doc% = "readme.md" as text
-- throw "not implemented"
 - assert %doc.Type.Name% equals "text"
 - assert %doc.Type.Kind% equals "md"

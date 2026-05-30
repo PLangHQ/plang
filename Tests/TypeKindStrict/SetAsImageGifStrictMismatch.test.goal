@@ -8,4 +8,3 @@ Start
 / runner doesn't have it, this test asserts via a wrapper goal that runs
 / the builder and checks the error.
 - set %img% = "photo.png" as image/gif strict
-- throw "not implemented"

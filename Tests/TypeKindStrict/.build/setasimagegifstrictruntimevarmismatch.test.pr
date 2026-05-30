@@ -1,0 +1,146 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "read photo.png into %upload%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Strict \u002B %var% \u002B runtime-resolved-to-PNG \u2192 builds clean, runtime typed error.\nValidateBuild defers because of the %var% reference; Run resolves the upload,\ncalls image.ValidateKind, fails with \u0022expected gif, got png\u0022.",
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "photo.png",
+              "type": {
+                "name": "path",
+                "kind": "file"
+              },
+              "kind": "file"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%upload%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": {
+                "name": "object"
+              }
+            },
+            {
+              "name": "Type",
+              "value": "image",
+              "type": {
+                "name": "text"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "file.read(Path=%upload%, ResolveVariables=false) | variable.set(Name=%upload%, Value=%!data%, Type=object)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %img% = %upload% as image/gif strict",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%img%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": "%upload%",
+              "type": {
+                "name": "image"
+              }
+            },
+            {
+              "name": "Type",
+              "value": {
+                "name": "image",
+                "kind": "gif",
+                "strict": true
+              },
+              "type": {
+                "name": "type"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%img%, Value=%upload%, Type={\u0022name\u0022:\u0022image\u0022,\u0022kind\u0022:\u0022gif\u0022,\u0022strict\u0022:true})",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/TypeKindStrict/SetAsImageGifStrictRuntimeVarMismatch.test.goal",
+  "prPath": "/TypeKindStrict/.build/setasimagegifstrictruntimevarmismatch.test.pr",
+  "hash": "93d9529ca73c8604b9093f17f8ec8d41b7a28845a088652edec258fa82f2b31b",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}
