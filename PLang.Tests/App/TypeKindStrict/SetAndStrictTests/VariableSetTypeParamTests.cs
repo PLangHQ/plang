@@ -1,26 +1,27 @@
+using System.Reflection;
 using TUnit.Core;
 using TUnit.Assertions;
+using TUnit.Assertions.Extensions;
 
 namespace PLang.Tests.App.TypeKindStrict.SetAndStrictTests;
-
-// `variable.set.Type` is the new `type` value (name + optional kind + optional
-// strict), not a bare string. The handler reads Name to resolve the CLR type
-// and carries the whole `type` onto the minted variable.
 
 public class VariableSetTypeParamTests
 {
     [Test] public async Task SetType_IsTypeEntity_NotString()
     {
-        // Reflection probe: the partial property `variable.set.Type` is
-        // Data<app.type.@this>?, not Data<string>?.
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var t = typeof(global::app.module.variable.Set);
+        var prop = t.GetProperty("Type", BindingFlags.Public | BindingFlags.Instance)!;
+        await Assert.That(prop).IsNotNull();
+        // data.@this<app.type.@this>?
+        var inner = prop.PropertyType.GetGenericArguments()[0];
+        await Assert.That(inner).IsEqualTo(typeof(global::app.type.@this));
     }
 
     [Test] public async Task SetType_IsNullable()
     {
-        // The `as` clause is optional on `set` — Type may be null.
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var t = typeof(global::app.module.variable.Set);
+        var prop = t.GetProperty("Type", BindingFlags.Public | BindingFlags.Instance)!;
+        // It's a reference type, nullable annotation via context.
+        await Assert.That(prop.PropertyType.IsGenericType).IsTrue();
     }
 }

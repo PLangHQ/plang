@@ -21,6 +21,29 @@ public partial class Set : IContext, IBuildValidatable
             string.Equals(p.Name, "Value", StringComparison.OrdinalIgnoreCase));
         if (value?.Value is string s && s == "this")
             return "Parameter 'Value' is the literal string \"this\" — this is wrong. For \"write to %var%\" patterns, use \"%!data%\" to capture the previous action's result. \"this\" is a type annotation, not a value.";
+
+        // Strict kind enforcement at build for literals. Pulls the user-named
+        // type entity from the Type parameter (post-Stage-4 — a type, not a
+        // string). Mismatches return a build error; %var% values defer to Run.
+        var typeParam = parameters.FirstOrDefault(p =>
+            string.Equals(p.Name, "Type", StringComparison.OrdinalIgnoreCase));
+        if (typeParam?.Value is global::app.type.@this t && t.Strict && t.Kind != null
+            && value?.Value != null && !value.HasVariableReference)
+        {
+            var clr = t.ClrType;
+            if (clr != null && typeof(global::app.data.IKindValidatable).IsAssignableFrom(clr))
+            {
+                var probe = TryInstantiateValidator(clr, value.Value);
+                if (probe is global::app.data.IKindValidatable v)
+                {
+                    var (ok, actual) = v.ValidateKind(value.Value, t.Kind);
+                    if (!ok)
+                        return $"Strict kind mismatch: declared {t.Name}/{t.Kind}"
+                            + (actual != null ? $" but content is {actual}." : ".");
+                }
+            }
+        }
+
         if (value?.Type?.Name != null && value.Value != null)
         {
             // Skip validation when value contains %variable% references — they resolve at runtime
@@ -43,7 +66,14 @@ public partial class Set : IContext, IBuildValidatable
 
     public partial data.@this<app.variable.@this> Name { get; init; }
     public partial data.@this Value { get; init; }
-    public partial data.@this<string>? Type { get; init; }
+    /// <summary>
+    /// Optional <c>as</c> clause. Carries the whole <c>type</c> entity (Name,
+    /// Kind, Strict) the LLM constructed — replaces the historical bare string.
+    /// <c>Run</c> reads <c>Type.Value.Name</c> to resolve the CLR type via the
+    /// registry and stamps the entire entity (kind included) onto the minted
+    /// variable.
+    /// </summary>
+    public partial data.@this<global::app.type.@this>? Type { get; init; }
     [Default(false)]
     public partial data.@this<bool> AsDefault { get; init; }
 
@@ -98,12 +128,37 @@ public partial class Set : IContext, IBuildValidatable
         // json` (mapped to variable.set Type=json) followed by foreach over the resulting dict.
         if (Type?.Value != null)
         {
-            var targetType = Context.App.Type.Get(Type.Value);
+            var typeEntity = Type.Value;
+            var typeName = typeEntity.Name;
+            var targetType = Context.App.Type.Get(typeName);
             if (targetType == null)
             {
                 return Task.FromResult(global::app.data.@this.FromError(
-                    new global::app.error.ServiceError($"Unknown type '{Type.Value}'", "UnknownType", 400)));
+                    new global::app.error.ServiceError($"Unknown type '{typeName}'", "UnknownType", 400)));
             }
+
+            // Strict kind enforcement at runtime — for `%var%` paths
+            // ValidateBuild deferred to here. When the resolved CLR type
+            // implements IKindValidatable and Strict is true, sniff the value.
+            // We construct a sample instance using the raw value as the first
+            // ctor argument (image's primary ctor takes byte[]); a type without
+            // a fitting ctor is treated as "no probe available".
+            if (typeEntity.Strict && typeEntity.Kind != null
+                && typeof(global::app.data.IKindValidatable).IsAssignableFrom(targetType))
+            {
+                var probe = TryInstantiateValidator(targetType, Value.Value);
+                if (probe is global::app.data.IKindValidatable v)
+                {
+                    var (ok, actual) = v.ValidateKind(Value.Value!, typeEntity.Kind);
+                    if (!ok)
+                        return Task.FromResult(global::app.data.@this.FromError(
+                            new global::app.error.ServiceError(
+                                $"Strict kind mismatch: declared {typeName}/{typeEntity.Kind}"
+                                + (actual != null ? $" but content is {actual}." : "."),
+                                "StrictKindMismatch", 400)));
+                }
+            }
+
             object? converted = Value.Value;
             if (converted != null && !targetType.IsInstanceOfType(converted))
             {
@@ -113,11 +168,10 @@ public partial class Set : IContext, IBuildValidatable
                 converted = c;
             }
             var typedData = ConstructDataOfT(Name.Value, targetType, converted, Context);
-            // Pin the user-named Type onto the Data so downstream `%x!Type%`
-            // / `%x.Type%` consumers see the explicit value rather than the
-            // runtime-inferred name (e.g. user wrote `type=text/plain`; the
-            // CLR runtime type is `string` — we keep the MIME on the wire).
-            typedData.Type = global::app.type.@this.FromName(Type.Value);
+            // Pin the whole user-named Type entity onto the Data — kind and
+            // strict survive the binding-mint. (The dropped-kind bug fixed
+            // by construction: we no longer copy just the name.)
+            typedData.Type = typeEntity;
             CopyProperties(Value, typedData);
             return Task.FromResult(Context.Variable.Set(typedData));
         }
@@ -183,6 +237,26 @@ public partial class Set : IContext, IBuildValidatable
     /// <summary>
     /// Reflection construction of Data&lt;T&gt; for a runtime type not in the hot if-chain.
     /// </summary>
+    private static object? TryInstantiateValidator(System.Type targetType, object? rawValue)
+    {
+        if (rawValue == null) return null;
+        foreach (var ctor in targetType.GetConstructors())
+        {
+            var ps = ctor.GetParameters();
+            if (ps.Length == 0) continue;
+            if (!ps[0].ParameterType.IsAssignableFrom(rawValue.GetType())) continue;
+            var args = new object?[ps.Length];
+            args[0] = rawValue;
+            for (int i = 1; i < ps.Length; i++)
+                args[i] = ps[i].HasDefaultValue ? ps[i].DefaultValue
+                    : ps[i].ParameterType == typeof(string) ? string.Empty : null;
+            try { return ctor.Invoke(args); }
+            catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
+            { continue; }
+        }
+        return null;
+    }
+
     private static data.@this ConstructDataOfT(string name, System.Type t, object? value, actor.context.@this context)
     {
         var generic = typeof(data.@this<>).MakeGenericType(t);

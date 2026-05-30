@@ -54,13 +54,36 @@ public sealed partial class @this : global::app.data.IBooleanResolvable, global:
         => System.Threading.Tasks.Task.FromResult(Bytes.Length > 0);
 
     /// <summary>
-    /// Stage 4 fills in the magic-byte sniff comparing <paramref name="requiredKind"/>
-    /// (e.g. "gif", "png") to the actual format derived from <see cref="Bytes"/>
-    /// (via ImageSharp's <c>DetectFormat</c>). Stage 1 lands the marker only so
-    /// the strict pipeline has a seam to call into.
+    /// Sniffs the magic bytes of <paramref name="value"/> (a <c>byte[]</c>) via
+    /// ImageSharp's <c>DetectFormat</c>, and compares the format's primary
+    /// extension to <paramref name="requiredKind"/>. Returns <c>(true, null)</c>
+    /// on match, <c>(false, actualKind)</c> on mismatch.
     /// </summary>
     public (bool ok, string? actualKind) ValidateKind(object value, string requiredKind)
-        => (true, null);
+    {
+        var bytes = value as byte[] ?? Bytes;
+        if (bytes == null || bytes.Length == 0) return (false, null);
+        try
+        {
+            var fmt = SixLabors.ImageSharp.Image.DetectFormat(bytes);
+            if (fmt == null) return (false, null);
+            // ImageSharp's IImageFormat exposes FileExtensions (e.g. ["gif"],
+            // ["jpg","jpeg"]); the canonical form for "kind" is the shortest.
+            string? actual = null;
+            foreach (var ext in fmt.FileExtensions)
+            {
+                if (actual == null || ext.Length < actual.Length) actual = ext;
+            }
+            if (actual == null) return (false, null);
+            if (string.Equals(actual, requiredKind, System.StringComparison.OrdinalIgnoreCase))
+                return (true, null);
+            return (false, actual);
+        }
+        catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
+        {
+            return (false, null);
+        }
+    }
 
     private (int w, int h) ProbeDimensions()
     {
