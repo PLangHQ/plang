@@ -295,8 +295,9 @@ public sealed class @this
 
     /// <summary>
     /// Gets all non-setup goals. Consistent with Get() which excludes setup goals.
-    /// Canonical enumerator is <c>list</c> (added in Stage 3 for the accessor surface);
-    /// <c>All</c> stays as a non-IEnumerable alias for compatibility callers.
+    /// Stage 3 added <c>list</c> as the canonical accessor-surface enumerator;
+    /// <c>All</c> stays because <c>GoalsTests</c> and other in-test sites still
+    /// use it — same shape, kept to avoid a sweep across test fixtures.
     /// </summary>
     public IEnumerable<goal.@this> All => _goals.Values.Where(g => !g.IsSetup);
 
