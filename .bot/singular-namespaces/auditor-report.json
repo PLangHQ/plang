@@ -1,0 +1,69 @@
+{
+  "reviewer": "auditor",
+  "branch": "singular-namespaces",
+  "timestamp": "2026-05-30T12:35:00Z",
+  "reviewed_version": "v1 (auditor) on coder v3 / codeanalyzer v4 / tester v3",
+  "summary": "Cross-cutting audit of a 4-stage refactor (singular rename + non-null + accessor reshape + type-entity move). Prior verdicts (codeanalyzer v4 PASS, tester v3 PASS) hold up. Fundamentals are consistent across seams; cache-build safety still proven (via _foldLoaded); test green is real (rebuilt + verified). Three minor/latent codeanalyzer-v4 findings remain in production HEAD because coder v3 was test-only; none blocking. No security review on branch — recommend routing before docs.",
+  "previous_reviews_assessed": {
+    "codeanalyzer": "agree — v4 verdict honest; 4 minor notes were rated correctly as latent/cosmetic; cache-build safety re-verified",
+    "tester": "agree — v3 mutation pairs honest (delete-the-throw → exactly-the-named-test-fails); coverage now matches the named invariants",
+    "security": "n/a — not run on this branch; see Finding 1"
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "category": "review-gap",
+      "file": "branch-wide",
+      "line": null,
+      "issue": "No security review ran on this branch. Functional security-relevant changes are limited (Permission.Find producer-stamping rehydrated grants; type.Promote throws an InvalidOperationException whose message includes the type name; Wire deserialization mints type from on-wire string). All look low-risk, but convention is to route Permission/Wire-touching branches through security.",
+      "missed_by": "none",
+      "impact": "Defensive gap. No observed vulnerability. Coverage convention is broken.",
+      "suggestion": "Route through security before docs."
+    },
+    {
+      "id": 2,
+      "severity": "nit",
+      "category": "review-gap",
+      "file": "PLang/app/type/this.cs",
+      "line": 69,
+      "issue": "type.IsNull => Value == \"null\" is string-magic. The Null sentinel is a singleton; ReferenceEquals(this, Null) is exact and free. Codeanalyzer v4 F1 flagged this and recommended a one-line fix; coder v3 was test-only, so it's still in HEAD.",
+      "missed_by": "none (codeanalyzer flagged, rated non-blocking)",
+      "impact": "Latent footgun if anyone ever constructs new type(\"null\") or a user types `type=null` — silently treated as the sentinel (dropped from wire, cleared on copy).",
+      "suggestion": "When coder is next invoked, replace with ReferenceEquals(this, Null)."
+    },
+    {
+      "id": 3,
+      "severity": "nit",
+      "category": "contract",
+      "file": "PLang/app/data/this.cs",
+      "line": 444,
+      "issue": "Data.As(string typeName) dropped its `?? AppTypes.GetPrimitiveOrMime(typeName)` fallback, contradicting the ValidateBuild/Sqlite reasoning that kept the same fallback in the entity's own resolver. Codeanalyzer v4 F3.",
+      "missed_by": "none (codeanalyzer flagged, rated latent)",
+      "impact": "No production caller today (only the internal error string references it). If one ever appears on a null-context path, it NREs where the old code resolved a primitive.",
+      "suggestion": "Restore the `?? GetPrimitiveOrMime(typeName)` fallback for consistency, OR document that this overload requires a stamped Data."
+    },
+    {
+      "id": 4,
+      "severity": "nit",
+      "category": "contract",
+      "file": "PLang/app/type/this.cs",
+      "line": 137,
+      "issue": "Scheme getter changed from `Context?.App?.Type?.Scheme` to `Context.App.Type.Scheme`. Codeanalyzer v4 F4.",
+      "missed_by": "none (codeanalyzer flagged, rated latent)",
+      "impact": "Unstamped path-named entity reading .Scheme NREs instead of returning null. All three readers run on stamped entities today, so latent.",
+      "suggestion": "Either re-add `?.` for graceful null return, or convert to an explicit InvalidOperationException with a producer-bug message (mirror Promote)."
+    },
+    {
+      "id": 5,
+      "severity": "minor",
+      "category": "cross-file",
+      "file": "PLang/app/data/this.cs",
+      "line": 80,
+      "issue": "Producer-stamping invariant is correct but subtle. Data ctor sets _type directly (bypasses setter, doesn't propagate Context to type). Type's Context is propagated only by the Data.Context setter (line 80-81) when downstream code stamps the Data. Reads on type fold properties (Fields/Values) before Data.Context is stamped will throw.",
+      "missed_by": "none (codeanalyzer noted producer stamping is correct, didn't trace propagation mechanism explicitly)",
+      "impact": "Cross-module invariant. Easy to violate in a future module without realizing it. Defense-in-depth is in place via Promote throw + tester's TypeFoldRead_OnUnstampedDomainEntity_ThrowsHard mutation-confirmed test.",
+      "suggestion": "Capture as a 'Producer Stamping Invariant' note in good_to_know.md so future module authors know. No code change required."
+    }
+  ]
+}

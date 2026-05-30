@@ -1,0 +1,85 @@
+{
+  "name": "TestDataTypeReadsEntityAfterStamp",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %name% = \u0022alice\u0022, type=text/plain",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%name%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "alice",
+              "type": "string"
+            },
+            {
+              "name": "Type",
+              "value": "text/plain",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%name%, Value=\u0022alice\u0022, Type=\u0022text/plain\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %name!Type% equals \u0022text/plain\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "text/plain",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%name!Type%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022text/plain\u0022, Actual=%name!Type%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/SingularNamespaces/DataTypeReadsEntity.test.goal",
+  "prPath": "/SingularNamespaces/.build/datatypereadsentity.test.pr",
+  "hash": "f9d648a170d6f7fe10b120c66390b1fd3fd4a3c03204159328e94d5373765b93",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

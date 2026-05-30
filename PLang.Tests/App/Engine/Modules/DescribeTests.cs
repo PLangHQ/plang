@@ -1,5 +1,4 @@
-using app.variables;
-using AppModules = global::app.modules.@this;
+using app.variable;
 
 namespace PLang.Tests.App.Modules;
 
@@ -8,7 +7,7 @@ public class DescribeTests
     [Test]
     public async Task Describe_ActionWithConcreteReturnType_IncludesReturnTypeProperties()
     {
-        var modules = new AppModules();
+        var app = new global::app.@this("/test"); var modules = app.Module;
         modules.RegisterType("testmod", "getpath", typeof(FakeGetPath));
 
         var actions = await modules.Describe();
@@ -29,7 +28,7 @@ public class DescribeTests
     [Test]
     public async Task Describe_ActionReturningData_HasNullReturnType()
     {
-        var modules = new AppModules();
+        var app = new global::app.@this("/test"); var modules = app.Module;
         modules.RegisterType("testmod", "basic", typeof(FakeBasicAction));
 
         var actions = await modules.Describe();
@@ -41,7 +40,7 @@ public class DescribeTests
     [Test]
     public async Task Describe_DataWrappedProperty_ShowsInnerTypeName()
     {
-        var modules = new AppModules();
+        var app = new global::app.@this("/test"); var modules = app.Module;
         modules.RegisterType("testmod", "datapath", typeof(FakeDataPathAction));
 
         var actions = await modules.Describe();
@@ -54,34 +53,34 @@ public class DescribeTests
 }
 
 // Fake action with Data<T> wrapped property
-[global::app.modules.Action("datapath")]
-public record FakeDataPathAction : global::app.modules.ICodeGenerated
+[global::app.module.Action("datapath")]
+public record FakeDataPathAction : global::app.module.ICodeGenerated
 {
-    public global::app.data.@this<global::app.types.path.@this> Path { get; init; }
+    public global::app.data.@this<global::app.type.path.@this> Path { get; init; }
 
     public Task<Data> Run() => Task.FromResult(Data.Ok());
 
-    public Task<Data> ExecuteAsync(global::app.goals.goal.steps.step.actions.action.@this action,
+    public Task<Data> ExecuteAsync(global::app.goal.steps.step.actions.action.@this action,
         global::app.actor.context.@this context) => Task.FromResult(Data.Ok());
 }
 
 // Fake action with concrete return type
-[global::app.modules.Action("getpath")]
-public class FakeGetPath : global::app.modules.ICodeGenerated
+[global::app.module.Action("getpath")]
+public class FakeGetPath : global::app.module.ICodeGenerated
 {
     public Task<FakePathResult> Run() => Task.FromResult(new FakePathResult());
 
-    public Task<Data> ExecuteAsync(global::app.goals.goal.steps.step.actions.action.@this action,
+    public Task<Data> ExecuteAsync(global::app.goal.steps.step.actions.action.@this action,
         global::app.actor.context.@this context) => Task.FromResult(Data.Ok());
 }
 
 // Fake action returning plain Data
-[global::app.modules.Action("basic")]
-public class FakeBasicAction : global::app.modules.ICodeGenerated
+[global::app.module.Action("basic")]
+public class FakeBasicAction : global::app.module.ICodeGenerated
 {
     public Task<Data> Run() => Task.FromResult(Data.Ok("hello"));
 
-    public Task<Data> ExecuteAsync(global::app.goals.goal.steps.step.actions.action.@this action,
+    public Task<Data> ExecuteAsync(global::app.goal.steps.step.actions.action.@this action,
         global::app.actor.context.@this context) => Task.FromResult(Data.Ok());
 }
 

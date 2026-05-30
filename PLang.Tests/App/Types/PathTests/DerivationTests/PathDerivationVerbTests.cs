@@ -1,16 +1,16 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using FilePath = global::app.types.path.file.@this;
-using HttpPath = global::app.types.path.http.@this;
-using Path = global::app.types.path.@this;
+using FilePath = global::app.type.path.file.@this;
+using HttpPath = global::app.type.path.http.@this;
+using Path = global::app.type.path.@this;
 
 namespace PLang.Tests.App.Types.PathTests.DerivationTests;
 
 /// <summary>
 /// Path derivation verbs.
 ///
-/// Verbs added to <c>app.types.path.@this</c>: <c>Parent</c>, <c>WithName</c>,
+/// Verbs added to <c>app.type.path.@this</c>: <c>Parent</c>, <c>WithName</c>,
 /// <c>WithExtension</c>, <c>Combine</c>, <c>InFolder</c>. Pure derivations —
 /// no IO, no async, no AuthGate. Derived path inherits Context and scheme.
 /// </summary>

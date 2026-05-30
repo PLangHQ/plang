@@ -1,5 +1,5 @@
-using app.errors;
-using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
+using app.error;
+using ActionEntity = app.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.VariablesTests;
 
@@ -12,7 +12,7 @@ public class SnapshotAtErrorTests
         var step = new Step { Index = 0, Text = "step", Goal = goal };
         var action = new ActionEntity { Module = "test", ActionName = "test" };
         action.Step = step; step.Actions.Add(action); goal.Steps.Add(step);
-        app.Goals.Add(goal);
+        app.Goal.Add(goal);
         return (app, action);
     }
 
@@ -21,20 +21,20 @@ public class SnapshotAtErrorTests
     {
         var (app, action) = BuildLive("SAa");
         var stack = app.CallStack;
-        var vars = app.User.Context.Variables;
+        var vars = app.User.Context.Variable;
         stack.Variables = vars;
         await using var call = stack.Push(action, vars);
 
         // Establish %x%=1 *before* the error fires.
         vars.Set("x", 1);
         var error = new ServiceError("boom", "TestErr", 400);
-        using (app.Errors.Push(error))
+        using (app.Error.Push(error))
         {
             // Handler-time mutation post-throw.
             vars.Set("x", 2);
 
             var projection = vars.SnapshotAt(error);
-            await Assert.That(projection).IsTypeOf<global::app.variables.@this>();
+            await Assert.That(projection).IsTypeOf<global::app.variable.list.@this>();
             await Assert.That(projection.Get("x")?.Value).IsEqualTo(1);
         }
     }
@@ -44,13 +44,13 @@ public class SnapshotAtErrorTests
     {
         var (app, action) = BuildLive("SAb");
         var stack = app.CallStack;
-        var vars = app.User.Context.Variables;
+        var vars = app.User.Context.Variable;
         stack.Variables = vars;
         await using var call = stack.Push(action, vars);
 
         vars.Set("a", "before");
         var error = new ServiceError("boom", "TestErr", 400);
-        using (app.Errors.Push(error))
+        using (app.Error.Push(error))
         {
             vars.Set("a", "after");
             vars.Set("b", "added");
@@ -65,13 +65,13 @@ public class SnapshotAtErrorTests
     {
         var (app, action) = BuildLive("SAc");
         var stack = app.CallStack;
-        var vars = app.User.Context.Variables;
+        var vars = app.User.Context.Variable;
         stack.Variables = vars;
         await using var call = stack.Push(action, vars);
 
         vars.Set("x", 1);
         var error = new ServiceError("boom", "TestErr", 400);
-        using (app.Errors.Push(error))
+        using (app.Error.Push(error))
         {
             vars.Set("x", 2); // handler mutation
             var projection = vars.SnapshotAt(error);
@@ -84,13 +84,13 @@ public class SnapshotAtErrorTests
     {
         var (app, action) = BuildLive("SAd");
         var stack = app.CallStack;
-        var vars = app.User.Context.Variables;
+        var vars = app.User.Context.Variable;
         stack.Variables = vars;
         await using var call = stack.Push(action, vars);
 
         vars.Set("x", "stable");
         var error = new ServiceError("boom", "TestErr", 400);
-        using (app.Errors.Push(error))
+        using (app.Error.Push(error))
         {
             // No post-throw mutations.
             var projection = vars.SnapshotAt(error);
@@ -103,13 +103,13 @@ public class SnapshotAtErrorTests
     {
         var (app, action) = BuildLive("SAe");
         var stack = app.CallStack;
-        var vars = app.User.Context.Variables;
+        var vars = app.User.Context.Variable;
         stack.Variables = vars;
         await using var call = stack.Push(action, vars);
 
         vars.Set("v", 10);
         var error = new ServiceError("boom", "TestErr", 400);
-        using (app.Errors.Push(error))
+        using (app.Error.Push(error))
         {
             vars.Set("v", 20);
             var p1 = vars.SnapshotAt(error);

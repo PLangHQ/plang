@@ -8,7 +8,7 @@ Channels are PLang's per-actor I/O primitive. Every read, write, and prompt at r
 
 ```
 App
-├── System (Actor)        ─┬── Channels  (app.channels.@this — registry per actor)
+├── System (Actor)        ─┬── Channels  (app.channel.@this — registry per actor)
 ├── Service (Actor)        │     ├── "output"   → Channel.Stream.@this   (stdout)
 └── User (Actor)           │     ├── "error"    → Channel.Stream.@this   (stderr)
                            │     ├── "input"    → Channel.Stream.@this   (stdin)
@@ -19,7 +19,7 @@ App
 
 Three actors, three independent registries. The entry point (PlangConsole today; future PlangWeb) wires the four default-named channels on each actor before user code runs. `environment.run` enforces this — boot fails with `MissingRequiredChannelAtBoot` if any of `output`/`error`/`input` is absent.
 
-## The registry: `app.channels.@this`
+## The registry: `app.channel.@this`
 
 Per-actor. Pure registry — Register / Get / Remove / Resolve. **Choreography (the actual write/read/ask paths) lives on `Channel.@this`**, not here.
 
@@ -59,7 +59,7 @@ Reach the registry from an actor: `actor.Channels`. Every channel registered is 
 
 `Resolve` / `Get` return the channel; the registry's `WriteAsync` / `ReadChannelAsync` overloads gate on direction (write fails on `Input`-only, read fails on `Output`-only) and surface `ChannelReadOnly` / `ChannelWriteOnly` Data errors. The default console pair is intentionally direction-split: `output` is write-only, `input` is read-only. See [Interactive prompts](#interactive-prompts) below.
 
-## The channel: `app.channels.Channel.@this`
+## The channel: `app.channel.Channel.@this`
 
 Abstract base. Carries config (Buffer, Timeout, Mime, Encoding, Encryption, Signing), wires the public `WriteAsync` / `ReadAsync` / `Ask` to the abstract `Write` / `Read` / `Ask` hooks that concretes implement, and runs the channel-event lifecycle (Before/After Read/Write, OnAsk). The `Core` suffix on the hooks was dropped in `data-serialize-cleanup` — the public orchestrators keep the `Async` suffix; the hooks are bare verbs.
 
@@ -199,14 +199,14 @@ Per-channel binding list with its own lock and an AsyncLocal "this binding is al
 
 `output` / `error` / `input` are in `Defaults` and **cannot be removed** — `channel.remove "output"` returns `ChannelInvariantViolation`. To redirect them, use `channel.set` to replace the backing. `debug` is not in `Defaults`; it can be added or removed freely.
 
-`app.modules.debug.Write(...)` resolves the System actor's `debug` channel falling back to `error`. It is gated on `IsEnabled` (set by `--debug`); production code calls it freely without checking. Full rule on when to use which surface: see `good_to_know.md` "Console.* Is Banned in Production C#".
+`app.module.debug.Write(...)` resolves the System actor's `debug` channel falling back to `error`. It is gated on `IsEnabled` (set by `--debug`); production code calls it freely without checking. Full rule on when to use which surface: see `good_to_know.md` "Console.* Is Banned in Production C#".
 
 ## Actor channel resolution
 
 ```csharp
 public sealed class app.actor.@this
 {
-    public AppChannels Channels { get; }     // the direct registry, no overlay
+    public app.channel.list.@this Channels { get; }     // the direct registry, no overlay
 }
 ```
 
@@ -216,7 +216,7 @@ isolation is the channel's responsibility (`Channel.Goal.@this.IsExecuting`
 + the `Get`-side branch above), not the actor's.
 
 A historical `FoundationalChannels` boot snapshot plus
-`PushChannelsOverride` / `FreezeFoundational` plus `AppChannels.Snapshot`
+`PushChannelsOverride` / `FreezeFoundational` plus `app.channel.list.@this.Snapshot`
 existed in earlier builds. That mechanism shipped a bug: anything
 registered after the snapshot was invisible to writes from inside a
 goal-channel body — e.g. a `"builder"` channel registered at the top of
@@ -249,8 +249,8 @@ Every PLang `write` step resolves through the channels registry. `write out` res
 The default console pair is direction-split (`output` write-only, `input` read-only). `Channel.Stream.Ask` writes-then-reads on a single bidirectional stream — works for memory and HTTP-session channels, **not** across the console pair. Two-call pattern from C#:
 
 ```csharp
-var output = User.Channels.Get(global::app.channels.@this.Output) as Channel.Stream.@this;
-var input  = User.Channels.Get(global::app.channels.@this.Input)  as Channel.Stream.@this;
+var output = User.Channels.Get(global::app.channel.@this.Output) as Channel.Stream.@this;
+var input  = User.Channels.Get(global::app.channel.@this.Input)  as Channel.Stream.@this;
 
 await output.WriteTextAsync($"Create new app? (y/n): ");
 using var reader = new StreamReader(input.Stream, leaveOpen: true);
@@ -266,7 +266,7 @@ var answer = (await reader.ReadLineAsync())?.Trim().ToLowerInvariant();
 ```csharp
 // User-facing chatter — output channel
 await app.CurrentActor.Channels.WriteTextAsync(
-    global::app.channels.@this.Output,
+    global::app.channel.@this.Output,
     $"  Saved {goal.Name} ({elapsed.TotalSeconds:F1}s){Environment.NewLine}");
 
 // Diagnostic — Debug.Write (gated on --debug, falls back to error)
@@ -279,7 +279,7 @@ The redirection model is exactly how tests capture stderr in the channels world.
 
 ```csharp
 var captured = app.System.Channels.CreateMemoryChannel(
-    global::app.channels.@this.Error,
+    global::app.channel.@this.Error,
     Channel.ChannelDirection.Bidirectional);
 // ... run code under test ...
 captured.Stream.Position = 0;

@@ -1,5 +1,5 @@
 using System.Text.Json;
-using image = global::app.types.image.@this;
+using image = global::app.type.image.@this;
 
 namespace PLang.Tests.App.Serialization;
 
@@ -13,7 +13,7 @@ public class ImageSerializerTests
 {
     private static readonly byte[] PngBytes = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 
-    private sealed class CaptureWriter : global::app.channels.serializers.IWriter
+    private sealed class CaptureWriter : global::app.channel.serializer.IWriter
     {
         public string Format { get; }
         public object? Last { get; private set; }
@@ -44,10 +44,10 @@ public class ImageSerializerTests
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-imgs-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var p = global::app.types.path.@this.Resolve("/some/photo.png", app.User.Context);
+        var p = global::app.type.path.@this.Resolve("/some/photo.png", app.User.Context);
         var img = new image(PngBytes, "image/png", p);
         var w = new CaptureWriter("text");
-        global::app.types.image.serializer.text.Write(img, w);
+        global::app.type.image.serializer.text.Write(img, w);
         await Assert.That(w.LastMethod).IsEqualTo("String");
         await Assert.That(((string)w.Last!).Contains("photo.png") || ((string)w.Last!).Contains("image:")).IsTrue();
     }
@@ -57,7 +57,7 @@ public class ImageSerializerTests
         // No Path → text writer falls back to the bare label.
         var img = new image(PngBytes, "image/png");
         var w = new CaptureWriter("text");
-        global::app.types.image.serializer.text.Write(img, w);
+        global::app.type.image.serializer.text.Write(img, w);
         await Assert.That(((string)w.Last!).Contains("[image:")).IsTrue();
     }
 
@@ -65,14 +65,14 @@ public class ImageSerializerTests
     {
         var img = new image(PngBytes, "image/png");
         var w = new CaptureWriter("json");
-        global::app.types.image.serializer.Default.Write(img, w);
+        global::app.type.image.serializer.Default.Write(img, w);
         await Assert.That(w.LastMethod).IsEqualTo("String");
         await Assert.That(w.Last).IsEqualTo(System.Convert.ToBase64String(PngBytes));
     }
 
     [Test] public async Task Image_PlangFormat_DefaultFallback_RendersBase64()
     {
-        var renderers = new global::app.types.renderers.@this();
+        var renderers = new global::app.type.renderer.@this();
         // plang Format falls through to wildcard "*" → Default → base64.
         var write = renderers.Of("image", "plang");
         await Assert.That(write).IsNotNull();
@@ -83,7 +83,7 @@ public class ImageSerializerTests
 
     [Test] public async Task Image_ProtobufFormat_RendersRawBytes_StubInPlace()
     {
-        var renderers = new global::app.types.renderers.@this();
+        var renderers = new global::app.type.renderer.@this();
         var write = renderers.Of("image", "protobuf");
         await Assert.That(write).IsNotNull();
         var w = new CaptureWriter("protobuf");
@@ -96,11 +96,11 @@ public class ImageSerializerTests
     {
         // Write → base64 string. Round-trip back via image.Resolve(byte[]).
         var img = new image(PngBytes, "image/png");
-        var renderers = new global::app.types.renderers.@this();
+        var renderers = new global::app.type.renderer.@this();
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.channels.serializers.json.Writer(utf, options: null,
+            var w = new global::app.channel.serializer.json.Writer(utf, options: null,
                 view: global::app.View.Out, renderers: renderers);
             w.Value(new global::app.data.TypedValueNode(img, "image"));
         }
@@ -119,7 +119,7 @@ public class ImageSerializerTests
         // image has Default.cs + text.cs + protobuf.cs — three files, the
         // (type, *) wildcard covers any format that doesn't ship a dedicated
         // file. The would-be PLNG gate accepts it.
-        var renderers = new global::app.types.renderers.@this();
+        var renderers = new global::app.type.renderer.@this();
         await Assert.That(renderers.Has("image")).IsTrue();
         await Assert.That(renderers.Of("image", "json")).IsNotNull();
         await Assert.That(renderers.Of("image", "text")).IsNotNull();

@@ -1,9 +1,9 @@
 using app.actor.context;
 using app;
-using app.variables;
-using app.modules.file;
-using PLangPath = global::app.types.path.@this;
-using PLangFilePath = global::app.types.path.file.@this;
+using app.variable;
+using app.module.file;
+using PLangPath = global::app.type.path.@this;
+using PLangFilePath = global::app.type.path.file.@this;
 
 namespace PLang.Tests.App.actions.file;
 
@@ -80,12 +80,12 @@ public class FileHandlerTests : IDisposable
         // unregistered s3:// scheme) is a non-Success data.@this<path>. The
         // handler must surface that typed SchemeNotRegistered error, not NRE
         // on Path.Value.
-        var ctx = _app.User.Context;
-        var failedPath = new Data("path", "s3://bucket/key") { Context = ctx }
-            .As<PLangPath>(ctx);
+        var context = _app.User.Context;
+        var failedPath = new Data("path", "s3://bucket/key") { Context = context }
+            .As<PLangPath>(context);
         await Assert.That(failedPath.Success).IsFalse();   // conversion already failed
 
-        var action = new Read { Context = ctx, Path = failedPath };
+        var action = new Read { Context = context, Path = failedPath };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
@@ -118,7 +118,7 @@ public class FileHandlerTests : IDisposable
     public async Task Read_ResolveVariablesTrue_ResolvesVariableInContent()
     {
         System.IO.File.WriteAllText(TempPath("template.txt"), "Hello %name%, welcome");
-        _app.User.Context.Variables.Set("name", "Ingi");
+        _app.User.Context.Variable.Set("name", "Ingi");
 
         var action = new Read
         {
@@ -138,7 +138,7 @@ public class FileHandlerTests : IDisposable
         // Default value of ResolveVariables is false (per [Default(false)]). Even
         // when %var% is set, the literal must come back unresolved.
         System.IO.File.WriteAllText(TempPath("literal.txt"), "Hello %name%, welcome");
-        _app.User.Context.Variables.Set("name", "Ingi");
+        _app.User.Context.Variable.Set("name", "Ingi");
 
         var action = new Read
         {
@@ -438,30 +438,30 @@ public class FileHandlerTests : IDisposable
         System.IO.File.WriteAllText(TempPath("real.txt"), "I exist");
 
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new StreamChannel(
-            EngineChannels.Output, captureStream,
+        _app.User.Channel.Register(new StreamChannel(
+            global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 
-        var goal = new global::app.goals.goal.@this
+        var goal = new global::app.goal.@this
         {
             Name = "TestFileExistsFlow",
-            Steps = new global::app.goals.goal.steps.@this
+            Steps = new global::app.goal.steps.@this
             {
-                new global::app.goals.goal.steps.step.@this
+                new global::app.goal.steps.step.@this
                 {
                     Index = 0,
                     Text = "check if file exists",
-                    Actions = new global::app.goals.goal.steps.step.actions.@this
+                    Actions = new global::app.goal.steps.step.actions.@this
                     {
-                        new global::app.goals.goal.steps.step.actions.action.@this
+                        new global::app.goal.steps.step.actions.action.@this
                         {
                             Module = "file",
                             ActionName = "exists",
                             Parameters = new System.Collections.Generic.List<global::app.data.@this>
                                 { new global::app.data.@this("path", TempPath("real.txt")) },
                         },
-                        new global::app.goals.goal.steps.step.actions.action.@this
+                        new global::app.goal.steps.step.actions.action.@this
                         {
                             Module = "variable",
                             ActionName = "set",
@@ -472,13 +472,13 @@ public class FileHandlerTests : IDisposable
                         }
                     }
                 },
-                new global::app.goals.goal.steps.step.@this
+                new global::app.goal.steps.step.@this
                 {
                     Index = 1,
                     Text = "write exists result",
-                    Actions = new global::app.goals.goal.steps.step.actions.@this
+                    Actions = new global::app.goal.steps.step.actions.@this
                     {
-                        new global::app.goals.goal.steps.step.actions.action.@this
+                        new global::app.goal.steps.step.actions.action.@this
                         {
                             Module = "output",
                             ActionName = "write",
@@ -495,13 +495,13 @@ public class FileHandlerTests : IDisposable
 
         await Assert.That(goalResult.Success).IsTrue();
 
-        var fileData = context.Variables.Get("fileResult");
+        var fileData = context.Variable.Get("fileResult");
         await Assert.That(fileData).IsNotNull();
         var fileObj = fileData!.Value as PLangPath;
         await Assert.That(fileObj).IsNotNull();
         await Assert.That(await fileObj!.AsBooleanAsync()).IsTrue();
 
-        var existsData = context.Variables.Get("fileResult.Exists");
+        var existsData = context.Variable.Get("fileResult.Exists");
         await Assert.That(existsData).IsNotNull();
         await Assert.That(existsData!.Value).IsEqualTo(true);
 
@@ -514,30 +514,30 @@ public class FileHandlerTests : IDisposable
     public async Task Integration_FileNotExists_FlowsThroughVariables_ToOutput()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new StreamChannel(
-            EngineChannels.Output, captureStream,
+        _app.User.Channel.Register(new StreamChannel(
+            global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 
-        var goal = new global::app.goals.goal.@this
+        var goal = new global::app.goal.@this
         {
             Name = "TestFileNotExistsFlow",
-            Steps = new global::app.goals.goal.steps.@this
+            Steps = new global::app.goal.steps.@this
             {
-                new global::app.goals.goal.steps.step.@this
+                new global::app.goal.steps.step.@this
                 {
                     Index = 0,
                     Text = "check if file exists",
-                    Actions = new global::app.goals.goal.steps.step.actions.@this
+                    Actions = new global::app.goal.steps.step.actions.@this
                     {
-                        new global::app.goals.goal.steps.step.actions.action.@this
+                        new global::app.goal.steps.step.actions.action.@this
                         {
                             Module = "file",
                             ActionName = "exists",
                             Parameters = new System.Collections.Generic.List<global::app.data.@this>
                                 { new global::app.data.@this("path", TempPath("ghost.txt")) },
                         },
-                        new global::app.goals.goal.steps.step.actions.action.@this
+                        new global::app.goal.steps.step.actions.action.@this
                         {
                             Module = "variable",
                             ActionName = "set",
@@ -548,13 +548,13 @@ public class FileHandlerTests : IDisposable
                         }
                     }
                 },
-                new global::app.goals.goal.steps.step.@this
+                new global::app.goal.steps.step.@this
                 {
                     Index = 1,
                     Text = "write exists result",
-                    Actions = new global::app.goals.goal.steps.step.actions.@this
+                    Actions = new global::app.goal.steps.step.actions.@this
                     {
-                        new global::app.goals.goal.steps.step.actions.action.@this
+                        new global::app.goal.steps.step.actions.action.@this
                         {
                             Module = "output",
                             ActionName = "write",
@@ -571,7 +571,7 @@ public class FileHandlerTests : IDisposable
 
         await Assert.That(goalResult.Success).IsTrue();
 
-        var existsData = context.Variables.Get("fileResult.Exists");
+        var existsData = context.Variable.Get("fileResult.Exists");
         await Assert.That(existsData).IsNotNull();
         await Assert.That(existsData!.Value).IsEqualTo(false);
 

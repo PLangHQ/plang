@@ -10,7 +10,7 @@ public class Stage4_BuilderCatalogTests
     public async Task BuilderCatalog_DescribesChannelParameter_OnIChannelActions()
     {
         var app = new global::app.@this("/tmp/s4cat-a");
-        var actions = await app.Modules.Describe();
+        var actions = await app.Module.Describe();
         var write = actions.FirstOrDefault(a => a.Module == "output" && a.ActionName == "write");
         await Assert.That(write).IsNotNull();
         var channelParam = write!.Parameters.FirstOrDefault(p => p.Name == "channel");
@@ -22,9 +22,9 @@ public class Stage4_BuilderCatalogTests
     {
         var app = new global::app.@this("/tmp/s4cat-b");
         global::app.@this.WireDefaultConsoleChannels(app.User);
-        app.User.Channels.Register(StreamChannel.Memory("logger"));
+        app.User.Channel.Register(StreamChannel.Memory("logger"));
 
-        var inventory = app.Modules.GetChannelInventory(app.User);
+        var inventory = app.Module.GetChannelInventory(app.User);
         await Assert.That(inventory).Contains("output");
         await Assert.That(inventory).Contains("error");
         await Assert.That(inventory).Contains("input");
@@ -40,7 +40,7 @@ public class Stage4_BuilderCatalogTests
         // level. Here we verify the structural pre-condition: no syntactic-pattern
         // hint appears in the channel parameter description.
         var app = new global::app.@this("/tmp/s4cat-c");
-        var actions = await app.Modules.Describe();
+        var actions = await app.Module.Describe();
         var write = actions.First(a => a.Module == "output" && a.ActionName == "write");
         var channelParam = write.Parameters.First(p => p.Name == "channel");
         var desc = channelParam.Value as string ?? "";

@@ -1,5 +1,5 @@
-using app.modules.environment;
-using app.goals.goal;
+using app.module.environment;
+using app.goal;
 
 namespace PLang.Tests.App.Modules.app;
 
@@ -11,7 +11,7 @@ public class AppRunTests
     public void Setup()
     {
         _app = new global::app.@this("/app");
-        _app.Goals.Add(new global::app.goals.goal.@this
+        _app.Goal.Add(new global::app.goal.@this
         {
             Name = "RunTarget",
             Path = "/RunTarget.goal"
@@ -50,7 +50,7 @@ public class AppRunTests
     [Test]
     public async Task Run_Step_ExecutesStep()
     {
-        var step = new global::app.goals.goal.steps.step.@this
+        var step = new global::app.goal.steps.step.@this
         {
             Text = "test step",
             Index = 0

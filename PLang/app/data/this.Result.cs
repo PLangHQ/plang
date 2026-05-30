@@ -1,7 +1,9 @@
 using System.Text.Json.Serialization;
-using app.errors;
+using app.error;
 
 namespace app.data;
+
+using type = global::app.type.@this;
 
 /// <summary>
 /// Data — result/error concern.

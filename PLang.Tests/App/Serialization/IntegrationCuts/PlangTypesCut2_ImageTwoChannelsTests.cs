@@ -1,5 +1,5 @@
 using System.Text.Json;
-using image = global::app.types.image.@this;
+using image = global::app.type.image.@this;
 
 namespace PLang.Tests.App.Serialization.IntegrationCuts;
 
@@ -12,7 +12,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
 {
     private static readonly byte[] PngBytes = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 
-    private sealed class CaptureWriter : global::app.channels.serializers.IWriter
+    private sealed class CaptureWriter : global::app.channel.serializer.IWriter
     {
         public string Format { get; }
         public string LastMethod { get; private set; } = "";
@@ -43,10 +43,10 @@ public class PlangTypesCut2_ImageTwoChannelsTests
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut2t-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var p = global::app.types.path.@this.Resolve("/srv/photo.png", app.User.Context);
+        var p = global::app.type.path.@this.Resolve("/srv/photo.png", app.User.Context);
         var img = new image(PngBytes, "image/png", p);
 
-        var write = app.Types.Renderers.Of("image", "text");
+        var write = app.Type.Renderers.Of("image", "text");
         await Assert.That(write).IsNotNull();
         var w = new CaptureWriter("text");
         write!(img, w);
@@ -63,8 +63,8 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.channels.serializers.json.Writer(utf, options: null,
-                view: global::app.View.Out, renderers: app.Types.Renderers);
+            var w = new global::app.channel.serializer.json.Writer(utf, options: null,
+                view: global::app.View.Out, renderers: app.Type.Renderers);
             w.Value(new global::app.data.TypedValueNode(img, "image"));
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
@@ -75,12 +75,12 @@ public class PlangTypesCut2_ImageTwoChannelsTests
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut2s-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var p = global::app.types.path.@this.Resolve("/srv/x.png", app.User.Context);
+        var p = global::app.type.path.@this.Resolve("/srv/x.png", app.User.Context);
         var img = new image(PngBytes, "image/png", p);
         var beforeBytes = img.Bytes;
 
-        app.Types.Renderers.Of("image", "text")!(img, new CaptureWriter("text"));
-        app.Types.Renderers.Of("image", "json")!(img, new CaptureWriter("json"));
+        app.Type.Renderers.Of("image", "text")!(img, new CaptureWriter("text"));
+        app.Type.Renderers.Of("image", "json")!(img, new CaptureWriter("json"));
 
         // Bytes is the same reference — no copy, no re-decode.
         await Assert.That(ReferenceEquals(img.Bytes, beforeBytes)).IsTrue();
@@ -93,7 +93,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         // switch. Verify by reflection: json.Writer.Value(object?) is the
         // only place writer ever sees the typed value, and the case it
         // takes is TypedValueNode — not image/number/code branches.
-        var writerType = typeof(global::app.channels.serializers.json.Writer);
+        var writerType = typeof(global::app.channel.serializer.json.Writer);
         var valueMethod = writerType.GetMethod("Value",
             new[] { typeof(object) });
         await Assert.That(valueMethod).IsNotNull();
@@ -110,12 +110,12 @@ public class PlangTypesCut2_ImageTwoChannelsTests
             "plang-cut2i-" + System.Guid.NewGuid().ToString("N")[..8]));
         var img = new image(PngBytes, "image/png");
         var data = new global::app.data.@this("photo", img,
-            new global::app.data.type("image")) { Context = app.User.Context };
+            new global::app.type.@this("image")) { Context = app.User.Context };
 
         await Assert.That(data.Type?.Value).IsEqualTo("image");
-        app.Types.Renderers.Of("image", "text")!(img, new CaptureWriter("text"));
+        app.Type.Renderers.Of("image", "text")!(img, new CaptureWriter("text"));
         await Assert.That(data.Type?.Value).IsEqualTo("image");
-        app.Types.Renderers.Of("image", "json")!(img, new CaptureWriter("json"));
+        app.Type.Renderers.Of("image", "json")!(img, new CaptureWriter("json"));
         await Assert.That(data.Type?.Value).IsEqualTo("image");
     }
 }

@@ -15,9 +15,9 @@ Every folder's primary class is named `@this` in `this.cs`. Consumers use global
 
 ### Namespace Per Folder
 Each folder gets its **own namespace** matching its path exactly:
-- `Goals/Goal/this.cs` → namespace `app.goals.goal`
-- `Goals/Goal/Steps/Step/this.cs` → namespace `app.goals.goal.steps.step`
-- `Events/Lifecycle/Bindings/this.cs` → namespace `app.events.lifecycle.bindings`
+- `goal/this.cs` → namespace `app.goal`
+- `goal/step/this.cs` → namespace `app.goal.step`
+- `event/lifecycle/binding/this.cs` → namespace `app.event.lifecycle.binding`
 
 This works because the class is `@this` — it never collides with its namespace segment.
 
@@ -559,9 +559,9 @@ This means:
 
 ---
 
-## app.modules.code — Pluggable Module Implementations
+## app.module.code — Pluggable Module Implementations
 
-`app.modules.code` (`app.modules.code.@this`) is a named code-implementation registry — `ConcurrentDictionary<Type, ConcurrentDictionary<string, ICode>>`. Each interface type can have multiple named implementations. First registered becomes default.
+`app.module.code` (`app.module.code.@this`) is a named code-implementation registry — `ConcurrentDictionary<Type, ConcurrentDictionary<string, ICode>>`. Each interface type can have multiple named implementations. First registered becomes default.
 
 Each module:
 1. Defines a code interface (e.g., `ICrypto`, `ISigning`) under `app/modules/<m>/code/`
@@ -642,7 +642,7 @@ This means `SignedData.Verified` needs a lazy resolution pattern (similar to `Id
 
 ---
 
-## ILlm — LLM Implementation in app.modules.code
+## ILlm — LLM Implementation in app.module.code
 
 `ILlm` follows the same `ICode` pattern as other module interfaces. Single method: `Task<Data> Query(query action)`. The implementation owns the full lifecycle: config resolution, message formatting, HTTP calls (via the http module), tool execution loop, caching, streaming, validation, and conversation continuity.
 
@@ -662,7 +662,7 @@ This means `SignedData.Verified` needs a lazy resolution pattern (similar to `Id
 
 ---
 
-## IHttp — HTTP Implementation in app.modules.code
+## IHttp — HTTP Implementation in app.module.code
 
 `IHttp` follows the same `ICode` pattern as `ISigning`, `ICrypto`, etc. Registered on `app.Code` during app construction. `Default` (`app/modules/http/code/Default.cs`) is the built-in implementation that owns `HttpClient`, config resolution, signing integration, streaming, and response parsing.
 
@@ -681,7 +681,7 @@ PLang type name mapping: `"http"` / `"ihttp"` → `IHttp`, `"template"` / `"item
 
 ---
 
-## IBuilder — Builder Implementation in app.modules.code
+## IBuilder — Builder Implementation in app.module.code
 
 `IBuilder` follows the same `ICode` pattern as other module interfaces. Owns all build-time logic — action records are thin one-line delegates. The default implementation under `app/modules/builder/code/Default.cs` handles goal parsing, `.pr` file merging, action validation, and persistence.
 
@@ -862,7 +862,7 @@ Tracking-name constants (`ActionInfoTrackingName`, `ActionInfoFilteredTrackingNa
 
 ```csharp
 global using Data = global::app.data.@this;
-global using Variables = app.variables.@this;
+global using Variables = app.variable.@this;  // alias name kept for `%var%`-bag readability
 ```
 
 Do NOT create test namespaces matching these alias names — `PLang.Tests.app.data` or `PLang.Tests.app.variables` namespaces shadow the type alias for all sibling test files (`CS0118: 'Data' is a namespace but is used like a type`). File-level `using Data = ...` cannot override (CS1537 against the global, and the namespace still wins at sibling scope). Convention: when a test folder mirrors `PLang/app/data/` or `PLang/app/variables/`, use the `*Tests` suffix on the folder/namespace (`PLang.Tests/app/DataTests/`, `PLang.Tests/app/VariablesTests/`). Same applies to any future global alias whose name is also a directory under `PLang/app/`.
@@ -882,7 +882,7 @@ Anything else fails the build with `PLNG001: Property '{0}' on action '{1}' must
 
 ---
 
-## `app.variables.Variable` — the variable-name carrier
+## `app.variable.Variable` — the variable-name carrier
 
 `Variable` is a record (`Name`, `RawValue`, `WasPercentWrapped`) used as the wrapped type in `Data<Variable>` for action parameters that *name* a variable rather than carry its value (write targets, read-by-name lookups: `variable.set`, every `list.*`, `loop.foreach` ItemName/KeyName). It implements `IRawNameResolvable`, a marker that tells `Data.AsT_Impl` to skip its `%var%` substitution branch and call `Variable.Resolve(raw, ctx)` directly. Both `value="%x%"` and bare `value="x"` slot forms collapse to `Variable { Name = "x" }` — symmetric, and works even when the named variable doesn't yet exist (e.g., `set %x% = 5` creating x for the first time).
 
@@ -1124,7 +1124,7 @@ The dispatch path is: callbacks read `RestoredFrame` to identify the resume `Pos
 
 Action handlers and engine code under `PLang/app/**` must NOT call
 `System.IO.*` directly. The only allowed filesystem surface is the
-`app.types.path.@this` verb set (`ReadText`, `ReadBytes`, `WriteText`,
+`app.type.path.@this` verb set (`ReadText`, `ReadBytes`, `WriteText`,
 `WriteBytes`, `Append`, `Mkdir`, `Delete`, `List`, `Stat`, `MoveTo`,
 `CopyTo`, `ExistsAsync`, `AsBooleanAsync`). Every one of those methods
 passes through `FilePath.AuthGate(verb)` before touching the disk.
@@ -1135,7 +1135,7 @@ GetFullPath/...) is reaching **under** the auth gate. That means an
 out-of-root path the actor never consented to gets read / written
 silently. It's the filesystem analogue of the `Console.*` ban below.
 
-**The rule.** A filesystem path in interior C# is `app.types.path.@this`
+**The rule.** A filesystem path in interior C# is `app.type.path.@this`
 (the lowercase `path` alias). `string` only appears at the perimeter:
 CLI args, JSON-on-disk shape (the wire format), scheme-resolved DLL
 loads, and the App root anchors (`App.AbsolutePath`, `App.OsDirectory`,
@@ -1161,14 +1161,14 @@ plus `Path.Combine` / `GetDirectoryName` / `GetFileName` /
 `GetFullPath` / `Join` / `TrimEndingDirectorySeparator` / `GetPathRoot` /
 `EndsInDirectorySeparator`. These are string transformations, not IO.
 
-Exempt files / namespaces: `app.types.path.**` (the verb surface
+Exempt files / namespaces: `app.type.path.**` (the verb surface
 legitimately uses `System.IO` post-AuthGate); the `PLang.Generators`
-project; and `app.modules.MarkdownTeaching` (bootstrap-time discovery of
+project; and `app.module.MarkdownTeaching` (bootstrap-time discovery of
 static repo-shipped teaching .md files — converting its sync utility
 shape to async-everywhere buys no security and lots of churn).
 
 **`.Absolute` discipline (D13).** `path.Absolute` is an easy-to-misuse
-escape hatch. Any reach for `.Absolute` outside `app.types.path.**`
+escape hatch. Any reach for `.Absolute` outside `app.type.path.**`
 means a third-party API (sqlite, image library, `Assembly.LoadFrom`) is
 about to touch the filesystem with no gate. Handlers MUST `await
 path.Authorize(verb)` first and check `auth.Success` before reading
@@ -1214,7 +1214,7 @@ Channels exist so that I/O is **redirectable** — a user can re-register the `o
 The rule, with the three flavours of write:
 
 - **Diagnostic / debug chatter** (lifecycle banners, `--debug` traces, internal warnings) → `await context.App.Debug.Write(...)`. This routes through the `debug` channel falling back to `error`, and is gated on `IsEnabled` so it goes silent without `--debug`. Sites that subscribe as `Action<...>` (sync event handlers) can use `_ = Debug.Write(...)` — `Console.Error` was non-awaitable already, so ordering guarantees don't change.
-- **User-facing program output** (builder progress lines, LLM validation chatter — the user expects to see them with `--debug` off) → `await app.CurrentActor.Channels.WriteTextAsync(global::app.channels.@this.Output, ...)`. Do **not** route these through `Debug.Write` — the `IsEnabled` gate would silence them in the default case.
+- **User-facing program output** (builder progress lines, LLM validation chatter — the user expects to see them with `--debug` off) → `await app.CurrentActor.Channels.WriteTextAsync(global::app.channel.@this.Output, ...)`. Do **not** route these through `Debug.Write` — the `IsEnabled` gate would silence them in the default case.
 - **Interactive prompts** (the App build "create new app? (y/n)" prompt is the canonical example). The default console pair is direction-split: `output` is write-only, `input` is read-only. `Channel.Stream.AskCore` writes-then-reads on a single bidirectional stream and does not work across the split pair. Two-call pattern: write the prompt through `output`, then `using var reader = new StreamReader(inputChannel.Stream, leaveOpen: true)` and `await reader.ReadLineAsync()`. Don't extract a `Channels.AskAcrossAsync` primitive on speculation — there's only one caller.
 
 The two `Console.*` references that **stay**:
@@ -1265,7 +1265,7 @@ A new operator or evaluator must `await`. A new type that wants scheme-defined t
 
 ## Per-action LLM teaching lives in markdown, not attributes
 
-Action **shape** (what parameters exist, what types, what defaults, is-it-a-modifier) is declared in C# attributes on the handler class — that has to be reflection-readable at compile time. Action **prose** (Description, Notes, Examples) is declared in markdown files at `os/system/modules/<module>/{module,<action>}.{description,notes,examples}.md` and read at catalog-build time by `app.modules.MarkdownTeaching.Load(...)`.
+Action **shape** (what parameters exist, what types, what defaults, is-it-a-modifier) is declared in C# attributes on the handler class — that has to be reflection-readable at compile time. Action **prose** (Description, Notes, Examples) is declared in markdown files at `os/system/modules/<module>/{module,<action>}.{description,notes,examples}.md` and read at catalog-build time by `app.module.MarkdownTeaching.Load(...)`.
 
 `[Description]`, `[ModuleDescription]`, and `[Example]` no longer exist on action handlers. Don't add them back; the rename from "attribute prose" to "markdown prose" was a deliberate move (branch `compile-llm-notes-per-action`) for three reasons:
 
@@ -1306,7 +1306,7 @@ In-band errors stay on `Data` (caller short-circuits, must be in the return path
 
 ```csharp
 var ch = Context.App.Channels.Channel("builder");
-await ch.WriteAsync(new app.modules.builder.warning.@this(this, $"missing literal file: {path}"));
+await ch.WriteAsync(new app.module.builder.warning.@this(this, $"missing literal file: {path}"));
 return data.@this.Ok(inferredType);
 ```
 
@@ -1444,3 +1444,106 @@ Higher-level PLang values (`number`, `image`, `code`, `path`, `datetime`, `durat
 **Couriers never read `.Value`.** Variable memory, callstack, channel routing, signing, the wire envelope all key on `Data.Type` (and `Data.Kind` when relevant). Only **leaf actions** (handlers declaring `Data<T>` parameters) and **leaf serializers** (the per-(type, format) renderer files) get to dereference `Data.Value`. This is [OBP Rule #9](object_pattern_formal.md#9-only-leaves-touch-datavalue) — and the seventh entry in `/CLAUDE.md`'s OBP Smell Checklist.
 
 Full design (movie, build-vs-runtime trace, dispatch mechanism): the architect plan on the `plang-types` branch — `.bot/plang-types/architect/plan.md` and the seven stage files alongside.
+
+## `app.X` is the collection node — `[name]` / `.list` / `.current`
+
+Across the `singular-namespaces` refactor every plural `App<Plural>`
+wrapper alias (`AppGoals`, `AppChannels`, `AppEvents`, `AppModules`) was
+deleted. The replacement is the **collection-node convention**: every
+concept `X` in the PLang vocabulary exposes its collection at `app.X`
+(type `app.X.list.@this`, folder `X/list/this.cs`), owned once by the
+singleton `app` (or by `actor` for `channel`). Selection, enumeration,
+and "what we're currently inside" are all on the node:
+
+```csharp
+app.Goal["main"]            // select one by name/key — throws on miss
+app.Goal.list               // enumerate (IEnumerable<goal.@this>)
+app.Goal.current            // the goal execution is currently inside
+                            // (reads CallStack.Current.Action.Step.Goal)
+```
+
+**`.current` exists only where execution flows through.** A concept that
+nothing is ever *inside* — `type`, `channel`, `event`, `module`, `format`
+— has **no** `.current`. Reach for the registry on the node, not for a
+fictional current.
+
+**Registry = selection + lifecycle; behavior lives on the element.** A
+type-switch (`is X.subtype` or `switch (registry[name])`) inside a
+registry method is misplaced behavior — push it onto the element as a
+virtual member. The collection never lives on the element, and the
+collection is never a flat property on `app` either (the deleted
+`App<Plural>` aliases were exactly that smell).
+
+**`module` is a no-`.current` service.** Action modules are dispatched,
+not navigated. `app/module/this.cs` (= `app.module.@this`, the type) is
+the action registry; the property surface is `app.Module` (PascalCase).
+`app.Module.Describe()` walks the registered handlers for the catalog;
+`app.Module.Schema.Build()` produces the LLM action catalog snapshot.
+
+The full token map for the rename (plural → singular) lives in
+`app-tree.md`; the canonical OBP rule (Rule #1 — Public mutable
+collection with rules enforced from outside) is what was being fixed.
+
+## Producer-stamping invariant — `Data.Type` propagation
+
+`Data.Context` is **non-null end-to-end** post-`singular-namespaces`.
+But `Data`'s constructor sets the internal `_type` field directly
+(bypassing the setter), which means `type.@this.Context` is **not**
+populated at construction. It is propagated **only** by the
+`Data.Context` setter — when a downstream owner stamps the Data with a
+context, the setter also writes through to `_type.Context`.
+
+The invariant:
+
+> A `type.@this` entity that fronts a `Data` is stamped *by the Data*,
+> not at its own construction. Code that reads `type.Fields` /
+> `type.Values` / `type.Example` (the catalog-fold properties) **before**
+> the carrying Data has been stamped will throw
+> `InvalidOperationException` via `type.Promote()`.
+
+Two carve-outs from the throw:
+
+- **Primitive entities** — constructed via the 2-arg ctor that flips
+  `_foldLoaded = true`. `app.Type["string"].Example` is reachable
+  without any App or stamped Data.
+- **`ClrType` reads** — the chain
+  `_clrType ?? Context?.App.Type.Resolve(name)?.ClrType ?? GetPrimitiveOrMime(name)`
+  falls off to `null` instead of throwing. Tests pin both branches:
+
+```csharp
+TypeFoldRead_OnUnstampedDomainEntity_ThrowsHard       // Promote() fires
+TypeFoldRead_OnPrimitiveEntity_DoesNotThrow_EvenWithoutContext  // _foldLoaded=true
+ClrType_OnUnstampedDomainType_ReturnsNull             // silent null, no Promote
+```
+
+(All three in `PLang.Tests/App/SingularNamespaces/NullabilityTests/NonNullInvariantTests.cs`.)
+
+**Why this matters for module authors.** A new module that constructs a
+`type.@this` itself (instead of `app.Type["name"]`) and reads fold
+properties on it before stamping the Data will hit the throw. The fix
+is always to either (a) route through `app.Type[...]` to get a stamped
+primitive entity, or (b) stamp the carrying Data with a context before
+reading. Don't add `?.` to the fold-property accessors — the throw is
+the contract; the dot-chain is defense-in-depth on top.
+
+## `type.@this.Null` — non-null sentinel on `Data.Type`
+
+`Data.Type` is non-null end-to-end. A `Data` with no declared type
+returns the singleton `type.@this.Null` (`IsNull = true`,
+`ClrType = typeof(object)`) instead of literal null. Three concrete
+consequences:
+
+- **Call sites don't null-check `Data.Type`.** Copying
+  `dest.Type = source.Type` is unconditional — the setter recognises
+  `Null` by `ReferenceEquals(this, Null)` and clears `_type` so the
+  sentinel doesn't propagate as a real assignment.
+- **Wire skips emission.** `Wire.Write` does not emit a `"type"` field
+  for `Data` whose type is `Null` — the on-wire shape matches the
+  pre-rename "no type stamped" case, so callbacks signed under the old
+  shape still verify.
+- **Don't construct `new type.@this("null")` to mean Null.** That gives
+  you a real entity named "null", not the sentinel. The codeanalyzer v4
+  F1 note (auditor v1 F2) tracks the latent footgun where
+  `IsNull => Value == "null"` is string-magic instead of
+  `ReferenceEquals`; a future coder pass will tighten this. Today, the
+  only correct way to get the sentinel is `type.@this.Null`.

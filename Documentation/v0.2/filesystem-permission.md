@@ -97,7 +97,7 @@ fresh `Data` per call.
 
 ## Grant verification — Ed25519 with SkipFreshnessCheck
 
-`VerifySignature` constructs `app.modules.signing.verify`:
+`VerifySignature` constructs `app.module.signing.verify`:
 
 ```csharp
 var action = new signing.verify {

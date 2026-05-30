@@ -13,13 +13,13 @@ namespace PLang.Tests.App.Modules.Llm;
 /// </summary>
 public class OpenAiImageDenialTests
 {
-    private sealed class CannedChannel : global::app.channels.channel.@this
+    private sealed class CannedChannel : global::app.channel.@this
     {
         private readonly string _answer;
-        public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channels.channel.ChannelDirection.Bidirectional; }
+        public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
-        public override Task<global::app.data.@this> Ask(global::app.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok(_answer));
+        public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok(_answer));
     }
 
     private static PLangEngine NewApp(out string root)
@@ -33,7 +33,7 @@ public class OpenAiImageDenialTests
     [Test] public async Task ImageAttachment_PathOutsideRoot_DeniedAnswer_NotIncludedInRequest()
     {
         var app = NewApp(out _);
-        app.User.Channels.Register(new CannedChannel("n"));
+        app.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "img.png");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
@@ -44,7 +44,7 @@ public class OpenAiImageDenialTests
         // → ResolveImage falls through (no bytes shipped). PNG magic bytes
         // (89 50 4E 47) base64-encode to a string starting with "iVBOR" —
         // it MUST NOT appear in the wire content.
-        var content = global::app.modules.llm.code.OpenAi.ResolveImage(outOfRoot, app, app.User.Context);
+        var content = global::app.module.llm.code.OpenAi.ResolveImage(outOfRoot, app, app.User.Context);
         var serialized = System.Text.Json.JsonSerializer.Serialize(content);
         await Assert.That(serialized).DoesNotContain("iVBOR");
     }
@@ -59,7 +59,7 @@ public class OpenAiImageDenialTests
         // through the gated verb (mutating to plain System.IO would still
         // produce the same bytes; the proof of *routing* is in the in-root
         // pair with the out-of-root denial test above).
-        var content = global::app.modules.llm.code.OpenAi.ResolveImage(file, app, app.User.Context);
+        var content = global::app.module.llm.code.OpenAi.ResolveImage(file, app, app.User.Context);
         var serialized = System.Text.Json.JsonSerializer.Serialize(content);
         await Assert.That(serialized).Contains("iVBOR");
         await Assert.That(serialized).Contains("data:image/png;base64,");

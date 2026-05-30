@@ -25,8 +25,8 @@ public class TestMetadataTests
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = new global::app.@this(_tempDir);
         _captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new StreamChannel(
-            EngineChannels.Output, _captureStream,
+        _app.User.Channel.Register(new StreamChannel(
+            global::app.channel.list.@this.Output, _captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
     }
@@ -50,7 +50,7 @@ public class TestMetadataTests
             Hash = goalHash,
             BuilderVersion = builderVersion
         };
-        var run = new global::app.tester.Run(new global::app.tester.Test.@this { Goal = goal });
+        var run = new global::app.tester.Run(new global::app.tester.test.@this { Goal = goal });
         run.Complete(global::app.tester.Status.Pass);
         return run;
     }
@@ -83,7 +83,7 @@ public class TestMetadataTests
     {
         _app.Tester.Results.Add(NewRun("T", builderVersion: "v1.0"));
 
-        var action = new global::app.modules.test.report { Context = _app.User.Context };
+        var action = new global::app.module.test.report { Context = _app.User.Context };
         await action.Run();
 
         var jsonPath = System.IO.Path.Combine(_tempDir, ".test", "results.json");
@@ -105,7 +105,7 @@ public class TestMetadataTests
         _app.Version = "v2.0"; // current app builder version
         _app.Tester.Results.Add(NewRun("T", builderVersion: "v1.0")); // stale
 
-        var action = new global::app.modules.test.report { Context = _app.User.Context };
+        var action = new global::app.module.test.report { Context = _app.User.Context };
         await action.Run();
 
         var output = CapturedOutput();

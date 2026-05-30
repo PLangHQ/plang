@@ -18,7 +18,7 @@ public interface ISnapshotted
 
 The type system is the bucket assignment. Subsystems that implement `ISnapshotted` participate in snapshot/restore. Subsystems that don't are reconstructed on App build instead — Modules, Goals, Channels, Cache, the action registry. There is no third bucket and no per-call opt-in.
 
-Implementers in v1: `app.@this`, `app.callstack.@this`, `app.callstack.call.@this`, `app.variables.@this`, `app.errors.@this`, `app.errors.trail.@this`, `app.modules.code.@this`, `app.statics.@this`, `app.modules.builder.@this`, `app.tester.@this`.
+Implementers in v1: `app.@this`, `app.callstack.@this`, `app.callstack.call.@this`, `app.variable.@this`, `app.error.@this`, `app.error.trail.@this`, `app.module.code.@this`, `app.statics.@this`, `app.module.builder.@this`, `app.tester.@this`.
 
 ## The container — `Snapshot.@this`
 
@@ -39,7 +39,7 @@ public sealed class @this
 A subsystem captures into the subtree it was given:
 
 ```csharp
-public partial class @this : ISnapshotted   // app.variables.@this
+public partial class @this : ISnapshotted   // app.variable.@this
 {
     public void Capture(Snapshot.@this s)
     {

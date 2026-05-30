@@ -2,14 +2,14 @@ namespace PLang.Tests.App.Types;
 
 public class EngineTypesTests
 {
-    private EngineTypes _types = null!;
-    private global::app.formats.@this _formats = null!;
+    private global::app.type.list.@this _types = null!;
+    private global::app.format.list.@this _formats = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _types = new EngineTypes();
-        _formats = new global::app.formats.@this();
+        _types = new global::app.type.list.@this();
+        _formats = new global::app.format.list.@this();
     }
 
     // --- Clr: PLang name → CLR type ---
@@ -612,10 +612,10 @@ public class EngineTypesTests
         var context = new global::app.actor.context.@this(engine);
 
         // Add a custom type mapping that static TypeMapping does NOT have
-        engine.Formats.Add(".custom", "custom-kind", "application/custom");
+        engine.Format.Add(".custom", "custom-kind", "application/custom");
 
         var data = new global::app.data.@this("test", new byte[] { 1 },
-            global::app.data.type.FromMime("application/custom"));
+            global::app.type.@this.FromMime("application/custom"));
         data.Context = context;
 
         // Type.Kind goes through Engine.Types.KindOf — which sees our custom mapping
@@ -629,8 +629,8 @@ public class EngineTypesTests
     {
         await using var engine = new global::app.@this("/test");
 
-        await Assert.That(engine.Types).IsNotNull();
-        await Assert.That(engine.Types.Clr("string")).IsEqualTo(typeof(string));
+        await Assert.That(engine.Type).IsNotNull();
+        await Assert.That(engine.Type.Clr("string")).IsEqualTo(typeof(string));
     }
 
     // --- v5: Depth limit ---

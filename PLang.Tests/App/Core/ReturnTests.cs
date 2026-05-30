@@ -1,5 +1,5 @@
-using app.errors;
-using app.variables;
+using app.error;
+using app.variable;
 
 namespace PLang.Tests.App.Core;
 

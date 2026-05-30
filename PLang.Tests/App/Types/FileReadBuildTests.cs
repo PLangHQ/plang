@@ -1,4 +1,4 @@
-using image = global::app.types.image.@this;
+using image = global::app.type.image.@this;
 
 namespace PLang.Tests.App.Types;
 
@@ -18,14 +18,14 @@ public class FileReadBuildTests
         // The action Build() returns the high-level type stamp. For .png the
         // formats registry maps the extension → "image".
         await using var app = NewApp();
-        var k = app.Formats.Kind("png");
+        var k = app.Format.Kind("png");
         await Assert.That(k).IsEqualTo("image");
     }
 
     [Test] public async Task FileReadBuild_TxtExtension_ReturnsHighLevelType_Text()
     {
         await using var app = NewApp();
-        var k = app.Formats.Kind("txt");
+        var k = app.Format.Kind("txt");
         await Assert.That(k).IsEqualTo("text");
     }
 
@@ -49,11 +49,11 @@ public class FileReadBuildTests
         System.IO.File.WriteAllBytes(abs, pngBytes);
         try
         {
-            var p = global::app.types.path.@this.Resolve(abs, app.User.Context);
-            var action = new global::app.modules.file.Read
+            var p = global::app.type.path.@this.Resolve(abs, app.User.Context);
+            var action = new global::app.module.file.Read
             {
                 Context = app.User.Context,
-                Path = global::app.data.@this<global::app.types.path.@this>.Ok(p),
+                Path = global::app.data.@this<global::app.type.path.@this>.Ok(p),
             };
             var result = await action.Run();
             await Assert.That(result.Success).IsTrue();
@@ -72,11 +72,11 @@ public class FileReadBuildTests
         System.IO.File.WriteAllText(abs, "hello");
         try
         {
-            var p = global::app.types.path.@this.Resolve(abs, app.User.Context);
-            var action = new global::app.modules.file.Read
+            var p = global::app.type.path.@this.Resolve(abs, app.User.Context);
+            var action = new global::app.module.file.Read
             {
                 Context = app.User.Context,
-                Path = global::app.data.@this<global::app.types.path.@this>.Ok(p),
+                Path = global::app.data.@this<global::app.type.path.@this>.Ok(p),
             };
             var result = await action.Run();
             await Assert.That(result.Success).IsTrue();
@@ -91,14 +91,14 @@ public class FileReadBuildTests
         // name. The action Build returns Ok() (no stamp) when even that isn't
         // a registered PLang type.
         await using var app = NewApp();
-        await Assert.That(app.Formats.Kind("xyz")).IsNull();
+        await Assert.That(app.Format.Kind("xyz")).IsNull();
     }
 
     [Test] public async Task FileReadRun_ReturnsBareDataPolymorphic_NotStaticDataImage()
     {
         // Run() signature is Task<Data> (bare), not Task<Data<image>>. The
         // image lift happens inside Run() based on MIME.
-        var rt = typeof(global::app.modules.file.Read).GetMethod("Run")!.ReturnType;
+        var rt = typeof(global::app.module.file.Read).GetMethod("Run")!.ReturnType;
         await Assert.That(rt).IsEqualTo(typeof(System.Threading.Tasks.Task<global::app.data.@this>));
     }
 }

@@ -1,5 +1,5 @@
 using app.tester;
-using Tag = global::app.modules.test.Tag;
+using Tag = global::app.module.test.Tag;
 
 namespace PLang.Tests.App.Tester;
 
@@ -25,7 +25,7 @@ public class TagActionTests
     public async Task Teardown() => await _app.DisposeAsync();
 
     private static global::app.tester.Run NewRun() =>
-        new(new global::app.tester.Test.@this { Goal = new Goal { Name = "T", Path = "/Tests/T.test.goal" } });
+        new(new global::app.tester.test.@this { Goal = new Goal { Name = "T", Path = "/Tests/T.test.goal" } });
 
     // When Testing.CurrentTest is set (test in flight), test.tag with Tags=["http","fast"]
     // writes both tags into CurrentTest.UserTags.
@@ -53,7 +53,7 @@ public class TagActionTests
     {
         _app.Tester.CurrentTest = NewRun();
         var beforeResultCount = _app.Tester.Results.Count;
-        var beforeVarCount = _app.User.Context.Variables.GetNames().Count();
+        var beforeVarCount = _app.User.Context.Variable.GetNames().Count();
 
         var action = new Tag
         {
@@ -64,7 +64,7 @@ public class TagActionTests
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_app.Tester.Results.Count).IsEqualTo(beforeResultCount);
-        await Assert.That(_app.User.Context.Variables.GetNames().Count()).IsEqualTo(beforeVarCount);
+        await Assert.That(_app.User.Context.Variable.GetNames().Count()).IsEqualTo(beforeVarCount);
     }
 
     // Testing.CurrentTest == null (normal plang run, not --test mode) → test.tag is a

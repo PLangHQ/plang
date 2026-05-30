@@ -18,12 +18,12 @@ public sealed class Money
     public Money(decimal amount, string currency) { Amount = amount; Currency = currency; }
 }
 
-public sealed class MoneyRenderer : global::app.types.ITypeRenderer
+public sealed class MoneyRenderer : global::app.type.list.ITypeRenderer
 {
     public string TypeName => "money";
-    public string Format => global::app.types.renderers.@this.AnyFormat;
+    public string Format => global::app.type.renderer.@this.AnyFormat;
 
-    public void Write(object value, global::app.channels.serializers.IWriter writer)
+    public void Write(object value, global::app.channel.serializer.IWriter writer)
     {
         if (value is Money m)
             writer.String($"{m.Currency} {m.Amount}");
@@ -43,10 +43,10 @@ public sealed class CustomInt
     public static string Shape => "string";
 }
 
-public sealed class CustomIntRenderer : global::app.types.ITypeRenderer
+public sealed class CustomIntRenderer : global::app.type.list.ITypeRenderer
 {
     public string TypeName => "int";
-    public string Format => global::app.types.renderers.@this.AnyFormat;
-    public void Write(object value, global::app.channels.serializers.IWriter writer)
+    public string Format => global::app.type.renderer.@this.AnyFormat;
+    public void Write(object value, global::app.channel.serializer.IWriter writer)
         => writer.String("CUSTOM-INT");
 }

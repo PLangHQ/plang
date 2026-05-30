@@ -1,8 +1,8 @@
 using app;
 using app.actor.context;
-using app.variables;
-using app.modules.condition;
-using app.types.path;
+using app.variable;
+using app.module.condition;
+using app.type.path;
 
 namespace PLang.Tests.App.Modules.condition;
 
@@ -37,7 +37,7 @@ public class StepsSubStepTests : IDisposable
             Text = $"if condition = {conditionResult}",
             Actions = new StepActions
             {
-                new global::app.goals.goal.steps.step.actions.action.@this
+                new global::app.goal.steps.step.actions.action.@this
                 {
                     Module = "condition",
                     ActionName = "if",
@@ -64,7 +64,7 @@ public class StepsSubStepTests : IDisposable
             Text = $"write {marker}",
             Actions = new StepActions
             {
-                new global::app.goals.goal.steps.step.actions.action.@this
+                new global::app.goal.steps.step.actions.action.@this
                 {
                     Module = "output",
                     ActionName = "write",
@@ -86,7 +86,7 @@ public class StepsSubStepTests : IDisposable
             Text = $"set {varName} = {value}",
             Actions = new StepActions
             {
-                new global::app.goals.goal.steps.step.actions.action.@this
+                new global::app.goal.steps.step.actions.action.@this
                 {
                     Module = "variable",
                     ActionName = "set",
@@ -103,8 +103,8 @@ public class StepsSubStepTests : IDisposable
     private (System.IO.MemoryStream stream, Func<string> getOutput) SetupCapture()
     {
         var stream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new StreamChannel(
-            EngineChannels.Output, stream,
+        _app.User.Channel.Register(new StreamChannel(
+            global::app.channel.list.@this.Output, stream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 

@@ -170,7 +170,7 @@ Surfaces every call site where the caller is reaching into `App.X` to pass it as
 
 **Worked examples currently in the cleanup plan:**
 
-- `app/modules/builder/providers/DefaultBuilderProvider.cs:37` — `Catalog.@this.Build(action.Context.App.Modules)` flags. Fix (stage 9): `app.modules.Schema.Build()` instance method, navigates `this.Modules` internally.
+- `app/module/builder/providers/DefaultBuilderProvider.cs:37` — `Catalog.@this.Build(action.Context.App.Module)` flags. Fix (stage 9): `app.module.Schema.Build()` instance method, navigates `this.Module` internally.
 - `app/Catalog/ExampleRenderer.cs:Render(spec, modules)` flags. Fix (stage 9): instance method `Schema.Render(spec)` navigating `this.Modules`.
 
 ---

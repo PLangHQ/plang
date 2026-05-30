@@ -24,9 +24,9 @@ public sealed partial class @this : ISnapshot
     /// <summary>
     /// Replaces the live App's Statics bag tree with the captured one.
     /// </summary>
-    public static void Restore(global::app.snapshot.@this s, global::app.actor.context.@this ctx)
+    public static void Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
     {
-        var target = ctx.App.Statics;
+        var target = context.App.Statics;
         target._bags.Clear();
         var snap = s.Read<Dictionary<string, Dictionary<string, object?>>>("bags");
         if (snap == null) return;

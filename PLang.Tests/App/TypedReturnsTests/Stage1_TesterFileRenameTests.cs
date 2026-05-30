@@ -2,7 +2,7 @@ using System.Reflection;
 
 namespace PLang.Tests.App.TypedReturnsTests;
 
-// Contract: the test-domain entity lives at app.tester.Test.@this (OBP
+// Contract: the test-domain entity lives at app.tester.test.@this (OBP
 // singular-folder layout). Its PLang catalog name derives to "test" via the
 // @this last-namespace-segment convention; the legacy app.tester.File type
 // is gone, as is the "testfile" PLang name.
@@ -27,13 +27,13 @@ public class Stage1_TesterFileRenameTests
             .Because("Only tester.Test.@this exists; the legacy File class is gone.");
     }
 
-    // The new home is app.tester.Test.@this (OBP singular-folder convention).
+    // The new home is app.tester.test.@this (OBP singular-folder convention).
     [Test]
     public async Task TesterTest_ClassExistsAtNewLocation()
     {
-        var newType = typeof(global::app.tester.Test.@this);
+        var newType = typeof(global::app.tester.test.@this);
         await Assert.That(newType).IsNotNull();
-        await Assert.That(newType.Namespace).IsEqualTo("app.tester.Test");
+        await Assert.That(newType.Namespace).IsEqualTo("app.tester.test");
         await Assert.That(newType.Name).IsEqualTo("this");
     }
 
@@ -44,7 +44,7 @@ public class Stage1_TesterFileRenameTests
     [Test]
     public async Task TesterTest_CarriesAllNineDomainFields()
     {
-        var testType = typeof(global::app.tester.Test.@this);
+        var testType = typeof(global::app.tester.test.@this);
         var testProps = testType.GetProperties().Select(p => p.Name).ToHashSet();
         var goalProps = typeof(Goal).GetProperties().Select(p => p.Name).ToHashSet();
 
@@ -62,7 +62,7 @@ public class Stage1_TesterFileRenameTests
     [Test]
     public async Task TesterTest_PlangTypeName_IsTest_Not_TestFile()
     {
-        var name = _app.Types.Name(typeof(global::app.tester.Test.@this));
+        var name = _app.Type.Name(typeof(global::app.tester.test.@this));
         await Assert.That(name).IsEqualTo("test");
         await Assert.That(name).IsNotEqualTo("testfile");
     }
@@ -80,7 +80,7 @@ public class Stage1_TesterFileRenameTests
     [Test]
     public async Task NoSourceFile_ReferencesTestfileString()
     {
-        var resolved = _app.Types.Get("testfile");
+        var resolved = _app.Type.Get("testfile");
         await Assert.That(resolved).IsNull()
             .Because("No [PlangType(\"testfile\")] override exists — only 'test' resolves.");
     }

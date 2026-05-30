@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "Suite is green but the green is dishonest: Stage 2 contract tests inverted to assert the opposite of the still-pending architect spec ('Per Ingi', unrecorded) and branch declared complete; Stage 4 builder golden asserts two tautologies instead of a byte diff; plus 3 weak/false tests and 1 flaky shared-static test." }

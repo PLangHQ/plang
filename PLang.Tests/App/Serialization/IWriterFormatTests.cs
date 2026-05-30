@@ -8,11 +8,11 @@ namespace PLang.Tests.App.Serialization;
 
 public class IWriterFormatTests
 {
-    private static global::app.channels.serializers.json.Writer MakeJsonWriter(
-        System.IO.Stream stream, global::app.types.renderers.@this? renderers = null)
+    private static global::app.channel.serializer.json.Writer MakeJsonWriter(
+        System.IO.Stream stream, global::app.type.renderer.@this? renderers = null)
     {
         var utf = new Utf8JsonWriter(stream);
-        return new global::app.channels.serializers.json.Writer(utf, options: null,
+        return new global::app.channel.serializer.json.Writer(utf, options: null,
             view: global::app.View.Out, renderers: renderers);
     }
 
@@ -32,13 +32,13 @@ public class IWriterFormatTests
     public async Task Writer_TypedValueNodeCase_CallsLookup_WithOwnFormatToken()
     {
         // Pass a renderer that fires only when the writer's Format matches "json".
-        var r = new global::app.types.renderers.@this();
+        var r = new global::app.type.renderer.@this();
         string? capturedFormat = null;
         r.Register("fmtcheck", "json", (v, w) => { capturedFormat = w.Format; w.String("via-json"); });
 
         using var ms = new System.IO.MemoryStream();
         var utf = new Utf8JsonWriter(ms);
-        var w = new global::app.channels.serializers.json.Writer(utf, options: null,
+        var w = new global::app.channel.serializer.json.Writer(utf, options: null,
             view: global::app.View.Out, renderers: r);
         w.Value(new global::app.data.TypedValueNode(new object(), "fmtcheck"));
         utf.Flush();
@@ -48,15 +48,15 @@ public class IWriterFormatTests
     [Test]
     public async Task Writer_TypedValueNodeCase_FallsBackToStar_WhenSpecificMissing()
     {
-        var r = new global::app.types.renderers.@this();
+        var r = new global::app.type.renderer.@this();
         bool fired = false;
         // Only the wildcard registered — no "json"-specific. Lookup must fall through.
-        r.Register("fallback-fixture", global::app.types.renderers.@this.AnyFormat,
+        r.Register("fallback-fixture", global::app.type.renderer.@this.AnyFormat,
             (v, w) => { fired = true; w.String("via-star"); });
 
         using var ms = new System.IO.MemoryStream();
         var utf = new Utf8JsonWriter(ms);
-        var w = new global::app.channels.serializers.json.Writer(utf, options: null,
+        var w = new global::app.channel.serializer.json.Writer(utf, options: null,
             view: global::app.View.Out, renderers: r);
         w.Value(new global::app.data.TypedValueNode(new object(), "fallback-fixture"));
         utf.Flush();

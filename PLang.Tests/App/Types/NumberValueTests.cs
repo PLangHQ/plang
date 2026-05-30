@@ -1,10 +1,10 @@
-using number = global::app.types.number.@this;
-using PKind = global::app.types.number.NumberKind;
+using number = global::app.type.number.@this;
+using PKind = global::app.type.number.NumberKind;
 
 namespace PLang.Tests.App.Types;
 
 // plang-types — Stage 3
-// app/types/number/this.cs — sealed class @this : IEquatable<@this>, IBooleanResolvable.
+// app/type/number/this.cs — sealed class @this : IEquatable<@this>, IBooleanResolvable.
 // Immutable; readonly slots _i / _d / _f; NumberKind { Int, Long, Float, Double, Decimal }.
 // int/long/decimal/double/float are KINDS of number — not separate top-level types.
 // No Context, no IContext stored.
@@ -113,7 +113,7 @@ public class NumberValueTests
     [Test]
     public async Task PlangTypeAttribute_Number_IsRegistered()
     {
-        var types = new EngineTypes();
+        var types = new global::app.type.list.@this();
         await Assert.That(types.ResolveType("number")).IsEqualTo(typeof(number));
         await Assert.That(types.ResolveName(typeof(number))).IsEqualTo("number");
     }

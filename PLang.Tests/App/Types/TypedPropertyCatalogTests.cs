@@ -17,7 +17,7 @@ public class TypedPropertyCatalogTests
         public static string Shape => "string";
         public static string? Build(object? value) => "jpg";
         [global::app.LlmBuilder]
-        public global::app.types.path.@this? Path { get; init; }
+        public global::app.type.path.@this? Path { get; init; }
     }
 
     [global::app.Attributes.PlangType("kind-fixture-number")]
@@ -34,19 +34,19 @@ public class TypedPropertyCatalogTests
         public static string Shape => "string";
     }
 
-    private EngineTypes _types = null!;
+    private global::app.type.list.@this _types = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _types = new EngineTypes();
+        _types = new global::app.type.list.@this();
         _types.Assemblies.Add(typeof(TypedPropertyCatalogTests).Assembly);
     }
 
-    private global::app.builder.Types.Entry? FindEntry(string name)
+    private global::app.type.@this? FindEntry(string name)
     {
         foreach (var e in _types.BuildTypeEntries(null))
-            if (e.Name == name) return e;
+            if (e.Value == name) return e;
         return null;
     }
 

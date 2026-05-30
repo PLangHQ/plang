@@ -1,5 +1,5 @@
-using Path = global::app.types.path.@this;
-using HttpPath = global::app.types.path.http.@this;
+using Path = global::app.type.path.@this;
+using HttpPath = global::app.type.path.http.@this;
 using System;
 using System.Threading.Tasks;
 using PLang.Tests.App.Types.PathTests.Http;

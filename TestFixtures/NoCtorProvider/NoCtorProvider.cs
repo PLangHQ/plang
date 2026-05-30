@@ -1,6 +1,6 @@
-using app.modules.code;
-using app.modules.signing;
-using app.modules.signing.code;
+using app.module.code;
+using app.module.signing;
+using app.module.signing.code;
 
 namespace NoCtorProvider;
 

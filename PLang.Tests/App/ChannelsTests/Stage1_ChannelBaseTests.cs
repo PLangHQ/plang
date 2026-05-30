@@ -60,9 +60,9 @@ public class Stage1_ChannelBaseTests
     [Test]
     public async Task Channels_DefaultsContains_OutputErrorInput()
     {
-        await Assert.That(EngineChannels.Defaults).Contains("output");
-        await Assert.That(EngineChannels.Defaults).Contains("error");
-        await Assert.That(EngineChannels.Defaults).Contains("input");
+        await Assert.That(global::app.channel.list.@this.Defaults).Contains("output");
+        await Assert.That(global::app.channel.list.@this.Defaults).Contains("error");
+        await Assert.That(global::app.channel.list.@this.Defaults).Contains("input");
     }
 
     [Test]
@@ -91,7 +91,7 @@ public class Stage1_ChannelBaseTests
         var captureA = new MemoryStream();
         var jsonCh = new StreamChannel("json", captureA, ChannelDirection.Output, ownsStream: false)
         { Mime = "application/json" };
-        app.User.Channels.Register(jsonCh);
+        app.User.Channel.Register(jsonCh);
         await jsonCh.Write(Data.Ok(new { name = "x" }));
         await jsonCh.DisposeAsync();
         var jsonText = global::System.Text.Encoding.UTF8.GetString(captureA.ToArray());
@@ -100,7 +100,7 @@ public class Stage1_ChannelBaseTests
         var captureB = new MemoryStream();
         var textCh = new StreamChannel("txt", captureB, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" };
-        app.User.Channels.Register(textCh);
+        app.User.Channel.Register(textCh);
         await textCh.Write(Data.Ok("plain hello"));
         await textCh.DisposeAsync();
         var raw = global::System.Text.Encoding.UTF8.GetString(captureB.ToArray());
@@ -110,8 +110,8 @@ public class Stage1_ChannelBaseTests
     [Test]
     public async Task SessionVsMessage_AbstractsExist_WithDistinctSemantics()
     {
-        var session = typeof(global::app.channels.channel.session.@this);
-        var message = typeof(global::app.channels.channel.message.@this);
+        var session = typeof(global::app.channel.session.@this);
+        var message = typeof(global::app.channel.message.@this);
         await Assert.That(session.IsAbstract).IsTrue();
         await Assert.That(message.IsAbstract).IsTrue();
         await Assert.That(session.IsSubclassOf(typeof(Channel))).IsTrue();

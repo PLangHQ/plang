@@ -1,7 +1,7 @@
 using app.actor.context;
 using app;
-using app.variables;
-using app.modules.list;
+using app.variable;
+using app.module.list;
 
 namespace PLang.Tests.App.actions.list;
 
@@ -25,7 +25,7 @@ public class ListAddIdentityTests
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
 
-    private (global::app.actor.context.@this ctx, Variables vars) Ctx() => (_app.User.Context, _app.User.Context.Variables);
+    private (global::app.actor.context.@this context, Variables vars) Ctx() => (_app.User.Context, _app.User.Context.Variable);
 
     // Mutation IS visible through Variables.Get because list.add mutates the live
     // List<object?> reference held by the variable's Data. No Variables.Set("products", list)
@@ -33,14 +33,14 @@ public class ListAddIdentityTests
     [Test]
     public async Task ListAdd_PlainDataList_MutatesLiveVariableValueDirectly()
     {
-        var (ctx, vars) = Ctx();
+        var (context, vars) = Ctx();
         var existing = new List<object?> { "a", "b" };
         vars.Set("products", existing);
 
         var action = new Add
-        {
-            Context = ctx,
-            ListName = new Variable("products"),
+		{
+            Context = context,
+            ListName = new app.variable.@this("products"),
             Value = new Data("", "c")
         };
         var result = await action.Run();
@@ -60,14 +60,14 @@ public class ListAddIdentityTests
     [Test]
     public async Task ListAdd_ReturnsLiveVariableData_NotNewData()
     {
-        var (ctx, vars) = Ctx();
+        var (context, vars) = Ctx();
         var live = new List<object?> { 1, 2 };
         vars.Set("products", live);
 
         var action = new Add
-        {
-            Context = ctx,
-            ListName = new Variable("products"),
+		{
+            Context = context,
+            ListName = new app.variable.@this("products"),
             Value = new Data("", 3)
         };
         var result = await action.Run();
@@ -86,7 +86,7 @@ public class ListAddIdentityTests
     [Test]
     public async Task ListAdd_ItemAsLiveVarRef_AppendsCurrentValue()
     {
-        var (ctx, vars) = Ctx();
+        var (context, vars) = Ctx();
         vars.Set("products", new List<object?>());
 
         // C# direct-composition path bypasses the .pr resolver, so we wrap "hello"
@@ -95,9 +95,9 @@ public class ListAddIdentityTests
         var liveItem = vars.Get("item");
 
         var action = new Add
-        {
-            Context = ctx,
-            ListName = new Variable("products"),
+		{
+            Context = context,
+            ListName = new app.variable.@this("products"),
             Value = liveItem
         };
         var result = await action.Run();
@@ -118,7 +118,7 @@ public class ListAddIdentityTests
     [Test]
     public async Task ListAdd_AfterReplacement_HandlerSeesNewValue()
     {
-        var (ctx, vars) = Ctx();
+        var (context, vars) = Ctx();
         var orphan = new List<object?> { "x" };
         vars.Set("products", orphan);
 
@@ -127,9 +127,9 @@ public class ListAddIdentityTests
         vars.Set("products", fresh);
 
         var action = new Add
-        {
-            Context = ctx,
-            ListName = new Variable("products"),
+		{
+            Context = context,
+            ListName = new app.variable.@this("products"),
             Value = new Data("", "z")
         };
         var result = await action.Run();

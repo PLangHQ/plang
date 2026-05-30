@@ -7,10 +7,10 @@ namespace SignatureRendererShadow;
 //
 // Uses "signature" (not "identity") to avoid colliding with the
 // IdentityShadow fixture's PlangType.
-public sealed class ShadowSignatureRenderer : global::app.types.ITypeRenderer
+public sealed class ShadowSignatureRenderer : global::app.type.list.ITypeRenderer
 {
     public string TypeName => "signature";
-    public string Format => global::app.types.renderers.@this.AnyFormat;
-    public void Write(object value, global::app.channels.serializers.IWriter writer)
+    public string Format => global::app.type.renderer.@this.AnyFormat;
+    public void Write(object value, global::app.channel.serializer.IWriter writer)
         => writer.String("[shadow-signature]");
 }

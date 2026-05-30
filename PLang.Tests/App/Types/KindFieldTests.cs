@@ -9,10 +9,10 @@ namespace PLang.Tests.App.Types;
 public class KindFieldTests
 {
     private static JsonSerializerOptions Options
-        => global::app.channels.serializers.serializer.plang.@this.ContextLessFallback
+        => global::app.channel.serializer.plang.@this.ContextLessFallback
             .GetType()
             .GetField("_outbound", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
-            .GetValue(global::app.channels.serializers.serializer.plang.@this.ContextLessFallback)
+            .GetValue(global::app.channel.serializer.plang.@this.ContextLessFallback)
             as JsonSerializerOptions
             ?? throw new System.InvalidOperationException("could not access plang outbound options");
 
@@ -28,7 +28,7 @@ public class KindFieldTests
         // No kind set ⇒ no "kind" key on the wire.
         var data = new global::app.data.@this("x", "hello")
         {
-            Type = new global::app.data.type("string")
+            Type = new global::app.type.@this("string")
         };
         var json = ToJson(data);
         await Assert.That(json.Contains("\"kind\"")).IsFalse();
@@ -41,7 +41,7 @@ public class KindFieldTests
         // the wire emits "kind":"<value>" alongside "type".
         var data = new global::app.data.@this("photo", "/srv/a.jpg")
         {
-            Type = new global::app.data.type("path"),
+            Type = new global::app.type.@this("path"),
             Kind = "file"
         };
         var json = ToJson(data);
@@ -55,7 +55,7 @@ public class KindFieldTests
         // The fields are separate. Combined "type:kind" form must never appear.
         var data = new global::app.data.@this("p", "http://x")
         {
-            Type = new global::app.data.type("path"),
+            Type = new global::app.type.@this("path"),
             Kind = "http"
         };
         var json = ToJson(data);
@@ -69,7 +69,7 @@ public class KindFieldTests
     {
         var data = new global::app.data.@this("x", 1)
         {
-            Type = new global::app.data.type("int"),
+            Type = new global::app.type.@this("int"),
             Kind = null,
         };
         var json = ToJson(data);
@@ -82,7 +82,7 @@ public class KindFieldTests
     {
         var original = new global::app.data.@this("photo", "/srv/a.jpg")
         {
-            Type = new global::app.data.type("path"),
+            Type = new global::app.type.@this("path"),
             Kind = "file"
         };
         var json = ToJson(original);

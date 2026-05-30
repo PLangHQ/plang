@@ -72,7 +72,7 @@ public class ErrorHandleTests
         var result = await action.RunAsync(Ctx);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(Ctx.Variables.GetValue("ok")).IsEqualTo("v");
+        await Assert.That(Ctx.Variable.GetValue("ok")).IsEqualTo("v");
     }
 
     [Test]
@@ -194,7 +194,7 @@ public class ErrorHandleTests
         {
             callCount++;
             return Task.FromResult(global::app.data.@this.FromError(
-                new global::app.errors.ServiceError("persistent failure", "TransientError", 503)));
+                new global::app.error.ServiceError("persistent failure", "TransientError", 503)));
         };
 
         var modifiers = new ActionModifiers
@@ -218,7 +218,7 @@ public class ErrorHandleTests
         {
             callCount++;
             return Task.FromResult(global::app.data.@this.FromError(
-                new global::app.errors.ServiceError("failure", "TransientError", 503)));
+                new global::app.error.ServiceError("failure", "TransientError", 503)));
         };
 
         var modifiers = new ActionModifiers
@@ -241,7 +241,7 @@ public class ErrorHandleTests
         {
             callCount++;
             return Task.FromResult(global::app.data.@this.FromError(
-                new global::app.errors.ServiceError("always fails", "TransientError", 503)));
+                new global::app.error.ServiceError("always fails", "TransientError", 503)));
         };
 
         var modifiers = new ActionModifiers { ErrorHandler(("retryCount", 3)) };
@@ -263,7 +263,7 @@ public class ErrorHandleTests
             callCount++;
             if (callCount == 1)
                 return Task.FromResult(global::app.data.@this.FromError(
-                    new global::app.errors.ServiceError("transient failure", "TransientError", 503)));
+                    new global::app.error.ServiceError("transient failure", "TransientError", 503)));
             return Task.FromResult(global::app.data.@this.Ok());
         };
 
@@ -281,7 +281,7 @@ public class ErrorHandleTests
     // --- Goal path tests (CallErrorGoal coverage) ---
 
     /// <summary>
-    /// Creates an in-memory goal with a single action step and registers it in app.goals.
+    /// Creates an in-memory goal with a single action step and registers it in app.goal.
     /// </summary>
     private Goal RegisterGoal(string name, string module, string actionName,
         params (string name, object? value)[] parameters)
@@ -295,7 +295,7 @@ public class ErrorHandleTests
         step.Actions.Add(prAction);
         var goal = new Goal { Name = name, Path = $"/{name}.goal" };
         goal.Steps.Add(step);
-        _app.Goals.Add(goal);
+        _app.Goal.Add(goal);
         return goal;
     }
 

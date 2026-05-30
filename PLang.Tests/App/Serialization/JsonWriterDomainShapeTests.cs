@@ -14,7 +14,7 @@ public class JsonWriterDomainShapeTests
 {
     [Test] public async Task WireOutput_Path_IsPropertyBag_SchemeAndRelative_NotBareString()
     {
-        global::app.types.path.@this p = "/foo/bar.txt";
+        global::app.type.path.@this p = "/foo/bar.txt";
         var json = NormalizePipelineHelper.SerializeValueSlot(p);
         await Assert.That(json.StartsWith("{")).IsTrue();
         await Assert.That(json).Contains("\"scheme\":");
@@ -23,21 +23,21 @@ public class JsonWriterDomainShapeTests
 
     [Test] public async Task WireOutput_FilePath_HasScheme_File()
     {
-        global::app.types.path.@this p = "/foo/bar.txt";
+        global::app.type.path.@this p = "/foo/bar.txt";
         var json = NormalizePipelineHelper.SerializeValueSlot(p);
         await Assert.That(json).Contains("\"scheme\":\"file\"");
     }
 
     [Test] public async Task WireOutput_HttpPath_HasScheme_Http()
     {
-        var p = new global::app.types.path.http.@this("https://example.com");
+        var p = new global::app.type.path.http.@this("https://example.com");
         var json = NormalizePipelineHelper.SerializeValueSlot(p);
         await Assert.That(json).Contains("\"scheme\":\"https\"").Or.Contains("\"scheme\":\"http\"");
     }
 
     [Test] public async Task WireOutput_Identity_IncludesName_PublicKey_ExcludesPrivateKey()
     {
-        var i = new global::app.modules.identity.Identity { Name = "alice", PublicKey = "pk", PrivateKey = "secret" };
+        var i = new global::app.module.identity.Identity { Name = "alice", PublicKey = "pk", PrivateKey = "secret" };
         var json = NormalizePipelineHelper.SerializeValueSlot(i);
         await Assert.That(json).Contains("\"name\":\"alice\"");
         await Assert.That(json).Contains("\"publickey\":\"pk\"");
@@ -46,7 +46,7 @@ public class JsonWriterDomainShapeTests
 
     [Test] public async Task WireOutput_Identity_ExcludesIsDefault_IsArchived_Created()
     {
-        var i = new global::app.modules.identity.Identity { Name = "x", PublicKey = "y", IsDefault = true };
+        var i = new global::app.module.identity.Identity { Name = "x", PublicKey = "y", IsDefault = true };
         var json = NormalizePipelineHelper.SerializeValueSlot(i);
         await Assert.That(json).DoesNotContain("isdefault");
         await Assert.That(json).DoesNotContain("isarchived");
@@ -55,7 +55,7 @@ public class JsonWriterDomainShapeTests
 
     [Test] public async Task WireOutput_Setting_KeyVisible_ValueIsFourStars()
     {
-        var s = new global::app.modules.settings.types.setting { key = "DATABASE_URL", value = "real-secret" };
+        var s = new global::app.module.settings.type.setting { key = "DATABASE_URL", value = "real-secret" };
         var json = NormalizePipelineHelper.SerializeValueSlot(s);
         await Assert.That(json).Contains("\"key\":\"DATABASE_URL\"");
         await Assert.That(json).Contains("\"value\":\"****\"");
@@ -64,7 +64,7 @@ public class JsonWriterDomainShapeTests
 
     [Test] public async Task WireOutput_List_EmitsCount_AndValue()
     {
-        var list = new global::app.modules.list.types.list { count = 3, value = new List<int> { 1, 2, 3 } };
+        var list = new global::app.module.list.type.list { count = 3, value = new List<int> { 1, 2, 3 } };
         var json = NormalizePipelineHelper.SerializeValueSlot(list);
         await Assert.That(json).Contains("\"count\":3");
         await Assert.That(json).Contains("\"value\":");
@@ -72,7 +72,7 @@ public class JsonWriterDomainShapeTests
 
     [Test] public async Task WireOutput_HttpResponse_ExcludesDuration()
     {
-        var r = new global::app.http.Response.@this(200, new Dictionary<string, string>(), "ok",
+        var r = new global::app.http.response.@this(200, new Dictionary<string, string>(), "ok",
             System.TimeSpan.FromMilliseconds(50));
         var json = NormalizePipelineHelper.SerializeValueSlot(r);
         await Assert.That(json).Contains("\"status\":200");
@@ -81,7 +81,7 @@ public class JsonWriterDomainShapeTests
 
     [Test] public async Task WireOutput_GoalCall_ExcludesEvent_Action_CycleRefs()
     {
-        var gc = new global::app.goals.goal.GoalCall { Name = "ProcessData", Parallel = false };
+        var gc = new global::app.goal.GoalCall { Name = "ProcessData", Parallel = false };
         var json = NormalizePipelineHelper.SerializeValueSlot(gc);
         await Assert.That(json).Contains("\"name\":\"ProcessData\"");
         await Assert.That(json).DoesNotContain("\"event\":");
@@ -93,7 +93,7 @@ public class JsonWriterDomainShapeTests
         // Stage 2b: PathJsonConverter still exists for read-side compatibility,
         // but the Normalize + JsonWriter pipeline does NOT invoke its Write —
         // path on the wire is the property-bag shape produced here.
-        global::app.types.path.@this p = "/foo";
+        global::app.type.path.@this p = "/foo";
         var json = NormalizePipelineHelper.SerializeValueSlot(p);
         // Bespoke string form would be just "\"/foo\"" (a JSON string); the
         // property-bag form is a JSON object starting with "{".
@@ -107,7 +107,7 @@ public class JsonWriterDomainShapeTests
         // is exercised here by calling the same call chain directly. The pin:
         // a domain object's value slot is the property-bag JSON object form,
         // proving Normalize ran before emission.
-        var i = new global::app.modules.identity.Identity { Name = "x", PublicKey = "y" };
+        var i = new global::app.module.identity.Identity { Name = "x", PublicKey = "y" };
         var record = new Data("rec", i);
         var json = NormalizePipelineHelper.SerializeRecord(record);
         await Assert.That(json).Contains("\"name\":\"rec\"");
@@ -117,7 +117,7 @@ public class JsonWriterDomainShapeTests
 
     [Test] public async Task NormalizedTree_DoubleSerialize_ProducesByteIdenticalOutput()
     {
-        var i = new global::app.modules.identity.Identity { Name = "alice", PublicKey = "pk" };
+        var i = new global::app.module.identity.Identity { Name = "alice", PublicKey = "pk" };
         var first = NormalizePipelineHelper.SerializeValueSlot(i);
         var second = NormalizePipelineHelper.SerializeValueSlot(i);
         await Assert.That(first).IsEqualTo(second);

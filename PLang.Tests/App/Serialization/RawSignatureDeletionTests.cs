@@ -7,7 +7,7 @@ namespace PLang.Tests.App.Serialization;
 // Seven call sites across three files migrate to `Signature` directly:
 //   - PLang/app/data/Wire.cs (3 sites)
 //   - PLang/app/actor/permission/this.cs (2 sites)
-//   - PLang/app/modules/signing/code/Ed25519.cs (2 sites)
+//   - PLang/app/module/signing/code/Ed25519.cs (2 sites)
 // Compile-time guarantee — expressed here via reflection so a regression fails as a test, not a build.
 
 public class RawSignatureDeletionTests
@@ -52,7 +52,7 @@ public class RawSignatureDeletionTests
 
     [Test] public async Task Ed25519_DoesNotReferenceRawSignature_StringScan()
     {
-        var src = ReadSource("PLang/app/modules/signing/code/Ed25519.cs");
+        var src = ReadSource("PLang/app/module/signing/code/Ed25519.cs");
         await Assert.That(src.Contains("RawSignature")).IsFalse();
     }
 

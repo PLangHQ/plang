@@ -1,10 +1,10 @@
-using Path = global::app.types.path.file.@this;
+using Path = global::app.type.path.file.@this;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using Verb = global::app.types.path.permission.verb.@this;
-using Read = global::app.types.path.permission.verb.Read;
-using Write = global::app.types.path.permission.verb.Write;
+using Verb = global::app.type.path.permission.verb.@this;
+using Read = global::app.type.path.permission.verb.Read;
+using Write = global::app.type.path.permission.verb.Write;
 
 namespace PLang.Tests.App.FileSystem.SurfaceTests;
 
@@ -21,7 +21,7 @@ public class MoveCopyBundledConsentTests
         return new global::app.@this(root);
     }
 
-    private sealed class CapturingChannel : global::app.channels.channel.@this
+    private sealed class CapturingChannel : global::app.channel.@this
     {
         public string LastQuestion { get; private set; } = "";
         public int AskCount { get; private set; }
@@ -29,13 +29,13 @@ public class MoveCopyBundledConsentTests
         public CapturingChannel(string answer)
         {
             _answer = answer; Name = "input";
-            Direction = global::app.channels.channel.ChannelDirection.Bidirectional;
+            Direction = global::app.channel.ChannelDirection.Bidirectional;
         }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
             => Task.FromResult(global::app.data.@this.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default)
             => Task.FromResult(global::app.data.@this.Ok((object?)null));
-        public override Task<global::app.data.@this> Ask(global::app.modules.output.ask action, CancellationToken ct = default)
+        public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
         {
             LastQuestion = action.Question?.Value ?? "";
             AskCount++;
@@ -57,7 +57,7 @@ public class MoveCopyBundledConsentTests
         // The bundled prompt should mention only the source.
         var app = NewApp(out var root);
         var ch = new CapturingChannel("a");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
 
         var srcDir = ForeignDir();
         var srcFile = System.IO.Path.Combine(srcDir, "x");
@@ -80,7 +80,7 @@ public class MoveCopyBundledConsentTests
     {
         var app = NewApp(out _);
         var ch = new CapturingChannel("a");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
 
         var srcDir = ForeignDir();
         var srcFile = System.IO.Path.Combine(srcDir, "x");
@@ -106,7 +106,7 @@ public class MoveCopyBundledConsentTests
     {
         var app = NewApp(out _);
         var ch = new CapturingChannel("a");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
 
         var srcDir = ForeignDir();
         var srcFile = System.IO.Path.Combine(srcDir, "x");
@@ -128,7 +128,7 @@ public class MoveCopyBundledConsentTests
     {
         var app = NewApp(out _);
         var ch = new CapturingChannel("a");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
 
         var srcDir = ForeignDir();
         var srcFile = System.IO.Path.Combine(srcDir, "x");
@@ -145,9 +145,9 @@ public class MoveCopyBundledConsentTests
         await Assert.That(await app.User.Permission.Find(dst, new Verb { Write = new Write() })).IsNotNull();
     }
 
-    private sealed class StatelessChannel : global::app.channels.channel.message.@this
+    private sealed class StatelessChannel : global::app.channel.message.@this
     {
-        public StatelessChannel() { Name = "input"; Direction = global::app.channels.channel.ChannelDirection.Bidirectional; }
+        public StatelessChannel() { Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
             => Task.FromResult(global::app.data.@this.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default)
@@ -158,7 +158,7 @@ public class MoveCopyBundledConsentTests
     {
         var app = NewApp(out _);
         var ch = new CapturingChannel("n");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
 
         var srcDir = ForeignDir();
         var srcFile = System.IO.Path.Combine(srcDir, "x");
@@ -171,7 +171,7 @@ public class MoveCopyBundledConsentTests
 
         var result = await src.MoveTo(dst, overwrite: true);
         await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error).IsTypeOf<global::app.errors.PermissionDenied>();
+        await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>();
         // No grants stored, no filesystem mutation.
         await Assert.That(await app.User.Permission.Find(src, new Verb { Read = new Read() })).IsNull();
         await Assert.That(await app.User.Permission.Find(dst, new Verb { Write = new Write() })).IsNull();
@@ -183,7 +183,7 @@ public class MoveCopyBundledConsentTests
     {
         var app = NewApp(out _);
         var ch = new CapturingChannel("n");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
 
         var srcDir = ForeignDir();
         var srcFile = System.IO.Path.Combine(srcDir, "x");
@@ -196,7 +196,7 @@ public class MoveCopyBundledConsentTests
 
         var result = await src.CopyTo(dst, overwrite: true, includeSubfolders: true);
         await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error).IsTypeOf<global::app.errors.PermissionDenied>();
+        await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>();
         await Assert.That(System.IO.File.Exists(srcFile)).IsTrue();
         await Assert.That(System.IO.File.Exists(dstFile)).IsFalse();
     }
@@ -204,7 +204,7 @@ public class MoveCopyBundledConsentTests
     [Test] public async Task Move_StatelessChannel_BubblesDataAskUnchanged_NoFsMutation()
     {
         var app = NewApp(out _);
-        app.User.Channels.Register(new StatelessChannel());
+        app.User.Channel.Register(new StatelessChannel());
 
         var srcDir = ForeignDir();
         var srcFile = System.IO.Path.Combine(srcDir, "x");

@@ -1,6 +1,6 @@
 using app.actor.context;
 using app;
-using app.variables;
+using app.variable;
 
 namespace PLang.Tests.App.Context;
 
@@ -13,7 +13,7 @@ public class PLangContextTests
         using var context = new global::app.actor.context.@this(engine);
 
         await Assert.That(context.App).IsEqualTo(engine);
-        await Assert.That(context.Variables).IsNotNull();
+        await Assert.That(context.Variable).IsNotNull();
         await Assert.That(context.Parent).IsNull();
     }
 
@@ -49,7 +49,7 @@ public class PLangContextTests
 
         using var context = new global::app.actor.context.@this(engine, variables);
 
-        await Assert.That(context.Variables).IsEqualTo(variables);
+        await Assert.That(context.Variable).IsEqualTo(variables);
     }
 
     [Test]
@@ -210,12 +210,12 @@ public class PLangContextTests
     {
         await using var engine = new global::app.@this("/app");
         using var parent = new global::app.actor.context.@this(engine);
-        parent.Variables.Set("test", "value");
+        parent.Variable.Set("test", "value");
 
         using var child = parent.CreateChild();
 
-        await Assert.That(child.Variables.GetValue("test")).IsEqualTo("value");
-        await Assert.That(child.Variables).IsNotEqualTo(parent.Variables);
+        await Assert.That(child.Variable.GetValue("test")).IsEqualTo("value");
+        await Assert.That(child.Variable).IsNotEqualTo(parent.Variable);
     }
 
     [Test]
@@ -239,7 +239,7 @@ public class PLangContextTests
 
         using var child = parent.CreateChild(customStack);
 
-        await Assert.That(child.Variables).IsEqualTo(customStack);
+        await Assert.That(child.Variable).IsEqualTo(customStack);
     }
 
     [Test]
@@ -280,7 +280,7 @@ public class PLangContextTests
 
         using var clone = original.Clone(customStack);
 
-        await Assert.That(clone.Variables).IsEqualTo(customStack);
+        await Assert.That(clone.Variable).IsEqualTo(customStack);
     }
 
     [Test]

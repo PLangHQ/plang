@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "Singular-namespaces docs updated: CLAUDE.md accessor convention + token renames applied, app-tree.md rewritten for singular world (drift checker clean), 9 Documentation/v0.2 files refreshed, three new good_to_know.md sections (accessor model, producer-stamping invariant, Null sentinel). Ready to merge." }

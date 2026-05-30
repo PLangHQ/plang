@@ -16,8 +16,8 @@ public sealed partial class @this
     public snapshot.@this Snapshot()
     {
         var s = new snapshot.@this();
-        CurrentActor.Context.Variables.Capture(s.Section("Variables"));
-        Errors.Capture(s.Section("Errors"));
+        CurrentActor.Context.Variable.Capture(s.Section("Variables"));
+        Error.Capture(s.Section("Errors"));
         Code.Capture(s.Section("Providers"));
         Statics.Capture(s.Section("Statics"));
         Builder.Capture(s.Section("Build"));
@@ -38,14 +38,14 @@ public sealed partial class @this
     /// </summary>
     public void Restore(snapshot.@this s, actor.context.@this? context = null)
     {
-        var ctx = context ?? CurrentActor.Context;
+        context = context ?? CurrentActor.Context;
 
-        if (s.HasSection("Providers")) global::app.modules.code.@this.Restore(s.Section("Providers"), ctx);
-        if (s.HasSection("Variables")) global::app.variables.@this.Restore(s.Section("Variables"), ctx);
-        if (s.HasSection("Errors"))    global::app.errors.@this.Restore(s.Section("Errors"), ctx);
-        if (s.HasSection("Statics"))   global::app.Statics.@this.Restore(s.Section("Statics"), ctx);
-        if (s.HasSection("Build"))     global::app.modules.builder.@this.Restore(s.Section("Build"), ctx);
-        if (s.HasSection("Testing"))   global::app.tester.@this.Restore(s.Section("Testing"), ctx);
-        if (s.HasSection("CallStack")) global::app.callstack.@this.Restore(s.Section("CallStack"), ctx);
+        if (s.HasSection("Providers")) global::app.module.code.@this.Restore(s.Section("Providers"), context);
+        if (s.HasSection("Variables")) global::app.variable.list.@this.Restore(s.Section("Variables"), context);
+        if (s.HasSection("Errors"))    global::app.error.list.@this.Restore(s.Section("Errors"), context);
+        if (s.HasSection("Statics"))   global::app.Statics.@this.Restore(s.Section("Statics"), context);
+        if (s.HasSection("Build"))     global::app.module.builder.@this.Restore(s.Section("Build"), context);
+        if (s.HasSection("Testing"))   global::app.tester.@this.Restore(s.Section("Testing"), context);
+        if (s.HasSection("CallStack")) global::app.callstack.@this.Restore(s.Section("CallStack"), context);
     }
 }

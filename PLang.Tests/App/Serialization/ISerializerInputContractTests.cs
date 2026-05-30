@@ -1,6 +1,6 @@
 using System.Reflection;
-using app.channels.serializers;
-using app.channels.serializers.serializer;
+using app.channel.serializer.list;
+using app.channel.serializer;
 
 namespace PLang.Tests.App.Serialization;
 
@@ -15,7 +15,7 @@ public class ISerializerInputContractTests
     [Test]
     public async Task SerializeAsync_AcceptsDataArgument_ReturnsTaskData()
     {
-        var json = new global::app.channels.serializers.serializer.Json();
+        var json = new global::app.channel.serializer.Json();
         using var ms = new MemoryStream();
         var result = await json.SerializeAsync(ms, global::app.data.@this.Ok("hello"));
         await Assert.That(result).IsNotNull();
@@ -58,12 +58,12 @@ public class ISerializerInputContractTests
         var probe = new ProbeSerializer();
 
         await using var app = new global::app.@this("/tmp/stream-channel-write-test");
-        var ch = new global::app.channels.channel.stream.@this(
-            "probe", new MemoryStream(), global::app.channels.channel.ChannelDirection.Output)
+        var ch = new global::app.channel.stream.@this(
+            "probe", new MemoryStream(), global::app.channel.ChannelDirection.Output)
         {
             Mime = probe.Type,
         };
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
         ch.Channels!.Serializers.Register(probe);
 
         var input = global::app.data.@this.Ok("payload");

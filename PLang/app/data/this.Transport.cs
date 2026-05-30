@@ -3,10 +3,12 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using app;
-using app.channels.serializers;
-using app.errors;
+using app.channel.serializer;
+using app.error;
 
 namespace app.data;
+
+using type = global::app.type.@this;
 
 /// <summary>
 /// Data — transport-pipeline concern.
@@ -20,7 +22,7 @@ public partial class @this
     /// </summary>
     private const long MaxDecompressedSize = 100 * 1024 * 1024;
 
-    private app.modules.signing.Signature? _signature;
+    private app.module.signing.Signature? _signature;
 
     /// <summary>
     /// Cryptographic signature attached to this Data. After stage 2a.7,
@@ -31,7 +33,7 @@ public partial class @this
     [JsonIgnore]
     [In]
     [Out, Store]
-    public app.modules.signing.Signature? Signature
+    public app.module.signing.Signature? Signature
     {
         get => _signature;
         set => _signature = value;
@@ -52,7 +54,7 @@ public partial class @this
                 "Data.Signature cannot be lazily populated without a Context — " +
                 "set Context (or use the Variables.Set path which wires it) before reading Signature.");
 
-        var action = new app.modules.signing.sign
+        var action = new app.module.signing.sign
         {
             Data = this,
         };
@@ -71,7 +73,7 @@ public partial class @this
     /// </summary>
     public @this Wrap()
     {
-        if (_context == null || Type == null)
+        if (Type == null)
             return this;
 
         var kind = Type.Kind;
@@ -103,14 +105,14 @@ public partial class @this
     /// </summary>
     public async Task<@this> CompressAsync(CancellationToken ct = default)
     {
-        if (_context == null || Type == null)
+        if (Type == null)
             return this;
 
         if (!Type.Compressible)
             return this;
 
-        var serializer = _context.Actor?.Channels.Serializers.GetByType("application/plang")
-                         ?? (global::app.channels.serializers.serializer.ISerializer)global::app.channels.serializers.serializer.plang.@this.ContextLessFallback;
+        var serializer = _context.Actor?.Channel.Serializers.GetByType("application/plang")
+                         ?? (global::app.channel.serializer.ISerializer)global::app.channel.serializer.plang.@this.ContextLessFallback;
 
         using var ms = new MemoryStream();
         await serializer.SerializeAsync(ms, this, ct);
@@ -178,8 +180,8 @@ public partial class @this
         {
             var decompressed = GZipDecompress(compressed);
 
-            var serializer = _context?.Actor?.Channels.Serializers.GetByType("application/plang")
-                             ?? (global::app.channels.serializers.serializer.ISerializer)global::app.channels.serializers.serializer.plang.@this.ContextLessFallback;
+            var serializer = _context?.Actor?.Channel.Serializers.GetByType("application/plang")
+                             ?? (global::app.channel.serializer.ISerializer)global::app.channel.serializer.plang.@this.ContextLessFallback;
 
             using var ms = new MemoryStream(decompressed);
             var deser = await serializer.DeserializeAsync(ms, ct);

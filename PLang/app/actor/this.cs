@@ -1,8 +1,8 @@
 using app;
-using app.modules.settings;
-using app.variables;
-using app.modules.identity;
-using app.modules.identity.code;
+using app.module.settings;
+using app.variable;
+using app.module.identity;
+using app.module.identity.code;
 
 namespace app.actor;
 
@@ -31,14 +31,14 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     public permission.@this Permission { get; private set; } = null!;
 
-    private readonly AppChannels _channels;
+    private readonly global::app.channel.list.@this _channels;
 
     /// <summary>
     /// Named channels owned by this actor. Goal-channel recursion isolation lives
     /// on <see cref="channel.goal.@this.IsExecuting"/> — the registry's <c>Get</c>
     /// treats an executing goal-channel as not-found.
     /// </summary>
-    public AppChannels Channels => _channels;
+    public global::app.channel.list.@this Channel => _channels;
 
     /// <summary>
     /// Back-reference to the app.
@@ -63,7 +63,7 @@ public sealed class @this : IAsyncDisposable
     /// Resolves an actor by name using the app.
     /// Convention: types with this signature are auto-resolved by the source generator.
     /// </summary>
-    public static @this? Resolve(string name, context.@this ctx) => ctx.App.GetActor(name).Actor;
+    public static @this? Resolve(string name, context.@this context) => context.App.GetActor(name).Actor;
 
     /// <summary>
     /// Closed list of actor names the LLM may emit for an Actor-typed slot.
@@ -71,7 +71,7 @@ public sealed class @this : IAsyncDisposable
     /// chosen name via <see cref="Resolve"/> → <c>App.GetActor</c>.
     /// </summary>
     [app.Attributes.Choices]
-    public static string[] Choices(context.@this? ctx) => ["user", "system"];
+    public static string[] Choices(context.@this? context) => ["user", "system"];
 
     public @this(string name, app.@this app, CancellationToken parentToken = default)
     {
@@ -85,23 +85,23 @@ public sealed class @this : IAsyncDisposable
         Permission = new permission.@this(this);
         // Per-Actor Serializers: bound to this actor's Context so PathJsonConverter
         // produces Context-wired Paths on deserialize without any ambient state.
-        _channels = new AppChannels(app, new global::app.channels.serializers.@this(Context)) { Actor = this };
+        _channels = new global::app.channel.list.@this(app, new global::app.channel.serializer.list.@this(Context)) { Actor = this };
 
         // Register %Settings.X% as a navigable mount on this actor's Variables.
         // Resolution dispatches to app.Settings.Get(path, this.Context); the
-        // lambda captures *this* actor's Context so per-actor ctx propagates.
-        Context.Variables.RegisterNavigable("Settings", path => app.Settings.Get(path, Context));
+        // lambda captures *this* actor's Context so per-actor context propagates.
+        Context.Variable.RegisterNavigable("Settings", path => app.Settings.Get(path, Context));
 
         // Register %!app% — navigates the App object graph (e.g., %!app.tester.IsEnabled%)
-        Context.Variables.Set("!app", new data.DynamicData("!app", () => app));
+        Context.Variable.Set("!app", new data.DynamicData("!app", () => app));
 
         // Register lazy %MyIdentity% — resolves to the System actor's default identity.
         // Data.DynamicData re-evaluates on each access, so changes via setDefault/rename are reflected.
-        Context.Variables.Set("MyIdentity", new data.DynamicData("MyIdentity", () =>
+        Context.Variable.Set("MyIdentity", new data.DynamicData("MyIdentity", () =>
         {
             var provider = app.Code.Get<IIdentity>();
             if (!provider.Success) return null;
-            var result = provider.Value!.GetOrCreateDefaultAsync(new global::app.modules.identity.Get { Context = app.System.Context }).GetAwaiter().GetResult();
+            var result = provider.Value!.GetOrCreateDefaultAsync(new global::app.module.identity.Get { Context = app.System.Context }).GetAwaiter().GetResult();
             return result.Success ? result.Value as Identity : null;
         }));
     }

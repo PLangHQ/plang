@@ -1,5 +1,5 @@
-using app.events;
-using app.events.lifecycle.bindings.binding;
+using app.@event;
+using app.@event.lifecycle.binding;
 
 namespace PLang.Tests.App.ChannelsTests;
 
@@ -41,7 +41,7 @@ public class Stage8_ChannelEventsTests
     {
         await using var app = new global::app.@this("/test", autoWireConsoleChannels: false);
         var ch = StreamChannel.Memory("logger");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
         Data? captured = null;
         ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, payload) =>
         {
@@ -77,7 +77,7 @@ public class Stage8_ChannelEventsTests
     {
         await using var app = new global::app.@this("/test", autoWireConsoleChannels: false);
         var ch = StreamChannel.Memory("c");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
         bool afterFired = false;
         ch.Events.Add(new EventBinding(EventType.AfterWrite, (_, _, _) =>
         {
@@ -112,7 +112,7 @@ public class Stage8_ChannelEventsTests
     {
         await using var app = new global::app.@this("/test", autoWireConsoleChannels: false);
         var ch = StreamChannel.Memory("c");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
         ch.Events.Add(new EventBinding(EventType.AfterWrite, (_, _, _) =>
             throw new InvalidOperationException("after fail")));
         var result = await ch.WriteAsync(Data.Ok("hi"));
@@ -140,7 +140,7 @@ public class Stage8_ChannelEventsTests
     {
         await using var app = new global::app.@this("/test", autoWireConsoleChannels: false);
         var ch = StreamChannel.Memory("c");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
         var order = new List<string>();
         ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, _) => { order.Add("A"); return Task.FromResult(Data.Ok()); }));
         ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, _) => { order.Add("B"); return Task.FromResult(Data.Ok()); }));
@@ -178,7 +178,7 @@ public class Stage8_ChannelEventsTests
             receivedData = payload;
             return Task.FromResult(Data.Ok());
         }));
-        var result = await ch.AskAsync(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "") });
+        var result = await ch.AskAsync(new global::app.module.output.ask { Question = new global::app.data.@this<string>("", "") });
         await Assert.That(result.Value as string).IsEqualTo("answer");
         await Assert.That(receivedData).IsNotNull();
         await Assert.That(receivedData!.Value as string).IsEqualTo("answer");
@@ -198,7 +198,7 @@ public class Stage8_ChannelEventsTests
             fired = true;
             return Task.FromResult(Data.Ok());
         }));
-        await ch.AskAsync(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "q?") });
+        await ch.AskAsync(new global::app.module.output.ask { Question = new global::app.data.@this<string>("", "q?") });
         await Assert.That(fired).IsTrue();
     }
 
@@ -208,12 +208,12 @@ public class Stage8_ChannelEventsTests
         await using var app = new global::app.@this("/tmp/s8-cross");
         var userLogger = StreamChannel.Memory("logger");
         var serviceLogger = StreamChannel.Memory("logger");
-        app.User.Channels.Register(userLogger);
+        app.User.Channel.Register(userLogger);
         await using var svc = app.Services.New(parent: app.User);
         svc.Channels.Register(serviceLogger);
 
         var hits = 0;
-        app.Events.Register(new EventBinding(EventType.BeforeWrite,
+        app.Event.Register(new EventBinding(EventType.BeforeWrite,
             (_, _, _) => { hits++; return Task.FromResult(Data.Ok()); },
             channelName: "logger"));
 
@@ -227,10 +227,10 @@ public class Stage8_ChannelEventsTests
     {
         await using var app = new global::app.@this("/tmp/s8-iso");
         var ch = StreamChannel.Memory("c");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
 
         bool goalFired = false;
-        app.Events.Register(new EventBinding(EventType.BeforeGoal,
+        app.Event.Register(new EventBinding(EventType.BeforeGoal,
             (_, _, _) => { goalFired = true; return Task.FromResult(Data.Ok()); }));
 
         await ch.WriteAsync(Data.Ok("x"));
@@ -242,8 +242,8 @@ public class Stage8_ChannelEventsTests
     {
         // Regression probe for B1: `_active` is an instance field, not static.
         // If it ever becomes static, evB sees evA's active set.
-        var evA = new global::app.channels.channel.events.@this();
-        var evB = new global::app.channels.channel.events.@this();
+        var evA = new global::app.channel.@event.@this();
+        var evB = new global::app.channel.@event.@this();
         using var _ = evA.Enter("X");
         await Assert.That(evA.IsActive("X")).IsTrue();
         await Assert.That(evB.IsActive("X")).IsFalse();
@@ -256,7 +256,7 @@ public class Stage8_ChannelEventsTests
         // If a child mutates the parent's HashSet in place, the parent flow
         // sees the child's id while the child is still inside its scope.
         // (Naive Task.WhenAll passes either way — children Add then Remove.)
-        var ev = new global::app.channels.channel.events.@this();
+        var ev = new global::app.channel.@event.@this();
         using var _ = ev.Enter("A");
         var inside = new TaskCompletionSource();
         var release = new TaskCompletionSource();
@@ -279,14 +279,14 @@ public class Stage8_ChannelEventsTests
         public override Task<Data> Write(Data data, CancellationToken ct = default)
             => throw new IOException("boom");
         public override Task<Data> Read(CancellationToken ct = default) => Task.FromResult(Data.Ok());
-        public override Task<Data> Ask(global::app.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        public override Task<Data> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok());
     }
 
-    private sealed class MessageProbeChannel : global::app.channels.channel.message.@this
+    private sealed class MessageProbeChannel : global::app.channel.message.@this
     {
         public MessageProbeChannel(string name) { Name = name; }
         public override Task<Data> Write(Data data, CancellationToken ct = default) => Task.FromResult(Data.Ok());
         public override Task<Data> Read(CancellationToken ct = default) => Task.FromResult(Data.Ok());
-        public override Task<Data> Ask(global::app.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok("answer-from-resume"));
+        public override Task<Data> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok("answer-from-resume"));
     }
 }

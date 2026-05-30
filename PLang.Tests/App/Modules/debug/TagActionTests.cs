@@ -1,4 +1,4 @@
-using app.modules.debug;
+using app.module.debug;
 using static PLang.Tests.App.CallStackTests.CallStackTestHelpers;
 
 namespace PLang.Tests.App.Modules.debug;
@@ -80,8 +80,8 @@ public class TagActionTests
     [Test]
     public async Task Tag_ActionIsNotCacheable()
     {
-        var attr = typeof(Tag).GetCustomAttributes(typeof(global::app.modules.ActionAttribute), false)
-            .Cast<global::app.modules.ActionAttribute>().FirstOrDefault();
+        var attr = typeof(Tag).GetCustomAttributes(typeof(global::app.module.ActionAttribute), false)
+            .Cast<global::app.module.ActionAttribute>().FirstOrDefault();
         await Assert.That(attr).IsNotNull();
         await Assert.That(attr!.Cacheable).IsFalse();
     }

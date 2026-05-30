@@ -1,5 +1,5 @@
 using app.Utils;
-using app.modules.llm;
+using app.module.llm;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.builder;
@@ -24,13 +24,13 @@ public class ComplexTypeDiscoveryTests
         _app.Builder.IsEnabled = true;
     }
 
-    private static string RenderEntry(global::app.builder.Types.Entry e) => e.Kind switch
+    private static string RenderEntry(global::app.type.@this e)
     {
-        global::app.builder.Types.EntryKind.Enum => string.Join(" | ", e.Values!),
-        global::app.builder.Types.EntryKind.Scalar => e.Shape ?? "",
-        _ => "{ " + string.Join(", ", (e.Fields ?? Array.Empty<global::app.builder.Types.Field>())
-            .Select(f => f.Name + ": " + f.TypeName)) + " }"
-    };
+        if (e.Values != null) return string.Join(" | ", e.Values);
+        if (e.Fields != null)
+            return "{ " + string.Join(", ", e.Fields.Select(f => f.Name + ": " + f.TypeName)) + " }";
+        return e.Shape ?? "";
+    }
 
     [After(Test)]
     public async Task Cleanup()
@@ -49,8 +49,8 @@ public class ComplexTypeDiscoveryTests
     {
         // llm.query has Messages parameter of type List<LlmMessage>
         // LlmMessage should be auto-discovered and its schema included
-        var schemas = TypeMapping.BuildTypeEntries(_app.Modules)
-            .ToDictionary(e => e.Name, e => RenderEntry(e));
+        var schemas = TypeMapping.BuildTypeEntries(_app.Module)
+            .ToDictionary(e => e.Value, e => RenderEntry(e));
 
         await Assert.That(schemas.ContainsKey("llmmessage")).IsTrue();
     }
@@ -58,8 +58,8 @@ public class ComplexTypeDiscoveryTests
     [Test]
     public async Task LlmMessage_SchemaIncludesRoleAndContent()
     {
-        var schemas = TypeMapping.BuildTypeEntries(_app.Modules)
-            .ToDictionary(e => e.Name, e => RenderEntry(e));
+        var schemas = TypeMapping.BuildTypeEntries(_app.Module)
+            .ToDictionary(e => e.Value, e => RenderEntry(e));
 
         await Assert.That(schemas.ContainsKey("llmmessage")).IsTrue();
         var schema = schemas["llmmessage"];
@@ -71,8 +71,8 @@ public class ComplexTypeDiscoveryTests
     public async Task GoalCall_StillIncluded()
     {
         // goal.call was already in TypeMapping — should still be discovered
-        var schemas = TypeMapping.BuildTypeEntries(_app.Modules)
-            .ToDictionary(e => e.Name, e => RenderEntry(e));
+        var schemas = TypeMapping.BuildTypeEntries(_app.Module)
+            .ToDictionary(e => e.Value, e => RenderEntry(e));
 
         await Assert.That(schemas.ContainsKey("goal.call")).IsTrue();
     }
@@ -81,8 +81,8 @@ public class ComplexTypeDiscoveryTests
     public async Task PrimitiveTypes_NotInSchemas()
     {
         // Primitive types (string, int, etc.) should not appear in complex schemas
-        var schemas = TypeMapping.BuildTypeEntries(_app.Modules)
-            .ToDictionary(e => e.Name, e => e.Kind);
+        var schemas = TypeMapping.BuildTypeEntries(_app.Module)
+            .ToDictionary(e => e.Value, e => RenderEntry(e));
 
         await Assert.That(schemas.ContainsKey("string")).IsFalse();
         await Assert.That(schemas.ContainsKey("int")).IsFalse();
@@ -93,7 +93,7 @@ public class ComplexTypeDiscoveryTests
     public async Task Enums_ReturnValidValues()
     {
         // Enums should return their names as valid values
-        var values = TypeMapping.GetValidValues(typeof(global::app.goals.goal.steps.step.ErrorOrder));
+        var values = TypeMapping.GetValidValues(typeof(global::app.goal.steps.step.ErrorOrder));
 
         await Assert.That(values).IsNotNull();
         await Assert.That(values!).Contains("GoalFirst");
@@ -104,7 +104,7 @@ public class ComplexTypeDiscoveryTests
     public async Task NullableEnums_ReturnValidValues()
     {
         // Nullable enums should unwrap and return valid values
-        var values = TypeMapping.GetValidValues(typeof(global::app.goals.goal.steps.step.ErrorOrder?));
+        var values = TypeMapping.GetValidValues(typeof(global::app.goal.steps.step.ErrorOrder?));
 
         await Assert.That(values).IsNotNull();
         await Assert.That(values!).Contains("GoalFirst");

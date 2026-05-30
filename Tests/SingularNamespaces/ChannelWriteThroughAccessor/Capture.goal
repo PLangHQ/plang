@@ -1,0 +1,5 @@
+Capture
+/ Echo whatever the channel delivered so the assertion in Start.test.goal pins value-flow,
+/ not just reachability. `%!data%` is the channel payload — if the accessor delivers wrong
+/ bytes (corruption, swap, drop), %captured% diverges from the expected literal.
+- set %captured% = %!data%

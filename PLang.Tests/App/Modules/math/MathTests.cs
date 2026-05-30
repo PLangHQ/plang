@@ -1,7 +1,7 @@
 using app.actor.context;
 using app;
-using app.variables;
-using app.modules.math;
+using app.variable;
+using app.module.math;
 
 namespace PLang.Tests.App.actions.math;
 
@@ -10,7 +10,7 @@ public class MathTests
     private (global::app.actor.context.@this context, Variables memory) CreateContext()
     {
         var app = new global::app.@this("/app");
-        return (app.User.Context, app.User.Context.Variables);
+        return (app.User.Context, app.User.Context.Variable);
     }
 
     // --- Add ---
@@ -27,7 +27,7 @@ public class MathTests
         await Assert.That(result.Value).IsEqualTo(7);
         // plang-types Stage 4: math.* returns Data<number>; the underlying kind
         // is Int (not the CLR `int`).
-        await Assert.That(result.Value!.Kind).IsEqualTo(global::app.types.number.NumberKind.Int);
+        await Assert.That(result.Value!.Kind).IsEqualTo(global::app.type.number.NumberKind.Int);
     }
 
     [Test]
@@ -39,7 +39,7 @@ public class MathTests
         var result = await action.Run();
 
         await Assert.That(result.Value).IsEqualTo(7.5);
-        await Assert.That(result.Value!.Kind).IsEqualTo(global::app.types.number.NumberKind.Double);
+        await Assert.That(result.Value!.Kind).IsEqualTo(global::app.type.number.NumberKind.Double);
     }
 
     // --- Subtract ---
@@ -228,7 +228,7 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new global::app.modules.math.Random { Context = context, Min = 1, Max = 10 };
+        var action = new global::app.module.math.Random { Context = context, Min = 1, Max = 10 };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();

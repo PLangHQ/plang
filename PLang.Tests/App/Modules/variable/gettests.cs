@@ -1,7 +1,7 @@
 using app.actor.context;
 using app;
-using app.variables;
-using app.modules.variable;
+using app.variable;
+using app.module.variable;
 
 namespace PLang.Tests.App.actions.variable;
 
@@ -10,16 +10,16 @@ public class GetTests
     private (global::app.actor.context.@this context, Variables memory) CreateContext()
     {
         var app = new global::app.@this("/app");
-        return (app.User.Context, app.User.Context.Variables);
+        return (app.User.Context, app.User.Context.Variable);
     }
 
     [Test]
     public async Task Get_ReturnsRawValue()
     {
         var (context, _) = CreateContext();
-        context.Variables.Set("testVar", "testValue");
+        context.Variable.Set("testVar", "testValue");
 
-        var action = new Get { Context = context, Name = new Variable("testVar") };
+        var action = new Get { Context = context, Name = new app.variable.@this("testVar") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -32,7 +32,7 @@ public class GetTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Get { Context = context, Name = new Variable("nonexistent") };
+        var action = new Get { Context = context, Name = new app.variable.@this("nonexistent") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();

@@ -3,15 +3,15 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using app.channels.serializers;
+using app.channel.serializer;
 using app.actor.context;
-using app.variables;
-using app.modules.code;
-using app.modules.http;
-using app.modules.http.code;
-using app.modules.signing;
+using app.variable;
+using app.module.code;
+using app.module.http;
+using app.module.http.code;
+using app.module.signing;
 using PLangEngine = global::app.@this;
-using HttpMethod = global::app.modules.http.HttpMethod;
+using HttpMethod = global::app.module.http.HttpMethod;
 
 namespace PLang.Tests.App.Modules.http;
 
@@ -41,7 +41,7 @@ public class RequestActionTests
 
         // Register stub goals for streaming callbacks — GoalCall needs to find them
         foreach (var name in new[] { "HandleLine", "HandleSSE", "HandleBytes", "HandleChunk", "ProcessChunk" })
-            _app.Goals.Add(new global::app.goals.goal.@this { Name = name, Path = $"/{name}.goal" });
+            _app.Goal.Add(new global::app.goal.@this { Name = name, Path = $"/{name}.goal" });
     }
 
     [After(Test)]
@@ -382,7 +382,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/stream",
-            OnStream = new global::app.goals.goal.GoalCall { Name = "ProcessChunk" },
+            OnStream = new global::app.goal.GoalCall { Name = "ProcessChunk" },
             Unsigned = true
         };
 
@@ -492,7 +492,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/stream",
-            OnStream = new global::app.goals.goal.GoalCall { Name = "HandleLine" },
+            OnStream = new global::app.goal.GoalCall { Name = "HandleLine" },
             Unsigned = true
         };
         var result = await action.Run();
@@ -500,7 +500,7 @@ public class RequestActionTests
         // Stream processed successfully (callback goal not found writes to stderr, doesn't abort)
         await Assert.That(result.Success).IsTrue();
         // Last line set on Variables
-        var lastValue = Ctx.Variables.Get("chunk");
+        var lastValue = Ctx.Variable.Get("chunk");
         await Assert.That(lastValue).IsNotNull();
         await Assert.That(lastValue!.ToString()).IsEqualTo("line3");
     }
@@ -518,13 +518,13 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/sse",
-            OnStream = new global::app.goals.goal.GoalCall { Name = "HandleSSE" },
+            OnStream = new global::app.goal.GoalCall { Name = "HandleSSE" },
             Unsigned = true
         };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var lastValue = Ctx.Variables.Get("chunk");
+        var lastValue = Ctx.Variable.Get("chunk");
         await Assert.That(lastValue).IsNotNull();
         await Assert.That(lastValue!.ToString()).IsEqualTo("world");
     }
@@ -542,13 +542,13 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/sse-multi",
-            OnStream = new global::app.goals.goal.GoalCall { Name = "HandleSSE" },
+            OnStream = new global::app.goal.GoalCall { Name = "HandleSSE" },
             Unsigned = true
         };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var lastValue = Ctx.Variables.Get("chunk");
+        var lastValue = Ctx.Variable.Get("chunk");
         await Assert.That(lastValue!.ToString()).IsEqualTo("part1\npart2");
     }
 
@@ -568,14 +568,14 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/bytes",
-            OnStream = new global::app.goals.goal.GoalCall { Name = "HandleBytes" },
+            OnStream = new global::app.goal.GoalCall { Name = "HandleBytes" },
             StreamAs = StreamFormat.Bytes,
             Unsigned = true
         };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var lastData = Ctx.Variables.Get("chunk");
+        var lastData = Ctx.Variable.Get("chunk");
         await Assert.That(lastData).IsNotNull();
         // Verify byte content was delivered (last chunk contains the input bytes)
         await Assert.That(lastData!.Value).IsTypeOf<byte[]>();
@@ -595,7 +595,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/stream-err",
-            OnStream = new global::app.goals.goal.GoalCall { Name = "HandleLine" },
+            OnStream = new global::app.goal.GoalCall { Name = "HandleLine" },
             Unsigned = true
         };
         var result = await action.Run();
@@ -617,7 +617,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/stream",
-            OnStream = new global::app.goals.goal.GoalCall
+            OnStream = new global::app.goal.GoalCall
             {
                 Name = "HandleChunk",
                 Parameters = new List<Data> { new Data("myChunk") }
@@ -627,7 +627,7 @@ public class RequestActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var lastValue = Ctx.Variables.Get("myChunk");
+        var lastValue = Ctx.Variable.Get("myChunk");
         await Assert.That(lastValue).IsNotNull();
         await Assert.That(lastValue!.ToString()).IsEqualTo("chunk1");
     }
@@ -644,7 +644,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/plang-stream",
-            OnStream = new global::app.goals.goal.GoalCall { Name = "HandlePlang" },
+            OnStream = new global::app.goal.GoalCall { Name = "HandlePlang" },
             Unsigned = true
         };
         var result = await action.Run();
@@ -663,7 +663,7 @@ public class RequestActionTests
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
             TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
             {
-                Modifiers = { global::app.channels.serializers.filters.Transport.ForOutbound }
+                Modifiers = { global::app.channel.serializer.filter.Transport.ForOutbound }
             }
         };
 
@@ -689,14 +689,14 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/plang-stream",
-            OnStream = new global::app.goals.goal.GoalCall { Name = "HandlePlang" },
+            OnStream = new global::app.goal.GoalCall { Name = "HandlePlang" },
             Unsigned = false
         };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
         // Verify !ServiceIdentity was set and matches the signing key
-        var identity = Ctx.Variables.Get("!ServiceIdentity");
+        var identity = Ctx.Variable.Get("!ServiceIdentity");
         await Assert.That(identity).IsNotNull();
         await Assert.That(identity!.ToString()).IsEqualTo(signResult2.Signature!.Identity);
     }
@@ -711,7 +711,7 @@ public class RequestActionTests
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
             TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
             {
-                Modifiers = { global::app.channels.serializers.filters.Transport.ForOutbound }
+                Modifiers = { global::app.channel.serializer.filter.Transport.ForOutbound }
             }
         };
 
@@ -728,7 +728,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/plang-bad-stream",
-            OnStream = new global::app.goals.goal.GoalCall { Name = "HandlePlang" },
+            OnStream = new global::app.goal.GoalCall { Name = "HandlePlang" },
             Unsigned = false
         };
         var result = await action.Run();
@@ -738,7 +738,7 @@ public class RequestActionTests
         // NOTE: Weak assertion — verifying exact Variables state after failed plang stream
         // verification + failed goal callback is complex. The non-streaming test
         // (Get_PlangResponseInvalidSignature_ReturnsError) covers the verification error path.
-        var lastValue = Ctx.Variables.Get("chunk");
+        var lastValue = Ctx.Variable.Get("chunk");
         await Assert.That(lastValue).IsNotNull();
     }
 
@@ -853,7 +853,7 @@ public class RequestActionTests
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
             TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
             {
-                Modifiers = { global::app.channels.serializers.filters.Transport.ForOutbound }
+                Modifiers = { global::app.channel.serializer.filter.Transport.ForOutbound }
             }
         };
         var responseBody = JsonSerializer.Serialize(responseData, transportOptions);
@@ -872,7 +872,7 @@ public class RequestActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var identity = Ctx.Variables.Get("!ServiceIdentity");
+        var identity = Ctx.Variable.Get("!ServiceIdentity");
         await Assert.That(identity).IsNotNull();
         // Identity should match the signing key used (same as the one in the signed response)
         await Assert.That(identity!.ToString()).IsEqualTo(signResult.Signature!.Identity);
@@ -894,7 +894,7 @@ public class RequestActionTests
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
             TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
             {
-                Modifiers = { global::app.channels.serializers.filters.Transport.ForOutbound }
+                Modifiers = { global::app.channel.serializer.filter.Transport.ForOutbound }
             }
         };
         var responseBody = JsonSerializer.Serialize(responseData, transportOptions);
@@ -993,7 +993,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/sse-overflow",
-            OnStream = new global::app.goals.goal.GoalCall { Name = "HandleSSE" },
+            OnStream = new global::app.goal.GoalCall { Name = "HandleSSE" },
             Unsigned = true
         };
         var result = await action.Run();
@@ -1001,7 +1001,7 @@ public class RequestActionTests
         // Stream completes (overflow is non-fatal — emits error to stderr, clears buffer, continues)
         await Assert.That(result.Success).IsTrue();
         // The second (small) message should still be delivered
-        var lastValue = Ctx.Variables.Get("chunk");
+        var lastValue = Ctx.Variable.Get("chunk");
         await Assert.That(lastValue).IsNotNull();
         await Assert.That(lastValue!.Value!.ToString()).IsEqualTo("ok");
     }

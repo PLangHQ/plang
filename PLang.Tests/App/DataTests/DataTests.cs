@@ -1,7 +1,7 @@
 using System.Reflection;
 using app;
-using app.variables;
-using Type = global::app.data.type;
+using app.variable;
+using Type = global::app.type.@this;
 
 namespace PLang.Tests.App.DataTests;
 
@@ -497,11 +497,15 @@ public class DataTests
     }
 
     [Test]
-    public async Task Type_NullValue_ReturnsNull()
+    public async Task Type_NullValue_ReturnsNullSentinel()
     {
+        // Type is non-null end-to-end; the "no value, no explicit type" state
+        // is carried as the synthetic Null entity instead of a literal null,
+        // so consumers don't need a Type? null guard.  Wire serialization
+        // skips the Null sentinel so the on-wire shape is unchanged.
         var ov = new Data("test");
 
-        await Assert.That(ov.Type).IsNull();
+        await Assert.That(ov.Type.IsNull).IsTrue();
     }
 
     [Test]
@@ -596,7 +600,7 @@ public class DataTests
     public async Task Signature_CanBeSet()
     {
         var data = new Data("test", "hello");
-        var sig = new global::app.modules.signing.Signature { Type = "signature", Nonce = "test" };
+        var sig = new global::app.module.signing.Signature { Type = "signature", Nonce = "test" };
 
         data.Signature = sig;
 
@@ -1110,9 +1114,9 @@ public class DataTests
 
         // Stage 3: archived.Value is the gzip byte[] directly (no inner gzip Data).
         await using var engine = new global::app.@this("/test");
-        var ctx = new global::app.actor.context.@this(engine);
+        var context = new global::app.actor.context.@this(engine);
         var archived = new Data("", compressed, Type.FromName("archived"));
-        archived.Context = ctx;
+        archived.Context = context;
 
         var result = archived.Decompress();
 

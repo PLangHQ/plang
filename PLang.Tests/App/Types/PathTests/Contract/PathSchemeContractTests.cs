@@ -3,7 +3,7 @@ using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using System;
 using System.Threading.Tasks;
-using Path = global::app.types.path.@this;
+using Path = global::app.type.path.@this;
 
 namespace PLang.Tests.App.Types.PathTests.Contract;
 
@@ -24,14 +24,14 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
     /// <summary>Registers the "allow" channel on the path's actor and returns the path.</summary>
     private static Path Authorized(Path p)
     {
-        p.Context!.Actor!.Channels.Register(new CannedAnswerChannel("a"));
+        p.Context!.Actor!.Channel.Register(new CannedAnswerChannel("a"));
         return p;
     }
 
     /// <summary>Registers the "deny" channel on the path's actor and returns the path.</summary>
     private static Path Denied(Path p)
     {
-        p.Context!.Actor!.Channels.Register(new CannedAnswerChannel("n"));
+        p.Context!.Actor!.Channel.Register(new CannedAnswerChannel("n"));
         return p;
     }
 
@@ -125,7 +125,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
         {
             var read = await p.ReadText();
             await Assert.That(read.Success).IsFalse();
-            await Assert.That(read.Error).IsTypeOf<global::app.errors.PermissionDenied>();
+            await Assert.That(read.Error).IsTypeOf<global::app.error.PermissionDenied>();
         }
         finally { await Fixture.Cleanup(p); }
     }
@@ -137,7 +137,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
         {
             var write = await p.WriteText("should not land");
             await Assert.That(write.Success).IsFalse();
-            await Assert.That(write.Error).IsTypeOf<global::app.errors.PermissionDenied>();
+            await Assert.That(write.Error).IsTypeOf<global::app.error.PermissionDenied>();
         }
         finally { await Fixture.Cleanup(p); }
     }

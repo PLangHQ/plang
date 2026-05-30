@@ -6,7 +6,7 @@ using System.Linq;
 namespace PLang.Tests.App.Types.PathTests;
 
 /// <summary>
-/// Namespace move: <c>app.filesystem/</c> → <c>app.types/path/</c>, and the
+/// Namespace move: <c>app.filesystem/</c> → <c>app.type/path/</c>, and the
 /// path class converts to the <c>@this</c> convention.
 ///
 /// Survey assertions over the loaded App assembly, string-based reflection only.
@@ -29,37 +29,37 @@ public class NamespaceMoveTests
         // with System.IO.Path across the codebase. The path type is reachable
         // by its fully-qualified name; per-file `using Path = ...` aliases are
         // used where the short name is wanted.
-        var pathType = AppAssembly.GetType("app.types.path.this");
+        var pathType = AppAssembly.GetType("app.type.path.this");
         await Assert.That(pathType).IsNotNull();
         await Assert.That(pathType!.IsAbstract).IsTrue();
     }
 
     [Test] public async Task PathType_LivesIn_AppTypesPathNamespace()
     {
-        var pathType = AppAssembly.GetType("app.types.path.this");
+        var pathType = AppAssembly.GetType("app.type.path.this");
         await Assert.That(pathType).IsNotNull();
-        await Assert.That(pathType!.Namespace).IsEqualTo("app.types.path");
+        await Assert.That(pathType!.Namespace).IsEqualTo("app.type.path");
     }
 
     [Test] public async Task PathClass_FollowsThisConvention_NamedThis()
     {
-        var pathType = AppAssembly.GetType("app.types.path.this");
+        var pathType = AppAssembly.GetType("app.type.path.this");
         await Assert.That(pathType).IsNotNull();
         await Assert.That(pathType!.Name).IsEqualTo("this");
     }
 
     [Test] public async Task PermissionType_MovedUnder_AppTypesPathPermission()
     {
-        await Assert.That(AppAssembly.GetType("app.types.path.permission.this")).IsNotNull();
+        await Assert.That(AppAssembly.GetType("app.type.path.permission.this")).IsNotNull();
         await Assert.That(AppAssembly.GetType("app.filesystem.permission.this")).IsNull();
     }
 
     [Test] public async Task VerbTypes_MovedUnder_AppTypesPathPermissionVerb()
     {
-        await Assert.That(AppAssembly.GetType("app.types.path.permission.verb.this")).IsNotNull();
-        await Assert.That(AppAssembly.GetType("app.types.path.permission.verb.Read")).IsNotNull();
-        await Assert.That(AppAssembly.GetType("app.types.path.permission.verb.Write")).IsNotNull();
-        await Assert.That(AppAssembly.GetType("app.types.path.permission.verb.Delete")).IsNotNull();
+        await Assert.That(AppAssembly.GetType("app.type.path.permission.verb.this")).IsNotNull();
+        await Assert.That(AppAssembly.GetType("app.type.path.permission.verb.Read")).IsNotNull();
+        await Assert.That(AppAssembly.GetType("app.type.path.permission.verb.Write")).IsNotNull();
+        await Assert.That(AppAssembly.GetType("app.type.path.permission.verb.Delete")).IsNotNull();
     }
 
     [Test] public async Task ExistingSuite_StaysGreen_AfterRename()

@@ -1,6 +1,6 @@
-using PermissionRecord = global::app.types.path.permission.@this;
-using Verb = global::app.types.path.permission.verb.@this;
-using MatchMode = global::app.types.path.permission.Match;
+using PermissionRecord = global::app.type.path.permission.@this;
+using Verb = global::app.type.path.permission.verb.@this;
+using MatchMode = global::app.type.path.permission.Match;
 
 namespace app.actor.permission;
 
@@ -64,6 +64,11 @@ public sealed class @this
             {
                 foreach (var grantData in list)
                 {
+                    // Stamp Context on grants freshly rehydrated from SQLite — the store
+                    // returns Data without a Context wired, and downstream signature/
+                    // type-resolution paths require it.  Per the architecture: every
+                    // producer stamps Context; SettingsStore is a producer.
+                    grantData.Context = _actor.Context;
                     if (grantData.Value is null) continue;
                     if (!string.Equals(grantData.Value.Actor, _actor.Name, StringComparison.Ordinal)) continue;
                     if (await TryCover(grantData, request)) return grantData;
@@ -154,7 +159,7 @@ public sealed class @this
             // would expire "always allow" after 5 minutes and would reject
             // re-reads of the same stored nonce. The grant's own Expires
             // (null = permanent today) is the only time bound that applies.
-            var action = new global::app.modules.signing.verify
+            var action = new global::app.module.signing.verify
             {
                 Data = data,
                 SkipFreshnessCheck = new global::app.data.@this<bool>("", true),

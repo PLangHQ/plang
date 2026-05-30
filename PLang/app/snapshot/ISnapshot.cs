@@ -21,8 +21,8 @@ public interface ISnapshot
 
     /// <summary>
     /// Static factory: rebuilds the subsystem from <paramref name="s"/> into the
-    /// live App reachable via <paramref name="ctx"/>. Hard-errors on referent-integrity
+    /// live App reachable via <paramref name="context"/>. Hard-errors on referent-integrity
     /// violations (unresolvable name, hash mismatch, missing source). No silent fallback.
     /// </summary>
-    static abstract void Restore(@this s, actor.context.@this ctx);
+    static abstract void Restore(@this s, actor.context.@this context);
 }

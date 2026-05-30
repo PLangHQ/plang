@@ -1,6 +1,6 @@
 // Test-only compatibility facade for the former `App.Utils.TypeMapping` and
 // `App.Utils.Json` static classes. Production callers were migrated to
-// `app.Types.X(...)` (stage 26) and the dispersed Json bag homes (stage 27);
+// `app.Type.X(...)` (stage 26) and the dispersed Json bag homes (stage 27);
 // tests retain the flat static-call shape for ergonomics.
 
 namespace app.Utils;
@@ -12,47 +12,47 @@ internal static class TypeMapping
     /// <summary>For tests that need the live App backing this facade (e.g. Register that must persist across calls).</summary>
     internal static global::app.@this App => _app;
 
-    public static System.Type? GetType(string typeName) => _app.Types.Get(typeName);
+    public static System.Type? GetType(string typeName) => _app.Type.Get(typeName);
 
-    public static string GetTypeName(System.Type type) => _app.Types.GetTypeName(type);
+    public static string GetTypeName(System.Type type) => _app.Type.GetTypeName(type);
 
-    public static void Register(string plangName, System.Type clrType) => _app.Types.Register(plangName, clrType);
+    public static void Register(string plangName, System.Type clrType) => _app.Type.Register(plangName, clrType);
 
     public static string[]? GetValidValues(System.Type type, global::app.actor.context.@this? context = null)
-        => _app.Types.GetValidValues(type, context);
+        => _app.Type.GetValidValues(type, context);
 
-    public static List<string> GetBuilderTypeNames() => _app.Types.GetBuilderTypeNames();
+    public static List<string> GetBuilderTypeNames() => _app.Type.GetBuilderTypeNames();
 
-    public static List<global::app.builder.Types.Entry> BuildTypeEntries(global::app.modules.@this? modules)
-        => _app.Types.BuildTypeEntries(modules);
+    public static List<global::app.type.@this> BuildTypeEntries(global::app.module.@this? modules)
+        => _app.Type.BuildTypeEntries(modules);
 
-    public static bool IsScalarPlangType(System.Type type) => global::app.types.@this.IsScalarPlangType(type);
+    public static bool IsScalarPlangType(System.Type type) => global::app.type.list.@this.IsScalarPlangType(type);
 
-    public static bool IsPrimitive(System.Type type) => global::app.types.@this.IsPrimitive(type);
+    public static bool IsPrimitive(System.Type type) => global::app.type.list.@this.IsPrimitive(type);
 
-    public static T? ConvertTo<T>(object? value) => global::app.types.@this.ConvertTo<T>(value);
+    public static T? ConvertTo<T>(object? value) => global::app.type.list.@this.ConvertTo<T>(value);
 
-    public static object? ConvertTo(object? value, System.Type targetType) => global::app.types.@this.ConvertTo(value, targetType);
+    public static object? ConvertTo(object? value, System.Type targetType) => global::app.type.list.@this.ConvertTo(value, targetType);
 
-    public static void Populate(object target, IDictionary<string, object?> values) => global::app.types.@this.Populate(target, values);
+    public static void Populate(object target, IDictionary<string, object?> values) => global::app.type.list.@this.Populate(target, values);
 
-    public static (object? Value, global::app.errors.Error? Error) TryConvertTo(
+    public static (object? Value, global::app.error.Error? Error) TryConvertTo(
         object? value, System.Type targetType, global::app.actor.context.@this? context = null)
-        => global::app.types.@this.TryConvertTo(value, targetType, context);
+        => global::app.type.list.@this.TryConvertTo(value, targetType, context);
 }
 
 /// <summary>
 /// Test-only facade for the former <c>App.Utils.TypeConverter</c> static class.
-/// Stage 27 absorbed it into <see cref="global::app.types.@this"/>; this facade routes back.
+/// Stage 27 absorbed it into <see cref="global::app.type.list.@this"/>; this facade routes back.
 /// </summary>
 internal static class TypeConverter
 {
-    public static T? ConvertTo<T>(object? value) => global::app.types.@this.ConvertTo<T>(value);
-    public static object? ConvertTo(object? value, System.Type targetType) => global::app.types.@this.ConvertTo(value, targetType);
-    public static void Populate(object target, IDictionary<string, object?> values) => global::app.types.@this.Populate(target, values);
-    public static (object? Value, global::app.errors.Error? Error) TryConvertTo(
+    public static T? ConvertTo<T>(object? value) => global::app.type.list.@this.ConvertTo<T>(value);
+    public static object? ConvertTo(object? value, System.Type targetType) => global::app.type.list.@this.ConvertTo(value, targetType);
+    public static void Populate(object target, IDictionary<string, object?> values) => global::app.type.list.@this.Populate(target, values);
+    public static (object? Value, global::app.error.Error? Error) TryConvertTo(
         object? value, System.Type targetType, global::app.actor.context.@this? context = null)
-        => global::app.types.@this.TryConvertTo(value, targetType, context);
+        => global::app.type.list.@this.TryConvertTo(value, targetType, context);
 }
 
 /// <summary>
@@ -66,9 +66,9 @@ internal static class Json
     // App.Types.@this). Keeps the test surface pinned to one production source so a
     // converter added in Conversion.cs is exercised by tests automatically. The
     // http/code/Default bag is independent and not covered here — by design.
-    public static System.Text.Json.JsonSerializerOptions CaseInsensitiveRead => global::app.types.@this.CaseInsensitiveRead;
+    public static System.Text.Json.JsonSerializerOptions CaseInsensitiveRead => global::app.type.list.@this.CaseInsensitiveRead;
 
     public static System.Text.Json.JsonSerializerOptions CamelCaseIndented => global::app.@this.CamelCaseIndented;
-    public static System.Text.Json.JsonSerializerOptions PrWrite => global::app.modules.builder.@this.PrWrite;
+    public static System.Text.Json.JsonSerializerOptions PrWrite => global::app.module.builder.@this.PrWrite;
     public static System.Text.Json.JsonSerializerOptions DiagnosticOutput => global::app.Diagnostics.Format.Options;
 }

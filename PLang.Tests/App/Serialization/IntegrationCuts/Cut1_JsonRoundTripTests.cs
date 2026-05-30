@@ -13,7 +13,7 @@ public class Cut1_JsonRoundTripTests
 {
     [Test] public async Task Cut1_Path_RoundTrips_AsScheme_Relative_PropertyBag()
     {
-        global::app.types.path.@this p = "/foo/bar.txt";
+        global::app.type.path.@this p = "/foo/bar.txt";
         var json = NormalizePipelineHelper.SerializeValueSlot(p);
         // Wire shape carries scheme + relative — both fields present and lowercased.
         await Assert.That(json).Contains("\"scheme\":\"file\"");
@@ -25,7 +25,7 @@ public class Cut1_JsonRoundTripTests
         });
         var ex = await Assert.ThrowsAsync<NormalizeException>(async () =>
         {
-            carrier.Reconstruct<global::app.types.path.@this>();
+            carrier.Reconstruct<global::app.type.path.@this>();
             await Task.CompletedTask;
         });
         await Assert.That(ex!.Key).IsEqualTo("NormalizeContextRequired");
@@ -33,12 +33,12 @@ public class Cut1_JsonRoundTripTests
 
     [Test] public async Task Cut1_Identity_RoundTrips_NameAndPublicKey_PrivateKeyAbsent()
     {
-        var original = new global::app.modules.identity.Identity
+        var original = new global::app.module.identity.Identity
         {
             Name = "alice", PublicKey = "pk", PrivateKey = "secret"
         };
         var normalized = new Data("", original).Normalize();
-        var rebuilt = new Data("", normalized).Reconstruct<global::app.modules.identity.Identity>();
+        var rebuilt = new Data("", normalized).Reconstruct<global::app.module.identity.Identity>();
         await Assert.That(rebuilt).IsNotNull();
         await Assert.That(rebuilt!.Name).IsEqualTo("alice");
         await Assert.That(rebuilt.PublicKey).IsEqualTo("pk");
@@ -61,7 +61,7 @@ public class Cut1_JsonRoundTripTests
 
     [Test] public async Task Cut1_Setting_RoundTrips_KeyVisible_ValueMasked()
     {
-        var s = new global::app.modules.settings.types.setting { key = "K", value = "secret" };
+        var s = new global::app.module.settings.type.setting { key = "K", value = "secret" };
         var json = NormalizePipelineHelper.SerializeValueSlot(s);
         await Assert.That(json).Contains("\"key\":\"K\"");
         await Assert.That(json).Contains("\"value\":\"****\"");
@@ -70,7 +70,7 @@ public class Cut1_JsonRoundTripTests
 
     [Test] public async Task Cut1_HttpResponse_RoundTrips_Status_Headers_Body_NoDuration()
     {
-        var r = new global::app.http.Response.@this(
+        var r = new global::app.http.response.@this(
             200,
             new Dictionary<string, string> { ["Content-Type"] = "text/plain" },
             "hello",
@@ -108,7 +108,7 @@ public class Cut1_JsonRoundTripTests
         // goal suites. Here, pin that a Data with an in-memory Signature emits
         // the signature field through the Normalize pipeline.
         var d = new Data("rec", "payload");
-        d.Signature = new global::app.modules.signing.Signature
+        d.Signature = new global::app.module.signing.Signature
         {
             Identity = "ident", Nonce = "n1", Algorithm = "ed25519"
         };

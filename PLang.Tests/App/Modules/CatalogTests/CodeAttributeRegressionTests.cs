@@ -19,12 +19,12 @@ namespace PLang.Tests.App.Modules.CatalogTests;
 public class CodeAttributeRegressionTests
 {
     private static Assembly PLangAssembly =>
-        typeof(global::app.modules.@this).Assembly;
+        typeof(global::app.module.@this).Assembly;
 
     [Test]
     public async Task CodeAttribute_TypeExistsInAppModulesNamespace()
     {
-        var type = PLangAssembly.GetType("app.modules.CodeAttribute", throwOnError: false);
+        var type = PLangAssembly.GetType("app.module.CodeAttribute", throwOnError: false);
         await Assert.That(type).IsNotNull();
         await Assert.That(typeof(Attribute).IsAssignableFrom(type!)).IsTrue();
     }
@@ -33,11 +33,11 @@ public class CodeAttributeRegressionTests
     public async Task ProviderAttribute_DoesNotExistAnymore()
     {
         // Guard against reintroduction. No public type literally named
-        // ProviderAttribute anywhere in the app.modules namespace tree.
+        // ProviderAttribute anywhere in the app.module namespace tree.
         var bad = PLangAssembly.GetTypes()
             .Where(t => t.IsPublic
                      && t.Namespace != null
-                     && t.Namespace.StartsWith("app.modules", StringComparison.Ordinal)
+                     && t.Namespace.StartsWith("app.module", StringComparison.Ordinal)
                      && t.Name == "ProviderAttribute")
             .ToList();
         await Assert.That(bad.Count).IsEqualTo(0);

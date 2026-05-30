@@ -1,5 +1,5 @@
 using PLang.Tests.App.Fixtures;
-using app.modules.matrix.resolution;
+using app.module.matrix.resolution;
 
 namespace PLang.Tests.Generator.Matrix.Resolution;
 
@@ -29,7 +29,7 @@ public class FullVarMatchTests
     {
         await using var app = new global::app.@this("/app");
         // Variables.Set wraps the value in Data; the variable's .Value should be unwrapped during As<T>.
-        app.User.Context.Variables.Set("count", 42);
+        app.User.Context.Variable.Set("count", 42);
         var result = await MatrixRunner.RunAsync<FullVarMatch>(app,
             parameters: new[] { ("path", (object?)"%count%") });
 
@@ -54,7 +54,7 @@ public class FullVarMatchTests
 
 public class InterpolationTests
 {
-    // Parameter Value "Hello %name%" (partial %var%) → As<string> calls Variables.Resolve(str, ctx), returns interpolated.
+    // Parameter Value "Hello %name%" (partial %var%) → As<string> calls Variables.Resolve(str, context), returns interpolated.
     [Test]
     public async Task Interpolation_PartialVar_CallsResolve()
     {
@@ -108,7 +108,7 @@ public class DeepResolutionListTests
             parameters: new[] { ("messages", (object?)raw) },
             variables: new Dictionary<string, object?> { ["prompt"] = "You are a compiler" });
 
-        var typed = result.Data as global::app.data.@this<List<global::app.modules.llm.LlmMessage>>;
+        var typed = result.Data as global::app.data.@this<List<global::app.module.llm.LlmMessage>>;
         await Assert.That(typed!.Value).IsNotNull();
         await Assert.That(typed.Value![0].Content).IsEqualTo("You are a compiler");
     }
@@ -135,7 +135,7 @@ public class DeepResolutionListTests
             parameters: new[] { ("messages", (object?)raw) },
             variables: new Dictionary<string, object?> { ["a"] = "alpha", ["b"] = "beta" });
 
-        var typed = result.Data as global::app.data.@this<List<global::app.modules.llm.LlmMessage>>;
+        var typed = result.Data as global::app.data.@this<List<global::app.module.llm.LlmMessage>>;
         await Assert.That(typed!.Value![0].Content).IsEqualTo("alpha");
         await Assert.That(typed.Value![1].Content).IsEqualTo("beta");
     }
@@ -191,13 +191,13 @@ public class ReResolveAcrossCallsTests
     {
         await using var app = new global::app.@this("/app");
 
-        app.User.Context.Variables.Set("x", "first");
+        app.User.Context.Variable.Set("x", "first");
         var first = await MatrixRunner.RunAsync<ReResolveAcrossCalls>(app,
             parameters: new[] { ("value", (object?)"%x%") });
         var firstTyped = first.Data as global::app.data.@this<string>;
         await Assert.That(firstTyped!.Value).IsEqualTo("first");
 
-        app.User.Context.Variables.Set("x", "second");
+        app.User.Context.Variable.Set("x", "second");
         var second = await MatrixRunner.RunAsync<ReResolveAcrossCalls>(app,
             parameters: new[] { ("value", (object?)"%x%") });
         var secondTyped = second.Data as global::app.data.@this<string>;
@@ -211,7 +211,7 @@ public class ReResolveAcrossCallsTests
         await using var app = new global::app.@this("/app");
         var sharedData = new Data("value", "%x%");
 
-        app.User.Context.Variables.Set("x", "v1");
+        app.User.Context.Variable.Set("x", "v1");
         var action1 = new PrAction
         {
             Module = "matrix.resolution",
@@ -224,7 +224,7 @@ public class ReResolveAcrossCallsTests
         // Raw .Value is still "%x%" — no in-place mutation
         await Assert.That(sharedData.Value).IsEqualTo("%x%");
 
-        app.User.Context.Variables.Set("x", "v2");
+        app.User.Context.Variable.Set("x", "v2");
         var action2 = new PrAction
         {
             Module = "matrix.resolution",
@@ -244,7 +244,7 @@ public class ReResolveAcrossCallsTests
         var seen = new List<string?>();
         for (int i = 0; i < 3; i++)
         {
-            app.User.Context.Variables.Set("i", $"value-{i}");
+            app.User.Context.Variable.Set("i", $"value-{i}");
             var r = await MatrixRunner.RunAsync<ReResolveAcrossCalls>(app,
                 parameters: new[] { ("value", (object?)"%i%") });
             var typed = r.Data as global::app.data.@this<string>;
@@ -263,7 +263,7 @@ public class ConcurrentHandlersTests
     public async Task ConcurrentHandlers_ParallelExecuteAsync_NoSharedState()
     {
         await using var app = new global::app.@this("/app");
-        app.User.Context.Variables.Set("x", "value");
+        app.User.Context.Variable.Set("x", "value");
 
         // Pre-register; run in parallel.
         MatrixRunner.EnsureRegistered<ConcurrentHandlers>(app);
@@ -289,7 +289,7 @@ public class ConcurrentHandlersTests
     public async Task ConcurrentHandlers_ParallelAsT_IndependentResults()
     {
         await using var app = new global::app.@this("/app");
-        app.User.Context.Variables.Set("x", "shared");
+        app.User.Context.Variable.Set("x", "shared");
         var data = new Data("v", "%x%") { Context = app.User.Context };
 
         var tasks = Enumerable.Range(0, 50).Select(_ => Task.Run(() =>

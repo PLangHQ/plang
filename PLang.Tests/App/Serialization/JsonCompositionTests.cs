@@ -1,6 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using app.channels.serializers.serializer;
+using app.channel.serializer;
 
 namespace PLang.Tests.App.Serialization;
 

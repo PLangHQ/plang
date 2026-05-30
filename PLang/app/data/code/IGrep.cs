@@ -1,4 +1,4 @@
-using app.modules.code;
+using app.module.code;
 
 namespace app.data.code;
 

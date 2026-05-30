@@ -1,16 +1,16 @@
 using System.Text.Json;
-using number = global::app.types.number.@this;
+using number = global::app.type.number.@this;
 
 namespace PLang.Tests.App.Serialization;
 
 // plang-types — Stage 3
-// app/types/number/serializer/Default.cs — (number, *) → writer.Int/Long/Decimal/Double/Float
+// app/type/number/serializer/Default.cs — (number, *) → writer.Int/Long/Decimal/Double/Float
 // by Kind. Uniform across formats: number renders the same in every writer (the IWriter
 // primitive vocabulary is the cross-format contract).
 
 public class NumberSerializerTests
 {
-    private sealed class CaptureWriter : global::app.channels.serializers.IWriter
+    private sealed class CaptureWriter : global::app.channel.serializer.IWriter
     {
         public string Format { get; }
         public object? Last { get; private set; }
@@ -40,7 +40,7 @@ public class NumberSerializerTests
     [Test] public async Task Number_KindInt_Default_EmitsWriterInt()
     {
         var w = new CaptureWriter("json");
-        global::app.types.number.serializer.Default.Write(number.From(7), w);
+        global::app.type.number.serializer.Default.Write(number.From(7), w);
         await Assert.That(w.LastMethod).IsEqualTo("Int");
         await Assert.That(w.Last).IsEqualTo(7);
     }
@@ -48,7 +48,7 @@ public class NumberSerializerTests
     [Test] public async Task Number_KindLong_Default_EmitsWriterLong()
     {
         var w = new CaptureWriter("json");
-        global::app.types.number.serializer.Default.Write(number.From(7L), w);
+        global::app.type.number.serializer.Default.Write(number.From(7L), w);
         await Assert.That(w.LastMethod).IsEqualTo("Long");
         await Assert.That(w.Last).IsEqualTo(7L);
     }
@@ -56,7 +56,7 @@ public class NumberSerializerTests
     [Test] public async Task Number_KindDecimal_Default_EmitsWriterDecimal()
     {
         var w = new CaptureWriter("json");
-        global::app.types.number.serializer.Default.Write(number.From(3.14m), w);
+        global::app.type.number.serializer.Default.Write(number.From(3.14m), w);
         await Assert.That(w.LastMethod).IsEqualTo("Decimal");
         await Assert.That(w.Last).IsEqualTo(3.14m);
     }
@@ -64,7 +64,7 @@ public class NumberSerializerTests
     [Test] public async Task Number_KindDouble_Default_EmitsWriterDouble()
     {
         var w = new CaptureWriter("json");
-        global::app.types.number.serializer.Default.Write(number.From(2.5), w);
+        global::app.type.number.serializer.Default.Write(number.From(2.5), w);
         await Assert.That(w.LastMethod).IsEqualTo("Double");
         await Assert.That(w.Last).IsEqualTo(2.5);
     }
@@ -72,7 +72,7 @@ public class NumberSerializerTests
     [Test] public async Task Number_KindFloat_Default_EmitsWriterFloat()
     {
         var w = new CaptureWriter("json");
-        global::app.types.number.serializer.Default.Write(number.From(2.5f), w);
+        global::app.type.number.serializer.Default.Write(number.From(2.5f), w);
         await Assert.That(w.LastMethod).IsEqualTo("Float");
         await Assert.That(w.Last).IsEqualTo(2.5f);
     }
@@ -80,11 +80,11 @@ public class NumberSerializerTests
     [Test] public async Task Number_Wire_RoundTrip_PreservesValueAndKind()
     {
         // Through json.Writer + the renderer dispatch.
-        var renderers = new global::app.types.renderers.@this();
+        var renderers = new global::app.type.renderer.@this();
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.channels.serializers.json.Writer(utf, options: null,
+            var w = new global::app.channel.serializer.json.Writer(utf, options: null,
                 view: global::app.View.Out, renderers: renderers);
             w.Value(new global::app.data.TypedValueNode(number.From(42), "number"));
         }
@@ -96,7 +96,7 @@ public class NumberSerializerTests
     {
         // Default.cs registers under wildcard "*". A writer with any Format
         // (here "text") resolves to it through the fallback path.
-        var renderers = new global::app.types.renderers.@this();
+        var renderers = new global::app.type.renderer.@this();
         var write = renderers.Of("number", "text");
         await Assert.That(write).IsNotNull();
         var w = new CaptureWriter("text");
@@ -107,11 +107,11 @@ public class NumberSerializerTests
     [Test] public async Task Number_Decimal_ShortestRoundTrip_NoTrailingZeros()
     {
         // 0.1m through writer.Decimal → JSON "0.1", not "0.10000000".
-        var renderers = new global::app.types.renderers.@this();
+        var renderers = new global::app.type.renderer.@this();
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.channels.serializers.json.Writer(utf, options: null,
+            var w = new global::app.channel.serializer.json.Writer(utf, options: null,
                 view: global::app.View.Out, renderers: renderers);
             w.Value(new global::app.data.TypedValueNode(number.From(0.1m), "number"));
         }

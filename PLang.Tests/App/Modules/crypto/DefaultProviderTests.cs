@@ -1,12 +1,12 @@
-using app.variables;
-using app.modules.crypto;
-using app.modules.crypto.code;
+using app.variable;
+using app.module.crypto;
+using app.module.crypto.code;
 
 namespace PLang.Tests.App.Modules.crypto;
 
 public class DefaultCryptoProviderTests
 {
-    private readonly global::app.modules.crypto.code.Default _provider = new();
+    private readonly global::app.module.crypto.code.Default _provider = new();
 
     private static Hash HashAction(object data, string algorithm = "keccak256")
         => new() { Data = Data.Ok(data), Algorithm = algorithm };

@@ -1,0 +1,10 @@
+TestChannelWriteThroughNewAccessor
+/ Cut 2 surface in PLang. A PLang `write to %channelName%` step lands on the new
+/ actor.channel[name].Write(data) path — the registry no longer holds WriteText/WriteAsync,
+/ and the type-switch on channel.stream.@this moved onto the element as a virtual.
+/ Without the assertion this was a no-assertion smoke test (tester v1 F7) — it would
+/ pass even if the accessor path was unreachable. Routing through a goal channel and
+/ asserting on the captured value pins that the Write call actually reaches handler code.
+- set channel "log" call Capture
+- write "hello from channel accessor" to log
+- assert %captured% equals "hello from channel accessor"

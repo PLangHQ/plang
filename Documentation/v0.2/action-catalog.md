@@ -6,9 +6,9 @@ This doc is for anyone adding or editing action handlers — what goes where, ho
 
 ## Where the catalog lives
 
-1. **Source (shape)**: C# action handler classes in `PLang/app/modules/<module>/<action>.cs`. Class attributes declare structure (action name, modifier role, parameter defaults). Class shape is the single source of truth for what parameters exist and what types they take.
+1. **Source (shape)**: C# action handler classes in `PLang/app/module/<module>/<action>.cs`. Class attributes declare structure (action name, modifier role, parameter defaults). Class shape is the single source of truth for what parameters exist and what types they take.
 2. **Source (prose)**: Markdown files under `os/system/modules/<module>/`. Description, Notes, and Examples are read from disk per action — tuning LLM teaching ships without a C# rebuild.
-3. **Builder pulls both**: `app.modules.Describe()` walks the registered handlers, reads the class attributes, then calls `MarkdownTeaching.Load(...)` for each one. Output is a collection of `Action` records carrying `Module`, `ActionName`, `Cacheable`, `Parameters`, `Description` + `ModuleDescription`, `Notes` + `ModuleNotes`, `ExamplesMd` + `ModuleExamplesMd`, `IsModifier`, `ReturnType`.
+3. **Builder pulls both**: `app.Module.Describe()` walks the registered handlers, reads the class attributes, then calls `MarkdownTeaching.Load(...)` for each one. Output is a collection of `Action` records carrying `Module`, `ActionName`, `Cacheable`, `Parameters`, `Description` + `ModuleDescription`, `Notes` + `ModuleNotes`, `ExamplesMd` + `ModuleExamplesMd`, `IsModifier`, `ReturnType`.
 4. **Renderer**: a step-action-details template renders **per-action blocks only for the actions the planner picked** — the Notes and Examples blocks fire in the user message of the Compile call, not in the cross-cutting system prompt. The system prompt keeps only the cross-cutting kernel (modifier vs peer classification, `write to %var%` → peer `variable.set`, formal-mirroring rule, type-name conventions, etc.).
 5. **Prompt injects it**: `system/builder/llm/Compile.llm` carries the kernel; per-action blocks render through `stepActionDetails` against the planner's set.
 
@@ -58,7 +58,7 @@ os/system/modules/
     <action>.description.md
 ```
 
-Module folder names are lowercase and match `PLang/app/modules/<module>/` (`assert/`, `error/`, `output/`, …).
+Module folder names are lowercase and match `PLang/app/module/<module>/` (`assert/`, `error/`, `output/`, …).
 
 ### Merge semantics
 
@@ -103,7 +103,7 @@ There is **no `[Description]` attribute on action classes any more**, and no `[E
 | `string` / `int` / `long` / `bool` / `double` / `decimal` / `DateTime` / `Guid` | Lowercased: `string`, `int`, etc. |
 | Nullable (`string?`, `int?`) | Trailing `?`. |
 | `Data<T>` (LazyParam) | Unwrapped to `T`'s rendering. |
-| `Data<app.variables.Variable>` | Renders as `string` — the slot names a variable rather than carrying a value. `Variable` implements `IRawNameResolvable`, so `Data.As<T>` resolves it from the raw slot string (`%x%` and bare `x` both produce `Variable { Name = "x" }`). The handler reads `Foo.Value`; implicit conversion to `string` covers method-call boundaries. |
+| `Data<app.variable.Variable>` | Renders as `string` — the slot names a variable rather than carrying a value. `Variable` implements `IRawNameResolvable`, so `Data.As<T>` resolves it from the raw slot string (`%x%` and bare `x` both produce `Variable { Name = "x" }`). The handler reads `Foo.Value`; implicit conversion to `string` covers method-call boundaries. |
 | Enum or type with a `static string[] ValidValues` | Type name plus inline enumeration: `operator(==|!=|>|<|…)`. |
 | `List<T>`, `IList<T>`, arrays | `list<T>`. |
 | `Dictionary<K,V>` and its variants | `dict<K,V>`. |
@@ -150,7 +150,7 @@ One-sentence, present-tense, verb-first. Must add information the signature does
 
 ## Adding a new action
 
-1. Create `PLang/app/modules/<module>/<action>.cs`. Class should be `public partial class YourAction : IContext` (or the appropriate base/interfaces for your module pattern).
+1. Create `PLang/app/module/<module>/<action>.cs`. Class should be `public partial class YourAction : IContext` (or the appropriate base/interfaces for your module pattern).
 2. Apply `[Action("<action-name>")]`. If the action name matches the class name lowercased, the string argument is optional.
 3. Apply `[Modifier(Order = N)]` if this is a modifier (current orders: `timeout.after = 1`, `cache.wrap = 2`, `error.handle = 3` — outer first).
 4. Add properties for each parameter with the appropriate attributes.
@@ -163,7 +163,7 @@ Nothing else needs updating — the builder picks up the new action the next tim
 
 ## Adding a new module
 
-Create the C# `PLang/app/modules/<module>/` folder with at least one `[Action]` class. Create `os/system/modules/<module>/module.description.md` (one sentence for the module). If there's a rule that applies to every action in the module, add `os/system/modules/<module>/module.notes.md`.
+Create the C# `PLang/app/module/<module>/` folder with at least one `[Action]` class. Create `os/system/modules/<module>/module.description.md` (one sentence for the module). If there's a rule that applies to every action in the module, add `os/system/modules/<module>/module.notes.md`.
 
 Modules composed entirely of modifier actions (e.g. `cache`, `timeout`) render only in the `# Modifiers` section. Modules with only non-modifier actions render only in `# Actions`. Mixed modules render their header in both, which is a feature, not a bug — it keeps module context next to each group.
 
@@ -173,9 +173,9 @@ Modules composed entirely of modifier actions (e.g. `cache`, `timeout`) render o
 
 ```csharp
 using app.Attributes;
-using app.variables;
+using app.variable;
 
-namespace app.modules.variable;
+namespace app.module.variable;
 
 /// <summary>
 /// Sets a variable in the current context's variable store.

@@ -53,7 +53,7 @@ public class AfterActionPayloadTests
                 }
             }
         };
-        _app.Goals.Add(goal);
+        _app.Goal.Add(goal);
         await _app.RunGoalAsync(goal, _app.User.Context);
     }
 
@@ -65,7 +65,7 @@ public class AfterActionPayloadTests
         PrAction? captured = null;
         _app.User.Context.Events.Register(new EventBinding(
             EventType.AfterAction,
-            (ctx, action, result) => { captured = action; return Task.FromResult(Data.Ok()); },
+            (context, action, result) => { captured = action; return Task.FromResult(Data.Ok()); },
             priority: int.MaxValue,
             stopOnError: false));
 
@@ -84,7 +84,7 @@ public class AfterActionPayloadTests
         Data? captured = null;
         _app.User.Context.Events.Register(new EventBinding(
             EventType.AfterAction,
-            (ctx, action, result) => { captured = result; return Task.FromResult(Data.Ok()); },
+            (context, action, result) => { captured = result; return Task.FromResult(Data.Ok()); },
             priority: int.MaxValue,
             stopOnError: false));
 
@@ -131,12 +131,12 @@ public class AfterActionPayloadTests
                 new Step { Index = 0, Text = "mod set", Actions = new StepActions { inner } }
             }
         };
-        _app.Goals.Add(goal);
+        _app.Goal.Add(goal);
 
         var observed = new List<(string Module, string ActionName)>();
         _app.User.Context.Events.Register(new EventBinding(
             EventType.AfterAction,
-            (ctx, action, result) =>
+            (context, action, result) =>
             {
                 if (action != null) observed.Add((action.Module, action.ActionName));
                 return Task.FromResult(Data.Ok());
@@ -167,7 +167,7 @@ public class AfterActionPayloadTests
         Data? seenResult = null;
         _app.User.Context.Events.Register(new EventBinding(
             EventType.BeforeAction,
-            (ctx, action, result) =>
+            (context, action, result) =>
             {
                 seenAction = action;
                 seenResult = result;
@@ -215,12 +215,12 @@ public class AfterActionPayloadTests
                 }
             }
         };
-        _app.Goals.Add(goal);
+        _app.Goal.Add(goal);
 
         Data? captured = null;
         _app.User.Context.Events.Register(new EventBinding(
             EventType.AfterAction,
-            (ctx, action, result) => { captured = result; return Task.FromResult(Data.Ok()); },
+            (context, action, result) => { captured = result; return Task.FromResult(Data.Ok()); },
             priority: int.MaxValue,
             stopOnError: false));
 
@@ -239,7 +239,7 @@ public class AfterActionPayloadTests
         PrAction? captured = null;
         _app.User.Context.Events.Register(new EventBinding(
             EventType.AfterAction,
-            (ctx, action, result) => { captured = action; return Task.FromResult(Data.Ok()); },
+            (context, action, result) => { captured = action; return Task.FromResult(Data.Ok()); },
             priority: int.MaxValue,
             stopOnError: false));
 

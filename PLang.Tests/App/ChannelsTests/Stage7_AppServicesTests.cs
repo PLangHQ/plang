@@ -1,5 +1,5 @@
 using System.Reflection;
-using AppService = global::app.Services.Service.@this;
+using AppService = global::app.service.@this;
 
 namespace PLang.Tests.App.ChannelsTests;
 
@@ -29,7 +29,7 @@ public class Stage7_AppServicesTests
     public async Task Service_Identity_NavigatesToAppSystemIdentity()
     {
         await using var app = new global::app.@this("/tmp/s7c");
-        app.System.Identity = new global::app.modules.identity.Identity { Name = "system-id" };
+        app.System.Identity = new global::app.module.identity.Identity { Name = "system-id" };
         var s = app.Services.New(parent: app.User);
         await Assert.That(s.Identity).IsEqualTo(app.System.Identity);
     }
@@ -49,7 +49,7 @@ public class Stage7_AppServicesTests
     {
         await using var app = new global::app.@this("/tmp/s7e");
         AppService captured;
-        global::app.channels.channel.@this disposedCh;
+        global::app.channel.@this disposedCh;
         {
             await using var s = app.Services.New(parent: app.User);
             captured = s;

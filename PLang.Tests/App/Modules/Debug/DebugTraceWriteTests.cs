@@ -12,7 +12,7 @@ namespace PLang.Tests.App.Modules.Debug;
 /// the actual handler methods. A mutation that reverted
 /// <c>_currentLlmFilePath.Append(...)</c> to <c>System.IO.File.AppendAllText</c>
 /// would not flip these tests (both end up writing to disk), so we also
-/// assert the underlying path is a <see cref="global::app.types.path.@this"/>
+/// assert the underlying path is a <see cref="global::app.type.path.@this"/>
 /// instance — the typed channel is the audit-gate.
 /// </summary>
 public class DebugTraceWriteTests
@@ -28,13 +28,13 @@ public class DebugTraceWriteTests
     [Test] public async Task GenerateLlmFilePath_ProducedViaPathDerivationVerbs()
     {
         var app = NewApp(out var root);
-        var ctx = app.User.Context;
-        var resolved = app.Debug.ResolveLlmFilePath(ctx);
+        var context = app.User.Context;
+        var resolved = app.Debug.ResolveLlmFilePath(context);
         // Typed channel: ResolveLlmFilePath must return a Path object (the
         // .Absolute reach is auth-gated). A future mutation reverting to
         // System.IO.Path.Combine + string would break this signature.
         await Assert.That(resolved).IsNotNull();
-        await Assert.That(resolved is global::app.types.path.@this).IsTrue();
+        await Assert.That(resolved is global::app.type.path.@this).IsTrue();
         // And the derivation lands under .build/traces.
         await Assert.That(resolved.Absolute.Replace('\\', '/'))
             .Contains(".build/traces/");
@@ -43,14 +43,14 @@ public class DebugTraceWriteTests
     [Test] public async Task TraceWrite_GoesThroughPathVerbs_NotFileWriteAllText()
     {
         var app = NewApp(out var root);
-        var ctx = app.User.Context;
+        var context = app.User.Context;
         // Pre-stage the trace file path the way the LLM event subscriber does.
-        app.Debug._currentLlmFilePath = app.Debug.ResolveLlmFilePath(ctx);
+        app.Debug._currentLlmFilePath = app.Debug.ResolveLlmFilePath(context);
         // Drive a trace emit. Append routes through AuthGate(Write); in-root
         // fast-passes. If anyone reverts to System.IO.File.AppendAllText the
         // PLNG002 analyzer fails the build — but we additionally verify the
         // bytes land on disk.
-        app.Debug.EmitLlmBlock("LLM TEST", new[] { "line one", "line two" }, ctx, toFile: true);
+        app.Debug.EmitLlmBlock("LLM TEST", new[] { "line one", "line two" }, context, toFile: true);
         // Read back via the same gated verb.
         var read = await app.Debug._currentLlmFilePath!.ReadText();
         await Assert.That(read.Success).IsTrue();

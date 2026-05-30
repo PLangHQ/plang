@@ -1,0 +1,28 @@
+{
+  "reviewer": "docs",
+  "branch": "singular-namespaces",
+  "timestamp": "2026-05-30T13:00:00Z",
+  "reviewed_version": "v1 (docs) on coder v3 / codeanalyzer v4 / tester v3 / auditor v1+v2 / security v1",
+  "summary": "Final docs gate on singular-namespaces. The branch landed a 4-stage refactor (plural→singular+lowercase rename, non-null app/context/data._context, app.X collection-node accessor, type.@this entity promotion) but touched no Documentation/ files. Docs v1 closes that gap: applied the architect's root CLAUDE.md proposal (token renames + new accessor convention bullet), refreshed plural namespace tokens across 9 Documentation/v0.2/ files, rewrote app-tree.md (singular folder paths + accessor convention + Type/Null sections + 'What's NOT on app' rows for the deleted plural names), updated the check-app-tree.sh drift script for the new module path, and added three new good_to_know.md sections (app.X collection-node accessor, Producer-Stamping Invariant per auditor F5, Null type sentinel). Drift checker now passes clean. No PLang .goal examples needed — rename is interior C# only; public action catalog shape unchanged.",
+  "stats": { "gaps_found": 13, "gaps_filled": 13, "docs_updated": 11, "docs_created": 0 },
+  "changes": [
+    { "id": 1, "type": "architecture-doc", "action": "updated", "file": "CLAUDE.md", "description": "Singular+lowercase vocabulary list, .Module/.Goal property names, app.type.path / app.channel.@this / Data<app.variable.Variable> tokens, new 'app.X is the collection node' convention bullet (applies architect v1 proposal)" },
+    { "id": 2, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/app-tree.md", "description": "Full rewrite for singular world: vocabulary list, top-level tree (Goal/Event/Module/Type/Error/Format/Service), Actor surface (Variables→app/variable/, Channels→app/channel/list/), modules block (app.Module.<name>), new collection-node accessor section, new Type entity section, new Null sentinel section, expanded 'What's NOT on app' table with the deleted plural names" },
+    { "id": 3, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/scripts/check-app-tree.sh", "description": "Updated module path from PLang/app/modules to PLang/app/module so drift checker actually runs; verified clean (30 modules, 37 app props, 7 actor props, 7 data partials)" },
+    { "id": 4, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/architecture.md", "description": "app.Module.Describe(), app.module.builder.Types, app.module.{module}.{actionName}, namespace example, Data<app.variable.Variable> refs" },
+    { "id": 5, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/action-catalog.md", "description": "app.Module.Describe(), PLang/app/module/ path, Data<app.variable.Variable> row, namespace app.module.variable example" },
+    { "id": 6, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/io-channels.md", "description": "All app.channels.@this → app.channel.@this, AppChannels → app.channel.list.@this, app.module.debug.Write" },
+    { "id": 7, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/variables.md", "description": "app.variables.@this → app.variable.@this" },
+    { "id": 8, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/snapshots.md", "description": "ISnapshotted implementer list singular; example header comment" },
+    { "id": 9, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/code-vs-goals.md", "description": "All app.modules.code → app.module.code; PLang/app/module/code/ path" },
+    { "id": 10, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/object_pattern_formal.md", "description": "Namespace convention table singular: app.module.{module}" },
+    { "id": 11, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/filesystem-permission.md", "description": "app.module.signing.verify token" },
+    { "id": 12, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/audit/obp-rules.md", "description": "Worked-example path: app/module/builder/, .App.Module property, app.module.Schema.Build()" },
+    { "id": 13, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/good_to_know.md", "description": "Token sweep (app.module.code, app.variable.@this, app.variable.Variable, app.type.path, app.channel.@this.Output, app.module.MarkdownTeaching, namespace examples singular) PLUS three new sections appended at end: (a) 'app.X is the collection node — [name] / .list / .current' canonical accessor convention; (b) 'Producer-stamping invariant — Data.Type propagation' addressing auditor v1 F5, including the three contract tests; (c) 'type.@this.Null — non-null sentinel on Data.Type' covering the copy-unconditional discipline, wire-skip-emission rule, and the latent ReferenceEquals footgun" }
+  ],
+  "findings": [],
+  "claude_md_proposals": [
+    { "from_bot": "architect v1", "target": "/CLAUDE.md", "decision": "applied", "reason": "Singular tokens are ground truth post-rename; the new app.X accessor convention is canonical for all future app/ work; the lowercase-vocabulary list must match the tree. Applied with minor cleanup: .Module is the property surface (singular) and .Modules in the example list was also stale" }
+  ],
+  "character_proposals": []
+}

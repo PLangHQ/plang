@@ -1,6 +1,6 @@
-using app.variables;
-using app.modules.condition;
-using app.modules.condition.code;
+using app.variable;
+using app.module.condition;
+using app.module.condition.code;
 
 namespace PLang.Tests.App.Modules.condition;
 
@@ -160,7 +160,7 @@ public class DefaultEvaluatorTests
         var app = new global::app.@this(root);
         var file = System.IO.Path.Combine(root, "present.txt");
         System.IO.File.WriteAllText(file, "x");
-        var fp = new global::app.types.path.file.@this(file, app.User.Context);
+        var fp = new global::app.type.path.file.@this(file, app.User.Context);
         await Assert.That(IsTrue(await EvalIf(fp, "==", true))).IsTrue();
         System.IO.Directory.Delete(root, true);
     }
@@ -171,7 +171,7 @@ public class DefaultEvaluatorTests
         System.IO.Directory.CreateDirectory(root);
         var app = new global::app.@this(root);
         var missing = System.IO.Path.Combine(root, "not-here.txt");
-        var fp = new global::app.types.path.file.@this(missing, app.User.Context);
+        var fp = new global::app.type.path.file.@this(missing, app.User.Context);
         await Assert.That(IsFalse(await EvalIf(fp, "==", true))).IsTrue();
         System.IO.Directory.Delete(root, true);
     }

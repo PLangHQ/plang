@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "Coder v2 fundamentals (non-null Context/Type, type.Null sentinel, Promote throw, producer stamping) are sound; cache-build safe via _foldLoaded; build clean + affected subsets green (verified). 4 minor/latent notes; F1 (ReferenceEquals for sentinel) worth a one-line fix." }

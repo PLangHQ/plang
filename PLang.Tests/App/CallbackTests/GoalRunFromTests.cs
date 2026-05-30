@@ -2,13 +2,13 @@ using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using app.data;
-using app.modules.output;
-using ActionEntity = global::app.goals.goal.steps.step.actions.action.@this;
+using app.module.output;
+using ActionEntity = global::app.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.CallbackTests;
 
-/// Stage 2a — Batch 4: `Step.RunFrom(ctx, actionIdx)` and
-/// `Goal.RunFrom(ctx, stepIdx, actionIdx)` — continuation helpers used by
+/// Stage 2a — Batch 4: `Step.RunFrom(context, actionIdx)` and
+/// `Goal.RunFrom(context, stepIdx, actionIdx)` — continuation helpers used by
 /// `Snapshot.ResumeChain`. The architect resolved against a
 /// `Steps.RunAsync(fromIndex)` overload — the remaining-steps loop lives
 /// inside Goal.RunFrom.
@@ -38,51 +38,51 @@ public class GoalRunFromTests
     public async Task StepRunFrom_Zero_RunsAllActions()
     {
         var app = NewApp();
-        var ctx = app.User.Context;
+        var context = app.User.Context;
         var actionA = TestAction.Create("variable", "set", ("name", "%a%"), ("value", "A"));
         var actionB = TestAction.Create("variable", "set", ("name", "%b%"), ("value", "B"));
         var step = new Step { Index = 0, Text = "multi" };
         actionA.Step = step; actionB.Step = step;
         step.Actions.Add(actionA); step.Actions.Add(actionB);
 
-        var result = await step.RunFrom(ctx, 0);
+        var result = await step.RunFrom(context, 0);
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(ctx.Variables.GetValue("a")).IsEqualTo("A");
-        await Assert.That(ctx.Variables.GetValue("b")).IsEqualTo("B");
+        await Assert.That(context.Variable.GetValue("a")).IsEqualTo("A");
+        await Assert.That(context.Variable.GetValue("b")).IsEqualTo("B");
     }
 
     [Test]
     public async Task StepRunFrom_MidStep_RunsRemainingActionsOnly()
     {
         var app = NewApp();
-        var ctx = app.User.Context;
+        var context = app.User.Context;
         var actionA = TestAction.Create("variable", "set", ("name", "%a%"), ("value", "A"));
         var actionB = TestAction.Create("variable", "set", ("name", "%b%"), ("value", "B"));
         var step = new Step { Index = 0, Text = "multi" };
         actionA.Step = step; actionB.Step = step;
         step.Actions.Add(actionA); step.Actions.Add(actionB);
 
-        var result = await step.RunFrom(ctx, 1);
+        var result = await step.RunFrom(context, 1);
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(ctx.Variables.Get("a").IsInitialized).IsFalse(); // skipped
-        await Assert.That(ctx.Variables.GetValue("b")).IsEqualTo("B");
+        await Assert.That(context.Variable.Get("a").IsInitialized).IsFalse(); // skipped
+        await Assert.That(context.Variable.GetValue("b")).IsEqualTo("B");
     }
 
     [Test]
     public async Task GoalRunFrom_ResumesActionThenRemainingStepsInGoal()
     {
         var app = NewApp();
-        var ctx = app.User.Context;
+        var context = app.User.Context;
         var goal = Build("G",
             SetStep(0, "s0", "skip"),
             SetStep(1, "s1", "from-here"),
             SetStep(2, "s2", "and-after"));
 
-        var result = await goal.RunFrom(ctx, stepIdx: 1, actionIdx: 0);
+        var result = await goal.RunFrom(context, stepIdx: 1, actionIdx: 0);
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(ctx.Variables.Get("s0").IsInitialized).IsFalse();
-        await Assert.That(ctx.Variables.GetValue("s1")).IsEqualTo("from-here");
-        await Assert.That(ctx.Variables.GetValue("s2")).IsEqualTo("and-after");
+        await Assert.That(context.Variable.Get("s0").IsInitialized).IsFalse();
+        await Assert.That(context.Variable.GetValue("s1")).IsEqualTo("from-here");
+        await Assert.That(context.Variable.GetValue("s2")).IsEqualTo("and-after");
     }
 
     [Test]
@@ -108,13 +108,13 @@ public class GoalRunFromTests
         // GoalRunFrom_ResumesActionThenRemainingStepsInGoal above. This test
         // pins the contract that earlier steps are not re-run.
         var app = NewApp();
-        var ctx = app.User.Context;
+        var context = app.User.Context;
         var goal = Build("G",
             SetStep(0, "first", "should-not-run"),
             SetStep(1, "second", "runs"));
 
-        await goal.RunFrom(ctx, stepIdx: 1, actionIdx: 0);
-        await Assert.That(ctx.Variables.Get("first").IsInitialized).IsFalse();
-        await Assert.That(ctx.Variables.GetValue("second")).IsEqualTo("runs");
+        await goal.RunFrom(context, stepIdx: 1, actionIdx: 0);
+        await Assert.That(context.Variable.Get("first").IsInitialized).IsFalse();
+        await Assert.That(context.Variable.GetValue("second")).IsEqualTo("runs");
     }
 }

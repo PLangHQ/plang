@@ -1,8 +1,8 @@
 using app.actor.context;
 using app;
-using app.errors;
-using app.variables;
-using app.modules.mock;
+using app.error;
+using app.variable;
+using app.module.mock;
 
 
 namespace PLang.Tests.App.Modules.mock;
@@ -12,7 +12,7 @@ public class MockTests
     private (global::app.actor.context.@this context, Variables memory, global::app.@this app) CreateContext()
     {
         var app = new global::app.@this("/app");
-        return (app.User.Context, app.User.Context.Variables, app);
+        return (app.User.Context, app.User.Context.Variable, app);
     }
 
     // --- mock.action: simple return ---
@@ -30,9 +30,9 @@ public class MockTests
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsNotNull();
-        await Assert.That(result.Value is global::app.mock.Mock.@this).IsTrue();
+        await Assert.That(result.Value is global::app.mock.@this).IsTrue();
 
-        var handle = (global::app.mock.Mock.@this)result.Value!;
+        var handle = (global::app.mock.@this)result.Value!;
         await Assert.That(handle.Pattern).IsEqualTo("file.read");
         await Assert.That(handle.CallCount).IsEqualTo(0);
         await Assert.That(handle.IsSpy).IsFalse();
@@ -51,7 +51,7 @@ public class MockTests
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
 
-        var handle = (global::app.mock.Mock.@this)result.Value!;
+        var handle = (global::app.mock.@this)result.Value!;
         await Assert.That(handle.IsSpy).IsTrue();
     }
 
@@ -83,7 +83,7 @@ public class MockTests
             Return = new global::app.data.@this("", "mocked")        };
 
         var result = await action.Run();
-        var handle = (global::app.mock.Mock.@this)result.Value!;
+        var handle = (global::app.mock.@this)result.Value!;
 
         await Assert.That(handle.EventBindingId).IsNotNull();
         await Assert.That(handle.EventBindingId.Length).IsGreaterThan(0);
@@ -95,7 +95,7 @@ public class MockTests
     public async Task Verify_CorrectCount_Passes()
     {
         var (context, _, _) = CreateContext();
-        var handle = new global::app.mock.Mock.@this
+        var handle = new global::app.mock.@this
         {
             Id = "test",
             Pattern = "file.read"
@@ -118,7 +118,7 @@ public class MockTests
     public async Task Verify_WrongCount_Fails()
     {
         var (context, _, _) = CreateContext();
-        var handle = new global::app.mock.Mock.@this
+        var handle = new global::app.mock.@this
         {
             Id = "test",
             Pattern = "file.read"
@@ -141,7 +141,7 @@ public class MockTests
     public async Task Verify_CustomMessage_IncludedInError()
     {
         var (context, _, _) = CreateContext();
-        var handle = new global::app.mock.Mock.@this
+        var handle = new global::app.mock.@this
         {
             Id = "test",
             Pattern = "file.read"
@@ -176,7 +176,7 @@ public class MockTests
             Pattern = "file.read",
             Return = new global::app.data.@this("", "mocked")        };
         var mockResult = await mockAction.Run();
-        var handle = (global::app.mock.Mock.@this)mockResult.Value!;
+        var handle = (global::app.mock.@this)mockResult.Value!;
 
         var countBefore = context.Events.Count;
 
@@ -224,12 +224,12 @@ public class MockTests
         await Assert.That(context.Events.Count).IsEqualTo(0);
     }
 
-    // --- global::app.mock.Mock.@this tracking ---
+    // --- global::app.mock.@this tracking ---
 
     [Test]
     public async Task MockHandle_RecordCall_TracksParameters()
     {
-        var handle = new global::app.mock.Mock.@this
+        var handle = new global::app.mock.@this
         {
             Id = "test",
             Pattern = "file.read"

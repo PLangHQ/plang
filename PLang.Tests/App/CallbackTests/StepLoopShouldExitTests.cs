@@ -2,8 +2,8 @@ using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using app.data;
-using app.errors;
-using app.modules.output;
+using app.error;
+using app.module.output;
 
 namespace PLang.Tests.App.CallbackTests;
 

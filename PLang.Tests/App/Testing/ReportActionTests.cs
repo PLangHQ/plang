@@ -1,5 +1,5 @@
 using System.Xml.Linq;
-using app.errors;
+using app.error;
 using app.tester;
 
 namespace PLang.Tests.App.Tester;
@@ -27,8 +27,8 @@ public class ReportActionTests
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = new global::app.@this(_tempDir);
         _captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new StreamChannel(
-            EngineChannels.Output, _captureStream,
+        _app.User.Channel.Register(new StreamChannel(
+            global::app.channel.list.@this.Output, _captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
     }
@@ -52,7 +52,7 @@ public class ReportActionTests
             Hash = "deadbeef",
             BuilderVersion = "v1"
         };
-        var run = new global::app.tester.Run(new global::app.tester.Test.@this { Goal = goal });
+        var run = new global::app.tester.Run(new global::app.tester.test.@this { Goal = goal });
         run.Complete(status, error);
         if (output != null) run.Output = output;
         return run;
@@ -60,7 +60,7 @@ public class ReportActionTests
 
     private async Task Report()
     {
-        var action = new global::app.modules.test.report { Context = _app.User.Context };
+        var action = new global::app.module.test.report { Context = _app.User.Context };
         await action.Run();
     }
 

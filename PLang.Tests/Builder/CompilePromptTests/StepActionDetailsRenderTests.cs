@@ -1,5 +1,5 @@
 using Fluid;
-using PrAction2 = global::app.goals.goal.steps.step.actions.action.@this;
+using PrAction2 = global::app.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.Builder.CompilePromptTests;
 
@@ -47,12 +47,12 @@ public class StepActionDetailsRenderTests
 
         var options = new TemplateOptions { MemberAccessStrategy = new UnsafeMemberAccessStrategy() };
         options.MemberAccessStrategy.IgnoreCasing = true;
-        var ctx = new TemplateContext(options);
-        ctx.SetValue("actions", actions);
-        ctx.SetValue("planStep", new { actions = plannerSet });
+        var context = new TemplateContext(options);
+        context.SetValue("actions", actions);
+        context.SetValue("planStep", new { actions = plannerSet });
 
         var writer = new StringWriter();
-        await fluidTemplate.RenderAsync(writer, Fluid.NullEncoder.Default, ctx);
+        await fluidTemplate.RenderAsync(writer, Fluid.NullEncoder.Default, context);
         return writer.ToString();
     }
 

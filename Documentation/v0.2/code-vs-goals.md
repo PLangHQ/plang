@@ -2,7 +2,7 @@
 
 > **Everything is goals, except where you need code.**
 
-PLang is a goal-first language. The expectation is that almost every piece of behaviour you write lives in a `.goal` file: natural-language steps, composed and orchestrated through other goals. The C# escape hatch — the `app.modules.code` registry and the `code/` folders inside each module — exists for the cases where goals can't reach.
+PLang is a goal-first language. The expectation is that almost every piece of behaviour you write lives in a `.goal` file: natural-language steps, composed and orchestrated through other goals. The C# escape hatch — the `app.module.code` registry and the `code/` folders inside each module — exists for the cases where goals can't reach.
 
 This page is about that boundary: when goals are the right tool, when to reach for code, and how the two surfaces meet.
 
@@ -23,9 +23,9 @@ There are four honest reasons to drop into C#:
 
 If your reason isn't one of those four, write a goal.
 
-## The `app.modules.code` registry
+## The `app.module.code` registry
 
-`app.modules.code` (`PLang/app/modules/code/this.cs`) is the runtime's named code-implementation registry — `ConcurrentDictionary<Type, ConcurrentDictionary<string, ICode>>`. Each module interface (`ISigning`, `IHttp`, `ILlm`, etc.) can have multiple named implementations registered against it. First registered for a type becomes the default.
+`app.module.code` (`PLang/app/module/code/this.cs`) is the runtime's named code-implementation registry — `ConcurrentDictionary<Type, ConcurrentDictionary<string, ICode>>`. Each module interface (`ISigning`, `IHttp`, `ILlm`, etc.) can have multiple named implementations registered against it. First registered for a type becomes the default.
 
 **Resolution at the call site:**
 
@@ -92,7 +92,7 @@ In return, the runtime gives you:
 
 - A registered place in the snapshot graph — you participate in `app.Snapshot()` and `Restore`.
 - Free swappability — your default can be replaced via `code.load` without anyone editing call sites.
-- Lifetime management — `IAsyncDisposable` / `IDisposable` are honoured by `app.modules.code.DisposeAsync()`.
+- Lifetime management — `IAsyncDisposable` / `IDisposable` are honoured by `app.module.code.DisposeAsync()`.
 
 ## Decision flow
 
@@ -115,6 +115,6 @@ If the goal-route ever feels "too verbose" for something that should be a one-li
 ## See also
 
 - [`docs/modules/code.md`](../../docs/modules/code.md) — the user-facing `code` module reference.
-- [`good_to_know.md`](good_to_know.md) — `app.modules.code — Pluggable Module Implementations` covers the registry mechanics in depth.
+- [`good_to_know.md`](good_to_know.md) — `app.module.code — Pluggable Module Implementations` covers the registry mechanics in depth.
 - [`architecture.md`](architecture.md) — `Property kinds (PLNG001 build-time gate)` covers the `[Code]` attribute contract.
 - `PLang/app/modules/code/this.cs` — the registry itself; `PLang/app/modules/code/ICode.cs` — the marker interface.
