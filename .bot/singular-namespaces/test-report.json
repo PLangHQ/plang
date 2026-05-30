@@ -1,60 +1,25 @@
 {
   "tester": "tester",
   "branch": "singular-namespaces",
-  "timestamp": "2026-05-30T11:35:00Z",
-  "tested_version": "v2",
+  "timestamp": "2026-05-30T12:10:00Z",
+  "tested_version": "v3",
   "test_run": {
-    "csharp": { "total": 3694, "passed": 3694, "failed": 0, "skipped": 0, "runs": 4, "note": "4 consecutive clean runs; F6 flake gone" },
-    "plang": { "total": 253, "passed": 253, "failed": 0, "skipped": 0 }
+    "csharp": { "total": 3696, "passed": 3696, "failed": 0, "skipped": 0, "note": "+2 new throw-coverage tests vs v2; both mutation-confirmed honest" },
+    "plang": { "total": 253, "passed": 253, "failed": 0, "skipped": 0, "note": "8 HTTP fails on first run were httpbin.org external transients (v3 changed zero production source); cleared on re-run" }
   },
   "coverage": {
-    "changed_files_covered": 10,
-    "changed_files_total": 11,
+    "changed_files_covered": 1,
+    "changed_files_total": 1,
     "uncovered_files": [],
-    "low_coverage_files": ["PLang/app/type/this.cs (line 62.3% / branch 33.3% — Promote throw branch unverified)"]
+    "improved": ["PLang/app/type/this.cs (line 62.3->78.3%, branch 33.3->57.1%; Promote throw branch now exercised AND mutation-verified)"]
   },
-  "findings": [
-    {
-      "id": 1,
-      "severity": "major",
-      "type": "false-green",
-      "test_file": "PLang.Tests/App/SingularNamespaces/NullabilityTests/NonNullInvariantTests.cs",
-      "code_file": "PLang/app/type/this.cs",
-      "issue": "The headline F1 change — Promote() throws InvalidOperationException on unstamped non-primitive schema-property reads (commit 3c1521c20) — has zero test coverage. The test named DataType_OnUnstampedData_ThrowsHard_NoSilentFallback asserts ClrType IsNull() instead: no throw, and ClrType never calls Promote() (the throw is on Fields/Values/Shape/Example/etc.). Test name advertises a contract the body does not test.",
-      "impact": "Deletion-confirmed: replacing the throw with `return this` keeps 3694/3694 green. A future refactor can silently restore the old silent-empty-fold footgun (which surfaces as wrong LLM prompts / schema decisions far from the bug) and no test catches it. Green test names imply the fail-loud contract is verified when it is not.",
-      "suggestion": "Add a test reading a fold property (e.g. .Fields) on an unstamped non-primitive type.@this and asserting Throws<InvalidOperationException>; rename the existing test to ClrType_OnUnstampedDomainType_ReturnsNull (what it actually pins) or merge it into the throw test."
-    },
-    {
-      "id": 2,
-      "severity": "minor",
-      "type": "false-green",
-      "test_file": "PLang.Tests/App/SingularNamespaces/NullabilityTests/NonNullInvariantTests.cs",
-      "code_file": "PLang/app/data/this.cs, PLang/app/module/variable/set.cs",
-      "issue": "GetPrimitiveOrMime_ExternalFallbackCallSites_AllRemoved does `if (!File.Exists(path)) continue;` — if the BaseDirectory->repo-root relative walk breaks, both source files are skipped and the test asserts nothing, passing vacuously.",
-      "impact": "The structural pin (no consumer-site `?? GetPrimitiveOrMime` chains) silently stops protecting if the runner layout changes. Resolves correctly today, so a real pin now, but fragile.",
-      "suggestion": "Assert File.Exists(path) (fail when the guard file can't be located) instead of `continue`."
-    },
-    {
-      "id": 3,
-      "severity": "minor",
-      "type": "weak-assertion",
-      "test_file": "Tests/SingularNamespaces/ChannelWriteThroughAccessor/Start.test.goal + Capture.goal",
-      "code_file": "PLang/app/channel/this.cs",
-      "issue": "Capture.goal sets %captured% to a hardcoded literal identical to the written value, not an echo of the channel payload. The test pins that the accessor Write path REACHES handler code (Capture must run, else %captured% null -> assert fails) but not that the written VALUE flows through. A corrupted/dropped channel value would still pass.",
-      "impact": "Value-integrity of the channel-accessor write path is unverified. Reachability regressions are caught; payload-corruption regressions are not.",
-      "suggestion": "Have Capture echo the channel payload variable into %captured% so a wrong/dropped value diverges from the expected string."
-    },
-    {
-      "id": 4,
-      "severity": "minor",
-      "type": "missing-coverage",
-      "test_file": "(process) .bot/singular-namespaces/coder/v2/",
-      "code_file": "",
-      "issue": "No baseline-tests.md recorded for coder v2 (v1 also lacked it). Required by the coder workflow to separate regression from pre-existing failures.",
-      "impact": "Regression vs pre-existing separation relies on a fully-green suite rather than a recorded baseline; works this time, fragile in general.",
-      "suggestion": "Coder records baseline-tests.md before starting each version."
-    }
+  "findings": [],
+  "resolved_from_v2": [
+    { "id": 1, "severity": "major", "status": "resolved", "how": "Renamed misnamed test to ClrType_OnUnstampedDomainType_ReturnsNull; added TypeFoldRead_OnUnstampedDomainEntity_ThrowsHard (Mutation A: removing the Promote throw fails exactly this test) + TypeFoldRead_OnPrimitiveEntity_DoesNotThrow_EvenWithoutContext (Mutation B: deleting _foldLoaded=true fails exactly this test). Both deletion-confirmed honest." },
+    { "id": 2, "severity": "minor", "status": "resolved", "how": "GetPrimitiveOrMime_..._AllRemoved now asserts File.Exists(path).IsTrue() instead of `continue` — no longer passes vacuously if the relative-walk breaks." },
+    { "id": 3, "severity": "minor", "status": "resolved", "how": "Capture.goal echoes %!data% (channel payload); .pr rebuilt to variable.set(Value=%!data%); now pins value-flow not just reachability." },
+    { "id": 4, "severity": "minor", "status": "resolved", "how": "coder/v3/baseline-tests.md present (3694/3694 + 253/253 pre-edit)." }
   ],
-  "verdict": "needs-fixes",
-  "summary": "Coder v2 honestly fixes 6 of 7 v1 findings — F2 golden is a real SHA byte-diff, F3 paths are now distinguishable (path vs int), F4 reads the type entity via !Type, F5 asserts the typed ChannelNotFound key on a literal-channel index-miss, F6 flake gone (4 clean runs), builder .pr files all match step text. C# 3694/3694, PLang 253/253. But the ONE new behavior added this version — the type.Promote() fail-loud throw, the headline of plan F1 — is deletion-confirmed UNCOVERED, and the test named ...ThrowsHard_NoSilentFallback asserts a silent null return on a different property (ClrType, which never calls Promote). Per strict-red, a confirmed false-green is FAIL. The fix is one test plus a rename."
+  "verdict": "approved",
+  "summary": "Coder v3 closes all 4 of my v2 findings. The two new throw-coverage tests are mutation-confirmed honest — each fails when the exact production line it guards is deleted and passes otherwise (Mutation A: Promote throw; Mutation B: _foldLoaded primitive carve-out). The N1 grep-pin no longer passes vacuously, N2 now pins channel value-flow via %!data% echo, and baseline-tests.md is recorded. C# 3696/3696, PLang 253/253 (the 8 HTTP fails on first run were httpbin.org external transients — v3 touched zero production source — cleared on clean re-run). type/this.cs coverage rose 62.3->78.3% line / 33.3->57.1% branch, and the throw branch is verified not merely executed. PASS."
 }

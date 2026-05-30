@@ -1,38 +1,39 @@
 # Tester summary — singular-namespaces
 
-**Latest version:** v2 (reviewing coder v2) — **VERDICT: FAIL** (1 MAJOR false-green, surgical fix)
+**Latest version:** v3 (reviewing coder v3) — **VERDICT: PASS**
 
 ## What this is
 
-A 4-stage refactor: namespace singularization, non-null invariants (Stage 2), accessor
-reshape, and the type-entity move (Stage 4, Entry-fold). My v1 returned FAIL with 7 findings.
-Coder v2 addresses all 7 and additionally completes `Data.Context` non-null + a `type.@this.Null`
-sentinel + a `type.Promote()` fail-loud throw.
+A 4-stage refactor (namespace singularization, non-null invariants, accessor reshape,
+type-entity move). Review chain: tester v1 FAIL (7) → coder v2 → tester v2 FAIL (1 MAJOR +
+3 minor) → coder v3 → **tester v3 PASS**.
 
-## What was done (v2 review)
+## What was done (v3 review)
 
-Clean rebuild (stale-binary trap avoided), then:
-- **C# 3694/3694 across 4 consecutive runs** — F6 flake (`[NotInParallel]` fix) confirmed gone.
-- **PLang 253/253** — all branch tests `[Pass]`; the `builder.validate` deserialize line is the
-  same benign mock-fixture diagnostic, not a failure.
-- Read every changed test + `.pr`. 6 of 7 fixes are **honest**, not papered over (F2 golden is a
-  real SHA byte-diff, F3 distinguishes registry vs static via `path`, F4 reads `%name!Type%`,
-  F5 asserts the typed `ChannelNotFound` key on a literal-channel index-miss).
-- **One MAJOR false-green found** via deletion test: the headline F1 `Promote()` throw is
-  uncovered — removing it keeps 3694/3694 green — and the test named `...ThrowsHard_NoSilentFallback`
-  asserts `ClrType IsNull()` (no throw, different property). Plus 3 minor notes.
+Coder v3 changed only tests + `.bot` + rebuilt `.pr` (zero production source), addressing my v2
+findings. I clean-rebuilt and verified each fix is *honest*, not just green:
 
-Output: `v2/result.md`, `v2/coverage.json`, `test-report.json` (branch root), `v2/verdict.json`.
+- **F1-RESIDUAL (was MAJOR) — closed, mutation-confirmed.** The `type.Promote()` fail-loud throw
+  now has real coverage; the misnamed test was renamed to match its body.
+  - Mutation A: remove the Promote throw → **exactly** `TypeFoldRead_OnUnstampedDomainEntity_ThrowsHard`
+    fails. Honest.
+  - Mutation B: delete `_foldLoaded = true` → **exactly** `TypeFoldRead_OnPrimitiveEntity_DoesNotThrow_EvenWithoutContext`
+    fails. Honest.
+- **N1 — closed.** Source-grep pin now `Assert.That(File.Exists).IsTrue()`, not a vacuous `continue`.
+- **N2 — closed.** `Capture.goal` echoes `%!data%`; `.pr` rebuilt; pins channel value-flow.
+- **N4 — closed.** `baseline-tests.md` present.
 
-## The finding that flips the verdict (deletion test)
+C# **3696/3696**, PLang **253/253**. (First PLang run had 8 `/Modules/Http/*` fails — external
+httpbin.org transients, v3 touched no production source — cleared on re-run.) `type/this.cs`
+coverage 62.3→78.3% line, 33.3→57.1% branch, throw branch now verified.
+
+## The verification that earns the PASS (mutation, not trust)
 
 ```
-// type/this.cs:168 — temporarily replaced the throw with `return this;`
-if (Context == null) return this;   // -> C# suite STILL 3694/3694
+// type/this.cs Promote(): replace throw with `return this;` -> 3695/3696
+//   ONLY TypeFoldRead_OnUnstampedDomainEntity_ThrowsHard fails
+// 2-arg ctor: delete `_foldLoaded = true;`        -> 3694/3696
+//   TypeFoldRead_OnPrimitiveEntity_DoesNotThrow... fails
 ```
-The fail-loud contract the coder added this version has zero coverage; reverted immediately,
-`git status` clean. The test that looks like it covers it tests `ClrType` (which never calls
-`Promote()`) and asserts a null return, not a throw.
-
-**Fix for coder:** add `Assert.That(() => _ = unstampedDomainType.Fields).Throws<InvalidOperationException>()`
-and rename the misnamed test to `ClrType_OnUnstampedDomainType_ReturnsNull`.
+Both reverted, `git status` clean — no source committed. A test that fails when its guarded
+behavior is deleted is honest green. v3 meets that bar on every finding.

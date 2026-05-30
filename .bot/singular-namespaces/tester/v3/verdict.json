@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "All 4 v2 findings fixed and mutation-confirmed honest; C# 3696/3696, PLang 253/253 (HTTP fails were httpbin.org transients)." }

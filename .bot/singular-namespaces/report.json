@@ -581,6 +581,56 @@
         "health": "green-but-one-dishonest",
         "notes": "Suite green (C# 3694/3694 x4, PLang 253/253). Single surgical fix: cover the Promote() throw and rename DataType_OnUnstampedData_ThrowsHard_NoSilentFallback."
       }
+    },
+    {
+      "id": "7c1e4d92-3b0a-4f6e-9c21-8a5d6e0f1b22",
+      "bot": "tester",
+      "timestamp_start": "2026-05-30T12:05:00Z",
+      "timestamp_end": "2026-05-30T12:12:00Z",
+      "intent": "Verify coder v3 fixes to tester v2's 1 MAJOR + 3 minor findings are honest (mutation-confirmed), not just green.",
+      "before": {
+        "assumptions": "Coder v3 added Promote-throw coverage + primitive carve-out test + file-exists guard + Capture %!data% echo. Claims C# 3696, PLang 253.",
+        "risk": "The new throw tests are themselves the highest false-green risk \u2014 must mutation-confirm they catch the deletion, not pass vacuously."
+      },
+      "plan": ".bot/singular-namespaces/tester/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/SingularNamespaces/NullabilityTests/NonNullInvariantTests.cs",
+            "Tests/SingularNamespaces/ChannelWriteThroughAccessor/Capture.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild. C# 3696/3696, PLang 253/253 (8 HTTP fails first run = httpbin.org transients, v3 zero production source, cleared on re-run). .pr sweep clean."
+        },
+        {
+          "paths": [
+            "PLang/app/type/this.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Mutation A: remove Promote throw -> only TypeFoldRead_OnUnstampedDomainEntity_ThrowsHard fails. Mutation B: delete _foldLoaded=true -> only TypeFoldRead_OnPrimitiveEntity_DoesNotThrow fails. Both new throw tests deletion-confirmed honest. Reverted, git clean."
+        },
+        {
+          "paths": [
+            ".bot/singular-namespaces/tester/v3/result.md",
+            ".bot/singular-namespaces/tester/v3/coverage.json",
+            ".bot/singular-namespaces/test-report.json",
+            ".bot/singular-namespaces/tester/v3/verdict.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "PASS verdict. All 4 v2 findings resolved and mutation-confirmed. type/this.cs coverage 62.3->78.3% line."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "green-and-honest",
+        "notes": "All v2 findings closed with deletion-confirmed tests. C# 3696/3696, PLang 253/253. Ready for security review."
+      }
     }
   ]
 }

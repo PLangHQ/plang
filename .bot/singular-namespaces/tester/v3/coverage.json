@@ -1,0 +1,9 @@
+{
+  "approach": "TUnit built-in cobertura over full suite (3696/3696). Focus: did the v2 type/this.cs Promote-throw gap close? Highest-coverage class entry per file.",
+  "command": "dotnet run --project PLang.Tests --coverage --coverage-output /tmp/cov3/coverage.cobertura.xml --coverage-output-format cobertura",
+  "key_surface": {
+    "app/type/this.cs": { "line_pct": 78.3, "branch_pct": 57.1, "v2_was": "62.3 / 33.3",
+      "note": "Promote() Context==null throw branch now exercised AND mutation-verified (Mutation A). Primitive carve-out (_foldLoaded) mutation-verified (Mutation B). v2 coverage-dazzle gap closed." }
+  },
+  "verification": "Coverage alone is not the proof — both new throw tests were mutation-confirmed: each fails when the exact line it guards is deleted, and passes otherwise."
+}
