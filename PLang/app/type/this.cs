@@ -60,13 +60,33 @@ public sealed class @this
     [JsonIgnore]
     internal actor.context.@this? Context { get; set; }
 
-    public @this(string name) { Name = name; }
+    public @this(string name)
+    {
+        Name = Canonicalise(name);
+        StampPrimitive(name);
+    }
 
     public @this(string name, string? kind, bool strict = false)
     {
-        Name = name;
+        Name = Canonicalise(name);
         Kind = kind;
         Strict = strict;
+        StampPrimitive(name);
+    }
+
+    private void StampPrimitive(string rawName)
+    {
+        // When the canonical name folds away the original CLR mate hint
+        // (e.g. `int`→`number`, `text` whose CLR is typeof(string)), stamp
+        // ClrType from the alias the caller passed in so the entity still
+        // answers the .ClrType question without a registry round-trip.
+        // Primitives have no catalog fold data, so mark fold as loaded too —
+        // keeps Promote()'s Context guard from firing on fold-prop reads.
+        if (app.type.primitive.@this.Aliases.TryGetValue(rawName.ToLowerInvariant(), out var clr))
+        {
+            _clrType = clr;
+            _foldLoaded = true;
+        }
     }
 
     /// <summary>
@@ -105,13 +125,17 @@ public sealed class @this
     [JsonIgnore]
     public bool IsNull => Name == "null";
 
-    public static @this String => new("string");
-    public static @this Int => new("int");
-    public static @this Long => new("long");
-    public static @this Double => new("double");
-    public static @this Bool => new("bool");
-    public static @this DateTime => new("datetime");
-    public static @this Object => new("object");
+    // Static helpers — names match the new canonical primitives. The numeric
+    // helpers carry their kind so callers don't have to re-stamp it: Int/Long/
+    // Decimal/Double all surface as `number` with a precision kind.
+    public static @this String => new("text", typeof(string));
+    public static @this Int => new("number", typeof(int)) { Kind = "int" };
+    public static @this Long => new("number", typeof(long)) { Kind = "long" };
+    public static @this Decimal => new("number", typeof(decimal)) { Kind = "decimal" };
+    public static @this Double => new("number", typeof(double)) { Kind = "double" };
+    public static @this Bool => new("bool", typeof(bool));
+    public static @this DateTime => new("datetime", typeof(System.DateTimeOffset));
+    public static @this Object => new("object", typeof(object));
 
     public static @this FromMime(string mimeType) => new(mimeType);
     public static @this FromName(string typeName) => new(typeName);
@@ -153,14 +177,16 @@ public sealed class @this
 
     private static string Canonicalise(string name)
     {
-        // Lowercase pin: PLang type names are case-insensitive — the factory
-        // lowercases first so unknown names still round-trip predictably. The
-        // alias→canonical fold (e.g. `string`→`text`) is deliberately NOT done
-        // here — that's a later-stage change, and folding eagerly would
-        // collapse `text`→`string` today because `typeof(string)`'s canonical
-        // is still `"string"`. The factory just lowercases; consumers continue
-        // to use the alias table for name→CLR lookups separately.
-        return name.ToLowerInvariant();
+        // PLang type names are case-insensitive. Fold through the alias table
+        // to land on the canonical name: `string`→`text`, `integer`→`number`,
+        // etc. Unknown names lowercase through unchanged.
+        var lower = name.ToLowerInvariant();
+        if (app.type.primitive.@this.Aliases.TryGetValue(lower, out var clr))
+        {
+            if (app.type.primitive.@this.Canonical.TryGetValue(clr, out var canonical))
+                return canonical;
+        }
+        return lower;
     }
 
     public override string ToString() => Name;

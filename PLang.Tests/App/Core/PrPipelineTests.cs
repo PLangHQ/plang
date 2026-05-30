@@ -41,7 +41,7 @@ public class PrPipelineTests
 
         // Defaults resolved — step 0 has defaults: [{ type: "string" }]
         var greetingData = context.Variable.Get("greeting");
-        await Assert.That(greetingData?.Type?.Name).IsEqualTo("string");
+        await Assert.That(greetingData?.Type?.Name).IsEqualTo("text");
     }
 
     [Test]

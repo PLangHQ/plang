@@ -165,7 +165,7 @@ public class Phase0Proof
 
         // OUTPUT: Type auto-inferred as "int"
         await Assert.That(result.Type).IsNotNull();
-        await Assert.That(result.Type!.Name).IsEqualTo("int");
+        await Assert.That(result.Type!.Name).IsEqualTo("number");
     }
 
     // ================================================================

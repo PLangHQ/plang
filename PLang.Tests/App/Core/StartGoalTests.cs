@@ -230,7 +230,7 @@ public class StartGoalTests
 
         // Type should be "string" — resolved from defaults, not null
         var data = context.Variable.Get("greeting");
-        await Assert.That(data?.Type?.Name).IsEqualTo("string");
+        await Assert.That(data?.Type?.Name).IsEqualTo("text");
     }
 
     [Test]
@@ -259,7 +259,7 @@ public class StartGoalTests
         await Assert.That(result.Success).IsTrue();
         // "long" from parameters, not "string" from defaults
         var data = context.Variable.Get("count");
-        await Assert.That(data?.Type?.Name).IsEqualTo("long");
+        await Assert.That(data?.Type?.Name).IsEqualTo("number");
     }
 
     [Test]

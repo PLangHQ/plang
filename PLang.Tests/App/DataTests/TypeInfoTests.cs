@@ -10,7 +10,7 @@ public class TypeTests
     {
         var type = new Type("string");
 
-        await Assert.That(type.Name).IsEqualTo("string");
+        await Assert.That(type.Name).IsEqualTo("text");
         await Assert.That(type.ClrType).IsEqualTo(typeof(string));
     }
 
@@ -19,7 +19,7 @@ public class TypeTests
     {
         var type = new Type("int");
 
-        await Assert.That(type.Name).IsEqualTo("int");
+        await Assert.That(type.Name).IsEqualTo("number");
         await Assert.That(type.ClrType).IsEqualTo(typeof(int));
     }
 
@@ -29,7 +29,7 @@ public class TypeTests
         var type = Type.FromName("string");
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(string));
-        await Assert.That(type.Name).IsEqualTo("string");
+        await Assert.That(type.Name).IsEqualTo("text");
     }
 
     [Test]
@@ -116,7 +116,7 @@ public class TypeTests
         var type = Type.String;
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(string));
-        await Assert.That(type.Name).IsEqualTo("string");
+        await Assert.That(type.Name).IsEqualTo("text");
     }
 
     [Test]
@@ -125,7 +125,7 @@ public class TypeTests
         var type = Type.Int;
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(int));
-        await Assert.That(type.Name).IsEqualTo("int");
+        await Assert.That(type.Name).IsEqualTo("number");
     }
 
     [Test]
@@ -134,7 +134,7 @@ public class TypeTests
         var type = Type.Long;
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(long));
-        await Assert.That(type.Name).IsEqualTo("long");
+        await Assert.That(type.Name).IsEqualTo("number");
     }
 
     [Test]
@@ -143,7 +143,7 @@ public class TypeTests
         var type = Type.Double;
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(double));
-        await Assert.That(type.Name).IsEqualTo("double");
+        await Assert.That(type.Name).IsEqualTo("number");
     }
 
     [Test]

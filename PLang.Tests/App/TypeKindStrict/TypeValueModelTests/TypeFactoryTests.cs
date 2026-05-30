@@ -22,14 +22,8 @@ public class TypeFactoryTests
 
     [Test] public async Task Factory_String_CanonicalisesNameToText()
     {
-        // Stage 2 lands string→text canonicalisation; Stage 1 wires the
-        // canonicalisation hook through the primitive alias table — currently
-        // "string" stays "string" (alias table identity), so until Stage 2
-        // flips primitive.Canonical[typeof(string)] from "string" to "text",
-        // the factory hands back the same name it received.
         var t = TypeEntity.Create("string");
-        // Stage 2 will change this to "text"; Stage 1 pins the identity path.
-        await Assert.That(t.Name).IsEqualTo("string");
+        await Assert.That(t.Name).IsEqualTo("text");
     }
 
     [Test] public async Task Factory_SingleStringWithSlash_SplitsToNameAndKind()

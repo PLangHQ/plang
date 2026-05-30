@@ -230,10 +230,26 @@ public partial class @this
             // already skips emission for Null so the on-wire shape is
             // unchanged.  Consumers no longer carry a `Type?` null guard.
             if (_value == null) return type.Null;
-            var typeName = _context?.App.Type.Name(_value.GetType())
-                           ?? AppTypes.GetPrimitiveName(_value.GetType())
-                           ?? _value.GetType().Name.ToLowerInvariant();
-            var derived = new type(typeName);
+            var clr = _value.GetType();
+            var typeName = _context?.App.Type.Name(clr)
+                           ?? AppTypes.GetPrimitiveName(clr)
+                           ?? clr.Name.ToLowerInvariant();
+            // Stamp ClrType directly — the value's own CLR type is the truth.
+            // The name may collapse multiple CLR types (numerics → "number"),
+            // so the entity can't re-derive the precise CLR mate from the name
+            // alone. Build hook stamps Kind too: for "number", carry the
+            // precision (int/long/decimal/…) so consumers see the same shape
+            // as a build-stamped variable.
+            var derived = new type(typeName, clr);
+            if (typeName == "number")
+            {
+                derived.Kind = clr == typeof(int) ? "int"
+                    : clr == typeof(long) ? "long"
+                    : clr == typeof(decimal) ? "decimal"
+                    : clr == typeof(double) ? "double"
+                    : clr == typeof(float) ? "double"  // float widens to double slot
+                    : null;
+            }
             derived.Context = _context;
             _type = derived;
             return _type;

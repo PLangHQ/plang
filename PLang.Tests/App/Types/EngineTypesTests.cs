@@ -143,13 +143,13 @@ public class EngineTypesTests
     [Test]
     public async Task Name_String_ReturnsString()
     {
-        await Assert.That(_types.Name(typeof(string))).IsEqualTo("string");
+        await Assert.That(_types.Name(typeof(string))).IsEqualTo("text");
     }
 
     [Test]
     public async Task Name_Int_ReturnsInt()
     {
-        await Assert.That(_types.Name(typeof(int))).IsEqualTo("int");
+        await Assert.That(_types.Name(typeof(int))).IsEqualTo("number");
     }
 
     [Test]
@@ -161,31 +161,31 @@ public class EngineTypesTests
     [Test]
     public async Task Name_NullableInt_ReturnsIntQuestionMark()
     {
-        await Assert.That(_types.Name(typeof(int?))).IsEqualTo("int?");
+        await Assert.That(_types.Name(typeof(int?))).IsEqualTo("number?");
     }
 
     [Test]
     public async Task Name_ListOfString_ReturnsListString()
     {
-        await Assert.That(_types.Name(typeof(List<string>))).IsEqualTo("list<string>");
+        await Assert.That(_types.Name(typeof(List<string>))).IsEqualTo("list<text>");
     }
 
     [Test]
     public async Task Name_IListOfInt_ReturnsListInt()
     {
-        await Assert.That(_types.Name(typeof(IList<int>))).IsEqualTo("list<int>");
+        await Assert.That(_types.Name(typeof(IList<int>))).IsEqualTo("list<number>");
     }
 
     [Test]
     public async Task Name_DictionaryStringInt_ReturnsDictStringInt()
     {
-        await Assert.That(_types.Name(typeof(Dictionary<string, int>))).IsEqualTo("dict<string,int>");
+        await Assert.That(_types.Name(typeof(Dictionary<string, int>))).IsEqualTo("dict<text,number>");
     }
 
     [Test]
     public async Task Name_IntArray_ReturnsListInt()
     {
-        await Assert.That(_types.Name(typeof(int[]))).IsEqualTo("list<int>");
+        await Assert.That(_types.Name(typeof(int[]))).IsEqualTo("list<number>");
     }
 
     [Test]
@@ -561,7 +561,7 @@ public class EngineTypesTests
     {
         var names = _types.BuilderNames();
 
-        await Assert.That(names).Contains("string");
+        await Assert.That(names).Contains("text");
         await Assert.That(names).Contains("int");
         await Assert.That(names).Contains("bool");
         await Assert.That(names).Contains("datetime");

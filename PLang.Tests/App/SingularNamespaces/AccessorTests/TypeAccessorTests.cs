@@ -17,7 +17,7 @@ public class TypeAccessorTests
     {
         await using var app = new PLangEngine("/test");
         var t = app.Type["int"];
-        await Assert.That(t.Name).IsEqualTo("int");
+        await Assert.That(t.Name).IsEqualTo("number");
         await Assert.That(t.ClrType).IsEqualTo(typeof(int));
     }
 
@@ -25,7 +25,7 @@ public class TypeAccessorTests
     {
         await using var app = new PLangEngine("/test");
         var entity = app.Type.of<string>();
-        await Assert.That(entity.Name).IsEqualTo("string");
+        await Assert.That(entity.Name).IsEqualTo("text");
     }
 
     [Test] public async Task AppType_IndexBySystemType_ReturnsEntity_WithMatchingPlangName()

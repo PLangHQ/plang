@@ -466,7 +466,7 @@ public class DataTests
 
         // Type is lazily derived on first access
         await Assert.That(ov.Type).IsNotNull();
-        await Assert.That(ov.Type!.Name).IsEqualTo("int");
+        await Assert.That(ov.Type!.Name).IsEqualTo("number");
         await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(int));
     }
 
@@ -481,7 +481,7 @@ public class DataTests
 
         // Type lazily derived through context's Engine.Types
         await Assert.That(ov.Type).IsNotNull();
-        await Assert.That(ov.Type!.Name).IsEqualTo("string");
+        await Assert.That(ov.Type!.Name).IsEqualTo("text");
         await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(string));
     }
 
@@ -490,11 +490,11 @@ public class DataTests
     {
         var ov = new Data("test", "hello");
 
-        await Assert.That(ov.Type!.Name).IsEqualTo("string");
+        await Assert.That(ov.Type!.Name).IsEqualTo("text");
 
         ov.Value = 42;
 
-        await Assert.That(ov.Type!.Name).IsEqualTo("int");
+        await Assert.That(ov.Type!.Name).IsEqualTo("number");
         await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(int));
     }
 

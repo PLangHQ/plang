@@ -268,7 +268,7 @@ public class TypeMappingTests
     [Test]
     public async Task GetType_GenericDictStringInt_ReturnsDictionary()
     {
-        var type = TypeMapping.GetType("dict<string,int>");
+        var type = TypeMapping.GetType("dict<text,number>");
 
         await Assert.That(type).IsEqualTo(typeof(Dictionary<string, int>));
     }
@@ -456,7 +456,7 @@ public class TypeMappingTests
     {
         var name = TypeMapping.GetTypeName(typeof(Dictionary<string, int>));
 
-        await Assert.That(name).IsEqualTo("dict<string,int>");
+        await Assert.That(name).IsEqualTo("dict<text,number>");
     }
 
     [Test]

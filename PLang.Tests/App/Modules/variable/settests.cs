@@ -58,7 +58,7 @@ public class SetTests
         var result = await action.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.Variable.Get("count")!.Type!.Name).IsEqualTo("int");
+        await Assert.That(context.Variable.Get("count")!.Type!.Name).IsEqualTo("number");
     }
 
     [Test]

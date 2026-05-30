@@ -74,12 +74,18 @@ public static class @this
     public static IReadOnlyDictionary<System.Type, string> Canonical { get; } =
         new Dictionary<System.Type, string>
         {
-            [typeof(string)] = "string",
-            [typeof(int)] = "int",
-            [typeof(long)] = "long",
-            [typeof(float)] = "float",
-            [typeof(double)] = "double",
-            [typeof(decimal)] = "decimal",
+            // `text` is the canonical PLang name for textual content; `string`
+            // stays as an accepted alias (Aliases still has both entries → typeof(string)).
+            [typeof(string)] = "text",
+            // Numeric primitives surface as `number` with kind carried separately
+            // — `int/long/decimal/double/float` are kinds of `number`, not
+            // top-level names. The kind comes from the `number.Build` hook (for
+            // literals) or the CLR numeric type (for declared returns).
+            [typeof(int)] = "number",
+            [typeof(long)] = "number",
+            [typeof(float)] = "number",
+            [typeof(double)] = "number",
+            [typeof(decimal)] = "number",
             [typeof(bool)] = "bool",
             [typeof(System.DateTime)] = "datetime",   // legacy; new code targets DateTimeOffset
             [typeof(System.DateTimeOffset)] = "datetime",
@@ -93,13 +99,32 @@ public static class @this
         };
 
     /// <summary>
-    /// Names exposed to the LLM builder catalog — every alias-less canonical
-    /// name (no <c>?</c> suffixes). Domain types are surfaced separately via
-    /// schemas, not listed here.
+    /// Names exposed to the LLM builder catalog — `text` is canonical for
+    /// strings, `number` for numerics (kind carries the precision). Excludes
+    /// `?` aliases. Domain types are surfaced separately via schemas.
     /// </summary>
-    public static IReadOnlyList<string> BuilderNames { get; } = Aliases
-        .Where(kvp => !kvp.Key.EndsWith("?"))
-        .GroupBy(kvp => kvp.Value)
-        .Select(g => g.First().Key)
-        .ToList();
+    public static IReadOnlyList<string> BuilderNames { get; } = BuildBuilderNames();
+
+    private static IReadOnlyList<string> BuildBuilderNames()
+    {
+        // Pull canonical names from Canonical, plus aliased names that have
+        // no canonical CLR entry (`list`, `dict`, `json`, …). Drop the kinds
+        // that surface only as `number` subtypes — they aren't names anymore.
+        var names = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+        var numericKinds = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
+            { "int", "integer", "long", "float", "double", "decimal" };
+        foreach (var name in Canonical.Values) names.Add(name);
+        foreach (var kvp in Aliases)
+        {
+            if (kvp.Key.EndsWith("?")) continue;
+            if (numericKinds.Contains(kvp.Key)) continue;
+            if (kvp.Key.Equals("string", System.StringComparison.OrdinalIgnoreCase)) continue;
+            if (Canonical.TryGetValue(kvp.Value, out var canonical)
+                && names.Contains(canonical)) continue;
+            names.Add(kvp.Key);
+        }
+        // Ordered: canonicals first (by Canonical iteration order via HashSet),
+        // then alias-only entries. List materialisation pins a stable order.
+        return names.ToList();
+    }
 }
