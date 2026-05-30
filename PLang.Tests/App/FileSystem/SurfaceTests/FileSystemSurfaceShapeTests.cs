@@ -22,7 +22,7 @@ public class FileSystemSurfaceShapeTests
     {
         // The path verb surface lives on the abstract base — ReadText/WriteText/
         // Delete/MoveTo/CopyTo. Handlers are thin shells over it.
-        var pathType = typeof(global::app.types.path.@this);
+        var pathType = typeof(global::app.type.path.@this);
         await Assert.That(pathType.GetMethod("ReadText")).IsNotNull();
         await Assert.That(pathType.GetMethod("WriteText", new[] { typeof(string) })).IsNotNull();
         await Assert.That(pathType.GetMethod("Delete", System.Type.EmptyTypes)).IsNotNull();
@@ -32,13 +32,13 @@ public class FileSystemSurfaceShapeTests
 
     [Test] public async Task IPLangFileSystem_AbsentFromProductionAssembly()
     {
-        await Assert.That(AppAssembly.GetType("app.types.path.IPLangFileSystem")).IsNull();
+        await Assert.That(AppAssembly.GetType("app.type.path.IPLangFileSystem")).IsNull();
     }
 
     [Test] public async Task FileAccessControl_TypeAbsentFromProductionAssembly()
     {
         // v2 uses Actor.Permission — the FileAccessControl root-jail record is gone.
-        await Assert.That(AppAssembly.GetType("app.types.path.Default.FileAccessControl")).IsNull();
+        await Assert.That(AppAssembly.GetType("app.type.path.Default.FileAccessControl")).IsNull();
     }
 
     [Test] public async Task PLangFileSystem_WrapperLayer_AbsentFromProductionAssembly()
@@ -46,10 +46,10 @@ public class FileSystemSurfaceShapeTests
         // The System.IO.Abstractions wrapper layer is deleted.
         foreach (var name in new[]
         {
-            "app.types.path.Default.PLangFileSystem",
-            "app.types.path.Default.PLangFile",
-            "app.types.path.Default.PLangDirectoryWrapper",
-            "app.types.path.Default.PLangPath",
+            "app.type.path.Default.PLangFileSystem",
+            "app.type.path.Default.PLangFile",
+            "app.type.path.Default.PLangDirectoryWrapper",
+            "app.type.path.Default.PLangPath",
         })
         {
             await Assert.That(AppAssembly.GetType(name)).IsNull();

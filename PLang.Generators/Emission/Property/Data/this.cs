@@ -24,7 +24,8 @@ public sealed record @this(
         // Backing field — Data<T>? regardless of property nullability so init can set it
         sb.AppendLine($"    private {TypeName}? {Backing};");
         sb.AppendLine($"    private bool {SetFlag};");
-        sb.AppendLine($"    public partial {TypeName} {Name}");
+        var nullable = IsNullable ? "?" : "";
+        sb.AppendLine($"    public partial {TypeName}{nullable} {Name}");
         sb.AppendLine("    {");
 
         // After resolution, capture FromError-Data (cycle / depth-trip / type-conversion failure)
@@ -74,7 +75,7 @@ public sealed record @this(
         sb.AppendLine($"        {{");
         sb.AppendLine($"            var __pr = __action?.Parameters?.FirstOrDefault(p => string.Equals(p.Name, \"{Name}\", System.StringComparison.OrdinalIgnoreCase));");
         sb.AppendLine($"            __pr ??= __action?.Defaults?.FirstOrDefault(p => string.Equals(p.Name, \"{Name}\", System.StringComparison.OrdinalIgnoreCase));");
-        sb.AppendLine($"            __list.Add(new global::app.errors.ParamSnapshot {{");
+        sb.AppendLine($"            __list.Add(new global::app.error.ParamSnapshot {{");
         sb.AppendLine($"                Name = \"{Name}\",");
         sb.AppendLine($"                DeclaredType = \"{declaredType}\",");
         sb.AppendLine($"                PrValue = {prValueExpr},");

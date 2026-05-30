@@ -1,8 +1,8 @@
 using app.actor.context;
 using app;
-using app.variables;
-using app.modules;
-using app.modules.module;
+using app.variable;
+using app.module;
+using app.module.module;
 
 namespace PLang.Tests.App.Modules.module;
 
@@ -29,7 +29,7 @@ public class ModuleAddTests
         var add = new Add
         {
             Context = context,
-            Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve("nonexistent_mylib.dll", context)),
+            Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve("nonexistent_mylib.dll", context)),
             Namespace = null
         };
 
@@ -48,11 +48,11 @@ public class ModuleAddTests
             var add = new Add
             {
                 Context = context,
-                Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve(assemblyPath, context)),
-                Namespace = "app.modules"
+                Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
+                Namespace = "app.module"
             };
 
-            var countBefore = app.Modules.Count;
+            var countBefore = app.Module.Count;
             var result = await add.Run();
 
             await Assert.That(result.Success).IsTrue();
@@ -70,15 +70,15 @@ public class ModuleAddTests
             var add = new Add
             {
                 Context = context,
-                Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve(assemblyPath, context)),
-                Namespace = "app.modules"
+                Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
+                Namespace = "app.module"
             };
 
             var result = await add.Run();
             await Assert.That(result.Success).IsTrue();
 
             // After adding, actions should be discoverable via the flat registry
-            await Assert.That(app.Modules.Contains("variable", "set")).IsTrue();
+            await Assert.That(app.Module.Contains("variable", "set")).IsTrue();
         }
     }
 
@@ -91,7 +91,7 @@ public class ModuleAddTests
             var add = new Add
             {
                 Context = context,
-                Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve(assemblyPath, context)),
+                Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
                 Namespace = "Some.Completely.Wrong.Namespace"
             };
 
@@ -112,8 +112,8 @@ public class ModuleAddTests
             var add = new Add
             {
                 Context = context,
-                Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve(assemblyPath, context)),
-                Namespace = "app.modules"
+                Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
+                Namespace = "app.module"
             };
 
             var result = await add.Run();
@@ -132,7 +132,7 @@ public class ModuleAddTests
             var add = new Add
             {
                 Context = context,
-                Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve(assemblyPath, context)),
+                Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
                 Namespace = null
             };
 
@@ -140,7 +140,7 @@ public class ModuleAddTests
             await Assert.That(result.Success).IsTrue();
 
             // With null namespace, Discover defaults to App.modules
-            await Assert.That(app.Modules.Contains("variable", "set")).IsTrue();
+            await Assert.That(app.Module.Contains("variable", "set")).IsTrue();
         }
     }
 
@@ -153,15 +153,15 @@ public class ModuleAddTests
             var add = new Add
             {
                 Context = context,
-                Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve(assemblyPath, context)),
-                Namespace = "app.modules"
+                Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
+                Namespace = "app.module"
             };
 
             var result = await add.Run();
             await Assert.That(result.Success).IsTrue();
 
             // Actions registered via Discover should be resolvable
-            var (action, error) = app.Modules.GetCodeGenerated(new PrAction { Module = "variable", ActionName = "set" });
+            var (action, error) = app.Module.GetCodeGenerated(new PrAction { Module = "variable", ActionName = "set" });
             await Assert.That(action).IsNotNull();
             await Assert.That(error).IsNull();
         }

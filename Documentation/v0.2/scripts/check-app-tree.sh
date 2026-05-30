@@ -2,7 +2,8 @@
 # Drift checker for Documentation/v0.2/app-tree.md.
 #
 # Compares the doc against the source under PLang/app/ and reports:
-#   - module folders that exist in source but not in the doc (and vice versa)
+#   - action-module folders under PLang/app/module/ that exist in source but
+#     not in the doc (and vice versa)
 #   - public properties on app.@this not mentioned in the doc
 #   - public properties on actor.@this not mentioned in the doc
 #   - data/this.*.cs partials not mentioned in the doc
@@ -35,12 +36,13 @@ in_doc() { grep -qE "(^|[^A-Za-z0-9_])$1([^A-Za-z0-9_]|$)" "$doc"; }
 # owned by Modules — documented separately at the foot of the modules
 # section, not as a bullet in the action list).
 module_skip_regex='^(Schema)$'
-mapfile -t module_dirs < <(find "$app/modules" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
+mapfile -t module_dirs < <(find "$app/module" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
 for m in "${module_dirs[@]}"; do
   [[ "$m" =~ $module_skip_regex ]] && continue
   # Lines in the modules block look like:  ├── name   — ...   or   └── name   — ...
   if ! grep -qE "^[├└]── $m( |$)" "$doc"; then
-    note "module '$m' exists under PLang/app/modules/ but no '── $m' line in app-tree.md"
+    note "module '$m' exists under PLang/app/module/ but no '── $m' line in app-tree.md"
+    :
   fi
 done
 
@@ -49,7 +51,7 @@ while IFS= read -r line; do
   name="$(sed -E 's/^[├└]── ([A-Za-z_]+).*/\1/' <<<"$line")"
   [[ -z "$name" ]] && continue
   # Only check names that look like module candidates (skip top-level tree lines).
-  if [[ ! -d "$app/modules/$name" ]] && [[ -d "$app/modules" ]]; then
+  if [[ ! -d "$app/module/$name" ]] && [[ -d "$app/module" ]]; then
     # Only flag if it appears inside the modules block. Crude heuristic: line
     # is between the "app.Modules" header and the next fenced close.
     :
@@ -62,8 +64,8 @@ mapfile -t doc_modules < <(
     | sed -nE 's/^[├└]── ([A-Za-z_]+).*/\1/p'
 )
 for n in "${doc_modules[@]}"; do
-  if [[ ! -d "$app/modules/$n" ]]; then
-    note "app-tree.md lists module '$n' but no folder PLang/app/modules/$n/"
+  if [[ ! -d "$app/module/$n" ]]; then
+    note "app-tree.md lists module '$n' but no folder PLang/app/module/$n/"
   fi
 done
 

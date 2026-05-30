@@ -6,14 +6,14 @@ namespace PLang.Tests.App.DataTests;
 // Per-type reconstruction hook. Some types can't be populated by setting public properties:
 // path is the canonical case — abstract, no parameterless ctor, needs Context to wire FileSystem.
 // Two discovery conventions: explicit `static T FromNormalized(Data, Context)` on T, and a
-// built-in path hook that calls `path.Resolve(relative, ctx)`.
+// built-in path hook that calls `path.Resolve(relative, context)`.
 
 public class AsReconstructionHookTests
 {
     private sealed class HasHook
     {
         public string? Tag { get; private set; }
-        public static HasHook FromNormalized(Data tree, global::app.actor.context.@this? ctx)
+        public static HasHook FromNormalized(Data tree, global::app.actor.context.@this? context)
             => new() { Tag = "via-hook" };
     }
 
@@ -32,7 +32,7 @@ public class AsReconstructionHookTests
         var carrier = new Data("", children);
         var ex = await Assert.ThrowsAsync<NormalizeException>(async () =>
         {
-            carrier.Reconstruct<global::app.types.path.@this>();
+            carrier.Reconstruct<global::app.type.path.@this>();
             await Task.CompletedTask;
         });
         await Assert.That(ex!.Key).IsEqualTo("NormalizeContextRequired");
@@ -58,7 +58,7 @@ public class AsReconstructionHookTests
         var carrier = new Data("", children);
         var ex = await Assert.ThrowsAsync<NormalizeException>(async () =>
         {
-            carrier.Reconstruct<global::app.types.path.file.@this>();
+            carrier.Reconstruct<global::app.type.path.file.@this>();
             await Task.CompletedTask;
         });
         await Assert.That(ex!.Key).IsEqualTo("NormalizeContextRequired");
@@ -70,7 +70,7 @@ public class AsReconstructionHookTests
         var carrier = new Data("", children);
         var ex = await Assert.ThrowsAsync<NormalizeException>(async () =>
         {
-            carrier.Reconstruct<global::app.types.path.http.@this>();
+            carrier.Reconstruct<global::app.type.path.http.@this>();
             await Task.CompletedTask;
         });
         await Assert.That(ex!.Key).IsEqualTo("NormalizeContextRequired");
@@ -82,7 +82,7 @@ public class AsReconstructionHookTests
         var carrier = new Data("", children);
         var ex = await Assert.ThrowsAsync<NormalizeException>(async () =>
         {
-            carrier.Reconstruct<global::app.types.path.@this>(context: null);
+            carrier.Reconstruct<global::app.type.path.@this>(context: null);
             await Task.CompletedTask;
         });
         await Assert.That(ex!.Key).IsEqualTo("NormalizeContextRequired");
@@ -102,7 +102,7 @@ public class AsReconstructionHookTests
         // Stage 2 deferred — path.JsonConverter still owns Read. Once
         // Wire routes through Normalize + Reconstruct, this
         // converter goes away or delegates. Today the converter file exists.
-        var converterType = System.Type.GetType("app.types.path.JsonConverter, PLang", throwOnError: false);
+        var converterType = System.Type.GetType("app.type.path.JsonConverter, PLang", throwOnError: false);
         // Either: converter is gone (Read-deletion path), or it exists and the
         // path hook owns wire reconstruction (deferred-wiring path).
         await Assert.That(converterType == null || Data.HookCacheSize >= 0).IsTrue();

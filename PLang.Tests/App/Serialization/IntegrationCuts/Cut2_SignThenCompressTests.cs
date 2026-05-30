@@ -10,7 +10,7 @@ public class Cut2_SignThenCompressTests
         "plang-cut2-" + Guid.NewGuid().ToString("N")[..8]));
 
     private static global::app.data.@this MakeCompressible(global::app.@this app, string payload)
-        => new global::app.data.@this("user", payload, global::app.data.type.FromMime("text/plain"))
+        => new global::app.data.@this("user", payload, global::app.type.@this.FromMime("text/plain"))
         { Context = app.User.Context };
 
     [Test] public async Task Cut2_OuterWireJson_HasArchivedTypeBytesValueAndSignature()
@@ -18,8 +18,8 @@ public class Cut2_SignThenCompressTests
         await using var app = NewApp();
         var d1 = MakeCompressible(app, "Ingi");
         var d2 = d1.Compress();
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+        var plang = (global::app.channel.serializer.plang.@this)
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
         var wire = plang.Serialize(d2).Value!;
 
         using var doc = JsonDocument.Parse(wire);
@@ -61,8 +61,8 @@ public class Cut2_SignThenCompressTests
         await using var app = NewApp();
         var d1 = MakeCompressible(app, "Ingi");
         var d2 = d1.Compress();
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+        var plang = (global::app.channel.serializer.plang.@this)
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
         var wire = plang.Serialize(d2).Value!;
 
         // Flip a byte in the base64-encoded value — read back, verify must fail.
@@ -77,8 +77,8 @@ public class Cut2_SignThenCompressTests
         var restored = (global::app.data.@this)back.Value!;
         restored.Context = app.User.Context;
 
-        var verify = await app.RunAction<global::app.modules.signing.verify>(
-            new global::app.modules.signing.verify
+        var verify = await app.RunAction<global::app.module.signing.verify>(
+            new global::app.module.signing.verify
             {
                 Data = restored,
                 SkipFreshnessCheck = new global::app.data.@this<bool>("", true)

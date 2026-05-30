@@ -13,10 +13,10 @@ namespace PLang.Tests.App.Types;
 
 public class CleanupBindingsTests
 {
-    private EngineTypes _types = null!;
+    private global::app.type.list.@this _types = null!;
 
     [Before(Test)]
-    public void Setup() => _types = new EngineTypes();
+    public void Setup() => _types = new global::app.type.list.@this();
 
     [Test] public async Task DateTime_PlangName_ResolvesToDateTimeOffset_NotSystemDateTime()
     {
@@ -53,7 +53,7 @@ public class CleanupBindingsTests
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-dt-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var dt = global::app.types.datetime.@this.Resolve("2024-03-15T10:30:00+02:00", app.User.Context);
+        var dt = global::app.type.datetime.@this.Resolve("2024-03-15T10:30:00+02:00", app.User.Context);
         await Assert.That(dt).IsNotNull();
         await Assert.That(dt!.Value.Year).IsEqualTo(2024);
         await Assert.That(dt.Value.Offset).IsEqualTo(System.TimeSpan.FromHours(2));
@@ -63,7 +63,7 @@ public class CleanupBindingsTests
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-d1-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var d = global::app.types.duration.@this.Resolve("1.02:03:04", app.User.Context);
+        var d = global::app.type.duration.@this.Resolve("1.02:03:04", app.User.Context);
         await Assert.That(d).IsNotNull();
         await Assert.That(d!.Value.Days).IsEqualTo(1);
         await Assert.That(d.Value.Hours).IsEqualTo(2);
@@ -73,7 +73,7 @@ public class CleanupBindingsTests
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-d2-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var d = global::app.types.duration.@this.Resolve("PT5M", app.User.Context);
+        var d = global::app.type.duration.@this.Resolve("PT5M", app.User.Context);
         await Assert.That(d).IsNotNull();
         await Assert.That(d!.Value).IsEqualTo(System.TimeSpan.FromMinutes(5));
     }
@@ -98,14 +98,14 @@ public class CleanupBindingsTests
     {
         // datetime/date/time/duration don't have a `kind`, so none should
         // declare a static Build(object?) hook.
-        var kinds = new global::app.types.kinds.@this();
+        var kinds = new global::app.type.kind.@this();
         await Assert.That(kinds.Of(typeof(System.DateTimeOffset), System.DateTimeOffset.UtcNow)).IsNull();
         await Assert.That(kinds.Of(typeof(System.DateOnly), System.DateOnly.MinValue)).IsNull();
         await Assert.That(kinds.Of(typeof(System.TimeOnly), System.TimeOnly.MinValue)).IsNull();
         await Assert.That(kinds.Of(typeof(System.TimeSpan), System.TimeSpan.Zero)).IsNull();
         // The wrapper @this types also don't declare Build.
-        await Assert.That(kinds.Of(typeof(global::app.types.datetime.@this), null)).IsNull();
-        await Assert.That(kinds.Of(typeof(global::app.types.duration.@this), null)).IsNull();
+        await Assert.That(kinds.Of(typeof(global::app.type.datetime.@this), null)).IsNull();
+        await Assert.That(kinds.Of(typeof(global::app.type.duration.@this), null)).IsNull();
     }
 
     [Test] public async Task CatalogLeadsWithDuration_TimespanNotPrimary()

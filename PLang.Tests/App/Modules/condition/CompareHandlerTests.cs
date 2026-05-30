@@ -1,8 +1,8 @@
 using app;
 using app.actor.context;
-using app.variables;
-using app.modules.condition;
-using app.types.path;
+using app.variable;
+using app.module.condition;
+using app.type.path;
 
 namespace PLang.Tests.App.Modules.condition;
 

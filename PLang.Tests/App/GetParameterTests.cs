@@ -98,7 +98,7 @@ public class GetParameterTests
     [Test]
     public async Task GetParameter_NoResolutionSideEffect_ValueRemainsRaw()
     {
-        _app.User.Context.Variables.Set("name", "world");
+        _app.User.Context.Variable.Set("name", "world");
         var action = Action(("greeting", "Hello %name%"));
 
         var found = action.GetParameter("greeting", _app.User.Context);

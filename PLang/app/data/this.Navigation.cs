@@ -1,5 +1,5 @@
 using System.Text.RegularExpressions;
-using app.errors;
+using app.error;
 
 namespace app.data;
 
@@ -77,7 +77,7 @@ public partial class @this
         if (!child.IsInitialized) return child;
 
         // Inject context on IContext values during traversal
-        if (child.Value is app.modules.IContext contextual && _context != null)
+        if (child.Value is app.module.IContext contextual)
             contextual.Context = _context;
 
         if (string.IsNullOrEmpty(remaining))
@@ -268,7 +268,7 @@ public partial class @this
         // resolve when Value has no matching child.
         if (val != null)
         {
-            var navigator = _context?.App?.Navigators?.Get(val.GetType());
+            var navigator = _context?.App?.Navigator?.Get(val.GetType());
             if (navigator != null)
             {
                 var navResult = navigator.Navigate(this, key);
@@ -276,7 +276,7 @@ public partial class @this
             }
 
             // Fallback when no app context (e.g., during deserialization)
-            var fallbackResult = global::app.variables.navigators.ValueNavigators.Navigate(this, key);
+            var fallbackResult = global::app.variable.navigator.ValueNavigators.Navigate(this, key);
             if (fallbackResult.IsInitialized) return fallbackResult;
         }
 

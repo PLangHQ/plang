@@ -13,8 +13,8 @@ public class WireConverterSigningTests
     [Test] public async Task WireConverter_OnUnsignedData_FiresEnsureSignedAndEmitsSignature()
     {
         await using var app = NewSignedApp();
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+        var plang = (global::app.channel.serializer.plang.@this)
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var data = new global::app.data.@this("greeting", "hello") { Context = app.User.Context };
         await Assert.That(data.Signature).IsNull();
@@ -28,8 +28,8 @@ public class WireConverterSigningTests
     [Test] public async Task WireConverter_OnSignedData_LeavesSignatureUnchanged()
     {
         await using var app = NewSignedApp();
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+        var plang = (global::app.channel.serializer.plang.@this)
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var data = new global::app.data.@this("x", "y") { Context = app.User.Context };
         data.EnsureSigned();
@@ -55,8 +55,8 @@ public class WireConverterSigningTests
     [Test] public async Task WireConverter_OnListDataInsideValue_SignsEachElement()
     {
         await using var app = NewSignedApp();
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+        var plang = (global::app.channel.serializer.plang.@this)
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var inner1 = new global::app.data.@this("a", "1") { Context = app.User.Context };
         var inner2 = new global::app.data.@this("b", "2") { Context = app.User.Context };
@@ -92,8 +92,8 @@ public class WireConverterSigningTests
         var data = new global::app.data.@this("x", "before") { Context = app.User.Context };
         // Mutate BEFORE serialize — the converter signs the mutated value.
         data.Value = "after";
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+        var plang = (global::app.channel.serializer.plang.@this)
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
         var json = plang.Serialize(data).Value!;
         await Assert.That(json).Contains("after");
         await Assert.That(json).DoesNotContain("before");
@@ -103,8 +103,8 @@ public class WireConverterSigningTests
     [Test] public async Task ApplicationPlang_Read_PopulatesSignature_WithoutAutoVerify()
     {
         await using var app = NewSignedApp();
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+        var plang = (global::app.channel.serializer.plang.@this)
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var data = new global::app.data.@this("greeting", "hello") { Context = app.User.Context };
         var json = plang.Serialize(data).Value!;
@@ -120,8 +120,8 @@ public class WireConverterSigningTests
     [Test] public async Task WireConverter_OnByteArrayValue_EmitsBytesWithoutNestedDataWrap()
     {
         await using var app = NewSignedApp();
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+        var plang = (global::app.channel.serializer.plang.@this)
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var bytes = new byte[] { 1, 2, 3, 4 };
         var data = new global::app.data.@this("blob", bytes) { Context = app.User.Context };
@@ -138,8 +138,8 @@ public class WireConverterSigningTests
         // walk into Properties even today (they're [JsonIgnore]). Stage 4 turns Properties
         // into Dictionary<string, object?>; the don't-walk-Properties rule is preserved.
         await using var app = NewSignedApp();
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+        var plang = (global::app.channel.serializer.plang.@this)
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var data = new global::app.data.@this("x", "y") { Context = app.User.Context };
         var json = plang.Serialize(data).Value!;

@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
-using app.channels.serializers;
+using app.channel.serializer;
 
 namespace PLang.Tests.App.Serialization;
 
@@ -27,7 +27,7 @@ public class IWriterContractTests
     [Test] public async Task IWriter_Interface_Exists_InSerializersNamespace()
     {
         var t = typeof(IWriter);
-        await Assert.That(t.Namespace).IsEqualTo("app.channels.serializers");
+        await Assert.That(t.Namespace).IsEqualTo("app.channel.serializer");
         await Assert.That(t.IsInterface).IsTrue();
     }
 
@@ -49,37 +49,37 @@ public class IWriterContractTests
     [Test] public async Task JsonWriter_Null_EmitsNullToken()
     {
         var (jw, ms) = MakeWriter();
-        new global::app.channels.serializers.json.Writer(jw).Null();
+        new global::app.channel.serializer.json.Writer(jw).Null();
         await Assert.That(Flush(jw, ms)).IsEqualTo("null");
     }
 
     [Test] public async Task JsonWriter_Bool_EmitsTrueOrFalse()
     {
         var (jw, ms) = MakeWriter();
-        new global::app.channels.serializers.json.Writer(jw).Bool(true);
+        new global::app.channel.serializer.json.Writer(jw).Bool(true);
         await Assert.That(Flush(jw, ms)).IsEqualTo("true");
         var (jw2, ms2) = MakeWriter();
-        new global::app.channels.serializers.json.Writer(jw2).Bool(false);
+        new global::app.channel.serializer.json.Writer(jw2).Bool(false);
         await Assert.That(Flush(jw2, ms2)).IsEqualTo("false");
     }
 
     [Test] public async Task JsonWriter_Int_Long_Double_EmitNumericTokens()
     {
         var (jw, ms) = MakeWriter();
-        new global::app.channels.serializers.json.Writer(jw).Int(42);
+        new global::app.channel.serializer.json.Writer(jw).Int(42);
         await Assert.That(Flush(jw, ms)).IsEqualTo("42");
         var (jw2, ms2) = MakeWriter();
-        new global::app.channels.serializers.json.Writer(jw2).Long(100L);
+        new global::app.channel.serializer.json.Writer(jw2).Long(100L);
         await Assert.That(Flush(jw2, ms2)).IsEqualTo("100");
         var (jw3, ms3) = MakeWriter();
-        new global::app.channels.serializers.json.Writer(jw3).Double(1.5);
+        new global::app.channel.serializer.json.Writer(jw3).Double(1.5);
         await Assert.That(Flush(jw3, ms3)).IsEqualTo("1.5");
     }
 
     [Test] public async Task JsonWriter_String_EmitsQuotedString_WithEscapes()
     {
         var (jw, ms) = MakeWriter();
-        new global::app.channels.serializers.json.Writer(jw).String("hello \"world\"");
+        new global::app.channel.serializer.json.Writer(jw).String("hello \"world\"");
         var s = Flush(jw, ms);
         await Assert.That(s.StartsWith("\"") && s.EndsWith("\"")).IsTrue();
         await Assert.That(s).Contains("hello");
@@ -89,7 +89,7 @@ public class IWriterContractTests
     {
         var (jw, ms) = MakeWriter();
         var dt = new System.DateTime(2026, 1, 2, 3, 4, 5, System.DateTimeKind.Utc);
-        new global::app.channels.serializers.json.Writer(jw).DateTime(dt);
+        new global::app.channel.serializer.json.Writer(jw).DateTime(dt);
         var s = Flush(jw, ms);
         await Assert.That(s).Contains("2026");
     }
@@ -97,14 +97,14 @@ public class IWriterContractTests
     [Test] public async Task JsonWriter_Decimal_EmitsNumericToken()
     {
         var (jw, ms) = MakeWriter();
-        new global::app.channels.serializers.json.Writer(jw).Decimal(3.14m);
+        new global::app.channel.serializer.json.Writer(jw).Decimal(3.14m);
         await Assert.That(Flush(jw, ms)).IsEqualTo("3.14");
     }
 
     [Test] public async Task JsonWriter_Bytes_EmitsBase64String()
     {
         var (jw, ms) = MakeWriter();
-        new global::app.channels.serializers.json.Writer(jw).Bytes(new byte[] { 1, 2, 3 });
+        new global::app.channel.serializer.json.Writer(jw).Bytes(new byte[] { 1, 2, 3 });
         var s = Flush(jw, ms);
         await Assert.That(s).IsEqualTo("\"AQID\"");
     }
@@ -112,7 +112,7 @@ public class IWriterContractTests
     [Test] public async Task JsonWriter_BeginArray_EndArray_BracketArrayCorrectly()
     {
         var (jw, ms) = MakeWriter();
-        var w = new global::app.channels.serializers.json.Writer(jw);
+        var w = new global::app.channel.serializer.json.Writer(jw);
         w.BeginArray(3);
         w.Int(1); w.Int(2); w.Int(3);
         w.EndArray();
@@ -122,7 +122,7 @@ public class IWriterContractTests
     [Test] public async Task JsonWriter_BeginRecord_EndRecord_EmitDataRecordShape()
     {
         var (jw, ms) = MakeWriter();
-        var w = new global::app.channels.serializers.json.Writer(jw);
+        var w = new global::app.channel.serializer.json.Writer(jw);
         var record = new app.data.@this("hello", "world");
         w.BeginRecord(record);
         w.String("world");
@@ -135,7 +135,7 @@ public class IWriterContractTests
     [Test] public async Task JsonWriter_NestedArrayInsideRecord_RoundTrips()
     {
         var (jw, ms) = MakeWriter();
-        var w = new global::app.channels.serializers.json.Writer(jw);
+        var w = new global::app.channel.serializer.json.Writer(jw);
         var record = new app.data.@this("nums", new List<int> { 1, 2 });
         w.BeginRecord(record);
         w.BeginArray(2);

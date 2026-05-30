@@ -1,5 +1,5 @@
-using app.errors;
-using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
+using app.error;
+using ActionEntity = app.goal.steps.step.actions.action.@this;
 
 namespace app.callstack;
 
@@ -24,7 +24,7 @@ public sealed partial class @this
 
     /// <summary>
     /// Per-property gates for richer Call data capture. See <see cref="Flags"/>.
-    /// Settable so <see cref="app.modules.debug.@this.Apply"/> can update it from <c>--debug</c>
+    /// Settable so <see cref="app.module.debug.@this.Apply"/> can update it from <c>--debug</c>
     /// after construction; otherwise stays at <see cref="Flags.Default"/>.
     ///
     /// Concurrency note: <see cref="Flags"/> is a multi-field <c>record struct</c>;
@@ -130,7 +130,7 @@ public sealed partial class @this
     /// goal Name alone can collide across an app's goal tree. Used by Push to enforce
     /// indirect goal-cycle detection.
     /// </summary>
-    public bool ContainsGoal(global::app.types.path.@this prPath)
+    public bool ContainsGoal(global::app.type.path.@this prPath)
     {
         var node = _current.Value;
         while (node != null)

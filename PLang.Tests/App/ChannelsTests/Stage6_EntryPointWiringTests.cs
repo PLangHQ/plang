@@ -19,8 +19,8 @@ public class Stage6_EntryPointWiringTests
         // App ctor offers an opt-out for entry points that own the wiring.
         // With autoWireConsoleChannels:false, the per-actor Channels are empty.
         await using var app = new global::app.@this("/tmp/s6a", autoWireConsoleChannels: false);
-        await Assert.That(app.User.Channels.ChannelNames.Any()).IsFalse();
-        await Assert.That(app.System.Channels.ChannelNames.Any()).IsFalse();
+        await Assert.That(app.User.Channel.ChannelNames.Any()).IsFalse();
+        await Assert.That(app.System.Channel.ChannelNames.Any()).IsFalse();
     }
 
     [Test]
@@ -35,20 +35,20 @@ public class Stage6_EntryPointWiringTests
     public async Task AppThis_SerializersExists_PerActor()
     {
         await using var app = new global::app.@this("/tmp/s6c");
-        await Assert.That(app.User.Channels.Serializers).IsNotNull();
-        await Assert.That(app.System.Channels.Serializers).IsNotNull();
+        await Assert.That(app.User.Channel.Serializers).IsNotNull();
+        await Assert.That(app.System.Channel.Serializers).IsNotNull();
     }
 
     [Test]
     public async Task ChannelsVerify_FailsFast_WhenOutputMissing()
     {
         await using var app = new global::app.@this("/tmp/s6d", autoWireConsoleChannels: false);
-        app.User.Channels.Register(new StreamChannel("error", new MemoryStream(),
+        app.User.Channel.Register(new StreamChannel("error", new MemoryStream(),
             ChannelDirection.Output, ownsStream: true));
-        app.User.Channels.Register(new StreamChannel("input", new MemoryStream(),
+        app.User.Channel.Register(new StreamChannel("input", new MemoryStream(),
             ChannelDirection.Input, ownsStream: true));
 
-        var result = app.User.Channels.Verify();
+        var result = app.User.Channel.Verify();
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("MissingRequiredChannelAtBoot");
     }
@@ -57,12 +57,12 @@ public class Stage6_EntryPointWiringTests
     public async Task ChannelsVerify_FailsFast_WhenErrorMissing()
     {
         await using var app = new global::app.@this("/tmp/s6e", autoWireConsoleChannels: false);
-        app.User.Channels.Register(new StreamChannel("output", new MemoryStream(),
+        app.User.Channel.Register(new StreamChannel("output", new MemoryStream(),
             ChannelDirection.Output, ownsStream: true));
-        app.User.Channels.Register(new StreamChannel("input", new MemoryStream(),
+        app.User.Channel.Register(new StreamChannel("input", new MemoryStream(),
             ChannelDirection.Input, ownsStream: true));
 
-        var result = app.User.Channels.Verify();
+        var result = app.User.Channel.Verify();
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("MissingRequiredChannelAtBoot");
     }
@@ -71,12 +71,12 @@ public class Stage6_EntryPointWiringTests
     public async Task ChannelsVerify_FailsFast_WhenInputMissing()
     {
         await using var app = new global::app.@this("/tmp/s6f", autoWireConsoleChannels: false);
-        app.User.Channels.Register(new StreamChannel("output", new MemoryStream(),
+        app.User.Channel.Register(new StreamChannel("output", new MemoryStream(),
             ChannelDirection.Output, ownsStream: true));
-        app.User.Channels.Register(new StreamChannel("error", new MemoryStream(),
+        app.User.Channel.Register(new StreamChannel("error", new MemoryStream(),
             ChannelDirection.Output, ownsStream: true));
 
-        var result = app.User.Channels.Verify();
+        var result = app.User.Channel.Verify();
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("MissingRequiredChannelAtBoot");
     }
@@ -87,7 +87,7 @@ public class Stage6_EntryPointWiringTests
         await using var app = new global::app.@this("/tmp/s6g");
         global::app.@this.WireDefaultConsoleChannels(app.User);
 
-        var result = app.User.Channels.Verify();
+        var result = app.User.Channel.Verify();
         await Assert.That(result.Success).IsTrue();
     }
 
@@ -96,16 +96,16 @@ public class Stage6_EntryPointWiringTests
     {
         await using var app = new global::app.@this("/tmp/s6j");
         var errorCapture = new MemoryStream();
-        app.User.Channels.Register(new StreamChannel("error", errorCapture,
+        app.User.Channel.Register(new StreamChannel("error", errorCapture,
             ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
 
         // Unknown channel — Resolve returns null (no exception), source-gen
         // surfaces ChannelNotFound Data error from the IChannel slot.
-        await Assert.That(app.User.Channels.Resolve("dbg")).IsNull();
+        await Assert.That(app.User.Channel.Resolve("dbg")).IsNull();
 
         // Error channel is registered and resolvable.
-        var errCh = app.User.Channels.Resolve("error");
+        var errCh = app.User.Channel.Resolve("error");
         await Assert.That(errCh).IsNotNull();
         await Assert.That(errCh!.Name).IsEqualTo("error");
     }

@@ -1,4 +1,4 @@
-using HttpPath = global::app.types.path.http.@this;
+using HttpPath = global::app.type.path.http.@this;
 using AppEngine = global::app.@this;
 using Ctx = global::app.actor.context.@this;
 using PLang.Tests.App.Types.PathTests.Contract;
@@ -17,34 +17,34 @@ namespace PLang.Tests.App.Types.PathTests.Http;
 /// </summary>
 public class HttpPathConsentFidelityTests
 {
-    private sealed class CapturingChannel : global::app.channels.channel.@this
+    private sealed class CapturingChannel : global::app.channel.@this
     {
         public string LastQuestion = "";
         public string Answer = "n";
         public CapturingChannel()
         {
             Name = "input";
-            Direction = global::app.channels.channel.ChannelDirection.Bidirectional;
+            Direction = global::app.channel.ChannelDirection.Bidirectional;
         }
         public override Task<global::app.data.@this> Write(global::app.data.@this d, CancellationToken ct = default)
             => Task.FromResult(global::app.data.@this.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default)
             => Task.FromResult(global::app.data.@this.Ok((object?)null));
-        public override Task<global::app.data.@this> Ask(global::app.modules.output.ask action, CancellationToken ct = default)
+        public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
         {
             LastQuestion = action.Question.Value ?? "";
             return Task.FromResult(global::app.data.@this.Ok(Answer));
         }
     }
 
-    private static (AppEngine app, Ctx ctx, CapturingChannel ch) MakeApp()
+    private static (AppEngine app, Ctx context, CapturingChannel ch) MakeApp()
     {
         var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-http-consent-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(dir);
         var app = new AppEngine(dir);
         var ch = new CapturingChannel();
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
         return (app, app.User.Context, ch);
     }
 
@@ -53,29 +53,29 @@ public class HttpPathConsentFidelityTests
     [Test]
     public async Task IdnHost_HomographHost_RendersAsPunycodeInPromptAndAbsolute()
     {
-        var (_, ctx, ch) = MakeApp();
+        var (_, context, ch) = MakeApp();
         // Cyrillic 'а' (U+0430) + Latin "pple.com" — looks like apple to a human,
         // but IdnHost is xn--pple-43d.com.
         var url = "https://аpple.com/login";
 
         // Read so Authorize fires and renders the prompt.
-        _ = await new HttpPath(url, ctx).ReadText();
+        _ = await new HttpPath(url, context).ReadText();
 
         await Assert.That(ch.LastQuestion).Contains("xn--pple-43d.com");
         await Assert.That(ch.LastQuestion).DoesNotContain("аpple.com");
 
         // Absolute is what gets persisted as the grant key. Same canonical form.
-        var path = new HttpPath(url, ctx);
+        var path = new HttpPath(url, context);
         await Assert.That(path.Absolute).Contains("xn--pple-43d.com");
     }
 
     [Test]
     public async Task IdnHost_AsciiHost_RendersUnchanged()
     {
-        var (_, ctx, ch) = MakeApp();
+        var (_, context, ch) = MakeApp();
         var url = "https://apple.com/login";
 
-        _ = await new HttpPath(url, ctx).ReadText();
+        _ = await new HttpPath(url, context).ReadText();
 
         await Assert.That(ch.LastQuestion).Contains("apple.com");
         await Assert.That(ch.LastQuestion).DoesNotContain("xn--");
@@ -86,9 +86,9 @@ public class HttpPathConsentFidelityTests
     [Test]
     public async Task UserInfo_StrippedAtConstruction_AbsoluteOmitsCredentials()
     {
-        var (_, ctx, _) = MakeApp();
+        var (_, context, _) = MakeApp();
         var url = "https://attacker:pwd@victim.example/admin";
-        var path = new HttpPath(url, ctx);
+        var path = new HttpPath(url, context);
 
         await Assert.That(path.Absolute).DoesNotContain("attacker");
         await Assert.That(path.Absolute).DoesNotContain("pwd");
@@ -99,10 +99,10 @@ public class HttpPathConsentFidelityTests
     [Test]
     public async Task UserInfo_StrippedAtConstruction_UriOnWireOmitsCredentials()
     {
-        var (_, ctx, _) = MakeApp();
+        var (_, context, _) = MakeApp();
         // Uri.ToString should also have no userinfo since we rebuilt _uri.
         var url = "https://u:p@victim.example/path";
-        var path = new HttpPath(url, ctx);
+        var path = new HttpPath(url, context);
 
         await Assert.That(path.Uri.UserInfo).IsEqualTo("");
         await Assert.That(path.Uri.ToString()).DoesNotContain("@victim.example");
@@ -111,10 +111,10 @@ public class HttpPathConsentFidelityTests
     [Test]
     public async Task UserInfo_PromptShowsCleanUrl_AndGrantKeyIsClean()
     {
-        var (_, ctx, ch) = MakeApp();
+        var (_, context, ch) = MakeApp();
         var url = "https://attacker:pwd@victim.example/admin";
 
-        _ = await new HttpPath(url, ctx).ReadText();
+        _ = await new HttpPath(url, context).ReadText();
 
         await Assert.That(ch.LastQuestion).DoesNotContain("attacker");
         await Assert.That(ch.LastQuestion).DoesNotContain("pwd");

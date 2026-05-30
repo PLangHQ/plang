@@ -31,7 +31,7 @@ public class TransportRenameTests
     {
         // Read the type's XML doc from the source file — Roslyn doesn't bind <summary>
         // text at runtime, so the cheapest test is a substring check on the source.
-        var path = System.IO.Path.Combine(RepoRoot(), "PLang", "app", "modules", "signing", "Signature.cs");
+        var path = System.IO.Path.Combine(RepoRoot(), "PLang", "app", "module", "signing", "Signature.cs");
         var content = await System.IO.File.ReadAllTextAsync(path);
         // Locate the class-level summary block (the first <summary> in the file).
         var summaryStart = content.IndexOf("/// <summary>", StringComparison.Ordinal);

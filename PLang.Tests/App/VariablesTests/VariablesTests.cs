@@ -1,5 +1,5 @@
-using app.variables;
-using Type = global::app.data.type;
+using app.variable;
+using Type = global::app.type.@this;
 
 namespace PLang.Tests.App.VariablesTests;
 
@@ -761,9 +761,9 @@ public class VariablesTests
         var context = new global::app.actor.context.@this(engine);
 
         // Variables set through global::app.actor.context.@this's Variables get context stamped
-        context.Variables.Set("name", "John");
+        context.Variable.Set("name", "John");
 
-        await Assert.That(context.Variables.Get("name")!.Context).IsEqualTo(context);
+        await Assert.That(context.Variable.Get("name")!.Context).IsEqualTo(context);
     }
 
     [Test]
@@ -773,7 +773,7 @@ public class VariablesTests
         var context = new global::app.actor.context.@this(engine);
 
         var data = new Data("test", "hello");
-        context.Variables.Set(data);
+        context.Variable.Set(data);
 
         await Assert.That(data.Context).IsEqualTo(context);
     }
@@ -801,9 +801,9 @@ public class VariablesTests
         await using var engine = new global::app.@this("/test");
         var context = new global::app.actor.context.@this(engine);
 
-        context.Variables.Set("name", "John");
+        context.Variable.Set("name", "John");
 
-        var clone = context.Variables.Clone();
+        var clone = context.Variable.Clone();
 
         // Clone preserves the context so Type.Kind/Compressible/ClrType still resolve
         await Assert.That(clone.Context).IsEqualTo(context);
@@ -814,12 +814,12 @@ public class VariablesTests
     {
         await using var engine = new global::app.@this("/test");
         var parentContext = new global::app.actor.context.@this(engine);
-        parentContext.Variables.Set("name", "John");
+        parentContext.Variable.Set("name", "John");
 
         var childContext = parentContext.CreateChild();
 
         // Child context stamps its own context on the cloned data
-        await Assert.That(childContext.Variables.Get("name")!.Context).IsEqualTo(childContext);
+        await Assert.That(childContext.Variable.Get("name")!.Context).IsEqualTo(childContext);
     }
 }
 
@@ -890,7 +890,7 @@ public class VariablesAccessorTests
     [Test]
     public async Task Current_ReturnsNewStackIfNotSet()
     {
-        var accessor = new global::app.variables.@thisAccessor();
+        var accessor = new global::app.variable.list.@thisAccessor();
 
         var stack = accessor.Current;
 
@@ -900,7 +900,7 @@ public class VariablesAccessorTests
     [Test]
     public async Task Current_SetAndGet_ReturnsSameStack()
     {
-        var accessor = new global::app.variables.@thisAccessor();
+        var accessor = new global::app.variable.list.@thisAccessor();
         var stack = new Variables();
 
         accessor.Current = stack;
@@ -913,12 +913,12 @@ public class VariablesAccessorTests
     {
         var engine = new global::app.@this("/app");
         var context = new global::app.actor.context.@this(engine, new Variables());
-        context.Variables.Set("x", 1);
+        context.Variable.Set("x", 1);
 
-        var clone = context.Variables.Clone();
+        var clone = context.Variable.Clone();
 
         await Assert.That(clone.Context).IsNotNull();
-        await Assert.That(clone.Context).IsEqualTo(context.Variables.Context);
+        await Assert.That(clone.Context).IsEqualTo(context.Variable.Context);
     }
 
     [Test]
@@ -955,10 +955,10 @@ public class VariablesAccessorTests
     public async Task Get_GoalSubGoalName_NavigatesCorrectly()
     {
         var stack = new Variables();
-        var goal = new global::app.goals.goal.@this { Name = "BuildGoal" };
-        goal.Goals.Add(new global::app.goals.goal.@this { Name = "ProcessGroup" });
-        goal.Goals.Add(new global::app.goals.goal.@this { Name = "LlmFixer" });
-        goal.Goals.Add(new global::app.goals.goal.@this { Name = "HandleFailure" });
+        var goal = new global::app.goal.@this { Name = "BuildGoal" };
+        goal.Goals.Add(new global::app.goal.@this { Name = "ProcessGroup" });
+        goal.Goals.Add(new global::app.goal.@this { Name = "LlmFixer" });
+        goal.Goals.Add(new global::app.goal.@this { Name = "HandleFailure" });
         stack.Set("goal", goal);
 
         var name0 = stack.Get("goal.Goals[0].Name");
@@ -975,7 +975,7 @@ public class VariablesAccessorTests
     public async Task Get_GoalName_ReturnsGoalName()
     {
         var stack = new Variables();
-        var goal = new global::app.goals.goal.@this { Name = "BuildGoal" };
+        var goal = new global::app.goal.@this { Name = "BuildGoal" };
         stack.Set("goal", goal);
 
         var name = stack.Get("goal.Name");
@@ -988,9 +988,9 @@ public class VariablesAccessorTests
     public async Task Get_GoalGoalsCount_ReturnsCount()
     {
         var stack = new Variables();
-        var goal = new global::app.goals.goal.@this { Name = "BuildGoal" };
-        goal.Goals.Add(new global::app.goals.goal.@this { Name = "Sub1" });
-        goal.Goals.Add(new global::app.goals.goal.@this { Name = "Sub2" });
+        var goal = new global::app.goal.@this { Name = "BuildGoal" };
+        goal.Goals.Add(new global::app.goal.@this { Name = "Sub1" });
+        goal.Goals.Add(new global::app.goal.@this { Name = "Sub2" });
         stack.Set("goal", goal);
 
         var count = stack.Get("goal.Goals.Count");
@@ -1003,19 +1003,19 @@ public class VariablesAccessorTests
     public async Task Set_GoalStepsBracketIndex_PreservesGoalIdentity()
     {
         var stack = new Variables();
-        var goal = new global::app.goals.goal.@this { Name = "BuildGoal" };
-        goal.Goals.Add(new global::app.goals.goal.@this { Name = "SubGoal" });
-        var step = new global::app.goals.goal.steps.step.@this { Index = 0, Text = "original" };
+        var goal = new global::app.goal.@this { Name = "BuildGoal" };
+        goal.Goals.Add(new global::app.goal.@this { Name = "SubGoal" });
+        var step = new global::app.goal.steps.step.@this { Index = 0, Text = "original" };
         goal.Steps.Add(step);
         stack.Set("goal", goal);
 
         // Simulate what builder.merge does: set %goal.Steps[0]% = newStep
-        var newStep = new global::app.goals.goal.steps.step.@this { Index = 0, Text = "updated" };
+        var newStep = new global::app.goal.steps.step.@this { Index = 0, Text = "updated" };
         stack.Set("goal.Steps[0]", newStep);
 
         // Goal should still be a Goal, not a dictionary
         var retrieved = stack.Get("goal");
-        await Assert.That(retrieved.Value).IsTypeOf<global::app.goals.goal.@this>();
+        await Assert.That(retrieved.Value).IsTypeOf<global::app.goal.@this>();
 
         // Sub-goal names should survive
         var subName = stack.Get("goal.Goals[0].Name");
@@ -1031,7 +1031,7 @@ public class VariablesAccessorTests
     public async Task Set_GoalAsDataSubclass_StoredDirectly()
     {
         var stack = new Variables();
-        var goal = new global::app.goals.goal.@this { Name = "MyGoal" };
+        var goal = new global::app.goal.@this { Name = "MyGoal" };
         stack.Set("goal", goal);
 
         // Should get a Data wrapping the Goal back

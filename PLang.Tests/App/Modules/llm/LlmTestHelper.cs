@@ -1,10 +1,10 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using app.variables;
-using app.modules.http.code;
-using app.modules.llm;
-using app.modules.llm.code;
+using app.variable;
+using app.module.http.code;
+using app.module.llm;
+using app.module.llm.code;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.llm;
@@ -113,12 +113,12 @@ internal static class LlmTestHelper
     /// <summary>
     /// Creates a basic query action with system + user messages.
     /// </summary>
-    internal static query MakeQuery(global::app.actor.context.@this ctx,
+    internal static query MakeQuery(global::app.actor.context.@this context,
         string systemText = "You are helpful", string userText = "Hello")
     {
         return new query
         {
-            Context = ctx,
+            Context = context,
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "system", Content = systemText },

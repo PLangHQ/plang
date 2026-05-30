@@ -1,0 +1,25 @@
+{
+  "tester": "tester",
+  "branch": "singular-namespaces",
+  "timestamp": "2026-05-30T12:10:00Z",
+  "tested_version": "v3",
+  "test_run": {
+    "csharp": { "total": 3696, "passed": 3696, "failed": 0, "skipped": 0, "note": "+2 new throw-coverage tests vs v2; both mutation-confirmed honest" },
+    "plang": { "total": 253, "passed": 253, "failed": 0, "skipped": 0, "note": "8 HTTP fails on first run were httpbin.org external transients (v3 changed zero production source); cleared on re-run" }
+  },
+  "coverage": {
+    "changed_files_covered": 1,
+    "changed_files_total": 1,
+    "uncovered_files": [],
+    "improved": ["PLang/app/type/this.cs (line 62.3->78.3%, branch 33.3->57.1%; Promote throw branch now exercised AND mutation-verified)"]
+  },
+  "findings": [],
+  "resolved_from_v2": [
+    { "id": 1, "severity": "major", "status": "resolved", "how": "Renamed misnamed test to ClrType_OnUnstampedDomainType_ReturnsNull; added TypeFoldRead_OnUnstampedDomainEntity_ThrowsHard (Mutation A: removing the Promote throw fails exactly this test) + TypeFoldRead_OnPrimitiveEntity_DoesNotThrow_EvenWithoutContext (Mutation B: deleting _foldLoaded=true fails exactly this test). Both deletion-confirmed honest." },
+    { "id": 2, "severity": "minor", "status": "resolved", "how": "GetPrimitiveOrMime_..._AllRemoved now asserts File.Exists(path).IsTrue() instead of `continue` — no longer passes vacuously if the relative-walk breaks." },
+    { "id": 3, "severity": "minor", "status": "resolved", "how": "Capture.goal echoes %!data% (channel payload); .pr rebuilt to variable.set(Value=%!data%); now pins value-flow not just reachability." },
+    { "id": 4, "severity": "minor", "status": "resolved", "how": "coder/v3/baseline-tests.md present (3694/3694 + 253/253 pre-edit)." }
+  ],
+  "verdict": "approved",
+  "summary": "Coder v3 closes all 4 of my v2 findings. The two new throw-coverage tests are mutation-confirmed honest — each fails when the exact production line it guards is deleted and passes otherwise (Mutation A: Promote throw; Mutation B: _foldLoaded primitive carve-out). The N1 grep-pin no longer passes vacuously, N2 now pins channel value-flow via %!data% echo, and baseline-tests.md is recorded. C# 3696/3696, PLang 253/253 (the 8 HTTP fails on first run were httpbin.org external transients — v3 touched zero production source — cleared on clean re-run). type/this.cs coverage rose 62.3->78.3% line / 33.3->57.1% branch, and the throw branch is verified not merely executed. PASS."
+}

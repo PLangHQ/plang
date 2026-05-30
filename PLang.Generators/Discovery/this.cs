@@ -38,7 +38,7 @@ public static class @this
     /// Diagnostic descriptor for raw-scalar partial properties on [Action] handlers.
     /// Post-v5 contract: every action property must be <c>Data&lt;T&gt;</c>, plain <c>Data</c>,
     /// or <c>[Code]</c>-attributed. Variable-name slots use <c>Data&lt;Variable&gt;</c>
-    /// (app.variables.Variable) — the former <c>[VariableName] string</c> carve-out is gone.
+    /// (app.variable.Variable) — the former <c>[VariableName] string</c> carve-out is gone.
     /// </summary>
     internal static readonly DiagnosticDescriptor RawScalarPropertyDescriptor = new(
         id: "PLNG001",
@@ -56,13 +56,13 @@ public static class @this
 
         var hasActionAttr = classSymbol.GetAttributes().Any(a =>
             a.AttributeClass?.Name == "ActionAttribute"
-            && a.AttributeClass.ContainingNamespace.ToDisplayString() == "app.modules");
+            && a.AttributeClass.ContainingNamespace.ToDisplayString() == "app.module");
         if (!hasActionAttr) return null;
 
         bool ImplementsModule(string ifaceName) =>
             classSymbol.AllInterfaces.Any(i =>
                 i.Name == ifaceName
-                && i.ContainingNamespace.ToDisplayString() == "app.modules");
+                && i.ContainingNamespace.ToDisplayString() == "app.module");
 
         var implementsIContext = ImplementsModule("IContext");
         var implementsIChannel = ImplementsModule("IChannel");
@@ -152,7 +152,7 @@ public static class @this
             var typeName = prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             // ImplementsIContext is used for the engine-resolution expression — read off the parent class.
             var parentImplsCtx = prop.ContainingType.AllInterfaces.Any(i =>
-                i.Name == "IContext" && i.ContainingNamespace.ToDisplayString() == "app.modules");
+                i.Name == "IContext" && i.ContainingNamespace.ToDisplayString() == "app.module");
             return (new CodeProperty(prop.Name, typeName, parentImplsCtx), false);
         }
 
@@ -172,7 +172,7 @@ public static class @this
         var implementsIEvent = rawType is INamedTypeSymbol evt
             && evt.AllInterfaces.Any(i =>
                 i.Name == "IEvent"
-                && i.ContainingNamespace.ToDisplayString() == "app.modules");
+                && i.ContainingNamespace.ToDisplayString() == "app.module");
 
         // Detect Data<T> and plain Data
         var typeNameStr = prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
@@ -201,7 +201,7 @@ public static class @this
                     && namedType.TypeArguments[0] is INamedTypeSymbol innerNamed
                     && innerNamed.AllInterfaces.Any(i =>
                         i.Name == "IRawNameResolvable"
-                        && i.ContainingNamespace.ToDisplayString() == "app.variables"))
+                        && i.ContainingNamespace.ToDisplayString() == "app.variable"))
                 {
                     isRawNameResolvable = true;
                 }

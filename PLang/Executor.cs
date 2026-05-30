@@ -38,7 +38,7 @@ namespace PLang
 			var engine = new app.@this(startupDirectory);
 			engine.OsDirectory = engine.OsAbsolutePath;
 
-			var userVars = engine.User.Context.Variables;
+			var userVars = engine.User.Context.Variable;
 
 			// Route CLI parameters to user Variables
 			foreach (var param in parameters)
@@ -68,7 +68,7 @@ namespace PLang
 
 			// App settings (--app={"create":true})
 			if (parameters.TryGetValue("!app", out var appValue) && appValue is IDictionary<string, object?> appDict)
-				global::app.types.@this.Populate(engine, appDict, engine.User.Context);
+				global::app.type.list.@this.Populate(engine, appDict, engine.User.Context);
 
 			// Builder mode (--builder or legacy --build). Either flag may be a bare
 			// `true` (e.g. `plang build` normalizes the subcommand to `--builder`) or
@@ -87,7 +87,7 @@ namespace PLang
 				var buildDict = builderValue as IDictionary<string, object?>
 				             ?? buildValue as IDictionary<string, object?>;
 				if (buildDict != null)
-					global::app.types.@this.Populate(engine.Builder, buildDict, engine.User.Context);
+					global::app.type.list.@this.Populate(engine.Builder, buildDict, engine.User.Context);
 
 				// Sync cache flag to %!build.cache% for Build.goal
 				userVars.Set("!build.cache", engine.Builder.Cache);
@@ -97,14 +97,14 @@ namespace PLang
 			// Tester mode routes to system test runner instead of Start.goal
 			if (engine.Tester.IsEnabled && goalFile == "Start.goal")
 			{
-				engine.System.Context.Variables.Set("goalFile", "/system/.build/test.pr");
+				engine.System.Context.Variable.Set("goalFile", "/system/.build/test.pr");
 				return (engine, null);
 			}
 
 			var prPath = goalFile.Replace(".goal", ".pr", StringComparison.OrdinalIgnoreCase);
 			if (!prPath.StartsWith(".build"))
 				prPath = ".build/" + prPath;
-			engine.System.Context.Variables.Set("goalFile", "/" + prPath.ToLowerInvariant());
+			engine.System.Context.Variable.Set("goalFile", "/" + prPath.ToLowerInvariant());
 
 			return (engine, null);
 		}

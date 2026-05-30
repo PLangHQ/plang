@@ -1,6 +1,6 @@
 using app;
-using app.errors;
-using app.variables;
+using app.error;
+using app.variable;
 using app.Utils;
 using R2 = global::app.data;
 
@@ -145,12 +145,12 @@ public class Phase0Proof
     public async Task Phase04_ListType_IsPreserved()
     {
         // INPUT: Data.Ok with a list value and explicit list type
-        var listValue = new global::app.modules.list.types.list
+        var listValue = new global::app.module.list.type.list
         {
             count = 3,
             value = new List<object?> { 1, 2, 3 }
         };
-        var result = Data.Ok(listValue, R2.type.FromName("list"));
+        var result = Data.Ok(listValue, global::app.type.@this.FromName("list"));
 
         // OUTPUT: Type is "list", not the CLR type name
         await Assert.That(result.Type).IsNotNull();

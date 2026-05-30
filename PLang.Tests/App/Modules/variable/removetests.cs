@@ -1,7 +1,7 @@
 using app.actor.context;
 using app;
-using app.variables;
-using app.modules.variable;
+using app.variable;
+using app.module.variable;
 
 namespace PLang.Tests.App.actions.variable;
 
@@ -10,7 +10,7 @@ public class RemoveTests
     private (global::app.actor.context.@this context, Variables memory) CreateContext()
     {
         var app = new global::app.@this("/app");
-        return (app.User.Context, app.User.Context.Variables);
+        return (app.User.Context, app.User.Context.Variable);
     }
 
     [Test]
@@ -19,7 +19,7 @@ public class RemoveTests
         var (context, memory) = CreateContext();
         memory.Set("testVar", "testValue");
 
-        var action = new Remove { Context = context, Name = new Variable("testVar") };
+        var action = new Remove { Context = context, Name = new app.variable.@this("testVar") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -31,7 +31,7 @@ public class RemoveTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Remove { Context = context, Name = new Variable("nonexistent") };
+        var action = new Remove { Context = context, Name = new app.variable.@this("nonexistent") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();

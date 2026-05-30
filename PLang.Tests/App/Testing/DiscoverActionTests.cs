@@ -7,7 +7,7 @@ namespace PLang.Tests.App.Tester;
 /// <summary>
 /// Batch 8 — test.discover action.
 /// C# handler: filesystem walk + .pr parsing. Inputs: Path (default "."), Pattern
-/// (default "*.test.goal"). Returns List&lt;global::app.tester.Test.@this&gt; with file path, entry goal,
+/// (default "*.test.goal"). Returns List&lt;global::app.tester.test.@this&gt; with file path, entry goal,
 /// .pr path, tags, status.
 ///
 /// Freshness uses Goal.Hash (SHA-256 over Name + Steps.Text, [Store]-persisted in
@@ -134,22 +134,22 @@ public class DiscoverActionTests
         return relativePath;
     }
 
-    private async Task<List<global::app.tester.Test.@this>> Discover(string path = ".", bool recursive = true)
+    private async Task<List<global::app.tester.test.@this>> Discover(string path = ".", bool recursive = true)
     {
-        var action = new global::app.modules.test.discover
+        var action = new global::app.module.test.discover
         {
             Context = _app.User.Context,
-            Path = global::app.data.@this<global::app.types.path.@this>.Ok(
-                global::app.types.path.@this.Resolve(path, _app.User.Context)),
+            Path = global::app.data.@this<global::app.type.path.@this>.Ok(
+                global::app.type.path.@this.Resolve(path, _app.User.Context)),
             Pattern = new global::app.data.@this<string>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<bool>("Recursive", recursive)
         };
         var result = await action.Run();
-        return result.Value as List<global::app.tester.Test.@this> ?? new List<global::app.tester.Test.@this>();
+        return result.Value as List<global::app.tester.test.@this> ?? new List<global::app.tester.test.@this>();
     }
 
     // Walks the tree of *.test.goal files under the target path; every match surfaces
-    // in the returned List<global::app.tester.Test.@this>.
+    // in the returned List<global::app.tester.test.@this>.
     [Test]
     public async Task Discover_RecursiveWalk_FindsAllTestGoalFiles()
     {
@@ -261,7 +261,7 @@ public class DiscoverActionTests
                 }
             }
         };
-        _app.Goals.Add(helper);
+        _app.Goal.Add(helper);
 
         CreateTestFileWithAction("Foo.test.goal", "Start",
             new[] { "call Helper" },
@@ -269,7 +269,7 @@ public class DiscoverActionTests
             {
                 ("goal", "call", new List<Data>
                 {
-                    new("GoalName", new GoalCall { Name = "Helper" }, global::app.data.type.FromName("goal.call"))
+                    new("GoalName", new GoalCall { Name = "Helper" }, global::app.type.@this.FromName("goal.call"))
                 })
             });
 

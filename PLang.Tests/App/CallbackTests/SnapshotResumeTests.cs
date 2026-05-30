@@ -1,12 +1,12 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using app.modules.callback;
-using ActionEntity = global::app.goals.goal.steps.step.actions.action.@this;
+using app.module.callback;
+using ActionEntity = global::app.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.CallbackTests;
 
-/// Stage 2a — Batch 5 (C# half): `Data.Snapshot.Resume(ctx)` recursive cross-
+/// Stage 2a — Batch 5 (C# half): `Data.Snapshot.Resume(context)` recursive cross-
 /// goal continuation; `callback.run` is the resume entry and requires Snapshot.
 public class SnapshotResumeTests
 {
@@ -59,25 +59,25 @@ public class SnapshotResumeTests
         // Capture a snapshot mid-flight: build a goal, push a Call frame for
         // one of its actions (synthesise suspension), snapshot, then Resume.
         var app = NewApp();
-        var ctx = app.User.Context;
+        var context = app.User.Context;
         var goal = new Goal { Name = "G", Path = "/G.goal", PrPath = "/G.pr" };
         var step0 = SetStep(0, "s0", "first"); step0.Goal = goal;
         var step1 = SetStep(1, "s1", "second"); step1.Goal = goal;
         goal.Steps.Add(step0); goal.Steps.Add(step1);
-        app.Goals.Add(goal);
+        app.Goal.Add(goal);
 
         // Push the action of step1 so the snapshot captures (stepIdx=1, actionIdx=0).
-        await using (var call = ctx.App.CallStack.Push(step1.Actions[0], ctx.Variables))
+        await using (var call = context.App.CallStack.Push(step1.Actions[0], context.Variable))
         {
             var snap = app.Snapshot();
             // Pop the call frame before Resume so Restore doesn't conflict.
             await call.DisposeAsync();
 
-            var result = await snap.Resume(ctx);
+            var result = await snap.Resume(context);
             await Assert.That(result.Success).IsTrue();
             // Step 1 ran on resume; step 0 should NOT have run (we resumed mid-goal).
-            await Assert.That(ctx.Variables.GetValue("s1")).IsEqualTo("second");
-            await Assert.That(ctx.Variables.Get("s0").IsInitialized).IsFalse();
+            await Assert.That(context.Variable.GetValue("s1")).IsEqualTo("second");
+            await Assert.That(context.Variable.Get("s0").IsInitialized).IsFalse();
         }
     }
 
@@ -97,7 +97,7 @@ public class SnapshotResumeTests
     [Test] public async Task ResumeChain_MultiActionStep_ContinuesAtActionIndexPlusOne()
     {
         // Pinned by Goal.RunFrom contract (GoalRunFromTests). ResumeChain's
-        // parent-frame branch calls Goal.RunFrom(ctx, stepIdx, ActionIndex+1) —
+        // parent-frame branch calls Goal.RunFrom(context, stepIdx, ActionIndex+1) —
         // the +1 mirrors what GoalRunFrom's tests already pin. End-to-end
         // exercised by 2a.8's cross-goal .test.goal fixture.
         await Assert.That(true).IsTrue();

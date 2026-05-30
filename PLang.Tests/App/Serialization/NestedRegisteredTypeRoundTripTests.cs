@@ -20,17 +20,17 @@ public class NestedRegisteredTypeRoundTripTests
         // putting a registered-type value (path) at two nested positions: a Data
         // whose Value is a list containing two path-typed Datas.
         await using var app = NewApp();
-        var ctx = app.User.Context;
-        var p1 = global::app.types.path.@this.Resolve("/srv/a.txt", ctx);
-        var p2 = global::app.types.path.@this.Resolve("/srv/b.txt", ctx);
+        var context = app.User.Context;
+        var p1 = global::app.type.path.@this.Resolve("/srv/a.txt", context);
+        var p2 = global::app.type.path.@this.Resolve("/srv/b.txt", context);
         var outer = new global::app.data.@this("outer", new[] {
-            new global::app.data.@this("p1", p1) { Context = ctx },
-            new global::app.data.@this("p2", p2) { Context = ctx },
-        }) { Context = ctx };
+            new global::app.data.@this("p1", p1) { Context = context },
+            new global::app.data.@this("p2", p2) { Context = context },
+        }) { Context = context };
 
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
-        var options = (JsonSerializerOptions)typeof(global::app.channels.serializers.serializer.plang.@this)
+        var plang = (global::app.channel.serializer.plang.@this)
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
+        var options = (JsonSerializerOptions)typeof(global::app.channel.serializer.plang.@this)
             .GetField("_outbound", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
             .GetValue(plang)!;
         var json = JsonSerializer.Serialize(outer, options);
@@ -45,20 +45,20 @@ public class NestedRegisteredTypeRoundTripTests
     public async Task RegisteredValueInsideList_EachElementDispatched()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var context = app.User.Context;
         var paths = new[]
         {
-            global::app.types.path.@this.Resolve("/srv/x.json", ctx),
-            global::app.types.path.@this.Resolve("/srv/y.json", ctx),
+            global::app.type.path.@this.Resolve("/srv/x.json", context),
+            global::app.type.path.@this.Resolve("/srv/y.json", context),
         };
 
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.channels.serializers.json.Writer(utf, options: null,
-                view: global::app.View.Out, renderers: app.Types.Renderers);
+            var w = new global::app.channel.serializer.json.Writer(utf, options: null,
+                view: global::app.View.Out, renderers: app.Type.Renderers);
             var visited = new HashSet<object>(System.Collections.Generic.ReferenceEqualityComparer.Instance);
-            var normalized = global::app.data.@this.NormalizeValue(paths, global::app.View.Out, visited, 0, app.Types);
+            var normalized = global::app.data.@this.NormalizeValue(paths, global::app.View.Out, visited, 0, app.Type);
             w.Value(normalized);
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
@@ -74,19 +74,19 @@ public class NestedRegisteredTypeRoundTripTests
         // reflection into a List<Data>; the inner Path leaf surfaces as a
         // TypedValueNode and renders as a string.
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var context = app.User.Context;
         var wrapper = new InnerWrapper
         {
-            Path = global::app.types.path.@this.Resolve("/srv/wrap.json", ctx),
+            Path = global::app.type.path.@this.Resolve("/srv/wrap.json", context),
         };
 
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.channels.serializers.json.Writer(utf, options: null,
-                view: global::app.View.Out, renderers: app.Types.Renderers);
+            var w = new global::app.channel.serializer.json.Writer(utf, options: null,
+                view: global::app.View.Out, renderers: app.Type.Renderers);
             var visited = new HashSet<object>(System.Collections.Generic.ReferenceEqualityComparer.Instance);
-            var normalized = global::app.data.@this.NormalizeValue(wrapper, global::app.View.Out, visited, 0, app.Types);
+            var normalized = global::app.data.@this.NormalizeValue(wrapper, global::app.View.Out, visited, 0, app.Type);
             w.Value(normalized);
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
@@ -106,7 +106,7 @@ public class NestedRegisteredTypeRoundTripTests
         var visited = new HashSet<object>(System.Collections.Generic.ReferenceEqualityComparer.Instance);
         try
         {
-            global::app.data.@this.NormalizeValue(chain, global::app.View.Out, visited, 0, app.Types);
+            global::app.data.@this.NormalizeValue(chain, global::app.View.Out, visited, 0, app.Type);
             // Either it raises NormalizeMaxDepthExceeded or it completes cleanly.
             // Both outcomes are acceptable; the failure mode we forbid is
             // a StackOverflowException (we'd never reach this assertion).
@@ -120,7 +120,7 @@ public class NestedRegisteredTypeRoundTripTests
 
     public sealed class InnerWrapper
     {
-        [global::app.LlmBuilder] public global::app.types.path.@this? Path { get; set; }
+        [global::app.LlmBuilder] public global::app.type.path.@this? Path { get; set; }
         [global::app.LlmBuilder] public InnerWrapper? Nested { get; set; }
     }
 }

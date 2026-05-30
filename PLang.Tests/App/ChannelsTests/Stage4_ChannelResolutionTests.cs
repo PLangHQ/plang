@@ -1,4 +1,4 @@
-using app.channels;
+using app.channel;
 
 namespace PLang.Tests.App.ChannelsTests;
 
@@ -12,10 +12,10 @@ public class Stage4_ChannelResolutionTests
     {
         // The Write action implements IChannel — the generator emits a
         // `Channel { get; set; }` slot. Verify via reflection.
-        var writeType = typeof(global::app.modules.output.Write);
+        var writeType = typeof(global::app.module.output.Write);
         var prop = writeType.GetProperty("Channel");
         await Assert.That(prop).IsNotNull();
-        await Assert.That(prop!.PropertyType).IsEqualTo(typeof(global::app.channels.channel.@this));
+        await Assert.That(prop!.PropertyType).IsEqualTo(typeof(global::app.channel.@this));
     }
 
     [Test]
@@ -23,7 +23,7 @@ public class Stage4_ChannelResolutionTests
     {
         var app = new global::app.@this("/tmp/s4a");
         global::app.@this.WireDefaultConsoleChannels(app.User);
-        var ch = app.User.Channels.Resolve(null);
+        var ch = app.User.Channel.Resolve(null);
         await Assert.That(ch).IsNotNull();
         await Assert.That(ch!.Name).IsEqualTo("output");
     }
@@ -33,16 +33,16 @@ public class Stage4_ChannelResolutionTests
     {
         var app = new global::app.@this("/tmp/s4b");
         var logger = StreamChannel.Memory("logger");
-        app.User.Channels.Register(logger);
-        var ch = app.User.Channels.Resolve("logger");
-        await Assert.That(ch).IsEqualTo((Channel)logger);
+        app.User.Channel.Register(logger);
+        var ch = app.User.Channel.Resolve("logger");
+        await Assert.That((Channel?)ch).IsEqualTo((Channel)logger);
     }
 
     [Test]
     public async Task ChannelsResolve_UnknownName_ReturnsNull()
     {
         var app = new global::app.@this("/tmp/s4c");
-        var ch = app.User.Channels.Resolve("dbg");
+        var ch = app.User.Channel.Resolve("dbg");
         await Assert.That(ch).IsNull();
     }
 
@@ -51,14 +51,14 @@ public class Stage4_ChannelResolutionTests
     {
         var app = new global::app.@this("/tmp/s4d");
         var captured = new MemoryStream();
-        app.User.Channels.Register(new StreamChannel("output", captured, ChannelDirection.Output, ownsStream: false)
+        app.User.Channel.Register(new StreamChannel("output", captured, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
 
-        var write = new global::app.modules.output.Write
+        var write = new global::app.module.output.Write
         {
             Context = app.User.Context,
             Data = Data.Ok("hello-default"),
-            Channel = app.User.Channels.Resolve(null)
+            Channel = app.User.Channel.Resolve(null)
         };
         // Direct Run skips ExecuteAsync's reset of init backing fields.
         await write.Run();
@@ -72,14 +72,14 @@ public class Stage4_ChannelResolutionTests
     {
         var app = new global::app.@this("/tmp/s4e");
         var loggerCapture = new MemoryStream();
-        app.User.Channels.Register(new StreamChannel("logger", loggerCapture, ChannelDirection.Output, ownsStream: false)
+        app.User.Channel.Register(new StreamChannel("logger", loggerCapture, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
 
-        var write = new global::app.modules.output.Write
+        var write = new global::app.module.output.Write
         {
             Context = app.User.Context,
             Data = Data.Ok("targetted"),
-            Channel = app.User.Channels.Resolve("logger")
+            Channel = app.User.Channel.Resolve("logger")
         };
         await write.Run();
 
@@ -93,12 +93,12 @@ public class Stage4_ChannelResolutionTests
         // Plan rule 7: relay don't repackage. Channel.WriteAsync receives full Data.
         var app = new global::app.@this("/tmp/s4f");
         var probe = new EnvelopeProbeChannel();
-        app.User.Channels.Register(probe);
+        app.User.Channel.Register(probe);
 
         var data = Data.Ok("payload");
         data.Properties.Set("custom-prop", "x");
 
-        var write = new global::app.modules.output.Write
+        var write = new global::app.module.output.Write
         {
             Context = app.User.Context,
             Data = data,
@@ -113,11 +113,11 @@ public class Stage4_ChannelResolutionTests
     [Test]
     public async Task ChannelsThis_WriteAsyncWriteOverload_IsRemoved()
     {
-        var channelsType = typeof(EngineChannels);
+        var channelsType = typeof(global::app.channel.list.@this);
         var writeOverload = channelsType.GetMethods()
             .FirstOrDefault(m => m.Name == "WriteAsync"
                 && m.GetParameters().Length == 1
-                && m.GetParameters()[0].ParameterType == typeof(global::app.modules.output.Write));
+                && m.GetParameters()[0].ParameterType == typeof(global::app.module.output.Write));
         await Assert.That(writeOverload).IsNull();
     }
 
@@ -135,6 +135,6 @@ public class Stage4_ChannelResolutionTests
             return Task.FromResult(Data.Ok());
         }
         public override Task<Data> Read(CancellationToken ct = default) => Task.FromResult(Data.Ok());
-        public override Task<Data> Ask(global::app.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        public override Task<Data> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok());
     }
 }

@@ -1,17 +1,17 @@
 using System.Text.Json;
-using app.goals.goal;
-using app.goals.goal.steps;
-using app.goals.goal.steps.step;
-using app.goals.goal.steps.step.actions;
-using PLangAction = app.goals.goal.steps.step.actions.action.@this;
-using PLangGoal = app.goals.goal.@this;
+using app.goal;
+using app.goal.steps;
+using app.goal.steps.step;
+using app.goal.steps.step.actions;
+using PLangAction = app.goal.steps.step.actions.action.@this;
+using PLangGoal = app.goal.@this;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Goals;
 
 /// <summary>
 /// Guards the four-tier slash-qualified resolution in
-/// <see cref="app.goals.goal.GoalCall.GetGoalAsync"/>.
+/// <see cref="app.goal.GoalCall.GetGoalAsync"/>.
 ///
 /// Slash-qualified Names (Folder/Leaf) resolve as
 /// <c>{folder}/.build/{leaf}.pr</c> — NOT <c>.build/{folder/leaf}.pr</c>.

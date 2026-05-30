@@ -1,4 +1,4 @@
-using AppVars = global::app.variables.@this;
+using AppVars = global::app.variable.list.@this;
 
 namespace PLang.Tests.App.VariablesTests;
 

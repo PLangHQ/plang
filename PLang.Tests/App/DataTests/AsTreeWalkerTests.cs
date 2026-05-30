@@ -71,10 +71,10 @@ public class AsTreeWalkerTests
 
     [Test] public async Task As_Identity_ReconstructsName_PublicKey_PrivateKeyIsNull()
     {
-        var source = new global::app.modules.identity.Identity { Name = "alice", PublicKey = "pk", PrivateKey = "secret" };
+        var source = new global::app.module.identity.Identity { Name = "alice", PublicKey = "pk", PrivateKey = "secret" };
         var normalized = new Data("", source).Normalize();
         var carrier = new Data("", normalized);
-        var rebuilt = carrier.Reconstruct<global::app.modules.identity.Identity>();
+        var rebuilt = carrier.Reconstruct<global::app.module.identity.Identity>();
         await Assert.That(rebuilt).IsNotNull();
         await Assert.That(rebuilt!.Name).IsEqualTo("alice");
         await Assert.That(rebuilt.PublicKey).IsEqualTo("pk");
@@ -83,9 +83,9 @@ public class AsTreeWalkerTests
 
     [Test] public async Task As_Identity_IsDefault_IsArchived_Created_TakeDefaults()
     {
-        var source = new global::app.modules.identity.Identity { Name = "x", PublicKey = "y", IsDefault = true };
+        var source = new global::app.module.identity.Identity { Name = "x", PublicKey = "y", IsDefault = true };
         var normalized = new Data("", source).Normalize();
-        var rebuilt = new Data("", normalized).Reconstruct<global::app.modules.identity.Identity>();
+        var rebuilt = new Data("", normalized).Reconstruct<global::app.module.identity.Identity>();
         await Assert.That(rebuilt!.IsDefault).IsFalse().Because("IsDefault not in [Out] inventory");
         await Assert.That(rebuilt.IsArchived).IsFalse();
     }
@@ -132,7 +132,7 @@ public class AsTreeWalkerTests
         var carrier = new Data("", children);
         var ex = await Assert.ThrowsAsync<NormalizeException>(async () =>
         {
-            carrier.Reconstruct<global::app.types.path.@this>();
+            carrier.Reconstruct<global::app.type.path.@this>();
             await Task.CompletedTask;
         });
         await Assert.That(ex!.Key).IsEqualTo("NormalizeContextRequired");

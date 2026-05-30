@@ -1,0 +1,18 @@
+{
+  "approach": "TUnit built-in cobertura over full suite (3694/3694). Branch-relevant surfaces only — the ~1355 mechanical rename .cs are not behavior. Highest-coverage class entry per file (ignoring <>c / async state-machine entries).",
+  "command": "dotnet run --project PLang.Tests --coverage --coverage-output /tmp/cov/coverage.cobertura.xml --coverage-output-format cobertura",
+  "key_surfaces": {
+    "app/type/this.cs":              { "line_pct": 62.3, "branch_pct": 33.3, "note": "LOWEST. Promote() Context==null throw branch is line-executed but behaviorally unverified (deletion test passes). Scheme getter + several fold paths uncovered. See F1-RESIDUAL." },
+    "app/type/Field.cs":             { "line_pct": 100.0, "branch_pct": 100.0 },
+    "app/type/list/this.cs":         { "line_pct": 100.0, "branch_pct": 100.0 },
+    "app/data/this.cs":              { "line_pct": 100.0, "branch_pct": 100.0, "note": "Context non-null + Type Null-sentinel getter/setter fully covered." },
+    "app/data/Wire.cs":              { "line_pct": 93.3, "branch_pct": 79.6, "note": "IsNull emit-skip covered." },
+    "app/builder/type/this.cs":      { "line_pct": 96.8, "branch_pct": 75.0 },
+    "app/actor/permission/this.cs":  { "line_pct": 100.0, "branch_pct": 100.0, "note": "SQLite-rehydration Context stamp covered." },
+    "app/module/variable/set.cs":    { "line_pct": 100.0, "branch_pct": 100.0 },
+    "app/module/settings/Sqlite.cs": { "line_pct": 100.0, "branch_pct": 100.0 },
+    "app/channel/this.cs":           { "line_pct": 100.0, "branch_pct": 75.0 },
+    "app/channel/list/this.cs":      { "line_pct": 100.0, "branch_pct": 100.0 }
+  },
+  "trap_note": "type/this.cs line 62% understates the gap: the new Promote() fail-loud throw executes under stamped-path tests (counts as covered) while its Context==null branch is unverified. Deletion test (throw -> return this) keeps 3694/3694 green. Executed != verified."
+}

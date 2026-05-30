@@ -1,56 +1,53 @@
 
 // Goals subsystem
-global using AppGoals = app.goals.@this;
-global using GoalCall = app.goals.goal.GoalCall;
-global using GoalSteps = app.goals.goal.steps.@this;
-global using Step = app.goals.goal.steps.step.@this;
-global using ErrorOrder = app.goals.goal.steps.step.ErrorOrder;
-global using CacheSettings = app.goals.goal.steps.step.CacheSettings;
-global using StepActions = app.goals.goal.steps.step.actions.@this;
-global using ActionModifiers = app.goals.goal.steps.step.actions.action.modifiers.@this;
+global using GoalCall = app.goal.GoalCall;
+global using GoalSteps = app.goal.steps.@this;
+global using Step = app.goal.steps.step.@this;
+global using ErrorOrder = app.goal.steps.step.ErrorOrder;
+global using CacheSettings = app.goal.steps.step.CacheSettings;
+global using StepActions = app.goal.steps.step.actions.@this;
+global using ActionModifiers = app.goal.steps.step.actions.action.modifiers.@this;
 
 // Event types
-global using AppEvents = app.events.@this;
-global using Lifecycle = app.events.lifecycle.@this;
-global using Bindings = app.events.lifecycle.bindings.@this;
+global using Lifecycle = app.@event.lifecycle.@this;
+global using Bindings = app.@event.lifecycle.binding.list.@this;
 
 // Event types WITH conflicts — require per-file handling:
-// AppEvents alias (not "Events") avoids collision with PLang.Events namespace
-// EventType: v1 PLang.Events conflict — use: using app.events; or per-file alias
-// EventBinding: v1 PLang.Events conflict — use: using EventBinding = app.events.lifecycle.bindings.binding.@this;
-
-// Modules subsystem (action registry)
-global using AppModules = app.modules.@this;
+// global::app.@event.list.@this alias (not "Events") avoids collision with PLang.Events namespace
+// EventType: v1 PLang.Events conflict — use: using app.@event; or per-file alias
+// EventBinding: v1 PLang.Events conflict — use: using EventBinding = app.@event.lifecycle.binding.@this;
 
 // Channels subsystem
-global using AppChannels = app.channels.@this;
-global using Channel = app.channels.channel.@this;
-global using ChannelDirection = app.channels.channel.ChannelDirection;
-global using Serializers = app.channels.serializers.@this;
-global using SerializeOptions = app.channels.serializers.SerializeOptions;
-global using DeserializeOptions = app.channels.serializers.DeserializeOptions;
+global using Channel = app.channel.@this;
+global using ChannelDirection = app.channel.ChannelDirection;
+global using Serializers = app.channel.serializer.list.@this;
+global using SerializeOptions = app.channel.serializer.list.SerializeOptions;
+global using DeserializeOptions = app.channel.serializer.list.DeserializeOptions;
 
 // Path types (formerly FileSystem)
 // Lowercase aliases — match the PLang concept names, and (unlike PascalCase
-// `Path`) do not collide with System.IO.Path. Inside `namespace app.types`
-// the bare name `path` is ambiguous with the child namespace `app.types.path`;
-// those few files qualify with `global::app.types.path.@this`.
-global using path = app.types.path.@this;
-global using filepath = app.types.path.file.@this;
-global using httppath = app.types.path.http.@this;
+// `Path`) do not collide with System.IO.Path. Inside `namespace app.type`
+// the bare name `path` is ambiguous with the child namespace `app.type.path`;
+// those few files qualify with `global::app.type.path.@this`.
+global using path = app.type.path.@this;
+global using filepath = app.type.path.file.@this;
+global using httppath = app.type.path.http.@this;
 
 // Config subsystem
 global using AppConfig = app.config.@this;
 global using ConfigScope = app.config.Scope;
 
 // Type system
-global using AppTypes = app.types.@this;
+global using AppTypes = app.type.list.@this;
+// The type entity (moved to app.type.@this in Stage 4) was historically reached as `app.type.@this`.
+// Callers that wrote `app.type.@this.X` keep working via this alias. Stage 3b/5 may sweep the call
+// sites to bare `type` (collides with the contextual keyword sites, so opting for the qualified form).
 
 // Code subsystem (the runtime escape-hatch — was Providers)
-global using AppCode = app.modules.code.@this;
+global using AppCode = app.module.code.@this;
 
 // Variables (was MemoryStack)
-global using Variables = app.variables.@this;
+global using Variables = app.variable.list.@this;
 
 // Snapshot subsystem
 global using Snapshot = app.snapshot.@this;
@@ -61,18 +58,18 @@ global using ISnapshot = app.snapshot.ISnapshot;
 global using AppStatics = app.Statics.@this;
 
 // Standalone concepts
-global using ICache = app.modules.cache.ICache;
-global using Debugging = app.modules.debug.@this;
+global using ICache = app.module.cache.ICache;
+global using Debugging = app.module.debug.@this;
 global using Tester = app.tester.@this;
 
-// Call: not a global alias — app.modules.goal.Call (the goal.call action handler) collides.
+// Call: not a global alias — app.module.goal.Call (the goal.call action handler) collides.
 // Use app.callstack.call.@this fully qualified, or per-file alias.
 
 // Builder: can't be global alias — v1 PLang.Builder namespace conflict (legacy).
 // Inside app.@this: the `Builder` property shadows the `builder` namespace, so
-// type references must be fully qualified (global::app.modules.builder.@this).
+// type references must be fully qualified (global::app.module.builder.@this).
 // Inside other app.*: builder.@this resolves naturally.
-// Outside app.*: use app.modules.builder.@this or a per-file alias.
+// Outside app.*: use app.module.builder.@this or a per-file alias.
 
 // App: can't be global alias — app.@this IS the app root
 // Inside app.*: use app.@this (parent namespace resolves naturally)

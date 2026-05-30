@@ -1,7 +1,7 @@
 using app.actor.context;
 using app;
-using app.variables;
-using app.modules.error;
+using app.variable;
+using app.module.error;
 
 namespace PLang.Tests.App.actions.error;
 
@@ -10,7 +10,7 @@ public class ThrowTests
     private (global::app.actor.context.@this context, Variables memory) CreateContext()
     {
         var app = new global::app.@this("/app");
-        return (app.User.Context, app.User.Context.Variables);
+        return (app.User.Context, app.User.Context.Variable);
     }
 
     [Test]

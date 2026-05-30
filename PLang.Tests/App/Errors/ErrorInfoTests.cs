@@ -1,6 +1,6 @@
 using app.actor.context;
 using app;
-using app.errors;
+using app.error;
 
 namespace PLang.Tests.App.Errors;
 

@@ -1,5 +1,5 @@
-using app.channels.serializers;
-using app.channels.serializers.serializer;
+using app.channel.serializer;
+using app.channel.serializer;
 
 namespace PLang.Tests.App.Serializers;
 
@@ -13,7 +13,7 @@ public class JsonSerializerRoundTripTests
         var app = new global::app.@this("/test");
         var data = new Data("v") { Value = "hello", Context = app.User.Context };
 
-        var json = app.User.Channels.Serializers.GetByMimeType("application/json");
+        var json = app.User.Channel.Serializers.GetByMimeType("application/json");
         var s = json.Serialize(data).Value!;
 
         await Assert.That(s.Contains("hello")).IsTrue();
@@ -26,7 +26,7 @@ public class JsonSerializerRoundTripTests
     {
         // Reading a JSON wire payload reconstructs Data with Value set; Signature stays null.
         var app = new global::app.@this("/test");
-        var json = app.User.Channels.Serializers.GetByMimeType("application/json");
+        var json = app.User.Channel.Serializers.GetByMimeType("application/json");
         var raw = "\"hello\"";
         var s = json.Deserialize<string>(raw).Value!;
         await Assert.That(s).IsEqualTo("hello");
@@ -37,10 +37,10 @@ public class JsonSerializerRoundTripTests
     {
         // The serializer registers for both mimetypes and produces the same wire shape.
         var app = new global::app.@this("/test");
-        var jsonByJson = app.User.Channels.Serializers.GetByMimeType("application/json");
-        var jsonByHtml = app.User.Channels.Serializers.GetByMimeType("text/html");
-        await Assert.That(jsonByJson).IsTypeOf<global::app.channels.serializers.serializer.Json>();
-        await Assert.That(jsonByHtml).IsTypeOf<global::app.channels.serializers.serializer.Json>();
+        var jsonByJson = app.User.Channel.Serializers.GetByMimeType("application/json");
+        var jsonByHtml = app.User.Channel.Serializers.GetByMimeType("text/html");
+        await Assert.That(jsonByJson).IsTypeOf<global::app.channel.serializer.Json>();
+        await Assert.That(jsonByHtml).IsTypeOf<global::app.channel.serializer.Json>();
         // Same instance — text/html aliases to the JSON serializer.
         await Assert.That(jsonByHtml).IsSameReferenceAs(jsonByJson);
     }

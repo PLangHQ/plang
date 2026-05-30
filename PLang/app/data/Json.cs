@@ -1,6 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Type = app.data.type;
+using Type = app.type.@this;
 
 namespace app.data;
 

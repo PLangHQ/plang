@@ -4,12 +4,12 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Reflection;
 using app.actor.context;
-using app.modules.settings;
-using app.errors;
-using app.variables;
-using app.modules;
+using app.module.settings;
+using app.error;
+using app.variable;
+using app.module;
 using app.Utils;
-using Goal = app.goals.goal.@this;
+using Goal = app.goal.@this;
 
 namespace app;
 
@@ -21,13 +21,13 @@ namespace app;
 public sealed partial class @this : IAsyncDisposable
 {
     private readonly CancellationTokenSource _shutdownCts = new();
-    private readonly AppModules _modules;
-    private readonly AppGoals _goals;
+    private readonly global::app.module.@this _modules;
+    private readonly global::app.goal.list.@this _goals;
     private bool _disposed;
 
     private actor.@this? _system;
     private actor.@this? _user;
-    private global::app.Services.@this? _services;
+    private global::app.service.list.@this? _services;
 
     /// <summary>
     /// Unique identifier for this app. Loaded from app.pr, or generated on first run.
@@ -129,13 +129,13 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Global event collection for the application.
     /// </summary>
-    public AppEvents Events { get; }
+    public global::app.@event.list.@this Event { get; }
 
     /// <summary>
     /// Flat action registry. Discovers, registers, and resolves actions by module.action.
     /// Built-in actions from PLang assembly, external DLLs add via Discover().
     /// </summary>
-    public AppModules Modules => _modules;
+    public global::app.module.@this Module => _modules;
 
     /// <summary>
     /// Type-keyed provider registry for pluggable module implementations.
@@ -146,12 +146,12 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Per-type navigator registry for Data navigation.
     /// </summary>
-    public variables.navigators.@this Navigators { get; } = new();
+    public variable.navigator.list.@this Navigator { get; } = new();
 
     /// <summary>
     /// The loaded goals.
     /// </summary>
-    public AppGoals Goals => _goals;
+    public global::app.goal.list.@this Goal => _goals;
 
     /// <summary>
     /// The file system abstraction.
@@ -160,7 +160,7 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Pluggable step cache. Default: in-memory. Swap via: - use 'redis.dll' for caching
     /// </summary>
-    public ICache Cache { get; set; } = new global::app.modules.cache.Memory();
+    public ICache Cache { get; set; } = new global::app.module.cache.Memory();
 
     /// <summary>
     /// Strongly typed, goal-scoped module config.
@@ -175,16 +175,16 @@ public sealed partial class @this : IAsyncDisposable
     /// Created lazily on first access so tests with fictional paths and apps
     /// that never touch settings don't pay for SQLite-file creation at boot.
     /// </summary>
-    public global::app.modules.settings.IStore SettingsStore => _settingsStore.Value;
-    private Lazy<global::app.modules.settings.IStore> _settingsStore = null!;
+    public global::app.module.settings.IStore SettingsStore => _settingsStore.Value;
+    private Lazy<global::app.module.settings.IStore> _settingsStore = null!;
 
     /// <summary>
     /// Shared (one per app) settings collection. Holds Data values keyed by
     /// name, backed by <see cref="SettingsStore"/>. Registered on every actor's
     /// Variables via <see cref="Variables.@this.RegisterNavigable"/> so
-    /// <c>%Settings.X%</c> resolution dispatches into <see cref="app.modules.settings.@this.Get"/>.
+    /// <c>%Settings.X%</c> resolution dispatches into <see cref="app.module.settings.@this.Get"/>.
     /// </summary>
-    public global::app.modules.settings.@this Settings { get; }
+    public global::app.module.settings.@this Settings { get; }
 
     /// <summary>
     /// Debug mode controller. Registers event handlers for step/goal debug output.
@@ -195,7 +195,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Run-wide error scope. AsyncLocal-flowed current error (PLang <c>%!error%</c>) +
     /// audit list of every error pushed. Populated by error.handle.Wrap during recovery.
     /// </summary>
-    public global::app.errors.@this Errors { get; }
+    public global::app.error.list.@this Error { get; }
 
     /// <summary>
     /// Test runner. Discovers and runs *.test.goal files with assertion tracking.
@@ -205,7 +205,7 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Builder mode controller. When enabled, actors use in-memory datasources.
     /// </summary>
-    public global::app.modules.builder.@this Builder { get; }
+    public global::app.module.builder.@this Builder { get; }
 
     /// <summary>
     /// Allow creating a new app if none exists. Set via --app={"create":true}. Default false.
@@ -214,15 +214,15 @@ public sealed partial class @this : IAsyncDisposable
 
     /// <summary>
     /// Centralized type identity: PLang names ↔ CLR types. File-format
-    /// characteristics live on <see cref="Formats"/>.
+    /// characteristics live on <see cref="Format"/>.
     /// </summary>
-    public types.@this Types { get; }
+    public type.list.@this Type { get; }
 
     /// <summary>
     /// File-format characteristics: extension → Kind, extension → MIME,
     /// Kind → compressibility. One per app.
     /// </summary>
-    public formats.@this Formats { get; } = new();
+    public format.list.@this Format { get; } = new();
 
     /// <summary>
     /// System actor — the root of the cancellation hierarchy.
@@ -241,7 +241,7 @@ public sealed partial class @this : IAsyncDisposable
     /// scope (channels, identity, parent ref). Stage 7: replaces runtime1's
     /// Service-as-actor model.
     /// </summary>
-    public global::app.Services.@this Services => _services ??= new global::app.Services.@this(this);
+    public global::app.service.list.@this Services => _services ??= new global::app.service.list.@this(this);
 
     /// <summary>
     /// The currently executing actor. Defaults to User. Changed to System during bootstrap (Start).
@@ -293,7 +293,7 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public callstack.@this CallStack { get; } = new();
 
-    public @this(string absolutePath, AppModules? modules = null,
+    public @this(string absolutePath, global::app.module.@this? modules = null,
         string? environment = null,
         bool autoWireConsoleChannels = true)
     {
@@ -304,26 +304,26 @@ public sealed partial class @this : IAsyncDisposable
         AbsolutePath = absolutePath;
         Environment = environment ?? "production";
         StartedAt = DateTime.UtcNow;
-        Events = new AppEvents();
+        Event = new global::app.@event.list.@this();
         Debug = new Debugging(this);
         Tester = new global::app.tester.@this(this);
-        Builder = new global::app.modules.builder.@this(this);
-        Types = new types.@this();
+        Builder = new global::app.module.builder.@this(this);
+        Type = new type.list.@this();
         Config = new config.@this();
-        _settingsStore = new Lazy<global::app.modules.settings.IStore>(CreateSettingsStore);
-        Settings = new global::app.modules.settings.@this(this);
-        _modules = modules ?? new AppModules();
+        _settingsStore = new Lazy<global::app.module.settings.IStore>(CreateSettingsStore);
+        Settings = new global::app.module.settings.@this(this);
+        _modules = modules ?? new global::app.module.@this();
         _modules.App = this;
-        _goals = new AppGoals { App = this };
+        _goals = new global::app.goal.list.@this { App = this };
 
-        Errors = new global::app.errors.@this(this);
+        Error = new global::app.error.list.@this(this);
 
         Code.RegisterDefaults();
-        Types.RegisterDomainTypes();
-        Types.Scheme.Register("file", (raw, ctx) => global::app.types.path.file.@this.Resolve(raw, ctx));
-        Types.Scheme.Register("http", (raw, ctx) => global::app.types.path.http.@this.Resolve(raw, ctx));
-        Types.Scheme.Register("https", (raw, ctx) => global::app.types.path.http.@this.Resolve(raw, ctx));
-        Navigators.RegisterDefaults();
+        Type.RegisterDomainTypes();
+        Type.Scheme.Register("file", (raw, context) => global::app.type.path.file.@this.Resolve(raw, context));
+        Type.Scheme.Register("http", (raw, context) => global::app.type.path.http.@this.Resolve(raw, context));
+        Type.Scheme.Register("https", (raw, context) => global::app.type.path.http.@this.Resolve(raw, context));
+        Navigator.RegisterDefaults();
 
         // Default actor is User — Start() switches to System for bootstrap
         CurrentActor = User;
@@ -353,18 +353,18 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public static void WireDefaultConsoleChannels(global::app.actor.@this actor)
     {
-        if (!actor.Channels.Contains(global::app.channels.@this.Output))
-            actor.Channels.Register(new global::app.channels.channel.stream.@this(
-                global::app.channels.@this.Output, Console.OpenStandardOutput(),
-                global::app.channels.channel.ChannelDirection.Output, ownsStream: false));
-        if (!actor.Channels.Contains(global::app.channels.@this.Error))
-            actor.Channels.Register(new global::app.channels.channel.stream.@this(
-                global::app.channels.@this.Error, Console.OpenStandardError(),
-                global::app.channels.channel.ChannelDirection.Output, ownsStream: false));
-        if (!actor.Channels.Contains(global::app.channels.@this.Input))
-            actor.Channels.Register(new global::app.channels.channel.stream.@this(
-                global::app.channels.@this.Input, Console.OpenStandardInput(),
-                global::app.channels.channel.ChannelDirection.Input, ownsStream: false));
+        if (!actor.Channel.Contains(global::app.channel.list.@this.Output))
+            actor.Channel.Register(new global::app.channel.stream.@this(
+                global::app.channel.list.@this.Output, Console.OpenStandardOutput(),
+                global::app.channel.ChannelDirection.Output, ownsStream: false));
+        if (!actor.Channel.Contains(global::app.channel.list.@this.Error))
+            actor.Channel.Register(new global::app.channel.stream.@this(
+                global::app.channel.list.@this.Error, Console.OpenStandardError(),
+                global::app.channel.ChannelDirection.Output, ownsStream: false));
+        if (!actor.Channel.Contains(global::app.channel.list.@this.Input))
+            actor.Channel.Register(new global::app.channel.stream.@this(
+                global::app.channel.list.@this.Input, Console.OpenStandardInput(),
+                global::app.channel.ChannelDirection.Input, ownsStream: false));
     }
 
     /// <summary>
@@ -373,7 +373,7 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public async Task Load()
     {
-        var prPath = global::app.types.path.@this.Resolve("/.build/app.pr", System.Context!);
+        var prPath = global::app.type.path.@this.Resolve("/.build/app.pr", System.Context!);
         var exists = await prPath.ExistsAsync();
         if (!exists.Success || exists.Value != true) return;
         var readResult = await prPath.ReadText();
@@ -416,8 +416,8 @@ public sealed partial class @this : IAsyncDisposable
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = true,
         Converters = {
-            new global::app.channels.serializers.TimeSpanIso8601(),
-            new global::app.types.path.JsonConverter()
+            new global::app.channel.serializer.TimeSpanIso8601(),
+            new global::app.type.path.JsonConverter()
         }
     };
 
@@ -428,7 +428,7 @@ public sealed partial class @this : IAsyncDisposable
         var json = JsonSerializer.Serialize(
             new { id = Id, name = Name, created = Created, updated = Updated, version = Version },
             CamelCaseIndented);
-        var prPath = global::app.types.path.@this.Resolve("/.build/app.pr", System.Context!);
+        var prPath = global::app.type.path.@this.Resolve("/.build/app.pr", System.Context!);
         var written = await prPath.WriteText(json);
         if (!written.Success) return written;
         return app.data.@this.Ok(this);
@@ -456,9 +456,9 @@ public sealed partial class @this : IAsyncDisposable
     /// be removed entirely when handlers grow their own RunAsync surface.
     /// </summary>
     public Task<data.@this> RunAction<TAction>(TAction handler, actor.context.@this context)
-        where TAction : modules.ICodeGenerated
+        where TAction : module.ICodeGenerated
     {
-        var entity = new goals.goal.steps.step.actions.action.@this
+        var entity = new global::app.goal.steps.step.actions.action.@this
         {
             Module = ResolveModuleName(typeof(TAction)),
             ActionName = ResolveActionName(typeof(TAction)),
@@ -471,7 +471,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Typed variant — same dispatch path, casts the result Value to TResult.
     /// </summary>
     public async Task<data.@this<TResult>> RunAction<TAction, TResult>(TAction handler, actor.context.@this context)
-        where TAction : modules.ICodeGenerated
+        where TAction : module.ICodeGenerated
     {
         var result = await RunAction(handler, context);
         if (!result.Success) return data.@this<TResult>.FromError(result.Error!);
@@ -487,7 +487,7 @@ public sealed partial class @this : IAsyncDisposable
 
     private static string ResolveActionName(System.Type handlerType)
     {
-        var attr = handlerType.GetCustomAttribute<modules.ActionAttribute>(inherit: false);
+        var attr = handlerType.GetCustomAttribute<module.ActionAttribute>(inherit: false);
         return attr?.Name ?? handlerType.Name.ToLowerInvariant();
     }
 
@@ -503,7 +503,7 @@ public sealed partial class @this : IAsyncDisposable
         // by the entry point before goal execution. Surface a clear error otherwise.
         foreach (var actor in new[] { System, User })
         {
-            var invariant = actor.Channels.Verify();
+            var invariant = actor.Channel.Verify();
             if (!invariant.Success) return invariant;
         }
 
@@ -514,12 +514,12 @@ public sealed partial class @this : IAsyncDisposable
         if (Builder.IsEnabled) return await Builder.RunAsync();
 
         // Resolve goal file
-        var goalFile = context.Variables.GetValue("goalFile") as string;
+        var goalFile = context.Variable.GetValue("goalFile") as string;
         if (string.IsNullOrEmpty(goalFile))
-            return app.data.@this.FromError(new global::app.errors.ServiceError(
+            return app.data.@this.FromError(new global::app.error.ServiceError(
                 "No goal file specified. Use: plang <goalfile>", "NoGoalFile", 400));
 
-        var goalCall = new GoalCall { PrPath = global::app.types.path.@this.Resolve(goalFile, context) };
+        var goalCall = new GoalCall { PrPath = global::app.type.path.@this.Resolve(goalFile, context) };
         var goalResult = await goalCall.GetGoalAsync(this, context);
         if (!goalResult.Success) return goalResult;
 
@@ -542,7 +542,7 @@ public sealed partial class @this : IAsyncDisposable
         if (!goalResult.Success) return goalResult;
 
         // Inject parameters — GetGoalAsync only injects when loading from file,
-        // but goals found in memory (app.goals.Get) need parameters too.
+        // but goals found in memory (app.goal.Get) need parameters too.
         // Goal-call is *not* a fork: it stays in the caller's flow. Variables.Set
         // is overlay-aware — if a fork operator above us (channel fire, parallel
         // foreach iteration) pushed a Calls scope, these writes land in that
@@ -552,7 +552,7 @@ public sealed partial class @this : IAsyncDisposable
         // isolated by whatever forked them.
         if (goalCall.Parameters != null)
             foreach (var param in goalCall.Parameters)
-                context.Variables.Set(param.Name, param);
+                context.Variable.Set(param.Name, param);
 
         return await ((Goal)goalResult.Value!).RunAsync(context);
     }
@@ -566,18 +566,18 @@ public sealed partial class @this : IAsyncDisposable
         return await goal.RunAsync(context);
     }
 
-    private global::app.modules.settings.IStore CreateSettingsStore()
+    private global::app.module.settings.IStore CreateSettingsStore()
     {
         // Testing: in-memory db scoped by App.Id so per-test Apps never share state.
         // SQLite's shared-cache merges in-memory dbs with identical DataSource names,
         // so the App.Id scoping is load-bearing.
         if (Tester.IsEnabled)
-            return global::app.modules.settings.Sqlite.InMemory($"system-{Id}");
+            return global::app.module.settings.Sqlite.InMemory($"system-{Id}");
 
         // Lift to Path: AuthGate fires inside the Sqlite ctor on Write,
         // parent dir creation via path.Mkdir.
-        var dbPath = global::app.types.path.@this.Resolve("/.db/system.sqlite", System.Context!);
-        return new global::app.modules.settings.Sqlite(dbPath);
+        var dbPath = global::app.type.path.@this.Resolve("/.db/system.sqlite", System.Context!);
+        return new global::app.module.settings.Sqlite(dbPath);
     }
 
     public async ValueTask DisposeAsync()

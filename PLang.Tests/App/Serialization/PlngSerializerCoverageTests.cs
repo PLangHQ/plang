@@ -9,7 +9,7 @@ namespace PLang.Tests.App.Serialization;
 // diagnostic with error severity in PLang.Generators. Stage 2 ships the runtime
 // dispatch + reflection-driven discovery; the build-time enforcement is a
 // follow-up. The runtime safety is currently the writer's "RendererLookupMissed"
-// throw (see app/channels/serializers/json/writer.cs case TypedValueNode), which
+// throw (see app/channel/serializers/json/writer.cs case TypedValueNode), which
 // makes a missing renderer surface immediately on first emit rather than silently
 // dropping the value — but the architect's intent is the BUILD fails before that.
 
@@ -17,9 +17,9 @@ public class PlngSerializerCoverageTests
 {
     [Test] public async Task Coverage_PlangTypeWithDefaultCs_PassesGate()
     {
-        // path has app/types/path/serializer/Default.cs ⇒ the would-be gate
+        // path has app/type/path/serializer/Default.cs ⇒ the would-be gate
         // accepts it. Today's runtime equivalent: renderers.Has("path") == true.
-        var r = new global::app.types.renderers.@this();
+        var r = new global::app.type.renderer.@this();
         await Assert.That(r.Has("path")).IsTrue();
     }
 

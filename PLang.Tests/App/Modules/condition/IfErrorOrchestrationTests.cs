@@ -1,8 +1,8 @@
 using app;
 using app.actor.context;
-using app.variables;
-using app.types.path;
-using Action = global::app.goals.goal.steps.step.actions.action.@this;
+using app.variable;
+using app.type.path;
+using Action = global::app.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.Modules.condition;
 
@@ -78,8 +78,8 @@ public class IfErrorOrchestrationTests : IDisposable
     public async Task If_OrchestratedSuccess_MarksResultHandled()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new StreamChannel(
-            EngineChannels.Output, captureStream,
+        _app.User.Channel.Register(new StreamChannel(
+            global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 

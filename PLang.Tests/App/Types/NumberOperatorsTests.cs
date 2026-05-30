@@ -1,5 +1,5 @@
-using number = global::app.types.number.@this;
-using PKind = global::app.types.number.NumberKind;
+using number = global::app.type.number.@this;
+using PKind = global::app.type.number.NumberKind;
 
 namespace PLang.Tests.App.Types;
 

@@ -2,14 +2,14 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using app;
-using app.channels.serializers;
-using app.variables;
-using app.modules.signing;
+using app.channel.serializer;
+using app.variable;
+using app.module.signing;
 
 namespace PLang.Tests.App.Serializers;
 
 /// <summary>
-/// Tests global::app.channels.serializers.filters.Transport — re-includes [JsonIgnore] properties
+/// Tests global::app.channel.serializer.filter.Transport — re-includes [JsonIgnore] properties
 /// that have [In] or [Out] attributes for application/plang transport.
 /// </summary>
 public class TransportPropertyFilterTests
@@ -26,7 +26,7 @@ public class TransportPropertyFilterTests
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
-            Modifiers = { global::app.channels.serializers.filters.Transport.ForInbound }
+            Modifiers = { global::app.channel.serializer.filter.Transport.ForInbound }
         }
     };
 
@@ -37,7 +37,7 @@ public class TransportPropertyFilterTests
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
-            Modifiers = { global::app.channels.serializers.filters.Transport.ForOutbound }
+            Modifiers = { global::app.channel.serializer.filter.Transport.ForOutbound }
         }
     };
 

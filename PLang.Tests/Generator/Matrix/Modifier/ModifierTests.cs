@@ -1,6 +1,6 @@
 using PLang.Tests.App.Fixtures;
-using app.modules.matrix.modifier;
-using app.modules.matrix.plain;
+using app.module.matrix.modifier;
+using app.module.matrix.plain;
 
 namespace PLang.Tests.Generator.Matrix.Modifier;
 

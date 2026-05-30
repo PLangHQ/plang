@@ -3,6 +3,8 @@ using System.Text.Json.Serialization;
 
 namespace app.data;
 
+using type = global::app.type.@this;
+
 /// <summary>
 /// Wire converter for <c>app.data.@this</c> — the single point where the
 /// canonical five-field shape <c>{name, type, value, properties, signature}</c>
@@ -207,7 +209,7 @@ public sealed class Wire : JsonConverter<@this>
         object? value = null;
         type? typeRef = null;
         string? kind = null;
-        app.modules.signing.Signature? signature = null;
+        app.module.signing.Signature? signature = null;
         Properties? properties = null;
 
         while (reader.Read())
@@ -266,7 +268,7 @@ public sealed class Wire : JsonConverter<@this>
                     }
                     break;
                 case "signature":
-                    signature = JsonSerializer.Deserialize<app.modules.signing.Signature>(ref reader, options);
+                    signature = JsonSerializer.Deserialize<app.module.signing.Signature>(ref reader, options);
                     break;
                 case "properties":
                     properties = ReadPropertiesObject(ref reader);
@@ -384,12 +386,12 @@ public sealed class Wire : JsonConverter<@this>
         writer.WriteString("name", data.Name);
 
         // type — emit as a plain JSON string (the data.@this.Type's wire form).
-        // Skipped entirely when null to match the legacy [JsonIgnore(WhenWritingNull)]
-        // discipline so the wire stays compact.
-        var typeVal = data.Type?.Value;
-        if (typeVal != null)
+        // Skipped for the Null sentinel (the type entity that replaces the
+        // historical `Type == null` state) — keeps the wire shape compact and
+        // identical to the pre-Null-type world.
+        if (!data.Type.IsNull)
         {
-            writer.WriteString("type", typeVal);
+            writer.WriteString("type", data.Type.Value);
         }
 
         // kind — refinement of type, separate sibling field per plang-types design.
@@ -410,8 +412,8 @@ public sealed class Wire : JsonConverter<@this>
         //     Sensitive included, Masked ignored. Round-trips local state.
         //   - View.Debug — diagnostic dump.
         var normalizedValue = data.Normalize(View);
-        var jsonWriter = new app.channels.serializers.json.Writer(writer, options, View,
-            renderers: data.Context?.App?.Types.Renderers);
+        var jsonWriter = new app.channel.serializer.json.Writer(writer, options, View,
+            renderers: data.Context?.App?.Type.Renderers);
         jsonWriter.Value(normalizedValue);
 
         // properties — nested object, omitted when empty to keep the wire compact.

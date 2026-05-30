@@ -1,6 +1,6 @@
 using System.Diagnostics;
-using app.errors;
-using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
+using app.error;
+using ActionEntity = app.goal.steps.step.actions.action.@this;
 
 namespace app.callstack.call;
 
@@ -44,10 +44,10 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Errors observed at this scope. Populated by App.Run when the handler returns a
     /// failure or throws. <see cref="Handled"/> tracks recovery outcome independently —
-    /// the error stays in the list either way (audit trail). See <see cref="Errors.@this"/>
+    /// the error stays in the list either way (audit trail). See <see cref="error.@this"/>
     /// for thread-safety semantics.
     /// </summary>
-    public Errors.@this Errors { get; } = new();
+    public error.@this Errors { get; } = new();
 
     /// <summary>
     /// Flipped <c>true</c> by error.handle.Wrap on recovery success. Renderers use this to
@@ -65,10 +65,10 @@ public sealed partial class @this : IAsyncDisposable
 
     /// <summary>
     /// Live siblings under this Call. Owns its own lock + FIFO eviction policy — see
-    /// <see cref="children.@this"/>. Allocated lazily via the constructor below so the
+    /// <see cref="child.list.@this"/>. Allocated lazily via the constructor below so the
     /// back-reference to the parent CallStack is set before any Add can land.
     /// </summary>
-    public children.@this Children { get; }
+    public child.list.@this Children { get; }
 
     // --- Timing tier (default(DateTimeOffset) when Flags.Timing off) ---
     /// <summary>UTC timestamp at Push. <c>default(DateTimeOffset)</c> when Timing flag off.</summary>
@@ -83,17 +83,17 @@ public sealed partial class @this : IAsyncDisposable
     // --- Diff tier (null when Flags.Diff off) ---
     /// <summary>
     /// Variable mutations observed during this Call's lifetime. Null unless Flags.Diff was
-    /// on at Push. See <see cref="diffs.@this"/> for thread-safety + snapshot iteration.
+    /// on at Push. See <see cref="diff.@this"/> for thread-safety + snapshot iteration.
     /// </summary>
-    public diffs.@this? Diffs { get; }
+    public diff.@this? Diffs { get; }
 
     // --- Tag tier ---
     /// <summary>
     /// Free-form tags written by handlers (<c>tag</c> action) or C# code via <see cref="Tag"/>.
     /// Always allocated (cost is one dict alloc per Call) so the lazy-init race goes away —
-    /// see <see cref="tags.@this"/> for thread-safety + iteration semantics.
+    /// see <see cref="tag.@this"/> for thread-safety + iteration semantics.
     /// </summary>
-    public tags.@this Tags { get; } = new();
+    public tag.@this Tags { get; } = new();
 
     /// <summary>
     /// Constructed by <see cref="app.callstack.@this.Push"/>. Holds back-references to the
@@ -115,7 +115,7 @@ public sealed partial class @this : IAsyncDisposable
         _stack = stack;
         _previousCurrent = previousCurrent;
         _diffSource = diffSource;
-        Children = new children.@this(stack);
+        Children = new child.list.@this(stack);
 
         if (flags.Timing)
         {
@@ -125,7 +125,7 @@ public sealed partial class @this : IAsyncDisposable
 
         if (flags.Diff && diffSource != null)
         {
-            Diffs = new diffs.@this();
+            Diffs = new diff.@this();
             var deep = flags.DeepDiff;
             _onSetHandler = (name, before, _) =>
             {
@@ -226,7 +226,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Returns the handler's result (or a ServiceError-wrapped result on
     /// caught exception).
     /// </summary>
-    public async Task<data.@this> ExecuteAsync(modules.ICodeGenerated handler, actor.context.@this context)
+    public async Task<data.@this> ExecuteAsync(module.ICodeGenerated handler, actor.context.@this context)
     {
         try
         {

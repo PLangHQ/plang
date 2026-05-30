@@ -2,11 +2,11 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using app.actor.context;
-using app.goals.goal;
-using app.variables;
-using app.modules.http.code;
-using app.modules.llm;
-using app.modules.llm.code;
+using app.goal;
+using app.variable;
+using app.module.http.code;
+using app.module.llm;
+using app.module.llm.code;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.llm;
@@ -192,7 +192,7 @@ public class LlmIntegrationTests
                 Name = "GetWeather",
                 Parameters = new List<Data>
                 {
-                    new Data("city", null, global::app.data.type.String)
+                    new Data("city", null, global::app.type.@this.String)
                 }
             }
         };

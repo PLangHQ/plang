@@ -21,15 +21,15 @@ public class Stage2_MechanicalTypings_Part1Tests
     [Test]
     public async Task TestDiscover_Run_ReturnsTaskDataListOfTest()
     {
-        var ret = RunReturnType<global::app.modules.test.discover>();
-        var expected = typeof(Task<global::app.data.@this<List<global::app.tester.Test.@this>>>);
+        var ret = RunReturnType<global::app.module.test.discover>();
+        var expected = typeof(Task<global::app.data.@this<List<global::app.tester.test.@this>>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
 
     [Test]
     public async Task TestRun_Run_ReturnsTaskDataOfResults()
     {
-        var ret = RunReturnType<global::app.modules.test.run>();
+        var ret = RunReturnType<global::app.module.test.run>();
         var expected = typeof(Task<global::app.data.@this<global::app.tester.Results>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
@@ -41,7 +41,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     [Test]
     public async Task GoalGetTypes_Run_ReturnsTaskDataOfStronglyTypedRecord()
     {
-        var ret = RunReturnType<global::app.modules.goal.getTypes>();
+        var ret = RunReturnType<global::app.module.goal.getTypes>();
         var expected = typeof(Task<global::app.data.@this<List<Dictionary<string, string>>>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
@@ -52,15 +52,15 @@ public class Stage2_MechanicalTypings_Part1Tests
     [Test]
     public async Task OutputAsk_Run_ReturnsTaskDataOfAsk()
     {
-        var ret = RunReturnType<global::app.modules.output.ask>();
-        var expected = typeof(Task<global::app.data.@this<global::app.modules.output.Ask>>);
+        var ret = RunReturnType<global::app.module.output.ask>();
+        var expected = typeof(Task<global::app.data.@this<global::app.module.output.Ask>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
 
     [Test]
     public async Task ChannelSet_Run_ReturnsBareTaskOfData_VoidLike()
     {
-        var ret = RunReturnType<global::app.modules.channel.Set>();
+        var ret = RunReturnType<global::app.module.channel.Set>();
         await Assert.That(ret).IsEqualTo(typeof(Task<Data>))
             .Because("channel.set produces no value — bare Task<Data> is the contract.");
     }
@@ -68,7 +68,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     [Test]
     public async Task ModulesDescribe_TestDiscover_AdvertisesListOfTestReturnType()
     {
-        var rendered = await _app.Modules.Describe();
+        var rendered = await _app.Module.Describe();
         var row = rendered.FirstOrDefault(a => a.Module == "test" && a.ActionName == "discover");
         await Assert.That(row).IsNotNull();
         await Assert.That(row!.ReturnTypeName).IsEqualTo("list<test>");
@@ -77,7 +77,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     [Test]
     public async Task ModulesDescribe_TestRun_AdvertisesResultsReturnType()
     {
-        var rendered = await _app.Modules.Describe();
+        var rendered = await _app.Module.Describe();
         var row = rendered.FirstOrDefault(a => a.Module == "test" && a.ActionName == "run");
         await Assert.That(row).IsNotNull();
         await Assert.That(row!.ReturnTypeName).IsEqualTo("results");
@@ -88,7 +88,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     [Test]
     public async Task ModulesDescribe_OutputAsk_AdvertisesAskReturnType()
     {
-        var rendered = await _app.Modules.Describe();
+        var rendered = await _app.Module.Describe();
         var row = rendered.FirstOrDefault(a => a.Module == "output" && a.ActionName == "ask");
         await Assert.That(row).IsNotNull();
         await Assert.That(row!.ReturnTypeName).IsEqualTo("ask");
@@ -97,7 +97,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     [Test]
     public async Task ModulesDescribe_ChannelSet_OmitsReturnsLine()
     {
-        var rendered = await _app.Modules.Describe();
+        var rendered = await _app.Module.Describe();
         var row = rendered.FirstOrDefault(a => a.Module == "channel" && a.ActionName == "set");
         await Assert.That(row).IsNotNull();
         await Assert.That(row!.ReturnTypeName).IsEqualTo("data")
@@ -111,7 +111,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     [Test]
     public async Task DataValueFromTypedRun_NotDoubleWrapped()
     {
-        var ret = RunReturnType<global::app.modules.test.discover>();
+        var ret = RunReturnType<global::app.module.test.discover>();
         // Task<Data<T>> → unwrap → Data<T>
         var dataWrapper = ret.GetGenericArguments()[0];
         var t = dataWrapper.GetGenericArguments()[0];

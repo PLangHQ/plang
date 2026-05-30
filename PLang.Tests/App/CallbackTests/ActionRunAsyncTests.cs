@@ -4,7 +4,7 @@ using TUnit.Assertions.Extensions;
 
 namespace PLang.Tests.App.CallbackTests;
 
-/// Stage 2a — Batch 4: action owns its execution. `action.RunAsync(ctx)` is
+/// Stage 2a — Batch 4: action owns its execution. `action.RunAsync(context)` is
 /// the single entry; `App.Run` is deleted (RunAction retained as the inline-
 /// C#-composition wrapper that builds an entity and dispatches through the
 /// same path — spec-deferred for later removal once handlers grow their own
@@ -18,11 +18,11 @@ public class ActionRunAsyncTests
     [Test] public async Task ActionRunAsync_IsSingleEntry_PushAnchorExecute()
     {
         var app = NewApp();
-        var ctx = app.User.Context;
+        var context = app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%v%"), ("value", "ok"));
-        var result = await action.RunAsync(ctx);
+        var result = await action.RunAsync(context);
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(ctx.Variables.GetValue("v")).IsEqualTo("ok");
+        await Assert.That(context.Variable.GetValue("v")).IsEqualTo("ok");
     }
 
     [Test] public async Task AppRun_SymbolAbsent_FromProductionSource()
@@ -31,7 +31,7 @@ public class ActionRunAsyncTests
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance,
             null,
             new[] {
-                typeof(global::app.goals.goal.steps.step.actions.action.@this),
+                typeof(global::app.goal.steps.step.actions.action.@this),
                 typeof(global::app.actor.context.@this),
             },
             null);

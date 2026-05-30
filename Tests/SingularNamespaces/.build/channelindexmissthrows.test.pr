@@ -1,0 +1,111 @@
+{
+  "name": "TestUnknownChannelThrowsTypedError",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write \u0027ping\u0027 to absent-channel-xyz, on error set %errorKey% = %!error.Key%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "Failure matrix: actor.channel[\u0022nope\u0022] selecting an absent channel from PLang code raises\na typed error \u2014 uniform with goal/type index-miss, no silent noop, no implicit create.\nAsserts the typed Error.Key, not just \u0022any error\u0022 \u2014 proves the registry index-miss path,\nnot a null-channel coincidence.",
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "ping",
+              "type": "object"
+            },
+            {
+              "name": "channel",
+              "value": "absent-channel-xyz",
+              "type": "channel"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "variable",
+                      "action": "set",
+                      "parameters": [
+                        {
+                          "name": "Name",
+                          "value": "%errorKey%",
+                          "type": "string"
+                        },
+                        {
+                          "name": "Value",
+                          "value": "%!error.Key%",
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  ],
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "formal": "output.write(Data=\u0022ping\u0022, channel=\u0022absent-channel-xyz\u0022) | error.handle(Actions=[variable.set(Name=%errorKey%, Value=%!error.Key%, Type=object)])",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %errorKey% equals \u0027ChannelNotFound\u0027",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "ChannelNotFound",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%errorKey%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022ChannelNotFound\u0022, Actual=%errorKey%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/SingularNamespaces/ChannelIndexMissThrows.test.goal",
+  "prPath": "/SingularNamespaces/.build/channelindexmissthrows.test.pr",
+  "hash": "b17c0cef2817f5bd07308dc79bd90fd408c1884b1facc4aa09c8b812f328c1d6",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

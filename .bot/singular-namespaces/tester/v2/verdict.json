@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "6 of 7 v1 findings honestly fixed; the new F1 Promote() throw is deletion-confirmed uncovered and its named test verifies the opposite." }

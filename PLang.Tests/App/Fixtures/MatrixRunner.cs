@@ -1,5 +1,5 @@
 using System.Reflection;
-using app.modules;
+using app.module;
 
 namespace PLang.Tests.App.Fixtures;
 
@@ -9,7 +9,7 @@ namespace PLang.Tests.App.Fixtures;
 /// are all exercised. Tests construct an Action with synthetic Parameters/Defaults,
 /// optionally seed Variables, and read back the result Data plus diagnostic context.
 ///
-/// Matrix handlers live in App.modules.matrix.* — not auto-registered by Modules.Discover
+/// Matrix handlers live in App.module.matrix.* — not auto-registered by Modules.Discover
 /// (which walks PLang.dll only). RunAsync registers the handler type on demand using
 /// its action attribute name and dispatches via App.Run.
 /// </summary>
@@ -21,11 +21,11 @@ public static class MatrixRunner
     /// </summary>
     public sealed record Result(
         Data Data,
-        IReadOnlyList<global::app.errors.ParamSnapshot>? Snapshot);
+        IReadOnlyList<global::app.error.ParamSnapshot>? Snapshot);
 
     /// <summary>
     /// Runs the matrix handler TAction through App.Run. Parameters and defaults are
-    /// supplied as (name, value) pairs; variables are seeded into context.Variables.
+    /// supplied as (name, value) pairs; variables are seeded into context.Variable.
     /// </summary>
     public static async Task<Result> RunAsync<TAction>(
         global::app.@this app,
@@ -52,11 +52,11 @@ public static class MatrixRunner
         if (variables != null)
         {
             foreach (var kv in variables)
-                context.Variables.Set(kv.Key, kv.Value);
+                context.Variable.Set(kv.Key, kv.Value);
         }
 
         var data = await action.RunAsync(context);
-        var snapshot = (data.Error as global::app.errors.Error)?.Params;        return new Result(data, snapshot);
+        var snapshot = (data.Error as global::app.error.Error)?.Params;        return new Result(data, snapshot);
     }
 
     /// <summary>
@@ -88,12 +88,12 @@ public static class MatrixRunner
         if (variables != null)
         {
             foreach (var kv in variables)
-                context.Variables.Set(kv.Key, kv.Value);
+                context.Variable.Set(kv.Key, kv.Value);
         }
 
         var handler = new TAction();
         var data = await handler.ExecuteAsync(action, context);
-        var snapshot = (data.Error as global::app.errors.Error)?.Params;
+        var snapshot = (data.Error as global::app.error.Error)?.Params;
         return new Result(data, snapshot);
     }
 
@@ -105,8 +105,8 @@ public static class MatrixRunner
         where TAction : class, ICodeGenerated
     {
         var (module, actionName) = ModuleAndAction<TAction>();
-        if (app.Modules.Contains(module, actionName)) return;
-        app.Modules.RegisterType(module, actionName, typeof(TAction));
+        if (app.Module.Contains(module, actionName)) return;
+        app.Module.RegisterType(module, actionName, typeof(TAction));
     }
 
     /// <summary>
@@ -120,16 +120,16 @@ public static class MatrixRunner
             t.GetCustomAttribute<ActionAttribute>() != null
             && typeof(ICodeGenerated).IsAssignableFrom(t)
             && !t.IsAbstract
-            && (t.Namespace?.StartsWith("app.modules.matrix.") ?? false));
+            && (t.Namespace?.StartsWith("app.module.matrix.") ?? false));
 
         foreach (var type in matrixTypes)
         {
             var attr = type.GetCustomAttribute<ActionAttribute>()!;
             var actionName = attr.Name ?? type.Name.ToLowerInvariant();
             var moduleNs = type.Namespace!;
-            var module = moduleNs.Substring("app.modules.".Length);
-            if (!app.Modules.Contains(module, actionName))
-                app.Modules.RegisterType(module, actionName, type);
+            var module = moduleNs.Substring("app.module.".Length);
+            if (!app.Module.Contains(module, actionName))
+                app.Module.RegisterType(module, actionName, type);
         }
     }
 
@@ -141,8 +141,8 @@ public static class MatrixRunner
         var actionName = attr.Name ?? t.Name.ToLowerInvariant();
         var moduleNs = t.Namespace
             ?? throw new InvalidOperationException($"{t.FullName} has no namespace");
-        var module = moduleNs.StartsWith("app.modules.")
-            ? moduleNs.Substring("app.modules.".Length)
+        var module = moduleNs.StartsWith("app.module.")
+            ? moduleNs.Substring("app.module.".Length)
             : moduleNs;
         return (module, actionName);
     }

@@ -1,0 +1,30 @@
+using app.variable;
+using app.module.signing.code;
+
+namespace app.module.signing;
+
+/// <summary>
+/// Signs data using the configured signing provider.
+/// </summary>
+[Action("sign", Cacheable = false)]
+public partial class sign : IContext
+{
+    /// <summary>The data to sign.</summary>
+    [IsInitiated]
+    public partial data.@this? Data { get; init; }
+
+    /// <summary>Contracts for this signature. Default: ["C0"].</summary>
+    public partial data.@this<List<string>>? Contracts { get; init; }
+
+    /// <summary>Optional headers to include in the signature object.</summary>
+    public partial data.@this<Dictionary<string, object>>? Headers { get; init; }
+
+    /// <summary>Optional TTL. If set, signature.Expires = Created + this duration.
+    /// Wire form is ISO 8601 (e.g. <c>"PT5M"</c>) via the global TimeSpan converter.</summary>
+    public partial data.@this<TimeSpan>? Expires { get; init; }
+
+    [Code]
+    public partial ISigning Signer { get; }
+
+    public async Task<data.@this<object>> Run() => await Signer.SignAsync(this);
+}

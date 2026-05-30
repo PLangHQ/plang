@@ -1,11 +1,11 @@
 using System.Reflection;
 using System.Text.Json;
 using app;
-using app.goals.goal;
-using app.variables;
-using app.modules.code;
-using app.modules.llm;
-using app.modules.llm.code;
+using app.goal;
+using app.variable;
+using app.module.code;
+using app.module.llm;
+using app.module.llm.code;
 
 namespace PLang.Tests.App.Modules.llm;
 
@@ -83,16 +83,16 @@ public class LlmTypeTests
     public async Task GoalCall_ExistingProperties_UnchangedAfterNewFields()
     {
         await using var app = new global::app.@this("/test");
-        var ctx = app.User.Context;
+        var context = app.User.Context;
         var gc = new GoalCall
         {
             Name = "MyGoal",
             Parallel = true,
             Parameters = new List<Data> { new Data("param1", "value1") },
-            PrPath = global::app.types.path.@this.Resolve("/test/.build/mygoal.pr", ctx)
+            PrPath = global::app.type.path.@this.Resolve("/test/.build/mygoal.pr", context)
         };
 
-        var opts = new JsonSerializerOptions { Converters = { new global::app.types.path.JsonConverter(ctx) } };
+        var opts = new JsonSerializerOptions { Converters = { new global::app.type.path.JsonConverter(context) } };
         var json = JsonSerializer.Serialize(gc, opts);
         var deserialized = JsonSerializer.Deserialize<GoalCall>(json, opts)!;
 

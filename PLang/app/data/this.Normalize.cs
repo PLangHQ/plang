@@ -1,6 +1,6 @@
 using System.Collections;
 using app;
-using app.channels.serializers.filters;
+using app.channel.serializer.filter;
 
 namespace app.data;
 
@@ -33,7 +33,7 @@ public partial class @this
     public object? Normalize(View mode = View.Out)
     {
         var visited = new HashSet<object>(System.Collections.Generic.ReferenceEqualityComparer.Instance);
-        return NormalizeValue(Value, mode, visited, depth: 0, types: _context?.App?.Types);
+        return NormalizeValue(Value, mode, visited, depth: 0, types: _context?.App?.Type);
     }
 
     /// <summary>
@@ -46,13 +46,13 @@ public partial class @this
     /// <summary>
     /// Walk-with-types overload — when <paramref name="types"/> is non-null,
     /// values whose CLR type resolves to a registered <see cref="app.Attributes.PlangTypeAttribute"/>
-    /// name AND have at least one entry in <see cref="app.types.renderers.@this"/>
+    /// name AND have at least one entry in <see cref="app.type.renderer.@this"/>
     /// are tagged as <see cref="TypedValueNode"/> rather than reflected. Bare
     /// (no-types) callers fall back to today's reflection — safe default for
     /// tests / no-Context paths.
     /// </summary>
     internal static object? NormalizeValue(object? value, View mode, HashSet<object> visited, int depth,
-        app.types.@this? types)
+        app.type.list.@this? types)
     {
         if (depth > MaxNormalizeDepth)
             throw new NormalizeException(
@@ -168,13 +168,13 @@ public partial class @this
     }
 
     private static List<@this> NormalizeObject(object obj, View mode, HashSet<object> visited, int depth,
-        app.types.@this? types)
+        app.type.list.@this? types)
     {
         if (!visited.Add(obj))
             throw CycleError(obj);
         try
         {
-            var entries = app.channels.serializers.filters.Tagged.PropertiesFor(obj.GetType(), mode);
+            var entries = app.channel.serializer.filter.Tagged.PropertiesFor(obj.GetType(), mode);
             var children = new List<@this>(entries.Count);
 
             foreach (var entry in entries)

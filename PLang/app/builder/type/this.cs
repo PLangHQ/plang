@@ -1,0 +1,140 @@
+using System.Text;
+using System.Text.Json.Serialization;
+using app.Attributes;
+using app.Utils;
+
+namespace app.builder.type;
+
+/// <summary>
+/// "What every action looks like, for the LLM." Owned by Modules; describes
+/// the registered actions' types, parameter schemas, and authored Examples.
+///
+/// Two roles in one type:
+///   - Host (the instance held at <c>app.builder.type</c>) — has <c>_modules</c>
+///     and exposes <see cref="Build"/> + <see cref="Render"/>. Its
+///     <see cref="PrimitiveNames"/> / <see cref="Types"/> are empty arrays.
+///   - Built result (returned by <see cref="Build"/>) — same instance shape,
+///     populated PrimitiveNames + Types. Consumers (builder template, trace
+///     viewer) use the built result.
+///
+/// OBP: schema is a real object owned by Modules. Reach it via
+/// <c>app.builder.type</c>; build a snapshot via
+/// <c>app.builder.type.Build()</c>.
+/// </summary>
+public sealed partial class @this
+{
+    private readonly app.module.@this _modules;
+
+    public @this(app.module.@this modules) { _modules = modules; }
+
+    /// <summary>Ordered list of primitive type names exposed to the builder.</summary>
+    [LlmBuilder]
+    public IReadOnlyList<string> PrimitiveNames { get; init; } = System.Array.Empty<string>();
+
+    /// <summary>Record and enum entries referenced by the action catalog.</summary>
+    [LlmBuilder]
+    public IReadOnlyList<global::app.type.@this> Types { get; init; } = System.Array.Empty<global::app.type.@this>();
+
+    // ---- Template conveniences (pre-rendered views the Liquid prompt consumes) ----
+
+    /// <summary>Comma-joined primitive names — the string the builder template drops in.</summary>
+    [JsonIgnore]
+    public string TypeNames => string.Join(", ", PrimitiveNames);
+
+    /// <summary>
+    /// The full schema block rendered as the markdown shape the builder prompt expects:
+    ///   `name: v1 | v2 | ...`           for Enum entries
+    ///   `name: { k: T, ... }`            for Record entries
+    /// Pre-rendered so the Liquid template stays a dumb stitcher.
+    /// </summary>
+    [JsonIgnore]
+    public string TypeSchemas
+    {
+        get
+        {
+            var sb = new StringBuilder();
+            foreach (var t in Types)
+            {
+                sb.Append("  ").Append(t.Value).Append(": ");
+                if (t.Values != null)
+                {
+                    sb.Append(string.Join(" | ", t.Values));
+                }
+                else if (t.Fields != null)
+                {
+                    sb.Append("{ ");
+                    for (int i = 0; i < t.Fields.Count; i++)
+                    {
+                        if (i > 0) sb.Append(", ");
+                        sb.Append(t.Fields[i].Name).Append(": ").Append(t.Fields[i].TypeName);
+                    }
+                    sb.Append(" }");
+                }
+                else
+                {
+                    // Scalar: emit just the constructor-input type, not the
+                    // `constructor(name: type), properties: ...` verbose form.
+                    // The verbose form misleads the LLM into emitting a record
+                    // (dict) for parameters of this type; what it actually wants
+                    // is a scalar matching the input form (e.g. a string for
+                    // `path`). The dot-path properties (extension, exists, ...)
+                    // stay accessible at runtime via type registration; they
+                    // don't need to live in the catalog summary.
+                    if (t.ConstructorSignature != null)
+                    {
+                        var sig = t.ConstructorSignature;
+                        var colonIdx = sig.IndexOf(':');
+                        sb.Append(colonIdx > 0 ? sig[(colonIdx + 1)..].Trim() : sig);
+                    }
+                    else if (t.Shape != null)
+                    {
+                        sb.Append(t.Shape);
+                    }
+                }
+                if (t.Kinds != null && t.Kinds.Count > 0)
+                    sb.Append(" (kinds: ").Append(string.Join(" | ", t.Kinds)).Append(')');
+                if (!string.IsNullOrEmpty(t.Description))
+                    sb.Append(" — ").Append(t.Description);
+                if (!string.IsNullOrEmpty(t.Example))
+                    sb.Append(" (e.g. ").Append(t.Example).Append(')');
+                sb.AppendLine();
+            }
+            return sb.ToString().TrimEnd();
+        }
+    }
+
+    /// <summary>
+    /// Builds a fresh Schema by walking <c>_modules</c>' action parameter types.
+    /// Discovery is transitive: every type referenced in a schema is itself surfaced.
+    /// The @this decision (OBP types are catalog-visible by convention), [PlangType]
+    /// resolution, enum handling, and [LlmBuilder]-filtered fields all live in
+    /// TypeMapping — Build just assembles the result.
+    /// </summary>
+    public @this Build()
+    {
+        var primitives = _modules.App?.Type.GetBuilderTypeNames() ?? new List<string>();
+        var types = _modules.App?.Type.BuildTypeEntries(_modules) ?? new List<global::app.type.@this>();
+
+        return new @this(_modules)
+        {
+            PrimitiveNames = primitives,
+            Types = types,
+        };
+    }
+
+    /// <summary>
+    /// Serializes the schema as JSON — structured Types + PrimitiveNames, with
+    /// camelCase keys. ClrType is hidden (tagged JsonIgnore on Entry). The
+    /// result is safe to expose to docs/UI/trace-viewer consumers.
+    /// </summary>
+    public string ToJson(bool indent = true)
+    {
+        var options = new System.Text.Json.JsonSerializerOptions
+        {
+            WriteIndented = indent,
+            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+        };
+        return System.Text.Json.JsonSerializer.Serialize(this, options);
+    }
+}

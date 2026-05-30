@@ -161,17 +161,17 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_PlainDataTarget_VarReference_ReturnsLiveVariableData()
     {
-        var ctx = _app.User.Context;
-        var live = new global::app.data.@this<List<object?>>("products", new List<object?> { "a", "b" }) { Context = ctx };
-        ctx.Variables.Set(live);
+        var context = _app.User.Context;
+        var live = new global::app.data.@this<List<object?>>("products", new List<object?> { "a", "b" }) { Context = context };
+        context.Variable.Set(live);
 
-        var paramData = new Data("Slot", "%products%") { Context = ctx };
+        var paramData = new Data("Slot", "%products%") { Context = context };
         var canonical = paramData.AsCanonical();
 
         await Assert.That(ReferenceEquals(canonical, live)).IsTrue();
         // Mutation propagates: appending via live's value is visible through Variables.Get.
         ((List<object?>)canonical.Value!).Add("c");
-        var stored = (List<object?>)ctx.Variables.Get("products").Value!;
+        var stored = (List<object?>)context.Variable.Get("products").Value!;
         await Assert.That(stored.Count).IsEqualTo(3);
     }
 
@@ -181,10 +181,10 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_PlainDataTarget_ListWithNestedVars_ResolvesAndReturnsFreshData()
     {
-        var ctx = _app.User.Context;
-        ctx.Variables.Set("greeting", "hello");
+        var context = _app.User.Context;
+        context.Variable.Set("greeting", "hello");
         var raw = new List<object?> { "%greeting%", "literal" };
-        var paramData = new Data("Slot", raw) { Context = ctx };
+        var paramData = new Data("Slot", raw) { Context = context };
 
         var canonical = paramData.AsCanonical();
 
@@ -200,10 +200,10 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_PlainDataTarget_DictWithNestedVars_ResolvesAndReturnsFreshData()
     {
-        var ctx = _app.User.Context;
-        ctx.Variables.Set("prompt", "You are a compiler");
+        var context = _app.User.Context;
+        context.Variable.Set("prompt", "You are a compiler");
         var raw = new Dictionary<string, object?> { ["role"] = "system", ["content"] = "%prompt%" };
-        var paramData = new Data("Slot", raw) { Context = ctx };
+        var paramData = new Data("Slot", raw) { Context = context };
 
         var canonical = paramData.AsCanonical();
 
@@ -219,15 +219,15 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_PlainDataTarget_ListOfDictsWithNestedVars_DeepResolves()
     {
-        var ctx = _app.User.Context;
-        ctx.Variables.Set("prompt", "You are a compiler");
-        ctx.Variables.Set("user", "build this goal");
+        var context = _app.User.Context;
+        context.Variable.Set("prompt", "You are a compiler");
+        context.Variable.Set("user", "build this goal");
         var raw = new List<object?>
         {
             new Dictionary<string, object?> { ["Role"] = "system", ["Content"] = "%prompt%" },
             new Dictionary<string, object?> { ["Role"] = "user",   ["Content"] = "%user%" }
         };
-        var paramData = new Data("messages", raw) { Context = ctx };
+        var paramData = new Data("messages", raw) { Context = context };
 
         var canonical = paramData.AsCanonical();
 
@@ -245,9 +245,9 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_PlainDataTarget_LiteralList_NoNestedVars_PreservesValues()
     {
-        var ctx = _app.User.Context;
+        var context = _app.User.Context;
         var raw = new List<object?> { "a", "b", "c" };
-        var paramData = new Data("items", raw) { Context = ctx };
+        var paramData = new Data("items", raw) { Context = context };
 
         var canonical = paramData.AsCanonical();
 
@@ -269,10 +269,10 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_PlainDataTarget_DictWithInfraVar_ResolvesAtCanonicalWalk()
     {
-        var ctx = _app.User.Context;
-        ctx.Variables.Set(new global::app.data.DynamicData("!error", () => "boom"));
+        var context = _app.User.Context;
+        context.Variable.Set(new global::app.data.DynamicData("!error", () => "boom"));
         var raw = new Dictionary<string, object?> { ["message"] = "%!error%" };
-        var paramData = new Data("trace.buildError", raw) { Context = ctx };
+        var paramData = new Data("trace.buildError", raw) { Context = context };
 
         var canonical = paramData.AsCanonical();
 

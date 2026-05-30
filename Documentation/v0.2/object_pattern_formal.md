@@ -421,7 +421,7 @@ app.Modules.GetCodeGenerated("variable", "set", context);
 |---------|-----------|---------|
 | **Record** (parameters) | lowercase action name | `set`, `save`, `@if` |
 | **Handler** (execution) | PascalCase + `Handler`, `partial` | `SetHandler`, `IfHandler` |
-| **Namespace** | `app.modules.{module}` | `app.modules.condition` |
+| **Namespace** | `app.module.{module}` | `app.module.condition` |
 | **Registry key** | `{module}.{record}` | `condition.if` |
 
 ## Context and App: What You Can Access

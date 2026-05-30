@@ -122,17 +122,17 @@ public sealed class HttpTestServer : IDisposable
     {
         while (!_disposed)
         {
-            HttpListenerContext ctx;
-            try { ctx = await _listener.GetContextAsync(); }
+            HttpListenerContext context;
+            try { context = await _listener.GetContextAsync(); }
             catch { return; }   // listener stopped
-            _ = Task.Run(() => Handle(ctx));
+            _ = Task.Run(() => Handle(context));
         }
     }
 
-    private void Handle(HttpListenerContext ctx)
+    private void Handle(HttpListenerContext context)
     {
-        var req = ctx.Request;
-        var resp = ctx.Response;
+        var req = context.Request;
+        var resp = context.Response;
         var path = req.Url!.AbsolutePath;
 
         // Capture the request.

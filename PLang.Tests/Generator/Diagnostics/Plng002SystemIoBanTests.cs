@@ -15,7 +15,7 @@ namespace PLang.Tests.Generator.Diagnostics;
 ///   <item><c>System.IO.Path.*</c> (pure name math) is allowed only from
 ///   <c>PLang/app/Utils/PathHelper.cs</c> — the single forwarder.</item>
 ///   <item><c>System.IO.File/Directory/FileInfo/FileStream/...</c> (actual
-///   IO) is allowed only under <c>PLang/app/types/path/**</c> — the gated
+///   IO) is allowed only under <c>PLang/app/type/path/**</c> — the gated
 ///   verb surface.</item>
 /// </list>
 /// </summary>
@@ -23,7 +23,7 @@ public class Plng002SystemIoBanTests
 {
     private const string Stubs = """
         using System;
-        namespace app.modules {
+        namespace app.module {
             public class ActionAttribute : Attribute {}
             public class CodeAttribute : Attribute {}
             public interface IContext {}
@@ -56,14 +56,14 @@ public class Plng002SystemIoBanTests
         return driver.RunGenerators(compilation).GetRunResult().Diagnostics;
     }
 
-    private const string ModulesPath = "/workspace/plang/PLang/app/modules/foo/Test.cs";
-    private const string PathTypesPath = "/workspace/plang/PLang/app/types/path/test/Test.cs";
+    private const string ModulesPath = "/workspace/plang/PLang/app/module/foo/Test.cs";
+    private const string PathTypesPath = "/workspace/plang/PLang/app/type/path/test/Test.cs";
     private const string PathHelperPath = "/workspace/plang/PLang/app/Utils/PathHelper.cs";
 
     [Test] public async Task Fires_OnFileReadAllText_UnderModulesNamespace()
     {
         var source = """
-            namespace app.modules.foo {
+            namespace app.module.foo {
                 public class Handler {
                     public string Read() => System.IO.File.ReadAllText("x.txt");
                 }
@@ -76,7 +76,7 @@ public class Plng002SystemIoBanTests
     [Test] public async Task Fires_OnDirectoryGetFiles_UnderModulesNamespace()
     {
         var source = """
-            namespace app.modules.foo {
+            namespace app.module.foo {
                 public class Handler {
                     public string[] Walk() => System.IO.Directory.GetFiles("/tmp");
                 }
@@ -89,7 +89,7 @@ public class Plng002SystemIoBanTests
     [Test] public async Task Fires_OnSystemIoPathCombine_UnderModulesNamespace()
     {
         var source = """
-            namespace app.modules.foo {
+            namespace app.module.foo {
                 public class Handler {
                     public string Join() => System.IO.Path.Combine("a", "b");
                 }
@@ -102,8 +102,8 @@ public class Plng002SystemIoBanTests
     [Test] public async Task Fires_OnDataOfString_NamedPath_InActionHandler()
     {
         var source = Stubs + """
-            namespace app.modules.foo {
-                [app.modules.Action]
+            namespace app.module.foo {
+                [app.module.Action]
                 public partial class Handler {
                     public partial app.data.@this<string> Path { get; init; }
                 }
@@ -119,7 +119,7 @@ public class Plng002SystemIoBanTests
         // any other System.IO.Path.* member, they must route through
         // PathHelper. Type-based exemption, not symbol-name allowlist.
         var source = """
-            namespace app.modules.foo {
+            namespace app.module.foo {
                 public class Handler {
                     public char Sep() => System.IO.Path.DirectorySeparatorChar;
                 }
@@ -135,7 +135,7 @@ public class Plng002SystemIoBanTests
         // ONLY from PathHelper, not under path-types. The path-types carve-out
         // covers File/Directory/FileInfo/Stream, not name math.
         var source = """
-            namespace app.types.path.test {
+            namespace app.type.path.test {
                 public class Impl {
                     public string Join() => System.IO.Path.Combine("a", "b");
                 }
@@ -149,7 +149,7 @@ public class Plng002SystemIoBanTests
     {
         // File.* under path-types stays exempt — the verb surface owns IO.
         var source = """
-            namespace app.types.path.test {
+            namespace app.type.path.test {
                 public class FsImpl {
                     public string Read() => System.IO.File.ReadAllText("x.txt");
                 }
@@ -194,11 +194,11 @@ public class Plng002SystemIoBanTests
     {
         // Data<some-non-string> is the correct shape — must not trip PLNG002.
         var source = Stubs + """
-            namespace app.types.path { public class @this {} }
-            namespace app.modules.foo {
-                [app.modules.Action]
+            namespace app.type.path { public class @this {} }
+            namespace app.module.foo {
+                [app.module.Action]
                 public partial class Handler {
-                    public partial app.data.@this<app.types.path.@this> Path { get; init; }
+                    public partial app.data.@this<app.type.path.@this> Path { get; init; }
                 }
             }
             """;
@@ -209,7 +209,7 @@ public class Plng002SystemIoBanTests
     [Test] public async Task DiagnosticLocation_UnderlinesOffendingMemberAccess()
     {
         var source = """
-            namespace app.modules.foo {
+            namespace app.module.foo {
                 public class Handler {
                     public string Read() => System.IO.File.ReadAllText("x.txt");
                 }

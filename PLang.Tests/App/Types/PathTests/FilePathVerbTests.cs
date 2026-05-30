@@ -1,8 +1,8 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using FilePath = global::app.types.path.file.@this;
-using StatInfo = global::app.types.path.@this.StatInfo;
+using FilePath = global::app.type.path.file.@this;
+using StatInfo = global::app.type.path.@this.StatInfo;
 
 namespace PLang.Tests.App.Types.PathTests;
 

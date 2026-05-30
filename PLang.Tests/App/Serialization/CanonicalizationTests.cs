@@ -20,8 +20,8 @@ public class CanonicalizationTests
         // plang serializer. If Hash uses the wire options, the produced hash
         // matches what a wire-driven canonicalization would produce.
         await using var app = NewSignedApp();
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+        var plang = (global::app.channel.serializer.plang.@this)
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var data = new global::app.data.@this("greeting", "hello") { Context = app.User.Context };
 
@@ -31,8 +31,8 @@ public class CanonicalizationTests
             wireBytesWithoutOuterSig = JsonSerializer.SerializeToUtf8Bytes(data, plang.OutboundOptions);
         }
 
-        var hashResult = await app.RunAction<global::app.modules.crypto.Hash>(
-            new global::app.modules.crypto.Hash
+        var hashResult = await app.RunAction<global::app.module.crypto.Hash>(
+            new global::app.module.crypto.Hash
             {
                 Data = data,
                 Algorithm = new global::app.data.@this<string>("", "keccak256")
@@ -47,8 +47,8 @@ public class CanonicalizationTests
     [Test] public async Task CryptoHash_BytesMatch_WireSerializerBytesMinusOuterSignature()
     {
         await using var app = NewSignedApp();
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+        var plang = (global::app.channel.serializer.plang.@this)
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var data = new global::app.data.@this("x", "y") { Context = app.User.Context };
 
@@ -67,8 +67,8 @@ public class CanonicalizationTests
     [Test] public async Task OuterSignature_BindsInnerSignature_TamperingInnerFailsOuterVerify()
     {
         await using var app = NewSignedApp();
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+        var plang = (global::app.channel.serializer.plang.@this)
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var inner = new global::app.data.@this("inner", "secret") { Context = app.User.Context };
         var outer = new global::app.data.@this("outer", inner) { Context = app.User.Context };
@@ -90,8 +90,8 @@ public class CanonicalizationTests
         await Assert.That(roundTripped).IsNotNull();
         roundTripped!.Context = app.User.Context;
 
-        var verifyResult = await app.RunAction<global::app.modules.signing.verify>(
-            new global::app.modules.signing.verify { Data = roundTripped, SkipFreshnessCheck = new global::app.data.@this<bool>("", true) },
+        var verifyResult = await app.RunAction<global::app.module.signing.verify>(
+            new global::app.module.signing.verify { Data = roundTripped, SkipFreshnessCheck = new global::app.data.@this<bool>("", true) },
             app.User.Context);
 
         await Assert.That(verifyResult.Success).IsFalse()
@@ -113,7 +113,7 @@ public class CanonicalizationTests
         var inner = new global::app.data.@this("inner", "v") { Context = app.User.Context };
         inner.Properties["meta"] = new List<object>
         {
-            new global::app.modules.identity.Identity
+            new global::app.module.identity.Identity
             {
                 Name = "alice",
                 PublicKey = "pk",
@@ -122,8 +122,8 @@ public class CanonicalizationTests
         };
         var outer = new global::app.data.@this("outer", inner) { Context = app.User.Context };
 
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+        var plang = (global::app.channel.serializer.plang.@this)
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var outBytes = plang.Serialize(outer).Value!;
         await Assert.That(outBytes).DoesNotContain("PRIV-must-persist")
@@ -145,8 +145,8 @@ public class CanonicalizationTests
         var dict = new Dictionary<string, object?> { ["payload"] = inner };
         var outer = new global::app.data.@this("outer", dict) { Context = app.User.Context };
 
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+        var plang = (global::app.channel.serializer.plang.@this)
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
         var json = plang.Serialize(outer).Value!;
 
         await Assert.That(inner.Signature).IsNotNull()

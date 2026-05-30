@@ -1,0 +1,58 @@
+{
+  "branch": "singular-namespaces",
+  "sessions": [
+    {
+      "id": "00e95063-0cc9-4b42-b915-984a4bd1c896",
+      "bot": "architect",
+      "timestamp_start": "2026-05-29T19:09:32+00:00",
+      "timestamp_end": "2026-05-29T19:16:59+00:00",
+      "intent": "Merge runtime2 (plang-types) into the branch and revise plan/stages/tests to match the new typed-value system.",
+      "before": {
+        "assumptions": "Branch was planning-only (no production code), so the merge would be clean. Stage 4 (type-entity) was the main overlap risk with the incoming plang-types work.",
+        "risk": "plang-types reshapes the exact area Stage 4 targets; the plan, stage files, and test docs could be stale or contradicted by the merge."
+      },
+      "plan": ".bot/singular-namespaces/architect/plan.md",
+      "actions": [
+        {
+          "paths": ["Documentation/Runtime2/todos.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Committed the captured audio-transcription todo before merging."
+        },
+        {
+          "paths": ["."],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "Merged origin/runtime2 (plang-types: typed value system, math retype, runtime DLL type loading) — clean, zero production conflicts since branch was planning-only."
+        },
+        {
+          "paths": [
+            ".bot/singular-namespaces/architect/plan.md",
+            ".bot/singular-namespaces/architect/plan/type-entity.md",
+            ".bot/singular-namespaces/architect/plan/nullability.md",
+            ".bot/singular-namespaces/architect/plan/accessor-model.md",
+            ".bot/singular-namespaces/architect/plan/rename-map.md",
+            ".bot/singular-namespaces/architect/plan/test-strategy.md",
+            ".bot/singular-namespaces/architect/plan/test-coverage.md",
+            ".bot/singular-namespaces/architect/stage-1-rename.md",
+            ".bot/singular-namespaces/architect/stage-2-nullability.md",
+            ".bot/singular-namespaces/architect/stage-3-accessor.md",
+            ".bot/singular-namespaces/architect/stage-4-type-entity.md",
+            ".bot/singular-namespaces/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Revised the full plan to absorb plang-types: 1B (move type entity from app.data.type to type/this.cs, demote registry to type/list/this.cs), fold builder.Types.Entry onto the entity, index-miss = hard error. Stage 4 reframed as move+demote+fold (the entity already exists); Stage 2 simplified (dead module fallbacks, context-propagation plumbing at data/this.cs:144); Stage 1 type subtree grew (~55 files). Newtonsoft confirmed gone → data/Converter.cs dead."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green — merge clean, docs revised and internally consistent",
+        "notes": "Decisions locked with Ingi: 1B (unify type entity under type/), Entry folds into type.@this, index-miss = error. Plan, four stage files, four deep dives, and both test docs updated. Ready to commit + push; test-designer can re-run from the revised plan."
+      }
+    }
+  ]
+}

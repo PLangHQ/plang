@@ -218,18 +218,18 @@ Collections own their loops (OBP rule 5). Steps iterates its own steps, Actions 
 
 Flat `module.action` registry. No hierarchy, no inheritance.
 
-The catalog rendered for the LLM builder is derived from these registered handlers via `app.modules.Describe()` plus `app.modules.builder.Types.@this.Build()`. Describe() reads class shape from C# attributes (`[Action]`, `[Modifier]`, `[Default]`, `[Code]`) and per-action prose (Description / Notes / Examples) from markdown files at `os/system/modules/<module>/{module,<action>}.{description,notes,examples}.md` via `MarkdownTeaching.Load(...)`. Per-action Notes/Examples render in the **user message** of each Compile call only for actions the planner picked — the cross-cutting system prompt carries only the kernel (modifier-vs-peer classification, formal-mirroring rule, type conventions). See [action-catalog.md](action-catalog.md) for the full attribute + markdown contract. Variable-name slots are typed via `Data<app.variables.Variable>` (no attribute) and render as `Name([string] %var%)` based on the wrapped type.
+The catalog rendered for the LLM builder is derived from these registered handlers via `app.Module.Describe()` plus `app.module.builder.Types.@this.Build()`. Describe() reads class shape from C# attributes (`[Action]`, `[Modifier]`, `[Default]`, `[Code]`) and per-action prose (Description / Notes / Examples) from markdown files at `os/system/modules/<module>/{module,<action>}.{description,notes,examples}.md` via `MarkdownTeaching.Load(...)`. Per-action Notes/Examples render in the **user message** of each Compile call only for actions the planner picked — the cross-cutting system prompt carries only the kernel (modifier-vs-peer classification, formal-mirroring rule, type conventions). See [action-catalog.md](action-catalog.md) for the full attribute + markdown contract. Variable-name slots are typed via `Data<app.variable.Variable>` (no attribute) and render as `Name([string] %var%)` based on the wrapped type.
 
 ### Discovery
 
-Scans assemblies for types with `[Action]` attribute implementing `ICodeGenerated`. Extracts module from namespace: `app.modules.{module}.{actionName}`.
+Scans assemblies for types with `[Action]` attribute implementing `ICodeGenerated`. Extracts module from namespace: `app.module.{module}.{actionName}`.
 
 ### Handler pattern
 
 ```
 Record (parameters):  lowercase action name     -> set, save, read
 Handler (execution):  PascalCase + Handler      -> SetHandler, SaveHandler
-Namespace:            app.modules.{module}      -> modules.variable
+Namespace:            app.module.{module}       -> module.variable
 Registry key:         {module}.{record}         -> variable.set
 ```
 
@@ -264,7 +264,7 @@ Action property positions are constrained at build time. `Discovery.IsValidActio
 
 Any other shape (raw `partial string`, `partial int`, untagged primitives, attributed strings) reports the **PLNG001** error: *Property '{0}' on action '{1}' must be Data<T> or [Code]. Raw scalars are not permitted.* The diagnostic carries the full identifier span so IDE squiggles underline the property name.
 
-For parameters that name a variable rather than carry its value — write targets and read-by-name lookups (`variable.set`, every `list.*`, `loop.foreach` ItemName/KeyName) — use `Data<app.variables.Variable>`. `Variable` implements `IRawNameResolvable`, a marker that tells `Data.AsT_Impl` to skip the `%var%` substitution branch and dispatch to `Variable.Resolve(raw, ctx)` directly. Both `value="%x%"` and bare `value="x"` collapse to `Variable { Name = "x" }`, so the name-slot semantic survives whichever shape the LLM emits — including the case where `x` doesn't yet exist (`set %x% = 5` creating x for the first time). Use sites read `Foo.Value`; Variable's implicit `string` operator and `ToString() => Name` cover the read paths. Discovery detects `T : IRawNameResolvable` on non-nullable `Data<T>` slots and the Action emitter emits a pre-`Run()` guard mirroring `[IsNotNull]` — a missing slot surfaces as `MissingRequiredParameter` ServiceError before the implicit conversion can NRE. See [`data-generic-design.md`](data-generic-design.md) and [`good_to_know.md`](good_to_know.md) for the resolution and gotcha details.
+For parameters that name a variable rather than carry its value — write targets and read-by-name lookups (`variable.set`, every `list.*`, `loop.foreach` ItemName/KeyName) — use `Data<app.variable.Variable>`. `Variable` implements `IRawNameResolvable`, a marker that tells `Data.AsT_Impl` to skip the `%var%` substitution branch and dispatch to `Variable.Resolve(raw, ctx)` directly. Both `value="%x%"` and bare `value="x"` collapse to `Variable { Name = "x" }`, so the name-slot semantic survives whichever shape the LLM emits — including the case where `x` doesn't yet exist (`set %x% = 5` creating x for the first time). Use sites read `Foo.Value`; Variable's implicit `string` operator and `ToString() => Name` cover the read paths. Discovery detects `T : IRawNameResolvable` on non-nullable `Data<T>` slots and the Action emitter emits a pre-`Run()` guard mirroring `[IsNotNull]` — a missing slot surfaces as `MissingRequiredParameter` ServiceError before the implicit conversion can NRE. See [`data-generic-design.md`](data-generic-design.md) and [`good_to_know.md`](good_to_know.md) for the resolution and gotcha details.
 
 ### Key interface
 

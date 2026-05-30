@@ -1,5 +1,5 @@
-using app.events;
-using app.events.lifecycle.bindings.binding;
+using app.@event;
+using app.@event.lifecycle.binding;
 
 namespace PLang.Tests.App.ChannelsTests.Integration;
 
@@ -14,17 +14,17 @@ public class IntegrationCutsTests
         var userOutput = new MemoryStream();
         var userError = new MemoryStream();
         var userInput = new MemoryStream();
-        app.User.Channels.Register(new StreamChannel("output", userOutput, ChannelDirection.Output, ownsStream: false)
+        app.User.Channel.Register(new StreamChannel("output", userOutput, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
-        app.User.Channels.Register(new StreamChannel("error", userError, ChannelDirection.Output, ownsStream: false)
+        app.User.Channel.Register(new StreamChannel("error", userError, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
-        app.User.Channels.Register(new StreamChannel("input", userInput, ChannelDirection.Input, ownsStream: false)
+        app.User.Channel.Register(new StreamChannel("input", userInput, ChannelDirection.Input, ownsStream: false)
         { Mime = "text/plain" });
         global::app.@this.WireDefaultConsoleChannels(app.System);
 
         // Direct write through the resolved Output channel — proves
         // Channels.Resolve(null) returns Output role channel and WriteAsync routes there.
-        var ch = app.User.Channels.Resolve(null);
+        var ch = app.User.Channel.Resolve(null);
         await ch.WriteAsync(Data.Ok("hello"));
 
         var got = global::System.Text.Encoding.UTF8.GetString(userOutput.ToArray());
@@ -49,8 +49,8 @@ public class IntegrationCutsTests
         { Mime = "text/plain" };
         var metrics = new StreamChannel("metrics", metricsCapture, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" };
-        app.User.Channels.Register(audit);
-        app.User.Channels.Register(metrics);
+        app.User.Channel.Register(audit);
+        app.User.Channel.Register(metrics);
 
         // BeforeWrite on audit: reject if value contains "REJECT".
         audit.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, payload) =>
@@ -83,10 +83,10 @@ public class IntegrationCutsTests
         await Assert.That(metricsText.Contains("+1")).IsTrue();
     }
 
-    private sealed class GoalChannelProbe : global::app.channels.channel.goal.@this
+    private sealed class GoalChannelProbe : global::app.channel.goal.@this
     {
         private readonly Action _onInvoke;
-        public GoalChannelProbe(string name, global::app.goals.goal.@this goal, global::app.actor.@this actor, Action onInvoke)
+        public GoalChannelProbe(string name, global::app.goal.@this goal, global::app.actor.@this actor, Action onInvoke)
             : base(name, goal, actor) { _onInvoke = onInvoke; }
         public override Task<Data> Write(Data data, CancellationToken ct = default)
         {

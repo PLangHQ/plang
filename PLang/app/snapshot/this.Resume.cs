@@ -20,28 +20,28 @@ public sealed partial class @this
         context.App.Restore(this, context);
         var chain = context.App.CallStack.RestoredChain;
         if (chain == null || chain.Count == 0)
-            return data.@this.FromError(new global::app.errors.ServiceError(
+            return data.@this.FromError(new global::app.error.ServiceError(
                 "Resume has no frames after Restore", "NoPosition", 400));
         return await ResumeChain(chain, 0, context);
     }
 
     private static async Task<data.@this> ResumeChain(
-        IReadOnlyList<callstack.call.Position> chain, int idx, actor.context.@this ctx)
+        IReadOnlyList<callstack.call.Position> chain, int idx, actor.context.@this context)
     {
         var frame = chain[idx];
 
         // Bottom: re-enter the goal at the suspended (StepIndex, ActionIndex).
         if (idx == chain.Count - 1)
-            return await frame.Goal.RunFrom(ctx, frame.StepIndex, frame.ActionIndex);
+            return await frame.Goal.RunFrom(context, frame.StepIndex, frame.ActionIndex);
 
         // Parent: its action is a "call SubGoal" mid-flight. Push so children
         // see it as caller, recurse into the sub-goal, then continue from
         // ActionIndex+1 (the action after the call).
-        await using var callFrame = ctx.App.CallStack.Push(frame.Action, ctx.Variables);
+        await using var callFrame = context.App.CallStack.Push(frame.Action, context.Variable);
 
-        var subResult = await ResumeChain(chain, idx + 1, ctx);
+        var subResult = await ResumeChain(chain, idx + 1, context);
         if (subResult.ShouldExit()) return subResult;
 
-        return await frame.Goal.RunFrom(ctx, frame.StepIndex, frame.ActionIndex + 1);
+        return await frame.Goal.RunFrom(context, frame.StepIndex, frame.ActionIndex + 1);
     }
 }

@@ -1,5 +1,5 @@
 using app;
-using app.variables;
+using app.variable;
 
 namespace PLang.Tests.App.Core;
 
@@ -17,7 +17,7 @@ public class StepTests
             Comment = "This makes an HTTP call",
             Actions = new StepActions
             {
-                new global::app.goals.goal.steps.step.actions.action.@this
+                new global::app.goal.steps.step.actions.action.@this
                 {
                     Module = "http",
                     ActionName = "get",
@@ -133,7 +133,7 @@ public class StepTests
             Comment = "original comment",
             Actions = new StepActions
             {
-                new global::app.goals.goal.steps.step.actions.action.@this
+                new global::app.goal.steps.step.actions.action.@this
                 {
                     Module = "variable",
                     ActionName = "set",

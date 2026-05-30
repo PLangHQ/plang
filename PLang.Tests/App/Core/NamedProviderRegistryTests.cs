@@ -1,13 +1,13 @@
 using app.actor.context;
-using app.errors;
-using app.variables;
-using app.modules.code;
-using app.modules.signing;
-using app.modules.signing.code;
-using app.modules.identity.code;
-using app.modules.crypto.code;
+using app.error;
+using app.variable;
+using app.module.code;
+using app.module.signing;
+using app.module.signing.code;
+using app.module.identity.code;
+using app.module.crypto.code;
 using PLangEngine = global::app.@this;
-using EngineProviders = global::app.modules.code.@this;
+using EngineProviders = global::app.module.code.@this;
 
 namespace PLang.Tests.App.Core;
 

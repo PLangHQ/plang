@@ -1,4 +1,4 @@
-using app.errors;
+using app.error;
 using static PLang.Tests.App.CallStackTests.CallStackTestHelpers;
 
 namespace PLang.Tests.App.CallStackTests;

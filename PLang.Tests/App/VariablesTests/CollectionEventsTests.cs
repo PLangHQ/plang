@@ -59,7 +59,7 @@ public class CollectionEventsTests
     [Test]
     public async Task PerVariableEvents_StillFire_BackCompat()
     {
-        // Per-variable Data.OnChange must still fire — used by --debug={"variables":[...]}.
+        // Per-variable Data.OnChange must still fire — used by --debug={"variable":[...]}.
         var vars = new Variables();
         vars.Set("name", "first");
 

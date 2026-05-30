@@ -1,9 +1,9 @@
 using app.actor.context;
-using app.errors;
-using app.variables;
-using app.modules.code;
-using app.modules.signing.code;
-using app.modules.identity;
+using app.error;
+using app.variable;
+using app.module.code;
+using app.module.signing.code;
+using app.module.identity;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.signing;

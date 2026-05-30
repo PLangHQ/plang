@@ -1,6 +1,6 @@
 using app.actor.context;
 using app;
-using app.variables;
+using app.variable;
 
 namespace PLang.Tests.App.Context;
 
@@ -17,7 +17,7 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVar_Engine_ReturnsEngineInstance()
     {
-        var vars = _app.User.Context.Variables;
+        var vars = _app.User.Context.Variable;
         var value = vars.GetValue("!app");
 
         await Assert.That(value).IsNotNull();
@@ -27,7 +27,7 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVar_Variables_ReturnsVariables()
     {
-        var vars = _app.User.Context.Variables;
+        var vars = _app.User.Context.Variable;
         var value = vars.GetValue("!variables");
 
         await Assert.That(value).IsNotNull();
@@ -37,7 +37,7 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVar_Context_ReturnsPLangContext()
     {
-        var vars = _app.User.Context.Variables;
+        var vars = _app.User.Context.Variable;
         var value = vars.GetValue("!context");
 
         await Assert.That(value).IsNotNull();
@@ -48,7 +48,7 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVar_CallStack_ReturnsCallStack()
     {
-        var vars = _app.User.Context.Variables;
+        var vars = _app.User.Context.Variable;
         var value = vars.GetValue("!callStack");
 
         await Assert.That(value).IsNotNull();
@@ -58,7 +58,7 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVar_Channels_ReturnsChannels()
     {
-        var vars = _app.User.Context.Variables;
+        var vars = _app.User.Context.Variable;
         var value = vars.GetValue("!channels");
 
         await Assert.That(value).IsNotNull();
@@ -67,7 +67,7 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVar_Serializers_ReturnsSerializerRegistry()
     {
-        var vars = _app.User.Context.Variables;
+        var vars = _app.User.Context.Variable;
         var value = vars.GetValue("!serializers");
 
         await Assert.That(value).IsNotNull();
@@ -76,7 +76,7 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVar_Goal_IsNullInitially()
     {
-        var vars = _app.User.Context.Variables;
+        var vars = _app.User.Context.Variable;
         var value = vars.GetValue("!goal");
 
         await Assert.That(value).IsNull();
@@ -85,7 +85,7 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVar_Step_IsNullInitially()
     {
-        var vars = _app.User.Context.Variables;
+        var vars = _app.User.Context.Variable;
         var value = vars.GetValue("!step");
 
         await Assert.That(value).IsNull();
@@ -98,7 +98,7 @@ public class ContextVariableTests
         var goal = new Goal { Name = "TestGoal" };
         context.Goal = goal;
 
-        var vars = _app.User.Context.Variables;
+        var vars = _app.User.Context.Variable;
         var value = vars.GetValue("!goal");
 
         await Assert.That(value).IsNotNull();
@@ -112,7 +112,7 @@ public class ContextVariableTests
         var step = new Step { Index = 0, Text = "test step" };
         context.Step = step;
 
-        var vars = _app.User.Context.Variables;
+        var vars = _app.User.Context.Variable;
         var value = vars.GetValue("!step");
 
         await Assert.That(value).IsNotNull();
@@ -122,7 +122,7 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVars_ExcludedFromGetNames()
     {
-        var vars = _app.User.Context.Variables;
+        var vars = _app.User.Context.Variable;
         vars.Set("regularVar", "hello");
 
         var names = vars.GetNames().ToList();
@@ -136,7 +136,7 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVars_ExcludedFromGetAll()
     {
-        var vars = _app.User.Context.Variables;
+        var vars = _app.User.Context.Variable;
         vars.Set("regularVar", "hello");
 
         var all = vars.GetAll().ToList();
@@ -150,7 +150,7 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVars_SurviveClear()
     {
-        var vars = _app.User.Context.Variables;
+        var vars = _app.User.Context.Variable;
         vars.Set("regularVar", "hello");
 
         vars.Clear();
@@ -166,7 +166,7 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVars_NotCloned()
     {
-        var vars = _app.User.Context.Variables;
+        var vars = _app.User.Context.Variable;
         vars.Set("regularVar", "hello");
 
         var clone = vars.Clone();
@@ -183,7 +183,7 @@ public class ContextVariableTests
     {
         // Proves the virtual/override fix: accessing .Value through a Data reference
         // correctly calls DynamicData.Value (not base Data.Value which returns null)
-        var vars = _app.User.Context.Variables;
+        var vars = _app.User.Context.Variable;
 
         // Now is a DynamicData registered by Variables constructor
         var nowValue = vars.GetValue("Now");
@@ -203,7 +203,7 @@ public class ContextVariableTests
     [Test]
     public async Task ContextVar_AppProperty_AccessibleViaDotNotation()
     {
-        var vars = _app.User.Context.Variables;
+        var vars = _app.User.Context.Variable;
         var data = vars.Get("!app.Name");
 
         await Assert.That(data).IsNotNull();

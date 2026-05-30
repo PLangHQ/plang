@@ -1,8 +1,8 @@
-using number = global::app.types.number.@this;
-using PKind = global::app.types.number.NumberKind;
-using PPolicy = global::app.types.number.NumberPolicy;
-using POverflow = global::app.types.number.OverflowMode;
-using PPrecision = global::app.types.number.PrecisionMode;
+using number = global::app.type.number.@this;
+using PKind = global::app.type.number.NumberKind;
+using PPolicy = global::app.type.number.NumberPolicy;
+using POverflow = global::app.type.number.OverflowMode;
+using PPrecision = global::app.type.number.PrecisionMode;
 
 namespace PLang.Tests.App.Types;
 

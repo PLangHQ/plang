@@ -21,19 +21,19 @@ public class OutAttributeInventoryTests
     // 1. Identity ------------------------------------------------------------
     [Test] public async Task Identity_Name_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.modules.identity.Identity), "Name")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.module.identity.Identity), "Name")).IsTrue();
     }
     [Test] public async Task Identity_PublicKey_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.modules.identity.Identity), "PublicKey")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.module.identity.Identity), "PublicKey")).IsTrue();
     }
     [Test] public async Task Identity_PrivateKey_StaysSensitive_NoOut()
     {
-        await Assert.That(HasOut(typeof(global::app.modules.identity.Identity), "PrivateKey")).IsFalse();
+        await Assert.That(HasOut(typeof(global::app.module.identity.Identity), "PrivateKey")).IsFalse();
     }
     [Test] public async Task Identity_IsDefault_IsArchived_Created_NotOut()
     {
-        var t = typeof(global::app.modules.identity.Identity);
+        var t = typeof(global::app.module.identity.Identity);
         await Assert.That(HasOut(t, "IsDefault")).IsFalse();
         await Assert.That(HasOut(t, "IsArchived")).IsFalse();
         await Assert.That(HasOut(t, "Created")).IsFalse();
@@ -42,57 +42,57 @@ public class OutAttributeInventoryTests
     // 2. path / FilePath / HttpPath -----------------------------------------
     [Test] public async Task Path_Scheme_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.types.path.@this), "Scheme")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.type.path.@this), "Scheme")).IsTrue();
     }
     [Test] public async Task Path_Relative_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.types.path.@this), "Relative")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.type.path.@this), "Relative")).IsTrue();
     }
     [Test] public async Task Path_Absolute_NotOut_LeaksFilesystemLayout()
     {
-        await Assert.That(HasOut(typeof(global::app.types.path.@this), "Absolute")).IsFalse();
+        await Assert.That(HasOut(typeof(global::app.type.path.@this), "Absolute")).IsFalse();
     }
     [Test] public async Task Path_Raw_NotOut()
     {
-        await Assert.That(HasOut(typeof(global::app.types.path.@this), "Raw")).IsFalse();
+        await Assert.That(HasOut(typeof(global::app.type.path.@this), "Raw")).IsFalse();
     }
     [Test] public async Task Path_DerivedProps_NotOut_Extension_FileName_Directory_MimeType_IsFile_IsDirectory()
     {
-        var t = typeof(global::app.types.path.@this);
+        var t = typeof(global::app.type.path.@this);
         foreach (var p in new[] { "Extension", "FileName", "FileNameWithoutExtension", "Directory", "MimeType", "IsFile", "IsDirectory" })
             await Assert.That(HasOut(t, p)).IsFalse().Because($"Path.{p} is derived; receiver recomputes");
     }
     [Test] public async Task Path_Content_Source_NotOut()
     {
-        var t = typeof(global::app.types.path.@this);
+        var t = typeof(global::app.type.path.@this);
         await Assert.That(HasOut(t, "Content")).IsFalse();
         await Assert.That(HasOut(t, "Source")).IsFalse();
     }
     [Test] public async Task Path_GoalCall_Context_StayJsonIgnore_NoOut()
     {
-        var t = typeof(global::app.types.path.@this);
+        var t = typeof(global::app.type.path.@this);
         await Assert.That(HasOut(t, "GoalCall")).IsFalse();
         await Assert.That(HasOut(t, "Context")).IsFalse();
     }
 
-    // 3. list (modules.list.types.list) -------------------------------------
+    // 3. list (module.list.types.list) -------------------------------------
     [Test] public async Task List_Count_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.modules.list.types.list), "count")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.module.list.type.list), "count")).IsTrue();
     }
     [Test] public async Task List_Value_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.modules.list.types.list), "value")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.module.list.type.list), "value")).IsTrue();
     }
 
     // 4. Variable ------------------------------------------------------------
     [Test] public async Task Variable_Name_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.variables.Variable), "Name")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.variable.@this), "Name")).IsTrue();
     }
     [Test] public async Task Variable_RawValue_WasPercentWrapped_NotOut()
     {
-        var t = typeof(global::app.variables.Variable);
+        var t = typeof(global::app.variable.@this);
         await Assert.That(HasOut(t, "RawValue")).IsFalse();
         await Assert.That(HasOut(t, "WasPercentWrapped")).IsFalse();
     }
@@ -122,7 +122,7 @@ public class OutAttributeInventoryTests
     // 6. StatInfo ------------------------------------------------------------
     [Test] public async Task StatInfo_Exists_IsFile_Length_Modified_HaveOut()
     {
-        var t = typeof(global::app.types.path.@this.StatInfo);
+        var t = typeof(global::app.type.path.@this.StatInfo);
         await Assert.That(HasOut(t, "Exists")).IsTrue();
         await Assert.That(HasOut(t, "IsFile")).IsTrue();
         await Assert.That(HasOut(t, "Length")).IsTrue();
@@ -132,7 +132,7 @@ public class OutAttributeInventoryTests
     // 7. GoalCall ------------------------------------------------------------
     [Test] public async Task GoalCall_Name_Parallel_Parameters_PrPath_HaveOut()
     {
-        var t = typeof(global::app.goals.goal.GoalCall);
+        var t = typeof(global::app.goal.GoalCall);
         await Assert.That(HasOut(t, "Name")).IsTrue();
         await Assert.That(HasOut(t, "Parallel")).IsTrue();
         await Assert.That(HasOut(t, "Parameters")).IsTrue();
@@ -140,7 +140,7 @@ public class OutAttributeInventoryTests
     }
     [Test] public async Task GoalCall_Event_Action_StayJsonIgnore_NoOut()
     {
-        var t = typeof(global::app.goals.goal.GoalCall);
+        var t = typeof(global::app.goal.GoalCall);
         await Assert.That(HasOut(t, "Event")).IsFalse();
         await Assert.That(HasOut(t, "Action")).IsFalse();
     }
@@ -148,7 +148,7 @@ public class OutAttributeInventoryTests
     // 8. permission ----------------------------------------------------------
     [Test] public async Task Permission_Actor_Path_Verb_Match_HaveOut()
     {
-        var t = typeof(global::app.types.path.permission.@this);
+        var t = typeof(global::app.type.path.permission.@this);
         await Assert.That(HasOut(t, "Actor")).IsTrue();
         await Assert.That(HasOut(t, "Path")).IsTrue();
         await Assert.That(HasOut(t, "Verb")).IsTrue();
@@ -158,11 +158,11 @@ public class OutAttributeInventoryTests
     // 9. setting -------------------------------------------------------------
     [Test] public async Task Setting_Key_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.modules.settings.types.setting), "key")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.module.settings.type.setting), "key")).IsTrue();
     }
     [Test] public async Task Setting_Value_HasOut_AndMasked()
     {
-        var t = typeof(global::app.modules.settings.types.setting);
+        var t = typeof(global::app.module.settings.type.setting);
         await Assert.That(HasOut(t, "value")).IsTrue();
         await Assert.That(HasMasked(t, "value")).IsTrue();
     }
@@ -170,26 +170,26 @@ public class OutAttributeInventoryTests
     // 10. http.Response ------------------------------------------------------
     [Test] public async Task HttpResponse_Status_Headers_Body_HaveOut()
     {
-        var t = typeof(global::app.http.Response.@this);
+        var t = typeof(global::app.http.response.@this);
         await Assert.That(HasOut(t, "Status")).IsTrue();
         await Assert.That(HasOut(t, "Headers")).IsTrue();
         await Assert.That(HasOut(t, "Body")).IsTrue();
     }
     [Test] public async Task HttpResponse_Duration_NotOut()
     {
-        await Assert.That(HasOut(typeof(global::app.http.Response.@this), "Duration")).IsFalse();
+        await Assert.That(HasOut(typeof(global::app.http.response.@this), "Duration")).IsFalse();
     }
 
     // 11. Ask ----------------------------------------------------------------
     [Test] public async Task Ask_Answer_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.modules.output.Ask), "Answer")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.module.output.Ask), "Answer")).IsTrue();
     }
 
     // 12. Mock ---------------------------------------------------------------
     [Test] public async Task Mock_NoOutProperties_TestOnlyType()
     {
-        var t = typeof(global::app.mock.Mock.@this);
+        var t = typeof(global::app.mock.@this);
         foreach (var p in t.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic))
             await Assert.That(p.IsDefined(typeof(global::app.OutAttribute), inherit: true))
                 .IsFalse()
@@ -199,10 +199,10 @@ public class OutAttributeInventoryTests
     // 13. condition.Operator -------------------------------------------------
     [Test] public async Task ConditionOperator_Value_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.modules.condition.Operator), "Value")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.module.condition.Operator), "Value")).IsTrue();
     }
     [Test] public async Task ConditionOperator_Evaluate_NotOut_Delegate()
     {
-        await Assert.That(HasOut(typeof(global::app.modules.condition.Operator), "Evaluate")).IsFalse();
+        await Assert.That(HasOut(typeof(global::app.module.condition.Operator), "Evaluate")).IsFalse();
     }
 }

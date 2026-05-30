@@ -4,7 +4,7 @@ namespace app.Attributes;
 /// Marks a public static method as the vocabulary provider for its declaring type —
 /// the closed list of strings the LLM may emit for a slot whose type is this.
 ///
-/// Method shape: <c>public static string[] X(Actor.Context.@this ctx)</c>. The method
+/// Method shape: <c>public static string[] X(Actor.Context.@this context)</c>. The method
 /// name is conventionally <c>Choices</c> but the attribute is the contract. The Context
 /// parameter is mandatory even for static vocabularies (signature symmetry — dynamic
 /// vocabularies that depend on app/actor state share one shape with static ones).

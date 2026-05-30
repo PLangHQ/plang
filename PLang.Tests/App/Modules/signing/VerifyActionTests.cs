@@ -1,11 +1,11 @@
 using app.actor.context;
-using app.errors;
-using app.variables;
-using app.modules.code;
-using app.modules.signing.code;
-using app.modules.crypto;
-using app.modules.identity;
-using app.modules.signing;
+using app.error;
+using app.variable;
+using app.module.code;
+using app.module.signing.code;
+using app.module.crypto;
+using app.module.identity;
+using app.module.signing;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.signing;
@@ -170,7 +170,7 @@ public class VerifyActionTests
     {
         var signed = await SignHelper(new { amount = 100 }, contracts: new List<string> { "C0" });
         // Tamper the hash
-        signed.Signature!.Hash = Data.Ok(new byte[32], global::app.data.type.FromName("keccak256"));
+        signed.Signature!.Hash = Data.Ok(new byte[32], global::app.type.@this.FromName("keccak256"));
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
         await Assert.That(result.Success).IsFalse();

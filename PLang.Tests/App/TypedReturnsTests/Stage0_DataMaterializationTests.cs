@@ -49,7 +49,7 @@ public class Stage0_DataMaterializationTests
     {
         var src = new Data("x", "{\"a\":1}")
         {
-            Type = new global::app.data.type("json"),
+            Type = new global::app.type.@this("json"),
             Context = _app.User.Context
         };
 
@@ -66,7 +66,7 @@ public class Stage0_DataMaterializationTests
     {
         var src = new Data("x", "{\"a\":1}")
         {
-            Type = new global::app.data.type("json"),
+            Type = new global::app.type.@this("json"),
             Context = _app.User.Context
         };
 
@@ -85,7 +85,7 @@ public class Stage0_DataMaterializationTests
     public async Task Data_VariableSet_NoParsingAtSetTime()
     {
         const string raw = "a,b,c\n1,2,3";
-        var src = new Data("x", raw) { Type = new global::app.data.type("csv") };
+        var src = new Data("x", raw) { Type = new global::app.type.@this("csv") };
 
         await Assert.That(src.Value).IsEqualTo(raw)
             .Because("Setting a typed Data must not invoke the materializer.");
@@ -96,7 +96,7 @@ public class Stage0_DataMaterializationTests
     [Test]
     public async Task Data_AsString_UnknownType_SurfacesErrorAtAccess_NotAtSet()
     {
-        var src = new Data("x", "anything") { Type = new global::app.data.type("bogus") };
+        var src = new Data("x", "anything") { Type = new global::app.type.@this("bogus") };
 
         await Assert.That(src.Value).IsEqualTo("anything")
             .Because("Setting with an unknown declared type stays cleanly stored.");
@@ -114,7 +114,7 @@ public class Stage0_DataMaterializationTests
     {
         var src = new Data("x", "{\"a\":1}")
         {
-            Type = new global::app.data.type("csv"),
+            Type = new global::app.type.@this("csv"),
             Context = _app.User.Context
         };
 

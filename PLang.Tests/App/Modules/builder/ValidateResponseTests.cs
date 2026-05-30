@@ -1,4 +1,4 @@
-using app.modules.builder;
+using app.module.builder;
 
 namespace PLang.Tests.App.Modules.builder;
 
@@ -167,7 +167,7 @@ public class ValidateResponseTests
     {
         var step = new Step { Index = 0 };
         var act = new PrAction { Module = "output", ActionName = "write" };
-        act.Parameters.Add(new Data("Data", "Hello %name%", new global::app.data.type("tstring")));
+        act.Parameters.Add(new Data("Data", "Hello %name%", new global::app.type.@this("tstring")));
         step.Actions.Add(act);
 
         var response = new BuildResponse { Steps = new() { step } };
@@ -186,7 +186,7 @@ public class ValidateResponseTests
             ["value"] = "Hello %name%",
             ["key"] = null,
         };
-        act.Parameters.Add(new Data("Data", record, new global::app.data.type("tstring")));
+        act.Parameters.Add(new Data("Data", record, new global::app.type.@this("tstring")));
         step.Actions.Add(act);
 
         var response = new BuildResponse { Steps = new() { step } };
@@ -207,7 +207,7 @@ public class ValidateResponseTests
             ["raw"] = "/tmp/x.txt",
             ["absolute"] = "/tmp/x.txt",
         };
-        act.Parameters.Add(new Data("Path", record, new global::app.data.type("path")));
+        act.Parameters.Add(new Data("Path", record, new global::app.type.@this("path")));
         step.Actions.Add(act);
 
         var response = new BuildResponse { Steps = new() { step } };
@@ -226,7 +226,7 @@ public class ValidateResponseTests
         var act = new PrAction { Module = "output", ActionName = "write" };
         act.Parameters.Add(new Data("Data",
             new Dictionary<string, object?> { ["value"] = "x" },
-            new global::app.data.type("tstring")));
+            new global::app.type.@this("tstring")));
         step.Actions.Add(act);
 
         var response = new BuildResponse { Steps = new() { step } };

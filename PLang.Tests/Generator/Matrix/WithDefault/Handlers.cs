@@ -1,35 +1,35 @@
-namespace app.modules.matrix.withdefault;
+namespace app.module.matrix.withdefault;
 
 public enum MatrixEnum { A, B, C }
 
-[global::app.modules.Action("stringwithdefault")]
-public partial class StringWithDefault : global::app.modules.IContext
+[global::app.module.Action("stringwithdefault")]
+public partial class StringWithDefault : global::app.module.IContext
 {
-    [global::app.modules.Default("hello")]
+    [global::app.module.Default("hello")]
     public partial global::app.data.@this<string> Greeting { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Greeting);
 }
 
-[global::app.modules.Action("intwithdefault")]
-public partial class IntWithDefault : global::app.modules.IContext
+[global::app.module.Action("intwithdefault")]
+public partial class IntWithDefault : global::app.module.IContext
 {
-    [global::app.modules.Default(42)]
+    [global::app.module.Default(42)]
     public partial global::app.data.@this<int> Count { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Count);
 }
 
-[global::app.modules.Action("enumwithdefault")]
-public partial class EnumWithDefault : global::app.modules.IContext
+[global::app.module.Action("enumwithdefault")]
+public partial class EnumWithDefault : global::app.module.IContext
 {
-    [global::app.modules.Default(MatrixEnum.A)]
+    [global::app.module.Default(MatrixEnum.A)]
     public partial global::app.data.@this<MatrixEnum> Choice { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Choice);
 }
 
-[global::app.modules.Action("boolwithdefault")]
-public partial class BoolWithDefault : global::app.modules.IContext
+[global::app.module.Action("boolwithdefault")]
+public partial class BoolWithDefault : global::app.module.IContext
 {
-    [global::app.modules.Default(false)]
+    [global::app.module.Default(false)]
     public partial global::app.data.@this<bool> Flag { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Flag);
 }

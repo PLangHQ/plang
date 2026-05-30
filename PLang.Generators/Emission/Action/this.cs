@@ -35,7 +35,7 @@ public static class @this
 
             namespace {{info.Namespace}};
 
-            partial class {{info.ClassName}} : global::app.modules.ICodeGenerated, global::app.modules.IClass
+            partial class {{info.ClassName}} : global::app.module.ICodeGenerated, global::app.module.IClass
             {
 
             """);
@@ -63,17 +63,17 @@ public static class @this
                 """);
         if (info.ImplementsIChannel)
             sb.Append("""
-                    public global::app.channels.channel.@this Channel { get; set; } = null!;
+                    public global::app.channel.@this Channel { get; set; } = null!;
 
                 """);
         if (info.ImplementsIAction)
             sb.Append("""
-                    public global::app.goals.goal.steps.step.actions.action.@this Action { get; set; } = null!;
+                    public global::app.goal.steps.step.actions.action.@this Action { get; set; } = null!;
 
                 """);
         if (info.ImplementsIStep)
             sb.Append("""
-                    public global::app.goals.goal.steps.step.@this Step { get; set; } = null!;
+                    public global::app.goal.steps.step.@this Step { get; set; } = null!;
 
                 """);
         if (info.ImplementsIStatic)
@@ -86,7 +86,7 @@ public static class @this
     private static void EmitResolutionState(StringBuilder sb)
     {
         sb.Append("""
-                private global::app.goals.goal.steps.step.actions.action.@this? __action;
+                private global::app.goal.steps.step.actions.action.@this? __action;
                 private global::app.@this? __app;
                 private global::app.data.@this? __resolutionError;
 
@@ -107,7 +107,7 @@ public static class @this
             sb.Append("""
                     protected static global::app.data.@this Data() => global::app.data.@this.Ok();
                     protected static global::app.data.@this Data(object? value) => global::app.data.@this.Ok(value);
-                    protected static global::app.data.@this Data(object? value, global::app.data.type? type) => global::app.data.@this.Ok(value, type);
+                    protected static global::app.data.@this Data(object? value, global::app.type.@this? type) => global::app.data.@this.Ok(value, type);
 
                 """);
         }
@@ -115,7 +115,7 @@ public static class @this
         if (!hasErrorProp)
         {
             sb.Append("""
-                    protected static global::app.data.@this Error(global::app.errors.IError error) => global::app.data.@this.FromError(error);
+                    protected static global::app.data.@this Error(global::app.error.IError error) => global::app.data.@this.FromError(error);
 
                 """);
         }
@@ -126,7 +126,7 @@ public static class @this
     {
         sb.Append("""
                 public async System.Threading.Tasks.Task<global::app.data.@this> ExecuteAsync(
-                    global::app.goals.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
+                    global::app.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
                 {
                     __action = action;
                     __app = context.App;
@@ -162,9 +162,9 @@ public static class @this
             sb.Append("""
                         {
                             var __channelName = __action?.Parameters?.FirstOrDefault(d => string.Equals(d.Name, "channel", System.StringComparison.OrdinalIgnoreCase))?.Value as string;
-                            Channel = (context.Actor ?? app.User).Channels.Resolve(__channelName);
+                            Channel = (context.Actor ?? app.User).Channel.Resolve(__channelName);
                             if (Channel == null)
-                                return global::app.data.@this.FromError(new global::app.errors.ServiceError(
+                                return global::app.data.@this.FromError(new global::app.error.ServiceError(
                                     $"Channel '{__channelName ?? "output"}' not found", __step, __callFrames, "ChannelNotFound", 404));
                         }
 
@@ -174,7 +174,7 @@ public static class @this
         if (info.ImplementsIStep) sb.AppendLine("        Step = __action?.Step!;");
         if (info.ImplementsIStatic)
         {
-            const string prefix = "app.modules.";
+            const string prefix = "app.module.";
             var moduleName = info.Namespace.StartsWith(prefix)
                 ? info.Namespace.Substring(prefix.Length).Split('.')[0]
                 : info.Namespace;
@@ -213,7 +213,7 @@ public static class @this
                 var lower = name.ToLowerInvariant();
                 sb.Append($$"""
                                 if (__action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Value == null)
-                                    return global::app.data.@this.FromError(new global::app.errors.ServiceError(
+                                    return global::app.data.@this.FromError(new global::app.error.ServiceError(
                                         "'{{lower}}' must have a value", __step, __callFrames, "ValueRequired", 400));
 
                     """);
@@ -241,7 +241,7 @@ public static class @this
                 var lower = prop.Name.ToLowerInvariant();
                 sb.Append($$"""
                                 if (__action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Value == null)
-                                    return global::app.data.@this.FromError(new global::app.errors.ServiceError(
+                                    return global::app.data.@this.FromError(new global::app.error.ServiceError(
                                         "Required parameter '{{lower}}' is missing or null", __step, __callFrames, "MissingRequiredParameter", 400));
 
                     """);
@@ -263,7 +263,7 @@ public static class @this
                         // C# stack stays available for diagnostic display.
                         var mod = __action?.Module ?? "?";
                         var act = __action?.ActionName ?? "?";
-                        return global::app.data.@this.FromError(new global::app.errors.ServiceError(
+                        return global::app.data.@this.FromError(new global::app.error.ServiceError(
                             $"{mod}.{act}: {ex.GetType().Name}: {ex.Message}",
                             __step!, __callFrames, ex.GetType().Name, 500)
                         { Exception = ex });
@@ -285,7 +285,7 @@ public static class @this
                     if (__action == null || err.Error == null) return err;
                     var orig = err.Error;
                     var msg = $"{__action.Module}.{__action.ActionName}: {orig.Message}";
-                    return global::app.data.@this.FromError(new global::app.errors.ActionError(msg, orig.Key ?? "ActionError", orig.StatusCode));
+                    return global::app.data.@this.FromError(new global::app.error.ActionError(msg, orig.Key ?? "ActionError", orig.StatusCode));
                 }
 
             """);
@@ -303,7 +303,7 @@ public static class @this
     {
         sb.Append("""
                 public void SetAction(
-                    global::app.goals.goal.steps.step.actions.action.@this action,
+                    global::app.goal.steps.step.actions.action.@this action,
                     global::app.actor.context.@this context)
                 {
                     __action = action;
@@ -343,7 +343,7 @@ public static class @this
     {
         // Public surface for App.Run's catch path.
         sb.Append("""
-                public System.Collections.Generic.List<global::app.errors.ParamSnapshot> SnapshotParams()
+                public System.Collections.Generic.List<global::app.error.ParamSnapshot> SnapshotParams()
                     => __SnapshotParams();
 
             """);
@@ -369,9 +369,9 @@ public static class @this
     private static void EmitSnapshotInternal(StringBuilder sb, ActionClassInfo info)
     {
         sb.Append("""
-                private System.Collections.Generic.List<global::app.errors.ParamSnapshot> __SnapshotParams()
+                private System.Collections.Generic.List<global::app.error.ParamSnapshot> __SnapshotParams()
                 {
-                    var __list = new System.Collections.Generic.List<global::app.errors.ParamSnapshot>();
+                    var __list = new System.Collections.Generic.List<global::app.error.ParamSnapshot>();
             """);
         sb.AppendLine();
         foreach (var prop in info.Properties)

@@ -46,7 +46,7 @@ public class ExecutorTests
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
         await Assert.That(engine!.Tester.IsEnabled).IsTrue();
-        await Assert.That(engine.System.Context.Variables.Get<string>("goalFile"))
+        await Assert.That(engine.System.Context.Variable.Get<string>("goalFile"))
             .IsEqualTo("/system/.build/test.pr");
         await using var _ = engine;
     }
@@ -105,7 +105,7 @@ public class ExecutorTests
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
         await Assert.That(engine!.Builder.IsEnabled).IsTrue();
-        var cacheVar = engine.User.Context.Variables.Get("!build.cache");
+        var cacheVar = engine.User.Context.Variable.Get("!build.cache");
         await Assert.That(cacheVar).IsNotNull();
         await using var _ = engine;
     }
@@ -133,7 +133,7 @@ public class ExecutorTests
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
-        var vars = engine!.User.Context.Variables;
+        var vars = engine!.User.Context.Variable;
         await Assert.That(vars.Get<long>("count")).IsEqualTo(42L);
         await Assert.That(vars.Get<string>("label")).IsEqualTo("hello");
         await using var _ = engine;
@@ -152,7 +152,7 @@ public class ExecutorTests
         await Assert.That(engine!.Tester.IsEnabled).IsFalse();
         await Assert.That(engine.Debug.IsEnabled).IsFalse();
         await Assert.That(engine.Builder.IsEnabled).IsFalse();
-        await Assert.That(engine.System.Context.Variables.Get<string>("goalFile"))
+        await Assert.That(engine.System.Context.Variable.Get<string>("goalFile"))
             .IsEqualTo("/.build/start.pr");
         await using var _ = engine;
     }

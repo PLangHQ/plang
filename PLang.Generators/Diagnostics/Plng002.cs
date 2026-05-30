@@ -42,8 +42,8 @@ public static class Plng002
 
     public static readonly DiagnosticDescriptor Descriptor = new(
         id: DiagnosticId,
-        title: "System.IO is banned in PLang action code (use app.types.path verbs)",
-        messageFormat: "{0}. Use app.types.path.@this verbs (ReadText/WriteText/List/Stat/...) — they route through AuthGate.",
+        title: "System.IO is banned in PLang action code (use app.type.path verbs)",
+        messageFormat: "{0}. Use app.type.path.@this verbs (ReadText/WriteText/List/Stat/...) — they route through AuthGate.",
         category: "PLang.Generators",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
@@ -89,7 +89,7 @@ public static class Plng002
     /// like everyone else.
     /// </summary>
     private static bool IsPathTypeSurface(string normalizedPath)
-        => normalizedPath.Contains("/PLang/app/types/path/");
+        => normalizedPath.Contains("/PLang/app/type/path/");
 
     /// <summary>
     /// True for the single <c>PathHelper.cs</c> forwarder. PathHelper IS the
@@ -199,7 +199,7 @@ public static class Plng002
         if (cls == null) return null;
         var isAction = cls.GetAttributes().Any(a =>
             a.AttributeClass?.Name == "ActionAttribute"
-            && a.AttributeClass.ContainingNamespace?.ToDisplayString() == "app.modules");
+            && a.AttributeClass.ContainingNamespace?.ToDisplayString() == "app.module");
         if (!isAction) return null;
 
         // Type must be Data<string>.

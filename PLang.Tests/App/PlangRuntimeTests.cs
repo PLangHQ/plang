@@ -1,7 +1,7 @@
 using app;
 using app.actor.context;
-using app.variables;
-using app.types.path;
+using app.variable;
+using app.type.path;
 
 namespace PLang.Tests.App;
 
@@ -34,8 +34,8 @@ public class PlangRuntimeTests : IDisposable
     public async Task Kernel_Execute_RunsStepActions()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new StreamChannel(
-            EngineChannels.Output, captureStream,
+        _app.User.Channel.Register(new StreamChannel(
+            global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 
@@ -45,7 +45,7 @@ public class PlangRuntimeTests : IDisposable
             Text = "write hello",
             Actions = new StepActions
             {
-                new global::app.goals.goal.steps.step.actions.action.@this
+                new global::app.goal.steps.step.actions.action.@this
                 {
                     Module = "output",
                     ActionName = "write",
@@ -89,10 +89,10 @@ public class PlangRuntimeTests : IDisposable
         var context = _app.User.Context;
 
         // Register a before-step event
-        var onAction = new global::app.modules.@event.On
+        var onAction = new global::app.module.@event.On
         {
             Context = context,
-            Type = global::app.events.EventType.BeforeStep,
+            Type = global::app.@event.EventType.BeforeStep,
             GoalToCall = new GoalCall { Name = "LogBefore" },
             StepPattern = "*"
         };
@@ -112,8 +112,8 @@ public class PlangRuntimeTests : IDisposable
     public async Task PlangRuntime_SimpleGoal_ExecutesThroughRunGoal()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new StreamChannel(
-            EngineChannels.Output, captureStream,
+        _app.User.Channel.Register(new StreamChannel(
+            global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 
@@ -129,7 +129,7 @@ public class PlangRuntimeTests : IDisposable
                     Text = "write hello",
                     Actions = new StepActions
                     {
-                        new global::app.goals.goal.steps.step.actions.action.@this
+                        new global::app.goal.steps.step.actions.action.@this
                         {
                             Module = "output",
                             ActionName = "write",

@@ -1,11 +1,11 @@
-using Path = global::app.types.path.file.@this;
+using Path = global::app.type.path.file.@this;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using PermissionRecord = global::app.types.path.permission.@this;
-using Verb = global::app.types.path.permission.verb.@this;
-using Read = global::app.types.path.permission.verb.Read;
-using MatchMode = global::app.types.path.permission.Match;
+using PermissionRecord = global::app.type.path.permission.@this;
+using Verb = global::app.type.path.permission.verb.@this;
+using Read = global::app.type.path.permission.verb.Read;
+using MatchMode = global::app.type.path.permission.Match;
 
 namespace PLang.Tests.App.FileSystem;
 
@@ -23,7 +23,7 @@ public class Stage5MessagesEndToEndTests
             "plang-s5-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
         var app = new global::app.@this(root);
-        app.User.Channels.Register(new CannedChannel(answer));
+        app.User.Channel.Register(new CannedChannel(answer));
 
         // Simulate /apps/Email/system.sqlite living outside the app root.
         var foreignDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
@@ -34,23 +34,23 @@ public class Stage5MessagesEndToEndTests
         return (app, foreignFile);
     }
 
-    private sealed class CannedChannel : global::app.channels.channel.@this
+    private sealed class CannedChannel : global::app.channel.@this
     {
         private readonly string _answer;
         public int AskCount { get; private set; }
-        public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channels.channel.ChannelDirection.Bidirectional; }
+        public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
-        public override Task<global::app.data.@this> Ask(global::app.modules.output.ask action, CancellationToken ct = default)
+        public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
         {
             AskCount++;
             return Task.FromResult(global::app.data.@this.Ok(_answer));
         }
     }
 
-    private sealed class StatelessChannel : global::app.channels.channel.message.@this
+    private sealed class StatelessChannel : global::app.channel.message.@this
     {
-        public StatelessChannel() { Name = "input"; Direction = global::app.channels.channel.ChannelDirection.Bidirectional; }
+        public StatelessChannel() { Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
     }
@@ -59,7 +59,7 @@ public class Stage5MessagesEndToEndTests
     {
         var (app, _) = Setup("UNUSED");
         // Override channel: stateless.
-        app.User.Channels.Register(new StatelessChannel());
+        app.User.Channel.Register(new StatelessChannel());
         var foreignFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-email-x", "system.sqlite");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(foreignFile)!);
@@ -87,7 +87,7 @@ public class Stage5MessagesEndToEndTests
     {
         var (app, foreignFile) = Setup("a");
         var path = new Path(foreignFile, app.User.Context);
-        var ch = (CannedChannel)app.User.Channels.Resolve("input")!;
+        var ch = (CannedChannel)app.User.Channel.Resolve("input")!;
 
         await path.ReadText(); // grants via prompt
         var asksAfterFirst = ch.AskCount;
@@ -112,7 +112,7 @@ public class Stage5MessagesEndToEndTests
         // prompt that fires means the persisted grant was missed.
         var app2 = new global::app.@this(root);
         var statelessProbe = new StatelessChannel();
-        app2.User.Channels.Register(statelessProbe);
+        app2.User.Channel.Register(statelessProbe);
         var path2 = new Path(foreignFile, app2.User.Context);
         var secondRead = await path2.ReadText();
         await Assert.That(secondRead.Success).IsTrue();
@@ -137,13 +137,13 @@ public class Stage5MessagesEndToEndTests
         // Config.TimeoutMs window that would otherwise expire the signature.
         var app2 = new global::app.@this(root);
         var statelessProbe = new StatelessChannel();
-        app2.User.Channels.Register(statelessProbe);
+        app2.User.Channel.Register(statelessProbe);
         // Replace the DynamicData NowUtc with a static Data (the DynamicData's
         // override Value getter ignores `_value`, so Set("NowUtc", offset)
         // would be a no-op — we must replace with a fresh Data instance).
-        app2.User.Context.Variables.Set(
+        app2.User.Context.Variable.Set(
             new global::app.data.@this("NowUtc", DateTimeOffset.UtcNow.AddMinutes(10),
-                global::app.data.type.DateTime));
+                global::app.type.@this.DateTime));
 
         var path2 = new Path(foreignFile, app2.User.Context);
         var secondRead = await path2.ReadText();
@@ -168,7 +168,7 @@ public class Stage5MessagesEndToEndTests
         // app2: two reads. Each Find re-deserializes the grant → two real
         // VerifySignature passes → step 4 would NonceReplay the second.
         var app2 = new global::app.@this(root);
-        app2.User.Channels.Register(new StatelessChannel());
+        app2.User.Channel.Register(new StatelessChannel());
         var path2 = new Path(foreignFile, app2.User.Context);
         var read1 = await path2.ReadText();   // verify #1 — nonce cached
         var read2 = await path2.ReadText();   // verify #2 — nonce replay if step 4 active
@@ -182,7 +182,7 @@ public class Stage5MessagesEndToEndTests
     {
         var (app, foreignFile) = Setup("a");
         var path = new Path(foreignFile, app.User.Context);
-        var ch = (CannedChannel)app.User.Channels.Resolve("input")!;
+        var ch = (CannedChannel)app.User.Channel.Resolve("input")!;
 
         await path.ReadText();              // initial grant
         var asksBeforeRevoke = ch.AskCount;
@@ -210,7 +210,7 @@ public class Stage5MessagesEndToEndTests
         // Stat needs Metadata=true; the narrowed Read grant doesn't cover it.
         // Authorize asks; the CannedChannel answers "a" and a wider grant lands.
         var path = new Path(foreignFile, app.User.Context);
-        var ch = (CannedChannel)app.User.Channels.Resolve("input")!;
+        var ch = (CannedChannel)app.User.Channel.Resolve("input")!;
         var statResult = await path.Stat();
         await Assert.That(statResult.Success).IsTrue();
         await Assert.That(ch.AskCount).IsGreaterThan(0); // prompt fired despite the narrow grant

@@ -69,37 +69,37 @@ public class Stage0_PlangTypeRemovalTests
     [Test]
     public async Task Results_PlangTypeName_DerivesFromClassNameLowercased()
     {
-        var name = _app.Types.Name(typeof(global::app.tester.Results));
+        var name = _app.Type.Name(typeof(global::app.tester.Results));
         await Assert.That(name).IsEqualTo("results");
     }
 
-    // app.mock.Mock.@this is an @this class — its PLang type name derives
+    // app.mock.@this is an @this class — its PLang type name derives
     // from the last namespace segment ("mock"), not the class name ("@this").
     [Test]
     public async Task Mock_PlangTypeName_DerivesFromClassName()
     {
-        var name = _app.Types.Name(typeof(global::app.mock.Mock.@this));
+        var name = _app.Type.Name(typeof(global::app.mock.@this));
         await Assert.That(name).IsEqualTo("mock");
     }
 
-    // app.tester.Test.@this is an @this class — its PLang type name derives
+    // app.tester.test.@this is an @this class — its PLang type name derives
     // from the last namespace segment ("test"), not the class name ("@this").
     [Test]
     public async Task Test_PlangTypeName_DerivesFromClassName_AfterRename()
     {
-        var name = _app.Types.Name(typeof(global::app.tester.Test.@this));
+        var name = _app.Type.Name(typeof(global::app.tester.test.@this));
         await Assert.That(name).IsEqualTo("test")
             .Because("@this convention takes the last namespace segment as the PLang type name.");
     }
 
     // @this classes use the last namespace segment, not the literal "this".
-    // app.builder.Types.@this → "types" by derivation alone (no override).
+    // app.builder.type.@this → "type" by derivation alone (no override).
     [Test]
     public async Task PlangTypeDerivation_OBPSingleNameFolders_UseFolderNameNotThisLiteral()
     {
-        var name = _app.Types.Name(typeof(global::app.builder.Types.@this));
+        var name = _app.Type.Name(typeof(global::app.builder.type.@this));
         await Assert.That(name).IsNotEqualTo("this");
-        await Assert.That(name).IsEqualTo("types")
+        await Assert.That(name).IsEqualTo("type")
             .Because("The @this segment 'Types' derives cleanly to 'types' — no [PlangType] override needed.");
     }
 }

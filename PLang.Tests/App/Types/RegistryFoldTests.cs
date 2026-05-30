@@ -1,17 +1,17 @@
 namespace PLang.Tests.App.Types;
 
 // plang-types — Stage 1
-// The flat Primitives/PrimitiveNames dicts in app/types/this.cs fold into the
+// The flat Primitives/PrimitiveNames dicts in app/type/this.cs fold into the
 // [PlangType] registry — one source of truth for name↔type and IsPrimitive.
 // CLR primitives without a folder still resolve via a bootstrap RegisterRuntime.
 // Bar: no behavior regresses.
 
 public class RegistryFoldTests
 {
-    private EngineTypes _types = null!;
+    private global::app.type.list.@this _types = null!;
 
     [Before(Test)]
-    public void Setup() => _types = new EngineTypes();
+    public void Setup() => _types = new global::app.type.list.@this();
 
     [Test]
     public async Task Get_NumberByName_ResolvesViaRegistry_NotFlatPrimitivesDict()
@@ -30,14 +30,14 @@ public class RegistryFoldTests
     [Test]
     public async Task IsPrimitive_AllPriorTrueAnswers_StillTrue()
     {
-        await Assert.That(EngineTypes.IsPrimitive(typeof(string))).IsTrue();
-        await Assert.That(EngineTypes.IsPrimitive(typeof(int))).IsTrue();
-        await Assert.That(EngineTypes.IsPrimitive(typeof(long))).IsTrue();
-        await Assert.That(EngineTypes.IsPrimitive(typeof(double))).IsTrue();
-        await Assert.That(EngineTypes.IsPrimitive(typeof(decimal))).IsTrue();
-        await Assert.That(EngineTypes.IsPrimitive(typeof(bool))).IsTrue();
-        await Assert.That(EngineTypes.IsPrimitive(typeof(System.DateTime))).IsTrue();
-        await Assert.That(EngineTypes.IsPrimitive(typeof(System.Guid))).IsTrue();
+        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(string))).IsTrue();
+        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(int))).IsTrue();
+        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(long))).IsTrue();
+        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(double))).IsTrue();
+        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(decimal))).IsTrue();
+        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(bool))).IsTrue();
+        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(System.DateTime))).IsTrue();
+        await Assert.That(global::app.type.list.@this.IsPrimitive(typeof(System.Guid))).IsTrue();
     }
 
     [Test]
@@ -62,7 +62,7 @@ public class RegistryFoldTests
     [Test]
     public async Task ClrPrimitivesWithoutFolder_StillRegistered_ViaBootstrap()
     {
-        // string / int / decimal have no folder under app/types/ and carry no
+        // string / int / decimal have no folder under app/type/ and carry no
         // [PlangType] attribute. Registry.SeedClrPrimitives is what makes
         // ResolveType see them. KnownTypes() must include them.
         var known = new System.Collections.Generic.HashSet<System.Type>(_types.KnownTypes());
@@ -74,7 +74,7 @@ public class RegistryFoldTests
     [Test]
     public async Task Conversion_TryConvertTo_RoutesThroughRegistry_NotPrimitivesDict()
     {
-        var (value, error) = global::app.types.@this.TryConvertTo("42", typeof(int));
+        var (value, error) = global::app.type.list.@this.TryConvertTo("42", typeof(int));
         await Assert.That(error).IsNull();
         await Assert.That(value).IsEqualTo(42);
     }

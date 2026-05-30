@@ -2,11 +2,11 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using app.actor.context;
-using app.variables;
-using app.modules.http;
-using app.modules.http.code;
+using app.variable;
+using app.module.http;
+using app.module.http.code;
 using PLangEngine = global::app.@this;
-using HttpMethod = global::app.modules.http.HttpMethod;
+using HttpMethod = global::app.module.http.HttpMethod;
 
 namespace PLang.Tests.App.Modules.http;
 

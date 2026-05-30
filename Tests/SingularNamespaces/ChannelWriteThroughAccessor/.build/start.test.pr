@@ -1,0 +1,116 @@
+{
+  "name": "TestChannelWriteThroughNewAccessor",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set channel \u0022log\u0022 call Capture",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": "Cut 2 surface in PLang. A PLang \u0060write to %channelName%\u0060 step lands on the new\nactor.channel[name].Write(data) path \u2014 the registry no longer holds WriteText/WriteAsync,\nand the type-switch on channel.stream.@this moved onto the element as a virtual.\nWithout the assertion this was a no-assertion smoke test (tester v1 F7) \u2014 it would\npass even if the accessor path was unreachable. Routing through a goal channel and\nasserting on the captured value pins that the Write call actually reaches handler code.",
+      "actions": [
+        {
+          "module": "channel",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "log",
+              "type": "string"
+            },
+            {
+              "name": "Goal",
+              "value": {
+                "name": "Capture",
+                "parallel": false,
+                "parameters": [],
+                "prPath": null
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "channel.set(Name=\u0022log\u0022, Goal={name:\u0022Capture\u0022})",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write \u0022hello from channel accessor\u0022 to log",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "hello from channel accessor",
+              "type": "string"
+            },
+            {
+              "name": "channel",
+              "value": "log",
+              "type": "channel"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "output.write(Data=\u0022hello from channel accessor\u0022, channel=\u0022log\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %captured% equals \u0022hello from channel accessor\u0022",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "hello from channel accessor",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%captured%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022hello from channel accessor\u0022, Actual=%captured%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/SingularNamespaces/ChannelWriteThroughAccessor/Start.test.goal",
+  "prPath": "/SingularNamespaces/ChannelWriteThroughAccessor/.build/start.test.pr",
+  "hash": "3121b760fa33c848e290c342b4a57a6e674f2ed3f0c934eb68a7e9dec9a84246",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

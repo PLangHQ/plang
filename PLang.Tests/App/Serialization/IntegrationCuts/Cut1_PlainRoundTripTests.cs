@@ -18,8 +18,8 @@ public class Cut1_PlainRoundTripTests
     private static async Task<(string wireJson, global::app.data.@this readBack, global::app.@this app)> WriteAndRead(string name, object? value)
     {
         var app = NewApp();
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+        var plang = (global::app.channel.serializer.plang.@this)
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var data = new global::app.data.@this(name, value) { Context = app.User.Context };
         var wire = plang.Serialize(data).Value!;
@@ -73,8 +73,8 @@ public class Cut1_PlainRoundTripTests
         await using (app)
         {
             back.Context = app.User.Context;
-            var verify = await app.RunAction<global::app.modules.signing.verify>(
-                new global::app.modules.signing.verify
+            var verify = await app.RunAction<global::app.module.signing.verify>(
+                new global::app.module.signing.verify
                 {
                     Data = back,
                     SkipFreshnessCheck = new global::app.data.@this<bool>("", true)

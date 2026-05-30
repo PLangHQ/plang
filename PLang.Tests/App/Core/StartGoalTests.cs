@@ -1,6 +1,6 @@
 using app.actor.context;
-using app.variables;
-using app.modules;
+using app.variable;
+using app.module;
 
 namespace PLang.Tests.App.Core;
 
@@ -15,7 +15,7 @@ public class StartGoalTests
 
         // Replace output.write with capturing version
         var capture = new CapturingWriteHandler();
-        engine.Modules.Register("output", "write", capture);
+        engine.Module.Register("output", "write", capture);
 
         var goal = new Goal
         {
@@ -37,7 +37,7 @@ public class StartGoalTests
                     index: 3, text: "write out \"NewVar: %newVarName%\"")
             }
         };
-        engine.Goals.Add(goal);
+        engine.Goal.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
@@ -45,8 +45,8 @@ public class StartGoalTests
         await Assert.That(result.Success).IsTrue();
 
         // Check variables
-        await Assert.That(context.Variables.GetValue("name")).IsEqualTo("Plang");
-        await Assert.That(context.Variables.GetValue("newVarName")).IsEqualTo("Plang");
+        await Assert.That(context.Variable.GetValue("name")).IsEqualTo("Plang");
+        await Assert.That(context.Variable.GetValue("newVarName")).IsEqualTo("Plang");
 
         // Check output
         await Assert.That(capture.Lines).Contains("Plang");
@@ -76,13 +76,13 @@ public class StartGoalTests
                     index: 1, text: "set result = %myVar%")
             }
         };
-        engine.Goals.Add(goal);
+        engine.Goal.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.Variables.GetValue("result")).IsEqualTo("Hello");
+        await Assert.That(context.Variable.GetValue("result")).IsEqualTo("Hello");
     }
 
     [Test]
@@ -91,7 +91,7 @@ public class StartGoalTests
         await using var engine = new global::app.@this("/app");
 
         var capture = new CapturingWriteHandler();
-        engine.Modules.Register("output", "write", capture);
+        engine.Module.Register("output", "write", capture);
 
         var goal = new Goal
         {
@@ -107,7 +107,7 @@ public class StartGoalTests
                     index: 1, text: "write Hello %user%!")
             }
         };
-        engine.Goals.Add(goal);
+        engine.Goal.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
@@ -122,7 +122,7 @@ public class StartGoalTests
         await using var engine = new global::app.@this("/app");
 
         var capture = new CapturingWriteHandler();
-        engine.Modules.Register("output", "write", capture);
+        engine.Module.Register("output", "write", capture);
 
         var goal = new Goal
         {
@@ -135,7 +135,7 @@ public class StartGoalTests
                     index: 0, text: "write literal")
             }
         };
-        engine.Goals.Add(goal);
+        engine.Goal.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
@@ -150,7 +150,7 @@ public class StartGoalTests
         await using var engine = new global::app.@this("/app");
 
         var capture = new CapturingWriteHandler();
-        engine.Modules.Register("output", "write", capture);
+        engine.Module.Register("output", "write", capture);
 
         var goal = new Goal
         {
@@ -163,7 +163,7 @@ public class StartGoalTests
                     index: 0, text: "write with unknown var")
             }
         };
-        engine.Goals.Add(goal);
+        engine.Goal.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
@@ -188,13 +188,13 @@ public class StartGoalTests
                     index: 0, text: "set result = %nonexistent%")
             }
         };
-        engine.Goals.Add(goal);
+        engine.Goal.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.Variables.GetValue("result")).IsNull();
+        await Assert.That(context.Variable.GetValue("result")).IsNull();
     }
 
     #endregion
@@ -220,16 +220,16 @@ public class StartGoalTests
                     index: 0, text: "set greeting = hello")
             }
         };
-        engine.Goals.Add(goal);
+        engine.Goal.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.Variables.GetValue("greeting")).IsEqualTo("hello");
+        await Assert.That(context.Variable.GetValue("greeting")).IsEqualTo("hello");
 
         // Type should be "string" — resolved from defaults, not null
-        var data = context.Variables.Get("greeting");
+        var data = context.Variable.Get("greeting");
         await Assert.That(data?.Type?.Value).IsEqualTo("string");
     }
 
@@ -251,14 +251,14 @@ public class StartGoalTests
                     index: 0, text: "set count = 42")
             }
         };
-        engine.Goals.Add(goal);
+        engine.Goal.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
         await Assert.That(result.Success).IsTrue();
         // "long" from parameters, not "string" from defaults
-        var data = context.Variables.Get("count");
+        var data = context.Variable.Get("count");
         await Assert.That(data?.Type?.Value).IsEqualTo("long");
     }
 
@@ -279,7 +279,7 @@ public class StartGoalTests
                     index: 0, text: "set x = y")
             }
         };
-        engine.Goals.Add(goal);
+        engine.Goal.Add(goal);
 
         var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
@@ -287,7 +287,7 @@ public class StartGoalTests
         await Assert.That(result.Success).IsTrue();
         // Type is derived from value ("y" is a string), not from defaults or [Default] attribute
         // This proves the fallback chain works: no defaults → no attribute → auto-derive
-        var data = context.Variables.Get("x");
+        var data = context.Variable.Get("x");
         await Assert.That(data?.Value).IsEqualTo("y");
     }
 
@@ -310,7 +310,7 @@ public class StartGoalTests
             Text = text,
             Actions = new StepActions
             {
-                new global::app.goals.goal.steps.step.actions.action.@this
+                new global::app.goal.steps.step.actions.action.@this
                 {
                     Module = actionClass,
                     ActionName = method,
@@ -329,12 +329,12 @@ public class StartGoalTests
     {
         public List<string> Lines { get; } = new();
 
-        public global::app.goals.goal.steps.step.actions.action.@this Action { get; set; } = null!;
+        public global::app.goal.steps.step.actions.action.@this Action { get; set; } = null!;
         public global::app.@this App { get; private set; } = null!;
         public global::app.actor.context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
 
-        public Task<Data> ExecuteAsync(global::app.goals.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
+        public Task<Data> ExecuteAsync(global::app.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
         {
             App = context.App!;
             Context = context;
@@ -344,10 +344,10 @@ public class StartGoalTests
             {
                 var fullMatch = System.Text.RegularExpressions.Regex.Match(str, @"^%([^%]+)%$");
                 if (fullMatch.Success)
-                    content = context.Variables.GetValue(fullMatch.Groups[1].Value);
+                    content = context.Variable.GetValue(fullMatch.Groups[1].Value);
                 else
                     content = System.Text.RegularExpressions.Regex.Replace(str, @"%([^%]+)%",
-                        m => context.Variables.GetValue(m.Groups[1].Value)?.ToString() ?? "");
+                        m => context.Variable.GetValue(m.Groups[1].Value)?.ToString() ?? "");
             }
             if (content != null)
                 Lines.Add(content.ToString()!);

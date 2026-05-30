@@ -1,7 +1,7 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using FilePath = global::app.types.path.file.@this;
+using FilePath = global::app.type.path.file.@this;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Types.PathTests;
@@ -40,9 +40,9 @@ public class RootComparisonKeyingTests
     [Test] public async Task DictionaryKeyedByPath_RoundTripsBuiltAndResolvedPath()
     {
         var app = NewApp(out _);
-        var dict = new System.Collections.Generic.Dictionary<global::app.types.path.@this, string>();
-        var built = global::app.types.path.@this.Resolve("/Cache/Start.goal", app.User.Context);
-        var resolved = global::app.types.path.@this.Resolve("/Cache/Start.goal", app.User.Context);
+        var dict = new System.Collections.Generic.Dictionary<global::app.type.path.@this, string>();
+        var built = global::app.type.path.@this.Resolve("/Cache/Start.goal", app.User.Context);
+        var resolved = global::app.type.path.@this.Resolve("/Cache/Start.goal", app.User.Context);
         dict[built] = "value";
         await Assert.That(dict.ContainsKey(resolved)).IsTrue();
     }
@@ -50,9 +50,9 @@ public class RootComparisonKeyingTests
     [Test] public async Task CycleDetection_GoalPrPath_UsesPathEquality_NotStringInterpolation()
     {
         var app = NewApp(out _);
-        var ctx = app.User.Context;
-        var a = global::app.types.path.@this.Resolve("/Cache/Foo.goal", ctx);
-        var b = global::app.types.path.@this.Resolve("/Cache/Foo.goal", ctx);
+        var context = app.User.Context;
+        var a = global::app.type.path.@this.Resolve("/Cache/Foo.goal", context);
+        var b = global::app.type.path.@this.Resolve("/Cache/Foo.goal", context);
         // Same absolute path → Path equality returns true → cycle detection
         // would correctly identify these as the same goal.
         await Assert.That(a.Equals(b)).IsTrue();
@@ -61,13 +61,13 @@ public class RootComparisonKeyingTests
     [Test] public async Task StepDisabledKey_InterpolatesPrPathRelative_NotRawObject()
     {
         var app = NewApp(out _);
-        var ctx = app.User.Context;
+        var context = app.User.Context;
         var goal = new Goal
         {
             Name = "Test",
-            Path = global::app.types.path.@this.Resolve("/Start.goal", ctx)
+            Path = global::app.type.path.@this.Resolve("/Start.goal", context)
         };
-        var step = new Step { Index = 0, Text = "noop", Goal = goal, Context = ctx };
+        var step = new Step { Index = 0, Text = "noop", Goal = goal, Context = context };
         // step.DisabledKey is private — test indirectly: Disabled get/set roundtrips.
         // The key shape is `step:<PrPath>:<index>:disabled` — Goal?.PrPath inside
         // interpolation needs to render as a string, not "@this { ... }".

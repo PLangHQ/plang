@@ -1,16 +1,16 @@
 using app.actor.context;
 using app;
-using app.errors;
-using app.variables;
-using AssertEquals = global::app.modules.assert.Equals;
-using AssertNotEquals = global::app.modules.assert.NotEquals;
-using AssertIsTrue = global::app.modules.assert.IsTrue;
-using AssertIsFalse = global::app.modules.assert.IsFalse;
-using AssertIsNull = global::app.modules.assert.IsNull;
-using AssertIsNotNull = global::app.modules.assert.IsNotNull;
-using AssertContains = global::app.modules.assert.Contains;
-using AssertGreaterThan = global::app.modules.assert.GreaterThan;
-using AssertLessThan = global::app.modules.assert.LessThan;
+using app.error;
+using app.variable;
+using AssertEquals = global::app.module.assert.Equals;
+using AssertNotEquals = global::app.module.assert.NotEquals;
+using AssertIsTrue = global::app.module.assert.IsTrue;
+using AssertIsFalse = global::app.module.assert.IsFalse;
+using AssertIsNull = global::app.module.assert.IsNull;
+using AssertIsNotNull = global::app.module.assert.IsNotNull;
+using AssertContains = global::app.module.assert.Contains;
+using AssertGreaterThan = global::app.module.assert.GreaterThan;
+using AssertLessThan = global::app.module.assert.LessThan;
 
 namespace PLang.Tests.App.actions.assert;
 
@@ -19,7 +19,7 @@ public class AssertTests
     private (global::app.actor.context.@this context, Variables memory) CreateContext()
     {
         var app = new global::app.@this("/app");
-        return (app.User.Context, app.User.Context.Variables);
+        return (app.User.Context, app.User.Context.Variable);
     }
 
     private static Data D(object? value) => value == null ? new Data("") : Data.Ok(value);
@@ -212,7 +212,7 @@ public class AssertTests
         var (app, root) = MakeAppRoot("istrue-yes");
         var filePath = System.IO.Path.Combine(root, "exists.txt");
         System.IO.File.WriteAllText(filePath, "x");
-        var fp = new global::app.types.path.file.@this(filePath, app.User.Context);
+        var fp = new global::app.type.path.file.@this(filePath, app.User.Context);
         var action = new AssertIsTrue { Context = app.User.Context, Value = D(fp) };
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
@@ -224,7 +224,7 @@ public class AssertTests
     {
         var (app, root) = MakeAppRoot("istrue-no");
         var missing = System.IO.Path.Combine(root, "nope.txt");
-        var fp = new global::app.types.path.file.@this(missing, app.User.Context);
+        var fp = new global::app.type.path.file.@this(missing, app.User.Context);
         var action = new AssertIsTrue { Context = app.User.Context, Value = D(fp) };
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();
@@ -237,7 +237,7 @@ public class AssertTests
     {
         var (app, root) = MakeAppRoot("isfalse-yes");
         var missing = System.IO.Path.Combine(root, "still-nope.txt");
-        var fp = new global::app.types.path.file.@this(missing, app.User.Context);
+        var fp = new global::app.type.path.file.@this(missing, app.User.Context);
         var action = new AssertIsFalse { Context = app.User.Context, Value = D(fp) };
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
@@ -250,7 +250,7 @@ public class AssertTests
         var (app, root) = MakeAppRoot("isfalse-no");
         var filePath = System.IO.Path.Combine(root, "really-here.txt");
         System.IO.File.WriteAllText(filePath, "x");
-        var fp = new global::app.types.path.file.@this(filePath, app.User.Context);
+        var fp = new global::app.type.path.file.@this(filePath, app.User.Context);
         var action = new AssertIsFalse { Context = app.User.Context, Value = D(fp) };
         var result = await action.Run();
         await Assert.That(result.Success).IsFalse();

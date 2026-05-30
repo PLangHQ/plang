@@ -1,5 +1,5 @@
-using app.variables;
-using app.modules.condition;
+using app.variable;
+using app.module.condition;
 
 namespace PLang.Tests.App.Modules.condition;
 

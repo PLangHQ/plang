@@ -1,6 +1,6 @@
 using app.actor.context;
-using app.variables;
-using app.modules.identity;
+using app.variable;
+using app.module.identity;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.identity;

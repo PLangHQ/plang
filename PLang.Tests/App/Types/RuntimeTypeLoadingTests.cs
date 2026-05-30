@@ -2,11 +2,11 @@ namespace PLang.Tests.App.Types;
 
 // plang-types — Stage 7
 // `- load X.dll` scans the assembly for [PlangType] classes → Registry.RegisterRuntime,
-// and for ITypeRenderer impls → renderers.@this.Register. Runtime registrations
+// and for ITypeRenderer impls → renderer.@this.Register. Runtime registrations
 // outrank built-ins (ResolveType + Renderers.Of precedence). A loaded [PlangType]
 // with no covering renderer fails the load.
 //
-// Tests use the in-test fixture assembly via app.types.Loader (the static helper
+// Tests use the in-test fixture assembly via app.type.list.Loader (the static helper
 // behind code.load) — no real DLL roundtrip needed to verify the wiring.
 
 public class RuntimeTypeLoadingTests
@@ -18,11 +18,11 @@ public class RuntimeTypeLoadingTests
         public static string Shape => "string";
     }
 
-    public sealed class FixtureOnlyRenderer : global::app.types.ITypeRenderer
+    public sealed class FixtureOnlyRenderer : global::app.type.list.ITypeRenderer
     {
         public string TypeName => "runtime-fixture-only";
-        public string Format => global::app.types.renderers.@this.AnyFormat;
-        public void Write(object value, global::app.channels.serializers.IWriter writer)
+        public string Format => global::app.type.renderer.@this.AnyFormat;
+        public void Write(object value, global::app.channel.serializer.IWriter writer)
             => writer.String("[runtime-fixture-only]");
     }
 
@@ -32,11 +32,11 @@ public class RuntimeTypeLoadingTests
         public static string Shape => "string";
     }
 
-    public sealed class OverrideIntRenderer : global::app.types.ITypeRenderer
+    public sealed class OverrideIntRenderer : global::app.type.list.ITypeRenderer
     {
         public string TypeName => "int";
-        public string Format => global::app.types.renderers.@this.AnyFormat;
-        public void Write(object value, global::app.channels.serializers.IWriter writer)
+        public string Format => global::app.type.renderer.@this.AnyFormat;
+        public void Write(object value, global::app.channel.serializer.IWriter writer)
             => writer.String("OVERRIDDEN");
     }
 
@@ -48,8 +48,8 @@ public class RuntimeTypeLoadingTests
 
     [Test] public async Task LoadDll_PlangTypeClass_RegistersViaRegistryRegisterRuntime()
     {
-        var types = new EngineTypes();
-        var result = global::app.types.Loader.Register(TestAssembly, types);
+        var types = new global::app.type.list.@this();
+        var result = global::app.type.list.Loader.Register(TestAssembly, types);
         // The fixture types in this file should appear in RegisteredTypes.
         await Assert.That(result.RegisteredTypes).Contains("runtime-fixture-only");
         await Assert.That(types.ResolveType("runtime-fixture-only")).IsEqualTo(typeof(FixtureOnly));
@@ -57,8 +57,8 @@ public class RuntimeTypeLoadingTests
 
     [Test] public async Task LoadDll_ITypeRenderer_RegistersIntoTypeSerializers()
     {
-        var types = new EngineTypes();
-        var result = global::app.types.Loader.Register(TestAssembly, types);
+        var types = new global::app.type.list.@this();
+        var result = global::app.type.list.Loader.Register(TestAssembly, types);
         await Assert.That(types.Renderers.Has("runtime-fixture-only")).IsTrue();
         await Assert.That(types.Renderers.Of("runtime-fixture-only", "json")).IsNotNull();
     }
@@ -67,7 +67,7 @@ public class RuntimeTypeLoadingTests
     {
         // Register a runtime entry under "int" — runtime should shadow the
         // bootstrap-seeded primitive.
-        var types = new EngineTypes();
+        var types = new global::app.type.list.@this();
         types.Register("int", typeof(System.Uri));
         await Assert.That(types.ResolveType("int")).IsEqualTo(typeof(System.Uri));
     }
@@ -77,7 +77,7 @@ public class RuntimeTypeLoadingTests
         // "path" has a generator-emitted Default.cs renderer; register a runtime
         // one over it and assert the runtime delegate wins. Captures both
         // outputs so a regression that resolved generated first would fail.
-        var types = new EngineTypes();
+        var types = new global::app.type.list.@this();
         var generatedWriter = new FakeWriter("json");
         var baseline = types.Renderers.Of("path", "json");
         await Assert.That(baseline).IsNotNull();
@@ -99,7 +99,7 @@ public class RuntimeTypeLoadingTests
         // Loader registers all [PlangType] classes in pass 1, then enforces the
         // coverage gate. The fixture-norenderer type must register, and the
         // gate must surface a TypeLoadCoverage failure for it.
-        var result = global::app.types.Loader.Register(TestAssembly, new EngineTypes());
+        var result = global::app.type.list.Loader.Register(TestAssembly, new global::app.type.list.@this());
         await Assert.That(result.RegisteredTypes).Contains("runtime-fixture-norenderer");
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.ErrorKey).IsEqualTo("TypeLoadCoverage");
@@ -112,20 +112,20 @@ public class RuntimeTypeLoadingTests
         // baked in by the source generator at compile time; assert the generic
         // argument stays the built-in number type before AND after overriding
         // "number" in the runtime registry.
-        var runReturn = typeof(global::app.modules.math.Add).GetMethod("Run")!.ReturnType;
+        var runReturn = typeof(global::app.module.math.Add).GetMethod("Run")!.ReturnType;
         var dataGeneric = runReturn.GetGenericArguments()[0];
         await Assert.That(dataGeneric.IsGenericType).IsTrue();
         await Assert.That(dataGeneric.GetGenericTypeDefinition()).IsEqualTo(typeof(global::app.data.@this<>));
         var slotBefore = dataGeneric.GetGenericArguments()[0];
-        await Assert.That(slotBefore).IsEqualTo(typeof(global::app.types.number.@this));
+        await Assert.That(slotBefore).IsEqualTo(typeof(global::app.type.number.@this));
 
-        var types = new EngineTypes();
+        var types = new global::app.type.list.@this();
         types.Register("number", typeof(System.Uri));
         await Assert.That(types.ResolveType("number")).IsEqualTo(typeof(System.Uri));
 
-        var slotAfter = typeof(global::app.modules.math.Add).GetMethod("Run")!
+        var slotAfter = typeof(global::app.module.math.Add).GetMethod("Run")!
             .ReturnType.GetGenericArguments()[0].GetGenericArguments()[0];
-        await Assert.That(slotAfter).IsEqualTo(typeof(global::app.types.number.@this));
+        await Assert.That(slotAfter).IsEqualTo(typeof(global::app.type.number.@this));
     }
 
     private static string FixtureDll(string name) => System.IO.Path.GetFullPath(
@@ -143,7 +143,7 @@ public class RuntimeTypeLoadingTests
         // identity's CLR type would let a runtime DLL compose the body that
         // gets signed under the actor's key.
         var asm = System.Reflection.Assembly.LoadFrom(IdentityShadowDll);
-        var result = global::app.types.Loader.Register(asm, new EngineTypes());
+        var result = global::app.type.list.Loader.Register(asm, new global::app.type.list.@this());
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.ErrorKey).IsEqualTo("TypeLoadCollision");
         await Assert.That(result.ErrorMessage).Contains("identity");
@@ -158,7 +158,7 @@ public class RuntimeTypeLoadingTests
         // has only the renderer, no [PlangType], so pass-1 passes and the
         // gate fires on pass-2.
         var asm = System.Reflection.Assembly.LoadFrom(SignatureRendererShadowDll);
-        var result = global::app.types.Loader.Register(asm, new EngineTypes());
+        var result = global::app.type.list.Loader.Register(asm, new global::app.type.list.@this());
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.ErrorKey).IsEqualTo("TypeLoadCollision");
         await Assert.That(result.ErrorMessage).Contains("signature");
@@ -171,7 +171,7 @@ public class RuntimeTypeLoadingTests
         // InferName yields "callback" (a sealed name). The gate refuses
         // before the registry is touched.
         var asm = System.Reflection.Assembly.LoadFrom(CallbackInferredShadowDll);
-        var result = global::app.types.Loader.Register(asm, new EngineTypes());
+        var result = global::app.type.list.Loader.Register(asm, new global::app.type.list.@this());
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.ErrorKey).IsEqualTo("TypeLoadCollision");
         await Assert.That(result.ErrorMessage).Contains("callback");
@@ -182,7 +182,7 @@ public class RuntimeTypeLoadingTests
         // The carve-out covers the names the signing pipeline assumes are
         // built-in. Lookup is OrdinalIgnoreCase so a DLL declaring
         // `[PlangType("Identity")]` can't slip past the comparison.
-        var sealedSet = global::app.types.Loader.SealedNames;
+        var sealedSet = global::app.type.list.Loader.SealedNames;
         await Assert.That(sealedSet.Contains("identity")).IsTrue();
         await Assert.That(sealedSet.Contains("IDENTITY")).IsTrue();
         await Assert.That(sealedSet.Contains("signature")).IsTrue();
@@ -197,17 +197,17 @@ public class RuntimeTypeLoadingTests
 
     [Test] public async Task ITypeRenderer_InterfaceShape_FormatPropertyAndWriteMethod()
     {
-        var t = typeof(global::app.types.ITypeRenderer);
+        var t = typeof(global::app.type.list.ITypeRenderer);
         await Assert.That(t.GetProperty("Format")).IsNotNull();
         await Assert.That(t.GetProperty("TypeName")).IsNotNull();
         await Assert.That(t.GetMethod("Write")).IsNotNull();
         var writeParams = t.GetMethod("Write")!.GetParameters();
         await Assert.That(writeParams.Length).IsEqualTo(2);
         await Assert.That(writeParams[0].ParameterType).IsEqualTo(typeof(object));
-        await Assert.That(writeParams[1].ParameterType).IsEqualTo(typeof(global::app.channels.serializers.IWriter));
+        await Assert.That(writeParams[1].ParameterType).IsEqualTo(typeof(global::app.channel.serializer.IWriter));
     }
 
-    private sealed class FakeWriter : global::app.channels.serializers.IWriter
+    private sealed class FakeWriter : global::app.channel.serializer.IWriter
     {
         public FakeWriter(string format) { Format = format; }
         public string Format { get; }

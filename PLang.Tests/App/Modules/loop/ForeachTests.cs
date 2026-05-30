@@ -1,7 +1,7 @@
 using app.actor.context;
 using app;
-using app.variables;
-using LoopResult = global::app.modules.loop.types.loop;
+using app.variable;
+using LoopResult = global::app.module.loop.type.loop;
 
 namespace PLang.Tests.App.actions.loop;
 
@@ -20,7 +20,7 @@ public class ForeachTests
     {
         var context = _app.User.Context;
         var items = new List<object?> { "a", "b", "c" };
-        context.Variables.Set("items", items);
+        context.Variable.Set("items", items);
 
         var goal = new Goal
         {
@@ -28,7 +28,7 @@ public class ForeachTests
             Path = "/ProcessItem.goal",
             Steps = new GoalSteps()
         };
-        _app.Goals.Add(goal);
+        _app.Goal.Add(goal);
 
         var foreachAction = TestAction.Create("loop", "foreach",
             ("collection", "%items%"), ("itemname", "%item%"));
@@ -47,14 +47,14 @@ public class ForeachTests
         var result = await step.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.Variables.GetValue("item")).IsEqualTo("c");
+        await Assert.That(context.Variable.GetValue("item")).IsEqualTo("c");
     }
 
     [Test]
     public async Task Foreach_EmptyCollection_ReturnsZeroCount()
     {
         var context = _app.User.Context;
-        context.Variables.Set("items", new List<object?>());
+        context.Variable.Set("items", new List<object?>());
 
         var action = TestAction.Create("loop", "foreach",
             ("collection", "%items%"), ("itemname", "%item%"));
@@ -70,10 +70,10 @@ public class ForeachTests
     public async Task Foreach_SetsItemVariable()
     {
         var context = _app.User.Context;
-        context.Variables.Set("items", new List<object?> { "hello" });
+        context.Variable.Set("items", new List<object?> { "hello" });
 
         var goal = new Goal { Name = "DoNothing", Path = "/DoNothing.goal", Steps = new GoalSteps() };
-        _app.Goals.Add(goal);
+        _app.Goal.Add(goal);
 
         var foreachAction = TestAction.Create("loop", "foreach",
             ("collection", "%items%"), ("itemname", "%myItem%"));
@@ -92,7 +92,7 @@ public class ForeachTests
         var result = await step.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(context.Variables.GetValue("myItem")).IsEqualTo("hello");
+        await Assert.That(context.Variable.GetValue("myItem")).IsEqualTo("hello");
     }
 
     [Test]
@@ -100,10 +100,10 @@ public class ForeachTests
     {
         var context = _app.User.Context;
         var dict = new Dictionary<string, object?> { ["name"] = "Alice", ["age"] = 30 };
-        context.Variables.Set("dict", dict);
+        context.Variable.Set("dict", dict);
 
         var goal = new Goal { Name = "DictGoal", Path = "/DictGoal.goal", Steps = new GoalSteps() };
-        _app.Goals.Add(goal);
+        _app.Goal.Add(goal);
 
         var foreachAction = TestAction.Create("loop", "foreach",
             ("collection", "%dict%"), ("itemname", "%val%"), ("keyname", "%key%"));
@@ -130,10 +130,10 @@ public class ForeachTests
         var context = _app.User.Context;
         // Use single-entry dict so final state = only iteration
         var dict = new Dictionary<string, object?> { ["greeting"] = "hello" };
-        context.Variables.Set("dict", dict);
+        context.Variable.Set("dict", dict);
 
         var goal = new Goal { Name = "Noop", Path = "/Noop.goal", Steps = new GoalSteps() };
-        _app.Goals.Add(goal);
+        _app.Goal.Add(goal);
 
         var foreachAction = TestAction.Create("loop", "foreach",
             ("collection", "%dict%"), ("itemname", "%val%"), ("keyname", "%key%"));
@@ -153,10 +153,10 @@ public class ForeachTests
 
         await Assert.That(result.Success).IsTrue();
         // %key% should be the dictionary key (string "greeting"), not numeric index (0)
-        var key = context.Variables.GetValue("key");
+        var key = context.Variable.GetValue("key");
         await Assert.That(key).IsEqualTo("greeting");
         // %val% should be the value ("hello"), not a KeyValuePair struct
-        var val = context.Variables.GetValue("val");
+        var val = context.Variable.GetValue("val");
         await Assert.That(val).IsEqualTo("hello");
     }
 
@@ -179,7 +179,7 @@ public class ForeachTests
     public async Task Foreach_Cancellation_StopsIteration()
     {
         var context = _app.User.Context;
-        context.Variables.Set("items", new List<object?> { "a", "b", "c", "d", "e" });
+        context.Variable.Set("items", new List<object?> { "a", "b", "c", "d", "e" });
 
         var cts = new CancellationTokenSource();
         context.PushCancellation(cts);

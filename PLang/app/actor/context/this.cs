@@ -1,12 +1,12 @@
 using System.Collections.Concurrent;
 using app;
-using app.variables;
-using app.events;
-using Goal = app.goals.goal.@this;
-using Action = app.goals.goal.steps.step.actions.action.@this;
-using Setup = app.goals.setup.@this;
+using app.variable;
+using app.@event;
+using Goal = app.goal.@this;
+using Action = app.goal.steps.step.actions.action.@this;
+using Setup = app.goal.setup.@this;
 using TraceContext = app.actor.context.trace.@this;
-using app.errors;
+using app.error;
 using ActorType = app.actor.@this;
 using CallStackType = app.callstack.@this;
 namespace app.actor.context;
@@ -40,7 +40,7 @@ public sealed class @this : IDisposable
     /// <summary>
     /// Variables for this execution.
     /// </summary>
-    public Variables Variables { get; }
+    public Variables Variable { get; }
 
     /// <summary>
     /// The app's call tree. Read-through to <c>App.CallStack</c> — single tree per run,
@@ -90,7 +90,7 @@ public sealed class @this : IDisposable
     /// Event bindings registered on this context.
     /// Each actor's context has its own event collection.
     /// </summary>
-    public AppEvents Events { get; } = new();
+    public global::app.@event.list.@this Events { get; } = new();
 
     /// <summary>
     /// The goal currently being executed.
@@ -120,7 +120,7 @@ public sealed class @this : IDisposable
     /// Accessible via %!event%. Contains .step (triggering step), .phase, etc.
     /// Null when not in an event handler.
     /// </summary>
-    public modules.EventContext? Event { get; set; }
+    public module.EventContext? Event { get; set; }
 
     /// <summary>
     /// Set during setup execution, null otherwise.
@@ -140,7 +140,7 @@ public sealed class @this : IDisposable
     {
         Id = Guid.NewGuid().ToString("N")[..12];
         App = app;
-        Variables = variables ?? new Variables();
+        Variable = variables ?? new Variables();
         Parent = parent;
         CreatedAt = DateTime.UtcNow;
         var linkTo = parentToken ?? parent?.CancellationToken ?? app.ShutdownToken;
@@ -149,7 +149,7 @@ public sealed class @this : IDisposable
         Events.OnChanged = InvalidateEventCache;
 
         // Stamp context on Variables (propagates to all existing Data)
-        Variables.Context = this;
+        Variable.Context = this;
 
         // Register context variables on the Variables
         RegisterContextVariables();
@@ -160,24 +160,24 @@ public sealed class @this : IDisposable
     /// </summary>
     private void RegisterContextVariables()
     {
-        var vars = Variables;
+        var vars = Variable;
 
         // All context variables are lazy — context has app, fetch at request time
         vars.Set(new data.DynamicData("!app", () => App));
         vars.Set(new data.DynamicData("!context", () => this));
-        vars.Set(new data.DynamicData("!variables", () => Variables));
+        vars.Set(new data.DynamicData("!variables", () => Variable));
         vars.Set(new data.DynamicData("!callStack", () => CallStack));
         vars.Set(new data.DynamicData("!trace", () => Trace));
-        vars.Set(new data.DynamicData("!channels", () => Actor?.Channels));
-        vars.Set(new data.DynamicData("!serializers", () => Actor!.Channels.Serializers));
+        vars.Set(new data.DynamicData("!channels", () => Actor?.Channel));
+        vars.Set(new data.DynamicData("!serializers", () => Actor!.Channel.Serializers));
         vars.Set(new data.DynamicData("!goal", () => Goal));
         vars.Set(new data.DynamicData("!step", () => Step));
         // %!error% reads from App.Errors.@this — an AsyncLocal scope managed by
-        // error.handle.Wrap via using(app.errors.Push(caught)) { ... }. Null outside any
+        // error.handle.Wrap via using(app.error.Push(caught)) { ... }. Null outside any
         // active recovery scope; in nested handlers each scope sees its own caught error
         // (LIFO restore on dispose). AsyncLocal is parallelism-safe by construction.
-        vars.Set(new data.DynamicData("!error", () => App.Errors.Error));
-        vars.Set(new data.DynamicData("!data", () => App.System.Context.Variables.GetValue("data")));
+        vars.Set(new data.DynamicData("!error", () => App.Error.Error));
+        vars.Set(new data.DynamicData("!data", () => App.System.Context.Variable.GetValue("data")));
         vars.Set(new data.DynamicData("!event", () => Event ?? App.System?.Context?.Event));
         vars.Set(new data.DynamicData("!test", () => Test));
     }
@@ -260,7 +260,7 @@ public sealed class @this : IDisposable
     /// </summary>
     public @this CreateChild(Variables? variables = null)
     {
-        return new @this(App, variables ?? Variables.Clone(), this);
+        return new @this(App, variables ?? Variable.Clone(), this);
     }
 
     /// <summary>
@@ -286,16 +286,16 @@ public sealed class @this : IDisposable
         private readonly Action _action;
         private readonly Step? _previousStep;
         private readonly Goal? _previousGoal;
-        private readonly modules.EventContext? _previousEvent;
+        private readonly module.EventContext? _previousEvent;
         private readonly @this? _previousStepContext;
 
-        public AnchorScopeDisposable(@this ctx, Action action)
+        public AnchorScopeDisposable(@this context, Action action)
         {
-            _ctx = ctx;
+            _ctx = context;
             _action = action;
-            _previousStep = ctx.Step;
-            _previousGoal = ctx.Goal;
-            _previousEvent = ctx.Event;
+            _previousStep = context.Step;
+            _previousGoal = context.Goal;
+            _previousEvent = context.Event;
             _previousStepContext = action.Step?.Context;
         }
 
@@ -316,7 +316,7 @@ public sealed class @this : IDisposable
     /// </summary>
     public @this Clone(Variables? variables = null)
     {
-        var clone = new @this(App, variables ?? Variables.Clone(), Parent)
+        var clone = new @this(App, variables ?? Variable.Clone(), Parent)
         {
             IsAsync = IsAsync,
             Setup = Setup,
@@ -436,7 +436,7 @@ public sealed class @this : IDisposable
     /// Owner type determines scope: Step → step bindings, Goal → goal bindings.
     /// Used by Event resolver (IEvent) during dot-path traversal.
     /// </summary>
-    public List<GoalCall> GetEventBindings(object owner, modules.EventPhase phase)
+    public List<GoalCall> GetEventBindings(object owner, module.EventPhase phase)
     {
         var events = Events;
         var (beforeType, afterType) = owner switch
@@ -447,7 +447,7 @@ public sealed class @this : IDisposable
             _ => (EventType.BeforeStep, EventType.AfterStep) // fallback
         };
 
-        var eventType = phase == modules.EventPhase.Before ? beforeType : afterType;
+        var eventType = phase == module.EventPhase.Before ? beforeType : afterType;
 
         string? goalName = owner switch
         {
@@ -457,10 +457,10 @@ public sealed class @this : IDisposable
             _ => null
         };
         string? stepText = owner is Step s ? s.Text : null;
-        string? module = owner is Action a ? a.Module : null;
+        string? moduleName = owner is Action a ? a.Module : null;
         string? actionName = owner is Action a2 ? a2.ActionName : null;
 
-        var bindings = events.GetMatchingBindings(eventType, goalName: goalName, stepText: stepText, module: module, actionName: actionName);
+        var bindings = events.GetMatchingBindings(eventType, goalName: goalName, stepText: stepText, module: moduleName, actionName: actionName);
         return bindings
             .Where(b => b.GoalToCall != null)
             .Select(b => b.GoalToCall!)

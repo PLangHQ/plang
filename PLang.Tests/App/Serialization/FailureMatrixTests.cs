@@ -32,8 +32,8 @@ public class FailureMatrixTests
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-fm-" + Guid.NewGuid().ToString("N")[..8]));
-        var plang = (global::app.channels.serializers.serializer.plang.@this)
-            app.User.Channels.Serializers.GetByMimeType("application/plang");
+        var plang = (global::app.channel.serializer.plang.@this)
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var d = new global::app.data.@this("x", "untampered") { Context = app.User.Context };
         var wire = plang.Serialize(d).Value!;
@@ -41,8 +41,8 @@ public class FailureMatrixTests
 
         var back = (global::app.data.@this)plang.Deserialize(tampered).Value!;
         back.Context = app.User.Context;
-        var verify = await app.RunAction<global::app.modules.signing.verify>(
-            new global::app.modules.signing.verify
+        var verify = await app.RunAction<global::app.module.signing.verify>(
+            new global::app.module.signing.verify
             {
                 Data = back,
                 SkipFreshnessCheck = new global::app.data.@this<bool>("", true)
@@ -53,7 +53,7 @@ public class FailureMatrixTests
 
     [Test] public async Task WireConverter_Read_RandomJsonMissingReservedFields_ProducesTypedFailure()
     {
-        var plang = new global::app.channels.serializers.serializer.plang.@this();
+        var plang = new global::app.channel.serializer.plang.@this();
         // A JSON object with none of the reserved fields — Read parses, but
         // produces an effectively-empty Data (the converter ignores unknown
         // top-level fields). Typed-failure here means the call doesn't throw;
@@ -67,7 +67,7 @@ public class FailureMatrixTests
 
     [Test] public async Task Decompress_OnNonArchivedType_ReturnsSelfNoError()
     {
-        var d = new global::app.data.@this("x", "y", global::app.data.type.FromName("text/plain"));
+        var d = new global::app.data.@this("x", "y", global::app.type.@this.FromName("text/plain"));
         var result = d.Decompress();
         await Assert.That(ReferenceEquals(d, result)).IsTrue();
         await Assert.That(result.Success).IsTrue();
@@ -75,7 +75,7 @@ public class FailureMatrixTests
 
     [Test] public async Task Decompress_OnArchivedWithoutByteArrayValue_ReturnsDataWithDecompressError()
     {
-        var d = new global::app.data.@this("x", "not bytes", global::app.data.type.FromName("archived"));
+        var d = new global::app.data.@this("x", "not bytes", global::app.type.@this.FromName("archived"));
         var result = d.Decompress();
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("DecompressError");
@@ -83,8 +83,8 @@ public class FailureMatrixTests
 
     [Test] public async Task CryptoHash_WithUnsupportedAlgorithm_ReturnsDataWithUnsupportedAlgorithmError()
     {
-        var crypto = new global::app.modules.crypto.code.Default();
-        var action = new global::app.modules.crypto.Hash
+        var crypto = new global::app.module.crypto.code.Default();
+        var action = new global::app.module.crypto.Hash
         {
             Data = global::app.data.@this.Ok("x"),
             Algorithm = new global::app.data.@this<string>("", "md5")
@@ -96,7 +96,7 @@ public class FailureMatrixTests
 
     [Test] public async Task ChannelWrite_OnInputOnlyChannel_ReturnsServiceErrorChannelReadOnly()
     {
-        var ch = global::app.channels.channel.stream.@this.Input("stdin", new MemoryStream());
+        var ch = global::app.channel.stream.@this.Input("stdin", new MemoryStream());
         var result = await ch.Write(global::app.data.@this.Ok("x"));
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ChannelReadOnly");
@@ -104,7 +104,7 @@ public class FailureMatrixTests
 
     [Test] public async Task ChannelRead_OnOutputOnlyChannel_ReturnsServiceErrorChannelWriteOnly()
     {
-        var ch = global::app.channels.channel.stream.@this.Output("stdout", new MemoryStream());
+        var ch = global::app.channel.stream.@this.Output("stdout", new MemoryStream());
         var result = await ch.Read();
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ChannelWriteOnly");
@@ -113,9 +113,9 @@ public class FailureMatrixTests
     [Test] public async Task ChannelAsk_OnClosedPipe_ReturnsServiceErrorChannelEof()
     {
         // Empty MemoryStream — ReadLineAsync returns null (EOF).
-        var ch = new global::app.channels.channel.stream.@this("input", new MemoryStream(),
-            global::app.channels.channel.ChannelDirection.Bidirectional);
-        var action = new global::app.modules.output.ask
+        var ch = new global::app.channel.stream.@this("input", new MemoryStream(),
+            global::app.channel.ChannelDirection.Bidirectional);
+        var action = new global::app.module.output.ask
         {
             Question = new global::app.data.@this<string>("", "")
         };

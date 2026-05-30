@@ -7,10 +7,10 @@ namespace PLang.Tests.App.Types;
 
 public class TypeBuildHookTests
 {
-    private global::app.types.kinds.@this _kinds = null!;
+    private global::app.type.kind.@this _kinds = null!;
 
     [Before(Test)]
-    public void Setup() => _kinds = new global::app.types.kinds.@this();
+    public void Setup() => _kinds = new global::app.type.kind.@this();
 
     [Test]
     public async Task TypeBuild_DiscoveredByReflection_LikeResolve()
@@ -18,9 +18,9 @@ public class TypeBuildHookTests
         // path.@this declares `public static string? Build(object? value)` in
         // this.Build.cs. The dispatcher finds it by reflection (same shape as
         // Resolve discovery) and invokes it.
-        await Assert.That(_kinds.Of(typeof(global::app.types.path.@this), "/srv/a.jpg")).IsEqualTo("file");
-        await Assert.That(_kinds.Of(typeof(global::app.types.path.@this), "https://x")).IsEqualTo("http");
-        await Assert.That(_kinds.Of(typeof(global::app.types.path.@this), "http://x")).IsEqualTo("http");
+        await Assert.That(_kinds.Of(typeof(global::app.type.path.@this), "/srv/a.jpg")).IsEqualTo("file");
+        await Assert.That(_kinds.Of(typeof(global::app.type.path.@this), "https://x")).IsEqualTo("http");
+        await Assert.That(_kinds.Of(typeof(global::app.type.path.@this), "http://x")).IsEqualTo("http");
     }
 
     [Test]
@@ -31,7 +31,7 @@ public class TypeBuildHookTests
         // Discovery must filter on the (object?)→string signature only — an
         // action handler that implements IClass.Build() must NOT be picked up
         // as if it were a kind hook.
-        var fileReadType = typeof(global::app.modules.file.Read);
+        var fileReadType = typeof(global::app.module.file.Read);
         await Assert.That(_kinds.Of(fileReadType, "/whatever")).IsNull();
     }
 
@@ -40,10 +40,10 @@ public class TypeBuildHookTests
     {
         // Hook returning null is normal (path.Build returns null for non-strings,
         // empty strings, %var% refs). Dispatcher passes the null through.
-        await Assert.That(_kinds.Of(typeof(global::app.types.path.@this), null)).IsNull();
-        await Assert.That(_kinds.Of(typeof(global::app.types.path.@this), "")).IsNull();
-        await Assert.That(_kinds.Of(typeof(global::app.types.path.@this), 42)).IsNull();
-        await Assert.That(_kinds.Of(typeof(global::app.types.path.@this), "%photo%")).IsNull();
+        await Assert.That(_kinds.Of(typeof(global::app.type.path.@this), null)).IsNull();
+        await Assert.That(_kinds.Of(typeof(global::app.type.path.@this), "")).IsNull();
+        await Assert.That(_kinds.Of(typeof(global::app.type.path.@this), 42)).IsNull();
+        await Assert.That(_kinds.Of(typeof(global::app.type.path.@this), "%photo%")).IsNull();
     }
 
     [Test]

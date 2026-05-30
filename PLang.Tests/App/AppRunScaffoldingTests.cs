@@ -1,7 +1,7 @@
 using PLang.Tests.App.Fixtures;
-using app.modules.matrix.plain;
-using app.modules.matrix.markers;
-using app.modules.matrix.modifier;
+using app.module.matrix.plain;
+using app.module.matrix.markers;
+using app.module.matrix.modifier;
 
 namespace PLang.Tests.App;
 
@@ -101,7 +101,7 @@ public class AppRunScaffoldingTests
         // Use ThrowingHandler-equivalent: the matrix snapshot handler returns FromError but doesn't throw.
         // Build a handler instance that throws.
         var thrower = new ThrowingMatrixHandler();
-        _app.Modules.Register("matrix.throwing", "throw", thrower);
+        _app.Module.Register("matrix.throwing", "throw", thrower);
 
         var currentBefore = _app.User.Context.CallStack?.Current;
         var action = MakeAction("matrix.throwing", "throw");
@@ -151,7 +151,7 @@ public class AppRunScaffoldingTests
     public async Task AppRun_HandlerThrowsOCE_TranslatesToServiceError_DoesNotPropagate()
     {
         var oceThrower = new OceThrowingHandler();
-        _app.Modules.Register("matrix.oce", "throwoce", oceThrower);
+        _app.Module.Register("matrix.oce", "throwoce", oceThrower);
 
         var action = MakeAction("matrix.oce", "throwoce");
 
@@ -204,9 +204,9 @@ public class AppRunScaffoldingTests
 }
 
 // Hand-written handler that throws — used to exercise App.Run's catch path.
-internal class ThrowingMatrixHandler : global::app.modules.IAction, global::app.modules.ICodeGenerated
+internal class ThrowingMatrixHandler : global::app.module.IAction, global::app.module.ICodeGenerated
 {
-    public global::app.goals.goal.steps.step.actions.action.@this Action { get; set; } = null!;
+    public global::app.goal.steps.step.actions.action.@this Action { get; set; } = null!;
     public global::app.@this App { get; private set; } = null!;
     public global::app.actor.context.@this Context { get; private set; } = null!;
     public System.Type? ParameterType => null;
@@ -215,7 +215,7 @@ internal class ThrowingMatrixHandler : global::app.modules.IAction, global::app.
     { App = engine; Context = context; }
 
     public Task<global::app.data.@this> ExecuteAsync(
-        global::app.goals.goal.steps.step.actions.action.@this action,
+        global::app.goal.steps.step.actions.action.@this action,
         global::app.actor.context.@this context)
     {
         throw new InvalidOperationException("forced throw");
@@ -223,9 +223,9 @@ internal class ThrowingMatrixHandler : global::app.modules.IAction, global::app.
 }
 
 // Hand-written handler that throws OperationCanceledException — pins the timeout.after contract.
-internal class OceThrowingHandler : global::app.modules.IAction, global::app.modules.ICodeGenerated
+internal class OceThrowingHandler : global::app.module.IAction, global::app.module.ICodeGenerated
 {
-    public global::app.goals.goal.steps.step.actions.action.@this Action { get; set; } = null!;
+    public global::app.goal.steps.step.actions.action.@this Action { get; set; } = null!;
     public global::app.@this App { get; private set; } = null!;
     public global::app.actor.context.@this Context { get; private set; } = null!;
     public System.Type? ParameterType => null;
@@ -234,7 +234,7 @@ internal class OceThrowingHandler : global::app.modules.IAction, global::app.mod
     { App = engine; Context = context; }
 
     public Task<global::app.data.@this> ExecuteAsync(
-        global::app.goals.goal.steps.step.actions.action.@this action,
+        global::app.goal.steps.step.actions.action.@this action,
         global::app.actor.context.@this context)
     {
         throw new OperationCanceledException("simulated cancellation");

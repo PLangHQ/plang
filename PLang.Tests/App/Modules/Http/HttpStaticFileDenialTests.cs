@@ -13,13 +13,13 @@ namespace PLang.Tests.App.Modules.Http;
 /// </summary>
 public class HttpStaticFileDenialTests
 {
-    private sealed class CannedChannel : global::app.channels.channel.@this
+    private sealed class CannedChannel : global::app.channel.@this
     {
         private readonly string _answer;
-        public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channels.channel.ChannelDirection.Bidirectional; }
+        public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
-        public override Task<global::app.data.@this> Ask(global::app.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok(_answer));
+        public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok(_answer));
     }
 
     private static PLangEngine NewApp(out string root)
@@ -33,7 +33,7 @@ public class HttpStaticFileDenialTests
     [Test] public async Task StaticFile_RequestWithDotDotTraversal_DeniedByAuthGate()
     {
         var app = NewApp(out _);
-        app.User.Channels.Register(new CannedChannel("n"));
+        app.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "secret.txt");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
@@ -48,7 +48,7 @@ public class HttpStaticFileDenialTests
         bool denied = false;
         try
         {
-            var result = await global::app.modules.http.code.Default.CreateFileContentAsync(app, app.User.Context, outOfRoot);
+            var result = await global::app.module.http.code.Default.CreateFileContentAsync(app, app.User.Context, outOfRoot);
             denied = !result.Success;
         }
         catch (System.IO.IOException) { denied = true; }
@@ -59,10 +59,10 @@ public class HttpStaticFileDenialTests
     {
         var app = NewApp(out var root);
         var ch = new CannedChannel("UNEXPECTED");
-        app.User.Channels.Register(ch);
+        app.User.Channel.Register(ch);
         var file = System.IO.Path.Combine(root, "public.txt");
         System.IO.File.WriteAllText(file, "hello");
-        var result = await global::app.modules.http.code.Default.CreateFileContentAsync(app, app.User.Context, file);
+        var result = await global::app.module.http.code.Default.CreateFileContentAsync(app, app.User.Context, file);
         await Assert.That(result.Success).IsTrue();
         var bytes = await result.Value!.ReadAsByteArrayAsync();
         await Assert.That(System.Text.Encoding.UTF8.GetString(bytes)).IsEqualTo("hello");

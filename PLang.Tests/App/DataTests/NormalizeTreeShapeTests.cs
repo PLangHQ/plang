@@ -86,7 +86,7 @@ public class NormalizeTreeShapeTests
 
     [Test] public async Task Normalize_DomainObject_EmitsOneChildPerOutProperty_LowercasedName()
     {
-        var identity = new global::app.modules.identity.Identity
+        var identity = new global::app.module.identity.Identity
         {
             Name = "alice",
             PublicKey = "pk",
@@ -105,7 +105,7 @@ public class NormalizeTreeShapeTests
 
     [Test] public async Task Normalize_RecordType_EmitsOneChildPerOutProperty()
     {
-        var setting = new global::app.modules.settings.types.setting { key = "DATABASE_URL", value = "postgres://..." };
+        var setting = new global::app.module.settings.type.setting { key = "DATABASE_URL", value = "postgres://..." };
         var d = new Data("", setting);
         var result = d.Normalize();
         var children = (List<Data>)result!;
@@ -133,9 +133,9 @@ public class NormalizeTreeShapeTests
         // reflection fires once, then handed back. Asserting on the global
         // CacheSize counter races with parallel Normalize tests; the
         // per-key reference identity is the behaviour this filter owns.
-        System.Type t = typeof(global::app.modules.identity.Identity);
-        var first = global::app.channels.serializers.filters.Tagged.PropertiesFor(t, global::app.View.Out);
-        var second = global::app.channels.serializers.filters.Tagged.PropertiesFor(t, global::app.View.Out);
+        System.Type t = typeof(global::app.module.identity.Identity);
+        var first = global::app.channel.serializer.filter.Tagged.PropertiesFor(t, global::app.View.Out);
+        var second = global::app.channel.serializer.filter.Tagged.PropertiesFor(t, global::app.View.Out);
         await Assert.That(object.ReferenceEquals(first, second)).IsTrue()
             .Because("second call for the same (Type, Mode) key must hand back the cached reference");
     }

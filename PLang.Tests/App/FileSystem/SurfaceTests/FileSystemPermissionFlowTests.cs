@@ -1,11 +1,11 @@
-using Path = global::app.types.path.file.@this;
+using Path = global::app.type.path.file.@this;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using Verb = global::app.types.path.permission.verb.@this;
-using Read = global::app.types.path.permission.verb.Read;
-using Write = global::app.types.path.permission.verb.Write;
-using Delete = global::app.types.path.permission.verb.Delete;
+using Verb = global::app.type.path.permission.verb.@this;
+using Read = global::app.type.path.permission.verb.Read;
+using Write = global::app.type.path.permission.verb.Write;
+using Delete = global::app.type.path.permission.verb.Delete;
 
 namespace PLang.Tests.App.FileSystem.SurfaceTests;
 
@@ -28,18 +28,18 @@ public class FileSystemPermissionFlowTests
         return new global::app.@this(root);
     }
 
-    private sealed class CannedChannel : global::app.channels.channel.@this
+    private sealed class CannedChannel : global::app.channel.@this
     {
         private readonly string _answer;
-        public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channels.channel.ChannelDirection.Bidirectional; }
+        public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
-        public override Task<global::app.data.@this> Ask(global::app.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok(_answer));
+        public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok(_answer));
     }
 
-    private sealed class StatelessChannel : global::app.channels.channel.message.@this
+    private sealed class StatelessChannel : global::app.channel.message.@this
     {
-        public StatelessChannel() { Name = "input"; Direction = global::app.channels.channel.ChannelDirection.Bidirectional; }
+        public StatelessChannel() { Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
     }
@@ -87,7 +87,7 @@ public class FileSystemPermissionFlowTests
     public async Task InRootPath_ReturnsOk_NoAskIssued(string method)
     {
         var app = NewApp(out var root);
-        app.User.Channels.Register(new CannedChannel("UNEXPECTED"));
+        app.User.Channel.Register(new CannedChannel("UNEXPECTED"));
         PrepareForRead(root, method);
         var targetPath = method switch
         {
@@ -107,7 +107,7 @@ public class FileSystemPermissionFlowTests
     public async Task OutOfRoot_StreamChannel_BlocksAndCompletes_GrantStored(string method)
     {
         var app = NewApp(out _);
-        app.User.Channels.Register(new CannedChannel("a"));
+        app.User.Channel.Register(new CannedChannel("a"));
 
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8]);
@@ -138,7 +138,7 @@ public class FileSystemPermissionFlowTests
     public async Task OutOfRoot_MessageChannel_ReturnsDataAsk_WithSnapshot(string method)
     {
         var app = NewApp(out _);
-        app.User.Channels.Register(new StatelessChannel());
+        app.User.Channel.Register(new StatelessChannel());
 
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8]);

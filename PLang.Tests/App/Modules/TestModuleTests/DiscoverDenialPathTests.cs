@@ -10,13 +10,13 @@ namespace PLang.Tests.App.Modules.TestModuleTests;
 /// </summary>
 public class DiscoverDenialPathTests
 {
-    private sealed class CannedChannel : global::app.channels.channel.@this
+    private sealed class CannedChannel : global::app.channel.@this
     {
         private readonly string _answer;
-        public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channels.channel.ChannelDirection.Bidirectional; }
+        public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
-        public override Task<global::app.data.@this> Ask(global::app.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok(_answer));
+        public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok(_answer));
     }
 
     private static PLangEngine NewApp(out string root)
@@ -30,13 +30,13 @@ public class DiscoverDenialPathTests
     [Test] public async Task Discover_WithTestPathOutsideRoot_DenialNotSilentEmpty()
     {
         var app = NewApp(out _);
-        app.User.Channels.Register(new CannedChannel("n"));
+        app.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = "//etc";
-        var action = new global::app.modules.test.discover
+        var action = new global::app.module.test.discover
         {
             Context = app.User.Context,
-            Path = global::app.data.@this<global::app.types.path.@this>.Ok(
-                global::app.types.path.@this.Resolve(outOfRoot, app.User.Context)),
+            Path = global::app.data.@this<global::app.type.path.@this>.Ok(
+                global::app.type.path.@this.Resolve(outOfRoot, app.User.Context)),
             Pattern = new global::app.data.@this<string>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<bool>("Recursive", false)
         };
@@ -48,12 +48,12 @@ public class DiscoverDenialPathTests
     [Test] public async Task Discover_WithDotDotTraversal_DeniedByAuthGate()
     {
         var app = NewApp(out _);
-        app.User.Channels.Register(new CannedChannel("n"));
-        var action = new global::app.modules.test.discover
+        app.User.Channel.Register(new CannedChannel("n"));
+        var action = new global::app.module.test.discover
         {
             Context = app.User.Context,
-            Path = global::app.data.@this<global::app.types.path.@this>.Ok(
-                global::app.types.path.@this.Resolve("//../../../etc", app.User.Context)),
+            Path = global::app.data.@this<global::app.type.path.@this>.Ok(
+                global::app.type.path.@this.Resolve("//../../../etc", app.User.Context)),
             Pattern = new global::app.data.@this<string>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<bool>("Recursive", false)
         };
@@ -63,7 +63,7 @@ public class DiscoverDenialPathTests
         // can't slip through.
         if (result.Success)
         {
-            var files = result.Value as System.Collections.Generic.List<global::app.tester.Test.@this>;
+            var files = result.Value as System.Collections.Generic.List<global::app.tester.test.@this>;
             await Assert.That(files == null || files.Count == 0).IsTrue();
         }
         else

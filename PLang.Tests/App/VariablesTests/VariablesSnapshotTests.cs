@@ -7,18 +7,18 @@ public class VariablesSnapshotTests
     {
         // Set %x%=1 and %obj%={a:1}; Capture; Restore into fresh Variables; deep-equal.
         var src = new global::app.@this("/src");
-        src.User.Context.Variables.Set("x", 1);
-        src.User.Context.Variables.Set("obj", new Dictionary<string, object?> { ["a"] = 1 });
+        src.User.Context.Variable.Set("x", 1);
+        src.User.Context.Variable.Set("obj", new Dictionary<string, object?> { ["a"] = 1 });
 
         var snap = src.Snapshot();
         var dst = new global::app.@this("/dst");
         dst.Restore(snap, dst.User.Context);
 
-        var x = dst.User.Context.Variables.Get("x");
+        var x = dst.User.Context.Variable.Get("x");
         await Assert.That(x).IsNotNull();
         await Assert.That(x!.Value).IsEqualTo(1);
 
-        var obj = dst.User.Context.Variables.Get("obj");
+        var obj = dst.User.Context.Variable.Get("obj");
         await Assert.That(obj).IsNotNull();
         var dict = obj!.Value as IDictionary<string, object?>;
         await Assert.That(dict).IsNotNull();
@@ -32,7 +32,7 @@ public class VariablesSnapshotTests
         // Settings is now a navigable resolver (not in _variables) so it's absent
         // by construction — no special-case needed.
         var src = new global::app.@this("/src");
-        var vars = src.User.Context.Variables;
+        var vars = src.User.Context.Variable;
         vars.Set("user", "alice");        // user var — survives
         vars.Set("!myInfra", "infra");    // !-prefixed — skipped
 
