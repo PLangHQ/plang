@@ -39,17 +39,12 @@
             ".bot/type-kind-strict/architect/plan/type-value-model.md",
             ".bot/type-kind-strict/architect/plan/kind-derivation-and-validation.md",
             ".bot/type-kind-strict/architect/plan/llm-type-representation.md",
-            ".bot/type-kind-strict/architect/stage-1-type-value-model.md",
-            ".bot/type-kind-strict/architect/stage-2-text-type-and-names.md",
-            ".bot/type-kind-strict/architect/stage-3-kind-derivation.md",
-            ".bot/type-kind-strict/architect/stage-4-set-and-strict.md",
-            ".bot/type-kind-strict/architect/stage-5-llm-representation.md",
             ".bot/type-kind-strict/architect/summary.md"
           ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Wrote the spine (plan.md), three topic deep-dives (type value model, kind derivation/validation, LLM type representation), and five stage files for the coder. Design is settled across the conversation; awaiting Ingi's review comments before suggesting test-designer."
+          "context": "Wrote the spine (plan.md) and three topic deep-dives (type value model, kind derivation/validation, LLM type representation). Stage files were drafted then removed at Ingi's request — he wants to comment on the design before the implementation stages are carved; the sequence is sketched in plan.md and becomes stage-N-*.md after review."
         }
       ],
       "after": {
