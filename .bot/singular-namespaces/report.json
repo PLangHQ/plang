@@ -779,55 +779,103 @@
       }
     },
     {
-      "id": "8aeb699d-caf2-4c75-a031-db90ae8e209d",
-      "bot": "auditor",
-      "timestamp_start": "2026-05-30T13:00:00Z",
-      "timestamp_end": "2026-05-30T13:10:00Z",
-      "intent": "Auditor v2 \u2014 capture security v1 (pushed after my v1), retract v1 F1 stale-state finding, establish pipeline-state rule.",
+      "id": "3e657285-e27c-4441-a53d-252f9ebb556b",
+      "bot": "docs",
+      "timestamp_start": "2026-05-30T12:37:45Z",
+      "timestamp_end": "2026-05-30T12:47:38Z",
+      "intent": "Final docs gate on singular-namespaces: apply architect CLAUDE.md proposal, refresh Documentation/v0.2/ stale plural references, and write three new good_to_know.md sections (accessor model, producer-stamping invariant, Null sentinel).",
       "before": {
-        "assumptions": "v1 ran without git fetch; security had completed locally but hadn't pushed.",
-        "risk": "v1's F1 (no security review) was stale-state, not real. Need to retract and incorporate security's findings."
+        "assumptions": "codeanalyzer v4 + tester v3 + auditor v1 + security v1 all PASS. No Documentation/ touched on the branch \u2014 all stale references and new convention material is mine to write. Architect filed one CLAUDE.md proposal to apply.",
+        "risk": "High volume of plural-token references across 9 doc files + root CLAUDE.md; any miss is a stale ref that future bots will trust. App.Modules property stays PascalCase \u2014 only namespace went singular, so blind sed would be wrong."
       },
-      "plan": ".bot/singular-namespaces/auditor/v2/plan.md",
+      "plan": ".bot/singular-namespaces/docs/v1/plan.md",
       "actions": [
         {
           "paths": [
-            ".bot/singular-namespaces/auditor/v2/v1_review_summary.md",
-            ".bot/singular-namespaces/auditor/v2/plan.md",
-            ".bot/singular-namespaces/auditor/v2/result.md",
-            ".bot/singular-namespaces/auditor/v2/verdict.json",
-            ".bot/singular-namespaces/auditor/summary.md"
+            ".bot/singular-namespaces/docs/v1/plan.md"
           ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Auditor v2: retract v1 F1, cross-reference security's 3 lows (F1 + F3 echo my F5 producer-stamping invariant). Net 4 findings, PASS, next is docs."
+          "context": "Read coder v3 + auditor v1+v2 + security v1; inventoried 9 doc files with stale plural-namespace tokens + the architect CLAUDE.md proposal; wrote v1 plan with proposal decision + new-material list."
         },
         {
           "paths": [
-            "/home/claude/.claude/projects/-workspace-plang/memory/feedback_upstream_bots_required.md",
-            "/home/claude/.claude/projects/-workspace-plang/memory/MEMORY.md"
-          ],
-          "type": "create",
-          "category": "doc",
-          "confidence": "high",
-          "context": "Saved feedback memory: before auditing, fetch + verify all upstream bots (coder/codeanalyzer/tester/security) ran on current version. If missing, status:blocked, stop."
-        },
-        {
-          "paths": [
-            ".bot/singular-namespaces/claude-md-proposals.md"
+            "CLAUDE.md"
           ],
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Proposed character change: add Process step 0 (fetch + check all upstream bots), document blocked verdict shape."
+          "context": "Applied architect v1 proposal: vocabulary list to lowercase singular; new app.X collection-node convention bullet; token renames (app.type.path, Data<app.variable.Variable>, app.channel.@this.Output, .Module/.Goal property names, app/module/ path)."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/app-tree.md",
+            "Documentation/v0.2/scripts/check-app-tree.sh"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Rewrote app-tree.md for singular world (vocabulary list, top-level properties, actor surface, modules block, new Collection-node accessors section, new Type entity section, new Null sentinel section, expanded What-is-NOT-on-app table). Updated drift checker path PLang/app/modules \u2192 PLang/app/module; checker now reports clean (30 modules, 37 app props, 7 actor props, 7 data partials)."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/architecture.md",
+            "Documentation/v0.2/action-catalog.md",
+            "Documentation/v0.2/io-channels.md",
+            "Documentation/v0.2/variables.md",
+            "Documentation/v0.2/snapshots.md",
+            "Documentation/v0.2/code-vs-goals.md",
+            "Documentation/v0.2/object_pattern_formal.md",
+            "Documentation/v0.2/filesystem-permission.md",
+            "Documentation/v0.2/audit/obp-rules.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Token sweep: plural namespace refs \u2192 singular; refreshed app.Module.Describe(), app.channel.list.@this, app.module.<X> across the v0.2 doc surface."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/good_to_know.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Token sweep + appended three new sections: (1) app.X collection node accessor canonical rule; (2) Producer-stamping invariant \u2014 Data.Type propagation, closing auditor v1 F5 with the three contract tests in NonNullInvariantTests.cs; (3) type.@this.Null non-null sentinel including the copy-unconditional rule, wire skip-emission, and the latent ReferenceEquals footgun."
+        },
+        {
+          "paths": [
+            ".bot/singular-namespaces/docs-report.json",
+            ".bot/singular-namespaces/docs/v1/verdict.json",
+            ".bot/singular-namespaces/docs/v1/result.md",
+            ".bot/singular-namespaces/docs/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Final docs reports."
         }
       ],
       "after": {
-        "status": "PASS",
-        "health": "green \u2014 security v1 PASS reinforces my v1 findings; pipeline-state rule captured to prevent recurrence",
-        "notes": "Net 4 minor/nit findings (down from 5). Next bot: docs."
+        "status": "complete",
+        "health": "pass",
+        "notes": "All Documentation/ + CLAUDE.md refreshed to the singular world. Architect proposal applied verbatim with minor cleanup (.Module property singular, not Modules). Drift checker passes. Auditor F5 closed via good_to_know.md addition. Three latent codeanalyzer-v4 / auditor-v1 nits and three security low-residuals remain \u2014 all flagged for future coder passes, none block merge."
       }
+    },
+    {
+      "id": "01de5126-80ec-4e1d-beab-18e0dcdf59a9",
+      "bot": "docs",
+      "timestamp_start": "2026-05-30T12:38:57Z",
+      "timestamp_end": null,
+      "intent": "Final docs gate on singular-namespaces: apply architect CLAUDE.md proposal, refresh Documentation/v0.2/ stale plural references, and write three new good_to_know.md sections (accessor model, producer-stamping invariant, Null sentinel).",
+      "before": {
+        "assumptions": "codeanalyzer v4 + tester v3 + auditor v1+v2 + security v1 all PASS. No Documentation/ touched on the branch \u2014 all stale references and new convention material is mine to write.",
+        "risk": "High volume of plural-token references across 9 doc files + root CLAUDE.md. App.Modules property stays PascalCase \u2014 only namespace went singular; blind sed would be wrong."
+      },
+      "plan": ".bot/singular-namespaces/docs/v1/plan.md",
+      "actions": [],
+      "after": null
     }
   ]
 }
