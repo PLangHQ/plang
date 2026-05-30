@@ -67,7 +67,7 @@ public class Stage5MessagesEndToEndTests
 
         var path = new Path(foreignFile, app.User.Context);
         var result = await path.ReadText();
-        await Assert.That(result.Type?.Value).IsEqualTo("ask");
+        await Assert.That(result.Type?.Name).IsEqualTo("ask");
         await Assert.That(result.Snapshot).IsNotNull();
     }
 
@@ -117,7 +117,7 @@ public class Stage5MessagesEndToEndTests
         var secondRead = await path2.ReadText();
         await Assert.That(secondRead.Success).IsTrue();
         // No Exit-typed bubble (no prompt) — the grant covered the request.
-        await Assert.That(secondRead.Type?.Value).IsNotEqualTo("ask");
+        await Assert.That(secondRead.Type?.Name).IsNotEqualTo("ask");
     }
 
     /// Persisted "always allow" grants must outlive the wire-freshness
@@ -148,7 +148,7 @@ public class Stage5MessagesEndToEndTests
         var path2 = new Path(foreignFile, app2.User.Context);
         var secondRead = await path2.ReadText();
         await Assert.That(secondRead.Success).IsTrue();
-        await Assert.That(secondRead.Type?.Value).IsNotEqualTo("ask");
+        await Assert.That(secondRead.Type?.Name).IsNotEqualTo("ask");
     }
 
     /// Nonce-replay half of the persisted-grant contract: a persisted grant
@@ -173,9 +173,9 @@ public class Stage5MessagesEndToEndTests
         var read1 = await path2.ReadText();   // verify #1 — nonce cached
         var read2 = await path2.ReadText();   // verify #2 — nonce replay if step 4 active
         await Assert.That(read1.Success).IsTrue();
-        await Assert.That(read1.Type?.Value).IsNotEqualTo("ask");
+        await Assert.That(read1.Type?.Name).IsNotEqualTo("ask");
         await Assert.That(read2.Success).IsTrue();
-        await Assert.That(read2.Type?.Value).IsNotEqualTo("ask");
+        await Assert.That(read2.Type?.Name).IsNotEqualTo("ask");
     }
 
     [Test] public async Task Scenario5_RevokeReprompts_AfterRevokeFreshPromptFires()

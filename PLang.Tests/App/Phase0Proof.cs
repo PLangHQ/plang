@@ -154,7 +154,7 @@ public class Phase0Proof
 
         // OUTPUT: Type is "list", not the CLR type name
         await Assert.That(result.Type).IsNotNull();
-        await Assert.That(result.Type!.Value).IsEqualTo("list");
+        await Assert.That(result.Type!.Name).IsEqualTo("list");
     }
 
     [Test]
@@ -165,7 +165,7 @@ public class Phase0Proof
 
         // OUTPUT: Type auto-inferred as "int"
         await Assert.That(result.Type).IsNotNull();
-        await Assert.That(result.Type!.Value).IsEqualTo("int");
+        await Assert.That(result.Type!.Name).IsEqualTo("int");
     }
 
     // ================================================================

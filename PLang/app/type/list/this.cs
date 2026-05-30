@@ -33,10 +33,12 @@ public sealed partial class @this
     /// Per-App build-time kind dispatcher — discovers and invokes each
     /// registered type's <c>static string? Build(object?)</c> hook (the
     /// build-time sibling of <c>Resolve</c>). Owns the reflection cache.
-    /// Call: <c>App.Types.Kinds.Of(declaredType, value)</c> during build to
-    /// stamp <c>Data.Kind</c> alongside <c>Data.Type</c>.
+    /// Call: <c>App.Type.KindHooks.Of(declaredType, value)</c> during build to
+    /// stamp <c>Type.Kind</c> alongside <c>Type.Name</c>. Renamed from
+    /// <c>Kinds</c> so the word stops colliding with <see cref="@this.Kind"/>
+    /// (per-value subtype) and the advertised-vocabulary <c>type.Kinds</c>.
     /// </summary>
-    public kind.@this Kinds { get; } = new();
+    public kind.@this KindHooks { get; } = new();
 
     /// <summary>
     /// Per-(type, format) renderer dispatch — feeds the writer's
@@ -182,13 +184,13 @@ public sealed partial class @this
                 // populated Fields depending on assembly load order.
                 // Richness rank: Record (has Fields) > Enum (has Values) > Scalar.
                 // (codeanalyzer v2 finding #1.)
-                if (!dict.TryGetValue(entry.Value, out var existing))
+                if (!dict.TryGetValue(entry.Name, out var existing))
                 {
-                    dict[entry.Value] = entry;
+                    dict[entry.Name] = entry;
                     continue;
                 }
                 if (Rank(entry) > Rank(existing))
-                    dict[entry.Value] = entry;
+                    dict[entry.Name] = entry;
             }
             return dict;
         });

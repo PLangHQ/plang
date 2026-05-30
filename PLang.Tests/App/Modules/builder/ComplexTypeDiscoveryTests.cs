@@ -50,7 +50,7 @@ public class ComplexTypeDiscoveryTests
         // llm.query has Messages parameter of type List<LlmMessage>
         // LlmMessage should be auto-discovered and its schema included
         var schemas = TypeMapping.BuildTypeEntries(_app.Module)
-            .ToDictionary(e => e.Value, e => RenderEntry(e));
+            .ToDictionary(e => e.Name, e => RenderEntry(e));
 
         await Assert.That(schemas.ContainsKey("llmmessage")).IsTrue();
     }
@@ -59,7 +59,7 @@ public class ComplexTypeDiscoveryTests
     public async Task LlmMessage_SchemaIncludesRoleAndContent()
     {
         var schemas = TypeMapping.BuildTypeEntries(_app.Module)
-            .ToDictionary(e => e.Value, e => RenderEntry(e));
+            .ToDictionary(e => e.Name, e => RenderEntry(e));
 
         await Assert.That(schemas.ContainsKey("llmmessage")).IsTrue();
         var schema = schemas["llmmessage"];
@@ -72,7 +72,7 @@ public class ComplexTypeDiscoveryTests
     {
         // goal.call was already in TypeMapping — should still be discovered
         var schemas = TypeMapping.BuildTypeEntries(_app.Module)
-            .ToDictionary(e => e.Value, e => RenderEntry(e));
+            .ToDictionary(e => e.Name, e => RenderEntry(e));
 
         await Assert.That(schemas.ContainsKey("goal.call")).IsTrue();
     }
@@ -82,7 +82,7 @@ public class ComplexTypeDiscoveryTests
     {
         // Primitive types (string, int, etc.) should not appear in complex schemas
         var schemas = TypeMapping.BuildTypeEntries(_app.Module)
-            .ToDictionary(e => e.Value, e => RenderEntry(e));
+            .ToDictionary(e => e.Name, e => RenderEntry(e));
 
         await Assert.That(schemas.ContainsKey("string")).IsFalse();
         await Assert.That(schemas.ContainsKey("int")).IsFalse();

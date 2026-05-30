@@ -74,8 +74,8 @@ public class DefaultCryptoProviderTests
         var keccak = _provider.Hash(HashAction("test"));
         var sha = _provider.Hash(HashAction("test", "sha256"));
 
-        await Assert.That(keccak.Type!.Value).IsEqualTo("keccak256");
-        await Assert.That(sha.Type!.Value).IsEqualTo("sha256");
+        await Assert.That(keccak.Type!.Name).IsEqualTo("keccak256");
+        await Assert.That(sha.Type!.Name).IsEqualTo("sha256");
     }
 
     // --- Verify ---

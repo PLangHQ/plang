@@ -123,7 +123,7 @@ public class ExecuteVerbTests
         var p = new FilePath(outOfRoot, app.User.Context);
         var result = await p.LoadAssemblyAsync();
         // Stateless channels surface "ask" as a Data type signal, not a stored grant.
-        await Assert.That(result.Type?.Value == "ask" || !result.Success).IsTrue();
+        await Assert.That(result.Type?.Name == "ask" || !result.Success).IsTrue();
     }
 
     [Test] public async Task LoadAssemblyAsync_OutOfRoot_DeniedAnswer_DoesNotLoadAssembly()

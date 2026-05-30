@@ -33,7 +33,7 @@ public partial class Read : IContext
         // plang-types Stage 5: when the read result is image-MIME bytes, lift
         // to an image value. Bytes are loaded once here; image is the leaf
         // owner of width/height/mime — width/height stay lazy until accessed.
-        var mime = read.Type?.Value ?? "";
+        var mime = read.Type?.Name ?? "";
         if (read.Value is byte[] bytes && mime.StartsWith("image/", System.StringComparison.OrdinalIgnoreCase))
         {
             var image = new global::app.type.image.@this(bytes, mime, Path.Value);

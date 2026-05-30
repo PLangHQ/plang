@@ -99,7 +99,7 @@ public class FileSystemPermissionFlowTests
 
         var result = await Dispatch(method, path);
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Type?.Value).IsNotEqualTo("ask");
+        await Assert.That(result.Type?.Name).IsNotEqualTo("ask");
     }
 
     [Test]
@@ -153,7 +153,7 @@ public class FileSystemPermissionFlowTests
         var path = new Path(targetPath, app.User.Context);
 
         var result = await Dispatch(method, path);
-        await Assert.That(result.Type?.Value).IsEqualTo("ask");
+        await Assert.That(result.Type?.Name).IsEqualTo("ask");
         await Assert.That(result.Snapshot).IsNotNull();
     }
 }

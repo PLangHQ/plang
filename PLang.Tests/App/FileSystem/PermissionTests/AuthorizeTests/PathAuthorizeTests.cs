@@ -123,7 +123,7 @@ public class PathAuthorizeTests
 
         var result = await path.Authorize(new Verb { Read = new Read() });
         // Stateless: bubble the Exit-typed Data up so the step loop short-circuits.
-        await Assert.That(result.Type?.Value).IsEqualTo("ask");
+        await Assert.That(result.Type?.Name).IsEqualTo("ask");
         await Assert.That(result.Snapshot).IsNotNull();
     }
 

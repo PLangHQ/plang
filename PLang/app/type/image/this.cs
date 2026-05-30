@@ -15,7 +15,7 @@ namespace app.type.image;
 /// Routing key / serializer always stays <c>image</c>: no <c>path|image</c>
 /// union. See plan/build-vs-runtime.md "composition, not union".</para>
 /// </summary>
-public sealed partial class @this : global::app.data.IBooleanResolvable
+public sealed partial class @this : global::app.data.IBooleanResolvable, global::app.data.IKindValidatable
 {
     public static string Example => "/some/photo.jpg";
     public static string Shape => "string";
@@ -52,6 +52,15 @@ public sealed partial class @this : global::app.data.IBooleanResolvable
 
     public System.Threading.Tasks.Task<bool> AsBooleanAsync()
         => System.Threading.Tasks.Task.FromResult(Bytes.Length > 0);
+
+    /// <summary>
+    /// Stage 4 fills in the magic-byte sniff comparing <paramref name="requiredKind"/>
+    /// (e.g. "gif", "png") to the actual format derived from <see cref="Bytes"/>
+    /// (via ImageSharp's <c>DetectFormat</c>). Stage 1 lands the marker only so
+    /// the strict pipeline has a seam to call into.
+    /// </summary>
+    public (bool ok, string? actualKind) ValidateKind(object value, string requiredKind)
+        => (true, null);
 
     private (int w, int h) ProbeDimensions()
     {

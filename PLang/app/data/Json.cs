@@ -24,6 +24,6 @@ public sealed class Json : JsonConverter<Type?>
         if (value == null)
             writer.WriteNullValue();
         else
-            writer.WriteStringValue(value.Value);
+            writer.WriteStringValue(value.Name);
     }
 }

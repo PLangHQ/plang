@@ -51,7 +51,7 @@ public class OutputAskRoutingTests
 
         var handler = new ask { Context = context, Question = new global::app.data.@this<string>("", "name?") };
         var result = await handler.Run();
-        await Assert.That(result.Type?.Value).IsEqualTo("ask");
+        await Assert.That(result.Type?.Name).IsEqualTo("ask");
         await Assert.That(result.Snapshot).IsNotNull();
     }
 
@@ -91,7 +91,7 @@ public class OutputAskRoutingTests
         var result = await ch.Ask(action);
         await Assert.That(result.Value).IsTypeOf<global::app.module.output.Ask>();
         await Assert.That(((global::app.module.output.Ask)result.Value!).Answer).IsNull();
-        await Assert.That(result.Type?.Value).IsEqualTo("ask");
+        await Assert.That(result.Type?.Name).IsEqualTo("ask");
     }
 
     [Test] public async Task MessageChannelAsk_AttachesSnapshotToReturnedData()

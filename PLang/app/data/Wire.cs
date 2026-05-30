@@ -217,7 +217,22 @@ public sealed class Wire : JsonConverter<@this>
             if (reader.TokenType == JsonTokenType.EndObject)
             {
                 var data = new @this(name, value, typeRef);
-                if (kind != null) data.Kind = kind;
+                // Hydrate kind onto Type.Kind (the entity is the single owner).
+                // typeRef may be null on legacy wire reads with no `type` key;
+                // we mint a passthrough type so the kind isn't lost.
+                if (kind != null)
+                {
+                    if (typeRef == null)
+                    {
+                        var derived = new type("object");
+                        derived.Kind = kind;
+                        data.Type = derived;
+                    }
+                    else
+                    {
+                        typeRef.Kind = kind;
+                    }
+                }
                 if (signature != null) data.Signature = signature;
                 if (properties != null) data.Properties = properties;
                 return data;
@@ -391,14 +406,16 @@ public sealed class Wire : JsonConverter<@this>
         // identical to the pre-Null-type world.
         if (!data.Type.IsNull)
         {
-            writer.WriteString("type", data.Type.Value);
+            writer.WriteString("type", data.Type.Name);
         }
 
         // kind — refinement of type, separate sibling field per plang-types design.
+        // Sourced from Type.Kind (the single owner since the Data.Kind fold).
         // Skipped entirely when null (types with no kind, polymorphic results).
-        if (!string.IsNullOrEmpty(data.Kind))
+        var kindForWire = data.Type.Kind;
+        if (!string.IsNullOrEmpty(kindForWire))
         {
-            writer.WriteString("kind", data.Kind);
+            writer.WriteString("kind", kindForWire);
         }
 
         writer.WritePropertyName("value");

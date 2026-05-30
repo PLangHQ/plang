@@ -58,7 +58,7 @@ public class FileReadBuildTests
             var result = await action.Run();
             await Assert.That(result.Success).IsTrue();
             await Assert.That(result.Value).IsTypeOf<image>();
-            await Assert.That(result.Type?.Value).IsEqualTo("image");
+            await Assert.That(result.Type?.Name).IsEqualTo("image");
         }
         finally { try { System.IO.File.Delete(abs); } catch { } }
     }

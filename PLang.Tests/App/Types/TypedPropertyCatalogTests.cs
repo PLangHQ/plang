@@ -46,7 +46,7 @@ public class TypedPropertyCatalogTests
     private global::app.type.@this? FindEntry(string name)
     {
         foreach (var e in _types.BuildTypeEntries(null))
-            if (e.Value == name) return e;
+            if (e.Name == name) return e;
         return null;
     }
 

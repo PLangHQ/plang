@@ -55,7 +55,7 @@ public sealed partial class @this
             var sb = new StringBuilder();
             foreach (var t in Types)
             {
-                sb.Append("  ").Append(t.Value).Append(": ");
+                sb.Append("  ").Append(t.Name).Append(": ");
                 if (t.Values != null)
                 {
                     sb.Append(string.Join(" | ", t.Values));

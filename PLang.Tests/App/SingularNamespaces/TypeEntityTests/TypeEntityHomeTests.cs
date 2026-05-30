@@ -28,7 +28,7 @@ public class TypeEntityHomeTests
         // ClrType walks through context.app.Type.Clr today — same result as app.Type[Value].ClrType.
         await using var app = new PLangEngine("/test");
         var d = new global::app.data.@this<string>("", "hello") { Context = app.User.Context };
-        var fromRegistry = app.Type[d.Type!.Value];
+        var fromRegistry = app.Type[d.Type!.Name];
         fromRegistry.Context = app.User.Context;
         await Assert.That(d.Type.ClrType).IsEqualTo(fromRegistry.ClrType);
     }

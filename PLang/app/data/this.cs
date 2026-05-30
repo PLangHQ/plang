@@ -250,15 +250,28 @@ public partial class @this
     }
 
     /// <summary>
-    /// Refinement of <see cref="Type"/> — the build-time kind a type's
-    /// <c>static string? Build(object?)</c> hook produces. Stays null for
-    /// types without a kind (plain string, polymorphic results). Separate
-    /// JSON field, never a "type:kind" string — splitting is runtime work.
+    /// Build-time subtype refinement — folds through to <see cref="type.Kind"/>
+    /// (the entity is the single owner; no stored field on Data). Stays null
+    /// for types without a kind (plain string, polymorphic results). Separate
+    /// JSON field on the wire, never a "type:kind" string. Setting on the
+    /// <see cref="@this.Null"/> sentinel is a no-op — the sentinel is shared
+    /// state; a Data minted with no name + no value has no slot to refine.
     /// </summary>
     [JsonPropertyName("kind")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [Out, Store]
-    public string? Kind { get; set; }
+    public string? Kind
+    {
+        get => _type?.Kind;
+        set
+        {
+            // Read through Type so the lazy derivation runs if needed. Null
+            // sentinel is shared singleton — refuse to mutate.
+            var t = Type;
+            if (t.IsNull) return;
+            t.Kind = value;
+        }
+    }
 
     /// <summary>
     /// Gets the value cast to the specified type.

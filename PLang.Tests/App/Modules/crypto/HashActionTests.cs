@@ -44,7 +44,7 @@ public class HashActionTests
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value is byte[]).IsTrue();
-        await Assert.That(result.Type!.Value).IsEqualTo("keccak256");
+        await Assert.That(result.Type!.Name).IsEqualTo("keccak256");
         await Assert.That(((byte[])result.Value!).Length).IsEqualTo(32);
     }
 
@@ -68,7 +68,7 @@ public class HashActionTests
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value is byte[]).IsTrue();
-        await Assert.That(result.Type!.Value).IsEqualTo("keccak256");
+        await Assert.That(result.Type!.Name).IsEqualTo("keccak256");
     }
 
     [Test]
@@ -82,8 +82,8 @@ public class HashActionTests
 
         await Assert.That(keccakResult.Success).IsTrue();
         await Assert.That(sha256Result.Success).IsTrue();
-        await Assert.That(sha256Result.Type!.Value).IsEqualTo("sha256");
-        await Assert.That(keccakResult.Type!.Value).IsEqualTo("keccak256");
+        await Assert.That(sha256Result.Type!.Name).IsEqualTo("sha256");
+        await Assert.That(keccakResult.Type!.Name).IsEqualTo("keccak256");
         await Assert.That((byte[])sha256Result.Value!).IsNotEquivalentTo((byte[])keccakResult.Value!);
     }
 

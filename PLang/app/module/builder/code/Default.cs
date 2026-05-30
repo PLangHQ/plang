@@ -60,7 +60,7 @@ public class Default : IBuilder
         if (filter is { Count: > 0 })
         {
             var allTypeNames = new HashSet<string>(
-                schema.Types.Select(t => t.Value), StringComparer.OrdinalIgnoreCase);
+                schema.Types.Select(t => t.Name), StringComparer.OrdinalIgnoreCase);
             var refs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var tokenRx = new System.Text.RegularExpressions.Regex(@"\b[a-zA-Z][\w]*\b");
             var wantedActions = new HashSet<string>(filter, StringComparer.OrdinalIgnoreCase);
@@ -94,7 +94,7 @@ public class Default : IBuilder
                 changed = false;
                 foreach (var t in schema.Types)
                 {
-                    if (!refs.Contains(t.Value)) continue;
+                    if (!refs.Contains(t.Name)) continue;
                     var pieces = new[] { t.ConstructorSignature ?? "" };
                     foreach (var s in pieces)
                         foreach (System.Text.RegularExpressions.Match m in tokenRx.Matches(s))
@@ -111,7 +111,7 @@ public class Default : IBuilder
                 }
             }
 
-            var filteredTypes = schema.Types.Where(t => refs.Contains(t.Value)).ToList();
+            var filteredTypes = schema.Types.Where(t => refs.Contains(t.Name)).ToList();
             schema = new global::app.builder.type.@this(modules)
             {
                 PrimitiveNames = schema.PrimitiveNames,
@@ -478,13 +478,13 @@ public class Default : IBuilder
             {
                 foreach (var p in a.Parameters)
                 {
-                    if (!string.Equals(p.Type?.Value, "goal.call", StringComparison.OrdinalIgnoreCase)) continue;
+                    if (!string.Equals(p.Type?.Name, "goal.call", StringComparison.OrdinalIgnoreCase)) continue;
                     // Catalog descriptions (e.g. "goal.call", "goal.call?") aren't real values —
                     // they're schema metadata from Modules.Describe(). Same skip as in
                     // NormalizeParameterTypes; without it, ToGoalCall parses "goal.call" as a
                     // dotted name and the type-name guard below false-positives on every
                     // goal.call slot in the catalog.
-                    if (p.Value is string desc && IsCatalogDescription(desc, p.Type!.Value)) continue;
+                    if (p.Value is string desc && IsCatalogDescription(desc, p.Type!.Name)) continue;
                     var goalCall = ToGoalCall(p.Value);
                     if (goalCall == null || string.IsNullOrEmpty(goalCall.Name)) continue;
                     if (goalCall.Name.Contains('%')) continue;  // %var% resolves at runtime
@@ -707,7 +707,7 @@ public class Default : IBuilder
                 if (i > 0) sb.Append(", ");
                 var p = a.Parameters[i];
                 sb.Append(p.Name).Append('(');
-                if (p.Type != null) sb.Append('[').Append(p.Type.Value).Append("] ");
+                if (p.Type != null) sb.Append('[').Append(p.Type.Name).Append("] ");
                 sb.Append(FormatValue(p.Value));
                 sb.Append(')');
             }
@@ -892,7 +892,7 @@ public class Default : IBuilder
                         var underlying = System.Nullable.GetUnderlyingType(declared) ?? declared;
                         if (underlying.IsGenericType && underlying.GetGenericTypeDefinition() == typeof(global::app.data.@this<>))
                             underlying = underlying.GetGenericArguments()[0];
-                        var kind = context.App.Type.Kinds.Of(underlying, p.Value);
+                        var kind = context.App.Type.KindHooks.Of(underlying, p.Value);
                         if (kind != null) p.Kind = kind;
                     }
                 }
@@ -921,9 +921,9 @@ public class Default : IBuilder
                 // metadata produced by Modules.Describe(), not values to normalize. They
                 // surface when the catalog is fed back through validate (BuilderValidateValid
                 // smoke test). Skip — coercing a description string to its declared type fails.
-                if (p.Value is string desc && IsCatalogDescription(desc, p.Type.Value)) continue;
+                if (p.Value is string desc && IsCatalogDescription(desc, p.Type.Name)) continue;
 
-                var targetType = context.App.Type.Get(p.Type.Value);
+                var targetType = context.App.Type.Get(p.Type.Name);
                 if (targetType == null) continue;
 
                 // Scalar PlangType domain types (Path, etc.) carry their wire representation
@@ -1067,7 +1067,7 @@ public class Default : IBuilder
 
         foreach (var param in action.Parameters)
         {
-            if (!string.Equals(param.Type?.Value, "goal.call", StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(param.Type?.Name, "goal.call", StringComparison.OrdinalIgnoreCase))
                 continue;
 
             var goalCall = ToGoalCall(param.Value);

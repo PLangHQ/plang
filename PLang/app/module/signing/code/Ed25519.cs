@@ -132,7 +132,7 @@ public class Ed25519 : ISigning
         if (action.Data?.Value != null)
         {
             var rehash = await app.RunAction<Hash>(
-                new Hash { Data = action.Data, Algorithm = new data.@this<string>("", signedData.Hash!.Type?.Value ?? "keccak256") }, action.Context);
+                new Hash { Data = action.Data, Algorithm = new data.@this<string>("", signedData.Hash!.Type?.Name ?? "keccak256") }, action.Context);
             if (!rehash.Success) return global::app.data.@this<bool>.From(rehash);
             if (rehash.Value is not byte[] rehashBytes || !rehashBytes.AsSpan().SequenceEqual(storedHash))
                 return global::app.data.@this<bool>.FromError(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));

@@ -6,54 +6,91 @@ using app.actor.context;
 namespace app.type;
 
 /// <summary>
-/// PLang type entity. <see cref="Value"/> is the type name: "string", "long",
-/// "text/markdown", "image/jpeg", etc.  The same entity carries the full
-/// catalog knowledge — Fields, Values, Properties, Shape, ConstructorSignature,
-/// Example, Description, Kinds, ClrType — folded in during Stage 4
-/// (singular-namespaces) from the prior <c>app.builder.type.Entry</c> parallel
-/// struct.  Both doors — <c>data.Type</c> and <c>app.Type[name]</c> — return
-/// the same entity shape; <c>app.Type</c> resolves names through the registry
-/// and stamps <c>Context</c>, while <c>type.list.@this.BuildTypeEntries</c>
-/// walks the action catalog and populates the catalog properties at
-/// construction.  Entities minted outside <c>BuildTypeEntries</c> lazily
-/// resolve the catalog properties on first read by looking themselves up in
-/// the registry's catalog walk.
+/// PLang type entity carrying the <c>{Name, Kind, Strict}</c> identity plus the
+/// folded catalog knowledge (Fields, Values, Properties, Shape,
+/// ConstructorSignature, Example, Description, Kinds).
 ///
-/// No discriminator enum — the populated property set <em>is</em> the
-/// discriminator: <see cref="Fields"/> non-null → record-shape; <see cref="Values"/>
-/// non-null → enum-shape; <see cref="Shape"/> or <see cref="ConstructorSignature"/>
-/// non-null → scalar-shape.
+/// <para><c>Name</c> is the family/primitive ("text", "number", "image", "long",
+/// "datetime"). <c>Kind</c> is the optional subtype ("md", "gif", "int") —
+/// folded from the historical <c>Data.Kind</c> field so the entity is the
+/// single owner of the build-time refinement. <c>Strict</c> turns the kind
+/// into a requirement; per-family enforcement is gated on the
+/// <c>app.data.IKindValidatable</c> marker (image sniffs bytes; text degrades
+/// to "kind-name-accepted").</para>
+///
+/// <para>Both doors — <c>data.Type</c> and <c>app.Type[name]</c> — return the
+/// same entity shape; <c>app.Type</c> resolves names through the registry and
+/// stamps <c>Context</c>, while <c>type.list.@this.BuildTypeEntries</c> walks
+/// the action catalog and populates the catalog properties at construction.
+/// Entities minted outside <c>BuildTypeEntries</c> lazily resolve the catalog
+/// properties on first read via <see cref="Promote"/>.</para>
 /// </summary>
 public sealed class @this
 {
     [JsonPropertyName("name")]
-    public string Value { get; }
+    public string Name { get; }
+
+    /// <summary>
+    /// Build-time subtype refinement ("md", "gif", "int"). Null when the type
+    /// has no sub-kind. Mutable: <c>Data.Kind</c> delegates set-through to this
+    /// slot so the entity is the single owner. <c>[JsonIgnore]</c> — the wire
+    /// emits <c>kind</c> separately from the type entity (Wire.cs writes it
+    /// alongside the <c>type</c> key), so STJ-default serialisation of the
+    /// entity itself never carries it.
+    /// </summary>
+    [JsonIgnore]
+    public string? Kind { get; set; }
+
+    /// <summary>
+    /// When true, <see cref="Kind"/> is a requirement (enforced at build for
+    /// literals via <c>app.data.IKindValidatable</c>; deferred to runtime for
+    /// <c>%var%</c>). Default false — kind is a hint. Build-only — not on the
+    /// wire (a serialised type only describes what it is, not whether the
+    /// reader is strict about it).
+    /// </summary>
+    [JsonIgnore]
+    public bool Strict { get; init; }
 
     // Context is the *runtime* invariant — once a Data is stamped (Variables.Set,
     // Action.RunAsync), the entity reads through the registry.  Before stamping,
     // the entity falls through to the static primitive surface so type-entity
     // instantiated purely for its identity (e.g. `new type("string")`, file
     // mime-deriving an extension before any Data wraps it) still answers the
-    // ClrType question without an App in scope.  This is the entity's own
-    // documented no-context surface; external consumer sites do NOT chain
-    // `?? GetPrimitiveOrMime` themselves — that pattern is gone (see
-    // NonNullInvariantTests).
+    // ClrType question without an App in scope.
     [JsonIgnore]
     internal actor.context.@this? Context { get; set; }
 
-    public @this(string value) { Value = value; }
+    public @this(string name) { Name = name; }
 
+    public @this(string name, string? kind, bool strict = false)
+    {
+        Name = name;
+        Kind = kind;
+        Strict = strict;
+    }
+
+    /// <summary>
+    /// CLR mate for this type's name. Internal — the public PLang surface is
+    /// name-keyed (the registry's <c>App.Type.Clr(name)</c> / <c>Get(name)</c>
+    /// is the door for interior consumers).
+    /// </summary>
     [JsonIgnore]
-    public System.Type? ClrType => _clrType ?? Context?.App.Type.Clr(Value) ?? AppTypes.GetPrimitiveOrMime(Value);
+    internal System.Type? ClrType => _clrType ?? Context?.App.Type.Clr(Name) ?? AppTypes.GetPrimitiveOrMime(Name);
     private System.Type? _clrType;
 
-    /// <summary>Format kind for this type value (e.g. "image", "text"). Null for PLang type names like "string".</summary>
+    /// <summary>True when content of this type benefits from compression.</summary>
     [JsonIgnore]
-    public string? Kind => Context?.App.Format.KindOf(Value);
-
-    /// <summary>Whether content of this type benefits from compression.</summary>
-    [JsonIgnore]
-    public bool Compressible => Kind != null && (Context?.App.Format.Compressible(Kind) ?? false);
+    public bool Compressible
+    {
+        get
+        {
+            // Resolve family from Name through the format registry (the
+            // family-Kind accessor went away with the rename; family-lookup
+            // is now an explicit registry call). Null family → not compressible.
+            var family = Context?.App.Format.KindOf(Name);
+            return family != null && (Context?.App.Format.Compressible(family) ?? false);
+        }
+    }
 
     /// <summary>
     /// The "null" type — the type of a Data whose Value is null and no explicit
@@ -66,7 +103,7 @@ public sealed class @this
 
     /// <summary>True when this is the <see cref="Null"/> sentinel type.</summary>
     [JsonIgnore]
-    public bool IsNull => Value == "null";
+    public bool IsNull => Name == "null";
 
     public static @this String => new("string");
     public static @this Int => new("int");
@@ -79,11 +116,58 @@ public sealed class @this
     public static @this FromMime(string mimeType) => new(mimeType);
     public static @this FromName(string typeName) => new(typeName);
 
-    public override string ToString() => Value;
+    /// <summary>
+    /// Normalising factory — the single entry point the LLM, build pipeline,
+    /// and tests reach. Canonicalises <paramref name="name"/> (currently
+    /// preserves the input via <c>primitive.Aliases</c>; stage 2 lands
+    /// <c>string</c>→<c>text</c>), splits a single-string slash form
+    /// ("text/markdown" → name=text, kind=markdown) onto first slash, rejects
+    /// empty/whitespace names. Multi-slash splits on the first; the rest is a
+    /// free-string <paramref name="kind"/>.
+    /// </summary>
+    public static @this Create(string name, string? kind = null, bool strict = false)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new System.ArgumentException("type name is required (empty or whitespace not allowed).", nameof(name));
+
+        // Single-string slash form: "text/markdown" → name=text, kind=markdown.
+        // Only fold the slash into kind when caller did NOT pass a kind
+        // explicitly — Create("text", "md") stays as-is, even if name itself
+        // had no slash.
+        if (kind == null && name.Contains('/'))
+        {
+            var slash = name.IndexOf('/');
+            kind = name[(slash + 1)..];
+            name = name[..slash];
+            if (string.IsNullOrWhiteSpace(name))
+                throw new System.ArgumentException("type name is required (empty or whitespace not allowed).", nameof(name));
+        }
+
+        // Canonicalise name through the primitive alias table — `Text`→`text`,
+        // `STRING`→`string`. Unknown names pass through (domain types,
+        // unrecognised primitives).
+        name = Canonicalise(name);
+
+        return new @this(name, kind, strict);
+    }
+
+    private static string Canonicalise(string name)
+    {
+        // Lowercase pin: PLang type names are case-insensitive — the factory
+        // lowercases first so unknown names still round-trip predictably. The
+        // alias→canonical fold (e.g. `string`→`text`) is deliberately NOT done
+        // here — that's a later-stage change, and folding eagerly would
+        // collapse `text`→`string` today because `typeof(string)`'s canonical
+        // is still `"string"`. The factory just lowercases; consumers continue
+        // to use the alias table for name→CLR lookups separately.
+        return name.ToLowerInvariant();
+    }
+
+    public override string ToString() => Name;
 
     public object? Convert(string raw)
     {
-        return Value.ToLowerInvariant() switch
+        return Name.ToLowerInvariant() switch
         {
             "json" => JsonSerializer.Deserialize<Dictionary<string, object?>>(raw,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true }),
@@ -124,7 +208,12 @@ public sealed class @this
     /// <summary>Semantic description from a static <c>Description</c> property on the type.</summary>
     public string? Description { get => Promote()._description; init => _description = value; }
 
-    /// <summary>Developer-meaningful kind vocabulary from a static <c>Kinds</c> property.</summary>
+    /// <summary>
+    /// Developer-meaningful kind vocabulary from a static <c>Kinds</c> property.
+    /// Advertised vocabulary the LLM may emit; distinct from <see cref="Kind"/>
+    /// (the per-value subtype) and the build-hook dispatcher
+    /// <c>App.Type.KindHooks</c>.
+    /// </summary>
     public IReadOnlyList<string>? Kinds { get => Promote()._kinds; init => _kinds = value; }
 
     /// <summary>Alias for <see cref="Values"/> — enum members the LLM may emit.</summary>
@@ -134,14 +223,14 @@ public sealed class @this
     /// <summary>Path-scheme registry for the path entity. Null when this type is not path.</summary>
     [JsonIgnore]
     public global::app.type.path.scheme.@this? Scheme
-        => Value == "path" ? Context.App.Type.Scheme : null;
+        => Name == "path" ? Context.App.Type.Scheme : null;
 
     // Construct with a stamped ClrType (used by BuildTypeEntries and by the
     // type-list indexer's primitive fallback path; both spare the registry
     // round-trip).  The primitive path also has no fold data — primitives are
     // not in ComplexSchemas — so mark fold as already-loaded; that keeps
     // Promote()'s Context check from firing for `app.Type["string"]`.
-    internal @this(string value, System.Type? clrType) : this(value)
+    internal @this(string name, System.Type? clrType) : this(name)
     {
         _clrType = clrType;
         _foldLoaded = true;
@@ -167,12 +256,12 @@ public sealed class @this
         // surface it as wrong LLM prompts / wrong schema decisions far away.
         if (Context == null)
             throw new System.InvalidOperationException(
-                $"type.@this(\"{Value}\") has no Context — schema properties "
+                $"type.@this(\"{Name}\") has no Context — schema properties "
                 + "(Fields/Values/Example/Shape/etc.) require a stamped entity. "
                 + "This is a producer bug: whoever minted this type via FromName "
                 + "did not propagate Context. Primitive identity reads "
-                + "(.Value/.ClrType) do not hit this path.");
-        if (!Context.App.Type.ComplexSchemas().TryGetValue(Value, out var match)) return this;
+                + "(.Name/.ClrType) do not hit this path.");
+        if (!Context.App.Type.ComplexSchemas().TryGetValue(Name, out var match)) return this;
         _fields = match._fields;
         _values = match._values;
         _properties = match._properties;

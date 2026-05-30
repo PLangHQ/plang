@@ -404,7 +404,7 @@ public class FileHandlerTests : IDisposable
         var action = new Read { Context = _app.User.Context, Path = MakePath("doc.md") };
         var result = await action.Run();
 
-        await Assert.That(result.Type!.Value).IsEqualTo("text/markdown");
+        await Assert.That(result.Type!.Name).IsEqualTo("text/markdown");
     }
 
     [Test]

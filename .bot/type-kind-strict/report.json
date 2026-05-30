@@ -199,6 +199,94 @@
         "test_files_plang": 10,
         "ready_for": "coder"
       }
+    },
+    {
+      "id": "c0de1001-stage1-name-kind-strict-fold",
+      "bot": "coder",
+      "timestamp_start": "2026-05-30T16:30:00Z",
+      "timestamp_end": "2026-05-30T18:15:00Z",
+      "intent": "Stage 1 only \u2014 give app.type.@this {Name,Kind,Strict}; fold Data.Kind into Type.Kind; rename App.Type.Kinds\u2192KindHooks; internalise ClrType; add IKindValidatable marker. Leave Stage 2\u20135 stubs failing as planned.",
+      "before": {
+        "assumptions": "Baseline: 3696 pre-existing C# tests pass, 107 new TypeKindStrict stubs fail with Assert.Fail. PLang: 253 pass, 0 fail, 10 stale (Stage 4+ goals). Stage order strict per architect/test-designer.",
+        "risk": "Value\u2192Name rename has ~16 caller sites (manageable). Data.Kind fold may affect wire serialization tests if the converter is anywhere outside Wire.cs. App.Type.Kinds rename hits the dispatcher's existing callers."
+      },
+      "plan": ".bot/type-kind-strict/coder/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/type/this.cs",
+            "PLang/app/data/this.cs",
+            "PLang/app/data/Wire.cs",
+            "PLang/app/data/IKindValidatable.cs",
+            "PLang/app/data/this.Transport.cs",
+            "PLang/app/type/list/this.cs",
+            "PLang/app/type/image/this.cs",
+            "PLang/app/module/builder/code/Default.cs",
+            "PLang/app/module/builder/validateResponse.cs",
+            "PLang/app/module/variable/set.cs",
+            "PLang/app/module/settings/Sqlite.cs",
+            "PLang/app/module/file/read.cs",
+            "PLang/app/module/goal/getTypes.cs",
+            "PLang/app/module/llm/code/OpenAi.cs",
+            "PLang/app/module/signing/code/Ed25519.cs",
+            "PLang/app/module/signing/Signature.cs",
+            "PLang/app/module/debug/this.cs",
+            "PLang/app/error/Error.cs",
+            "PLang/app/channel/serializer/json/writer.cs",
+            "PLang/app/builder/type/this.cs",
+            "PLang/app/data/Json.cs",
+            "PLang.Generators/Emission/Property/Data/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage 1 spine: type.@this gains Name/Kind/Strict and a normalising factory; Data.Kind folds to Type.Kind (stored field deleted); Wire reads/writes kind via the entity; App.Type.Kinds renamed KindHooks; public ClrType internalised; IKindValidatable marker added (image implements with stub body, text/number do not). Family-Kind accessor removed; consumers (Wrap, Compressible, DataTests, EngineTypesTests) updated to call App.Format.KindOf(Name) directly. Value\u2192Name fan-out across ~25 files (sed + manual fixups for Default.cs's t.Values that the regex over-matched). Generator's PrType emission updated to use Name."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/TypeFactoryTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/TypeEntityShapeTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/DataKindFoldTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/WireKindShapeTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/IKindValidatableMarkerTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/ClrTypeRerouteTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/DispatcherRenameTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Replaced Assert.Fail('Not implemented') with real bodies for all 28 Stage 1 contract tests. Comments pin the contract per test-designer's intent; no stage references in source."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/DataTests/DataTests.cs",
+            "PLang.Tests/App/Types/EngineTypesTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Updated pre-existing tests that asserted the OLD family-Kind accessor on type.@this. Family resolution is now an explicit App.Format.KindOf(Name) call; the tests' intent (Context propagation, Compressible, custom-type lazy derivation) is preserved against the new shape."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/DataTests/TypeInfoTests.cs",
+            "PLang.Tests/App/Types/TypedPropertyCatalogTests.cs",
+            "PLang.Tests/App/Modules/builder/ComplexTypeDiscoveryTests.cs",
+            "PLang.Tests/App/Modules/Schema/SchemaTests.cs",
+            "PLang.Tests/App/SingularNamespaces/AccessorTests/TypeAccessorTests.cs",
+            "PLang.Tests/App/Serialization/IntegrationCuts/PlangTypesCut3_CompositionNavigationTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Mechanical Value\u2192Name rename across test files that touched the type entity's name property."
+        }
+      ],
+      "after": {
+        "status": "PASS \u2014 Stage 1 complete. C# 3732/3803 (was 3696/3803); +36 tests passing. 71 remaining failures = Stage 2\u20135 stubs deferred to future versions. PLang unchanged: 253/253 + 10 stale (Stage 2+/4 stubs).",
+        "health": "green",
+        "notes": "All 28 Stage 1 contract tests green. Ready for Stage 2 (text type + numerics under number) or codeanalyzer review."
+      }
     }
   ]
 }

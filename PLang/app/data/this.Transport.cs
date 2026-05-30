@@ -76,11 +76,14 @@ public partial class @this
         if (Type == null)
             return this;
 
-        var kind = Type.Kind;
-        if (kind == null)
+        // family-Kind accessor is gone — the family lives on the format registry
+        // under the type's Name. The wrap outer carries the family ("image" for
+        // an "image/jpeg" body).
+        var family = _context?.App.Format.KindOf(Type.Name);
+        if (family == null)
             return this;
 
-        var outer = new @this("", this, type.FromName(kind));
+        var outer = new @this("", this, type.FromName(family));
         outer.Context = _context;
         return outer;
     }
@@ -146,7 +149,7 @@ public partial class @this
     /// </summary>
     public @this Decrypt()
     {
-        if (!string.Equals(Type?.Value, "encrypted", StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(Type?.Name, "encrypted", StringComparison.OrdinalIgnoreCase))
             return this;
 
         // Decryption requires a crypto service on App (not yet implemented).
@@ -169,7 +172,7 @@ public partial class @this
     /// </summary>
     public async Task<@this> DecompressAsync(CancellationToken ct = default)
     {
-        if (!string.Equals(Type?.Value, "archived", StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(Type?.Name, "archived", StringComparison.OrdinalIgnoreCase))
             return this;
 
         var compressed = GetValue<byte[]>();

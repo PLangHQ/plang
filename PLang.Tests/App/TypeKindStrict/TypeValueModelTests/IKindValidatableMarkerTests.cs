@@ -1,52 +1,58 @@
+using System.Reflection;
 using TUnit.Core;
 using TUnit.Assertions;
+using TUnit.Assertions.Extensions;
 
 namespace PLang.Tests.App.TypeKindStrict.TypeValueModelTests;
 
-// The new `IKindValidatable` marker. Sibling to IBooleanResolvable in
+// The `IKindValidatable` marker. Sibling to IBooleanResolvable in
 // app/data/. The marker is the seam strict uses in ValidateBuild — the
-// design lives here even before image implements it.
-
+// design lives here even before image implements the byte-sniff body.
 public class IKindValidatableMarkerTests
 {
     [Test] public async Task Marker_Defined_InAppDataNamespace()
     {
-        // Reflection: typeof(app.data.IKindValidatable) exists and is an interface.
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var t = typeof(global::app.data.IKindValidatable);
+        await Assert.That(t.IsInterface).IsTrue();
+        await Assert.That(t.Namespace).IsEqualTo("app.data");
     }
 
     [Test] public async Task Marker_Signature_BoolAndActualKindTuple()
     {
-        // (bool ok, string? actualKind) ValidateKind(object value, string requiredKind).
-        // Pin the signature so can rely on it.
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var t = typeof(global::app.data.IKindValidatable);
+        var m = t.GetMethod("ValidateKind", BindingFlags.Public | BindingFlags.Instance)!;
+        await Assert.That(m).IsNotNull();
+        var ps = m.GetParameters();
+        await Assert.That(ps.Length).IsEqualTo(2);
+        await Assert.That(ps[0].ParameterType).IsEqualTo(typeof(object));
+        await Assert.That(ps[1].ParameterType).IsEqualTo(typeof(string));
+        // Return is a (bool ok, string? actualKind) tuple.
+        await Assert.That(m.ReturnType).IsEqualTo(typeof(System.ValueTuple<bool, string?>));
     }
 
     [Test] public async Task Image_ImplementsIKindValidatable()
     {
-        // app.type.image.@this : IKindValidatable. The byte-sniff lives here, not
-        // in variable.set or a switch in build.validate.
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var image = typeof(global::app.type.image.@this);
+        await Assert.That(typeof(global::app.data.IKindValidatable).IsAssignableFrom(image)).IsTrue();
     }
 
     [Test] public async Task Text_DoesNotImplementIKindValidatable()
     {
-        // there is no "plain vs markdown" probe from content. text strict
-        // degrades to "kind name accepted", never raises a content-mismatch error.
-        // Negative: reflection probe confirms text does NOT implement IKindValidatable.
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // Pinned: no app.type.text.@this exists yet (Stage 2 lands it).
+        // The negative shape is: no CLR type under `app.type.text` implements
+        // the marker. Verify by walking the PLang assembly for any
+        // `app.type.text.*` types and asserting none implement IKindValidatable.
+        var asm = typeof(global::app.type.@this).Assembly;
+        var textImpls = asm.GetTypes()
+            .Where(t => t.Namespace != null && t.Namespace.StartsWith("app.type.text", System.StringComparison.Ordinal))
+            .Where(t => typeof(global::app.data.IKindValidatable).IsAssignableFrom(t))
+            .ToList();
+        await Assert.That(textImpls.Count).IsEqualTo(0);
     }
 
     [Test] public async Task Number_DoesNotImplementIKindValidatable()
     {
-        // the strict path calls ValidateKind on the resolved
-        // CLR type. number is not byte-sniffable; the strict path must skip cleanly
-        // (not throw "not implemented"). Negative-presence pin.
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var number = typeof(global::app.type.number.@this);
+        await Assert.That(typeof(global::app.data.IKindValidatable).IsAssignableFrom(number)).IsFalse();
     }
 }

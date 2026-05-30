@@ -299,7 +299,7 @@ public class Error : IError
                 foreach (var kvp in allVars)
                 {
                     var val = FormatVerboseValue(kvp.Value.Value);
-                    sb.AppendLine($"{indent}    %{kvp.Key}% = {val} ({kvp.Value.Type?.Value ?? "?"})");
+                    sb.AppendLine($"{indent}    %{kvp.Key}% = {val} ({kvp.Value.Type?.Name ?? "?"})");
                 }
             }
         }

@@ -87,7 +87,7 @@ public class KindFieldTests
         };
         var json = ToJson(original);
         var read = FromJson(json);
-        await Assert.That(read.Type?.Value).IsEqualTo("path");
+        await Assert.That(read.Type?.Name).IsEqualTo("path");
         await Assert.That(read.Kind).IsEqualTo("file");
     }
 }

@@ -449,12 +449,14 @@ public class DataTests
         await using var engine = new global::app.@this("/test");
         var context = new global::app.actor.context.@this(engine);
 
-        // Use MIME type — Kind is only non-null when context is set
+        // Context propagation: setting Data.Context stamps the embedded Type
+        // entity so registry-keyed reads (Compressible, ClrType) work.
         var ov = new Data("test", new byte[] { 1, 2 }, Type.FromMime("image/jpeg"));
         ov.Context = context;
 
-        // Type has context: Kind navigation works
-        await Assert.That(ov.Type!.Kind).IsEqualTo("image");
+        // Family is no longer on Type.Kind (Kind is the subtype). It lives on
+        // the format registry, keyed by the type's Name.
+        await Assert.That(engine.Format.KindOf(ov.Type!.Name)).IsEqualTo("image");
     }
 
     [Test]
@@ -464,7 +466,7 @@ public class DataTests
 
         // Type is lazily derived on first access
         await Assert.That(ov.Type).IsNotNull();
-        await Assert.That(ov.Type!.Value).IsEqualTo("int");
+        await Assert.That(ov.Type!.Name).IsEqualTo("int");
         await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(int));
     }
 
@@ -479,7 +481,7 @@ public class DataTests
 
         // Type lazily derived through context's Engine.Types
         await Assert.That(ov.Type).IsNotNull();
-        await Assert.That(ov.Type!.Value).IsEqualTo("string");
+        await Assert.That(ov.Type!.Name).IsEqualTo("string");
         await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(string));
     }
 
@@ -488,11 +490,11 @@ public class DataTests
     {
         var ov = new Data("test", "hello");
 
-        await Assert.That(ov.Type!.Value).IsEqualTo("string");
+        await Assert.That(ov.Type!.Name).IsEqualTo("string");
 
         ov.Value = 42;
 
-        await Assert.That(ov.Type!.Value).IsEqualTo("int");
+        await Assert.That(ov.Type!.Name).IsEqualTo("int");
         await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(int));
     }
 
@@ -516,7 +518,7 @@ public class DataTests
 
         // Explicit type is preserved, not lazily derived
         await Assert.That(ov.Type).IsEqualTo(explicitType);
-        await Assert.That(ov.Type!.Value).IsEqualTo("image/jpeg");
+        await Assert.That(ov.Type!.Name).IsEqualTo("image/jpeg");
     }
 
     [Test]
@@ -531,8 +533,8 @@ public class DataTests
         var newType = new Type("text/plain");
         ov.Type = newType;
 
-        // Type gets context from Data — Kind navigation works
-        await Assert.That(newType.Kind).IsEqualTo("text");
+        // Type gets context from Data — family is resolvable via registry.
+        await Assert.That(engine.Format.KindOf(newType.Name)).IsEqualTo("text");
     }
 
     [Test]
@@ -544,7 +546,7 @@ public class DataTests
         var data = new Data("img", new byte[] { 1, 2 }, Type.FromMime("image/jpeg"));
         data.Context = context;
 
-        await Assert.That(data.Type!.Kind).IsEqualTo("image");
+        await Assert.That(engine.Format.KindOf(data.Type!.Name)).IsEqualTo("image");
         await Assert.That(data.Type!.Compressible).IsFalse();
     }
 
@@ -553,6 +555,7 @@ public class DataTests
     {
         var imageType = new Type("image/jpeg");
 
+        // Family-Kind accessor is gone — Kind is the subtype (null when unset).
         await Assert.That(imageType.Kind).IsNull();
         await Assert.That(imageType.Compressible).IsFalse();
     }
@@ -566,7 +569,7 @@ public class DataTests
         var data = new Data("txt", "hello", Type.FromMime("text/plain"));
         data.Context = context;
 
-        await Assert.That(data.Type!.Kind).IsEqualTo("text");
+        await Assert.That(engine.Format.KindOf(data.Type!.Name)).IsEqualTo("text");
         await Assert.That(data.Type!.Compressible).IsTrue();
     }
 
@@ -660,11 +663,11 @@ public class DataTests
         var wrapped = data.Wrap();
 
         await Assert.That(wrapped).IsNotEqualTo(data);
-        await Assert.That(wrapped.Type!.Value).IsEqualTo("image");
+        await Assert.That(wrapped.Type!.Name).IsEqualTo("image");
         await Assert.That(wrapped.Value).IsTypeOf<Data>();
         await Assert.That(wrapped.Context).IsEqualTo(context);
         var inner = (Data)wrapped.Value!;
-        await Assert.That(inner.Type!.Value).IsEqualTo("image/jpeg");
+        await Assert.That(inner.Type!.Name).IsEqualTo("image/jpeg");
     }
 
     [Test]
@@ -700,7 +703,7 @@ public class DataTests
 
         var unwrapped = envelope.Unwrap();
 
-        await Assert.That(unwrapped.Type!.Value).IsEqualTo("text/plain");
+        await Assert.That(unwrapped.Type!.Name).IsEqualTo("text/plain");
         await Assert.That(unwrapped.Value).IsEqualTo("Hello");
     }
 
@@ -744,7 +747,7 @@ public class DataTests
         var compressed = wrapped.Compress();
 
         // Stage 3: flat shape — archived.Value is byte[] directly, no nested gzip Data.
-        await Assert.That(compressed.Type!.Value).IsEqualTo("archived");
+        await Assert.That(compressed.Type!.Name).IsEqualTo("archived");
         await Assert.That(compressed.Value).IsTypeOf<byte[]>();
     }
 
@@ -791,7 +794,7 @@ public class DataTests
         var decompressed = compressed.Decompress();
 
         await Assert.That(decompressed.Success).IsTrue();
-        await Assert.That(decompressed.Type!.Value).IsEqualTo("text");
+        await Assert.That(decompressed.Type!.Name).IsEqualTo("text");
         await Assert.That(decompressed.Value).IsTypeOf<Data>();
         var decompressedInner = (Data)decompressed.Value!;
         await Assert.That(decompressedInner.Value).IsEqualTo("Hello world");
@@ -823,7 +826,7 @@ public class DataTests
         var decompressed = compressed.Decompress();
 
         await Assert.That(decompressed.Success).IsTrue();
-        await Assert.That(decompressed.Type!.Value).IsEqualTo("text");
+        await Assert.That(decompressed.Type!.Name).IsEqualTo("text");
 
         // Unwrap to get back to the content
         var unwrapped = decompressed.Unwrap();
@@ -874,7 +877,7 @@ public class DataTests
         var envelope = data.Wrap().Compress();
 
         // text/plain → Kind "text" (compressible) → archived envelope
-        await Assert.That(envelope.Type!.Value).IsEqualTo("archived");
+        await Assert.That(envelope.Type!.Name).IsEqualTo("archived");
     }
 
     [Test]
@@ -989,11 +992,11 @@ public class DataTests
         var decompressed = compressed.Decompress();
 
         await Assert.That(decompressed.Success).IsTrue();
-        await Assert.That(decompressed.Type!.Value).IsEqualTo("document");
+        await Assert.That(decompressed.Type!.Name).IsEqualTo("document");
         await Assert.That(decompressed.Value).IsTypeOf<Data>();
 
         var midResult = (Data)decompressed.Value!;
-        await Assert.That(midResult.Type!.Value).IsEqualTo("text");
+        await Assert.That(midResult.Type!.Name).IsEqualTo("text");
         await Assert.That(midResult.Value).IsTypeOf<Data>();
 
         var leafResult = (Data)midResult.Value!;

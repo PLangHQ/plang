@@ -112,10 +112,10 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         var data = new global::app.data.@this("photo", img,
             new global::app.type.@this("image")) { Context = app.User.Context };
 
-        await Assert.That(data.Type?.Value).IsEqualTo("image");
+        await Assert.That(data.Type?.Name).IsEqualTo("image");
         app.Type.Renderers.Of("image", "text")!(img, new CaptureWriter("text"));
-        await Assert.That(data.Type?.Value).IsEqualTo("image");
+        await Assert.That(data.Type?.Name).IsEqualTo("image");
         app.Type.Renderers.Of("image", "json")!(img, new CaptureWriter("json"));
-        await Assert.That(data.Type?.Value).IsEqualTo("image");
+        await Assert.That(data.Type?.Name).IsEqualTo("image");
     }
 }

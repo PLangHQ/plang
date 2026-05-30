@@ -44,7 +44,7 @@ public class SchemaTests
     public async Task Build_SurfacesEnumAsKindEnumWithValues()
     {
         var schema = _app.Module.Schema.Build();
-        var op = schema.Types.FirstOrDefault(t => t.Value == "operator");
+        var op = schema.Types.FirstOrDefault(t => t.Name == "operator");
 
         await Assert.That(op).IsNotNull();
         await Assert.That(op!.Values).IsNotNull();
@@ -58,7 +58,7 @@ public class SchemaTests
     public async Task Build_SurfacesRecordAsKindRecordWithFields()
     {
         var schema = _app.Module.Schema.Build();
-        var goal = schema.Types.FirstOrDefault(t => t.Value == "goal");
+        var goal = schema.Types.FirstOrDefault(t => t.Name == "goal");
 
         await Assert.That(goal).IsNotNull();
         await Assert.That(goal!.Fields).IsNotNull();

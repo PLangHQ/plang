@@ -618,8 +618,10 @@ public class EngineTypesTests
             global::app.type.@this.FromMime("application/custom"));
         data.Context = context;
 
-        // Type.Kind goes through Engine.Types.KindOf — which sees our custom mapping
-        await Assert.That(data.Type!.Kind).IsEqualTo("custom-kind");
+        // Family-Kind accessor went away with the rename; `data.Type.Kind` now
+        // means subtype (set explicitly), not family-derived. Family resolution
+        // is now an explicit registry call against the type's Name.
+        await Assert.That(engine.Format.KindOf(data.Type!.Name)).IsEqualTo("custom-kind");
     }
 
     // --- Engine integration ---

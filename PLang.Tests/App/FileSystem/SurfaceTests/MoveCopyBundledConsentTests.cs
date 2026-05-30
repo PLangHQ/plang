@@ -217,7 +217,7 @@ public class MoveCopyBundledConsentTests
 
         var result = await src.MoveTo(dst, overwrite: true);
         // Stateless: ask result is Exit-typed — Move bubbles it unchanged.
-        await Assert.That(result.Type?.Value).IsEqualTo("ask");
+        await Assert.That(result.Type?.Name).IsEqualTo("ask");
         await Assert.That(result.Snapshot).IsNotNull();
         // Nothing mutated on disk.
         await Assert.That(System.IO.File.Exists(srcFile)).IsTrue();

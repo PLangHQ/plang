@@ -1,32 +1,33 @@
+using System.Reflection;
 using TUnit.Core;
 using TUnit.Assertions;
+using TUnit.Assertions.Extensions;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.TypeKindStrict.TypeValueModelTests;
 
-// `App.Type.Kinds` (the build-hook dispatcher, app.type.kind.@this)
-// renames to `App.Type.KindHooks`. The rename exists to stop "kind" colliding
-// with the entity's `Kind` (subtype) and `Kinds` (advertised vocabulary).
-// The rename does NOT change `Of(clrType, value)` semantics.
-
+// `App.Type.Kinds` (the build-hook dispatcher, app.type.kind.@this) is renamed
+// `KindHooks` so it stops colliding with `type.Kind` (per-value subtype) and
+// `type.Kinds` (advertised vocabulary). Signature unchanged: Of(clrType, value).
 public class DispatcherRenameTests
 {
     [Test] public async Task AppType_HasKindHooks_NotKinds()
     {
-        // Reflection probe: app.type.list.@this has a KindHooks property.
-        // The old `Kinds` property is gone (or has become an alias forwarding
-        // to KindHooks — coder picks; pin presence of KindHooks either way).
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var t = typeof(global::app.type.list.@this);
+        await Assert.That(t.GetProperty("KindHooks", BindingFlags.Public | BindingFlags.Instance)).IsNotNull();
+        await Assert.That(t.GetProperty("Kinds", BindingFlags.Public | BindingFlags.Instance)).IsNull();
     }
 
     [Test] public async Task KindHooks_Of_StillReturnsStringOrNull()
     {
-        // The renamed dispatcher's Of(clrType, value) still:
-        //   - returns "int" for typeof(int) + 5
-        //   - returns null for typeof(int) + "%var%"
-        //   - returns null for a CLR type with no Build hook
-        // Smoke that the signature/semantics survived the rename.
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        await using var app = new PLangEngine("/test");
+        // number's Build hook is the canonical example: typeof(number.@this) +
+        // a CLR int → "int". Of(...) hands back the string the hook produced.
+        var kind = app.Type.KindHooks.Of(typeof(global::app.type.number.@this), 5);
+        await Assert.That(kind).IsEqualTo("int");
+
+        // No hook on a bare CLR primitive → null (the type doesn't define Build).
+        var none = app.Type.KindHooks.Of(typeof(System.Guid), System.Guid.NewGuid());
+        await Assert.That(none).IsNull();
     }
 }

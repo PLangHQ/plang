@@ -317,9 +317,9 @@ public sealed class Sqlite : IStore
     {
         if (data.Value == null || data.Type.IsNull) return;
 
-        // Rehydrate hits the entity's own no-context surface (Context?.X ?? static) —
-        // the entity is the documented resolver, callers don't chain a second fallback.
-        // type.@this.ClrType handles the primitive/registry split internally.
+        // ClrType is non-public on `type.@this` but `internal` — same-assembly
+        // callers read directly; the entity owns the registry/primitive
+        // fallback chain in one place.
         var clrType = data.Type.ClrType;
         if (clrType == null || clrType.IsAssignableFrom(data.Value.GetType())) return;
 

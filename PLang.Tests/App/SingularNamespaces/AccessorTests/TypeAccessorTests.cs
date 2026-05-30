@@ -17,7 +17,7 @@ public class TypeAccessorTests
     {
         await using var app = new PLangEngine("/test");
         var t = app.Type["int"];
-        await Assert.That(t.Value).IsEqualTo("int");
+        await Assert.That(t.Name).IsEqualTo("int");
         await Assert.That(t.ClrType).IsEqualTo(typeof(int));
     }
 
@@ -25,7 +25,7 @@ public class TypeAccessorTests
     {
         await using var app = new PLangEngine("/test");
         var entity = app.Type.of<string>();
-        await Assert.That(entity.Value).IsEqualTo("string");
+        await Assert.That(entity.Name).IsEqualTo("string");
     }
 
     [Test] public async Task AppType_IndexBySystemType_ReturnsEntity_WithMatchingPlangName()
@@ -44,7 +44,7 @@ public class TypeAccessorTests
         var enumEntry = entries.FirstOrDefault(e => e.Values != null && e.Values.Count > 0);
         await Assert.That(enumEntry).IsNotNull();
 
-        var t = app.Type[enumEntry!.Value];
+        var t = app.Type[enumEntry!.Name];
         await Assert.That(t.ValidValues).IsNotNull();
         await Assert.That(t.ValidValues!.Count).IsGreaterThan(0);
     }

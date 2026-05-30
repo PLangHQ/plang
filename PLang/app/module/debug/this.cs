@@ -603,7 +603,7 @@ public sealed class @this
                 continue;
             }
 
-            sb.AppendLine($"    %{name}% = {FormatValue(data.Value, context)} ({data.Type?.Value ?? "?"})");
+            sb.AppendLine($"    %{name}% = {FormatValue(data.Value, context)} ({data.Type?.Name ?? "?"})");
 
             if (data.Properties.Count > 0)
             {

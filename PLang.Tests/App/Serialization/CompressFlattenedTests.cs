@@ -23,7 +23,7 @@ public class CompressFlattenedTests
         await using var app = NewApp();
         var d = NewCompressibleData(app, "the quick brown fox jumps over the lazy dog");
         var archived = d.Compress();
-        await Assert.That(archived.Type?.Value).IsEqualTo("archived");
+        await Assert.That(archived.Type?.Name).IsEqualTo("archived");
         await Assert.That(archived.Value).IsTypeOf<byte[]>();
     }
 

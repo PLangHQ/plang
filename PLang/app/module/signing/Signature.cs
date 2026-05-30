@@ -64,7 +64,7 @@ public class Signature
         public override void Write(Utf8JsonWriter writer, data.@this value, JsonSerializerOptions options)
         {
             writer.WriteStartObject();
-            writer.WriteString("type", value.Type?.Value ?? "");
+            writer.WriteString("type", value.Type?.Name ?? "");
             var base64 = value.Value is byte[] bytes ? Convert.ToBase64String(bytes) : value.Value?.ToString() ?? "";
             writer.WriteString("value", base64);
             writer.WriteEndObject();

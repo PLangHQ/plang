@@ -21,20 +21,21 @@ public partial class Set : IContext, IBuildValidatable
             string.Equals(p.Name, "Value", StringComparison.OrdinalIgnoreCase));
         if (value?.Value is string s && s == "this")
             return "Parameter 'Value' is the literal string \"this\" — this is wrong. For \"write to %var%\" patterns, use \"%!data%\" to capture the previous action's result. \"this\" is a type annotation, not a value.";
-        if (value?.Type?.Value != null && value.Value != null)
+        if (value?.Type?.Name != null && value.Value != null)
         {
             // Skip validation when value contains %variable% references — they resolve at runtime
             if (value.HasVariableReference) return null;
 
-            // Route through the entity's own resolver — falls back to the static
-            // primitive table when Context is null (e.g. build-time validation paths
-            // and unit tests), routes through the registry when stamped.
+            // ClrType is non-public on `type.@this` — `internal` to the entity
+            // so the registry/primitive-fallback chain stays one place. Same
+            // assembly, so the read is direct; no external GetPrimitiveOrMime
+            // fallback to maintain at the call site.
             var targetType = value.Type.ClrType;
             if (targetType != null && !targetType.IsInstanceOfType(value.Value))
             {
                 var (_, error) = global::app.type.list.@this.TryConvertTo(value.Value, targetType);
                 if (error != null)
-                    return $"Parameter 'Value' has type={value.Type.Value} but value cannot be converted: {error.Message}";
+                    return $"Parameter 'Value' has type={value.Type.Name} but value cannot be converted: {error.Message}";
             }
         }
         return null;
