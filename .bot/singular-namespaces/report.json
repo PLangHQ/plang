@@ -684,6 +684,99 @@
         "health": "green \u2014 fundamentals consistent across seams, 3696/3696 C# pass, PLang HTTP flakes are transient external network issues",
         "notes": "5 findings, all minor/nit. F1: route through security before docs. F2-F4: codeanalyzer-v4 latent items (one-line cleanups available, not blocking). F5: producer-stamping invariant worth documenting in good_to_know.md."
       }
+    },
+    {
+      "id": "sec-v1-singular-namespaces-2026-05-30",
+      "bot": "security",
+      "timestamp_start": "2026-05-30T12:14:16Z",
+      "timestamp_end": "2026-05-30T12:14:16Z",
+      "intent": "First security pass on singular-namespaces (47 commits, 860 files). Validate Stage-1 rename did not break security invariants; review Stage-2 nullability flip (data._context = null!), Stage-3 throw-on-miss accessors, Stage-4 type entity reshape + DLL loader + Promote throw paths.",
+      "before": {
+        "assumptions": "Bot trail ends at tester v3 PASS / codeanalyzer v4 PASS (green and honest). Branch is mostly mechanical rename; the four staged semantic changes are the only places real regressions could land. No prior security review on this branch.",
+        "risk": "Stage-2 nullability flip removed _context==null guards in data/this.Transport.cs and elsewhere. Stage-3 throw-on-miss could become DoS if PLang user input reaches the throwing indexers. Stage-4 Promote throws InvalidOperationException on unstamped non-primitive reads. Rename could have broken signing/wire/AuthGate paths."
+      },
+      "plan": ".bot/singular-namespaces/security/v1/summary.md",
+      "actions": [
+        {
+          "paths": [
+            ".semgrep/",
+            "scripts/semgrep-scan.sh"
+          ],
+          "type": "review",
+          "category": "scan",
+          "confidence": "high",
+          "context": "semgrep clean against baseline (15 known INFO + 1 new INFO at builder/type/Render.cs \u2014 build-time JSON renderer with no sensitive graph reachable, accepted)."
+        },
+        {
+          "paths": [
+            "PLang/app/type/this.cs",
+            "PLang/app/type/list/this.cs",
+            "PLang/app/type/path/this.cs",
+            "PLang/app/type/path/file/this.cs",
+            "PLang/app/type/path/file/this.Operations.cs",
+            "PLang/app/type/path/this.Authorize.cs",
+            "PLang/app/type/path/this.Operations.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage-4 type entity + DLL loader gate + Stage-1 path rename. Verified Promote throws are developer-loud (not user-input DoS); AuthGate canonicalization gate (closed in purge-systemio-from-actions/v2) intact via FilePath ctor Canonicalize \u2192 PathHelper.GetFullPath; LoadAssemblyAsync limited to documented accepted-risk callers (module/add, code/load, code/this.Snapshot)."
+        },
+        {
+          "paths": [
+            "PLang/app/module/signing/code/Ed25519.cs",
+            "PLang/app/module/signing/Signature.cs",
+            "PLang/app/module/signing/verify.cs",
+            "PLang/app/module/signing/sign.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "9-step VerifyAsync pipeline intact after rename: type \u2192 freshness \u2192 expiry \u2192 nonce replay \u2192 contracts \u2192 headers (FixedTimeEquals constant-time) \u2192 data-hash \u2192 signature. ToSigningBytes thread-safety unchanged. Signature class shape preserved."
+        },
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/data/this.Transport.cs",
+            "PLang/app/data/Wire.cs",
+            "PLang/app/data/this.Normalize.cs",
+            "PLang/app/data/this.Reconstruct.cs",
+            "PLang/app/channel/this.cs",
+            "PLang/app/channel/list/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage-2 nullability flip walked: data._context = null! with removed _context==null guards in Wrap/Compress. Today self-protecting via Type.Kind null-coalesce \u2014 F1 low residual. Wire depth limits intact (MaxReadDepth 64, MaxNormalizeDepth 128). Wire.Read does not stamp Context \u2014 F3 low residual. Channel handler null-context force \u2014 F2 low residual."
+        },
+        {
+          "paths": [
+            "PLang/app/variable/list/this.cs",
+            "PLang/app/actor/permission/this.cs",
+            "PLang/app/module/callback/run.cs",
+            "PLang/app/module/file/read.cs",
+            "PLang/app/channel/list/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Standing findings re-checked after rename. Variables.Snapshot no-[Sensitive], callback.run signing-skip gap, AppChannels.Channel(string) parity gap, MigrationEnvelope keyless Signature, Channel.Stream.ReadAllBytesAsync no Buffer \u2014 all unchanged by rename, same severity, same residual posture."
+        },
+        {
+          "paths": [
+            ".bot/singular-namespaces/security/v1/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote v1 summary: PASS verdict. Zero high, zero medium open. Three low residuals (F1/F2/F3) \u2014 all latent on future expansion, not reachable today."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "green",
+        "notes": "Zero high/medium. Three low residuals are documentation gaps, not code defects. Stage-1 rename preserved every security invariant; Stage-2/3/4 semantic changes are safely contained in current call graphs. Next bot: docs."
+      }
     }
   ]
 }
