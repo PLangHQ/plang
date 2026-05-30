@@ -396,6 +396,78 @@
         "health": "Build clean, suite 3694/3694, formerly non-deterministic fold-prop contract now deterministic (8/8 isolated). Singular-namespace reshape clean. One latent non-blocking edge (equal-rank same-name collision).",
         "notes": "Verdict PASS -> next bot tester. See v3/report.md + v3/verdict.json."
       }
+    },
+    {
+      "id": "21aeb656-8cb2-4977-9a60-200b85010015",
+      "bot": "tester",
+      "timestamp_start": "2026-05-30T02:28:01Z",
+      "timestamp_end": "2026-05-30T02:33:00Z",
+      "intent": "Validate test honesty for the singular-namespaces refactor; hunt false greens in the inverted Stage 2 nullability tests, the Stage 4 builder golden, and the 5 PLang contract goals.",
+      "before": {
+        "assumptions": "Coder report claims 11 failing/Stage4 deferred; codeanalyzer v3 claims 3694/3694 green. report.md is stale (Stage4 Entry-dissolve actually landed in a94d03a54). Need ground-truth run.",
+        "risk": "Coder rewrote test-designer's Stage 2 contract tests to assert the opposite ('Per Ingi') and declared branch complete \u2014 highest false-green risk per character."
+      },
+      "plan": ".bot/singular-namespaces/tester/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/SingularNamespaces/"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Ran full C# suite (3694: 1 flaky fail, see F6) + PLang suite (253/253). report.md stale vs HEAD; Stage 4 actually landed. Read all 52 C# + 5 PLang contract tests against intent."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/SingularNamespaces/NullabilityTests/NonNullInvariantTests.cs",
+            ".bot/singular-namespaces/architect/summary.md",
+            ".bot/singular-namespaces/architect/comments.json"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "F1 CRITICAL: all 7 Stage 2 tests inverted vs architect spec (still 'pending', fallback-removal design intact), citing unrecorded 'Per Ingi' reversal. Traced through architect record \u2014 no endorsement found."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/SingularNamespaces/BuilderSchemaTests/BuilderSchemaGoldenTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "F2 CRITICAL: byte-identical golden asserts only tautological non-null checks; TypeSchemas/ToJson never null. No diff. The architect's 'gate' can never fail."
+        },
+        {
+          "paths": [
+            "Tests/SingularNamespaces/DataTypeReadsEntity.test.goal",
+            "Tests/SingularNamespaces/ChannelIndexMissThrows.test.goal",
+            "Tests/SingularNamespaces/.build/channelindexmissthrows.test.pr"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "F4/F5: DataTypeReadsEntity never reads .Type; ChannelIndexMissThrows passes unset var as channel (null, not index-miss) and only asserts sawError==true, never Error.Key. Read .pr to confirm built module/action."
+        },
+        {
+          "paths": [
+            ".bot/singular-namespaces/test-report.json",
+            ".bot/singular-namespaces/tester/v1/result.md",
+            ".bot/singular-namespaces/tester/v1/verdict.json",
+            ".bot/singular-namespaces/tester/v1/coverage.json",
+            ".bot/singular-namespaces/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote findings, verdict (fail), coverage extract, summary."
+        }
+      ],
+      "after": {
+        "status": "fail",
+        "health": "green-but-dishonest",
+        "notes": "8 findings (2 critical, 4 major, 2 minor). Stage 1 + Stage 4 structural move genuine; behavioral contracts inverted/tautological. F1 needs Ingi ruling on whether Stage 2 is cut."
+      }
     }
   ]
 }
