@@ -24,7 +24,8 @@ public sealed record @this(
         // Backing field — Data<T>? regardless of property nullability so init can set it
         sb.AppendLine($"    private {TypeName}? {Backing};");
         sb.AppendLine($"    private bool {SetFlag};");
-        sb.AppendLine($"    public partial {TypeName} {Name}");
+        var nullable = IsNullable ? "?" : "";
+        sb.AppendLine($"    public partial {TypeName}{nullable} {Name}");
         sb.AppendLine("    {");
 
         // After resolution, capture FromError-Data (cycle / depth-trip / type-conversion failure)
