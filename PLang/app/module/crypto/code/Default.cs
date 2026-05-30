@@ -62,18 +62,40 @@ public class Default : ICrypto
         if (hashBytes == null)
             return global::app.data.@this<byte[]>.FromError(new ActionError($"Algorithm '{action.Algorithm.Value}' is not supported", "UnsupportedAlgorithm", 400));
 
-        return global::app.data.@this<byte[]>.Ok(hashBytes, global::app.type.@this.FromName(algorithm));
+        // The value is the digest bytes; the algorithm is the value's KIND, not
+        // its name. Stamp {name: hash, kind: <algorithm>} so the digest knows
+        // how it was produced — verify reads the algorithm off the kind instead
+        // of taking it as a loose, mismatch-prone parameter.
+        return global::app.data.@this<byte[]>.Ok(hashBytes,
+            global::app.type.@this.Create("hash", kind: algorithm));
     }
 
     public data.@this<bool> Verify(Verify action)
     {
-        byte[] expectedHash;
-        try { expectedHash = Convert.FromBase64String(action.Hash.Value!); }
+        // The digest's own kind is authoritative — a sha256 hash can only be
+        // verified by recomputing sha256. When the expected-hash value carries
+        // {name: hash, kind: <algorithm>} (As<T> preserves the source Type),
+        // use that algorithm; otherwise fall back to the Algorithm parameter
+        // (a bare base64 string carries no kind). So `verify %data% against
+        // %hash%` needs no separate algorithm.
+        var hashKind = action.Hash.Type is { Name: "hash", Kind: { Length: > 0 } k } ? k : null;
+        var algorithm = hashKind ?? action.Algorithm.Value!;
+
+        // The hash type owns base64↔byte parsing (OBP) — Verify doesn't reach
+        // for Convert.FromBase64String / SequenceEqual itself.
+        global::app.type.hash.@this expected;
+        try { expected = global::app.type.hash.@this.FromBase64(action.Hash.Value!, algorithm); }
         catch (FormatException) { return global::app.data.@this<bool>.FromError(new ActionError("Hash string is not valid base64", "InvalidHash", 400)); }
 
-        var hashResult = Hash(new Hash { Context = action.Context, Data = action.Data, Algorithm = action.Algorithm });
+        var hashResult = Hash(new Hash
+        {
+            Context = action.Context,
+            Data = action.Data,
+            Algorithm = new global::app.data.@this<string>("Algorithm", algorithm),
+        });
         if (!hashResult.Success) return global::app.data.@this<bool>.FromError(hashResult.Error!);
 
-        return global::app.data.@this<bool>.Ok(((byte[])hashResult.Value!).AsSpan().SequenceEqual(expectedHash));
+        var recomputed = new global::app.type.hash.@this((byte[])hashResult.Value!, algorithm);
+        return global::app.data.@this<bool>.Ok(recomputed.DigestEquals(expected));
     }
 }

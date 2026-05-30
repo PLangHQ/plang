@@ -56,16 +56,26 @@ public sealed partial class @this
         var primitives = _modules.App?.Type.GetBuilderTypeNames() ?? new List<string>();
         var types = _modules.App?.Type.BuildTypeEntries(_modules) ?? new List<global::app.type.@this>();
 
-        // Family → kind vocabulary, inverted from the format registry's
-        // extension→family map. number's kinds aren't extensions, so we add
-        // them explicitly — the source of truth is app.type.number.@this.Kinds.
+        // name → kind vocabulary the LLM may emit. Two sources:
+        //   - Format registry's extension→family map (text, image, audio, …) —
+        //     the file-extension kinds.
+        //   - Types that ADVERTISE a static `Kinds` vocabulary (number's
+        //     precisions, hash's algorithms) — not extension-derived. Pulled
+        //     from each catalog entry's folded Kinds so the type owns its list
+        //     (no hardcoding here; add a type with a static Kinds and it shows).
         var kindsByName = new Dictionary<string, IReadOnlyList<string>>(System.StringComparer.OrdinalIgnoreCase);
         if (_modules.App?.Format is { } fmt)
         {
             foreach (var kvp in fmt.KindsByFamily())
                 kindsByName[kvp.Key] = kvp.Value;
         }
-        kindsByName["number"] = new[] { "int", "long", "decimal", "double" };
+        // Advertised-kind types (number's precisions, hash's algorithms) are
+        // surfaced even when they're only a return type (not a step param), so
+        // draw from ALL known types — any with a static Kinds advertises here.
+        var allKnown = _modules.App?.Type.BuildTypeEntries(null) ?? new List<global::app.type.@this>();
+        foreach (var t in allKnown)
+            if (t.Kinds is { Count: > 0 })
+                kindsByName[t.Name] = t.Kinds;
 
         return new @this(_modules)
         {

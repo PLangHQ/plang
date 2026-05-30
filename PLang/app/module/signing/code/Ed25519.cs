@@ -131,8 +131,12 @@ public class Ed25519 : ISigning
 
         if (action.Data?.Value != null)
         {
+            // Stage 7: the digest's algorithm is its type KIND now ({hash,
+            // keccak256}), not the type name. Read the kind; fall back to
+            // keccak256 for legacy hashes with no kind stamped.
+            var hashAlgorithm = signedData.Hash!.Type?.Kind ?? "keccak256";
             var rehash = await app.RunAction<Hash>(
-                new Hash { Data = action.Data, Algorithm = new data.@this<string>("", signedData.Hash!.Type?.Name ?? "keccak256") }, action.Context);
+                new Hash { Data = action.Data, Algorithm = new data.@this<string>("", hashAlgorithm) }, action.Context);
             if (!rehash.Success) return global::app.data.@this<bool>.From(rehash);
             if (rehash.Value is not byte[] rehashBytes || !rehashBytes.AsSpan().SequenceEqual(storedHash))
                 return global::app.data.@this<bool>.FromError(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));

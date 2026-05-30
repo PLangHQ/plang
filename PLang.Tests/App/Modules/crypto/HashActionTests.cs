@@ -44,7 +44,9 @@ public class HashActionTests
 
         await result.IsSuccess();
         await Assert.That(result.Value is byte[]).IsTrue();
-        await Assert.That(result.Type!.Name).IsEqualTo("keccak256");
+        // Stage 7: the algorithm is the value's KIND, name is "hash".
+        await Assert.That(result.Type!.Name).IsEqualTo("hash");
+        await Assert.That(result.Type!.Kind).IsEqualTo("keccak256");
         await Assert.That(((byte[])result.Value!).Length).IsEqualTo(32);
     }
 
@@ -68,7 +70,8 @@ public class HashActionTests
 
         await result.IsSuccess();
         await Assert.That(result.Value is byte[]).IsTrue();
-        await Assert.That(result.Type!.Name).IsEqualTo("keccak256");
+        await Assert.That(result.Type!.Name).IsEqualTo("hash");
+        await Assert.That(result.Type!.Kind).IsEqualTo("keccak256");
     }
 
     [Test]
@@ -82,8 +85,10 @@ public class HashActionTests
 
         await keccakResult.IsSuccess();
         await sha256Result.IsSuccess();
-        await Assert.That(sha256Result.Type!.Name).IsEqualTo("sha256");
-        await Assert.That(keccakResult.Type!.Name).IsEqualTo("keccak256");
+        await Assert.That(sha256Result.Type!.Name).IsEqualTo("hash");
+        await Assert.That(sha256Result.Type!.Kind).IsEqualTo("sha256");
+        await Assert.That(keccakResult.Type!.Name).IsEqualTo("hash");
+        await Assert.That(keccakResult.Type!.Kind).IsEqualTo("keccak256");
         await Assert.That((byte[])sha256Result.Value!).IsNotEquivalentTo((byte[])keccakResult.Value!);
     }
 
