@@ -763,3 +763,30 @@ it works on paper.
 When we build a module that can transcribe audio, check out
 https://nemorize.com/roadmaps/building-real-time-voice-agents-from-scratch
 as a reference for the design (real-time voice agent architecture).
+
+## 2026-05-30 — lazy JSON parse on file read (don't parse at read time)
+
+Context (from `type-kind-strict` branch, architect/Ingi). `FilePath.ReadText`
+(`PLang/app/type/path/file/this.Operations.cs:61`) currently parses eagerly:
+for a non-string CLR target (`.json` → dict, etc.) it runs
+`TryConvertTo(text, clr)` at read time, so reading a `.json` file always
+deserializes to a dict even when the caller only wanted the raw text.
+
+Change: read the file as text and stamp the type from the extension
+(`{name: object, kind: json}` for `.json`), but keep the value as the raw
+string and only parse to the JSON object on **first access** (lazy). The
+mechanism already exists — `Data.SetValue(Func<object?>)` for the deferred
+factory and `Data.ConvertValue()` ("if value is a string and Type knows the
+conversion, convert once on first navigation"). Route the read through those
+instead of converting inline.
+
+Why: matches the settled type/kind decision — `text` means "the value is a
+string"; JSON stays `object` with kind `json`. No reason to pay the parse
+cost (or commit to a shape) until someone navigates into the value. Text
+reads (`.md`/`.txt`/`.csv`) already stay string; this makes the structured
+formats lazy too.
+
+Scope (settled 2026-05-30, Ingi): applies to **every** non-string conversion
+in `ReadText`, not just JSON. The rule is "read returns raw text, materialize
+to the structured shape on first access" — JSON/dict/any non-string CLR target
+all go lazy via the same factory.

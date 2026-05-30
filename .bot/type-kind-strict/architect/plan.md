@@ -40,6 +40,10 @@ This entity is already both the descriptor on every `Data` (`Data.Type`) and the
 | 3 | [kind derivation + canonicalisation](stage-3-kind-derivation.md) | Extension→kind for `text`; accept `md|markdown`/`jpg|jpeg`, normalise to extension at build; rename `App.Format.KindOf`→`FamilyOf` and the `App.Type.Kinds` dispatcher. |
 | 4 | [variable.set + strict validation](stage-4-set-and-strict.md) | `variable.set.Type` becomes `type`; strict validation in `ValidateBuild` — sniffable families error on strict, warn on default, `%var%` deferred to runtime. |
 | 5 | [LLM type representation](stage-5-llm-representation.md) | Cached vocabulary block with two render modes; drop the flat primitive line; generate the system-prompt type list from the catalog; teach `type(name, kind?, strict?)`. |
+| 6 | [structured type at producers](stage-6-structured-type-producers.md) | One shared `(extension\|mime) → type{name,kind}` derivation; migrate `file.read` and `http` off the muddy MIME / bare-extension stamps so build==runtime; non-string reads materialize lazily. |
+| 7 | [the `hash` type](stage-7-hash-type.md) | New `app/type/hash/` type whose `kind` is the algorithm; `crypto.hash` returns `{name:hash, kind:<algo>}`; `crypto.verify` reads the algorithm off the value instead of a loose parameter. |
+
+> **Stages 6–7 added 2026-05-30.** Stages 1–5 fixed the type *model* and the *consumer* (`variable.set`). Stages 6–7 fix the *producers*: stage 1's wire decision later landed as one structured `type` field (`{name, kind?, strict?}`, commit `42b8430d6`) — the old "two flat keys" wording in rows 1/§model/§cross-cutting is superseded by that. Discovery (`file.read` survey, this session): the read/network producers were never migrated and stamp a muddy MIME or bare extension with no kind. Stage 6 covers the extension/MIME-derived producers (`file.read`, `http`) via one shared derivation; stage 7 covers `hash`, whose kind is an advertised algorithm, not extension-derived — hence a separate stage.
 
 ## Topic deep-dives
 

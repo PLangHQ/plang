@@ -287,6 +287,70 @@
         "health": "green",
         "notes": "All 28 Stage 1 contract tests green. Ready for Stage 2 (text type + numerics under number) or codeanalyzer review."
       }
+    },
+    {
+      "id": "18551ed0-5143-4c41-8e89-69b84cad4a2a",
+      "bot": "architect",
+      "timestamp_start": "2026-05-30T19:30:00Z",
+      "timestamp_end": "2026-05-30T20:35:00Z",
+      "intent": "Find the producers gap (file.read/http stamp muddy MIME, no kind) and carve stages 6-7 (structured type at producers + the hash type).",
+      "before": {
+        "assumptions": "Stages 1-5 (model + variable.set consumer) landed and wire unified to one structured type field. Open question from Ingi: scan codebase for string-returning methods and change to text; how is kind set on file.read.",
+        "risk": "Treating string->text as a codebase-wide return-type scan would be wrong scope; the real gap is unmigrated producers."
+      },
+      "plan": ".bot/type-kind-strict/architect/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/type/path/file/this.Operations.cs",
+            "PLang/app/module/file/read.cs",
+            "PLang/app/type/this.cs",
+            "PLang/app/type/primitive/this.cs",
+            "PLang/app/data/this.cs",
+            "PLang/app/module/http/HttpBuildHelpers.cs",
+            "PLang/app/module/http/request.cs",
+            "PLang/app/module/crypto/code/Default.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Traced the read path. Confirmed string->text is one boundary (Canonical[typeof(string)] now text); Data.Type getter auto-derives name + numeric kind. file.read ReadText stamps FromMime (full MIME, no kind, bypasses Create); Build() stamps bare extension; the two disagree. http identical. crypto.hash stamps FromName(algorithm) on bytes."
+        },
+        {
+          "paths": [
+            "Documentation/Runtime2/todos.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Captured lazy structured-parse-on-file-read todo; scoped (per Ingi) to every non-string conversion in ReadText, not just JSON."
+        },
+        {
+          "paths": [
+            ".bot/type-kind-strict/architect/stage-6-structured-type-producers.md",
+            ".bot/type-kind-strict/architect/stage-7-hash-type.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "medium",
+          "context": "Stage 6: one shared (extension|mime)->type{name,kind} derivation, migrate file.read + http, lazy materialization. Stage 7: hash type with algorithm-as-kind, crypto.verify reads kind. Split because two mechanisms (extension-derived vs advertised kind). hash name chosen over checksum."
+        },
+        {
+          "paths": [
+            ".bot/type-kind-strict/architect/plan.md",
+            ".bot/type-kind-strict/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added stages 6-7 to the stage index with a superseded-wire note; new summary entry at top with stage status."
+        }
+      ],
+      "after": {
+        "status": "Stages 6-7 written and confirmed (hash name settled; supported-type-list deliverable added to stage 7). Handing stage 6 to coder.",
+        "health": "green",
+        "notes": "Stages 1-5 complete via coder v1-v5. 6/7 split accepted."
+      }
     }
   ]
 }
