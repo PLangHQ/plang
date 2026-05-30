@@ -49,6 +49,6 @@ This `type` value is both the descriptor on every `Data` (`Data.Type`) and the v
 - [plan/test-strategy.md](plan/test-strategy.md) — the narrative: scope, layer mapping (C# vs goal vs integration), the three integration cuts, and what the matrix picks up beneath them.
 - [plan/test-coverage.md](plan/test-coverage.md) — the heavy reference: coverage matrix by topic, failure matrix (with the impossible-by-design negatives called out), and the inventory of new surfaces.
 
-## Open / deferred
+## Resolved during review
 
-- **Number's kind as `type.kind`.** `number` advertises `int|long|decimal|double` via a static `Kinds` list, and internally has `NumberKind`. Whether `Data.Type.Kind` for a number reads back the `NumberKind` (so `%n.Type.Kind%` = `"int"`) is a consistency question — pulls `number` fully into the same model. Flagged, not yet decided.
+- **Numerics carry `{name: number, kind: int|long|decimal|double}`.** `- set %x% = 5` stamps `{number, int}` (Ingi). That's exactly what `number.Build` already computes (`5`→`int`, `3.14`→`decimal`, `1e5`→`double`). Consequence, and it's forced by stage 2: since `int/long/decimal/double` are no longer top-level names, *every* numeric reads as `number` + kind — inferred values and action return types alike (`list.count → returns number(int)`). Inference must agree at both ends so `%x.Type%` never differs between build and runtime: the kind comes from `number.Build(value)` for a literal, or from the CLR numeric type for a declared return (`typeof(int)` → kind `int`).

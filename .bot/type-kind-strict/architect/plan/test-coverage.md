@@ -31,6 +31,10 @@ C# test placement follows the repo convention: mirror `app/` under `PLang.Tests/
 | `text.Build("notes")` (no extension) → null | C# | green |
 | `text.Build("%var%")` → null | C# | green |
 | `text.Build("page.HTML?v=1")` → `"html"` (lowercase, strip query) | C# | green |
+| `number.Build(5)`→`"int"`; `Build("3.14")`→`"decimal"`; `Build("1e5")`→`"double"` | C# | green |
+| `set %x% = 5` → variable type `{number, int}` | goal | green |
+| Runtime mint of a CLR `int` infers `{name:number, kind:int}` (agrees with build) | C# | green |
+| Action return declared `int` (e.g. `list.count`) renders `number(int)` in the catalog | C# | green |
 | Canonicalise `"markdown"` → `"md"` | C# | green |
 | Canonicalise `"jpeg"` → `"jpg"` | C# | green |
 | Canonicalise unknown `"frobnicate"` → unchanged (free string) | C# | green |
