@@ -48,9 +48,9 @@
         }
       ],
       "after": {
-        "status": "Design written, nothing built. Awaiting review.",
+        "status": "Design approved by Ingi with no comments. Five stage files carved and test-designer prep (test-strategy.md + test-coverage.md) written. Nothing built; ready for test-designer / coder.",
         "health": "green",
-        "notes": "Branch off runtime2 (d782fe2b5) for a clean base. Test strategy deferred until design confirmed. Open question logged: whether Data.Type.Kind reads back number's NumberKind for full consistency."
+        "notes": "Branch off runtime2 (d782fe2b5) for a clean base. Stage files were drafted, removed for review, then re-carved after approval. Open question logged: whether Data.Type.Kind reads back number's NumberKind for full consistency."
       }
     }
   ]

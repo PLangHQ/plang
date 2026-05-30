@@ -16,4 +16,13 @@ One cleanup rides along: the formats registry calls the family "kind" — under 
 
 Branch created off `runtime2` (d782fe2b5) — clean base with the whole type system; `prevars-in-pr` only carried unbuilt design docs, so it was not used as the base.
 
-Status: design written, nothing built. Stage files intentionally **not** carved yet — Ingi wants to comment on the design first; the implementation sequence is sketched in `plan.md` and becomes `stage-N-*.md` once the design is settled. Test strategy (`plan/test-strategy.md` + `plan/test-coverage.md`) likewise deferred until the design is confirmed.
+Status: design approved by Ingi with no comments. Five stage files carved and the test-designer prep written (`plan/test-strategy.md` + `plan/test-coverage.md`). Nothing built yet — ready to hand to test-designer / coder.
+
+Stage status:
+| Stage | File | Status |
+|-------|------|--------|
+| 1 | [type value model](stage-1-type-value-model.md) | pending |
+| 2 | [text type + name canonicalisation](stage-2-text-type-and-names.md) | pending |
+| 3 | [kind derivation + canonicalisation](stage-3-kind-derivation.md) | pending |
+| 4 | [variable.set + strict validation](stage-4-set-and-strict.md) | pending |
+| 5 | [LLM type representation](stage-5-llm-representation.md) | pending |
