@@ -88,3 +88,29 @@ Include in `obp-smells.md` the worked **naming** case surfaced on this branch (i
 - source-generator notes can stay near the generator docs
 
 This is a real docs project — keep it separate from PART 1 so the OBP slice isn't blocked on it.
+
+---
+
+## architect — 2026-05-31
+**Target:** `characters/codeanalyzer/character.md`
+**Why:** The doc restructure moved the OBP checklist/examples to `obp-smells.md`, so codeanalyzer's Pass 1 pointer is now stale (required fix). Two further additions tie codeanalyzer to this session's work: the `obp-cleanup.md` collection (so it doesn't re-raise parked violations as new) and the comment-hygiene rule just given to coder (codeanalyzer is the natural enforcer). Filed at Ingi's explicit request (architect proposing for a reviewer bot).
+
+**Proposed change 1 — REQUIRED (stale pointer).** In Pass 1a (line ~15), replace the source parenthetical:
+
+> (project `CLAUDE.md` "OBP Shape Smells"; full checklist in `Documentation/v0.2/good_to_know.md`; formal treatment in `Documentation/v0.2/object_pattern_formal.md`)
+
+with the current three-tier:
+
+> (terse list — project `CLAUDE.md` `## OBP Shape Smells`; worked examples + naming tells — `Documentation/v0.2/obp-smells.md`; formal pattern + the 9 rules — `Documentation/v0.2/object_pattern_formal.md`)
+
+**Proposed change 2 — RECOMMENDED (don't re-raise parked violations).** Add to Pass 1, after 1b:
+
+```markdown
+**1c. Check the parked list.** Before reporting an OBP shape finding, read `Documentation/Runtime2/obp-cleanup.md`. If the violation is already a parked entry there, don't re-raise it as a new finding — note "tracked: obp-cleanup #N" so the report stays signal. New *systemic* shape violations (not local to the diff) belong on that list; flag them and say so, but leave the write to architect/docs.
+```
+
+**Proposed change 3 — RECOMMENDED (comment hygiene; pairs with the coder change above).** Add to Pass 2 or Pass 3:
+
+```markdown
+- **Comments that narrate history or reference tasks.** Flag any comment that says "renamed from / moved from / was X / pre-merge", or references a task/review/branch ("fixes codeanalyzer v2 #1", "per auditor F3", "stage 7", branch names, dates, tickets). The code states what IS; provenance is `git blame`. A *why* is fine as a present fact, not as the story of who asked for it.
+```
