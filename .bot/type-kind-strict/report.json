@@ -695,6 +695,43 @@
         "health": "C# solid (3815/3815) and F1 honestly covered; PLang suite not reproducibly green",
         "notes": "FAIL on PLang fixture reproducibility, not on F1-F5 logic. Fix: rebuild+commit Tests/ .pr to stage-4 Type shape; prove >=2 consecutive clean-binary green runs with git clean after."
       }
+    },
+    {
+      "id": "9e4144f2-2180-4671-9bad-95e658b1e4dd",
+      "bot": "builder",
+      "timestamp_start": "2026-05-31T19:40:00+00:00",
+      "timestamp_end": "2026-05-31T20:35:00+00:00",
+      "intent": "Verify type-kind-strict LLM mapping via trace files (PASS); note two build-time runtime errors surfaced when building the builder and hand them to coder.",
+      "before": {
+        "assumptions": "Type-kind work landed; builder prompts restructured for the unified type vocabulary.",
+        "risk": "Building the builder exercises old-flat-.pr back-compat + new dict shape; failures could be regressions or pre-existing."
+      },
+      "plan": ".bot/type-kind-strict/builder/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/type-kind-strict/builder/v1/result.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Confirmed structured type entity flows through compile (trace LLM-raw vs final .pr) and CompileUser.llm renders the Type-reference block. Flat->dict back-compat observed live. No builder source changed."
+        },
+        {
+          "paths": [
+            "os/system/Run.goal"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "medium",
+          "context": "Flagged two runtime errors (error.throw string-coercion; unhelpful conversion messages) for coder, and an event.on/GoalToCall gap on Run.goal for the team. Diagnosis only; Run.goal read-only; no C# or goal edits by builder."
+        }
+      ],
+      "after": {
+        "status": "complete -- mapping review PASS; runtime findings handed to coder",
+        "health": "branch builds clean; only .bot additions in tree",
+        "notes": "coder v9 (e8c70d62) already addressed the two findings."
+      }
     }
   ]
 }
