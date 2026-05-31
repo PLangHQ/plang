@@ -70,3 +70,33 @@ Each entry: **location · the smell · the OBP-clean target · status · found-i
 - **(B) Always-present + explicit per-verb grant flag.** Every verb serialized; a `Granted`/`Allowed` bool (or equivalent) says yes/no explicitly, and revocation is `Granted = false`. Verbose wire, fully self-describing — Ingi's "serialize the verb so we know the permission." If this is right, **change the code** and keep rule #3.
 
 Ingi's lean ("code is wrong, we should serialize the verb") points at **(B)**. Confirm, and whether the cleaner flag lives per-verb or on the `verb.@this` container.
+
+---
+
+## 4. Registry family — collection-proxy verbs (ObpScan H1)
+
+**Location:** the `*.list` registries and `module`. Surfaced by `tools/ObpScan` (H1).
+
+**Found-in:** `type-kind-strict` (2026-05-31). Generalises #1 (type registry) to the whole family.
+
+**Status:** open — cleanup/todo, not for `type-kind-strict`. Fix together with #1 (same shape, same pass).
+
+**Clear "list-everything" proxies** (verb-named method handing back a raw collection — should be the collection / a named view that returns itself):
+- `variable/list/this.cs` — `GetNames()`, `GetAll()`
+- `event/list/this.cs` — `GetBindings()`
+- `module/this.cs` — `GetActions()`, `GetChannelInventory()`, `GetDefaults()`
+- `actor/context/this.cs` — `GetEventBindings()`
+- `type/list/this.cs` — `GetBuilderTypeNames()`, `BuildTypeEntries()` (already in #1)
+
+**Compute/derive — borderline:** `goal/steps/step/actions/this.cs::ComputeBranchChain()`, `module/MarkdownTeaching.cs::ScanOrphans()` — produce a derived result, not a stored collection; lower priority.
+
+**Pending discussion (Ingi leans smell, I'd flagged as "legit derived view" — TBD):**
+- `variable/list/this.cs::GetChangedSince()`, `event/list/this.cs::GetMatchingBindings()` — filtered/derived views over the registry. Resolve the "named view vs proxy" line before deciding.
+
+---
+
+## Decided NOT to change (so they're not re-flagged)
+
+- **`app/error/*Error` naming** (`ActionError`, `ServiceError`, `ValidationError`, …) — **keep the `*Error` suffix.** The OBP-pure single-word form (`error/Action` → `app.error.Action`) collides with pervasive names (`System.Action`, the `Goal` alias) and the types are used too widely (ServiceError 36 files, ValidationError 29, ActionError 18) for full-namespace to be clean. The suffix does real disambiguation work — names still describe what the thing IS. Not a smell. *(Separate: `GoalError` and `ProgramError` have 0 references — dead-type deletion candidates.)*
+- **`BuildResponse`, `LlmMessage`** (ObpScan H3) — left as-is; Ingi will refactor these a different way later.
+- **ObpScan H3 in general** — most public mutable collections flagged are DTOs / `.pr` param-bags / error-detail shapes, not owned-state smells. H3 is a candidate list, not a fix list.
