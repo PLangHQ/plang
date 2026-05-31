@@ -90,8 +90,7 @@ Ingi's lean ("code is wrong, we should serialize the verb") points at **(B)**. C
 
 **Compute/derive — borderline:** `goal/steps/step/actions/this.cs::ComputeBranchChain()`, `module/MarkdownTeaching.cs::ScanOrphans()` — produce a derived result, not a stored collection; lower priority.
 
-**Pending discussion (Ingi leans smell, I'd flagged as "legit derived view" — TBD):**
-- `variable/list/this.cs::GetChangedSince()`, `event/list/this.cs::GetMatchingBindings()` — filtered/derived views over the registry. Resolve the "named view vs proxy" line before deciding.
+**Confirmed smell (resolved 2026-05-31 — call sites settle it; Ingi was right, "derived view" was too lenient):** `event/list/this.cs::GetMatchingBindings()` and `GetBindings()`. *Every* caller does `foreach (var b in events.GetMatchingBindings(...))` (actor/context.cs:378–463) — get a raw filtered `List<EventBinding>`, then loop to run the bindings. The filter+iterate+run is the collection's own job. OBP-clean: the event collection owns the run (the `Actions.RunAsync()` pattern — `events.RunMatching(type, ctx, goal/step/action)`), not a raw-list handoff the caller foreach-es. `module/Events.cs` `Before`/`After` (`List<GoalCall>` via `Stamp(GetBindings(...))`) is the same family.
 
 ---
 
@@ -100,3 +99,8 @@ Ingi's lean ("code is wrong, we should serialize the verb") points at **(B)**. C
 - **`app/error/*Error` naming** (`ActionError`, `ServiceError`, `ValidationError`, …) — **keep the `*Error` suffix.** The OBP-pure single-word form (`error/Action` → `app.error.Action`) collides with pervasive names (`System.Action`, the `Goal` alias) and the types are used too widely (ServiceError 36 files, ValidationError 29, ActionError 18) for full-namespace to be clean. The suffix does real disambiguation work — names still describe what the thing IS. Not a smell. *(Separate: `GoalError` and `ProgramError` have 0 references — dead-type deletion candidates.)*
 - **`BuildResponse`, `LlmMessage`** (ObpScan H3) — left as-is; Ingi will refactor these a different way later.
 - **ObpScan H3 in general** — most public mutable collections flagged are DTOs / `.pr` param-bags / error-detail shapes, not owned-state smells. H3 is a candidate list, not a fix list.
+
+## Dead-code deletion candidates (0 references)
+- `variable/list/this.cs::GetChangedSince()` — 0 callers (the string projection it does, `Value?.ToString()` / `"(null)"`, would also be a presentation-in-registry smell if it were live).
+- `app/error/GoalError`, `app/error/ProgramError` — 0 references.
+Delete in the cleanup pass unless a near-term consumer is known.
