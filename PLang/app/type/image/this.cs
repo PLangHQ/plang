@@ -21,13 +21,16 @@ public sealed partial class @this : global::app.data.IBooleanResolvable, global:
     public static string Shape => "string";
 
     /// <summary>
-    /// The PLang types this value stands in for, self included — an image
-    /// has-a path, so it satisfies <c>path</c> too. Read by <c>type.@this.Is</c>
-    /// (the static-<c>Type</c> convention): <c>variable.set</c> keeps an image
-    /// bound to a <c>path</c> slot as-is (image wins) rather than downgrading it.
+    /// The types this one inherits — self included, declared as <c>typeof</c>
+    /// tokens (compiler-checked, rename-safe). An image <em>is-a</em> path
+    /// (it has-a path facet), so <c>image : path</c>. Read by
+    /// <c>type.@this.Is</c> (the static-<c>Type</c> convention): <c>variable.set</c>
+    /// keeps an image bound to a <c>path</c> slot as-is (image wins) rather than
+    /// downgrading it. Substitutability only — no state/behaviour is inherited,
+    /// so multiple entries here carry none of OOP MI's diamond/MRO baggage.
     /// </summary>
-    public static System.Collections.Generic.IReadOnlyList<string> Type { get; }
-        = new[] { "image", "path" };
+    public static System.Collections.Generic.IReadOnlyList<System.Type> Type { get; }
+        = new[] { typeof(@this), typeof(global::app.type.path.@this) };
 
     // Null until loaded — a path-backed image reads nothing until first content
     // access. A bytes-backed image sets this in the constructor.

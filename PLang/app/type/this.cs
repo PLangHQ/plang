@@ -274,24 +274,38 @@ public sealed class @this
     {
         if (other == null) return false;
         if (string.Equals(Name, other.Name, System.StringComparison.OrdinalIgnoreCase)) return true;
-        var clr = ClrType;
-        if (clr == null) return false;
-        foreach (var facet in _facetsByClr.GetOrAdd(clr, ReadFacets))
-            if (string.Equals(facet, other.Name, System.StringComparison.OrdinalIgnoreCase)) return true;
+        var thisClr = ClrType;
+        var otherClr = other.ClrType;
+        if (thisClr == null || otherClr == null) return false;
+        // Walk the inheritance chain by CLR-type identity (transitive: image : path,
+        // path : X ⟹ image Is X), guarding against self/cycles.
+        return Reaches(thisClr, otherClr, new HashSet<System.Type>());
+    }
+
+    private static bool Reaches(System.Type clr, System.Type target, HashSet<System.Type> seen)
+    {
+        if (!seen.Add(clr)) return false;
+        foreach (var parent in Parents(clr))
+        {
+            if (parent == target) return true;
+            if (Reaches(parent, target, seen)) return true;
+        }
         return false;
     }
 
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, IReadOnlyList<string>> _facetsByClr = new();
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, IReadOnlyList<System.Type>> _parentsByClr = new();
 
-    private static IReadOnlyList<string> ReadFacets(System.Type clrType)
-    {
-        var prop = clrType.GetProperty("Type",
-            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.FlattenHierarchy);
-        var raw = prop?.GetValue(null);
-        if (raw is IReadOnlyList<string> list) return list;
-        if (raw is IEnumerable<string> seq) return seq.ToList();
-        return System.Array.Empty<string>();
-    }
+    /// <summary>The types a concrete type inherits, from its <c>static IReadOnlyList&lt;System.Type&gt; Type</c> (self included).</summary>
+    private static IReadOnlyList<System.Type> Parents(System.Type clrType)
+        => _parentsByClr.GetOrAdd(clrType, static t =>
+        {
+            var prop = t.GetProperty("Type",
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.FlattenHierarchy);
+            var raw = prop?.GetValue(null);
+            if (raw is IReadOnlyList<System.Type> list) return list;
+            if (raw is IEnumerable<System.Type> seq) return seq.ToList();
+            return System.Array.Empty<System.Type>();
+        });
 
     // --- Catalog properties (init-only; promoted lazily) ---
 
