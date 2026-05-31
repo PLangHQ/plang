@@ -8,6 +8,8 @@ Reference: `Documentation/v0.2/object_pattern_formal.md` (the formal pattern + 9
 
 Each entry: **location · the smell · the OBP-clean target · status · found-in**.
 
+**Tooling & sequencing.** `tools/ObpScan` (syntax-only Roslyn scanner — run it over a root, get the H1/H2/H3 worklist) is the scanner for *this* pass. The plan is: **clean up the backlog below first, scanner-assisted; then promote the detection into a build-time `DiagnosticAnalyzer`** (a `PLNGxxx` diagnostic). Order matters — gating CI before the cleanup would just fail on the known backlog; the analyzer goes in once the violations are gone, to stop *new* ones.
+
 ---
 
 ## 1. `app.type.list.@this` — the type registry has accreted a wide verb/`Get` surface
