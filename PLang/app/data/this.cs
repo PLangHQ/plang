@@ -812,7 +812,9 @@ public partial class @this
             return ConstructWrap<T>((T?)convertedEnum, context);
         }
 
-        var (converted, error) = AppTypes.TryConvertTo(value, typeof(T), context);
+        // Thread the Data's Name (the parameter/variable name) into the
+        // conversion so a bind failure can name the slot.
+        var (converted, error) = AppTypes.TryConvertTo(value, typeof(T), context, Name);
         if (error != null)
             return @this<T>.FromError(error);
         return ConstructWrap<T>((T?)converted, context);

@@ -106,7 +106,7 @@ public sealed partial class @this
     /// or null value and an Error describing what went wrong.
     /// </summary>
     public static (object? Value, error.Error? Error) TryConvertTo(object? value, System.Type targetType,
-        actor.context.@this? context = null)
+        actor.context.@this? context = null, string? targetName = null)
     {
         if (value == null)
             return (targetType.IsValueType ? System.Activator.CreateInstance(targetType) : null, null);
@@ -122,7 +122,7 @@ public sealed partial class @this
         // Handle nullable target types
         var underlying = System.Nullable.GetUnderlyingType(targetType);
         if (underlying != null)
-            return TryConvertTo(value, underlying, context);
+            return TryConvertTo(value, underlying, context, targetName);
 
         // String → JsonNode: use ToJson() extension with fix-and-retry
         if (targetType == typeof(JsonNode) && value is string jsonNodeStr)
@@ -440,8 +440,11 @@ public sealed partial class @this
             }
             catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
             {
+                // Lead with target type + parameter name + actual content; never
+                // surface the raw C# exception text (e.g. "Object must implement
+                // IConvertible") as the headline — it's meaningless to a PLang dev.
                 var convErr = new error.Error(
-                    $"Cannot convert '{value}' ({sourceType.Name}) to {targetType.Name}: {ex.Message}",
+                    BindFailureMessage(value, sourceType, targetType, targetName),
                     "PrimitiveConversionFailed", 400)
                 { Exception = ex };
                 if (value is error.Error sourceErr)
@@ -494,7 +497,7 @@ public sealed partial class @this
         if (!targetType.IsAssignableFrom(sourceType))
         {
             return (null, new error.Error(
-                FormatTypeMismatch(value, sourceType, targetType),
+                FormatTypeMismatch(value, sourceType, targetType, targetName),
                 "TypeMismatch", 400)
                 { FixSuggestion = TypeMismatchHint(value, sourceType, targetType) });
         }
@@ -502,9 +505,42 @@ public sealed partial class @this
         return (value, null);
     }
 
-    private static string FormatTypeMismatch(object? value, System.Type sourceType, System.Type targetType)
+    /// <summary>
+    /// A parameter-binding failure in plain language: what we tried to convert
+    /// <em>to</em> (target PLang type), <em>where</em> (the parameter name, when
+    /// the binding layer threaded it in), and <em>from</em> (the actual value's
+    /// type + a content preview). Leads with these three facts and never the raw
+    /// C# exception text.
+    /// </summary>
+    private static string BindFailureMessage(object? value, System.Type sourceType, System.Type targetType, string? targetName)
     {
-        return $"Cannot convert {sourceType.FullName} to {targetType.FullName}. Source value: {FormatValuePreview(value)}";
+        var expected = PlangTypeLabel(targetType);
+        var slot = string.IsNullOrEmpty(targetName) ? "" : $" parameter '{targetName}'";
+        var actual = value is error.Error err
+            ? $"an Error object ({err.Key}: {Truncate(err.Message, 120)})"
+            : $"{PlangTypeLabel(sourceType)} {FormatValuePreview(value)}";
+        return $"Could not bind{slot}: expected {expected} but the value is {actual}.";
+    }
+
+    /// <summary>PLang type name + CLR type for a target/source, e.g. "text (string)".</summary>
+    private static string PlangTypeLabel(System.Type type)
+    {
+        var u = System.Nullable.GetUnderlyingType(type) ?? type;
+        return app.type.primitive.@this.Canonical.TryGetValue(u, out var plang)
+            ? $"{plang} ({u.Name})"
+            : u.Name;
+    }
+
+    private static string Truncate(string? s, int max)
+        => string.IsNullOrEmpty(s) ? "" : (s!.Length <= max ? s : s[..max] + "…");
+
+    private static string FormatTypeMismatch(object? value, System.Type sourceType, System.Type targetType, string? targetName = null)
+    {
+        // FullName (not Name) so an OBP `@this` target disambiguates; value
+        // preview surfaces an unresolved %var% in the headline. Lead with the
+        // parameter name when the binding layer threaded it in.
+        var slot = string.IsNullOrEmpty(targetName) ? "" : $"parameter '{targetName}': ";
+        return $"{slot}Cannot convert {sourceType.FullName} to {targetType.FullName}. Source value: {FormatValuePreview(value)}";
     }
 
     private static string TypeMismatchHint(object? value, System.Type sourceType, System.Type targetType)

@@ -37,8 +37,8 @@ internal static class TypeMapping
     public static void Populate(object target, IDictionary<string, object?> values) => global::app.type.list.@this.Populate(target, values);
 
     public static (object? Value, global::app.error.Error? Error) TryConvertTo(
-        object? value, System.Type targetType, global::app.actor.context.@this? context = null)
-        => global::app.type.list.@this.TryConvertTo(value, targetType, context);
+        object? value, System.Type targetType, global::app.actor.context.@this? context = null, string? targetName = null)
+        => global::app.type.list.@this.TryConvertTo(value, targetType, context, targetName);
 }
 
 /// <summary>
@@ -51,8 +51,8 @@ internal static class TypeConverter
     public static object? ConvertTo(object? value, System.Type targetType) => global::app.type.list.@this.ConvertTo(value, targetType);
     public static void Populate(object target, IDictionary<string, object?> values) => global::app.type.list.@this.Populate(target, values);
     public static (object? Value, global::app.error.Error? Error) TryConvertTo(
-        object? value, System.Type targetType, global::app.actor.context.@this? context = null)
-        => global::app.type.list.@this.TryConvertTo(value, targetType, context);
+        object? value, System.Type targetType, global::app.actor.context.@this? context = null, string? targetName = null)
+        => global::app.type.list.@this.TryConvertTo(value, targetType, context, targetName);
 }
 
 /// <summary>
