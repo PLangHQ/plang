@@ -1,6 +1,6 @@
 # Test Architecture
 
-> Decomposed out of `good_to_know.md` (2026-05-31). Content moved **verbatim** — stale pre-rename names are tracked in the `good_to_know.md` index under "Known stale references", not yet swept.
+> Part of the App architecture notes — index in [`good_to_know.md`](good_to_know.md).
 
 ## Test Architecture
 
@@ -45,7 +45,7 @@ Uses regex-based matching: standalone `*` becomes `.*`, regex-like patterns are 
 
 ## Test Module — Cross-Cutting Invariants
 
-The test runner lives in `PLang/app/modules/test/` (`discover.cs`, `run.cs`, `tag.cs`, `report.cs`) and stores run state on `app.Tester` (`PLang/app/tester/this.cs`). Facts future devs won't see in any single file:
+The test runner lives in `PLang/app/module/test/` (`discover.cs`, `run.cs`, `tag.cs`, `report.cs`) and stores run state on `app.Tester` (`PLang/app/tester/this.cs`). Facts future devs won't see in any single file:
 
 ### App boundary = file boundary
 Each `.test.goal` file gets its own child `App` rooted at that file's directory — not per-goal, not per-step. `test.run` spins up one App via `await using` per `TestFile`, runs the entry goal, then disposes. Multiple goals inside the same file share state within that test's run. Don't "optimise" this by pooling Apps across tests — isolation is the entire point of the module existing.
@@ -72,7 +72,7 @@ Per `PLang/app/Attributes/RequiresCapabilityAttribute.cs`, the attribute has `Al
 Shared goals often tag themselves so they carry auto-tags when reused in tests (`tag this test 'http'`). When that same goal runs in production (no `CurrentTest` on `App.Tester`), the action does nothing instead of throwing. This is why `test.tag` is callable from production goals — it's a one-way signal, never an error.
 
 ### `Variables.Snapshot()` honors exclusions, not sensitivity
-The snapshot taken on assertion failure (`PLang/app/variables/this.cs:Snapshot`) excludes `!`-prefixed infrastructure vars, `DynamicData` (Now/GUID), and `SettingsVariable`. It does **not** honour `[Sensitive]` — that filter applies at JSON *serialization* via `Json.DiagnosticOutput` when the snapshot is rendered into the report. Result: ordinary user variables carrying secrets flow through the snapshot but are only masked if their carrier type has `[Sensitive]` on the relevant property. See security-report.json finding #3 on this branch.
+The snapshot taken on assertion failure (`PLang/app/variable/this.cs:Snapshot`) excludes `!`-prefixed infrastructure vars, `DynamicData` (Now/GUID), and `SettingsVariable`. It does **not** honour `[Sensitive]` — that filter applies at JSON *serialization* via `Json.DiagnosticOutput` when the snapshot is rendered into the report. Result: ordinary user variables carrying secrets flow through the snapshot but are only masked if their carrier type has `[Sensitive]` on the relevant property. See security-report.json finding #3 on this branch.
 
 ### Teach LLM mappings via `ExamplesForLlm()`, never via runtime parsers
 When a step like `set %count% = %count% + 1` produces the wrong action chain, the temptation is to add an arithmetic evaluator inside `Variables.Resolve` so the runtime "just handles" the `+`. Don't. The compile path already has a `math` module (`add` / `subtract` / `multiply` / `divide` / `power`); the LLM just doesn't know to translate the RHS-arithmetic shorthand. Adding `ExamplesForLlm()` to each math action with both forms (natural — `"add 5 and 3, write to %sum%"` — and RHS — `"set %count% = %count% + 1"`) mapping to `math.<op> | variable.set Value=%!data%` is enough; the LLM follows the example.

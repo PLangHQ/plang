@@ -1,8 +1,6 @@
-# Good to Know — index
+# App Architecture Notes — index
 
-This file was a catch-all (~70 sections). It's been decomposed into focused topic docs;
-each section moved to the doc named beside it. References elsewhere that name a section by
-title still resolve here — search the title in the list below.
+Notes are split across the topic docs below. Each section title maps to its doc — search a title here to find its home.
 
 ## Topic docs
 - [`conventions.md`](conventions.md) — Conventions — Folders, Namespaces, Goal Resolution
@@ -78,14 +76,3 @@ title still resolve here — search the title in the list below.
 - Producer-stamping invariant — `Data.Type` propagation → `type-system.md`
 - `type.@this.Null` — non-null sentinel on `Data.Type` → `type-system.md`
 - OBP Naming Principle / Smell Checklist / Variant Design → `obp-smells.md`
-
-## Contradiction sweep (2026-05-31, confirmed with Ingi)
-Resolved:
-- ✅ **PathData** — confirmed gone (no source). The dead "PathData — Data Subclass in `app/filesystem/`" section was removed from `data-internals.md`.
-- ✅ **`app/types/` → `app/type/`** — plural fixed in `type-system.md` (and this index).
-- ✅ **Permission/Verb namespace** — confirmed `app.type.path.permission` (`permission/verb/{Read,Write,Delete,Execute}.cs`); corrected inline in `obp-smells.md`.
-- ↪ **Event rename (`GoalStepEvents`/`ActionEvents` → `Lifecycle`, `EventList` → `Bindings`)** — still pending; moved to `Documentation/Runtime2/todos.md` so the intent isn't lost.
-
-Still pending (the broad pass):
-- General pre-rename PascalCase/plural names (`app.Goals`→`app.Goal`, etc.) inside moved bodies — safe from CLAUDE.md, do in a focused sweep.
-

@@ -1,6 +1,6 @@
 # Data Internals & Source Generator
 
-> Decomposed out of `good_to_know.md` (2026-05-31). Content moved **verbatim** — stale pre-rename names are tracked in the `good_to_know.md` index under "Known stale references", not yet swept.
+> Part of the App architecture notes — index in [`good_to_know.md`](good_to_know.md).
 
 ## Data.Compare — Structural JSON Diff
 
@@ -26,7 +26,7 @@ Used by the builder eval runner to compare `.pr` output against `.golden` files.
 
 Handlers update `Actor.Identity` directly after mutations (e.g., `setDefault`, `rename`). The `DefaultIdentityProvider.Get()` refreshes `app.System.Identity` when resolving the default identity. `IdentityData.ToString()` returns the public key, so `%MyIdentity%` in a string context gives the public key.
 
-See `PLang/app/modules/identity/types.cs` for the class definition.
+See `PLang/app/module/identity/type/identity.cs` for the class definition.
 
 ---
 
@@ -59,7 +59,7 @@ global using Data = global::app.data.@this;
 global using Variables = app.variable.@this;  // alias name kept for `%var%`-bag readability
 ```
 
-Do NOT create test namespaces matching these alias names — `PLang.Tests.app.data` or `PLang.Tests.app.variables` namespaces shadow the type alias for all sibling test files (`CS0118: 'Data' is a namespace but is used like a type`). File-level `using Data = ...` cannot override (CS1537 against the global, and the namespace still wins at sibling scope). Convention: when a test folder mirrors `PLang/app/data/` or `PLang/app/variables/`, use the `*Tests` suffix on the folder/namespace (`PLang.Tests/app/DataTests/`, `PLang.Tests/app/VariablesTests/`). Same applies to any future global alias whose name is also a directory under `PLang/app/`.
+Do NOT create test namespaces matching these alias names — `PLang.Tests.app.data` or `PLang.Tests.app.variables` namespaces shadow the type alias for all sibling test files (`CS0118: 'Data' is a namespace but is used like a type`). File-level `using Data = ...` cannot override (CS1537 against the global, and the namespace still wins at sibling scope). Convention: when a test folder mirrors `PLang/app/data/` or `PLang/app/variable/`, use the `*Tests` suffix on the folder/namespace (`PLang.Tests/app/DataTests/`, `PLang.Tests/app/VariablesTests/`). Same applies to any future global alias whose name is also a directory under `PLang/app/`.
 
 ---
 
@@ -198,7 +198,7 @@ The walker is shared with `AsT_Impl` so plain `Data` and `Data<T>` resolve neste
 
 ## `Variables.Set` — events follow the name, Properties stay with the Data
 
-When `Variables.Set(dv)` replaces an existing binding under the same name (`app/variables/this.cs:78-87`):
+When `Variables.Set(dv)` replaces an existing binding under the same name (`app/variable/this.cs:78-87`):
 
 ```csharp
 if (_variables.TryGetValue(name, out var prev) && !ReferenceEquals(prev, dv))
@@ -222,7 +222,7 @@ if (_variables.TryGetValue(name, out var prev) && !ReferenceEquals(prev, dv))
 
 ## `variable.set` is the sole binding-mint site
 
-`app/modules/variable/set.cs` owns type inference for user-visible variables. `MintTyped(name, raw, ctx)` switches on the runtime type of the bound value and constructs the right `Data<T>` directly. Hot types (string, bool, int, long, double, decimal, float, DateTime, DateTimeOffset, Guid, byte[], `List<object?>`, `Dictionary<string, object?>`) take the if-chain; cold types fall through to a reflection construction (`typeof(Data<>).MakeGenericType`).
+`app/module/variable/set.cs` owns type inference for user-visible variables. `MintTyped(name, raw, ctx)` switches on the runtime type of the bound value and constructs the right `Data<T>` directly. Hot types (string, bool, int, long, double, decimal, float, DateTime, DateTimeOffset, Guid, byte[], `List<object?>`, `Dictionary<string, object?>`) take the if-chain; cold types fall through to a reflection construction (`typeof(Data<>).MakeGenericType`).
 
 **Mutable refs are snapshot-cloned via JSON roundtrip.** `set %x% = %y%` where `y` is a list/dict mints a `Data<List<object?>>` (or `Data<Dict>`) over a *fresh* container — later mutations of the source do not bleed through. The clone runs through `Data.UnwrapJsonElement` to recursively normalize `List<JsonElement>` (which `JsonSerializer.Deserialize<List<object?>>` produces) into primitives.
 
@@ -327,9 +327,9 @@ public interface IBooleanResolvable
 
 `path` implements it — truthiness means "does the resource exist". For `FilePath` that's a stat; for `HttpPath` it's a HEAD request. Because the probe can be I/O, the entire condition-evaluation pipeline is **async**:
 
-- `IEvaluator.Evaluate` returns `Task<data.@this>` (`PLang/app/modules/condition/code/IEvaluator.cs`).
-- `Operator.Evaluate` is `Func<data.@this?, data.@this?, Task<bool>>` (`PLang/app/modules/condition/Operator.cs`).
-- `assert.IsTrue` / `assert.IsFalse` are async (`PLang/app/modules/assert/code/Default.cs:138`).
+- `IEvaluator.Evaluate` returns `Task<data.@this>` (`PLang/app/module/condition/code/IEvaluator.cs`).
+- `Operator.Evaluate` is `Func<data.@this?, data.@this?, Task<bool>>` (`PLang/app/module/condition/Operator.cs`).
+- `assert.IsTrue` / `assert.IsFalse` are async (`PLang/app/module/assert/code/Default.cs:138`).
 - `Data.ToBooleanAsync()` dispatches to `IBooleanResolvable` when present and falls back to `ToBoolean()` otherwise (`PLang/app/data/this.cs:896`).
 
 A new operator or evaluator must `await`. A new type that wants scheme-defined truthiness implements `IBooleanResolvable` — never edit `Data.ToBoolean()` to special-case it.

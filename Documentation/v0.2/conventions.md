@@ -1,15 +1,15 @@
 # Conventions — Folders, Namespaces, Goal Resolution
 
-> Decomposed out of `good_to_know.md` (2026-05-31). Content moved **verbatim** — stale pre-rename names are tracked in the `good_to_know.md` index under "Known stale references", not yet swept.
+> Part of the App architecture notes — index in [`good_to_know.md`](good_to_know.md).
 
 ## Folder Structure & Namespaces
 
 ### `@this` Class Convention
 Every folder's primary class is named `@this` in `this.cs`. Consumers use global using aliases:
 - `app/this.cs` → `class @this` (no global alias — namespace shadows it)
-- `app/goals/this.cs` → `class @this` (alias: `EngineGoals`)
-- `app/goals/goal/this.cs` → `class @this` (alias: `Goal` in tests, per-file in PLang)
-- `app/goals/goal/steps/step/actions/action/this.cs` → `class @this` (per-file alias only — `System.Action` conflict)
+- `app/goal/this.cs` → `class @this` (alias: `EngineGoals`)
+- `app/goal/goal/this.cs` → `class @this` (alias: `Goal` in tests, per-file in PLang)
+- `app/goal/goal/steps/step/actions/action/this.cs` → `class @this` (per-file alias only — `System.Action` conflict)
 
 ### Namespace Per Folder
 Each folder gets its **own namespace** matching its path exactly:

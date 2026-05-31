@@ -1,12 +1,12 @@
 # app.module.code — Pluggable Implementations
 
-> Decomposed out of `good_to_know.md` (2026-05-31). Content moved **verbatim** — stale pre-rename names are tracked in the `good_to_know.md` index under "Known stale references", not yet swept.
+> Part of the App architecture notes — index in [`good_to_know.md`](good_to_know.md).
 
 ## Libraries Replaces ActionRegistry
 
-`ActionRegistry` was replaced by `app.Modules` (flat action registry). The key changes:
+`ActionRegistry` was replaced by `app.Module` (flat action registry). The key changes:
 
-- **`app.Modules`** — flat registry of all action handlers (module → action → type)
+- **`app.Module`** — flat registry of all action handlers (module → action → type)
 - **Resolution**: `Modules.GetCodeGenerated(module, action, context)` — case-insensitive lookup
 - **External DLL loading**: `module.add` action lets PLang code load external DLLs at runtime (`add module mymodule.dll`). `module.remove` unregisters a module.
 - **Two registration modes**: `Register(instance)` for shared/stateful handlers, `RegisterType(type)` for per-call instantiation (thread-safe)
@@ -43,7 +43,7 @@ This means:
 `app.module.code` (`app.module.code.@this`) is a named code-implementation registry — `ConcurrentDictionary<Type, ConcurrentDictionary<string, ICode>>`. Each interface type can have multiple named implementations. First registered becomes default.
 
 Each module:
-1. Defines a code interface (e.g., `ICrypto`, `ISigning`) under `app/modules/<m>/code/`
+1. Defines a code interface (e.g., `ICrypto`, `ISigning`) under `app/module/<m>/code/`
 2. Ships a default implementation under the same `code/` folder (e.g., `Default.cs`, `Ed25519.cs`)
 3. Resolves at runtime via `app.Code.Get<T>(name?)` or `GetOrDefault<T>(fallback)`
 
@@ -113,7 +113,7 @@ This means `SignedData.Verified` needs a lazy resolution pattern (similar to `Id
 
 `ILlm` follows the same `ICode` pattern as other module interfaces. Single method: `Task<Data> Query(query action)`. The implementation owns the full lifecycle: config resolution, message formatting, HTTP calls (via the http module), tool execution loop, caching, streaming, validation, and conversation continuity.
 
-**Default implementation:** `OpenAi` (`app/modules/llm/code/OpenAi.cs`) — works with any OpenAI-compatible API (configurable endpoint). Registered on `app.Code` during construction. Switchable via `code.setDefault`.
+**Default implementation:** `OpenAi` (`app/module/llm/code/OpenAi.cs`) — works with any OpenAI-compatible API (configurable endpoint). Registered on `app.Code` during construction. Switchable via `code.setDefault`.
 
 **PLang type name mapping:** `"llm"` / `"illm"` → `ILlm`.
 
@@ -131,7 +131,7 @@ This means `SignedData.Verified` needs a lazy resolution pattern (similar to `Id
 
 ## IHttp — HTTP Implementation in app.module.code
 
-`IHttp` follows the same `ICode` pattern as `ISigning`, `ICrypto`, etc. Registered on `app.Code` during app construction. `Default` (`app/modules/http/code/Default.cs`) is the built-in implementation that owns `HttpClient`, config resolution, signing integration, streaming, and response parsing.
+`IHttp` follows the same `ICode` pattern as `ISigning`, `ICrypto`, etc. Registered on `app.Code` during app construction. `Default` (`app/module/http/code/Default.cs`) is the built-in implementation that owns `HttpClient`, config resolution, signing integration, streaming, and response parsing.
 
 Full code-interface roster:
 - `ICode` — base: `Name`, `IsDefault`, `IsBuiltIn`, `Source`
@@ -142,7 +142,7 @@ Full code-interface roster:
 - `IHttp : ICode, IDisposable` — HTTP transport, disposable because it owns `HttpClient`
 - `ITemplate : ICode` — template rendering (default: `Fluid` using Liquid syntax)
 - `ILlm : ICode` — LLM queries (default: `OpenAi`)
-- `IBuilder : ICode` — build-time goal parsing, validation, merge, persistence (default: `Default` under `app/modules/builder/code/`)
+- `IBuilder : ICode` — build-time goal parsing, validation, merge, persistence (default: `Default` under `app/module/builder/code/`)
 
 PLang type name mapping: `"http"` / `"ihttp"` → `IHttp`, `"template"` / `"itemplate"` → `ITemplate`, `"llm"` / `"illm"` → `ILlm`.
 
@@ -150,7 +150,7 @@ PLang type name mapping: `"http"` / `"ihttp"` → `IHttp`, `"template"` / `"item
 
 ## IBuilder — Builder Implementation in app.module.code
 
-`IBuilder` follows the same `ICode` pattern as other module interfaces. Owns all build-time logic — action records are thin one-line delegates. The default implementation under `app/modules/builder/code/Default.cs` handles goal parsing, `.pr` file merging, action validation, and persistence.
+`IBuilder` follows the same `ICode` pattern as other module interfaces. Owns all build-time logic — action records are thin one-line delegates. The default implementation under `app/module/builder/code/Default.cs` handles goal parsing, `.pr` file merging, action validation, and persistence.
 
 **No per-action BuildingGuard.** Earlier revisions had a static `BuildingGuard(IContext)` called first in every method to gate builder actions on `App.Builder.IsEnabled`. That guard was deliberately removed (commit `4633674c`) — builder actions are callable at runtime as well as build time. The trust boundary is the goal signature: a signed `.pr` may legitimately invoke `builder.goals.save` and rewrite sibling `.pr` files, and the user is sovereign over which signatures to trust. `App.Builder.IsEnabled` is still consulted by the file module's default `IFile` on the read path for snapshot logic, but no per-action guard exists on the write path. If you are reasoning about the threat model, the docs file [`docs/modules/builder.md`](../../docs/modules/builder.md) summarises the same posture.
 
@@ -168,9 +168,9 @@ PLang type name mapping: `"http"` / `"ihttp"` → `IHttp`, `"template"` / `"item
 
 `ISettings` was renamed to `IConfig` across all modules. The rationale: "config" better describes what these classes are — configuration with defaults, not mutable settings. Files:
 
-- `app/modules/settings/ISettings.cs` → `app/config/IConfig.cs`
-- `app/modules/settings/ModuleView.cs` → `app/config/ModuleView.cs`
-- `app/modules/settings/this.cs` → `app/config/this.cs`
+- `app/module/settings/ISettings.cs` → `app/config/IConfig.cs`
+- `app/module/settings/ModuleView.cs` → `app/config/ModuleView.cs`
+- `app/module/settings/this.cs` → `app/config/this.cs`
 - Module `Settings.cs` files → `Config.cs` (archive, signing, http)
 
 `app.Settings` → `app.Config`. `Settings.Apply` writes action properties to the scope chain via reflection.

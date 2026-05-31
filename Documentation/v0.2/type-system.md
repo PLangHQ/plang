@@ -1,6 +1,6 @@
 # Type System Notes
 
-> Decomposed out of `good_to_know.md` (2026-05-31). Content moved **verbatim** — stale pre-rename names are tracked in the `good_to_know.md` index under "Known stale references", not yet swept.
+> Part of the App architecture notes — index in [`good_to_know.md`](good_to_know.md).
 
 ## `IExitsGoal.ShouldExit()` — Value-side opt-out for resolved sentinels
 

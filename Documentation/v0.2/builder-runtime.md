@@ -1,6 +1,6 @@
 # Builder & Runtime Notes
 
-> Decomposed out of `good_to_know.md` (2026-05-31). Content moved **verbatim** — stale pre-rename names are tracked in the `good_to_know.md` index under "Known stale references", not yet swept.
+> Part of the App architecture notes — index in [`good_to_know.md`](good_to_know.md).
 
 ## Event Override (skipAction)
 
@@ -16,7 +16,7 @@ Only if the error goal fails (or is absent) does the runtime proceed to retries.
 
 `RetryFirst` (the default) is the opposite order: retries run first, the error goal only runs if every retry still fails. `IgnoreError` is the final fallback in both orderings — applied after retry and goal are both exhausted.
 
-See `PLang/app/modules/error/handle.cs` for the implementation.
+See `PLang/app/module/error/handle.cs` for the implementation.
 
 ---
 
@@ -89,13 +89,13 @@ Error handling, caching, and timeouts are **not step-level properties** — they
 
 **Runtime.** `Action.RunAsync` hands its dispatch delegate to `Action.Modifiers.RunAsync(innermost, context)`, which walks the list right-to-left. Each action resolves its own handler via `Action.WrapAround` and wraps the running delegate. First in the list = outermost wrapper.
 
-**Builder.** The default `IBuilder.GoalsSave` (`app/modules/builder/code/Default.cs`) calls `step.Actions.GroupModifiers(app.Modules)` before serialization. The LLM returns a flat list; grouping attaches every `[Modifier]` action to the nearest preceding executable action and sorts each cluster by `Order`. A leading modifier with no preceding executable is dropped and recorded as `DroppedLeadingModifier` in `step.Warnings` so the builder author notices.
+**Builder.** The default `IBuilder.GoalsSave` (`app/module/builder/code/Default.cs`) calls `step.Actions.GroupModifiers(app.Module)` before serialization. The LLM returns a flat list; grouping attaches every `[Modifier]` action to the nearest preceding executable action and sorts each cluster by `Order`. A leading modifier with no preceding executable is dropped and recorded as `DroppedLeadingModifier` in `step.Warnings` so the builder author notices.
 
 **Ordering today:** `timeout=1` (outermost — caps everything including cache lookup), `cache=2` (skip the rest on a hit), `error=3` (innermost — closest to the action).
 
 **Adding a modifier.** Write a handler with `[Modifier(Order = N)]` and implement `IModifier.Wrap`. Normal module discovery picks it up; the LLM sees it in the action registry like any other action.
 
-See `PLang/app/modules/IModifier.cs`, `PLang/app/goals/goal/steps/step/actions/action/modifiers/this.cs`, and `PLang/app/goals/goal/steps/step/actions/this.cs` (`GroupModifiers`).
+See `PLang/app/module/IModifier.cs`, `PLang/app/goal/goal/steps/step/actions/action/modifiers/this.cs`, and `PLang/app/goal/goal/steps/step/actions/this.cs` (`GroupModifiers`).
 
 ---
 
@@ -146,7 +146,7 @@ Action **shape** (what parameters exist, what types, what defaults, is-it-a-modi
 
 Renamed attribute: **`[Provider]` → `[Code]`** across the source generator, the attribute definition, every call site, and the PLNG001 diagnostic text. Mechanical, no behaviour change.
 
-Full guide: [`action-catalog.md`](action-catalog.md). Loader source: `PLang/app/modules/MarkdownTeaching.cs`. Architect plan: `.bot/compile-llm-notes-per-action/architect/plan.md`.
+Full guide: [`action-catalog.md`](action-catalog.md). Loader source: `PLang/app/module/MarkdownTeaching.cs`. Architect plan: `.bot/compile-llm-notes-per-action/architect/plan.md`.
 
 ## Build()-time type stamping — `IClass.Build()`, `(type)` hints, and `BuildWarning`
 
@@ -181,6 +181,6 @@ return data.@this.Ok(inferredType);
 
 `Channels.Channel(name)` returns a registered channel or a **no-op fallback** (`channel.noop.@this`) — so the handler writes opportunistically without null-checking. (Distinct from `Channels.Resolve(name)`, which returns null on miss and surfaces `ChannelNotFound`.) `Build()` runs in two contexts: under the builder (channel registered, warning surfaces in trace + `--strict`) and outside it (channel absent, the no-op swallows the write).
 
-The warning record `app/modules/builder/warning/this.cs` carries `(IClass Action, string Message)` — the writing handler puts `this` in `Action` so the consumer has source attribution without channel-side caller-tagging magic.
+The warning record `app/module/builder/warning/this.cs` carries `(IClass Action, string Message)` — the writing handler puts `this` in `Action` so the consumer has source attribution without channel-side caller-tagging magic.
 
-Full implementation: `PLang/app/modules/builder/code/Default.cs` (the validate-pass + `StampOnTerminalVariableSet` helper).
+Full implementation: `PLang/app/module/builder/code/Default.cs` (the validate-pass + `StampOnTerminalVariableSet` helper).
