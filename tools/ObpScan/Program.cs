@@ -83,10 +83,11 @@ foreach (var path in Directory.EnumerateFiles(root, "*.cs", SearchOption.AllDire
             var inner = Unwrap(ret);
             int line = tree.GetLineSpan(m.Span).StartLinePosition.Line + 1;
 
-            // H1: verb-named method returning a RAW collection (not Data<...>)
-            if (HasVerbPrefix(name) && IsCollectionType(inner) && !inner.StartsWith("Data<", StringComparison.Ordinal)
+            // H1: public method returning a collection (not Data<...>) — proxy candidate
+            // regardless of verb/noun name. Annotate verb-prefixed (higher confidence).
+            if (IsCollectionType(inner) && !inner.StartsWith("Data<", StringComparison.Ordinal)
                 && !inner.StartsWith("data.", StringComparison.Ordinal))
-                h1.Add($"{path}:{line}  {typeName}.{name}() -> {ret}");
+                h1.Add($"{path}:{line}  {typeName}.{name}() -> {ret}{(HasVerbPrefix(name) ? "  [verb]" : "")}");
 
             // H2: Get-twin — GetX where member X exists
             if (name.StartsWith("Get", StringComparison.Ordinal) && name.Length > 3 && char.IsUpper(name[3]))
@@ -97,24 +98,27 @@ foreach (var path in Directory.EnumerateFiles(root, "*.cs", SearchOption.AllDire
             }
         }
 
-        // H3: public mutable collection exposed as property or field
+        // H3: public collection exposed as property or field. Includes read-only
+        // exposures (IReadOnlyList/…) — annotate mutable (higher concern) vs readonly.
         foreach (var prop in type.Members.OfType<PropertyDeclarationSyntax>())
         {
             if (!prop.Modifiers.Any(x => x.IsKind(SyntaxKind.PublicKeyword))) continue;
-            if (IsMutableCollectionType(prop.Type.ToString()))
+            var pt = prop.Type.ToString();
+            if (IsCollectionType(pt))
             {
                 int line = tree.GetLineSpan(prop.Span).StartLinePosition.Line + 1;
-                h3.Add($"{path}:{line}  {typeName}.{prop.Identifier.Text} : {prop.Type}");
+                h3.Add($"{path}:{line}  {typeName}.{prop.Identifier.Text} : {prop.Type}  [{(IsMutableCollectionType(pt) ? "mutable" : "readonly")}]");
             }
         }
         foreach (var fld in type.Members.OfType<FieldDeclarationSyntax>())
         {
             if (!fld.Modifiers.Any(x => x.IsKind(SyntaxKind.PublicKeyword))) continue;
-            if (IsMutableCollectionType(fld.Declaration.Type.ToString()))
+            var ft = fld.Declaration.Type.ToString();
+            if (IsCollectionType(ft))
             {
                 int line = tree.GetLineSpan(fld.Span).StartLinePosition.Line + 1;
                 foreach (var v in fld.Declaration.Variables)
-                    h3.Add($"{path}:{line}  {typeName}.{v.Identifier.Text} : {fld.Declaration.Type}");
+                    h3.Add($"{path}:{line}  {typeName}.{v.Identifier.Text} : {fld.Declaration.Type}  [{(IsMutableCollectionType(ft) ? "mutable" : "readonly")}]");
             }
         }
     }
