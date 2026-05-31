@@ -515,6 +515,42 @@
         "health": "C# suite 3818/3818 green",
         "notes": "PLang --test not re-run this session (user deferred). Recommended next: clean rebuild + plang --test, then builder bot for the CompileUser.llm teaching + fundamental-vocabulary prompt changes."
       }
+    },
+    {
+      "id": "codeanalyzer-v1-type-kind-strict",
+      "bot": "codeanalyzer",
+      "timestamp_end": "2026-05-31T00:00:00Z",
+      "verdict": "fail",
+      "next": "coder",
+      "intent": "Review coder v1-v7 (type-system reshape, stages 1-9): {Name,Kind,Strict} entity + Data.Kind fold, strict kind validation, hash-type relocation + signing, lazy path-backed reference fundamentals, LLM vocabulary scoping.",
+      "plan": ".bot/type-kind-strict/codeanalyzer/v1/report.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/module/variable/set.cs",
+            "PLang/app/type/image/this.cs",
+            "PLang/app/data/IKindValidatable.cs",
+            "Tests/TypeKindStrict/SetAsImageGifStrictMismatch.test.goal",
+            "Tests/TypeKindStrict/SetAsImageGifStrictRuntimeVarMismatch.test.goal"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1 (MAJOR, blocking): strict kind enforcement no-ops for path-literal and read-lifted image.@this values (TryInstantiateValidator/ValidateKind only handle byte[]); the two mismatch .test.goal files pass while asserting nothing. C# Cut2 tests pass only on the raw-byte[] path. Verdict FAIL -> coder."
+        },
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/type/this.cs",
+            "PLang/app/type/text/this.Build.cs",
+            "PLang/app/format/list/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F2 (medium): kind double-written on wire (type entity + Data.Kind sibling). F3-F5 minor: type.Scheme null-deref, text-kind gate at call site, dead CanonicaliseKind fast-path. Build clean, C# 3818/3818, PLang 263/263 on rebuilt-clean binary."
+        }
+      ]
     }
   ]
 }
