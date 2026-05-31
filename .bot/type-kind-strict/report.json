@@ -607,6 +607,30 @@
         "health": "C# 3815/3815, PLang 262/262 (0 fail, 0 stale)",
         "notes": "Re-run codeanalyzer; on PASS chain is codeanalyzer -> tester."
       }
+    },
+    {
+      "id": "codeanalyzer-v2-type-kind-strict",
+      "bot": "codeanalyzer",
+      "timestamp_end": "2026-05-31T00:00:00Z",
+      "verdict": "pass",
+      "next": "tester",
+      "intent": "Re-review coder v8's response to the v1 FAIL (F1 blocking + F2-F5): strict kind enforcement via IStrictKindEnforcer, Data.Kind wire de-dup, Scheme null-guard, text.Build deletion, dead-code removal.",
+      "plan": ".bot/type-kind-strict/codeanalyzer/v2/report.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/data/IStrictKindEnforcer.cs",
+            "PLang/app/type/image/this.cs",
+            "PLang/app/module/variable/set.cs",
+            "PLang.Tests/App/TypeKindStrict/IntegrationCutsTests/Cut2_StrictMismatchFailsAtRightLayer.cs",
+            "PLang.Tests/App/TypeKindStrict/ReferenceFundamentalTests/LazyPathHandleTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1 fixed correctly: read-lift/loaded image fails at set, lazy path-backed throws at BytesAsync load, ValidateKind reads image instances, imprint survives Variables.Set (by-reference). Mutation-verified non-vacuous (forced CheckStrictKind always-pass -> both new tests fail -> revert -> pass; git clean). F2-F5 clean. Build clean, C# 3815/3815, PLang 262/262. PASS -> tester. Three minor non-blocking residuals."
+        }
+      ]
     }
   ]
 }

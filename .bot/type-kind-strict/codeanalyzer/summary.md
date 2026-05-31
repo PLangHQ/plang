@@ -1,6 +1,22 @@
-# codeanalyzer — type-kind-strict (v1)
+# codeanalyzer — type-kind-strict
 
-**Verdict: FAIL** → next: **coder** (F1 blocking). HEAD `502d43d0e`.
+## v2 — **PASS** → next: **tester**. HEAD `fd7ee4812` (coder v8).
+
+Coder v8 fixed all five v1 findings. F1 (blocking) is correct and **mutation-
+verified**: strict `(kind)` rides with the value via `IStrictKindEnforcer` — a
+read-lifted/already-loaded image fails at the `set`; a lazy path-backed image
+throws at `BytesAsync` byte-load (Ingi's ruling); `ValidateKind` now reads a
+loaded `image.@this`, not only `byte[]`; the imprint survives storage
+(`Variables.Set` aliases by reference). Forcing `CheckStrictKind` to always-pass
+flips both new tests to failed (3813/3815), passing again on revert — they
+genuinely guard, unlike the v1 assertion-free goals. F2–F5 clean. Build clean,
+C# 3815/3815, PLang 262/262. Three minor non-blocking residuals noted in
+`v2/report.md` (sync reads don't enforce; no full end-to-end lazy-chain test;
+imprint is process-local) — for the tester to weigh.
+
+---
+
+## v1 — FAIL → coder (F1 blocking). HEAD `502d43d0e`.
 
 Build clean (0 err, no PLNG001/002, no System.IO/Console in changed prod files).
 C# 3818/3818, PLang 263/263 — both green on a rebuilt-clean binary.
