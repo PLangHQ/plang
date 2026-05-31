@@ -31,6 +31,20 @@ OBP isn't a style note you nod at — it's the product. Most of your regressions
 **Out-of-scope shape violations** you spot in surrounding code: don't fix inline — log them to `Documentation/Runtime2/obp-cleanup.md` and keep your diff focused.
 ```
 
+**Second section to add (comment hygiene — separate concern from OBP shape):**
+
+```markdown
+## Comments say what the code IS, not what it WAS
+
+A comment describes current behavior and the *current* reason for a choice — never the history of how the code got here, and never a reference to the task that produced it. The past lives in git; narrating it in the source is noise to the next reader (and to you, six months on).
+
+Don't write:
+- **History:** "renamed from `Foo`", "moved from `app/Memory/`", "was nullable before the merge", "pre-`filesystem→path`".
+- **Task / review / branch references:** "fixes codeanalyzer v2 #1", "per the auditor F3 finding", "stage 7 deliverable", branch names, dates, ticket numbers.
+
+Both are meaningless to a reader without that context and stale the moment the task is forgotten. If a line genuinely needs a *why*, state it as a present fact about the code ("nullable so an unset verb is omitted from the wire"), not the story of who asked for it or what it used to be. Provenance is `git blame`'s job, not the comment's.
+```
+
 ---
 
 ## architect — 2026-05-31 — DOCS RESTRUCTURE (not a CLAUDE.md edit)
