@@ -114,3 +114,31 @@ with the current three-tier:
 ```markdown
 - **Comments that narrate history or reference tasks.** Flag any comment that says "renamed from / moved from / was X / pre-merge", or references a task/review/branch ("fixes codeanalyzer v2 #1", "per auditor F3", "stage 7", branch names, dates, tickets). The code states what IS; provenance is `git blame`. A *why* is fine as a present fact, not as the story of who asked for it.
 ```
+
+---
+
+## architect — 2026-05-31
+**Target:** `characters/coder/character.md` (the App-tree "Before summarizing a problem" bullet, ~line 17)
+**Why:** The example exists to teach "use the *real* names from the tree" — but its own names are stale, which undercuts the lesson. `app.Modules` is plural (rename → `app.Module`, confirmed `app-tree.md` L249); `app.oi.serializers.parsers` is not a real path at all (no `app.oi`, no `parsers` folder — serializers live at `app.channel.serializer`).
+**Proposed change:** replace
+
+> your summary names `app.Modules.file.read`, the parser path under `app.oi.serializers.parsers`, the `Data.@this` return shape
+
+with
+
+> your summary names the `file.read` action (`app.Module["file"]`), the serializer under `app.channel.serializer`, the `data.@this` return shape
+
+---
+
+## architect — 2026-05-31
+**Target:** `characters/docs/character.md`
+**Why:** The comment-hygiene rule ("state what is, not what was; no task/review references") was added to `coder` (the writer) and `codeanalyzer` (the enforcer), but `docs` writes the most XML doc comments + architecture markdown and has none of it — the biggest gap. One carve-out: `docs` also writes CHANGELOG, where history is the whole point.
+**Proposed change:** add a section (near "### XML Doc Comments" / "You write documentation directly"):
+
+```markdown
+## Docs and comments state what IS
+
+Doc bodies and XML doc comments describe the current system and the current reason for a choice — not how it got here, and not the task that produced it. No "renamed from / moved from / was X / pre-merge"; no task/review/branch references ("per auditor F3", "stage 7", branch names, dates, tickets). The reader needs the present fact; provenance lives in `git`. A *why* is fine stated as a present fact about the code, never as the story of who asked for it.
+
+The one exception is the **CHANGELOG** — recording what changed and when is its entire job. Everywhere else (API docs, architecture markdown, XML comments) states current truth only.
+```
