@@ -32,6 +32,8 @@ Today the always-on "primitive" list is the primitive aliases (`text/number/bool
 
 Both always-on in the prompt vocabulary. This is what grounds a developer's `as image` (rule: the LLM recognises it because it's in the set, not by prose-guessing). The kind-vocabulary the LLM may emit narrows to these fundamentals' kinds (text/image/… extensions, number precisions) — not every registered type's `Kinds`.
 
+> **Guardrail — don't grow the registry surface.** `app.type.list.@this` already carries OBP debt (collection-proxy verbs like `BuildTypeEntries`, a name-resolution thicket, `Get`-twins) — tracked in `Documentation/Runtime2/obp-cleanup.md` for a separate pass. This stage must **not add to it**: no new registry verb, no sixth name-resolution door. The prompt-scoping below should move *away* from the all-types `BuildTypeEntries(null)` walk, not pile on.
+
 ### 4. (Confirm, don't rebuild) the runtime is the cross-step memory
 
 `goal.getTypes` walking prior steps → `%stepVarTypes%` → `CompileUser.llm` is the spine and it's correct. This stage only ensures the *right* type flows through it: once `crypto.hash` returns `hash` (stage 7 rev 2), `%bla% (hash)` appears here for free. No change to the mechanism — just verify a producing action's refined `Build()` type (rule 4) is what lands in the map, not the static floor.

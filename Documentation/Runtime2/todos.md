@@ -1,5 +1,7 @@
 # Runtime2 TODOs
 
+> **OBP shape violations** go in their own running collection: `Documentation/Runtime2/obp-cleanup.md` — parked for dedicated passes, not mixed into feature branches.
+
 > **Audited 2026-05-11** (`runtime2-foundation-verify` v1, architect). Every
 > entry in this file was checked against the current code. Resolved entries
 > are marked inline (`✅ RESOLVED`). Entries still open were re-verified and
