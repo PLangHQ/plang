@@ -39,7 +39,12 @@ spelling-kind from explicit `as text/md`); `Schema.Build().Kinds` no longer
 carries hash (stage 8 overrides stage 7 rev 2's wording) — repointed
 `HashType_AdvertisesAlgorithmKinds` to `app.Type["hash"].Kinds`.
 
-**Verification:** C# 3818/3818. PLang `--test` not re-run this session.
+**Verification:** C# 3818/3818. PLang `--test` 263/263 (0 fail, 0 stale). Two
+`as text` `.test.goal` contracts that pinned the pre-stage-8 derive-kind-from-
+extension behavior were updated to the no-kind contract and rebuilt
+(`SetAsTextUppercase`, `SetAsTextWithMdExtension`); the explicit `as
+text/markdown` tests were left unchanged. (One HTTP test, `ConfigHeaders`, is
+flaky — it hits httpbin.org; passed on re-run.)
 
 ---
 
