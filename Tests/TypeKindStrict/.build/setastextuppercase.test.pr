@@ -6,9 +6,9 @@
     {
       "index": 0,
       "text": "set %x% = \u0022readme.md\u0022 as TEXT",
-      "lineNumber": 4,
+      "lineNumber": 6,
       "indent": 0,
-      "comment": "\u0060as TEXT\u0060 (uppercase) \u2192 case-insensitive at the parser\u2192factory boundary.\nType.Name lowercases to \u0022text\u0022.",
+      "comment": "\u0060as TEXT\u0060 (uppercase) \u2192 case-insensitive at the parser\u2192factory boundary.\nType.Name lowercases to \u0022text\u0022. A literal\u0027s spelling is not its kind, so\nthe .md extension does NOT become a kind here (kind only from \u0060as text/\u003Ckind\u003E\u0060\nor a producing action).",
       "actions": [
         {
           "module": "variable",
@@ -58,7 +58,7 @@
     {
       "index": 1,
       "text": "assert %x.Type.Name% equals \u0022text\u0022",
-      "lineNumber": 5,
+      "lineNumber": 7,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -68,14 +68,14 @@
           "parameters": [
             {
               "name": "Expected",
-              "value": "text",
+              "value": "%x.Type.Name%",
               "type": {
-                "name": "text"
+                "name": "object"
               }
             },
             {
               "name": "Actual",
-              "value": "%x.Type.Name%",
+              "value": "text",
               "type": {
                 "name": "object"
               }
@@ -86,36 +86,27 @@
         }
       ],
       "intent": null,
-      "formal": "assert.equals(Expected=\u0022text\u0022, Actual=%x.Type.Name%)",
+      "formal": "assert.equals(Expected=%x.Type.Name%, Actual=\u0022text\u0022)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "assert %x.Type.Kind% equals \u0022md\u0022",
-      "lineNumber": 6,
+      "text": "assert %x.Type.Kind% is null",
+      "lineNumber": 8,
       "indent": 0,
       "comment": null,
       "actions": [
         {
           "module": "assert",
-          "action": "equals",
+          "action": "isNull",
           "parameters": [
             {
-              "name": "Expected",
+              "name": "Value",
               "value": "%x.Type.Kind%",
               "type": {
                 "name": "object"
               }
-            },
-            {
-              "name": "Actual",
-              "value": "md",
-              "type": {
-                "name": "text",
-                "kind": "md"
-              },
-              "kind": "md"
             }
           ],
           "defaults": null,
@@ -123,7 +114,7 @@
         }
       ],
       "intent": null,
-      "formal": "assert.equals(Expected=%x.Type.Kind%, Actual=\u0022md\u0022)",
+      "formal": "assert.isNull(Value=%x.Type.Kind%)",
       "source": null,
       "waitForExecution": true
     }
@@ -132,7 +123,7 @@
   "visibility": 1,
   "path": "/TypeKindStrict/SetAsTextUppercase.test.goal",
   "prPath": "/TypeKindStrict/.build/setastextuppercase.test.pr",
-  "hash": "b7934ddc7e5071f0f0d800dac8a954fabc99971d2a82d4a28253139dbc99a5f2",
+  "hash": "1efdcb6bd9316ea7b4fa6b7062ab8aeb29183ff1c26f8b203a6bcc9d8695d475",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
