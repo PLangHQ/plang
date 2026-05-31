@@ -43,7 +43,6 @@ title still resolve here — search the title in the list below.
 - TransportPropertyFilter — [In] / [Out] Attributes → `wire-serialization.md`
 - ISettings → IConfig Rename → `code-modules.md`
 - IConfigure\<T\> — Build-Time Defaults Pattern → `code-modules.md`
-- PathData — Data Subclass in app/filesystem/ → `data-internals.md`
 - Action Modifiers — Fold + Grouping → `builder-runtime.md`
 - GoalCall — Clone, Never Mutate → `builder-runtime.md`
 - Modifier Hardening Backlog → `builder-runtime.md`
@@ -74,16 +73,19 @@ title still resolve here — search the title in the list below.
 - Multi-segment serializer extension matching → `wire-serialization.md`
 - `IExitsGoal.ShouldExit()` — Value-side opt-out for resolved sentinels → `type-system.md`
 - Recursion guards belong on the value, not on a parallel context layer → `data-internals.md`
-- Typed values — `app/types/<name>/`, per-(type, format) renderers, `type` + `kind` as separate fields → `type-system.md`
+- Typed values — `app/type/<name>/`, per-(type, format) renderers, `type` + `kind` as separate fields → `type-system.md`
 - `app.X` is the collection node — `[name]` / `.list` / `.current` → `type-system.md`
 - Producer-stamping invariant — `Data.Type` propagation → `type-system.md`
 - `type.@this.Null` — non-null sentinel on `Data.Type` → `type-system.md`
 - OBP Naming Principle / Smell Checklist / Variant Design → `obp-smells.md`
 
-## Known stale references (contradiction sweep — TODO, not yet fixed)
-Content moved verbatim; these pre-singular-rename names are stale, tracked for a focused sweep:
-- "Typed values — `app/types/<name>/`" — plural `types` (now `type`).
-- "PathData — Data Subclass in `app/filesystem/`" — `filesystem` (now routed through `path`).
-- Permission/Verb variant example namespace — flagged inline in `obp-smells.md`.
-- General: pre-rename PascalCase/plural names (`app.Goals`→`app.Goal`, etc.) in moved bodies.
+## Contradiction sweep (2026-05-31, confirmed with Ingi)
+Resolved:
+- ✅ **PathData** — confirmed gone (no source). The dead "PathData — Data Subclass in `app/filesystem/`" section was removed from `data-internals.md`.
+- ✅ **`app/types/` → `app/type/`** — plural fixed in `type-system.md` (and this index).
+- ✅ **Permission/Verb namespace** — confirmed `app.type.path.permission` (`permission/verb/{Read,Write,Delete,Execute}.cs`); corrected inline in `obp-smells.md`.
+- ↪ **Event rename (`GoalStepEvents`/`ActionEvents` → `Lifecycle`, `EventList` → `Bindings`)** — still pending; moved to `Documentation/Runtime2/todos.md` so the intent isn't lost.
+
+Still pending (the broad pass):
+- General pre-rename PascalCase/plural names (`app.Goals`→`app.Goal`, etc.) inside moved bodies — safe from CLAUDE.md, do in a focused sweep.
 

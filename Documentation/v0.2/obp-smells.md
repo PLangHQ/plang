@@ -151,7 +151,7 @@ The coverage rule reads as *"if the request needs feature X, the grant must have
 5. **Methods take whole domain objects, not pre-decomposed primitives** — `HasAccess(Path, …)` not `HasAccess(string absolutePath, …)`. The receiver decides which field it needs; pre-decomposing leaks its preference into the call site.
 6. **Verb-named methods are fine when they do real work** — `HasAccess`, `Covers`, `Resolve`, `Open`. The `GetX`/`IsX` smell is property-shaped questions dressed as methods.
 
-> ⚠️ **Stale-naming flag (needs confirm):** this example was written as `App.FileSystem.Permission` (PascalCase, pre `filesystem→path` merge). Under the current singular tree the namespace is different — left as-is pending the correct current path, since I'd rather flag than guess. The *pattern* is current; the literal namespace is illustrative.
+> **Current home:** this pattern is live at **`app.type.path.permission`** — `permission/this.cs` plus `permission/verb/{Read,Write,Delete,Execute}.cs` (note: a fourth verb, `Execute`, alongside the three shown). The folder shape above matches; the namespace root in the older `App.FileSystem.Permission` examples is pre-`filesystem→path`-merge and should read `app.type.path.permission`. The sub-option booleans shown (`Recursive`/`Metadata`/…) are illustrative of the shape, not the exact current fields.
 
 ---
 

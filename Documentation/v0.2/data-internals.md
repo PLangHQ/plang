@@ -30,16 +30,6 @@ See `PLang/app/modules/identity/types.cs` for the class definition.
 
 ---
 
-## PathData — Data Subclass in app/filesystem/
-
-`PathData` extends `Data` — a path IS a Data. It was moved from `app/Memory/` to `app/filesystem/` because it's a file system concept, not a memory concept. `Value` holds file content when set by the file module (e.g., after `file.read`). Path properties (`Extension`, `FileName`, `FileNameWithoutExtension`, `Directory`, `Relative`) are on `PathData` directly, not on `Value`.
-
-The class resolves raw path strings into absolute paths. Relative paths resolve against the goal's folder, not the app root. The source generator detects `Resolve(string, PLangContext)` and auto-wraps string parameters.
-
-See `PLang/app/filesystem/PathData.cs` for the class definition.
-
----
-
 ## Source Generator — OBP shape and incremental cache
 
 `PLang.Generators/` mirrors the per-folder `@this` convention used by the runtime. Entry point is `PLang.Generators/this.cs` (`IIncrementalGenerator`); below it the work splits into Discovery (Roslyn boundary) and Emission (string output):

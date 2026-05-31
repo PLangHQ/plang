@@ -792,3 +792,16 @@ Scope (settled 2026-05-30, Ingi): applies to **every** non-string conversion
 in `ReadText`, not just JSON. The rule is "read returns raw text, materialize
 to the structured shape on first access" — JSON/dict/any non-string CLR target
 all go lazy via the same factory.
+
+## 2026-05-31 — event type/property rename (Lifecycle / Bindings)
+
+Still pending (confirmed on `type-kind-strict` by Ingi). Agreed target naming for the
+event surface, not yet landed:
+- `GoalStepEvents` / `ActionEvents` → `Lifecycle` (one type for all entities)
+- `EventList` → `Bindings`
+- Navigation reads: `goal.Lifecycle.Before.Run(context)`, `step.Lifecycle.After.Run(context)`
+
+Why: `Lifecycle` with `.Before`/`.After` IS a lifecycle (noun = identity); `Bindings`
+with `.Add()`/`.Run()` IS a collection of bindings. Current names describe shape, not
+identity. (Lifted out of the old `good_to_know.md` "OBP Naming Principle" block when it
+was consolidated into `obp-smells.md`, so the intent isn't lost.)
