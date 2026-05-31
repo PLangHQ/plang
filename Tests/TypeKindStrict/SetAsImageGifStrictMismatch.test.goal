@@ -1,10 +1,9 @@
 Start
-/ Strict + literal + mismatched bytes → BUILD error (not runtime).
-/ Requires fixture photo.png (1x1 transparent PNG). The build step itself
-/ must fail with a BuildValidation error; this .test.goal is structured so
-/ that the test runner sees the build failure as the success signal.
-/
-/ The exact test-runner shape for "expects build to fail" is open; if the
-/ runner doesn't have it, this test asserts via a wrapper goal that runs
-/ the builder and checks the error.
+/ A path-backed image reads nothing at the set, so a strict mismatch does NOT
+/ fail here — it is deferred to byte-materialization (first content load). The
+/ set itself is clean; the throw-at-load is covered by the C#
+/ LazyPathHandleTests.BytesAsync_StrictKindMismatch_ThrowsAtLoad. Requires the
+/ committed photo.png fixture.
 - set %img% = "photo.png" as image/gif strict
+- assert %img.Type.Name% equals "image"
+- assert %img.Type.Kind% equals "gif"

@@ -1,7 +1,37 @@
-# coder — type-kind-strict (v1–v7)
+# coder — type-kind-strict (v1–v8)
 
 ## Version
-v7 (Stages 7 rev 2, 8, 9 — see `v7/plan.md`). v6 = stages 6 & 7 rev 1. v1–v5 = original 5 stages.
+v8 (codeanalyzer v1 response — see `v8/plan.md`, `v8/v7_review_summary.md`). v7 = stages 7 rev 2, 8, 9. v6 = stages 6 & 7 rev 1. v1–v5 = original 5 stages.
+
+## v8 — codeanalyzer v1 response
+
+Codeanalyzer FAILed v7 on **F1**: `as image strict` enforced nothing for the two
+realistic value shapes (path literal, read-lifted `image.@this`) — strict only
+fired for raw `byte[]`, so a PNG passed as a strict GIF and the two PLang goals
+"covering" it asserted nothing. **Ingi ruled: validate at byte-materialization,
+throw if strict; `set` stays lazy.**
+
+Fix: a value-side `app.data.IStrictKindEnforcer` (mirrors `IBooleanResolvable`).
+`image` imprints the required kind (`RequireStrictKind`) and self-validates —
+already-loaded (read-lift, raw bytes) fails at the `set`; lazy path-backed throws
+`StrictKindMismatchException` from `BytesAsync` at first content access.
+`ValidateKind` now reads a loaded `image.@this`, not only `byte[]`. `variable.set`
+drives it generically (no image hardcode). Also fixed F2 (dropped the duplicate
+flat `kind` wire sibling on `Data.Kind` — OBP smell #6), F3 (`Scheme` null-guard),
+F4 (deleted `text.Build` — text has no spelling-kind; removed the `!= "text"`
+gate), F5 (dead fast-path + wrapper).
+
+Tests: C# `Cut2.ReadLiftImagePngAsImageGifStrict_FailsAtSet` +
+`LazyPathHandleTests.BytesAsync_StrictKindMismatch_ThrowsAtLoad`; PLang strict
+goals moved to the lazy contract (`...Mismatch` asserts clean-at-set;
+`...RuntimeVarMismatch` deleted — read-lift through a var is path-backed/defers
+and wouldn't build reliably; C# carries the read-lift coverage).
+
+**Verification:** C# 3815/3815. PLang 262/262 (0 fail, 0 stale).
+
+---
+
+## v7 — Stages 7 rev 2, 8, 9 (committed `f08f3760f`, `3c4591b24`, `bee135b30`)
 
 ## v7 — Stages 7 rev 2, 8, 9 (committed `f08f3760f`, `3c4591b24`, `bee135b30`)
 

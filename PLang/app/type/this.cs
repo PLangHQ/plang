@@ -311,7 +311,7 @@ public sealed class @this
     /// <summary>Path-scheme registry for the path entity. Null when this type is not path.</summary>
     [JsonIgnore]
     public global::app.type.path.scheme.@this? Scheme
-        => Name == "path" ? Context.App.Type.Scheme : null;
+        => Name == "path" ? Context?.App.Type.Scheme : null;
 
     // Construct with a stamped ClrType (used by BuildTypeEntries and by the
     // type-list indexer's primitive fallback path; both spare the registry

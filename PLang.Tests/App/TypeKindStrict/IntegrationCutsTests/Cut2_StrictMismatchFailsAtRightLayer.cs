@@ -87,4 +87,32 @@ public class Cut2_StrictMismatchFailsAtRightLayer
         await Assert.That(stored.Type.Kind).IsEqualTo("gif");
         await Assert.That(stored.Type.Strict).IsTrue();
     }
+
+    // A read-lift binds an already-loaded image.@this (not raw bytes). Strict
+    // must sniff the instance's own bytes at the set — the realistic shape the
+    // byte[]-only probe used to miss.
+    [Test] public async Task ReadLiftImagePngAsImageGifStrict_FailsAtSet()
+    {
+        var context = _app.User.Context;
+        var pngImage = new global::app.type.image.@this(PngBytes, "image/png");
+        var action = TestAction.Create("variable", "set",
+            ("name", "%img%"),
+            ("value", pngImage),
+            ("type", Type("image", "gif", true)));
+        var result = await action.RunAsync(context);
+        await result.IsFailure();
+        await Assert.That(result.Error?.Message ?? "").Contains("gif");
+    }
+
+    [Test] public async Task ReadLiftImageGifAsImageGifStrict_Succeeds()
+    {
+        var context = _app.User.Context;
+        var gifImage = new global::app.type.image.@this(GifBytes, "image/gif");
+        var action = TestAction.Create("variable", "set",
+            ("name", "%img%"),
+            ("value", gifImage),
+            ("type", Type("image", "gif", true)));
+        var result = await action.RunAsync(context);
+        await result.IsSuccess();
+    }
 }

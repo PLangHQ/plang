@@ -267,14 +267,16 @@ public partial class @this
     /// <summary>
     /// Build-time subtype refinement — folds through to <see cref="type.Kind"/>
     /// (the entity is the single owner; no stored field on Data). Stays null
-    /// for types without a kind (plain string, polymorphic results). Separate
-    /// JSON field on the wire, never a "type:kind" string. Setting on the
-    /// <see cref="@this.Null"/> sentinel is a no-op — the sentinel is shared
+    /// for types without a kind (plain string, polymorphic results). Setting on
+    /// the <see cref="@this.Null"/> sentinel is a no-op — the sentinel is shared
     /// state; a Data minted with no name + no value has no slot to refine.
+    ///
+    /// <para>Not serialized: kind rides the wire inside the <c>type</c> entity
+    /// (<c>{name, kind?, strict?}</c>). A flat <c>kind</c> sibling would write
+    /// the same value twice (OBP smell #6) — two views that can drift — and
+    /// <c>Wire.ReadBody</c> has no case to read it back.</para>
     /// </summary>
-    [JsonPropertyName("kind")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    [Out, Store]
+    [JsonIgnore]
     public string? Kind
     {
         get => _type?.Kind;

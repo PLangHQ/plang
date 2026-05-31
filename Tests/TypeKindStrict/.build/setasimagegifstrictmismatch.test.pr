@@ -6,9 +6,9 @@
     {
       "index": 0,
       "text": "set %img% = \u0022photo.png\u0022 as image/gif strict",
-      "lineNumber": 10,
+      "lineNumber": 7,
       "indent": 0,
-      "comment": "Strict \u002B literal \u002B mismatched bytes \u2192 BUILD error (not runtime).\nRequires fixture photo.png (1x1 transparent PNG). The build step itself\nmust fail with a BuildValidation error; this .test.goal is structured so\nthat the test runner sees the build failure as the success signal.\n\nThe exact test-runner shape for \u0022expects build to fail\u0022 is open; if the\nrunner doesn\u0027t have it, this test asserts via a wrapper goal that runs\nthe builder and checks the error.",
+      "comment": "A path-backed image reads nothing at the set, so a strict mismatch does NOT\nfail here \u2014 it is deferred to byte-materialization (first content load). The\nset itself is clean; the throw-at-load is covered by the C#\nLazyPathHandleTests.BytesAsync_StrictKindMismatch_ThrowsAtLoad. Requires the\ncommitted photo.png fixture.",
       "actions": [
         {
           "module": "variable",
@@ -25,7 +25,7 @@
               "name": "Value",
               "value": "photo.png",
               "type": {
-                "name": "text"
+                "name": "object"
               }
             },
             {
@@ -56,13 +56,83 @@
       "formal": "variable.set(Name=%img%, Value=\u0022photo.png\u0022, Type={\u0022name\u0022:\u0022image\u0022,\u0022kind\u0022:\u0022gif\u0022,\u0022strict\u0022:true})",
       "source": null,
       "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %img.Type.Name% equals \u0022image\u0022",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "image",
+              "type": {
+                "name": "text"
+              }
+            },
+            {
+              "name": "Actual",
+              "value": "%img.Type.Name%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022image\u0022, Actual=%img.Type.Name%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %img.Type.Kind% equals \u0022gif\u0022",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "gif",
+              "type": {
+                "name": "text"
+              }
+            },
+            {
+              "name": "Actual",
+              "value": "%img.Type.Kind%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022gif\u0022, Actual=%img.Type.Kind%)",
+      "source": null,
+      "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
   "path": "/TypeKindStrict/SetAsImageGifStrictMismatch.test.goal",
   "prPath": "/TypeKindStrict/.build/setasimagegifstrictmismatch.test.pr",
-  "hash": "aefb8bd18418be43d163b1c8d5b8f57758fc9df2a6b5f6a7647f17e3cda97fe4",
+  "hash": "0fc2165307a035f1002f4eee2817896cc7686ebd6f658f1ce44ced639935554b",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

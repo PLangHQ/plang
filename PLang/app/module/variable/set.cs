@@ -147,14 +147,11 @@ public partial class Set : IContext, IBuildValidatable
             // ClrType carries the right mate (typeof(int) for {number, int}).
             var targetType = typeEntity.ClrType ?? Context.App.Type.Get(typeName);
 
-            // Stamp kind from the value ONLY for a reference fundamental the
-            // developer named (`as image` → parse the path → kind=jpg). A bare
-            // literal's spelling is not a kind: `set %x% = "readme.md"` is the
-            // 9-char string "readme.md", not markdown — so `text` never derives
-            // a kind from the value here. The kind for text comes only from an
-            // explicit `as text/<kind>` or a producing action's Build().
-            if (typeEntity.Kind == null && targetType != null
-                && !string.Equals(typeName, "text", StringComparison.OrdinalIgnoreCase))
+            // Stamp kind from the value via the type's Build hook (image parses
+            // its path's extension → jpg; number reads the literal's precision →
+            // int). `text` has no Build hook (a literal's spelling is not its
+            // kind), so a text literal naturally derives nothing here.
+            if (typeEntity.Kind == null && targetType != null)
             {
                 var derivedKind = Context.App.Type.KindHooks.Of(targetType, Value.Value)
                                   ?? (Context.App.Type[typeName] is { ClrType: { } familyClr }
@@ -215,6 +212,25 @@ public partial class Set : IContext, IBuildValidatable
             // strict survive the binding-mint. (The dropped-kind bug fixed
             // by construction: we no longer copy just the name.)
             typedData.Type = typeEntity;
+
+            // Strict kind for a reference fundamental rides WITH the value to its
+            // load seam (Ingi: validate at byte-materialization, throw if strict).
+            // An already-loaded value (read-lift, raw bytes in hand) validates
+            // now; a lazy path-backed value defers — its own load enforces (e.g.
+            // image.BytesAsync throws on mismatch). Raw byte[] slots are handled
+            // separately above via the IKindValidatable probe.
+            if (typeEntity.Strict && typeEntity.Kind != null
+                && typedData.Value is global::app.data.IStrictKindEnforcer enforcer)
+            {
+                enforcer.RequireStrictKind(typeEntity.Kind);
+                if (enforcer.CheckStrictKind() is { ok: false } mismatch)
+                    return Task.FromResult(global::app.data.@this.FromError(
+                        new global::app.error.ServiceError(
+                            $"Strict kind mismatch: declared {typeName}/{typeEntity.Kind}"
+                            + (mismatch.actualKind != null ? $" but content is {mismatch.actualKind}." : "."),
+                            "StrictKindMismatch", 400)));
+            }
+
             CopyProperties(Value, typedData);
             return Task.FromResult(Context.Variable.Set(typedData));
         }

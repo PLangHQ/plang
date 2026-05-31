@@ -15,7 +15,7 @@ namespace app.type.image;
 /// Routing key / serializer always stays <c>image</c>: no <c>path|image</c>
 /// union. See plan/build-vs-runtime.md "composition, not union".</para>
 /// </summary>
-public sealed partial class @this : global::app.data.IBooleanResolvable, global::app.data.IKindValidatable
+public sealed partial class @this : global::app.data.IBooleanResolvable, global::app.data.IKindValidatable, global::app.data.IStrictKindEnforcer
 {
     public static string Example => "/some/photo.jpg";
     public static string Shape => "string";
@@ -24,6 +24,12 @@ public sealed partial class @this : global::app.data.IBooleanResolvable, global:
     // access. A bytes-backed image sets this in the constructor.
     private byte[]? _bytes;
     private string? _mime;
+
+    // Imprinted strict-kind requirement (from `as image/<kind> strict`). When
+    // set, the content must sniff to this kind the moment bytes are present —
+    // checked at the set for an already-loaded image, or at BytesAsync for a
+    // lazy path-backed one (which throws).
+    private string? _requiredKind;
 
     /// <summary>
     /// The in-memory image bytes. For a path-backed image this is empty until
@@ -90,7 +96,25 @@ public sealed partial class @this : global::app.data.IBooleanResolvable, global:
         var read = await Path.ReadBytes();
         if (!read.Success)
             throw new System.IO.IOException(read.Error?.Message ?? $"Could not read image from '{Path}'.");
-        return _bytes = read.Value ?? System.Array.Empty<byte>();
+        _bytes = read.Value ?? System.Array.Empty<byte>();
+        // Strict kind fires here, at byte-materialization — the set stayed lazy.
+        if (CheckStrictKind() is { ok: false } mismatch)
+            throw new global::app.data.StrictKindMismatchException(_requiredKind!, mismatch.actualKind);
+        return _bytes;
+    }
+
+    /// <summary>Imprint the strict kind this image's content must match (from `as image/<kind> strict`).</summary>
+    public void RequireStrictKind(string kind) => _requiredKind = kind;
+
+    /// <summary>
+    /// Sniff the loaded bytes against the imprinted kind. Null when no strict
+    /// kind was required or the bytes are not loaded yet (a lazy path-backed
+    /// image defers enforcement to <see cref="BytesAsync"/>).
+    /// </summary>
+    public (bool ok, string? actualKind)? CheckStrictKind()
+    {
+        if (_requiredKind == null || _bytes == null || _bytes.Length == 0) return null;
+        return ValidateKind(_bytes, _requiredKind);
     }
 
     public async System.Threading.Tasks.Task<bool> AsBooleanAsync()
@@ -115,7 +139,14 @@ public sealed partial class @this : global::app.data.IBooleanResolvable, global:
     /// </summary>
     public (bool ok, string? actualKind) ValidateKind(object value, string requiredKind)
     {
-        var bytes = value as byte[] ?? Bytes;
+        // Sniff the realistic value shapes: raw byte[], or a loaded image
+        // instance (read-lift) — read its own bytes, not the probe's empty ones.
+        var bytes = value switch
+        {
+            byte[] b => b,
+            @this img => img.Bytes,
+            _ => Bytes
+        };
         if (bytes == null || bytes.Length == 0) return (false, null);
         try
         {

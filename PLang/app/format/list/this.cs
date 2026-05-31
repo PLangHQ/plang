@@ -495,9 +495,7 @@ public sealed class @this
     {
         if (string.IsNullOrWhiteSpace(kind)) return null;
         var lower = kind.Trim().ToLowerInvariant();
-        // Already an extension we know? Return as-is.
-        if (_extensionToMime.ContainsKey(lower)) return lower;
-        // Otherwise: is this a MIME subtype (e.g. "markdown" for text/markdown,
+        // Is this a MIME subtype (e.g. "markdown" for text/markdown,
         // "jpeg" for image/jpeg)? Find every extension whose MIME subtype
         // matches, pick the shortest (jpg < jpeg) — the primary extension wins
         // when two share a MIME.

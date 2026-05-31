@@ -1,6 +1,0 @@
-Start
-/ Strict + %var% + runtime-resolved-to-PNG → builds clean, runtime typed error.
-/ ValidateBuild defers because of the %var% reference; Run resolves the upload,
-/ calls image.ValidateKind, fails with "expected gif, got png".
-- read photo.png into %upload%
-- set %img% = %upload% as image/gif strict

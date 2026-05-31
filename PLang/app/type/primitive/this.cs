@@ -137,15 +137,7 @@ public static class @this
     /// types are surfaced separately via schemas; their kinds never join the
     /// always-on table.
     /// </summary>
-    public static IReadOnlyList<string> BuilderNames { get; } = BuildBuilderNames();
+    public static IReadOnlyList<string> BuilderNames { get; } =
+        InlineFundamentals.Concat(ReferenceFundamentals).ToList();
 
-    private static IReadOnlyList<string> BuildBuilderNames()
-    {
-        // The fundamental vocabulary, inline first then reference. This is the
-        // small always-on set the LLM picks from when it must tag a value — not
-        // the full catalog of every alias (`integer`, `csv`, `map`, …), which
-        // are kinds or registry aliases, not names the LLM emits. `string`
-        // canonicalises to `text`; the numeric precisions are kinds of `number`.
-        return InlineFundamentals.Concat(ReferenceFundamentals).ToList();
-    }
 }

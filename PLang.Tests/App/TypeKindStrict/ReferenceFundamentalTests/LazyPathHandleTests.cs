@@ -26,6 +26,16 @@ public class LazyPathHandleTests
 
     private static readonly byte[] PngHeader = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 
+    // A full 1x1 PNG (ImageSharp DetectFormat identifies it as png).
+    private static readonly byte[] Png1x1 =
+    {
+        0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,
+        0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x06,0x00,0x00,0x00,0x1F,0x15,0xC4,
+        0x89,0x00,0x00,0x00,0x0D,0x49,0x44,0x41,0x54,0x78,0x9C,0x62,0x00,0x01,0x00,0x00,
+        0x05,0x00,0x01,0x0D,0x0A,0x2D,0xB4,0x00,0x00,0x00,0x00,0x49,0x45,0x4E,0x44,0xAE,
+        0x42,0x60,0x82
+    };
+
     [Test] public async Task SetAsImage_MintsPathBackedHandle_NoReadAtSet()
     {
         // The file does NOT exist. If `set` read it, this would error — it
@@ -72,6 +82,22 @@ public class LazyPathHandleTests
 
         // The read failure surfaces here, at first content access.
         await Assert.That(async () => await img.BytesAsync()).Throws<System.Exception>();
+    }
+
+    [Test] public async Task BytesAsync_StrictKindMismatch_ThrowsAtLoad_NotAtConstruction()
+    {
+        var context = _app.User.Context;
+        System.IO.File.WriteAllBytes(System.IO.Path.Combine(_app.AbsolutePath, "shot.png"), Png1x1);
+
+        // Path-backed handle declared `as image/gif strict`: nothing read at
+        // construction, so no error yet — the strict requirement is imprinted.
+        var img = new image(global::app.type.path.@this.Resolve(
+            System.IO.Path.Combine(_app.AbsolutePath, "shot.png"), context));
+        img.RequireStrictKind("gif");
+
+        // The mismatch (png content behind a strict gif) surfaces at byte-load.
+        await Assert.That(async () => await img.BytesAsync())
+            .Throws<global::app.data.StrictKindMismatchException>();
     }
 
     [Test] public async Task BytesBacked_Image_Unchanged_NoPathRead()

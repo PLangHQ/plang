@@ -551,6 +551,62 @@
           "context": "F2 (medium): kind double-written on wire (type entity + Data.Kind sibling). F3-F5 minor: type.Scheme null-deref, text-kind gate at call site, dead CanonicaliseKind fast-path. Build clean, C# 3818/3818, PLang 263/263 on rebuilt-clean binary."
         }
       ]
+    },
+    {
+      "id": "9542baaa-007f-4e87-a7f9-084f6111ea2f",
+      "bot": "coder",
+      "timestamp_start": "2026-05-31T18:00:00Z",
+      "timestamp_end": "2026-05-31T20:00:00Z",
+      "intent": "Address codeanalyzer v1 findings F1-F5 (F1 blocking: strict kind must validate at byte-materialization).",
+      "before": {
+        "assumptions": "v7 green but strict as-image enforced nothing for path-literal and read-lift shapes; Ingi ruled validate-at-byte-load.",
+        "risk": "Strict enforcement spans set (loaded) and BytesAsync (lazy); image must carry its requirement; PLang goals encode the old contract."
+      },
+      "plan": ".bot/type-kind-strict/coder/v8/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/data/IStrictKindEnforcer.cs",
+            "PLang/app/type/image/this.cs",
+            "PLang/app/module/variable/set.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1: value-side IStrictKindEnforcer; image imprints+self-validates (set for loaded, BytesAsync throw for lazy); ValidateKind reads image.@this; set.cs drives generically."
+        },
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/type/this.cs",
+            "PLang/app/type/text/this.Build.cs",
+            "PLang/app/type/primitive/this.cs",
+            "PLang/app/format/list/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "F2 drop flat kind wire sibling; F3 Scheme null-guard; F4 delete text.Build + remove gate; F5 dead fast-path + wrapper."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/TypeKindStrict/IntegrationCutsTests/Cut2_StrictMismatchFailsAtRightLayer.cs",
+            "PLang.Tests/App/TypeKindStrict/ReferenceFundamentalTests/LazyPathHandleTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TextTypeTests/TextBuildHookTests.cs",
+            "Tests/TypeKindStrict/SetAsImageGifStrictMismatch.test.goal",
+            "Tests/TypeKindStrict/SetAsImageGifStrictRuntimeVarMismatch.test.goal"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "C# read-lift-fails-at-set + BytesAsync-throws-at-load; deleted TextBuildHookTests; PLang strict goals to lazy contract (Mismatch clean-at-set; RuntimeVarMismatch deleted)."
+        }
+      ],
+      "after": {
+        "status": "F1-F5 addressed",
+        "health": "C# 3815/3815, PLang 262/262 (0 fail, 0 stale)",
+        "notes": "Re-run codeanalyzer; on PASS chain is codeanalyzer -> tester."
+      }
     }
   ]
 }
