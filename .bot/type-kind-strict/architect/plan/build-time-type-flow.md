@@ -19,6 +19,18 @@ PLang is higher-level than C# — it is *for* files, media, web, AI — so `imag
 
 Both groups are always-on in the small vocabulary (~16 names). The split is not cosmetic: it's exactly why the kind-parsing rule (rule 1) fires only for the reference group — a reference value carries a path whose extension is a real format signal; an inline literal's spelling is just characters. (`bytes` is borderline — base64 is sort-of-writable — but behaves like a reference fundamental.)
 
+### Reference fundamentals are lazy handles at runtime
+
+The "you only write a reference" shape carries through to runtime. `- set %x% = "file.jpg" as image` does **not** read the file:
+
+1. `variable.set` runs, sees declared `type = image`.
+2. Mints an `image` value, sets its `.Path = "file.jpg"`.
+3. Returns it. **No I/O.**
+
+`%x%` is a lazy handle — it knows *where* it is, not yet *what* it is. The bytes/decode/dimensions materialize from `.Path` only when something needs the content (a later step that reads width, pixels, etc.). This is the same lazy philosophy as file-read-returns-raw; an `image` is essentially a `path` plus lazily-decoded content, and holding one costs nothing. (What happens when a step *mutates* the loaded content — and how the value then diverges from its backing file — is deliberately out of scope here; parked.)
+
+Implementation: [stage 8 is build-time; the runtime lazy handle is stage 9](../stage-9-lazy-reference-handles.md).
+
 ## The four rules
 
 1. **Kind source.** A type's `kind` comes from exactly two places: the developer's explicit `as name/kind`, or a **producing action's `Build()`** reading the real content/path. **Never** inferred from a bare literal's spelling. (`read file.md` → `{text, md}` is true — the value *is* markdown. `set %x% = "file.md"` → `{text}` — the value is the 7-char string "file.md", which is not markdown.)

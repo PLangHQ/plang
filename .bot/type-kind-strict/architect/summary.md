@@ -1,5 +1,24 @@
 # Architect — type-kind-strict
 
+## 2026-05-31 — stage 9: reference fundamentals are lazy path-handles at runtime
+
+Ingi walked the runtime of `- set %x% = "file.jpg" as image`: mint an `image`, set `.Path = "file.jpg"`, return it — **no file read**; content loads only when needed (a later step touching width/pixels). Carved **stage 9** for it.
+
+Two real divergences found: (1) `image`'s constructor requires bytes (`Path` is just provenance) — needs path-backed lazy construction where `Bytes` loads from `.Path` on first access; (2) `variable.set` today mints a plain `Data<string>` annotated image for `as image` (a string-typed-image), not an actual image with `.Path` — that carve-out is what stage 9 replaces. The wrinkle I flagged for coder: lazy load from a path is **async I/O through the auth gate**, but `Bytes`/`Width`/`Height` are sync getters — so the path-backed content surface must be async (no sync-over-async), same reasoning as `IBooleanResolvable` making conditions async. Errors (missing file, bad decode) surface late at first access (consistent with lazy); cheap path-string validation can still fail at set.
+
+Mutation/save (`set width to 200` → divergence from the backing file, copy-on-write, origin-vs-destination path) **explicitly parked** per Ingi — captured as a follow-up in stage 9, not designed.
+
+Pushed `20f58d979` earlier (stages 7 rev2, 8, model doc). Stage 9 is local/unpushed at session end.
+
+Stage status:
+| Stage | File | Status |
+|-------|------|--------|
+| 1–5 | (see plan index) | complete (coder v1–v5) |
+| 6 | [structured type at producers](stage-6-structured-type-producers.md) | done by coder, reviewed clean |
+| 7 | [the `hash` type](stage-7-hash-type.md) | rev 2 written — needs redo |
+| 8 | [type flow + vocabulary](stage-8-type-flow-and-vocabulary.md) | pending |
+| 9 | [lazy reference handles](stage-9-lazy-reference-handles.md) | pending (unpushed) |
+
 ## 2026-05-31 — settled the build-time type-flow model; stage 8 carved
 
 Long design conversation with Ingi that pulled up from C# to the flow. Settled model written to [plan/build-time-type-flow.md](plan/build-time-type-flow.md). Key things that landed:

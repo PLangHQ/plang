@@ -356,7 +356,7 @@
       "id": "8b38c0bb-0cdf-43b8-815b-0e67f1ce0b6d",
       "bot": "coder",
       "timestamp_start": "2026-05-30T22:30:00",
-      "timestamp_end": "2026-05-31T12:00:00Z",
+      "timestamp_end": "2026-05-31T13:30:00Z",
       "intent": "Ship Stages 6 & 7: hash type (algorithm-as-kind) + structured {name,kind} at the file/http producers via one shared derivation.",
       "before": {
         "assumptions": "Stage 7 already committed (62a23c4e7); Stage 6 producer migration was in-progress (file.read + path done, http pending).",
@@ -417,10 +417,22 @@
           "category": "doc",
           "confidence": "high",
           "context": "Settled the build-time type-flow model with Ingi (spine: runtime is cross-step memory, LLM compiles each step independently; two fundamental categories inline-vs-reference; four rules incl. kind-only-from-as-or-producing-Build and bare-literal->text-no-kind). Wrote the model topic doc + stage 8 mapping divergences: variable.set literal rule, CompileUser.llm teaching, per-step prompt scoping (subsumes stage 7 emit-table fix), define fundamental vocabulary with image/video/audio/path first-class."
+        },
+        {
+          "paths": [
+            ".bot/type-kind-strict/architect/stage-9-lazy-reference-handles.md",
+            ".bot/type-kind-strict/architect/plan/build-time-type-flow.md",
+            ".bot/type-kind-strict/architect/plan.md",
+            ".bot/type-kind-strict/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 9 (with Ingi): reference fundamentals are lazy path-handles at runtime. set %x%=\"file.jpg\" as image mints an image with .Path set, no read; content loads from path on first access. Divergences: image ctor requires bytes (needs path-backed lazy); variable.set mints Data<string> carve-out instead of a path-handle image. Flagged the async wrinkle (lazy load is async I/O through auth gate; Bytes/Width/Height sync getters need async content surface). Mutation/save parked per Ingi."
         }
       ],
       "after": {
-        "status": "Stages 6 (clean), 7 rev 2 (hash value-type+relocate), 8 (type flow) defined. Awaiting Ingi: push + handoff order.",
+        "status": "Stages 6 clean; 7 rev2, 8, 9 defined and pending coder. Stage 9 unpushed.",
         "health": "green",
         "notes": "Model in plan/build-time-type-flow.md. Nothing pushed (Ingi holding)."
       }
