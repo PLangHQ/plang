@@ -38,3 +38,35 @@ Each entry: **location · the smell · the OBP-clean target · status · found-i
 - **Kill the `Get`-twins** — keep the noun (`ValidValues`, `BuilderNames`), drop the `Get`-prefixed double.
 
 **Guardrail meanwhile:** branches touching this file must not *grow* the surface — no new registry verb, no sixth name-resolution door. (Stage 8's prompt-scoping already moves *away* from the all-types `BuildTypeEntries(null)` walk — good direction.)
+
+---
+
+## 2. Module `type/` entity files break the `@this` convention
+
+**Location:** `PLang/app/module/<m>/type/<name>.cs` — e.g. `identity/type/identity.cs`, and siblings `http/type/http.cs`, `settings/type/settings.cs`, `math/type/math.cs`, `output/type/output.cs`, `loop/type/loop.cs`, `module/type/module.cs`, `list/type/list.cs`.
+
+**Found-in:** `type-kind-strict` (2026-05-31, Ingi).
+
+**Status:** open — cleanup/todo, not for `type-kind-strict`.
+
+**The smell:** the convention is "a folder's primary class is `@this` in `this.cs`." A `type/` folder that holds **one entity** (e.g. `identity/type/identity.cs` describing the identity object) should be `type/this.cs` (`app.module.identity.type.@this`). Some of the siblings are different — `http/type/http.cs` holds a *bag of enums* (`HttpMethod`, `StreamFormat`, …), not a single entity, so it isn't the same violation. Review each: single-entity `type/` folders → rename to `this.cs`; enum/param bags can stay (or move to a clearer name).
+
+**Note:** `data-internals.md`'s IdentityData section currently points at `identity/type/identity.cs` (the real file as it stands). When renamed to `this.cs`, update that pointer.
+
+---
+
+## 3. `path.permission.verb` — nullable verbs vs the always-present variant rule
+
+**Location:** `PLang/app/type/path/permission/verb/this.cs` (`Read? Read`, `Write? Write`, `Delete? Delete`, `Execute? Execute`; `WhenWritingNull` omits unset verbs from the wire).
+
+**Found-in:** `type-kind-strict` (2026-05-31). Surfaced reconciling `obp-smells.md` variant-design rule #3 ("variants always-present, non-nullable; never nullable as granted/not-granted signaling") against the live code, which does exactly that.
+
+**Status:** open — cleanup/todo, not for `type-kind-strict`. Security-sensitive and orthogonal to the branch. The A-vs-B call (below) is made when the pass runs; Ingi leans B. Don't change inline now.
+
+**The catch (why it's not a one-line fix):** the nullable is doing real work — **verb-level revoke**. `Read(Recursive:false, Metadata:false)` still grants basic single-file read (`Covers` returns true for a minimal read request), so an always-present-with-booleans model **cannot express "no read at all"** — only `null`/absence can. Removing `?` alone breaks revocation.
+
+**The two coherent shapes:**
+- **(A) Nullable = set membership.** Present verb = granted (with options); absent = denied. Compact wire (denied verbs omitted). Complete *given the verb vocabulary*. The cost Ingi flagged: absence is implicit — you can't distinguish "denied" from "data-loss" on the wire. If this is right, **narrow `obp-smells.md` rule #3** to "single-value variants, not set-membership grants."
+- **(B) Always-present + explicit per-verb grant flag.** Every verb serialized; a `Granted`/`Allowed` bool (or equivalent) says yes/no explicitly, and revocation is `Granted = false`. Verbose wire, fully self-describing — Ingi's "serialize the verb so we know the permission." If this is right, **change the code** and keep rule #3.
+
+Ingi's lean ("code is wrong, we should serialize the verb") points at **(B)**. Confirm, and whether the cleaner flag lives per-verb or on the `verb.@this` container.
