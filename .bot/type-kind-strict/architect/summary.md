@@ -1,5 +1,37 @@
 # Architect — type-kind-strict
 
+## 2026-05-31 — settled the build-time type-flow model; stage 8 carved
+
+Long design conversation with Ingi that pulled up from C# to the flow. Settled model written to [plan/build-time-type-flow.md](plan/build-time-type-flow.md). Key things that landed:
+
+- **The spine:** each step compiles as an independent LLM call with no memory of prior steps. The builder *runtime* is the cross-step memory — it walks built steps and feeds `%bla% (hash)` into the next step's prompt (`goal.getTypes → %stepVarTypes%`). So the prompt is rebuilt per step and should carry only what that step needs.
+- **Two categories of fundamental type**, by one question — can you write the value inline, or only a reference to it? Inline: `text/number/bool/object/list/dict/datetime/...`. Reference: `image/video/audio/path` (you write a path, never the bytes). Ingi's realization ("you can write `true` but not image data, only the path") is the clean axis. Both are fundamental — PLang is domain-elevated, so media+path are first-class, unlike C#.
+- **Four rules:** (1) kind only from explicit `as` or a producing action's `Build()` reading real content — never from a bare literal's spelling; (2) bare literal → value-shape type, no kind (`set "file.jpg"` → `text`, NOT image — kills the spelling-promotion magic); (3) per-step prompt = small vocabulary + step-action types + in-scope types, never the full catalog; (4) types enter on action returns (refinable by `Build()`), never developer-declared for result types like `hash`.
+
+Carved **stage 8** to map this to where the code diverges: the `variable.set` literal rule + `Build()`, the `CompileUser.llm` teaching (drop spelling-promotion), per-step prompt scoping (replaces stage 7's narrower hash-out-of-emit-table), and defining the fundamental vocabulary in two categories with `image/video/audio/path` first-class. Stage 8's scoping subsumes part of stage 7; noted in both files.
+
+Nothing pushed (Ingi holding pushes). Stages 6 (clean), 7 rev 2 (hash value-type + relocation), 8 (type flow) are the open work.
+
+Stage status:
+| Stage | File | Status |
+|-------|------|--------|
+| 1–5 | (see plan index) | complete (coder v1–v5) |
+| 6 | [structured type at producers](stage-6-structured-type-producers.md) | done by coder, reviewed clean |
+| 7 | [the `hash` type](stage-7-hash-type.md) | rev 2 written — needs redo (return `hash.@this`, relocate) |
+| 8 | [type flow + vocabulary](stage-8-type-flow-and-vocabulary.md) | pending |
+
+## 2026-05-31 — reviewed coder's stages 6–7; stage-7 rewritten (rev 2)
+
+Coder shipped both stages (commit `21e887a3d`/`62a23c4e7`, green 3810/263). **Stage 6 is clean** — shared `TypeFromMime`/`TypeFromExtension` derivation, `file.read` + `http` build==runtime, correct `{name,kind}`; lazy materialization + http runtime-body stamp deferred per Ingi. Ship it.
+
+**Stage 7 had one root defect with four faces, plus the placement error I introduced.** Coder followed my rev-1 doc and (a) put `hash` in `app/type/` (builtin) and (b) had `crypto.hash` return `Data<byte[]>` stamped `type=hash`. The `byte[]` return is the single root: it made the new serializer dead (Normalize dispatches by value CLR type → `bytes`, never `hash`), broke `verify %data% against %h%` in the real flow (`byte[]`→string has no base64 path → `FromBase64` throws; the test hid it by manually base64-encoding), and mismatched ClrType.
+
+Ingi's framing closed it: the point of `hash` is **build-time type flow** — `hash %ble% write to %bla%` should make the builder show `%bla% (hash)` when compiling the next `verify %bla%`. Traced the chain: `crypto.hash.Run()` return type → `goal.getTypes.DetermineReturnType` → `chainReturnType` → `variable.set %!data%` → `%stepVarTypes%` → `CompileUser.llm`. Today the return is `Data<byte[]>` → builder shows `%bla% (bytes)`.
+
+So **one change is the spine**: `crypto.hash` returns `Data<hash.@this>`. It delivers the `%bla% (hash)` annotation *and* fixes all three runtime faces at once. Rev-2 stage-7 written around that, plus: relocate `hash` → `app/module/crypto/type/` (confirm registry still resolves it via the return signature like `http.response`), wire read-back via `type.Convert` reading `Kind`, and replace the dishonest verify test with a real round-trip. Verify *split* (encoding+equality on the type, recompute in crypto) was correct — kept.
+
+Open thread, deferred: the LLM **emit** kind-vocab table now lists hash's algorithms, but hash is produced-not-emitted — result-types leaking into the emit vocabulary. Distinct from the (wanted) variables-in-scope annotation.
+
 ## 2026-05-30 — producers gap found; stages 6–7 carved (file.read + http + hash)
 
 Coder landed stages 1–5 (entity `{Name,Kind,Strict}`, `text` canonical for `string`, kind derivation, `variable.set` takes a `type`, LLM rendering) and unified the wire to **one structured `type` field** `{name, kind?, strict?}` (commit `42b8430d6`) — the old "two flat keys" wording in this plan is superseded by that.

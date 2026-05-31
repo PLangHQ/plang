@@ -1,73 +1,64 @@
-# Stage 7: The `hash` type — algorithm-as-kind
+# Stage 7 (rev 2): The `hash` type — module-owned, returned as a value
 
-> **Coder/test-designer: you own the final shape.** Settled: `hash` is a first-class type, the algorithm is its `kind`, and verification reads the algorithm off the value instead of taking it as a loose parameter. Whether the value is a `hash.@this` entity or bare bytes + a kinded type, and whether verify lives on the type or stays a crypto action, is yours — the constraint is that the kind carries the algorithm and verify uses it.
+> **Coder: you own the final shape.** Settled: `hash` is a **crypto-owned** type (lives under the module, not `app/type/`), and `crypto.hash` **returns a `hash.@this` value** (not `byte[]`). That single return-type change is the spine of this rev — it drives the build-time annotation Ingi wants *and* fixes the runtime defects rev 1 shipped. Method names and the exact read-back seam are yours.
 
-**Goal:** Introduce `hash` as a type whose `kind` is the hashing algorithm, so a digest value knows how to be verified. `crypto.hash` produces it; `crypto.verify` reads the algorithm off the value instead of requiring it as a separate parameter.
-**Scope:** Included — a `hash` type (`PLang/app/type/hash/`), **registration in the supported type list** (so the builder/LLM and the registry both know `hash` exists — see §"Register in the supported type list"), its `Kinds` vocabulary (the supported algorithms), `crypto.hash` (`code/Default.cs`) returning the structured type, `crypto.verify` reading the kind. Excluded — `encrypt`/`decrypt` (still opaque `byte[]` pass-throughs, no kind); the extension-derived producers (stage 6 — `hash`'s kind is *not* extension-derived).
-**Deliverables:** the `hash` type; `hash` listed in the supported types the builder/LLM sees and resolvable through the type registry; `crypto.hash` stamps `{name: hash, kind: <algorithm>}`; `crypto.verify` defaults the algorithm from the hash value's kind.
+**Goal:** A `hash` is a digest that knows its algorithm. `crypto.hash` returns a `hash` value so (1) the **builder annotates the write-to variable as `%x% (hash)`** for later steps, and (2) `crypto.verify` reads the algorithm off the value instead of a loose parameter.
+**Scope:** Included — relocate the `hash` type to `app/module/crypto/type/`; change `crypto.hash` to return `Data<hash.@this>`; the wire read-back (string+kind → `hash.@this`); a real verify round-trip test. Excluded — `encrypt`/`decrypt`; the extension-derived producers (stage 6).
+**Dependencies:** Stages 1–2. Independent of stage 6.
 
-**Name is settled:** `hash`, not `checksum` (Ingi, 2026-05-30) — these are cryptographic digests in the signing path; a non-crypto CRC would just be a `crc32` *kind* of `hash`.
-**Dependencies:** Stages 1–2 (`type.@this` carries `Name`/`Kind`; `Kinds` vocabulary fold). Independent of stage 6.
+## Why — build-time type flow is the point
 
-## Why
-
-`crypto.hash` (`code/Default.cs:65`) returns `Data<byte[]>` stamped `FromName(algorithm)` — the algorithm lands in the *type-name* slot on a bytes value. Two things wrong: the name should describe what the value *is* (a hash), and the algorithm is a *kind*, not a name.
-
-It matters because of verification. `crypto.verify` today (`verify.cs`) makes the developer pass the algorithm *separately* from the hash string:
+The payoff isn't runtime verification, it's the **builder**. When a developer writes:
 
 ```
-verify %data% against %hash%, algorithm "sha256"   ← algorithm decoupled from the hash; easy to mismatch
+- hash %ble%, write to %bla%
+- verify %bla% against ...
 ```
 
-A digest is meaningless for verification without knowing which algorithm produced it. So the algorithm belongs *on the value* — as its `kind`. Then verify reads it:
+the LLM compiling the *second* step is shown "Variables in scope (from prior steps)" — `CompileUser.llm` renders `` `%bla%` (<type>) `` from `%stepVarTypes%`. We want it to read `%bla% (hash)`.
 
-```
-verify %data% against %hash%      ← %hash% is {name:hash, kind:sha256}; verify recomputes with sha256
-```
+I traced the chain end to end:
 
-This is the `image`/`number` pattern (kind that the value owns), not the extension-derived `text`/`file` pattern — which is why it's a separate stage from 6.
+`crypto.hash.Run()` return type → `goal.getTypes.DetermineReturnType()` reflects `Run()` (`Task<Data<T>>` → `T` → `GetTypeNameStatic(T)`) → `chainReturnType` → the paired `variable.set Value=%!data%` records `working["bla"]` → `varTypes[stepIndex]` → `%stepVarTypes%` (`BuildStep/Start.goal:19-20`) → `CompileUser.llm:17`.
 
-## Design
+Today `crypto.hash` returns `Data<byte[]>`, so `DetermineReturnType` yields `"bytes"` and the builder shows `%bla% (bytes)`. To get `%bla% (hash)`, the return type must be `hash`.
 
-### The `hash` type
+## The one change everything hangs on
 
-A scalar type, folder `PLang/app/type/hash/`, primary class `app.type.hash.@this`. Mirrors the `path`/`image` precedent (a typed value with its own behavior and rendering):
+**`crypto.hash` returns `Data<hash.@this>`** — value `new hash.@this(bytes, algorithm)`, type stays `Create("hash", kind: algorithm)`. This single change delivers four things at once; rev 1 returned `byte[]` and got none of them:
 
-- **Wraps the digest** — the raw `byte[]`. Renders to a canonical string (base64 matches the existing `verify` which does `Convert.FromBase64String`; hex is the other common choice — coder picks, but it must round-trip with verify). `Shape = "string"` (string-shaped scalar, like `path`).
-- **`kind` = the algorithm** (`sha256`, `keccak256`). The single owner of the algorithm is the value; the `type.@this.Kind` is stamped from it at construction (one mirrored field — the accepted `image.mime`-style cost, not the #6 flat-copy smell).
-- **`Kinds` vocabulary** — the advertised list of supported algorithms (`keccak256`, `sha256` today), via the static `Kinds` property the entity folds. This is *advertised*, not extension/literal-derived, so **no `Build` hook** (unlike `text`/`image`). The LLM emits the algorithm as the kind when the step names it.
-- **Behavior on the type** — verification is hash behavior; per OBP it belongs on the value. A `Verify(input)` / equality member on `hash.@this` recomputes from the algorithm and compares. `crypto.verify` can then be a thin caller, or the type owns it outright. (Recompute logic stays shared with `crypto.hash` — don't fork the algorithm switch.)
+1. **Build annotation** — `DetermineReturnType` → `"hash"` → `%bla% (hash)` in the next step's compile prompt. *(Ingi's ask.)*
+2. **Live serializer** — Normalize dispatches by the *value's* CLR type (`this.Normalize.cs:158`). A `byte[]` resolves to `bytes`, so the `hash` serializer rev 1 wrote can never fire. A `hash.@this` value resolves to `hash` → the serializer renders base64.
+3. **Verify works in the real flow** — `verify %data% against %h%` binds `%h%` (now a `hash.@this`) into `Hash` (`data.@this<string>`); `As<string>` hits the implicit `operator string` → base64 → `FromBase64` succeeds. With `byte[]`, `As<string>` has no base64 path → `ToString()` → `"System.Byte[]"` → `FromBase64` throws. *(Rev 1's verify test hid this by manually base64-encoding — see below.)*
+4. **ClrType matches the value** — `hash` resolves to `hash.@this`; the carried value is `hash.@this`. No name/value mismatch.
 
-### Register in the supported type list
+### Wire read-back
 
-`hash` must show up wherever the existing first-class types (`image`, `path`, `number`) do, so the builder/LLM can emit it and the registry can resolve it:
+Once the value is `hash.@this`, the wire form is a base64 string with `type:{hash, kind}`. Reconstruct on read via the type's own `Convert` (it has the entity, so it has `Kind`): `hash.FromBase64(raw, this.Kind)`. Don't route read-back through a `Resolve(string, ctx)` that can't see the algorithm — the kind is on the type, and `Convert` is where the type can read it.
 
-- **Type registry** — `app.type.list.@this` must resolve `app.Type["hash"]` to the entity. Folder-based `@this` types are normally discovered by the catalog walk (`BuildTypeEntries` / the `@this`-convention name); confirm `hash` lands there and isn't dropped (the collision/seed logic in `type/list/this.cs`).
-- **The LLM-facing supported-types list** — the vocabulary the builder teaches (stage 5's `app.builder.type.@this` / `TypeSchemas`, and `primitive.@this.BuilderNames` if that's the seam the catalog draws from). Whatever surface currently lists `image`/`number`/`text` as available type names, `hash` joins it, with its `Kinds` (the algorithms) advertised the same way `number` advertises `int|long|…`.
-- Don't register `hash` as a *primitive alias* (it's not a string/bytes alias the way the retired `csv` hack was) — it's a real type with behavior, registered like `image`.
+## Relocation — `hash` is crypto-owned
 
-### `crypto.hash`
+Move `app/type/hash/` → `app/module/crypto/type/hash/` (mirrors `http/type/`, `settings/type/`, etc. — eight modules already do this; `app/type/` is reserved for the **builtin** vocabulary). The name still resolves to `hash` (the `@this`/class-name convention is location-independent).
 
-Replace the return stamp:
+**Confirm discovery survives the move:** `hash` is a *result* type — the registry should know it because it appears in `crypto.hash`'s return signature (the catalog walk over module signatures, the same way `http.response` is known), not because it sits in `app/type/`. The `HashType_Resolves_ViaRegistry` test (`app.Type["hash"].ClrType == typeof(hash.@this)`) must still pass after the move. If signature-discovery alone doesn't register it, that's the real work of this stage — wire the module-type into the registry walk; do **not** solve it by leaving `hash` in `app/type/`.
 
-```csharp
-// today
-return data.@this<byte[]>.Ok(hashBytes, type.@this.FromName(algorithm));
-// stage 7 — value is a hash; algorithm is its kind
-return data.@this<hash>.Ok(hashValue, type.Create("hash", kind: algorithm));
-```
+## The `hash` type shape — keep rev 1's, it was right
 
-The unsupported-algorithm error path stays (it already rejects anything outside the switch); the supported set *is* the `Kinds` vocabulary — keep them in one place so the switch and the advertised list can't drift.
+The type itself (rev 1) is good and stays, just relocated: `byte[] Bytes` + `string Algorithm` (the algorithm *is* the kind), `ToBase64`/`FromBase64`/`DigestEquals`, implicit `string`, `Shape="string"`, advertised `Kinds = [keccak256, sha256]`. The verify *split* is correct — the type owns encoding + byte-equality, `crypto.Default` owns the recompute (the algorithm switch). Don't change that.
 
-### `crypto.verify`
+## Fix the verify test — make it a real round-trip
 
-- The `Algorithm` parameter becomes **optional** — when the `Hash`/digest value carries `{name: hash, kind: …}`, default the algorithm from that kind. An explicit `Algorithm` still overrides (and a bare base64 string with no kind still needs it, as today).
-- Recompute with the resolved algorithm, compare. Same `SequenceEqual` as today.
+Rev 1's `CryptoVerify_DefaultsAlgorithmFromHashKind` manually does `Convert.ToBase64String((byte[])digest.Value!)` and manually stamps `{hash, sha256}` — so it never exercises the produced-variable path and passes while the real flow is broken. Replace it with a round-trip that binds the **actual produced hash** as the verify input (goal-level `hash … write to %h%` then `verify … against %h%` → true, or at least bind the `crypto.hash` result Data directly as `Hash`). No manual base64, no manual type stamp.
 
-## The Data shape this produces
+## Keep `hash` out of the LLM emit kind-table (Ingi, 2026-05-31)
 
-```
-hash %data%, sha256  →  data.@this { Name="…", Value=<digest>,
-                                     Type = { Name="hash", Kind="sha256", Strict=false } }
-wire:  { "name":"…", "type":{"name":"hash","kind":"sha256"}, "value":"<base64 digest>" }
-```
+Two tables, and rev 1 conflated them:
+
+- **C# type/kinds registry** (`Schema.Build().Kinds`, `app.Type[...]`) — **keeps `hash`.** This is how C# resolves the type when validating `verify %bla%` and how `getTypes` maps `%bla% → hash`. The `HashType_AdvertisesAlgorithmKinds` / `HashType_Resolves_ViaRegistry` tests assert this side; it stays.
+- **LLM emit kind-vocab table** (`CompileUser.llm`, the "kinds you may emit under each name" table) — **must not list `hash`.** The LLM never writes `as hash`; the algorithm is the `crypto.hash` `Algorithm` parameter, not an emitted type-kind. Listing it is pure noise in the prompt.
+
+Rev 1 built the emit table by walking **all** registered types' `Kinds` (`BuildTypeEntries(null)`), which is why `hash` leaked in. Fix: scope the **emit-table render** to the **builtin emit vocabulary** (the `app/type/` types + primitives) instead of every registered type. Combined with the relocation above, `hash` (now under `app/module/crypto/type/`) falls out of the emit table automatically while staying in the C# registry.
+
+**The `image` trap:** the filter is *"is in the builtin emit vocabulary,"* NOT *"is a module/result type."* `image` is both emittable (`as image`, kinds `png`/`jpg`) and produced — it must stay in the emit table. A naive "exclude module-owned types" filter would wrongly drop `image`. Key off the builtin emit set (or an explicit per-type "emittable" signal), not off folder location.
+
+The builder still sees `%bla% (hash)` on the next step — that comes from the variables-in-scope path (`getTypes → %stepVarTypes%`), name-only, independent of the emit table. Name is enough; the builder does not need the kind at build.
