@@ -805,3 +805,46 @@ Why: `Lifecycle` with `.Before`/`.After` IS a lifecycle (noun = identity); `Bind
 with `.Add()`/`.Run()` IS a collection of bindings. Current names describe shape, not
 identity. (Lifted out of the old `good_to_know.md` "OBP Naming Principle" block when it
 was consolidated into `obp-smells.md`, so the intent isn't lost.)
+
+## 2026-05-31 — feature idea: event-driven parallel branch (fan-out the remaining steps)
+
+Scenario:
+
+```
+DoStuff
+- read numbers.csv, write to %csv%
+- run calculate.cs for %csv%, write to %result%
+- write out %result%
+```
+
+Bind an event to step 1 (`read numbers.csv`). The handler sends the numbers to an
+LLM and gets back **two new sets**. It then tells the runtime: *"here are two sets —
+branch, and run the rest of the steps (2,3) in parallel, once per set."* Result: two
+parallel pipelines, each computing on its own set.
+
+**Core capability:** an event handler can **return a branch/fork instruction** that
+forks the remaining step execution into N parallel processes, each with its own
+variable binding. A scatter driven by an event's return.
+
+Open design questions (seeds, not decided):
+- **How the event returns the instruction.** A typed return the engine recognises —
+  analogous to how a suspending value (`IExitsGoal`/`Ask`) or an error-recovery value
+  flows back through the step loop. e.g. a `Branch`/`Fork` Data carrying N binding-sets;
+  the engine sees it and forks.
+- **Fork point = continue-from-here.** The event fired at step 1; the branch forks the
+  *remaining* steps (N+1…) — N continuations of the same step-chain, each with its own
+  scope (`%csv%` = set1 / set2).
+- **Parallelism + scope isolation.** N parallel runs of the remaining chain, each with
+  an isolated variable scope / forked CallStack. Ties to the existing fork-safe
+  `_current` AsyncLocal (each branch is its own context).
+- **Fan-in / rejoin.** Does the goal end as N independent `write out %result%` (no join),
+  or do branches rejoin (collect the N `%result%`s into one)? The instruction may carry
+  the join policy, or a later step is the join.
+- **Relationship to `loop.foreach`.** foreach already fans per-item by *calling a goal*,
+  sequentially. This is different: an event injects a *parallel* fan-out of the
+  *remaining pipeline*. Could unify (foreach = sequential case) or stay distinct.
+- **Where it lives.** Event-handler return → the step-execution loop forks the remaining
+  steps. Connects to "the event collection owns the run" (obp-cleanup #4) and the step loop.
+
+A real new runtime primitive (event-driven scatter / parallel-branch). Captured as a
+seed; design when picked up.
