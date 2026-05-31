@@ -4,7 +4,7 @@ A backlog of **OBP shape violations** found during other work, parked for a *ded
 
 Rule of thumb for whether something lands here vs. gets fixed now: if fixing it is a **wide, cross-cutting refactor orthogonal to the branch you're on** (many callers, touches a shared registry), park it here. If it's local to what you're already changing, just fix it.
 
-Reference: `Documentation/v0.2/object_pattern_formal.md` (the formal pattern), `Documentation/v0.2/good_to_know.md` "OBP Smell Checklist".
+Reference: `Documentation/v0.2/object_pattern_formal.md` (the formal pattern + 9 rules), `Documentation/v0.2/obp-smells.md` (the smell checklist + worked examples).
 
 Each entry: **location · the smell · the OBP-clean target · status · found-in**.
 
