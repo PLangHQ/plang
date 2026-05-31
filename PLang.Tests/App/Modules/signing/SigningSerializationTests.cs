@@ -98,7 +98,7 @@ public class SigningSerializationTests
         var cryptoProvider = new global::app.module.crypto.code.Default();
         var hashResult = cryptoProvider.Hash(new global::app.module.crypto.Hash
             { Data = Data.Ok(System.Text.Encoding.UTF8.GetBytes("test data")), Algorithm = "sha256" });
-        var hashBytes = (byte[])hashResult.Value!;
+        var hashBytes = ((global::app.module.crypto.type.hash.@this)hashResult.Value!).Bytes;
         var base64Hash = Convert.ToBase64String(hashBytes);
 
         // Should be valid base64
@@ -139,7 +139,7 @@ public class SigningSerializationTests
         // Create a Signature with invalid base64 in Hash
         // Verification should handle it gracefully (the hash comparison will fail)
         var sd = CreateTestSignedData();
-        sd.Hash = Data.Ok(new byte[] { 0xFF }, global::app.type.@this.FromName("sha256"));
+        sd.Hash = Data.Ok(new global::app.module.crypto.type.hash.@this(new byte[] { 0xFF }, "sha256"), global::app.type.@this.Create("hash", kind: "sha256"));
         sd.Value = Convert.ToBase64String(new byte[64]);
         sd.Contracts = new List<string> { "C0" };
 
@@ -199,7 +199,7 @@ public class SigningSerializationTests
             Created = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero),
             Identity = "testPublicKey",
             Contracts = new List<string> { "C0" },
-            Hash = Data.Ok(new byte[32], global::app.type.@this.FromName("sha256")),
+            Hash = Data.Ok(new global::app.module.crypto.type.hash.@this(new byte[32], "sha256"), global::app.type.@this.Create("hash", kind: "sha256")),
             Value = null
         };
     }

@@ -224,13 +224,39 @@ public sealed class @this
 
     public object? Convert(string raw)
     {
-        return Name.ToLowerInvariant() switch
+        if (string.Equals(Name, "json", System.StringComparison.OrdinalIgnoreCase))
+            return JsonSerializer.Deserialize<Dictionary<string, object?>>(raw,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        // Kinded scalar read-back: a string-shaped type whose value carries a
+        // sub-format the CLR type can't express (a hash's algorithm) reconstructs
+        // through its own `static object? FromWire(string raw, string? kind)`.
+        // Discovered by convention so the core type system rebuilds a kinded
+        // value without referencing the (possibly module-owned) type — the Kind
+        // on this entity is the only thing it can't read off the wire string.
+        var clr = ClrType;
+        if (clr != null)
         {
-            "json" => JsonSerializer.Deserialize<Dictionary<string, object?>>(raw,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }),
-            _ => AppTypes.TryConvertTo(raw, ClrType ?? typeof(object)).Value
-        };
+            var reader = WireReader(clr);
+            if (reader != null)
+                return reader.Invoke(null, new object?[] { raw, Kind });
+        }
+
+        return AppTypes.TryConvertTo(raw, clr ?? typeof(object)).Value;
     }
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Reflection.MethodInfo?> _wireReaders = new();
+
+    private static System.Reflection.MethodInfo? WireReader(System.Type clrType)
+        => _wireReaders.GetOrAdd(clrType, static t =>
+        {
+            var m = t.GetMethod("FromWire",
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
+                binder: null,
+                types: new[] { typeof(string), typeof(string) },
+                modifiers: null);
+            return m != null && m.ReturnType == typeof(object) ? m : null;
+        });
 
     // --- Catalog properties (init-only; promoted lazily) ---
 

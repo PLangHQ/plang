@@ -41,7 +41,7 @@ public class CanonicalizationTests
         await hashResult.IsSuccess();
         // The hash is 32 bytes; the wire-bytes are the input to the hash.
         var expectedHash = new Nethereum.Util.Sha3Keccack().CalculateHash(wireBytesWithoutOuterSig);
-        await Assert.That(((byte[])hashResult.Value!).SequenceEqual(expectedHash)).IsTrue();
+        await Assert.That(((global::app.module.crypto.type.hash.@this)hashResult.Value!).Bytes.SequenceEqual(expectedHash)).IsTrue();
     }
 
     [Test] public async Task CryptoHash_BytesMatch_WireSerializerBytesMinusOuterSignature()

@@ -9,8 +9,11 @@ public partial class Verify : IContext
     [IsNotNull]
     public partial data.@this Data { get; init; }
 
+    // The expected hash — either a hash value (carrying its algorithm as kind)
+    // or a bare base64 string. Untyped so a bound `hash` value survives intact;
+    // a string with no kind falls back to the Algorithm parameter.
     [IsNotNull]
-    public partial data.@this<string> Hash { get; init; }
+    public partial data.@this Hash { get; init; }
 
     [Default("keccak256")]
     public partial data.@this<string> Algorithm { get; init; }

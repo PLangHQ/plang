@@ -187,8 +187,8 @@ public class SignActionTests
         await result.IsSuccess();
         var hash = result.Signature!.Hash;
         await Assert.That(hash).IsNotNull();
-        await Assert.That(hash.Value is byte[]).IsTrue();
-        await Assert.That(((byte[])hash.Value!).Length).IsGreaterThan(0);
+        await Assert.That(hash.Value is global::app.module.crypto.type.hash.@this).IsTrue();
+        await Assert.That(((global::app.module.crypto.type.hash.@this)hash.Value!).Bytes.Length).IsGreaterThan(0);
     }
 
     #endregion

@@ -1,4 +1,4 @@
-namespace app.type.hash;
+namespace app.module.crypto.type.hash;
 
 /// <summary>
 /// PLang <c>hash</c> value — a cryptographic digest plus the algorithm that
@@ -6,6 +6,12 @@ namespace app.type.hash;
 /// so a digest knows how to be verified without the caller re-supplying the
 /// algorithm separately (the decoupling that made <c>crypto.verify</c>
 /// mismatch-prone).
+///
+/// <para>Crypto-owned: it lives under the module that produces it
+/// (<c>crypto.hash</c> returns it) rather than in <c>app/type/</c>, which is
+/// reserved for the builtin vocabulary. The registry still resolves it to
+/// <c>hash</c> — the <c>@this</c>/last-namespace-segment convention is
+/// location-independent.</para>
 ///
 /// <para>Scalar, string-shaped: the wire/render form is the base64 digest
 /// (matches the historical <c>crypto.verify</c> which round-trips through
@@ -54,6 +60,17 @@ public sealed class @this
     /// </summary>
     public static @this FromBase64(string base64, string algorithm)
         => new(System.Convert.FromBase64String(base64), algorithm);
+
+    /// <summary>
+    /// Wire read-back: reconstruct a <c>hash</c> from its base64 string form and
+    /// the kind carried on the <c>type</c> envelope. The <c>type.@this.Convert</c>
+    /// seam discovers this by convention (a <c>static object? FromWire(string,
+    /// string?)</c>) so the core type system reconstructs a kinded scalar without
+    /// referencing this module. The algorithm rides as the kind; falls back to
+    /// keccak256 (the signing default) when none was stamped.
+    /// </summary>
+    public static object? FromWire(string raw, string? kind)
+        => string.IsNullOrEmpty(raw) ? null : FromBase64(raw, kind ?? "keccak256");
 
     /// <summary>True when this digest's bytes equal another's.</summary>
     public bool DigestEquals(@this other)
