@@ -188,14 +188,30 @@ public partial class Set : IContext, IBuildValidatable
             }
 
             object? converted = Value.Value;
+            System.Type? mintType = targetType;
+
+            // The incoming value composes the declared type as a facet under a
+            // DIFFERENT name — an image has-a path, so an image bound to a `path`
+            // slot already satisfies `path`. Keep it as-is with its own (richer)
+            // type; the `path` hint was one the image already meets, downgrading
+            // would drop the bytes. Same-name is excluded: there the declared
+            // type may refine (`as text/md` over `{text}`) or carry strict, which
+            // must still apply (strict, below, then runs against the declared
+            // kind, so `image/gif strict` on a PNG still fails).
+            var keepAsIs = Value.Type != null
+                && !string.Equals(Value.Type.Name, typeEntity.Name, StringComparison.OrdinalIgnoreCase)
+                && Value.Type.Is(typeEntity);
+            if (keepAsIs)
+            {
+                mintType = converted?.GetType() ?? targetType;
+            }
             // CLR target type that can construct from the raw value (string→int,
             // string→DateTime, dict→record) — convert in place. Conversion
             // failure is a real error UNLESS the target is byte-backed
             // (IKindValidatable family like image), in which case a literal
             // path-string is a legitimate value the Type entity annotates;
             // mint as Data<string> and let downstream consumers resolve.
-            System.Type? mintType = targetType;
-            if (converted != null && !targetType.IsInstanceOfType(converted))
+            else if (converted != null && !targetType.IsInstanceOfType(converted))
             {
                 var (c, err) = global::app.type.list.@this.TryConvertTo(converted, targetType, Context);
                 if (err == null)
@@ -208,10 +224,10 @@ public partial class Set : IContext, IBuildValidatable
                     return Task.FromResult(global::app.data.@this.FromError(err));
             }
             var typedData = ConstructDataOfT(Name.Value, mintType, converted, Context);
-            // Pin the whole user-named Type entity onto the Data — kind and
-            // strict survive the binding-mint. (The dropped-kind bug fixed
-            // by construction: we no longer copy just the name.)
-            typedData.Type = typeEntity;
+            // Pin the type: the value's own when kept as-is (image wins over a
+            // `path` hint), else the user-named declared entity — kind and strict
+            // survive the binding-mint.
+            typedData.Type = keepAsIs ? Value.Type! : typeEntity;
 
             // Strict kind for a reference fundamental rides WITH the value to its
             // load seam (Ingi: validate at byte-materialization, throw if strict).

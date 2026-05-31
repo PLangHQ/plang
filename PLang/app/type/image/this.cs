@@ -20,6 +20,15 @@ public sealed partial class @this : global::app.data.IBooleanResolvable, global:
     public static string Example => "/some/photo.jpg";
     public static string Shape => "string";
 
+    /// <summary>
+    /// The PLang types this value stands in for, self included — an image
+    /// has-a path, so it satisfies <c>path</c> too. Read by <c>type.@this.Is</c>
+    /// (the static-<c>Type</c> convention): <c>variable.set</c> keeps an image
+    /// bound to a <c>path</c> slot as-is (image wins) rather than downgrading it.
+    /// </summary>
+    public static System.Collections.Generic.IReadOnlyList<string> Type { get; }
+        = new[] { "image", "path" };
+
     // Null until loaded — a path-backed image reads nothing until first content
     // access. A bytes-backed image sets this in the constructor.
     private byte[]? _bytes;
@@ -67,6 +76,18 @@ public sealed partial class @this : global::app.data.IBooleanResolvable, global:
     {
         _bytes = bytes ?? System.Array.Empty<byte>();
         _mime = mime ?? "application/octet-stream";
+        Path = path;
+    }
+
+    /// <summary>
+    /// Bytes-backed but path-aware: content already read, the SAME source path
+    /// object retained (Mime derives from it). file.read's image lift uses this
+    /// so the value carries its path without decomposing it into loose
+    /// primitives (bytes + mime + a re-resolved path).
+    /// </summary>
+    public @this(byte[] bytes, global::app.type.path.@this path)
+    {
+        _bytes = bytes ?? System.Array.Empty<byte>();
         Path = path;
     }
 

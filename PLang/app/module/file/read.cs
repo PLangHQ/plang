@@ -36,8 +36,10 @@ public partial class Read : IContext
         // image is the leaf owner of width/height/mime — lazy until accessed.
         if (read.Value is byte[] bytes && read.Type?.Name == "image")
         {
-            var mime = Path.Value!.MimeType;
-            var image = new global::app.type.image.@this(bytes, mime, Path.Value);
+            // Hand image the path OBJECT (the generated lazy Path already
+            // resolved it once); image derives Mime from it. No decomposing
+            // into bytes + mime + a re-resolved path.
+            var image = new global::app.type.image.@this(bytes, Path.Value!);
             return new data.@this(read.Name, image, read.Type);
         }
 

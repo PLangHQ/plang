@@ -848,3 +848,13 @@ Open design questions (seeds, not decided):
 
 A real new runtime primitive (event-driven scatter / parallel-branch). Captured as a
 seed; design when picked up.
+
+## type.Kind vs type.Kinds — singular sweep candidate (2026-05-31, Ingi)
+
+`type.@this` carries both `Kind` (the per-value subtype — `"png"`, `"md"`) and
+`Kinds` (the advertised vocabulary — `["keccak256","sha256"]`). Two names one
+letter apart for two different concepts reads suspiciously, and OBP leans
+singular. Left as-is for now (the vocabulary `Kinds` is a genuine "all valid
+kinds" collection, which is a defensible plural). Investigate whether the
+vocabulary should be renamed to a distinct singular noun so `Kind`/`Kinds` stop
+looking like a typo of each other — without merging the two concepts.

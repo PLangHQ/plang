@@ -258,6 +258,41 @@ public sealed class @this
             return m != null && m.ReturnType == typeof(object) ? m : null;
         });
 
+    /// <summary>
+    /// Does this type stand in for <paramref name="other"/> — is it the same
+    /// type, or does it compose <paramref name="other"/> as a facet? An image
+    /// has-a path, so <c>imageType.Is(pathType)</c> is true. The composing types
+    /// are declared, self included, on the concrete type's <c>static
+    /// IReadOnlyList&lt;string&gt; Type</c> (image → <c>["image","path"]</c>);
+    /// a type that declares none satisfies only its own name.
+    ///
+    /// <para>Used by <c>variable.set</c>: a value whose type already <c>Is</c>
+    /// the declared type is kept as-is (image wins over a <c>path</c> hint)
+    /// rather than converted/downgraded.</para>
+    /// </summary>
+    public bool Is(@this? other)
+    {
+        if (other == null) return false;
+        if (string.Equals(Name, other.Name, System.StringComparison.OrdinalIgnoreCase)) return true;
+        var clr = ClrType;
+        if (clr == null) return false;
+        foreach (var facet in _facetsByClr.GetOrAdd(clr, ReadFacets))
+            if (string.Equals(facet, other.Name, System.StringComparison.OrdinalIgnoreCase)) return true;
+        return false;
+    }
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, IReadOnlyList<string>> _facetsByClr = new();
+
+    private static IReadOnlyList<string> ReadFacets(System.Type clrType)
+    {
+        var prop = clrType.GetProperty("Type",
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.FlattenHierarchy);
+        var raw = prop?.GetValue(null);
+        if (raw is IReadOnlyList<string> list) return list;
+        if (raw is IEnumerable<string> seq) return seq.ToList();
+        return System.Array.Empty<string>();
+    }
+
     // --- Catalog properties (init-only; promoted lazily) ---
 
     private IReadOnlyList<Field>? _fields;
