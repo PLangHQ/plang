@@ -14,11 +14,16 @@ C# 3818/3818, PLang 263/263 — both green on a rebuilt-clean binary.
   no image ctor → probe null → strict skipped at build *and* runtime. The C#
   `Cut2` tests pass only because they feed raw bytes (the one working path); the
   three PLang `.test.goal` files that claim to cover the mismatch cases pass
-  while asserting nothing — a PNG is silently accepted as a strict GIF. Root:
-  unresolved Stage-9 (lazy path-handles, no I/O at set) ↔ Stage-4 (validate
-  content) tension; no deferred `BytesAsync` check either. Coder picks the
-  resolution (read-at-set / defer-to-load / reject-at-build) but must make
-  `ValidateKind` accept path/instance shapes and give the goals real assertions.
+  while asserting nothing — a PNG is silently accepted as a strict GIF.
+  **Ingi ruled (2026-05-31): validate at byte-load, wherever that is — if strict,
+  throw.** So `set` stays lazy (the path-literal "fail-at-build" sub-claim is
+  withdrawn), but nothing checks at byte-load today. Fix: the declared
+  `(kind, strict)` must ride with the image value to the load seam (`BytesAsync`,
+  or immediately at `set` for an already-loaded read-lift / raw bytes);
+  `ValidateKind` must accept an `image.@this`, not only `byte[]`; throw
+  `StrictKindMismatch` at first content access; give the mismatch goals real
+  assertions (the `...Mismatch` goal's "fail at build" comment is now wrong under
+  the lazy ruling — rewrite or delete).
 
 - **F2 (MEDIUM)** — `kind` written twice on the wire/`.pr`: inside the `type`
   entity and as the flat `Data.Kind` sibling (`[JsonPropertyName("kind")]` kept

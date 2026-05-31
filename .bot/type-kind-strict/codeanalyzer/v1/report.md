@@ -105,29 +105,43 @@ PLang goals (and real `.goal` authors) use. This is the
 [don't-call-it-covered] failure mode: two committed tests read as "strict
 enforcement verified" while verifying the opposite of their stated intent.
 
-**Root cause is the unresolved Stage-9 ↔ Stage-4 tension.** Stage 9 says a
-path-backed image reads nothing at `set`; Stage 4 says strict validates the
-content kind. You cannot both not-read and sniff-content at the same site. The
-code resolves it by silently doing nothing — and there is **no deferred check
-on `BytesAsync()` either**, so strict isn't even enforced lazily on first
-content access.
+**Root cause is the unresolved Stage-9 ↔ Stage-4 tension** — now resolved by
+Ingi (see ruling below). Stage 9 makes a path-backed image read nothing at
+`set`; Stage 4 wants strict to validate content. The code resolved it by
+silently doing nothing, and there is **no deferred check on `BytesAsync()`
+either**, so strict isn't enforced even when the bytes finally load.
 
-**Fix direction (coder owns the choice; all three need the validator and the
-tests fixed):**
-- (a) strict on a path-backed reference fundamental reads bytes at `set` and
-  sniffs (accept the I/O for the strict case, contra Stage-9 laziness for that
-  case only); or
-- (b) defer the kind probe to first content load (`BytesAsync`) and surface the
-  mismatch there; or
-- (c) reject `as <reference-fundamental> strict` from a path/instance at build
-  as explicitly unsupported.
+### Ingi's ruling (2026-05-31) — settles the fix
 
-In every case: make `ValidateKind` accept the realistic value shapes (a
-`path.@this` it can read through the auth gate, and an `image.@this` whose bytes
-it reads), and give the three PLang goals **assertions that fail when
-enforcement is absent** (assert the build error for the mismatch goal; assert
-the runtime `StrictKindMismatch` for the var-mismatch goal). A test whose only
-signal is "didn't throw" cannot guard a validation feature.
+> "It should happen when we load the bytes, whenever that is — if it's strict it
+> should throw."
+
+So `set` on a path stays lazy (no validation at `set` — my original
+"should-fail-at-build" framing for the path-literal case was wrong and is
+withdrawn). The strict kind check fires at **byte-materialization**: the point
+where loaded bytes and the strict requirement first coexist. On mismatch, throw.
+
+**Concrete fix shape for the coder:**
+- The validation belongs at the load seam (`image.BytesAsync()` for a
+  path-backed image; immediately at `set` for an already-loaded image such as a
+  `read`-lift or raw `byte[]`, since the bytes are already in hand there).
+- **The declared `(kind, strict)` must ride *with the value* to that seam.** It
+  currently lives only on `Data.Type` (`{image, gif, strict}`), which the
+  `image.@this` value can't see at load time. The image needs to carry its
+  expected kind + strict (mirroring how truthiness lives on the value via
+  `IBooleanResolvable`) so it can self-validate when `_bytes` first populates —
+  rather than the check living at the `set` call site against a value that has
+  no bytes yet.
+- `image.ValidateKind` must accept the realistic shapes — a loaded `image.@this`
+  (read its own bytes) — not only raw `byte[]`. The current `value as byte[] ??
+  Bytes` reads the *probe's* empty bytes when handed an instance.
+- Throw a typed `StrictKindMismatch` from the load seam (it surfaces wherever
+  the first content access is — `await`-ing bytes, `Width`/`Height`, render).
+- Give the PLang goals **real assertions**: `SetAsImageGifStrictRuntimeVarMismatch`
+  must assert the throw fires; `SetAsImageGifStrictMismatch`'s comment ("must
+  fail at build") is now wrong under the lazy ruling — rewrite it to assert the
+  throw at first content access, or delete it. A goal whose only signal is
+  "didn't throw" cannot guard a validation feature.
 
 ---
 
