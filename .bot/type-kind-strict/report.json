@@ -631,6 +631,70 @@
           "context": "F1 fixed correctly: read-lift/loaded image fails at set, lazy path-backed throws at BytesAsync load, ValidateKind reads image instances, imprint survives Variables.Set (by-reference). Mutation-verified non-vacuous (forced CheckStrictKind always-pass -> both new tests fail -> revert -> pass; git clean). F2-F5 clean. Build clean, C# 3815/3815, PLang 262/262. PASS -> tester. Three minor non-blocking residuals."
         }
       ]
+    },
+    {
+      "id": "63147875-e47f-4e82-9a27-4f2067646ad4",
+      "bot": "tester",
+      "timestamp_start": "2026-05-31T20:18:17.028575+00:00",
+      "timestamp_end": "2026-05-31T20:20:16.267788+00:00",
+      "intent": "Validate coder v8 test honesty + suite reproducibility on type-kind-strict.",
+      "before": {
+        "assumptions": "coder v8 + codeanalyzer v2 both report C# 3815/3815, PLang 262/262 (0 fail). F1 strict-kind is the review-driven high-risk area.",
+        "risk": "F1 false-greens (the v1 failure mode); stale PLang fixtures masking real behavior."
+      },
+      "plan": ".bot/type-kind-strict/tester/v8/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild + dotnet run PLang.Tests = 3815/3815. Deterministic; immune to fixture staleness."
+        },
+        {
+          "paths": [
+            "PLang/app/data/IStrictKindEnforcer.cs",
+            "PLang/app/type/image/this.cs",
+            "PLang/app/module/variable/set.cs",
+            "PLang.Tests/App/TypeKindStrict/IntegrationCutsTests/Cut2_StrictMismatchFailsAtRightLayer.cs",
+            "PLang.Tests/App/TypeKindStrict/ReferenceFundamentalTests/LazyPathHandleTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "F1 strict-kind: two distinct enforcement-path tests (read-lift fail-at-set; lazy throw-at-load) + byte[] probe. Builder .pr faithful. Honest, not vacuous. Did a code-read deletion test; codeanalyzer ran the live mutation."
+        },
+        {
+          "paths": [
+            "Tests/Types/.build/readphotostampsimage.test.pr",
+            "Tests/Serialization/.build/compressroundtrip.test.pr",
+            "Tests/.db/system.sqlite"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "CRITICAL: plang --test flaps 0-4 fail across clean runs. Committed .pr stale vs stage-4 variable.set.Type entity (688/703 bare-string). Runtime runs them wrong or LLM-rebuilds (non-deterministic; cache gitignored, cold on fresh clone)."
+        },
+        {
+          "paths": [
+            ".bot/type-kind-strict/test-report.json",
+            ".bot/type-kind-strict/tester/v8/result.md",
+            ".bot/type-kind-strict/tester/v8/verdict.json",
+            ".bot/type-kind-strict/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Tester v8 outputs; verdict FAIL."
+        }
+      ],
+      "after": {
+        "status": "fail",
+        "health": "C# solid (3815/3815) and F1 honestly covered; PLang suite not reproducibly green",
+        "notes": "FAIL on PLang fixture reproducibility, not on F1-F5 logic. Fix: rebuild+commit Tests/ .pr to stage-4 Type shape; prove >=2 consecutive clean-binary green runs with git clean after."
+      }
     }
   ]
 }
