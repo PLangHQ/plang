@@ -15,9 +15,9 @@ Append-only. Docs bot reviews at merge time and applies the ones that hold up. E
 OBP isn't a style note you nod at — it's the product. Most of your regressions are **shape** regressions, cheap to catch at write-time and expensive once codeanalyzer or the auditor finds them. So run the check codeanalyzer will run on you, *first*, on yourself.
 
 **Re-read the canonical sources — don't work from memory:**
-- Project `CLAUDE.md` → `## OBP Shape Smells` — the numbered checklist (it grows; re-read it each time).
-- `Documentation/v0.2/object_pattern_formal.md` — the formal pattern.
-- `Documentation/v0.2/good_to_know.md` "OBP Smell Checklist" — worked examples.
+- Project `CLAUDE.md` → `## OBP Shape Smells` — the terse numbered checklist, always loaded (it grows; re-read it each time).
+- `Documentation/v0.2/obp-smells.md` — the worked right/wrong examples, naming tells, variant design (the operational audit reference).
+- `Documentation/v0.2/object_pattern_formal.md` — the formal pattern (philosophy + the 9 rules).
 
 **Before you call a stage done, run every smell against your diff with an explicit yes/no.** Any "yes" is a structural fix, not a line edit.
 
