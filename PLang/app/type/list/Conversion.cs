@@ -267,6 +267,45 @@ public sealed partial class @this
             }
         }
 
+        // Reference fundamental backed by a path (image; audio/video follow the
+        // same shape): a path-string mints a LAZY handle with .Path set — no
+        // content read. The type exposes a single-arg constructor taking a
+        // path.@this; resolve the string through the scheme registry (no I/O —
+        // just constructs the path), then build the handle. Content materializes
+        // later, on first await of the handle's async accessor.
+        if (value is string refPathRaw && context != null
+            && !typeof(global::app.type.path.@this).IsAssignableFrom(targetType))
+        {
+            var pathCtor = targetType.GetConstructors().FirstOrDefault(c =>
+            {
+                var ps = c.GetParameters();
+                return ps.Length >= 1
+                    && typeof(global::app.type.path.@this).IsAssignableFrom(ps[0].ParameterType)
+                    && ps.Skip(1).All(p => p.IsOptional);
+            });
+            if (pathCtor != null)
+            {
+                try
+                {
+                    var handlePath = context.App.Type.Scheme.From(refPathRaw, context);
+                    var ps = pathCtor.GetParameters();
+                    var args = new object?[ps.Length];
+                    args[0] = handlePath;
+                    for (int i = 1; i < ps.Length; i++) args[i] = ps[i].DefaultValue;
+                    return (pathCtor.Invoke(args), null);
+                }
+                catch (global::app.type.path.scheme.SchemeNotRegistered snr)
+                {
+                    return (null, new error.Error(snr.Message, "SchemeNotRegistered", 400)
+                        { FixSuggestion = $"Register a factory for scheme '{snr.Scheme}', or use a bare/file:// path." });
+                }
+                catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
+                {
+                    return (null, new error.Error(ex.InnerException?.Message ?? ex.Message, "PathHandleConstructionFailed", 400));
+                }
+            }
+        }
+
         // Types with a constructor that accepts a single string (may have optional params).
         if (value is string ctorStr)
         {

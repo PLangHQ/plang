@@ -20,16 +20,28 @@ public sealed partial class @this : global::app.data.IBooleanResolvable, global:
     public static string Example => "/some/photo.jpg";
     public static string Shape => "string";
 
-    [global::app.Out, global::app.Store]
-    public byte[] Bytes { get; }
-
-    [global::app.Out, global::app.Store]
-    public string Mime { get; }
+    // Null until loaded — a path-backed image reads nothing until first content
+    // access. A bytes-backed image sets this in the constructor.
+    private byte[]? _bytes;
+    private string? _mime;
 
     /// <summary>
-    /// Optional source path. Null when the image was constructed from raw bytes
-    /// (e.g. base64 decode, network fetch). Carries the path's typed properties
-    /// (<c>Exists</c>, <c>Relative</c>, …) when present.
+    /// The in-memory image bytes. For a path-backed image this is empty until
+    /// <see cref="BytesAsync"/> has loaded the content (the lazy load is async
+    /// because path reads pass through the actor permission gate — a sync getter
+    /// must not block on I/O). Use <see cref="BytesAsync"/> to load-then-read.
+    /// </summary>
+    [global::app.Out, global::app.Store]
+    public byte[] Bytes => _bytes ?? System.Array.Empty<byte>();
+
+    [global::app.Out, global::app.Store]
+    public string Mime => _mime ??= (Path?.MimeType ?? "application/octet-stream");
+
+    /// <summary>
+    /// Source path. Set for a path-backed image (content lazy-loads from here)
+    /// or as provenance for a bytes-backed one (network fetch, base64 decode);
+    /// null when the image is purely in-memory. Carries the path's typed
+    /// properties (<c>Exists</c>, <c>Relative</c>, …) when present.
     /// </summary>
     [global::app.LlmBuilder, global::app.Out, global::app.Store]
     public global::app.type.path.@this? Path { get; init; }
@@ -37,21 +49,63 @@ public sealed partial class @this : global::app.data.IBooleanResolvable, global:
     private int? _width;
     private int? _height;
 
-    /// <summary>Lazy width — read on first access via SixLabors.ImageSharp.</summary>
+    /// <summary>Lazy width — read on first access via SixLabors.ImageSharp.
+    /// Valid once bytes are in memory (bytes-backed, or after <see cref="BytesAsync"/>).</summary>
     public int Width => _width ??= ProbeDimensions().w;
 
     /// <summary>Lazy height — read on first access via SixLabors.ImageSharp.</summary>
     public int Height => _height ??= ProbeDimensions().h;
 
+    /// <summary>Bytes-backed: the content is already in hand (network fetch, base64 decode).</summary>
     public @this(byte[] bytes, string mime, global::app.type.path.@this? path = null)
     {
-        Bytes = bytes ?? System.Array.Empty<byte>();
-        Mime = mime ?? "application/octet-stream";
+        _bytes = bytes ?? System.Array.Empty<byte>();
+        _mime = mime ?? "application/octet-stream";
         Path = path;
     }
 
-    public System.Threading.Tasks.Task<bool> AsBooleanAsync()
-        => System.Threading.Tasks.Task.FromResult(Bytes.Length > 0);
+    /// <summary>
+    /// Path-backed: a lazy handle. <c>.Path</c> is set and <b>nothing is read</b>
+    /// — the content materializes from the path on the first
+    /// <see cref="BytesAsync"/>. The proving instance for reference-fundamental
+    /// laziness (audio/video follow the same shape).
+    /// </summary>
+    public @this(global::app.type.path.@this path)
+    {
+        Path = path ?? throw new System.ArgumentNullException(nameof(path));
+    }
+
+    /// <summary>
+    /// The image bytes, loaded through the path's auth gate on first access and
+    /// cached. A bytes-backed image returns its in-memory bytes with no I/O; a
+    /// path-backed image reads <see cref="Path"/> exactly once (subsequent calls
+    /// return the cache). Async because the read goes through
+    /// <c>FilePath.AuthGate</c> — never a blocking read in a sync getter. A read
+    /// failure (missing file, denied) surfaces here, at first content access.
+    /// </summary>
+    public async System.Threading.Tasks.Task<byte[]> BytesAsync()
+    {
+        if (_bytes != null) return _bytes;
+        if (Path == null) return _bytes = System.Array.Empty<byte>();
+        var read = await Path.ReadBytes();
+        if (!read.Success)
+            throw new System.IO.IOException(read.Error?.Message ?? $"Could not read image from '{Path}'.");
+        return _bytes = read.Value ?? System.Array.Empty<byte>();
+    }
+
+    public async System.Threading.Tasks.Task<bool> AsBooleanAsync()
+    {
+        // Truthiness without forcing a full load: in-memory bytes are truthy
+        // when non-empty; a path-backed image is truthy when its resource exists
+        // (existence probe, not a byte read — keeps the handle lazy).
+        if (_bytes != null) return _bytes.Length > 0;
+        if (Path != null)
+        {
+            var exists = await Path.ExistsAsync();
+            return exists.Success && exists.Value;
+        }
+        return false;
+    }
 
     /// <summary>
     /// Sniffs the magic bytes of <paramref name="value"/> (a <c>byte[]</c>) via
