@@ -732,6 +732,34 @@
         "health": "branch builds clean; only .bot additions in tree",
         "notes": "coder v9 (e8c70d62) already addressed the two findings."
       }
+    },
+    {
+      "id": "93bb8cbb-324f-4773-8895-a9f93594a5ca",
+      "bot": "coder",
+      "timestamp_start": "2026-05-31T21:00:00Z",
+      "timestamp_end": "2026-05-31T22:00:00Z",
+      "intent": "Respond to builder v1 (F1/F2 fixed) and tester v8 (PLang fixture flapping).",
+      "before": {
+        "assumptions": "Tester wants the whole Tests/ tree regenerated to current type wire shape.",
+        "risk": "A 700-goal LLM rebuild bakes in spurious Type hints and flakes; image read write-to is stamped {path} by the LLM."
+      },
+      "plan": ".bot/type-kind-strict/coder/v9/result.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/type-kind-strict/coder/v9/result.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Diagnosed ReadPhotoStampsImage: file.read already returns Data<image> with image.Path=source; break is the spurious LLM Type={path} hint forcing image->path downgrade (image HAS-A path, not IS-A). Precedence patch contradicts Stage4_TypeHintPrecedenceTests; reverted. Full rebuild rejected (bakes wrong fixtures + LLM build non-determinism). Routed: builder teaching (no Type on bare write-to) + architect determinism."
+        }
+      ],
+      "after": {
+        "status": "builder F1/F2 done+pushed; tester blocker analyzed and routed (not a coder rebuild)",
+        "health": "C# 3817/3817",
+        "notes": "No code change this session beyond F1/F2 already pushed. Tester report written."
+      }
     }
   ]
 }
