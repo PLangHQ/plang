@@ -11,13 +11,16 @@ public class Cut1_TypedSetRoundTripsKind
     [Before(Test)]
     public void Setup() { _app = new global::app.@this("/app"); }
 
-    [Test] public async Task SetReadmeMdAsText_DocTypeIsTextWithKindMd()
+    // An EXPLICIT kind (`as text/md`) round-trips onto the minted variable. A
+    // bare literal's spelling never derives a kind (that's the stage-8 rule) —
+    // here the developer declared `md`, so it survives.
+    [Test] public async Task SetAsTextMd_DocTypeIsTextWithKindMd()
     {
         var context = _app.User.Context;
         var action = TestAction.Create("variable", "set",
             ("name", "%doc%"),
             ("value", "readme.md"),
-            ("type", new global::app.type.@this("text")));
+            ("type", new global::app.type.@this("text", "md")));
         var result = await action.RunAsync(context);
         await result.IsSuccess();
 
@@ -27,13 +30,13 @@ public class Cut1_TypedSetRoundTripsKind
         await Assert.That(stored.Kind).IsEqualTo("md");
     }
 
-    [Test] public async Task SetReadmeMdAsText_NavigationResolvesKindFromVariableExpression()
+    [Test] public async Task SetAsTextMd_NavigationResolvesKindFromVariableExpression()
     {
         var context = _app.User.Context;
         var action = TestAction.Create("variable", "set",
             ("name", "%doc%"),
             ("value", "readme.md"),
-            ("type", new global::app.type.@this("text")));
+            ("type", new global::app.type.@this("text", "md")));
         await action.RunAsync(context);
 
         // Navigation via the same engine path used by `%doc.Type.Name%` in goal text.

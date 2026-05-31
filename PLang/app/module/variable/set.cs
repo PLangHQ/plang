@@ -147,13 +147,14 @@ public partial class Set : IContext, IBuildValidatable
             // ClrType carries the right mate (typeof(int) for {number, int}).
             var targetType = typeEntity.ClrType ?? Context.App.Type.Get(typeName);
 
-            // Stamp kind from the value when the type has a Build(object?) hook
-            // and the user didn't supply an explicit kind. Mirrors what
-            // NormalizeParameterTypes does at build for known-typed slots;
-            // here we run it on the resolved CLR type at runtime so literals
-            // like `set %x% = "readme.md" as text` pick up kind=md without
-            // the LLM having to spell it out.
-            if (typeEntity.Kind == null && targetType != null)
+            // Stamp kind from the value ONLY for a reference fundamental the
+            // developer named (`as image` → parse the path → kind=jpg). A bare
+            // literal's spelling is not a kind: `set %x% = "readme.md"` is the
+            // 9-char string "readme.md", not markdown — so `text` never derives
+            // a kind from the value here. The kind for text comes only from an
+            // explicit `as text/<kind>` or a producing action's Build().
+            if (typeEntity.Kind == null && targetType != null
+                && !string.Equals(typeName, "text", StringComparison.OrdinalIgnoreCase))
             {
                 var derivedKind = Context.App.Type.KindHooks.Of(targetType, Value.Value)
                                   ?? (Context.App.Type[typeName] is { ClrType: { } familyClr }

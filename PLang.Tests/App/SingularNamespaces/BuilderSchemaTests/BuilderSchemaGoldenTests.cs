@@ -12,12 +12,17 @@ public class BuilderSchemaGoldenTests
     {
         // Type rendering moved into the Liquid template (CompileUser.llm); the
         // schema is the strongly-typed surface the template reads. Pin the
-        // catalog counts — a stable proxy for "schema shape didn't drift".
+        // catalog shape — PrimitiveNames is the fundamental vocabulary, Types is
+        // the step-action catalog, Kinds is scoped to fundamental families only
+        // (result types like hash stay registered but never join this table).
         await using var app = new global::app.@this("/test");
         var schema = app.Module.Schema.Build();
         await Assert.That(schema.PrimitiveNames.Count).IsGreaterThan(10);
         await Assert.That(schema.Types.Count).IsGreaterThan(20);
-        await Assert.That(schema.Kinds.Count).IsGreaterThan(5);
+        await Assert.That(schema.Kinds.ContainsKey("number")).IsTrue();
+        await Assert.That(schema.Kinds.ContainsKey("text")).IsTrue();
+        await Assert.That(schema.Kinds.ContainsKey("image")).IsTrue();
+        await Assert.That(schema.Kinds.ContainsKey("hash")).IsFalse();
     }
 
     [Test] public async Task BuilderRender_ReadsFromTypeEntity_NotFromParallelEntryStruct()

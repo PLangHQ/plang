@@ -27,12 +27,15 @@ Examples of complete wrappers:
 - raw value `5` → `{"name":"X","value":5,"type":{"name":"number","kind":"int"}}`
 - raw value `3.14` → `{"name":"X","value":3.14,"type":{"name":"number","kind":"decimal"}}`
 - raw value `"hi"` → `{"name":"X","value":"hi","type":{"name":"text"}}`
-- raw value `"readme.md"` (text with a recognisable extension) → `{"name":"X","value":"readme.md","type":{"name":"text","kind":"md"}}`
+- raw value `"readme.md"` (a string literal — its value IS the 9 characters "readme.md", which is text, NOT a markdown document) → `{"name":"X","value":"readme.md","type":{"name":"text"}}`
 - raw value `true` → `{"name":"X","value":true,"type":{"name":"bool"}}`
 - raw value `{a:1, b:2}` → `{"name":"X","value":{"a":1,"b":2},"type":{"name":"object"}}`
-- raw value `"file.txt"` as a file path → `{"name":"X","value":"file.txt","type":{"name":"path","kind":"file"}}`
 
-When a string literal has a recognisable file extension (`.md`, `.csv`, `.json`, `.gif`, `.jpg`, etc.) and its family is `text` / `image` / `audio` / `video`, populate `kind` with that extension.
+A bare string literal is `text` with **no kind** — never promote it by its spelling. A file extension in a literal (`.md`, `.jpg`, `.csv`) does NOT make the value that kind: the value is the path string, not the content it points at. A `kind` on a literal comes from exactly two places, never the spelling:
+- an explicit `as <name>/<kind>` the developer wrote, or
+- a producing action that read the real content/path (e.g. `read file.md` → `{text, md}` — there the value IS the markdown).
+
+A reference fundamental (`image`, `video`, `audio`, `path`) is never tagged onto a raw literal — there is no image literal, only a path. The LLM emits `{name: image}` only when the developer wrote `as image`; the runtime parses the kind from the path.
 
 A parameter whose DECLARED schema type is `type` (e.g. `variable.set.Type`) carries a type entity AS ITS VALUE. The wrapper is:
 
@@ -51,7 +54,7 @@ A parameter whose DECLARED schema type is `type` (e.g. `variable.set.Type`) carr
 
 Rules:
 - `string` is NOT a name — use `text`. `int`/`long`/`decimal`/`double` are NOT names — use `number` with the precision as the kind.
-- Step-text `as <name>` → `{"name":"<name>"}` (runtime fills kind from value extension when literal).
+- Step-text `as <name>` → `{"name":"<name>"}`. For a reference fundamental (`image`/`video`/`audio`/`path`) the runtime parses the kind from the value's path; for `text` no kind is derived from a literal's spelling.
 - Step-text `as <name>/<kind>` → `{"name":"<name>","kind":"<kind>"}`.
 - Step-text `as <name>/<kind> strict` → adds `"strict":true`. Strict on a name with no kind is allowed (no-op).
 - Step-text `(<kind>)` after a write target → match the kind to its name in the table above. `(json)`/`(csv)`/`(xml)` → `text`; `(int)`/`(long)` → `number`; `(gif)`/`(jpg)` → `image`. Unknown free strings pass through as `{"name":"<that>"}`.

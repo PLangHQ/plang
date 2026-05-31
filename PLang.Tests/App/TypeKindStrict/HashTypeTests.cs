@@ -20,11 +20,22 @@ public class HashTypeTests
 
     [Test] public async Task HashType_AdvertisesAlgorithmKinds()
     {
+        // hash advertises its algorithms on the registry entity — how C#
+        // resolves the kind when validating `verify %bla%` and how getTypes
+        // maps a produced variable. The per-step LLM prompt table does NOT
+        // carry them (hash is a result type, not a fundamental the LLM emits).
         await using var app = new PLangEngine("/test");
-        var kinds = app.Module.Schema.Build().Kinds;
-        await Assert.That(kinds.ContainsKey("hash")).IsTrue();
-        await Assert.That(kinds["hash"]).Contains("sha256");
-        await Assert.That(kinds["hash"]).Contains("keccak256");
+        var kinds = app.Type["hash"].Kinds!;
+        await Assert.That(kinds).Contains("sha256");
+        await Assert.That(kinds).Contains("keccak256");
+    }
+
+    [Test] public async Task HashKinds_DoNotLeakIntoTheLlmPromptVocabulary()
+    {
+        // The prompt's kind table is scoped to fundamentals; a result type's
+        // algorithms are noise the LLM never chooses from.
+        await using var app = new PLangEngine("/test");
+        await Assert.That(app.Module.Schema.Build().Kinds.ContainsKey("hash")).IsFalse();
     }
 
     [Test] public async Task HashType_OwnsBase64RoundTrip()

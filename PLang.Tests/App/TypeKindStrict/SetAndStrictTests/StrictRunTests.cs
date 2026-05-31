@@ -56,15 +56,18 @@ public class StrictRunTests
 
     [Test] public async Task Run_NotStrict_StampsKindFromBuildHook_NoValidation()
     {
+        // A reference fundamental (`as image`, no kind) parses its kind from the
+        // path via the Build hook; non-strict means no content validation. (text
+        // does not derive a kind from a literal — see SetMintCarriesKindTests.)
         var context = _app.User.Context;
         var action = TestAction.Create("variable", "set",
             ("name", "%x%"),
-            ("value", "readme.md"),
-            ("type", new global::app.type.@this("text")));
+            ("value", "photo.png"),
+            ("type", new global::app.type.@this("image")));
         var result = await action.RunAsync(context);
         await result.IsSuccess();
         var stored = context.Variable.Get("x");
-        await Assert.That(stored!.Type!.Name).IsEqualTo("text");
-        await Assert.That(stored.Type.Kind).IsEqualTo("md");
+        await Assert.That(stored!.Type!.Name).IsEqualTo("image");
+        await Assert.That(stored.Type.Kind).IsEqualTo("png");
     }
 }
