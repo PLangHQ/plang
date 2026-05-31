@@ -436,6 +436,85 @@
         "health": "green",
         "notes": "Model in plan/build-time-type-flow.md. Nothing pushed (Ingi holding)."
       }
+    },
+    {
+      "id": "7e5d3ec1-95c1-4170-92da-17d55becc807",
+      "bot": "coder",
+      "timestamp_start": "2026-05-31T00:00:00Z",
+      "timestamp_end": "2026-05-31T00:00:00Z",
+      "intent": "Implement stage 7 rev 2 (hash crypto-owned, returned as value), stage 8 (build-time type flow + fundamentals), stage 9 (lazy path-handles).",
+      "before": {
+        "assumptions": "Stages 1-6 + stage 7 rev 1 committed and green. Rev 2 reworks rev 1 (return Data<hash.@this>); stage 8 scopes the builder prompt to fundamentals; stage 9 makes reference fundamentals lazy path-handles.",
+        "risk": "Changing crypto.hash's return type ripples through every crypto/signing test asserting byte[]. Scoping the prompt Kinds table changes the builder catalog (golden tests). text-no-kind reverses existing as-text tests."
+      },
+      "plan": ".bot/type-kind-strict/coder/v7/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/module/crypto/type/hash/this.cs",
+            "PLang/app/module/crypto/type/hash/serializer/Default.cs",
+            "PLang/app/module/crypto/code/Default.cs",
+            "PLang/app/module/crypto/code/ICrypto.cs",
+            "PLang/app/module/crypto/hash.cs",
+            "PLang/app/module/crypto/verify.cs",
+            "PLang/app/module/signing/Signature.cs",
+            "PLang/app/module/signing/code/Ed25519.cs",
+            "PLang/app/type/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage 7 rev 2: relocate hash type, crypto.hash returns Data<hash.@this>, untyped verify Hash param, FromWire wire read-back, signing round-trips a hash value."
+        },
+        {
+          "paths": [
+            "PLang/app/type/primitive/this.cs",
+            "PLang/app/builder/type/this.cs",
+            "PLang/app/module/variable/set.cs",
+            "os/system/builder/llm/CompileUser.llm"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage 8: fundamental vocabulary (two categories), prompt Kinds scoped to fundamentals (hash excluded), text never derives kind from a literal, dropped spelling-promotion teaching."
+        },
+        {
+          "paths": [
+            "PLang/app/type/image/this.cs",
+            "PLang/app/type/list/Conversion.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage 9: image path-backed lazy ctor + BytesAsync through auth gate; general TryConvertTo path-string->reference-fundamental arm replacing the Data<string> carve-out."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/TypeKindStrict/HashTypeTests.cs",
+            "PLang.Tests/App/Modules/crypto/DefaultProviderTests.cs",
+            "PLang.Tests/App/Modules/crypto/HashActionTests.cs",
+            "PLang.Tests/App/Modules/crypto/ProviderRegistryTests.cs",
+            "PLang.Tests/App/Modules/crypto/ProviderResolutionTests.cs",
+            "PLang.Tests/App/Modules/signing/Ed25519 tests",
+            "PLang.Tests/App/Serialization/CanonicalizationTests.cs",
+            "PLang.Tests/App/TypeKindStrict/LlmRepresentationTests/BuilderNamesTests.cs",
+            "PLang.Tests/App/TypeKindStrict/IntegrationCutsTests/Cut1_TypedSetRoundTripsKind.cs",
+            "PLang.Tests/App/TypeKindStrict/SetAndStrictTests/SetMintCarriesKindTests.cs",
+            "PLang.Tests/App/TypeKindStrict/SetAndStrictTests/StrictRunTests.cs",
+            "PLang.Tests/App/SingularNamespaces/BuilderSchemaTests/BuilderSchemaGoldenTests.cs",
+            "PLang.Tests/App/TypeKindStrict/ReferenceFundamentalTests/LazyPathHandleTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Repointed crypto/signing tests to read the hash value; updated as-text tests to no-kind contract; new lazy-path-handle tests. C# 3818/3818."
+        }
+      ],
+      "after": {
+        "status": "stages 7 rev 2, 8, 9 complete; all committed and pushed",
+        "health": "C# suite 3818/3818 green",
+        "notes": "PLang --test not re-run this session (user deferred). Recommended next: clean rebuild + plang --test, then builder bot for the CompileUser.llm teaching + fundamental-vocabulary prompt changes."
+      }
     }
   ]
 }

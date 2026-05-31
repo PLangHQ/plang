@@ -1,6 +1,49 @@
-# coder — type-kind-strict (v1–v6)
+# coder — type-kind-strict (v1–v7)
 
 ## Version
+v7 (Stages 7 rev 2, 8, 9 — see `v7/plan.md`). v6 = stages 6 & 7 rev 1. v1–v5 = original 5 stages.
+
+## v7 — Stages 7 rev 2, 8, 9 (committed `f08f3760f`, `3c4591b24`, `bee135b30`)
+
+**Stage 7 rev 2 — hash is crypto-owned, returned as a value.** `crypto.hash`
+now returns `Data<hash.@this>` (not `Data<byte[]>`) — the single change that
+drives the build annotation (`%x% (hash)`), fires the live serializer, and makes
+verify read the algorithm off the value. Relocated `app/type/hash` →
+`app/module/crypto/type/hash` (namespace-based discovery makes the move
+automatic). `crypto.verify` `Hash` param is now untyped `data.@this` (carries a
+hash value OR a base64 string). `type.@this.Convert` discovers a
+`static object? FromWire(string, string?)` for wire read-back. Signing's
+`HashDataConverter` + `Ed25519` round-trip/read a `hash.@this`. Crypto/signing
+tests now read the digest off the hash value (`.Bytes`/`.ToBase64`).
+
+**Stage 8 — build-time type flow + fundamentals.** Defined the fundamental
+vocabulary on `primitive.@this` in two categories (`InlineFundamentals` +
+`ReferenceFundamentals`); `BuilderNames` is now that explicit set so
+image/video/audio/path are first-class always-on. Scoped the prompt `Kinds`
+table to fundamentals (`builder/type` Build) — `hash` stays registered but its
+algorithms no longer leak into every step's prompt (subsumes stage 7's
+emit-table fix). `text` never derives a kind from a literal's spelling. Dropped
+the spelling-promotion teaching in `CompileUser.llm`.
+
+**Stage 9 — reference fundamentals are lazy path-handles.** `image` gains a
+path-backed constructor (`new @this(path)`): `.Path` set, no I/O. `BytesAsync()`
+loads through `Path.ReadBytes()` (the auth gate) once, caches; failure surfaces
+at first access. `TryConvertTo` gained a general path-string → reference-
+fundamental (any type with a `path.@this` ctor) arm — replaces `variable.set`'s
+`Data<string>` carve-out for `as image`. Mutation/save parked.
+
+**Coder decisions:** verify `Hash` untyped (As<string> can't convert a
+hash.@this); stage-8 determinism = KindHooks gate (`name != text`) + teaching,
+not a build strip (text→string makes text.Build unreachable; the .pr can't tell
+spelling-kind from explicit `as text/md`); `Schema.Build().Kinds` no longer
+carries hash (stage 8 overrides stage 7 rev 2's wording) — repointed
+`HashType_AdvertisesAlgorithmKinds` to `app.Type["hash"].Kinds`.
+
+**Verification:** C# 3818/3818. PLang `--test` not re-run this session.
+
+---
+
+## Version (historical)
 v6 (Stages 6 & 7 — see `v6/plan.md`). v1–v5 below cover the original 5 stages.
 
 ## v6 — Stages 6 & 7
