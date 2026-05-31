@@ -142,3 +142,67 @@ Doc bodies and XML doc comments describe the current system and the current reas
 
 The one exception is the **CHANGELOG** — recording what changed and when is its entire job. Everywhere else (API docs, architecture markdown, XML comments) states current truth only.
 ```
+
+## builder — v1 — 2026-05-31
+**Target:** characters/builder/character.md
+**Why:** Building the builder (PLang's self-hosted bootstrap) is the single most central procedure to the builder role, yet the character file does not contain the cwd + ordered-file-list recipe. In this session I built from the wrong cwd (`os/system/` instead of `os/`) and swept the whole system tree instead of the builder's 8 goal files, then had to grep `Documentation/v0.2/building-the-builder.md` to find the correct invocation. That doc must be referenced AND its cardinal rules inlined into the character so the builder never improvises this. Adds a new "Building the Builder (bootstrap)" section.
+**Proposed change:**
+
+````markdown
+## Building the Builder (bootstrap) — READ BEFORE ANY SELF-REBUILD
+
+Rebuilding `os/system/builder/` is PLang building PLang. Get it wrong and the
+builder either won't run or silently produces broken `.pr` files that look like
+LLM hallucinations. Full doc: `Documentation/v0.2/building-the-builder.md`
+(read it when touching builder prompts/validator). The non-negotiable recipe:
+
+### The recipe
+```bash
+cd os/        # NOT os/system/, NOT os/system/builder/, NOT repo root — ONLY os/
+plang '--build={"files":["Build.goal","BuildGoal.goal","BuildGoal/Start.goal","BuildGoal/Plan.goal","BuildGoal/Validate.goal","BuildGoal/LlmFixer.goal","BuildStep/Start.goal","BuildStep/Validate.goal"]}' build
+```
+
+Two things are load-bearing and non-obvious:
+
+1. **cwd = `os/`.** Builder `.pr` files stamp paths like
+   `/system/builder/.build/buildgoal.pr` that resolve relative to cwd. Only
+   `cd os/` lands them on the real files. `os/.build/app.pr` is the app-root
+   marker (`name: "os"`). Wrong cwd → `File not found: /.build/buildgoal.pr` or
+   short-form path stamps that break the next run. **Never** rebuild the builder
+   by running `plang build` from `os/system/` — that sweeps the whole system
+   tree (every goal, incl. non-builder goals like `Run.goal`) instead of the
+   builder's 8 files, and produces misleading failures from unrelated goals.
+
+2. **File order = call chain, outer→inner** (entry first, leaves last). The
+   running app uses the *previous* in-memory pipeline during rebuild; if
+   `BuildGoal`'s `.pr` is rewritten before its deps are stable, later goals pick
+   up a half-updated pipeline. Order: `Build.goal` → `BuildGoal/Start` →
+   `BuildGoal/Plan` → `BuildGoal/Validate` → `BuildGoal/LlmFixer` →
+   `BuildStep/Start` → `BuildStep/Validate`.
+   Wrong-order symptom: every goal logs `Validation failed: StepResults or Goal
+   is null — retrying...`, LlmFixer fires, build saves with empty-action
+   regressions.
+
+### Cardinal rule
+**Never hand-edit a builder `.pr` after a self-rebuild produced an error.**
+Surface the error loudly; fix it in the prompt (`os/system/builder/llm/*.llm`),
+the validator (`PLang/app/module/builder/code/Default.cs:Validate`), or the
+action/type teaching — **never** in the `.pr` (it's downstream of the builder).
+If a self-rebuild errors, `git checkout --` the dirtied `.pr` files; do not keep
+them.
+
+### Pre-flight + verify
+- Before: confirm `os/system/builder/.build/` is committed & clean (rollback
+  point). Audit existing builder `.pr` path stamps
+  (`path` = `/system/builder/<Goal>.goal`,
+  `prPath` = `/system/builder/.build/<goal>.pr`); anything short means a prior
+  wrong-cwd run — fix stamps first.
+- After: `cd Tests/Simple && plang build` should report `Saved` with
+  `Kept prior mapping for step N` for every step (no LLM re-call). If it fails,
+  the rebuilt builder has a regression — revert before pushing.
+
+### Scope note
+`os/system/Run.goal` and other `os/system/*.goal` files are NOT the builder. The
+builder is `os/system/builder/**` only. A failure in a non-builder goal during a
+whole-tree sweep is not a builder problem.
+````
