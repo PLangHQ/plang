@@ -26,7 +26,7 @@ public class SecurityFixTests
 
         // Create a binding whose handler throws
         var binding = new EventBinding(
-            EventType.BeforeGoal,
+            Trigger.BeforeGoal,
             handler: (_, _, _) => throw new InvalidOperationException("handler crash"),
             goalNamePattern: "*");
 
@@ -39,7 +39,7 @@ public class SecurityFixTests
         // We test by registering a side-effect handler and verifying it runs
         var secondCallRan = false;
         var binding2 = new EventBinding(
-            EventType.BeforeGoal,
+            Trigger.BeforeGoal,
             handler: (_, _, _) =>
             {
                 secondCallRan = true;
@@ -51,7 +51,7 @@ public class SecurityFixTests
         // To test the SAME binding, we need to call Run on the SAME binding again.
         var ranAgain = false;
         var testBinding = new EventBinding(
-            EventType.BeforeGoal,
+            Trigger.BeforeGoal,
             handler: (context, _, _) =>
             {
                 ranAgain = true;
@@ -62,7 +62,7 @@ public class SecurityFixTests
         // Can't reuse original binding (throws). Create one that tracks calls:
         var callCount = 0;
         var fragileBinding = new EventBinding(
-            EventType.BeforeGoal,
+            Trigger.BeforeGoal,
             handler: (_, _, _) =>
             {
                 callCount++;

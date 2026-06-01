@@ -9,9 +9,9 @@ namespace PLang.Tests.App.ChannelsTests;
 public class Stage8_ChannelEventsTests
 {
     [Test]
-    public async Task EventType_HasFiveNewValues_ForChannelLifecycle()
+    public async Task Trigger_HasFiveNewValues_ForChannelLifecycle()
     {
-        var names = Enum.GetNames(typeof(EventType));
+        var names = Enum.GetNames(typeof(Trigger));
         await Assert.That(names).Contains("BeforeWrite");
         await Assert.That(names).Contains("AfterWrite");
         await Assert.That(names).Contains("BeforeRead");
@@ -22,7 +22,7 @@ public class Stage8_ChannelEventsTests
     [Test]
     public async Task EventBinding_AcceptsChannelNameFilter()
     {
-        var b = new EventBinding(EventType.BeforeWrite,
+        var b = new EventBinding(Trigger.BeforeWrite,
             (_, _, _) => Task.FromResult(Data.Ok()),
             channelName: "logger");
         await Assert.That(b.ChannelName).IsEqualTo("logger");
@@ -43,7 +43,7 @@ public class Stage8_ChannelEventsTests
         var ch = StreamChannel.Memory("logger");
         app.User.Channel.Register(ch);
         Data? captured = null;
-        ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, payload) =>
+        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, payload) =>
         {
             captured = payload;
             return Task.FromResult(Data.Ok());
@@ -59,9 +59,9 @@ public class Stage8_ChannelEventsTests
     {
         var ch = StreamChannel.Memory("c");
         bool afterFired = false;
-        ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, _) =>
+        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) =>
             throw new InvalidOperationException("nope")));
-        ch.Events.Add(new EventBinding(EventType.AfterWrite, (_, _, _) =>
+        ch.Events.Add(new EventBinding(Trigger.AfterWrite, (_, _, _) =>
         {
             afterFired = true;
             return Task.FromResult(Data.Ok());
@@ -79,7 +79,7 @@ public class Stage8_ChannelEventsTests
         var ch = StreamChannel.Memory("c");
         app.User.Channel.Register(ch);
         bool afterFired = false;
-        ch.Events.Add(new EventBinding(EventType.AfterWrite, (_, _, _) =>
+        ch.Events.Add(new EventBinding(Trigger.AfterWrite, (_, _, _) =>
         {
             afterFired = true;
             return Task.FromResult(Data.Ok());
@@ -95,7 +95,7 @@ public class Stage8_ChannelEventsTests
         var ch = new ThrowOnWriteChannel("c");
         bool afterFired = false;
         Data? receivedData = null;
-        ch.Events.Add(new EventBinding(EventType.AfterWrite, (_, _, payload) =>
+        ch.Events.Add(new EventBinding(Trigger.AfterWrite, (_, _, payload) =>
         {
             afterFired = true;
             receivedData = payload;
@@ -113,7 +113,7 @@ public class Stage8_ChannelEventsTests
         await using var app = new global::app.@this("/test", autoWireConsoleChannels: false);
         var ch = StreamChannel.Memory("c");
         app.User.Channel.Register(ch);
-        ch.Events.Add(new EventBinding(EventType.AfterWrite, (_, _, _) =>
+        ch.Events.Add(new EventBinding(Trigger.AfterWrite, (_, _, _) =>
             throw new InvalidOperationException("after fail")));
         var result = await ch.WriteAsync(Data.Ok("hi"));
         await result.IsSuccess();
@@ -124,7 +124,7 @@ public class Stage8_ChannelEventsTests
     {
         var ch = StreamChannel.Memory("c");
         int outerHits = 0;
-        ch.Events.Add(new EventBinding(EventType.BeforeWrite, async (_, _, _) =>
+        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, async (_, _, _) =>
         {
             outerHits++;
             // Re-entry: write to the same channel inside the handler.
@@ -142,9 +142,9 @@ public class Stage8_ChannelEventsTests
         var ch = StreamChannel.Memory("c");
         app.User.Channel.Register(ch);
         var order = new List<string>();
-        ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, _) => { order.Add("A"); return Task.FromResult(Data.Ok()); }));
-        ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, _) => { order.Add("B"); return Task.FromResult(Data.Ok()); }));
-        ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, _) => { order.Add("C"); return Task.FromResult(Data.Ok()); }));
+        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) => { order.Add("A"); return Task.FromResult(Data.Ok()); }));
+        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) => { order.Add("B"); return Task.FromResult(Data.Ok()); }));
+        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) => { order.Add("C"); return Task.FromResult(Data.Ok()); }));
         await ch.WriteAsync(Data.Ok("x"));
         await Assert.That(order).IsEquivalentTo(new[] { "A", "B", "C" });
     }
@@ -154,13 +154,13 @@ public class Stage8_ChannelEventsTests
     {
         var ch = StreamChannel.Memory("c");
         var order = new List<string>();
-        ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, _) => { order.Add("A"); return Task.FromResult(Data.Ok()); }));
-        ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, _) =>
+        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) => { order.Add("A"); return Task.FromResult(Data.Ok()); }));
+        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) =>
         {
             order.Add("B");
             throw new InvalidOperationException("stop");
         }));
-        ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, _) => { order.Add("C"); return Task.FromResult(Data.Ok()); }));
+        ch.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, _) => { order.Add("C"); return Task.FromResult(Data.Ok()); }));
         var result = await ch.WriteAsync(Data.Ok("x"));
         await result.IsFailure();
         await Assert.That(order).IsEquivalentTo(new[] { "A", "B" });
@@ -173,7 +173,7 @@ public class Stage8_ChannelEventsTests
         var ch = new StreamChannel("i", ms, ChannelDirection.Bidirectional, ownsStream: false)
         { Mime = "text/plain" };
         Data? receivedData = null;
-        ch.Events.Add(new EventBinding(EventType.OnAsk, (_, _, payload) =>
+        ch.Events.Add(new EventBinding(Trigger.OnAsk, (_, _, payload) =>
         {
             receivedData = payload;
             return Task.FromResult(Data.Ok());
@@ -193,7 +193,7 @@ public class Stage8_ChannelEventsTests
         // consistent. Test pins that OnAsk does fire for Message-style kinds.
         var ch = new MessageProbeChannel("m");
         bool fired = false;
-        ch.Events.Add(new EventBinding(EventType.OnAsk, (_, _, _) =>
+        ch.Events.Add(new EventBinding(Trigger.OnAsk, (_, _, _) =>
         {
             fired = true;
             return Task.FromResult(Data.Ok());
@@ -213,7 +213,7 @@ public class Stage8_ChannelEventsTests
         svc.Channels.Register(serviceLogger);
 
         var hits = 0;
-        app.Event.Register(new EventBinding(EventType.BeforeWrite,
+        app.Event.Register(new EventBinding(Trigger.BeforeWrite,
             (_, _, _) => { hits++; return Task.FromResult(Data.Ok()); },
             channelName: "logger"));
 
@@ -230,7 +230,7 @@ public class Stage8_ChannelEventsTests
         app.User.Channel.Register(ch);
 
         bool goalFired = false;
-        app.Event.Register(new EventBinding(EventType.BeforeGoal,
+        app.Event.Register(new EventBinding(Trigger.BeforeGoal,
             (_, _, _) => { goalFired = true; return Task.FromResult(Data.Ok()); }));
 
         await ch.WriteAsync(Data.Ok("x"));

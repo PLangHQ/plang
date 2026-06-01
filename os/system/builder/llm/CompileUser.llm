@@ -65,4 +65,10 @@ Rules:
 {% for t in typeInfo.Types %}- `{{ t.Name }}`{% if t.Values %}: {% for v in t.Values %}{{ v }}{% unless forloop.last %} | {% endunless %}{% endfor %}{% elsif t.Fields %}: { {% for f in t.Fields %}{{ f.Name }}: {{ f.TypeName }}{% unless forloop.last %}, {% endunless %}{% endfor %} }{% elsif t.ConstructorSignature %} ({{ t.ConstructorSignature }}){% elsif t.Shape %} ({{ t.Shape }}){% endif %}{% if t.Description %} — {{ t.Description }}{% endif %}{% if t.Example %} (e.g. `{{ t.Example }}`){% endif %}
 {% endfor %}{% endif %}
 
-Produce the actions for this step.
+## Compile this exact line
+
+```
+{{ step.Text }}
+```
+
+Produce the actions for this step — map the line above verbatim. Copy every identifier, path, and argument exactly as written (e.g. a goal name `Folder/Goal` keeps `/Goal`; a `%var%` stays a `%var%`).

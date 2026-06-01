@@ -28,8 +28,9 @@ For `foreach %list%, call X, section=%item%` the action set is `loop.foreach` + 
 
 ### Payload `name` is a goal identifier — never a CLR type or schema token
 
-The `{"name": "..."}` payload is the goal name **verbatim from the step text**. Common wrong shapes:
+The `{"name": "..."}` payload is the goal name **verbatim from the step text** — copy the path exactly, whatever its form: `Goal`, `Folder/Goal`, `../X`, `/root/Y`. Keep every character of the path; dropping or rewriting a segment (e.g. `Folder/Goal` → `Folder`) points the call at a goal that doesn't exist and fails at runtime with NotFound.
 
-- `"App.Goals.Goal.GoalCall"` — CLR class FullName. Wrong.
+Common wrong shapes:
+
 - `"goal.call"` — the PLang **type descriptor** for this very parameter. The VALUE goes inside `{"name": "..."}` and must be the user's goal identifier from the step text. Never copy the type token into the value slot.
 - Any dotted identifier that's a type rather than a goal.

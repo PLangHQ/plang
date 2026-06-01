@@ -16,7 +16,7 @@ global using Goal = app.goal.@this;
 global using Visibility = app.goal.Visibility;
 
 // Event types
-global using EventType = app.@event.EventType;
+global using Trigger = app.@event.Trigger;
 global using EventBinding = app.@event.lifecycle.binding.@this;
 global using Lifecycle = app.@event.lifecycle.@this;
 global using Bindings = app.@event.lifecycle.binding.list.@this;

@@ -3,7 +3,7 @@ namespace app.@event;
 /// <summary>
 /// Types of events in the PLang runtime lifecycle.
 /// </summary>
-public enum EventType
+public enum Trigger
 {
     BeforeAppStart,
     AfterAppStart,

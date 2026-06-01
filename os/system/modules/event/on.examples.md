@@ -1,11 +1,11 @@
 Step text: `before step, call LogStep, on goal pattern 'Api/*'`
-Mapping: `event.on Type([eventtype] BeforeStep), GoalToCall([goal.call] LogStep), GoalPattern([string] Api/*)`
+Mapping: `event.on Trigger([trigger] BeforeStep), GoalToCall([goal.call] LogStep), GoalPattern([string] Api/*)`
 
 Step text: `on ask on "input" channel call CaptchaGoal, write to %bindingId%`
-Mapping: `event.on Type([eventtype] OnAsk), ChannelName([string] "input"), GoalToCall([goal.call] CaptchaGoal) | variable.set Name(%bindingId%), Value(%!data%)`
+Mapping: `event.on Trigger([trigger] OnAsk), ChannelName([string] "input"), GoalToCall([goal.call] CaptchaGoal) | variable.set Name(%bindingId%), Value(%!data%)`
 
 Step text: `before write on "output" channel call LogOutput`
-Mapping: `event.on Type([eventtype] BeforeWrite), ChannelName([string] "output"), GoalToCall([goal.call] LogOutput)`
+Mapping: `event.on Trigger([trigger] BeforeWrite), ChannelName([string] "output"), GoalToCall([goal.call] LogOutput)`
 
 "on X" / "before X" / "after X" step phrasings all map to event.on with the
 appropriate Type (OnAsk, BeforeWrite, BeforeStep, AfterAction, etc.). The

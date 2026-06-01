@@ -18,7 +18,7 @@ public partial class Reset : IContext
         else
         {
             // Clear all mocks — remove all BeforeAction bindings tagged as mock
-            var bindings = Context.Events.GetBindings(EventType.BeforeAction);
+            var bindings = Context.Events.GetBindings(Trigger.BeforeAction);
             foreach (var binding in bindings)
             {
                 if (binding.Targets.OfType<global::app.mock.@this>().Any())

@@ -57,7 +57,7 @@ public class ConditionIfBranchIndexTests
 
         Data? captured = null;
         _app.User.Context.Events.Register(new EventBinding(
-            EventType.AfterAction,
+            Trigger.AfterAction,
             (context, action, result) =>
             {
                 if (action?.Module == "condition" && action.ActionName == "if")
@@ -142,7 +142,7 @@ public class ConditionIfBranchIndexTests
         // Capture the first-if's AfterAction (the orchestrator emits its result there).
         var first = actions[0];
         _app.User.Context.Events.Register(new EventBinding(
-            EventType.AfterAction,
+            Trigger.AfterAction,
             (context, action, result) =>
             {
                 if (ReferenceEquals(action, first))

@@ -41,6 +41,13 @@ public sealed partial class @this
     public kind.@this KindHooks { get; } = new();
 
     /// <summary>
+    /// Per-type <c>static Convert(object?, string? kind, context)</c> hooks — the
+    /// runtime sibling of <see cref="KindHooks"/>. A type owns how a value becomes
+    /// an instance of itself; <c>app.type.@this.Convert</c> routes through here.
+    /// </summary>
+    public convert.@this Conversions { get; } = new();
+
+    /// <summary>
     /// Per-(type, format) renderer dispatch — feeds the writer's
     /// <see cref="data.TypedValueNode"/> case. Discovers
     /// <c>app/types/&lt;name&gt;/serializer/&lt;format&gt;.cs</c> classes via

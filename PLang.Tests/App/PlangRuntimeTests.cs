@@ -92,7 +92,7 @@ public class PlangRuntimeTests : IDisposable
         var onAction = new global::app.module.@event.On
         {
             Context = context,
-            Type = global::app.@event.EventType.BeforeStep,
+            Trigger = global::app.@event.Trigger.BeforeStep,
             GoalToCall = new GoalCall { Name = "LogBefore" },
             StepPattern = "*"
         };

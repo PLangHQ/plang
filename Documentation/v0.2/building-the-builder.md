@@ -22,10 +22,10 @@ The one exception is the *initial bootstrap* when source `.goal` semantics chang
 
 ```bash
 cd os/
-plang '--build={"files":["Build.goal","BuildGoal.goal","BuildGoal/Start.goal","BuildGoal/Plan.goal","BuildGoal/Validate.goal","BuildGoal/LlmFixer.goal","BuildStep/Start.goal","BuildStep/Validate.goal"]}' build
+plang '--build={"files":["system/builder/Build.goal","system/builder/BuildGoal.goal","system/builder/BuildGoal/Start.goal","system/builder/BuildGoal/Plan.goal","system/builder/BuildGoal/Validate.goal","system/builder/BuildGoal/LlmFixer.goal","system/builder/BuildStep/Start.goal","system/builder/BuildStep/Validate.goal"]}' build
 ```
 
-Two things matter and both are non-obvious:
+Three things matter and all are non-obvious:
 
 ### 1. `cwd = os/`
 
@@ -50,6 +50,14 @@ Pass the explicit ordered list via `--build={"files":[...]}` whenever you rebuil
 **Why:** during the rebuild the running app uses the *previous* in-memory build pipeline. If `BuildGoal`'s `.pr` is rewritten before its dependencies are stable, subsequent goal builds may pick up a partially-updated pipeline and produce inconsistent output. The list order is honoured by `DefaultBuilderProvider.LoadFiles` (`PLang/app/modules/builder/code/Default.cs`) — files in the `files` filter are queued in the order they appear.
 
 **Wrong-order symptom:** every goal logs `Validation failed: StepResults or Goal is null — retrying...` on first attempt and `LlmFixer` fires. The build still saves, but with empty-action regressions in the `.pr`.
+
+### 3. Path-qualify every filter — bare filenames fan out across the whole tree
+
+Each `files` entry **must** start with `system/builder/`. A filter with no `/` (e.g. `"Build.goal"`) is matched by **filename only** — `Builder.Goals` → `MatchesPattern` falls back to `f.FileName.Equals(bf.FileName)` for non-path-qualified entries. `os/` has multiple `Build.goal` and many `Start.goal` files (e.g. `system/modules/db/Builder/Build.goal`, every `<app>/Start.goal`), so a bare list silently pulls in **dozens of unrelated goals** instead of the builder's 8.
+
+Some of those incidental files are stubs or fully `/* … */`-commented (0 parseable steps). The planner then receives a goal whose rendered body is just its name (`"Build\n\n"`) and fails with `BuilderPlannerFailed` ("the LLM never returned a steps array") — a **phantom error that has nothing to do with the builder**. You'll also see a build count far larger than 8 (`builder.actions` firing hundreds of times) — the tell that the filter didn't scope.
+
+Qualify with the **full `system/builder/` prefix**, not a shorter suffix: `MatchesPattern` matches path-qualified filters by `EndsWith`/`StartsWith` *case-insensitively*, so `"builder/Build.goal"` would still match `system/modules/db/Builder/Build.goal` (`Builder` vs `builder`). `"system/builder/Build.goal"` is unambiguous.
 
 ## Pre-flight check
 

@@ -142,7 +142,7 @@ public class RunActionTests
         {
             if (!childApp.AbsolutePath.StartsWith(_tempDir)) return;
             childApp.User.Context.Events.Register(new EventBinding(
-                EventType.BeforeAction,
+                Trigger.BeforeAction,
                 async (context, action, result) =>
                 {
                     lock (depthLock)

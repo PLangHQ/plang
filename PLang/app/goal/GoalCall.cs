@@ -88,6 +88,15 @@ public sealed class GoalCall : module.IEvent
             // ancestor of the caller's folder, so walk the caller's ancestors
             // before falling back to root- and context-relative.
             var subPath = $"{name[..slashAt]}/.build/{name[(slashAt + 1)..].ToLowerInvariant()}.pr";
+
+            // App-absolute name (e.g. "/system/builder/EmitBuildEvent"): subPath is
+            // already app-rooted ("/system/builder/.build/emitbuildevent.pr"). Load it
+            // directly — the relative-name fallbacks below ("/" + subPath, {dir}/{subPath})
+            // would prepend a second separator, and "//…" resolves to the HOST filesystem
+            // root, tripping the permission gate for a file that's plainly under the app.
+            if (name.StartsWith('/'))
+                return await LoadFromFile(subPath, app, context);
+
             for (var dir = callerDir; !string.IsNullOrEmpty(dir);)
             {
                 var hit = await LoadFromFile($"{dir}/{subPath}", app, context);

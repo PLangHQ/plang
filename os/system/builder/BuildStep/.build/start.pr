@@ -945,6 +945,11 @@
                   "name": "Cache",
                   "value": "%!build.cache%",
                   "type": "bool"
+                },
+                {
+                  "name": "Model",
+                  "value": "gpt-5.4",
+                  "type": "text"
                 }
               ],
               "defaults": [
@@ -1255,6 +1260,11 @@
                   "name": "ContinuePreviousConversation",
                   "value": "%plan%",
                   "type": "bool"
+                },
+                {
+                  "name": "Model",
+                  "value": "gpt-5.4",
+                  "type": "text"
                 }
               ],
               "defaults": [
@@ -1579,6 +1589,11 @@
                   "name": "ContinuePreviousConversation",
                   "value": true,
                   "type": "bool"
+                },
+                {
+                  "name": "Model",
+                  "value": "gpt-5.4",
+                  "type": "text"
                 }
               ],
               "defaults": [

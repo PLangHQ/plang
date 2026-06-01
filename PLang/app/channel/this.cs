@@ -117,7 +117,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
     public virtual async Task<global::app.data.@this> WriteAsync(global::app.data.@this data, CancellationToken ct = default)
     {
         // Fire BeforeWrite — abort on throw.
-        var beforeAborted = await FireBefore(global::app.@event.EventType.BeforeWrite, data);
+        var beforeAborted = await FireBefore(global::app.@event.Trigger.BeforeWrite, data);
         if (beforeAborted != null) return beforeAborted;
 
         global::app.data.@this result;
@@ -129,7 +129,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
         }
 
         // Fire AfterWrite — always (even on error). Handler throws are suppressed.
-        await FireAfter(global::app.@event.EventType.AfterWrite, result);
+        await FireAfter(global::app.@event.Trigger.AfterWrite, result);
         return result;
     }
 
@@ -138,7 +138,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
     /// </summary>
     public virtual async Task<global::app.data.@this> ReadAsync(CancellationToken ct = default)
     {
-        var beforeAborted = await FireBefore(global::app.@event.EventType.BeforeRead, global::app.data.@this.Ok());
+        var beforeAborted = await FireBefore(global::app.@event.Trigger.BeforeRead, global::app.data.@this.Ok());
         if (beforeAborted != null) return beforeAborted;
 
         global::app.data.@this result;
@@ -149,7 +149,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
                 $"Channel '{Name}' read failed: {ex.Message}", "ReadError") { Exception = ex });
         }
 
-        await FireAfter(global::app.@event.EventType.AfterRead, result);
+        await FireAfter(global::app.@event.Trigger.AfterRead, result);
         return result;
     }
 
@@ -167,7 +167,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
                 $"Channel '{Name}' ask failed: {ex.Message}", "AskError") { Exception = ex });
         }
 
-        await FireAfter(global::app.@event.EventType.OnAsk, result);
+        await FireAfter(global::app.@event.Trigger.OnAsk, result);
         return result;
     }
 
@@ -176,7 +176,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
     /// per-channel Events list, plus app-level bindings whose ChannelName equals
     /// this channel's name. Per-channel bindings precede app-level (registration order).
     /// </summary>
-    private IEnumerable<global::app.@event.lifecycle.binding.@this> MatchingBindings(global::app.@event.EventType type)
+    private IEnumerable<global::app.@event.lifecycle.binding.@this> MatchingBindings(global::app.@event.Trigger type)
     {
         // Per-channel bindings (with their own lock + filter, owned by Events).
         foreach (var b in Events.Match(type, Name)) yield return b;
@@ -201,7 +201,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
         }
     }
 
-    private async Task<global::app.data.@this?> FireBefore(global::app.@event.EventType type, global::app.data.@this data)
+    private async Task<global::app.data.@this?> FireBefore(global::app.@event.Trigger type, global::app.data.@this data)
     {
         foreach (var binding in MatchingBindings(type))
         {
@@ -222,7 +222,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
         return null;
     }
 
-    private async Task FireAfter(global::app.@event.EventType type, global::app.data.@this data)
+    private async Task FireAfter(global::app.@event.Trigger type, global::app.data.@this data)
     {
         foreach (var binding in MatchingBindings(type))
         {

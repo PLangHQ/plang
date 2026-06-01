@@ -23,5 +23,5 @@ Plan
 
 
 QueryAndValidatePlan
-- llm.query Messages=%messages%, Schema={description: string, steps: list<{index: int, actions: list<string>, confidence: string, explanation?: string}>}, cache=%!build.cache%, write to %plan%
+- llm.query Messages=%messages%, Schema={description: string, steps: list<{index: int, actions: list<string>, confidence: string, explanation?: string}>}, cache=%!build.cache%, model="gpt-5.4", write to %plan%
 - call Validate

@@ -227,6 +227,18 @@ public sealed partial class @this
                 return (targetList, null);
             }
 
+            // The value IS a collection, but none of the arms above recognized it
+            // (e.g. a generic-only IList<T>/IEnumerable<T> that isn't the non-generic
+            // IList — a domain collection like step.actions.@this). Falling through to
+            // the single-element wrap below would silently bury the whole collection in
+            // one slot and hide the gap. Throw loudly so it surfaces and the list
+            // converter grows a real arm for this shape instead of masking it.
+            if (value is System.Collections.IEnumerable && value is not string)
+                throw new System.InvalidOperationException(
+                    $"List-conversion gap: cannot convert {sourceType.FullName} into {targetType.FullName}. " +
+                    "It is a collection the list converter doesn't recognize (likely a generic-only IList<T>); " +
+                    "add an arm for it rather than coercing the whole collection into a single element.");
+
             if (listElementType.IsAssignableFrom(sourceType))
             {
                 var list = (System.Collections.IList)System.Activator.CreateInstance(targetType)!;
@@ -561,8 +573,11 @@ public sealed partial class @this
         }
         if (value is System.Collections.ICollection col)
             return $"<{value.GetType().Name} @ {col.Count} items>";
-        var str = value.ToString() ?? "?";
-        return str.Length <= 100 ? $"{str} ({value.GetType().Name})" : $"{str[..100]}… ({value.GetType().Name})";
+        // A value that is neither string nor collection: show its TYPE, never
+        // ToString() it. A domain object's ToString() leaks the CLR type name as if
+        // it were content and masks the real defect (an object reaching a text slot);
+        // the type name alone is the honest, useful signal for a bind-failure message.
+        return $"<{value.GetType().FullName}>";
     }
 
     private static System.Type? GetListElementType(System.Type targetType)

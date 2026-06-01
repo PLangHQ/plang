@@ -25,7 +25,7 @@ public sealed class @this
     /// Dispatches matching bindings. Payload-carrying events (AfterAction) pass the
     /// action and its result; other events leave action/result null.
     /// </summary>
-    public Task<data.@this> Run(actor.context.@this context, EventType type,
+    public Task<data.@this> Run(actor.context.@this context, Trigger type,
         Action? action = null, data.@this? result = null)
         => RunBindings(_bindings.Where(b => b.Type == type), context, action, result);
 

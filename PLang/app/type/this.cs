@@ -139,6 +139,38 @@ public sealed class @this
     }
 
     /// <summary>
+    /// Produce a value OF THIS TYPE from <paramref name="value"/>, kind-aware.
+    /// OBP: a type owns its own construction — callers ask the type to make the
+    /// value instead of reaching for <c>Convert.ChangeType</c> themselves. Returns
+    /// the converted value, or an Error when the value cannot honestly become this
+    /// type. <c>Convert.ChangeType</c> survives only as a leaf inside the general
+    /// converter for genuine primitive coercions.
+    /// </summary>
+    public global::app.data.@this Convert(object? value, actor.context.@this context)
+    {
+        Context ??= context;
+        if (value is null) return global::app.data.@this.Ok(value);
+
+        // OBP: the concrete type owns its own construction. Resolve the family
+        // class (text.@this, number.@this, …) and ask IT to make the value from
+        // ours, passing our Kind. This entity only routes — it holds no per-type
+        // ("if text", "if number") knowledge.
+        var familyClass = context.App.Type[Name]?.ClrType;
+        var owned = context.App.Type.Conversions.Of(familyClass, value, Kind, context);
+        if (owned != null) return owned;
+
+        // No type-owned Convert yet — fall back to the general converter against
+        // this type's CLR mate (incremental migration; the leaf Convert.ChangeType
+        // lives in there, and each family grows its own Convert over time).
+        var target = ClrType;
+        if (target == null)
+            return global::app.data.@this.FromError(new global::app.error.Error(
+                $"Unknown type '{Name}'", "UnknownType", 400));
+        var (c, err) = global::app.type.list.@this.TryConvertTo(value, target, context);
+        return err != null ? global::app.data.@this.FromError(err) : global::app.data.@this.Ok(c);
+    }
+
+    /// <summary>
     /// The "null" type — the type of a Data whose Value is null and no explicit
     /// Type was set.  Replaces the historical <c>Data.Type == null</c> sentinel
     /// so the property can be non-null end-to-end.  Wire serialization skips it

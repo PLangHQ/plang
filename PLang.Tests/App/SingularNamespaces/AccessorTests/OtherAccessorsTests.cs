@@ -14,7 +14,7 @@ public class OtherAccessorsTests
     {
         await using var app = new PLangEngine("/test");
         var binding = new global::app.@event.lifecycle.binding.@this(
-            global::app.@event.EventType.AfterAction, async (_, _, _) => global::app.data.@this.Ok());
+            global::app.@event.Trigger.AfterAction, async (_, _, _) => global::app.data.@this.Ok());
         var id = app.Event.Register(binding);
         await Assert.That(id).IsNotNull();
         await Assert.That(app.Event.Unregister(id)).IsTrue();
@@ -24,7 +24,7 @@ public class OtherAccessorsTests
     {
         await using var app = new PLangEngine("/test");
         var binding = new global::app.@event.lifecycle.binding.@this(
-            global::app.@event.EventType.AfterAction, async (_, _, _) => global::app.data.@this.Ok());
+            global::app.@event.Trigger.AfterAction, async (_, _, _) => global::app.data.@this.Ok());
         app.Event.Register(binding);
         var bindings = app.Event.list;
         await Assert.That(bindings.Any(b => b.Id == binding.Id)).IsTrue();

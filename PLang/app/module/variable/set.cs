@@ -213,15 +213,20 @@ public partial class Set : IContext, IBuildValidatable
             // mint as Data<string> and let downstream consumers resolve.
             else if (converted != null && !targetType.IsInstanceOfType(converted))
             {
-                var (c, err) = global::app.type.list.@this.TryConvertTo(converted, targetType, Context);
-                if (err == null)
-                    converted = c;
+                // Ask the TYPE to make a value of itself (kind-aware) — the type owns
+                // its own construction; we don't reach for Convert.ChangeType here.
+                var convResult = typeEntity.Convert(converted, Context);
+                if (convResult.Success)
+                {
+                    converted = convResult.Value;
+                    mintType = converted?.GetType() ?? targetType;
+                }
                 else if (typeof(global::app.data.IKindValidatable).IsAssignableFrom(targetType))
                     // Byte-backed family — keep the raw value, the Type entity
                     // (with its kind/strict) carries the user-declared meaning.
                     mintType = converted.GetType();
                 else
-                    return Task.FromResult(global::app.data.@this.FromError(err));
+                    return Task.FromResult(convResult);
             }
             var typedData = ConstructDataOfT(Name.Value, mintType, converted, Context);
             // Pin the type: the value's own when kept as-is (image wins over a
