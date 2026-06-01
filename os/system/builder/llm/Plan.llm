@@ -49,6 +49,8 @@ If a step is a single clause, `actions` has one entry. If it's compound, more en
 
 Step text `- call Validate` (or any `call <Identifier>`) is a goal-to-goal call: `goal.call`. NOT `builder.validate`, NOT `file.save` — `call` is the verb, the identifier is the goal name. Compiler fills the goal name; you just emit `goal.call`.
 
+**The callee's NAME never changes this pick.** `call <Name>` is `goal.call` whatever `<Name>` spells — including when the name (or a parameter value) contains a word that resembles another module's domain. The name is an identifier the developer chose; it is not the step's verb. `event.on` is selected ONLY when the STEP ITSELF leads with `on`/`before`/`after` to register a callback (e.g. `before step, call X`). A leading `call` always means `goal.call`, even path-qualified (`call Some/Path/Name ...`).
+
 Exception: explicit `<module>.<action> <params>` syntax (e.g. `builder.validate actions=%x%`, `file.save Path=%p%`) — that names the action directly.
 
 ## The verb is the leading word — parameter values are arguments, never actions
@@ -58,6 +60,7 @@ The action set comes from the step's leading verb (or the explicit `module.actio
 A value that *resembles* another action's domain — an `event`-sounding string in a parameter, a `%goal%` reference, a verb-like word inside quotes — does not change the verb. Examples that often mislead:
 
 - `call X kind="goalError", goal=%g%` — verb is `call` → `goal.call`. Not `event.on` (the value `"goalError"` is a label, not an event registration). Not `error.throw`.
+- `call X kind="..."` where the goal name `X` *itself* reads like another module's domain — still `goal.call`. A word inside the callee name is an identifier, not the step's verb; only a leading `on`/`before`/`after` selects `event.on`.
 - `set %x% = %a% + %b%` — verb is `set` → `variable.set` (with `math.add` as a peer for the arithmetic expression). The arithmetic-on-the-right doesn't make the WHOLE step `math.add` alone.
 - `write out "deleting %file%"` — verb is `write` → `output.write`. The word "deleting" in the value doesn't add `file.remove`.
 

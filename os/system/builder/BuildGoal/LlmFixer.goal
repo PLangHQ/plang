@@ -5,7 +5,7 @@ LlmFixer
 
 - call /system/builder/EmitBuildEvent kind="planner-validation-failed", errorMessage=%!error.Message%
 - set %fixerMessages% = [{"Role":"user", "Content":"Your previous response was rejected: %!error.Message%\n\nReturn the corrected plan. Each step's `actions` MUST be a non-empty array of `\"module.action\"` strings from the catalog (e.g. `\"variable.set\"`, `\"file.read\"`). `index` is 0-based."}], type=json
-- llm.query Messages=%fixerMessages%, Schema={description: string, steps: list<{index: int, actions: list<string>, confidence: string, explanation?: string}>}, cache=%!build.cache%, model="gpt-5.4", previousConversation=%plan%, write to %plan%
+- llm.query Messages=%fixerMessages%, Schema={description: string, steps: list<{index: int, actions: list<string>, confidence: string, explanation?: string}>}, cache=%!build.cache%, previousConversation=%plan%, write to %plan%
 
 / Don't recurse into Validate here — the runtime retries QueryAndValidatePlan
 / (the wrapped call), which calls Validate itself. Validate-call inside this
