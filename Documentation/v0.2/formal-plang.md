@@ -195,19 +195,29 @@ assert.isTrue(Value=%flag%)
 formal      := chain
 chain       := segment ( (" | " | " , ") segment )*
 segment     := module "." action "(" params? ")"
-params      := param ( "," param )*
-param       := Name "=" value
-value       := string | number | bool | var | sysvar | list | object | actionlist
-string      := '"' chars '"'
-var         := "%" identifier ("." member)* "%"
-sysvar      := "%!" identifier ("." member)* "%"
+params      := param ( ", " param )*
+param       := Name "=" value | value
+value       := text | number | bool | list | object | segment | ...
+text        := '"' chars '"'
 list        := "[" (value ("," value)*)? "]"
 object      := "{" (key ":" value ("," key ":" value)*)? "}"
-actionlist  := "[" (segment ("," segment)*)? "]"     // e.g. error.handle Actions, goal.call parameters
 ```
 
-Modifiers (`error.handle`, `cache.wrap`, `timeout.after`) are segments introduced
-by ` | `; peers are segments introduced by ` , `.
+Notes:
+- The `value` alternatives above are **not a closed set** — `text`, `number`,
+  `bool`, `list`, `object` are the common primitives, but the full value
+  vocabulary comes from the **PLang type system (the types list)**, and more are
+  added there as needed. The grammar's job is the *structure* (how values are
+  written and composed); *which* types exist is owned by the type list (currently
+  migrating to `{name, kind, strict}` — see the warning at the top).
+- A **variable reference** (`%name%`, member access `%name.x%`, or system
+  `%!data%`) appears anywhere a value does, written verbatim and resolved at
+  runtime. It is not a distinct grammar atom — it's just a value token.
+- A **nested action** is a value: `error.handle(Actions=[goal.call(...)])` is a
+  `list` whose elements are `segment`s. There is no separate "action-list"
+  production — a list of actions is just a `list` of `value`s.
+- Modifiers (`error.handle`, `cache.wrap`, `timeout.after`) are segments
+  introduced by ` | `; peers are segments introduced by ` , `.
 
 ---
 
