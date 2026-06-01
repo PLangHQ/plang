@@ -120,6 +120,33 @@ Ingi's lean ("code is wrong, we should serialize the verb") points at **(B)**. C
 
 ---
 
+## 6. Long methods — behavior that should be distributed across owners, crammed into one body
+
+**Location:** not a fixed list — these drift. Find them with the recipe below, then triage. (At the time of writing the two worst were a 442-line LLM `Query()` and `TryConvertTo` from #5; by the time this pass runs those line numbers will have moved, so re-scan rather than trust any list.)
+
+**Found-in:** `type-kind-strict` (2026-06-01). Ingi's read on `TryConvertTo`: the standout wasn't the type-switch, it was that it's a *very long method* — and that length itself is the smell, static or not.
+
+**Status:** open — cleanup/todo. Pick off individual offenders in their own small commits; no single branch.
+
+**The smell:** a method body that runs several independent phases, each appending to one shared mutable accumulator (an `errors` list, a `StringBuilder`, the result `Data`). In OBP terms that's procedural code wearing a method's clothes — the phases are behaviors that want owners. The OBP cut goes one step past generic "extract a private helper": ask whether each phase's work *belongs on another object*. The clean fix is usually "ask the part to do it itself" — the call stack formats itself, the message set builds itself, each type converts itself (#5) — leaving the long method a thin orchestrator. Extract-method is the floor; pushing the job onto its owner is the OBP move.
+
+**How to find them (the durable part — the file list isn't):**
+
+- **Quick, zero-build:** `python3 tools/obp-longmethods.py [root]` (root defaults to `PLang`). Masks strings/comments so interpolated `{}` and `//` don't skew the brace count, then ranks every method/ctor/local-function body by line span and prints a distribution + the top 40. Heuristic — eyeball the hits.
+- **Exact, durable home:** add an **H4 pass to `tools/ObpScan`** (it already walks `MethodDeclarationSyntax` for H1/H2). Roslyn gives the body line span exactly — `m.Body?.GetLocation().GetLineSpan()` end−start — no brace-masking heuristics. This is where the file's "promote detection into ObpScan" plan lands for this smell.
+- **As a gate it must be a WARNING, never a build error.** ~20% of long methods are legitimate (below), so a hard `PLNGxxx` would false-positive on parsers and dispatchers. Length flags a candidate; a human makes the call.
+
+**Threshold:** review band starts ~60 lines; **>100 lines is a strong candidate.** Triage top-down — the finder ranks by span.
+
+**Triage rubric — run the finder, then for each candidate ask:**
+
+- **LEGIT — leave it.** The body is one inherently flat thing: a single-pass parser / state machine, an exhaustive type/shape dispatcher, or a decision tree whose guards must stay ordered. Tell: every branch is a *disjoint case of the same dimension*, and there's no accumulator being appended across independent phases. Splitting scatters cohesion and threads state through helpers for nothing. (In the 2026-06-01 scan, single-pass `.goal` parsing, the value→tree shape dispatcher, and the resolution decision-tree were all legit at 115–182 lines.)
+- **SMELL — decompose.** The body is "first do A, then B, then C" where A/B/C don't depend on each other's locals — they only share the accumulator. Each phase is a candidate behavior. Ask where it belongs before reaching for a private helper.
+
+**Calibration snapshot (2026-06-01, root `PLang`):** 1277 methods detected — 2 over 300 lines, 0 in 200–299, 10 in 150–199, 5 in 100–149, 39 in 60–99. So this is **~15 hotspots, not systemic** — the codebase is mostly fine-grained, which makes the cleanup tractable. Re-run the finder to see whether that's trending worse.
+
+---
+
 ## Decided NOT to change (so they're not re-flagged)
 
 - **`app/error/*Error` naming** (`ActionError`, `ServiceError`, `ValidationError`, …) — **keep the `*Error` suffix.** The OBP-pure single-word form (`error/Action` → `app.error.Action`) collides with pervasive names (`System.Action`, the `Goal` alias) and the types are used too widely (ServiceError 36 files, ValidationError 29, ActionError 18) for full-namespace to be clean. The suffix does real disambiguation work — names still describe what the thing IS. Not a smell. *(Separate: `GoalError` and `ProgramError` have 0 references — dead-type deletion candidates.)*
