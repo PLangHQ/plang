@@ -104,7 +104,7 @@ There is **no `[Description]` attribute on action classes any more**, and no `[E
 | Nullable (`string?`, `int?`) | Trailing `?`. |
 | `Data<T>` (LazyParam) | Unwrapped to `T`'s rendering. |
 | `Data<app.variable.Variable>` | Renders as `string` — the slot names a variable rather than carrying a value. `Variable` implements `IRawNameResolvable`, so `Data.As<T>` resolves it from the raw slot string (`%x%` and bare `x` both produce `Variable { Name = "x" }`). The handler reads `Foo.Value`; implicit conversion to `string` covers method-call boundaries. |
-| Enum or type with a `static string[] ValidValues` | Type name plus inline enumeration: `operator(==|!=|>|<|…)`. |
+| Enum or type with valid values (`static string[] ValidValues`) | Type name only: `operator`, `trigger`. The members are **not** inlined per parameter — they're declared once in the Type Information block, derived live from the enum via `app.type.GetValidValues`. The type name alone points the LLM to that entry. |
 | `List<T>`, `IList<T>`, arrays | `list<T>`. |
 | `Dictionary<K,V>` and its variants | `dict<K,V>`. |
 | `HashSet<T>`, `ISet<T>`, `IEnumerable<T>`, `ICollection<T>`, `IReadOnlyList<T>` | `list<T>`. |
@@ -255,6 +255,7 @@ Whenever you change markdown or attributes, rebuild a sample goal and verify the
 
 - Don't rebuild `system/builder/BuildGoal/Start.goal` as a way to test catalog changes. The catalog renders on *any* build (the per-action notes/examples render in `BuildStep/Start.goal` for the planner's picked action set). Rebuilding the builder risks LLM drift on its own `.pr` — the builder building the builder is the most fragile build in the system.
 - Don't add a Description that restates the signature. If your description starts with the action's name verb-for-verb, rewrite it.
+- Don't enumerate a closed set's members in prose — enum values, valid-value lists, type-kind vocabularies, MIME maps. The catalog already injects them live from the source of truth (`app.type.GetValidValues` → the enum's own members) into the Type Information block; per-parameter inlining was removed (`PLang/app/module/this.cs:336`). A prose copy goes stale the moment a member is added — today `os/system/modules/event/on.description.md` lists 11 of `Trigger`'s 21. Name the type (`trigger`, `operator`) and teach shape and behavior — how the value is emitted, what it must not be confused with — and let Type Information carry the members. At most one representative member as illustration, never "the valid set is X, Y, Z."
 - Don't put a rule that constrains one action into `Compile.llm`. The cross-cutting system prompt keeps only the kernel — modifier vs peer classification, the formal-mirroring rule, type conventions, the `%!data%`-never-as-fallback rule. Per-action rules go in `<action>.notes.md`.
 - Don't repeat a family rule across every `<action>.notes.md` in a module. Put it once in `module.notes.md` — the renderer concats module-first automatically.
 - Don't add a stem named `module.<foo>.md` for anything other than module-wide teaching — the stem is reserved.

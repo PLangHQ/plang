@@ -35,7 +35,7 @@ This works because C# resolves child namespace segments before using aliases.
 - `CallStack` — v1 `PLang.Runtime.CallStack` conflict
 - `Goal`, `Visibility` — v1 `Building.Model` conflict
 - `Action` — `System.Action` conflict
-- `EventType`, `EventBinding` — v1 `PLang.Events` conflict
+- `Trigger`, `EventBinding` — v1 `PLang.Events` conflict
 
 ### PLang.Tests Has Extra Aliases
 `PLang.Tests/GlobalUsings.cs` includes additional aliases (App, Goal, ErrorOrder, CallStack, etc.)

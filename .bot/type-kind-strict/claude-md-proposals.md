@@ -206,3 +206,16 @@ them.
 builder is `os/system/builder/**` only. A failure in a non-builder goal during a
 whole-tree sweep is not a builder problem.
 ````
+
+---
+
+## architect — 2026-06-01
+**Target:** `CLAUDE.md` (project) — the `## OBP Shape Smells` / module-markdown area, as a new sub-point under "Action prose lives in markdown, not attributes."
+**Why:** The coder (authoring prose) and the builder (validating the catalog) both write and tune `os/system/modules/<module>/*.md`. There's no rule against copying a closed set's members into that prose, and they do. Concrete: `os/system/modules/event/on.description.md` says "Event types include BeforeGoal, AfterGoal, BeforeStep, ..." and lists 11 — but `app/event/Trigger.cs` defines 21 (`BeforeAppStart`, `OnError`, `OnCacheHit`, `On*GoalLoad`, ... are all missing). The list was wrong the day a member was added. It's also redundant: the catalog already derives enum members live from the enum (`app.type.GetValidValues` → `type.GetEnumNames()`) and prints them once in the Type Information block — `PLang/app/module/this.cs:336` explicitly removed per-parameter inlining for exactly this reason. So a prose copy buys nothing and rots. This is the doc-level form of OBP smell #3 (same thing stored twice) — the enum owns its members; any md that re-lists them is a second source of truth that silently drifts. One shared home rather than a copy in each of `coder` and `builder` character.md — duplicating the rule across two consumers is the very thing it warns against.
+
+**Proposed change:** append this sub-point to the "Action prose lives in markdown, not attributes." bullet:
+
+```markdown
+**Closed sets stay in the catalog, never the prose.** Do not enumerate the members of a closed set in the `.md` teaching files — enum values, valid-value lists, type-kind vocabularies, MIME maps. The catalog injects them live from the source of truth (`app.type.GetValidValues` → the enum's own members) into the Type Information block; per-parameter inlining was removed (`PLang/app/module/this.cs:336`). A prose copy duplicates what the LLM already gets and goes stale the moment a member is added (today `event/on.description.md` lists 11 of `Trigger`'s 21). Prose names the type (`trigger`, `operator`) and teaches what the catalog can't: shape and behavior — how the value is emitted (a bare member string, not a wrapped object), and what it must not be confused with. At most one representative member as illustration, never framed as "the valid set is X, Y, Z." Grep tell: a `.md` listing three or more `PascalCase` members of one type, or a comma-run that mirrors an enum body.
+```
+
