@@ -238,6 +238,94 @@ quality at the prompt/catalog layer (§5, §6) over changing the model.
 
 ---
 
+## 12. Debugging a build — traces and `--debug`
+
+Two complementary tools. **Traces** are written automatically and tell you *what
+the builder produced and what the LLM saw*. **`--debug`** is opt-in and tells you
+*how a value flowed through execution*.
+
+### Trace files (always written, no flag needed)
+
+Every build invocation writes a trace, regardless of `--debug`:
+
+```
+.build/traces/{trace.id}/
+├── manifest.json     ← the goal names built in this run
+├── Start.json        ← per-goal build trace
+├── BuildGoal.json
+└── ...
+```
+
+`trace.id` is `{ticks}_{guid8}` — sortable by start time, so a directory listing
+shows runs in order, and each run gets its own folder (nothing overwrites). Each
+per-goal `<Goal>.json` holds:
+
+| Field | What it captures |
+|---|---|
+| `goal` | the parsed goal (steps, paths, hash) |
+| `plan` | the planner pass: `description`, `steps` (the action sets it chose), `system` (the **exact** planner system prompt = rendered `Plan.llm` + `%actionSummary%`), `user` (the goal text sent), `usage` (model, token counts, cost, cached) |
+| `stepPasses[]` | one entry per compiled step: `stepText`, `actions`, `user` (the `CompileUser` message), `response` (the compile result), `usage` |
+| `compileSystem` | the compile system prompt (rendered once per goal) |
+| `durationMs`, `subGoals[]` | timing and the nested sub-goal traces |
+
+What traces are good for:
+- **Seeing exactly what the LLM received** — the rendered `system`/`user` prompts
+  for both phases, without re-running anything.
+- **Auditing what the builder produced** for a goal, and comparing two runs
+  side by side (separate folders).
+- **Token/cost accounting** per phase via `usage`.
+
+> **Caveat:** the `response` in `stepPasses` is captured *after*
+> `builder.validate`/enrich runs, so parameter values may already be normalized
+> (e.g. a raw `"data.txt"` turned into a `Path` object). Do **not** read traces to
+> learn what the LLM *literally* returned — for the raw API payload use
+> `--debug={"llm":{"response":true}}`.
+
+Clean up a single run without touching others: `rm -rf .build/traces/{trace.id}/`.
+
+### `--debug` — following a variable through the system
+
+All `--debug` output goes to **stderr** (it never pollutes program output), and
+the JSON maps onto `Debug.@this` (`PLang/app/module/debug/this.cs`). The pieces
+that answer "where did this variable come from / change / go wrong?":
+
+- **Watch a value at step boundaries** — see it BEFORE/AFTER each step:
+  ```bash
+  plang build '--build={"files":"x.goal","cache":false}' '--debug={"variables":[{"name":"actionSummary"}]}'
+  ```
+- **Track every mutation** — log each time the variable is replaced, with the
+  goal, step, old/new CLR type, and a C# stack trace (the top frames) showing
+  *who* changed it. This is the tool for "this variable became the wrong thing —
+  where?":
+  ```bash
+  plang '--debug={"variables":[{"name":"trace","event":"onchange"}]}'
+  ```
+  Events: `oncreate`, `onchange`, `ondelete`, `ontypechange` (fires only when the
+  value's CLR type changes — e.g. Dictionary → String).
+- **Drop to action granularity** — `level:"action"` shows BEFORE/AFTER for each
+  action *within* a step, so you can watch `%!data%` flow between chained actions
+  (e.g. `goal.call` → `variable.set`):
+  ```bash
+  plang '--debug={"level":"action","variables":["%!data%"]}'
+  ```
+- **Trace resolution** — `resolveTrace:true` logs every `%variable%` resolution
+  with the resolved type and nesting depth. Use it when a `%var%` resolves to
+  null or the wrong member and you need to see the lookup path.
+- **Scope and trim the noise** — `goal` / `step` filter to one place, `grep` is a
+  case-insensitive regex over output lines, `maxLength` caps line length:
+  ```bash
+  plang build '--build={"cache":false}' '--debug={"goal":"BuildGoal","step":3,"grep":"Module","maxLength":2000}'
+  ```
+
+The combination — read the trace to see *what* the builder produced and what the
+LLM saw, then re-run with `--debug` variable watches to see *how* a value got
+there — is the standard loop for diagnosing a bad mapping without adding a single
+line of diagnostic code. (Diagnostics in C# go through `context.App.Debug.Write`,
+gated on `--debug`; never `Console.WriteLine`.) Full options:
+[`debug.md`](debug.md).
+
+---
+
 ## Mental model in one paragraph
 
 The builder is PLang building PLang. It runs **two LLM phases** — a cheap
