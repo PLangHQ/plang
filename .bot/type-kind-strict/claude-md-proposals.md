@@ -239,3 +239,15 @@ whole-tree sweep is not a builder problem.
 - A **leaf trace** whenever the plan gives a new owner to existing behavior: name the incumbent code (file + method), list its call sites, and state each one's disposition — migrate / keep as the leaf / delete. If the disposition is incremental, name which cases land *this branch* and file the rest as an explicit parked backlog before coding starts.
 ```
 
+
+---
+
+## builder — v1 — 2026-06-01
+**Target:** `characters/builder/character.md` — the `## Reference Docs` list ("Read these before working on anything builder-related").
+**Why:** This session showed that without a held mental model of how the builder works (two-phase Plan→Compile, the bootstrap that runs from its own `.pr`, the catalog from `app.Module.Describe()`, the single OpenAi-layer LLM cache, and which recovery loop fires for which failure), I burned several turns rediscovering it the hard way — e.g. not realizing a `.goal` edit doesn't affect the running build, or inventing a non-existent "keep-prior-mapping" cache separate from the LLM cache. That conceptual model now lives in one place: `Documentation/v0.2/understanding-the-builder.md` (written and verified against the source + the creator's corrections this session). The existing Reference Docs list points at `build.md`/`debug.md`/`building_plang_tests.md` (the *how-to* references) but nothing gives the *why/what* orientation. Loading the orientation doc at session start is the cheapest way to avoid re-deriving it every time. Belongs in the builder character (loads for builder sessions), not the repo CLAUDE.md, since it's role-specific reading.
+
+**Proposed change:** add this bullet to the `## Reference Docs` list, as the first entry (read it before the how-to refs):
+
+```markdown
+- `Documentation/v0.2/understanding-the-builder.md` — **read this first.** The conceptual model: two-phase Plan→Compile, the bootstrap (the builder runs from its own `.pr`, so `.goal` edits aren't live until rebuilt), the catalog from `app.Module.Describe()`, the single LLM cache at the OpenAi layer (`cache:false` to bypass), and the recovery loops (`LlmFixer`/`RefineActions`/`FixValidation`/`HandleStepFailure`). Orientation; the docs below are the how-to references.
+```
