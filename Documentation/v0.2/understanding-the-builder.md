@@ -71,6 +71,11 @@ action's authored **Examples**.
 formal: goal.call(GoalName={name:"Greet", parameters:[{name:"name", value:"world"}]})
 ```
 
+The compiler writes a one-line **`formal`** notation first, then mirrors it into
+`actions[]`. It's the syntax the LLM thinks in, and every `.pr` step carries it.
+Full grammar, pattern catalog, and the known rough edges:
+[`formal-plang.md`](formal-plang.md).
+
 Why split them? The planner narrows a huge catalog down to a handful of
 candidates cheaply; the compiler then reasons in depth about just those, with
 their full schemas and examples loaded. It also lets the system prompt for the
