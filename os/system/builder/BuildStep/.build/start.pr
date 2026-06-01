@@ -1982,61 +1982,41 @@
           "comment": null,
           "actions": [
             {
-              "module": "event",
-              "action": "on",
+              "module": "goal",
+              "action": "call",
               "parameters": [
                 {
-                  "name": "Trigger",
-                  "value": "BeforeStep",
-                  "type": {
-                    "name": "trigger"
-                  }
-                },
-                {
-                  "name": "GoalToCall",
+                  "name": "GoalName",
                   "value": {
-                    "name": "%!data%",
+                    "name": "/system/builder/EmitBuildEvent",
                     "parallel": false,
-                    "parameters": null,
-                    "prPath": null
+                    "parameters": [
+                      {
+                        "name": "kind",
+                        "value": "step-build-error",
+                        "type": {
+                          "name": "text"
+                        }
+                      },
+                      {
+                        "name": "step",
+                        "value": "%step%",
+                        "type": {
+                          "name": "text"
+                        }
+                      },
+                      {
+                        "name": "errorMessage",
+                        "value": "%!error.Message%",
+                        "type": {
+                          "name": "text"
+                        }
+                      }
+                    ],
+                    "prPath": "/system/builder/.build/emitbuildevent.pr"
                   },
                   "type": {
                     "name": "goal.call"
-                  }
-                },
-                {
-                  "name": "GoalPattern",
-                  "value": "%step%",
-                  "type": {
-                    "name": "text"
-                  }
-                },
-                {
-                  "name": "StepPattern",
-                  "value": "%step%",
-                  "type": {
-                    "name": "text"
-                  }
-                },
-                {
-                  "name": "ActionPattern",
-                  "value": "%step%",
-                  "type": {
-                    "name": "text"
-                  }
-                },
-                {
-                  "name": "IsRegex",
-                  "value": false,
-                  "type": {
-                    "name": "bool"
-                  }
-                },
-                {
-                  "name": "Priority",
-                  "value": 0,
-                  "type": {
-                    "name": "number"
                   }
                 }
               ],
@@ -2045,7 +2025,7 @@
             }
           ],
           "intent": null,
-          "formal": "event.on(Trigger=\u0022BeforeStep\u0022, GoalToCall=%!data%, GoalPattern=%step%, StepPattern=%step%, ActionPattern=%step%, IsRegex=false, Priority=0)",
+          "formal": "goal.call(GoalName={name:\u0022/system/builder/EmitBuildEvent\u0022, parameters:[{name:\u0022kind\u0022, value:\u0022step-build-error\u0022, type:{name:\u0022text\u0022}}, {name:\u0022step\u0022, value:\u0022%step%\u0022, type:{name:\u0022text\u0022}}, {name:\u0022errorMessage\u0022, value:\u0022%!error.Message%\u0022, type:{name:\u0022text\u0022}}]})",
           "source": null,
           "waitForExecution": true
         },
