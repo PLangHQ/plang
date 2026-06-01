@@ -96,6 +96,30 @@ Ingi's lean ("code is wrong, we should serialize the verb") points at **(B)**. C
 
 ---
 
+## 5. Value conversion lives in a central target-type switch, not on the types
+
+**Location:** `PLang/app/type/list/Conversion.cs` (`TryConvertTo`); twin in `PLang/app/channel/serializer/Text.cs` (`ConvertFromString` + `IsSimpleType`).
+
+**Found-in:** `type-kind-strict` (2026-06-01). Ingi noticed `Convert.TryConvert`-shaped code during the ObpScan/analyzer work and flagged it as a likely OBP symptom. Confirmed by reading `Conversion.cs`. Swept for siblings by ranking every non-`.build` `.cs` under `PLang/` by density of `== typeof(` (target-type switches) and `value is <type>` (value-shape branches) — `grep -c` per file, sorted descending. That ranking surfaced the twin (`Text.cs`) and the adjacent sites in the recurrence list below; it's the reproducible way to find more of this shape.
+
+**Status:** open — cleanup/todo, not for `type-kind-strict`. The per-type `Convert` migration is already underway on this branch (`app.type.convert.@this` + `text/this.Convert.cs`); draining the rest, plus the `Text.cs` dedupe, is its own pass. Don't widen `TryConvertTo` meanwhile.
+
+**The smell:** `TryConvertTo` (`Conversion.cs:108`, ~400 lines) is one switch keyed by **target type** — `if (targetType == typeof(JsonNode))`, `typeof(TimeSpan)`, `targetType.IsEnum`, a ~50-line `typeof(GoalCall)` arm, the path-string and ctor-string arms. Every arm is "how to make a value of type X from a raw value" = X's own knowledge, centralized in a file that has to reference every type to switch on it. To add a type you edit the switch instead of the type shipping its own hook.
+
+**The twin (worse — it's a divergent duplicate):** `Text.cs:91 ConvertFromString` reimplements the string→primitive arm (`int.TryParse`, `long.TryParse`, `DateTime.TryParse`, `Guid.TryParse`, `byte[]`). It has already drifted: `TryConvertTo` parses with `InvariantCulture` (`Conversion.cs:451`), `ConvertFromString` uses bare `TryParse` (CurrentCulture) — the same `"3.14"`/date string deserializes differently depending on which path you came through. A latent locale bug. And `Text.cs:82 IsSimpleType` is a hand copy of `type/list/this.cs:480 IsPrimitive`. Two instances of smell #3 (same logical thing implemented twice) layered on top of the conversion smell.
+
+**The OBP-clean target:** the correct shape already exists right next door — `type.Convert(value, context)` (`type/this.cs:149`) routes to the family's own `static Convert(object?, kind, context)` hook via `app.type.convert.@this.Of`, and `text/this.Convert.cs` is the first type to own its construction (`this.cs:162` calls `TryConvertTo` the fallback "each family grows its own Convert over time"). End-state: every type owns `Convert` (read) and a render hook (write); `Conversion.cs` and `Text.cs` shrink to dispatchers like `type.convert.@this.Of` already is; `System.Convert.ChangeType` survives only as the genuine primitive leaf. Smallest first step (kills the locale bug now): route `Text.Deserialize<T>`/`ConvertFromString` through the one converter and `IsSimpleType` through `IsPrimitive`.
+
+**Where the shape recurs (from the density sweep):**
+- `channel/serializer/Text.cs` — **real, divergent duplicate** (above). Highest value, smallest fix.
+- `module/condition/Operator.cs` — `left is string` / `is Enum` / `IsNumeric` coercion for compare. Same logic as the `IBooleanResolvable` rule (a value's boolean meaning belongs to the value) → coercion-for-compare arguably belongs on the type too. Adjacent, lower priority.
+- `module/{builder,http,assert}/code/Default.cs` — per-module value-shape branches; check whether each code-behind re-derives the same value handling. Unverified.
+- `data/this.Normalize.cs` + `this.Reconstruct.cs` — `typeof` arms on the wire path. Likely the legit per-type dispatcher (`[Out]`/`IWriter`, per CLAUDE.md "Data is not enveloped") rather than a switch — confirm dispatcher-not-switch before parking.
+- `type/list/this.cs::GetTypeName` — CLR→PLang **name** ladder repeated 3× (L107 / 332 / 731). Legit as a name registry (naming keyed by type, not behavior), but the triplication is an internal DRY smell.
+- Legit, NOT smells: `type/number/this.IConvertible.cs` (the `IConvertible` interface contract inherently switches), `variable/navigator/List.cs` (`typeof(IList<>)` capability detection — the navigator's own concern).
+
+---
+
 ## Decided NOT to change (so they're not re-flagged)
 
 - **`app/error/*Error` naming** (`ActionError`, `ServiceError`, `ValidationError`, …) — **keep the `*Error` suffix.** The OBP-pure single-word form (`error/Action` → `app.error.Action`) collides with pervasive names (`System.Action`, the `Goal` alias) and the types are used too widely (ServiceError 36 files, ValidationError 29, ActionError 18) for full-namespace to be clean. The suffix does real disambiguation work — names still describe what the thing IS. Not a smell. *(Separate: `GoalError` and `ProgramError` have 0 references — dead-type deletion candidates.)*
