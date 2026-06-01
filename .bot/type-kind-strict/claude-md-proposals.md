@@ -219,3 +219,23 @@ whole-tree sweep is not a builder problem.
 **Closed sets stay in the catalog, never the prose.** Do not enumerate the members of a closed set in the `.md` teaching files — enum values, valid-value lists, type-kind vocabularies, MIME maps. The catalog injects them live from the source of truth (`app.type.GetValidValues` → the enum's own members) into the Type Information block; per-parameter inlining was removed (`PLang/app/module/this.cs:336`). A prose copy duplicates what the LLM already gets and goes stale the moment a member is added (today `event/on.description.md` lists 11 of `Trigger`'s 21). Prose names the type (`trigger`, `operator`) and teaches what the catalog can't: shape and behavior — how the value is emitted (a bare member string, not a wrapped object), and what it must not be confused with. At most one representative member as illustration, never framed as "the valid set is X, Y, Z." Grep tell: a `.md` listing three or more `PascalCase` members of one type, or a comma-run that mirrors an enum body.
 ```
 
+---
+
+## architect — 2026-06-01 — plan must trace the incumbent (leaf trace)
+**Target:** `characters/architect/character.md`
+**Why:** `type-kind-strict` shipped the type *model* (`{name, kind, strict}`), the consumer, the producers, the LLM surface — all per plan — but the plan never designed **how a type builds a value of itself from raw input**. It designed only how a type *validates* its kind (`IKindValidatable`), and silently assumed value *construction* (string→int, dict→record) rode the same seam. It doesn't: construction is a separate job whose real home is `TryConvertTo` (`type/list/Conversion.cs`, ~400-line target-type switch). Evidence of the half-migration that resulted: the incumbent `TryConvertTo`/`ConvertTo` has ~15 call sites including `Data.As<T>` (the path every lazy parameter funnels through); the new type-owned `type.Convert` has 2, and falls straight back to the switch for every type but `text`. A divergent duplicate (`channel/serializer/Text.cs` `ConvertFromString`/`IsSimpleType`) carries a live locale bug. All of this was found *in usage* and then in an ObpScan sweep (parked as obp-cleanup #5) — never at plan time. Root cause: "Play the movie" (MANDATORY step 4) traces the *new feature's forward path* (developer → builder → .pr → runtime → handler) but never asks where the behavior already lives. A plan that gives a new owner to an existing behavior is not finished until it accounts for the behavior's old home — and top-down feature decomposition (model → consumer → producer) structurally cannot find that home, because it's orthogonal infrastructure sitting under all the new nouns.
+
+**Proposed change — two coordinated edits.**
+
+**Edit 1 — append a paragraph to the MANDATORY "Play the movie" step (step 4 of the numbered list):**
+
+```markdown
+   **Then trace the incumbent — backwards.** The movie above traces where the *new* design flows. Run it a second time the other direction: when the design gives a new owner to a behavior that already exists somewhere — value conversion, validation, serialization, routing, caching, parsing — find where that job is done *today*, before you plan the new home. Grep for the incumbent (`== typeof(`, `value is <type>`, the existing method name, `Convert`/`TryParse`-shaped code) and find *all* of them, including divergent duplicates. Then the plan must state, per call site and per branch: **migrated / kept as the primitive leaf / deleted.** "Each type grows its own X over time" is a non-decision — it ships half-migrated and the gap surfaces in usage, not review. And split the two jobs that masquerade as one: how a type *validates* itself and how a type *constructs a value of itself from raw input* are different seams — design both, not just the one the new nouns happen to surface.
+```
+
+**Edit 2 — add a bullet to `plan.md`'s "Contains:" list in the "Two-layer plan" section (Layer 1 — the spine):**
+
+```markdown
+- A **leaf trace** whenever the plan gives a new owner to existing behavior: name the incumbent code (file + method), list its call sites, and state each one's disposition — migrate / keep as the leaf / delete. If the disposition is incremental, name which cases land *this branch* and file the rest as an explicit parked backlog before coding starts.
+```
+
