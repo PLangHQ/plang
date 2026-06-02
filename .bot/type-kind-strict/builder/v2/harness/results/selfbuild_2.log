@@ -7,25 +7,25 @@ Found  goals
 Building goal: Build
 
 
-  [≡] set default /workspace/plang/os = "/"
+  [✓] set default /workspace/plang/os = "/"
 
 
-  [≡] set default %!build.cache% = true
+  [✓] set default %!build.cache% = true
 
 
-  [≡] set default %!build.summary% = true
+  [✓] set default %!build.summary% = true
 
 
-  [≡] set System.Collections.Generic.List`1[System.Object] = [], type=json
+  [✓] set System.Collections.Generic.List`1[System.Object] = [], type=json
 
 
-  [≡] set channel "builder" call BuilderChannel
+  [✓] set channel "builder" call BuilderChannel
 
 
-  [≡] call EmitBuildEvent kind="build-path", path=/workspace/plang/os
+  [✓] call EmitBuildEvent kind="build-path", path=/workspace/plang/os
 
 
-  [≡] builder.load, write to app.this
+  [✓] builder.load, write to app.this
 
 
   [✓] builder.goals path=/workspace/plang/os, write to System.Collections.Generic.List`1[app.goal.this]
@@ -43,25 +43,2074 @@ Building goal: Build
   [✓] builder.appSave
 
 
-🔴   ================== ValidationErrors(400) ==================   🔴
-🧩 Key:  ValidationErrors
-#️⃣  StatusCode:  400
-🕑 Time: 06/02/2026 01:41:12
+  Saved Build (66.4s)
+Building goal: BuildGoal
+
+
+  [✓] call BuildGoal/Start goal=BuildGoal
+- call BuildGoal/Start goal=BuildGoal
+- call BuildGoal/Start goal=%goal%
+
+
+  Saved BuildGoal (2.9s)
+Building goal: Start
+
+
+  Step 0 validation error — retrying: event.on: goal.call.Name 'goal.call' looks like a type name. Goal names are simple identifiers (e.g. 'BuildGoalCore', 'HandleValidationError'). Use the actual goal name from the @known mapping or the step text.
+
+
+  [✓] call /system/builder/EmitBuildEvent kind="goalHeader", goal=Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal%
+- set 639159648996493810 = 639159649089060268
+- set System.Collections.Generic.Dictionary`2[System.String,System.Object] = {"id": "%!trace.id%", "timestamp": "06/02/2026 02:41:48 +00:00", "goal": Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set System.Collections.Generic.Dictionary`2[System.String,System.Object] = System.Collections.Generic.Dictionary`2[System.String,System.Object]
+- render template "/system/builder/llm/Compile.llm", write to # Step Compiler
+
+You are the PLang compiler. The planner gave you the **set of actions** a step uses (unordered). You order them, nest modifiers, fill parameter values from the step text, and emit one `formal` line plus the matching `actions[]`.
+
+Each picked action's parameter schema, **Notes**, **Examples**, and the **Type reference** are in the user message below — authoritative for that action's shape. Read them first. This prompt is the cross-cutting kernel.
+
+## Core rule: map the clauses — nothing more, nothing less
+
+Walk the step text clause by clause. Each clause that does work maps to exactly the action(s) it names.
+
+- **Emit only what a clause names.** If the text gives no value for an optional parameter, omit it. If no clause calls for a second action, don't add one — never invent a peer or modifier (no stray `variable.get`, `file.read`, `cache.wrap`) the text didn't ask for.
+- **Never return an empty `actions` list for a step that has a clause.** Every real step maps to at least one action: `set %x% = %y%` → one `variable.set`; `call X` → one `goal.call`. If the planner's set genuinely lacks a needed action, emit the `missing-actions` error — never return nothing.
+
+Most steps are one action per clause. "This looks too simple" is almost always right.
+
+## Write `formal` first
+
+A one-line render of the chain; `actions[]` then mirrors it exactly.
+
+`module.action(ParamName=value, ...)` — real schema param names. Quote strings; keep `%vars%` verbatim; numbers/bools unquoted; lists `[...]`; objects `{k:v}`.
+- Modifier follows its host with ` | ` : `host(...) | error.handle(Actions=[recovery(...)])`
+- Peer follows with ` , ` : `condition.if(...) , goal.call(...)`
+- Nested action values use `[...]` with the same syntax.
+
+`formal` and `actions[]` MUST match exactly — every `Param=value` in one appears in the other, no extras either way.
+
+## Modifiers vs peers
+
+Only THREE actions are modifiers — `error.handle`, `cache.wrap`, `timeout.after` — and they go in the host action's `modifiers[]`. Use one only when the step has a clause like `on error …`, `cache for …`, `timeout after …`. A `cache=` *parameter* on `llm.query` is NOT cache.wrap.
+
+Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `output.write`, `file.*`, `error.throw`, …) is a **peer** in the top-level `actions[]`, never in `modifiers[]`. `if X, call Y` and `foreach X, call Y` are two peers.
+
+## `write to %x%` and `%!data%`
+
+`…, write to %x%` → a trailing peer `variable.set(Name=%x%, Value=%!data%)` after the producer (never a modifier). `%!data%` is the immediately preceding action's return value — use it ONLY to thread one action's result into the next when the text says so. It is not a fill-in for an unsupplied slot.
+
+## Output shape
+
+```json
+{"formal":"...","actions":[...],"confidence":"VeryHigh|High|Medium|Low|VeryLow","explanation":"...","errors":[],"warnings":[]}
+```
+
+Each action: `{module, action, parameters:[{name, value, type}], modifiers?:[...]}`. `module` is a single identifier: `ui.render` → `{"module":"ui","action":"render"}`, never `{"module":"ui.render",...}`. Omit `explanation` at High/VeryHigh; otherwise one sentence on the uncertainty. Drop confidence to Low/VeryLow when the verb doesn't really match any action you were given.
+
+## Parameters & types
+
+- `name` is always the literal schema property name (`Name`, `Value`, `GoalName`, …). A `%var%` marker in a schema means "takes a variable reference" — it is never a parameter name and says nothing about the runtime type. Don't raise warnings over type or letter-case differences.
+- Type names come from the per-step Type reference (primitive names + kind table + catalog types) — don't invent. `text` not `string`; `number` carries `int/long/decimal/double` as its *kind*; lists are `list<T>`. A JSON object/array value uses `type:"json"` as a structured value.
+- Omit nullable params (`?`) when the text gives no value. NEVER emit `""` or copy a type descriptor (`actor?`, `eventtype`) into a value slot.
+
+## Intermediates & compound conditions
+
+- To branch on a producer's property, capture into a temp `__conditionReturn__` and reference `%__conditionReturn__.X%`.
+- `if A and B, call C` → two `condition.if` peers + the `goal.call`; add `warnings:[{"key":"expanded-condition","message":"..."}]`.
+
+## Errors
+
+- `missing-actions` (top-level, exact key) — the set lacks an action the step needs; emit and stop, don't fabricate a partial chain.
+- Also: `actionNotFound`, `insufficientContext` (top-level); `ambiguousMapping`, `possibleTypo` (per action).
+
+Never invent action names (`list.append`/`push`/`insert` don't exist — use `list.add`). Preserve `%name%` literally everywhere, including `return`.
+
+- set # Step Compiler
+
+You are the PLang compiler. The planner gave you the **set of actions** a step uses (unordered). You order them, nest modifiers, fill parameter values from the step text, and emit one `formal` line plus the matching `actions[]`.
+
+Each picked action's parameter schema, **Notes**, **Examples**, and the **Type reference** are in the user message below — authoritative for that action's shape. Read them first. This prompt is the cross-cutting kernel.
+
+## Core rule: map the clauses — nothing more, nothing less
+
+Walk the step text clause by clause. Each clause that does work maps to exactly the action(s) it names.
+
+- **Emit only what a clause names.** If the text gives no value for an optional parameter, omit it. If no clause calls for a second action, don't add one — never invent a peer or modifier (no stray `variable.get`, `file.read`, `cache.wrap`) the text didn't ask for.
+- **Never return an empty `actions` list for a step that has a clause.** Every real step maps to at least one action: `set %x% = %y%` → one `variable.set`; `call X` → one `goal.call`. If the planner's set genuinely lacks a needed action, emit the `missing-actions` error — never return nothing.
+
+Most steps are one action per clause. "This looks too simple" is almost always right.
+
+## Write `formal` first
+
+A one-line render of the chain; `actions[]` then mirrors it exactly.
+
+`module.action(ParamName=value, ...)` — real schema param names. Quote strings; keep `%vars%` verbatim; numbers/bools unquoted; lists `[...]`; objects `{k:v}`.
+- Modifier follows its host with ` | ` : `host(...) | error.handle(Actions=[recovery(...)])`
+- Peer follows with ` , ` : `condition.if(...) , goal.call(...)`
+- Nested action values use `[...]` with the same syntax.
+
+`formal` and `actions[]` MUST match exactly — every `Param=value` in one appears in the other, no extras either way.
+
+## Modifiers vs peers
+
+Only THREE actions are modifiers — `error.handle`, `cache.wrap`, `timeout.after` — and they go in the host action's `modifiers[]`. Use one only when the step has a clause like `on error …`, `cache for …`, `timeout after …`. A `cache=` *parameter* on `llm.query` is NOT cache.wrap.
+
+Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `output.write`, `file.*`, `error.throw`, …) is a **peer** in the top-level `actions[]`, never in `modifiers[]`. `if X, call Y` and `foreach X, call Y` are two peers.
+
+## `write to %x%` and `%!data%`
+
+`…, write to %x%` → a trailing peer `variable.set(Name=%x%, Value=%!data%)` after the producer (never a modifier). `%!data%` is the immediately preceding action's return value — use it ONLY to thread one action's result into the next when the text says so. It is not a fill-in for an unsupplied slot.
+
+## Output shape
+
+```json
+{"formal":"...","actions":[...],"confidence":"VeryHigh|High|Medium|Low|VeryLow","explanation":"...","errors":[],"warnings":[]}
+```
+
+Each action: `{module, action, parameters:[{name, value, type}], modifiers?:[...]}`. `module` is a single identifier: `ui.render` → `{"module":"ui","action":"render"}`, never `{"module":"ui.render",...}`. Omit `explanation` at High/VeryHigh; otherwise one sentence on the uncertainty. Drop confidence to Low/VeryLow when the verb doesn't really match any action you were given.
+
+## Parameters & types
+
+- `name` is always the literal schema property name (`Name`, `Value`, `GoalName`, …). A `%var%` marker in a schema means "takes a variable reference" — it is never a parameter name and says nothing about the runtime type. Don't raise warnings over type or letter-case differences.
+- Type names come from the per-step Type reference (primitive names + kind table + catalog types) — don't invent. `text` not `string`; `number` carries `int/long/decimal/double` as its *kind*; lists are `list<T>`. A JSON object/array value uses `type:"json"` as a structured value.
+- Omit nullable params (`?`) when the text gives no value. NEVER emit `""` or copy a type descriptor (`actor?`, `eventtype`) into a value slot.
+
+## Intermediates & compound conditions
+
+- To branch on a producer's property, capture into a temp `__conditionReturn__` and reference `%__conditionReturn__.X%`.
+- `if A and B, call C` → two `condition.if` peers + the `goal.call`; add `warnings:[{"key":"expanded-condition","message":"..."}]`.
+
+## Errors
+
+- `missing-actions` (top-level, exact key) — the set lacks an action the step needs; emit and stop, don't fabricate a partial chain.
+- Also: `actionNotFound`, `insufficientContext` (top-level); `ambiguousMapping`, `possibleTypo` (per action).
+
+Never invent action names (`list.append`/`push`/`insert` don't exist — use `list.add`). Preserve `%name%` literally everywhere, including `return`.
+ = # Step Compiler
+
+You are the PLang compiler. The planner gave you the **set of actions** a step uses (unordered). You order them, nest modifiers, fill parameter values from the step text, and emit one `formal` line plus the matching `actions[]`.
+
+Each picked action's parameter schema, **Notes**, **Examples**, and the **Type reference** are in the user message below — authoritative for that action's shape. Read them first. This prompt is the cross-cutting kernel.
+
+## Core rule: map the clauses — nothing more, nothing less
+
+Walk the step text clause by clause. Each clause that does work maps to exactly the action(s) it names.
+
+- **Emit only what a clause names.** If the text gives no value for an optional parameter, omit it. If no clause calls for a second action, don't add one — never invent a peer or modifier (no stray `variable.get`, `file.read`, `cache.wrap`) the text didn't ask for.
+- **Never return an empty `actions` list for a step that has a clause.** Every real step maps to at least one action: `set %x% = %y%` → one `variable.set`; `call X` → one `goal.call`. If the planner's set genuinely lacks a needed action, emit the `missing-actions` error — never return nothing.
+
+Most steps are one action per clause. "This looks too simple" is almost always right.
+
+## Write `formal` first
+
+A one-line render of the chain; `actions[]` then mirrors it exactly.
+
+`module.action(ParamName=value, ...)` — real schema param names. Quote strings; keep `%vars%` verbatim; numbers/bools unquoted; lists `[...]`; objects `{k:v}`.
+- Modifier follows its host with ` | ` : `host(...) | error.handle(Actions=[recovery(...)])`
+- Peer follows with ` , ` : `condition.if(...) , goal.call(...)`
+- Nested action values use `[...]` with the same syntax.
+
+`formal` and `actions[]` MUST match exactly — every `Param=value` in one appears in the other, no extras either way.
+
+## Modifiers vs peers
+
+Only THREE actions are modifiers — `error.handle`, `cache.wrap`, `timeout.after` — and they go in the host action's `modifiers[]`. Use one only when the step has a clause like `on error …`, `cache for …`, `timeout after …`. A `cache=` *parameter* on `llm.query` is NOT cache.wrap.
+
+Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `output.write`, `file.*`, `error.throw`, …) is a **peer** in the top-level `actions[]`, never in `modifiers[]`. `if X, call Y` and `foreach X, call Y` are two peers.
+
+## `write to %x%` and `%!data%`
+
+`…, write to %x%` → a trailing peer `variable.set(Name=%x%, Value=%!data%)` after the producer (never a modifier). `%!data%` is the immediately preceding action's return value — use it ONLY to thread one action's result into the next when the text says so. It is not a fill-in for an unsupplied slot.
+
+## Output shape
+
+```json
+{"formal":"...","actions":[...],"confidence":"VeryHigh|High|Medium|Low|VeryLow","explanation":"...","errors":[],"warnings":[]}
+```
+
+Each action: `{module, action, parameters:[{name, value, type}], modifiers?:[...]}`. `module` is a single identifier: `ui.render` → `{"module":"ui","action":"render"}`, never `{"module":"ui.render",...}`. Omit `explanation` at High/VeryHigh; otherwise one sentence on the uncertainty. Drop confidence to Low/VeryLow when the verb doesn't really match any action you were given.
+
+## Parameters & types
+
+- `name` is always the literal schema property name (`Name`, `Value`, `GoalName`, …). A `%var%` marker in a schema means "takes a variable reference" — it is never a parameter name and says nothing about the runtime type. Don't raise warnings over type or letter-case differences.
+- Type names come from the per-step Type reference (primitive names + kind table + catalog types) — don't invent. `text` not `string`; `number` carries `int/long/decimal/double` as its *kind*; lists are `list<T>`. A JSON object/array value uses `type:"json"` as a structured value.
+- Omit nullable params (`?`) when the text gives no value. NEVER emit `""` or copy a type descriptor (`actor?`, `eventtype`) into a value slot.
+
+## Intermediates & compound conditions
+
+- To branch on a producer's property, capture into a temp `__conditionReturn__` and reference `%__conditionReturn__.X%`.
+- `if A and B, call C` → two `condition.if` peers + the `goal.call`; add `warnings:[{"key":"expanded-condition","message":"..."}]`.
+
+## Errors
+
+- `missing-actions` (top-level, exact key) — the set lacks an action the step needs; emit and stop, don't fabricate a partial chain.
+- Also: `actionNotFound`, `insufficientContext` (top-level); `ambiguousMapping`, `possibleTypo` (per action).
+
+Never invent action names (`list.append`/`push`/`insert` don't exist — use `list.add`). Preserve `%name%` literally everywhere, including `return`.
+
+- foreach System.Collections.Generic.List`1[System.Object], call BuildStep/Start planStep=System.Collections.Generic.Dictionary`2[System.String,System.Object], on error call HandleBuildFailure
+- set BuildGoal
+- call BuildGoal/Start goal=%goal% = Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal%
+- foreach System.Collections.Generic.List`1[app.goal.this], call BuildSubGoal subGoal=System.Collections.Generic.Dictionary`2[System.String,System.Object]
+- set Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal% = BuildGoal
+- call BuildGoal/Start goal=%goal%
+- math.subtract A=639159649089069160, B=639159648996493810, write to 28878940
+- math.divide A=28878940, B=10000, write to 2887.894
+- set 0 = 2887.894
+- save System.Collections.Generic.Dictionary`2[System.String,System.Object] to file '/.build/traces/%!trace.id%/Start.json'
+- add Start to System.Collections.Generic.List`1[System.Object]
+- builder.goalsSave Goal=Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal%
+
+
+      ⚠ compiler Low: I can’t see the @known mapping or the step text here, so I’m indicating where to substitute the correct goal identifier.
+
+  [✓] set 639159648996493810 = 639159649104378143
+
+
+  [✓] set System.Collections.Generic.Dictionary`2[System.String,System.Object] = {"id": "%!trace.id%", "timestamp": "06/02/2026 02:41:56 +00:00", "goal": Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal%
+- set 639159648996493810 = 639159649163743753
+- set System.Collections.Generic.Dictionary`2[System.String,System.Object] = {"id": "%!trace.id%", "timestamp": "06/02/2026 02:41:56 +00:00", "goal": Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set System.Collections.Generic.Dictionary`2[System.String,System.Object] = System.Collections.Generic.Dictionary`2[System.String,System.Object]
+- render template "/system/builder/llm/Compile.llm", write to # Step Compiler
+
+You are the PLang compiler. The planner gave you the **set of actions** a step uses (unordered). You order them, nest modifiers, fill parameter values from the step text, and emit one `formal` line plus the matching `actions[]`.
+
+Each picked action's parameter schema, **Notes**, **Examples**, and the **Type reference** are in the user message below — authoritative for that action's shape. Read them first. This prompt is the cross-cutting kernel.
+
+## Core rule: map the clauses — nothing more, nothing less
+
+Walk the step text clause by clause. Each clause that does work maps to exactly the action(s) it names.
+
+- **Emit only what a clause names.** If the text gives no value for an optional parameter, omit it. If no clause calls for a second action, don't add one — never invent a peer or modifier (no stray `variable.get`, `file.read`, `cache.wrap`) the text didn't ask for.
+- **Never return an empty `actions` list for a step that has a clause.** Every real step maps to at least one action: `set %x% = %y%` → one `variable.set`; `call X` → one `goal.call`. If the planner's set genuinely lacks a needed action, emit the `missing-actions` error — never return nothing.
+
+Most steps are one action per clause. "This looks too simple" is almost always right.
+
+## Write `formal` first
+
+A one-line render of the chain; `actions[]` then mirrors it exactly.
+
+`module.action(ParamName=value, ...)` — real schema param names. Quote strings; keep `%vars%` verbatim; numbers/bools unquoted; lists `[...]`; objects `{k:v}`.
+- Modifier follows its host with ` | ` : `host(...) | error.handle(Actions=[recovery(...)])`
+- Peer follows with ` , ` : `condition.if(...) , goal.call(...)`
+- Nested action values use `[...]` with the same syntax.
+
+`formal` and `actions[]` MUST match exactly — every `Param=value` in one appears in the other, no extras either way.
+
+## Modifiers vs peers
+
+Only THREE actions are modifiers — `error.handle`, `cache.wrap`, `timeout.after` — and they go in the host action's `modifiers[]`. Use one only when the step has a clause like `on error …`, `cache for …`, `timeout after …`. A `cache=` *parameter* on `llm.query` is NOT cache.wrap.
+
+Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `output.write`, `file.*`, `error.throw`, …) is a **peer** in the top-level `actions[]`, never in `modifiers[]`. `if X, call Y` and `foreach X, call Y` are two peers.
+
+## `write to %x%` and `%!data%`
+
+`…, write to %x%` → a trailing peer `variable.set(Name=%x%, Value=%!data%)` after the producer (never a modifier). `%!data%` is the immediately preceding action's return value — use it ONLY to thread one action's result into the next when the text says so. It is not a fill-in for an unsupplied slot.
+
+## Output shape
+
+```json
+{"formal":"...","actions":[...],"confidence":"VeryHigh|High|Medium|Low|VeryLow","explanation":"...","errors":[],"warnings":[]}
+```
+
+Each action: `{module, action, parameters:[{name, value, type}], modifiers?:[...]}`. `module` is a single identifier: `ui.render` → `{"module":"ui","action":"render"}`, never `{"module":"ui.render",...}`. Omit `explanation` at High/VeryHigh; otherwise one sentence on the uncertainty. Drop confidence to Low/VeryLow when the verb doesn't really match any action you were given.
+
+## Parameters & types
+
+- `name` is always the literal schema property name (`Name`, `Value`, `GoalName`, …). A `%var%` marker in a schema means "takes a variable reference" — it is never a parameter name and says nothing about the runtime type. Don't raise warnings over type or letter-case differences.
+- Type names come from the per-step Type reference (primitive names + kind table + catalog types) — don't invent. `text` not `string`; `number` carries `int/long/decimal/double` as its *kind*; lists are `list<T>`. A JSON object/array value uses `type:"json"` as a structured value.
+- Omit nullable params (`?`) when the text gives no value. NEVER emit `""` or copy a type descriptor (`actor?`, `eventtype`) into a value slot.
+
+## Intermediates & compound conditions
+
+- To branch on a producer's property, capture into a temp `__conditionReturn__` and reference `%__conditionReturn__.X%`.
+- `if A and B, call C` → two `condition.if` peers + the `goal.call`; add `warnings:[{"key":"expanded-condition","message":"..."}]`.
+
+## Errors
+
+- `missing-actions` (top-level, exact key) — the set lacks an action the step needs; emit and stop, don't fabricate a partial chain.
+- Also: `actionNotFound`, `insufficientContext` (top-level); `ambiguousMapping`, `possibleTypo` (per action).
+
+Never invent action names (`list.append`/`push`/`insert` don't exist — use `list.add`). Preserve `%name%` literally everywhere, including `return`.
+
+- set # Step Compiler
+
+You are the PLang compiler. The planner gave you the **set of actions** a step uses (unordered). You order them, nest modifiers, fill parameter values from the step text, and emit one `formal` line plus the matching `actions[]`.
+
+Each picked action's parameter schema, **Notes**, **Examples**, and the **Type reference** are in the user message below — authoritative for that action's shape. Read them first. This prompt is the cross-cutting kernel.
+
+## Core rule: map the clauses — nothing more, nothing less
+
+Walk the step text clause by clause. Each clause that does work maps to exactly the action(s) it names.
+
+- **Emit only what a clause names.** If the text gives no value for an optional parameter, omit it. If no clause calls for a second action, don't add one — never invent a peer or modifier (no stray `variable.get`, `file.read`, `cache.wrap`) the text didn't ask for.
+- **Never return an empty `actions` list for a step that has a clause.** Every real step maps to at least one action: `set %x% = %y%` → one `variable.set`; `call X` → one `goal.call`. If the planner's set genuinely lacks a needed action, emit the `missing-actions` error — never return nothing.
+
+Most steps are one action per clause. "This looks too simple" is almost always right.
+
+## Write `formal` first
+
+A one-line render of the chain; `actions[]` then mirrors it exactly.
+
+`module.action(ParamName=value, ...)` — real schema param names. Quote strings; keep `%vars%` verbatim; numbers/bools unquoted; lists `[...]`; objects `{k:v}`.
+- Modifier follows its host with ` | ` : `host(...) | error.handle(Actions=[recovery(...)])`
+- Peer follows with ` , ` : `condition.if(...) , goal.call(...)`
+- Nested action values use `[...]` with the same syntax.
+
+`formal` and `actions[]` MUST match exactly — every `Param=value` in one appears in the other, no extras either way.
+
+## Modifiers vs peers
+
+Only THREE actions are modifiers — `error.handle`, `cache.wrap`, `timeout.after` — and they go in the host action's `modifiers[]`. Use one only when the step has a clause like `on error …`, `cache for …`, `timeout after …`. A `cache=` *parameter* on `llm.query` is NOT cache.wrap.
+
+Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `output.write`, `file.*`, `error.throw`, …) is a **peer** in the top-level `actions[]`, never in `modifiers[]`. `if X, call Y` and `foreach X, call Y` are two peers.
+
+## `write to %x%` and `%!data%`
+
+`…, write to %x%` → a trailing peer `variable.set(Name=%x%, Value=%!data%)` after the producer (never a modifier). `%!data%` is the immediately preceding action's return value — use it ONLY to thread one action's result into the next when the text says so. It is not a fill-in for an unsupplied slot.
+
+## Output shape
+
+```json
+{"formal":"...","actions":[...],"confidence":"VeryHigh|High|Medium|Low|VeryLow","explanation":"...","errors":[],"warnings":[]}
+```
+
+Each action: `{module, action, parameters:[{name, value, type}], modifiers?:[...]}`. `module` is a single identifier: `ui.render` → `{"module":"ui","action":"render"}`, never `{"module":"ui.render",...}`. Omit `explanation` at High/VeryHigh; otherwise one sentence on the uncertainty. Drop confidence to Low/VeryLow when the verb doesn't really match any action you were given.
+
+## Parameters & types
+
+- `name` is always the literal schema property name (`Name`, `Value`, `GoalName`, …). A `%var%` marker in a schema means "takes a variable reference" — it is never a parameter name and says nothing about the runtime type. Don't raise warnings over type or letter-case differences.
+- Type names come from the per-step Type reference (primitive names + kind table + catalog types) — don't invent. `text` not `string`; `number` carries `int/long/decimal/double` as its *kind*; lists are `list<T>`. A JSON object/array value uses `type:"json"` as a structured value.
+- Omit nullable params (`?`) when the text gives no value. NEVER emit `""` or copy a type descriptor (`actor?`, `eventtype`) into a value slot.
+
+## Intermediates & compound conditions
+
+- To branch on a producer's property, capture into a temp `__conditionReturn__` and reference `%__conditionReturn__.X%`.
+- `if A and B, call C` → two `condition.if` peers + the `goal.call`; add `warnings:[{"key":"expanded-condition","message":"..."}]`.
+
+## Errors
+
+- `missing-actions` (top-level, exact key) — the set lacks an action the step needs; emit and stop, don't fabricate a partial chain.
+- Also: `actionNotFound`, `insufficientContext` (top-level); `ambiguousMapping`, `possibleTypo` (per action).
+
+Never invent action names (`list.append`/`push`/`insert` don't exist — use `list.add`). Preserve `%name%` literally everywhere, including `return`.
+ = # Step Compiler
+
+You are the PLang compiler. The planner gave you the **set of actions** a step uses (unordered). You order them, nest modifiers, fill parameter values from the step text, and emit one `formal` line plus the matching `actions[]`.
+
+Each picked action's parameter schema, **Notes**, **Examples**, and the **Type reference** are in the user message below — authoritative for that action's shape. Read them first. This prompt is the cross-cutting kernel.
+
+## Core rule: map the clauses — nothing more, nothing less
+
+Walk the step text clause by clause. Each clause that does work maps to exactly the action(s) it names.
+
+- **Emit only what a clause names.** If the text gives no value for an optional parameter, omit it. If no clause calls for a second action, don't add one — never invent a peer or modifier (no stray `variable.get`, `file.read`, `cache.wrap`) the text didn't ask for.
+- **Never return an empty `actions` list for a step that has a clause.** Every real step maps to at least one action: `set %x% = %y%` → one `variable.set`; `call X` → one `goal.call`. If the planner's set genuinely lacks a needed action, emit the `missing-actions` error — never return nothing.
+
+Most steps are one action per clause. "This looks too simple" is almost always right.
+
+## Write `formal` first
+
+A one-line render of the chain; `actions[]` then mirrors it exactly.
+
+`module.action(ParamName=value, ...)` — real schema param names. Quote strings; keep `%vars%` verbatim; numbers/bools unquoted; lists `[...]`; objects `{k:v}`.
+- Modifier follows its host with ` | ` : `host(...) | error.handle(Actions=[recovery(...)])`
+- Peer follows with ` , ` : `condition.if(...) , goal.call(...)`
+- Nested action values use `[...]` with the same syntax.
+
+`formal` and `actions[]` MUST match exactly — every `Param=value` in one appears in the other, no extras either way.
+
+## Modifiers vs peers
+
+Only THREE actions are modifiers — `error.handle`, `cache.wrap`, `timeout.after` — and they go in the host action's `modifiers[]`. Use one only when the step has a clause like `on error …`, `cache for …`, `timeout after …`. A `cache=` *parameter* on `llm.query` is NOT cache.wrap.
+
+Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `output.write`, `file.*`, `error.throw`, …) is a **peer** in the top-level `actions[]`, never in `modifiers[]`. `if X, call Y` and `foreach X, call Y` are two peers.
+
+## `write to %x%` and `%!data%`
+
+`…, write to %x%` → a trailing peer `variable.set(Name=%x%, Value=%!data%)` after the producer (never a modifier). `%!data%` is the immediately preceding action's return value — use it ONLY to thread one action's result into the next when the text says so. It is not a fill-in for an unsupplied slot.
+
+## Output shape
+
+```json
+{"formal":"...","actions":[...],"confidence":"VeryHigh|High|Medium|Low|VeryLow","explanation":"...","errors":[],"warnings":[]}
+```
+
+Each action: `{module, action, parameters:[{name, value, type}], modifiers?:[...]}`. `module` is a single identifier: `ui.render` → `{"module":"ui","action":"render"}`, never `{"module":"ui.render",...}`. Omit `explanation` at High/VeryHigh; otherwise one sentence on the uncertainty. Drop confidence to Low/VeryLow when the verb doesn't really match any action you were given.
+
+## Parameters & types
+
+- `name` is always the literal schema property name (`Name`, `Value`, `GoalName`, …). A `%var%` marker in a schema means "takes a variable reference" — it is never a parameter name and says nothing about the runtime type. Don't raise warnings over type or letter-case differences.
+- Type names come from the per-step Type reference (primitive names + kind table + catalog types) — don't invent. `text` not `string`; `number` carries `int/long/decimal/double` as its *kind*; lists are `list<T>`. A JSON object/array value uses `type:"json"` as a structured value.
+- Omit nullable params (`?`) when the text gives no value. NEVER emit `""` or copy a type descriptor (`actor?`, `eventtype`) into a value slot.
+
+## Intermediates & compound conditions
+
+- To branch on a producer's property, capture into a temp `__conditionReturn__` and reference `%__conditionReturn__.X%`.
+- `if A and B, call C` → two `condition.if` peers + the `goal.call`; add `warnings:[{"key":"expanded-condition","message":"..."}]`.
+
+## Errors
+
+- `missing-actions` (top-level, exact key) — the set lacks an action the step needs; emit and stop, don't fabricate a partial chain.
+- Also: `actionNotFound`, `insufficientContext` (top-level); `ambiguousMapping`, `possibleTypo` (per action).
+
+Never invent action names (`list.append`/`push`/`insert` don't exist — use `list.add`). Preserve `%name%` literally everywhere, including `return`.
+
+- foreach System.Collections.Generic.List`1[System.Object], call BuildStep/Start planStep=System.Collections.Generic.Dictionary`2[System.String,System.Object], on error call HandleBuildFailure
+- set BuildGoal
+- call BuildGoal/Start goal=%goal% = Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal%
+- foreach System.Collections.Generic.List`1[app.goal.this], call BuildSubGoal subGoal=System.Collections.Generic.Dictionary`2[System.String,System.Object]
+- set Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal% = BuildGoal
+- call BuildGoal/Start goal=%goal%
+- math.subtract A=639159649163745448, B=639159648996493810, write to 28878940
+- math.divide A=28878940, B=10000, write to 2887.894
+- set 0 = 2887.894
+- save System.Collections.Generic.Dictionary`2[System.String,System.Object] to file '/.build/traces/%!trace.id%/Start.json'
+- add Start to System.Collections.Generic.List`1[System.Object]
+- builder.goalsSave Goal=Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+
+
+  [✓] call Plan, on error call HandleBuildFailure
+
+
+  [✓] set System.Collections.Generic.Dictionary`2[System.String,System.Object] = System.Collections.Generic.Dictionary`2[System.String,System.Object]
+
+
+  [✓] render template "/system/builder/llm/Compile.llm", write to # Step Compiler
+
+You are the PLang compiler. The planner gave you the **set of actions** a step uses (unordered). You order them, nest modifiers, fill parameter values from the step text, and emit one `formal` line plus the matching `actions[]`.
+
+Each picked action's parameter schema, **Notes**, **Examples**, and the **Type reference** are in the user message below — authoritative for that action's shape. Read them first. This prompt is the cross-cutting kernel.
+
+## Core rule: map the clauses — nothing more, nothing less
+
+Walk the step text clause by clause. Each clause that does work maps to exactly the action(s) it names.
+
+- **Emit only what a clause names.** If the text gives no value for an optional parameter, omit it. If no clause calls for a second action, don't add one — never invent a peer or modifier (no stray `variable.get`, `file.read`, `cache.wrap`) the text didn't ask for.
+- **Never return an empty `actions` list for a step that has a clause.** Every real step maps to at least one action: `set %x% = %y%` → one `variable.set`; `call X` → one `goal.call`. If the planner's set genuinely lacks a needed action, emit the `missing-actions` error — never return nothing.
+
+Most steps are one action per clause. "This looks too simple" is almost always right.
+
+## Write `formal` first
+
+A one-line render of the chain; `actions[]` then mirrors it exactly.
+
+`module.action(ParamName=value, ...)` — real schema param names. Quote strings; keep `%vars%` verbatim; numbers/bools unquoted; lists `[...]`; objects `{k:v}`.
+- Modifier follows its host with ` | ` : `host(...) | error.handle(Actions=[recovery(...)])`
+- Peer follows with ` , ` : `condition.if(...) , goal.call(...)`
+- Nested action values use `[...]` with the same syntax.
+
+`formal` and `actions[]` MUST match exactly — every `Param=value` in one appears in the other, no extras either way.
+
+## Modifiers vs peers
+
+Only THREE actions are modifiers — `error.handle`, `cache.wrap`, `timeout.after` — and they go in the host action's `modifiers[]`. Use one only when the step has a clause like `on error …`, `cache for …`, `timeout after …`. A `cache=` *parameter* on `llm.query` is NOT cache.wrap.
+
+Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `output.write`, `file.*`, `error.throw`, …) is a **peer** in the top-level `actions[]`, never in `modifiers[]`. `if X, call Y` and `foreach X, call Y` are two peers.
+
+## `write to %x%` and `%!data%`
+
+`…, write to %x%` → a trailing peer `variable.set(Name=%x%, Value=%!data%)` after the producer (never a modifier). `%!data%` is the immediately preceding action's return value — use it ONLY to thread one action's result into the next when the text says so. It is not a fill-in for an unsupplied slot.
+
+## Output shape
+
+```json
+{"formal":"...","actions":[...],"confidence":"VeryHigh|High|Medium|Low|VeryLow","explanation":"...","errors":[],"warnings":[]}
+```
+
+Each action: `{module, action, parameters:[{name, value, type}], modifiers?:[...]}`. `module` is a single identifier: `ui.render` → `{"module":"ui","action":"render"}`, never `{"module":"ui.render",...}`. Omit `explanation` at High/VeryHigh; otherwise one sentence on the uncertainty. Drop confidence to Low/VeryLow when the verb doesn't really match any action you were given.
+
+## Parameters & types
+
+- `name` is always the literal schema property name (`Name`, `Value`, `GoalName`, …). A `%var%` marker in a schema means "takes a variable reference" — it is never a parameter name and says nothing about the runtime type. Don't raise warnings over type or letter-case differences.
+- Type names come from the per-step Type reference (primitive names + kind table + catalog types) — don't invent. `text` not `string`; `number` carries `int/long/decimal/double` as its *kind*; lists are `list<T>`. A JSON object/array value uses `type:"json"` as a structured value.
+- Omit nullable params (`?`) when the text gives no value. NEVER emit `""` or copy a type descriptor (`actor?`, `eventtype`) into a value slot.
+
+## Intermediates & compound conditions
+
+- To branch on a producer's property, capture into a temp `__conditionReturn__` and reference `%__conditionReturn__.X%`.
+- `if A and B, call C` → two `condition.if` peers + the `goal.call`; add `warnings:[{"key":"expanded-condition","message":"..."}]`.
+
+## Errors
+
+- `missing-actions` (top-level, exact key) — the set lacks an action the step needs; emit and stop, don't fabricate a partial chain.
+- Also: `actionNotFound`, `insufficientContext` (top-level); `ambiguousMapping`, `possibleTypo` (per action).
+
+Never invent action names (`list.append`/`push`/`insert` don't exist — use `list.add`). Preserve `%name%` literally everywhere, including `return`.
+
+
+
+  [✓] set # Step Compiler
+
+You are the PLang compiler. The planner gave you the **set of actions** a step uses (unordered). You order them, nest modifiers, fill parameter values from the step text, and emit one `formal` line plus the matching `actions[]`.
+
+Each picked action's parameter schema, **Notes**, **Examples**, and the **Type reference** are in the user message below — authoritative for that action's shape. Read them first. This prompt is the cross-cutting kernel.
+
+## Core rule: map the clauses — nothing more, nothing less
+
+Walk the step text clause by clause. Each clause that does work maps to exactly the action(s) it names.
+
+- **Emit only what a clause names.** If the text gives no value for an optional parameter, omit it. If no clause calls for a second action, don't add one — never invent a peer or modifier (no stray `variable.get`, `file.read`, `cache.wrap`) the text didn't ask for.
+- **Never return an empty `actions` list for a step that has a clause.** Every real step maps to at least one action: `set %x% = %y%` → one `variable.set`; `call X` → one `goal.call`. If the planner's set genuinely lacks a needed action, emit the `missing-actions` error — never return nothing.
+
+Most steps are one action per clause. "This looks too simple" is almost always right.
+
+## Write `formal` first
+
+A one-line render of the chain; `actions[]` then mirrors it exactly.
+
+`module.action(ParamName=value, ...)` — real schema param names. Quote strings; keep `%vars%` verbatim; numbers/bools unquoted; lists `[...]`; objects `{k:v}`.
+- Modifier follows its host with ` | ` : `host(...) | error.handle(Actions=[recovery(...)])`
+- Peer follows with ` , ` : `condition.if(...) , goal.call(...)`
+- Nested action values use `[...]` with the same syntax.
+
+`formal` and `actions[]` MUST match exactly — every `Param=value` in one appears in the other, no extras either way.
+
+## Modifiers vs peers
+
+Only THREE actions are modifiers — `error.handle`, `cache.wrap`, `timeout.after` — and they go in the host action's `modifiers[]`. Use one only when the step has a clause like `on error …`, `cache for …`, `timeout after …`. A `cache=` *parameter* on `llm.query` is NOT cache.wrap.
+
+Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `output.write`, `file.*`, `error.throw`, …) is a **peer** in the top-level `actions[]`, never in `modifiers[]`. `if X, call Y` and `foreach X, call Y` are two peers.
+
+## `write to %x%` and `%!data%`
+
+`…, write to %x%` → a trailing peer `variable.set(Name=%x%, Value=%!data%)` after the producer (never a modifier). `%!data%` is the immediately preceding action's return value — use it ONLY to thread one action's result into the next when the text says so. It is not a fill-in for an unsupplied slot.
+
+## Output shape
+
+```json
+{"formal":"...","actions":[...],"confidence":"VeryHigh|High|Medium|Low|VeryLow","explanation":"...","errors":[],"warnings":[]}
+```
+
+Each action: `{module, action, parameters:[{name, value, type}], modifiers?:[...]}`. `module` is a single identifier: `ui.render` → `{"module":"ui","action":"render"}`, never `{"module":"ui.render",...}`. Omit `explanation` at High/VeryHigh; otherwise one sentence on the uncertainty. Drop confidence to Low/VeryLow when the verb doesn't really match any action you were given.
+
+## Parameters & types
+
+- `name` is always the literal schema property name (`Name`, `Value`, `GoalName`, …). A `%var%` marker in a schema means "takes a variable reference" — it is never a parameter name and says nothing about the runtime type. Don't raise warnings over type or letter-case differences.
+- Type names come from the per-step Type reference (primitive names + kind table + catalog types) — don't invent. `text` not `string`; `number` carries `int/long/decimal/double` as its *kind*; lists are `list<T>`. A JSON object/array value uses `type:"json"` as a structured value.
+- Omit nullable params (`?`) when the text gives no value. NEVER emit `""` or copy a type descriptor (`actor?`, `eventtype`) into a value slot.
+
+## Intermediates & compound conditions
+
+- To branch on a producer's property, capture into a temp `__conditionReturn__` and reference `%__conditionReturn__.X%`.
+- `if A and B, call C` → two `condition.if` peers + the `goal.call`; add `warnings:[{"key":"expanded-condition","message":"..."}]`.
+
+## Errors
+
+- `missing-actions` (top-level, exact key) — the set lacks an action the step needs; emit and stop, don't fabricate a partial chain.
+- Also: `actionNotFound`, `insufficientContext` (top-level); `ambiguousMapping`, `possibleTypo` (per action).
+
+Never invent action names (`list.append`/`push`/`insert` don't exist — use `list.add`). Preserve `%name%` literally everywhere, including `return`.
+ = # Step Compiler
+
+You are the PLang compiler. The planner gave you the **set of actions** a step uses (unordered). You order them, nest modifiers, fill parameter values from the step text, and emit one `formal` line plus the matching `actions[]`.
+
+Each picked action's parameter schema, **Notes**, **Examples**, and the **Type reference** are in the user message below — authoritative for that action's shape. Read them first. This prompt is the cross-cutting kernel.
+
+## Core rule: map the clauses — nothing more, nothing less
+
+Walk the step text clause by clause. Each clause that does work maps to exactly the action(s) it names.
+
+- **Emit only what a clause names.** If the text gives no value for an optional parameter, omit it. If no clause calls for a second action, don't add one — never invent a peer or modifier (no stray `variable.get`, `file.read`, `cache.wrap`) the text didn't ask for.
+- **Never return an empty `actions` list for a step that has a clause.** Every real step maps to at least one action: `set %x% = %y%` → one `variable.set`; `call X` → one `goal.call`. If the planner's set genuinely lacks a needed action, emit the `missing-actions` error — never return nothing.
+
+Most steps are one action per clause. "This looks too simple" is almost always right.
+
+## Write `formal` first
+
+A one-line render of the chain; `actions[]` then mirrors it exactly.
+
+`module.action(ParamName=value, ...)` — real schema param names. Quote strings; keep `%vars%` verbatim; numbers/bools unquoted; lists `[...]`; objects `{k:v}`.
+- Modifier follows its host with ` | ` : `host(...) | error.handle(Actions=[recovery(...)])`
+- Peer follows with ` , ` : `condition.if(...) , goal.call(...)`
+- Nested action values use `[...]` with the same syntax.
+
+`formal` and `actions[]` MUST match exactly — every `Param=value` in one appears in the other, no extras either way.
+
+## Modifiers vs peers
+
+Only THREE actions are modifiers — `error.handle`, `cache.wrap`, `timeout.after` — and they go in the host action's `modifiers[]`. Use one only when the step has a clause like `on error …`, `cache for …`, `timeout after …`. A `cache=` *parameter* on `llm.query` is NOT cache.wrap.
+
+Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `output.write`, `file.*`, `error.throw`, …) is a **peer** in the top-level `actions[]`, never in `modifiers[]`. `if X, call Y` and `foreach X, call Y` are two peers.
+
+## `write to %x%` and `%!data%`
+
+`…, write to %x%` → a trailing peer `variable.set(Name=%x%, Value=%!data%)` after the producer (never a modifier). `%!data%` is the immediately preceding action's return value — use it ONLY to thread one action's result into the next when the text says so. It is not a fill-in for an unsupplied slot.
+
+## Output shape
+
+```json
+{"formal":"...","actions":[...],"confidence":"VeryHigh|High|Medium|Low|VeryLow","explanation":"...","errors":[],"warnings":[]}
+```
+
+Each action: `{module, action, parameters:[{name, value, type}], modifiers?:[...]}`. `module` is a single identifier: `ui.render` → `{"module":"ui","action":"render"}`, never `{"module":"ui.render",...}`. Omit `explanation` at High/VeryHigh; otherwise one sentence on the uncertainty. Drop confidence to Low/VeryLow when the verb doesn't really match any action you were given.
+
+## Parameters & types
+
+- `name` is always the literal schema property name (`Name`, `Value`, `GoalName`, …). A `%var%` marker in a schema means "takes a variable reference" — it is never a parameter name and says nothing about the runtime type. Don't raise warnings over type or letter-case differences.
+- Type names come from the per-step Type reference (primitive names + kind table + catalog types) — don't invent. `text` not `string`; `number` carries `int/long/decimal/double` as its *kind*; lists are `list<T>`. A JSON object/array value uses `type:"json"` as a structured value.
+- Omit nullable params (`?`) when the text gives no value. NEVER emit `""` or copy a type descriptor (`actor?`, `eventtype`) into a value slot.
+
+## Intermediates & compound conditions
+
+- To branch on a producer's property, capture into a temp `__conditionReturn__` and reference `%__conditionReturn__.X%`.
+- `if A and B, call C` → two `condition.if` peers + the `goal.call`; add `warnings:[{"key":"expanded-condition","message":"..."}]`.
+
+## Errors
+
+- `missing-actions` (top-level, exact key) — the set lacks an action the step needs; emit and stop, don't fabricate a partial chain.
+- Also: `actionNotFound`, `insufficientContext` (top-level); `ambiguousMapping`, `possibleTypo` (per action).
+
+Never invent action names (`list.append`/`push`/`insert` don't exist — use `list.add`). Preserve `%name%` literally everywhere, including `return`.
+
+
+
+  [✓] foreach System.Collections.Generic.List`1[System.Object], call BuildStep/Start planStep=System.Collections.Generic.Dictionary`2[System.String,System.Object], on error call HandleBuildFailure
+
+
+      ⚠ compiler Low: Compiled the foreach collection and the per-item goal call, and attached the on-error recovery as an error.handle modifier. However, the provided action-shape notes specify error.handle must wrap the preceding host action (the per-iteration goal call), not the loop.foreach itself; without an explicit host-action schema in the prompt, the exact nesting may be incorrect.
+
+  [✓] set BuildGoal
+- call BuildGoal/Start goal=Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal% = Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal%
+- set 639159648996493810 = 639159649298006894
+- set System.Collections.Generic.Dictionary`2[System.String,System.Object] = {"id": "%!trace.id%", "timestamp": "06/02/2026 02:42:09 +00:00", "goal": Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set System.Collections.Generic.Dictionary`2[System.String,System.Object] = System.Collections.Generic.Dictionary`2[System.String,System.Object]
+- render template "/system/builder/llm/Compile.llm", write to # Step Compiler
+
+You are the PLang compiler. The planner gave you the **set of actions** a step uses (unordered). You order them, nest modifiers, fill parameter values from the step text, and emit one `formal` line plus the matching `actions[]`.
+
+Each picked action's parameter schema, **Notes**, **Examples**, and the **Type reference** are in the user message below — authoritative for that action's shape. Read them first. This prompt is the cross-cutting kernel.
+
+## Core rule: map the clauses — nothing more, nothing less
+
+Walk the step text clause by clause. Each clause that does work maps to exactly the action(s) it names.
+
+- **Emit only what a clause names.** If the text gives no value for an optional parameter, omit it. If no clause calls for a second action, don't add one — never invent a peer or modifier (no stray `variable.get`, `file.read`, `cache.wrap`) the text didn't ask for.
+- **Never return an empty `actions` list for a step that has a clause.** Every real step maps to at least one action: `set %x% = %y%` → one `variable.set`; `call X` → one `goal.call`. If the planner's set genuinely lacks a needed action, emit the `missing-actions` error — never return nothing.
+
+Most steps are one action per clause. "This looks too simple" is almost always right.
+
+## Write `formal` first
+
+A one-line render of the chain; `actions[]` then mirrors it exactly.
+
+`module.action(ParamName=value, ...)` — real schema param names. Quote strings; keep `%vars%` verbatim; numbers/bools unquoted; lists `[...]`; objects `{k:v}`.
+- Modifier follows its host with ` | ` : `host(...) | error.handle(Actions=[recovery(...)])`
+- Peer follows with ` , ` : `condition.if(...) , goal.call(...)`
+- Nested action values use `[...]` with the same syntax.
+
+`formal` and `actions[]` MUST match exactly — every `Param=value` in one appears in the other, no extras either way.
+
+## Modifiers vs peers
+
+Only THREE actions are modifiers — `error.handle`, `cache.wrap`, `timeout.after` — and they go in the host action's `modifiers[]`. Use one only when the step has a clause like `on error …`, `cache for …`, `timeout after …`. A `cache=` *parameter* on `llm.query` is NOT cache.wrap.
+
+Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `output.write`, `file.*`, `error.throw`, …) is a **peer** in the top-level `actions[]`, never in `modifiers[]`. `if X, call Y` and `foreach X, call Y` are two peers.
+
+## `write to %x%` and `%!data%`
+
+`…, write to %x%` → a trailing peer `variable.set(Name=%x%, Value=%!data%)` after the producer (never a modifier). `%!data%` is the immediately preceding action's return value — use it ONLY to thread one action's result into the next when the text says so. It is not a fill-in for an unsupplied slot.
+
+## Output shape
+
+```json
+{"formal":"...","actions":[...],"confidence":"VeryHigh|High|Medium|Low|VeryLow","explanation":"...","errors":[],"warnings":[]}
+```
+
+Each action: `{module, action, parameters:[{name, value, type}], modifiers?:[...]}`. `module` is a single identifier: `ui.render` → `{"module":"ui","action":"render"}`, never `{"module":"ui.render",...}`. Omit `explanation` at High/VeryHigh; otherwise one sentence on the uncertainty. Drop confidence to Low/VeryLow when the verb doesn't really match any action you were given.
+
+## Parameters & types
+
+- `name` is always the literal schema property name (`Name`, `Value`, `GoalName`, …). A `%var%` marker in a schema means "takes a variable reference" — it is never a parameter name and says nothing about the runtime type. Don't raise warnings over type or letter-case differences.
+- Type names come from the per-step Type reference (primitive names + kind table + catalog types) — don't invent. `text` not `string`; `number` carries `int/long/decimal/double` as its *kind*; lists are `list<T>`. A JSON object/array value uses `type:"json"` as a structured value.
+- Omit nullable params (`?`) when the text gives no value. NEVER emit `""` or copy a type descriptor (`actor?`, `eventtype`) into a value slot.
+
+## Intermediates & compound conditions
+
+- To branch on a producer's property, capture into a temp `__conditionReturn__` and reference `%__conditionReturn__.X%`.
+- `if A and B, call C` → two `condition.if` peers + the `goal.call`; add `warnings:[{"key":"expanded-condition","message":"..."}]`.
+
+## Errors
+
+- `missing-actions` (top-level, exact key) — the set lacks an action the step needs; emit and stop, don't fabricate a partial chain.
+- Also: `actionNotFound`, `insufficientContext` (top-level); `ambiguousMapping`, `possibleTypo` (per action).
+
+Never invent action names (`list.append`/`push`/`insert` don't exist — use `list.add`). Preserve `%name%` literally everywhere, including `return`.
+
+- set # Step Compiler
+
+You are the PLang compiler. The planner gave you the **set of actions** a step uses (unordered). You order them, nest modifiers, fill parameter values from the step text, and emit one `formal` line plus the matching `actions[]`.
+
+Each picked action's parameter schema, **Notes**, **Examples**, and the **Type reference** are in the user message below — authoritative for that action's shape. Read them first. This prompt is the cross-cutting kernel.
+
+## Core rule: map the clauses — nothing more, nothing less
+
+Walk the step text clause by clause. Each clause that does work maps to exactly the action(s) it names.
+
+- **Emit only what a clause names.** If the text gives no value for an optional parameter, omit it. If no clause calls for a second action, don't add one — never invent a peer or modifier (no stray `variable.get`, `file.read`, `cache.wrap`) the text didn't ask for.
+- **Never return an empty `actions` list for a step that has a clause.** Every real step maps to at least one action: `set %x% = %y%` → one `variable.set`; `call X` → one `goal.call`. If the planner's set genuinely lacks a needed action, emit the `missing-actions` error — never return nothing.
+
+Most steps are one action per clause. "This looks too simple" is almost always right.
+
+## Write `formal` first
+
+A one-line render of the chain; `actions[]` then mirrors it exactly.
+
+`module.action(ParamName=value, ...)` — real schema param names. Quote strings; keep `%vars%` verbatim; numbers/bools unquoted; lists `[...]`; objects `{k:v}`.
+- Modifier follows its host with ` | ` : `host(...) | error.handle(Actions=[recovery(...)])`
+- Peer follows with ` , ` : `condition.if(...) , goal.call(...)`
+- Nested action values use `[...]` with the same syntax.
+
+`formal` and `actions[]` MUST match exactly — every `Param=value` in one appears in the other, no extras either way.
+
+## Modifiers vs peers
+
+Only THREE actions are modifiers — `error.handle`, `cache.wrap`, `timeout.after` — and they go in the host action's `modifiers[]`. Use one only when the step has a clause like `on error …`, `cache for …`, `timeout after …`. A `cache=` *parameter* on `llm.query` is NOT cache.wrap.
+
+Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `output.write`, `file.*`, `error.throw`, …) is a **peer** in the top-level `actions[]`, never in `modifiers[]`. `if X, call Y` and `foreach X, call Y` are two peers.
+
+## `write to %x%` and `%!data%`
+
+`…, write to %x%` → a trailing peer `variable.set(Name=%x%, Value=%!data%)` after the producer (never a modifier). `%!data%` is the immediately preceding action's return value — use it ONLY to thread one action's result into the next when the text says so. It is not a fill-in for an unsupplied slot.
+
+## Output shape
+
+```json
+{"formal":"...","actions":[...],"confidence":"VeryHigh|High|Medium|Low|VeryLow","explanation":"...","errors":[],"warnings":[]}
+```
+
+Each action: `{module, action, parameters:[{name, value, type}], modifiers?:[...]}`. `module` is a single identifier: `ui.render` → `{"module":"ui","action":"render"}`, never `{"module":"ui.render",...}`. Omit `explanation` at High/VeryHigh; otherwise one sentence on the uncertainty. Drop confidence to Low/VeryLow when the verb doesn't really match any action you were given.
+
+## Parameters & types
+
+- `name` is always the literal schema property name (`Name`, `Value`, `GoalName`, …). A `%var%` marker in a schema means "takes a variable reference" — it is never a parameter name and says nothing about the runtime type. Don't raise warnings over type or letter-case differences.
+- Type names come from the per-step Type reference (primitive names + kind table + catalog types) — don't invent. `text` not `string`; `number` carries `int/long/decimal/double` as its *kind*; lists are `list<T>`. A JSON object/array value uses `type:"json"` as a structured value.
+- Omit nullable params (`?`) when the text gives no value. NEVER emit `""` or copy a type descriptor (`actor?`, `eventtype`) into a value slot.
+
+## Intermediates & compound conditions
+
+- To branch on a producer's property, capture into a temp `__conditionReturn__` and reference `%__conditionReturn__.X%`.
+- `if A and B, call C` → two `condition.if` peers + the `goal.call`; add `warnings:[{"key":"expanded-condition","message":"..."}]`.
+
+## Errors
+
+- `missing-actions` (top-level, exact key) — the set lacks an action the step needs; emit and stop, don't fabricate a partial chain.
+- Also: `actionNotFound`, `insufficientContext` (top-level); `ambiguousMapping`, `possibleTypo` (per action).
+
+Never invent action names (`list.append`/`push`/`insert` don't exist — use `list.add`). Preserve `%name%` literally everywhere, including `return`.
+ = # Step Compiler
+
+You are the PLang compiler. The planner gave you the **set of actions** a step uses (unordered). You order them, nest modifiers, fill parameter values from the step text, and emit one `formal` line plus the matching `actions[]`.
+
+Each picked action's parameter schema, **Notes**, **Examples**, and the **Type reference** are in the user message below — authoritative for that action's shape. Read them first. This prompt is the cross-cutting kernel.
+
+## Core rule: map the clauses — nothing more, nothing less
+
+Walk the step text clause by clause. Each clause that does work maps to exactly the action(s) it names.
+
+- **Emit only what a clause names.** If the text gives no value for an optional parameter, omit it. If no clause calls for a second action, don't add one — never invent a peer or modifier (no stray `variable.get`, `file.read`, `cache.wrap`) the text didn't ask for.
+- **Never return an empty `actions` list for a step that has a clause.** Every real step maps to at least one action: `set %x% = %y%` → one `variable.set`; `call X` → one `goal.call`. If the planner's set genuinely lacks a needed action, emit the `missing-actions` error — never return nothing.
+
+Most steps are one action per clause. "This looks too simple" is almost always right.
+
+## Write `formal` first
+
+A one-line render of the chain; `actions[]` then mirrors it exactly.
+
+`module.action(ParamName=value, ...)` — real schema param names. Quote strings; keep `%vars%` verbatim; numbers/bools unquoted; lists `[...]`; objects `{k:v}`.
+- Modifier follows its host with ` | ` : `host(...) | error.handle(Actions=[recovery(...)])`
+- Peer follows with ` , ` : `condition.if(...) , goal.call(...)`
+- Nested action values use `[...]` with the same syntax.
+
+`formal` and `actions[]` MUST match exactly — every `Param=value` in one appears in the other, no extras either way.
+
+## Modifiers vs peers
+
+Only THREE actions are modifiers — `error.handle`, `cache.wrap`, `timeout.after` — and they go in the host action's `modifiers[]`. Use one only when the step has a clause like `on error …`, `cache for …`, `timeout after …`. A `cache=` *parameter* on `llm.query` is NOT cache.wrap.
+
+Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `output.write`, `file.*`, `error.throw`, …) is a **peer** in the top-level `actions[]`, never in `modifiers[]`. `if X, call Y` and `foreach X, call Y` are two peers.
+
+## `write to %x%` and `%!data%`
+
+`…, write to %x%` → a trailing peer `variable.set(Name=%x%, Value=%!data%)` after the producer (never a modifier). `%!data%` is the immediately preceding action's return value — use it ONLY to thread one action's result into the next when the text says so. It is not a fill-in for an unsupplied slot.
+
+## Output shape
+
+```json
+{"formal":"...","actions":[...],"confidence":"VeryHigh|High|Medium|Low|VeryLow","explanation":"...","errors":[],"warnings":[]}
+```
+
+Each action: `{module, action, parameters:[{name, value, type}], modifiers?:[...]}`. `module` is a single identifier: `ui.render` → `{"module":"ui","action":"render"}`, never `{"module":"ui.render",...}`. Omit `explanation` at High/VeryHigh; otherwise one sentence on the uncertainty. Drop confidence to Low/VeryLow when the verb doesn't really match any action you were given.
+
+## Parameters & types
+
+- `name` is always the literal schema property name (`Name`, `Value`, `GoalName`, …). A `%var%` marker in a schema means "takes a variable reference" — it is never a parameter name and says nothing about the runtime type. Don't raise warnings over type or letter-case differences.
+- Type names come from the per-step Type reference (primitive names + kind table + catalog types) — don't invent. `text` not `string`; `number` carries `int/long/decimal/double` as its *kind*; lists are `list<T>`. A JSON object/array value uses `type:"json"` as a structured value.
+- Omit nullable params (`?`) when the text gives no value. NEVER emit `""` or copy a type descriptor (`actor?`, `eventtype`) into a value slot.
+
+## Intermediates & compound conditions
+
+- To branch on a producer's property, capture into a temp `__conditionReturn__` and reference `%__conditionReturn__.X%`.
+- `if A and B, call C` → two `condition.if` peers + the `goal.call`; add `warnings:[{"key":"expanded-condition","message":"..."}]`.
+
+## Errors
+
+- `missing-actions` (top-level, exact key) — the set lacks an action the step needs; emit and stop, don't fabricate a partial chain.
+- Also: `actionNotFound`, `insufficientContext` (top-level); `ambiguousMapping`, `possibleTypo` (per action).
+
+Never invent action names (`list.append`/`push`/`insert` don't exist — use `list.add`). Preserve `%name%` literally everywhere, including `return`.
+
+- foreach System.Collections.Generic.List`1[System.Object], call BuildStep/Start planStep=System.Collections.Generic.Dictionary`2[System.String,System.Object], on error call HandleBuildFailure
+- set BuildGoal
+- call BuildGoal/Start goal=%goal% = Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal%
+- foreach System.Collections.Generic.List`1[app.goal.this], call BuildSubGoal subGoal=System.Collections.Generic.Dictionary`2[System.String,System.Object]
+- set Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal% = BuildGoal
+- call BuildGoal/Start goal=%goal%
+- math.subtract A=639159649298008988, B=639159648996493810, write to 28878940
+- math.divide A=28878940, B=10000, write to 2887.894
+- set 0 = 2887.894
+- save System.Collections.Generic.Dictionary`2[System.String,System.Object] to file '/.build/traces/%!trace.id%/Start.json'
+- add Start to System.Collections.Generic.List`1[System.Object]
+- builder.goalsSave Goal=Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal%
+
+
+  [✓] foreach System.Collections.Generic.List`1[app.goal.this], call BuildSubGoal subGoal=System.Collections.Generic.Dictionary`2[System.String,System.Object]
+
+
+  [✓] set Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal%
+- set 639159648996493810 = 639159649340137596
+- set System.Collections.Generic.Dictionary`2[System.String,System.Object] = {"id": "%!trace.id%", "timestamp": "06/02/2026 02:42:14 +00:00", "goal": Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set System.Collections.Generic.Dictionary`2[System.String,System.Object] = System.Collections.Generic.Dictionary`2[System.String,System.Object]
+- render template "/system/builder/llm/Compile.llm", write to # Step Compiler
+
+You are the PLang compiler. The planner gave you the **set of actions** a step uses (unordered). You order them, nest modifiers, fill parameter values from the step text, and emit one `formal` line plus the matching `actions[]`.
+
+Each picked action's parameter schema, **Notes**, **Examples**, and the **Type reference** are in the user message below — authoritative for that action's shape. Read them first. This prompt is the cross-cutting kernel.
+
+## Core rule: map the clauses — nothing more, nothing less
+
+Walk the step text clause by clause. Each clause that does work maps to exactly the action(s) it names.
+
+- **Emit only what a clause names.** If the text gives no value for an optional parameter, omit it. If no clause calls for a second action, don't add one — never invent a peer or modifier (no stray `variable.get`, `file.read`, `cache.wrap`) the text didn't ask for.
+- **Never return an empty `actions` list for a step that has a clause.** Every real step maps to at least one action: `set %x% = %y%` → one `variable.set`; `call X` → one `goal.call`. If the planner's set genuinely lacks a needed action, emit the `missing-actions` error — never return nothing.
+
+Most steps are one action per clause. "This looks too simple" is almost always right.
+
+## Write `formal` first
+
+A one-line render of the chain; `actions[]` then mirrors it exactly.
+
+`module.action(ParamName=value, ...)` — real schema param names. Quote strings; keep `%vars%` verbatim; numbers/bools unquoted; lists `[...]`; objects `{k:v}`.
+- Modifier follows its host with ` | ` : `host(...) | error.handle(Actions=[recovery(...)])`
+- Peer follows with ` , ` : `condition.if(...) , goal.call(...)`
+- Nested action values use `[...]` with the same syntax.
+
+`formal` and `actions[]` MUST match exactly — every `Param=value` in one appears in the other, no extras either way.
+
+## Modifiers vs peers
+
+Only THREE actions are modifiers — `error.handle`, `cache.wrap`, `timeout.after` — and they go in the host action's `modifiers[]`. Use one only when the step has a clause like `on error …`, `cache for …`, `timeout after …`. A `cache=` *parameter* on `llm.query` is NOT cache.wrap.
+
+Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `output.write`, `file.*`, `error.throw`, …) is a **peer** in the top-level `actions[]`, never in `modifiers[]`. `if X, call Y` and `foreach X, call Y` are two peers.
+
+## `write to %x%` and `%!data%`
+
+`…, write to %x%` → a trailing peer `variable.set(Name=%x%, Value=%!data%)` after the producer (never a modifier). `%!data%` is the immediately preceding action's return value — use it ONLY to thread one action's result into the next when the text says so. It is not a fill-in for an unsupplied slot.
+
+## Output shape
+
+```json
+{"formal":"...","actions":[...],"confidence":"VeryHigh|High|Medium|Low|VeryLow","explanation":"...","errors":[],"warnings":[]}
+```
+
+Each action: `{module, action, parameters:[{name, value, type}], modifiers?:[...]}`. `module` is a single identifier: `ui.render` → `{"module":"ui","action":"render"}`, never `{"module":"ui.render",...}`. Omit `explanation` at High/VeryHigh; otherwise one sentence on the uncertainty. Drop confidence to Low/VeryLow when the verb doesn't really match any action you were given.
+
+## Parameters & types
+
+- `name` is always the literal schema property name (`Name`, `Value`, `GoalName`, …). A `%var%` marker in a schema means "takes a variable reference" — it is never a parameter name and says nothing about the runtime type. Don't raise warnings over type or letter-case differences.
+- Type names come from the per-step Type reference (primitive names + kind table + catalog types) — don't invent. `text` not `string`; `number` carries `int/long/decimal/double` as its *kind*; lists are `list<T>`. A JSON object/array value uses `type:"json"` as a structured value.
+- Omit nullable params (`?`) when the text gives no value. NEVER emit `""` or copy a type descriptor (`actor?`, `eventtype`) into a value slot.
+
+## Intermediates & compound conditions
+
+- To branch on a producer's property, capture into a temp `__conditionReturn__` and reference `%__conditionReturn__.X%`.
+- `if A and B, call C` → two `condition.if` peers + the `goal.call`; add `warnings:[{"key":"expanded-condition","message":"..."}]`.
+
+## Errors
+
+- `missing-actions` (top-level, exact key) — the set lacks an action the step needs; emit and stop, don't fabricate a partial chain.
+- Also: `actionNotFound`, `insufficientContext` (top-level); `ambiguousMapping`, `possibleTypo` (per action).
+
+Never invent action names (`list.append`/`push`/`insert` don't exist — use `list.add`). Preserve `%name%` literally everywhere, including `return`.
+
+- set # Step Compiler
+
+You are the PLang compiler. The planner gave you the **set of actions** a step uses (unordered). You order them, nest modifiers, fill parameter values from the step text, and emit one `formal` line plus the matching `actions[]`.
+
+Each picked action's parameter schema, **Notes**, **Examples**, and the **Type reference** are in the user message below — authoritative for that action's shape. Read them first. This prompt is the cross-cutting kernel.
+
+## Core rule: map the clauses — nothing more, nothing less
+
+Walk the step text clause by clause. Each clause that does work maps to exactly the action(s) it names.
+
+- **Emit only what a clause names.** If the text gives no value for an optional parameter, omit it. If no clause calls for a second action, don't add one — never invent a peer or modifier (no stray `variable.get`, `file.read`, `cache.wrap`) the text didn't ask for.
+- **Never return an empty `actions` list for a step that has a clause.** Every real step maps to at least one action: `set %x% = %y%` → one `variable.set`; `call X` → one `goal.call`. If the planner's set genuinely lacks a needed action, emit the `missing-actions` error — never return nothing.
+
+Most steps are one action per clause. "This looks too simple" is almost always right.
+
+## Write `formal` first
+
+A one-line render of the chain; `actions[]` then mirrors it exactly.
+
+`module.action(ParamName=value, ...)` — real schema param names. Quote strings; keep `%vars%` verbatim; numbers/bools unquoted; lists `[...]`; objects `{k:v}`.
+- Modifier follows its host with ` | ` : `host(...) | error.handle(Actions=[recovery(...)])`
+- Peer follows with ` , ` : `condition.if(...) , goal.call(...)`
+- Nested action values use `[...]` with the same syntax.
+
+`formal` and `actions[]` MUST match exactly — every `Param=value` in one appears in the other, no extras either way.
+
+## Modifiers vs peers
+
+Only THREE actions are modifiers — `error.handle`, `cache.wrap`, `timeout.after` — and they go in the host action's `modifiers[]`. Use one only when the step has a clause like `on error …`, `cache for …`, `timeout after …`. A `cache=` *parameter* on `llm.query` is NOT cache.wrap.
+
+Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `output.write`, `file.*`, `error.throw`, …) is a **peer** in the top-level `actions[]`, never in `modifiers[]`. `if X, call Y` and `foreach X, call Y` are two peers.
+
+## `write to %x%` and `%!data%`
+
+`…, write to %x%` → a trailing peer `variable.set(Name=%x%, Value=%!data%)` after the producer (never a modifier). `%!data%` is the immediately preceding action's return value — use it ONLY to thread one action's result into the next when the text says so. It is not a fill-in for an unsupplied slot.
+
+## Output shape
+
+```json
+{"formal":"...","actions":[...],"confidence":"VeryHigh|High|Medium|Low|VeryLow","explanation":"...","errors":[],"warnings":[]}
+```
+
+Each action: `{module, action, parameters:[{name, value, type}], modifiers?:[...]}`. `module` is a single identifier: `ui.render` → `{"module":"ui","action":"render"}`, never `{"module":"ui.render",...}`. Omit `explanation` at High/VeryHigh; otherwise one sentence on the uncertainty. Drop confidence to Low/VeryLow when the verb doesn't really match any action you were given.
+
+## Parameters & types
+
+- `name` is always the literal schema property name (`Name`, `Value`, `GoalName`, …). A `%var%` marker in a schema means "takes a variable reference" — it is never a parameter name and says nothing about the runtime type. Don't raise warnings over type or letter-case differences.
+- Type names come from the per-step Type reference (primitive names + kind table + catalog types) — don't invent. `text` not `string`; `number` carries `int/long/decimal/double` as its *kind*; lists are `list<T>`. A JSON object/array value uses `type:"json"` as a structured value.
+- Omit nullable params (`?`) when the text gives no value. NEVER emit `""` or copy a type descriptor (`actor?`, `eventtype`) into a value slot.
+
+## Intermediates & compound conditions
+
+- To branch on a producer's property, capture into a temp `__conditionReturn__` and reference `%__conditionReturn__.X%`.
+- `if A and B, call C` → two `condition.if` peers + the `goal.call`; add `warnings:[{"key":"expanded-condition","message":"..."}]`.
+
+## Errors
+
+- `missing-actions` (top-level, exact key) — the set lacks an action the step needs; emit and stop, don't fabricate a partial chain.
+- Also: `actionNotFound`, `insufficientContext` (top-level); `ambiguousMapping`, `possibleTypo` (per action).
+
+Never invent action names (`list.append`/`push`/`insert` don't exist — use `list.add`). Preserve `%name%` literally everywhere, including `return`.
+ = # Step Compiler
+
+You are the PLang compiler. The planner gave you the **set of actions** a step uses (unordered). You order them, nest modifiers, fill parameter values from the step text, and emit one `formal` line plus the matching `actions[]`.
+
+Each picked action's parameter schema, **Notes**, **Examples**, and the **Type reference** are in the user message below — authoritative for that action's shape. Read them first. This prompt is the cross-cutting kernel.
+
+## Core rule: map the clauses — nothing more, nothing less
+
+Walk the step text clause by clause. Each clause that does work maps to exactly the action(s) it names.
+
+- **Emit only what a clause names.** If the text gives no value for an optional parameter, omit it. If no clause calls for a second action, don't add one — never invent a peer or modifier (no stray `variable.get`, `file.read`, `cache.wrap`) the text didn't ask for.
+- **Never return an empty `actions` list for a step that has a clause.** Every real step maps to at least one action: `set %x% = %y%` → one `variable.set`; `call X` → one `goal.call`. If the planner's set genuinely lacks a needed action, emit the `missing-actions` error — never return nothing.
+
+Most steps are one action per clause. "This looks too simple" is almost always right.
+
+## Write `formal` first
+
+A one-line render of the chain; `actions[]` then mirrors it exactly.
+
+`module.action(ParamName=value, ...)` — real schema param names. Quote strings; keep `%vars%` verbatim; numbers/bools unquoted; lists `[...]`; objects `{k:v}`.
+- Modifier follows its host with ` | ` : `host(...) | error.handle(Actions=[recovery(...)])`
+- Peer follows with ` , ` : `condition.if(...) , goal.call(...)`
+- Nested action values use `[...]` with the same syntax.
+
+`formal` and `actions[]` MUST match exactly — every `Param=value` in one appears in the other, no extras either way.
+
+## Modifiers vs peers
+
+Only THREE actions are modifiers — `error.handle`, `cache.wrap`, `timeout.after` — and they go in the host action's `modifiers[]`. Use one only when the step has a clause like `on error …`, `cache for …`, `timeout after …`. A `cache=` *parameter* on `llm.query` is NOT cache.wrap.
+
+Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `output.write`, `file.*`, `error.throw`, …) is a **peer** in the top-level `actions[]`, never in `modifiers[]`. `if X, call Y` and `foreach X, call Y` are two peers.
+
+## `write to %x%` and `%!data%`
+
+`…, write to %x%` → a trailing peer `variable.set(Name=%x%, Value=%!data%)` after the producer (never a modifier). `%!data%` is the immediately preceding action's return value — use it ONLY to thread one action's result into the next when the text says so. It is not a fill-in for an unsupplied slot.
+
+## Output shape
+
+```json
+{"formal":"...","actions":[...],"confidence":"VeryHigh|High|Medium|Low|VeryLow","explanation":"...","errors":[],"warnings":[]}
+```
+
+Each action: `{module, action, parameters:[{name, value, type}], modifiers?:[...]}`. `module` is a single identifier: `ui.render` → `{"module":"ui","action":"render"}`, never `{"module":"ui.render",...}`. Omit `explanation` at High/VeryHigh; otherwise one sentence on the uncertainty. Drop confidence to Low/VeryLow when the verb doesn't really match any action you were given.
+
+## Parameters & types
+
+- `name` is always the literal schema property name (`Name`, `Value`, `GoalName`, …). A `%var%` marker in a schema means "takes a variable reference" — it is never a parameter name and says nothing about the runtime type. Don't raise warnings over type or letter-case differences.
+- Type names come from the per-step Type reference (primitive names + kind table + catalog types) — don't invent. `text` not `string`; `number` carries `int/long/decimal/double` as its *kind*; lists are `list<T>`. A JSON object/array value uses `type:"json"` as a structured value.
+- Omit nullable params (`?`) when the text gives no value. NEVER emit `""` or copy a type descriptor (`actor?`, `eventtype`) into a value slot.
+
+## Intermediates & compound conditions
+
+- To branch on a producer's property, capture into a temp `__conditionReturn__` and reference `%__conditionReturn__.X%`.
+- `if A and B, call C` → two `condition.if` peers + the `goal.call`; add `warnings:[{"key":"expanded-condition","message":"..."}]`.
+
+## Errors
+
+- `missing-actions` (top-level, exact key) — the set lacks an action the step needs; emit and stop, don't fabricate a partial chain.
+- Also: `actionNotFound`, `insufficientContext` (top-level); `ambiguousMapping`, `possibleTypo` (per action).
+
+Never invent action names (`list.append`/`push`/`insert` don't exist — use `list.add`). Preserve `%name%` literally everywhere, including `return`.
+
+- foreach System.Collections.Generic.List`1[System.Object], call BuildStep/Start planStep=System.Collections.Generic.Dictionary`2[System.String,System.Object], on error call HandleBuildFailure
+- set BuildGoal
+- call BuildGoal/Start goal=%goal% = Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal%
+- foreach System.Collections.Generic.List`1[app.goal.this], call BuildSubGoal subGoal=System.Collections.Generic.Dictionary`2[System.String,System.Object]
+- set Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal% = BuildGoal
+- call BuildGoal/Start goal=%goal%
+- math.subtract A=639159649340139196, B=639159648996493810, write to 28878940
+- math.divide A=28878940, B=10000, write to 2887.894
+- set 0 = 2887.894
+- save System.Collections.Generic.Dictionary`2[System.String,System.Object] to file '/.build/traces/%!trace.id%/Start.json'
+- add Start to System.Collections.Generic.List`1[System.Object]
+- builder.goalsSave Goal=Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal% = BuildGoal
+- call BuildGoal/Start goal=Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal%
+
+
+  [✓] math.subtract A=639159649366796856, B=639159648996493810, write to 28878940
+
+
+  [✓] math.divide A=28878940, B=10000, write to 2887.894
+
+
+  [✓] set 0 = 2887.894
+
+
+  [✓] save System.Collections.Generic.Dictionary`2[System.String,System.Object] to file '/.build/traces/%!trace.id%/Start.json'
+
+
+  [✓] add Start to System.Collections.Generic.List`1[System.Object]
+
+
+  [✓] builder.goalsSave Goal=Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal%
+- set 639159648996493810 = 639159649471496134
+- set System.Collections.Generic.Dictionary`2[System.String,System.Object] = {"id": "%!trace.id%", "timestamp": "06/02/2026 02:42:27 +00:00", "goal": Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set System.Collections.Generic.Dictionary`2[System.String,System.Object] = System.Collections.Generic.Dictionary`2[System.String,System.Object]
+- render template "/system/builder/llm/Compile.llm", write to # Step Compiler
+
+You are the PLang compiler. The planner gave you the **set of actions** a step uses (unordered). You order them, nest modifiers, fill parameter values from the step text, and emit one `formal` line plus the matching `actions[]`.
+
+Each picked action's parameter schema, **Notes**, **Examples**, and the **Type reference** are in the user message below — authoritative for that action's shape. Read them first. This prompt is the cross-cutting kernel.
+
+## Core rule: map the clauses — nothing more, nothing less
+
+Walk the step text clause by clause. Each clause that does work maps to exactly the action(s) it names.
+
+- **Emit only what a clause names.** If the text gives no value for an optional parameter, omit it. If no clause calls for a second action, don't add one — never invent a peer or modifier (no stray `variable.get`, `file.read`, `cache.wrap`) the text didn't ask for.
+- **Never return an empty `actions` list for a step that has a clause.** Every real step maps to at least one action: `set %x% = %y%` → one `variable.set`; `call X` → one `goal.call`. If the planner's set genuinely lacks a needed action, emit the `missing-actions` error — never return nothing.
+
+Most steps are one action per clause. "This looks too simple" is almost always right.
+
+## Write `formal` first
+
+A one-line render of the chain; `actions[]` then mirrors it exactly.
+
+`module.action(ParamName=value, ...)` — real schema param names. Quote strings; keep `%vars%` verbatim; numbers/bools unquoted; lists `[...]`; objects `{k:v}`.
+- Modifier follows its host with ` | ` : `host(...) | error.handle(Actions=[recovery(...)])`
+- Peer follows with ` , ` : `condition.if(...) , goal.call(...)`
+- Nested action values use `[...]` with the same syntax.
+
+`formal` and `actions[]` MUST match exactly — every `Param=value` in one appears in the other, no extras either way.
+
+## Modifiers vs peers
+
+Only THREE actions are modifiers — `error.handle`, `cache.wrap`, `timeout.after` — and they go in the host action's `modifiers[]`. Use one only when the step has a clause like `on error …`, `cache for …`, `timeout after …`. A `cache=` *parameter* on `llm.query` is NOT cache.wrap.
+
+Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `output.write`, `file.*`, `error.throw`, …) is a **peer** in the top-level `actions[]`, never in `modifiers[]`. `if X, call Y` and `foreach X, call Y` are two peers.
+
+## `write to %x%` and `%!data%`
+
+`…, write to %x%` → a trailing peer `variable.set(Name=%x%, Value=%!data%)` after the producer (never a modifier). `%!data%` is the immediately preceding action's return value — use it ONLY to thread one action's result into the next when the text says so. It is not a fill-in for an unsupplied slot.
+
+## Output shape
+
+```json
+{"formal":"...","actions":[...],"confidence":"VeryHigh|High|Medium|Low|VeryLow","explanation":"...","errors":[],"warnings":[]}
+```
+
+Each action: `{module, action, parameters:[{name, value, type}], modifiers?:[...]}`. `module` is a single identifier: `ui.render` → `{"module":"ui","action":"render"}`, never `{"module":"ui.render",...}`. Omit `explanation` at High/VeryHigh; otherwise one sentence on the uncertainty. Drop confidence to Low/VeryLow when the verb doesn't really match any action you were given.
+
+## Parameters & types
+
+- `name` is always the literal schema property name (`Name`, `Value`, `GoalName`, …). A `%var%` marker in a schema means "takes a variable reference" — it is never a parameter name and says nothing about the runtime type. Don't raise warnings over type or letter-case differences.
+- Type names come from the per-step Type reference (primitive names + kind table + catalog types) — don't invent. `text` not `string`; `number` carries `int/long/decimal/double` as its *kind*; lists are `list<T>`. A JSON object/array value uses `type:"json"` as a structured value.
+- Omit nullable params (`?`) when the text gives no value. NEVER emit `""` or copy a type descriptor (`actor?`, `eventtype`) into a value slot.
+
+## Intermediates & compound conditions
+
+- To branch on a producer's property, capture into a temp `__conditionReturn__` and reference `%__conditionReturn__.X%`.
+- `if A and B, call C` → two `condition.if` peers + the `goal.call`; add `warnings:[{"key":"expanded-condition","message":"..."}]`.
+
+## Errors
+
+- `missing-actions` (top-level, exact key) — the set lacks an action the step needs; emit and stop, don't fabricate a partial chain.
+- Also: `actionNotFound`, `insufficientContext` (top-level); `ambiguousMapping`, `possibleTypo` (per action).
+
+Never invent action names (`list.append`/`push`/`insert` don't exist — use `list.add`). Preserve `%name%` literally everywhere, including `return`.
+
+- set # Step Compiler
+
+You are the PLang compiler. The planner gave you the **set of actions** a step uses (unordered). You order them, nest modifiers, fill parameter values from the step text, and emit one `formal` line plus the matching `actions[]`.
+
+Each picked action's parameter schema, **Notes**, **Examples**, and the **Type reference** are in the user message below — authoritative for that action's shape. Read them first. This prompt is the cross-cutting kernel.
+
+## Core rule: map the clauses — nothing more, nothing less
+
+Walk the step text clause by clause. Each clause that does work maps to exactly the action(s) it names.
+
+- **Emit only what a clause names.** If the text gives no value for an optional parameter, omit it. If no clause calls for a second action, don't add one — never invent a peer or modifier (no stray `variable.get`, `file.read`, `cache.wrap`) the text didn't ask for.
+- **Never return an empty `actions` list for a step that has a clause.** Every real step maps to at least one action: `set %x% = %y%` → one `variable.set`; `call X` → one `goal.call`. If the planner's set genuinely lacks a needed action, emit the `missing-actions` error — never return nothing.
+
+Most steps are one action per clause. "This looks too simple" is almost always right.
+
+## Write `formal` first
+
+A one-line render of the chain; `actions[]` then mirrors it exactly.
+
+`module.action(ParamName=value, ...)` — real schema param names. Quote strings; keep `%vars%` verbatim; numbers/bools unquoted; lists `[...]`; objects `{k:v}`.
+- Modifier follows its host with ` | ` : `host(...) | error.handle(Actions=[recovery(...)])`
+- Peer follows with ` , ` : `condition.if(...) , goal.call(...)`
+- Nested action values use `[...]` with the same syntax.
+
+`formal` and `actions[]` MUST match exactly — every `Param=value` in one appears in the other, no extras either way.
+
+## Modifiers vs peers
+
+Only THREE actions are modifiers — `error.handle`, `cache.wrap`, `timeout.after` — and they go in the host action's `modifiers[]`. Use one only when the step has a clause like `on error …`, `cache for …`, `timeout after …`. A `cache=` *parameter* on `llm.query` is NOT cache.wrap.
+
+Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `output.write`, `file.*`, `error.throw`, …) is a **peer** in the top-level `actions[]`, never in `modifiers[]`. `if X, call Y` and `foreach X, call Y` are two peers.
+
+## `write to %x%` and `%!data%`
+
+`…, write to %x%` → a trailing peer `variable.set(Name=%x%, Value=%!data%)` after the producer (never a modifier). `%!data%` is the immediately preceding action's return value — use it ONLY to thread one action's result into the next when the text says so. It is not a fill-in for an unsupplied slot.
+
+## Output shape
+
+```json
+{"formal":"...","actions":[...],"confidence":"VeryHigh|High|Medium|Low|VeryLow","explanation":"...","errors":[],"warnings":[]}
+```
+
+Each action: `{module, action, parameters:[{name, value, type}], modifiers?:[...]}`. `module` is a single identifier: `ui.render` → `{"module":"ui","action":"render"}`, never `{"module":"ui.render",...}`. Omit `explanation` at High/VeryHigh; otherwise one sentence on the uncertainty. Drop confidence to Low/VeryLow when the verb doesn't really match any action you were given.
+
+## Parameters & types
+
+- `name` is always the literal schema property name (`Name`, `Value`, `GoalName`, …). A `%var%` marker in a schema means "takes a variable reference" — it is never a parameter name and says nothing about the runtime type. Don't raise warnings over type or letter-case differences.
+- Type names come from the per-step Type reference (primitive names + kind table + catalog types) — don't invent. `text` not `string`; `number` carries `int/long/decimal/double` as its *kind*; lists are `list<T>`. A JSON object/array value uses `type:"json"` as a structured value.
+- Omit nullable params (`?`) when the text gives no value. NEVER emit `""` or copy a type descriptor (`actor?`, `eventtype`) into a value slot.
+
+## Intermediates & compound conditions
+
+- To branch on a producer's property, capture into a temp `__conditionReturn__` and reference `%__conditionReturn__.X%`.
+- `if A and B, call C` → two `condition.if` peers + the `goal.call`; add `warnings:[{"key":"expanded-condition","message":"..."}]`.
+
+## Errors
+
+- `missing-actions` (top-level, exact key) — the set lacks an action the step needs; emit and stop, don't fabricate a partial chain.
+- Also: `actionNotFound`, `insufficientContext` (top-level); `ambiguousMapping`, `possibleTypo` (per action).
+
+Never invent action names (`list.append`/`push`/`insert` don't exist — use `list.add`). Preserve `%name%` literally everywhere, including `return`.
+ = # Step Compiler
+
+You are the PLang compiler. The planner gave you the **set of actions** a step uses (unordered). You order them, nest modifiers, fill parameter values from the step text, and emit one `formal` line plus the matching `actions[]`.
+
+Each picked action's parameter schema, **Notes**, **Examples**, and the **Type reference** are in the user message below — authoritative for that action's shape. Read them first. This prompt is the cross-cutting kernel.
+
+## Core rule: map the clauses — nothing more, nothing less
+
+Walk the step text clause by clause. Each clause that does work maps to exactly the action(s) it names.
+
+- **Emit only what a clause names.** If the text gives no value for an optional parameter, omit it. If no clause calls for a second action, don't add one — never invent a peer or modifier (no stray `variable.get`, `file.read`, `cache.wrap`) the text didn't ask for.
+- **Never return an empty `actions` list for a step that has a clause.** Every real step maps to at least one action: `set %x% = %y%` → one `variable.set`; `call X` → one `goal.call`. If the planner's set genuinely lacks a needed action, emit the `missing-actions` error — never return nothing.
+
+Most steps are one action per clause. "This looks too simple" is almost always right.
+
+## Write `formal` first
+
+A one-line render of the chain; `actions[]` then mirrors it exactly.
+
+`module.action(ParamName=value, ...)` — real schema param names. Quote strings; keep `%vars%` verbatim; numbers/bools unquoted; lists `[...]`; objects `{k:v}`.
+- Modifier follows its host with ` | ` : `host(...) | error.handle(Actions=[recovery(...)])`
+- Peer follows with ` , ` : `condition.if(...) , goal.call(...)`
+- Nested action values use `[...]` with the same syntax.
+
+`formal` and `actions[]` MUST match exactly — every `Param=value` in one appears in the other, no extras either way.
+
+## Modifiers vs peers
+
+Only THREE actions are modifiers — `error.handle`, `cache.wrap`, `timeout.after` — and they go in the host action's `modifiers[]`. Use one only when the step has a clause like `on error …`, `cache for …`, `timeout after …`. A `cache=` *parameter* on `llm.query` is NOT cache.wrap.
+
+Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `output.write`, `file.*`, `error.throw`, …) is a **peer** in the top-level `actions[]`, never in `modifiers[]`. `if X, call Y` and `foreach X, call Y` are two peers.
+
+## `write to %x%` and `%!data%`
+
+`…, write to %x%` → a trailing peer `variable.set(Name=%x%, Value=%!data%)` after the producer (never a modifier). `%!data%` is the immediately preceding action's return value — use it ONLY to thread one action's result into the next when the text says so. It is not a fill-in for an unsupplied slot.
+
+## Output shape
+
+```json
+{"formal":"...","actions":[...],"confidence":"VeryHigh|High|Medium|Low|VeryLow","explanation":"...","errors":[],"warnings":[]}
+```
+
+Each action: `{module, action, parameters:[{name, value, type}], modifiers?:[...]}`. `module` is a single identifier: `ui.render` → `{"module":"ui","action":"render"}`, never `{"module":"ui.render",...}`. Omit `explanation` at High/VeryHigh; otherwise one sentence on the uncertainty. Drop confidence to Low/VeryLow when the verb doesn't really match any action you were given.
+
+## Parameters & types
+
+- `name` is always the literal schema property name (`Name`, `Value`, `GoalName`, …). A `%var%` marker in a schema means "takes a variable reference" — it is never a parameter name and says nothing about the runtime type. Don't raise warnings over type or letter-case differences.
+- Type names come from the per-step Type reference (primitive names + kind table + catalog types) — don't invent. `text` not `string`; `number` carries `int/long/decimal/double` as its *kind*; lists are `list<T>`. A JSON object/array value uses `type:"json"` as a structured value.
+- Omit nullable params (`?`) when the text gives no value. NEVER emit `""` or copy a type descriptor (`actor?`, `eventtype`) into a value slot.
+
+## Intermediates & compound conditions
+
+- To branch on a producer's property, capture into a temp `__conditionReturn__` and reference `%__conditionReturn__.X%`.
+- `if A and B, call C` → two `condition.if` peers + the `goal.call`; add `warnings:[{"key":"expanded-condition","message":"..."}]`.
+
+## Errors
+
+- `missing-actions` (top-level, exact key) — the set lacks an action the step needs; emit and stop, don't fabricate a partial chain.
+- Also: `actionNotFound`, `insufficientContext` (top-level); `ambiguousMapping`, `possibleTypo` (per action).
+
+Never invent action names (`list.append`/`push`/`insert` don't exist — use `list.add`). Preserve `%name%` literally everywhere, including `return`.
+
+- foreach System.Collections.Generic.List`1[System.Object], call BuildStep/Start planStep=System.Collections.Generic.Dictionary`2[System.String,System.Object], on error call HandleBuildFailure
+- set BuildGoal
+- call BuildGoal/Start goal=%goal% = Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal%
+- foreach System.Collections.Generic.List`1[app.goal.this], call BuildSubGoal subGoal=System.Collections.Generic.Dictionary`2[System.String,System.Object]
+- set Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal% = BuildGoal
+- call BuildGoal/Start goal=%goal%
+- math.subtract A=639159649471498229, B=639159648996493810, write to 28878940
+- math.divide A=28878940, B=10000, write to 2887.894
+- set 0 = 2887.894
+- save System.Collections.Generic.Dictionary`2[System.String,System.Object] to file '/.build/traces/%!trace.id%/Start.json'
+- add Start to System.Collections.Generic.List`1[System.Object]
+- builder.goalsSave Goal=Start
+- call /system/builder/EmitBuildEvent kind="goalHeader", goal=%goal%
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal%
+
+
+  Building sub-goal: BuildSubGoal
+
+
+  [✓] set BuildSubGoal
+- set BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs% = BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%
+- set 639159649471565857 = 639159649521555434
+- call Plan, on error call HandleBuildFailure
+- foreach System.Collections.Generic.List`1[System.Object], call BuildStep/Start planStep=System.Collections.Generic.Dictionary`2[System.String,System.Object], on error call HandleBuildFailure
+- add {goal: BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%, plan: System.Collections.Generic.Dictionary`2[System.String,System.Object]} to System.Collections.Generic.List`1[System.Object]
+- math.subtract A=639159649521555813, B=639159649471565857, write to 28878940
+- math.divide A=28878940, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%, subgoalMs=%subgoalMs% = BuildSubGoal
+- set BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs% = BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%
+- set 639159649471565857 = 639159649521556369
+- call Plan, on error call HandleBuildFailure
+- foreach System.Collections.Generic.List`1[System.Object], call BuildStep/Start planStep=System.Collections.Generic.Dictionary`2[System.String,System.Object], on error call HandleBuildFailure
+- add {goal: BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%, plan: System.Collections.Generic.Dictionary`2[System.String,System.Object]} to System.Collections.Generic.List`1[System.Object]
+- math.subtract A=639159649521556565, B=639159649471565857, write to 28878940
+- math.divide A=28878940, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%, subgoalMs=%subgoalMs%
+
+
+  [✓] call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=BuildSubGoal
+- set BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs% = BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%
+- set 639159649471565857 = 639159649547838830
+- call Plan, on error call HandleBuildFailure
+- foreach System.Collections.Generic.List`1[System.Object], call BuildStep/Start planStep=System.Collections.Generic.Dictionary`2[System.String,System.Object], on error call HandleBuildFailure
+- add {goal: BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%, plan: System.Collections.Generic.Dictionary`2[System.String,System.Object]} to System.Collections.Generic.List`1[System.Object]
+- math.subtract A=639159649547839473, B=639159649471565857, write to 28878940
+- math.divide A=28878940, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%, subgoalMs=%subgoalMs%
+
+
+  [✓] set 639159649471565857 = 639159649564436349
+
+
+  [✓] call Plan, on error call HandleBuildFailure
+
+
+  [✓] foreach System.Collections.Generic.List`1[System.Object], call BuildStep/Start planStep=System.Collections.Generic.Dictionary`2[System.String,System.Object], on error call HandleBuildFailure
+
+
+      ⚠ compiler Low: The mapping is straightforward for foreach and the call parameter planStep=System.Collections.Generic.Dictionary`2[System.String,System.Object], but the provided action schema for error.handle is a modifier that must wrap the preceding host action; the planner’s action set includes error.handle, yet the host action to wrap is ambiguous from the unordered set alone.
+
+  [✓] add {goal: BuildSubGoal
+- set BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs% = BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%
+- set 639159649471565857 = 639159649641232874
+- call Plan, on error call HandleBuildFailure
+- foreach System.Collections.Generic.List`1[System.Object], call BuildStep/Start planStep=System.Collections.Generic.Dictionary`2[System.String,System.Object], on error call HandleBuildFailure
+- add {goal: BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%, plan: System.Collections.Generic.Dictionary`2[System.String,System.Object]} to System.Collections.Generic.List`1[System.Object]
+- math.subtract A=639159649641233292, B=639159649471565857, write to 28878940
+- math.divide A=28878940, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%, subgoalMs=%subgoalMs%, plan: System.Collections.Generic.Dictionary`2[System.String,System.Object]} to System.Collections.Generic.List`1[System.Object]
+
+
+  [✓] math.subtract A=639159649661824571, B=639159649471565857, write to 28878940
+
+
+  [✓] math.divide A=28878940, B=10000, write to %subgoalMs%
+
+
+  [✓] call /system/builder/EmitBuildEvent kind="subGoalDone", goal=BuildSubGoal
+- set BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs% = BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%
+- set 639159649471565857 = 639159649713561205
+- call Plan, on error call HandleBuildFailure
+- foreach System.Collections.Generic.List`1[System.Object], call BuildStep/Start planStep=System.Collections.Generic.Dictionary`2[System.String,System.Object], on error call HandleBuildFailure
+- add {goal: BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%, plan: System.Collections.Generic.Dictionary`2[System.String,System.Object]} to System.Collections.Generic.List`1[System.Object]
+- math.subtract A=639159649713562000, B=639159649471565857, write to 28878940
+- math.divide A=28878940, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=BuildSubGoal
+- set %goal% = %subGoal%
+- call /system/builder/EmitBuildEvent kind="subGoalHeader", goal=%goal%
+- set %subgoalStart% = %Now.Ticks%
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
+- math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%
+- call /system/builder/EmitBuildEvent kind="subGoalDone", goal=%goal%, subgoalMs=%subgoalMs%, subgoalMs=%subgoalMs%, subgoalMs=%subgoalMs%
+
+
+  Sub-goal BuildSubGoal done (24210.8711ms)
+
+
+  Building sub-goal: HandleBuildFailure
+
+
+  [✓] call /system/builder/EmitBuildEvent kind="goalError", goal=HandleBuildFailure
+- call /system/builder/EmitBuildEvent kind="goalError", goal=HandleBuildFailure
+- call /system/builder/EmitBuildEvent kind="goalError", goal=%goal%, errorMessage=%!error.Message%
+- set %trace.buildError% = {"key": "%!error.Key%", "message": "%!error.Message%", "goal": "%goal.Name%"}, type=json
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- throw %!error%, errorMessage=%!error.Message%
+- set %trace.buildError% = {"key": "%!error.Key%", "message": "%!error.Message%", "goal": "HandleBuildFailure"}, type=json
+- save System.Collections.Generic.Dictionary`2[System.String,System.Object] to file '/.build/traces/%!trace.id%/HandleBuildFailure.json'
+- throw %!error%, errorMessage=%!error.Message%
+
+
+  [✓] set %trace.buildError% = {"key": "%!error.Key%", "message": "%!error.Message%", "goal": "HandleBuildFailure"}, type=json
+
+
+  [✓] save System.Collections.Generic.Dictionary`2[System.String,System.Object] to file '/.build/traces/%!trace.id%/HandleBuildFailure.json'
+
+
+  [✓] throw %!error%
+
+
+  Sub-goal HandleBuildFailure done (9942.4548ms)
+
+
+  Saved Start (81.7s)
+🔴   ================== ActionNotFound(404) ==================   🔴
+🧩 Key:  ActionNotFound
+#️⃣  StatusCode:  404
+🕑 Time: 06/02/2026 02:43:01
 
 🔍   ================== Error Details ==================   🔍
 
 🧐 Reason: 
-    - Step[0]: no actions. Every step must have at least one action with module and action.
-- Step[1]: no actions. Every step must have at least one action with module and action.
-- Step[2]: no actions. Every step must have at least one action with module and action.
-- Step[3]: no actions. Every step must have at least one action with module and action.
-- Step[4]: no actions. Every step must have at least one action with module and action.
-- Step[5]: no actions. Every step must have at least one action with module and action.
-- Step[6]: no actions. Every step must have at least one action with module and action.
+    Action 'validator.enforceIdentifierGoalName' not found
 
 🛝  Call stack:
-    Start - /system/builder/BuildGoal/Start.goal:28
-    Start - /system/builder/BuildGoal/Start.goal:4
     BuildGoal - /system/builder/BuildGoal.goal:4
     BuildGoal - /system/builder/BuildGoal.goal:4
     Build - /system/builder/Build.goal:15
@@ -69,12 +2118,9 @@ Building goal: Build
     Build - /system/builder/Build.goal:6
 
 📥 Parameters at dispatch:
-    Goal (app.data.@this<app.goal.@this>)
-        .pr value:  "%goal%" [goal]
-        final:      Build
-- set default %path% = "/"
-- set default %!build.cache% = true
-- set default %!build.summary% = true
-- set %traceGoals% = [], type=json
-- set channel "builder" call BuilderChannel
-- call EmitBui... (506 chars)
+    GoalName (app.data.@this<app.goal.GoalCall>)
+        .pr value:  {"name":"BuildGoal/Start","parallel":false,"parameters":[{"name":"goal","value":"%goal%","type":{"name":"text"}}],"prPath":"/system/builder/BuildGoal/.build/start.pr"} [goal.call]
+        final:      app.goal.GoalCall
+    Actor (app.data.@this<app.actor.@this>)
+        .pr value:  (null)
+        final:      (null)

@@ -55,6 +55,39 @@ public sealed class json : JsonConverter<@this?>
             return string.IsNullOrWhiteSpace(name) ? null : @this.Create(name!, kind, strict);
         }
 
+        // HACK (minimal, "just get the build working"): the build LLM occasionally
+        // emits a parameter `type` as a JSON ARRAY (e.g. a list-typed param rendered as
+        // ["text"] / [{"name":"text"}] / ["list","text"]) instead of the required string
+        // or {name,kind,strict} object. That is an LLM/prompt bug — `type` must never be
+        // an array. Throwing here turns one occasional bad field into a whole-build crash
+        // (DeserializationFailed at BuildStep/Start Compile). Tolerate it instead: take the
+        // first string/object element as the type, ignore the rest, fall back to null
+        // (runtime infers). TODO(coder): fix at the prompt/schema layer (CompileUser.llm
+        // "Type reference" — forbid array `type`, teach list types as a single name like
+        // "list<text>") and then DELETE this branch. See
+        // .bot/type-kind-strict/builder/v2/baseline-findings.md.
+        if (reader.TokenType == JsonTokenType.StartArray)
+        {
+            @this? fromArray = null;
+            while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+            {
+                if (fromArray == null && reader.TokenType == JsonTokenType.String)
+                {
+                    var s = reader.GetString();
+                    if (!string.IsNullOrEmpty(s)) fromArray = @this.Create(s);
+                }
+                else if (fromArray == null && reader.TokenType == JsonTokenType.StartObject)
+                {
+                    fromArray = Read(ref reader, typeToConvert, options);
+                }
+                else
+                {
+                    reader.Skip();
+                }
+            }
+            return fromArray;
+        }
+
         throw new JsonException($"Expected string or object for app.type.@this, got {reader.TokenType}");
     }
 

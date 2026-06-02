@@ -112,6 +112,31 @@ Harness updated: clears llmcache before EACH trial (cache:false isn't enough). T
 in selfbuild.sh was already correct (`git -C $REPO`); only my one-off manual command had the
 cwd bug.
 
+## TRUE failure map (clean cache + slim prompts + type-array fix, N=5)
+Every trial now reaches 101–104/104 steps (was: cache-replay empties). 0/5 full pass, but
+the failures are finally REAL and distinct (no longer cache artifacts):
+1. **`llm.query` NullReferenceException at `BuildGoal/Plan.goal:26`** — the PLANNER call
+   itself NREs (3/5), on the validation-retry path. RUNTIME bug, not cache/prompt/my-fix
+   (trial 5 hit it at 104/104 correct). **Biggest remaining blocker.** Ingi OK'd runtime
+   changes — next to investigate.
+2. **`call …/EmitBuildEvent` → `event.on` + a HALLUCINATED action**
+   (`validator.enforceIdentifierGoalName`, `validation.ensureIdentifier`) — 2/5. The old
+   call→event.on mis-map, now also inventing non-existent `validator.*` actions → "Action
+   not found". Prompt-layer (Plan/Compile + goal/call + event/on notes).
+3. planner step-count mismatch, retry exhausted — 1/5.
+4. occasional empty `[]` actions (QueryAndValidatePlan[0], BuildSubGoal[4]) — a couple steps.
+5. minor over-emits: `Compile[1]` +variable.set (the builder.actions self-capture, 2/5),
+   RefineActions[2] +cache.wrap (1/5).
+
+The type-array DeserializationFailed is GONE from the failure list (the C# tolerance hack in
+PLang/app/type/this.json.cs works — converts the crash into first-element/null).
+
+**Bottom line:** the cache fix + slim + array-tolerance removed the dominant crashes; what
+remains is genuine long-tail per-step flakiness (~97–100%/step, but ×104 steps → most full
+builds trip on 1–3 bad steps) plus a real `llm.query` planner NRE. Stable full self-build
+needs: (a) fix the planner llm.query NRE, (b) raise per-step mapping reliability
+(call→event.on + hallucinated-action guard).
+
 ## Status of prompt-slimming (levers 1+3) — DONE, kept, non-regressing
 - Compile.llm 16 KB → 3.5 KB (formal-centric, dedup, missingVariable removed, "map clauses —
   nothing more/less"). Fixed all 3 phantom-extra divergences; build completes when nano
