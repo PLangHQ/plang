@@ -47,10 +47,11 @@ public class Error : IError
 
     /// <summary>
     /// PLang surface <c>%!error.callback%</c> resolves through here. First read invokes
-    /// <c>app.Snapshot()</c> (which captures Variables.SnapshotAt(this) for the throw-time
-    /// view) and wraps the snapshot directly — <c>Data&lt;Snapshot&gt;</c>. Resume goes
-    /// through <see cref="app.snapshot.@this.Resume"/>, same path as ask-resume.
-    /// Cached per Error instance — reading twice returns the same Data reference.
+    /// <c>app.Snapshot(this)</c> — the THROW-TIME snapshot: CallStack from this error's
+    /// <see cref="CallFrames"/> (the live stack has unwound past the failing action by
+    /// handler time) and variables via <c>SnapshotAt(this)</c>. Wrapped directly as
+    /// <c>Data&lt;Snapshot&gt;</c>; resume goes through <see cref="app.snapshot.@this.Resume"/>,
+    /// same path as ask-resume. Cached per Error instance — reading twice returns the same Data.
     /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public global::app.data.@this<global::app.snapshot.@this> Callback
@@ -61,7 +62,7 @@ public class Error : IError
             if (App == null)
                 throw new InvalidOperationException(
                     "Error.Callback requires App reference; ensure the error went through Errors.Push.");
-            var snap = App.Snapshot();
+            var snap = App.Snapshot(this);
             _callback = global::app.data.@this<global::app.snapshot.@this>.Ok(snap);
             _callback.Context = App.User.Context;
             _callback.Snapshot = snap;
