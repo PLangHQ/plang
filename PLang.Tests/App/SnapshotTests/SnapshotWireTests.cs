@@ -312,6 +312,80 @@ public class SnapshotWireTests
     }
 
     [Test]
+    public async Task ThrowTimeSnapshot_EditSurvivesResume()
+    {
+        // The ONE difference from the passing edit-resume tests: the snapshot comes
+        // from app.Snapshot(error) (throw-time: SnapshotAt + error.CallFrames), the
+        // path Error.Callback uses in the .test.goal — not app.Snapshot() (live).
+        var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-tt-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var context = app.User.Context;
+
+        var goal = new Goal { Name = "G", Path = "/G.goal", PrPath = "/G.pr" };
+        var step0 = SetStep(0, "x", "1");          step0.Goal = goal;
+        var step1 = SetStepRef(1, "seen", "%x%");  step1.Goal = goal;
+        goal.Steps.Add(step0); goal.Steps.Add(step1);
+        app.Goal.Add(goal);
+
+        context.Variable.Set("x", 1L);
+        string json;
+        await using (var call = context.App.CallStack.Push(goal.Steps[1].Actions[0], context.Variable))
+        {
+            var err = new ServiceError("boom", goal.Steps[1],
+                context.App.CallStack.Current!.SnapshotChain());
+            json = app.SnapshotToWire(app.Snapshot(err));   // throw-time overload
+        }
+
+        var te = new global::app.type.@this("snapshot") { Context = context };
+        var snap = te.Convert(json, context).Value as global::app.snapshot.@this;
+        await Assert.That(snap).IsNotNull();
+
+        context.Variable.Set("snap", snap);
+        context.Variable.Set("snap.variables.x", 2L);
+        await Assert.That(System.Convert.ToInt64(context.Variable.Get("snap.variables.x").Value)).IsEqualTo(2L);
+
+        var result = await snap!.Resume(context);
+        await result.IsSuccess();
+        await Assert.That(System.Convert.ToInt64(context.Variable.GetValue("seen"))).IsEqualTo(2L);
+    }
+
+    [Test]
+    public async Task TypedSnapshotString_NavigateEditResume_PersistsEdit()
+    {
+        // The `as snapshot` contract: %snap% is a Data with a string Value (wire bytes
+        // off disk) but Type=snapshot. Navigating %snap.variables.x% must materialize
+        // and cache the snapshot so an edit persists into resume — proving the runtime
+        // honours a typed-string snapshot end-to-end (the cast must reach this Data;
+        // see RawStringInSnap counterpart: an untyped string loses the edit).
+        var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-typed-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var context = app.User.Context;
+
+        var goal = new Goal { Name = "G", Path = "/G.goal", PrPath = "/G.pr" };
+        var step0 = SetStep(0, "x", "1");          step0.Goal = goal;
+        var step1 = SetStepRef(1, "seen", "%x%");  step1.Goal = goal;
+        goal.Steps.Add(step0); goal.Steps.Add(step1);
+        app.Goal.Add(goal);
+
+        context.Variable.Set("x", 1L);
+        string json;
+        await using (var call = context.App.CallStack.Push(goal.Steps[1].Actions[0], context.Variable))
+            json = app.SnapshotToWire(app.Snapshot());
+
+        // %snap% = string value, but TYPED as snapshot (what an honored `as snapshot` yields).
+        context.Variable.Set(new global::app.data.@this(
+            "snap", json, new global::app.type.@this("snapshot")) { Context = context });
+
+        context.Variable.Set("snap.variables.x", 2L);
+
+        var snap = context.Variable.Get("snap").As<global::app.snapshot.@this>(context).Value;
+        var result = await snap!.Resume(context);
+        await result.IsSuccess();
+        long seen = System.Convert.ToInt64(context.Variable.GetValue("seen"));
+        await Assert.That(seen).IsEqualTo(2L);  // edit persists IFF navigation materializes+caches
+    }
+
+    [Test]
     public async Task NavigateAndEditCapturedVariable_ThenResumeToSuccess()
     {
         // The PLang fix-and-replay loop, in C#: read a snapshot back, navigate
