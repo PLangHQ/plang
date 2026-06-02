@@ -59,3 +59,36 @@ catalog/planner should not pick `output.write` for `write %x% to '<path-with-ext
 Once the builder planner is healthy, building + running this `.test.goal` should
 go green and demonstrate the loop at the PLang level. (And under the App-as-snapshot
 reframe, it becomes `%!app%` / `%app.Variables.x%` / `run %app%`.)
+
+---
+
+## Update — file round-trip fixed; remaining failure is a RESUME bug (not serialization)
+
+Two real serialization bugs found + fixed (commit on `type-kind-strict`):
+1. **Content-aware serialize fallback** (`channel/serializer/list`): an unmatched
+   extension (`.snapshot`) was falling back to `application/json` (plain STJ),
+   which reflects `snapshot.@this`'s `Entries`/`Sections` → wrong shape (and on a
+   minimal snapshot wrote 897 bytes of garbage; on a CallStack-bearing snapshot
+   STJ threw → caught → demoted to the error chain → looked like "0 bytes,
+   swallowed"). Now structured Data routes to the Wire serializer.
+2. **Object navigator double-wrap** (Rule #7): `%!error.callback%` returns a
+   `Data<snapshot>`; the reflection navigator wrapped it in another `Data` →
+   `Data-in-Data` → serialized as a **double envelope** the reader couldn't peel.
+   Fixed: navigation relays an already-`Data` value instead of repackaging it.
+
+`crash.snapshot` now round-trips as a proper single-envelope wire, and the edit
+(`set %snap.variables.x% = 2`) is confirmed to persist in `%snap%`.
+
+**The test still fails — and it's a resume-machinery bug, precisely located:**
+the captured CallStack chain is `Start@(step0, "enter")` → `Start@(step2, call)` →
+`Check@(assert)`. `ResumeChain`'s unwind, on the outermost **goal-`enter`** frame
+(`actionIndex = -1`), runs `Goal.RunFrom(Start, 0, -1+1=0)` → **re-runs Start from
+step 0**, which executes `set %x% = 1` and clobbers the restored `x=2` → Check
+re-fails (`resumed-x.txt` is never written, proving the resumed assert saw x=1).
+
+So resume restarts the entry goal instead of just unwinding into it. The
+goal-`enter` frame should not trigger a re-run from step 0. This is in
+`app/snapshot/this.Resume.cs` (`ResumeChain`) / the CallStack capture — the
+resume mechanism, exercised here for the first time by an error→edit→resume flow
+(the existing ask-resume / InProcessResume tests don't hit it). Fix that and the
+`.test.goal` goes green (the serialize + edit + navigate pieces are all proven).
