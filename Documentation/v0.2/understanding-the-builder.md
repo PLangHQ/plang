@@ -142,14 +142,57 @@ the goal text and per-step action details.
 7. `EmitSummary` — emits the per-step `[✓] fresh` / `[≡] cached` line and any
    planner/compiler **Low/VeryLow** confidence warnings.
 
-### Per-action prose lives in markdown, not C# attributes
+### The markdown teaching layer (`os/system/modules/*`) — your main quality lever
 
-The shape of an action (parameters, types, modifier role) is read from C#
-attributes on the handler. Its **prose** — Description, Notes, Examples — lives
-in `os/system/modules/<module>/{module,<action>}.{description,notes,examples}.md`.
-The compiler's user message carries the Notes/Examples **only for the actions the
-planner picked**. This is the main lever for fixing mapping quality: clarify the
-description/examples, and the LLM stops guessing wrong.
+An action has two halves. Its **shape** (parameters, types, modifier role,
+defaults) is read from C# attributes on the handler. Its **prose** — what it
+means, when to use it, how its chain looks — lives in markdown under
+`os/system/modules/<module>/`. The prose is what you edit to fix mapping
+mistakes; **this is the primary lever for builder quality** (the `event.on`
+mis-selection we chase elsewhere is fixed by editing `event/on.description.md`,
+not C#).
+
+**File layout** — one folder per module, with two kinds of stems:
+
+```
+os/system/modules/<module>/
+├── module.description.md      ← module-wide teaching (the reserved "module" stem)
+├── module.notes.md            ← "module" can never be an action name
+├── module.examples.md
+├── <action>.description.md    ← per-action: what this action is
+├── <action>.notes.md          ← per-action: action-specific rules
+└── <action>.examples.md       ← per-action: canonical chain shapes
+```
+
+(e.g. `goal/` has `call.description.md`, `call.notes.md`, `module.description.md`;
+`event/` has `on.description.md`, `on.examples.md`, `module.description.md`.)
+
+**What each stem teaches, and when it reaches the LLM:**
+
+| Stem | Purpose | Where it shows up |
+|---|---|---|
+| `*.description.md` | One-line "what this action/module is" | The **catalog** — feeds the planner's `%actionSummary%` and the compiler |
+| `*.notes.md` | Action-specific rules (when to emit `channel`, how `error.handle` nests, …) | The **compiler's user message** — **only for the actions the planner picked** |
+| `*.examples.md` | Canonical chain shapes the compiler copies | Same — per-step, only for picked actions |
+
+The `module.*` stem is the **module-wide** teaching layer (applies to all of that
+module's actions). The renderer concatenates module-first, a blank line, then the
+action's own prose. Per-action Notes/Examples are pulled in **lazily** — they only
+cost prompt tokens for the actions actually under consideration on a given step,
+which keeps the compile call small.
+
+**Loader & guard rails** (`PLang/app/module/MarkdownTeaching.cs`):
+- The loader reads the stems above and never throws — a missing file just means
+  "no prose for that slot."
+- A `.md` whose stem matches no real action is an **orphan**; `ScanOrphans`
+  surfaces these as warnings so typos (`reed.description.md`) don't silently do
+  nothing.
+
+**One discipline:** don't enumerate a closed set's members in the prose (enum
+values, valid-value lists). The catalog already injects those live from the
+source of truth into the Type Information block, so a hand-copied list just goes
+stale. Prose names the *type* and teaches shape/behavior; the members come from
+the type system. (Full guide: [`action-catalog.md`](action-catalog.md).)
 
 ---
 
