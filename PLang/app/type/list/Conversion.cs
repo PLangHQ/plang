@@ -174,6 +174,23 @@ public sealed partial class @this
             return (node, null);
         }
 
+        // A target type that owns its wire reconstruction — a static
+        // `object? FromWire(string, string?)` — rebuilds from the raw string
+        // itself (the snapshot / crypto.hash seam). Checked before the generic
+        // JSON deserialize below, which would produce a broken object for types
+        // whose state isn't plain public properties (snapshot's private section
+        // tree). Kind is null here — FromWire types needing a kind carry it on
+        // the type entity, not on this conversion path.
+        if (value is string wireStr)
+        {
+            var reader = global::app.type.@this.WireReader(targetType);
+            if (reader != null)
+            {
+                var built = reader.Invoke(null, new object?[] { wireStr, null });
+                if (built != null) return (built, null);
+            }
+        }
+
         // String → complex type: try JSON deserialization before list handling
         // (e.g., file.read of .pr returns JSON string → Goal)
         if (value is string jsonStr && !targetType.IsPrimitive && targetType != typeof(string))

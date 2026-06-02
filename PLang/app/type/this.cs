@@ -279,7 +279,7 @@ public sealed class @this
 
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Reflection.MethodInfo?> _wireReaders = new();
 
-    private static System.Reflection.MethodInfo? WireReader(System.Type clrType)
+    internal static System.Reflection.MethodInfo? WireReader(System.Type clrType)
         => _wireReaders.GetOrAdd(clrType, static t =>
         {
             var m = t.GetMethod("FromWire",

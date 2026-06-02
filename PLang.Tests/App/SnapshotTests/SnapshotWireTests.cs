@@ -142,6 +142,109 @@ public class SnapshotWireTests
     }
 
     [Test]
+    public async Task SerializedString_ConvertsToSnapshotViaTypeSystem_AndResumesToSuccess()
+    {
+        // Proves the consumer-typed deserialize: the wire string converts to a
+        // snapshot.@this through the type system (snapshot.FromWire) — exactly what
+        // the `resume` verb's Data<snapshot> param triggers at the action boundary —
+        // then Resume re-enters the suspended step and succeeds.
+        var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-conv-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var context = app.User.Context;
+
+        var goal = new Goal { Name = "G", Path = "/G.goal", PrPath = "/G.pr" };
+        var step0 = SetStep(0, "s0", "first"); step0.Goal = goal;
+        var step1 = SetStep(1, "s1", "second"); step1.Goal = goal;
+        goal.Steps.Add(step0); goal.Steps.Add(step1);
+        app.Goal.Add(goal);
+
+        string json;
+        await using (var call = context.App.CallStack.Push(step1.Actions[0], context.Variable))
+        {
+            json = app.SnapshotToWire(app.Snapshot());
+            await call.DisposeAsync();
+        }
+
+        // The string → snapshot conversion the runtime performs for a Data<snapshot> slot.
+        var converted = context.App.Type.Convert(json, typeof(global::app.snapshot.@this), context).Value
+            as global::app.snapshot.@this;
+        await Assert.That(converted).IsNotNull();
+
+        var result = await converted!.Resume(context);
+        await result.IsSuccess();
+        await Assert.That(context.Variable.GetValue("s1")).IsEqualTo("second");
+    }
+
+    private static Step SetStepRef(int index, string varName, string expr)
+    {
+        var action = TestAction.Create("variable", "set", ("name", "%" + varName + "%"), ("value", expr));
+        var step = new Step { Index = index, Text = $"set %{varName}% = {expr}" };
+        action.Step = step;
+        step.Actions.Add(action);
+        return step;
+    }
+
+    [Test]
+    public async Task MidStackChain_SurvivesDisk_ResumesDeep_AndUnwindsToEntryGoal()
+    {
+        // The realistic shape: Start sets vars and calls Sub; Sub sets a var and
+        // suspends at a NON-zero step (where "throw if i==1" would fire). We
+        // serialize that 2-frame chain to a disk string, convert it back, patch
+        // the captured %i% (1 → 2 — the fix), and Resume. Proof points:
+        //  - Sub re-enters mid-goal (step 1, not 0) and its continuation reads the
+        //    PATCHED %i% — so the edit flowed into resumed execution.
+        //  - The stack unwinds: the entry goal Start runs its POST-call step.
+        //  - Survivor vars are intact.
+        var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-mid-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var context = app.User.Context;
+        context.Variable.Set("keep", "alive");
+        context.Variable.Set("i", 1L);
+
+        // Start: [0] set a, [1] the call to Sub, [2] post-call marker (the unwind proof).
+        var start = new Goal { Name = "Start", Path = "/Start.goal", PrPath = "/Start.pr" };
+        var st0 = SetStep(0, "a", "A");                 st0.Goal = start;
+        var st1 = SetStep(1, "calledSub", "yes");       st1.Goal = start;   // stands in for `call Sub`
+        var st2 = SetStepRef(2, "entryReached", "END"); st2.Goal = start;   // post-call: only runs on unwind
+        start.Steps.Add(st0); start.Steps.Add(st1); start.Steps.Add(st2);
+
+        // Sub: [0] set b, [1] the throw point (suspended here), [2] continuation reading %i%.
+        var sub = new Goal { Name = "Sub", Path = "/Sub.goal", PrPath = "/Sub.pr" };
+        var sb0 = SetStep(0, "b", "B");                  sb0.Goal = sub;
+        var sb1 = SetStep(1, "passedThrow", "ok");       sb1.Goal = sub;    // the `throw if i==1` step
+        var sb2 = SetStepRef(2, "seenI", "%i%");         sb2.Goal = sub;    // reads the patched value
+        sub.Steps.Add(sb0); sub.Steps.Add(sb1); sub.Steps.Add(sb2);
+
+        app.Goal.Add(start); app.Goal.Add(sub);
+
+        // Suspend mid-stack: Start at its call step (1,0), Sub at its throw step (1,0).
+        string json;
+        await using (var startFrame = context.App.CallStack.Push(start.Steps[1].Actions[0], context.Variable))
+        await using (var subFrame = context.App.CallStack.Push(sub.Steps[1].Actions[0], context.Variable))
+        {
+            json = app.SnapshotToWire(app.Snapshot());
+        }
+
+        // Round-trip through the disk string, then patch %i% 1 → 2 (the fix the
+        // operator/builder makes — the C# stand-in for `set %snap.variable.i% = 2`).
+        var snap = global::app.snapshot.@this.Deserialize(json, context);
+        var vars = snap.Section("Variables").Read<List<global::app.data.@this>>("variables")!;
+        var iVar = vars.First(v => v.Name == "i");
+        iVar.Value = 2L;
+
+        var result = await snap.Resume(context);
+
+        await result.IsSuccess();
+        // Sub re-entered at step 1 and continued — and saw the PATCHED %i%.
+        await Assert.That(context.Variable.GetValue("passedThrow")).IsEqualTo("ok");
+        await Assert.That(System.Convert.ToInt64(context.Variable.GetValue("seenI"))).IsEqualTo(2L);
+        // The stack unwound to the entry goal's post-call step.
+        await Assert.That(context.Variable.GetValue("entryReached")).IsEqualTo("END");
+        // Survivor var intact across the whole round-trip.
+        await Assert.That(context.Variable.GetValue("keep")).IsEqualTo("alive");
+    }
+
+    [Test]
     public async Task EmptyApp_WireIsValidJson_AndRestoresClean()
     {
         var src = new global::app.@this("/src");
