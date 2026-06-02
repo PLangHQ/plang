@@ -785,3 +785,80 @@ the HTTP fetch and the size guard land in one focused branch.
     await Assert.That(img.Path).IsNotNull();
 }
 ```
+
+## 2026-06-02 — Remove `Data.Snapshot` side-channel property
+
+`data.@this.Snapshot` ([JsonIgnore], in `app/data/this.Snapshot.cs`) is a smell
+for the error-callback path: `Error.Callback` does `Data.Ok(snap)` *and*
+`_callback.Snapshot = snap`, so the Value already IS the snapshot — the side-
+channel is redundant there. Resume should come from the snapshot **object**
+(the Data's Value), not a side property.
+
+Still load-bearing for **ask-suspend** (`channel/message`): there Value is the
+`Ask` payload and `Snapshot` is the separate resume state (Value ≠ snapshot).
+Remove `Data.Snapshot` when going deeper into the ask module — migrate ask-
+suspend to carry its resume state another way (e.g. the Ask value carries it, or
+Properties), then resume reads uniformly from the Value. Blast radius:
+`data/this.cs` Clone (line ~1186), `error/Error.cs:67`, `channel/message/this.cs`,
+`module/callback/run.cs`. (Ingi's call, 2026-06-02.)
+
+## 2026-06-02 — Make the snapshot wire format-agnostic (the `Io` layer rework) + the PLang surface
+
+**Status of the surrounding work:** the original builder handoff blocker — a
+snapshot↔disk serializer with deterministic resume — is **done and C#-proven**
+(`snapshot.@this.Serialize`/`Deserialize`, `App.ResumeFromWire`, round-trip +
+suspend→serialize→read→Resume→success tests in
+`PLang.Tests/App/SnapshotTests/SnapshotWireTests.cs`). What's below is the
+*architectural cleanup + PLang surface* deliberately deferred.
+
+**The smell — snapshot knows the format.** `snapshot.@this.Serialize`
+(`app/snapshot/this.Wire.cs`) ends in `root.ToJsonString(opts)` and the whole
+`app/snapshot/Io.cs` layer wraps a `System.Text.Json.Nodes.JsonObject` +
+`JsonSerializerOptions`, doing `Put<T>`/`Get<T>` through STJ. So the snapshot is
+hard-coded to JSON. A value should write to an `IWriter`
+(`app/channel/serializer/IWriter.cs`) and not care whether the bytes end up
+JSON, protobuf, CBOR — the channel picks the format. (Ingi, 2026-06-02.)
+
+**The rework:**
+- `Io` (write side) wraps an `IWriter` instead of a `JsonObject`. Section
+  serializers emit through the `Null/Bool/Int/String/BeginArray/BeginRecord/Value`
+  protocol. `Data` entries (Variables) go through `writer.Value(...)` so they
+  ride the channel's own Data handling; scalars via `writer.Int/String`.
+- `app/error/IError.Wire.cs` (`ErrorWire`, an STJ `JsonConverter`) becomes an
+  `IWriter`-based emit of the same flattened shape (`$type` + common fields +
+  `AskError`/`PermissionDenied` extras + recursive `ErrorChain`).
+- Read side: the channel's reader produces a generic tree (Data/dict/list);
+  `snapshot.@this.Deserialize` reconstructs the typed sections from *that* tree,
+  not from a JSON string. The section-dispatch design and typed-reconstruction
+  logic (frames-as-int, polymorphic IError) carry over; only the JSON plumbing
+  is replaced.
+- `Serialize` becomes `Write(IWriter)`; `Deserialize` takes the parsed tree.
+
+**The PLang surface this unblocks** (Ingi wants `- read 'x.snapshot' into %snap%`
+then `set %snap.variable.x% = 2` then `- run %snap%` working end to end):
+1. **Renderer** so `write %!error.callback% to 'x.snapshot'` serializes the
+   snapshot via its own `IWriter` emit — the channel's per-(type,format) renderer
+   table (`app/types/<name>/serializer/<format>.cs`). Needs snapshot known as a
+   PLang type "snapshot".
+2. **Lazy deserialize via `Data<Snapshot>`**: read lands bytes; the `resume`
+   action declares `Data<snapshot.@this>`, and the runtime converts at the
+   boundary. Hook: in `app/type/list/Conversion.cs` `TryConvert`, before the
+   generic STJ deserialize, honor a target type's static
+   `object? FromWire(string, string?)` (snapshot already has one;
+   `type.@this.WireReader` is the existing lookup — make it `internal` and call
+   it). A draft of this was written and reverted to keep the proven diff focused.
+3. **`resume` verb** — `[Action("resume")]` with a `Data<snapshot.@this>` param
+   → `Snapshot.Value.Resume(Context)`. (Today `callback.run` resumes from the
+   `[JsonIgnore]` `Data.Snapshot` property, which is null after a disk read —
+   the snapshot comes back in the Value. See the separate `Data.Snapshot`
+   removal todo.)
+4. **`INavigator` for `snapshot.@this`** so `%snap.variable.x%` reads and
+   `set %snap.variable.x% = 2` writes into the captured variables (the existing
+   nested-set machinery in `variable/list/this.cs` navigates to the parent and
+   sets the child; the snapshot just needs to be navigable + settable by name).
+5. **`.snapshot` extension → "snapshot" type** so `file.read` stamps the type
+   and lazy-conversion/navigation fire.
+6. The PLang `.test.goal`: throw if `%x% == 1` → write `%!error.callback%` to
+   disk → read back → `set %snap.variable.x% = 2` → `run %snap%` → success, with
+   other vars (`%keepA%`, `%keepB%`) asserted to survive. (LLM-built, so the new
+   `resume` verb needs catalog/markdown.)

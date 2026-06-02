@@ -41,6 +41,7 @@ public sealed class @this : ISerializer
     private readonly JsonSerializerOptions _outbound;
     private readonly JsonSerializerOptions _inbound;
     private readonly JsonSerializerOptions _store;
+    private readonly JsonSerializerOptions _snapshot;
 
     public @this() : this(null) { }
 
@@ -64,6 +65,16 @@ public sealed class @this : ISerializer
             new global::app.data.Wire(global::app.View.Store),
             pathConverter,
             global::app.channel.serializer.filter.Transport.ForOutbound);
+
+        // Snapshot durable-execution wire: Store view (local round-trip, keeps
+        // [Sensitive]) but NON-signing — a snapshot is internal in-process state,
+        // not an actor-boundary crossing. Adds the polymorphic IError converter
+        // for the Errors trail section. Same recipe otherwise → one source of truth.
+        _snapshot = BuildOptions(
+            new global::app.data.Wire(global::app.View.Store, sign: false),
+            pathConverter,
+            global::app.channel.serializer.filter.Transport.ForOutbound);
+        _snapshot.Converters.Add(new global::app.error.ErrorWire());
     }
 
     private static JsonSerializerOptions BuildOptions(
@@ -93,6 +104,22 @@ public sealed class @this : ISerializer
     /// signed bytes match the wire bytes.
     /// </summary>
     internal JsonSerializerOptions OutboundOptions => _outbound;
+
+    /// <summary>
+    /// Store-view options — the [Store]-including, Sensitive-keeping recipe used
+    /// for local persistence. Exposed so the snapshot wire serializer
+    /// (<see cref="global::app.snapshot.Io"/>) layers its IError converter on top
+    /// of this one recipe rather than duplicating the camelCase + Wire + path +
+    /// transport-modifier construction.
+    /// </summary>
+    internal JsonSerializerOptions StoreOptions => _store;
+
+    /// <summary>
+    /// Options for the snapshot durable-execution wire — Store view, non-signing,
+    /// with the polymorphic <see cref="global::app.error.ErrorWire"/> for the
+    /// Errors trail. Consumed by <c>App.SnapshotToWire</c>/<c>SnapshotFromWire</c>.
+    /// </summary>
+    internal JsonSerializerOptions SnapshotOptions => _snapshot;
 
     /// <summary>
     /// Context-less fallback instance — used by callers (crypto.Hash,

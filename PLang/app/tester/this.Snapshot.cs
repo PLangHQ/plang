@@ -15,4 +15,10 @@ public sealed partial class @this : ISnapshot
     /// </summary>
     public static void Restore(snapshot.@this s, actor.context.@this context)
         => context.App.Tester.IsEnabled = s.Read<bool>("isEnabled");
+
+    public static void Write(snapshot.@this section, snapshot.Io io)
+        => io.Put("isEnabled", section.Read<bool>("isEnabled"));
+
+    public static void Read(snapshot.Io io, snapshot.@this section)
+        => section.Write("isEnabled", io.Get<bool>("isEnabled"));
 }

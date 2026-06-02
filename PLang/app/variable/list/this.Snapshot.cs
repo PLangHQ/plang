@@ -43,4 +43,16 @@ public partial class @this : ISnapshot
             target.Set(data.Name, data.Clone());
         }
     }
+
+    /// <summary>
+    /// Serializes the captured variables. Each <c>data.@this</c> rides the
+    /// canonical Data <c>Wire</c> shape carried by the io options — no per-type
+    /// work here, only naming the concrete list type so Read recovers it.
+    /// </summary>
+    public static void Write(snapshot.@this section, snapshot.Io io)
+        => io.Put("variables", section.Read<List<data.@this>>("variables") ?? new());
+
+    /// <summary>Rehydrates the variables list into the section for Restore to consume.</summary>
+    public static void Read(snapshot.Io io, snapshot.@this section)
+        => section.Write("variables", io.Get<List<data.@this>>("variables") ?? new());
 }

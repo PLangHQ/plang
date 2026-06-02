@@ -38,4 +38,35 @@ public sealed partial class @this
                 return i;
         return -1;
     }
+
+    /// <summary>
+    /// Serializes one captured frame onto its own wire cursor. The Call owns the
+    /// frame's key set (the same keys <see cref="Capture"/> writes) — CallStack
+    /// owns only the list, not each frame's shape. Naming each scalar's concrete
+    /// type here is what keeps <c>stepIndex</c>/<c>actionIndex</c> coming back as
+    /// <c>int</c> (not <c>long</c>), which <see cref="callstack.@this.Restore"/>'s
+    /// <c>Read&lt;int&gt;</c> depends on.
+    /// </summary>
+    public static void WriteFrame(global::app.snapshot.@this frame, global::app.snapshot.Io io)
+    {
+        io.Put("goalPrPath",   frame.Read<string>("goalPrPath") ?? "");
+        io.Put("goalHash",     frame.Read<string>("goalHash")   ?? "");
+        io.Put("stepIndex",    frame.Read<int>("stepIndex"));
+        io.Put("actionIndex",  frame.Read<int>("actionIndex"));
+        io.Put("actionModule", frame.Read<string>("actionModule") ?? "");
+        io.Put("actionName",   frame.Read<string>("actionName") ?? "");
+        io.Put("id",           frame.Read<string>("id") ?? "");
+    }
+
+    /// <summary>Rehydrates one frame's scalars into a section, preserving the int typing.</summary>
+    public static void ReadFrame(global::app.snapshot.Io io, global::app.snapshot.@this frame)
+    {
+        frame.Write("goalPrPath",   io.Get<string>("goalPrPath") ?? "");
+        frame.Write("goalHash",     io.Get<string>("goalHash")   ?? "");
+        frame.Write("stepIndex",    io.Get<int>("stepIndex"));
+        frame.Write("actionIndex",  io.Get<int>("actionIndex"));
+        frame.Write("actionModule", io.Get<string>("actionModule") ?? "");
+        frame.Write("actionName",   io.Get<string>("actionName") ?? "");
+        frame.Write("id",           io.Get<string>("id") ?? "");
+    }
 }

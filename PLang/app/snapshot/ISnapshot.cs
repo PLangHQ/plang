@@ -25,4 +25,23 @@ public interface ISnapshot
     /// violations (unresolvable name, hash mismatch, missing source). No silent fallback.
     /// </summary>
     static abstract void Restore(@this s, actor.context.@this context);
+
+    /// <summary>
+    /// Serializes the captured subtree <paramref name="section"/> onto the wire
+    /// cursor <paramref name="io"/>. The subsystem owns the wire shape because it
+    /// alone knows the concrete CLR type of each entry it wrote in
+    /// <see cref="Capture"/> — the snapshot tree stores entries as <c>object?</c>,
+    /// so the type must be named here for <see cref="Read"/> to recover it.
+    /// Both Write and Read operate purely on the section (no live subsystem
+    /// state), so both are static — paralleling <see cref="Restore"/>'s factory.
+    /// </summary>
+    static abstract void Write(@this section, Io io);
+
+    /// <summary>
+    /// Reconstructs the subtree <paramref name="section"/> from the wire cursor
+    /// <paramref name="io"/>, casting each entry back to the concrete type the
+    /// subsystem owns. The result is the same in-memory shape <see cref="Capture"/>
+    /// produced, so the existing <see cref="Restore"/> consumes it unchanged.
+    /// </summary>
+    static abstract void Read(Io io, @this section);
 }

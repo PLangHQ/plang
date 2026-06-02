@@ -94,6 +94,35 @@ public class Error : IError
     }
 
     /// <summary>
+    /// Snapshot-restore ctor — reconstructs an Error from wire with its original
+    /// <see cref="Id"/> and <see cref="CreatedUtc"/> preserved (both are otherwise
+    /// set only at first construction). The live back-references (Step, Goal,
+    /// CallFrames, Exception) are intentionally NOT restored: the CallStack
+    /// section already carries the frame chain, and a live Exception / Goal
+    /// object graph cannot round-trip. Used by <see cref="ErrorWire"/>.
+    /// </summary>
+    private Error(string id, string message, string key, int statusCode, DateTime createdUtc)
+    {
+        Id = id;
+        Message = message;
+        Key = key;
+        StatusCode = statusCode;
+        CreatedUtc = createdUtc;
+    }
+
+    /// <summary>
+    /// Factory mirror of the snapshot-restore ctor that also re-applies the
+    /// init-only advisory fields. See <see cref="ErrorWire"/>.
+    /// </summary>
+    internal static Error Restore(string id, string message, string key, int statusCode,
+        DateTime createdUtc, string? fixSuggestion, string? helpfulLinks)
+        => new Error(id, message, key, statusCode, createdUtc)
+        {
+            FixSuggestion = fixSuggestion,
+            HelpfulLinks = helpfulLinks,
+        };
+
+    /// <summary>
     /// Creates an error tied to a specific step. Goal is inferred from step.Goal.
     /// </summary>
     public Error(string message, Step? step, string key = "Error", int statusCode = 400)

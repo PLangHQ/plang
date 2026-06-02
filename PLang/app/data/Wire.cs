@@ -54,11 +54,23 @@ public sealed class Wire : JsonConverter<@this>
     /// </summary>
     public global::app.View View { get; }
 
+    /// <summary>
+    /// Whether sign-if-missing fires during the Write walk. True for every wire
+    /// that crosses an actor boundary (the default). False for the snapshot
+    /// durable-execution wire: a snapshot is internal in-process state replayed
+    /// into the same actor, so signing it is both unnecessary and a side effect
+    /// (it mutates the captured Data and needs writable identity I/O, which is
+    /// absent headless). Read is unaffected — signatures already present still
+    /// rehydrate.
+    /// </summary>
+    public bool Sign { get; }
+
     public Wire() : this(global::app.View.Out) { }
 
-    public Wire(global::app.View view)
+    public Wire(global::app.View view, bool sign = true)
     {
         View = view;
+        Sign = sign;
     }
 
     /// <summary>
@@ -359,7 +371,7 @@ public sealed class Wire : JsonConverter<@this>
         // and skipping silently keeps those paths working. Production
         // discipline (Variables.Set / Channels.Register) always sets Actor
         // before any wire crossing.
-        if (!isHashOuter && data.Signature == null && data.Context?.Actor != null)
+        if (Sign && !isHashOuter && data.Signature == null && data.Context?.Actor != null)
         {
             data.EnsureSigned();
         }
@@ -368,7 +380,7 @@ public sealed class Wire : JsonConverter<@this>
         // (no STJ recursion), so the sign-if-missing check above only fires
         // for the outer. Walk the graph once here so every Data in scope
         // gets sealed before any byte leaves.
-        EnsureInnerSigned(data.Value);
+        if (Sign) EnsureInnerSigned(data.Value);
 
         writer.WriteStartObject();
         writer.WriteString("name", data.Name);
