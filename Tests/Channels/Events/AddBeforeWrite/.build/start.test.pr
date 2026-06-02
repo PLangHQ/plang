@@ -17,7 +17,9 @@
             {
               "name": "Name",
               "value": "audit",
-              "type": "string"
+              "type": {
+                "name": "text"
+              }
             },
             {
               "name": "Goal",
@@ -25,9 +27,11 @@
                 "name": "AuditLog",
                 "parallel": false,
                 "parameters": [],
-                "prPath": null
+                "prPath": "/Channels/Events/AddBeforeWrite/.build/auditlog.pr"
               },
-              "type": "goal.call"
+              "type": {
+                "name": "goal.call"
+              }
             }
           ],
           "defaults": null,
@@ -35,10 +39,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Set the named channel \u0022audit\u0022 to be backed by a goal call to AuditLog (channel.set upserts).",
-      "level": "high",
-      "confidence": 92,
-      "formal": null,
+      "formal": "channel.set(Name=\u0022audit\u0022, Goal=goal.call(GoalName={name:\u0022AuditLog\u0022, parameters:[]}))",
       "source": null,
       "waitForExecution": true
     },
@@ -54,46 +55,54 @@
           "action": "on",
           "parameters": [
             {
-              "name": "Type",
+              "name": "Trigger",
               "value": "BeforeWrite",
-              "type": "eventtype"
+              "type": {
+                "name": "trigger"
+              }
+            },
+            {
+              "name": "ChannelName",
+              "value": "audit",
+              "type": {
+                "name": "text"
+              }
             },
             {
               "name": "GoalToCall",
               "value": {
                 "name": "ApprovalGoal",
                 "parallel": false,
-                "parameters": [],
-                "prPath": null
+                "parameters": null,
+                "prPath": "/Channels/Events/AddBeforeWrite/.build/approvalgoal.pr"
               },
-              "type": "goal.call"
-            },
-            {
-              "name": "ChannelName",
-              "value": "audit",
-              "type": "string"
+              "type": {
+                "name": "goal.call"
+              }
             }
           ],
           "defaults": [
             {
               "name": "isregex",
               "value": false,
-              "type": "bool"
+              "type": {
+                "name": "bool"
+              }
             },
             {
               "name": "priority",
               "value": 0,
-              "type": "int"
+              "type": {
+                "name": "number",
+                "kind": "int"
+              }
             }
           ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": "Register a lifecycle event hook: before write on the named channel \u0022audit\u0022, call ApprovalGoal.",
-      "level": "high",
-      "confidence": 90,
-      "formal": null,
+      "formal": "event.on(Trigger=BeforeWrite, ChannelName=\u0022audit\u0022, GoalToCall={name:\u0022ApprovalGoal\u0022})",
       "source": null,
       "waitForExecution": true
     },
@@ -111,12 +120,9 @@
             {
               "name": "Data",
               "value": "payload",
-              "type": "string"
-            },
-            {
-              "name": "channel",
-              "value": "audit",
-              "type": "this"
+              "type": {
+                "name": "object"
+              }
             }
           ],
           "defaults": null,
@@ -124,10 +130,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Write the literal payload to the named channel \u0022audit\u0022.",
-      "level": "high",
-      "confidence": 95,
-      "formal": null,
+      "formal": "output.write(Data=\u0027payload\u0027)",
       "source": null,
       "waitForExecution": true
     },
@@ -145,12 +148,9 @@
             {
               "name": "Value",
               "value": "%approvalCalled%",
-              "type": "bool"
-            },
-            {
-              "name": "Message",
-              "value": "approvalCalled should be true",
-              "type": "string"
+              "type": {
+                "name": "object"
+              }
             }
           ],
           "defaults": null,
@@ -158,10 +158,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that %approvalCalled% is true.",
-      "level": "high",
-      "confidence": 85,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%approvalCalled%)",
       "source": null,
       "waitForExecution": true
     },
@@ -179,12 +176,9 @@
             {
               "name": "Value",
               "value": "%auditCalled%",
-              "type": "bool"
-            },
-            {
-              "name": "Message",
-              "value": "auditCalled should be true",
-              "type": "string"
+              "type": {
+                "name": "object"
+              }
             }
           ],
           "defaults": null,
@@ -192,10 +186,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that %auditCalled% is true.",
-      "level": "high",
-      "confidence": 85,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%auditCalled%)",
       "source": null,
       "waitForExecution": true
     }
@@ -205,7 +196,7 @@
   "path": "/Channels/Events/AddBeforeWrite/Start.test.goal",
   "prPath": "/Channels/Events/AddBeforeWrite/.build/start.test.pr",
   "hash": "f926e9e9faae24747d78a2e01acc1f8da4bfd0e58aa0d9884b510a1636463734",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,
