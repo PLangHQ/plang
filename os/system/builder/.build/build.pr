@@ -93,12 +93,12 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%default%",
+              "value": "%!build.summary%",
               "type": "variable"
             },
             {
               "name": "Value",
-              "value": "%!build.summary%",
+              "value": true,
               "type": "bool"
             },
             {
@@ -117,7 +117,7 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%default%, Value=%!build.summary%, Type=bool, AsDefault=true)",
+      "formal": "variable.set(Name=%!build.summary%, Value=true, Type=bool, AsDefault=true)",
       "source": null,
       "waitForExecution": true
     },
@@ -457,34 +457,10 @@
           ],
           "defaults": null,
           "modifiers": []
-        },
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%path%",
-              "type": "variable"
-            },
-            {
-              "name": "Value",
-              "value": "%!data%",
-              "type": "path"
-            }
-          ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ],
-          "modifiers": []
         }
       ],
       "intent": null,
-      "formal": "file.save(Path=\u0022/.build/traces/%!trace.id%/manifest.json\u0022, Value=%traceGoals%) , variable.set(Name=%path%, Value=%!data%)",
+      "formal": "file.save(Path=\u0022/.build/traces/%!trace.id%/manifest.json\u0022, Value=%traceGoals%)",
       "source": null,
       "waitForExecution": true
     },

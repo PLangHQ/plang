@@ -11,48 +11,43 @@
       "comment": null,
       "actions": [
         {
-          "module": "event",
-          "action": "on",
+          "module": "goal",
+          "action": "call",
           "parameters": [
             {
-              "name": "Type",
-              "value": "OnError",
-              "type": "eventtype"
-            },
-            {
-              "name": "GoalToCall",
+              "name": "GoalName",
               "value": {
                 "name": "/system/builder/EmitBuildEvent",
                 "parallel": false,
                 "parameters": [
                   {
+                    "name": "kind",
+                    "value": "planner-validation-failed",
+                    "type": {
+                      "name": "text"
+                    }
+                  },
+                  {
                     "name": "errorMessage",
                     "value": "%!error.Message%",
-                    "type": "string"
+                    "type": {
+                      "name": "text"
+                    }
                   }
                 ],
                 "prPath": "/system/builder/.build/emitbuildevent.pr"
               },
-              "type": "goal.call"
+              "type": {
+                "name": "goal.call"
+              }
             }
           ],
-          "defaults": [
-            {
-              "name": "isregex",
-              "value": false,
-              "type": "bool"
-            },
-            {
-              "name": "priority",
-              "value": 0,
-              "type": "int"
-            }
-          ],
+          "defaults": null,
           "modifiers": []
         }
       ],
       "intent": null,
-      "formal": "event.on(Type=OnError, GoalToCall=goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[errorMessage=%!error.Message%]}))",
+      "formal": "goal.call(GoalName={name:\"/system/builder/EmitBuildEvent\", parameters:[{name:\"kind\", value:\"planner-validation-failed\", type:{name:\"text\"}}, {name:\"errorMessage\", value:\"%!error.Message%\", type:{name:\"text\"}}]})",
       "source": null,
       "waitForExecution": true
     },
