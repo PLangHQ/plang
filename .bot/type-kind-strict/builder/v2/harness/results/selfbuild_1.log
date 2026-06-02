@@ -1,0 +1,77 @@
+Building path: /workspace/plang/os
+
+
+Found  goals
+
+
+Building goal: Build
+
+
+  [≡] set default /workspace/plang/os = "/"
+
+
+  [≡] set default %!build.cache% = true
+
+
+  [≡] set default %!build.summary% = true
+
+
+  [≡] set System.Collections.Generic.List`1[System.Object] = [], type=json
+
+
+  [✓] set channel "builder" call BuilderChannel
+
+
+  [✓] call EmitBuildEvent kind="build-path", path=/workspace/plang/os
+
+
+  [✓] builder.load, write to app.this
+
+
+  [✓] builder.goals path=/workspace/plang/os, write to System.Collections.Generic.List`1[app.goal.this]
+
+
+  [✓] call EmitBuildEvent kind="goals-found", goals=System.Collections.Generic.List`1[app.goal.this]
+
+
+  [✓] foreach System.Collections.Generic.List`1[app.goal.this], call BuildGoal goal=System.Collections.Generic.Dictionary`2[System.String,System.Object]
+
+
+  [✓] save System.Collections.Generic.List`1[System.Object] to file '/.build/traces/%!trace.id%/manifest.json'
+
+
+  [✓] builder.appSave
+
+
+🔴   ================== ValidationErrors(400) ==================   🔴
+🧩 Key:  ValidationErrors
+#️⃣  StatusCode:  400
+🕑 Time: 06/02/2026 01:40:57
+
+🔍   ================== Error Details ==================   🔍
+
+🧐 Reason: 
+    - Step[0]: no actions. Every step must have at least one action with module and action.
+- Step[1]: no actions. Every step must have at least one action with module and action.
+- Step[2]: no actions. Every step must have at least one action with module and action.
+- Step[3]: no actions. Every step must have at least one action with module and action.
+
+🛝  Call stack:
+    Start - /system/builder/BuildGoal/Start.goal:28
+    Start - /system/builder/BuildGoal/Start.goal:4
+    BuildGoal - /system/builder/BuildGoal.goal:4
+    BuildGoal - /system/builder/BuildGoal.goal:4
+    Build - /system/builder/Build.goal:15
+    Build - /system/builder/Build.goal:15
+    Build - /system/builder/Build.goal:6
+
+📥 Parameters at dispatch:
+    Goal (app.data.@this<app.goal.@this>)
+        .pr value:  "%goal%" [goal]
+        final:      Build
+- set default %path% = "/"
+- set default %!build.cache% = true
+- set default %!build.summary% = true
+- set %traceGoals% = [], type=json
+- set channel "builder" call BuilderChannel
+- call EmitBui... (506 chars)

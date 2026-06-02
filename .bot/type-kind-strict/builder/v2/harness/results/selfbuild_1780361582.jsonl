@@ -1,0 +1,1 @@
+{"pass": false, "matched": 104, "total": 104, "calls": 13, "completion": 2843, "prompt": 77389, "cost": 0.009263, "missingPr": [], "divergences": [], "trial": 1, "seconds": 31.3, "exit": 1, "buildError": "- Step[0]: no actions. Every step must have at least one action with module and action.", "failGoal": "0/os/system/builder/BuildGoal/Start.goal:28", "buildOk": false}

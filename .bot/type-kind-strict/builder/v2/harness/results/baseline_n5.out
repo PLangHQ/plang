@@ -1,0 +1,23 @@
+reference captured: 10 files, 104 steps -> /workspace/plang/.bot/type-kind-strict/builder/v2/harness/selfbuild_reference.json
+
+selfbuild: N=5  plang=/workspace/plang/PlangConsole/bin/Debug/net10.0/plang
+
+  trial 1: pass=False buildOk=False steps=104/104 calls=13 out=2759 26.0s exit=1 divs=0  FAIL@0/os/system/builder/BuildGoal/Start.goal:28: - Step[0]: no actions. Every step must have at least one action with module and action.
+  trial 2: pass=False buildOk=False steps=104/104 calls=13 out=2919 23.7s exit=1 divs=0  FAIL@0/os/system/builder/BuildGoal/Start.goal:28: - Step[0]: no actions. Every step must have at least one action with module and action.
+  trial 3: pass=False buildOk=False steps=104/104 calls=13 out=2887 20.3s exit=1 divs=0  FAIL@0/os/system/builder/BuildGoal/Start.goal:28: - Step[0]: no actions. Every step must have at least one action with module and action.
+  trial 4: pass=False buildOk=False steps=104/104 calls=13 out=2896 13.2s exit=1 divs=0  FAIL@0/os/system/builder/BuildGoal/Start.goal:28: - Step[0]: no actions. Every step must have at least one action with module and action.
+  trial 5: pass=False buildOk=False steps=104/104 calls=13 out=2927 8.3s exit=1 divs=0  FAIL@0/os/system/builder/BuildGoal/Start.goal:28: - Step[0]: no actions. Every step must have at least one action with module and action.
+
+=== aggregate over 5 trials ===
+pass-rate (GATE)     : 0/5
+builds completed     : 0/5
+median out tokens    : 0  (completed builds only)
+median calls         : 0
+median seconds (all) : 20.3
+
+build failures (self-build aborted):
+  [5/5] 0/os/system/builder/BuildGoal/Start.goal:28 :: - Step[0]: no actions. Every step must have at least one action with module and action.
+
+no divergences — self-build reproduced the oracle in every trial.
+
+raw: /workspace/plang/.bot/type-kind-strict/builder/v2/harness/results/selfbuild_1780361644.jsonl
