@@ -21,14 +21,28 @@ cache bundle did not reproduce `String→LlmMessage`. Cache-replay is therefore 
   re-enters each goal at its captured `(StepIndex, ActionIndex)` via `Goal.RunFrom`. Deterministic
   re-execution of the failing step.
 
-**What's missing (the coder task):**
-1. **Persist** the throw-time `App.Snapshot()` to disk on a build-step failure (serialize the
-   `snapshot.@this` tree — same shape keepalive/channel-suspend already round-trips). Suggested
-   sink: `.bot/<branch>/builder/v2/repros/<id>/snapshot.json`.
-2. **Load-and-Resume entry**: a way to point the runtime at a stored snapshot and call
-   `Resume(context)` — so `plang` can replay a captured failure with no LLM.
-3. Verify Variables capture includes the LLM response in scope at throw (e.g. `%plan%` /
+**What's missing — THREE pieces (not one), confirmed by reading the code:**
+
+0. **A capture VERB.** There is no `module.action` to get the app snapshot from PLang. Needed
+   so the builder root can do, in its error handler:
+   `- get app snapshot, write to %snapshot%` then `- write %snapshot% to <id>.snapshot`.
+   Small — exposes `App.Snapshot()` (e.g. `snapshot.capture`). (Builder can add this verb.)
+
+1. **A snapshot→disk SERIALIZER — the real blocker.** `Data.Snapshot` is **`[JsonIgnore]`**
+   (`app/data/this.Snapshot.cs`) and the comment names a still-unbuilt follow-up: "Stateless-resume
+   wire shape is built by a per-channel serializer". So today the snapshot CANNOT be written to a
+   file round-trippably. The serializer must persist Variables + Errors + CallStack positions
+   (StepIndex/ActionIndex/Goal-by-name) + Build/Providers, and avoid the
+   Variables→Data→Snapshot→Variables recursion that forced the `[JsonIgnore]`. Architect/coder.
+
+2. **Load + Resume-from-file entry.** Point the runtime at a stored `.snapshot`, `App.Restore` it,
+   call `snapshot.Resume(context)` — replays the failing step with no live LLM. Coder.
+
+3. Verify the Variables capture includes the LLM response in scope at throw (`%plan%` /
    `%compileResult%`) so the failing conversion sees the same bad value on Resume.
+
+So the build.goal one-liner the user wants is the right shape, but it's blocked on (1) the
+serializer existing. (0) is a quick builder add once (1) is real.
 
 Once (1)+(2) land, the loop is: capture failure → Resume (deterministic) → fix handler → Resume
 again → green.
