@@ -7,9 +7,13 @@ using app.data;
 namespace app.type.list;
 
 /// <summary>
-/// Conversion partial of <see cref="@this"/> — absorbs the former <c>Utils.TypeConverter</c>.
-/// Public methods (ConvertTo, Populate, TryConvertTo) stay <c>public static</c>; pure-logic
-/// helpers stay <c>private static</c> (Rule C exception class for stateless behaviour).
+/// Conversion partial of <see cref="@this"/>. The public surface is the infra dispatch
+/// door <see cref="Convert(object?, System.Type, actor.context.@this?, string?)"/>; the
+/// shared dispatcher (<c>TryConvert</c>) + its helpers stay <c>internal static</c> — the
+/// type-agnostic plumbing + residual primitive leaf both doors share. Per-type construction
+/// knowledge lives on the owning types (their <c>Convert</c> hooks), reached here via the
+/// hook dispatch; this file holds no per-type arms. Pure-logic helpers stay
+/// <c>private static</c> (Rule C stateless behaviour).
 /// </summary>
 public sealed partial class @this
 {
@@ -44,7 +48,7 @@ public sealed partial class @this
     /// Builds a one-shot JsonSerializerOptions equivalent to
     /// <see cref="_caseInsensitiveRead"/> but with a Context-bound
     /// <see cref="app.type.path.JsonConverter"/> in place of the stub one.
-    /// Used when <see cref="TryConvertTo"/> receives a non-null context so
+    /// Used when <see cref="TryConvert"/> receives a non-null context so
     /// every <see cref="app.type.path.@this"/> field in the deserialized
     /// graph lands fully Context-wired.
     /// </summary>
@@ -66,18 +70,34 @@ public sealed partial class @this
     /// <summary>Internal accessor for the test facade — see <see cref="_caseInsensitiveRead"/>.</summary>
     internal static JsonSerializerOptions CaseInsensitiveRead => _caseInsensitiveRead;
 
+    /// <summary>
+    /// Infra dispatch door — used by callers that hold only a CLR target (Data.As&lt;T&gt;,
+    /// wire reconstruct, the variable navigator, Sqlite, builder validators). Resolves the
+    /// owning family from <paramref name="clrTarget"/>, asks its <c>Convert</c> hook, and
+    /// falls through to the residual primitive leaf + plumbing in <see cref="TryConvert"/>.
+    /// The primary door (<c>type.@this.Convert</c>) is for callers holding a PLang type entity.
+    /// <paramref name="slot"/> names the binding target so an action-parameter bind failure
+    /// reads naturally.
+    /// </summary>
+    public global::app.data.@this Convert(object? value, System.Type clrTarget,
+        actor.context.@this? context = null, string? slot = null)
+    {
+        var (result, error) = TryConvert(value, clrTarget, context, slot);
+        return error != null ? global::app.data.@this.FromError(error) : global::app.data.@this.Ok(result);
+    }
+
     /// <summary>Attempts to convert a value to the specified type. Generic convenience overload.</summary>
-    public static T? ConvertTo<T>(object? value, actor.context.@this? context = null)
+    internal static T? ConvertTo<T>(object? value, actor.context.@this? context = null)
         => (T?)ConvertTo(value, typeof(T), context);
 
     /// <summary>
-    /// Attempts to convert a value to the specified type. Returns null on failure — use TryConvertTo for error details.
+    /// Attempts to convert a value to the specified type. Returns null on failure — use TryConvert for error details.
     /// A <paramref name="context"/> is required to convert a string into a <see cref="path.@this"/> (the per-App
     /// scheme registry needs it); without one, string→path conversions yield null.
     /// </summary>
-    public static object? ConvertTo(object? value, System.Type targetType, actor.context.@this? context = null)
+    internal static object? ConvertTo(object? value, System.Type targetType, actor.context.@this? context = null)
     {
-        var (result, _) = TryConvertTo(value, targetType, context);
+        var (result, _) = TryConvert(value, targetType, context);
         return result;
     }
 
@@ -87,7 +107,7 @@ public sealed partial class @this
     /// Pass <paramref name="context"/> when any target property is <see cref="path.@this"/>-typed
     /// (or a list of them) — without it those properties stay unset.
     /// </summary>
-    public static void Populate(object target, IDictionary<string, object?> values,
+    internal static void Populate(object target, IDictionary<string, object?> values,
         actor.context.@this? context = null)
     {
         foreach (var kvp in values)
@@ -105,7 +125,7 @@ public sealed partial class @this
     /// Returns the converted value and null error on success,
     /// or null value and an Error describing what went wrong.
     /// </summary>
-    public static (object? Value, error.Error? Error) TryConvertTo(object? value, System.Type targetType,
+    internal static (object? Value, error.Error? Error) TryConvert(object? value, System.Type targetType,
         actor.context.@this? context = null, string? targetName = null)
     {
         if (value == null)
@@ -122,7 +142,29 @@ public sealed partial class @this
         // Handle nullable target types
         var underlying = System.Nullable.GetUnderlyingType(targetType);
         if (underlying != null)
-            return TryConvertTo(value, underlying, context, targetName);
+            return TryConvert(value, underlying, context, targetName);
+
+        // OBP: ask the owning type to build the value — the type knows its own
+        // construction (number/text/datetime/duration/path/image/goal.call). When a
+        // family owns the target it is authoritative: success returns the value, an
+        // error surfaces (enriched with the slot name). A null result means the family
+        // declined this value shape (e.g. image for raw bytes) — fall through to the
+        // residual leaf + plumbing below.
+        if (context != null)
+        {
+            var (family, kind) = global::app.type.convert.@this.OwnerOf(targetType);
+            if (family != null)
+            {
+                var owned = context.App.Type.Conversions.Of(family, value, kind, context);
+                if (owned != null)
+                {
+                    if (owned.Success) return (owned.Value, null);
+                    var hookErr = owned.Error as error.Error
+                        ?? new error.Error(owned.Error!.Message, "TypeConversionFailed", 400);
+                    return (null, WithSlot(hookErr, targetName));
+                }
+            }
+        }
 
         // String → JsonNode: use ToJson() extension with fix-and-retry
         if (targetType == typeof(JsonNode) && value is string jsonNodeStr)
@@ -177,7 +219,7 @@ public sealed partial class @this
                 var targetList = (System.Collections.IList)System.Activator.CreateInstance(targetType)!;
                 foreach (var elem in jeArr.EnumerateArray())
                 {
-                    var (convertedElem, _) = TryConvertTo(elem, listElementType, context);
+                    var (convertedElem, _) = TryConvert(elem, listElementType, context);
                     if (convertedElem != null) targetList.Add(convertedElem);
                 }
                 return (targetList, null);
@@ -191,7 +233,7 @@ public sealed partial class @this
                 var targetList = (System.Collections.IList)System.Activator.CreateInstance(targetType)!;
                 foreach (var elem in jArr)
                 {
-                    var (convertedElem, _) = TryConvertTo(elem, listElementType, context);
+                    var (convertedElem, _) = TryConvert(elem, listElementType, context);
                     if (convertedElem != null) targetList.Add(convertedElem);
                 }
                 return (targetList, null);
@@ -203,7 +245,7 @@ public sealed partial class @this
                 var errors = new List<error.Error>();
                 for (int i = 0; i < sourceList.Count; i++)
                 {
-                    var (convertedItem, itemError) = TryConvertTo(sourceList[i], listElementType, context);
+                    var (convertedItem, itemError) = TryConvert(sourceList[i], listElementType, context);
                     if (itemError != null)
                     {
                         itemError = new error.Error(
@@ -245,7 +287,7 @@ public sealed partial class @this
                 list.Add(value);
                 return (list, null);
             }
-            var (converted, convError) = TryConvertTo(value, listElementType, context);
+            var (converted, convError) = TryConvert(value, listElementType, context);
             if (converted != null && listElementType.IsAssignableFrom(converted.GetType()))
             {
                 var list = (System.Collections.IList)System.Activator.CreateInstance(targetType)!;
@@ -256,67 +298,8 @@ public sealed partial class @this
                 return (null, convError);
         }
 
-        // Path: route through the per-App scheme registry. The abstract base
-        // can't be constructed directly; the registry dispatches to the right
-        // subclass (file → FilePath, http/https → HttpPath, …) based on the
-        // raw string's scheme prefix.
-        if (value is string rawPath
-            && context != null
-            && typeof(global::app.type.path.@this).IsAssignableFrom(targetType))
-        {
-            try
-            {
-                return (context.App.Type.Scheme.From(rawPath, context), null);
-            }
-            catch (global::app.type.path.scheme.SchemeNotRegistered snr)
-            {
-                return (null, new error.Error(snr.Message, "SchemeNotRegistered", 400)
-                    { FixSuggestion = $"Register a factory for scheme '{snr.Scheme}' via app.Type.Scheme.Register, or use a bare/file:// path." });
-            }
-            catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
-            {
-                return (null, new error.Error(ex.Message, "PathConstructionFailed", 400));
-            }
-        }
-
-        // Reference fundamental backed by a path (image; audio/video follow the
-        // same shape): a path-string mints a LAZY handle with .Path set — no
-        // content read. The type exposes a single-arg constructor taking a
-        // path.@this; resolve the string through the scheme registry (no I/O —
-        // just constructs the path), then build the handle. Content materializes
-        // later, on first await of the handle's async accessor.
-        if (value is string refPathRaw && context != null
-            && !typeof(global::app.type.path.@this).IsAssignableFrom(targetType))
-        {
-            var pathCtor = targetType.GetConstructors().FirstOrDefault(c =>
-            {
-                var ps = c.GetParameters();
-                return ps.Length >= 1
-                    && typeof(global::app.type.path.@this).IsAssignableFrom(ps[0].ParameterType)
-                    && ps.Skip(1).All(p => p.IsOptional);
-            });
-            if (pathCtor != null)
-            {
-                try
-                {
-                    var handlePath = context.App.Type.Scheme.From(refPathRaw, context);
-                    var ps = pathCtor.GetParameters();
-                    var args = new object?[ps.Length];
-                    args[0] = handlePath;
-                    for (int i = 1; i < ps.Length; i++) args[i] = ps[i].DefaultValue;
-                    return (pathCtor.Invoke(args), null);
-                }
-                catch (global::app.type.path.scheme.SchemeNotRegistered snr)
-                {
-                    return (null, new error.Error(snr.Message, "SchemeNotRegistered", 400)
-                        { FixSuggestion = $"Register a factory for scheme '{snr.Scheme}', or use a bare/file:// path." });
-                }
-                catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
-                {
-                    return (null, new error.Error(ex.InnerException?.Message ?? ex.Message, "PathHandleConstructionFailed", 400));
-                }
-            }
-        }
+        // (string → path and string → path-backed reference fundamental (image) are
+        // owned by path.Convert / image.Convert, dispatched via the hook above.)
 
         // Types with a constructor that accepts a single string (may have optional params).
         if (value is string ctorStr)
@@ -352,21 +335,7 @@ public sealed partial class @this
             }
         }
 
-        // TimeSpan: parse ISO 8601 (e.g. "PT30S", "PT1H30M") via XmlConvert,
-        // fall back to .NET TimeSpan.Parse (e.g. "00:30:00"). Same wire shape
-        // the TimeSpanIso8601 uses for JSON.
-        if (targetType == typeof(TimeSpan) && value is string tsStr)
-        {
-            try { return (System.Xml.XmlConvert.ToTimeSpan(tsStr), null); }
-            catch (FormatException)
-            {
-                if (TimeSpan.TryParse(tsStr, System.Globalization.CultureInfo.InvariantCulture, out var ts))
-                    return (ts, null);
-                return (null, new error.Error(
-                    $"Cannot parse '{tsStr}' as TimeSpan — expected ISO 8601 (e.g. PT30S) or .NET format (e.g. 00:00:30).",
-                    "TimeSpanParseFailed", 400));
-            }
-        }
+        // (string → TimeSpan is owned by duration.Convert, dispatched via the hook above.)
 
         // Enum types
         if (targetType.IsEnum)
@@ -388,59 +357,7 @@ public sealed partial class @this
                 "EnumConversionFailed", 400)); }
         }
 
-        // GoalCall: convert from string, JsonElement, or Dictionary (UnwrapJsonElement output)
-        if (targetType == typeof(app.goal.GoalCall))
-        {
-            if (value is string goalName)
-            {
-                if (context?.App.Type.IsClrTypeName(goalName) ?? false)
-                    return (null, new error.Error(
-                        $"GoalCall.Name was set to a CLR type name '{goalName}' from a string source.",
-                        "ClrTypeNameInGoalSlot", 500)
-                        { FixSuggestion = "Build pipeline leaked a typed object's ToString() into a goal-name slot." });
-                return (new app.goal.GoalCall { Name = goalName }, null);
-            }
-            if (value is JsonElement je)
-            {
-                try
-                {
-                    return (JsonSerializer.Deserialize<app.goal.GoalCall>(
-                        je.GetRawText(),
-                        _caseInsensitiveRead), null);
-                }
-                catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
-                {
-                    return (null, new error.Error(
-                        $"Failed to deserialize GoalCall from JSON: {ex.Message}",
-                        "GoalCallDeserializationFailed", 400));
-                }
-            }
-            if (value is IDictionary<string, object?> dict)
-            {
-                var name = dict.TryGetValue("name", out var n) ? n?.ToString() ?? "" : "";
-                if (context?.App.Type.IsClrTypeName(name) ?? false)
-                    return (null, new error.Error(
-                        $"GoalCall.Name was set to a CLR type name '{name}'.",
-                        "ClrTypeNameInGoalSlot", 500)
-                        { FixSuggestion = "Build pipeline leaked a typed object's ToString() into a goal-name slot " +
-                            "(likely a Fluid template rendering an object via ToString() instead of navigating to .Name)." });
-                var prPathStr = dict.TryGetValue("prPath", out var pr) ? pr?.ToString() : null;
-                var prPath = (prPathStr != null && context != null)
-                    ? global::app.type.path.@this.Resolve(prPathStr, context)
-                    : null;
-                List<data.@this>? parameters = null;
-                if (dict.TryGetValue("parameters", out var p) && p is IList<object?> pList)
-                {
-                    parameters = pList
-                        .OfType<IDictionary<string, object?>>()
-                        .Select(d => new data.@this(
-                            d.TryGetValue("name", out var dn) ? dn?.ToString() ?? "" : "",
-                            d.TryGetValue("value", out var dv) ? dv : null))
-                        .ToList();
-                }
-                return (new app.goal.GoalCall { Name = name, PrPath = prPath, Parameters = parameters }, null);
-            }
-        }
+        // (string/JsonElement/dict → goal.call is owned by GoalCall.Convert, dispatched via the hook above.)
 
         // Primitives via Convert.ChangeType. InvariantCulture so JSON-shaped
         // numbers ("3.14", "1000") parse identically regardless of the user's locale.
@@ -541,6 +458,22 @@ public sealed partial class @this
         return app.type.primitive.@this.Canonical.TryGetValue(u, out var plang)
             ? $"{plang} ({u.Name})"
             : u.Name;
+    }
+
+    /// <summary>
+    /// Prepends the binding slot (parameter/variable name) to an owning-type hook's
+    /// error so an action-parameter bind failure still names where it failed — the hooks
+    /// don't carry the slot, the door does. No-op when the slot is unknown or already named.
+    /// </summary>
+    private static error.Error WithSlot(error.Error e, string? targetName)
+    {
+        if (string.IsNullOrEmpty(targetName) || e.Message.Contains($"'{targetName}'"))
+            return e;
+        return new error.Error($"parameter '{targetName}': {e.Message}", e.Key, e.StatusCode)
+        {
+            FixSuggestion = e.FixSuggestion,
+            Exception = e.Exception
+        };
     }
 
     private static string Truncate(string? s, int max)

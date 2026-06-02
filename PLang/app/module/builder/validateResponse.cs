@@ -200,11 +200,11 @@ public partial class validateResponse : IContext
 
                     // LLMs emit "" for unset nullable slots even when the prompt says
                     // omit them. Map "" → null when the schema prop is nullable, so the
-                    // .pr doesn't store the empty string and TryConvertTo doesn't get
+                    // .pr doesn't store the empty string and TryConvert doesn't get
                     // a string it can't possibly satisfy ("" is not in any actor's
                     // ValidValues, can't parse to int, etc.). For non-nullable slots we
                     // *want* the convertibility error to surface — leave it for the
-                    // TryConvertTo path below.
+                    // TryConvert path below.
                     if (p.Value is string emptyCheck && emptyCheck.Length == 0)
                     {
                         if (ValidateResponseHelpers.IsNullableSchemaProp(actionType, p.Name))
@@ -238,7 +238,7 @@ public partial class validateResponse : IContext
                         continue;
                     }
 
-                    var (_, error) = global::app.type.list.@this.TryConvertTo(p.Value, targetType);
+                    var (_, error) = global::app.type.list.@this.TryConvert(p.Value, targetType);
                     if (error == null) continue;
 
                     var validValues = (goal.App ?? app)?.Type.GetValidValues(targetType);

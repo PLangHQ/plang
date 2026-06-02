@@ -166,7 +166,7 @@ public sealed class @this
         if (target == null)
             return global::app.data.@this.FromError(new global::app.error.Error(
                 $"Unknown type '{Name}'", "UnknownType", 400));
-        var (c, err) = global::app.type.list.@this.TryConvertTo(value, target, context);
+        var (c, err) = global::app.type.list.@this.TryConvert(value, target, context);
         return err != null ? global::app.data.@this.FromError(err) : global::app.data.@this.Ok(c);
     }
 
@@ -274,7 +274,7 @@ public sealed class @this
                 return reader.Invoke(null, new object?[] { raw, Kind });
         }
 
-        return AppTypes.TryConvertTo(raw, clr ?? typeof(object)).Value;
+        return AppTypes.TryConvert(raw, clr ?? typeof(object)).Value;
     }
 
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Reflection.MethodInfo?> _wireReaders = new();

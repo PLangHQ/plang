@@ -53,7 +53,7 @@ public sealed partial class @this
 
     /// <summary>
     /// MIME-aware read. Authorize → (Builder snapshot for .pr) → bytes for
-    /// binary MIME, text+TryConvertTo for the rest. The Data's <c>Type</c> is
+    /// binary MIME, text+TryConvert for the rest. The Data's <c>Type</c> is
     /// stamped from the file extension's MIME so downstream variable.set into a
     /// typed slot round-trips correctly. Replaces today's
     /// <c>file/code/Default.cs::Default.Read</c>.
@@ -75,7 +75,7 @@ public sealed partial class @this
                 var snapshotClr = global::app.type.list.@this.ClrFromMime(mime);
                 if (snapshotClr != null && snapshotClr != typeof(string))
                 {
-                    var (converted, _) = global::app.type.list.@this.TryConvertTo(snapshot, snapshotClr, Context!);
+                    var converted = Context!.App.Type.Convert(snapshot, snapshotClr, Context).Value;
                     if (converted != null)
                         return new data.@this(Raw, converted, snapshotType);
                 }
@@ -114,7 +114,7 @@ public sealed partial class @this
                     // Pass Context so the per-call options bag uses a Context-
                     // bound PathJsonConverter — Path fields inside the result
                     // (Goal.Path, GoalCall.PrPath, ...) land fully wired.
-                    var (converted, _) = global::app.type.list.@this.TryConvertTo(text, materialized, Context!);
+                    var converted = Context!.App.Type.Convert(text, materialized, Context).Value;
                     content = converted ?? text;
                 }
                 else

@@ -117,7 +117,7 @@ public partial class discover : IContext
         }
 
         // Read the .pr through the gated verb. MIME maps .pr → Goal via
-        // ReadText's TryConvertTo branch.
+        // ReadText's TryConvert branch.
         var prRead = await prFile.ReadText();
         if (!prRead.Success)
         {

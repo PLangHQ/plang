@@ -760,6 +760,111 @@
         "health": "C# 3817/3817",
         "notes": "No code change this session beyond F1/F2 already pushed. Tester report written."
       }
+    },
+    {
+      "id": "46c41c5b-f579-4b50-a7bf-fbac52c1e606",
+      "bot": "coder",
+      "timestamp_start": "2026-06-01T23:26:01.300403+00:00",
+      "timestamp_end": "2026-06-02T00:00:36.420380+00:00",
+      "intent": "Stage 10: dissolve the central TryConvertTo god-switch into per-type Convert hooks + two dispatch doors (primary type.Convert, infra App.Type.Convert) + a residual primitive leaf.",
+      "before": {
+        "assumptions": "text.Convert already proves the per-type model; number/image/path/datetime/duration/GoalCall still route through the 400-line target-keyed switch in type/list/Conversion.cs; channel/serializer/Text.cs reimplements the string->primitive arm with CurrentCulture (locale bug).",
+        "risk": "15 call sites + a god-switch removal; element-recursion plumbing and the json seam are the tricky parts. C# 3822 green, PLang 259/262 (3 pre-existing event fails) is the floor."
+      },
+      "plan": ".bot/type-kind-strict/coder/v10/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/type/number/this.Convert.cs",
+            "PLang/app/type/datetime/this.Convert.cs",
+            "PLang/app/type/duration/this.Convert.cs",
+            "PLang/app/type/path/this.Convert.cs",
+            "PLang/app/type/image/this.Convert.cs",
+            "PLang/app/goal/GoalCall.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Per-type Convert(object?,string? kind,ctx) hooks \u2014 each type owns its own construction. Moved the matching domain arms off the central switch."
+        },
+        {
+          "paths": [
+            "PLang/app/type/convert/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added static OwnerOf routing table (CLR target -> owning family + number-kind), App-less so the infra door serves context-less callers."
+        },
+        {
+          "paths": [
+            "PLang/app/type/list/Conversion.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Hook-first bridge (authoritative on success+error, decline falls through); drained path/image/TimeSpan/GoalCall arms; TryConvertTo->internal TryConvert; added public infra door Convert(value,clrTarget,ctx,slot); WithSlot enriches hook errors with binding slot."
+        },
+        {
+          "paths": [
+            "PLang/app/channel/serializer/Text.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Deleted divergent twin ConvertFromString+IsSimpleType (CurrentCulture locale bug); route Deserialize<T> through the one converter (invariant); IsSimpleType->IsPrimitive; kept empty->default and text->utf8 as serializer-local FromText<T>."
+        },
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/type/path/file/this.Operations.cs",
+            "PLang/app/module/builder/code/Default.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Migrated context-ful cross-module call sites onto the infra door App.Type.Convert; ToGoalCall now threads context (GoalCall.Convert requires it)."
+        },
+        {
+          "paths": [
+            "PLang/app/type/this.cs",
+            "PLang/app/module/builder/validateResponse.cs",
+            "PLang/app/module/test/discover.cs",
+            "PLang/app/module/variable/set.cs",
+            "PLang/app/variable/list/this.cs",
+            "PLang/app/type/path/this.JsonConverter.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "TryConvertTo->TryConvert rename at internal/context-optional call sites and crefs."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/ValueConversionHookTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "11 tests: locale guard (de-DE), each hook isolated + via infra door, json-string->record, bool/guid/enum residual leaf, hook-less string-ctor plumbing fallback."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Support/TypeMappingTestFacade.cs",
+            "PLang.Tests/App/Types/PathTests/PathTypeMapperTests.cs",
+            "PLang.Tests/App/Types/RegistryFoldTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Updated direct converter callers for the TryConvertTo->TryConvert rename (IVT)."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "C# 3833/3833 (+11). PLang 259/262, 0 stale \u2014 identical to baseline (3 pre-existing event/Trigger fails). Public TryConvertTo god-switch gone; per-type Convert hooks + two doors + residual leaf. Locale bug fixed. One flagged decision: json-text->structure parse kept on JsonString.ToJson (text's CLR-mate extension) rather than relocated onto a text.@this.Convert overload \u2014 architect to confirm."
+      }
     }
   ]
 }

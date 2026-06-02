@@ -42,6 +42,37 @@ public sealed class @this
         }
     }
 
+    /// <summary>
+    /// Routing table: which family owns construction of <paramref name="clrTarget"/>,
+    /// plus the number-precision kind when the target pins one. Pure plumbing — it holds
+    /// no per-type *logic*, only "who owns this target", and survives a null App so the
+    /// infra door works for context-less callers (Data.GetValue, Reconstruct).
+    ///
+    /// <para>Raw CLR primitives a family constructs (int/long/decimal/double/float →
+    /// <c>number</c>, string → <c>text</c>, DateTimeOffset → <c>datetime</c>, TimeSpan →
+    /// <c>duration</c>) map to that family. A path subclass maps to <c>path</c>. Any other
+    /// type that declares its own <c>Convert</c> hook (image, goal.call, …) owns itself.
+    /// Returns <c>(null, null)</c> when no family owns the target — the dispatcher then
+    /// uses its residual leaf + plumbing.</para>
+    /// </summary>
+    public static (System.Type? family, string? kind) OwnerOf(System.Type clrTarget)
+    {
+        var u = System.Nullable.GetUnderlyingType(clrTarget) ?? clrTarget;
+
+        if (u == typeof(int)) return (typeof(global::app.type.number.@this), "int");
+        if (u == typeof(long)) return (typeof(global::app.type.number.@this), "long");
+        if (u == typeof(decimal)) return (typeof(global::app.type.number.@this), "decimal");
+        if (u == typeof(double)) return (typeof(global::app.type.number.@this), "double");
+        if (u == typeof(float)) return (typeof(global::app.type.number.@this), "float");
+        if (u == typeof(string)) return (typeof(global::app.type.text.@this), null);
+        if (u == typeof(System.DateTimeOffset)) return (typeof(global::app.type.datetime.@this), null);
+        if (u == typeof(System.TimeSpan)) return (typeof(global::app.type.duration.@this), null);
+        if (typeof(global::app.type.path.@this).IsAssignableFrom(u)) return (typeof(global::app.type.path.@this), null);
+        if (Discover(u) != null) return (u, null);
+
+        return (null, null);
+    }
+
     private static MethodInfo? Discover(System.Type type)
     {
         var m = type.GetMethod("Convert",

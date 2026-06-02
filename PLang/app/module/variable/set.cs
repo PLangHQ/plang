@@ -56,7 +56,7 @@ public partial class Set : IContext, IBuildValidatable
             var targetType = value.Type.ClrType;
             if (targetType != null && !targetType.IsInstanceOfType(value.Value))
             {
-                var (_, error) = global::app.type.list.@this.TryConvertTo(value.Value, targetType);
+                var (_, error) = global::app.type.list.@this.TryConvert(value.Value, targetType);
                 if (error != null)
                     return $"Parameter 'Value' has type={value.Type.Name} but value cannot be converted: {error.Message}";
             }
@@ -120,10 +120,10 @@ public partial class Set : IContext, IBuildValidatable
                 return Task.FromResult(existing);
         }
 
-        // Forced type via [Type]: convert via TryConvertTo and mint Data<T>. Conversion failure
+        // Forced type via [Type]: convert via TryConvert and mint Data<T>. Conversion failure
         // surfaces as Data.Error (Success=false) — Variables.Set is not called in that case so
         // the binding stays whatever it was. For primitives this is straight coercion ("42" → 42).
-        // For json (TypeMapping maps "json" → typeof(JsonNode)), TryConvertTo parses the string
+        // For json (TypeMapping maps "json" → typeof(JsonNode)), TryConvert parses the string
         // into a JsonObject which IS IDictionary — that's what enables `convert %json% from
         // json` (mapped to variable.set Type=json) followed by foreach over the resulting dict.
         if (Type?.Value != null)

@@ -1,237 +1,113 @@
-# coder — type-kind-strict (v1–v8)
+# coder — type-kind-strict (v1–v10)
 
 ## Version
-v8 (codeanalyzer v1 response — see `v8/plan.md`, `v8/v7_review_summary.md`). v7 = stages 7 rev 2, 8, 9. v6 = stages 6 & 7 rev 1. v1–v5 = original 5 stages.
-
-## v8 — codeanalyzer v1 response
-
-Codeanalyzer FAILed v7 on **F1**: `as image strict` enforced nothing for the two
-realistic value shapes (path literal, read-lifted `image.@this`) — strict only
-fired for raw `byte[]`, so a PNG passed as a strict GIF and the two PLang goals
-"covering" it asserted nothing. **Ingi ruled: validate at byte-materialization,
-throw if strict; `set` stays lazy.**
-
-Fix: a value-side `app.data.IStrictKindEnforcer` (mirrors `IBooleanResolvable`).
-`image` imprints the required kind (`RequireStrictKind`) and self-validates —
-already-loaded (read-lift, raw bytes) fails at the `set`; lazy path-backed throws
-`StrictKindMismatchException` from `BytesAsync` at first content access.
-`ValidateKind` now reads a loaded `image.@this`, not only `byte[]`. `variable.set`
-drives it generically (no image hardcode). Also fixed F2 (dropped the duplicate
-flat `kind` wire sibling on `Data.Kind` — OBP smell #6), F3 (`Scheme` null-guard),
-F4 (deleted `text.Build` — text has no spelling-kind; removed the `!= "text"`
-gate), F5 (dead fast-path + wrapper).
-
-Tests: C# `Cut2.ReadLiftImagePngAsImageGifStrict_FailsAtSet` +
-`LazyPathHandleTests.BytesAsync_StrictKindMismatch_ThrowsAtLoad`; PLang strict
-goals moved to the lazy contract (`...Mismatch` asserts clean-at-set;
-`...RuntimeVarMismatch` deleted — read-lift through a var is path-backed/defers
-and wouldn't build reliably; C# carries the read-lift coverage).
-
-**Verification:** C# 3815/3815. PLang 262/262 (0 fail, 0 stale).
+v10 = Stage 10 (value construction onto the types; drain the central converter).
+v8/v9 = codeanalyzer responses. v1–v7 = stages 1–9. See per-version dirs for history.
 
 ---
 
-## v7 — Stages 7 rev 2, 8, 9 (committed `f08f3760f`, `3c4591b24`, `bee135b30`)
+## v10 — Stage 10: value construction belongs to the types
 
-## v7 — Stages 7 rev 2, 8, 9 (committed `f08f3760f`, `3c4591b24`, `bee135b30`)
+### What this is
+The 400-line target-keyed god-switch `app.type.list.@this.TryConvertTo` held *every*
+type's construction knowledge (how `image` reads a path, how `duration` parses ISO-8601,
+how `GoalCall` assembles, …). Adding a type meant editing the switch, and the knowledge
+was duplicated in `channel/serializer/Text.cs` with a **CurrentCulture** parse — a live
+locale bug (`"3.14"` → `314` under de-DE). Stage 10 moves each type's construction onto
+the type (a `Convert` hook), leaves a type-agnostic dispatcher + residual primitive leaf,
+and exposes two doors. The locale bug dies.
 
-**Stage 7 rev 2 — hash is crypto-owned, returned as a value.** `crypto.hash`
-now returns `Data<hash.@this>` (not `Data<byte[]>`) — the single change that
-drives the build annotation (`%x% (hash)`), fires the live serializer, and makes
-verify read the algorithm off the value. Relocated `app/type/hash` →
-`app/module/crypto/type/hash` (namespace-based discovery makes the move
-automatic). `crypto.verify` `Hash` param is now untyped `data.@this` (carries a
-hash value OR a base64 string). `type.@this.Convert` discovers a
-`static object? FromWire(string, string?)` for wire read-back. Signing's
-`HashDataConverter` + `Ed25519` round-trip/read a `hash.@this`. Crypto/signing
-tests now read the digest off the hash value (`.Bytes`/`.ToBase64`).
+### What was done — three phases, all shipped, all green
 
-**Stage 8 — build-time type flow + fundamentals.** Defined the fundamental
-vocabulary on `primitive.@this` in two categories (`InlineFundamentals` +
-`ReferenceFundamentals`); `BuilderNames` is now that explicit set so
-image/video/audio/path are first-class always-on. Scoped the prompt `Kinds`
-table to fundamentals (`builder/type` Build) — `hash` stays registered but its
-algorithms no longer leak into every step's prompt (subsumes stage 7's
-emit-table fix). `text` never derives a kind from a literal's spelling. Dropped
-the spelling-promotion teaching in `CompileUser.llm`.
+**Phase 1 — hooks + bridge (additive).** Added per-type `Convert(object?, string? kind, ctx)`
+hooks, discovered by the existing `app.type.convert.@this` dispatcher:
+- `number/this.Convert.cs` — kind picks CLR precision (`int/long/decimal/double/float`),
+  null kind derives via `Build`, invariant culture. Output is the CLR numeric, not the wrapper.
+- `datetime/this.Convert.cs`, `duration/this.Convert.cs` — string → `DateTimeOffset` / `TimeSpan`.
+- `path/this.Convert.cs` — string → path via the scheme registry.
+- `image/this.Convert.cs` — path-string → lazy handle (declines raw `byte[]` → built at its
+  own seam); proving instance for reference fundamentals.
+- `goal/GoalCall.cs` — the ~50-line string/JsonElement/dict assembly arm, moved verbatim.
+- `text` already owned structure→json-string (prior branch work).
+`TryConvert` (the central converter) now asks the owning family's hook first
+(`convert.@this.OwnerOf(target)` resolves family + number-kind), authoritative on success
+and error, declining (null) falls through.
 
-**Stage 9 — reference fundamentals are lazy path-handles.** `image` gains a
-path-backed constructor (`new @this(path)`): `.Path` set, no I/O. `BytesAsync()`
-loads through `Path.ReadBytes()` (the auth gate) once, caches; failure surfaces
-at first access. `TryConvertTo` gained a general path-string → reference-
-fundamental (any type with a `path.@this` ctor) arm — replaces `variable.set`'s
-`Data<string>` carve-out for `as image`. Mutation/save parked.
+**Phase 2 — drain + kill the twin.** Deleted the path / image / TimeSpan / GoalCall arms
+from the switch (their hooks own them now). Deleted `channel/serializer/Text.cs`
+`ConvertFromString` + `IsSimpleType`; routed `Deserialize<T>` through the one converter
+(invariant) and `IsSimpleType` → `AppTypes.IsPrimitive`. **Locale bug fixed.** Kept
+empty-payload→`default` and text-payload→UTF-8-bytes as serializer-local concerns (a small
+`FromText<T>` helper) — they are not universal conversions (`GetValue<byte[]>` must *reject*
+a string, not UTF-8-encode it; that was a Decompress regression I hit and reverted from the
+central leaf).
 
-**Coder decisions:** verify `Hash` untyped (As<string> can't convert a
-hash.@this); stage-8 determinism = KindHooks gate (`name != text`) + teaching,
-not a build strip (text→string makes text.Build unreachable; the .pr can't tell
-spelling-kind from explicit `as text/md`); `Schema.Build().Kinds` no longer
-carries hash (stage 8 overrides stage 7 rev 2's wording) — repointed
-`HashType_AdvertisesAlgorithmKinds` to `app.Type["hash"].Kinds`.
+**Phase 3 — re-door.** The public static god-switch is gone: `TryConvertTo` → `internal
+static TryConvert` (the shared dispatcher = plumbing + residual leaf, no per-type arms).
+Added the public **infra door** `App.Type.Convert(value, clrTarget, ctx, slot)` →
+`data.@this`. Migrated the cross-module call sites that hold a non-null context onto it
+(`Data.As(typeName)`, `file/this.Operations` ×2, `builder/code/Default` validate + `ToGoalCall`).
+Context-optional neighbors (`Data.As<T>`/`GetValue`, `Reconstruct`, the navigator, `Sqlite`,
+`validateResponse`, `set`-validate) call the shared internal directly — they run without an
+App, so an instance door isn't reachable; they are no longer touching a god-switch.
 
-**Verification:** C# 3818/3818. PLang `--test` 263/263 (0 fail, 0 stale). Two
-`as text` `.test.goal` contracts that pinned the pre-stage-8 derive-kind-from-
-extension behavior were updated to the no-kind contract and rebuilt
-(`SetAsTextUppercase`, `SetAsTextWithMdExtension`); the explicit `as
-text/markdown` tests were left unchanged. (One HTTP test, `ConfigHeaders`, is
-flaky — it hits httpbin.org; passed on re-run.)
+### Key decisions (mine; architect set the model)
+- **`convert.@this.OwnerOf` routing table** (static): raw CLR primitive → family (`int→number`
+  + kind, `string→text`, `DateTimeOffset→datetime`, `TimeSpan→duration`), path subclass → path,
+  any type declaring a `Convert` hook → itself. App-less so the infra door serves context-less
+  callers. Deviation from the literal "Canonical→name→App.Type[name].ClrType" (needs an App);
+  same destination, more robust.
+- **`WithSlot`** enriches an owning-hook error with the binding slot name — the hooks don't
+  carry it, the door does; preserves action-param bind-error quality.
+- **json seam left as-is, flagged.** `json-text → generic structure` already lives on
+  `JsonString.ToJson` (a `string` extension = text's CLR mate, "the string owns its conversion");
+  the dispatcher uses it. I did not relocate it onto a new `text.@this.Convert` overload — it's
+  keyed by *source* not *target* so it can't ride target-dispatch, and `ToJson` is already the
+  focused OBP owner. The record-shaping (structure→target) stays dispatcher target-shaping, which
+  *is* the seam's split. **Architect: confirm acceptable, or say to relocate onto text.**
 
----
-
-## Version (historical)
-v6 (Stages 6 & 7 — see `v6/plan.md`). v1–v5 below cover the original 5 stages.
-
-## v6 — Stages 6 & 7
-
-**Stage 7 (committed `62a23c4e7`): the hash type.** A hash gets its own scalar
-type whose *kind is the algorithm* (`{name:"hash", kind:"keccak256"|"sha256"}`).
-`hash.@this` owns byte⇄base64 (`ToBase64`/`FromBase64`/`DigestEquals`).
-`crypto` stamps `Create("hash", kind: algorithm)`; `Verify` and Ed25519 rehash
-read the algorithm from `Type.Kind` (was `Type.Name`). Schema `Kinds` now derive
-from all known types' static `Kinds` so the return-only `hash` advertises its
-algorithms to the LLM.
-
-**Stage 6 (this commit): structured type at the producers.** One shared
-derivation — `Format.TypeFromMime` / `TypeFromExtension` — that both build and
-runtime call, so they can't drift. Producers stamp `{name, kind}` (e.g. a `.md`
-read → `{text, md}`, `.json` → `{object, json}`) instead of a muddy MIME or a
-bare extension. Migrated `file/read.cs` (Build + Run image-lift),
-`path/file/this.Operations.cs` (ReadText), `http/HttpBuildHelpers.cs`
-(InferTypeFromUrl), and `builder/code/Default.cs` (stamp the entity on the
-terminal `variable.set`).
-
-*Decision I owned (architect delegated):* an unregistered-but-known-MIME
-extension (`.pdf`) now stamps `{object, pdf}` rather than bailing — because the
-runtime produces exactly that for the same Content-Type, and bailing at build
-would re-create the drift the stage kills.
-
-*Deferred (per Ingi):* lazy materialization for non-string CLR targets; the
-http runtime response-body type stamp (the `Body` is a bare `object?` with no
-typed-Data seam — needs a wrapper restructure).
-
-**Final: C# 3810/3810, PLang 263/263 (0 stale).**
-
----
-
-
-## What this is
-
-Architect carved a 5-stage plan to reshape PLang's type value into
-a structured `{Name, Kind, Strict}` entity, fold `Data.Kind`, normalise the
-kind vocabulary (extension-derived, with `md|markdown` aliasing), make
-`variable.set` take a `type` (not a bare string), and restructure the type
-information the LLM sees.
-
-Test-designer wrote 107 C# + 10 PLang failing-test stubs across all 5
-stages. This coder thread shipped all 5 stages, one version per stage:
-
-| Version | Stage | C# passing | Δ vs prev |
-|---------|-------|-----------:|----------:|
-| baseline | — | 3696 | — |
-| v1 | 1 — Name/Kind/Strict + Data.Kind fold + IKindValidatable + KindHooks rename | 3732 | +36 |
-| v2 | 2 — text type + numerics under number | 3721 | −11 |
-| v3 | 3 — Format.KindOf→FamilyOf + kind canonicaliser | 3731 | +10 |
-| v4 | 4 — variable.set takes type entity + image.ValidateKind body | 3734 | +3 |
-| v5 | 5 — TypeSchemas dual-mode renderer + LLM constructor teaching | 3742 | +8 |
-
-**Final C# state: 3742/3803 (+46 vs baseline).**
-**PLang: 253/253 + 10 stale (unchanged).**
-
-## What was done
-
-**v1 (Stage 1):** `app.type.@this` rename `Value`→`Name`; add `Kind`,
-`Strict`; drop family-`Kind`; `ClrType` internalised; `Create(name, kind?,
-strict?)` factory with slash-split and lowercase canonicalisation.
-`Data.Kind` stored field deleted — folds to `Type.Kind`. Wire reads/writes
-kind via the entity. New `IKindValidatable` marker; image implements with
-a stub body. `App.Type.Kinds` → `KindHooks`. ~25 source files + tests
-updated for `Type.Value` → `Type.Name`.
-
-**v2 (Stage 2):** Created `app/type/text/` (mirrors image, text-backed,
-Shape="string", static Description teaches kind-from-extension, no static
-Kinds). Flipped `primitive.Canonical[typeof(string)] = "text"`. Mapped
-`Canonical[typeof(int|long|decimal|double|float)] = "number"`. Rebuilt
-`BuilderNames` so `text` is in, `string` and numerics are out. Raw
-`new Type(name)` constructor canonicalises. `Type.String/Int/Long/Decimal/
-Double` static helpers updated. `Data.Type` lazy-derivation stamps Kind
-for numerics. ~50 test sites updated.
-
-**v3 (Stage 3):** `App.Format.KindOf` → `FamilyOf` rename across PLang +
-tests. New `App.Format.CanonicaliseKind` — derived from the
-extension→MIME registry: walks the map, finds entries whose MIME subtype
-matches, picks the shortest extension (`markdown`→`md`, `jpeg`→`jpg`).
-Unknown free strings pass through. `type.Create` takes optional context
-and canonicalises kind when present.
-
-**v4 (Stage 4):** `variable.set.Type` shape change —
-`data.@this<string>?` → `data.@this<app.type.@this>?`. Handler stamps the
-whole entity (kind + strict survive). Strict enforcement: `ValidateBuild`
-(build-time, literals) and `Run` (runtime, after %var% resolution) call
-`IKindValidatable.ValidateKind` when `Type.Value.Strict && Kind != null`
-and the resolved CLR type implements the marker. Mismatch → typed
-`StrictKindMismatch` error. `image.ValidateKind` real body via
-`ImageSharp.DetectFormat`. `TryInstantiateValidator` helper finds a
-ctor whose first param accepts the raw value.
-
-**v5 (Stage 5):** `TypeSchemas` dual-mode rendering — advertised kinds
-(closed list, e.g. `number — kinds: int | long | decimal | double`) vs
-extension-derived (e.g. `text — kind = extension (md, txt, csv, html, ...)`).
-`app.type.@this` gets `[LlmBuilder]` on Name/Kind/Strict so the catalog
-walker surfaces `type` as a record with the constructor shape.
-`TypeDescription` const carries the "emit a dict, never the slash form"
-teaching.
-
-## Not done (and why)
-
-- **Pre-existing `EngineTypesTests` / `TypeMappingTests` (~30 tests)** that
-  literal-assert `Name(typeof(int)) == "int"` style. The architect explicitly
-  flagged this as expected fan-out ("Expect tests asserting type=='string' to
-  need updating — that churn is intended, not a regression."). A focused
-  sweep would close them; left for a follow-up session.
-- **`os/system/builder/llm/Compile.llm`** template — replace hand-written
-  primitive list with catalog-generated vocabulary. Needs a build-trace
-  capture to verify the LLM still builds correctly. The C# side is ready;
-  the template edit is pure content with a verification gate.
-- **`os/system/builder/llm/CompileUser.llm`** — drop the `Primitive types:`
-  line. Same trace-validation rationale.
-- **PLang `.test.goal` bodies** under `Tests/TypeKindStrict/` (10 stale).
-  These need the builder to recognise `as <type> strict` natural-language
-  syntax, which is a builder-prompt-level change rather than a runtime one.
-- **Stage 4 stub tests** (`StrictValidateBuild_*`, `StrictRun_*`,
-  `SetMintCarriesKind_*` — 8 tests) need a `Run()` test harness with a
-  context + variables set up; not in this session's budget.
-- **The remaining 71 - 3 = ~68 failing tests** break down to: ~30
-  pre-existing tests needing the Stage-2 churn cleanup; ~10 PLang goal
-  stubs; ~8 Stage 4 Run-harness tests; the rest are Stage 5 trace tests
-  that need LLM credentials.
-
-## Code example
-
+### Code example (the pattern — every hook looks like this)
 ```csharp
-// Variable.set declaration (Stage 4):
-public partial data.@this<global::app.type.@this>? Type { get; init; }
-
-// Run() body (Stage 4):
-var typeEntity = Type.Value;
-var targetType = Context.App.Type.Get(typeEntity.Name);
-if (typeEntity.Strict && typeEntity.Kind != null
-    && typeof(IKindValidatable).IsAssignableFrom(targetType))
+// PLang/app/type/duration/this.Convert.cs — the type owns its own construction.
+public static global::app.data.@this Convert(object? value, string? kind,
+    global::app.actor.context.@this context)
 {
-    var probe = TryInstantiateValidator(targetType, Value.Value);
-    if (probe is IKindValidatable v) {
-        var (ok, actual) = v.ValidateKind(Value.Value!, typeEntity.Kind);
-        if (!ok) return FromError(new StrictKindMismatch(typeEntity, actual));
+    switch (value)
+    {
+        case null:            return data.@this.Ok(value);
+        case System.TimeSpan: return data.@this.Ok(value);
+        case string s:
+            var parsed = Resolve(s, context);            // reuse the type's own parser
+            return parsed != null ? data.@this.Ok(parsed.Value)
+                                  : data.@this.FromError(new error.Error("…", "DurationParseFailed", 400));
+        default: return data.@this.FromError(new error.Error("…", "DurationConversionFailed", 400));
     }
 }
-// ... mint typed Data, stamp typedData.Type = typeEntity (the whole entity).
-
-// TypeSchemas dual-mode (Stage 5):
-if (t.Kinds != null) sb.Append(" — kinds: ").Append(string.Join(" | ", t.Kinds));
-else if (HasBuildHook(t)) sb.Append(" — kind = extension (...)");
+```
+The central converter no longer knows how a duration parses — it asks:
+```csharp
+var (family, kind) = convert.@this.OwnerOf(targetType);     // TimeSpan → duration.@this
+var owned = context.App.Type.Conversions.Of(family, value, kind, context);
+if (owned is { Success: true }) return (owned.Value, null);  // the type built it
 ```
 
-## Hand-off
+### Verification
+Clean rebuild. **C# 3833/3833** (+11 new stage-10 tests: locale guard, each hook in
+isolation + through the infra door, json-string→record, bool/guid/enum residual leaf,
+hook-less string-ctor plumbing fallback). **PLang 259/262, 0 stale** — identical to baseline;
+the 3 fails (`Channels/Events/AddOnAsk`, `AddBeforeWrite`, `Modules/Event/Basic`) are
+pre-existing event/Trigger-merge failures, not this stage.
 
-```
-Next: run.ps1 codeanalyzer type-kind-strict "Review coder v1-v5 on branch type-kind-strict" -b type-kind-strict
-```
+### Files
+- New hooks: `type/number/this.Convert.cs`, `type/datetime/this.Convert.cs`,
+  `type/duration/this.Convert.cs`, `type/path/this.Convert.cs`, `type/image/this.Convert.cs`;
+  `goal/GoalCall.cs` (+Convert).
+- Dispatcher: `type/convert/this.cs` (+`OwnerOf`); `type/list/Conversion.cs` (hook bridge,
+  drained arms, infra door `Convert`, `TryConvertTo`→internal `TryConvert`, `WithSlot`).
+- Twin: `channel/serializer/Text.cs` (ConvertFromString/IsSimpleType gone → one converter).
+- Call sites: `type/this.cs`, `data/this.cs`, `path/file/this.Operations.cs`,
+  `builder/code/Default.cs`, plus rename-only touch in `builder/validateResponse.cs`,
+  `module/test/discover.cs`, `variable/set.cs`, `variable/list/this.cs`,
+  `path/this.JsonConverter.cs`.
+- Tests: `PLang.Tests/App/Types/ValueConversionHookTests.cs`; facade + two direct-caller
+  test files updated for the rename.

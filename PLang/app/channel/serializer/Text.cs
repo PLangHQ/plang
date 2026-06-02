@@ -26,7 +26,7 @@ public sealed class Text : ISerializer
         try
         {
             var value = data.Value;
-            if (!IsSimpleType(value))
+            if (value != null && !AppTypes.IsPrimitive(value.GetType()))
                 return await _jsonFallback.SerializeAsync(stream, data, cancellationToken);
 
             var bytes = _encoding.GetBytes((value?.ToString() ?? "") + Environment.NewLine);
@@ -59,14 +59,14 @@ public sealed class Text : ISerializer
     {
         var result = await DeserializeAsync(stream, cancellationToken);
         if (!result.Success) return global::app.data.@this<T>.From(result);
-        var converted = ConvertFromString(result.Value as string ?? "", typeof(T));
-        return global::app.data.@this<T>.Ok(converted is T typed ? typed : default!);
+        return global::app.data.@this<T>.Ok(FromText<T>(result.Value as string ?? ""));
     }
 
     public data.@this<string> Serialize(data.@this data)
     {
         var value = data.Value;
-        if (IsSimpleType(value)) return global::app.data.@this<string>.Ok(value?.ToString() ?? "");
+        if (value == null || AppTypes.IsPrimitive(value.GetType()))
+            return global::app.data.@this<string>.Ok(value?.ToString() ?? "");
         return _jsonFallback.Serialize(data);
     }
 
@@ -74,54 +74,21 @@ public sealed class Text : ISerializer
         => global::app.data.@this.Ok(s);
 
     public data.@this<T> Deserialize<T>(string s)
+        => global::app.data.@this<T>.Ok(FromText<T>(s));
+
+    /// <summary>
+    /// A text payload → a typed value. Two concerns belong to this serializer, not
+    /// the general converter: an empty payload is absence (<c>default</c>, not a
+    /// value), and a text payload's own bytes are its UTF-8 encoding. Everything
+    /// else routes through the one converter (invariant culture, residual primitive
+    /// leaf + per-type hooks) — the text channel no longer forks its own parse, which
+    /// had drifted to CurrentCulture and gave a divergent locale result.
+    /// </summary>
+    private T FromText<T>(string s)
     {
-        var result = ConvertFromString(s, typeof(T));
-        return global::app.data.@this<T>.Ok(result is T typed ? typed : default!);
-    }
-
-    private static bool IsSimpleType(object? value)
-    {
-        if (value == null) return true;
-        var t = value.GetType();
-        return t.IsPrimitive || t == typeof(string) || t == typeof(decimal)
-            || t == typeof(DateTime) || t == typeof(DateTimeOffset)
-            || t == typeof(Guid) || t.IsEnum;
-    }
-
-    private static object? ConvertFromString(string text, Type type)
-    {
-        if (string.IsNullOrEmpty(text))
-            return type.IsValueType ? Activator.CreateInstance(type) : null;
-
-        if (type == typeof(string))
-            return text;
-
-        // Handle basic types
-        if (type == typeof(int) || type == typeof(int?))
-            return int.TryParse(text, out var i) ? i : null;
-
-        if (type == typeof(long) || type == typeof(long?))
-            return long.TryParse(text, out var l) ? l : null;
-
-        if (type == typeof(double) || type == typeof(double?))
-            return double.TryParse(text, out var d) ? d : null;
-
-        if (type == typeof(decimal) || type == typeof(decimal?))
-            return decimal.TryParse(text, out var m) ? m : null;
-
-        if (type == typeof(bool) || type == typeof(bool?))
-            return bool.TryParse(text, out var b) ? b : null;
-
-        if (type == typeof(DateTime) || type == typeof(DateTime?))
-            return DateTime.TryParse(text, out var dt) ? dt : null;
-
-        if (type == typeof(Guid) || type == typeof(Guid?))
-            return Guid.TryParse(text, out var g) ? g : null;
-
-        if (type == typeof(byte[]))
-            return Encoding.UTF8.GetBytes(text);
-
-        // For complex types, return the string and let the caller handle conversion
-        return text;
+        if (string.IsNullOrEmpty(s)) return default!;
+        if (typeof(T) == typeof(byte[])) return (T)(object)_encoding.GetBytes(s);
+        var converted = AppTypes.ConvertTo(s, typeof(T));
+        return converted is T typed ? typed : default!;
     }
 }

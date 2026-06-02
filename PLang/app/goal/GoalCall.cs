@@ -36,6 +36,66 @@ public sealed class GoalCall : module.IEvent
     public steps.step.actions.action.@this? Action { get; set; }
 
     /// <summary>
+    /// OBP: <c>GoalCall</c> owns how a goal-call value is assembled from raw input —
+    /// a bare goal name (string), a JSON object (JsonElement), or the dict shape
+    /// <c>UnwrapJsonElement</c> produces. A CLR type name leaking into the name slot
+    /// is rejected loudly (a build-pipeline ToString() leak, not a goal name).
+    /// </summary>
+    public static data.@this Convert(object? value, string? kind, actor.context.@this context)
+    {
+        switch (value)
+        {
+            case null:
+                return data.@this.Ok(value);
+            case GoalCall:
+                return data.@this.Ok(value);
+            case string goalName:
+                if (context.App.Type.IsClrTypeName(goalName))
+                    return data.@this.FromError(new global::app.error.Error(
+                        $"GoalCall.Name was set to a CLR type name '{goalName}' from a string source.",
+                        "ClrTypeNameInGoalSlot", 500)
+                        { FixSuggestion = "Build pipeline leaked a typed object's ToString() into a goal-name slot." });
+                return data.@this.Ok(new GoalCall { Name = goalName });
+            case System.Text.Json.JsonElement je:
+                try
+                {
+                    return data.@this.Ok(System.Text.Json.JsonSerializer.Deserialize<GoalCall>(
+                        je.GetRawText(), global::app.type.list.@this.CaseInsensitiveRead));
+                }
+                catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
+                {
+                    return data.@this.FromError(new global::app.error.Error(
+                        $"Failed to deserialize GoalCall from JSON: {ex.Message}",
+                        "GoalCallDeserializationFailed", 400));
+                }
+            case IDictionary<string, object?> dict:
+                var name = dict.TryGetValue("name", out var n) ? n?.ToString() ?? "" : "";
+                if (context.App.Type.IsClrTypeName(name))
+                    return data.@this.FromError(new global::app.error.Error(
+                        $"GoalCall.Name was set to a CLR type name '{name}'.",
+                        "ClrTypeNameInGoalSlot", 500)
+                        { FixSuggestion = "Build pipeline leaked a typed object's ToString() into a goal-name slot " +
+                            "(likely a Fluid template rendering an object via ToString() instead of navigating to .Name)." });
+                var prPathStr = dict.TryGetValue("prPath", out var pr) ? pr?.ToString() : null;
+                var prPath = prPathStr != null ? path.Resolve(prPathStr, context) : null;
+                List<data.@this>? parameters = null;
+                if (dict.TryGetValue("parameters", out var p) && p is IList<object?> pList)
+                {
+                    parameters = pList
+                        .OfType<IDictionary<string, object?>>()
+                        .Select(d => new data.@this(
+                            d.TryGetValue("name", out var dn) ? dn?.ToString() ?? "" : "",
+                            d.TryGetValue("value", out var dv) ? dv : null))
+                        .ToList();
+                }
+                return data.@this.Ok(new GoalCall { Name = name, PrPath = prPath, Parameters = parameters });
+            default:
+                return data.@this.FromError(new global::app.error.Error(
+                    $"Cannot convert {value.GetType().Name} to a goal call.", "GoalCallConversionFailed", 400));
+        }
+    }
+
+    /// <summary>
     /// Resolves the Goal. PrPath is authoritative when set — file.read only.
     /// Otherwise: action chain → app.Goal → file.read fallback.
     /// Returns Data with the Goal as Value, or Data with Error if not found.

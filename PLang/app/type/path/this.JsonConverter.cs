@@ -17,7 +17,7 @@ namespace app.type.path;
 /// strings.</para>
 ///
 /// <para>Per-Actor registration: each Actor's serializer chain bakes
-/// <c>new JsonConverter(actor.Context)</c> into its options. <see cref="Conversion.TryConvertTo"/>
+/// <c>new JsonConverter(actor.Context)</c> into its options. <see cref="Conversion.TryConvert"/>
 /// builds a one-shot Context-bound options bag per call when a Context was
 /// passed in.</para>
 /// </summary>

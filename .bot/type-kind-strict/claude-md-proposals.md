@@ -251,3 +251,29 @@ whole-tree sweep is not a builder problem.
 ```markdown
 - `Documentation/v0.2/understanding-the-builder.md` — **read this first.** The conceptual model: two-phase Plan→Compile, the bootstrap (the builder runs from its own `.pr`, so `.goal` edits aren't live until rebuilt), the catalog from `app.Module.Describe()`, the single LLM cache at the OpenAi layer (`cache:false` to bypass), and the recovery loops (`LlmFixer`/`RefineActions`/`FixValidation`/`HandleStepFailure`). Orientation; the docs below are the how-to references.
 ```
+
+---
+
+## coder — v10 — 2026-06-02
+**Target:** /CLAUDE.md
+**Why:** Stage 10 made "a type owns how a value of itself is built" a load-bearing convention with a concrete shape (per-type `Convert` hook + a routing table + two doors + a residual leaf). Future type work must extend the hook, not the converter — without a stated rule the next bot will reach back into the central switch (the exact regression this stage removed).
+**Proposed change:** Add under `## Runtime2 Conventions`:
+
+```
+- **Type value-construction is type-owned (`Convert` hooks).** A type owns how a value of
+  itself is built from raw input via a `public static data.@this Convert(object? value,
+  string? kind, context)` hook on its family class (`number`, `datetime`, `duration`, `path`,
+  `image`, `GoalCall`, …), discovered by `app.type.convert.@this`. Output is the CLR value the
+  alias targets (e.g. `number.Convert` returns a CLR `int`/`decimal`, not `number.@this`); a
+  hook returns `null` to *decline* a value shape (falls through), an Error `data.@this` to fail
+  authoritatively. The central converter `app.type.list.@this` holds **no per-type arms** — it
+  is the dispatcher (`internal TryConvert`) + a residual primitive leaf (bool/guid/enum/
+  `ChangeType`/string-ctor/json-structural) only. Two public doors share it: **primary**
+  `type.@this.Convert(value, ctx)` (a PLang type entity in hand, carries Kind) and **infra**
+  `App.Type.Convert(value, clrTarget, ctx, slot)` (only a CLR target in hand). `convert.@this.
+  OwnerOf(clrTarget)` is the App-less routing table (CLR primitive → family + number-kind; path
+  subclass → path; any type declaring a hook → itself). Adding a type = add a `Convert` hook +
+  (if it constructs a raw CLR primitive) an `OwnerOf` row — never edit a target switch. String→T
+  is invariant-culture; a channel serializer that needs a locale/empty/utf8 nuance keeps it
+  serializer-local, it does NOT belong in the converter.
+```

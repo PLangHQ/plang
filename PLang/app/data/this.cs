@@ -477,10 +477,7 @@ public partial class @this
             return global::app.data.@this.FromError(new global::app.error.ServiceError(
                 $"No PLang type registered under name '{typeName}'.", "UnknownType", 400));
 
-        var raw = Value;
-        var converted = raw is string s
-            ? AppTypes.TryConvertTo(s, clr).Value
-            : AppTypes.ConvertTo(raw, clr);
+        var converted = context.App.Type.Convert(Value, clr, context).Value;
         return new @this(Name, converted, new type(typeName), Parent) { Context = context };
     }
 
@@ -814,7 +811,7 @@ public partial class @this
 
         // Thread the Data's Name (the parameter/variable name) into the
         // conversion so a bind failure can name the slot.
-        var (converted, error) = AppTypes.TryConvertTo(value, typeof(T), context, Name);
+        var (converted, error) = AppTypes.TryConvert(value, typeof(T), context, Name);
         if (error != null)
             return @this<T>.FromError(error);
         return ConstructWrap<T>((T?)converted, context);

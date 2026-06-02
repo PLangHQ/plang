@@ -486,7 +486,7 @@ public class Default : IBuilder
                     // dotted name and the type-name guard below false-positives on every
                     // goal.call slot in the catalog.
                     if (p.Value is string desc && IsCatalogDescription(desc, p.Type!.Name)) continue;
-                    var goalCall = ToGoalCall(p.Value);
+                    var goalCall = ToGoalCall(p.Value, context);
                     if (goalCall == null || string.IsNullOrEmpty(goalCall.Name)) continue;
                     if (goalCall.Name.Contains('%')) continue;  // %var% resolves at runtime
                     // Hard reject CLR type names — these are the known leak vector
@@ -916,7 +916,7 @@ public class Default : IBuilder
                 // LLM-emitted "" for an unset nullable slot — same shape as
                 // validateResponse's normalization, repeated here so detail-pass
                 // results (which bypass validateResponse) also get the fix instead
-                // of failing in TryConvertTo below. For non-nullable slots leave the
+                // of failing in TryConvert below. For non-nullable slots leave the
                 // empty string in place so the conversion error surfaces and
                 // LlmFixer retries.
                 if (p.Value is string empty && empty.Length == 0
@@ -956,11 +956,11 @@ public class Default : IBuilder
                 // Convert in either direction: string → bool/int/double/etc., or
                 // numeric/bool → string when the parameter is declared string. The LLM
                 // emitting `Key=404 (int)` for a string-declared Key gets normalized here.
-                var (converted, error) = global::app.type.list.@this.TryConvertTo(p.Value, targetType, context);
-                if (converted != null)
-                    p.Value = converted;
-                else if (error != null)
-                    errors.Add($"{a.Module}.{a.ActionName}.{p.Name}: {error.Message}");
+                var conv = context.App.Type.Convert(p.Value, targetType, context);
+                if (conv.Value != null)
+                    p.Value = conv.Value;
+                else if (conv.Error != null)
+                    errors.Add($"{a.Module}.{a.ActionName}.{p.Name}: {conv.Error.Message}");
             }
         }
         return errors;
@@ -1079,7 +1079,7 @@ public class Default : IBuilder
             if (!string.Equals(param.Type?.Name, "goal.call", StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            var goalCall = ToGoalCall(param.Value);
+            var goalCall = ToGoalCall(param.Value, context);
             if (goalCall == null || string.IsNullOrEmpty(goalCall.Name))
                 continue;
 
@@ -1109,9 +1109,12 @@ public class Default : IBuilder
         }
     }
 
-    private static GoalCall? ToGoalCall(object? value)
+    private static GoalCall? ToGoalCall(object? value, actor.context.@this context)
     {
         if (value is GoalCall gc) return gc;
-        return global::app.type.list.@this.ConvertTo<GoalCall>(value);
+        // GoalCall owns its own assembly (string / JsonElement / dict → goal.call);
+        // reach it through the infra door, which needs context for name-leak guards
+        // and prPath resolution.
+        return context.App.Type.Convert(value, typeof(GoalCall), context).Value as GoalCall;
     }
 }
