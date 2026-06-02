@@ -29,7 +29,12 @@ public sealed class Object : INavigator
 
         try
         {
-            return new data.@this(key, prop.GetValue(value), parent: data);
+            var resolved = prop.GetValue(value);
+            // Relay an already-Data property value rather than repackaging it
+            // (Rule #7). A property like Error.Callback returns a Data<snapshot>;
+            // wrapping it in another Data produces a Data-in-Data that serializes
+            // as a double envelope. Hand back the Data itself.
+            return resolved is data.@this d ? d : new data.@this(key, resolved, parent: data);
         }
         catch (TargetInvocationException ex)
         {

@@ -245,6 +245,73 @@ public class SnapshotWireTests
     }
 
     [Test]
+    public async Task PlangPath_AsSnapshotConvert_EditSurvivesResume()
+    {
+        // Mirrors the .test.goal EXACTLY: the read result (an envelope STRING) goes
+        // through `as snapshot` → variable.set's typeEntity.Convert (set.cs:218),
+        // NOT Deserialize directly. Isolates whether that conversion yields a
+        // navigable snapshot.@this and whether the edit survives resume.
+        var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-aspath-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var context = app.User.Context;
+
+        var goal = new Goal { Name = "G", Path = "/G.goal", PrPath = "/G.pr" };
+        var step0 = SetStep(0, "x", "1");          step0.Goal = goal;
+        var step1 = SetStepRef(1, "seen", "%x%");  step1.Goal = goal;
+        goal.Steps.Add(step0); goal.Steps.Add(step1);
+        app.Goal.Add(goal);
+
+        context.Variable.Set("x", 1L);
+        string json;
+        await using (var call = context.App.CallStack.Push(goal.Steps[1].Actions[0], context.Variable))
+        {
+            json = app.SnapshotToWire(app.Snapshot());
+        }
+
+        // `as snapshot` path: typeEntity.Convert(envelopeString, context).
+        var te = new global::app.type.@this("snapshot") { Context = context };
+        var conv = te.Convert(json, context);
+        await Assert.That(conv.Value is global::app.snapshot.@this)
+            .IsTrue(); // ← if false, the as-snapshot conversion is the bug
+
+        context.Variable.Set("snap", conv.Value);
+        context.Variable.Set("snap.variables.x", 2L);
+        await Assert.That(System.Convert.ToInt64(context.Variable.Get("snap.variables.x").Value)).IsEqualTo(2L);
+
+        var snap = context.Variable.Get("snap").Value as global::app.snapshot.@this;
+        await Assert.That(snap).IsNotNull();
+        var result = await snap!.Resume(context);
+        await result.IsSuccess();
+        await Assert.That(System.Convert.ToInt64(context.Variable.GetValue("seen"))).IsEqualTo(2L);
+    }
+
+    [Test]
+    public async Task FileSave_OfSnapshot_ThroughChannel_ProducesWireEnvelope()
+    {
+        // `save %x% to file 'foo.snapshot'`: an unknown extension must serialize a
+        // structured Data through the Wire serializer (content-aware fallback),
+        // not the plain application/json STJ path which can't render snapshot.@this.
+        var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-fs-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var context = app.User.Context;
+        context.Variable.Set("x", 1L);
+
+        var snap = app.Snapshot();
+        var d = new global::app.data.@this<global::app.snapshot.@this>("", snap,
+            new global::app.type.@this("snapshot")) { Context = context };
+
+        using var ms = new System.IO.MemoryStream();
+        var result = await context.Actor.Channel.Serializers.SerializeAsync(
+            new global::app.channel.serializer.list.SerializeOptions
+            { Stream = ms, Data = d, Extension = ".snapshot" });
+
+        // file.save of a snapshot must produce the wire envelope (content-aware
+        // fallback routes structured Data to the Wire serializer, not plain STJ).
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(ms.Length).IsGreaterThan(0);
+    }
+
+    [Test]
     public async Task NavigateAndEditCapturedVariable_ThenResumeToSuccess()
     {
         // The PLang fix-and-replay loop, in C#: read a snapshot back, navigate

@@ -47,8 +47,11 @@ public sealed partial class @this
         var opts = WireOptions(context);
         var parsed = JsonNode.Parse(json)?.AsObject()
             ?? throw new JsonException("Snapshot wire root is not a JSON object");
-        // Envelope-tolerant: a Data envelope nests the sections under "value".
-        var root = parsed["value"] is JsonObject value && (parsed.ContainsKey("type") || parsed.ContainsKey("name"))
+        // Envelope-tolerant: file.save serializes the snapshot as ONE Data
+        // envelope ({name,type,value:{…sections…}}); peel that single layer to
+        // the section object. (A double envelope would mean a Data was wrapped
+        // in another Data upstream — that's a bug to fix at the source, not here.)
+        var root = parsed["value"] is JsonObject value && parsed.ContainsKey("type")
             ? value
             : parsed;
         var s = new @this();
