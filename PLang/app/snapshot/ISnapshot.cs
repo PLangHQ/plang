@@ -27,21 +27,16 @@ public interface ISnapshot
     static abstract void Restore(@this s, actor.context.@this context);
 
     /// <summary>
-    /// Serializes the captured subtree <paramref name="section"/> onto the wire
-    /// cursor <paramref name="io"/>. The subsystem owns the wire shape because it
-    /// alone knows the concrete CLR type of each entry it wrote in
-    /// <see cref="Capture"/> — the snapshot tree stores entries as <c>object?</c>,
-    /// so the type must be named here for <see cref="Read"/> to recover it.
-    /// Both Write and Read operate purely on the section (no live subsystem
-    /// state), so both are static — paralleling <see cref="Restore"/>'s factory.
-    /// </summary>
-    static abstract void Write(@this section, Io io);
-
-    /// <summary>
     /// Reconstructs the subtree <paramref name="section"/> from the wire cursor
     /// <paramref name="io"/>, casting each entry back to the concrete type the
     /// subsystem owns. The result is the same in-memory shape <see cref="Capture"/>
     /// produced, so the existing <see cref="Restore"/> consumes it unchanged.
+    ///
+    /// <para>There is no write-side counterpart here: the snapshot serializes
+    /// itself generically via <see cref="@this.ToTree"/> (it owns its own tree),
+    /// and a domain value that isn't tree-native owns its node via
+    /// <see cref="ITreeValue"/>. Read stays explicit because rebuilding a typed
+    /// section from an untyped parsed tree needs the owner's type knowledge.</para>
     /// </summary>
     static abstract void Read(Io io, @this section);
 }

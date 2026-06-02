@@ -152,17 +152,6 @@ public sealed partial class @this : ISnapshot
         }
     }
 
-    /// <summary>
-    /// Serializes the captured registry layer — the (typeName, providerName,
-    /// source) registration tuples and the default-selection overrides. Both are
-    /// plain string-bearing records that STJ round-trips directly.
-    /// </summary>
-    public static void Write(global::app.snapshot.@this section, global::app.snapshot.Io io)
-    {
-        io.Put("registrations", section.Read<List<Registration>>("registrations") ?? new());
-        io.Put("defaultOverrides", section.Read<List<DefaultOverride>>("defaultOverrides") ?? new());
-    }
-
     public static void Read(global::app.snapshot.Io io, global::app.snapshot.@this section)
     {
         section.Write("registrations", io.Get<List<Registration>>("registrations") ?? new());

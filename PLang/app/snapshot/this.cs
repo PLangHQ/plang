@@ -50,4 +50,14 @@ public sealed partial class @this
 
     /// <summary>Number of entries directly on this section (excludes nested sections).</summary>
     public int EntryCount => _entries.Count;
+
+    /// <summary>
+    /// The entries directly on this node (excludes nested sections) — read-only.
+    /// Exposed so the snapshot's leaf-serializer can walk its own state to render
+    /// it; the snapshot owns its rendering (Rule #9), the renderer just reads.
+    /// </summary>
+    public IReadOnlyDictionary<string, object?> Entries => _entries;
+
+    /// <summary>The nested sub-sections on this node, by name — read-only.</summary>
+    public IReadOnlyDictionary<string, @this> Sections => _sections;
 }

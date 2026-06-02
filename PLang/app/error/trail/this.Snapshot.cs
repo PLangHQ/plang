@@ -18,13 +18,6 @@ public sealed partial class @this : ISnapshot
         context.App.Error.RestoreTrail(entries);
     }
 
-    /// <summary>
-    /// Serializes the trail entries. The polymorphic <see cref="global::app.error.ErrorWire"/>
-    /// converter carried by the io options handles each IError's shape.
-    /// </summary>
-    public static void Write(global::app.snapshot.@this s, global::app.snapshot.Io io)
-        => io.Put("entries", s.Read<List<IError>>("entries") ?? new List<IError>());
-
     public static void Read(global::app.snapshot.Io io, global::app.snapshot.@this s)
         => s.Write("entries", io.Get<List<IError>>("entries") ?? new List<IError>());
 

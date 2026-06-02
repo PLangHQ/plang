@@ -142,20 +142,6 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
         context.App.CallStack._restoredChain = restored;
     }
 
-    /// <summary>
-    /// Serializes the frame chain. CallStack owns the list structure; each frame
-    /// serializes itself through <see cref="call.@this.WriteFrame"/> into its own
-    /// array cursor — the element is responsible for its own shape.
-    /// </summary>
-    public static void Write(global::app.snapshot.@this s, global::app.snapshot.Io io)
-    {
-        var frames = s.Read<List<global::app.snapshot.@this>>("frames")
-                     ?? new List<global::app.snapshot.@this>();
-        var append = io.PutSectionList("frames");
-        foreach (var frame in frames)
-            call.@this.WriteFrame(frame, append());
-    }
-
     public static void Read(global::app.snapshot.Io io, global::app.snapshot.@this s)
     {
         var frames = new List<global::app.snapshot.@this>();

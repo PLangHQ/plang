@@ -16,41 +16,41 @@ namespace app.snapshot;
 /// </summary>
 public sealed partial class @this
 {
-    /// <summary>Serializes this snapshot tree to its wire JSON string.</summary>
-    public string Serialize(global::app.actor.context.@this? context = null)
+    /// <summary>
+    /// Serializes this snapshot to its wire string. The snapshot rides as the
+    /// Value of a <c>snapshot</c>-typed Data through the channel serializer, so
+    /// its own leaf-serializer (<see cref="serializer.Default"/>) renders it
+    /// format-agnostically — the snapshot never names a format. Non-signing Store
+    /// view (a snapshot is internal in-process state, not an actor-boundary
+    /// crossing). A context is required so the renderer + type registry are in
+    /// scope.
+    /// </summary>
+    public string Serialize(global::app.actor.context.@this context)
     {
-        var opts = WireOptions(context);
-        var root = new JsonObject();
-
-        void Emit(string name, System.Action<@this, Io> write)
+        var serializer = new global::app.channel.serializer.plang.@this(context);
+        var d = new global::app.data.@this<@this>("", this, new global::app.type.@this("snapshot"))
         {
-            if (!HasSection(name)) return;
-            var node = new JsonObject();
-            write(Section(name), new Io(node, opts));
-            root[name] = node;
-        }
-
-        Emit("Variables", global::app.variable.list.@this.Write);
-        Emit("Errors",    global::app.error.list.@this.Write);
-        Emit("Providers", global::app.module.code.@this.Write);
-        Emit("Statics",   global::app.Statics.@this.Write);
-        Emit("Build",     global::app.module.builder.@this.Write);
-        Emit("Testing",   global::app.tester.@this.Write);
-        Emit("CallStack", global::app.callstack.@this.Write);
-
-        return root.ToJsonString(opts);
+            Context = context,
+        };
+        return JsonSerializer.Serialize(d, serializer.SnapshotOptions);
     }
 
     /// <summary>
-    /// Reconstructs a snapshot tree from its wire JSON. The result is the same
+    /// Reconstructs a snapshot tree from its wire string. The result is the same
     /// in-memory shape <see cref="global::app.@this.Snapshot"/> produces, so
-    /// <see cref="global::app.@this.Restore"/> consumes it unchanged.
+    /// <see cref="global::app.@this.Restore"/> consumes it unchanged. The wire is
+    /// the Data envelope <c>{name, type, value:{…sections…}}</c>; the sections
+    /// object is read back per-section (the owner's type knowledge rebuilds each).
     /// </summary>
     public static @this Deserialize(string json, global::app.actor.context.@this? context = null)
     {
         var opts = WireOptions(context);
-        var root = JsonNode.Parse(json)?.AsObject()
+        var parsed = JsonNode.Parse(json)?.AsObject()
             ?? throw new JsonException("Snapshot wire root is not a JSON object");
+        // Envelope-tolerant: a Data envelope nests the sections under "value".
+        var root = parsed["value"] is JsonObject value && (parsed.ContainsKey("type") || parsed.ContainsKey("name"))
+            ? value
+            : parsed;
         var s = new @this();
 
         void Load(string name, System.Action<Io, @this> read)

@@ -15,9 +15,6 @@ public sealed partial class @this : ISnapshot
     public static void Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
         => context.App.Builder.IsEnabled = s.Read<bool>("isEnabled");
 
-    public static void Write(global::app.snapshot.@this section, global::app.snapshot.Io io)
-        => io.Put("isEnabled", section.Read<bool>("isEnabled"));
-
     public static void Read(global::app.snapshot.Io io, global::app.snapshot.@this section)
         => section.Write("isEnabled", io.Get<bool>("isEnabled"));
 }

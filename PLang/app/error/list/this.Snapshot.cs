@@ -18,13 +18,6 @@ public sealed partial class @this : ISnapshot
         global::app.error.trail.@this.Restore(s.Section("trail"), context);
     }
 
-    /// <summary>Delegates the trail subtree to Trail's own wire shape (it owns the entries).</summary>
-    public static void Write(global::app.snapshot.@this s, global::app.snapshot.Io io)
-    {
-        if (!s.HasSection("trail")) return;
-        global::app.error.trail.@this.Write(s.Section("trail"), io.PutSection("trail"));
-    }
-
     public static void Read(global::app.snapshot.Io io, global::app.snapshot.@this s)
     {
         var sub = io.GetSection("trail");
