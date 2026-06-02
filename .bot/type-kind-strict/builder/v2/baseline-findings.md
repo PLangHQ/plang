@@ -51,7 +51,26 @@ Better framing for a bootstrap: the real test is a FIXPOINT — build with the s
 use the OUTPUT as the running builder, build again; stable = it reproduces itself. The
 fixed-oracle harness is a proxy.
 
-## PIVOT: the dominant failure is nano returning empty `{}`, not prompt size
+## CORRECTION (Ingi was right): it was NOT nano — it was a POISONED CACHE
+The "empty {} ~80%" conclusion was WRONG. A failing build showed **20 `[≡]` cached, 0 `[✓]`
+fresh** — every step a cache hit. The `llmcache` table held a degenerate planner entry
+(`"description":"No goal steps were…"`) and empty/bad compile entries that got **replayed**.
+`--build cache:false` did NOT give clean builds: `%!build.cache%` correctly = False, but the
+local llmcache was still being served (cache:false bypass is incomplete for the build path —
+real bug to file). So every measurement above (1/5, 0/5, 0/3) was **cache replay, not the
+model**. After `DELETE FROM llmcache`, the minimal set-default goal builds cleanly every run.
+
+Cache DBs: `os/.db/system.sqlite`, `os/system/.db/system.sqlite`, `Tests/.db/system.sqlite`
+(table `llmcache`, cols `key,data`). No `sqlite3` binary — use Python's `sqlite3` module.
+
+**Consequences:**
+- The harness MUST clear `llmcache` before measuring (cache:false is not enough). Added.
+- The builder may be far healthier than the polluted baselines implied — re-measuring fresh.
+- Two real bugs to track: (1) `cache:false` doesn't fully bypass the local llmcache on the
+  build path; (2) degenerate/empty LLM responses get cached and replayed (no validation
+  before caching) — a single bad response poisons all future builds until cleared.
+
+## (SUPERSEDED) PIVOT: the dominant failure is nano returning empty `{}`, not prompt size
 Measured `set default %x% = Y` compile reliability (minimal 3-step goal, cache:false, ×5):
 - original Compile.llm (16 KB): **1/5**
 - slim Compile.llm (3.5 KB): **1/5**
@@ -76,6 +95,22 @@ nano reliably returns a formal STRING under a minimal `{formal:string}` schema b
 committing to the parser — quick test: temporarily set QueryAndVerify Schema minimal, measure.)
 
 Retry-on-empty alone can't rescue an 80% empty rate across 104 steps (0.8^104 ≈ 0).
+
+## TRUE baseline (clean cache + slim prompts): 97 fresh, 1 real bug
+Cleared llmcache, ran one fresh self-build (cwd=os/, 8 files):
+- **97 `[✓]` fresh, 0 `[≡]` cached, ZERO "no actions"** — the empty-actions failure is GONE.
+- Build still exits 1 on ONE real, non-cache bug at `BuildStep/Start.goal:25` (Compile):
+  `DeserializationFailed: Failed to deserialize List\`1 to this: Expected string or object
+  for app.type.@this, got StartArray`. A compile `type` field came back as a JSON ARRAY;
+  the type-kind-strict deserializer wants string or object. This is the next real target
+  (type-kind-strict territory) — NOT cache, NOT nano-empty, NOT prompt size.
+  Likely fix: either the LLM emits a list type as an array (clarify in CompileUser/Type
+  reference) OR `app.type.@this`'s JSON deserializer should handle/reject an array case
+  (runtime — Ingi OK'd runtime changes for this). Capture the raw type value next.
+
+Harness updated: clears llmcache before EACH trial (cache:false isn't enough). The restore
+in selfbuild.sh was already correct (`git -C $REPO`); only my one-off manual command had the
+cwd bug.
 
 ## Status of prompt-slimming (levers 1+3) — DONE, kept, non-regressing
 - Compile.llm 16 KB → 3.5 KB (formal-centric, dedup, missingVariable removed, "map clauses —

@@ -43,7 +43,20 @@ RESULTS="$OUT/selfbuild_$(date +%s).jsonl"; : > "$RESULTS"
 echo "selfbuild: N=$N  plang=$PLANG"
 echo
 
+clear_cache() {
+  # cache:false does NOT fully bypass the local llmcache on the build path, and a
+  # single degenerate/empty response gets cached + replayed — poisoning every later
+  # build. Clear it before each trial so we measure the MODEL, not stale cache.
+  python3 - <<'PY'
+import sqlite3, os
+for db in ['os/.db/system.sqlite','os/system/.db/system.sqlite']:
+    if os.path.exists(db):
+        c=sqlite3.connect(db); c.execute('DELETE FROM llmcache'); c.commit(); c.close()
+PY
+}
+
 for i in $(seq 1 "$N"); do
+  ( cd "$REPO" && clear_cache )
   before="$(ls "$TRACES" 2>/dev/null | sort || true)"
   start=$(date +%s.%N)
   ( cd "$OSDIR" && "$PLANG" "--build={\"files\":$FILES_JSON,\"cache\":false}" ) >"$OUT/selfbuild_$i.log" 2>&1
