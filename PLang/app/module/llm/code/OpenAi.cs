@@ -70,8 +70,19 @@ public sealed class OpenAi : ILlm
         model ??= await ResolveConfigAsync(settings, "llm.model", null, "gpt-5.4-nano");
 
         // --- Validate ---
-        if (action.Messages.Value!.Count == 0)
-            return global::app.data.@this<object>.FromError(new ActionError("Messages list is empty", "ValidationError", 400));
+        // HACK (minimal): Messages.Value can be NULL (not just empty) — the [IsNotNull]
+        // guard checks the parameter's presence, not the lazily-resolved value. Seen in the
+        // builder self-build: when error.handle RETRIES QueryAndValidatePlan
+        // (BuildGoal/Plan.goal:26), the parent-scope %messages% variable resolves to null on
+        // the retry (it's fine on the first call), so `action.Messages.Value!.Count` NRE'd
+        // and crashed the whole build with a bare NullReferenceException. Treat null like
+        // empty → clean ValidationError instead of a crash.
+        // TODO(coder): real fix is in the retry/scope handling — a sub-goal's access to a
+        // parent-scope variable should survive an error.handle retry (or pass %messages% as
+        // a goal.call parameter to QueryAndValidatePlan so it re-binds each attempt). See
+        // .bot/type-kind-strict/builder/v2/baseline-findings.md.
+        if (action.Messages.Value is not { Count: > 0 })
+            return global::app.data.@this<object>.FromError(new ActionError("Messages list is empty or null", "ValidationError", 400));
 
         // --- Build messages ---
         var messages = CloneMessages(action.Messages.Value!);
