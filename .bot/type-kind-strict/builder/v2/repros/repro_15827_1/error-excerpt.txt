@@ -1,0 +1,30 @@
+  Step 0 build error: llm.query: Cannot convert System.String to app.module.llm.LlmMessage. Source value: "[{"Role":"system","Content":"# Step Compiler
+
+You are the PLang compiler. The planner gave you the *…" (string, 14610 chars)
+
+
+  Build error in Validate: llm.query: Cannot convert System.String to app.module.llm.LlmMessage. Source value: "[{"Role":"system","Content":"# Step Compiler
+
+You are the PLang compiler. The planner gave you the *…" (string, 14610 chars)
+
+
+🔴   ================== TypeMismatch(400) ==================   🔴
+🧩 Key:  TypeMismatch
+#️⃣  StatusCode:  400
+🕑 Time: 06/02/2026 10:31:44
+
+🔍   ================== Error Details ==================   🔍
+
+🧐 Reason: 
+    llm.query: Cannot convert System.String to app.module.llm.LlmMessage. Source value: "[{"Role":"system","Content":"# Step Compiler
+
+You are the PLang compiler. The planner gave you the *…" (string, 14610 chars)
+
+🛝  Call stack:
+    QueryAndVerify - /system/builder/BuildStep/Start.goal:47
+    QueryAndVerify - /system/builder/BuildStep/Start.goal:47
+    Compile - /system/builder/BuildStep/Start.goal:30
+    Compile - /system/builder/BuildStep/Start.goal:15
+    Start - /system/builder/BuildStep/Start.goal:7
+    Start - /system/builder/BuildStep/Start.goal:6
+    Start - /system/builder/BuildGoal/Start.goal:16
