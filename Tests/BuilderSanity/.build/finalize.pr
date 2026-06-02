@@ -17,31 +17,32 @@
             {
               "name": "Name",
               "value": "%label%",
-              "type": "variable"
+              "type": {
+                "name": "variable"
+              }
             },
             {
               "name": "Value",
               "value": "%label%-and-done",
-              "type": "string"
-            },
-            {
-              "name": "Type",
-              "value": "string",
-              "type": "string"
+              "type": {
+                "name": "text"
+              }
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
               "value": false,
-              "type": "bool"
+              "type": {
+                "name": "bool"
+              }
             }
           ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%label%, Value=\u0022%label%-and-done\u0022, Type=string)",
+      "formal": "variable.set(Name=%label%, Value=\u0022%label%-and-done\u0022)",
       "source": null,
       "waitForExecution": true
     }

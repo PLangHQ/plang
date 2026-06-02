@@ -1,0 +1,31 @@
+{
+  "branch": "type-kind-strict",
+  "sessions": [
+    {
+      "id": "2ce86748-c49a-4cc4-b0ee-7cbb4caf20f1",
+      "bot": "builder",
+      "timestamp_start": "2026-06-02T00:22:04Z",
+      "timestamp_end": null,
+      "intent": "Plan how to make the builder's self-build reliable on nano via prompt slimming, schema-drift fix, formal-grammar pinning, and a scored subagent competition gated on an eval harness.",
+      "before": {
+        "assumptions": "Self-build flakiness on nano stems from oversized accreted always-on prompts (Plan.llm/Compile.llm), per-action prose misplaced into the stable prompt instead of the lazy os/system/modules/* markdown, and a prompt-vs-schema contradiction (QueryAndVerify schema lacks `modifiers` and types `type?:string` while prompts demand modifier-nesting + structured {name,kind,strict}). Bigger-model JsonParseError is consistent with that drift.",
+        "risk": "A competition can optimize the builder into reliability while regressing ordinary builds (overfit). The eval is the load-bearing part; without a held-out generalization set and a pass-rate gate, scoring is gameable and noise-dominated (self-build is non-deterministic)."
+      },
+      "plan": ".bot/type-kind-strict/builder/v2/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/type-kind-strict/builder/v2/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote the full plan (diagnosis A-D, levers 1-4, harness design, lexicographic scoring with pass-rate gate, execution sequence) so the multi-session harness work isn't lost. No prompt/code edits yet — planning only."
+        }
+      ],
+      "after": {
+        "status": "plan written; awaiting Ingi's go-ahead on corpus contents, N (trials), M (agents), and harness implementation medium before building the harness",
+        "health": "green",
+        "notes": "Levers split: competition scope = Plan.llm/Compile.llm/CompileUser.llm/os/system/modules/* (read-fresh, no bootstrap rebuild). Out of competition: schema fix #2 (.goal, needs rebuild) and formal-grammar pinning #3 (feeds #4 formal-as-sole-output, needs coder handoff)."
+      }
+    }
+  ]
+}
