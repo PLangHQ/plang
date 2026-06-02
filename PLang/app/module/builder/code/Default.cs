@@ -495,7 +495,35 @@ public class Default : IBuilder
                     if (app.Type.IsClrTypeName(goalCall.Name))
                         validationErrors.Add($"{a.Module}.{a.ActionName}: goal.call.Name '{goalCall.Name}' is a CLR type name. This is a build pipeline leak (likely a template rendering an object via ToString() instead of .Name). Use the actual goal name from the step text.");
                     else if (goalCall.Name.Contains('.'))
-                        validationErrors.Add($"{a.Module}.{a.ActionName}: goal.call.Name '{goalCall.Name}' looks like a type name. Goal names are simple identifiers (e.g. 'BuildGoalCore', 'HandleValidationError'). Use the actual goal name from the @known mapping or the step text.");
+                    {
+                        // Repair the recurring LLM leak of stuffing the formal goal.call
+                        // notation into the goal NAME itself — e.g. event.on's GoalToCall
+                        // coming back as "goal.call(LogBefore)" / "goal.call LogBefore".
+                        // The real name is the inner identifier. Repair + warn rather than
+                        // reject: rejecting triggers a FixValidation retry that tends to
+                        // DEGRADE (nano returns prose in `formal` and a bare `goal` param,
+                        // dropping the required Trigger → "trigger must have a value" at
+                        // runtime). Mirrors the module-name-separator repair above.
+                        var m = System.Text.RegularExpressions.Regex.Match(
+                            goalCall.Name, @"^goal\.call\s*\(?\s*([A-Za-z_][\w/]*)\s*\)?$",
+                            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                        if (m.Success)
+                        {
+                            a.Warnings.Add(new Info {
+                                Key = "GoalCallNameRepaired",
+                                Message = $"goal.call.Name '{goalCall.Name}' carried the formal goal.call notation; repaired to '{m.Groups[1].Value}'."
+                            });
+                            // Name is init-only; rebuild with the repaired name, carry the rest.
+                            p.Value = new GoalCall {
+                                Name = m.Groups[1].Value,
+                                Parallel = goalCall.Parallel,
+                                Parameters = goalCall.Parameters,
+                                PrPath = goalCall.PrPath,
+                            };
+                        }
+                        else
+                            validationErrors.Add($"{a.Module}.{a.ActionName}: goal.call.Name '{goalCall.Name}' looks like a type name. Goal names are simple identifiers (e.g. 'BuildGoalCore', 'HandleValidationError'). Use the actual goal name from the @known mapping or the step text.");
+                    }
                 }
             }
 
