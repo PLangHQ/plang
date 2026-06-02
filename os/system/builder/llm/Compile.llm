@@ -34,6 +34,8 @@ Everything else (`goal.call`, `variable.set`, `condition.if`, `loop.foreach`, `o
 
 `…, write to %x%` → a trailing peer `variable.set(Name=%x%, Value=%!data%)` after the producer (never a modifier). `%!data%` is the immediately preceding action's return value — use it ONLY to thread one action's result into the next when the text says so. It is not a fill-in for an unsupplied slot.
 
+**`(type)` hint on a write target:** a `(<kind>)` token after a write target sets the trailing `variable.set`'s `Type` — e.g. `write to %answer%(json)` → `Type` with that kind (map the kind to its name per the Type reference). PLang's parser ignores `(...)`; it's prose you read.
+
 ## Output shape
 
 ```json
