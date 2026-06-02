@@ -315,6 +315,15 @@ public partial class @this
     /// </summary>
     private static object SetValueOnObject(object target, string propertyName, object? value)
     {
+        // Snapshot — editing a captured variable routes to the snapshot's own
+        // SetVariable (the owner), so `set %snap.variables.x% = 2` lands on the
+        // list Restore reads. Behavior on the owner, not reached-into here.
+        if (target is global::app.snapshot.@this snap)
+        {
+            snap.SetVariable(propertyName, value);
+            return target;
+        }
+
         // Dictionary — set key directly (case-insensitive lookup)
         if (target is IDictionary<string, object?> dict)
         {

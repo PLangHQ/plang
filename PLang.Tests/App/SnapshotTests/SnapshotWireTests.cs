@@ -245,6 +245,47 @@ public class SnapshotWireTests
     }
 
     [Test]
+    public async Task NavigateAndEditCapturedVariable_ThenResumeToSuccess()
+    {
+        // The PLang fix-and-replay loop, in C#: read a snapshot back, navigate
+        // %snap.variables.x% (read), edit it (set), then resume — the edit flows
+        // into resumed execution. Mirrors the .test.goal.
+        var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-nav-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var context = app.User.Context;
+
+        var goal = new Goal { Name = "G", Path = "/G.goal", PrPath = "/G.pr" };
+        var step0 = SetStep(0, "x", "1");                step0.Goal = goal;
+        var step1 = SetStepRef(1, "seen", "%x%");        step1.Goal = goal;   // reads the edited value
+        goal.Steps.Add(step0); goal.Steps.Add(step1);
+        app.Goal.Add(goal);
+
+        // Suspend at step1 with %x% = 1 captured.
+        context.Variable.Set("x", 1L);
+        string json;
+        await using (var call = context.App.CallStack.Push(goal.Steps[1].Actions[0], context.Variable))
+        {
+            json = app.SnapshotToWire(app.Snapshot());
+        }
+
+        // Read the snapshot back as a value, bind it under %snap%.
+        var snap = global::app.snapshot.@this.Deserialize(json, context);
+        context.Variable.Set("snap", snap);
+
+        // Navigate + read: %snap.variables.x% is 1.
+        await Assert.That(System.Convert.ToInt64(context.Variable.Get("snap.variables.x").Value)).IsEqualTo(1L);
+
+        // Edit: set %snap.variables.x% = 2 — routes to the snapshot's SetVariable.
+        context.Variable.Set("snap.variables.x", 2L);
+        await Assert.That(System.Convert.ToInt64(context.Variable.Get("snap.variables.x").Value)).IsEqualTo(2L);
+
+        // Resume the edited snapshot — step1 reads the patched %x%.
+        var result = await snap.Resume(context);
+        await result.IsSuccess();
+        await Assert.That(System.Convert.ToInt64(context.Variable.GetValue("seen"))).IsEqualTo(2L);
+    }
+
+    [Test]
     public async Task EmptyApp_WireIsValidJson_AndRestoresClean()
     {
         var src = new global::app.@this("/src");
