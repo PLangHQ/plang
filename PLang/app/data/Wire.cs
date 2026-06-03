@@ -353,12 +353,20 @@ public sealed class Wire : JsonConverter<@this>
             if (hasName && hasValue) break;
         }
 
+        // Lean: deserialize straight from the parsed element (no GetRawText
+        // string round-trip — one parse, not two). Envelope-recognition stays:
+        // recognizing our own canonical Data shape is the Wire serializer's job
+        // as a leaf, not the banned content-format sniffing (Stage 5) and not a
+        // courier reaching into .Value. A nested Data in a bare untyped slot has
+        // no type slot to drive it (no `data` type exists, and json.Writer emits
+        // a nested Data inline with a type slot only when !Type.IsNull), so this
+        // recognition is what keeps it from degrading to a dict.
         if (!(hasName && hasValue))
         {
-            return JsonSerializer.Deserialize<object?>(element.GetRawText(), options);
+            return element.Deserialize<object?>(options);
         }
 
-        return JsonSerializer.Deserialize<@this>(element.GetRawText(), options);
+        return element.Deserialize<@this>(options);
     }
 
     public override void Write(Utf8JsonWriter writer, @this data, JsonSerializerOptions options)

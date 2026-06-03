@@ -1,38 +1,75 @@
+using System.Reflection;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
+using data = global::app.data.@this;
+using plang = global::app.channel.serializer.plang.@this;
 
 namespace PLang.Tests.App.LazyDeserialize.LazyDataTests;
 
-// app/data/Wire.cs:141 today eagerly deserialises the value slot via
-// `LiftDataIfShaped` / `Deserialize<object?>`. Stage 3 captures the value
-// slot's raw json into `_raw`, stamps `type`/`kind` from the type slot,
-// and defers materialisation. This is what makes wire-sourced Data pass
-// through verbatim and verify against the original bytes.
+// Architect call #3 (2026-06-03): Wire.Read defers (captures _raw) only when
+// the type slot is present; untyped slots stay eager. LiftDataIfShaped is kept
+// LEAN — envelope-recognition stays (a leaf serializer recognizing its own
+// canonical shape, not banned format-sniffing), only the GetRawText double-
+// parse is dropped. Signing recanonicalizes (no "verify on raw").
 public class WireReadLazyTests
 {
-    [Test] public async Task WireRead_CapturesValueSlotRaw_DefersMaterialisation() { throw new System.NotImplementedException("not implemented"); }
+    private static data RoundTrip(data d)
+        => (data)plang.ContextLessFallback.Deserialize(plang.ContextLessFallback.Serialize(d).Value!).Value!;
 
-    // Behaviour-level pin: a payload with a malformed value slot (e.g. a
-    // truncated number string) does not throw at Wire.Read time. The error
-    // surfaces only when `.Value` is touched.
-    [Test] public async Task WireRead_DoesNotEagerlyDeserialiseValueSlot() { throw new System.NotImplementedException("not implemented"); }
+    // Typed value-slot deferral pairs with Stage 4 (channel.read is the natural
+    // origin of raw-backed wire Data, and it carries the context the registry
+    // needs to materialize — Wire.Read itself has no context). Deferred here.
+    [Test] public async Task WireRead_CapturesValueSlotRaw_DefersMaterialisation()
+        => throw new System.NotImplementedException("deferred to Stage 4: typed-slot deferral needs context at materialize (channel.read provides it)");
 
-    [Test] public async Task WireRead_StampsTypeKindFromTypeSlot() { throw new System.NotImplementedException("not implemented"); }
+    [Test] public async Task WireRead_DoesNotEagerlyDeserialiseValueSlot()
+        => throw new System.NotImplementedException("deferred to Stage 4: typed-slot deferral");
 
-    // Independent #20a — the reflection probe: app/data/Wire.cs:346 private
-    // static `LiftDataIfShaped` is gone by name.
-    [Test] public async Task LiftDataIfShaped_MethodIsGone() { throw new System.NotImplementedException("not implemented"); }
+    // Testable now (eager): a typed Data round-trips its type/kind through the
+    // type slot.
+    [Test] public async Task WireRead_StampsTypeKindFromTypeSlot()
+    {
+        var d = data.Ok(5);                 // number / int derived
+        d.Name = "n";
+        var back = RoundTrip(d);
+        await Assert.That(back.Type.Name).IsEqualTo("number");
+        await Assert.That(back.Kind).IsEqualTo("int");
+    }
 
-    // Independent #20b — the behaviour probe: a payload with `name`+`value`
-    // keys at the value slot stays as a dict. No shape guess, no double-
-    // parse. Two-prong because the method could be renamed without the
-    // heuristic actually being removed.
-    [Test] public async Task LiftDataIfShaped_BehaviourIsGone() { throw new System.NotImplementedException("not implemented"); }
+    // Flipped (architect call #3): LiftDataIfShaped is KEPT lean, not deleted —
+    // pin that the private static method still exists.
+    [Test] public async Task LiftDataIfShaped_KeptLean_StillExists()
+    {
+        var m = typeof(global::app.data.Wire).GetMethod("LiftDataIfShaped",
+            BindingFlags.NonPublic | BindingFlags.Static);
+        await Assert.That(m).IsNotNull();
+    }
 
-    // The case `LiftDataIfShaped` covered. After deletion, a genuinely
-    // nested Data round-trips because the containing type's reader
-    // (e.g. `Signature` rebuilding its Data field) does the
-    // reconstruction — not a key-shape guess on the json.
-    [Test] public async Task NestedSignedData_RebuiltByContainingTypeReader_NotByKeyGuess() { throw new System.NotImplementedException("not implemented"); }
+    // Flipped: envelope-recognition STAYS. A nested Data in a bare untyped value
+    // slot round-trips as a Data (not degraded to a dict) via lean recognition.
+    [Test] public async Task NestedDataInUntypedSlot_RecognizedAsData_NotDict()
+    {
+        var inner = data.Ok("hello");
+        inner.Name = "inner";
+        var outer = data.Ok(inner);
+        outer.Name = "outer";
+        var back = RoundTrip(outer);
+        await Assert.That(back.Value).IsTypeOf<data>();
+        await Assert.That(((data)back.Value!).Value).IsEqualTo((object)"hello");
+    }
+
+    // The case LiftDataIfShaped covers: a genuinely nested Data round-trips and
+    // stays a reconstructed Data (so its signature would reach signing.verify),
+    // via the lean envelope-recognition — one parse, no key-shape double-parse.
+    // (Full sign→wire→verify is integration Cut 3.)
+    [Test] public async Task NestedSignedData_RebuiltByContainingTypeReader_NotByKeyGuess()
+    {
+        var inner = data.Ok("payload");
+        inner.Name = "inner";
+        var outer = data.Ok(inner);
+        outer.Name = "outer";
+        var back = RoundTrip(outer);
+        await Assert.That(back.Value).IsTypeOf<data>();
+    }
 }
