@@ -49,19 +49,41 @@ public class TypeOwnedReadParityTests
 
     [Test] public async Task HashRead_MatchesPriorFromWireOutput()
     {
-        // app/module/crypto/type/hash/this.cs:72 — old FromWire.
-        throw new System.NotImplementedException("not implemented");
+        // hash's Read re-houses FromWire; the registry read equals FromWire.
+        var bytes = new byte[] { 1, 2, 3, 4, 250, 99 };
+        var b64 = System.Convert.ToBase64String(bytes);
+        var r = new global::app.type.reader.@this();
+        var rc = new global::app.type.reader.ReadContext(null);
+        var via = r.Of("hash", null)!(b64, "keccak256", rc) as global::app.module.crypto.type.hash.@this;
+        var prior = global::app.module.crypto.type.hash.@this.FromWire(b64, "keccak256") as global::app.module.crypto.type.hash.@this;
+        await Assert.That(via).IsNotNull();
+        await Assert.That(via!.ToBase64()).IsEqualTo(prior!.ToBase64());
+        await Assert.That(via.Algorithm).IsEqualTo(prior.Algorithm);
     }
 
-    [Test] public async Task ErrorRead_MatchesPriorErrorWireOutput()
+    [Test] public async Task ErrorWire_RoundTrips_AsSpecializedSnapshotConverter()
     {
-        // app/error/IError.Wire.cs:33 — old ErrorWire.
-        throw new System.NotImplementedException("not implemented");
+        // error stays snapshot-specialized (architect call) — ErrorWire is not
+        // folded into the value-reader registry. Pin that the specialized
+        // converter still round-trips an Error verbatim (no behavior change).
+        var err = new global::app.error.Error("boom", "BoomKey", 418);
+        var opts = new System.Text.Json.JsonSerializerOptions
+        { Converters = { new global::app.error.ErrorWire() } };
+        var json = System.Text.Json.JsonSerializer.Serialize<global::app.error.IError>(err, opts);
+        var back = System.Text.Json.JsonSerializer.Deserialize<global::app.error.IError>(json, opts);
+        await Assert.That(back!.Message).IsEqualTo("boom");
+        await Assert.That(back.Key).IsEqualTo("BoomKey");
+        await Assert.That(back.StatusCode).IsEqualTo(418);
     }
 
     [Test] public async Task TimeSpanRead_MatchesPriorTimeSpanIso8601Output()
     {
-        throw new System.NotImplementedException("not implemented");
+        // duration's Read parses ISO-8601 to the same TimeSpan the format-layer
+        // TimeSpanIso8601 converter produced (XmlConvert.ToTimeSpan).
+        var r = new global::app.type.reader.@this();
+        var rc = new global::app.type.reader.ReadContext(null);
+        var via = r.Of("duration", "iso8601")!("PT30S", "iso8601", rc);
+        await Assert.That(via).IsEqualTo((object)System.Xml.XmlConvert.ToTimeSpan("PT30S"));
     }
 
     [Test] public async Task ObjectJsonRead_MatchesPriorPlangJsonReaderOutput()

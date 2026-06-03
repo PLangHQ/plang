@@ -48,8 +48,18 @@ public class PerTypeReadEntriesTests
         var r = new global::app.type.reader.@this();
         await Assert.That(r.Of("image", "png")).IsNotNull();
     }
-    // TimeSpanIso8601 folds in — duration owns the iso8601 kind.
-    [Test] public async Task Reader_Of_DurationIso8601_ReturnsDelegate() { throw new System.NotImplementedException("not implemented"); }
-    // crypto.hash's FromWire folds in — hash owns the default-binary kind.
-    [Test] public async Task Reader_Of_HashDefault_ReturnsDelegate() { throw new System.NotImplementedException("not implemented"); }
+    // duration owns the iso8601 kind in the reader registry (its Read parses
+    // ISO-8601 + .NET forms). The format-layer TimeSpanIso8601 STJ converter
+    // stays separate (architect call) — see ConverterDeletionsTests.
+    [Test] public async Task Reader_Of_DurationIso8601_ReturnsDelegate()
+    {
+        var r = new global::app.type.reader.@this();
+        await Assert.That(r.Of("duration", "iso8601")).IsNotNull();
+    }
+    // crypto.hash's FromWire re-houses as hash's Read (default kind).
+    [Test] public async Task Reader_Of_HashDefault_ReturnsDelegate()
+    {
+        var r = new global::app.type.reader.@this();
+        await Assert.That(r.Of("hash", global::app.type.reader.@this.AnyKind)).IsNotNull();
+    }
 }

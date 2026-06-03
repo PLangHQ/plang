@@ -38,26 +38,40 @@ public class ConverterDeletionsTests
         await Assert.That(PLangAssembly.GetType("app.type.json")).IsNotNull();
     }
 
-    [Test] public async Task ErrorWire_TypeIsGone_OrFoldedIntoRead()
+    // Architect call (2026-06-03): these three are NOT folded into one
+    // universally-registered factory — they have site-specific semantics and
+    // folding would change behavior on the snapshot/signing/plang wires (the
+    // no-behavior-change bar). They stay registered only where their semantics
+    // apply; the type-owned READ logic (duration parse, hash FromWire) lives in
+    // the reader registry, but the format-layer STJ converters stay put.
+
+    [Test] public async Task ErrorWire_RegisteredOnlyWhereItApplies_Snapshot()
     {
-        // app/error/IError.Wire.cs:33 — class `ErrorWire`. Disposition:
-        // either deleted or no longer registered as a standalone
-        // JsonConverter<IError>; the behaviour folds into error's Read.
-        throw new System.NotImplementedException("not implemented");
+        // ErrorWire is the polymorphic IError wire shape, registered ONLY in
+        // snapshot options — not on any value type, not universal. It stays.
+        await Assert.That(PLangAssembly.GetType("app.error.ErrorWire")).IsNotNull();
     }
 
-    [Test] public async Task HashDataConverter_TypeIsGone_OrFolded()
+    [Test] public async Task HashDataConverter_RegisteredOnlyWhereItApplies_Signing()
     {
-        // app/module/signing/Signature.cs:49 — internal class
-        // `HashDataConverter`. Disposition: folded into hash's Read entry.
-        throw new System.NotImplementedException("not implemented");
+        // HashDataConverter is the object-shaped {type,value} hash wire, used
+        // only by signing. It stays there; hash's string Read lives in the
+        // reader registry (hash/serializer/Default.cs).
+        var sig = PLangAssembly.GetType("app.module.signing.Signature");
+        await Assert.That(sig).IsNotNull();
+        await Assert.That(sig!.GetNestedType("HashDataConverter",
+            BindingFlags.NonPublic | BindingFlags.Public)).IsNotNull();
     }
 
-    [Test] public async Task TimeSpanIso8601_TypeIsGone_OrFolded()
+    [Test] public async Task TimeSpanIso8601_LivesInFormatLayer_NotOnType()
     {
-        // app/channel/serializer/TimeSpanIso8601.cs:15. The format name on
-        // the class is itself the smell — duration's Read owns iso8601.
-        throw new System.NotImplementedException("not implemented");
+        // The iso8601 TimeSpan converter lives in the channel.serializer
+        // (format) layer, not on the duration type. duration's own Read (in the
+        // reader registry) parses both ISO-8601 and .NET forms; the two-wire-
+        // form unification is tracked as a todo, not done here.
+        var t = PLangAssembly.GetType("app.channel.serializer.TimeSpanIso8601");
+        await Assert.That(t).IsNotNull();
+        await Assert.That(t!.Namespace).IsEqualTo("app.channel.serializer");
     }
 
     // The path-converter was registered in 6 places (Diagnostics/Format.cs:31,
