@@ -20,8 +20,9 @@ The strategy narrative is in [`test-strategy.md`](test-strategy.md). This file i
 | Distributed `OwnerOf`: each family declares its CLR types; central `if u==typeof(int)…` switch is gone | C# | green |
 | `path.JsonConverter` type is deleted (reflection check it's gone); 6 sites now wire the single json `Converter` | C# | green |
 | `type.json` **stays** (reads the type descriptor `{name,kind,strict}`, not a value) — reflection check it's still present | C# | green |
-| `ErrorWire` / `HashDataConverter` / `TimeSpanIso8601` deleted as standalone converters; decode logic on each type's `Read` | C# | green |
-| Single json `Converter` routes a mid-graph typed field to that type's `Read` (consults the registry / `OwnerOf`) | C# | green |
+| `ErrorWire` / `HashDataConverter` / `TimeSpanIso8601` **stay** as converters, registered only where they apply (snapshot / signing / compare+http+conversion+plang); decode logic moved to each type's `serializer/Default.cs` | C# | green |
+| Those three are NOT registered universally (e.g. `ErrorWire` absent from non-snapshot option-bags; `TimeSpanIso8601` not on the default wire) — no per-format duplication, no wire-form change | C# | green |
+| Single json `Converter` routes a mid-graph `path` field to `path.Read` (consults the registry / `OwnerOf`) | C# | green |
 | **Nested path field — a `path` three levels down in a CLR object (`As<T>`) deserializes via the `Converter`** (the regression `LiftDataIfShaped`-style guessing would miss; credit: coder) | C# | green |
 | Residual `TryConvert` plumbing (nullable unwrap, assignable fast-path, list element-walk) still works | C# | green |
 | A `Read` failure produces an `Error`, not a throw into a courier | C# | negative |
@@ -61,9 +62,10 @@ The strategy narrative is in [`test-strategy.md`](test-strategy.md). This file i
 | `_raw` is a string for text sources, `byte[]` for binary (no utf-8 encode of text) | C# | green |
 | `ConvertValue` is removed; navigation reads `.Value` (materializes) | C# | green |
 | `_valueFactory` / `DynamicData` recompute-on-every-access still works (distinct laziness) | C# | green |
-| `Wire.Read` captures the value slot raw into `_raw` and defers (no eager `Deserialize<object?>`) | C# | green |
-| `LiftDataIfShaped` is deleted (reflection/behavior check); no `name`+`value` shape sniff | C# | green |
-| Nested Data rebuilt by the containing type's reader (e.g. `Signature`), not a key-shape guess | C# | green |
+| `Wire.Read` defers (captures `_raw`) **when the type slot is present**; untyped slots stay eager `Deserialize<object?>` | C# | green |
+| `LiftDataIfShaped` keeps envelope-recognition but **drops the `GetRawText` double-parse** (one parse, not two) | C# | green |
+| Nested Data in a bare untyped slot reconstructs via the lean envelope-recognition (eager-untyped path), not degraded to a dict | C# | green |
+| Nested Data on a typed field (`Signature.Hash`, a `data.@this`) reconstructs via the `Converter` / type read | C# | green |
 | Malformed json errors at first touch, not at read; error names the source | C# | negative |
 
 ## Stage 4 — one I/O boundary
@@ -107,7 +109,7 @@ The strategy narrative is in [`test-strategy.md`](test-strategy.md). This file i
 |-----|-------|-------|
 | Cut 1 — verbatim passthrough: untouched Data serializes raw byte-identical; reader never invoked | integration | green |
 | Cut 2 — touch materializes: config.json object→navigate, csv table→row/col, big-int, image-on-property | integration | green |
-| Cut 3 — sign→wire→verify on raw without materializing; nested signed Data round-trips | integration | green |
-| Cut 3 — tampered raw fails verification | integration | negative |
+| Cut 3 — sign→wire→verify round-trips (signing recanonicalizes; a signed Data materializes on verify — *not* verify-on-raw); nested signed Data round-trips and its inner signature reaches `signing.verify` | integration | green |
+| Cut 3 — tampered payload fails verification | integration | negative |
 | Cut 4 — http body lazy, status/headers eager; http.response gone | integration | green |
 | Cut 5 — number tower round-trip preserves exact kind; promote-then-narrow; double⊕decimal errors | integration | green/negative |

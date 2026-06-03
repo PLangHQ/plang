@@ -19,8 +19,8 @@ The read side and the write side of the value model are out of balance, and it s
 
 Two payoffs are worth stating up front because they're the strongest reasons to do this, and the original proposal buried them:
 
-- **Verbatim passthrough.** A `Data` that is never touched serializes its bytes straight back out — no parse-then-reserialize. Couriers (variable memory, callstack, channel routing, signing) physically cannot force materialization. The OBP courier rule (only leaves touch `.Value`) becomes enforced by construction instead of by discipline.
-- **Verify a signature without materializing.** A signature is over the bytes. Holding the bytes verbatim lets us verify exactly what arrived, instead of parsing and re-serializing to a canonical form that might not match what was signed.
+- **Verbatim passthrough.** A `Data` that is never touched serializes its raw straight back out — no parse-then-reserialize. Couriers (variable memory, callstack, channel routing) that don't read `.Value` cannot force materialization. The OBP courier rule (only leaves touch `.Value`) becomes enforced by construction instead of by discipline.
+- **Relay without forced materialization.** A typed value can be routed/stored/forwarded without parsing it. (This was originally framed as "verify a signature on the raw bytes" — that was wrong, and the code proves it: signing recanonicalizes deterministically via `Signature.ToSigningBytes`, so it never compares raw arrival bytes. See Decision 8.)
 
 ## The shape, in one sentence
 
@@ -84,7 +84,7 @@ These came from the design session and are settled.
        - write out %response.name%  / now body materializes: bytes → json → .name
    ```
 7. **`.plang` self-describing header** — out of scope. Stage 3 may stub the "type/kind from the payload's own header" case; the `.plang` format design lands elsewhere.
-8. **Signing.** Verify at the boundary, on the bytes, independent of materialization.
+8. **Signing — unchanged by lazy.** *(Corrected from an earlier draft after checking the code.)* Signing recanonicalizes deterministically — `Signature.ToSigningBytes` re-serializes with `SigningOptions` (Signature excluded, ordered), so verification recomputes the canonical form and never compares raw arrival bytes. The deterministic canonicalization already guarantees re-serialization matches, so there is no "verify on raw" to build. A signed Data therefore **materializes its value on verify** (recanonicalization touches it) — a legitimate touch, identical to today. Lazy changes nothing about when or how signatures are checked. Do **not** rewire signing to read `_raw`.
 
 ## Stages
 

@@ -9,7 +9,7 @@ This branch reshapes how `Data` is *read* — the mirror of the write-side `data
 Things that have to be true at the end:
 
 - **One reader decodes everything, with no output change.** `app.type.reader.Of(type, kind).Read(...)` replaces `type.Convert` / the `Convert` hooks / `FromWire` / `path.JsonConverter` / `type.json` / the `JsonConverter<T>` set — and Stage 1 changes *no* observable output (the suite is green before and after with no expected-output edits).
-- **Lazy works.** A value read from a source or off the wire is not parsed until touched. Untouched, it serializes its raw straight back out (verbatim passthrough); a signature verifies against the raw without materializing. Touched, it materializes correctly via the reader.
+- **Lazy works.** A value read from a source or off the wire is not parsed until touched. Untouched, it serializes its raw straight back out (verbatim passthrough). Touched, it materializes correctly via the reader. (Signing is unaffected — it recanonicalizes deterministically, so a signed Data materializes on verify; there is no verify-on-raw.)
 - **Numbers don't lose type.** The full C# scalar tower round-trips losslessly; arithmetic promotes-then-narrows (no silent overflow wrap); `double⊕decimal` errors.
 - **One boundary, shape-based types.** `file` and `http` read through `channel.read`; the body is lazy, status/headers are properties; `http.response` is gone. Types are stamped by shape: `config.json` → `{object, json}` (unchanged from today), `report.csv`/`.xlsx` → the new `{table, …}`.
 - **No guessing.** Type-unknown structured access errors and asks for `as <type>` — nothing sniffs content.
@@ -61,16 +61,16 @@ Rule of thumb: internal behavior (a method, the registry, the field split, the c
 - The big-int materializes to a `BigInteger` losslessly.
 - The image materializes only when a property is read, not at read time.
 
-### Cut 3: Sign → wire → verify on the raw
+### Cut 3: Sign → wire → verify
 
-**Setup:** A signed `Data`, including a **nested** signed Data (the case `LiftDataIfShaped` used to catch — e.g. a `Signature` carrying a Data).
+**Setup:** A signed `Data`, including a **nested** signed Data (a `Signature` carrying a Data, and a Data in a bare untyped value slot).
 
 **Capture:** Serialize, read back on the receiving side (`Wire.Read`), verify.
 
 **Must prove:**
-- Verification runs against `_raw` and succeeds without forcing `.Value` (assert the body wasn't materialized to verify).
-- The nested signed Data round-trips and its inner signature reaches `signing.verify` — without `LiftDataIfShaped`, via the type-driven reader.
-- A tampered raw fails verification.
+- Verification succeeds end-to-end. *(Signing recanonicalizes deterministically — `Signature.ToSigningBytes` — so verify recomputes the canonical form; a signed Data materializes on verify, which is fine. This is **not** verify-on-raw; don't assert the body stayed unmaterialized through verify.)*
+- The nested signed Data round-trips and its inner signature reaches `signing.verify` — reconstructed as a Data (via the type read for a typed field, or the lean envelope-recognition for a bare untyped slot), not degraded to a dict.
+- A tampered payload fails verification.
 
 ### Cut 4: http — body lazy, metadata eager
 

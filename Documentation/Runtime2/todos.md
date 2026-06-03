@@ -880,3 +880,9 @@ divergence is on the *write* side. Architect's call (2026-06-03): flag, don't fi
 here. Unify later — pick one canonical TimeSpan wire form and route both paths
 through it (likely the duration type's own renderer/Read once the format-layer
 `TimeSpanIso8601` converter is reconsidered).
+
+## Fully type-driven nested Data — retire envelope-recognition (2026-06-03, architect; from `lazy-deserialize` Stage 3)
+
+`lazy-deserialize` Stage 3 keeps a **lean** `LiftDataIfShaped` (`app/data/Wire.cs`): it recognizes a nested Data by its envelope shape (`name`+`value` keys) in the eager-untyped path, because a nested Data in a bare value slot has **no type slot** to drive reconstruction (there is no `data` type, and `json.Writer` emits a nested Data inline with a type slot only when `!Type.IsNull`). The `GetRawText` double-parse was dropped, but the shape-recognition remains.
+
+Endgame (separate branch): add a `data` type to the registry, stamp a Data-valued slot with it on **write**, and reconstruct nested Data purely via `Readers.Of("data", …)` — then the envelope-recognition can be deleted entirely and reconstruction is 100% type-driven (the branch thesis). This is a **wire-format + new-type change on the serialization core** (touches snapshot + signing round-trips), so it was held out of Stage 3. Pick up when the snapshot branch or a dedicated pass touches the wire shape. Note: recognizing the Data envelope is legitimately a leaf serializer's job (not the banned content-sniffing, not a courier #7) — so the lean version is correct interim, not a smell to rush.

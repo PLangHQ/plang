@@ -33,6 +33,10 @@ This replaces the `_i/_d/_f` tagged union and the `float→double` collapse. It 
    - `double` ⊕ `decimal` → **error, requires an explicit cast.** Neither holds the other exactly; C# forbids it without a cast, so does PLang. Don't silently pick one.
    - **Result kind** = the wider of the two operand kinds, widened *further only if the value overflows it*. `int + int` stays `int`; `3000000000u + 2000000000u` lands as `long` (not a silent `uint` wrap). Division producing a fraction → `decimal`/`double` per the operands.
 5. **Stamp = exact type.** `app/data/this.cs:242` (and `Build`) stamp the kind from `value.GetType()` across the whole tower — `typeof(float)` → `float`, `typeof(uint)` → `uint`, not `double`/`int`.
+6. **`NumberPolicy` stays — repurposed, not inert, not deleted.** `number` already carries a developer-facing `NumberPolicy {Overflow, Precision}` (math.* step params + config cascade via `MathPolicy.Resolve`). Way 3 sets the *defaults*; the policy is the developer's explicit override. Both axes stay live (do **not** gut to an inert shell — an ignored axis is a silent lie):
+   - **`Overflow`**: `Promote` (default) = Way 3 — BigInteger carrier → narrow to smallest fitting kind, never wraps (`int+int` over → `long`, `uint+uint` over-range → `long`). `Throw` = strict-width — keep the operand kind, error if the result doesn't fit (this is the "error on overflow" capability a developer can opt into).
+   - **`Precision`** (the `double ⊕ decimal` mix): default = **`Error`** (the developer must choose — Way 3's "don't silently pick"). `Double` / `Decimal` = standing choice that resolves the mix. Setting Precision *is* the explicit cast, declared once at config/step scope.
+   - **Behavior changes to document:** Precision default flips today's silent-`Double` → `Error` (the `DoublePlusDecimal_Errors` goal test expects it). `Promote` now spans the full tower. `Throw` redefined from "throw on overflow" to "strict-width error." Update the existing math arithmetic C# tests to these Way-3 expectations, documenting each.
 
 ## Design
 
