@@ -56,7 +56,7 @@ type/
   this.cs                            ~  Convert(raw) → registry dispatch entry; FromWire/WireReader fold in
   this.json.cs                       −  deletes (folds into the reader registry)
   convert/this.cs                    ~  OwnerOf switch → per-family "I own these CLR types" declarations
-  path/this.JsonConverter.cs         −  deletes (path's Read → path/serializer/Default.cs; 6 registration sites drop it)
+  path/this.JsonConverter.cs         −  deletes (path's Read → path/serializer/Default.cs; 6 sites wire the json `Converter` instead)
   number/this.cs                     ~  exact-CLR value + full scalar tower; drop _i/_d/_f union, NumberKind enum, Kinds
   number/this.Build.cs               ~  kind from the exact type (no float→double collapse)
   number/this.Convert.cs             ~  KindToClr covers the tower; promote-then-narrow for arithmetic
@@ -78,8 +78,9 @@ channel/
     IReader.cs                       +  read abstraction — mirror of IWriter
     json/writer.cs                   ·  json write — the text representation of the plang container
     json/reader.cs                   +  json read — mirror of json/writer.cs
+    json/converter.cs                +  the single STJ↔plang `Converter` — routes any plang-typed field to its Read/Write
     plang/this.cs                    ~  the application/plang container: read header → (type,kind) → defer body
-    TimeSpanIso8601.cs               −  folds into type/duration/serializer/Default.cs Read
+    TimeSpanIso8601.cs               −  deleted — duration owns Read/Write; the `Converter` routes to it
 
 format/list/this.cs                  ~  TypeFromMime/TypeFromExtension: shape-based — json/xml/yaml→object, csv/xlsx→table
 http/response/this.cs                −  deletes (dissolves into Data: body=value, status/headers/duration=properties)
@@ -136,8 +137,10 @@ Discovery mirrors the renderer exactly: a static `Read` sits next to `Write` in 
 - `type.Convert(raw)` (`app/type/this.cs:257`) → the registry's dispatch entry.
 - The per-family `Convert` hook invoked by `app.type.convert.Of` (`app/type/convert/this.cs:28`) → each family's `Read`.
 - `FromWire` / `WireReader` (`app/type/this.cs:282`; impls on crypto.hash, snapshot) → each type's `Read`. **Snapshot carve-out:** leave `snapshot.FromWire` and `app.Snapshot*` signatures; another branch owns snapshot. Adjust their internals only if needed to compile.
-- `path.JsonConverter` (`app/type/path/this.JsonConverter.cs`) → path's `Read`; the 6 registration sites (`Diagnostics/Format.cs:31`, `channel/serializer/Json.cs:47`, `channel/serializer/plang/this.cs:51`, `module/builder/this.cs:50`, `this.cs:420`, `type/list/Conversion.cs:42,64`) stop wiring a path-specific JSON converter.
-- `type.json` (`app/type/this.json.cs`) and the domain-coupled `JsonConverter<T>` set (`ErrorWire`, `signing.HashDataConverter`, `TimeSpanIso8601`) → `Read` entries. The genuinely STJ-shape plumbing for JSON itself stays inside the json reader.
+- `path.JsonConverter` (`app/type/path/this.JsonConverter.cs`) → its decode logic moves to **path's `Read`**; the path-owned converter *type* is **deleted**. Nested mid-graph path fields are served by the single json `Converter` below (not a path-owned converter); the 6 registration sites (`Diagnostics/Format.cs:31`, `channel/serializer/Json.cs:47`, `channel/serializer/plang/this.cs:51`, `module/builder/this.cs:50`, `this.cs:420`, `type/list/Conversion.cs:42,64`) wire that `Converter` instead.
+- The domain-coupled `JsonConverter<T>` value converters (`ErrorWire`, `signing.HashDataConverter`, `TimeSpanIso8601`) → decode logic moves to the owning type's `Read`; the converters collapse into the single json `Converter`. **`type.json` does *not* fold** — it deserializes the type *descriptor* `{name, kind, strict}` (the wire `type` slot), not a value, so it stays as wire-layer plumbing (rename optional). It is not a value-materializer and is not in the value-reader registry.
+
+**Mid-graph fields — one json `Converter`.** The reader registry is a *payload-level* decoder: handed the whole raw, keyed by `(type, kind)`. But STJ also hits domain-typed fields *mid-graph* — a `path` nested three levels down while deserializing a CLR object (e.g. `As<T>` into a type with a path field). A payload-level registry can't serve those; STJ won't call into it. So the json layer holds **one converter** — `app/channel/serializer/json/converter.cs`, class `Converter` — that talks STJ on one side and the plang type system on the other: STJ consults it for any plang-typed value, it checks the registry / distributed `OwnerOf`, and routes to that type's `Read`/`Write`. (STJ's mechanism for "one converter handles a whole family" is a converter-factory under the hood; conceptually it's the single `Converter`.) Built per-actor with context (as `path.JsonConverter` is today). The path / Error / duration / signing converters all collapse into it — decode logic lives once on each type's `Read`, and `Converter` is the adapter that lets STJ reach it. The scaling win: a new format ships *one* such converter and reads the same type `Read`/`Write` — types are never enumerated per format. No *value type* owns a format-named converter; the json layer owns json plumbing. This is the read-side mirror of the single write-side `Wire` converter.
 
 **Distribute `OwnerOf`.** The `clr → (family, kind)` switch in `app/type/convert/this.cs:58` becomes a declaration on each family — `number` declares the numeric CLR types it owns, `text` declares `string`, `path` declares its subclasses. The registry composes the routing from those declarations. The central `if u == typeof(int) …` ladder dies. (This is also what lets Part 3 add new numeric kinds by editing only `number`.)
 
@@ -237,9 +240,9 @@ No content sniffing. A guess at json/xml/yaml/csv contradicts "the type reads it
 | `app.type.convert.Of` (family `Convert` hook) | `app/type/convert/this.cs:28` | Becomes the type's `Read`. |
 | `OwnerOf` (clr→family switch) | `app/type/convert/this.cs:58` | Distributes onto each family. |
 | `FromWire` / `WireReader` | `app/type/this.cs:282`, crypto.hash, snapshot | Become `Read`. Snapshot signatures carved out. |
-| `path.JsonConverter` (+6 sites) | `app/type/path/this.JsonConverter.cs:24` | Deletes; path gets a format-agnostic `Read`. |
-| `type.json` converter | `app/type/this.json.cs:20` | Folds into the registry. |
-| `ErrorWire`, `HashDataConverter`, `TimeSpanIso8601`, `EmptyStringToNull…` | `IError.Wire.cs:33`, `Signature.cs:49`, `TimeSpanIso8601.cs:15`, `JsonString.cs:244` | Domain-coupled ones → `Read`; pure json plumbing stays. |
+| `path.JsonConverter` (+6 sites) | `app/type/path/this.JsonConverter.cs:24` | Type deleted; decode → `path.Read`. Mid-graph path fields served by the single json `Converter` (`channel/serializer/json/converter.cs`); the 6 sites wire it. |
+| `type.json` converter | `app/type/this.json.cs:20` | **Stays** — reads the type descriptor `{name,kind,strict}` (the wire `type` slot), not a value. Not in the value-reader registry (rename optional). |
+| `ErrorWire`, `HashDataConverter`, `TimeSpanIso8601`, `EmptyStringToNull…` | `IError.Wire.cs:33`, `Signature.cs:49`, `TimeSpanIso8601.cs:15`, `JsonString.cs:244` | Decode → owning type's `Read`; the value converters collapse into the single json `Converter`. `EmptyStringToNull…` is STJ plumbing — stays in the json reader. |
 | `Data.ConvertValue` + lazy-on-navigate | `app/data/this.cs:199`, `this.Navigation.cs` | Folds into materialize-from-raw. |
 | `_valueFactory` / `DynamicData` | `app/data/this.cs:186`, `:1205` | Stays (different laziness). |
 | `Wire.Read` (eager value slot) | `app/data/Wire.cs:141` | Captures value slot raw, defers materialization. |

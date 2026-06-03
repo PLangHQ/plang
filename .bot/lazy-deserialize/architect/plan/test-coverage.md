@@ -18,9 +18,11 @@ The strategy narrative is in [`test-strategy.md`](test-strategy.md). This file i
 | `number.Read` parses identically to the old number convert (pre-Stage-2 behavior) | C# | green |
 | Each `FromWire` body, moved to its type's `Read`, produces the same value (crypto.hash) | C# | green |
 | Distributed `OwnerOf`: each family declares its CLR types; central `if u==typeof(int)…` switch is gone | C# | green |
-| `path.JsonConverter` type is deleted (reflection check it's gone); 6 registration sites no longer wire it | C# | green |
-| `type.json` converter is deleted / folded | C# | green |
-| `ErrorWire` / `HashDataConverter` / `TimeSpanIso8601` become `Read` entries (domain-coupled ones gone as standalone converters) | C# | green |
+| `path.JsonConverter` type is deleted (reflection check it's gone); 6 sites now wire the single json `Converter` | C# | green |
+| `type.json` **stays** (reads the type descriptor `{name,kind,strict}`, not a value) — reflection check it's still present | C# | green |
+| `ErrorWire` / `HashDataConverter` / `TimeSpanIso8601` deleted as standalone converters; decode logic on each type's `Read` | C# | green |
+| Single json `Converter` routes a mid-graph typed field to that type's `Read` (consults the registry / `OwnerOf`) | C# | green |
+| **Nested path field — a `path` three levels down in a CLR object (`As<T>`) deserializes via the `Converter`** (the regression `LiftDataIfShaped`-style guessing would miss; credit: coder) | C# | green |
 | Residual `TryConvert` plumbing (nullable unwrap, assignable fast-path, list element-walk) still works | C# | green |
 | A `Read` failure produces an `Error`, not a throw into a courier | C# | negative |
 | Round-trip via renderer→reader for path / image / number / text-json (the keying validation) | C# | green |
