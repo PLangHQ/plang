@@ -22,10 +22,17 @@ public class TypeOwnedReadParityTests
 
     [Test] public async Task NumberRead_MatchesPriorConvertOutput()
     {
-        // Parametric across int/long/decimal/double/float. Stage 1 keeps the
-        // pre-Stage-2 number model; Stage 2 then extends the tower. Parity
-        // here is against the current model only.
-        throw new System.NotImplementedException("not implemented");
+        // Stage 1 keeps the pre-Stage-2 number model; Stage 2 extends the tower.
+        // The reader re-houses number.Convert: Read == Convert, value-identical
+        // across int/long/decimal/double/float.
+        var r = new global::app.type.reader.@this();
+        var ctx = new global::app.type.reader.ReadContext(null);
+        var read = r.Of("number", "int")!; // Default wildcard covers every kind
+        await Assert.That(read("42", "int", ctx)).IsEqualTo((object)42);
+        await Assert.That(read("42", "long", ctx)).IsEqualTo((object)42L);
+        await Assert.That(read("3.14", "decimal", ctx)).IsEqualTo((object)3.14m);
+        await Assert.That(read("3.14", "double", ctx)).IsEqualTo((object)3.14d);
+        await Assert.That(read("3.14", "float", ctx)).IsEqualTo((object)3.14f);
     }
 
     [Test] public async Task HashRead_MatchesPriorFromWireOutput()
@@ -47,11 +54,23 @@ public class TypeOwnedReadParityTests
 
     [Test] public async Task ObjectJsonRead_MatchesPriorPlangJsonReaderOutput()
     {
-        // The existing System.Text.Json plumbing inside the plang json
-        // reader is re-housed, not rewritten (Decision 1). Parity is
-        // verbatim for canonical { key: value, list: […], nested: {…} }.
-        // Architect 829785fbe — json keeps today's shape (`object`); the
-        // entry key is `(object, json)`.
-        throw new System.NotImplementedException("not implemented");
+        // The existing System.Text.Json plumbing is re-housed, not rewritten
+        // (Decision 1): the (object, json) Read produces the same dictionary the
+        // inline `type.Convert("json")` path produced — verbatim for canonical
+        // { key: value, list: […], nested: {…} }.
+        const string json = "{\"a\":1,\"b\":[1,2],\"c\":{\"d\":true}}";
+        var r = new global::app.type.reader.@this();
+        var ctx = new global::app.type.reader.ReadContext(null);
+        var via = r.Of("object", "json")!(json, "json", ctx);
+        await Assert.That(via).IsTypeOf<Dictionary<string, object?>>();
+        var dict = (Dictionary<string, object?>)via!;
+        await Assert.That(dict.ContainsKey("a")).IsTrue();
+        await Assert.That(dict.ContainsKey("b")).IsTrue();
+        await Assert.That(dict.ContainsKey("c")).IsTrue();
+
+        // Parity against the incumbent inline json read on the type entity.
+        var prior = global::app.type.@this.Create("json").Convert(json);
+        await Assert.That(System.Text.Json.JsonSerializer.Serialize(via))
+            .IsEqualTo(System.Text.Json.JsonSerializer.Serialize(prior));
     }
 }

@@ -30,4 +30,13 @@ public static class Default
                     $"number.serializer.Default: unknown NumberKind {value.Kind}");
         }
     }
+
+    /// <summary>
+    /// Read mirror of <see cref="Write"/> — re-houses the per-family
+    /// <c>number.Convert</c> hook behind the reader registry. The decode logic
+    /// is not rewritten: <paramref name="kind"/> picks the CLR precision and the
+    /// raw value parses invariant-culture, exactly as the eager convert path did.
+    /// </summary>
+    public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
+        => global::app.type.number.@this.Convert(raw, kind, ctx.Context!).Value;
 }
