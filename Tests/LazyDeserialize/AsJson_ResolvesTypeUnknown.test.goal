@@ -1,0 +1,7 @@
+Start
+/ Stage 5 — the developer's escape hatch for a type-unknown value. `as json`
+/ stamps the cast; navigation then materialises through text/json's reader
+/ and the field resolves. Companion to NavigationOnTypeUnknown_AsksForAsType:
+/ that one errors, this one shows the fix.
+- set %x% = "{\"port\":8080}" as text/json
+- assert %x.port% equals 8080

@@ -1,0 +1,10 @@
+Start
+/ A read of config.json lands the file as {text, json}. Untouched, %cfg% is
+/ the file's raw json *string* — not a parsed dict, not a JsonNode. This is
+/ the Stage 4 + Decision (Part 1) row that flips structured-text MIMEs onto
+/ {text, kind} so the value carries the json source until something asks.
+/ Requires the config.json fixture committed alongside.
+- read file 'config.json', write to %cfg%
+- assert %cfg.Type.Name% equals "text"
+- assert %cfg.Type.Kind% equals "json"
+- assert %cfg% equals "{\"port\":8080}"

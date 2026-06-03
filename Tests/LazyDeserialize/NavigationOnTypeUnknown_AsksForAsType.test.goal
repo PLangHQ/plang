@@ -1,0 +1,11 @@
+Start
+/ Stage 5 negative — navigation into a type-unknown value errors with a
+/ message that names the fix. Independent #18 pins the exact substring
+/ "add" + "as <type>" in the C# layer; here we just pin that an error
+/ rises (the no-guessing rule).
+- set %x% = "{\"port\":8080}"
+- set %p% = %x.port%, on error call CaughtIt
+- assert false equals true
+
+CaughtIt
+- assert %!error% is not null

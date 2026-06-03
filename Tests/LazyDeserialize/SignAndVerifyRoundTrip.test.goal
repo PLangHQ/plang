@@ -1,0 +1,12 @@
+Start
+/ Cut 3 at the goal layer — sign a Data, transport across a goal-call
+/ boundary, verify. The C# integration test pins "verify against raw
+/ without materialising"; this one pins the developer surface succeeds
+/ end-to-end. The hard probe stays in C#.
+- sign data %payload% = "hello world", write to %signed%
+- call VerifyOnReceiver signed=%signed%, write to %ok%
+- assert %ok% equals true
+
+VerifyOnReceiver
+- verify signature %signed%, write to %ok%
+- return %ok%

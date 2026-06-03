@@ -1,0 +1,11 @@
+Start
+/ Smoke test of Cut 4 at the goal layer. The hard probe (body's _value
+/ stays null after the property read) lives in C# HttpChannelTests; this
+/ goal test pins the surface: %response!status% reads metadata, the
+/ subsequent %response.field% reads the body. Result of the body read
+/ depends on the live endpoint; the smoke is that both calls succeed and
+/ http.response no longer exists as a parallel type.
+- get http https://httpbin.org/json
+    write to %response%
+- assert %response!status% equals 200
+- assert %response.slideshow.author% equals "Yours Truly"
