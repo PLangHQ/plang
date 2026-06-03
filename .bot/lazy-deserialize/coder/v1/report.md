@@ -70,6 +70,8 @@ The deferred 7 rows (`WireReadLazy` ×6 + `AfterMutation`/`RawBackedSerialize`) 
 
 This touches the serialization core (snapshot/signing/all wire) — I'm not gambling on it without the call. Recommended: my "defer-only-when-typed" resolution + confirm the nested-Data path.
 
+**RESOLVED (architect, 2026-06-03):** both wrinkles confirmed. Defer only when the type slot is present; untyped stays eager. `LiftDataIfShaped` **kept lean** (not deleted) — envelope recognition stays (a leaf's job), only the `GetRawText` double-parse drops. And **signing recanonicalizes** (`ToSigningBytes`) — "verify on raw" was wrong and is removed; a signed Data materializes on verify, signing is left alone. **Landed** (`c94b6dc95`): lean `LiftDataIfShaped` (zero regression), `WireReadLazyTests` aligned (23/26). The remaining 3 rows are the **typed-slot deferral** — folded into Stage 4, because `channel.read` is the natural origin of raw-backed wire Data and carries the context the registry needs to materialize (Wire.Read itself has none). Fully type-driven (a `data` type) is a follow-up todo the architect filed.
+
 ## Remaining
 
 3. **Stage 3 lazy `Data`** — `_raw` + lazy `.Value` (materialize via reader when `_value` null & `_raw` set) + mutation-invalidates-`_raw` + `Wire.Read` defers the value slot + delete `LiftDataIfShaped`. Touches the engine's hottest type (`Data.Value`); needs full-suite verification. Also unblocks the 2 Stage-3-coupled `ReadFailureTests` rows + the `MaterialiseErrorPath` rows.
