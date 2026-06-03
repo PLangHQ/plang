@@ -1,5 +1,18 @@
 # test-designer v1 — lazy-deserialize — plan
 
+> **Update (after architect 829785fbe — "add `table` type, revert json→object"):**
+> The shape-based typing revision changes the format-mapping contract — json/xml/yaml stay `{object, kind}` (today's behavior), and csv/xlsx land the new `{table, kind}`. Tests updated in-place rather than re-numbered:
+> - `FormatRemapTests.cs`: `…ApplicationJson_ReturnsTextJson_NotObjectJson` → `…ReturnsObjectJson`; `…DotCsv_ReturnsTextCsv` → `…ReturnsTableCsv`; added `.xlsx → {table, xlsx}` and a csv extension/MIME convergence row.
+> - `ChannelReadBoundaryTests.cs`: `…StampsTextJson_NotObjectJson` → `…StampsObjectJson_NoParseAtStamp` (the lazy invariant: stamping does *not* parse) + a new `…StampsTableCsv_NoParseAtStamp` row.
+> - `PerTypeReadEntriesTests.cs`: `Reader_Of_TextJson_…` → `Reader_Of_ObjectJson_…` + a new `Reader_Of_TableCsv_…`.
+> - `TypeOwnedReadParityTests.cs`: `TextJsonRead_…` → `ObjectJsonRead_…`.
+> - `Cut2_TouchMaterializes.cs`: reworded — *untouched is the raw string* even when `type=object` (stamping doesn't parse). Added a csv/table row.
+> - `NavigationAccessTests.cs`: added two rows — `Navigation_ObjectShape_NavigatesByKey` + `Navigation_TableShape_NavigatesByRowColumn` (shape decides the navigation model).
+> - New file: `OneBoundaryTests/TableTypeTests.cs` (6 rows) — table type exists, `(table, csv)` reader discovered, xlsx-stamps-but-no-reader-yet rides as raw bytes, grid-shape advertised, stamping-doesn't-parse, navigation by row/column.
+> - Goal layer: `ReadConfigJson_UntouchedIsJsonString.test.goal` flipped to `object`; `AsJson_ResolvesTypeUnknown.test.goal` now uses `as object/json`; new `ReadCsv_LandsAsTable.test.goal`.
+>
+> Independent #16 stays but gets a csv twin. The `table` row count grows the suite to 35 C# files / ~177 tests + 10 goal tests. None of the independent additions are invalidated by the revision.
+
 ## Frame
 
 Architect carved 5 stages and 5 integration cuts: reader registry + consolidation → numbers (Way 3) → lazy Data → one I/O boundary → access-driven resolution. Hand-off docs: [test-strategy.md](../../architect/plan/test-strategy.md) + [test-coverage.md](../../architect/plan/test-coverage.md) + [architect-verdict.md](../../architect/architect-verdict.md).

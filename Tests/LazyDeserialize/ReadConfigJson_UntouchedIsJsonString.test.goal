@@ -1,10 +1,11 @@
 Start
-/ A read of config.json lands the file as {text, json}. Untouched, %cfg% is
-/ the file's raw json *string* — not a parsed dict, not a JsonNode. This is
-/ the Stage 4 + Decision (Part 1) row that flips structured-text MIMEs onto
-/ {text, kind} so the value carries the json source until something asks.
-/ Requires the config.json fixture committed alongside.
+/ A read of config.json lands the file as {object, json} (architect's
+/ shape-based typing — keeps today's json→object). The critical lazy
+/ invariant: stamping `type=object` does NOT parse — `%cfg%` untouched is
+/ still the raw json *string*. Materialisation only fires on navigation
+/ (see ReadConfigJson_NavigateMaterialisesField). Requires the config.json
+/ fixture committed alongside.
 - read file 'config.json', write to %cfg%
-- assert %cfg.Type.Name% equals "text"
+- assert %cfg.Type.Name% equals "object"
 - assert %cfg.Type.Kind% equals "json"
 - assert %cfg% equals "{\"port\":8080}"

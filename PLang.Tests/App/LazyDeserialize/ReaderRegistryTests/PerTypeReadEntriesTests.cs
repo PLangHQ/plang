@@ -11,9 +11,15 @@ namespace PLang.Tests.App.LazyDeserialize.ReaderRegistryTests;
 // TypeOwnedReadParityTests.
 public class PerTypeReadEntriesTests
 {
-    // Independent #3 — the registry-level "the (text, json) entry exists"
-    // probe. Decision 1 sets text/json as the dispatch shape for json bodies.
-    [Test] public async Task Reader_Of_TextJson_ReturnsDelegate() { throw new System.NotImplementedException("not implemented"); }
+    // Independent #3 — the registry-level "the (object, json) entry
+    // exists" probe. Architect 829785fbe sets shape-based dispatch:
+    // json/xml/yaml live under `object`; csv/xlsx under the new `table`.
+    [Test] public async Task Reader_Of_ObjectJson_ReturnsDelegate() { throw new System.NotImplementedException("not implemented"); }
+
+    // The new `table` type's primary kind. `(table, csv)` lands in-branch;
+    // `(table, xlsx)` is a follow-on (binary, needs a library) — until
+    // then, a .xlsx stamps `{table, xlsx}` and rides as raw bytes.
+    [Test] public async Task Reader_Of_TableCsv_ReturnsDelegate() { throw new System.NotImplementedException("not implemented"); }
     [Test] public async Task Reader_Of_PathDefault_ReturnsDelegate() { throw new System.NotImplementedException("not implemented"); }
     [Test] public async Task Reader_Of_NumberInt_ReturnsDelegate() { throw new System.NotImplementedException("not implemented"); }
     // Stage 2 surface, but the entry exists by Stage 1's end (the catalog is

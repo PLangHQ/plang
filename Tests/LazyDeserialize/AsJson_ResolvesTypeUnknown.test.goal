@@ -1,7 +1,9 @@
 Start
-/ Stage 5 — the developer's escape hatch for a type-unknown value. `as json`
-/ stamps the cast; navigation then materialises through text/json's reader
-/ and the field resolves. Companion to NavigationOnTypeUnknown_AsksForAsType:
-/ that one errors, this one shows the fix.
-- set %x% = "{\"port\":8080}" as text/json
+/ Stage 5 — the developer's escape hatch for a type-unknown value.
+/ `as object/json` stamps the cast (shape `object`, encoding `json`);
+/ navigation then materialises through the (object, json) reader and the
+/ field resolves. Companion to NavigationOnTypeUnknown_AsksForAsType:
+/ that one errors, this one shows the fix. Architect 829785fbe — json
+/ values are `object`-shaped, not `text`.
+- set %x% = "{\"port\":8080}" as object/json
 - assert %x.port% equals 8080

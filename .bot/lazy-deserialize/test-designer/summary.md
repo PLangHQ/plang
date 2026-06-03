@@ -1,8 +1,14 @@
 # test-designer — lazy-deserialize — summary
 
-## v1 — PASS
+## v1 — PASS (rebased onto architect 829785fbe)
 
-- **33 C# TUnit files / 167 tests** under `PLang.Tests/App/LazyDeserialize/`, organised by stage:
+After the architect's shape-based typing revision (json/xml/yaml → `object`,
+csv/xlsx → new `table` type), the contract was updated in place — see the
+update banner at the top of `v1/plan.md` for the row-by-row delta. New file
+`OneBoundaryTests/TableTypeTests.cs` pins the new `table` family; new goal
+`ReadCsv_LandsAsTable.test.goal`.
+
+- **35 C# TUnit files / 180 tests** under `PLang.Tests/App/LazyDeserialize/`, organised by stage:
   - `ReaderRegistryTests/` (Stage 1) — registry shape, per-type Read entries, converter deletions, distributed OwnerOf, parity-with-incumbents, failure path, residual TryConvert, snapshot carve-out.
   - `NumberTowerTests/` (Stage 2) — storage, kind derivation, Read parsing, arithmetic (promote-then-narrow + double⊕decimal error), per-family CLR declarations.
   - `LazyDataTests/` (Stage 3) — `_raw` shape, materialisation rules, mutation-invalidates-raw, raw-type discipline, Wire.Read lazy, materialise-error path.
@@ -10,7 +16,7 @@
   - `AccessResolutionTests/` (Stage 5) — scalar/navigation/as-cast/property access, no-content-sniffing negatives.
   - `IntegrationCutsTests/` — Cut1 verbatim passthrough, Cut2 touch materialises, Cut3 sign→wire→verify, Cut4 http body lazy / metadata eager, Cut5 number tower round-trip.
 
-- **9 PLang `.test.goal` files** under `Tests/LazyDeserialize/`, covering the developer surface: read-config / navigate, http body lazy + status eager, big-integer no-uint-wrap sum, double+decimal error, type-unknown nav error + `as <type>` fix, sign+verify + tamper-fails.
+- **10 PLang `.test.goal` files** under `Tests/LazyDeserialize/`, covering the developer surface: read-config / navigate, http body lazy + status eager, big-integer no-uint-wrap sum, double+decimal error, type-unknown nav error + `as <type>` fix, sign+verify + tamper-fails.
 
 - **20 independent additions** beyond the architect's matrix, including: registry shape-equivalence with renderer, `_raw` is private (verbatim passthrough invariant), `_raw` survives the courier path, mutation-then-serialize uses renderer, `LiftDataIfShaped` deletion + behaviour-gone two-prong, `http.response` deletion-by-absolute-name + Run-return-type, octet-stream `_raw` is `byte[]`, format-from-extension equals format-from-MIME, error-names-the-source, type-unknown error contains literal `as <type>`. Each enumerated in `v1/plan.md`.
 

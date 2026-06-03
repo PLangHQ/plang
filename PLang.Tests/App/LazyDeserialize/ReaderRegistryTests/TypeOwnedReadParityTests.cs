@@ -45,11 +45,13 @@ public class TypeOwnedReadParityTests
         throw new System.NotImplementedException("not implemented");
     }
 
-    [Test] public async Task TextJsonRead_MatchesPriorPlangJsonReaderOutput()
+    [Test] public async Task ObjectJsonRead_MatchesPriorPlangJsonReaderOutput()
     {
         // The existing System.Text.Json plumbing inside the plang json
         // reader is re-housed, not rewritten (Decision 1). Parity is
         // verbatim for canonical { key: value, list: […], nested: {…} }.
+        // Architect 829785fbe — json keeps today's shape (`object`); the
+        // entry key is `(object, json)`.
         throw new System.NotImplementedException("not implemented");
     }
 }

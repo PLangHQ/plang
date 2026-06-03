@@ -11,6 +11,13 @@ public class NavigationAccessTests
 {
     [Test] public async Task Navigation_KnownType_MaterialisesViaReader_AndNavigates() { throw new System.NotImplementedException("not implemented"); }
 
+    // Architect 829785fbe — the type's *shape* decides the navigation
+    // model. `object` navigates by key (`%cfg.port%`); `table`
+    // navigates by row/column. The exact `table` surface is the
+    // coder's call (open item).
+    [Test] public async Task Navigation_ObjectShape_NavigatesByKey() { throw new System.NotImplementedException("not implemented"); }
+    [Test] public async Task Navigation_TableShape_NavigatesByRowColumn() { throw new System.NotImplementedException("not implemented"); }
+
     // The contract error — "value has no type; add `as <type>`."
     [Test] public async Task Navigation_TypeUnknown_ProducesAddAsTypeError() { throw new System.NotImplementedException("not implemented"); }
 

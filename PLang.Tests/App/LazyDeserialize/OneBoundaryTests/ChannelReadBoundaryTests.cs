@@ -22,10 +22,15 @@ public class ChannelReadBoundaryTests
     // `byte[]`, not `string`.
     [Test] public async Task ChannelRead_OctetStreamMime_StampsBytesAndRawIsByteArray() { throw new System.NotImplementedException("not implemented"); }
 
-    // Decision (Part 1) — structured-text MIMEs map to `{text, kind}`,
-    // not `{object, kind}`. So `application/json` body lands as
-    // `{text, json}` — the json string is the value until navigated.
-    [Test] public async Task ChannelRead_ApplicationJsonBody_StampsTextJson_NotObjectJson() { throw new System.NotImplementedException("not implemented"); }
+    // Shape-based stamping (architect's 829785fbe revision) — an
+    // application/json body stamps `{object, json}`, keeping today's
+    // mapping. The key invariant: stamping does NOT parse — `_raw`
+    // stays the json string, `_value` stays null until navigation.
+    [Test] public async Task ChannelRead_ApplicationJsonBody_StampsObjectJson_NoParseAtStamp() { throw new System.NotImplementedException("not implemented"); }
+
+    // text/csv lands `{table, csv}` — the new shape-based stamp. Same
+    // lazy invariant: `_raw` is the csv string, no parse at stamp time.
+    [Test] public async Task ChannelRead_TextCsvBody_StampsTableCsv_NoParseAtStamp() { throw new System.NotImplementedException("not implemented"); }
 
     // `application/plang` is the self-describing container; channel.read
     // hands the body to the plang serializer, which reads the Data

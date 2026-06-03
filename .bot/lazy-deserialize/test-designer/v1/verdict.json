@@ -1,1 +1,1 @@
-{"verdict": "PASS", "version": "v1", "cs_files": 33, "cs_tests": 167, "goal_files": 9, "build": "clean", "warnings_introduced": 0}
+{"verdict": "PASS", "version": "v1", "cs_files": 35, "cs_tests": 180, "goal_files": 10, "build": "clean", "warnings_introduced": 0, "rebased_onto": "829785fbe (shape-based typing + table)"}
