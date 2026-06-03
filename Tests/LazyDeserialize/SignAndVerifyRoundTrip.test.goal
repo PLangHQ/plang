@@ -3,10 +3,10 @@ Start
 / boundary, verify. The C# integration test pins "verify against raw
 / without materialising"; this one pins the developer surface succeeds
 / end-to-end. The hard probe stays in C#.
-- sign data %payload% = "hello world", write to %signed%
+- sign "hello world", write to %signed%
 - call VerifyOnReceiver signed=%signed%, write to %ok%
 - assert %ok% equals true
 
 VerifyOnReceiver
-- verify signature %signed%, write to %ok%
+- verify %signed%, write to %ok%
 - return %ok%

@@ -146,17 +146,17 @@ public partial class @this
                         dv.OnCreate = prevFrame.OnCreate;
                         dv.OnChange = prevFrame.OnChange;
                         dv.OnDelete = prevFrame.OnDelete;
-                        var prevValue = prevFrame.Value;
+                        var prevValue = prevFrame.ScalarValue;
                         prevFrame.FireOnChange(dv);
                         frame.Set(name, dv);
-                        OnSet?.Invoke(name, prevValue, dv.Value);
+                        OnSet?.Invoke(name, prevValue, dv.ScalarValue);
                         return dv;
                     }
                     else if (!hadPrev)
                     {
                         dv.FireOnCreate();
                         frame.Set(name, dv);
-                        OnCreate?.Invoke(name, dv.Value);
+                        OnCreate?.Invoke(name, dv.ScalarValue);
                         return dv;
                     }
                     frame.Set(name, dv);
@@ -172,17 +172,17 @@ public partial class @this
                     dv.OnCreate = prev.OnCreate;
                     dv.OnChange = prev.OnChange;
                     dv.OnDelete = prev.OnDelete;
-                    var prevValue = prev.Value;
+                    var prevValue = prev.ScalarValue;
                     prev.FireOnChange(dv);
                     _variables[name] = dv;
-                    OnSet?.Invoke(name, prevValue, dv.Value);
+                    OnSet?.Invoke(name, prevValue, dv.ScalarValue);
                     return dv;
                 }
                 else if (prev == null)
                 {
                     dv.FireOnCreate();
                     _variables[name] = dv;
-                    OnCreate?.Invoke(name, dv.Value);
+                    OnCreate?.Invoke(name, dv.ScalarValue);
                     return dv;
                 }
 

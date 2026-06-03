@@ -676,7 +676,10 @@ public sealed class Default : IHttp
         }
 
         props["StatusCode"] = (int)response.StatusCode;
-        props["Status"] = response.ReasonPhrase;
+        // `status` is the numeric code (the architect's %response!status% == 200);
+        // the human reason phrase rides as `reason`.
+        props["Status"] = (int)response.StatusCode;
+        props["Reason"] = response.ReasonPhrase;
         props["IsSuccess"] = response.IsSuccessStatusCode;
 
         var respHeaders = new Dictionary<string, object?>();

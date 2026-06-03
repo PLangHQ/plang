@@ -237,6 +237,14 @@ public partial class @this
     /// </summary>
     private @this GetChildValue(string key)
     {
+        // A raw-backed, untouched value answers Type metadata from its stamp
+        // WITHOUT materializing — reading the {type, kind} stamp must never
+        // trigger a parse, so a later scalar read of %x% stays the raw form.
+        // Scoped to RawUntouched so authored values keep "value wins over Data
+        // infrastructure" (a value's own "type" field still wins for those).
+        if (RawUntouched && key.Equals("Type", StringComparison.OrdinalIgnoreCase))
+            return new @this(key, Type, parent: this);
+
         var val = Value;
 
         // If Value is a Data object (e.g., DynamicData wrapping Identity),

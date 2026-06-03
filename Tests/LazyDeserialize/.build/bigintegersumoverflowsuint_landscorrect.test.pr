@@ -1,0 +1,220 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %a% = 3000000000",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": "The Stage 2 marquee row at the goal surface. 3_000_000_000 \u002B 2_000_000_000\noverflows uint(uint.MaxValue ~ 4.29e9). Under Way 3 the addition promotes\nto BigInteger, computes 5_000_000_000, and narrows the result to long \u2014\nno silent uint wrap. The goal test pins the sum\u0027s value; the kind-on-the-\nresult test (\u0060%sum.Type.Kind%\u0060 == \u0022long\u0022) sits in C# NumberArithmeticTests.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%a%",
+              "scalarValue": "%a%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": 3000000000,
+              "scalarValue": 3000000000,
+              "type": {
+                "name": "number",
+                "kind": "int"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%a%, Value=3000000000)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %b% = 2000000000",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%b%",
+              "scalarValue": "%b%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": 2000000000,
+              "scalarValue": 2000000000,
+              "type": {
+                "name": "number",
+                "kind": "int"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%b%, Value=2000000000)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %sum% = %a% \u002B %b%",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "math",
+          "action": "add",
+          "parameters": [
+            {
+              "name": "A",
+              "value": "%a%",
+              "scalarValue": "%a%",
+              "type": {
+                "name": "number"
+              }
+            },
+            {
+              "name": "B",
+              "value": "%b%",
+              "scalarValue": "%b%",
+              "type": {
+                "name": "number"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%sum%",
+              "scalarValue": "%sum%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "scalarValue": "%!data%",
+              "type": {
+                "name": "number"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "math.add(A=%a%, B=%b%) | variable.set(Name=%sum%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %sum% equals 5000000000",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 5000000000,
+              "scalarValue": 5000000000,
+              "type": {
+                "name": "number",
+                "kind": "int"
+              }
+            },
+            {
+              "name": "Actual",
+              "value": "%sum%",
+              "scalarValue": "%sum%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=5000000000, Actual=%sum%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/LazyDeserialize/BigIntegerSumOverflowsUInt_LandsCorrect.test.goal",
+  "prPath": "/LazyDeserialize/.build/bigintegersumoverflowsuint_landscorrect.test.pr",
+  "hash": "e9a010ad6e2794416337c2c53b3db013c19c46b042c1459c4f3cf1e2baee6005",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

@@ -2,9 +2,9 @@ Start
 / Cut 3 negative — sign, mutate, verify; verify fails. The mutation is via
 / a string-edit on the signed payload before verify is called. The C# cut
 / pins the raw-tamper path strictly; this is the goal-surface smoke.
-- sign data %payload% = "hello world", write to %signed%
+- sign "hello world", write to %signed%
 - set %tampered% = %signed% + " (tampered)"
-- verify signature %tampered%, on error call CaughtIt
+- verify %tampered%, on error call CaughtIt
 - assert false equals true
 
 CaughtIt

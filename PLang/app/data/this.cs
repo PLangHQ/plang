@@ -635,6 +635,13 @@ public partial class @this
     public @this AsCanonical(actor.context.@this? context = null)
     {
         context = context ?? _context;
+
+        // A raw-backed value is a concrete source form, not a `%var%` reference —
+        // it's already canonical. Return it as-is WITHOUT reading .Value (which
+        // would materialize), so a lazily-read Data stays lazy as it flows through
+        // result-binding, couriers, and parameter resolution.
+        if (RawUntouched) return this;
+
         var raw = Value;
 
         if (raw is string strVal && strVal.Contains('%') && context?.Variable != null)

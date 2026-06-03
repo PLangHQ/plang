@@ -1,0 +1,197 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "get http https://httpbin.org/json\nwrite to %response%",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": "Smoke test of Cut 4 at the goal layer. The hard probe (body\u0027s _value\nstays null after the property read) lives in C# HttpChannelTests; this\ngoal test pins the surface: %response!status% reads metadata, the\nsubsequent %response.field% reads the body. Result of the body read\ndepends on the live endpoint; the smoke is that both calls succeed and\nhttp.response no longer exists as a parallel type.",
+      "actions": [
+        {
+          "module": "http",
+          "action": "request",
+          "parameters": [
+            {
+              "name": "Url",
+              "value": "https://httpbin.org/json",
+              "scalarValue": "https://httpbin.org/json",
+              "type": {
+                "name": "text"
+              }
+            },
+            {
+              "name": "Method",
+              "value": "GET",
+              "scalarValue": "GET",
+              "type": {
+                "name": "httpmethod"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "contenttype",
+              "value": "application/json",
+              "scalarValue": "application/json",
+              "type": {
+                "name": "text"
+              }
+            },
+            {
+              "name": "encoding",
+              "value": "utf-8",
+              "scalarValue": "utf-8",
+              "type": {
+                "name": "text"
+              }
+            },
+            {
+              "name": "timeoutinsec",
+              "value": 30,
+              "scalarValue": 30,
+              "type": {
+                "name": "number",
+                "kind": "int"
+              }
+            },
+            {
+              "name": "unsigned",
+              "value": false,
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%response%",
+              "scalarValue": "%response%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "scalarValue": "%!data%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "http.request(Url=\u0022https://httpbin.org/json\u0022, Method=GET) , variable.set(Name=%response%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %response!status% equals 200",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 200,
+              "scalarValue": 200,
+              "type": {
+                "name": "number",
+                "kind": "int"
+              }
+            },
+            {
+              "name": "Actual",
+              "value": "%response!status%",
+              "scalarValue": "%response!status%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=200, Actual=%response!status%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %response.slideshow.author% equals \u0022Yours Truly\u0022",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "Yours Truly",
+              "scalarValue": "Yours Truly",
+              "type": {
+                "name": "text"
+              }
+            },
+            {
+              "name": "Actual",
+              "value": "%response.slideshow.author%",
+              "scalarValue": "%response.slideshow.author%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022Yours Truly\u0022, Actual=%response.slideshow.author%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/LazyDeserialize/HttpStatusRead_DoesNotMaterialiseBody.test.goal",
+  "prPath": "/LazyDeserialize/.build/httpstatusread_doesnotmaterialisebody.test.pr",
+  "hash": "fb2c5f5b1a65e628ff952fe2eba5328f9c1d2c35643977437729f9ba941611cf",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

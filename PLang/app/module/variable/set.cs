@@ -187,6 +187,20 @@ public partial class Set : IContext, IBuildValidatable
                 }
             }
 
+            // The incoming value is ALREADY a raw-backed Data of the declared type
+            // — a lazy read assigned via `write to %var%` (file.read/channel.read
+            // stamp {table,csv}/{object,json} and the same stamp lands here). Store
+            // it as-is so it stays lazy: scalar %var% remains the raw source form
+            // and verbatim passthrough holds. Re-materializing (Value.Value below)
+            // would parse it on store and defeat the whole lazy path.
+            if (Value.RawUntouched && Value.Type is { } vt
+                && string.Equals(vt.Name, typeEntity.Name, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(vt.Kind ?? "", typeEntity.Kind ?? "", StringComparison.OrdinalIgnoreCase))
+            {
+                Value.Name = Name.Value!;
+                return Task.FromResult(Context.Variable.Set(Value));
+            }
+
             object? converted = Value.Value;
             System.Type? mintType = targetType;
 
