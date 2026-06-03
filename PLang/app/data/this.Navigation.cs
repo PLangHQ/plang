@@ -301,7 +301,32 @@ public partial class @this
             return new @this(key, ownProp.GetValue(this), parent: this);
         }
 
+        // Access-driven resolution: navigating by key into a value whose type is
+        // unknown is NOT a guess — no content sniffing. A bare string with no
+        // structured type stamp can't be walked, so the developer gets a clear,
+        // actionable error pointing at the fix (`as <type>`) rather than a silent
+        // NotFound. A typed string (e.g. {object, json}) already materialized
+        // above, so it never reaches here.
+        if (val is string && (_type == null || _type.IsNull))
+            return TypeUnknownError(key);
+
         return NotFound(key);
+    }
+
+    /// <summary>
+    /// The type-unknown navigation error — the contract surface for "you tried
+    /// to navigate a value that has no type; tell PLang how to read it." The
+    /// wording is the LLM teaching surface; <c>add `as &lt;type&gt;`</c> names
+    /// the fix.
+    /// </summary>
+    private @this TypeUnknownError(string key)
+    {
+        var nameHint = string.IsNullOrEmpty(Name) ? "value" : $"%{Name}%";
+        var err = FromError(new global::app.error.Error(
+            $"cannot navigate .{key}: {nameHint} has no type; add `as <type>` (e.g. `as object/json`)",
+            "TypeUnknown", 400));
+        err.Name = key;
+        return err;
     }
 
     /// <summary>

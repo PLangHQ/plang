@@ -200,6 +200,36 @@ public partial class @this
     }
 
     /// <summary>
+    /// Scalar / output read — the access-driven rule for <c>%x%</c> and
+    /// <c>write out %x%</c>. Returns the value's raw source form WITHOUT a
+    /// structured parse: a text raw is the string; a byte raw decodes utf-8 when
+    /// the bytes are valid utf-8, otherwise stays <c>byte[]</c> (silently
+    /// mojibake-ing binary is worse than handing back bytes). An authored value
+    /// (or one already materialized) returns as-is. Scalar access never
+    /// materializes a structured type — only navigation (<c>%x.field%</c>) and
+    /// <c>As&lt;T&gt;</c> / <c>as &lt;type&gt;</c> do.
+    /// </summary>
+    public object? ScalarValue
+    {
+        get
+        {
+            if (_valueFactory != null) { _value = _valueFactory(); _valueFactory = null; }
+            if (_value != null) return _value;
+            if (_raw is string s) return s;
+            if (_raw is byte[] b) return DecodeUtf8OrBytes(b);
+            return _value;
+        }
+    }
+
+    // Strict utf-8 decode: returns the string when the bytes are valid utf-8,
+    // else hands back the bytes unchanged (no lossy substitution).
+    private static object DecodeUtf8OrBytes(byte[] bytes)
+    {
+        try { return new System.Text.UTF8Encoding(false, throwOnInvalidBytes: true).GetString(bytes); }
+        catch (System.Text.DecoderFallbackException) { return bytes; }
+    }
+
+    /// <summary>
     /// Sets a lazy value factory. Invoked on first Value access, then cached.
     /// </summary>
     public void SetValue(Func<object?> factory)
@@ -551,6 +581,30 @@ public partial class @this
                 "Data.As(typeName) requires a non-empty type name.", "InvalidTypeName", 400));
 
         context = context ?? _context!;
+
+        // `as <type>/<kind>` (e.g. `as object/json`) reads toward the named
+        // encoding through the reader registry — the explicit, deterministic cast
+        // that resolves a type-unknown value (replacing the removed json-string
+        // content-sniff). The bare `as <type>` form keeps the CLR Convert path.
+        string? kind = null;
+        if (typeName.Contains('/'))
+        {
+            var slash = typeName.IndexOf('/');
+            kind = typeName[(slash + 1)..];
+            typeName = typeName[..slash];
+        }
+        if (kind != null)
+        {
+            var reader = context.App.Type.Readers.Of(typeName, kind);
+            if (reader != null)
+            {
+                var raw = ScalarValue;
+                var materialized = raw == null ? null
+                    : reader(raw, kind, new global::app.type.reader.ReadContext(context));
+                return new @this(Name, materialized, type.Create(typeName, kind, context: context), Parent) { Context = context };
+            }
+        }
+
         var clr = context.App.Type.Clr(typeName);
         if (clr == null)
             return global::app.data.@this.FromError(new global::app.error.ServiceError(
