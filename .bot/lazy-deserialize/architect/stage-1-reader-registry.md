@@ -38,7 +38,7 @@ The point of doing this first: it's the floor every other stage stands on (lazy 
 
 ## Design
 
-**Mirror the renderer, but key on `(type, kind)`, not `(type, format)`.** The renderer encodes a value *into* a channel, so it keys on the channel format. The reader decodes the value's *own* raw form, so it keys on `kind` — the type's refinement: `json`/`csv`/`md`/`plain` for text, `int`/`uint` for number, `png`/`jpg` for image. Same discovery, same wildcard, same precedence — different key. The channel wire format (how the surrounding `application/plang` container is encoded) stays the channel serializer's job and isn't this registry's axis.
+**Mirror the renderer, but key on `(type, kind)`, not `(type, format)`.** The renderer encodes a value *into* a channel, so it keys on the channel format. The reader decodes the value's *own* raw form, so it keys on `kind` — the encoding within the type's shape: `json`/`xml`/`yaml` for `object`, `csv`/`xlsx` for `table`, `int`/`uint` for `number`, `png`/`jpg` for `image`, `md`/`plain` for `text`. Same discovery, same wildcard, same precedence — different key. The channel wire format (how the surrounding `application/plang` container is encoded) stays the channel serializer's job and isn't this registry's axis.
 
 **Validate the keying with a round-trip before building the rest:** write a `path` into json via the renderer, read it back via the reader. If `(type, kind)` round-trips a path, an image, a number, and a text/json document, the keying holds.
 

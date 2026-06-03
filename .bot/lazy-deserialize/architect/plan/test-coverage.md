@@ -78,10 +78,13 @@ The strategy narrative is in [`test-strategy.md`](test-strategy.md). This file i
 | `http.response.@this` deleted (reflection check); result is plain Data | C# | green |
 | `%response!status%` reads without materializing the body | goal | green |
 | `%response.field%` materializes the body | goal | green |
-| `TypeFromMime(application/json)` → `{text, json}` (not `{object, json}`) | C# | green |
-| `TypeFromExtension(.json)` → `{text, json}`; `.csv` → `{text, csv}`; `.png` → `{image, png}` | C# | green |
-| `config.json` read lands as `{text, json}`; `%cfg%` is the json string | goal | green |
-| `application/plang` body → the Data container (lazy `Wire.Read`); `application/json` body → a `{text, json}` value | C# | green |
+| `TypeFromMime(application/json)` → `{object, json}` (shape-based; keeps today's json→object) | C# | green |
+| `TypeFromExtension`: `.json` → `{object, json}`; `.csv` → `{table, csv}`; `.xlsx` → `{table, xlsx}`; `.png` → `{image, png}` | C# | green |
+| `config.json` read lands as `{object, json}`; `%cfg%` untouched is the json string (no parse from stamping) | goal | green |
+| `report.csv` lands as `{table, csv}`; the `(table, csv)` reader materializes a grid on navigation | C#+goal | green |
+| `table` navigates by row/column once touched; `object` navigates by key | C#+goal | green |
+| `(table, xlsx)` reader is a follow-on — a `.xlsx` stamps `{table, xlsx}` and rides as raw bytes until then | C# | green |
+| `application/plang` body → the Data container (lazy `Wire.Read`); `application/json` body → an `{object, json}` value | C# | green |
 
 ## Stage 5 — access-driven resolution
 
@@ -101,7 +104,7 @@ The strategy narrative is in [`test-strategy.md`](test-strategy.md). This file i
 | Cut | Layer | Sense |
 |-----|-------|-------|
 | Cut 1 — verbatim passthrough: untouched Data serializes raw byte-identical; reader never invoked | integration | green |
-| Cut 2 — touch materializes: config.json text→navigate, big-int, image-on-property | integration | green |
+| Cut 2 — touch materializes: config.json object→navigate, csv table→row/col, big-int, image-on-property | integration | green |
 | Cut 3 — sign→wire→verify on raw without materializing; nested signed Data round-trips | integration | green |
 | Cut 3 — tampered raw fails verification | integration | negative |
 | Cut 4 — http body lazy, status/headers eager; http.response gone | integration | green |

@@ -859,8 +859,8 @@ kinds" collection, which is a defensible plural). Investigate whether the
 vocabulary should be renamed to a distinct singular noun so `Kind`/`Kinds` stop
 looking like a typo of each other — without merging the two concepts.
 
-## Render-side kind-awareness — csv→table, the write half of lazy-deserialize (2026-06-03, Ingi)
+## Render a `table` to a UI — write half of lazy-deserialize (2026-06-03, Ingi)
 
-Follow-on to the `lazy-deserialize` branch, which is the *read* half. That branch makes a value carry its `kind` (`text`/`csv`, `text`/`json`, …) untouched all the way to the render boundary — the precondition for Ingi's vision: "read a csv, nothing in the runtime cares about it until I render it, then it sees it's csv and draws a table in the UI."
+Follow-on to the `lazy-deserialize` branch, which is the *read* half. That branch types csv/xlsx as `type=table` (grid shape) and carries it untouched to the render boundary — the precondition for Ingi's vision: "read a csv, nothing in the runtime cares about it until I render it, then it draws a table in the UI."
 
-The gap: the renderer registry (`app.type.renderer.Of(typeName, format)`) keys on `(type, format)`, not `kind`. So a `text` value going to a UI channel renders as escaped text, not a table — the renderer can't yet see "this is csv, draw a table." The follow-on is to make the renderer dispatch on `kind` too (`(text, csv) → table` for a UI/html channel) — the symmetric mirror of the read-side `(type, kind)` reader this branch builds. Read half ships in `lazy-deserialize`; this is the write half.
+Because csv/xlsx are typed by *shape* (`table`) rather than by encoding, the renderer needs **no kind-awareness** — it dispatches on `type=table` through its existing `(type, format)` model. The follow-on is simply a `(table, html)` renderer entry that draws a grid (and whatever other UI formats), alongside `(table, csv)`/`(table, xlsx)` write-back. Read half + the `table` type ship in `lazy-deserialize`; this is the write half. (Earlier framing of this todo asked for kind-awareness on a `text`/csv value — superseded: typing by shape moved the "it's a table" knowledge onto `type`, where the renderer already looks.)

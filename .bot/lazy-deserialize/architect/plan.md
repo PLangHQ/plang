@@ -60,6 +60,7 @@ type/
   number/this.cs                     ~  exact-CLR value + full scalar tower; drop _i/_d/_f union, NumberKind enum, Kinds
   number/this.Build.cs               ~  kind from the exact type (no float→double collapse)
   number/this.Convert.cs             ~  KindToClr covers the tower; promote-then-narrow for arithmetic
+  table/this.cs + serializer/        +  NEW type — grid (rows/columns/headers); Read: (table,csv) now, (table,xlsx) follow-on
 
 data/
   this.cs                            ~  add `raw`; .Value materializes via reader when value is null; drop ConvertValue
@@ -80,7 +81,7 @@ channel/
     plang/this.cs                    ~  the application/plang container: read header → (type,kind) → defer body
     TimeSpanIso8601.cs               −  folds into type/duration/serializer/Default.cs Read
 
-format/list/this.cs                  ~  TypeFromMime/TypeFromExtension: structured-text MIMEs → {text, kind}, not {object, kind}
+format/list/this.cs                  ~  TypeFromMime/TypeFromExtension: shape-based — json/xml/yaml→object, csv/xlsx→table
 http/response/this.cs                −  deletes (dissolves into Data: body=value, status/headers/duration=properties)
 error/IError.Wire.cs                 ~  ErrorWire folds into error's Read
 
@@ -128,7 +129,7 @@ Discovery mirrors the renderer exactly: a static `Read` sits next to `Write` in 
 
 **Two read layers, mirroring the two write layers.** On write, the channel serializer owns the format (`IWriter`, `json/writer.cs`) and the type owns its value (`Write(value, IWriter)`). Read mirrors that: the channel serializer decodes bytes → a structure (`IReader`, `json/reader.cs`), and the type builds its value from that (`Read(raw, kind, ctx)`). So `IReader` is the format-decode surface, `type.Read` is the value-materialize step — different layers, same split the write side already has. For reading a raw file/http payload there's no surrounding wire structure, so `raw` is the decoded-or-undecoded source form and the type reads it directly per `kind`. The layer-1 wire container is `application/plang` — the Data shape `{name, type, kind, value, properties, signature}` — in a binary *or* a text representation (json is the default text form, but it's configurable). "json on the wire" is just plang's text representation, not a peer format. A bare `application/json` body, by contrast, isn't the container — it's a value, stamped from its Mime like any other.
 
-**Decision — type is what was read, kind is which decode.** `type` names what the bytes are at the boundary, *before* any parse: a json/xml/yaml document is read as `text` (the string you actually hold), not `object` (what a parse would produce). `kind` is the refinement that says which decode turns the raw into a value — `json`/`csv` for text, `int`/`uint` for number, `png` for image. The reader dispatches on `(type, kind)`. So `config.json` → `{text, json}`: `%cfg%` untouched is the json string; `%cfg.port%` navigates, which runs the `(text, json)` reader and parses on the spot. This flips a current behavior — `Format.TypeFromMime` maps json→`object` today (`app/format/list/this.cs:443`, via `ClrFromMime`); this branch changes structured-text MIMEs to `{text, kind}` (`json`; `xml`/`yaml`/`csv` when they come). The wire-container axis (the `application/plang` representation, above) is separate and owned by the serializer — it doesn't enter this keying. Worth confirming with a round-trip (write a path into json, read it back) before the rest.
+**Decision — type is the data's shape, kind is the encoding, raw is the source.** `type` names what the value *is* by shape — `object` for hierarchical/tree data, `table` for a grid of rows and columns, `text` for prose, plus `image`, `number`, etc. — not how it was encoded. `kind` is the encoding within that shape: `json`/`xml`/`yaml` for object, `csv`/`xlsx` for table, `png`/`jpg` for image, `int`/`uint` for number. `raw` is the source bytes/string, held lazily. The reader dispatches on `(type, kind)`. So `config.json` → `{object, json}` (this keeps today's `Format.TypeFromMime` behavior — `app/format/list/this.cs:443`); `report.csv`/`.xlsx` → `{table, csv}`/`{table, xlsx}`. **Stamping the type does not parse** — `type=object` is a promise about the shape on materialization, not an instruction to produce it now. `%cfg%` untouched is the raw json string; `%cfg.port%` navigates, which runs the `(object, json)` reader and parses on the spot. Grouping by shape (not encoding) is what makes csv and xlsx the *same* type and lets the renderer draw a table by dispatching on `type=table` alone. The wire-container axis (the `application/plang` representation, above) is separate and owned by the serializer — it doesn't enter this keying. Confirm with a round-trip (write a path into json, read it back) before the rest.
 
 **What folds in** (each becomes a type's `Read`, reached through the registry):
 
@@ -204,7 +205,7 @@ Channel is the foundational I/O layer — a stream with a `Mime` and a serialize
   ```
   Data {
     value:      <lazy body>                 // %response%        → body (materializes on touch)
-    type/kind:  text / json  (Content-Type)
+    type/kind:  object / json  (Content-Type)
     properties: { status:200, headers:{…}, duration:0.12s }   // %response!status%, %response!content-type%
   }
   ```
@@ -214,7 +215,7 @@ Channel is the foundational I/O layer — a stream with a `Mime` and a serialize
       - write out %response.name%  / body materializes: raw → json → .name
   ```
 
-- **`json ⇒ text` mapping** — `Format.TypeFromMime` / `TypeFromExtension` (`app/format/list/this.cs:415,446`) stamp structured-text MIMEs as `{text, kind}` instead of today's `{object, kind}`. This is what lands `config.json` as `{text, json}` (Part 1 decision); the body of an `application/json` http response stamps the same way.
+- **Shape-based MIME mapping** — `Format.TypeFromMime` / `TypeFromExtension` (`app/format/list/this.cs:415,446`) stamp by shape: json/xml/yaml → `object` (keeping today's json→object), csv/xlsx → the new `table` type. `config.json` → `{object, json}`; `report.csv` → `{table, csv}`. An `application/json` http body stamps the same way.
 
 ## Part 5 — access-driven resolution (no guessing)
 
@@ -248,7 +249,7 @@ No content sniffing. A guess at json/xml/yaml/csv contradicts "the type reads it
 | `http.get` / `ParseResponseAsync` | `app/module/http/code/Default.cs:463,518,551` | Stop deserializing; body→value, metadata→properties. |
 | `http.response.@this` | `app/http/response/this.cs:10` | Dissolves into Data. |
 | `channel.read` (raw text, ignores Mime) | `app/channel/stream/this.cs:69` | The single boundary; stamps type/kind from Mime. All channel kinds move under `channel/type/`. |
-| `Format.TypeFromMime` / `TypeFromExtension` (json→`object`) | `app/format/list/this.cs:415,446` | Structured-text MIMEs → `{text, kind}`. |
+| `Format.TypeFromMime` / `TypeFromExtension` | `app/format/list/this.cs:415,446` | Shape-based: json/xml/yaml → `object` (unchanged), csv/xlsx → new `table` type. |
 | Number union + float collapse | `app/type/number/this.cs:27,48,216`, `Build.cs:25`, `Convert.cs:40`, `data/this.cs:242` | Replaced by Way 3. |
 
 ## Behavior changes to watch
@@ -273,6 +274,7 @@ The only hard ordering constraint is **1 before everything**. Each stage green b
 ## Out of scope
 
 - **`.plang` container internals** (Decision 7) — the self-describing `application/plang` format whose header carries type+kind, in a binary or text (json by default, configurable) representation. This branch only assumes the boundary can read type+kind from such a payload; designing the container is a separate branch.
-- **Render-side kind-awareness** — the *write* mirror of this work: making the renderer dispatch on `kind` so a `(text, csv)` value renders as a table for a UI channel ("read a csv, nothing touches it until render, then it draws a table"). This branch is the read half and makes the value *carry* `kind` to the render boundary; wiring the kind-aware renderer is the write half. Captured in `Documentation/Runtime2/todos.md` (2026-06-03).
+- **Rendering `table` to a UI** — the *write* mirror: a `(table, html)` renderer that draws a grid. With `type=table` this is a plain renderer entry (dispatch on `type=table`), not the kind-awareness the earlier todo described — that's the payoff of typing csv/xlsx by shape. The read half (the value carries `type=table` to the render boundary) is here; the grid renderer is a follow-on. Captured in `Documentation/Runtime2/todos.md`.
+- **`(table, xlsx)` reader** — xlsx is binary (zip + xml, needs a library). The `table` type and the `(table, csv)` reader land here; xlsx parsing is a follow-on. A `.xlsx` still stamps `{table, xlsx}` and rides as raw bytes until its reader exists.
 - **Snapshot rename to OBP names** — another branch; snapshot's `FromWire` / `app.Snapshot*` signatures stay.
 - **SIMD / vector numeric types** — a `uint4`-style value is a list of numbers, not a number kind.

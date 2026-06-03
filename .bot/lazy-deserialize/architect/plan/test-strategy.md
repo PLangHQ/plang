@@ -11,21 +11,22 @@ Things that have to be true at the end:
 - **One reader decodes everything, with no output change.** `app.type.reader.Of(type, kind).Read(...)` replaces `type.Convert` / the `Convert` hooks / `FromWire` / `path.JsonConverter` / `type.json` / the `JsonConverter<T>` set — and Stage 1 changes *no* observable output (the suite is green before and after with no expected-output edits).
 - **Lazy works.** A value read from a source or off the wire is not parsed until touched. Untouched, it serializes its raw straight back out (verbatim passthrough); a signature verifies against the raw without materializing. Touched, it materializes correctly via the reader.
 - **Numbers don't lose type.** The full C# scalar tower round-trips losslessly; arithmetic promotes-then-narrows (no silent overflow wrap); `double⊕decimal` errors.
-- **One boundary.** `file` and `http` read through `channel.read`; the body is lazy, status/headers are properties; `http.response` is gone; `config.json` lands as `{text, json}`.
+- **One boundary, shape-based types.** `file` and `http` read through `channel.read`; the body is lazy, status/headers are properties; `http.response` is gone. Types are stamped by shape: `config.json` → `{object, json}` (unchanged from today), `report.csv`/`.xlsx` → the new `{table, …}`.
 - **No guessing.** Type-unknown structured access errors and asks for `as <type>` — nothing sniffs content.
 
 ## Test layer mapping
 
 **C# TUnit (`PLang.Tests/`)** — pins internal behavior the engine owns:
 - Reader registry: `Of(type, kind)` precedence (runtime-exact → generated-exact → runtime-`"*"` → generated-`"*"`); discovery finds a `serializer/Default.cs` static `Read`.
-- Per-type `Read` round-trips (path, number, image, text/json) match what the old converters produced — the "no behavior change" pin.
+- Per-type `Read` round-trips (path, number, image, object/json) match what the old converters produced — the "no behavior change" pin.
 - Distributed `OwnerOf`: each family declares its CLR types; the central switch is gone (reflection check).
 - Numbers: exact-CLR storage + kind derivation across the tower; `Read` parses to the exact kind; promote-then-narrow result kinds; `double⊕decimal` errors.
 - Lazy `Data`: `.Value` materializes only when `_value` null and `_raw` set; authored values (`_value` set) never hit the byte path; `_raw` survives materialization; a mutation invalidates `_raw`.
 - `Wire.Read` captures the value slot raw and defers; `LiftDataIfShaped` is gone (reflection/behavior check).
 
 **PLang `.goal` (`Tests/`)** — pins developer-facing surfaces:
-- Read `config.json`; `%cfg%` untouched is the json text; `%cfg.port%` navigates and returns the field.
+- Read `config.json` (`type=object`); `%cfg%` untouched is the json text; `%cfg.port%` navigates and returns the field.
+- Read a `report.csv` (`type=table`); untouched it's the csv text; once navigated, a row/column resolves.
 - `get http`; `%response!status%` reads without touching the body; `%response.field%` materializes the body.
 - Sign a Data, serialize, read back on the other side, verify the signature.
 - Number arithmetic in a goal (a big-int sum that would overflow `uint` lands correctly; a `double`+`decimal` step errors).
@@ -50,12 +51,13 @@ Rule of thumb: internal behavior (a method, the registry, the field split, the c
 
 ### Cut 2: Touch materializes correctly
 
-**Setup:** `config.json` = `{"port": 8080}` read as `{text, json}`; a number `"9999999999999999999999"` read as `{number, biginteger}`; an `image/png` read as `{image, png}`.
+**Setup:** `config.json` = `{"port": 8080}` read as `{object, json}`; `report.csv` read as `{table, csv}`; a number `"9999999999999999999999"` read as `{number, biginteger}`; an `image/png` read as `{image, png}`.
 
-**Capture:** `%cfg%` untouched; then `%cfg.port%`; the number used in arithmetic; the image's width read.
+**Capture:** `%cfg%` untouched; then `%cfg.port%`; a row/column of the table; the number used in arithmetic; the image's width read.
 
 **Must prove:**
-- `%cfg%` untouched is the json *string* (type=text); `%cfg.port%` parses on navigation and returns `8080`.
+- `%cfg%` untouched is the raw json *string* (stamping `type=object` did **not** parse); `%cfg.port%` parses on navigation and returns `8080`.
+- The csv is `type=table` and navigates by row/column once touched; untouched, it's the raw csv string.
 - The big-int materializes to a `BigInteger` losslessly.
 - The image materializes only when a property is read, not at read time.
 

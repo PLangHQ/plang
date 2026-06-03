@@ -17,7 +17,7 @@
 **Deliverables:**
 
 1. **Scalar / output** (`%x%`, `write out %x%`) → if `_raw` is bytes, decode utf-8 (and stay bytes if it doesn't decode); if text, the string. No structured parse.
-2. **Navigation** (`%x.field%`) → materialize through the known type's reader; `kind` says how (`(text, json)` parses json, then navigate). If the type is **unknown** → clear error: `"value has no type; add as <type>"`.
+2. **Navigation** (`%x.field%`) → materialize through the known type's reader; `kind` says how (`(object, json)` parses json, then navigate). The **type's shape decides the navigation model**: an `object` navigates by key (`%cfg.port%`), a `table` by row/column (`%t.rows`, `%t[0].name%` — coder owns the exact surface). If the type is **unknown** → clear error: `"value has no type; add as <type>"`.
 3. **`as <type>`** → read toward that type (the explicit override; the materialization path for type-unknown bytes).
 4. **Property** (`%x!prop%`) → read from `Data.Properties`; never touches the value. A status check (`%response!status%`) does not materialize the body.
 5. **No sniffing.** Type-unknown bytes touched as structured do not get guessed (json vs xml vs yaml vs csv) — they error per rule 2.

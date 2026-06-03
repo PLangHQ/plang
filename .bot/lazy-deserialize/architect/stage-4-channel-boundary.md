@@ -12,7 +12,8 @@
 - `app/module/file/read.cs` — opens the file channel and reads; stops converting at read time.
 - `app/module/http/code/Default.cs` — opens the http channel; body→value, metadata→properties; stops `Content-Type` deserialize.
 - `app/http/response/this.cs` — **deletes** (dissolves into Data).
-- `app/format/list/this.cs` (`TypeFromMime` `:415`, `TypeFromExtension` `:446`) — structured-text MIMEs stamp `{text, kind}`, not today's `{object, kind}`.
+- `app/format/list/this.cs` (`TypeFromMime` `:415`, `TypeFromExtension` `:446`) — shape-based stamps: json/xml/yaml → `{object, kind}` (unchanged), csv/xlsx → the new `{table, kind}`.
+- `app/type/table/` — new type family (grid: rows/columns/headers) + `serializer/Default.cs` Read; `(table, csv)` reader now, `(table, xlsx)` a follow-on.
 
 **Dependencies:** Stages 1–3 (the reader registry, exact numbers, and lazy `Data` — the boundary produces lazy Data that materializes through the registry).
 
@@ -32,7 +33,7 @@
    - if %response!status% == 200    / property read — body untouched
        - write out %response.name%   / body materializes: raw → json → .name
    ```
-6. **`json ⇒ text` mapping.** `Format.TypeFromMime` / `TypeFromExtension` stamp structured-text MIMEs as `{text, kind}` instead of today's `{object, kind}` (which `ClrFromMime` → `GetPrimitiveName` produces — see `app/format/list/this.cs:443`). `application/json` → `{text, json}`, `text/csv` → `{text, csv}`. `config.json` → `{text, json}`. (`xml`/`yaml` the same when they come — out of scope here.)
+6. **Shape-based MIME mapping + the `table` type.** `Format.TypeFromMime` / `TypeFromExtension` stamp by shape: `application/json`/xml/yaml → `{object, kind}` (keeps today's json→object — `app/format/list/this.cs:443`), `text/csv`/xlsx → the new `{table, kind}`. `config.json` → `{object, json}`; `report.csv` → `{table, csv}`. `table` is a new type family this stage (grid: rows/columns/headers); its `(table, csv)` reader lands here, `(table, xlsx)` is a follow-on (binary, needs a library — a `.xlsx` still stamps `{table, xlsx}` and rides as raw bytes until then).
 
 ## Design
 
@@ -40,6 +41,6 @@
 
 **Status/headers are properties, not the value.** The body is the payload (lazy); status/headers/duration are metadata read at the boundary from the protocol. Putting them in `Data.Properties` (read with `!`) means `if %response!status% == 200` never touches the body — a status check doesn't force a parse. This also dissolves the parallel `http.response` type: the result is plain Data like everything else.
 
-**The wire-container case.** When a channel's `Mime` is `application/plang`, the bytes are the Data container (binary, or text/json by default) — the serializer reads type+kind from it and produces lazy Data (this is `Wire.Read` from Stage 3). When the `Mime` is a bare value type (`application/json`, `image/png`, `text/csv`), the bytes are a value — stamp `(type, kind)` from the Mime and the raw is the value's source form. So `application/plang` ⇒ container (Stage 3's lazy `Wire.Read`); `application/json` ⇒ a `{text, json}` value. Don't conflate them.
+**The wire-container case.** When a channel's `Mime` is `application/plang`, the bytes are the Data container (binary, or text/json by default) — the serializer reads type+kind from it and produces lazy Data (this is `Wire.Read` from Stage 3). When the `Mime` is a bare value type (`application/json`, `image/png`, `text/csv`), the bytes are a value — stamp `(type, kind)` from the Mime and the raw is the value's source form. So `application/plang` ⇒ container (Stage 3's lazy `Wire.Read`); `application/json` ⇒ an `{object, json}` value. Don't conflate them.
 
-**`json ⇒ text`, and why it's lazy-consistent.** At the boundary you have the string you read, not the structure a parse would produce — so stamp `text` (what you hold), with `kind=json` saying which decode to run on navigation. The structure materializes only when `%cfg.port%` navigates. Stamping `object` would presume a parse that hasn't happened. This is the one place Stage 4 *changes* a current behavior (`TypeFromMime` lands json on `object` today); the rest of the stage is plumbing.
+**Shape-based typing, and why it's still lazy.** The type names the value's *shape* — `object` for json/xml/yaml (a tree, navigated by key), `table` for csv/xlsx (a grid, navigated by row/column) — and `kind` is the encoding. Stamping the type does **not** parse: `config.json` lands `{object, json}` with `raw` = the json string, untouched, and the structure materializes only when `%cfg.port%` navigates. json→object keeps today's behavior; the new work is the `table` type for csv/xlsx — grouping by shape is what lets a renderer draw a grid by dispatching on `type=table` alone. The rest of the stage is plumbing.
