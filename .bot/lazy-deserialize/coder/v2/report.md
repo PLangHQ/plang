@@ -1,19 +1,19 @@
 # coder — lazy-deserialize — v2 report
 
-## Status: Stage 4 = 4a–4d DONE. Stage 5 = access-resolution core + scalar interpolation + Cut2 + Cut5 DONE. Remaining: 4e (http dissolve), Cut1/Cut3/Cut4, assert-full-match scalar, goal-test building.
+## Status: Stage 4 COMPLETE (4a–4e). Stage 5 = access-resolution core + scalar interpolation + Cut2/Cut4/Cut5 + ReadFailure DONE. Remaining: Cut1 + WireReadLazy (lazy Wire.Read/Write) + Cut3 (signing) — 10 deep wire/signing stubs.
 
 ### Update (later in session, all pushed)
-- **Cut5** (number tower) green: exact-kind round-trip, promote-then-narrow no-wrap, double⊕decimal raises.
-- **Scalar interpolation wired**: `Variables.Resolve` renders `%x%` via `ScalarValue` — a bare `%cfg%` of a lazily-read object is the raw json string; dotted `%cfg.port%` still navigates+materializes. Hot path; goal suite stayed 262 pass / 0 fail.
-- **Cut2** (touch materializes) green: config.json/csv untouched=raw, navigated=field/row-column; biginteger lossless; image decodes only on value-touch.
-- C# suite: **27 fail (all stubs), 0 regressions**. Goal suite: **262 pass, 0 fail, 10 stale**.
+- **Cut5** (number tower), **Cut2** (touch materializes), **Cut4** (http body-lazy/metadata-eager) green.
+- **Scalar interpolation wired**: `Variables.Resolve` renders `%x%` via `ScalarValue` — bare `%cfg%` of a lazily-read object is the raw json string; dotted `%cfg.port%` still navigates+materializes. Hot path; goal suite stayed 262/0.
+- **4e DONE**: http channel kind (`channel/type/http`) + `http.response` dissolved. `ParseResponseAsync` returns plain Data (body=lazy value from Content-Type, status/headers/duration=Properties); `request`/`upload` Run → `Task<Data>`; OpenAi reads body from Data value; `http.response.@this` deleted. Updated ~9 dependent C# test files (Stage3_HttpResponse/ContentTypeDispatch rewritten to the lazy contract; RequestAction/UploadAction `.Body`→`Value`/`ScalarValue`; obsolete Out/Normalize rows removed) and filled HttpChannel/Cut4/ChannelKindLayout. Goal http tests stayed green.
+- **ReadFailure** green: malformed read surfaces `Data.Error`, never throws into a courier.
+- C# suite: **10 fail (all stubs), 0 regressions**. Goal suite: **262 pass, 0 fail, 10 stale**.
 
-### Still remaining
-- **4e** http channel + `http.response` dissolve (the big one — ~12 C# files + http goal tests; plan below).
-- **Cut1** verbatim passthrough — needs `Wire.Write`/value-emit to emit `_raw` verbatim for an untouched raw-backed Data (currently `Normalize` reads `.Value` → materializes). Serialization-core change, deferred.
-- **Cut3** sign→wire→verify, **Cut4** http body-lazy/metadata-eager (needs 4e).
-- **assert/compare full-match scalar**: `Variables.Resolve` (interpolation/output) now uses `ScalarValue`; the `assert %x% equals` full-match compare path may still read `.Value` — verify when wiring 4e/goal tests.
-- **Goal `.test.goal` building**: the 10 LazyDeserialize goal tests are *stale* (need `plang build` + a `config.json`/`.png` fixture; build needs the LLM builder). Mechanism is proven in C#.
+### Still remaining (10 stubs — all deep wire-serializer / signing)
+- **Cut1** verbatim passthrough (4) + **WireReadLazy** typed-slot deferral (2): both need lazy `Wire.Read` (capture the value-slot raw + defer when a type slot is present) and `Wire.Write` (emit `_raw` verbatim for an untouched raw-backed Data; today `Normalize` reads `.Value` → materializes). The blocker the architect flagged: the STJ `Wire` converter has **no actor context**, so a deferred wire Data can't dispatch the reader at materialize. Resolution path: thread context to the deserialized Data (the plang serializer / channel sets it), or give `FromRaw`-from-wire a context hook. Touches snapshot + signing round-trips → do deliberately.
+- **Cut3** sign→wire→verify (3): signing round-trip incl. nested signed Data via the lean envelope. Needs identity setup + sign/verify actions.
+- **assert/compare full-match scalar**: `Variables.Resolve` (interpolation/output) uses `ScalarValue`; the `assert %x% equals` full-match compare path may still read `.Value` — verify if a goal test needs it.
+- **Goal `.test.goal` building**: the 10 LazyDeserialize goal tests are *stale* (need `plang build` + `config.json`/`.png` fixtures; build needs the LLM builder). Mechanism proven in C#.
 
 ---
 (original v2 detail below)
