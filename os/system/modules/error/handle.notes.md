@@ -1,40 +1,12 @@
-`error.handle` is the **modifier** that wraps an action with recovery — it goes inside the host action's `modifiers` array, NEVER as a peer in top-level `actions`.
+`error.handle` is the **modifier** that wraps an action with recovery — it goes inside the host action's `modifiers` array, NEVER as a top-level peer.
 
-When the step text says `<main>, on error <recovery>` (or `on error call X`), the recovery action goes INSIDE `error.handle.Actions` as a list of action records.
-
-**Multilingual:** the "on error" clause may be written in any natural language. Recognize them all as error.handle and produce the same .pr structure. Examples:
-
-- English: `on error call X`, `if it fails call X`, `catch error call X`
-- Icelandic: `a villu kalla i X`, `ef villa kemur upp kalla X`
-- Japanese: `エラー時に X を呼ぶ`, `エラーが発生したら X を呼び出す`
-- Arabic: `عند الخطأ اتصل بـ X`
-- Korean: `오류 발생 시 X 호출`, `오류가 나면 X 호출`
-- Swahili: `kwa hitilafu piga X`, `ikishindwa piga X`
-- Spanish: `en caso de error llamar a X`
-- German: `bei Fehler X aufrufen`
-
-ANY trailing clause after the main verb that references an error-handling action MUST produce the error.handle modifier on the main action with that goal in Actions. Drop nothing.
+When the step text has a trailing `on error <recovery>` clause (in ANY natural language — "on error", "if it fails", "catch error" and their equivalents in other languages all count), the recovery action goes INSIDE `error.handle.Actions` (a list of action records). Never drop the clause.
 
 Three failure modes to avoid:
 
-1. **Don't duplicate** — if `variable.set` is the recovery, it appears ONCE inside `Actions`. Never also as a top-level peer. A duplicate peer would run the recovery unconditionally on every step execution, defeating the whole "on error" intent.
-2. **Don't stuff recovery content into `Key` / `Message`** — `Key` filters by a named error key (e.g. `"Conflict"`, `"404"`); `Message` filters by error message substring. The recovery clause's content (variable name, "true", goal name) is NEVER what `Key` or `Message` should contain. If the step text uses `on error <verb> ...` with no filter clause (no `key X`, no status code, no message match), DO NOT invent a filter — leave `Key`/`Message`/`StatusCode` absent.
-3. **`on error call FailureGoal`** routes to an `error.handle` modifier wrapping the host, with `goal.call(GoalName={name:"FailureGoal"})` inside `Actions`. NEVER fill the host's own callback slots (`OnToolCall`, `OnValidateResponse`, `OnStream`) with the error handler — those are normal action parameters for unrelated purposes, and silent misbehaviour results.
+1. **Don't duplicate** — the recovery action appears ONCE, inside `Actions`. Never also as a top-level peer (a peer would run it unconditionally every execution, defeating "on error").
+2. **Don't stuff recovery content into `Key`/`Message`** — `Key` filters by a named error key (e.g. `"Conflict"`, `"404"`), `Message` by a message substring. The recovery's content (a goal name, variable, `"true"`) is never a filter. If the step names no filter (`key X`, a status code, a message match), leave `Key`/`Message`/`StatusCode` absent — don't invent one.
+3. **Don't fill the host's callback slots** (`OnToolCall`, `OnValidateResponse`, `OnStream`) with the error handler — those are unrelated parameters.
 
-Example — `write 'hi' to logger, on error set %writeFailed% = true`:
-
-```json
-{"actions": [
-  {"module": "output", "action": "write",
-    "parameters": [{"name": "Data", "value": "hi", "type": "object"},
-                   {"name": "channel", "value": "logger", "type": "string"}],
-    "modifiers": [
-      {"module": "error", "action": "handle",
-        "parameters": [{"name": "Actions",
-          "value": [{"module": "variable", "action": "set",
-            "parameters": [{"name": "Name", "value": "%writeFailed%", "type": "string"},
-                           {"name": "Value", "value": true, "type": "bool"}]}],
-          "type": "list<action>"}]}
-    ]}
-]}
-```
+`write 'hi' to logger, on error set %writeFailed% = true`:
+`output.write(Data="hi", channel="logger") | error.handle(Actions=[variable.set(Name=%writeFailed%, Value=true)])`
