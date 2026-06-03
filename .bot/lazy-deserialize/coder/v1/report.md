@@ -58,6 +58,18 @@ So Way 3 **supersedes** `NumberPolicy`'s two axes and **changes `math.*` observa
 
 My default if you want me to just proceed: Way 3 wins, `NumberPolicy` axes become no-ops (struct kept for `math.*` signatures), update the affected math C# tests to Way-3 expectations, document each changed expectation.
 
+## Stage 3 — CORE DONE (commit `0f19d1430`), Wire-lazy tail OPEN (design call #3)
+
+The lazy `Data` mechanism is landed and green, **inert for existing flows** (nothing sets `_raw` until Stage 4): `_raw` slot, lazy `.Value` materialize (only when `_value` null & `_raw` set), `_raw` survives materialization, mutation invalidates it, `ConvertValue` folded into the `Materialise()` seam, touch-time errors cached as `Data.Error` naming the source. `FromRaw(raw, type, context)` factory. Zero regression (DataTests 303, Serialization 321, Core 251, Types 301, Goals 4). LazyDataTests 19/26.
+
+The deferred 7 rows (`WireReadLazy` ×6 + `AfterMutation`/`RawBackedSerialize`) need the **lazy `Wire.Read`/`Wire.Write`** rewrite, which has an unresolved wrinkle worth an architect call:
+
+**Design call #3 — lazy `Wire.Read` for untyped value slots + nested Data.** The plan says `Wire.Read` captures the value slot's raw json into `_raw`, stamps type/kind from the type slot, and defers; `LiftDataIfShaped` deletes. But:
+- **Untyped value slots** (the common case — `{name:"x", value:5}` with no `type`) have no kind to materialize toward. Deferring them means `.Value` can't reconstruct the primitive/list/dict. My proposed resolution: defer **only when the type slot is present**; keep eager `Deserialize<object?>` for untyped slots (cheap primitives/lists/dicts that need no type-driven read). Verbatim passthrough then applies to typed values (config.json → `{object,json}` → raw deferred), which is the payoff anyway.
+- **Nested Data in a bare value slot** (Data-wrapping-Data) is what `LiftDataIfShaped` rehydrated. The architect says the containing *type's* reader rebuilds it (e.g. `Signature` rebuilds its Data field) — true when the nested Data is reached through a typed domain field, but a bare untyped value slot holding a Data has no type to drive reconstruction. Deleting `LiftDataIfShaped` outright would turn such an inner Data into a dict (its Signature would stop reaching `signing.verify`). Needs either: nested Data always rides a typed slot, or a retained (non-shape-sniff) reconstruction path.
+
+This touches the serialization core (snapshot/signing/all wire) — I'm not gambling on it without the call. Recommended: my "defer-only-when-typed" resolution + confirm the nested-Data path.
+
 ## Remaining
 
 3. **Stage 3 lazy `Data`** — `_raw` + lazy `.Value` (materialize via reader when `_value` null & `_raw` set) + mutation-invalidates-`_raw` + `Wire.Read` defers the value slot + delete `LiftDataIfShaped`. Touches the engine's hottest type (`Data.Value`); needs full-suite verification. Also unblocks the 2 Stage-3-coupled `ReadFailureTests` rows + the `MaterialiseErrorPath` rows.
