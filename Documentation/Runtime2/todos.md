@@ -858,3 +858,9 @@ singular. Left as-is for now (the vocabulary `Kinds` is a genuine "all valid
 kinds" collection, which is a defensible plural). Investigate whether the
 vocabulary should be renamed to a distinct singular noun so `Kind`/`Kinds` stop
 looking like a typo of each other — without merging the two concepts.
+
+## Render-side kind-awareness — csv→table, the write half of lazy-deserialize (2026-06-03, Ingi)
+
+Follow-on to the `lazy-deserialize` branch, which is the *read* half. That branch makes a value carry its `kind` (`text`/`csv`, `text`/`json`, …) untouched all the way to the render boundary — the precondition for Ingi's vision: "read a csv, nothing in the runtime cares about it until I render it, then it sees it's csv and draws a table in the UI."
+
+The gap: the renderer registry (`app.type.renderer.Of(typeName, format)`) keys on `(type, format)`, not `kind`. So a `text` value going to a UI channel renders as escaped text, not a table — the renderer can't yet see "this is csv, draw a table." The follow-on is to make the renderer dispatch on `kind` too (`(text, csv) → table` for a UI/html channel) — the symmetric mirror of the read-side `(type, kind)` reader this branch builds. Read half ships in `lazy-deserialize`; this is the write half.
