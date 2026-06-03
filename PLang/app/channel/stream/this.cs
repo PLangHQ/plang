@@ -74,8 +74,11 @@ public sealed class @this : global::app.channel.session.@this
 
         try
         {
-            var text = await ReadAllTextAsync(ct);
-            return global::app.data.@this.Ok(text);
+            // The boundary: read the source bytes and let the base stamp
+            // {type, kind} from Mime into lazy Data — no bare text, no eager
+            // parse (the value materializes on first touch).
+            var bytes = await ReadAllBytesAsync(ct);
+            return await StampReadAsync(bytes, ct);
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
@@ -175,19 +178,6 @@ public sealed class @this : global::app.channel.session.@this
     {
         var bytes = ResolveEncoding().GetBytes(text);
         await WriteBytesAsync(bytes, cancellationToken);
-    }
-
-    /// <summary>
-    /// Resolves the channel's <see cref="Channel.@this.Encoding"/> name to a real
-    /// <see cref="global::System.Text.Encoding"/>. Falls back to UTF-8 when the
-    /// property is null/empty or names an unknown encoding.
-    /// </summary>
-    private global::System.Text.Encoding ResolveEncoding()
-    {
-        if (string.IsNullOrEmpty(Encoding))
-            return global::System.Text.Encoding.UTF8;
-        try { return global::System.Text.Encoding.GetEncoding(Encoding); }
-        catch (ArgumentException) { return global::System.Text.Encoding.UTF8; }
     }
 
     public override void Close()

@@ -251,6 +251,93 @@ public abstract class @this : IAsyncDisposable, IDisposable
         return binding.Handler(context!, null, data);
     }
 
+    /// <summary>
+    /// The one read boundary. A concrete kind reads its source bytes and hands
+    /// them here; the channel's <see cref="Mime"/> decides the value's
+    /// <c>{type, kind}</c> and the result is <em>lazy</em> Data — the value
+    /// materializes on first touch through the reader registry, never at read
+    /// time. Couriers (variable memory, callstack, routing) thus relay a value
+    /// without forcing a parse (the OBP courier rule holds by construction).
+    ///
+    /// <para>When <see cref="Mime"/> is <c>application/plang</c> the bytes are
+    /// the self-describing Data container, not a value — the serializer
+    /// reconstructs the Data (whose own value slot stays lazy via
+    /// <c>Wire.Read</c>). Any other Mime names a value: the bytes are stamped
+    /// <c>{type, kind}</c> and held as the raw source form.</para>
+    /// </summary>
+    protected async Task<global::app.data.@this> StampReadAsync(byte[] raw, CancellationToken ct = default)
+    {
+        var mime = Mime ?? "";
+        // application/plang — the self-describing container; the serializer
+        // reads the Data shape and returns the reconstructed Data.
+        if (mime.StartsWith("application/plang", System.StringComparison.OrdinalIgnoreCase))
+        {
+            var serializer = Channels?.Serializers.GetByType(mime);
+            if (serializer != null)
+            {
+                using var ms = new MemoryStream(raw);
+                var read = await serializer.DeserializeAsync(ms, ct);
+                // The container deserializer wraps the reconstructed Data in an
+                // Ok envelope; unwrap to the Data the container described.
+                return read.Value as global::app.data.@this ?? read;
+            }
+        }
+        return StampValue(raw);
+    }
+
+    /// <summary>
+    /// Stamps a value-typed payload — <see cref="Mime"/> names a value, not the
+    /// plang container. Text-shaped Mimes keep the raw as a decoded string
+    /// (Decision 3 — no utf-8 re-encode tax on the common path); binary Mimes
+    /// keep the <c>byte[]</c>.
+    /// </summary>
+    private global::app.data.@this StampValue(byte[] raw)
+    {
+        var context = Actor?.Context;
+        var (type, binary) = StampType(context);
+        object value = binary ? raw : ResolveEncoding().GetString(raw);
+        return global::app.data.@this.FromRaw(value, type, context, Name);
+    }
+
+    /// <summary>
+    /// The <c>{type, kind}</c> the channel's <see cref="Mime"/> stamps, plus
+    /// whether the source form is binary. <c>text/plain</c> (and an unset Mime)
+    /// is <c>{text, null}</c> — text with no specific encoding;
+    /// <c>application/octet-stream</c> and any unknown Mime is <c>{bytes, null}</c>
+    /// — opaque bytes that ride raw until cast. Everything else routes through
+    /// the shape-based <see cref="app.format.list.@this.TypeFromMime"/>.
+    /// </summary>
+    private (global::app.type.@this type, bool binary) StampType(global::app.actor.context.@this? context)
+    {
+        var mime = Mime ?? "";
+        if (string.IsNullOrEmpty(mime) || mime.Equals("text/plain", System.StringComparison.OrdinalIgnoreCase))
+            return (global::app.type.@this.Create("text", null, context: context), false);
+        if (mime.Equals("application/octet-stream", System.StringComparison.OrdinalIgnoreCase))
+            return (global::app.type.@this.Create("bytes", null, context: context), true);
+
+        var t = Channels?.App?.Format?.TypeFromMime(mime) ?? global::app.type.@this.Null;
+        if (t.IsNull)
+            return (global::app.type.@this.Create("bytes", null, context: context), true);
+        return (t, IsBinaryShape(t.Name));
+    }
+
+    private static bool IsBinaryShape(string name) =>
+        name is "image" or "audio" or "video" or "bytes";
+
+    /// <summary>
+    /// Resolves the channel's <see cref="Encoding"/> name to a real
+    /// <see cref="global::System.Text.Encoding"/>. Falls back to UTF-8 when the
+    /// property is null/empty or names an unknown encoding. Owned by the base so
+    /// every concrete kind decodes the same way.
+    /// </summary>
+    protected global::System.Text.Encoding ResolveEncoding()
+    {
+        if (string.IsNullOrEmpty(Encoding))
+            return global::System.Text.Encoding.UTF8;
+        try { return global::System.Text.Encoding.GetEncoding(Encoding); }
+        catch (System.ArgumentException) { return global::System.Text.Encoding.UTF8; }
+    }
+
     /// <summary>Closes the channel and any owned resources.</summary>
     public virtual void Close()
     {
