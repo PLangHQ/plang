@@ -624,7 +624,13 @@ public partial class @this
             var varName = match.Groups[1].Value;
             if (skipInfrastructure && varName.StartsWith('!'))
                 return match.Value; // Leave %!var% unresolved for untrusted input
-            return Get(varName)?.Value?.ToString() ?? match.Value;
+            // Scalar/output access (access-driven resolution): a bare `%x%` renders
+            // the value's raw source form, not a structured parse — `%cfg%` of a
+            // lazily-read config.json is the raw json string. ScalarValue equals
+            // the materialized value for authored/navigated Data, so this only
+            // changes raw-backed full matches (dotted paths navigate via Get and
+            // come back already materialized).
+            return Get(varName)?.ScalarValue?.ToString() ?? match.Value;
         });
     }
 

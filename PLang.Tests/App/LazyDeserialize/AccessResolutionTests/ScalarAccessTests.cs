@@ -36,4 +36,18 @@ public class ScalarAccessTests
         await Assert.That(d.ScalarValue).IsEqualTo((object)json); // the raw string, not a dict
         await Assert.That(d.MaterializeCount).IsEqualTo(0);       // never parsed
     }
+
+    // Variable interpolation/output uses the scalar form: a bare `%cfg%` of a
+    // lazily-read object renders the raw json string (no parse), while a dotted
+    // `%cfg.port%` navigates and materializes the field.
+    [Test] public async Task Scalar_VariableInterpolation_BareVarIsRaw_DottedNavigates()
+    {
+        await using var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-scalarvar-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var ctx = app.User.Context;
+        ctx.Variable.Set("cfg", data.FromRaw("{\"port\":8080}", type.Create("object", "json", context: ctx), ctx, "cfg"));
+
+        await Assert.That(ctx.Variable.Resolve("%cfg%")).IsEqualTo("{\"port\":8080}");
+        await Assert.That(ctx.Variable.Resolve("%cfg.port%")).IsEqualTo("8080");
+    }
 }
