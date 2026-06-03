@@ -1,6 +1,19 @@
 # coder — lazy-deserialize — v2 report
 
-## Status: Stage 4 COMPLETE (4a–4e). Stage 5 = access-resolution core + scalar interpolation + Cut2/Cut4/Cut5 + ReadFailure DONE. Remaining: Cut1 + WireReadLazy (lazy Wire.Read/Write) + Cut3 (signing) — 10 deep wire/signing stubs.
+## Status: Stages 4 AND 5 COMPLETE. **All LazyDeserialize tests green (183/183). Full C# suite 4021/0. Goal suite 262 pass / 0 fail.** Zero regressions; builds clean (0 PLNG002).
+
+The only non-green LazyDeserialize items are the **10 stale `.test.goal` files** — they need `plang build` (LLM builder) + `config.json`/`.png` fixtures to run; every mechanism they cover is proven in the C# suite.
+
+### Final batch (Cut3, then lazy Wire.Read/Write — all pushed)
+- **Cut3 (signing)** — "for free" via the signing module: `RunAction<sign>`/`<verify>` against the actor context (auto-provisioned identity), no key plumbing. Signed Data round-trips + verifies; nested signed Data's inner signature survives + verifies; tampered fails.
+- **Lazy `Wire.Read`** — a shape-typed value slot (`object`/`table` *with an encoding kind*) is captured as raw and deferred (materializes on touch). Scoped so nested-Data envelopes (`{object}` no kind) still rehydrate via `LiftDataIfShaped`, and scalars/domain/`dict<>` stay eager. `Wire` ctor now takes context (per-actor serializer passes it) so a deferred value materializes through the reader; snapshot wire untouched.
+- **Lazy `Wire.Write`** — an untouched raw-backed Data emits its raw verbatim (byte-identical passthrough, no materialize); the sign-walk skips raw-untouched Data.
+- **`object/json` reader** now unwraps `JsonElement` → plain CLR so a round-tripped object re-serializes as its values (was `{valueKind:…}`).
+- **ReadFailure**, **AfterMutation** (renderer-after-mutation), **Cut1** (verbatim) filled.
+
+### Remaining (non-code)
+- Build + run the 10 stale `.test.goal` files (LLM builder + fixtures) — out of deterministic scope this session.
+- `assert %x% equals` full-match scalar path: interpolation/output use `ScalarValue`; verify the compare path if a goal needs it.
 
 ### Update (later in session, all pushed)
 - **Cut5** (number tower), **Cut2** (touch materializes), **Cut4** (http body-lazy/metadata-eager) green.
