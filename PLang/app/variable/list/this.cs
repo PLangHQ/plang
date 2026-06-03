@@ -274,8 +274,8 @@ public partial class @this
         if (!parent.IsInitialized && parent.Value == null)
             return data.@this.NotFound(name);
 
-        // Lazy convert if parent is a typed string (e.g., json) — must happen before navigation
-        parent.ConvertValue();
+        // Lazy materialize if parent is a typed string (e.g., json) — must happen before navigation
+        parent.Materialise();
 
         // For dot-path, extract raw value from Data — we're setting a property on a C# object.
         // Dict/list values are snapshot-cloned so the target doesn't alias the source's

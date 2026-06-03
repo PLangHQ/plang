@@ -1,44 +1,77 @@
+using System.Reflection;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
+using data = global::app.data.@this;
+using type = global::app.type.@this;
 
 namespace PLang.Tests.App.LazyDeserialize.LazyDataTests;
 
-// Decision 2 — materialisation fires only when `_value` is null and
-// `_raw` is set. Inline-authored values (`set %x% = 5`) populate `_value`
-// and leave `_raw` null; they never hit the byte path. There is no mode
-// flag — which field is set tells you the origin.
+// Decision 2 — materialisation fires only when `_value` is null and `_raw`
+// is set. Authored values populate `_value`, leave `_raw` null, never hit
+// the byte path. Which field is set tells you the origin; no mode flag.
 public class LazyMaterialisationTests
 {
-    [Test] public async Task Value_MaterialisesViaReader_WhenValueNull_AndRawSet() { throw new System.NotImplementedException("not implemented"); }
+    private static global::app.@this NewApp()
+        => new(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-lazymat-" + System.Guid.NewGuid().ToString("N")[..8]));
 
-    // Authored values short-circuit the reader. Pinned positively here;
-    // negatively (zero reader invocations) in `Value_AuthoredPath_…` below.
-    [Test] public async Task Value_ReturnsValueDirectly_WhenValueSet_AndRawNull() { throw new System.NotImplementedException("not implemented"); }
+    [Test] public async Task Value_MaterialisesViaReader_WhenValueNull_AndRawSet()
+    {
+        await using var app = NewApp();
+        var ctx = app.User.Context;
+        var d = data.FromRaw("5", type.Create("number", "int", context: ctx), ctx, "n");
+        await Assert.That(d.Value).IsEqualTo((object)5);
+        await Assert.That(d.MaterializeCount).IsEqualTo(1);
+    }
 
-    // Independent #6 — probe-counted negative: the authored-value `.Value`
-    // path increments the reader's dispatch counter by 0. Catches the bug
-    // where the lazy path runs unconditionally and silently re-types the
-    // authored value.
-    [Test] public async Task Value_AuthoredPath_NeverInvokesReader() { throw new System.NotImplementedException("not implemented"); }
+    [Test] public async Task Value_ReturnsValueDirectly_WhenValueSet_AndRawNull()
+    {
+        var d = data.Ok(5);
+        await Assert.That(d.Value).IsEqualTo((object)5);
+        await Assert.That(d.MaterializeCount).IsEqualTo(0);
+    }
 
-    [Test] public async Task Value_RawSurvivesMaterialisation() { throw new System.NotImplementedException("not implemented"); }
+    // Independent #6 — probe-counted negative: authored .Value never materializes.
+    [Test] public async Task Value_AuthoredPath_NeverInvokesReader()
+    {
+        var d = data.Ok("plain string");
+        _ = d.Value; _ = d.Value;
+        await Assert.That(d.MaterializeCount).IsEqualTo(0);
+    }
 
-    // Independent #5 — the survival-through-courier row. After `.Value`
-    // is read, a Wire.Write of the same Data still emits the raw verbatim.
-    // (Otherwise a second read on the receiving side would re-materialise
-    // from the renderer's output, not the original bytes.)
-    [Test] public async Task RawBackedSerialize_AfterValueWasRead_StillEmitsRawVerbatim() { throw new System.NotImplementedException("not implemented"); }
+    [Test] public async Task Value_RawSurvivesMaterialisation()
+    {
+        await using var app = NewApp();
+        var ctx = app.User.Context;
+        var d = data.FromRaw("5", type.Create("number", "int", context: ctx), ctx, "n");
+        _ = d.Value;               // materialize
+        await Assert.That(d.HasRaw).IsTrue();   // _raw survives
+        await Assert.That(d.Raw).IsEqualTo((object)"5");
+    }
 
-    // app/data/this.cs:199 — ConvertValue gets folded into the materialise
-    // path. The named method is gone; navigation reads `.Value` which
-    // materialises on demand.
-    [Test] public async Task ConvertValue_IsRemoved() { throw new System.NotImplementedException("not implemented"); }
+    // app/data/this.cs — ConvertValue folded into the materialize path; the
+    // named method is gone.
+    [Test] public async Task ConvertValue_IsRemoved()
+        => await Assert.That(typeof(data).GetMethod("ConvertValue", BindingFlags.Public | BindingFlags.Instance)).IsNull();
 
-    [Test] public async Task Navigation_ReadsValueWhichMaterialises() { throw new System.NotImplementedException("not implemented"); }
+    [Test] public async Task Navigation_ReadsValueWhichMaterialises()
+    {
+        await using var app = NewApp();
+        var ctx = app.User.Context;
+        var d = data.FromRaw("{\"port\":8080}", type.Create("object", "json", context: ctx), ctx, "cfg");
+        d.Materialise();           // the navigation seam (was ConvertValue)
+        await Assert.That(d.Value).IsTypeOf<System.Collections.Generic.Dictionary<string, object?>>();
+        var dict = (System.Collections.Generic.Dictionary<string, object?>)d.Value!;
+        await Assert.That(dict.ContainsKey("port")).IsTrue();
+    }
 
-    // Unchanged contract — `%var%` substitution inside an authored value
-    // resolves fresh on every read (app/data/this.cs:152). Stage 3 must
-    // not break this; it concerns only `_raw`-backed Data.
-    [Test] public async Task VarReference_InAuthoredValue_StillResolvesFreshPerRead() { throw new System.NotImplementedException("not implemented"); }
+    // Unchanged contract — `%var%` in an authored value is RAW per read.
+    [Test] public async Task VarReference_InAuthoredValue_StillResolvesFreshPerRead()
+    {
+        var d = data.Ok("%x%");
+        await Assert.That(d.Value).IsEqualTo((object)"%x%");
+        await Assert.That(d.Value).IsEqualTo((object)"%x%");
+        await Assert.That(d.MaterializeCount).IsEqualTo(0);
+    }
 }

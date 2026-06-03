@@ -22,6 +22,18 @@ public partial class @this
 {
     private object? _value;
     private Func<object?>? _valueFactory;
+
+    // Lazy (Way-3) backing: the undecoded source form — `string` for a text
+    // source, `byte[]` for a binary one. When set with `_value` null, `.Value`
+    // materializes through the reader registry on first touch and caches into
+    // `_value`; `_raw` SURVIVES materialization (verbatim passthrough +
+    // signature verification ride on it) and is cleared only by a mutation.
+    // Private + never on the wire — the wire shape is Data's own four fields.
+    private object? _raw;
+    // Materialization is a read-through; a failed read caches its error here and
+    // surfaces it on the Data (best-effort `.Value` returns null). Touch-time,
+    // not read-time — the point of laziness.
+    private int _materializeCount;
     private type? _type;
     private actor.context.@this _context = null!;
 
@@ -163,12 +175,19 @@ public partial class @this
                 _value = _valueFactory();
                 _valueFactory = null;
             }
+            // Lazy materialize from the raw source form — only when nothing is
+            // cached yet AND a raw is set. Inline-authored values (`set %x% = 5`)
+            // populate `_value` and leave `_raw` null, so they never hit this
+            // path and the `%var%`-resolves-fresh-per-read contract is untouched.
+            if (_value == null && _raw != null)
+                _value = Materialize();
             return _value;
         }
         set
         {
             _value = UnwrapJsonElement(value);
             _valueFactory = null;
+            _raw = null;            // mutation — raw is no longer authoritative
             Updated = System.DateTime.UtcNow;
             IsInitialized = true;
             _type = null;
@@ -191,27 +210,90 @@ public partial class @this
     }
 
     /// <summary>
-    /// Lazily converts the value based on its Type.
-    /// Called on first navigation into the value — if the value is a string
-    /// and the Type knows how to convert it, replaces the value with the converted object.
-    /// Only converts once — subsequent accesses use the converted value directly.
+    /// Construct a raw-backed (lazy) Data — the value materializes through the
+    /// reader registry on first touch of <see cref="Value"/>. The source form
+    /// (<paramref name="raw"/>) is held verbatim; <paramref name="type"/> carries
+    /// the Name + Kind the reader dispatches on. Used by the channel boundary
+    /// (Stage 4) and tests; <c>set %x% = 5</c> still populates the value directly.
     /// </summary>
-    public void ConvertValue()
+    public static @this FromRaw(object raw, type type, actor.context.@this? context = null, string name = "")
     {
-        if (_value is not string raw || _type == null) return;
-        var converted = _type.Convert(raw);
-        if (converted != null)
-            SetValueDirect(converted);
+        var d = new @this(name) { _context = context };
+        d._raw = raw;
+        d._type = type;
+        if (type != null) type.Context = context;
+        return d;
+    }
+
+    /// <summary>How many times this Data materialized from <c>_raw</c> — a debug probe (0 for authored values).</summary>
+    internal int MaterializeCount => _materializeCount;
+
+    /// <summary>True when this Data is raw-backed (has an undecoded source form held verbatim).</summary>
+    internal bool HasRaw => _raw != null;
+
+    /// <summary>The undecoded source form, or null for an authored value. Internal — never on the wire.</summary>
+    internal object? Raw => _raw;
+
+    /// <summary>
+    /// Read-through materialization: turn <c>_raw</c> into the value via the
+    /// reader registry for <c>(Type.Name, Type.Kind)</c>, falling back to the
+    /// type's own <c>Convert</c> for a string raw (subsumes the old
+    /// <c>ConvertValue</c>). Never clears <c>_raw</c>. A failure caches an Error
+    /// that names the source and returns null — touch-time, not a throw into a courier.
+    /// </summary>
+    private object? Materialize()
+    {
+        _materializeCount++;
+        var t = _type;
+        try
+        {
+            var read = _context?.App.Type.Readers.Of(t?.Name ?? "", t?.Kind);
+            if (read != null)
+                return read(_raw!, t?.Kind, new global::app.type.reader.ReadContext(_context));
+            // Fallback — a string raw with a known type reads via the type's own
+            // Convert (json→dict, WireReader, primitive coercion). Subsumes ConvertValue.
+            if (_raw is string s && t != null)
+                return t.Convert(s);
+            return _raw; // no type to read toward — hand back the raw form (Stage 5 refines)
+        }
+        catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
+        {
+            // The reader dispatches through reflection — unwrap so the touch-time
+            // error names the real cause, not a generic invocation wrapper.
+            var real = (ex as System.Reflection.TargetInvocationException)?.InnerException ?? ex;
+            Error = new global::app.error.Error(
+                $"failed to read %{Name}% as {t?.Kind ?? t?.Name ?? "value"}: {real.Message}",
+                "MaterializeFailed", 400) { Exception = real };
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Force materialization of a string raw in place — the navigation seam that
+    /// replaces the old <c>ConvertValue</c>. A typed, still-textual value is
+    /// promoted to <c>_raw</c> and read through the registry; an already-raw-backed
+    /// value just materializes. No-op otherwise.
+    /// </summary>
+    internal void Materialise()
+    {
+        if (_value is string raw && _type != null)
+        {
+            _raw = raw;
+            _value = null;
+        }
+        if (_value == null && _raw != null)
+            _ = Value; // triggers Materialize(), caches into _value, keeps _raw
     }
 
     /// <summary>
     /// Updates _value without triggering Value setter side effects (no type clearing, no unwrap).
     /// Used by RehydrateNestedData to replace a dictionary with a reconstructed Data object
-    /// without losing the outer Type.
+    /// without losing the outer Type. A mutation — invalidates <c>_raw</c>.
     /// </summary>
     private void SetValueDirect(object? value)
     {
         _value = value;
+        _raw = null;
         Updated = System.DateTime.UtcNow;
         IsInitialized = true;
     }

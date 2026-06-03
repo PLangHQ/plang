@@ -254,10 +254,12 @@ public partial class @this
         if (ownProp != null && ownProp.DeclaringType != typeof(@this))
             return new @this(key, ownProp.GetValue(this), parent: this);
 
-        // Lazy type conversion — if value is a string with a typed Data, convert on first navigation
+        // Lazy materialization — a typed, still-textual value reads through the
+        // reader registry on first navigation (the old ConvertValue, folded into
+        // the materialize path).
         if (val is string && _type != null)
         {
-            ConvertValue();
+            Materialise();
             val = Value;
         }
 
