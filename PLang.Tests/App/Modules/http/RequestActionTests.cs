@@ -96,8 +96,8 @@ public class RequestActionTests
 
         await result.IsSuccess();
         await Assert.That(result.Value).IsNotNull();
-        // JSON deserializes as JsonElement on Response.Body — serialize back to verify.
-        var json = JsonSerializer.Serialize(result.Value!.Body);
+        // The body is the lazy value; touching it materializes json → object.
+        var json = JsonSerializer.Serialize(result.Value);
         await Assert.That(json).Contains("Alice");
     }
 
@@ -187,7 +187,7 @@ public class RequestActionTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value!.Body?.ToString()).Contains("<root>");
+        await Assert.That(result.ScalarValue?.ToString()).Contains("<root>");
     }
 
     [Test]
@@ -202,7 +202,7 @@ public class RequestActionTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value!.Body?.ToString()).IsEqualTo("Hello World");
+        await Assert.That(result.ScalarValue?.ToString()).IsEqualTo("Hello World");
     }
 
     [Test]
@@ -410,7 +410,7 @@ public class RequestActionTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value!.Body?.ToString()).IsEqualTo("not json at all");
+        await Assert.That(result.ScalarValue?.ToString()).IsEqualTo("not json at all");
     }
 
     [Test]
@@ -429,8 +429,8 @@ public class RequestActionTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value!.Body).IsTypeOf<byte[]>();
-        await Assert.That((byte[])result.Value!.Body!).IsEquivalentTo(bytes);
+        await Assert.That(result.ScalarValue).IsTypeOf<byte[]>();
+        await Assert.That((byte[])result.ScalarValue!).IsEquivalentTo(bytes);
     }
 
     #endregion

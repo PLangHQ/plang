@@ -221,10 +221,10 @@ public sealed class OpenAi : ILlm
                 return global::app.data.@this<object>.From(httpResult);
 
             // --- Parse response ---
-            // http.request now wraps the wire body in Data<Response> where
-            // Response.Body carries the deserialized JSON object — unwrap that
-            // before handing it to ParseApiResponse.
-            var responseBody = (httpResult.Value as global::app.http.response.@this)?.Body ?? httpResult.Value;
+            // http.request returns plain Data with the body as its lazy value
+            // (http.response dissolved). Touching .Value materializes the body
+            // (json → object) through the reader.
+            var responseBody = httpResult.Value;
             var (responseJson, parseEx) = ParseApiResponse(responseBody);
             if (responseJson == null)
             {

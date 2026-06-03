@@ -24,11 +24,12 @@ public class ChannelKindLayoutTests
 
     // New kinds — the surface that lets every read enter through the one
     // boundary.
+    // Metadata name of `@this` is `this` (the @ is C# escaping, not part of the name).
     [Test] public async Task FileChannel_Exists_AtAppChannelTypeFile()
         => await Assert.That(typeof(global::app.channel.@this).Assembly
-            .GetType("app.channel.type.file.@this")).IsNotNull();
+            .GetType("app.channel.type.file.this")).IsNotNull();
 
     [Test] public async Task HttpChannel_Exists_AtAppChannelTypeHttp()
         => await Assert.That(typeof(global::app.channel.@this).Assembly
-            .GetType("app.channel.type.http.@this")).IsNotNull();
+            .GetType("app.channel.type.http.this")).IsNotNull();
 }

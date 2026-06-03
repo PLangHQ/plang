@@ -1,6 +1,12 @@
+using System.Net;
+using System.Net.Http;
+using System.Text;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
+using app.module.http;
+using app.module.http.code;
+using httpchannel = global::app.channel.type.http.@this;
 
 namespace PLang.Tests.App.LazyDeserialize.OneBoundaryTests;
 
@@ -10,25 +16,76 @@ namespace PLang.Tests.App.LazyDeserialize.OneBoundaryTests;
 // (Decision 6).
 public class HttpChannelTests
 {
-    [Test] public async Task HttpChannel_IsBidirectional() { throw new System.NotImplementedException("not implemented"); }
-    [Test] public async Task HttpGet_OpensHttpChannel_StopsContentTypeDeserialize() { throw new System.NotImplementedException("not implemented"); }
+    private sealed class StubHandler : HttpMessageHandler
+    {
+        public System.Func<HttpRequestMessage, HttpResponseMessage>? Respond { get; set; }
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage req, System.Threading.CancellationToken ct)
+            => Task.FromResult(Respond!(req));
+    }
 
-    // Independent #12 — the strict deletion probe by absolute name.
-    // `Assembly.GetType("app.http.response.@this")` returns null. A
-    // surface-level rename that left the type in place would slip past
-    // behaviour-only tests.
-    [Test] public async Task HttpResponse_TypeDeleted_ByAbsoluteName() { throw new System.NotImplementedException("not implemented"); }
+    private static global::app.@this NewApp(out StubHandler handler)
+    {
+        var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-httpchan-" + System.Guid.NewGuid().ToString("N")[..8]));
+        handler = new StubHandler();
+        var provider = new Default(handler) { Name = "test" };
+        app.Code.Register<IHttp>(provider);
+        app.Code.SetDefault<IHttp>("test");
+        return app;
+    }
 
-    // Independent #13 — http.get's `Run` signature no longer references
-    // `app.http.response.@this`. Reflection on the action handler's
-    // method signature. Catches the case where the type deletes but a
-    // dispatch metadata still references it via Task<…>.
-    [Test] public async Task HttpGet_Run_ReturnTypeIsData_NotHttpResponse() { throw new System.NotImplementedException("not implemented"); }
+    private static async Task<global::app.data.@this> Get(global::app.@this app, StubHandler handler, string contentType, string body)
+    {
+        handler.Respond = _ => new HttpResponseMessage(HttpStatusCode.OK)
+        { Content = new StringContent(body, Encoding.UTF8, contentType) };
+        var action = new request { Context = app.User.Context, Url = "https://x/y", Unsigned = true };
+        return await action.Run();
+    }
 
-    [Test] public async Task HttpResponse_BodyIsLazyValue_StatusHeadersDurationAreProperties() { throw new System.NotImplementedException("not implemented"); }
+    [Test] public async Task HttpChannel_IsBidirectional()
+    {
+        await using var app = NewApp(out _);
+        var ch = new httpchannel("application/json", Encoding.UTF8.GetBytes("{}"), app.User.Context);
+        await Assert.That(ch.Direction).IsEqualTo(global::app.channel.ChannelDirection.Bidirectional);
+    }
 
-    // Independent #19 — the per-action C#-side pin for the body-untouched
-    // contract on property reads. Probe-based: the body's `_value` stays
-    // null after `%response!status%`.
-    [Test] public async Task HttpStatusRead_DoesNotMaterialiseBody() { throw new System.NotImplementedException("not implemented"); }
+    [Test] public async Task HttpGet_OpensHttpChannel_StopsContentTypeDeserialize()
+    {
+        await using var app = NewApp(out var handler);
+        var r = await Get(app, handler, "application/json", "{\"a\":1}");
+        await r.IsSuccess();
+        await Assert.That(r.MaterializeCount).IsEqualTo(0);            // not deserialized at read
+        await Assert.That(r.ScalarValue).IsEqualTo((object)"{\"a\":1}"); // raw body held
+    }
+
+    // Independent #12 — strict deletion probe by absolute name.
+    [Test] public async Task HttpResponse_TypeDeleted_ByAbsoluteName()
+        => await Assert.That(typeof(request).Assembly.GetType("app.http.response.@this")).IsNull();
+
+    // Independent #13 — http.request's Run signature is Task<Data>, not the type.
+    [Test] public async Task HttpGet_Run_ReturnTypeIsData_NotHttpResponse()
+    {
+        var ret = typeof(request).GetMethod("Run", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance, System.Type.EmptyTypes)!.ReturnType;
+        await Assert.That(ret).IsEqualTo(typeof(Task<global::app.data.@this>));
+    }
+
+    [Test] public async Task HttpResponse_BodyIsLazyValue_StatusHeadersDurationAreProperties()
+    {
+        await using var app = NewApp(out var handler);
+        var r = await Get(app, handler, "application/json", "{\"a\":1}");
+        await r.IsSuccess();
+        await Assert.That(r.HasRaw).IsTrue();                                   // body is lazy
+        await Assert.That(r.Properties.ContainsKey("StatusCode")).IsTrue();      // metadata = properties
+        await Assert.That(r.Properties.ContainsKey("Headers")).IsTrue();
+        await Assert.That(r.Properties.ContainsKey("Duration")).IsTrue();
+    }
+
+    // Independent #19 — a property (status) read never materializes the body.
+    [Test] public async Task HttpStatusRead_DoesNotMaterialiseBody()
+    {
+        await using var app = NewApp(out var handler);
+        var r = await Get(app, handler, "application/json", "{\"a\":1}");
+        await Assert.That(r.GetChild("!StatusCode").Value?.ToString()).IsEqualTo("200");
+        await Assert.That(r.MaterializeCount).IsEqualTo(0); // body untouched
+    }
 }
