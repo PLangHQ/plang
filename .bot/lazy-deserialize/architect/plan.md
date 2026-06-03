@@ -173,7 +173,7 @@ Key rules:
 - **Fold `ConvertValue`.** The string→typed-on-first-navigate path (`app/data/this.cs:199`, `this.Navigation.cs`) is subsumed: a raw-backed Data materializes through the reader. Remove `ConvertValue` once navigation reads `.Value` (which materializes).
 - **Keep `_valueFactory` / `DynamicData`** (`app/data/this.cs:186`, `:1205`). It is a *different* laziness — recompute-on-every-access (a live view), versus materialize-once-and-cache. Two lazinesses that mean different things; the design keeps both and says why rather than forcing them into one.
 
-**Wire.Read goes lazy too.** Today `Wire.Read` (`app/data/Wire.cs:141`) eagerly deserializes the value slot (`LiftDataIfShaped` / `Deserialize<object?>`). Change it to capture the value slot's raw json (e.g. the raw token text) into `_raw`, stamp `type`/`kind` from the type slot, and defer. This is what makes wire-sourced Data pass through verbatim and verify against the original bytes.
+**Wire.Read goes lazy too.** Today `Wire.Read` (`app/data/Wire.cs:141`) eagerly deserializes the value slot (`LiftDataIfShaped` / `Deserialize<object?>`). Change it to capture the value slot's raw json (e.g. the raw token text) into `_raw`, stamp `type`/`kind` from the type slot, and defer. This is what makes wire-sourced Data pass through verbatim and verify against the original bytes. It also **deletes `LiftDataIfShaped`** (`app/data/Wire.cs:346`): that method sniffs the value's json shape — "does it have both `name` and `value` keys?" — to guess whether it's a nested Data, with a `GetRawText` double-parse on top. That guess (a courier reading the value's shape, smell #7, and the read-side twin of the sniffing we cut) goes away — the `type` slot says what the value is, and a genuinely nested Data is reconstructed by the containing type's own reader (e.g. `Signature` rebuilds its Data field), not by a key-shape heuristic.
 
 ## Part 3 — numbers (Way 3)
 
@@ -242,6 +242,7 @@ No content sniffing. A guess at json/xml/yaml/csv contradicts "the type reads it
 | `Data.ConvertValue` + lazy-on-navigate | `app/data/this.cs:199`, `this.Navigation.cs` | Folds into materialize-from-raw. |
 | `_valueFactory` / `DynamicData` | `app/data/this.cs:186`, `:1205` | Stays (different laziness). |
 | `Wire.Read` (eager value slot) | `app/data/Wire.cs:141` | Captures value slot raw, defers materialization. |
+| `LiftDataIfShaped` (sniffs value for `name`+`value` keys) | `app/data/Wire.cs:346` | Deleted — type slot drives reconstruction; nested Data rebuilt by the containing type's reader. No shape-guess, no `GetRawText` double-parse. |
 | Renderer registry + `Normalize` gate | `app/type/renderer/this.cs:49`, `this.Normalize.cs:33,156` | Reference shapes for the reader. |
 | `file.read` + `FilePath.ReadText` | `app/module/file/read.cs:27`, `path/file/this.Operations.cs:61` | Become a byte source; stop converting at read. |
 | `http.get` / `ParseResponseAsync` | `app/module/http/code/Default.cs:463,518,551` | Stop deserializing; body→value, metadata→properties. |
@@ -255,6 +256,7 @@ No content sniffing. A guess at json/xml/yaml/csv contradicts "the type reads it
 - **Parse errors move from read-time to touch-time.** A malformed json file no longer errors at `read` — it errors at first touch (navigation / `As<T>`). This is the point of laziness and is acceptable, but it relocates where a developer sees the failure. Make the touch-time error name the source ("failed to read %x% as json").
 - **Signature verification fires on the raw, before materialization** (Decision 8). When a signed Data arrives at a boundary, verify `_raw` against the signature there; materialization is independent and later. Confirm the verify path never forces `.Value`.
 - **Verbatim passthrough depends on `_raw` surviving materialization.** If anything clears `_raw` on read, passthrough and signing break. The invalidate-on-mutation rule is the one to test hard.
+- **Nested signed Data round-trips without the shape sniff.** Deleting `LiftDataIfShaped` means nested Data is rebuilt by the type slot / containing type's reader, not a `name`+`value` key guess. Test that a signed, nested Data round-trips and its inner signature still reaches `signing.verify` — that's exactly the case the sniff was covering.
 
 ## Stages
 
