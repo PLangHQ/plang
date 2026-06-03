@@ -862,3 +862,23 @@ then `set %snap.variable.x% = 2` then `- run %snap%` working end to end):
    disk → read back → `set %snap.variable.x% = 2` → `run %snap%` → success, with
    other vars (`%keepA%`, `%keepB%`) asserted to survive. (LLM-built, so the new
    `resume` verb needs catalog/markdown.)
+
+## Re-enable the httpbin.org http tests — disabled offline (503 / rate-limited)
+
+**Date:** 2026-06-03 on branch `type-kind-strict`.
+
+httpbin.org began returning `503` on every request and repeated test runs got us
+rate-limited. The 8 http tests that hit it are disabled **in-goal** (network steps
+commented to `/`, replaced by an inert `write out '... disabled (httpbin blocked)'`)
+so `plang --test` is green with no exclude flag — testers shouldn't need to know.
+
+Disabled: `Tests/Modules/Http/{GetRequest, PostRequest, UnsignedRequest,
+SignedRequest, ConfigHeaders, ConfigBaseUrl, StreamCallback, UploadFile}`.
+`DownloadSkip` stays active (guards `http.download` behind `file.exists`, never
+hits the network).
+
+**To re-enable:** uncomment the `/`-prefixed steps in each goal, drop the inert
+stub, rebuild. Consider pointing at a self-hosted httpbin or a local mock so the
+suite isn't hostage to an external service. Each `[RequiresCapability("network")]`
+on the http actions still auto-tags these as `network`, so `--test={"exclude":
+["network"]}` remains available as a per-run alternative.
