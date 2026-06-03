@@ -48,29 +48,63 @@ public sealed class @this
     /// no per-type *logic*, only "who owns this target", and survives a null App so the
     /// infra door works for context-less callers (Data.GetValue, Reconstruct).
     ///
-    /// <para>Raw CLR primitives a family constructs (int/long/decimal/double/float →
-    /// <c>number</c>, string → <c>text</c>, DateTimeOffset → <c>datetime</c>, TimeSpan →
-    /// <c>duration</c>) map to that family. A path subclass maps to <c>path</c>. Any other
-    /// type that declares its own <c>Convert</c> hook (image, goal.call, …) owns itself.
-    /// Returns <c>(null, null)</c> when no family owns the target — the dispatcher then
-    /// uses its residual leaf + plumbing.</para>
+    /// <para><strong>Distributed.</strong> The routing is composed from each family's
+    /// <c>static OwnedClrTypes</c> declaration (<see cref="OwnedClr"/>) — the central
+    /// <c>if u == typeof(int)…</c> ladder is gone. <c>number</c> declares int/long/…,
+    /// <c>text</c> string, <c>datetime</c> DateTimeOffset, <c>duration</c> TimeSpan;
+    /// <c>path</c> declares its base <c>Assignable</c> so every scheme subclass routes to
+    /// it. Any other type with a <c>Convert</c> hook (goal.call, …) self-owns via
+    /// <see cref="Discover"/>. Returns <c>(null, null)</c> when no family owns the target —
+    /// the dispatcher then uses its residual leaf + plumbing. Adding an owned CLR type is
+    /// an edit to the family's declaration alone.</para>
     /// </summary>
     public static (System.Type? family, string? kind) OwnerOf(System.Type clrTarget)
     {
         var u = System.Nullable.GetUnderlyingType(clrTarget) ?? clrTarget;
 
-        if (u == typeof(int)) return (typeof(global::app.type.number.@this), "int");
-        if (u == typeof(long)) return (typeof(global::app.type.number.@this), "long");
-        if (u == typeof(decimal)) return (typeof(global::app.type.number.@this), "decimal");
-        if (u == typeof(double)) return (typeof(global::app.type.number.@this), "double");
-        if (u == typeof(float)) return (typeof(global::app.type.number.@this), "float");
-        if (u == typeof(string)) return (typeof(global::app.type.text.@this), null);
-        if (u == typeof(System.DateTimeOffset)) return (typeof(global::app.type.datetime.@this), null);
-        if (u == typeof(System.TimeSpan)) return (typeof(global::app.type.duration.@this), null);
-        if (typeof(global::app.type.path.@this).IsAssignableFrom(u)) return (typeof(global::app.type.path.@this), null);
+        var (exact, assignable) = _ownership.Value;
+        if (exact.TryGetValue(u, out var hit)) return hit;
+        foreach (var (baseClr, family) in assignable)
+            if (baseClr.IsAssignableFrom(u)) return (family, null);
         if (Discover(u) != null) return (u, null);
 
         return (null, null);
+    }
+
+    // CLR → (family, kind) routing, composed once from every family's static
+    // OwnedClrTypes declaration. Lazy + cached; survives a null App (pure
+    // reflection over the App assembly). Exact matches win; Assignable
+    // declarations (path) match any subclass.
+    private static readonly System.Lazy<(
+        System.Collections.Generic.Dictionary<System.Type, (System.Type? family, string? kind)> Exact,
+        System.Collections.Generic.List<(System.Type Base, System.Type Family)> Assignable)>
+        _ownership = new(BuildOwnership);
+
+    private static (
+        System.Collections.Generic.Dictionary<System.Type, (System.Type? family, string? kind)>,
+        System.Collections.Generic.List<(System.Type, System.Type)>) BuildOwnership()
+    {
+        var exact = new System.Collections.Generic.Dictionary<System.Type, (System.Type? family, string? kind)>();
+        var assignable = new System.Collections.Generic.List<(System.Type, System.Type)>();
+
+        foreach (var family in typeof(@this).Assembly.GetTypes())
+        {
+            // The family's primary class is `@this` (metadata name "this") under app.type.<name>.
+            if (!family.Name.Equals("this", System.StringComparison.Ordinal)) continue;
+            if (family.Namespace is null || !family.Namespace.StartsWith("app.type.", System.StringComparison.Ordinal)) continue;
+
+            var prop = family.GetProperty("OwnedClrTypes",
+                BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+            if (prop?.GetValue(null) is not System.Collections.Generic.IEnumerable<OwnedClr> decls) continue;
+
+            foreach (var decl in decls)
+            {
+                if (decl.Assignable) assignable.Add((decl.Clr, family));
+                else exact[decl.Clr] = (family, decl.Kind);
+            }
+        }
+
+        return (exact, assignable);
     }
 
     private static MethodInfo? Discover(System.Type type)
