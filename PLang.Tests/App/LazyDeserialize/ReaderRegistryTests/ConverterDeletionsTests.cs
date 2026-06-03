@@ -21,10 +21,14 @@ public class ConverterDeletionsTests
         throw new System.NotImplementedException("not implemented");
     }
 
-    [Test] public async Task TypeJson_TypeIsGone()
+    [Test] public async Task TypeJson_StillExists_ReadsTypeDescriptor()
     {
-        // app/type/this.json.cs:20 — class `json` in the `app.type` namespace
-        // (the wholesale STJ converter for `app.type.@this`).
+        // app/type/this.json.cs:20 — class `json` in `app.type`. **Stays**
+        // per architect's mid-graph Converter resolution: it reads the
+        // type descriptor `{name, kind, strict}` (the wire `type` slot),
+        // not a value, so it is not a value-materializer and is not in
+        // the value-reader registry. Rename optional; the *presence* is
+        // the contract.
         throw new System.NotImplementedException("not implemented");
     }
 
@@ -54,8 +58,42 @@ public class ConverterDeletionsTests
     // channel/serializer/Json.cs:47, channel/serializer/plang/this.cs:51,
     // module/builder/this.cs:50, app/this.cs:420, type/list/Conversion.cs:42,64).
     // After Stage 1 those sites no longer add a path-specific JsonConverter
-    // to their Converters lists — path reads through the registry instead.
-    [Test] public async Task PathConverterRegistrationSites_NoLongerAddPathJsonConverter()
+    // — they wire the single json `Converter` (deliverable 5 / mid-graph
+    // resolution) instead.
+    [Test] public async Task PathConverterRegistrationSites_NowWireSingleJsonConverter()
+    {
+        throw new System.NotImplementedException("not implemented");
+    }
+
+    // The mid-graph resolution (architect 829... follow-up). STJ hits
+    // domain-typed fields *mid-graph* — a `path` three levels down in a
+    // CLR object — and a payload-level registry can't serve those. So
+    // the json layer holds **one converter** —
+    // `app/channel/serializer/json/converter.cs`, class `Converter` —
+    // that talks STJ on one side and the plang type system on the
+    // other. It exists, is the entry point, and is built per-actor with
+    // context (mirror of how `path.JsonConverter` was built today).
+    [Test] public async Task SingleJsonConverter_Exists_AtChannelSerializerJson()
+    {
+        throw new System.NotImplementedException("not implemented");
+    }
+
+    // The behaviour: the single `Converter` consults the registry /
+    // distributed `OwnerOf` and routes to the owning type's `Read`/`Write`.
+    // A mid-graph typed field (`path`, `Error`, `duration`) deserialises
+    // through the same `Read` the payload-level path would reach.
+    [Test] public async Task SingleJsonConverter_RoutesMidGraphFieldToTypeRead_ViaRegistry()
+    {
+        throw new System.NotImplementedException("not implemented");
+    }
+
+    // The load-bearing regression test (credit: coder caught it).
+    // A `path` three levels down in a CLR object — `As<T>` into a record
+    // with a nested record with a nested `path` field — deserialises via
+    // the `Converter`. This is exactly the case that a payload-level
+    // registry alone could not serve and that a `LiftDataIfShaped`-style
+    // shape-sniff would have papered over. The test pins the resolution.
+    [Test] public async Task NestedPathField_ThreeLevelsDown_DeserialisesViaConverter()
     {
         throw new System.NotImplementedException("not implemented");
     }

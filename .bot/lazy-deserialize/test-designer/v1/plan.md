@@ -13,6 +13,16 @@
 >
 > Independent #16 stays but gets a csv twin. The `table` row count grows the suite to 35 C# files / ~177 tests + 10 goal tests. None of the independent additions are invalidated by the revision.
 
+> **Update v1.2 (per `architect/test-designer-sync.md`) — Converter resolution:**
+> Edits in `ConverterDeletionsTests.cs`:
+> - `TypeJson_TypeIsGone` → `TypeJson_StillExists_ReadsTypeDescriptor`. `type.json` stays — it reads the type descriptor `{name,kind,strict}` (the wire `type` slot), not a value; not a value-materializer, not in the value-reader registry.
+> - `PathConverterRegistrationSites_NoLongerAddPathJsonConverter` → `…NowWireSingleJsonConverter` (the 6 sites wire the single json `Converter` instead).
+> - Added: `SingleJsonConverter_Exists_AtChannelSerializerJson` — the existence pin for `app/channel/serializer/json/converter.cs`, class `Converter` (built per-actor with context).
+> - Added: `SingleJsonConverter_RoutesMidGraphFieldToTypeRead_ViaRegistry` — the behaviour pin (consults registry/`OwnerOf`, routes to owning type's `Read`).
+> - Added: `NestedPathField_ThreeLevelsDown_DeserialisesViaConverter` — the load-bearing regression the coder caught (a `path` three levels down via `As<T>`).
+>
+> Already-correct rows left as-is: `PathJsonConverter_TypeIsGone`, the "gone or folded" rows for ErrorWire/HashDataConverter/TimeSpanIso8601 (they collapse into the single `Converter` + each type's `Read`).
+
 ## Frame
 
 Architect carved 5 stages and 5 integration cuts: reader registry + consolidation → numbers (Way 3) → lazy Data → one I/O boundary → access-driven resolution. Hand-off docs: [test-strategy.md](../../architect/plan/test-strategy.md) + [test-coverage.md](../../architect/plan/test-coverage.md) + [architect-verdict.md](../../architect/architect-verdict.md).
