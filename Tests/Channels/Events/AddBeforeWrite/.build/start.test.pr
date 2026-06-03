@@ -27,7 +27,7 @@
                 "name": "AuditLog",
                 "parallel": false,
                 "parameters": [],
-                "prPath": "/Channels/Events/AddBeforeWrite/.build/auditlog.pr"
+                "prPath": null
               },
               "type": {
                 "name": "goal.call"
@@ -39,7 +39,7 @@
         }
       ],
       "intent": null,
-      "formal": "channel.set(Name=\u0022audit\u0022, Goal=goal.call(GoalName={name:\u0022AuditLog\u0022, parameters:[]}))",
+      "formal": "channel.set(Name=\u0022audit\u0022, Goal=goal.call(GoalName={name:\u0022AuditLog\u0022, parameters=[]})) , goal.call(GoalName={name:\u0022AuditLog\u0022, parameters=[]})",
       "source": null,
       "waitForExecution": true
     },
@@ -102,7 +102,7 @@
         }
       ],
       "intent": null,
-      "formal": "event.on(Trigger=BeforeWrite, ChannelName=\u0022audit\u0022, GoalToCall={name:\u0022ApprovalGoal\u0022})",
+      "formal": "event.on(Trigger=\u0022BeforeWrite\u0022, ChannelName=\u0022audit\u0022, GoalToCall={name:\u0022ApprovalGoal\u0022})",
       "source": null,
       "waitForExecution": true
     },
@@ -121,7 +121,14 @@
               "name": "Data",
               "value": "payload",
               "type": {
-                "name": "object"
+                "name": "text"
+              }
+            },
+            {
+              "name": "channel",
+              "value": "audit",
+              "type": {
+                "name": "channel"
               }
             }
           ],
@@ -130,7 +137,7 @@
         }
       ],
       "intent": null,
-      "formal": "output.write(Data=\u0027payload\u0027)",
+      "formal": "output.write(Data=\u0027payload\u0027, channel=audit)",
       "source": null,
       "waitForExecution": true
     },

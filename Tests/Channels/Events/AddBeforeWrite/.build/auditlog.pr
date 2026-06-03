@@ -17,29 +17,32 @@
             {
               "name": "Name",
               "value": "%auditCalled%",
-              "type": "variable"
+              "type": {
+                "name": "variable"
+              }
             },
             {
               "name": "Value",
               "value": true,
-              "type": "bool"
+              "type": {
+                "name": "bool"
+              }
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
               "value": false,
-              "type": "bool"
+              "type": {
+                "name": "bool"
+              }
             }
           ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": "variable.set to mark that AuditLog was invoked.",
-      "level": "high",
-      "confidence": 99,
-      "formal": null,
+      "formal": "variable.set(Name=%auditCalled%, Value=true)",
       "source": null,
       "waitForExecution": true
     }
@@ -49,7 +52,7 @@
   "path": "/Channels/Events/AddBeforeWrite/AuditLog.goal",
   "prPath": "/Channels/Events/AddBeforeWrite/.build/auditlog.pr",
   "hash": "f0bba0e40e12ff9a39f72b0d72a5d06b8bad7b34df908a3414d806994cb2ba80",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,
