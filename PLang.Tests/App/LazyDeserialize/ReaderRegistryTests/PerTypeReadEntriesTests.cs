@@ -20,7 +20,12 @@ public class PerTypeReadEntriesTests
     // `(table, xlsx)` is a follow-on (binary, needs a library) — until
     // then, a .xlsx stamps `{table, xlsx}` and rides as raw bytes.
     [Test] public async Task Reader_Of_TableCsv_ReturnsDelegate() { throw new System.NotImplementedException("not implemented"); }
-    [Test] public async Task Reader_Of_PathDefault_ReturnsDelegate() { throw new System.NotImplementedException("not implemented"); }
+    [Test] public async Task Reader_Of_PathDefault_ReturnsDelegate()
+    {
+        var r = new global::app.type.reader.@this();
+        await Assert.That(r.Of("path", "json")).IsNotNull();
+        await Assert.That(r.Of("path", global::app.type.reader.@this.AnyKind)).IsNotNull();
+    }
     [Test] public async Task Reader_Of_NumberInt_ReturnsDelegate() { throw new System.NotImplementedException("not implemented"); }
     // Stage 2 surface, but the entry exists by Stage 1's end (the catalog is
     // registered up front; Stage 2 wires Read to parse to exact CLR types).

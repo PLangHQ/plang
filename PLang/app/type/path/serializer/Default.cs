@@ -31,4 +31,19 @@ public static class Default
         wire ??= !string.IsNullOrEmpty(value.Raw) ? value.Raw : value.Absolute;
         writer.String(wire);
     }
+
+    /// <summary>
+    /// Read mirror of <see cref="Write"/> — the decode logic that used to live
+    /// in <c>app.type.path.JsonConverter.Read</c>. A path's raw wire form is its
+    /// portable <c>Relative</c> string; with a Context it resolves scheme-correct
+    /// and fully wired via <see cref="app.type.path.@this.Resolve(string, actor.context.@this)"/>,
+    /// without one it falls back to a bare file-scheme stub (the Authorize callers
+    /// then explode on it — that is the contract).
+    /// </summary>
+    public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
+    {
+        if (raw is not string s || string.IsNullOrEmpty(s)) return null;
+        if (ctx.Context != null) return global::app.type.path.@this.Resolve(s, ctx.Context);
+        return new global::app.type.path.file.@this(s, context: null) { Raw = s };
+    }
 }
