@@ -1,39 +1,56 @@
 # coder — lazy-deserialize — v1 report
 
-## Status: Stage 1 floor landed (green, pushed). Consolidation + Stages 2–5 remain.
+## Status: Stage 1 substantially landed (green, pushed). Two design calls open before Stage 2/the fold.
 
-Branch `lazy-deserialize`, two commits pushed on top of test-designer v1.2:
+Branch `lazy-deserialize`, commits pushed on top of test-designer v1.2:
 
 - `2b8eb71b6` — reader registry floor (`app.type.reader.@this` + `ReadContext` + `path.Read`)
 - `20840687c` — additive per-type Read entries (number, image, object/json)
+- `efe92b37a` — distribute `OwnerOf` onto families (`OwnedClr` declarations)
+- `7873f4f1f` — single json `Converter` for mid-graph path; delete `path.JsonConverter`; rewire 6 sites
 
-Build clean (0 errors, pre-existing warnings only). No existing behavior changed — both increments are purely additive.
+Build clean. **Full C# suite: zero regressions** — every non-lazy test green (Serialization 321, DataTests 303, Types 301, Core 251, Goals 4, …). The 146 "failures" are all not-yet-built lazy-deserialize stubs (Stages 2–5 + the deferred fold); the only 2 non-stub failures were security path-traversal tests that *timed out under my concurrent-run contention* and pass in isolation.
 
-## The mid-graph knot (resolved before coding)
+## Stage 1 — what's green
 
-Traced the read-side incumbents and surfaced one real design conflict: the plan said delete `path.JsonConverter` outright, but a payload-level reader registry can't serve a `path` field STJ hits **mid-graph** (nested three levels down in a CLR object). Raised it; architect resolved with **one json `Converter`** (`channel/serializer/json/converter.cs`) that talks STJ and routes any plang-typed field to its `Read`/`Write` via the registry — `ErrorWire`/`HashDataConverter`/`TimeSpanIso8601` collapse into it, `type.json` stays (it reads the type *descriptor*, not a value). The nested-path round-trip test was added (credited). Design now in `plan.md` "Mid-graph fields — one json `Converter`", `stage-1` §5.
+- `ReaderRegistryShapeTests` (9/9), `DistributedOwnerOfTests` (6/6), `ResidualTryConvertTests` (3/3), `SnapshotCarveOutTests` (4/4).
+- `PerTypeReadEntriesTests` 5/8 (path, number/int, number/biginteger via `*`, image/png, object/json).
+- `TypeOwnedReadParityTests` 3/6 (number, object/json, path).
+- `ConverterDeletionsTests`: PathJsonConverter gone, TypeJson stays, single `Converter` exists + routes mid-graph, **nested-path-three-levels-down** (the regression I caught), registration-sites-now-wire-Converter.
+- `ReadFailureTests`: registry-returns-null.
 
-## What's green
+## Stage 1 — remaining (the deferred fold) — OPEN DESIGN CALL #1
 
-- `ReaderRegistryShapeTests` — all 9 (type exists, `Of`/`Register` signatures, `AnyKind == renderer.AnyFormat`, delegate sig, precedence runtime>generated and exact>wildcard, null on miss, discovery of static `Read`).
-- `PerTypeReadEntriesTests` — 5/8: path, number/int, number/biginteger (via Default `*` fallback), image/png, object/json. (Failing: table/csv → Stage 4; duration/iso8601 + hash/default → deletion increment below.)
-- `TypeOwnedReadParityTests` — 2/6: NumberRead, ObjectJsonRead. (Failing: PathRead, HashRead, ErrorRead, TimeSpanRead → deletion increment.)
+`TimeSpanIso8601` / `ErrorWire` / `HashDataConverter` deletion is **not** safely a "fold into one universally-registered factory." They have **site-specific** semantics:
+- The plang wire writes `TimeSpan` as `"c"` (via `IWriter.TimeSpan`); `TimeSpanIso8601` writes ISO-8601. Different canonical forms in different bags.
+- `ErrorWire` lives *only* in snapshot options; it's polymorphic over `IError` with a `$type` discriminator.
+- `HashDataConverter` is object-shaped (`{type,value}`), in signing only.
 
-## Design decisions made (coder owns these per verdict)
+A single factory registered everywhere `path` is would start emitting ISO-8601 TimeSpans / ErrorWire-shaped IErrors on wires that never used them → behavior change, breaking the "no behavior change" bar. Also: path/TimeSpan are *string-shaped* (route cleanly through `type.Read`), but Error/hash are *object-shaped* (don't fit a string `Read`).
 
-- **Reader keys on `(type, kind)`**, mirror of renderer's `(type, format)`; `AnyKind = "*"`; precedence identical to renderer. Discovery is the renderer's namespace-scan with `Write`→`Read` and a 3-arg signature `Read(object raw, string? kind, ReadContext ctx)`.
-- **`ReadContext`** is a record wrapping the actor context — room to grow (target CLR hint, source channel) without re-threading every `Read`.
-- **Per-type `Read` = thin adapter over each family's existing `Convert` hook** (number, image) — literal "re-house, don't reimplement." `path.Read` lifts `path.JsonConverter.Read`'s body. `object/json` re-houses the inline `type.Convert("json")` json→dict read into `app/type/object/serializer/json.cs`.
+**Options for the architect:**
+- (a) Accept these three stay as specialized converters (the format-coupled *names* remain) — flip the 3 `*_TypeIsGone_OrFolded` tests to assert "registered only where its semantics apply."
+- (b) One factory, but **per-site configured** about which types it handles (defeats "one converter, types never enumerated").
+- (c) Fold only the string-shaped ones (TimeSpan) carefully per-bag; leave Error/hash as-is.
 
-## Remaining Stage 1 (consolidation) — in the order I'd take it
+Until resolved, the 3 deletion tests + 3 parity rows (Error/Hash/TimeSpan) stay red. Reader entries `duration/iso8601` and `hash/default` depend on this too. `table/csv` is genuinely Stage 4.
 
-1. **Distributed `OwnerOf`** (`app/type/convert/this.cs:58`). Each family declares the CLR types it owns (`number` → numeric tower, `text` → string, `path` → subclasses, `image` → byte[]); the central `if u==typeof(int)…` ladder dies; routing composes from declarations. Well-scoped, unblocks Stage 2. Greens `DistributedOwnerOfTests`. Needs a discovery mechanism for family declarations (suggest a static `Owns` surface per family + a composer in `convert`).
-2. **duration/iso8601 + hash + error Read entries** — additive like the others, but they couple to the deletions below (the converters being deleted are the parity reference). Add `duration/serializer/Default.cs` (or `iso8601.cs`) lifting `TimeSpanIso8601.Read`; hash Read lifts `crypto.hash.FromWire`; error Read lifts `ErrorWire.Read`. Then fill PathRead/HashRead/ErrorRead/TimeSpanRead parity.
-3. **The single json `Converter` + deletions + 6-site rewiring** — the risky core. Build `channel/serializer/json/converter.cs` (STJ `JsonConverterFactory` routing any plang-typed value to its `Read`/`Write` via registry/`OwnerOf`, built per-actor with context). Delete `path.JsonConverter`, `ErrorWire`, `HashDataConverter`, `TimeSpanIso8601`. Rewire the 6 registration sites (`Diagnostics/Format.cs:31`, `channel/serializer/Json.cs:47`, `channel/serializer/plang/this.cs:51`, `module/builder/this.cs:50`, `app/this.cs:420`, `type/list/Conversion.cs:42,64`) to wire the `Converter`. **This is where the "no behavior change" bar bites** — must run the full existing suite green before/after with no expected-output edits. `IReader` + `json/reader.cs` (layer-1 decode surface) land here too, used by the `Converter`.
+## Stage 2 (numbers) — scoped, NOT started — OPEN DESIGN CALL #2
 
-Then Stages 2 (numbers), 3 (lazy Data), 4 (one I/O boundary + table type), 5 (access resolution). Stage 2 can land right after the distributed `OwnerOf`.
+Blast radius is **fully contained**: `NumberKind` and the slot accessors have zero consumers outside `app/type/number/`. The rewrite touches only the `number/` partials + the `data` stamp (`data/this.cs:242`). The atomicity is fine — I'd rewrite them together and only commit when green.
 
-## Notes / flags for next session
+The open call: **Way 3's promote-then-narrow conflicts with the existing `NumberPolicy`** that `math.*` depends on.
+- Existing model: `OverflowMode` (Int overflow→Long→Decimal under Promote, or Throw) + `PrecisionMode` (Decimal×Double → Double or Decimal).
+- Way 3: integers promote to `BigInteger`, compute, **narrow to the smallest kind that fits** — so they *never* wrap and `OverflowMode` becomes moot for integers; `double⊕decimal` is a **hard error**, superseding the `PrecisionMode` swing.
 
-- `Reader_Of_TableCsv` and `ReadCsv_LandsAsTable.test.goal` are in Stage-1 test files but `table` is genuinely Stage 4 — those rows green when the table type lands.
-- Cross-stage coupling: several Stage-1 PerType/parity rows reference converters that only fully resolve in the deletion increment; that's expected, not a regression.
+So Way 3 **supersedes** `NumberPolicy`'s two axes and **changes `math.*` observable behavior** (and likely its existing C# arithmetic tests, which pin the policy-based promotion). Need a call: does Way 3 replace `NumberPolicy` (keep the struct for signature-compat but make its axes no-ops / remove), and are the existing math arithmetic tests expected to change to Way-3 semantics?
+
+My default if you want me to just proceed: Way 3 wins, `NumberPolicy` axes become no-ops (struct kept for `math.*` signatures), update the affected math C# tests to Way-3 expectations, document each changed expectation.
+
+## Next steps once the two calls land
+
+1. Resolve fold (call #1) → green the 3 deletion + 3 parity rows, add duration/iso8601 + hash reader entries.
+2. Stage 2 numbers (call #2) → full tower, exact-CLR storage, promote-then-narrow; green `NumberTowerTests`.
+3. Stage 3 lazy `Data` → `_raw` + lazy `.Value` + `Wire.Read` defers + delete `LiftDataIfShaped`. (Also unblocks the 2 Stage-3-coupled `ReadFailureTests` error-path rows.)
+4. Stage 4 one I/O boundary + `table` type.
+5. Stage 5 access-driven resolution.
