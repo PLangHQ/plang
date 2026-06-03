@@ -259,28 +259,29 @@ public abstract class @this : IAsyncDisposable, IDisposable
     /// time. Couriers (variable memory, callstack, routing) thus relay a value
     /// without forcing a parse (the OBP courier rule holds by construction).
     ///
-    /// <para>When <see cref="Mime"/> is <c>application/plang</c> the bytes are
-    /// the self-describing Data container, not a value — the serializer
-    /// reconstructs the Data (whose own value slot stays lazy via
+    /// <para>When the Mime resolves to the plang <em>transport</em> serializer,
+    /// the bytes are the self-describing Data container, not a value — the
+    /// serializer reconstructs the Data (whose own value slot stays lazy via
     /// <c>Wire.Read</c>). Any other Mime names a value: the bytes are stamped
-    /// <c>{type, kind}</c> and held as the raw source form.</para>
+    /// <c>{type, kind}</c> and held as the raw source form. The container is
+    /// recognised by <em>which serializer owns the Mime</em>, not by a name
+    /// match — so value MIMEs that merely share the <c>application/plang</c>
+    /// prefix (e.g. <c>application/plang-goal</c>, a goal source) correctly
+    /// stamp as values, with no per-extension special-casing anywhere.</para>
     /// </summary>
     protected async Task<global::app.data.@this> StampReadAsync(byte[] raw, CancellationToken ct = default)
     {
-        var mime = Mime ?? "";
-        // application/plang — the self-describing container; the serializer
-        // reads the Data shape and returns the reconstructed Data.
-        if (mime.StartsWith("application/plang", System.StringComparison.OrdinalIgnoreCase))
+        // The container is whatever the plang transport serializer is registered
+        // for — a semantic check, not a string prefix. Sibling MIMEs that aren't
+        // the container (application/plang-goal, application/json, …) fall through
+        // to value stamping.
+        if (Channels?.Serializers.GetByType(Mime ?? "") is global::app.channel.serializer.plang.@this serializer)
         {
-            var serializer = Channels?.Serializers.GetByType(mime);
-            if (serializer != null)
-            {
-                using var ms = new MemoryStream(raw);
-                var read = await serializer.DeserializeAsync(ms, ct);
-                // The container deserializer wraps the reconstructed Data in an
-                // Ok envelope; unwrap to the Data the container described.
-                return read.Value as global::app.data.@this ?? read;
-            }
+            using var ms = new MemoryStream(raw);
+            var read = await serializer.DeserializeAsync(ms, ct);
+            // The container deserializer wraps the reconstructed Data in an Ok
+            // envelope; unwrap to the Data the container described.
+            return read.Value as global::app.data.@this ?? read;
         }
         return StampValue(raw);
     }
