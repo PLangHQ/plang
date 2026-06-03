@@ -45,6 +45,12 @@ public class MutationInvalidatesRawTests
     // Stage 4's channel sources; pinned here once Wire.Write reads _raw.)
     [Test] public async Task AfterMutation_SerializeUsesRenderer_NotRaw()
     {
-        throw new System.NotImplementedException("deferred: Wire.Write raw-aware emission lands with Stage 4");
+        var d = data.FromRaw("{\"port\":8080}", type.Create("object", "json"));
+        d.Name = "cfg";
+        d.Value = "mutated";   // mutation clears _raw — raw is no longer authoritative
+
+        var wire = global::app.channel.serializer.plang.@this.ContextLessFallback.Serialize(d).Value!;
+        await Assert.That(wire).Contains("\"value\":\"mutated\""); // renderer output
+        await Assert.That(wire).DoesNotContain("8080");           // not the stale raw
     }
 }

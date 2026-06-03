@@ -17,14 +17,31 @@ public class WireReadLazyTests
     private static data RoundTrip(data d)
         => (data)plang.ContextLessFallback.Deserialize(plang.ContextLessFallback.Serialize(d).Value!).Value!;
 
-    // Typed value-slot deferral pairs with Stage 4 (channel.read is the natural
-    // origin of raw-backed wire Data, and it carries the context the registry
-    // needs to materialize — Wire.Read itself has no context). Deferred here.
+    // Typed value-slot deferral: a shape-typed (object/table) value rides as raw
+    // and materializes only on touch. Scoped to object/table so scalars/domain/
+    // dict<…> values keep their eager path.
     [Test] public async Task WireRead_CapturesValueSlotRaw_DefersMaterialisation()
-        => throw new System.NotImplementedException("deferred to Stage 4: typed-slot deferral needs context at materialize (channel.read provides it)");
+    {
+        var d = data.FromRaw("{\"a\":1}", global::app.type.@this.Create("object", "json"));
+        d.Name = "cfg";
+        var back = RoundTrip(d);
+        await Assert.That(back.HasRaw).IsTrue();
+        await Assert.That(back.MaterializeCount).IsEqualTo(0);
+        await Assert.That(back.Type.Name).IsEqualTo("object");
+    }
 
+    // Deferral means the value slot is NOT eagerly parsed at read time — a value
+    // whose content would fail a structured parse reads back without throwing (it
+    // errors only on a later touch).
     [Test] public async Task WireRead_DoesNotEagerlyDeserialiseValueSlot()
-        => throw new System.NotImplementedException("deferred to Stage 4: typed-slot deferral");
+    {
+        // value is a valid json *string* token whose content is malformed json,
+        // typed {object, json} — read defers it, no throw.
+        const string wire = "{\"name\":\"x\",\"type\":{\"name\":\"object\",\"kind\":\"json\"},\"value\":\"{not json\"}";
+        var back = (data)plang.ContextLessFallback.Deserialize(wire).Value!;
+        await Assert.That(back.HasRaw).IsTrue();
+        await Assert.That(back.MaterializeCount).IsEqualTo(0);
+    }
 
     // Testable now (eager): a typed Data round-trips its type/kind through the
     // type slot.

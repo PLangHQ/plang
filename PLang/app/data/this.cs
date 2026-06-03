@@ -265,6 +265,13 @@ public partial class @this
     internal object? Raw => _raw;
 
     /// <summary>
+    /// True when this Data is raw-backed and has NOT been materialized or mutated —
+    /// the verbatim-passthrough condition. Its raw source form can serialize back
+    /// out untouched, with no parse-then-reserialize.
+    /// </summary>
+    internal bool RawUntouched => _raw != null && _value == null && _valueFactory == null;
+
+    /// <summary>
     /// Read-through materialization: turn <c>_raw</c> into the value via the
     /// reader registry for <c>(Type.Name, Type.Kind)</c>, falling back to the
     /// type's own <c>Convert</c> for a string raw (subsumes the old

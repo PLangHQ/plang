@@ -17,11 +17,17 @@ namespace app.type.@object.serializer;
 /// </summary>
 public static class json
 {
+    private static readonly JsonSerializerOptions _opts = new() { PropertyNameCaseInsensitive = true };
+
     public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
     {
         if (raw is not string s) return raw;
         if (string.IsNullOrEmpty(s)) return null;
-        return JsonSerializer.Deserialize<Dictionary<string, object?>>(s,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        // Unwrap the JsonElement graph to plain CLR (Dictionary/List/primitives) —
+        // leaving JsonElement values would re-serialize as their reflection shape
+        // ({"valueKind":...}) on a round-trip and navigate awkwardly. This is the
+        // canonical CLR form the variable navigators + renderer expect.
+        var parsed = JsonSerializer.Deserialize<object?>(s, _opts);
+        return global::app.data.@this.UnwrapJsonElement(parsed);
     }
 }
