@@ -16,20 +16,91 @@ Every signature, file path, and shape below is a concrete suggestion so the desi
 ## The target shape
 
 ```
-SOURCE (file / http / channel / wire)
-   │  produces
-   ▼
-Data { raw, type, kind, value:lazy, properties }
-   │
-   │  first touch of .Value  (and only then)
-   ▼
-app.type.reader.Of(type, kind) → Read(raw, kind, ctx) → value     ← mirror of app.type.renderer
-   │
-   │  raw stays authoritative until a mutation; serialize emits raw verbatim when value was never touched
-   ▼
+                    channel  — the I/O layer: a stream + Mime + serializer
+                       │   every read enters here
+      ┌────────────────┼────────────────┐
+   file             http            stream / native
+(fs-backed,    (http-backed,      (in-memory, session, …)
+ Mime from      bidirectional,
+ extension)     Mime from C-Type)
+      └────────────────┼────────────────┘
+                       ▼
+                 channel.read                       ← the ONE boundary
+                       │   stamps type/kind from Mime; produces lazy Data.
+                       │   when Mime is the wire format the serializer is Wire
+                       │   (Wire.Read — defers the value slot too)
+                       ▼
+   Data { raw, type, kind, value:lazy, properties }
+                       │   first touch of .Value  (and only then)
+                       ▼
+   app.type.reader.Of(type, kind) → Read(raw, kind, ctx) → value   ← mirror of app.type.renderer
+                       │   raw stays authoritative until a mutation;
+                       │   serialize emits raw verbatim when the value was never touched
+                       ▼
 ```
 
-The whole plan is: build that registry (Part 1), make Data hold the raw and materialize through it (Part 2), broaden numbers so a type can read toward its exact kind (Part 3), route the I/O sources through one boundary (Part 4), and let the access pattern drive resolution without guessing (Part 5).
+Channel is the foundation: file and http aren't peers of channel — they're channels. Everything reads through the one `channel.read` boundary; "wire" isn't a separate source, it's the case where the channel's Mime is the wire format and the serializer is `Wire`.
+
+The whole plan is: build that registry (Part 1), make Data hold the raw and materialize through it (Part 2), broaden numbers so a type can read toward its exact kind (Part 3), make file and http channels so everything reads through one boundary (Part 4), and let the access pattern drive resolution without guessing (Part 5).
+
+## Code file structure
+
+Where the work lands. `+` new file, `~` changed, `−` deleted, `·` unchanged reference. Paths under `PLang/app/`.
+
+```
+type/
+  reader/this.cs                     +  the reader registry — mirror of type/renderer/this.cs; Of(type, kind) → Read
+  renderer/this.cs                   ·  the mirror it copies
+  <family>/serializer/Default.cs     ~  gains a static `Read` next to `Write`
+                                          (text, number, path, image, datetime, duration, code, choice)
+  this.cs                            ~  Convert(raw) → registry dispatch entry; FromWire/WireReader fold in
+  this.json.cs                       −  deletes (folds into the reader registry)
+  convert/this.cs                    ~  OwnerOf switch → per-family "I own these CLR types" declarations
+  path/this.JsonConverter.cs         −  deletes (path's Read → path/serializer/Default.cs; 6 registration sites drop it)
+  number/this.cs                     ~  exact-CLR value + full scalar tower; drop _i/_d/_f union, NumberKind enum, Kinds
+  number/this.Build.cs               ~  kind from the exact type (no float→double collapse)
+  number/this.Convert.cs             ~  KindToClr covers the tower; promote-then-narrow for arithmetic
+
+data/
+  this.cs                            ~  add `raw`; .Value materializes via reader when value is null; drop ConvertValue
+  this.Navigation.cs                 ~  navigation reads .Value (materializes); ConvertValue call removed
+  Wire.cs                            ~  Wire.Read captures the value slot raw and defers it (lazy wire read)
+
+channel/
+  this.cs                            ~  Read stamps type/kind from Mime → lazy Data (the boundary)
+  file/this.cs                       +  filesystem-backed channel kind (Mime from extension)   [or reuse stream/]
+  http/this.cs                       +  http-backed, bidirectional channel kind (Mime from Content-Type)
+  stream/this.cs                     ~  Read produces lazy Data
+  serializer/
+    IWriter.cs                       ·  write abstraction
+    IReader.cs                       +  read abstraction — mirror of IWriter
+    json/writer.cs                   ·  json write
+    json/reader.cs                   +  json read — mirror of json/writer.cs
+    plang/this.cs                    ~  gains Read (wire format → lazy Data, deferred value slot)
+    TimeSpanIso8601.cs               −  folds into type/duration/serializer/Default.cs Read
+
+http/response/this.cs                −  deletes (dissolves into Data: body=value, status/headers/duration=properties)
+error/IError.Wire.cs                 ~  ErrorWire folds into error's Read
+
+module/
+  file/read.cs                       ~  opens a file channel and reads (stops converting at read time)
+  http/code/Default.cs               ~  opens the http channel; body→value, metadata→properties
+  crypto/type/hash/this.cs           ~  FromWire → hash's Read
+  signing/Signature.cs               ~  HashDataConverter folds into the reader path
+```
+
+Carved out — another branch owns snapshot: `app/snapshot/this.Wire.cs` (`FromWire`) and `app/this.SnapshotWire.cs` (`SnapshotToWire`/`SnapshotFromWire`/`ResumeFromWire`) keep their signatures; touch internals only to compile.
+
+The shape of the whole change is symmetry — every write file gains its read mirror:
+
+```
+write                                 read
+──────────────────────────────────   ──────────────────────────────────
+type/renderer/this.cs              →  type/reader/this.cs
+channel/serializer/IWriter.cs      →  channel/serializer/IReader.cs
+channel/serializer/json/writer.cs  →  channel/serializer/json/reader.cs
+<family>/serializer/Default.cs Write → <family>/serializer/Default.cs Read
+```
 
 ## Part 1 — the reader registry
 
@@ -52,6 +123,8 @@ public sealed class @this
 ```
 
 Discovery mirrors the renderer exactly: a static `Read` sits next to `Write` in `app/type/<name>/serializer/<format>.cs`. `Default.cs` is the wildcard; a type that reads a kind specially gets a per-kind file. Same file, both halves of the type's serialization — not a separate `reader/` tree (that would split a type's two halves across folders).
+
+**Two read layers, mirroring the two write layers.** On write, the channel serializer owns the format (`IWriter`, `json/writer.cs`) and the type owns its value (`Write(value, IWriter)`). Read mirrors that: the channel serializer decodes bytes → a structure (`IReader`, `json/reader.cs`), and the type builds its value from that (`Read(raw, kind, ctx)`). So `IReader` is the format-decode surface, `type.Read` is the value-materialize step — different layers, same split the write side already has. For reading a raw file/http payload there's no surrounding wire structure, so `raw` is the decoded-or-undecoded source form and the type reads it directly per `kind`.
 
 **The one subtlety to validate first — type vs kind vs format.** The renderer keys on `(type, channel-format)` because it encodes a value *into* a channel (json, plang). The reader keys on `(type, kind)` because it decodes the value's *own* raw form: `kind` is the type's refinement — for text it's the textual format (`json`, `csv`, `md`, `plain`), for number the precision (`int`, `uint`), for image the format (`png`, `jpg`). The channel-format axis (how the surrounding `Data{name,type,value,…}` structure is wire-encoded) stays the channel serializer's job and doesn't change. Confirm this keying holds for a round-trip (write a path into json, read it back) before building the rest — it's the load-bearing choice.
 
@@ -120,11 +193,11 @@ This lands on top of Part 1 (number reads toward its exact kind through the read
 
 ## Part 4 — one I/O boundary
 
-`channel.read` becomes the single place raw + type/kind become a lazy Data.
+Channel is the foundational I/O layer — a stream with a `Mime` and a serializer (`app/channel/this.cs`). There is one read verb, `channel.read`, and file and http stop being self-contained I/O actions: they become channel kinds layered on the base, so every read enters through the one boundary.
 
-- **`channel.read`** (`app/channel/stream/this.cs:69`) stamps `type`/`kind` from the channel's `Mime` (`app/channel/this.cs:37`) using the existing mime mapping (`Format.Mime`, `Format.TypeFromMime`, `ClrFromMime` — already used by `FilePath.ReadText`), and produces `Data { raw = stream content, type, kind, value: lazy }`. It stops returning bare text.
-- **`file.read`** (`app/module/file/read.cs:27`, `app/type/path/file/this.Operations.cs:61`) stops converting at read time. It becomes a source: open the stream, hand it to the boundary with the extension-derived mime. The read-time `Context.App.Type.Convert(text, materialized, …)` call goes away.
-- **`http.get`** (`app/module/http/code/Default.cs:463`) stops deserializing by `Content-Type`. The http channel is bidirectional — write the request, read the response. The response **body** becomes the lazy value (type/kind from `Content-Type`); **status, headers, duration** become Data **properties** (read with `!`), which is what `BuildProperties` already attaches. `http.response.@this` (`app/http/response/this.cs`) **dissolves** — the result is plain Data:
+- **`channel.read`** — the base channel `Read` (`app/channel/this.cs:101`) becomes the boundary. It stamps `type`/`kind` from the channel's `Mime` (`:38`) via the existing mime mapping (`Format.Mime`, `Format.TypeFromMime`, `ClrFromMime` — already used by `FilePath.ReadText`) and produces `Data { raw = stream content, type, kind, value: lazy }`. Today the stream channel returns bare text (`app/channel/stream/this.cs:69`); that stops.
+- **file becomes a channel** — a filesystem-backed channel kind (`app/channel/file/`), `Mime` from the extension. `file.read` (`app/module/file/read.cs:27`) opens it and calls `channel.read` instead of converting at read time; the `Context.App.Type.Convert(text, materialized, …)` call in `FilePath.ReadText` (`app/type/path/file/this.Operations.cs:61`) goes away. (It can reuse the existing `stream/` channel if a separate kind isn't worth it — the coder's call.)
+- **http becomes a channel** — a bidirectional channel kind (`app/channel/http/`): write the request, read the response. The response **body** is the lazy value (type/kind from `Content-Type`); **status, headers, duration** become Data **properties** (read with `!`) — what `BuildProperties` already attaches. `http.get` (`app/module/http/code/Default.cs:463`) opens the channel and reads; it stops deserializing by `Content-Type`. `http.response.@this` (`app/http/response/this.cs`) **dissolves** — the result is plain Data:
 
   ```
   Data {
