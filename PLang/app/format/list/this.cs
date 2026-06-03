@@ -446,10 +446,14 @@ public sealed class @this
             return new global::app.type.@this(family, kind);
 
         // Everything else: name = the CLR type the content materializes to,
-        // canonicalised (string→text, object→object, byte[]→bytes).
+        // canonicalised (string→text, object→object, byte[]→bytes). A non-
+        // primitive CLR type keeps its own PLang name (e.g. application/plang-goal
+        // → `goal`) rather than collapsing to `object` — its reader materializes
+        // toward that name. Unknown/no CLR type falls back to `object`.
         var clr = global::app.type.list.@this.ClrFromMime(mime);
         var name = clr != null
-            ? (global::app.type.list.@this.GetPrimitiveName(clr) ?? "object")
+            ? (global::app.type.list.@this.GetPrimitiveName(clr)
+               ?? global::app.type.list.@this.GetTypeNameStatic(clr))
             : "object";
         return new global::app.type.@this(name, kind);
     }
