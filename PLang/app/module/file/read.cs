@@ -33,6 +33,14 @@ public partial class Read : IContext
         var read = await channel.Read();
         if (!read.Success || read.Type?.ClrType.Exit() == true) return read;
 
+        // A file-backed image carries a source-path facet (image.Path → the
+        // file, so %img.Path.Exists% works) that only the read site knows — the
+        // generic byte→image reader can't recover it. Build the path-backed image
+        // here from the raw bytes (no decode); every other type stays lazy.
+        if (read.Type?.Name == "image" && read.Raw is byte[] imageBytes)
+            return new data.@this(read.Name,
+                new global::app.type.image.@this(imageBytes, Path.Value!), read.Type);
+
         // ResolveVariables is an explicit opt-in that needs the text in hand, so
         // it forces materialization and resolves %var% — the only non-lazy path.
         if (ResolveVariables.Value && read.Value is string content)
