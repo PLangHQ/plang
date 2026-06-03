@@ -102,14 +102,15 @@ public class PathSerializerMigrationTests
         }
         var fromRenderer = System.Text.Encoding.UTF8.GetString(ms.ToArray());
 
-        using var ms2 = new System.IO.MemoryStream();
-        using (var utf = new Utf8JsonWriter(ms2))
+        // The legacy path.JsonConverter is gone; its Write logic now lives in the
+        // single json Converter (which routes path the same way). Drive the path
+        // through it and compare.
+        var opts = new JsonSerializerOptions
         {
-            var converter = new global::app.type.path.JsonConverter(context);
-            converter.Write(utf, p, new JsonSerializerOptions());
-        }
-        var fromLegacy = System.Text.Encoding.UTF8.GetString(ms2.ToArray());
+            Converters = { new global::app.channel.serializer.json.Converter(context) }
+        };
+        var fromConverter = JsonSerializer.Serialize<global::app.type.path.@this>(p, opts);
 
-        await Assert.That(fromRenderer).IsEqualTo(fromLegacy);
+        await Assert.That(fromRenderer).IsEqualTo(fromConverter);
     }
 }

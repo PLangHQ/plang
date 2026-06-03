@@ -19,7 +19,13 @@ public class ReadFailureTests
     // surfaces `TypeUnknown` (or whatever the chosen error key is). The
     // dispatch itself does not throw; the caller chooses to convert null
     // into a typed error.
-    [Test] public async Task Read_OfTypeUnknownToReader_ReturnsNullDelegate() { throw new System.NotImplementedException("not implemented"); }
+    [Test] public async Task Read_OfTypeUnknownToReader_ReturnsNullDelegate()
+    {
+        // Registry-level "no entry" path: Of(...) returns null; the dispatch
+        // itself does not throw. The caller turns null into a typed error.
+        var r = new global::app.type.reader.@this();
+        await Assert.That(r.Of("no-such-type", "json")).IsNull();
+    }
 
     // The end-to-end shape: a Read failure inside a courier (variable
     // memory rewriting a Data on its way through) reaches the leaf as a

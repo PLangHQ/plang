@@ -58,7 +58,7 @@ public class SaveGoalsTests
         var prPath = System.IO.Path.Combine(_tempDir, ".build", "start.pr");
         var json = System.IO.File.ReadAllText(prPath);
         var saved = JsonSerializer.Deserialize<Goal>(json,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true, Converters = { new global::app.type.path.JsonConverter(_app.User.Context) } });
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true, Converters = { new global::app.channel.serializer.json.Converter(_app.User.Context) } });
         await Assert.That(saved).IsNotNull();
         await Assert.That(saved!.Name).IsEqualTo("Start");
         await Assert.That(saved.Steps.Count).IsEqualTo(1);
@@ -110,7 +110,7 @@ public class SaveGoalsTests
         var prPath = System.IO.Path.Combine(_tempDir, ".build", "multi.pr");
         var json = System.IO.File.ReadAllText(prPath);
         var saved = JsonSerializer.Deserialize<Goal>(json,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true, Converters = { new global::app.type.path.JsonConverter(_app.User.Context) } });
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true, Converters = { new global::app.channel.serializer.json.Converter(_app.User.Context) } });
 
         await Assert.That(saved).IsNotNull();
         await Assert.That(saved!.Name).IsEqualTo("Public");

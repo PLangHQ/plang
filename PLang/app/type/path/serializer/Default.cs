@@ -6,12 +6,11 @@ namespace app.type.path.serializer;
 /// Context isn't wired, mirroring the legacy <c>JsonConverter.Write</c>).
 ///
 /// <para>One file, one decision: every wire format renders a path the same
-/// way. The renderer dispatcher registers this class as
-/// <c>(path, "*")</c>. The legacy <see cref="app.type.path.JsonConverter"/>
-/// stays alive because STJ deserialization (Read) still routes through it
-/// — the dispatch table only covers the write side. Deleting the legacy
-/// converter is a follow-up that needs every STJ path-typed read to migrate
-/// to <c>path.@this.Resolve(string, context)</c>.</para>
+/// way. The renderer dispatcher registers this class as <c>(path, "*")</c>,
+/// and the reader registry registers <see cref="Read"/> as the path decode.
+/// Mid-graph STJ path fields are served by the single json
+/// <c>Converter</c>, which routes to <see cref="Read"/> through the reader
+/// registry — the legacy <c>path.JsonConverter</c> is gone.</para>
 /// </summary>
 public static class Default
 {

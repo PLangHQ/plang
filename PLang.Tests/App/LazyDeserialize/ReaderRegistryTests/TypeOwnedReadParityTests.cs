@@ -13,11 +13,23 @@ public class TypeOwnedReadParityTests
 {
     [Test] public async Task PathRead_MatchesPriorJsonConverterRead()
     {
-        // Canonical inputs: absolute path string, relative path string,
-        // http:// path scheme, file:// path scheme. The new path.Read must
-        // produce the same path subclass + same scheme + same raw form as
-        // app.type.path.JsonConverter.Read did.
-        throw new System.NotImplementedException("not implemented");
+        // The old JsonConverter.Read resolved via path.@this.Resolve(raw, ctx);
+        // path.Read re-houses exactly that. Same subclass + same wire form for
+        // absolute and http inputs.
+        await using var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-pathread-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var ctx = app.User.Context;
+        var r = new global::app.type.reader.@this();
+        var rc = new global::app.type.reader.ReadContext(ctx);
+
+        foreach (var raw in new[] { "/srv/app/r.json", "https://example.com/x" })
+        {
+            var viaRead = r.Of("path", null)!(raw, null, rc) as global::app.type.path.@this;
+            var prior = global::app.type.path.@this.Resolve(raw, ctx);
+            await Assert.That(viaRead).IsNotNull();
+            await Assert.That(viaRead!.GetType()).IsEqualTo(prior.GetType());
+            await Assert.That(viaRead.Relative).IsEqualTo(prior.Relative);
+        }
     }
 
     [Test] public async Task NumberRead_MatchesPriorConvertOutput()

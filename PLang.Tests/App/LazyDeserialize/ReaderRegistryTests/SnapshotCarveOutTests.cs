@@ -1,3 +1,4 @@
+using System.Reflection;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
@@ -10,10 +11,23 @@ namespace PLang.Tests.App.LazyDeserialize.ReaderRegistryTests;
 // signatures are still there after Stage 1 lands.
 public class SnapshotCarveOutTests
 {
-    // app/snapshot/this.Wire.cs:83 — snapshot's `FromWire(...)` stays.
-    [Test] public async Task Snapshot_FromWire_StillExists() { throw new System.NotImplementedException("not implemented"); }
+    private static Assembly PLangAssembly => typeof(global::app.@this).Assembly;
 
-    [Test] public async Task App_SnapshotToWire_StillExists() { throw new System.NotImplementedException("not implemented"); }
-    [Test] public async Task App_SnapshotFromWire_StillExists() { throw new System.NotImplementedException("not implemented"); }
-    [Test] public async Task App_ResumeFromWire_StillExists() { throw new System.NotImplementedException("not implemented"); }
+    // app/snapshot/this.Wire.cs — snapshot's static `FromWire(string, string?)` stays.
+    [Test] public async Task Snapshot_FromWire_StillExists()
+    {
+        var t = PLangAssembly.GetType("app.snapshot.this");
+        await Assert.That(t).IsNotNull();
+        var m = t!.GetMethod("FromWire", BindingFlags.Public | BindingFlags.Static);
+        await Assert.That(m).IsNotNull();
+    }
+
+    [Test] public async Task App_SnapshotToWire_StillExists()
+        => await Assert.That(typeof(global::app.@this).GetMethod("SnapshotToWire")).IsNotNull();
+
+    [Test] public async Task App_SnapshotFromWire_StillExists()
+        => await Assert.That(typeof(global::app.@this).GetMethod("SnapshotFromWire")).IsNotNull();
+
+    [Test] public async Task App_ResumeFromWire_StillExists()
+        => await Assert.That(typeof(global::app.@this).GetMethod("ResumeFromWire")).IsNotNull();
 }

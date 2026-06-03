@@ -14,22 +14,28 @@ public class ConverterDeletionsTests
 {
     private static Assembly PLangAssembly => typeof(global::app.@this).Assembly;
 
+    private static global::app.@this NewApp()
+        => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-conv-del-" + System.Guid.NewGuid().ToString("N")[..8]));
+
+    public sealed class InnerFixture { public global::app.type.path.@this? File { get; set; } }
+    public sealed class MidFixture { public InnerFixture? Inner { get; set; } }
+    public sealed class OuterFixture { public MidFixture? Mid { get; set; } }
+
     [Test] public async Task PathJsonConverter_TypeIsGone()
     {
-        // app/type/path/this.JsonConverter.cs:24 — type name `JsonConverter`
-        // in the `app.type.path` namespace.
-        throw new System.NotImplementedException("not implemented");
+        // app/type/path/this.JsonConverter.cs — type name `JsonConverter`
+        // in the `app.type.path` namespace. Deleted; decode moved to path.Read.
+        await Assert.That(PLangAssembly.GetType("app.type.path.JsonConverter")).IsNull();
     }
 
     [Test] public async Task TypeJson_StillExists_ReadsTypeDescriptor()
     {
-        // app/type/this.json.cs:20 — class `json` in `app.type`. **Stays**
+        // app/type/this.json.cs — class `json` in `app.type`. **Stays**
         // per architect's mid-graph Converter resolution: it reads the
         // type descriptor `{name, kind, strict}` (the wire `type` slot),
-        // not a value, so it is not a value-materializer and is not in
-        // the value-reader registry. Rename optional; the *presence* is
-        // the contract.
-        throw new System.NotImplementedException("not implemented");
+        // not a value.
+        await Assert.That(PLangAssembly.GetType("app.type.json")).IsNotNull();
     }
 
     [Test] public async Task ErrorWire_TypeIsGone_OrFoldedIntoRead()
@@ -62,7 +68,23 @@ public class ConverterDeletionsTests
     // resolution) instead.
     [Test] public async Task PathConverterRegistrationSites_NowWireSingleJsonConverter()
     {
-        throw new System.NotImplementedException("not implemented");
+        // The single json Converter exists as a JsonConverterFactory and the
+        // wiring works end to end: a path round-trips through the plang wire
+        // serializer (one of the 6 former path-converter sites).
+        var converterType = PLangAssembly.GetType("app.channel.serializer.json.Converter");
+        await Assert.That(converterType).IsNotNull();
+        await Assert.That(typeof(System.Text.Json.Serialization.JsonConverterFactory)
+            .IsAssignableFrom(converterType!)).IsTrue();
+
+        await using var app = NewApp();
+        var ctx = app.User.Context;
+        var p = global::app.type.path.@this.Resolve("/srv/app/cfg.json", ctx);
+        var opts = new System.Text.Json.JsonSerializerOptions
+        { Converters = { new global::app.channel.serializer.json.Converter(ctx) } };
+        var json = System.Text.Json.JsonSerializer.Serialize<global::app.type.path.@this>(p, opts);
+        var back = System.Text.Json.JsonSerializer.Deserialize<global::app.type.path.@this>(json, opts);
+        await Assert.That(back).IsNotNull();
+        await Assert.That(back!.Relative).IsEqualTo(p.Relative);
     }
 
     // The mid-graph resolution (architect 829... follow-up). STJ hits
@@ -75,7 +97,7 @@ public class ConverterDeletionsTests
     // context (mirror of how `path.JsonConverter` was built today).
     [Test] public async Task SingleJsonConverter_Exists_AtChannelSerializerJson()
     {
-        throw new System.NotImplementedException("not implemented");
+        await Assert.That(PLangAssembly.GetType("app.channel.serializer.json.Converter")).IsNotNull();
     }
 
     // The behaviour: the single `Converter` consults the registry /
@@ -84,7 +106,21 @@ public class ConverterDeletionsTests
     // through the same `Read` the payload-level path would reach.
     [Test] public async Task SingleJsonConverter_RoutesMidGraphFieldToTypeRead_ViaRegistry()
     {
-        throw new System.NotImplementedException("not implemented");
+        // A mid-graph path field deserialises through the Converter, which
+        // routes to path's Read via App.Type.Readers — the resulting path is
+        // Context-wired (only the registry-with-context path produces that),
+        // proving the route, not a bare stub.
+        await using var app = NewApp();
+        var ctx = app.User.Context;
+        var opts = new System.Text.Json.JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            Converters = { new global::app.channel.serializer.json.Converter(ctx) }
+        };
+        var inner = System.Text.Json.JsonSerializer.Deserialize<InnerFixture>(
+            "{\"file\":\"/srv/app/x.json\"}", opts);
+        await Assert.That(inner!.File).IsNotNull();
+        await Assert.That(inner.File!.Context).IsNotNull(); // Context-wired ⇒ went through the registry read
     }
 
     // The load-bearing regression test (credit: coder caught it).
@@ -95,6 +131,19 @@ public class ConverterDeletionsTests
     // shape-sniff would have papered over. The test pins the resolution.
     [Test] public async Task NestedPathField_ThreeLevelsDown_DeserialisesViaConverter()
     {
-        throw new System.NotImplementedException("not implemented");
+        // The load-bearing regression: a path three levels down
+        // (Outer.Mid.Inner.File) deserialises via the single Converter — the
+        // case a payload-level registry alone could not serve.
+        await using var app = NewApp();
+        var ctx = app.User.Context;
+        var opts = new System.Text.Json.JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            Converters = { new global::app.channel.serializer.json.Converter(ctx) }
+        };
+        var outer = System.Text.Json.JsonSerializer.Deserialize<OuterFixture>(
+            "{\"mid\":{\"inner\":{\"file\":\"/srv/app/deep.json\"}}}", opts);
+        await Assert.That(outer!.Mid!.Inner!.File).IsNotNull();
+        await Assert.That(outer.Mid.Inner.File!.Context).IsNotNull();
     }
 }

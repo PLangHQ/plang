@@ -48,8 +48,8 @@ public sealed class @this : ISerializer
     public @this(actor.context.@this? context)
     {
         var pathConverter = context != null
-            ? new global::app.type.path.JsonConverter(context)
-            : new global::app.type.path.JsonConverter();
+            ? new global::app.channel.serializer.json.Converter(context)
+            : new global::app.channel.serializer.json.Converter();
 
         _outbound = BuildOptions(
             new global::app.data.Wire(global::app.View.Out),
@@ -79,7 +79,7 @@ public sealed class @this : ISerializer
 
     private static JsonSerializerOptions BuildOptions(
         global::app.data.Wire wire,
-        global::app.type.path.JsonConverter pathConverter,
+        global::app.channel.serializer.json.Converter pathConverter,
         System.Action<JsonTypeInfo> modifier)
         => new()
         {

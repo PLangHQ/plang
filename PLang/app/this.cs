@@ -417,7 +417,7 @@ public sealed partial class @this : IAsyncDisposable
         WriteIndented = true,
         Converters = {
             new global::app.channel.serializer.TimeSpanIso8601(),
-            new global::app.type.path.JsonConverter()
+            new global::app.channel.serializer.json.Converter()
         }
     };
 

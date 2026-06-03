@@ -47,7 +47,7 @@ public sealed partial class @this
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = true,
-        Converters = { new global::app.type.path.JsonConverter() },
+        Converters = { new global::app.channel.serializer.json.Converter() },
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
             Modifiers = { StoreOnlyModifier }
