@@ -17,12 +17,9 @@
             {
               "name": "Data",
               "value": "Received chunk: %!data%",
-              "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
+              "type": {
+                "name": "tstring"
+              }
             }
           ],
           "defaults": null,
@@ -30,10 +27,7 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
+      "formal": "output.write(Data=%!data%)",
       "source": null,
       "waitForExecution": true
     }
@@ -43,7 +37,7 @@
   "path": "/Modules/Http/StreamCallback/ProcessChunk.goal",
   "prPath": "/Modules/Http/StreamCallback/.build/processchunk.pr",
   "hash": "04c66cdf7538158f70ec86f58de4129957c80656d1b317866d3bab22ac2a7fca",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,
