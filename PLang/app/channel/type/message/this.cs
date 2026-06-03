@@ -1,6 +1,6 @@
 using app.module;
 
-namespace app.channel.message;
+namespace app.channel.type.message;
 
 /// <summary>
 /// Channel pattern abstract: stateless, one-shot exchange.

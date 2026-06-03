@@ -1,6 +1,6 @@
 using app.error;
 
-namespace app.channel.goal;
+namespace app.channel.type.goal;
 
 /// <summary>
 /// Concrete goal-backed channel. WriteAsync invokes the wrapped goal with the Data
@@ -13,7 +13,7 @@ namespace app.channel.goal;
 /// named <c>"output"</c> can't loop back into itself; sibling and late-registered
 /// channels stay visible.
 /// </summary>
-public class @this : global::app.channel.session.@this
+public class @this : global::app.channel.type.session.@this
 {
     /// <summary>The goal this channel dispatches writes to.</summary>
     public global::app.goal.@this Goal { get; }

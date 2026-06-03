@@ -1,4 +1,4 @@
-namespace app.channel.noop;
+namespace app.channel.type.noop;
 
 /// <summary>
 /// /dev/null channel — the fallback returned by <see cref="app.channel.list.@this.Channel"/>

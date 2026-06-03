@@ -3,7 +3,7 @@ using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using data = global::app.data.@this;
-using stream = global::app.channel.stream.@this;
+using stream = global::app.channel.type.stream.@this;
 
 namespace PLang.Tests.App.LazyDeserialize.OneBoundaryTests;
 

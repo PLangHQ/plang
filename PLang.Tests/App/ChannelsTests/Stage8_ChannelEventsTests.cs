@@ -282,7 +282,7 @@ public class Stage8_ChannelEventsTests
         public override Task<Data> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok());
     }
 
-    private sealed class MessageProbeChannel : global::app.channel.message.@this
+    private sealed class MessageProbeChannel : global::app.channel.type.message.@this
     {
         public MessageProbeChannel(string name) { Name = name; }
         public override Task<Data> Write(Data data, CancellationToken ct = default) => Task.FromResult(Data.Ok());

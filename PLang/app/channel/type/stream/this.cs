@@ -1,7 +1,7 @@
 using app.channel.serializer;
 using app.error;
 
-namespace app.channel.stream;
+namespace app.channel.type.stream;
 
 /// <summary>
 /// Concrete Stream-backed channel. Wraps a <see cref="System.IO.Stream"/> for I/O.
@@ -10,7 +10,7 @@ namespace app.channel.stream;
 /// Console streams (stdin/stdout/stderr) and arbitrary handed-in streams (HTTP response bodies,
 /// memory streams in tests) all use this concrete.
 /// </summary>
-public sealed class @this : global::app.channel.session.@this
+public sealed class @this : global::app.channel.type.session.@this
 {
     private readonly bool _ownsStream;
 

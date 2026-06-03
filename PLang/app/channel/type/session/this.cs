@@ -1,4 +1,4 @@
-namespace app.channel.session;
+namespace app.channel.type.session;
 
 /// <summary>
 /// Channel pattern abstract: kept-open, stateful connection.

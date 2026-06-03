@@ -58,7 +58,7 @@ public class ISerializerInputContractTests
         var probe = new ProbeSerializer();
 
         await using var app = new global::app.@this("/tmp/stream-channel-write-test");
-        var ch = new global::app.channel.stream.@this(
+        var ch = new global::app.channel.type.stream.@this(
             "probe", new MemoryStream(), global::app.channel.ChannelDirection.Output)
         {
             Mime = probe.Type,

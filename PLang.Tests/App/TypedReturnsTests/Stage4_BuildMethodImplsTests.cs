@@ -86,7 +86,7 @@ public class Stage4_BuildMethodImplsTests
     [Test]
     public async Task FileRead_Build_LiteralMissingFile_WritesBuildWarning()
     {
-        var channel = (global::app.channel.stream.@this)
+        var channel = (global::app.channel.type.stream.@this)
             _app.User.Channel.CreateMemoryChannel("builder");
 
         const string missing = "definitely-missing-stage4.csv";

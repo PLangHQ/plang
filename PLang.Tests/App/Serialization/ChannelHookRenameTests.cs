@@ -40,15 +40,15 @@ public class ChannelHookRenameTests
 
     // 1.10 — Every channel subclass overrides Write / Read / Ask (not the Core variants).
     [Test] public async Task ChannelSubclass_Stream_OverridesWriteReadAsk_NotCoreSuffixed()
-        => await AssertSubclassOverrides(typeof(global::app.channel.stream.@this));
+        => await AssertSubclassOverrides(typeof(global::app.channel.type.stream.@this));
 
     [Test] public async Task ChannelSubclass_Goal_OverridesWriteReadAsk_NotCoreSuffixed()
-        => await AssertSubclassOverrides(typeof(global::app.channel.goal.@this));
+        => await AssertSubclassOverrides(typeof(global::app.channel.type.goal.@this));
 
     [Test] public async Task ChannelSubclass_Message_OverridesWriteReadAsk_NotCoreSuffixed()
     {
         // Message is itself abstract — only Ask is implemented on it.
-        var t = typeof(global::app.channel.message.@this);
+        var t = typeof(global::app.channel.type.message.@this);
         var ask = t.GetMethod("Ask", BindingFlags.Public | BindingFlags.Instance);
         await Assert.That(ask).IsNotNull();
         await Assert.That(ask!.DeclaringType).IsEqualTo(t);
@@ -56,7 +56,7 @@ public class ChannelHookRenameTests
     }
 
     [Test] public async Task ChannelSubclass_Noop_OverridesWriteReadAsk_NotCoreSuffixed()
-        => await AssertSubclassOverrides(typeof(global::app.channel.noop.@this));
+        => await AssertSubclassOverrides(typeof(global::app.channel.type.noop.@this));
 
     [Test] public async Task ChannelSubclass_Events_OverridesWriteReadAsk_NotCoreSuffixed()
     {
@@ -72,7 +72,7 @@ public class ChannelHookRenameTests
     [Test] public async Task ChannelSubclass_Session_OverridesWriteReadAsk_NotCoreSuffixed()
     {
         // Session is abstract — concrete subclasses (stream, goal) carry the overrides.
-        var t = typeof(global::app.channel.session.@this);
+        var t = typeof(global::app.channel.type.session.@this);
         await Assert.That(t.IsAbstract).IsTrue();
         await Assert.That(t.GetMethod("WriteCore", BindingFlags.Public | BindingFlags.Instance)).IsNull();
     }

@@ -96,7 +96,7 @@ public class FailureMatrixTests
 
     [Test] public async Task ChannelWrite_OnInputOnlyChannel_ReturnsServiceErrorChannelReadOnly()
     {
-        var ch = global::app.channel.stream.@this.Input("stdin", new MemoryStream());
+        var ch = global::app.channel.type.stream.@this.Input("stdin", new MemoryStream());
         var result = await ch.Write(global::app.data.@this.Ok("x"));
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ChannelReadOnly");
@@ -104,7 +104,7 @@ public class FailureMatrixTests
 
     [Test] public async Task ChannelRead_OnOutputOnlyChannel_ReturnsServiceErrorChannelWriteOnly()
     {
-        var ch = global::app.channel.stream.@this.Output("stdout", new MemoryStream());
+        var ch = global::app.channel.type.stream.@this.Output("stdout", new MemoryStream());
         var result = await ch.Read();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ChannelWriteOnly");
@@ -113,7 +113,7 @@ public class FailureMatrixTests
     [Test] public async Task ChannelAsk_OnClosedPipe_ReturnsServiceErrorChannelEof()
     {
         // Empty MemoryStream — ReadLineAsync returns null (EOF).
-        var ch = new global::app.channel.stream.@this("input", new MemoryStream(),
+        var ch = new global::app.channel.type.stream.@this("input", new MemoryStream(),
             global::app.channel.ChannelDirection.Bidirectional);
         var action = new global::app.module.output.ask
         {

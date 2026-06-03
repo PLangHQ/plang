@@ -193,7 +193,7 @@ public sealed partial class @this
             {
                 // Collision resolution: when two CLR types map to the same PLang
                 // name (e.g. `app.goal.@this` the goal entity and
-                // `app.channel.goal.@this` the goal-channel both lowercase to
+                // `app.channel.type.goal.@this` the goal-channel both lowercase to
                 // "goal" via the @this convention), prefer the catalog-richer
                 // entry.  First-wins TryAdd over reflection-ordered types is
                 // non-deterministic — a Scalar entry could shadow a Record with
