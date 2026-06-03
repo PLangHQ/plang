@@ -1,6 +1,23 @@
 # coder — lazy-deserialize — v2 report
 
-## Status: Stage 4 = 4a–4d DONE (green, pushed). Stage 5 = access-resolution core DONE. Remaining: 4e (http dissolve), goal-level scalar wiring, integration cuts.
+## Status: Stage 4 = 4a–4d DONE. Stage 5 = access-resolution core + scalar interpolation + Cut2 + Cut5 DONE. Remaining: 4e (http dissolve), Cut1/Cut3/Cut4, assert-full-match scalar, goal-test building.
+
+### Update (later in session, all pushed)
+- **Cut5** (number tower) green: exact-kind round-trip, promote-then-narrow no-wrap, double⊕decimal raises.
+- **Scalar interpolation wired**: `Variables.Resolve` renders `%x%` via `ScalarValue` — a bare `%cfg%` of a lazily-read object is the raw json string; dotted `%cfg.port%` still navigates+materializes. Hot path; goal suite stayed 262 pass / 0 fail.
+- **Cut2** (touch materializes) green: config.json/csv untouched=raw, navigated=field/row-column; biginteger lossless; image decodes only on value-touch.
+- C# suite: **27 fail (all stubs), 0 regressions**. Goal suite: **262 pass, 0 fail, 10 stale**.
+
+### Still remaining
+- **4e** http channel + `http.response` dissolve (the big one — ~12 C# files + http goal tests; plan below).
+- **Cut1** verbatim passthrough — needs `Wire.Write`/value-emit to emit `_raw` verbatim for an untouched raw-backed Data (currently `Normalize` reads `.Value` → materializes). Serialization-core change, deferred.
+- **Cut3** sign→wire→verify, **Cut4** http body-lazy/metadata-eager (needs 4e).
+- **assert/compare full-match scalar**: `Variables.Resolve` (interpolation/output) now uses `ScalarValue`; the `assert %x% equals` full-match compare path may still read `.Value` — verify when wiring 4e/goal tests.
+- **Goal `.test.goal` building**: the 10 LazyDeserialize goal tests are *stale* (need `plang build` + a `config.json`/`.png` fixture; build needs the LLM builder). Mechanism is proven in C#.
+
+---
+(original v2 detail below)
+
 
 Builds clean (0 PLNG002). C# suite: **4028 total, 30 fail** — every failure is an
 unimplemented Stage-4e/integration-cut stub; **zero regressions**. Goal suite
