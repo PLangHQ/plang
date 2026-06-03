@@ -1,44 +1,98 @@
+using System.Numerics;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
+using number = global::app.type.number.@this;
+using PKind = global::app.type.number.NumberKind;
+using PPolicy = global::app.type.number.NumberPolicy;
+using POverflow = global::app.type.number.OverflowMode;
+using PPrecision = global::app.type.number.PrecisionMode;
 
 namespace PLang.Tests.App.LazyDeserialize.NumberTowerTests;
 
-// Promote-then-narrow (Decision 5):
-//   integers → promote to BigInteger, compute, narrow to a result kind.
-//   binary floats (Half/float/double) → promote to double.
-//   decimal → stays decimal.
-//   integer ⊕ binary float → double (C#'s rule).
-//   integer ⊕ decimal → decimal.
-//   double ⊕ decimal → error, requires an explicit cast.
-//   Result kind = the wider of the two operand kinds, widened further only
-//   if the value overflows it.
+// Promote-then-narrow (Decision 5 / Way 3, with the architect's repurposed
+// NumberPolicy): integers → BigInteger carrier → narrow (signed-biased);
+// double⊕decimal errors by default.
 public class NumberArithmeticTests
 {
-    [Test] public async Task IntPlusInt_StaysInt() { throw new System.NotImplementedException("not implemented"); }
+    private static PPolicy Lenient => PPolicy.Lenient;
 
-    // The marquee no-wrap row. uint(3_000_000_000) + uint(2_000_000_000)
-    // overflows uint; result lands as `long(5_000_000_000)`, not a wrapped
-    // uint.
-    [Test] public async Task UIntPlusUInt_PromotesAndNarrowsToLong_NoWrap() { throw new System.NotImplementedException("not implemented"); }
+    [Test] public async Task IntPlusInt_StaysInt()
+    {
+        var r = number.Add(number.From(2), number.From(3), Lenient);
+        await r.IsSuccess();
+        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Int);
+    }
 
-    [Test] public async Task IntPlusFloat_PromotesToDouble() { throw new System.NotImplementedException("not implemented"); }
-    [Test] public async Task IntPlusDecimal_PromotesToDecimal() { throw new System.NotImplementedException("not implemented"); }
+    // Marquee no-wrap row.
+    [Test] public async Task UIntPlusUInt_PromotesAndNarrowsToLong_NoWrap()
+    {
+        var r = number.Add(number.From(3000000000u), number.From(2000000000u), Lenient);
+        await r.IsSuccess();
+        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Long);
+        await Assert.That(r.Value!.ToInt64()).IsEqualTo(5000000000L);
+    }
 
-    // The "correct not easy" edge — C# forbids double⊕decimal without an
-    // explicit cast; PLang follows.
-    [Test] public async Task DoublePlusDecimal_RaisesExplicitCastError() { throw new System.NotImplementedException("not implemented"); }
+    [Test] public async Task IntPlusFloat_PromotesToDouble()
+    {
+        var r = number.Add(number.From(2), number.From(1.5f), Lenient);
+        await r.IsSuccess();
+        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Double);
+    }
 
-    [Test] public async Task DivisionProducingFraction_LandsOnDecimalOrDouble_PerOperandKinds() { throw new System.NotImplementedException("not implemented"); }
-    [Test] public async Task BigIntegerLossless_AcrossSumOfManyInts() { throw new System.NotImplementedException("not implemented"); }
+    [Test] public async Task IntPlusDecimal_PromotesToDecimal()
+    {
+        var r = number.Add(number.From(2), number.From(1.5m), Lenient);
+        await r.IsSuccess();
+        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Decimal);
+    }
 
-    // Independent #10 — "narrowing only when value fits". decimal(0.1) +
-    // decimal(10) stays decimal even though the result is small. The
-    // pinned shape: narrow only when overflow would otherwise happen.
-    [Test] public async Task Narrowing_OnlyWhenValueFits() { throw new System.NotImplementedException("not implemented"); }
+    // The "correct not easy" edge — double⊕decimal needs an explicit precision.
+    [Test] public async Task DoublePlusDecimal_RaisesExplicitCastError()
+    {
+        var r = number.Add(number.From(1.5d), number.From(0.1m), Lenient);
+        await r.IsFailure();
+        await Assert.That(r.Error?.Key).IsEqualTo("PrecisionMixRequiresChoice");
+    }
 
-    // Independent #11 — integer-tower associativity. `(a+b)+c == a+(b+c)`
-    // across the same set of kinds. Catches a subtle promote-then-narrow
-    // ordering bug.
-    [Test] public async Task IntegerAssociativity_AcrossKinds() { throw new System.NotImplementedException("not implemented"); }
+    [Test] public async Task DivisionProducingFraction_LandsOnDecimalOrDouble_PerOperandKinds()
+    {
+        var dec = number.Divide(number.From(7), number.From(2), Lenient);
+        await dec.IsSuccess();
+        await Assert.That(dec.Value!.Kind).IsEqualTo(PKind.Decimal); // 7/2 → 3.5 (decimal)
+        var dbl = number.Divide(number.From(7.0), number.From(2), Lenient);
+        await dbl.IsSuccess();
+        await Assert.That(dbl.Value!.Kind).IsEqualTo(PKind.Double);
+    }
+
+    [Test] public async Task BigIntegerLossless_AcrossSumOfManyInts()
+    {
+        BigInteger huge = (BigInteger)Int128.MaxValue + 1; // beyond Int128 → BigInteger
+        var r = number.Add(number.From(huge), number.From(1), Lenient);
+        await r.IsSuccess();
+        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.BigInteger);
+        await Assert.That(r.Value!.ToBigInteger()).IsEqualTo(huge + 1);
+    }
+
+    // Independent #10 — narrow only when the value overflows; decimal stays decimal.
+    [Test] public async Task Narrowing_OnlyWhenValueFits()
+    {
+        var r = number.Add(number.From(0.1m), number.From(10m), Lenient);
+        await r.IsSuccess();
+        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Decimal);
+        await Assert.That(r.Value!.ToDecimal()).IsEqualTo(10.1m);
+    }
+
+    // Independent #11 — integer-tower associativity.
+    [Test] public async Task IntegerAssociativity_AcrossKinds()
+    {
+        var ab_c = number.Add(number.Add(number.From(2000000000u), number.From(2000000000u), Lenient).Value!,
+                              number.From(2000000000u), Lenient);
+        var a_bc = number.Add(number.From(2000000000u),
+                              number.Add(number.From(2000000000u), number.From(2000000000u), Lenient).Value!, Lenient);
+        await ab_c.IsSuccess();
+        await a_bc.IsSuccess();
+        await Assert.That(ab_c.Value!.ToBigInteger()).IsEqualTo(a_bc.Value!.ToBigInteger());
+        await Assert.That(ab_c.Value!.ToBigInteger()).IsEqualTo((BigInteger)6000000000);
+    }
 }

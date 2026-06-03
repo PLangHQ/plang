@@ -242,12 +242,9 @@ public partial class @this
             var derived = new type(typeName, clr);
             if (typeName == "number")
             {
-                derived.Kind = clr == typeof(int) ? "int"
-                    : clr == typeof(long) ? "long"
-                    : clr == typeof(decimal) ? "decimal"
-                    : clr == typeof(double) ? "double"
-                    : clr == typeof(float) ? "double"  // float widens to double slot
-                    : null;
+                // Way 3: the kind is the value's exact CLR type — the full scalar
+                // tower, no float→double collapse. number owns the clr→kind map.
+                derived.Kind = global::app.type.number.@this.KindNameForClr(clr);
             }
             derived.Context = _context;
             _type = derived;

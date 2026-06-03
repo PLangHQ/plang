@@ -1,32 +1,65 @@
+using System.Linq;
+using System.Numerics;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
+using number = global::app.type.number.@this;
+using PKind = global::app.type.number.NumberKind;
 
 namespace PLang.Tests.App.LazyDeserialize.NumberTowerTests;
 
-// "The kind *is* its type" — no separate label to drift. Derivation reads
-// the value's `GetType()` and maps to the kind name. The build-stamp site
-// at app/data/this.cs:242 currently collapses float→double; this branch
-// removes that.
+// "The kind *is* its type" — no separate label to drift.
 public class NumberKindDerivationTests
 {
-    [Test] public async Task Kind_DerivesFromValueClrType_Int_ProducesIntKind() { throw new System.NotImplementedException("not implemented"); }
-    [Test] public async Task Kind_DerivesFromValueClrType_UInt_ProducesUIntKind() { throw new System.NotImplementedException("not implemented"); }
+    [Test] public async Task Kind_DerivesFromValueClrType_Int_ProducesIntKind()
+        => await Assert.That(number.From(5).Kind).IsEqualTo(PKind.Int);
 
-    // Independent #8 — float is not double. The kind is "float" when stored
-    // as `float`, "double" when stored as `double`.
-    [Test] public async Task Kind_DerivesFromValueClrType_Float_ProducesFloatKind_NotDouble() { throw new System.NotImplementedException("not implemented"); }
-    [Test] public async Task Kind_DerivesFromValueClrType_BigInteger_ProducesBigIntegerKind() { throw new System.NotImplementedException("not implemented"); }
+    [Test] public async Task Kind_DerivesFromValueClrType_UInt_ProducesUIntKind()
+        => await Assert.That(number.From(5u).Kind).IsEqualTo(PKind.UInt);
 
-    [Test] public async Task Kind_ForAllTowerEntries_RoundTripsThroughKindsList() { throw new System.NotImplementedException("not implemented"); }
+    // Independent #8 — float is not double.
+    [Test] public async Task Kind_DerivesFromValueClrType_Float_ProducesFloatKind_NotDouble()
+    {
+        await Assert.That(number.From(1.5f).Kind).IsEqualTo(PKind.Float);
+        await Assert.That(number.From(1.5f).KindLabel).IsEqualTo("float");
+        await Assert.That(number.From(1.5d).Kind).IsEqualTo(PKind.Double);
+    }
 
-    // The catalog. The architect lists the full tower:
-    // sbyte byte short ushort int uint long ulong int128 uint128 half float
-    // double decimal biginteger. Pin the advertised list.
-    [Test] public async Task Kinds_AdvertisesFullTower() { throw new System.NotImplementedException("not implemented"); }
-    [Test] public async Task KindToClr_CoversFullTower() { throw new System.NotImplementedException("not implemented"); }
+    [Test] public async Task Kind_DerivesFromValueClrType_BigInteger_ProducesBigIntegerKind()
+        => await Assert.That(number.From((BigInteger)1).Kind).IsEqualTo(PKind.BigInteger);
 
-    // app/data/this.cs:242 today collapses float→double at stamp time. After
-    // Stage 2 the stamp reflects the exact runtime type.
-    [Test] public async Task BuildHook_StampsFromValueGetType_NoFloatCollapse() { throw new System.NotImplementedException("not implemented"); }
+    [Test] public async Task Kind_ForAllTowerEntries_RoundTripsThroughKindsList()
+    {
+        foreach (var name in number.Kinds)
+        {
+            var k = number.KindFromName(name);
+            await Assert.That(k).IsNotNull();
+            await Assert.That(number.KindName(k!.Value)).IsEqualTo(name);
+        }
+    }
+
+    [Test] public async Task Kinds_AdvertisesFullTower()
+    {
+        string[] expected =
+        {
+            "sbyte", "byte", "short", "ushort", "int", "uint", "long", "ulong",
+            "int128", "uint128", "half", "float", "double", "decimal", "biginteger",
+        };
+        foreach (var name in expected)
+            await Assert.That(number.Kinds.Contains(name)).IsTrue();
+    }
+
+    [Test] public async Task KindToClr_CoversFullTower()
+    {
+        foreach (var name in number.Kinds)
+            await Assert.That(number.KindToClrType(number.KindFromName(name))).IsNotNull();
+    }
+
+    // app/data/this.cs:242 no longer collapses float→double at stamp time.
+    [Test] public async Task BuildHook_StampsFromValueGetType_NoFloatCollapse()
+    {
+        await Assert.That(number.Build(1.5f)).IsEqualTo("float");
+        await Assert.That(number.Build(1.5d)).IsEqualTo("double");
+        await Assert.That(number.Build(5u)).IsEqualTo("uint");
+    }
 }

@@ -19,11 +19,23 @@ public sealed partial class @this
         switch (value)
         {
             case null: return null;
+            // A non-string CLR numeric is read as its exact kind (Way 3 — no
+            // float→double collapse; the full tower is honoured).
+            case sbyte: return "sbyte";
+            case byte: return "byte";
+            case short: return "short";
+            case ushort: return "ushort";
             case int: return "int";
+            case uint: return "uint";
             case long: return "long";
-            case decimal: return "decimal";
-            case float: return "double"; // float widens to double slot
+            case ulong: return "ulong";
+            case System.Int128: return "int128";
+            case System.UInt128: return "uint128";
+            case System.Numerics.BigInteger: return "biginteger";
+            case System.Half: return "half";
+            case float: return "float";
             case double: return "double";
+            case decimal: return "decimal";
             case string s: return BuildFromString(s);
             default: return null;
         }
