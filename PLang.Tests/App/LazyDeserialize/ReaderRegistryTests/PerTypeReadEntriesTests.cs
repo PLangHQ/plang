@@ -23,7 +23,11 @@ public class PerTypeReadEntriesTests
     // The new `table` type's primary kind. `(table, csv)` lands in-branch;
     // `(table, xlsx)` is a follow-on (binary, needs a library) — until
     // then, a .xlsx stamps `{table, xlsx}` and rides as raw bytes.
-    [Test] public async Task Reader_Of_TableCsv_ReturnsDelegate() { throw new System.NotImplementedException("not implemented"); }
+    [Test] public async Task Reader_Of_TableCsv_ReturnsDelegate()
+    {
+        var r = new global::app.type.reader.@this();
+        await Assert.That(r.Of("table", "csv")).IsNotNull();
+    }
     [Test] public async Task Reader_Of_PathDefault_ReturnsDelegate()
     {
         var r = new global::app.type.reader.@this();

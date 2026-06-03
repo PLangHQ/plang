@@ -43,8 +43,9 @@ public class Stage4_BuildMethodImplsTests
 
     // The producer stamps a structured {name, kind} type entity, not a bare
     // extension string — so the build-time stamp and the runtime stamp share
-    // the same shape and can't drift. ".csv" → {text, csv}, ".json" → {object,
-    // json}: the name is the materialized CLR family, the kind is the extension.
+    // the same shape and can't drift. ".csv" → {table, csv}, ".json" → {object,
+    // json}: the name is the value's shape (table=grid, object=tree), the kind
+    // is the extension.
     private static global::app.type.@this AsType(Data result)
         => (global::app.type.@this)result.Value!;
 
@@ -53,7 +54,7 @@ public class Stage4_BuildMethodImplsTests
     {
         var result = await Build("file", "read", ("Path", "foo.csv"));
         await result.IsSuccess();
-        await Assert.That(AsType(result).Name).IsEqualTo("text");
+        await Assert.That(AsType(result).Name).IsEqualTo("table");
         await Assert.That(AsType(result).Kind).IsEqualTo("csv");
     }
 
@@ -103,7 +104,7 @@ public class Stage4_BuildMethodImplsTests
     {
         var result = await Build("file", "read", ("Path", "definitely-missing-stage4b.csv"));
         await result.IsSuccess();
-        await Assert.That(AsType(result).Name).IsEqualTo("text")
+        await Assert.That(AsType(result).Name).IsEqualTo("table")
             .Because("Missing file is non-fatal at build time — the inferred type still surfaces.");
         await Assert.That(AsType(result).Kind).IsEqualTo("csv");
     }
