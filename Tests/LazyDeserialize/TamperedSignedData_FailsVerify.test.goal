@@ -3,7 +3,7 @@ Start
 / a string-edit on the signed payload before verify is called. The C# cut
 / pins the raw-tamper path strictly; this is the goal-surface smoke.
 - sign "hello world", write to %signed%
-- set %tampered% = %signed% + " (tampered)"
+- set %tampered% = "%signed% (tampered)"
 - verify %tampered%, on error call CaughtIt
 - assert false equals true
 
