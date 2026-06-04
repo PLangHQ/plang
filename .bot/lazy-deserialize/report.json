@@ -56,6 +56,54 @@
         "health": "Green suites, no correctness regression. Blocker-level cleanups F1+F2 before PASS.",
         "notes": "F1 is the strongest: this branch's own shallow-clone fix made list.add store Data while list-creation still stores raw; consumers (List.Element, WrapItem) defensively unwrap. Store uniformly + add the signed-Data-in-collection regression the coder already identified. Next bot: coder."
       }
+    },
+    {
+      "id": "ca-v2-lazy-deserialize-0002",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-06-04T15:50:00Z",
+      "timestamp_end": "2026-06-04T16:15:00Z",
+      "intent": "Re-review the coder's response (55037aa32) to v1 findings F1-F5/R1.",
+      "before": {
+        "assumptions": "Coder commit 55037aa32 claims F1/F3/F5/R1 addressed; F2 + ctor-unwrap routed to a collections-are-data architect handoff.",
+        "risk": "F1 was the blocker — verify storage uniform OR contract documented + regression test green. Verify F3 extraction is behavior-preserving. Verify the F2 deferral is actually tracked, not just claimed."
+      },
+      "plan": ".bot/lazy-deserialize/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/module/variable/set.cs",
+            "Tests/LazyDeserialize/SignedDataSurvivesInList.test.goal",
+            "Tests/LazyDeserialize/HttpStatusRead_DoesNotMaterialiseBody.test.goal"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1 RESOLVED via documented element contract on WrapItem + the signed-Data-in-collection regression test (passes 28ms, deterministic). F3 RESOLVED: TryStaticResolve<T> extraction verified behavior-preserving. F5 RESOLVED: three-strict-kind-checks comment added. R1 RESOLVED: httpbin test disabled in-goal."
+        },
+        {
+          "paths": [".bot/lazy-deserialize/architect", "Documentation/Runtime2/todos.md"],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "F2 deferral check: commit message claims F2 + ctor-unwrap 'routed to the collections-are-data architect handoff', but no such handoff/todo artifact exists. Deferral is untracked — flagged as required follow-up, not a blocker."
+        },
+        {
+          "paths": [
+            ".bot/lazy-deserialize/codeanalyzer/v2/report.md",
+            ".bot/lazy-deserialize/codeanalyzer/v2/verdict.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Re-review verdict: PASS. Rebuilt (this.cs changed → stale binary). Goal 273/273, C# 4021/0 unaffected by the behavior-preserving diff. Only open item F2 (Low/Med naming footgun, untracked deferral)."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "Green (273/273 goal, 4021/0 C#). No correctness regression. Blocker F1 resolved with the regression test.",
+        "notes": "F2 is the only open item — Low/Med naming footgun whose 'routed to architect' deferral has no artifact. Rename now or file the handoff so it isn't lost. Does not gate the feature. Next bot: tester."
+      }
     }
   ]
 }

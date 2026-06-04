@@ -1,53 +1,42 @@
 # codeanalyzer — lazy-deserialize — summary
 
-**Version:** v1 (first codeanalyzer pass)
+**Version:** v2 (re-review of coder's response to v1 findings)
 
 ## What this is
-`lazy-deserialize` makes `Data` lazy: `Data { bytes(raw), type, kind, value }` where `value`
-is computed once, on first touch, from the raw source form via a per-(type,kind) **reader
-registry** (the read-side mirror of the existing renderer). One read boundary (`channel.read`)
-stamps `{type,kind}`; `file.read`/`http.get` stop deserializing. Scalar reads (`%x%`) return
-the raw form without parsing; navigation (`%x.field%`) and `as <type>` materialize. The v3
-session also fixed a class of internal `Data→JSON` round-trips (deep-clone / wire-shape /
-goal-call param) that were dropping Signature and mislabelling types.
+`lazy-deserialize` makes `Data` lazy: `Data { raw, type, kind, value }` where `value` is
+computed once, on first touch, from the raw source form via a per-(type,kind) **reader
+registry** (read-side mirror of the renderer). One boundary (`channel.read`) stamps
+`{type,kind}`; `file.read`/`http.get` stop deserializing. Scalar `%x%` returns the raw form
+unparsed; navigation `%x.field%` and `as <type>` materialize. The v3 work also fixed internal
+`Data→JSON` round-trips (deep-clone / wire-shape / goal-call param) that dropped Signature and
+mislabelled types.
 
-## What was done (this review)
-Rebuilt clean and verified the coder's GREEN claim:
-- **C# suite: 4021 / 0.** **Goal suite: 271 pass / 1 fail** — the 1 fail is a live
-  `httpbin.org` **503** (network-flaky; passed earlier same session). No regression.
-- Mechanical bans (System.IO, Console, OBP #9 courier-into-`.Value`): **0 hits** in the
-  changed surface.
+## v1 → v2 (review round)
+v1 verdict was **NEEDS WORK** on blocker F1 + F2. Coder pushed `55037aa32` addressing the
+findings. v2 re-review verdict: **PASS**.
 
-Deep-read the lazy mechanism + the highest-risk recent commits. Findings in
-`v1/report.md`. **Verdict: NEEDS WORK (fail).**
+### v1 findings, final disposition
+- **F1 (Medium, blocker) — RESOLVED.** Coder documented the collection-element contract on
+  `WrapItem` (element is a `Data` or a bare value; reads normalize) and added the regression
+  test I called for: `SignedDataSurvivesInList.test.goal` (`sign → add to %list% → verify
+  %list[0]%`), **green, 28ms, deterministic**. The deeper storage unification is correctly a
+  design call routed to architect (collections-are-data).
+- **F3 (Low) — RESOLVED.** Duplicated static-`Resolve` block extracted to one
+  `TryStaticResolve<T>` helper; verified behavior-preserving.
+- **F5 (Low) — RESOLVED.** Comment naming why three strict-kind checks exist (build / run /
+  load-seam).
+- **R1 — RESOLVED.** Flaky live-httpbin goal test disabled in-goal like its 8 siblings; C#
+  `HttpChannelTests` covers the probe deterministically.
+- **F4 (Low) — open, as filed (flag-don't-block).**
+- **F2 (Low/Med) — OPEN, deferral UNTRACKED.** The `Materialize()`/`Materialise()` one-vowel
+  naming footgun is unchanged. Commit claims it was "routed to the collections-are-data
+  architect handoff" with the ctor's `UnwrapJsonElement` decompose — defensible rationale, but
+  **no handoff/todo artifact exists**. Required follow-up: rename the seam, or actually file
+  the handoff so it isn't lost. Not a blocker.
 
-### Findings
-- **F1 (Medium, blocker):** `list.add` stores the whole `Data` (correct — preserves
-  Signature), but list-*creation* still seeds **raw** values, so a list can hold a mix and
-  two consumers (`List.Element`, `WrapItem`) defensively unwrap. OBP smell #5, introduced by
-  this branch's own shallow-clone fix. Store `Data` uniformly + add the signed-Data-in-
-  collection regression the coder already flagged.
-- **F2 (Low/Med):** `Materialize()` (read-through) vs `Materialise()` (in-place seam) — one
-  vowel apart, different behavior. Rename the seam.
-- **F3 (Low):** duplicated static-`Resolve` reflection block in `AsT_Impl`/`AsT_Convert`.
-- **F4 (Low):** `variable.set` re-runs `CanonicaliseKind` to repair a context lost across the
-  `.pr` round-trip (Pass 4.5 re-derive tell). One site; flag not block.
-- **F5 (Low):** `variable.set.Run()` ~190 lines — extract the forced-`Type` block.
-- **R1:** disable the flaky in-goal httpbin test like its 8 siblings on the parent branch.
-
-## Code example (the F1 shape)
-```csharp
-// list/add.cs — creation path seeds RAW...
-else if (existing != null) list = new List<object?> { existing };
-// ...but every add stores a Data wrapper:
-data.@this snapshot = Value.ShallowClone(Value.Name);
-list.Add(snapshot);
-
-// so every consumer must defensively unwrap both shapes:
-// navigator/List.cs:  if (raw is @this inner) return inner;
-// data/this.cs:510:   item is @this data ? data : new @this("", item)
-```
+## Deterministic baseline (v2)
+Rebuilt (`this.cs` changed → stale binary). **Goal 273/273, C# 4021/0.** No regression.
 
 ## What to do next
-Coder addresses F1 (+ regression test) and F2; F3–F5 are quick cleanups; R1 is test hygiene.
-Next bot: **coder**.
+F1 is resolved with the regression test; suites green. **PASS.** Next bot: **tester**.
+Carry forward the single open item: F2 (rename or file the collections-are-data handoff).
