@@ -972,6 +972,57 @@
         "health": "green",
         "notes": "v8 reproducibility blocker dead: PLang 273/273 deterministic x2, git clean. C# 4025/0. v13 tests honest + mutation-verified. One minor non-blocking carry-forward (no end-to-end PLang goal for lazy strict image load-throw; pinned in C#). Next: security/auditor or merge per Ingi."
       }
+    },
+    {
+      "id": "bc3abef3-0eab-46d7-b557-372d95f9aa0c",
+      "bot": "security",
+      "timestamp_start": "2026-06-04T19:55:06.257372+00:00",
+      "intent": "Security audit of type-kind-strict (merged with lazy-deserialize) \u2014 focus on strict-kind enforcement seams + reflection-based ctor invocation + wire/signing carry of Strict imprint.",
+      "before": {
+        "assumptions": "codeanalyzer v3 PASS, tester v13 PASS, lazy-deserialize half already security-PASS on ca6e2fb7c. Scope = type-kind-strict-specific additions: IStrictKindEnforcer, IKindValidatable, image strict enforcement, TryInstantiateValidator reflection, strict\u00d7lazy seam.",
+        "risk": "Reflection ctor invocation surface (TryInstantiateValidator), ImageSharp DetectFormat on pre-verify wire bytes, strict imprint cross-process semantics, kind canonicalization on hostile strings."
+      },
+      "actions": [
+        {
+          "paths": [
+            ".bot/type-kind-strict/security/v1/plan.md",
+            ".bot/type-kind-strict/security/v1/result.md",
+            ".bot/type-kind-strict/security/v1/verdict.json",
+            ".bot/type-kind-strict/security/summary.md",
+            ".bot/type-kind-strict/security-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v1 audit artefacts; strict x lazy seam re-traced, semgrep delta"
+        },
+        {
+          "paths": [
+            "PLang/app/module/variable/set.cs",
+            "PLang/app/type/image/this.cs",
+            "PLang/app/data/IStrictKindEnforcer.cs",
+            "PLang/app/data/IKindValidatable.cs",
+            "PLang/app/type/this.json.cs",
+            "PLang/app/type/text/this.Convert.cs",
+            "PLang/app/module/crypto/code/Default.cs",
+            "PLang/app/module/crypto/type/hash/this.cs",
+            "PLang/app/module/signing/Signature.cs",
+            "PLang/app/module/signing/code/Ed25519.cs",
+            "PLang/app/module/file/read.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "attack surface audit"
+        }
+      ],
+      "plan": ".bot/type-kind-strict/security/v1/plan.md",
+      "timestamp_end": "2026-06-04T20:01:37.386326+00:00",
+      "after": {
+        "status": "PASS",
+        "health": "green",
+        "notes": "3 low/info findings (F1 text.Convert default-options OPEN, F2 process-local imprint accepted, F3 Span.SequenceEqual info). No critical/high. Strict x lazy seam holds. Next: auditor."
+      }
     }
   ]
 }
