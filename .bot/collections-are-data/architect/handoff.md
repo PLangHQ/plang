@@ -24,7 +24,7 @@ The type/kind/value foundation is in place: `Kind` is a stored axis (`type/this.
 1. **`dict`** the native object type — unblocks everything (the property-bag deletion must precede arrays-as-Data).
 2. **`set` rebinds** — prerequisite for storing element `Data` by reference.
 3. **arrays hold `Data`** — F1 dies here. The load-bearing stage.
-4. **comparison onto the type** — blocked on the compare contract (Ingi's call).
+4. **comparison onto the type** — the compare contract is settled (see Stage 4).
 5. **list/dict ops + `where`** — Phase B, reuses Stage 4.
 6. **`item` apex** — separable follow-on, off the F1 path.
 

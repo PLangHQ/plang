@@ -1,6 +1,6 @@
 # Stage 5 — list/dict ops as exposure — `where` on `dict`+`list`
 
-**Leaf-trace row:** H (`list` action handlers). **Phase B. Reuses Stage 4's relocated compare — transitively gated on the compare contract.**
+**Leaf-trace row:** H (`list` action handlers). **Phase B — sequenced after Stage 4 (reuses its relocated compare).**
 
 **You own the final shape.** Anchors for the design — change what reads wrong, keep the dispositions.
 

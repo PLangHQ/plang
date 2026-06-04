@@ -100,7 +100,7 @@ Each stage builds and leaves both suites green. Sequencing is forced by one fact
 1. [`dict` — the native object type](stage-1-dict.md). Stand up `app/type/dict/` (mirrors `path`): holds `Dictionary<string,data>`, `Get`/`Keys`/`Has`, `IBooleanResolvable`, build-at-edge, a serializer that emits `{}`. Reader narrows json object → `dict`; `Materialize`/`type.Convert` json-object branch repointed to it (B, J). Collapse the `Dictionary` navigator (C). Retarget `NormalizeObject` and delete the property-bag writer case (E, F). **Arrays untouched.** Unblocks Stage 3.
 2. [`set` rebinds, not mutates](stage-2-set-rebinds.md). Rebind the two raw `Variables.Set` branches (`:199`, `:227`), carrying subscribers like the Data-value branch already does (M). Delete the dot-path `SnapshotClone` use (`:298`, L). The `add.cs` deep-clone is already gone, so once `set` rebinds, `add.cs`'s `ShallowClone` can drop to storing the reference. Prerequisite for Stage 3.
 3. [arrays hold `Data` — F1 dies](stage-3-arrays-as-data.md). `UnwrapJsonArray → List<data>` at parse; `Materialize` array branch narrows to `list` (A, B, J); `navigator/List` returns the element `Data` directly; delete the `Element` raw branch + `WrapItem` (D); `Conversion`/`IList` arms unwrap (I); sweep residual `is List<object?>` (K). **F1 dies here.** A signed `Data` survives as an element; json serializes it via the `Data` wire shape.
-4. [comparison onto the type — one compare path](stage-4-comparison-on-type.md). Relocate `Operator.Compare`/`NormalizeTypes` onto the types; route the condition operators and `data.sort` through it (G). **Blocked** on the compare contract (open decision below).
+4. [comparison onto the type — one compare path](stage-4-comparison-on-type.md). Relocate `Operator.Compare`/`NormalizeTypes` onto the types; route the condition operators and `data.sort` through it (G), honoring the settled compare contract below.
 5. [list/dict ops as exposure — `where` on `dict`+`list`](stage-5-list-dict-ops.md). `list.sort`/`group`/`unique` → thin dispatch; `where` becomes a `dict`+`list` capability — `dict.where` (scope = self, keep/drop) is the leaf, `list.where` delegates per element (H). Bare field names scope against the subject. Phase B.
 6. [`item` apex — register the top of the lattice](stage-6-item-apex.md). `type.Is` ancestry already works (P); register `item` as the apex type so `if %x% is item` / `if %x% is dict` resolve, and add a name-string `Is(string)` overload if the query surface needs it. Separable follow-on — off the F1 critical path, parallelizable once `dict`/`list` exist.
 
@@ -117,14 +117,16 @@ set %x% = "b"        → mint Data_B{x:"b"}, x → Data_B; Data_A untouched
 
 This matches how most languages behave — reassignment rebinds the variable, it doesn't reach back and mutate a value already stored elsewhere. Once it's in, `add.cs`'s `ShallowClone` (`:43`) can drop to storing the variable's `Data` reference, and the dot-path `SnapshotClone` (`:298`) deletes — value-independence falls out of rebinding, not defensive copying. Land it **before** Stage 3.
 
-## Open decision (gates Stages 4–5)
+## The compare contract (settled)
 
-The **compare contract**. Ownership is settled (the type owns it); the semantics are not:
-- mixed-type ordering and null-element placement — needs a defined total order.
-- what `table` does — likely equality-only (group/unique need equality, not ordering); a type implements only what's meaningful.
-- the adapter seam: `number.@this : IComparable<@this>` already compares two `number` instances (`type/number/this.Equality.cs:41`), but `Operator.cs` reaches the raw CLR value, not the typed instance. The entry that takes two element `Data`, picks the type, and compares — where `data.sort` meets the type — is not yet defined.
+The type owns compare. The semantics, settled with Ingi:
 
-Stages 1–3 do not depend on this. It gates **both** Stage 4 (compare relocation) **and** Stage 5 (`where` reuses the relocated condition operators). **Deferred** — Ingi settles it when he digs into the `list` module. Only #1 (mixed-type/null ordering) and #2 (orderable vs equality-only) are product calls, and they're his. #3 (the adapter seam) is plumbing coder shapes.
+- **Within a type — natural order.** number numerically (across kinds via numeric widening), datetime chronologically, duration by length, text lexically.
+- **Nulls sort last.**
+- **Ordering two genuinely different value types throws** a clear error ("cannot order X against Y") — no invented cross-type order. The operator coercions `NormalizeTypes` already does (numeric widening, string↔number) are preserved on the `if` path; this rule governs ordering distinct value types — the sort/list case.
+- **Orderable:** `number`, `datetime`, `duration`, `text`. **Equality-only:** `dict`, `list`, `bool`, `table`, `null`. `sort` on an equality-only type throws (no order defined); `group`/`unique`/`==` work on any type.
+
+The adapter seam is coder plumbing: the entry that takes two element `Data`, picks the type, and compares — dispatching to the element type's compare, throwing the mixed-type error when the two differ, placing nulls last. `number.@this : IComparable<@this>` already compares two `number` instances (`type/number/this.Equality.cs:41`); the seam reaches the typed instance, not the raw CLR value. Stages 4–5 implement against this contract; they are no longer blocked.
 
 ## Resolved by the model (no longer open)
 

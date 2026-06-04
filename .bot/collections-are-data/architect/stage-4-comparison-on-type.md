@@ -1,6 +1,6 @@
 # Stage 4 — comparison onto the type — one compare path
 
-**Leaf-trace row:** G (`Operator.Compare` / `NormalizeTypes` / `AreEqual`). **Blocked on the compare contract (see plan "Open decision").**
+**Leaf-trace row:** G (`Operator.Compare` / `NormalizeTypes` / `AreEqual`). The compare contract is settled (below).
 
 **You own the final shape.** Anchors for the design — change what reads wrong, keep the dispositions.
 
@@ -20,19 +20,21 @@ Two compare paths that drift:
 
 Then `if age > 18`, `where age > 18`, and `sort by "age"` use the same comparison.
 
-## Blocked — settle the contract first
+## The settled contract
 
-This stage cannot land until the compare contract is settled (Ingi, when he digs into the `list` module):
-1. mixed-type ordering + null-element placement (a defined total order).
-2. which types are orderable vs equality-only (`table` likely equality-only — `group`/`unique` need equality, not ordering).
+- **Within a type — natural order.** number numerically (across kinds via numeric widening), datetime chronologically, duration by length, text lexically.
+- **Nulls sort last.**
+- **Ordering two genuinely different value types throws** a clear error ("cannot order X against Y") — no invented cross-type order. Preserve the operator coercions `NormalizeTypes` already does (numeric widening, string↔number) on the `if` path; the throw governs ordering distinct value types (sort/list).
+- **Orderable:** `number`, `datetime`, `duration`, `text`. **Equality-only:** `dict`, `list`, `bool`, `table`, `null`. `sort` on an equality-only type throws; `group`/`unique`/`==` work on any type.
 
-#3 (the adapter seam) is plumbing you shape. #1 and #2 are product calls. Don't block other stages on this — Stages 1–3 are independent.
+The adapter seam (the entry that takes two element `Data`, picks the type, compares) is yours to shape — dispatch to the element type's compare, throw the mixed-type error when the two differ, nulls last.
 
-## Acceptance (once unblocked)
+## Acceptance
 
 - `sort %people% by "age"` orders numerically; `by "name"` lexically; `by "born"` chronologically.
 - `if %a.age% > %b.age%` and `sort by "age"` agree (same compare path).
-- mixed-type / null elements behave per the settled contract.
+- nulls sort last; sorting a list with two different value types throws "cannot order X against Y".
+- `sort` on a `list` of `dict` throws (equality-only); `unique`/`group` on the same list work.
 
 ## Green
 
