@@ -1,5 +1,9 @@
 # auditor — type-kind-strict
 
+## v2 — **PASS** → next: **Ingi**. HEAD `932564d6e`.
+
+Re-audit after coder v14's F1 fix. Coder added `ILoadable` + `Data.Load()` (a graph walk awaiting `LoadAsync()` on each `ILoadable`, with cycle guard + depth cap mirroring `Normalize`), made `image.LoadAsync => BytesAsync`, and called `await data.Load()` as the first line inside the `try` of both `plang.SerializeAsync` (line 141) and `Json.SerializeAsync` (line 77). `Text.SerializeAsync` delegates non-primitives to Json, so all three `ISerializer` impls are covered. `ContextLessFallback` (data transport egress) is `plang.@this`, so the wire path passes through the same gate. Strict mismatch is caught in `Load()` and returned as `FromError(StrictKindMismatch)` before any bytes write; read failures from `image.BytesAsync` propagate as `IOException` to the existing serializer catches. The cross-file gap is closed: `BytesAsync` now has exactly one production caller (`image.LoadAsync`), which runs from the un-bypassable chokepoint. Clean rebuild: C# 4031/4031 (+6 from `LoadSeamTests`), PLang 273/273. Coder's `Width`/`Height`/`ValidateKind` follow-up is correctly off the serialize wall and not auditor-blocking.
+
 ## v1 — **NEEDS WORK** → next: **coder**. HEAD `e847bf8ff`.
 
 Audited the merged `type-kind-strict` + `lazy-deserialize` state. Upstream coverage clean (no production code after codeanalyzer v3 / tester v13 / security v1). I walked the strict×lazy seam codeanalyzer v3 traced as CLEAN and verified the in-file claims line-by-line — they hold. The gap is one step further out:
