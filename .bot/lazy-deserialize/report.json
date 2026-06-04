@@ -1,0 +1,61 @@
+{
+  "branch": "lazy-deserialize",
+  "sessions": [
+    {
+      "id": "ca-v1-lazy-deserialize-0001",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-06-04T14:20:00Z",
+      "timestamp_end": "2026-06-04T15:05:00Z",
+      "intent": "First codeanalyzer pass over the lazy-deserialize feature (Data lazy materialize, reader registry, binding-clone, wire read/write, goal-call params).",
+      "before": {
+        "assumptions": "Coder v3 reports GREEN (272/272 goal, 4021/0 C#). Feature is large (~414 .cs files vs runtime2 base). Highest risk is the recent binding/clone + wire-shape reconstruction commits and the dense variable.set Run().",
+        "risk": "set.cs Run() is ~190 lines with deep branching; lazy materialize + clone semantics + wire-shape sniffing are subtle and could carry root-cause-vs-symptom smells."
+      },
+      "plan": ".bot/lazy-deserialize/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/data/this.Navigation.cs",
+            "PLang/app/data/Wire.cs",
+            "PLang/app/module/variable/set.cs",
+            "PLang/app/module/list/add.cs",
+            "PLang/app/type/reader/this.cs",
+            "PLang/app/type/list/Conversion.cs",
+            "PLang/app/goal/GoalCall.cs",
+            "PLang/app/variable/navigator/List.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Five-pass review focused on the lazy-deserialize mechanism + the highest-risk recent commits (binding-clone, wire-shape reconstruction, goal-call param clone). Mechanical bans (System.IO, Console, OBP #9) grepped clean across the whole changed surface."
+        },
+        {
+          "paths": [
+            "PLang.Tests",
+            "Tests/LazyDeserialize/HttpStatusRead_DoesNotMaterialiseBody.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Rebuilt clean. C# suite 4021/0. Goal suite 271 pass / 1 fail — the single fail is a live httpbin.org 503 (network-flaky, passed at 14485ms earlier same session, failed at 574ms now). Not a regression; flagged R1 to disable in-goal like its 8 siblings."
+        },
+        {
+          "paths": [
+            ".bot/lazy-deserialize/codeanalyzer/v1/report.md",
+            ".bot/lazy-deserialize/codeanalyzer/v1/verdict.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Findings F1 (list-element raw-vs-Data, OBP #5, blocker), F2 (Materialise/Materialize naming footgun), F3 (duplicated AsT Resolve block), F4 (CanonicaliseKind re-derive symptom), F5 (set.cs Run length), R1 (flaky httpbin test). Verdict NEEDS WORK / FAIL."
+        }
+      ],
+      "after": {
+        "status": "NEEDS WORK (fail)",
+        "health": "Green suites, no correctness regression. Blocker-level cleanups F1+F2 before PASS.",
+        "notes": "F1 is the strongest: this branch's own shallow-clone fix made list.add store Data while list-creation still stores raw; consumers (List.Element, WrapItem) defensively unwrap. Store uniformly + add the signed-Data-in-collection regression the coder already identified. Next bot: coder."
+      }
+    }
+  ]
+}

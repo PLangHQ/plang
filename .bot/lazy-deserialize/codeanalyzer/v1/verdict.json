@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "Green suites, no regression; NEEDS WORK on F1 list-element raw-vs-Data inconsistency (OBP #5, introduced by the shallow-clone fix) + missing signed-Data-in-collection test, plus F2 Materialise/Materialize one-letter-apart naming footgun." }
