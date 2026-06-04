@@ -1019,9 +1019,10 @@ public partial class @this
                 // String.Resolve below already does this fallback for partial matches;
                 // this brings full-match parity.
                 var resolved = context.Variable.Get(varName);
-                return resolved?.IsInitialized == true && resolved.Value != null
-                    ? resolved.Value
-                    : (object?)s;
+                if (resolved?.IsInitialized != true || resolved.Value == null) return s;
+                // A signed value keeps its Data wrapper so the Signature survives into
+                // the container (e.g. a goal-call param) — bare .Value would strip it.
+                return resolved.Signature != null ? resolved : resolved.Value;
             }
             return context.Variable.Resolve(s);
         }

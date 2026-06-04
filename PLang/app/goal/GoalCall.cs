@@ -83,9 +83,17 @@ public sealed class GoalCall : module.IEvent
                 {
                     parameters = pList
                         .OfType<IDictionary<string, object?>>()
-                        .Select(d => new data.@this(
-                            d.TryGetValue("name", out var dn) ? dn?.ToString() ?? "" : "",
-                            d.TryGetValue("value", out var dv) ? dv : null))
+                        .Select(d => {
+                            var name = d.TryGetValue("name", out var dn) ? dn?.ToString() ?? "" : "";
+                            var v = d.TryGetValue("value", out var dv) ? dv : null;
+                            // A full-match %var% that carries metadata (e.g. a signed
+                            // Data) resolves to the live Data, not its bare value — carry
+                            // the Signature onto the fresh param Data so it survives the
+                            // goal-call boundary (sign → call → verify).
+                            var pd = new data.@this(name, v is data.@this inner ? inner.Value : v);
+                            if (v is data.@this innerD && innerD.Signature != null) pd.Signature = innerD.Signature;
+                            return pd;
+                        })
                         .ToList();
                 }
                 return data.@this.Ok(new GoalCall { Name = name, PrPath = prPath, Parameters = parameters });
