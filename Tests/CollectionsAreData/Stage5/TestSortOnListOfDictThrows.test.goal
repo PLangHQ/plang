@@ -1,0 +1,5 @@
+TestSortOnListOfDictThrows
+/ sort %dicts% — throws because dict is equality-only (no natural ordering).
+/ group %dicts% / unique %dicts% on the same list still work. The error names
+/ the type honestly so the developer knows why.
+- throw "not implemented"

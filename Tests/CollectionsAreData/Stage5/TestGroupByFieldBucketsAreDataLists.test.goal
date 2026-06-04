@@ -1,0 +1,4 @@
+TestGroupByFieldBucketsAreDataLists
+/ group %people% by "city" — buckets are Data<List<data>>, keyed by city. Each
+/ bucket is itself a navigable list value type; you can sort or where inside one.
+- throw "not implemented"

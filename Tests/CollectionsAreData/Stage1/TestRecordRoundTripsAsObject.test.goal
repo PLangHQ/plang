@@ -1,0 +1,5 @@
+TestRecordRoundTripsAsObject
+/ A C# domain record (permission) normalizes to a dict via NormalizeObject and
+/ serializes as a JSON object {} — not the deleted property-bag arm, not a list.
+/ One object shape on the wire.
+- throw "not implemented"

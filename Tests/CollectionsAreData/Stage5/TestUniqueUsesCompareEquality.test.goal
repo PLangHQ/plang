@@ -1,0 +1,5 @@
+TestUniqueUsesCompareEquality
+/ unique %values% deduplicates via the type's Equals (not raw CLR reference). A
+/ list of equivalent dicts collapses to one. Works for equality-only types where
+/ sort would throw.
+- throw "not implemented"

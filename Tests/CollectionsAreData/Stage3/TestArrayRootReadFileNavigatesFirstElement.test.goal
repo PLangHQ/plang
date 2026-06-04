@@ -1,0 +1,5 @@
+TestArrayRootReadFileNavigatesFirstElement
+/ read file.json whose root is an array — %content[0].name% resolves; the
+/ implicit-first trick %content.name% also resolves to content[0].name when no
+/ list-intrinsic key matches. Acceptance from the plan's movie.
+- throw "not implemented"

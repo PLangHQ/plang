@@ -1,0 +1,6 @@
+TestForkedFlowSetDoesNotRewriteParentValue
+/ A set inside a parallel-foreach or channel-fired branch must not rewrite a value
+/ the parent already stored. Exercises the frame-overlay raw branch (:199) where
+/ skipping the rebind reintroduces the alias bug only inside forked flows — the
+/ worst kind to debug.
+- throw "not implemented"

@@ -1,0 +1,5 @@
+TestDotPathSetIndependenceViaRebind
+/ A dot-path set (set %user.name% = "b") leaves an earlier-captured snapshot of
+/ %user% unchanged. Independence comes from rebinding, not from the deleted
+/ SnapshotClone deep-clone (L).
+- throw "not implemented"

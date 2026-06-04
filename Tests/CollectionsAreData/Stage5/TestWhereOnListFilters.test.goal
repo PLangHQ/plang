@@ -1,0 +1,5 @@
+TestWhereOnListFilters
+/ where %users% age > 20 — list.where evaluates the predicate per element Data
+/ and returns only those that keep. Bare field name "age" scopes against each
+/ element. list.where delegates to dict.where per element.
+- throw "not implemented"

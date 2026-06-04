@@ -1,0 +1,5 @@
+TestSortMixedValueTypesThrows
+/ sort on a list whose elements are genuinely different value types (number and
+/ datetime) throws "cannot order X against Y" — no invented cross-type order.
+/ Pins the settled compare contract through the list surface.
+- throw "not implemented"

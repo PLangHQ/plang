@@ -1,0 +1,5 @@
+TestIsDictAndIsList
+/ if %x% is dict — true for a dict (after a json object narrows), false for a
+/ list. if %y% is list — symmetric. The Is(string) overload resolves PLang type
+/ names without minting a comparison type.
+- throw "not implemented"

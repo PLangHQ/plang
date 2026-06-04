@@ -1,0 +1,5 @@
+TestIsApexSurvivesLazyNarrow
+/ An unread Data with type=item, kind=json is-a item. After first navigation it
+/ narrows to dict (or list) — and stays is-a item too. IS-A is preserved through
+/ the lazy narrow; the type tree never loses its top.
+- throw "not implemented"

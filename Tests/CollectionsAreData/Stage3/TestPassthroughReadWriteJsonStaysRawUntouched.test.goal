@@ -1,0 +1,6 @@
+TestPassthroughReadWriteJsonStaysRawUntouched
+/ read file.json then write %content% to out.json without navigating in between
+/ — RawUntouched stays true (no parse), Data.Load() short-circuits on the
+/ kind=json serialization-format value, and the writer emits _raw bytes verbatim
+/ (row Q). Byte-for-byte passthrough, zero materialization.
+- throw "not implemented"

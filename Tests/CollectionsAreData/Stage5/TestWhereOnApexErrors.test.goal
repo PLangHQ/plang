@@ -1,0 +1,5 @@
+TestWhereOnApexErrors
+/ 5 where age > 20 — meaningless on a scalar, errors clearly. where lives only on
+/ field-bearing types (dict, and list via its elements), never the apex. The
+/ predicate has nothing to scope into.
+- throw "not implemented"

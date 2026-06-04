@@ -1,0 +1,4 @@
+TestIsNumberTrueForNumberLiteral
+/ set %x% = 1 / if %x% is number — true. The is-query reaches down the lattice
+/ from item to the concrete type.
+- throw "not implemented"

@@ -1,0 +1,4 @@
+TestIsItemTrueForAnyValue
+/ if %x% is item — true for every value: a number, a text, a dict, a list, a
+/ path, an image. item is the apex of the type lattice; nothing falls outside.
+- throw "not implemented"
