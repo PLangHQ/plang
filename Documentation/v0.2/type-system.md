@@ -40,6 +40,47 @@ Higher-level PLang values (`number`, `image`, `code`, `path`, `datetime`, `durat
 
 Full design (movie, build-vs-runtime trace, dispatch mechanism): the architect plan on the `plang-types` branch — `.bot/plang-types/architect/plan.md` and the seven stage files alongside.
 
+## Reader registry — `app.type.reader.@this`, the read-side mirror
+
+The renderer writes; the reader reads. `app/type/reader/this.cs` (`app.type.reader.@this`) mirrors `app.type.renderer.@this` exactly — same dispatch shape, same precedence order, same wildcard token. It exists so the read half is one symmetric registry instead of the fragmented set it replaced (`type.Convert`, the per-family `Convert` hook, `FromWire`/`WireReader`, `path.JsonConverter`, per-type `JsonConverter<T>`, and three separate parse moments across `file.read` / `http.get` / `channel.read`).
+
+```csharp
+public sealed class @this
+{
+    public const string AnyKind = "*";   // mirror of renderer.AnyFormat
+
+    public delegate object? Read(object raw, string? kind, ReadContext ctx);
+
+    public Read? Of(string typeName, string? kind);
+    public void  Register(string typeName, string kind, Read read);   // code.load seam
+}
+```
+
+**Discovery and file shape mirror the renderer.** A type ships its read by adding a `public static class` in `app/type/<name>/serializer/<kind>.cs` with `public static object? Read(object raw, string? kind, ReadContext ctx)`. `Default.cs` is the wildcard (`AnyKind`); a kind that reads specially gets a per-kind file. **Same file holds both halves** of a type's serialization (`Read` next to `Write`) — not a parallel `reader/` tree (that would split a type's two halves across folders).
+
+**Precedence: runtime-exact → generated-exact → runtime-`*` → generated-`*`.** Runtime registrations (`code.load`) shadow generator-discovered entries. An exact `(type, kind)` match wins over the wildcard at the same level. Identical to the renderer.
+
+**Two layers, both halves symmetric with write.**
+
+```
+write                                 read
+──────────────────────────────────   ──────────────────────────────────
+type/renderer/this.cs              →  type/reader/this.cs
+channel/serializer/IWriter.cs      →  channel/serializer/IReader.cs
+channel/serializer/json/writer.cs  →  channel/serializer/json/reader.cs
+<family>/serializer/Default.cs Write → <family>/serializer/Default.cs Read
+```
+
+On write, the channel serializer owns the format (`IWriter`, `json/writer.cs`) and the type owns its value (`Write(value, IWriter)`). Read mirrors that: the channel serializer decodes bytes → a structure (`IReader`, `json/reader.cs`), and the type builds its value from that (`Read(raw, kind, ctx)`). Format-decode and value-materialize are different layers — same split the write side already has.
+
+**Dispatch key is `(type, kind)` where `type` is the data's *shape* and `kind` is the *encoding within that shape*.** `object` is hierarchical/tree data, `table` is a grid of rows and columns, `number` is a scalar — not how it was encoded. `kind` is the encoding within that shape: `json`/`xml`/`yaml` for `object`, `csv`/`xlsx` for `table`, `png`/`jpg` for `image`, `int`/`uint` for `number`. So `config.json` → `(object, json)`, `report.csv` → `(table, csv)`. Stamping the type does **not** parse — `type=object` is a promise about the shape on materialization, not an instruction to produce it now. See [`Data` lazy materialization](data-internals.md) for the touch-time read.
+
+**Distributed `OwnerOf`.** The old `clr → (family, kind)` switch in `app/type/convert/this.cs` is being distributed onto each family — `number` declares the numeric CLR types it owns, `text` declares `string`, `path` declares its subclasses. The central `if u == typeof(int) …` ladder dies; adding a new CLR-backed kind becomes an edit to one family.
+
+**What mid-graph fields do.** Payload-level reads are keyed by `(type, kind)` — but STJ also hits domain-typed fields *mid-graph* (e.g. a `path` nested three levels down inside an `As<T>` target). A payload-level registry can't serve those. The json layer owns **one** converter — `app/channel/serializer/json/converter.cs` — that talks STJ on one side and the reader registry on the other. Built per-actor with context. Three legacy converters stay specialized rather than folding in: `TimeSpanIso8601` (site-dependent — STJ option-bag form differs from wire `IWriter.TimeSpan`), `ErrorWire` (polymorphic over `IError` with a `$type` discriminator; snapshot-only), and `HashDataConverter` (object-shaped, signing-only). None is a *value type owning a format-named converter* — that was the actual smell `path.JsonConverter` exhibited, and only `path.JsonConverter` is deleted.
+
+**Errors stay in `Data`, never throw at the courier.** A `Read` that fails (malformed json, wrong shape) produces a `Data.Error` rather than throwing — materialization failures surface through `As<T>()` / navigation, which already carry an `Error`. See [navigation seams](data-internals.md) for how `MaterializeFailed` gets surfaced past `GetChildValue` / `SetValueOnObjectByPath` instead of being silently dropped as `NotFound`.
+
 ## `app.X` is the collection node — `[name]` / `.list` / `.current`
 
 Across the `singular-namespaces` refactor every plural `App<Plural>`

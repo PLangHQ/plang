@@ -108,6 +108,76 @@ Call sites read `.Success` and `.Value` / `.Error` instead of try/catch around t
 
 Legacy properties (`%response.StatusCode%`, `%response.Body%` as raw string) remain reachable via `Response.BuildProperties` so existing PLang code keeps working alongside the new `%response.Status%` / typed `%response.Body%`.
 
+## Wire passthrough — `RawUntouched` / `EmitRawVerbatim`
+
+A `Data` whose `_raw` is set and whose value has never been touched serializes its raw source form back out **byte-identical**. Couriers (variable memory, callstack, channel routing, signing) cannot force a parse mid-flight — the OBP courier rule (only leaves touch `.Value`) holds by construction. See [lazy materialization](data-internals.md#lazy-materialization--_raw-materialize-forcematerialize) for the read half.
+
+```csharp
+internal bool RawUntouched => _raw != null && _value == null && _valueFactory == null;
+```
+
+**`Wire.Write` skips the inner walk when `RawUntouched`.** A relayed Data passes through as its raw form — no `Normalize` walk, no `[Out]` projection, no parse-then-reserialize. The wire emits the slot via `EmitRawVerbatim`:
+
+```csharp
+private static void EmitRawVerbatim(Utf8JsonWriter writer, @this data)
+{
+    var raw = data.Raw;
+    if (raw is byte[] bytes) { writer.WriteBase64StringValue(bytes); return; }
+    if (raw is string s)
+    {
+        var t = data.Type;
+        bool isJson = (t.Name == "object" && string.Equals(t.Kind, "json", StringComparison.OrdinalIgnoreCase))
+                      || t.Name == "number";
+        if (isJson) writer.WriteRawValue(s);   // byte-identical raw JSON / number literal
+        else        writer.WriteStringValue(s); // text/csv/xml/yaml → json string
+    }
+}
+```
+
+Raw json and number literals already *are* json, so `WriteRawValue` reproduces them exactly. Other text shapes ride as json strings; raw bytes ride as base64.
+
+**`Wire.Read` defers shape-typed value slots.** When the type slot is present and the type is `object` or `table` with a non-empty `kind` (`IsDeferrableShape`), the value slot's raw json is captured into `_raw` (the string value when it's a json string, else the raw token text via `GetRawText()`), and the Data is built via `FromRaw`. Eager `Deserialize<object?>` stays for untyped slots — there's no `(type, kind)` to materialize toward, and an untyped primitive/list/dict re-serializes stably.
+
+```csharp
+case "value":
+    if (typeRef != null && IsDeferrableShape(typeRef))
+    {
+        using var vdoc = JsonDocument.ParseValue(ref reader);
+        var el = vdoc.RootElement;
+        deferredRaw = el.ValueKind == JsonValueKind.String
+            ? el.GetString() ?? ""
+            : el.GetRawText();
+    }
+    else if (reader.TokenType == JsonTokenType.StartObject)
+    {
+        using var doc = JsonDocument.ParseValue(ref reader);
+        value = LiftDataIfShaped(doc.RootElement, options);  // nested-Data envelope recognition
+    }
+    else
+    {
+        value = JsonSerializer.Deserialize<object?>(ref reader, options);
+    }
+    break;
+```
+
+**Nested Data still rehydrates via `LiftDataIfShaped`.** A nested Data carried in a value slot has **no type slot** (Data's own PLang name is `object`, and `json.Writer` only emits a type slot when `!Type.IsNull`). The eager-untyped path recognises the canonical `{name, value, [signature]}` envelope and reconstructs via the Wire reader recursively. This is the Wire serializer's job as a leaf, not a courier reaching into `.Value`. Without it, a nested Data degrades into a dict and its inner `Signature` becomes observable as a sub-dictionary that never reaches `signing.verify`. A fully type-driven endgame (add a `data` PLang type, stamp nested Data on write, reconstruct purely via `Readers.Of("data", …)`) is captured in `Documentation/Runtime2/todos.md`.
+
+### Signing recanonicalizes — lazy does not change it
+
+Signing re-serializes deterministically through `Signature.ToSigningBytes` (`SigningOptions`, `Signature` excluded, ordered) — it never compares raw arrival bytes. So **verify on a signed Data materializes its value** — a legitimate touch, unchanged from pre-lazy. Do **not** rewire signing to read `_raw`; the round-trip is invariant on canonical sender output, not on byte-for-byte arrival form.
+
+The hash round-trip is byte-identical for a relayed `RawUntouched` Data because:
+
+1. `Wire.Write` emits keys in fixed order: `name` (suppressed in outer-hash via `MarkOuterForHash`), `type`, `value`, `properties`, `signature` (also suppressed in outer-hash).
+2. The `type` entity converter (`app/type/this.json.cs`) writes a fixed key order: `name`, then `kind?`, then `strict?`.
+3. `Properties` iterates a `Dictionary<string, object?>` whose .NET enumeration is insertion order — deterministic per-sender.
+4. `EmitRawVerbatim` preserves bytes exactly for `object/json` and number literals; round-trips through STJ canonical string-encoding for other shapes (symmetric under canonical sender/receiver).
+5. The hash carve-out (`MarkOuterForHash` ref-counted on `ReferenceEqualityComparer` keys) composes correctly under nested Hash calls.
+
+A sender that produces non-canonical bytes (third-party, non-STJ writer, permuted keys) fails verify on the receiver — conservative-correct. A wire-attached `type.kind` cannot redirect bytes to a different parser without invalidating the signature: the `type` slot is in the signed scope.
+
+**`Wire.Read` does not auto-verify.** A reconstructed Data carries its `Signature` populated-but-unverified. Verification is the consumer's explicit step (`signing.verify`, or a `BeforeRead` event binding). Parity with the prior eager-read behavior — not a regression. Full security audit in `.bot/lazy-deserialize/security/v1/result.md`.
+
 ## Multi-segment serializer extension matching
 
 `Serializers.GetByExtension` walks **multi-segment** extensions before falling back to the trailing segment. `report.junit.xml` first probes `junit.xml`; if no serializer is registered there, it falls back to `xml`. This lets a future `JunitSerializer` register against the multi-segment stem without colliding with the generic XML serializer.
