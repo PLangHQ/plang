@@ -60,7 +60,9 @@ public class CanonicalizationTests
 
         var hashInputJson = System.Text.Encoding.UTF8.GetString(hashInputBytes);
         await Assert.That(hashInputJson).DoesNotContain("signature");
-        await Assert.That(hashInputJson).Contains("\"name\":\"x\"");
+        // The variable name is excluded from the signed hash — a value verifies the
+        // same regardless of which variable holds it (sign → write to %a% → verify %a%).
+        await Assert.That(hashInputJson).DoesNotContain("\"name\":\"x\"");
         await Assert.That(hashInputJson).Contains("\"value\":\"y\"");
     }
 

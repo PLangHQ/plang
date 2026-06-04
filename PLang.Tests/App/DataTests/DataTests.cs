@@ -1045,16 +1045,18 @@ public class DataTests
     }
 
     [Test]
-    public async Task UnwrapJsonElement_DecimalNumber_PreservesPrecision()
+    public async Task UnwrapJsonElement_FractionalNumber_DefaultsToDouble()
     {
+        // A bare decimal-point literal defaults to double (universal language
+        // convention); decimal is opt-in via `as number/decimal`.
         var json = "{\"price\":19.99}";
         using var doc = System.Text.Json.JsonDocument.Parse(json);
         var result = Data.UnwrapJsonElement(doc.RootElement) as Dictionary<string, object?>;
 
         await Assert.That(result).IsNotNull();
         var price = result!["price"];
-        await Assert.That(price).IsTypeOf<decimal>();
-        await Assert.That(price).IsEqualTo(19.99m);
+        await Assert.That(price).IsTypeOf<double>();
+        await Assert.That(price).IsEqualTo(19.99d);
     }
 
     [Test]

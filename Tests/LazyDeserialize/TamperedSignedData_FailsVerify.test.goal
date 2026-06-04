@@ -5,7 +5,7 @@ Start
 - sign "hello world", write to %signed%
 - set %tampered% = "%signed% (tampered)"
 - verify %tampered%, on error call CaughtIt
-- assert false equals true
+- assert %caught% equals true
 
 CaughtIt
-- assert %!error% is not null
+- set %caught% = true

@@ -1254,7 +1254,8 @@ public partial class @this
     private static object UnwrapJsonNumber(JsonElement element)
     {
         if (element.TryGetInt64(out var l)) return l;
-        if (element.TryGetDecimal(out var d)) return d;
+        // Bare decimal-point literal → double by default (decimal is opt-in via
+        // `as number/decimal`), matching universal language convention.
         return element.GetDouble();
     }
 

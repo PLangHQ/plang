@@ -377,7 +377,8 @@ public sealed class Wire : JsonConverter<@this>
             case JsonTokenType.False: return false;
             case JsonTokenType.Number:
                 if (reader.TryGetInt64(out var l)) return l;
-                if (reader.TryGetDecimal(out var dec)) return dec;
+                // A bare decimal-point literal defaults to double (universal language
+                // convention); decimal is opt-in via `as number/decimal`.
                 return reader.GetDouble();
             case JsonTokenType.StartArray:
             {
@@ -458,7 +459,12 @@ public sealed class Wire : JsonConverter<@this>
         if (Sign && !data.RawUntouched) EnsureInnerSigned(data.Value);
 
         writer.WriteStartObject();
-        writer.WriteString("name", data.Name);
+        // The variable name is a binding label, not part of the data's identity —
+        // exclude it from the signed hash (isHashOuter) so a value verifies the
+        // same no matter which variable holds it (sign "x" → write to %a% → verify
+        // %a% must match sign's hash). The normal wire still carries the name.
+        if (!isHashOuter)
+            writer.WriteString("name", data.Name);
 
         // type — emit as the structured entity {name, kind?, strict?} via the
         // type's own JsonConverter. ONE field carrying the full identity; the
