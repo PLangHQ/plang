@@ -507,6 +507,12 @@ public partial class @this
             yield return (new @this("", 0) { Context = _context }, this);
     }
 
+    // Collection-element contract: an element is EITHER a Data (e.g. a value added by
+    // list.add, which carries Type/Signature) OR a bare value (e.g. an element of a list
+    // parsed from JSON). Reads normalize to Data — an existing Data passes through unchanged
+    // (identity, Type, Signature preserved), a bare value is wrapped. The navigator's element
+    // accessor (variable/navigator/List.Element) applies the same recognition rule (it wraps
+    // with the index as the name + parent link, so it can't simply call this).
     private @this WrapItem(object? item) =>
         item is @this data ? data : new @this("", item) { Context = _context };
 
@@ -877,20 +883,8 @@ public partial class @this
         // T has static Resolve(string, Context.@this) — Path-style domain types. Done before
         // the variance/wrap path because Resolve produces a fresh T from a string, not a
         // cast of an existing value.
-        if (raw is string srStr && context != null && raw is not T)
-        {
-            var resolveMethod = ResolveMethodCache.GetOrAdd(typeof(T), t =>
-                t.GetMethod("Resolve",
-                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
-                    null, new[] { typeof(string), typeof(actor.context.@this) }, null));
-            if (resolveMethod != null)
-            {
-                var (resolvedObj, resolveError) = InvokeResolve<T>(resolveMethod, srStr, context);
-                if (resolveError != null) return resolveError;
-                if (resolvedObj is T result)
-                    return ConstructWrap<T>(result, context);
-            }
-        }
+        var staticResolved = TryStaticResolve<T>(raw, context);
+        if (staticResolved != null) return staticResolved;
 
         // No more substitution to do — `this` is the canonical. Apply identity-preserving
         // wrap rules (same-type fast path → variance → cross-type with conversion).
@@ -906,21 +900,31 @@ public partial class @this
     /// </summary>
     private @this<T> AsT_Convert<T>(object? raw, actor.context.@this? context)
     {
-        if (raw is string srStr && context != null && raw is not T)
-        {
-            var resolveMethod = ResolveMethodCache.GetOrAdd(typeof(T), t =>
-                t.GetMethod("Resolve",
-                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
-                    null, new[] { typeof(string), typeof(actor.context.@this) }, null));
-            if (resolveMethod != null)
-            {
-                var (resolvedObj, resolveError) = InvokeResolve<T>(resolveMethod, srStr, context);
-                if (resolveError != null) return resolveError;
-                if (resolvedObj is T result)
-                    return ConstructWrap<T>(result, context);
-            }
-        }
+        var staticResolved = TryStaticResolve<T>(raw, context);
+        if (staticResolved != null) return staticResolved;
         return WrapAs<T>(raw, context);
+    }
+
+    /// <summary>
+    /// Path-style domain types expose a static <c>Resolve(string, context)</c> that builds a
+    /// fresh T from a string (rather than casting an existing value). Returns the wrapped
+    /// result, a wrapped error if Resolve threw, or <c>null</c> when this raw isn't applicable
+    /// (not a string, already a T, no context, or no Resolve method) — the caller then falls
+    /// through to WrapAs. Shared by AsT_Impl and AsT_Convert so the reflection lookup +
+    /// invoke + wrap-or-error rule lives in one place.
+    /// </summary>
+    private @this<T>? TryStaticResolve<T>(object? raw, actor.context.@this? context)
+    {
+        if (raw is not string srStr || context == null || raw is T) return null;
+        var resolveMethod = ResolveMethodCache.GetOrAdd(typeof(T), t =>
+            t.GetMethod("Resolve",
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
+                null, new[] { typeof(string), typeof(actor.context.@this) }, null));
+        if (resolveMethod == null) return null;
+        var (resolvedObj, resolveError) = InvokeResolve<T>(resolveMethod, srStr, context);
+        if (resolveError != null) return resolveError;
+        if (resolvedObj is T result) return ConstructWrap<T>(result, context);
+        return null;
     }
 
     /// <summary>

@@ -127,6 +127,12 @@ public partial class Set : IContext, IBuildValidatable
         // For json (TypeMapping maps "json" → typeof(JsonNode)), TryConvert parses the string
         // into a JsonObject which IS IDictionary — that's what enables `convert %json% from
         // json` (mapped to variable.set Type=json) followed by foreach over the resulting dict.
+        //
+        // Strict-kind is enforced at THREE genuinely different times in this block — they are
+        // NOT redundant, each catches a case the others can't see:
+        //   1. ValidateBuild (above) — a literal value, at BUILD time.
+        //   2. the IKindValidatable probe below — a %var% value resolved at RUN time.
+        //   3. the IStrictKindEnforcer load seam below — byte-backed values, at MATERIALIZATION.
         if (Type?.Value != null)
         {
             var typeEntity = Type.Value;
