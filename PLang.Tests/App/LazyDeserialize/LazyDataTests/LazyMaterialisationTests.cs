@@ -60,7 +60,7 @@ public class LazyMaterialisationTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         var d = data.FromRaw("{\"port\":8080}", type.Create("object", "json", context: ctx), ctx, "cfg");
-        d.Materialise();           // the navigation seam (was ConvertValue)
+        d.ForceMaterialize();      // the navigation seam (was ConvertValue)
         await Assert.That(d.Value).IsTypeOf<System.Collections.Generic.Dictionary<string, object?>>();
         var dict = (System.Collections.Generic.Dictionary<string, object?>)d.Value!;
         await Assert.That(dict.ContainsKey("port")).IsTrue();

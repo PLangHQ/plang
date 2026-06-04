@@ -272,10 +272,16 @@ public partial class @this
         }
 
         if (!parent.IsInitialized && parent.Value == null)
+        {
+            // A parse failure on a raw-backed parent stamps MaterializeFailed —
+            // surface it rather than masking the real cause with NotFound.
+            if (parent.Error?.Key == "MaterializeFailed")
+                return data.@this.FromError(parent.Error);
             return data.@this.NotFound(name);
+        }
 
         // Lazy materialize if parent is a typed string (e.g., json) — must happen before navigation
-        parent.Materialise();
+        parent.ForceMaterialize();
 
         // For dot-path, extract raw value from Data — we're setting a property on a C# object.
         // Dict/list values are snapshot-cloned so the target doesn't alias the source's
@@ -300,7 +306,12 @@ public partial class @this
             }
         }
         var target = parent.Value;
-        if (target == null) return data.@this.NotFound(name);
+        if (target == null)
+        {
+            if (parent.Error?.Key == "MaterializeFailed")
+                return data.@this.FromError(parent.Error);
+            return data.@this.NotFound(name);
+        }
         var result = SetValueOnObject(target, propertyName, rawValue);
         if (!ReferenceEquals(result, target))
             parent.Value = result;

@@ -311,7 +311,7 @@ public partial class @this
     /// promoted to <c>_raw</c> and read through the registry; an already-raw-backed
     /// value just materializes. No-op otherwise.
     /// </summary>
-    internal void Materialise()
+    internal void ForceMaterialize()
     {
         if (_value is string raw && _type != null)
         {

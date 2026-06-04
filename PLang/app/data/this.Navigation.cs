@@ -247,6 +247,13 @@ public partial class @this
 
         var val = Value;
 
+        // Materialization failed at touch-time — the actionable parse error is
+        // stamped on `this.Error`, but `val` came back null. Surface that error
+        // instead of falling through to a generic NotFound, otherwise the
+        // developer navigating malformed JSON sees "not found" not the real cause.
+        if (val == null && Error?.Key == "MaterializeFailed")
+            return FromError(Error);
+
         // If Value is a Data object (e.g., DynamicData wrapping Identity),
         // navigate into the VALUE first — it's the real object
         if (val is @this dataVal)
@@ -267,8 +274,10 @@ public partial class @this
         // the materialize path).
         if (val is string && _type != null)
         {
-            Materialise();
+            ForceMaterialize();
             val = Value;
+            if (val == null && Error?.Key == "MaterializeFailed")
+                return FromError(Error);
         }
 
         // Navigate the Value object via registered navigator (dict, list, CLR reflection, etc.)

@@ -48,4 +48,18 @@ public class MaterialiseErrorPathTests
         await Assert.That(v).IsNull();
         await Assert.That(d.Error).IsNotNull();
     }
+
+    // The error stamped during materialization is surfaced at the navigation
+    // seam — `%cfg.host%` on malformed JSON returns the MaterializeFailed error,
+    // not a generic NotFound. Without this, the developer chases a "not found"
+    // ghost instead of the parse error that explains why.
+    [Test] public async Task Navigation_OnMalformedJson_SurfacesMaterializeFailed_NotNotFound()
+    {
+        await using var app = NewApp();
+        var d = MalformedJson(app.User.Context, "cfg");
+        var child = d.GetChild("host");
+        await Assert.That(child.Error).IsNotNull();
+        await Assert.That(child.Error!.Key).IsEqualTo("MaterializeFailed");
+        await Assert.That(child.Error!.Message.Contains("cfg")).IsTrue();
+    }
 }
