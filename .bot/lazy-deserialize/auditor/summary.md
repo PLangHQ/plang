@@ -1,43 +1,50 @@
 # auditor — lazy-deserialize — summary
 
-**Version:** v1
-**Verdict:** NEEDS WORK
-**HEAD:** `ca6e2fb7c`
+**Version:** v2 (re-review of coder v4 fix for auditor v1)
+**Verdict:** PASS
+**HEAD:** `602c4f8ff`
 
-## What this is
+## v1 → v2
 
-Cross-check of codeanalyzer v2 PASS, tester v3 PASS, and security v1 PASS on the
-`lazy-deserialize` branch — and an independent trace of error propagation across the
-new lazy-materialization seams.
+v1 verdict was **NEEDS WORK** on F1 (Major) — `MaterializeFailed` lost at navigation
+seams — and F2 (Minor) — `Materialise`/`Materialize` rename untracked.
 
-## Findings
+Coder v4 (`602c4f8ff`) addressed both. v2 verdict: **PASS**.
 
-- **F1 (Major)** — `MaterializeFailed` error stamped on a raw-backed Data is dropped by
-  every navigation entry that triggers materialization. `GetChildValue` and
-  `SetValueOnObjectByPath` return a fresh `NotFound` Data with no error, so a developer
-  navigating a malformed JSON sees "not found" instead of the parse error. Zero test
-  coverage. Cross-instance smell: error on `this`, return value is a different Data.
-- **F2 (Minor)** — Codeanalyzer's deferred `Materialize`/`Materialise` rename has no
-  todo/handoff artifact. Either rename now or file the entry.
-- **F3 (Info)** — Tester's missing `variable.set` List-arm regression test is real and
-  benign; add the symmetric goal test.
-- **F4 (Info)** — Security's catch-all silencing concern is the same site as F1; fixing
-  F1 resolves it.
+## v1 findings — final disposition
 
-## What the upstream trio missed
+- **F1 (Major) — RESOLVED.** All four seams I named (two read paths in
+  `GetChildValue`, two set paths in `SetValueOnObjectByPath`) now surface the
+  `MaterializeFailed` error via `FromError(this.Error)` before falling through to
+  NotFound. New regression test pins the read-path contract directly:
+  `GetChild("host")` on malformed JSON returns `Error.Key == "MaterializeFailed"`
+  naming the source. Suite: 4022/0.
+- **F2 (Minor) — RESOLVED.** Renamed `Materialise()` → `ForceMaterialize()` rather
+  than deferring. `Materialize()` (private read-through) keeps its name. No more
+  one-vowel ambiguity. Verified no stale callsites.
+- **F3 (Info) — OPEN.** Tester's `variable.set` List-arm goal regression test
+  still not added. Coder probe-confirmed-benign deferral. Flag-don't-block.
+- **F4 (Info) — RESOLVED transitively.** Security v1 F2 catch-all silencing concern
+  is resolved by F1's surface-at-seam fix.
 
-All three bots passed on the same HEAD, but none traced the `Materialize()` failure path
-across instances. Codeanalyzer audited shape; tester audited suite quality; security
-audited the lazy↔signing boundary. Cross-file error propagation is auditor's lane and
-was the gap.
+## Soft residual (flag-don't-block)
+
+The new regression test covers the read path. The two set-path fixes
+(`variable/list/this.cs`) are not directly tested — symmetric fix shape, but no
+test signal if a future change breaks the set arm. Mirror test recommended.
+
+## What this confirms
+
+All four upstream verdicts (codeanalyzer v2 PASS, tester v3 PASS, security v1 PASS,
+auditor v1 NEEDS WORK→ v2 PASS) now converge on the same source tree. Merge
+committee story holds end-to-end.
 
 ## Next bot
 
-**coder** — surface `MaterializeFailed` at the navigation seam, add a goal regression
-test (`%cfg.host%` on malformed JSON → `error.key == "MaterializeFailed"`), and either
-rename `Materialise/Materialize` or file the F2 todo before merge.
+**none — clear to merge.**
 
 ## Files
 
 - `.bot/lazy-deserialize/auditor/v1/report.md`
+- `.bot/lazy-deserialize/auditor/v2/report.md`
 - `.bot/lazy-deserialize/auditor/summary.md` (this)
