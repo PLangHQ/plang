@@ -1,0 +1,1 @@
+{"version":"v1","verdict":"NEEDS_WORK","next":"coder","head":"e847bf8ff","findings":[{"id":"F1","severity":"major","title":"Path-backed strict-kind enforcement is unreachable from any production caller (BytesAsync has zero non-self call sites; all consumers use sync .Bytes which returns empty for path-backed images)"}]}
