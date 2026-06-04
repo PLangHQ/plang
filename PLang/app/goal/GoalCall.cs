@@ -83,28 +83,9 @@ public sealed class GoalCall : module.IEvent
                 {
                     parameters = pList
                         .OfType<IDictionary<string, object?>>()
-                        .Select(d => {
-                            var name = d.TryGetValue("name", out var dn) ? dn?.ToString() ?? "" : "";
-                            var v = d.TryGetValue("value", out var dv) ? dv : null;
-                            // A full-match %var% that carries metadata (e.g. a signed
-                            // Data) resolves to the live Data. Unwrap to the leaf value
-                            // and carry the Signature + Type so the param's canonical form
-                            // (value+type) matches what was signed — the signature then
-                            // survives sign → call → verify without wrapping changing the
-                            // hash.
-                            app.module.signing.Signature? sig = null;
-                            global::app.type.@this? typ = null;
-                            while (v is data.@this inner)
-                            {
-                                if (inner.Signature != null) sig = inner.Signature;
-                                if (inner.Type is { IsNull: false } it) typ = it;
-                                v = inner.Value;
-                            }
-                            var pd = new data.@this(name, v);
-                            if (sig != null) pd.Signature = sig;
-                            if (typ != null) pd.Type = typ;
-                            return pd;
-                        })
+                        .Select(d => new data.@this(
+                            d.TryGetValue("name", out var dn) ? dn?.ToString() ?? "" : "",
+                            d.TryGetValue("value", out var dv) ? dv : null))
                         .ToList();
                 }
                 return data.@this.Ok(new GoalCall { Name = name, PrPath = prPath, Parameters = parameters });
