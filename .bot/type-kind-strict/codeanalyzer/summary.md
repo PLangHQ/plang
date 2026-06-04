@@ -1,5 +1,30 @@
 # codeanalyzer — type-kind-strict
 
+## v3 — **PASS** → next: **tester**. HEAD `f971f98e6` (merged + coder v13).
+
+Re-review of the merged `type-kind-strict` + `lazy-deserialize` state (Ingi's
+"branch done" call). Scope = integration seams only; the two feature bodies were
+each already PASSed (v2 here for type-kind-strict at `fd7ee4812`; lazy-deserialize
+on its own branch). Clean rebuild: **PLang 273/273, C# 4025/0/0**, no PLNG001/002,
+no System.IO/Console in changed prod files.
+
+**Core finding — strict-kind × lazy passthrough is CLEAN (traced).** lazy added a
+`RawUntouched` verbatim-passthrough early-return in `variable/set.cs` (203–209)
+*before* the `IStrictKindEnforcer` stamp (264). It cannot leak a strict mismatch:
+for `IKindValidatable` types (image, the only strict family) the run-time probe
+at `set.cs:184` reads `Value.Value`, which materializes `_value` and so flips
+`RawUntouched` to false → strict images always reach the enforcer stamp;
+path-backed images get `RequireStrictKind` imprinted and enforce at
+`image.BytesAsync`. The passthrough only catches non-strict raw types. Signature
+carry and MaterializeFailed-on-set-path are covered by coder v9–v13's new tests
+(test-only changes, real assertions, mutation-verified).
+
+One non-blocking finding: F1 — pervasive `Stage N`/provenance comments
+(`set.cs:27,72` + ~18 across `type/**`,`data/**`). Systemic house style accepted
+by all prior passes; docs/architect cleanup, not a coder blocker. Verdict unaffected.
+
+---
+
 ## v2 — **PASS** → next: **tester**. HEAD `fd7ee4812` (coder v8).
 
 Coder v8 fixed all five v1 findings. F1 (blocking) is correct and **mutation-

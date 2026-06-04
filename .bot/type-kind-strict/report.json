@@ -865,6 +865,57 @@
         "health": "green",
         "notes": "C# 3833/3833 (+11). PLang 259/262, 0 stale \u2014 identical to baseline (3 pre-existing event/Trigger fails). Public TryConvertTo god-switch gone; per-type Convert hooks + two doors + residual leaf. Locale bug fixed. One flagged decision: json-text->structure parse kept on JsonString.ToJson (text's CLR-mate extension) rather than relocated onto a text.@this.Convert overload \u2014 architect to confirm."
       }
+    },
+    {
+      "id": "1f8f66d5-13ff-4cf6-b206-093a622fcf4d",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-06-04T19:41:40+00:00",
+      "timestamp_end": "2026-06-04T19:45:00+00:00",
+      "intent": "Re-review the merged type-kind-strict + lazy-deserialize state for integration-seam regressions.",
+      "before": {
+        "assumptions": "v2 PASSed type-kind-strict at coder v8; lazy-deserialize PASSed on its own branch. Risk concentrated at the seams where both touch the same files (variable/set.cs, type/**, Data/Wire), not in either body.",
+        "risk": "A strict-kind value could slip through the new lazy RawUntouched verbatim-passthrough unenforced."
+      },
+      "plan": ".bot/type-kind-strict/codeanalyzer/v3/report.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/module/variable/set.cs",
+            "PLang/app/data/this.cs",
+            "PLang/app/type/image/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Traced strict-kind x lazy materialization. The RawUntouched passthrough (set.cs:203) returns before the IStrictKindEnforcer stamp (264), but for IKindValidatable types the probe at line 184 reads Value.Value which materializes _value (this.cs:182), flipping RawUntouched false -> strict images always reach the stamp; path-backed images defer to image.BytesAsync. CLEAN."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/LazyDeserialize/LazyDataTests/MaterialiseErrorPathTests.cs",
+            "PLang.Tests/App/LazyDeserialize/IntegrationCutsTests/SignedDataSurvivesVariableSetListTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "coder v9-v13 changes are test-only (verified d4fdd030c..HEAD = these two files). Real assertions: MaterializeFailed key distinct from NotFound; signature non-null + verify==true through live handlers. Mutation-verified per coder report."
+        },
+        {
+          "paths": [
+            "PLang/app/module/variable/set.cs",
+            "PLang/app/type/",
+            "PLang/app/data/"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Pass 2: pervasive Stage N / provenance comments (set.cs:27,72 + ~18 across type/data). Systemic house style accepted by prior passes; flagged as F1 MINOR non-blocking, cleanup is docs/architect."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "green",
+        "notes": "Clean rebuild: PLang 273/273, C# 4025/0/0. No PLNG001/002, no System.IO/Console in changed prod files. Integration seam (strict x lazy) traced sound. One systemic non-blocking provenance-comment finding. Next bot: tester."
+      }
     }
   ]
 }
