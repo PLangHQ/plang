@@ -35,32 +35,12 @@ public partial class Add : IContext
             Context.Variable.Set(ListName.Value, list);
         }
 
-        // Snapshot the Data so each list entry is independent — without this,
-        // `add %x% to %list%` stores an alias and later `set %x% = ...` mutates
-        // every list entry. Data.SnapshotClone breaks cyclic runtime types
-        // (Goal↔Step↔Action) via [JsonIgnore] — see Data.SnapshotClone.
-        data.@this snapshot;
-        var rawValue = Value.Value;
-        if (rawValue is null || rawValue is string || rawValue is bool || rawValue is System.IConvertible)
-        {
-            // Cheap clone is fine for primitives/strings.
-            snapshot = Value.Clone();
-        }
-        else
-        {
-            try
-            {
-                var cloned = global::app.data.@this.SnapshotClone(rawValue);
-                snapshot = new data.@this(Value.Name, cloned, Value.Type) { Context = Context };
-            }
-            catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException)
-            {
-                // Last resort — alias. Risk of mutation, but better than crashing.
-                // Surface the failure so the alias-mode regression stays debuggable.
-                _ = Context?.App?.Debug?.Write($"[list.add] snapshot-clone failed for '{Value.Name}': {ex.GetType().Name}: {ex.Message} — proceeding with alias (mutation risk)");
-                snapshot = Value;
-            }
-        }
+        // Shallow-clone into its own Data so the entry is an independent binding —
+        // value (lazy raw included), type and signature shared by reference, no
+        // materialize, no deep clone. `set %x% = ...` replaces the binding (it never
+        // mutates an aliased Data), so a later reassignment of %x% leaves the entry
+        // untouched. Reference semantics for in-place mutation of a shared value object.
+        data.@this snapshot = Value.ShallowClone(Value.Name);
 
         if (AtIndex.Value >= 0 && AtIndex.Value <= list.Count)
             list.Insert(AtIndex.Value, snapshot);

@@ -1174,7 +1174,17 @@ public partial class @this
             Properties = Properties
         };
         clone._valueFactory = _valueFactory;
+        // Carry the raw backing so a lazily-read (raw-backed) value stays lazy through
+        // the clone — without this, RawUntouched would be false and the next .Value
+        // read would materialize null. _type already rode in via the constructor.
+        clone._raw = _raw;
         clone.Context = _context;
+        // A bare `object` type with no kind is the "unknown" sentinel a polymorphic slot
+        // stamps — the value's real CLR type is the truth, so let it derive rather than
+        // carrying a stale `object` label into the new binding. A genuine shape type
+        // (object/json, kind set) and raw-backed values keep their declared type.
+        if (!clone.RawUntouched && clone.Type is { IsNull: false, Name: "object", Kind: null })
+            clone.Type = type.Null;
         return clone;
     }
 
