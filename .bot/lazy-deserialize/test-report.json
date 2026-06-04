@@ -1,0 +1,50 @@
+{
+  "tester": "tester",
+  "branch": "lazy-deserialize",
+  "timestamp": "2026-06-04T16:50:00Z",
+  "tested_version": "v3",
+  "test_run": {
+    "csharp": { "total": 4021, "passed": 4021, "failed": 0, "skipped": 0 },
+    "plang": { "total": 273, "passed": 273, "failed": 0, "skipped": 0 }
+  },
+  "coverage": {
+    "changed_files_covered": 9,
+    "changed_files_total": 9,
+    "uncovered_files": [],
+    "note": "Qualitative: every changed .cs (data/this.cs, Wire.cs, Navigation.cs, list/Conversion.cs, GoalCall.cs, variable/set.cs, list/add.cs, MathPolicy.cs, OpenAi.cs) is exercised by a named, strong-assertion test verified during this audit. Instrumented coverage.json deprioritized in favor of per-anchor assertion-strength review."
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/App/Modules/variable/SetTypeInferenceTests.cs",
+      "code_file": "PLang/app/module/variable/set.cs",
+      "issue": "ead0caa83 changed BOTH variable.set and list.add to ShallowClone (replacing a JSON deep-clone that dropped Signatures / materialized lazy values). list.add got a real regression test (SignedDataSurvivesInList.test.goal: sign -> add to list -> verify element). The symmetric variable.set List/Dict arm has NO equivalent: Set_ListValue/DictValue_StoresDistinctListInstance only assert the OUTER container is a distinct instance, with plain string elements -- a nested signed/lazy Data is never put through that arm.",
+      "impact": "If a future change to the param-resolution container walk or ShallowClone re-wrapped nested elements, a signed Data bound inside a list-literal via variable.set could silently lose its Signature with no test catching it. This is exactly the class of bug (signed Data through a collection) that 'hid for so long' per the coder's own v3 report.",
+      "suggestion": "Add a goal regression mirroring SignedDataSurvivesInList but via set: `sign -> set %bundle% = [%signed%] -> verify %bundle[0]%`, OR a C# test Set_ListWithNestedSignedData_PreservesElementSignature. NOTE: tester probe-confirmed the CURRENT behavior is CORRECT (signature survives + verifies), so this is a regression-pinning gap, not a live bug."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "Tests/LazyDeserialize/TamperedSignedData_FailsVerify.test.goal",
+      "code_file": "PLang/app/module/signing/verify.cs",
+      "issue": "The goal tamper test mutates via string interpolation (`set %tampered% = \"%signed% (tampered)\"`), which produces a fresh plain-text Data with no Signature. So verify likely fails with a no-signature / missing-signature path rather than a hash-MISMATCH path -- the test passes for a possibly-weaker reason than its name implies.",
+      "impact": "On its own this would not distinguish 'tamper detected' from 'unsigned data rejected'.",
+      "suggestion": "Acceptable AS-IS: the goal comment explicitly defers the strict raw-tamper path to C#, and that anchor is real and strong -- FailureMatrixTests.SigningVerify_AfterWireByteTamper_ReturnsDataHashMismatch asserts Error.Key == 'DataHashMismatch'. No action required; documented for transparency."
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "type": "process",
+      "test_file": "(none)",
+      "code_file": ".bot/lazy-deserialize/coder/v3/baseline-tests.md",
+      "issue": "No baseline-tests.md exists for any coder version (v1/v2/v3). Tester workflow step 2 requires it to separate regressions from pre-existing failures.",
+      "impact": "Low this round -- both suites are fully green (273/0, 4021/0), so there are no failures to attribute. Would matter if anything were red.",
+      "suggestion": "Coder should drop baseline-tests.md before starting future versions."
+    }
+  ],
+  "verdict": "approved",
+  "summary": "lazy-deserialize v3 is honestly green. Clean rebuild gives 273/273 plang (deterministic across 2 runs, no .pr rewritten) and 4021/4021 C#. Every LazyDeserialize .pr matches its step text (no builder false-greens). The goal-layer 'smoke' tests legitimately defer strict assertions to C#, and all 9 claimed C# anchors were audited and found to exist with strong assertions (DataHashMismatch error key, MaterializeCount==0, 'add'/'as' substrings, PKind.Long + 5000000000, name-excluded canonical hash, etc.). The one genuine gap -- variable.set's List/Dict arm (symmetric half of the ead0caa83 ShallowClone fix) lacks a nested-signed-Data regression -- was probed empirically and the current behavior is CORRECT, so it is a regression-pinning gap (minor), not a live false-green. No critical or major findings. PASS."
+}
