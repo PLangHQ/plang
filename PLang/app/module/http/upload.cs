@@ -52,11 +52,8 @@ public partial class upload : IContext
     [Code]
     public partial IHttp Http { get; }
 
-    public async Task<data.@this<global::app.http.response.@this>> Run()
-    {
-        var result = await Http.UploadAsync(this);
-        return data.@this<global::app.http.response.@this>.From(result);
-    }
+    // Plain Data — body lazy (from Content-Type), metadata in Properties.
+    public async Task<data.@this> Run() => await Http.UploadAsync(this);
 
     public Task<data.@this> Build() => HttpBuildHelpers.InferTypeFromUrl(__action, __app, "Url");
 }

@@ -74,10 +74,12 @@ public class NumberPowerTests
     [Test] public async Task Power_NegativeExponentBeyondCap_DecimalPrecision_TypedFailure()
     {
         // Negative integer exponent on integer base lands in the Decimal loop
-        // path only when Precision == Decimal (Strict). Lenient routes through
-        // Math.Pow which is constant-time and skips the cap.
+        // path only when Precision == Decimal. (Way 3: Strict's precision is now
+        // Error, so the explicit Precision=Decimal override selects the loop.)
+        // Other precision modes route through Math.Pow which is constant-time
+        // and skips the cap.
         var r = number.Power(number.From(2), number.From(-number.MaxPowerExponent - 1),
-            PPolicy.Strict);
+            new PPolicy { Overflow = POverflow.Promote, Precision = PPrecision.Decimal });
         await r.IsFailure();
         await Assert.That(r.Error?.Key).IsEqualTo("PowerExponentTooLarge");
     }

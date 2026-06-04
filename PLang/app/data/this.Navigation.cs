@@ -237,7 +237,22 @@ public partial class @this
     /// </summary>
     private @this GetChildValue(string key)
     {
+        // A raw-backed, untouched value answers Type metadata from its stamp
+        // WITHOUT materializing — reading the {type, kind} stamp must never
+        // trigger a parse, so a later scalar read of %x% stays the raw form.
+        // Scoped to RawUntouched so authored values keep "value wins over Data
+        // infrastructure" (a value's own "type" field still wins for those).
+        if (RawUntouched && key.Equals("Type", StringComparison.OrdinalIgnoreCase))
+            return new @this(key, Type, parent: this);
+
         var val = Value;
+
+        // Materialization failed at touch-time — the actionable parse error is
+        // stamped on `this.Error`, but `val` came back null. Surface that error
+        // instead of falling through to a generic NotFound, otherwise the
+        // developer navigating malformed JSON sees "not found" not the real cause.
+        if (val == null && Error?.Key == "MaterializeFailed")
+            return FromError(Error);
 
         // If Value is a Data object (e.g., DynamicData wrapping Identity),
         // navigate into the VALUE first — it's the real object
@@ -254,11 +269,15 @@ public partial class @this
         if (ownProp != null && ownProp.DeclaringType != typeof(@this))
             return new @this(key, ownProp.GetValue(this), parent: this);
 
-        // Lazy type conversion — if value is a string with a typed Data, convert on first navigation
+        // Lazy materialization — a typed, still-textual value reads through the
+        // reader registry on first navigation (the old ConvertValue, folded into
+        // the materialize path).
         if (val is string && _type != null)
         {
-            ConvertValue();
+            ForceMaterialize();
             val = Value;
+            if (val == null && Error?.Key == "MaterializeFailed")
+                return FromError(Error);
         }
 
         // Navigate the Value object via registered navigator (dict, list, CLR reflection, etc.)
@@ -299,7 +318,34 @@ public partial class @this
             return new @this(key, ownProp.GetValue(this), parent: this);
         }
 
+        // Access-driven resolution: navigating by key into a plain string is NOT a
+        // guess — no content sniffing. A string (whether stamped `text` or
+        // un-typed) can't be walked by key, so the developer gets a clear,
+        // actionable error pointing at the fix (`as object/json`) rather than a
+        // silent null. A structured value (object/json) materialized above, so it
+        // never reaches here.
+        if (val is string)
+            return TypeUnknownError(key);
+
         return NotFound(key);
+    }
+
+    /// <summary>
+    /// The type-unknown navigation error — the contract surface for "you tried
+    /// to navigate a value that has no type; tell PLang how to read it." The
+    /// wording is the LLM teaching surface; <c>add `as &lt;type&gt;`</c> names
+    /// the fix.
+    /// </summary>
+    private @this TypeUnknownError(string key)
+    {
+        var nameHint = string.IsNullOrEmpty(Name) ? "value" : $"%{Name}%";
+        var isText = _type is { IsNull: false } t && t.Name == "text";
+        var what = isText ? "is text" : "has no type";
+        var err = FromError(new global::app.error.Error(
+            $"cannot navigate .{key}: {nameHint} {what}; add `as <type>` (e.g. `as object/json`) to navigate it",
+            "TypeUnknown", 400));
+        err.Name = key;
+        return err;
     }
 
     /// <summary>

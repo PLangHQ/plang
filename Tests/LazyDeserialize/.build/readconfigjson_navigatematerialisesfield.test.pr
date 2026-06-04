@@ -1,0 +1,142 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "read file \u0027config.json\u0027, write to %cfg%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "Same fixture as ReadConfigJson_UntouchedIsJsonString. On navigation\n(%cfg.port%) the value materialises through text/json\u0027s reader and the\nfield resolves. This is Stage 5 access-driven resolution: navigation into\na known type fires the reader on demand.",
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "path",
+              "value": "config.json",
+              "scalarValue": "config.json",
+              "type": {
+                "name": "path",
+                "kind": "file"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "resolvevariables",
+              "value": false,
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%cfg%",
+              "scalarValue": "%cfg%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "scalarValue": "%!data%",
+              "type": {
+                "name": "object"
+              }
+            },
+            {
+              "name": "Type",
+              "value": {
+                "name": "object",
+                "kind": "json"
+              },
+              "scalarValue": {
+                "name": "object",
+                "kind": "json"
+              },
+              "type": {
+                "name": "type"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "file.read(Path=\u0027config.json\u0027) | variable.set(Name=%cfg%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %cfg.port% equals 8080",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 8080,
+              "scalarValue": 8080,
+              "type": {
+                "name": "number",
+                "kind": "int"
+              }
+            },
+            {
+              "name": "Actual",
+              "value": "%cfg.port%",
+              "scalarValue": "%cfg.port%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=8080, Actual=%cfg.port%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/LazyDeserialize/ReadConfigJson_NavigateMaterialisesField.test.goal",
+  "prPath": "/LazyDeserialize/.build/readconfigjson_navigatematerialisesfield.test.pr",
+  "hash": "54e8e3a0f8cfec9d56e9978889b24ec97836aa22c6986bf217b89fdfb0ab4dc0",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

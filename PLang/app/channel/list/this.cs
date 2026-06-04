@@ -99,7 +99,7 @@ public sealed class @this : IAsyncDisposable
     public channel.@this? Get(string name)
     {
         if (!_channels.TryGetValue(name, out var channel)) return null;
-        if (channel is channel.goal.@this g && g.IsExecuting) return null;
+        if (channel is channel.type.goal.@this g && g.IsExecuting) return null;
         return channel;
     }
 
@@ -121,7 +121,7 @@ public sealed class @this : IAsyncDisposable
     public channel.@this Channel(string name)
         => _channels.TryGetValue(name, out var channel) ? channel : NoOp;
 
-    private static readonly channel.noop.@this NoOp = new("__noop__");
+    private static readonly channel.type.noop.@this NoOp = new("__noop__");
 
     public void Register(channel.@this channel)
     {
@@ -185,7 +185,7 @@ public sealed class @this : IAsyncDisposable
         var (channel, error) = GetChannel(channelName, requireRead: true);
         if (error != null) return error;
 
-        if (channel is channel.stream.@this sc)
+        if (channel is channel.type.stream.@this sc)
         {
             // Serializer returns Data<T> already with its own Success/Error —
             // forward as-is; no extra try/catch needed because parse failures
@@ -209,7 +209,7 @@ public sealed class @this : IAsyncDisposable
 
         try
         {
-            if (channel is channel.stream.@this sc)
+            if (channel is channel.type.stream.@this sc)
                 await sc.WriteTextAsync(text, cancellationToken);
             else
                 await channel!.WriteAsync(global::app.data.@this.Ok(text), cancellationToken);
@@ -229,7 +229,7 @@ public sealed class @this : IAsyncDisposable
 
         try
         {
-            if (channel is channel.stream.@this sc)
+            if (channel is channel.type.stream.@this sc)
             {
                 var text = await sc.ReadAllTextAsync(cancellationToken);
                 return global::app.data.@this.Ok(text);
@@ -246,7 +246,7 @@ public sealed class @this : IAsyncDisposable
     /// <summary>Creates and registers an in-memory channel. Convenience for tests.</summary>
     public channel.@this CreateMemoryChannel(string name, ChannelDirection direction = ChannelDirection.Bidirectional)
     {
-        var ch = channel.stream.@this.Memory(name, direction);
+        var ch = channel.type.stream.@this.Memory(name, direction);
         Register(ch);
         return ch;
     }

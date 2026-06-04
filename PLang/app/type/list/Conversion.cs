@@ -36,10 +36,10 @@ public sealed partial class @this
             new JsonStringEnumConverter(allowIntegerValues: true),
             new app.data.EmptyStringToNullEnumConverterFactory(),
             new global::app.channel.serializer.TimeSpanIso8601(),
-            // Context-less PathJsonConverter — produces stub Paths. Callers
+            // Context-less json Converter — produces stub Paths. Callers
             // with a Context in scope use ContextualReadOptions instead so
             // deserialized Paths are wired immediately.
-            new global::app.type.path.JsonConverter(),
+            new global::app.channel.serializer.json.Converter(),
         },
         NumberHandling = JsonNumberHandling.AllowReadingFromString
     };
@@ -61,7 +61,7 @@ public sealed partial class @this
                 new JsonStringEnumConverter(allowIntegerValues: true),
                 new app.data.EmptyStringToNullEnumConverterFactory(),
                 new global::app.channel.serializer.TimeSpanIso8601(),
-                new global::app.type.path.JsonConverter(context),
+                new global::app.channel.serializer.json.Converter(context),
             },
             NumberHandling = JsonNumberHandling.AllowReadingFromString
         };
@@ -135,9 +135,17 @@ public sealed partial class @this
         if (targetType.IsAssignableFrom(sourceType))
             return (value, null);
 
-        // data.@this is the universal value wrapper — any value can become Data
+        // data.@this is the universal value wrapper — any value can become Data.
+        // A wire-shaped object ({value, type, ...}) IS a serialized Data, so
+        // reconstruct it as a whole (value + type) rather than nesting the dict as a
+        // Data value — nesting mislabels the type as `object` and loses the inner
+        // value's real type, so sign and verify would hash different canonical shapes.
         if (targetType == typeof(data.@this) && value is not data.@this)
+        {
+            if (data.@this.IsWireShape(value))
+                return (data.@this.FromWireShape((IDictionary<string, object?>)value, "", context), null);
             return (new data.@this("", value), null);
+        }
 
         // Handle nullable target types
         var underlying = System.Nullable.GetUnderlyingType(targetType);

@@ -70,14 +70,9 @@ public class JsonWriterDomainShapeTests
         await Assert.That(json).Contains("\"value\":");
     }
 
-    [Test] public async Task WireOutput_HttpResponse_ExcludesDuration()
-    {
-        var r = new global::app.http.response.@this(200, new Dictionary<string, string>(), "ok",
-            System.TimeSpan.FromMilliseconds(50));
-        var json = NormalizePipelineHelper.SerializeValueSlot(r);
-        await Assert.That(json).Contains("\"status\":200");
-        await Assert.That(json).DoesNotContain("duration");
-    }
+    // http.response dissolved (Decision 6) — its wire shape is now plain Data
+    // (body in the value slot, status/headers/duration in Properties), covered
+    // by the http module + access-resolution tests.
 
     [Test] public async Task WireOutput_GoalCall_ExcludesEvent_Action_CycleRefs()
     {

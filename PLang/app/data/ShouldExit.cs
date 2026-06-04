@@ -24,7 +24,10 @@ public static class ShouldExitExtensions
     {
         if (!d.Success && !d.Handled) return true;
         if (d.Returned) return true;
-        if (d.Value is global::app.IExitsGoal eg) return eg.ShouldExit();
+        // A raw-backed, untouched read payload is never a flow-control signal —
+        // skip the .Value check so this step-loop probe doesn't materialize it
+        // (keeps a lazily-read value lazy until something actually uses it).
+        if (!d.RawUntouched && d.Value is global::app.IExitsGoal eg) return eg.ShouldExit();
         if (d.Type?.ClrType.Exit() == true) return true;
         return false;
     }

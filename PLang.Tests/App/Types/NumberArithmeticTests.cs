@@ -33,7 +33,10 @@ public class NumberArithmeticTests
         => await Assert.That(number.Add(number.From(2), number.From(3.0), Lenient).Value!.Kind).IsEqualTo(PKind.Double);
 
     [Test] public async Task Mul_DecimalDouble_PrecisionEqualsDouble_ReturnsDouble()
-        => await Assert.That(number.Multiply(number.From(2m), number.From(3.0), Lenient).Value!.Kind).IsEqualTo(PKind.Double);
+        // Way 3: decimal⊕double under the DEFAULT (Lenient) precision errors —
+        // the developer must choose. The Double result needs the explicit override.
+        => await Assert.That(number.Multiply(number.From(2m), number.From(3.0),
+            new PPolicy { Overflow = POverflow.Promote, Precision = PPrecision.Double }).Value!.Kind).IsEqualTo(PKind.Double);
 
     [Test] public async Task Mul_DecimalDouble_PrecisionEqualsDecimal_ReturnsDecimal()
     {
@@ -49,11 +52,13 @@ public class NumberArithmeticTests
         await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Long);
     }
 
-    [Test] public async Task Overflow_Promote_LongOverflowWidensToDecimal()
+    [Test] public async Task Overflow_Promote_LongOverflowWidensToInt128()
     {
+        // Way 3: long+long overflow widens along the signed track to Int128
+        // (BigInteger carrier → narrow), never wraps. (Was Decimal pre-Way-3.)
         var r = number.Add(number.From(long.MaxValue), number.From(long.MaxValue), Lenient);
         await r.IsSuccess();
-        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Decimal);
+        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Int128);
     }
 
     [Test] public async Task Overflow_Throw_IntPlusInt_SurfacesDataFailMathOverflow()

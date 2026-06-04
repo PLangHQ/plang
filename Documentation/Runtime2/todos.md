@@ -858,3 +858,31 @@ singular. Left as-is for now (the vocabulary `Kinds` is a genuine "all valid
 kinds" collection, which is a defensible plural). Investigate whether the
 vocabulary should be renamed to a distinct singular noun so `Kind`/`Kinds` stop
 looking like a typo of each other — without merging the two concepts.
+
+## Render a `table` to a UI — write half of lazy-deserialize (2026-06-03, Ingi)
+
+Follow-on to the `lazy-deserialize` branch, which is the *read* half. That branch types csv/xlsx as `type=table` (grid shape) and carries it untouched to the render boundary — the precondition for Ingi's vision: "read a csv, nothing in the runtime cares about it until I render it, then it draws a table in the UI."
+
+Because csv/xlsx are typed by *shape* (`table`) rather than by encoding, the renderer needs **no kind-awareness** — it dispatches on `type=table` through its existing `(type, format)` model. The follow-on is simply a `(table, html)` renderer entry that draws a grid (and whatever other UI formats), alongside `(table, csv)`/`(table, xlsx)` write-back. Read half + the `table` type ship in `lazy-deserialize`; this is the write half. (Earlier framing of this todo asked for kind-awareness on a `text`/csv value — superseded: typing by shape moved the "it's a table" knowledge onto `type`, where the renderer already looks.)
+
+## Unify TimeSpan's two wire forms (2026-06-03, coder/lazy-deserialize)
+
+Latent inconsistency surfaced during the reader-registry consolidation: a CLR
+`TimeSpan` has **two** wire forms depending on the path it takes.
+- `IWriter.TimeSpan` (json/writer.cs:42) writes `ToString("c")` → `"00:00:30"`.
+- `TimeSpanIso8601` (channel/serializer/TimeSpanIso8601.cs) reads/writes ISO-8601 → `"PT30S"`.
+
+So the same value serializes differently on the plang-value-tree path vs the
+STJ-converter path. Real, but out of scope for `lazy-deserialize` and risky to
+unify mid-branch (it's load-bearing on snapshot/signing wires). `duration` (the
+PLang type) parses both forms via `duration.Resolve`, so reads are tolerant; the
+divergence is on the *write* side. Architect's call (2026-06-03): flag, don't fix
+here. Unify later — pick one canonical TimeSpan wire form and route both paths
+through it (likely the duration type's own renderer/Read once the format-layer
+`TimeSpanIso8601` converter is reconsidered).
+
+## Fully type-driven nested Data — retire envelope-recognition (2026-06-03, architect; from `lazy-deserialize` Stage 3)
+
+`lazy-deserialize` Stage 3 keeps a **lean** `LiftDataIfShaped` (`app/data/Wire.cs`): it recognizes a nested Data by its envelope shape (`name`+`value` keys) in the eager-untyped path, because a nested Data in a bare value slot has **no type slot** to drive reconstruction (there is no `data` type, and `json.Writer` emits a nested Data inline with a type slot only when `!Type.IsNull`). The `GetRawText` double-parse was dropped, but the shape-recognition remains.
+
+Endgame (separate branch): add a `data` type to the registry, stamp a Data-valued slot with it on **write**, and reconstruct nested Data purely via `Readers.Of("data", …)` — then the envelope-recognition can be deleted entirely and reconstruction is 100% type-driven (the branch thesis). This is a **wire-format + new-type change on the serialization core** (touches snapshot + signing round-trips), so it was held out of Stage 3. Pick up when the snapshot branch or a dedicated pass touches the wire shape. Note: recognizing the Data envelope is legitimately a leaf serializer's job (not the banned content-sniffing, not a courier #7) — so the lean version is correct interim, not a smell to rush.

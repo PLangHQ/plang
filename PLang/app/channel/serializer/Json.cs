@@ -44,8 +44,8 @@ public sealed class Json : ISerializer
             {
                 new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
                 context != null
-                    ? new global::app.type.path.JsonConverter(context)
-                    : new global::app.type.path.JsonConverter()
+                    ? new global::app.channel.serializer.json.Converter(context)
+                    : new global::app.channel.serializer.json.Converter()
             }
         };
     }

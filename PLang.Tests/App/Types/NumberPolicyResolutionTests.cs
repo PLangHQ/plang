@@ -44,12 +44,13 @@ public class NumberPolicyResolutionTests
         await Assert.That(p.Overflow).IsEqualTo(POverflow.Throw);
     }
 
-    [Test] public async Task Resolve_RecordDefault_LenientPromoteDouble_WhenNothingSet()
+    [Test] public async Task Resolve_RecordDefault_PromoteAndPrecisionError_WhenNothingSet()
     {
         await using var app = NewApp();
         var p = global::app.module.math.MathPolicy.Resolve(app.User.Context, null, null);
         await Assert.That(p.Overflow).IsEqualTo(POverflow.Promote);
-        await Assert.That(p.Precision).IsEqualTo(PPrecision.Double);
+        // Precision defaults to Error: double ⊕ decimal demands an explicit choice.
+        await Assert.That(p.Precision).IsEqualTo(PPrecision.Error);
     }
 
     [Test] public async Task Resolve_SubContext_ClimbsParent_InheritsParentSetting()

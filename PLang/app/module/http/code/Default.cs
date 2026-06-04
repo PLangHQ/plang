@@ -501,61 +501,28 @@ public sealed class Default : IHttp
             return await ParsePlangResponseAsync(response, request, app, context, maxResponseSize);
         }
 
-        // Content-Type body dispatch flows through the serializer registry:
-        //   - registered serializer (application/json, application/plang, ...) → parsed object
-        //   - text-shaped content with no specific serializer (text/*, xml, csv) → utf-8 string
-        //   - everything else (image/*, application/octet-stream, missing CT) → byte[]
-        // A registered serializer that fails (server claimed JSON but sent garbage)
-        // falls back to the text-shaped representation rather than failing the request.
+        // The response body enters through the one channel boundary: the http
+        // channel stamps {type, kind} from Content-Type and produces LAZY Data —
+        // the body is NOT deserialized at read time, it materializes on first
+        // touch (navigation / As<T>) through the reader registry. A status check
+        // (%response!status%) reads a Property and never touches the body.
         var bytesRead = await ReadLimitedBytesAsync(response.Content, maxResponseSize);
         if (!bytesRead.Success)
         {
             BuildProperties(bytesRead, request, response);
             return bytesRead;
         }
-        var bytes = bytesRead.Value!;
-        object? body;
-        var serializer = context.Actor.Channel.Serializers.GetByType(contentType);
-        if (serializer != null)
-        {
-            using var stream = new MemoryStream(bytes);
-            var deser = await serializer.DeserializeAsync(stream);
-            body = deser.Success ? deser.Value : TextFallback(bytes, contentType);
-        }
-        else
-        {
-            body = TextFallback(bytes, contentType);
-        }
 
-        var respHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var h in response.Headers)
-            respHeaders[h.Key] = string.Join(", ", h.Value);
-        foreach (var h in response.Content.Headers)
-            respHeaders[h.Key] = string.Join(", ", h.Value);
-
-        var typed = new global::app.http.response.@this(statusCode, respHeaders, body, duration);
-        var result = data.@this<global::app.http.response.@this>.Ok(typed);
-        // Legacy Property bag — pre-Stage-3 PLang code reads %resp.StatusCode%,
-        // %resp.Url%, %resp.RequestHeaders% etc. via Properties navigation.
-        // Keep it populated so existing test goals don't break.
+        var channel = new global::app.channel.type.http.@this(contentType, bytesRead.Value!, context);
+        var result = await channel.Read();
+        // Metadata (status, headers, duration, url, ...) rides as Properties —
+        // read with `!`. BuildProperties populates the protocol metadata; duration
+        // is the one timing fact only this layer knows.
         BuildProperties(result, request, response);
+        // Duration as seconds (double) — Properties hold wire-supported primitives,
+        // so a raw TimeSpan can't ride; total-seconds is queryable (%resp!Duration%).
+        result.Properties["Duration"] = duration.TotalSeconds;
         return result;
-    }
-
-    /// <summary>
-    /// Falls back from byte[] to utf-8 string when the content type is "text-shaped"
-    /// (text/*, xml, json, csv) — server promised structured content but either
-    /// no serializer is registered for the exact subtype or the registered one
-    /// failed to parse. Image/binary/octet-stream stay as byte[].
-    /// </summary>
-    private static object TextFallback(byte[] bytes, string contentType)
-    {
-        if (contentType.StartsWith("text/", StringComparison.OrdinalIgnoreCase)
-            || contentType.Contains("xml", StringComparison.OrdinalIgnoreCase)
-            || contentType.Contains("json", StringComparison.OrdinalIgnoreCase)
-            || contentType.Contains("csv", StringComparison.OrdinalIgnoreCase))
-            return Encoding.UTF8.GetString(bytes);
-        return bytes;
     }
 
     /// <summary>
@@ -709,7 +676,10 @@ public sealed class Default : IHttp
         }
 
         props["StatusCode"] = (int)response.StatusCode;
-        props["Status"] = response.ReasonPhrase;
+        // `status` is the numeric code (the architect's %response!status% == 200);
+        // the human reason phrase rides as `reason`.
+        props["Status"] = (int)response.StatusCode;
+        props["Reason"] = response.ReasonPhrase;
         props["IsSuccess"] = response.IsSuccessStatusCode;
 
         var respHeaders = new Dictionary<string, object?>();

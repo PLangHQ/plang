@@ -56,6 +56,15 @@ public sealed partial class @this
     /// </summary>
     public renderer.@this Renderers { get; } = new();
 
+    /// <summary>
+    /// Per-(type, kind) reader dispatch — the read-side mirror of
+    /// <see cref="Renderers"/>. Discovers <c>app/type/&lt;name&gt;/serializer/&lt;kind&gt;.cs</c>
+    /// classes exposing a static <c>Read(object, string?, ReadContext)</c> and
+    /// exposes the same runtime-registration seam. The single json
+    /// <c>Converter</c> routes mid-graph typed fields through here.
+    /// </summary>
+    public reader.@this Readers { get; } = new();
+
     // --- Primitive lookup tables ---
     // Aliases / canonical-name data lives on app.type.primitive.@this — one
     // home for the seeded entries that both the registry (instance lookup) and
@@ -184,7 +193,7 @@ public sealed partial class @this
             {
                 // Collision resolution: when two CLR types map to the same PLang
                 // name (e.g. `app.goal.@this` the goal entity and
-                // `app.channel.goal.@this` the goal-channel both lowercase to
+                // `app.channel.type.goal.@this` the goal-channel both lowercase to
                 // "goal" via the @this convention), prefer the catalog-richer
                 // entry.  First-wins TryAdd over reflection-ordered types is
                 // non-deterministic — a Scalar entry could shadow a Record with

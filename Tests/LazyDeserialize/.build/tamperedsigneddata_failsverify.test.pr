@@ -1,0 +1,317 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "sign \u0022hello world\u0022, write to %signed%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Cut 3 negative \u2014 sign, mutate, verify; verify fails. The mutation is via\na string-edit on the signed payload before verify is called. The C# cut\npins the raw-tamper path strictly; this is the goal-surface smoke.",
+      "actions": [
+        {
+          "module": "signing",
+          "action": "sign",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "hello world",
+              "scalarValue": "hello world",
+              "type": {
+                "name": "text"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%signed%",
+              "scalarValue": "%signed%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "scalarValue": "%!data%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "signing.sign(Data={\u0022name\u0022:\u0022X\u0022,\u0022value\u0022:\u0022hello world\u0022,\u0022type\u0022:{\u0022name\u0022:\u0022text\u0022}}) | variable.set(Name=%signed%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %tampered% = \u0022%signed% (tampered)\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%tampered%",
+              "scalarValue": "%tampered%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": "%signed% (tampered)",
+              "scalarValue": "%signed% (tampered)",
+              "type": {
+                "name": "text"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%tampered%, Value=\u0022%signed% (tampered)\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "verify %tampered%, on error call CaughtIt",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "signing",
+          "action": "verify",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%tampered%",
+              "scalarValue": "%tampered%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "skipfreshnesscheck",
+              "value": false,
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "goal",
+                      "action": "call",
+                      "parameters": [
+                        {
+                          "name": "GoalName",
+                          "value": {
+                            "name": "CaughtIt",
+                            "parameters": []
+                          },
+                          "type": {
+                            "name": "goal.call"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "scalarValue": [
+                    {
+                      "module": "goal",
+                      "action": "call",
+                      "parameters": [
+                        {
+                          "name": "GoalName",
+                          "value": {
+                            "name": "CaughtIt",
+                            "parameters": []
+                          },
+                          "type": {
+                            "name": "goal.call"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "type": {
+                    "name": "list\u003Caction\u003E"
+                  }
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "formal": "signing.verify(Data=%tampered%) | error.handle(Actions=[goal.call(GoalName={name:\u0022CaughtIt\u0022, parameters:[]})])",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %caught% equals true",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "%caught%",
+              "scalarValue": "%caught%",
+              "type": {
+                "name": "object"
+              }
+            },
+            {
+              "name": "Actual",
+              "value": true,
+              "scalarValue": true,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=%caught%, Actual=true)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "CaughtIt",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "set %caught% = true",
+          "lineNumber": 11,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%caught%",
+                  "scalarValue": "%caught%",
+                  "type": {
+                    "name": "variable"
+                  }
+                },
+                {
+                  "name": "Value",
+                  "value": true,
+                  "scalarValue": true,
+                  "type": {
+                    "name": "bool"
+                  }
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "scalarValue": false,
+                  "type": {
+                    "name": "bool"
+                  }
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "formal": "variable.set(Name=%caught%, Value=true)",
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/LazyDeserialize/TamperedSignedData_FailsVerify.test.goal",
+      "prPath": "/LazyDeserialize/.build/tamperedsigneddata_failsverify.test.pr",
+      "hash": "4c4d2724b5430e226d0a47c4032f7128337458f25260cb293b4d6b44f3df9e61",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/LazyDeserialize/TamperedSignedData_FailsVerify.test.goal",
+  "prPath": "/LazyDeserialize/.build/tamperedsigneddata_failsverify.test.pr",
+  "hash": "378c680e9dc0bf397ecf75f7c9e3052cdb8ee2d81ae511775377101018e782ad",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

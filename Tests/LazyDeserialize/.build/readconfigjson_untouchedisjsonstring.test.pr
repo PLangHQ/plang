@@ -1,0 +1,215 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "read file \u0027config.json\u0027, write to %cfg%",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": "A read of config.json lands the file as {object, json} (architect\u0027s\nshape-based typing \u2014 keeps today\u0027s json\u2192object). The critical lazy\ninvariant: stamping \u0060type=object\u0060 does NOT parse \u2014 \u0060%cfg%\u0060 untouched is\nstill the raw json *string*. Materialisation only fires on navigation\n(see ReadConfigJson_NavigateMaterialisesField). Requires the config.json\nfixture committed alongside.",
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "path",
+              "value": "config.json",
+              "scalarValue": "config.json",
+              "type": {
+                "name": "path",
+                "kind": "file"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "resolvevariables",
+              "value": false,
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%cfg%",
+              "scalarValue": "%cfg%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "scalarValue": "%!data%",
+              "type": {
+                "name": "object"
+              }
+            },
+            {
+              "name": "Type",
+              "value": {
+                "name": "object",
+                "kind": "json"
+              },
+              "scalarValue": {
+                "name": "object",
+                "kind": "json"
+              },
+              "type": {
+                "name": "type"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "file.read(Path=\u0027config.json\u0027) | variable.set(Name=%cfg%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %cfg.Type.Name% equals \u0022object\u0022",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "object",
+              "scalarValue": "object",
+              "type": {
+                "name": "text"
+              }
+            },
+            {
+              "name": "Actual",
+              "value": "%cfg.Type.Name%",
+              "scalarValue": "%cfg.Type.Name%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022object\u0022, Actual=%cfg.Type.Name%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %cfg.Type.Kind% equals \u0022json\u0022",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "json",
+              "scalarValue": "json",
+              "type": {
+                "name": "text"
+              }
+            },
+            {
+              "name": "Actual",
+              "value": "%cfg.Type.Kind%",
+              "scalarValue": "%cfg.Type.Kind%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022json\u0022, Actual=%cfg.Type.Kind%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %cfg% equals \u0022{\\\u0022port\\\u0022:8080}\u0022",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "{\u0022port\u0022:8080}",
+              "scalarValue": "{\u0022port\u0022:8080}",
+              "type": {
+                "name": "object"
+              }
+            },
+            {
+              "name": "Actual",
+              "value": "%cfg%",
+              "scalarValue": "%cfg%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022{\\\u0022port\\\u0022:8080}\u0022, Actual=%cfg%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/LazyDeserialize/ReadConfigJson_UntouchedIsJsonString.test.goal",
+  "prPath": "/LazyDeserialize/.build/readconfigjson_untouchedisjsonstring.test.pr",
+  "hash": "245c8bea4f958db2b0a5d54113bc87f9f8cbeaa9c64deadbf094af947ef98b86",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

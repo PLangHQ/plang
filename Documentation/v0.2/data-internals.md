@@ -314,6 +314,63 @@ Mitigations:
 
 Migration status as of branch `path-polymorphism`: ~60% of handlers typed (73 `Task<data.@this<…>>` vs 48 bare `Task<data.@this>`). The remaining bare handlers are either the polymorphic-forwarding carve-out above or genuinely void; both are correct shapes, not pending work. Audit before flipping a bare signature.
 
+## Lazy materialization — `_raw`, `Materialize`, `ForceMaterialize`
+
+A raw-backed `Data` holds the source form (`_raw`) and **defers parsing until first touch of `.Value`**. The renderer registry was already symmetric — read fragmented across `type.Convert`, `FromWire`, `path.JsonConverter`, `ConvertValue`, and three separate parse moments. This is the consolidation: one reader registry ([type-system.md](type-system.md#reader-registry--apptypereaderthis-the-read-side-mirror)) plus a lazy backing on `Data`.
+
+```csharp
+private object? _raw;      // undecoded source form: string for text, byte[] for binary
+private object? _value;    // materialized; null until first touch of a raw-backed Data
+private type?   _type;     // carries Name + Kind — what the reader dispatches on
+
+public virtual object? Value
+{
+    get
+    {
+        if (_valueFactory != null) { _value = _valueFactory(); _valueFactory = null; }
+        if (_value == null && _raw != null)
+            _value = Materialize();   // reader.Of(Type.Name, Type.Kind).Read(_raw, Kind, ctx)
+        return _value;
+    }
+}
+```
+
+**Construct via `Data.FromRaw(raw, type, ctx, name)`** — the channel boundary uses this. An inline-authored value (`set %x% = 5`) sets `_value` and leaves `_raw` null; which field is set tells you the origin (no mode flag). The `%var%`-resolves-fresh-per-read contract is untouched on the authored path.
+
+**`_raw` is `string | byte[]`, not always bytes.** A json file's raw is the json string; an image's raw is `byte[]`. No utf-8 encode tax on the common path.
+
+**`_raw` survives materialization; mutation invalidates it.** `Materialize()` sets `_value` but does **not** clear `_raw` — that is the verbatim-passthrough invariant ([wire-serialization.md](wire-serialization.md#wire-passthrough--rawuntouched--emitrawverbatim)). The `Value` setter, `SetValueDirect`, and navigation-set all clear `_raw` so subsequent serialize renders from `_value` via the renderer.
+
+**Two lazinesses, kept distinct.** `_valueFactory` / `DynamicData` is *recompute-on-every-access* (a live view); `_raw` materialization is *parse-once-and-cache*. Different meanings, both kept; the `Value` getter runs the factory first, then the raw materialize.
+
+**Access-driven resolution.** `ScalarValue` (the `%x%` / `write out %x%` rule) returns the raw source form without a structured parse: a text raw is the string, a byte raw decodes utf-8 strict (else stays `byte[]` — never lossy mojibake). Navigation (`%x.field%`) and `as <type>` / `As<T>` go through `Materialize` or `ForceMaterialize`. Property access (`%x!prop%`) reads `Data.Properties` — body untouched, status checks don't materialize.
+
+**`ForceMaterialize()` is the navigation seam.** A typed, still-textual `_value` is promoted to `_raw` and read through the registry; an already-raw-backed value just materializes. This is the replacement for the deleted `ConvertValue` path.
+
+### Errors stay in Data, surface at touch-time
+
+A `Read` that fails (malformed json, wrong shape) stamps an `Error` on the Data with `Key == "MaterializeFailed"` — touch-time, not a throw into the courier. The catch in `Materialize()` excludes `NullReferenceException` / `OutOfMemoryException` / `StackOverflowException` only; everything else (including `TargetInvocationException` unwrapped to its inner) becomes a `MaterializeFailed` Error naming the variable and the kind.
+
+**Surfacing the error past navigation.** The bare `.Value` getter is best-effort (caches the error, returns `null`). Navigation seams that trigger materialization must then check `Error?.Key == "MaterializeFailed"` and return `FromError(Error)` — otherwise the navigator's own `NotFound` shadows the real parse error and the developer sees "not found" instead of "failed to read %cfg% as json". Three seams enforce this:
+
+| Seam | File:line | What it does |
+|---|---|---|
+| post-`Value` access | `app/data/this.Navigation.cs:250` (`GetChildValue`) | after `data.Value` returns null, check `Error.Key == "MaterializeFailed"` → `FromError` |
+| post-`ForceMaterialize` typed-string | `app/data/this.Navigation.cs:277` (`GetChildValue`) | typed-string branch — same check |
+| uninitialized-parent guard | `app/variable/list/this.cs:275` (`SetValueOnObjectByPath`) | after `parent.ForceMaterialize()` — same check |
+| `target == null` guard | `app/variable/list/this.cs:309` (`SetValueOnObjectByPath`) | set-path on raw-backed parent — same check |
+
+Regression pinned in `PLang.Tests/App/LazyDeserialize/LazyDataTests/MaterialiseErrorPathTests.cs`: `Navigation_OnMalformedJson_SurfacesMaterializeFailed_NotNotFound` — `GetChild("host")` on malformed JSON returns `Error.Key == "MaterializeFailed"` naming the source, not `NotFound`. The companion tests pin the read-time→touch-time deferral and the OBP Rule #9 "courier doesn't see throws" contract.
+
+**Behavior change to watch.** Parse errors move from read-time to touch-time. A malformed json file no longer errors at `file.read` — it errors at first navigation (`%cfg.host%`) or `As<T>`. The touch-time error names the source ("failed to read %cfg% as json"). Acceptable, but it relocates *where* a developer sees the failure.
+
+### `Materialize` vs `ForceMaterialize` — discriminated by role
+
+- `Materialize()` (private, read-through). Called only from the `Value` getter when `_value == null && _raw != null`. Catches and stamps the touch-time error.
+- `ForceMaterialize()` (internal, force-in-place). The navigation seam — promotes a typed string `_value` to `_raw`, then triggers `Materialize` via `_ = Value`.
+
+The earlier one-vowel pair (`Materialise` / `Materialize`) was a footgun; renamed to `ForceMaterialize` for the navigation seam. Method-name occurrences of "Materialise" that still appear in tests are spelling cosmetics, not callsites.
+
 ## Truthiness — `IBooleanResolvable` and async condition evaluation
 
 A value's boolean meaning belongs to the value, not to `Data`. `Data.ToBoolean()` is the sync fallback (null/false/0/"" falsy, everything else truthy); **do not** add type-specific cases to it. A type that knows its own truthiness implements `app.data.IBooleanResolvable`:

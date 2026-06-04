@@ -29,11 +29,14 @@ public class NumberUnaryTests
         await Assert.That((long)r.Value!).IsEqualTo(-(long)int.MinValue);
     }
 
-    [Test] public async Task Abs_LongMinValue_OverflowsAs_MathOverflow()
+    [Test] public async Task Abs_LongMinValue_WidensToInt128()
     {
+        // Way 3: abs(long.MinValue) = 9223372036854775808 exceeds the long range,
+        // so it widens along the signed track to Int128 rather than overflowing.
+        // (Was MathOverflow pre-Way-3.)
         var r = number.Abs(number.From(long.MinValue));
-        await r.IsFailure();
-        await Assert.That(r.Error?.Key).IsEqualTo("MathOverflow");
+        await r.IsSuccess();
+        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Int128);
     }
 
     [Test] public async Task Abs_Decimal_PreservesDecimalKind()

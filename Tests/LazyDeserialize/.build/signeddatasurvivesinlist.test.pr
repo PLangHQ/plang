@@ -1,0 +1,247 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "sign \u0022hello world\u0022, write to %signed%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Regression: a signed Data added to a list keeps its Signature, and the element\nverifies through the list. list.add stores the whole Data (not a decomposed value),\nand element reads return that Data unchanged \u2014 so %list[0]% is still verifiable.",
+      "actions": [
+        {
+          "module": "signing",
+          "action": "sign",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": {
+                "name": "text",
+                "value": "hello world",
+                "type": {
+                  "name": "text"
+                }
+              },
+              "scalarValue": {
+                "name": "text",
+                "value": "hello world",
+                "type": {
+                  "name": "text"
+                }
+              },
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%signed%",
+              "scalarValue": "%signed%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "scalarValue": "%!data%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "signing.sign(Data={\u0022name\u0022:\u0022text\u0022,\u0022value\u0022:\u0022hello world\u0022}, Headers={}, Contracts=[], Expires=0) | variable.set(Name=%signed%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "add %signed% to %list%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "add",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%list%",
+              "scalarValue": "%list%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": "%signed%",
+              "scalarValue": "%signed%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "atindex",
+              "value": -1,
+              "scalarValue": -1,
+              "type": {
+                "name": "number",
+                "kind": "int"
+              }
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "list.add(ListName=%list%, Value=%signed%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "verify %list[0]%, write to %ok%",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "signing",
+          "action": "verify",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "%list[0]%",
+              "scalarValue": "%list[0]%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "skipfreshnesscheck",
+              "value": false,
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%ok%",
+              "scalarValue": "%ok%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "scalarValue": "%!data%",
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "signing.verify(Data=%list[0]%) , variable.set(Name=%ok%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %ok% equals true",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "%ok%",
+              "scalarValue": "%ok%",
+              "type": {
+                "name": "object"
+              }
+            },
+            {
+              "name": "Actual",
+              "value": true,
+              "scalarValue": true,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=%ok%, Actual=true)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/LazyDeserialize/SignedDataSurvivesInList.test.goal",
+  "prPath": "/LazyDeserialize/.build/signeddatasurvivesinlist.test.pr",
+  "hash": "d6ed4947daad850cedbcce3e49510328544acd1ff84bea74a25dcec1b80c0415",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

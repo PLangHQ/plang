@@ -68,19 +68,9 @@ public class Cut1_JsonRoundTripTests
         await Assert.That(json).DoesNotContain("secret");
     }
 
-    [Test] public async Task Cut1_HttpResponse_RoundTrips_Status_Headers_Body_NoDuration()
-    {
-        var r = new global::app.http.response.@this(
-            200,
-            new Dictionary<string, string> { ["Content-Type"] = "text/plain" },
-            "hello",
-            System.TimeSpan.FromMilliseconds(123));
-        var json = NormalizePipelineHelper.SerializeValueSlot(r);
-        await Assert.That(json).Contains("\"status\":200");
-        await Assert.That(json).Contains("\"headers\":");
-        await Assert.That(json).Contains("\"body\":\"hello\"");
-        await Assert.That(json).DoesNotContain("duration");
-    }
+    // http.response dissolved (Decision 6) — the response is plain Data (body in
+    // the value slot, status/headers/duration in Properties), so its round-trip
+    // is the generic Data round-trip covered elsewhere, not a record wire shape.
 
     [Test] public async Task Cut1_NestedDataTree_RoundTrips_DepthN()
     {

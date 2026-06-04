@@ -7,10 +7,11 @@ namespace app.module.variable;
 /// Sets a variable in the current context's variable store.
 /// When AsDefault is true, only sets if the variable doesn't already exist.
 ///
-/// variable.set is the binding-mint site — it owns type inference (MintTyped picks
-/// the concrete Data&lt;T&gt; for the runtime type). Variables.Set decides whether to
-/// update the existing binding in place (same type) or replace it (type changed),
-/// and carries Properties + event subscribers across replacement.
+/// variable.set is the binding site. With no `as` clause it shallow-clones the source
+/// Data under the target name — value (lazy raw included), type, signature and
+/// properties shared by reference, no materialize, no deep clone. A `Type` clause
+/// converts/mints the declared Data&lt;T&gt;. Variables.Set then replaces the binding
+/// (Data values are never mutated in place), carrying event subscribers across the name.
 /// </summary>
 [Action("set", Cacheable = false)]
 public partial class Set : IContext, IBuildValidatable
@@ -126,6 +127,12 @@ public partial class Set : IContext, IBuildValidatable
         // For json (TypeMapping maps "json" → typeof(JsonNode)), TryConvert parses the string
         // into a JsonObject which IS IDictionary — that's what enables `convert %json% from
         // json` (mapped to variable.set Type=json) followed by foreach over the resulting dict.
+        //
+        // Strict-kind is enforced at THREE genuinely different times in this block — they are
+        // NOT redundant, each catches a case the others can't see:
+        //   1. ValidateBuild (above) — a literal value, at BUILD time.
+        //   2. the IKindValidatable probe below — a %var% value resolved at RUN time.
+        //   3. the IStrictKindEnforcer load seam below — byte-backed values, at MATERIALIZATION.
         if (Type?.Value != null)
         {
             var typeEntity = Type.Value;
@@ -185,6 +192,20 @@ public partial class Set : IContext, IBuildValidatable
                                 + (actual != null ? $" but content is {actual}." : "."),
                                 "StrictKindMismatch", 400)));
                 }
+            }
+
+            // The incoming value is ALREADY a raw-backed Data of the declared type
+            // — a lazy read assigned via `write to %var%` (file.read/channel.read
+            // stamp {table,csv}/{object,json} and the same stamp lands here). Store
+            // it as-is so it stays lazy: scalar %var% remains the raw source form
+            // and verbatim passthrough holds. Re-materializing (Value.Value below)
+            // would parse it on store and defeat the whole lazy path.
+            if (Value.RawUntouched && Value.Type is { } vt
+                && string.Equals(vt.Name, typeEntity.Name, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(vt.Kind ?? "", typeEntity.Kind ?? "", StringComparison.OrdinalIgnoreCase))
+            {
+                Value.Name = Name.Value!;
+                return Task.FromResult(Context.Variable.Set(Value));
             }
 
             object? converted = Value.Value;
@@ -256,68 +277,36 @@ public partial class Set : IContext, IBuildValidatable
             return Task.FromResult(Context.Variable.Set(typedData));
         }
 
-        // No forced type — type-infer from Value.Value's runtime type. Hot types (string,
-        // int, long, double, bool, decimal, DateTime, Guid, byte[], List, Dict) take the
-        // if-chain; cold types fall through to reflection.
-        var raw = Value.Value;
-        data.@this minted = MintTyped(Name.Value, raw, Context);
-        // The source Data may carry an explicit Type that's narrower than the runtime
-        // type of its Value (e.g. `data.Compress()` returns a Data<byte[]> tagged
-        // type=archived; MintTyped would otherwise produce Data<byte[]> with no
-        // type label, losing the transport marker). Preserve the source's Type
-        // when it has one AND when it carries real information — skip the
-        // "object" catch-all so a literal `5` lazy-derives to {number, int}
-        // instead of being pinned to `object` by the parameter schema's
-        // polymorphic Value-slot annotation. Properties already get copied
-        // below for the same "carry source metadata across the binding-mint"
-        // reason.
-        if (Value.Type is { } sourceType && !sourceType.IsNull && sourceType.Name != "object")
-            minted.Type = sourceType;
-        CopyProperties(Value, minted);
+        // No forced type — shallow bind. A new Data under the target name shares the
+        // source's value (lazy raw included), type, signature and properties: no
+        // materialize (.Value untouched), no deep clone. Reference semantics — a later
+        // in-place mutation of a shared value object is visible through both names, just
+        // as `a = x` shares in mainstream languages. `set %x% = ...` itself replaces the
+        // binding (Variables.Set never mutates an aliased Data in place), so reassignment
+        // never bleeds.
+        data.@this minted = Value.ShallowClone(Name.Value);
         return Task.FromResult(Context.Variable.Set(minted));
     }
 
     /// <summary>
     /// Properties carry per-Data result metadata (test.report's summaryFail, condition.if's
-    /// branchIndex, etc.) that downstream <c>%var.prop%</c> navigation depends on. MintTyped
-    /// builds a fresh Data from the source's raw value; without this copy, Properties get
-    /// dropped at the binding-mint site. Pre-merge variable.set passed Value directly to
-    /// Variables.Set which aliased the Data and kept Properties; the binding-mint refactor
-    /// (runtime2-data-share-state) lost that property-survival path.
+    /// branchIndex, etc.) that downstream <c>%var.prop%</c> navigation depends on. The
+    /// forced-type path (<c>as</c> clause) builds a fresh Data<T> from the converted value;
+    /// without this copy, Properties + Signature would be dropped at that mint. The no-type
+    /// path shallow-clones and so carries them for free.
     /// </summary>
     private static void CopyProperties(data.@this source, data.@this target)
     {
-        if (source.Properties.Count == 0 || ReferenceEquals(source, target)) return;
+        if (ReferenceEquals(source, target)) return;
+        // Signature is result metadata that must survive the binding-mint: the
+        // re-mint builds a fresh Data from the raw value, so `sign … write to %x%`
+        // would otherwise drop the signature before `verify %x%` ever sees it.
+        if (source.Signature != null) target.Signature = source.Signature;
+        if (source.Properties.Count == 0) return;
         foreach (var p in source.Properties)
             target.Properties[p.Key] = p.Value;
     }
 
-    /// <summary>
-    /// Type-infer + mint a Data&lt;T&gt; for the runtime type of <paramref name="raw"/>.
-    /// Mutable refs (List, Dict) snapshot-cloned via JSON roundtrip so later mutation of
-    /// the source doesn't bleed through. null produces plain Data (un-typed).
-    /// </summary>
-    private static data.@this MintTyped(string name, object? raw, actor.context.@this context)
-    {
-        return raw switch
-        {
-            null                                 => new data.@this(name, null) { Context = context },
-            string s                             => new data.@this<string>(name, s) { Context = context },
-            bool b                               => new data.@this<bool>(name, b) { Context = context },
-            int i                                => new data.@this<int>(name, i) { Context = context },
-            long l                               => new data.@this<long>(name, l) { Context = context },
-            double d                             => new data.@this<double>(name, d) { Context = context },
-            decimal m                            => new data.@this<decimal>(name, m) { Context = context },
-            float f                              => new data.@this<float>(name, f) { Context = context },
-            DateTime t                           => new data.@this<DateTime>(name, t) { Context = context },
-            DateTimeOffset to                    => new data.@this<DateTimeOffset>(name, to) { Context = context },
-            Guid g                               => new data.@this<Guid>(name, g) { Context = context },
-            byte[] ba                            => new data.@this<byte[]>(name, ba) { Context = context },
-            List<object?> list                   => new data.@this<List<object?>>(name, (List<object?>?)global::app.data.@this.SnapshotClone(list) ?? new List<object?>()) { Context = context },
-            Dictionary<string, object?> dict     => new data.@this<Dictionary<string, object?>>(name, (Dictionary<string, object?>?)global::app.data.@this.SnapshotClone(dict) ?? new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)) { Context = context },
-            _                                    => ConstructDataOfT(name, raw.GetType(), raw, context)
-        };
-    }
 
     /// <summary>
     /// Reflection construction of Data&lt;T&gt; for a runtime type not in the hot if-chain.

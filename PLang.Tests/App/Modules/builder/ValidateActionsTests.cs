@@ -79,7 +79,7 @@ public class ValidateActionsTests
         }, new System.Text.Json.JsonSerializerOptions
         {
             PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
-            Converters = { new global::app.type.path.JsonConverter(_app.User.Context) }
+            Converters = { new global::app.channel.serializer.json.Converter(_app.User.Context) }
         });
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "dosomething.pr"), prJson);
 

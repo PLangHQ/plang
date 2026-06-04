@@ -1,0 +1,259 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %x% = \u0022{\\\u0022port\\\u0022:8080}\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "Stage 5 negative \u2014 navigation into a type-unknown value errors with a\nmessage that names the fix. Independent #18 pins the exact substring\n\u0022add\u0022 \u002B \u0022as \u003Ctype\u003E\u0022 in the C# layer; here we just pin that an error\nrises (the no-guessing rule).",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%x%",
+              "scalarValue": "%x%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": "{\u0022port\u0022:8080}",
+              "scalarValue": "{\u0022port\u0022:8080}",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%x%, Value={\u0022port\u0022:8080})",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %p% = %x.port%, on error call CaughtIt",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%p%",
+              "scalarValue": "%p%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": "%x.port%",
+              "scalarValue": "%x.port%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "goal",
+                      "action": "call",
+                      "parameters": [
+                        {
+                          "name": "GoalName",
+                          "value": {
+                            "name": "CaughtIt",
+                            "parameters": []
+                          },
+                          "type": "goal.call"
+                        }
+                      ]
+                    }
+                  ],
+                  "scalarValue": [
+                    {
+                      "module": "goal",
+                      "action": "call",
+                      "parameters": [
+                        {
+                          "name": "GoalName",
+                          "value": {
+                            "name": "CaughtIt",
+                            "parameters": []
+                          },
+                          "type": "goal.call"
+                        }
+                      ]
+                    }
+                  ],
+                  "type": {
+                    "name": "list\u003Caction\u003E"
+                  }
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%p%, Value=%x.port%) | error.handle(Actions=[goal.call(GoalName={name:\u0022CaughtIt\u0022})])",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %caught% equals true",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "%caught%",
+              "scalarValue": "%caught%",
+              "type": {
+                "name": "object"
+              }
+            },
+            {
+              "name": "Actual",
+              "value": true,
+              "scalarValue": true,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=%caught%, Actual=true)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "CaughtIt",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "set %caught% = true",
+          "lineNumber": 11,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%caught%",
+                  "scalarValue": "%caught%",
+                  "type": {
+                    "name": "variable"
+                  }
+                },
+                {
+                  "name": "Value",
+                  "value": true,
+                  "scalarValue": true,
+                  "type": {
+                    "name": "bool"
+                  }
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "scalarValue": false,
+                  "type": {
+                    "name": "bool"
+                  }
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "formal": "variable.set(Name=%caught%, Value=true)",
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/LazyDeserialize/NavigationOnTypeUnknown_AsksForAsType.test.goal",
+      "prPath": "/LazyDeserialize/.build/navigationontypeunknown_asksforastype.test.pr",
+      "hash": "4c4d2724b5430e226d0a47c4032f7128337458f25260cb293b4d6b44f3df9e61",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/LazyDeserialize/NavigationOnTypeUnknown_AsksForAsType.test.goal",
+  "prPath": "/LazyDeserialize/.build/navigationontypeunknown_asksforastype.test.pr",
+  "hash": "03c26a60bd2688c12ebae5c38fe5864b60d07554e9e2c7c4ffd21fd2d49e66a3",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

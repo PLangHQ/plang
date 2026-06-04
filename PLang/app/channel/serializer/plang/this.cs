@@ -48,21 +48,23 @@ public sealed class @this : ISerializer
     public @this(actor.context.@this? context)
     {
         var pathConverter = context != null
-            ? new global::app.type.path.JsonConverter(context)
-            : new global::app.type.path.JsonConverter();
+            ? new global::app.channel.serializer.json.Converter(context)
+            : new global::app.channel.serializer.json.Converter();
 
+        // Pass context so a lazily-deferred value slot read back through this
+        // (per-actor) serializer carries the context it needs to materialize.
         _outbound = BuildOptions(
-            new global::app.data.Wire(global::app.View.Out),
+            new global::app.data.Wire(global::app.View.Out, context: context),
             pathConverter,
             global::app.channel.serializer.filter.Transport.ForOutbound);
 
         _inbound = BuildOptions(
-            new global::app.data.Wire(global::app.View.Out),
+            new global::app.data.Wire(global::app.View.Out, context: context),
             pathConverter,
             global::app.channel.serializer.filter.Transport.ForInbound);
 
         _store = BuildOptions(
-            new global::app.data.Wire(global::app.View.Store),
+            new global::app.data.Wire(global::app.View.Store, context: context),
             pathConverter,
             global::app.channel.serializer.filter.Transport.ForOutbound);
 
@@ -79,7 +81,7 @@ public sealed class @this : ISerializer
 
     private static JsonSerializerOptions BuildOptions(
         global::app.data.Wire wire,
-        global::app.type.path.JsonConverter pathConverter,
+        global::app.channel.serializer.json.Converter pathConverter,
         System.Action<JsonTypeInfo> modifier)
         => new()
         {

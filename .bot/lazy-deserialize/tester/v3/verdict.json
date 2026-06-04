@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "v3 honestly green: 273/273 plang (deterministic) + 4021/4021 C#, no builder false-greens, all 9 C# deferral anchors strong; one minor regression-pinning gap (probe-confirmed benign)." }

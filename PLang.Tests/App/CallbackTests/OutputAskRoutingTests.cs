@@ -15,7 +15,7 @@ public class OutputAskRoutingTests
         new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-rt-" + System.Guid.NewGuid().ToString("N")[..8]));
 
-    private sealed class TestMessageChannel : global::app.channel.message.@this
+    private sealed class TestMessageChannel : global::app.channel.type.message.@this
     {
         public TestMessageChannel(string name)
         {
@@ -59,7 +59,7 @@ public class OutputAskRoutingTests
     {
         var app = NewApp();
         var ms = new MemoryStream(global::System.Text.Encoding.UTF8.GetBytes("Alice\n"));
-        var ch = new global::app.channel.stream.@this("i", ms,
+        var ch = new global::app.channel.type.stream.@this("i", ms,
             global::app.channel.ChannelDirection.Bidirectional, ownsStream: false)
         { Mime = "text/plain" };
         // Empty question to skip WriteCore — exercises Ask's read-line path

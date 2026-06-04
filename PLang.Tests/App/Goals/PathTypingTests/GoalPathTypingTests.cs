@@ -82,7 +82,7 @@ public class GoalPathTypingTests
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             PropertyNameCaseInsensitive = true,
-            Converters = { new global::app.type.path.JsonConverter(context) }
+            Converters = { new global::app.channel.serializer.json.Converter(context) }
         };
         var json = JsonSerializer.Serialize(goal, options);
         await Assert.That(json).Contains("Cache/Start.goal");
@@ -100,7 +100,7 @@ public class GoalPathTypingTests
         var opts1 = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            Converters = { new global::app.type.path.JsonConverter(ctx1) }
+            Converters = { new global::app.channel.serializer.json.Converter(ctx1) }
         };
         var json = JsonSerializer.Serialize(goal, opts1);
         // Load under a different App / Context.
@@ -109,7 +109,7 @@ public class GoalPathTypingTests
         var opts2 = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
-            Converters = { new global::app.type.path.JsonConverter(ctx2) }
+            Converters = { new global::app.channel.serializer.json.Converter(ctx2) }
         };
         var loaded = JsonSerializer.Deserialize<Goal>(json, opts2);
         await Assert.That(loaded).IsNotNull();
@@ -130,7 +130,7 @@ public class GoalPathTypingTests
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             PropertyNameCaseInsensitive = true,
-            Converters = { new global::app.type.path.JsonConverter(context) }
+            Converters = { new global::app.channel.serializer.json.Converter(context) }
         };
         var json = JsonSerializer.Serialize(goal, opts);
         var loaded = JsonSerializer.Deserialize<Goal>(json, opts);
@@ -149,13 +149,13 @@ public class GoalPathTypingTests
         var opts = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            Converters = { new global::app.type.path.JsonConverter(context) }
+            Converters = { new global::app.channel.serializer.json.Converter(context) }
         };
         var json = JsonSerializer.Serialize(gc, opts);
         await Assert.That(json).Contains("Cache/.build/foo.pr");
         var loaded = JsonSerializer.Deserialize<GoalCall>(json,
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true,
-                Converters = { new global::app.type.path.JsonConverter(context) } });
+                Converters = { new global::app.channel.serializer.json.Converter(context) } });
         await Assert.That(loaded!.PrPath).IsNotNull();
     }
 
@@ -164,7 +164,7 @@ public class GoalPathTypingTests
         // The context-less converter produces a stub Path with Context=null.
         var opts = new JsonSerializerOptions
         {
-            Converters = { new global::app.type.path.JsonConverter() }
+            Converters = { new global::app.channel.serializer.json.Converter() }
         };
         var p = JsonSerializer.Deserialize<global::app.type.path.@this>("\"/Start.goal\"", opts);
         await Assert.That(p).IsNotNull();

@@ -354,15 +354,15 @@ public sealed partial class @this : IAsyncDisposable
     public static void WireDefaultConsoleChannels(global::app.actor.@this actor)
     {
         if (!actor.Channel.Contains(global::app.channel.list.@this.Output))
-            actor.Channel.Register(new global::app.channel.stream.@this(
+            actor.Channel.Register(new global::app.channel.type.stream.@this(
                 global::app.channel.list.@this.Output, Console.OpenStandardOutput(),
                 global::app.channel.ChannelDirection.Output, ownsStream: false));
         if (!actor.Channel.Contains(global::app.channel.list.@this.Error))
-            actor.Channel.Register(new global::app.channel.stream.@this(
+            actor.Channel.Register(new global::app.channel.type.stream.@this(
                 global::app.channel.list.@this.Error, Console.OpenStandardError(),
                 global::app.channel.ChannelDirection.Output, ownsStream: false));
         if (!actor.Channel.Contains(global::app.channel.list.@this.Input))
-            actor.Channel.Register(new global::app.channel.stream.@this(
+            actor.Channel.Register(new global::app.channel.type.stream.@this(
                 global::app.channel.list.@this.Input, Console.OpenStandardInput(),
                 global::app.channel.ChannelDirection.Input, ownsStream: false));
     }
@@ -417,7 +417,7 @@ public sealed partial class @this : IAsyncDisposable
         WriteIndented = true,
         Converters = {
             new global::app.channel.serializer.TimeSpanIso8601(),
-            new global::app.type.path.JsonConverter()
+            new global::app.channel.serializer.json.Converter()
         }
     };
 

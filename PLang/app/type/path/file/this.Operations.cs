@@ -134,7 +134,16 @@ public sealed partial class @this
     public override async Task<data.@this<byte[]>> ReadBytes()
     {
         if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return data.@this<byte[]>.From(early);
-        return data.@this<byte[]>.Ok(await System.IO.File.ReadAllBytesAsync(Absolute));
+        if (!System.IO.File.Exists(Absolute))
+            return data.@this<byte[]>.FromError(new global::app.error.ServiceError($"File not found: {Raw}", "NotFound", 404));
+        try
+        {
+            return data.@this<byte[]>.Ok(await System.IO.File.ReadAllBytesAsync(Absolute));
+        }
+        catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
+        {
+            return data.@this<byte[]>.FromError(new global::app.error.ServiceError(ex.Message, "IOError", 500));
+        }
     }
 
     public override async Task<data.@this<bool>> ExistsAsync()

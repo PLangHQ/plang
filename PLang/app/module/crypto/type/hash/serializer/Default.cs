@@ -16,4 +16,14 @@ public static class Default
         if (value == null) { writer.Null(); return; }
         writer.String(value.ToBase64());
     }
+
+    /// <summary>
+    /// Read mirror of <see cref="Write"/> — re-houses <c>hash.FromWire</c> behind
+    /// the reader registry. The algorithm rides as <paramref name="kind"/>; a
+    /// base64 digest string rebuilds the hash value. The signing-side STJ
+    /// <c>HashDataConverter</c> (object-shaped <c>{type,value}</c>) stays where
+    /// its semantics apply.
+    /// </summary>
+    public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
+        => raw is string s ? global::app.module.crypto.type.hash.@this.FromWire(s, kind) : null;
 }

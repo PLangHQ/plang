@@ -1,0 +1,344 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %a% = 1.5",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": "Stage 2 negative \u2014 double \u002B decimal raises the explicit-cast error.\nC# forbids this without a cast; PLang follows. Open item 5 in plan.md:\nif the PLang surface doesn\u0027t admit a \u0060decimal\u0060 literal/\u0060as decimal\u0060 the\ncoder switches this to C#-only. Pinned here on the assumption that\n\u0060as decimal\u0060 works.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%a%",
+              "scalarValue": "%a%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": 1.5,
+              "scalarValue": 1.5,
+              "type": {
+                "name": "number",
+                "kind": "decimal"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%a%, Value=1.5)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %b% = \u00220.1\u0022 as number/decimal",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%b%",
+              "scalarValue": "%b%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": "0.1",
+              "scalarValue": "0.1",
+              "type": {
+                "name": "text"
+              }
+            },
+            {
+              "name": "Type",
+              "value": {
+                "name": "number",
+                "kind": "decimal"
+              },
+              "scalarValue": {
+                "name": "number",
+                "kind": "decimal"
+              },
+              "type": {
+                "name": "type"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%b%, Value=\u00220.1\u0022, Type={name:number, kind:decimal})",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %sum% = %a% \u002B %b%, on error call CaughtIt",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "math",
+          "action": "add",
+          "parameters": [
+            {
+              "name": "A",
+              "value": "%a%",
+              "scalarValue": "%a%",
+              "type": {
+                "name": "object"
+              }
+            },
+            {
+              "name": "B",
+              "value": "%b%",
+              "scalarValue": "%b%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "goal",
+                      "action": "call",
+                      "parameters": [
+                        {
+                          "name": "GoalName",
+                          "value": {
+                            "name": "CaughtIt",
+                            "parameters": []
+                          },
+                          "type": "goal.call"
+                        }
+                      ]
+                    }
+                  ],
+                  "scalarValue": [
+                    {
+                      "module": "goal",
+                      "action": "call",
+                      "parameters": [
+                        {
+                          "name": "GoalName",
+                          "value": {
+                            "name": "CaughtIt",
+                            "parameters": []
+                          },
+                          "type": "goal.call"
+                        }
+                      ]
+                    }
+                  ],
+                  "type": {
+                    "name": "list\u003Caction\u003E"
+                  }
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%sum%",
+              "scalarValue": "%sum%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "scalarValue": "%!data%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "math.add(A=%a%, B=%b%) | error.handle(Actions=[goal.call(GoalName={name:\u0022CaughtIt\u0022})]) , variable.set(Name=%sum%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %caught% equals true",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "%caught%",
+              "scalarValue": "%caught%",
+              "type": {
+                "name": "object"
+              }
+            },
+            {
+              "name": "Actual",
+              "value": true,
+              "scalarValue": true,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=%caught%, Actual=true)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "CaughtIt",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "set %caught% = true",
+          "lineNumber": 13,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%caught%",
+                  "scalarValue": "%caught%",
+                  "type": {
+                    "name": "variable"
+                  }
+                },
+                {
+                  "name": "Value",
+                  "value": true,
+                  "scalarValue": true,
+                  "type": {
+                    "name": "bool"
+                  }
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "scalarValue": false,
+                  "type": {
+                    "name": "bool"
+                  }
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "formal": "variable.set(Name=%caught%, Value=true)",
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/LazyDeserialize/DoublePlusDecimal_Errors.test.goal",
+      "prPath": "/LazyDeserialize/.build/doubleplusdecimal_errors.test.pr",
+      "hash": "4c4d2724b5430e226d0a47c4032f7128337458f25260cb293b4d6b44f3df9e61",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/LazyDeserialize/DoublePlusDecimal_Errors.test.goal",
+  "prPath": "/LazyDeserialize/.build/doubleplusdecimal_errors.test.pr",
+  "hash": "8661c50f415285d59770237109114704db47d6d91b851891e90d47af0410f287",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

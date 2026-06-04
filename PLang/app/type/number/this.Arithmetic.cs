@@ -1,59 +1,33 @@
+using System.Numerics;
+
 namespace app.type.number;
 
 /// <summary>
-/// Policy-aware arithmetic surface — what the <c>math.*</c> handlers call.
-/// Each method returns <see cref="global::app.data.@this{T}"/> wrapping a
-/// <see cref="@this"/>; <see cref="System.OverflowException"/> and
-/// <see cref="System.DivideByZeroException"/> are caught internally and
-/// surface as <c>Data.Fail("MathOverflow")</c> / <c>"DivideByZero"</c>.
-///
-/// <para>Promotion table for + - * %:
-///   <c>Int × Int → Int</c>; either Long → Long; either Decimal → Decimal;
-///   either Double → Double. Decimal × Double promotes by
-///   <see cref="PrecisionMode"/>.</para>
-///
-/// <para>Divide leaves the integer track — <c>7 / 2 → 3.5</c> always
-/// promotes Int/Long to Decimal regardless of <see cref="PrecisionMode"/>;
-/// the policy axis only matters once an operand is already Decimal or
-/// Double. Truncating division is the explicit <c>math.intdiv</c> action.</para>
-///
-/// <para>Power promotes by exponent shape: integer base + non-negative
-/// integer exponent stays integer (overflow per policy); negative exponent
-/// leaves the integer track; fractional exponent is always Double.</para>
-///
-/// <para>Integer-exponent magnitude is capped at
-/// <see cref="MaxPowerExponent"/> (CPU-DoS guard — without the cap, a
-/// goal taking an untrusted exponent could spin the actor's core).
-/// Fractional and over-cap exponents on a Double base route through
-/// <c>System.Math.Pow</c>, which is constant-time.</para>
+/// Policy-aware arithmetic — what the <c>math.*</c> handlers call. Way 3:
+/// integers compute on a <c>BigInteger</c> carrier and narrow to the smallest
+/// kind that fits (Promote) or stay strict-width (Throw); binary floats compute
+/// in <c>double</c>; decimals in <c>decimal</c>; the <c>double ⊕ decimal</c> mix
+/// is resolved by <see cref="PrecisionMode"/> (Error by default). Each method
+/// returns <see cref="global::app.data.@this{T}"/>; exceptions surface as typed
+/// <c>Data.Fail</c>.
 /// </summary>
 public sealed partial class @this
 {
-    /// <summary>
-    /// Maximum |exponent| the integer-track power loops will iterate.
-    /// Past this, the handler surfaces <c>Data.Fail("PowerExponentTooLarge")</c>
-    /// — an explicit refusal rather than a silent CPU spin.
-    /// </summary>
+    /// <summary>Loop-protective cap on integer-track power exponents (CPU-DoS guard).</summary>
     public const long MaxPowerExponent = 64;
 
     public static global::app.data.@this<@this> Add(@this a, @this b, NumberPolicy policy)
         => Wrap(() => DoOp(a, b, ArithOp.Add, policy));
-
     public static global::app.data.@this<@this> Subtract(@this a, @this b, NumberPolicy policy)
         => Wrap(() => DoOp(a, b, ArithOp.Sub, policy));
-
     public static global::app.data.@this<@this> Multiply(@this a, @this b, NumberPolicy policy)
         => Wrap(() => DoOp(a, b, ArithOp.Mul, policy));
-
     public static global::app.data.@this<@this> Modulo(@this a, @this b, NumberPolicy policy)
         => Wrap(() => DoOp(a, b, ArithOp.Mod, policy));
-
     public static global::app.data.@this<@this> Divide(@this a, @this b, NumberPolicy policy)
         => Wrap(() => DoDivide(a, b, policy));
-
     public static global::app.data.@this<@this> IntDivide(@this a, @this b, NumberPolicy policy)
-        => Wrap(() => DoIntDivide(a, b));
-
+        => Wrap(() => DoIntDivide(a, b, policy));
     public static global::app.data.@this<@this> Power(@this a, @this b, NumberPolicy policy)
         => Wrap(() => DoPower(a, b, policy));
 
@@ -65,20 +39,25 @@ public sealed partial class @this
             return global::app.data.@this<@this>.FromError(
                 new global::app.error.ServiceError(ex.Message, "DivideByZero", 400) { Exception = ex });
         }
+        catch (PrecisionMixException ex)
+        {
+            return global::app.data.@this<@this>.FromError(
+                new global::app.error.ServiceError(ex.Message, "PrecisionMixRequiresChoice", 400) { Exception = ex });
+        }
         catch (System.OverflowException ex)
         {
             return global::app.data.@this<@this>.FromError(
                 new global::app.error.ServiceError(ex.Message, "MathOverflow", 400) { Exception = ex });
         }
-        catch (System.ArithmeticException ex)
-        {
-            return global::app.data.@this<@this>.FromError(
-                new global::app.error.ServiceError(ex.Message, "ArithmeticError", 400) { Exception = ex });
-        }
         catch (PowerExponentTooLargeException ex)
         {
             return global::app.data.@this<@this>.FromError(
                 new global::app.error.ServiceError(ex.Message, "PowerExponentTooLarge", 400) { Exception = ex });
+        }
+        catch (System.ArithmeticException ex)
+        {
+            return global::app.data.@this<@this>.FromError(
+                new global::app.error.ServiceError(ex.Message, "ArithmeticError", 400) { Exception = ex });
         }
     }
 
@@ -87,68 +66,58 @@ public sealed partial class @this
         public PowerExponentTooLargeException(string message) : base(message) { }
     }
 
-    private enum ArithOp { Add, Sub, Mul, Mod }
+    /// <summary>The double⊕decimal mix with no precision choice — Way 3's "correct, not easy" edge.</summary>
+    private sealed class PrecisionMixException : System.ArithmeticException
+    {
+        public PrecisionMixException()
+            : base("Mixing a double and a decimal needs an explicit precision choice — "
+                   + "neither represents the other exactly. Set math.number.precision = double | decimal "
+                   + "(or pass precision on the step).") { }
+    }
+
+    internal enum ArithOp { Add, Sub, Mul, Mod }
 
     private static @this DoOp(@this a, @this b, ArithOp op, NumberPolicy policy)
     {
-        var kind = PromoteKind(a.Kind, b.Kind, policy);
-        try
+        Category ca = a.Cat, cb = b.Cat;
+
+        // integer ⊕ integer — BigInteger carrier, narrow per policy.
+        if (ca == Category.Integer && cb == Category.Integer)
         {
-            return kind switch
+            BigInteger r = BigOp(a.AsBigInteger(), b.AsBigInteger(), op);
+            NumberKind floor = WiderInteger(a.Kind, b.Kind);
+            return policy.Overflow == OverflowMode.Throw ? NarrowStrict(r, floor) : NarrowInteger(r, floor);
+        }
+
+        bool aBF = ca == Category.BinaryFloat, bBF = cb == Category.BinaryFloat;
+        bool aDec = ca == Category.Decimal, bDec = cb == Category.Decimal;
+
+        // double ⊕ decimal — the precision-policy fork.
+        if ((aBF && bDec) || (aDec && bBF))
+            return policy.Precision switch
             {
-                NumberKind.Int => DoIntKind(a.AsInt64(), b.AsInt64(), op, asInt: true, policy),
-                NumberKind.Long => DoIntKind(a.AsInt64(), b.AsInt64(), op, asInt: false, policy),
-                NumberKind.Decimal => ArithDecimal(a.AsDecimal(), b.AsDecimal(), op),
-                NumberKind.Double or NumberKind.Float => ArithDouble(a.AsDouble(), b.AsDouble(), op),
-                _ => throw new System.InvalidOperationException(),
+                PrecisionMode.Double => DoubleOp(a.AsDouble(), b.AsDouble(), op),
+                PrecisionMode.Decimal => DecimalOp(a.AsDecimal(), b.AsDecimal(), op),
+                _ => throw new PrecisionMixException(),
             };
-        }
-        catch (System.OverflowException) when (policy.Overflow == OverflowMode.Promote && kind == NumberKind.Int)
-        {
-            // Int overflow widens to Long.
-            return DoOp(@this.From(a.AsInt64()), @this.From(b.AsInt64()), op,
-                policy with { /* same policy */ });
-        }
-        catch (System.OverflowException) when (policy.Overflow == OverflowMode.Promote && kind == NumberKind.Long)
-        {
-            // Long overflow widens to Decimal.
-            return ArithDecimal(a.AsDecimal(), b.AsDecimal(), op);
-        }
+
+        // any binary float (with integer or another binary float) → double.
+        if (aBF || bBF) return DoubleOp(a.AsDouble(), b.AsDouble(), op);
+
+        // remaining: decimal with integer/decimal → decimal.
+        return DecimalOp(a.AsDecimal(), b.AsDecimal(), op);
     }
 
-    private static @this DoIntKind(long a, long b, ArithOp op, bool asInt, NumberPolicy policy)
+    private static BigInteger BigOp(BigInteger a, BigInteger b, ArithOp op) => op switch
     {
-        if (asInt)
-        {
-            // Promoted kind is Int — keep the checked op at int width so int
-            // overflow surfaces. The DoOp catch widens to Long under Promote;
-            // under Throw the exception propagates to the Data.Fail wrapper.
-            int ia = checked((int)a), ib = checked((int)b);
-            int ri = checked(op switch
-            {
-                ArithOp.Add => ia + ib,
-                ArithOp.Sub => ia - ib,
-                ArithOp.Mul => ia * ib,
-                ArithOp.Mod => ia == int.MinValue && ib == -1 ? throw new System.OverflowException()
-                           : (ib == 0 ? throw new System.DivideByZeroException() : ia % ib),
-                _ => throw new System.InvalidOperationException()
-            });
-            return From(ri);
-        }
+        ArithOp.Add => a + b,
+        ArithOp.Sub => a - b,
+        ArithOp.Mul => a * b,
+        ArithOp.Mod => b == BigInteger.Zero ? throw new System.DivideByZeroException() : a % b,
+        _ => throw new System.InvalidOperationException(),
+    };
 
-        long r = checked(op switch
-        {
-            ArithOp.Add => a + b,
-            ArithOp.Sub => a - b,
-            ArithOp.Mul => a * b,
-            ArithOp.Mod => a == long.MinValue && b == -1 ? throw new System.OverflowException()
-                       : (b == 0 ? throw new System.DivideByZeroException() : a % b),
-            _ => throw new System.InvalidOperationException()
-        });
-        return From(r);
-    }
-
-    private static @this ArithDecimal(decimal a, decimal b, ArithOp op) => op switch
+    private static @this DecimalOp(decimal a, decimal b, ArithOp op) => op switch
     {
         ArithOp.Add => From(a + b),
         ArithOp.Sub => From(a - b),
@@ -157,7 +126,7 @@ public sealed partial class @this
         _ => throw new System.InvalidOperationException(),
     };
 
-    private static @this ArithDouble(double a, double b, ArithOp op) => op switch
+    private static @this DoubleOp(double a, double b, ArithOp op) => op switch
     {
         ArithOp.Add => From(a + b),
         ArithOp.Sub => From(a - b),
@@ -168,52 +137,61 @@ public sealed partial class @this
 
     private static @this DoDivide(@this a, @this b, NumberPolicy policy)
     {
-        var kind = PromoteKind(a.Kind, b.Kind, policy);
-        if (kind == NumberKind.Int || kind == NumberKind.Long)
-            kind = NumberKind.Decimal;
+        Category ca = a.Cat, cb = b.Cat;
+        bool aBF = ca == Category.BinaryFloat, bBF = cb == Category.BinaryFloat;
+        bool aDec = ca == Category.Decimal, bDec = cb == Category.Decimal;
 
-        return kind switch
-        {
-            NumberKind.Decimal => b.AsDecimal() == 0m
-                ? throw new System.DivideByZeroException()
-                : From(a.AsDecimal() / b.AsDecimal()),
-            NumberKind.Double or NumberKind.Float =>
-                From(a.AsDouble() / b.AsDouble()),
-            _ => throw new System.InvalidOperationException(),
-        };
+        if ((aBF && bDec) || (aDec && bBF))
+            return policy.Precision switch
+            {
+                PrecisionMode.Double => DivDouble(a, b),
+                PrecisionMode.Decimal => DivDecimal(a, b),
+                _ => throw new PrecisionMixException(),
+            };
+
+        if (aBF || bBF) return DivDouble(a, b);
+
+        // integer/integer, integer/decimal, decimal/decimal — division leaves
+        // the integer track to decimal (7/2 → 3.5).
+        return DivDecimal(a, b);
     }
 
-    private static @this DoIntDivide(@this a, @this b)
+    private static @this DivDouble(@this a, @this b) => From(a.AsDouble() / b.AsDouble());
+
+    private static @this DivDecimal(@this a, @this b)
     {
-        // Truncating division — the explicit opt-in for the C# semantics.
-        long bi = b.AsInt64();
-        if (bi == 0) throw new System.DivideByZeroException();
-        long r = a.AsInt64() / bi;
-        return (a.Kind == NumberKind.Int && b.Kind == NumberKind.Int
-                && r >= int.MinValue && r <= int.MaxValue)
-            ? From((int)r) : From(r);
+        decimal bd = b.AsDecimal();
+        if (bd == 0m) throw new System.DivideByZeroException();
+        return From(a.AsDecimal() / bd);
     }
 
-    private static @this DoPower(@this a, @this baseExp, NumberPolicy policy)
+    private static @this DoIntDivide(@this a, @this b, NumberPolicy policy)
     {
-        // Fractional exponent ⇒ Double IEEE math.
+        // Truncating division — explicit C# semantics. Integer operands only;
+        // result stays integer (narrowed per policy from the wider operand kind).
+        if (a.Cat != Category.Integer || b.Cat != Category.Integer)
+            throw new System.ArithmeticException("intdiv requires integer operands.");
+        BigInteger bb = b.AsBigInteger();
+        if (bb == BigInteger.Zero) throw new System.DivideByZeroException();
+        BigInteger r = a.AsBigInteger() / bb;
+        NumberKind floor = WiderInteger(a.Kind, b.Kind);
+        return policy.Overflow == OverflowMode.Throw ? NarrowStrict(r, floor) : NarrowInteger(r, floor);
+    }
+
+    private static @this DoPower(@this a, @this exp, NumberPolicy policy)
+    {
+        // Fractional exponent ⇒ double IEEE math.
         bool exponentIsFractional =
-            (baseExp.Kind == NumberKind.Decimal && baseExp.AsDecimal() != System.Math.Truncate(baseExp.AsDecimal()))
-            || ((baseExp.Kind == NumberKind.Double || baseExp.Kind == NumberKind.Float)
-                && baseExp.AsDouble() != System.Math.Truncate(baseExp.AsDouble()));
-
+            (exp.Cat == Category.Decimal && exp.AsDecimal() != System.Math.Truncate(exp.AsDecimal()))
+            || (exp.Cat == Category.BinaryFloat && exp.AsDouble() != System.Math.Truncate(exp.AsDouble()));
         if (exponentIsFractional)
-            return From(System.Math.Pow(a.AsDouble(), baseExp.AsDouble()));
+            return From(System.Math.Pow(a.AsDouble(), exp.AsDouble()));
 
-        // Cap is loop-protective only — Math.Pow paths (Double base, negative
-        // exponent on non-Decimal base) are constant-time and skip the check.
-        long expL = baseExp.AsInt64();
+        long expL = exp.ToInt64();
 
         if (expL < 0)
         {
-            // Promote per precision policy.
-            if (policy.Precision == PrecisionMode.Decimal
-                && a.Kind != NumberKind.Double && a.Kind != NumberKind.Float)
+            if (policy.Precision == PrecisionMode.Decimal && a.Cat != Category.BinaryFloat)
             {
                 EnsureExponentInRange(expL);
                 decimal acc = 1m, baseD = a.AsDecimal();
@@ -223,37 +201,25 @@ public sealed partial class @this
             return From(System.Math.Pow(a.AsDouble(), expL));
         }
 
-        // Non-negative integer exponent on integer base — stay integer, overflow per policy.
-        if ((a.Kind == NumberKind.Int || a.Kind == NumberKind.Long)
-            && (baseExp.Kind == NumberKind.Int || baseExp.Kind == NumberKind.Long))
+        // Non-negative integer exponent on an integer base — BigInteger carrier, narrow per policy.
+        if (a.Cat == Category.Integer)
         {
             EnsureExponentInRange(expL);
-            try
-            {
-                long b = a.AsInt64();
-                long r = 1;
-                for (long i = 0; i < expL; i++) r = checked(r * b);
-                return (a.Kind == NumberKind.Int && r >= int.MinValue && r <= int.MaxValue)
-                    ? From((int)r) : From(r);
-            }
-            catch (System.OverflowException) when (policy.Overflow == OverflowMode.Promote)
-            {
-                // Widen to decimal — same expL, still under cap.
-                decimal acc = 1m, baseD = a.AsDecimal();
-                for (long i = 0; i < expL; i++) acc *= baseD;
-                return From(acc);
-            }
+            BigInteger r = BigInteger.Pow(a.AsBigInteger(), (int)expL);
+            NumberKind floor = a.Kind;
+            return policy.Overflow == OverflowMode.Throw ? NarrowStrict(r, floor) : NarrowInteger(r, floor);
         }
 
-        // Decimal or Double base — route through the matching path.
-        if (a.Kind == NumberKind.Decimal && expL >= 0)
+        // Decimal base, non-negative integer exponent — repeated decimal multiply.
+        if (a.Cat == Category.Decimal)
         {
             EnsureExponentInRange(expL);
             decimal acc = 1m, baseD = a.AsDecimal();
             for (long i = 0; i < expL; i++) acc *= baseD;
             return From(acc);
         }
-        // Double base — Math.Pow is constant time, no cap needed.
+
+        // Binary-float base — Math.Pow is constant-time.
         return From(System.Math.Pow(a.AsDouble(), expL));
     }
 
@@ -262,23 +228,5 @@ public sealed partial class @this
         if (expL > MaxPowerExponent || expL < -MaxPowerExponent)
             throw new PowerExponentTooLargeException(
                 $"Integer-exponent magnitude {expL} exceeds limit {MaxPowerExponent}.");
-    }
-
-    /// <summary>
-    /// Promotion under policy. Decimal × Double swings on
-    /// <see cref="PrecisionMode"/>.
-    /// </summary>
-    private static NumberKind PromoteKind(NumberKind a, NumberKind b, NumberPolicy policy)
-    {
-        bool aDec = a == NumberKind.Decimal, bDec = b == NumberKind.Decimal;
-        bool aDbl = a == NumberKind.Double || a == NumberKind.Float;
-        bool bDbl = b == NumberKind.Double || b == NumberKind.Float;
-
-        if (aDec && bDbl) return policy.Precision == PrecisionMode.Decimal ? NumberKind.Decimal : NumberKind.Double;
-        if (bDec && aDbl) return policy.Precision == PrecisionMode.Decimal ? NumberKind.Decimal : NumberKind.Double;
-        if (aDbl || bDbl) return NumberKind.Double;
-        if (aDec || bDec) return NumberKind.Decimal;
-        if (a == NumberKind.Long || b == NumberKind.Long) return NumberKind.Long;
-        return NumberKind.Int;
     }
 }

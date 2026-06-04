@@ -21,28 +21,28 @@ public partial class Read : IContext
     [Default(false)]
     public partial data.@this<bool> ResolveVariables { get; init; }
 
-    // Bare Data — polymorphic by MIME (text → string, binary → byte[], json → structured,
-    // image → app.type.image.@this). The Type stamp carries the high-level type; the
-    // value is the typed instance.
+    // Opens a file channel and reads through the one boundary — `channel.read`
+    // stamps {type, kind} from the file's Mime and returns LAZY Data. Nothing is
+    // converted at read time; the value (string / dict / image / table / bytes)
+    // materializes on first touch through the reader registry. So `read
+    // config.json` untouched stays the raw json string; navigating it parses.
     public async Task<data.@this> Run()
     {
-        if (!Path.Success) return Path;   // codeanalyzer v1 F4 — typed scheme error, not an NRE
-        var read = await Path.Value!.ReadText();
+        if (!Path.Success) return Path;   // typed scheme error, not an NRE
+        var channel = new global::app.channel.type.file.@this(Path.Value!);
+        var read = await channel.Read();
         if (!read.Success || read.Type?.ClrType.Exit() == true) return read;
 
-        // When the read result is image bytes, lift to an image value. The
-        // producer derivation already stamped {name:image, kind:<ext>}; keep
-        // that whole type (kind included) — don't flatten to FromName("image").
-        // image is the leaf owner of width/height/mime — lazy until accessed.
-        if (read.Value is byte[] bytes && read.Type?.Name == "image")
-        {
-            // Hand image the path OBJECT (the generated lazy Path already
-            // resolved it once); image derives Mime from it. No decomposing
-            // into bytes + mime + a re-resolved path.
-            var image = new global::app.type.image.@this(bytes, Path.Value!);
-            return new data.@this(read.Name, image, read.Type);
-        }
+        // A file-backed image carries a source-path facet (image.Path → the
+        // file, so %img.Path.Exists% works) that only the read site knows — the
+        // generic byte→image reader can't recover it. Build the path-backed image
+        // here from the raw bytes (no decode); every other type stays lazy.
+        if (read.Type?.Name == "image" && read.Raw is byte[] imageBytes)
+            return new data.@this(read.Name,
+                new global::app.type.image.@this(imageBytes, Path.Value!), read.Type);
 
+        // ResolveVariables is an explicit opt-in that needs the text in hand, so
+        // it forces materialization and resolves %var% — the only non-lazy path.
         if (ResolveVariables.Value && read.Value is string content)
         {
             var resolved = Context.Variable.Resolve(content, skipInfrastructure: true);

@@ -134,8 +134,15 @@ public sealed class OpenAi : ILlm
         OnBeforeRequest?.Invoke(messages, schema);
 
         // --- Cache check ---
+        // A build with caching disabled (--build={"cache":false}) bypasses the LLM
+        // cache for EVERY query, not only the ones that thread cache=%!build.cache%.
+        // The build-wide flag is authoritative; relying on each builder goal to pass
+        // the per-call param is fragile (most don't), so the override lives here.
+        // Gating cacheKey also skips the write below (guarded by cacheKey != null),
+        // so cache:false is a full bypass: no read, no stale entry left behind.
+        var buildCacheOff = app.Builder.IsEnabled && !app.Builder.Cache;
         string? cacheKey = null;
-        if (action.Cache.Value && action.Tools?.Value == null)
+        if (action.Cache.Value && action.Tools?.Value == null && !buildCacheOff)
         {
             cacheKey = ComputeCacheKey(messages, model, action.Temperature.Value, schema, action.Format?.Value);
             var cached = await settings.Get(CacheTable, cacheKey);
@@ -221,10 +228,10 @@ public sealed class OpenAi : ILlm
                 return global::app.data.@this<object>.From(httpResult);
 
             // --- Parse response ---
-            // http.request now wraps the wire body in Data<Response> where
-            // Response.Body carries the deserialized JSON object — unwrap that
-            // before handing it to ParseApiResponse.
-            var responseBody = (httpResult.Value as global::app.http.response.@this)?.Body ?? httpResult.Value;
+            // http.request returns plain Data with the body as its lazy value
+            // (http.response dissolved). Touching .Value materializes the body
+            // (json → object) through the reader.
+            var responseBody = httpResult.Value;
             var (responseJson, parseEx) = ParseApiResponse(responseBody);
             if (responseJson == null)
             {

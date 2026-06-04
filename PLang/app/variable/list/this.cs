@@ -146,17 +146,17 @@ public partial class @this
                         dv.OnCreate = prevFrame.OnCreate;
                         dv.OnChange = prevFrame.OnChange;
                         dv.OnDelete = prevFrame.OnDelete;
-                        var prevValue = prevFrame.Value;
+                        var prevValue = prevFrame.ScalarValue;
                         prevFrame.FireOnChange(dv);
                         frame.Set(name, dv);
-                        OnSet?.Invoke(name, prevValue, dv.Value);
+                        OnSet?.Invoke(name, prevValue, dv.ScalarValue);
                         return dv;
                     }
                     else if (!hadPrev)
                     {
                         dv.FireOnCreate();
                         frame.Set(name, dv);
-                        OnCreate?.Invoke(name, dv.Value);
+                        OnCreate?.Invoke(name, dv.ScalarValue);
                         return dv;
                     }
                     frame.Set(name, dv);
@@ -172,17 +172,17 @@ public partial class @this
                     dv.OnCreate = prev.OnCreate;
                     dv.OnChange = prev.OnChange;
                     dv.OnDelete = prev.OnDelete;
-                    var prevValue = prev.Value;
+                    var prevValue = prev.ScalarValue;
                     prev.FireOnChange(dv);
                     _variables[name] = dv;
-                    OnSet?.Invoke(name, prevValue, dv.Value);
+                    OnSet?.Invoke(name, prevValue, dv.ScalarValue);
                     return dv;
                 }
                 else if (prev == null)
                 {
                     dv.FireOnCreate();
                     _variables[name] = dv;
-                    OnCreate?.Invoke(name, dv.Value);
+                    OnCreate?.Invoke(name, dv.ScalarValue);
                     return dv;
                 }
 
@@ -272,10 +272,16 @@ public partial class @this
         }
 
         if (!parent.IsInitialized && parent.Value == null)
+        {
+            // A parse failure on a raw-backed parent stamps MaterializeFailed —
+            // surface it rather than masking the real cause with NotFound.
+            if (parent.Error?.Key == "MaterializeFailed")
+                return data.@this.FromError(parent.Error);
             return data.@this.NotFound(name);
+        }
 
-        // Lazy convert if parent is a typed string (e.g., json) — must happen before navigation
-        parent.ConvertValue();
+        // Lazy materialize if parent is a typed string (e.g., json) — must happen before navigation
+        parent.ForceMaterialize();
 
         // For dot-path, extract raw value from Data — we're setting a property on a C# object.
         // Dict/list values are snapshot-cloned so the target doesn't alias the source's
@@ -300,7 +306,12 @@ public partial class @this
             }
         }
         var target = parent.Value;
-        if (target == null) return data.@this.NotFound(name);
+        if (target == null)
+        {
+            if (parent.Error?.Key == "MaterializeFailed")
+                return data.@this.FromError(parent.Error);
+            return data.@this.NotFound(name);
+        }
         var result = SetValueOnObject(target, propertyName, rawValue);
         if (!ReferenceEquals(result, target))
             parent.Value = result;
@@ -624,7 +635,13 @@ public partial class @this
             var varName = match.Groups[1].Value;
             if (skipInfrastructure && varName.StartsWith('!'))
                 return match.Value; // Leave %!var% unresolved for untrusted input
-            return Get(varName)?.Value?.ToString() ?? match.Value;
+            // Scalar/output access (access-driven resolution): a bare `%x%` renders
+            // the value's raw source form, not a structured parse — `%cfg%` of a
+            // lazily-read config.json is the raw json string. ScalarValue equals
+            // the materialized value for authored/navigated Data, so this only
+            // changes raw-backed full matches (dotted paths navigate via Get and
+            // come back already materialized).
+            return Get(varName)?.ScalarValue?.ToString() ?? match.Value;
         });
     }
 

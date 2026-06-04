@@ -333,6 +333,18 @@ public sealed class @this
         "image", "video", "audio", "archive"
     };
 
+    // Tabular content — a grid of rows/columns. Stamped as the `table` type by
+    // shape (csv and xlsx are the SAME type, differing only by kind), which is
+    // what lets one renderer draw a grid by dispatching on type=table alone.
+    // The value is the kind the `table` reader dispatches on.
+    private static readonly Dictionary<string, string> _tabularMimeToKind = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["text/csv"] = "csv",
+        ["application/vnd.ms-excel"] = "xls",
+        ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"] = "xlsx",
+        ["application/vnd.oasis.opendocument.spreadsheet"] = "ods",
+    };
+
     private readonly object _derivedLock = new();
     private readonly HashSet<string> _allKinds;
     private readonly ConcurrentDictionary<string, string> _mimeToKind;
@@ -417,6 +429,11 @@ public sealed class @this
         if (string.IsNullOrWhiteSpace(mime) || mime == "application/octet-stream")
             return global::app.type.@this.Null;
 
+        // Tabular shape wins before the generic name derivation — csv/xlsx name
+        // the value `table` (a grid), not `text`/`object`.
+        if (_tabularMimeToKind.TryGetValue(mime, out var tableKind))
+            return new global::app.type.@this("table", tableKind);
+
         var slash = mime.IndexOf('/');
         var family = slash > 0 ? mime[..slash].ToLowerInvariant() : "";
         var subtype = slash >= 0 && slash < mime.Length - 1 ? mime[(slash + 1)..] : null;
@@ -429,10 +446,14 @@ public sealed class @this
             return new global::app.type.@this(family, kind);
 
         // Everything else: name = the CLR type the content materializes to,
-        // canonicalised (string→text, object→object, byte[]→bytes).
+        // canonicalised (string→text, object→object, byte[]→bytes). A non-
+        // primitive CLR type keeps its own PLang name (e.g. application/plang-goal
+        // → `goal`) rather than collapsing to `object` — its reader materializes
+        // toward that name. Unknown/no CLR type falls back to `object`.
         var clr = global::app.type.list.@this.ClrFromMime(mime);
         var name = clr != null
-            ? (global::app.type.list.@this.GetPrimitiveName(clr) ?? "object")
+            ? (global::app.type.list.@this.GetPrimitiveName(clr)
+               ?? global::app.type.list.@this.GetTypeNameStatic(clr))
             : "object";
         return new global::app.type.@this(name, kind);
     }

@@ -70,6 +70,10 @@ public sealed class GoalCall : module.IEvent
                 }
             case IDictionary<string, object?> dict:
                 var name = dict.TryGetValue("name", out var n) ? n?.ToString() ?? "" : "";
+                // The name slot may be a dynamic %var% (e.g. `call %goalName%`). GoalCall
+                // owns its own resolution now (skipped the generic container walk so signed
+                // params survive), so resolve the name here.
+                if (name.Contains('%')) name = context.Variable.Resolve(name)?.ToString() ?? name;
                 if (context.App.Type.IsClrTypeName(name))
                     return data.@this.FromError(new global::app.error.Error(
                         $"GoalCall.Name was set to a CLR type name '{name}'.",
@@ -83,9 +87,10 @@ public sealed class GoalCall : module.IEvent
                 {
                     parameters = pList
                         .OfType<IDictionary<string, object?>>()
-                        .Select(d => new data.@this(
+                        .Select(d => data.@this.ResolveParameter(
                             d.TryGetValue("name", out var dn) ? dn?.ToString() ?? "" : "",
-                            d.TryGetValue("value", out var dv) ? dv : null))
+                            d.TryGetValue("value", out var dv) ? dv : null,
+                            context))
                         .ToList();
                 }
                 return data.@this.Ok(new GoalCall { Name = name, PrPath = prPath, Parameters = parameters });

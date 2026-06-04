@@ -309,6 +309,45 @@ stdout from the body" no longer works: registering `Logger` *as*
 and add a sibling channel (above), or have the body write directly to
 file/stderr/stream rather than recursing through `"output"`.
 
+## `channel.read` — the single read boundary
+
+Every read enters through one verb on the base channel. `StampReadAsync(byte[] raw)` decides what the bytes are *from the channel's `Mime`* and produces a [lazy](data-internals.md#lazy-materialization--_raw-materialize-forcematerialize) `Data` — the value materializes through the [reader registry](type-system.md#reader-registry--apptypereaderthis-the-read-side-mirror) on first touch.
+
+```
+                    channel  — the I/O layer: a stream + Mime + serializer
+                       │   every read enters here
+      ┌────────────────┼────────────────┐
+   file             http            stream / session / message / event / goal / noop
+(fs-backed,    (http-backed,      (the existing kinds)
+ Mime from      bidirectional,
+ extension)     Mime from C-Type)
+      └────────────────┼────────────────┘
+                       ▼
+                 channel.read                       ← the ONE boundary
+                       │   StampReadAsync stamps (type, kind) from Mime;
+                       │   produces lazy Data. When Mime is the application/plang
+                       │   transport, the bytes are the Data container — the
+                       │   serializer reconstructs the Data (whose own value
+                       │   slot stays lazy via Wire.Read).
+                       ▼
+   Data { raw, type, kind, value: lazy, properties }
+```
+
+**Two stamping branches.**
+
+- `Mime` resolves to the `application/plang` *container* — recognised by **which serializer owns the Mime**, not by name match. The container is deserialized; the reconstructed Data's value slot defers through `Wire.Read` (see [wire passthrough](wire-serialization.md#wire-passthrough--rawuntouched--emitrawverbatim)). Sibling MIMEs that share the prefix but aren't the container (e.g. `application/plang-goal`, a goal source) fall through to value stamping — no per-extension special-casing.
+- Otherwise `Mime` names a *value*. `StampType` maps it to `(type, kind)` via shape-based `Format.TypeFromMime` — `application/json` → `(object, json)`, `text/csv` → `(table, csv)`, `image/png` → `(image, png)`. Text shapes keep the raw as a decoded string (no utf-8 re-encode tax on the common path); binary shapes keep `byte[]`. `text/plain` and unset Mime stamp `(text, null)`; `application/octet-stream` and any unknown Mime stamp `(bytes, null)`.
+
+**file and http live as channel kinds.** `app/channel/type/file/` and `app/channel/type/http/` are channels — `file.Mime` from the extension (`path.ReadBytes` does the read, AuthGate-gated, PLNG002 stays clean), `http.Mime` from the response `Content-Type`. `file.read` and `http.get` open the channel and call `channel.read`; they no longer convert at read time. `http.response.@this` dissolves into plain Data: body is the lazy value (type/kind from `Content-Type`), and status / headers / duration become Data **properties** (read with `!` — `%response!status%`, `%response!content-type%`). A property read never materializes the body.
+
+```plang
+- get http https://api/...      write to %response%
+- if %response!status% == 200    /// property read — body untouched
+    - write out %response.name%  /// body materializes: raw → json → .name
+```
+
+**Access-driven resolution.** The kind of access decides materialization — nothing sniffs content. `%x%` and `write out %x%` go through `ScalarValue` (text raw stays a string, byte raw decodes utf-8 strict). `%x.field%` materializes through the known type's reader. `as <type>` reads toward that type. `%x!prop%` reads `Data.Properties` only. If the type is unknown and navigation is attempted, the surface returns a typed error asking for `as <type>` — never a silent json/xml guess.
+
 ## Roadmap
 
 - **Stage 9 — cross-device migration.** A prototyped `Channel.Migrate` / `MigrationEnvelope` surface was removed before merge after security review (the envelope had PKI-shape fields but a keyless integrity hash; receive side was undesigned). The combination is still on the roadmap — see `Documentation/Runtime2/cool.md` "Channels that migrate across devices". Resurrection happens fresh under Stage 9 transport: real Ed25519 envelope, designed-in permission gate on Variables-snapshot exposure, designed-in receive handshake.

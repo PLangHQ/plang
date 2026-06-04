@@ -72,6 +72,10 @@ Notes are split across the topic docs below. Each section title maps to its doc 
 - `IExitsGoal.ShouldExit()` — Value-side opt-out for resolved sentinels → `type-system.md`
 - Recursion guards belong on the value, not on a parallel context layer → `data-internals.md`
 - Typed values — `app/type/<name>/`, per-(type, format) renderers, `type` + `kind` as separate fields → `type-system.md`
+- Reader registry — `app.type.reader.@this`, the read-side mirror → `type-system.md`
+- Lazy materialization — `_raw`, `Materialize`, `ForceMaterialize` → `data-internals.md`
+- Wire passthrough — `RawUntouched` / `EmitRawVerbatim` → `wire-serialization.md`
+- `channel.read` — the single read boundary → `io-channels.md`
 - `app.X` is the collection node — `[name]` / `.list` / `.current` → `type-system.md`
 - Producer-stamping invariant — `Data.Type` propagation → `type-system.md`
 - `type.@this.Null` — non-null sentinel on `Data.Type` → `type-system.md`
