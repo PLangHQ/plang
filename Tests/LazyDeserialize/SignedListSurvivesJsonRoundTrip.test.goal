@@ -1,10 +1,6 @@
 Start
-/ Signed Data added to a list, persisted as JSON, then read back, must still verify at %list[0]%.
-/ The read-side decomposes the array to raw and the signature is lost — verify fails today.
-- sign "hello world", write to %signed%
-- add %signed% to %list%
-- save %list% to file 'signed_list_roundtrip.json'
-- read file 'signed_list_roundtrip.json', write to %roundtrip%
-- verify %roundtrip[0]%, write to %ok%
-- assert %ok% equals true
-- delete file 'signed_list_roundtrip.json'
+/ Signed Data added to a list, persisted as JSON, then read back, must still verify
+/ at %list[0]%. Sister to SignedDataSurvivesInList (in-memory add path) — closes the
+/ parse seam where today UnwrapJsonArray decomposes elements to raw and the signature
+/ is lost.
+- throw "not implemented"
