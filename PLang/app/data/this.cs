@@ -674,7 +674,12 @@ public partial class @this
         if (context != null && IsWalkableContainer(raw))
         {
             var walked = WalkContainerVars(raw, context);
-            var transient = new @this(Name, walked, _type, Parent) { Context = context };
+            // A wire-shaped dict IS a serialized Data — reconstruct it (value + type as a
+            // whole) rather than wrapping the dict as a Data value, which would mislabel
+            // the type as `object` and lose the inner value's real type.
+            @this transient = IsWireShape(walked)
+                ? FromWireShape((IDictionary<string, object?>)walked!, Name, context)
+                : new @this(Name, walked, _type, Parent) { Context = context };
             transient.Properties = Properties;
             transient.OnCreate   = OnCreate;
             transient.OnChange   = OnChange;
@@ -691,6 +696,42 @@ public partial class @this
     // to wrap into a fresh Data without invoking the walker on non-container values.
     private static bool IsWalkableContainer(object? raw) =>
         raw is IList<object?> || raw is IDictionary<string, object?>;
+
+    // A dict carrying the canonical Data wire shape — a `value` slot paired with a
+    // structured `type` entity. Such an object IS a serialized Data, so binding it to a
+    // Data slot must reconstruct the Data (value + type as a whole), not nest the dict.
+    internal static bool IsWireShape(object? raw) =>
+        raw is IDictionary<string, object?> d && d.ContainsKey("value") && d.ContainsKey("type");
+
+    // Reconstruct a Data from its wire shape ({name?, value, type}). The value is set
+    // as a whole under its real type; a nested wire-shaped value is itself a Data. The
+    // slot's name (not the wire dict's) is used so the value's identity is its content.
+    internal static @this FromWireShape(IDictionary<string, object?> wire, string name, actor.context.@this? context)
+    {
+        object? rawValue = wire.TryGetValue("value", out var v) ? v : null;
+        object? innerValue = IsWireShape(rawValue)
+            ? FromWireShape((IDictionary<string, object?>)rawValue!, "", context)
+            : rawValue;
+        type? typeEntity = wire.TryGetValue("type", out var t) ? TypeFromWire(t, context) : null;
+        return new @this(name, innerValue, typeEntity) { Context = context };
+    }
+
+    // Build a type entity from its wire form — a bare name string ("text") or the
+    // structured {name, kind?, strict?} dict.
+    private static type? TypeFromWire(object? t, actor.context.@this? context)
+    {
+        switch (t)
+        {
+            case string s when !string.IsNullOrWhiteSpace(s):
+                return type.Create(s, context: context);
+            case IDictionary<string, object?> td when td.TryGetValue("name", out var nm) && nm != null:
+                string? kind = td.TryGetValue("kind", out var k) ? k?.ToString() : null;
+                bool strict = td.TryGetValue("strict", out var st) && st is bool b && b;
+                return type.Create(nm.ToString()!, kind, strict, context);
+            default:
+                return null;
+        }
+    }
 
     // Walk lists/dicts to substitute nested %var% references. Always returns a fresh
     // container for IList<object?> / IDictionary<string,object?> (WalkList/WalkDict

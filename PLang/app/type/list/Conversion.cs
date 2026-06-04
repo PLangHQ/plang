@@ -135,9 +135,17 @@ public sealed partial class @this
         if (targetType.IsAssignableFrom(sourceType))
             return (value, null);
 
-        // data.@this is the universal value wrapper — any value can become Data
+        // data.@this is the universal value wrapper — any value can become Data.
+        // A wire-shaped object ({value, type, ...}) IS a serialized Data, so
+        // reconstruct it as a whole (value + type) rather than nesting the dict as a
+        // Data value — nesting mislabels the type as `object` and loses the inner
+        // value's real type, so sign and verify would hash different canonical shapes.
         if (targetType == typeof(data.@this) && value is not data.@this)
+        {
+            if (data.@this.IsWireShape(value))
+                return (data.@this.FromWireShape((IDictionary<string, object?>)value, "", context), null);
             return (new data.@this("", value), null);
+        }
 
         // Handle nullable target types
         var underlying = System.Nullable.GetUnderlyingType(targetType);
