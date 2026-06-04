@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "lazy-deserialize PASS — signing round-trip byte-identical via EmitRawVerbatim + MarkOuterForHash; no auto-verify regression; 5 low/info notes, no critical/high." }
