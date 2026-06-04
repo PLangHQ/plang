@@ -1,0 +1,7 @@
+Start
+/ Same fixture as ReadConfigJson_UntouchedIsJsonString. On navigation
+/ (%cfg.port%) the value materialises through text/json's reader and the
+/ field resolves. This is Stage 5 access-driven resolution: navigation into
+/ a known type fires the reader on demand.
+- read file 'config.json', write to %cfg%
+- assert %cfg.port% equals 8080

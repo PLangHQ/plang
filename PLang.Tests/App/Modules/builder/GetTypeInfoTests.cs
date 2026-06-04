@@ -42,12 +42,12 @@ public class GetTypeInfoTests
         var action = new types { Context = _app.User.Context };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var info = result.Value as global::app.builder.type.@this;
         await Assert.That(info).IsNotNull();
-        await Assert.That(info!.TypeNames).Contains("string");
-        await Assert.That(info.TypeNames).Contains("int");
-        await Assert.That(info.TypeNames).Contains("bool");
+        await Assert.That(info!.PrimitiveNames).Contains("text");
+        await Assert.That(info.PrimitiveNames).Contains("number");
+        await Assert.That(info.PrimitiveNames).Contains("bool");
     }
 
     [Test]
@@ -56,9 +56,9 @@ public class GetTypeInfoTests
         var action = new types { Context = _app.User.Context };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var info = result.Value as global::app.builder.type.@this;
         await Assert.That(info).IsNotNull();
-        await Assert.That(info!.TypeSchemas).Contains("goal.call");
+        await Assert.That(info!.Types.Any(t => t.Name == "goal.call")).IsTrue();
     }
 }

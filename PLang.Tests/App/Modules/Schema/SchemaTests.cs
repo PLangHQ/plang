@@ -33,8 +33,8 @@ public class SchemaTests
         var schema = _app.Module.Schema.Build();
 
         await Assert.That(schema.PrimitiveNames).IsNotEmpty();
-        await Assert.That(schema.PrimitiveNames).Contains("string");
-        await Assert.That(schema.PrimitiveNames).Contains("int");
+        await Assert.That(schema.PrimitiveNames).Contains("text");
+        await Assert.That(schema.PrimitiveNames).Contains("number");
         await Assert.That(schema.Types).IsNotEmpty();
     }
 
@@ -44,7 +44,7 @@ public class SchemaTests
     public async Task Build_SurfacesEnumAsKindEnumWithValues()
     {
         var schema = _app.Module.Schema.Build();
-        var op = schema.Types.FirstOrDefault(t => t.Value == "operator");
+        var op = schema.Types.FirstOrDefault(t => t.Name == "operator");
 
         await Assert.That(op).IsNotNull();
         await Assert.That(op!.Values).IsNotNull();
@@ -58,7 +58,7 @@ public class SchemaTests
     public async Task Build_SurfacesRecordAsKindRecordWithFields()
     {
         var schema = _app.Module.Schema.Build();
-        var goal = schema.Types.FirstOrDefault(t => t.Value == "goal");
+        var goal = schema.Types.FirstOrDefault(t => t.Name == "goal");
 
         await Assert.That(goal).IsNotNull();
         await Assert.That(goal!.Fields).IsNotNull();
@@ -67,50 +67,46 @@ public class SchemaTests
     }
 
     // TypeSchemas is the pre-rendered markdown the Liquid prompt consumes.
-    // Shape: "  name: …" per entry, with record fields in braces and enum values
-    // pipe-joined. This test locks both formats in.
+    // The strongly-typed schema exposes Types as IReadOnlyList<type.@this>;
+    // the Liquid template (CompileUser.llm) renders them. This test pins
+    // the structured shape — records carry Fields, enums carry Values.
     [Test]
     public async Task TypeSchemas_RendersRecordsAndEnumsInExpectedShape()
     {
         var schema = _app.Module.Schema.Build();
-        var rendered = schema.TypeSchemas;
 
-        await Assert.That(rendered).Contains("goal: {");        // record shape
-        await Assert.That(rendered).Contains("operator: ==");   // enum shape (first value)
-        await Assert.That(rendered).Contains(" | ");            // enum separator
+        var goal = schema.Types.FirstOrDefault(t => t.Name == "goal");
+        await Assert.That(goal).IsNotNull();
+        await Assert.That(goal!.Fields).IsNotNull();
+        await Assert.That(goal.Fields!.Count).IsGreaterThan(0);
+
+        var op = schema.Types.FirstOrDefault(t => t.Name == "operator");
+        await Assert.That(op).IsNotNull();
+        await Assert.That(op!.Values).IsNotNull();
+        await Assert.That(op.Values!).Contains("==");
     }
 
-    // The schema MUST serialize to JSON cleanly — that's the whole point of
-    // making it a structured object. ClrType is hidden (attribute-tagged),
-    // Fields/Values appear only for the kind that populates them.
+    // The schema is a structured object — PrimitiveNames + Types (strongly
+    // typed) + Kinds. Consumers (the Liquid template, trace viewer) read the
+    // typed surface directly; there's no bespoke JSON-dump method. An enum
+    // entry surfaces via Values populated, a record via Fields.
     [Test]
-    public async Task ToJson_ProducesStructuredSchema()
+    public async Task Schema_ExposesStructuredTypedCatalog()
     {
         var schema = _app.Module.Schema.Build();
-        var json = schema.ToJson();
 
-        using var doc = JsonDocument.Parse(json);
-        var root = doc.RootElement;
+        await Assert.That(schema.PrimitiveNames).IsNotEmpty();
+        await Assert.That(schema.Types).IsNotEmpty();
 
-        // Top-level shape
-        await Assert.That(root.TryGetProperty("primitiveNames", out var names)).IsTrue();
-        await Assert.That(names.ValueKind).IsEqualTo(JsonValueKind.Array);
-        await Assert.That(root.TryGetProperty("types", out var types)).IsTrue();
-        await Assert.That(types.ValueKind).IsEqualTo(JsonValueKind.Array);
+        var op = schema.Types.FirstOrDefault(t => t.Name == "operator");
+        await Assert.That(op).IsNotNull();
+        await Assert.That(op!.Values).IsNotNull();        // enum-shape: Values populated
+        await Assert.That(op.Values!).Contains("==");
+        await Assert.That(op.Fields).IsNull();             // not a record
 
-        // An enum entry should have `values` and not `fields`.
-        JsonElement? opEntry = null;
-        foreach (var t in types.EnumerateArray())
-        {
-            if (t.GetProperty("name").GetString() == "operator") { opEntry = t; break; }
-        }
-        await Assert.That(opEntry).IsNotNull();
-        // After Stage 4 Entry-dissolve: enum-shape entries surface via `values` being
-        // populated.  No discriminator enum — the data is the shape.
-        await Assert.That(opEntry!.Value.TryGetProperty("values", out _)).IsTrue();
-        await Assert.That(opEntry.Value.TryGetProperty("fields", out _)).IsFalse();
-
-        // ClrType must NOT leak — it's a CLR System.Type, not meaningful to consumers.
-        await Assert.That(opEntry.Value.TryGetProperty("clrType", out _)).IsFalse();
+        // ClrType is internal — never on the public/serializable surface.
+        await Assert.That(typeof(global::app.type.@this)
+            .GetProperty("ClrType", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+            .IsNull();
     }
 }

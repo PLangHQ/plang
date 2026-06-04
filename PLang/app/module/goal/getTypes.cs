@@ -91,7 +91,7 @@ public partial class getTypes : IContext
                 }
                 else
                 {
-                    type = (valueParam?.Type?.Value as string) ?? "object";
+                    type = (valueParam?.Type?.Name as string) ?? "object";
                 }
                 working[Normalise(rawName)] = type;
             }

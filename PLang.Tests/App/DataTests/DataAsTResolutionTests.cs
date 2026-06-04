@@ -42,7 +42,7 @@ public class DataAsTResolutionTests
 
         var result = data.As<string>(_app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo("/tmp/x.txt");
     }
 
@@ -121,7 +121,7 @@ public class DataAsTResolutionTests
 
         var result = data.As<int>(_app.User.Context);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
     }
 
@@ -179,7 +179,7 @@ public class DataAsTResolutionTests
 
         var result = data.As<List<PrAction>>(_app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsNotNull();
         // The substituted value should NOT have appeared inside the Action template — the raw %comment% remains.
         var firstAction = result.Value![0];
@@ -232,7 +232,7 @@ public class DataAsTResolutionTests
 
         var result = data.As<string>(_app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo("%b%");
     }
 
@@ -248,7 +248,7 @@ public class DataAsTResolutionTests
 
         var result = data.As<string>(_app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo("%x%");
     }
 
@@ -264,7 +264,7 @@ public class DataAsTResolutionTests
 
         var result = data.As<string>(_app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo("hello %x%");
     }
 
@@ -282,7 +282,7 @@ public class DataAsTResolutionTests
 
         var result = data.As<string>(_app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo("X-%b%");
     }
 
@@ -302,7 +302,7 @@ public class DataAsTResolutionTests
 
         var result = data.As<string>(_app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo("%b%");
     }
 
@@ -350,7 +350,7 @@ public class DataAsTResolutionTests
         var paramData = new Data("Messages", "%messages%") { Context = context };
         var result = paramData.As<List<Dictionary<string, object?>>>(context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var content = (string)result.Value![0]["Content"]!;
         await Assert.That(content).IsEqualTo("literal text with %x% and %y% inside");
         // Negative assertion — the bug substituted these:
@@ -386,7 +386,7 @@ public class DataAsTResolutionTests
         var paramData = new Data("Messages", "%fixerMessages%") { Context = context };
         var result = paramData.As<List<global::app.module.llm.LlmMessage>>(context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var content = result.Value![0].Content!;
         await Assert.That(content).IsEqualTo("literal text with %goal.Name% and %buildStart% inside");
         // Negative assertion — the bug substituted these:

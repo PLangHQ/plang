@@ -7,15 +7,15 @@ namespace app.module.@event;
 
 /// <summary>
 /// Registers an event binding on the execution lifecycle.
-/// Consolidates all event types (BeforeGoal, AfterGoal, BeforeStep, AfterStep, BeforeAction, AfterAction)
-/// into a single action with a Type parameter. Returns the binding ID for later removal.
+/// Consolidates all lifecycle moments into a single action with a Trigger parameter
+/// (the `trigger` enum). Returns the binding ID for later removal.
 /// </summary>
 [Action("on", Cacheable = false)]
 public partial class On : IContext
 {
-    /// <summary>Event type: BeforeGoal, AfterGoal, BeforeStep, AfterStep, BeforeAction, AfterAction.</summary>
+    /// <summary>Lifecycle moment the callback binds to (a <c>trigger</c> enum value, e.g. BeforeGoal, OnAsk).</summary>
     [IsNotNull]
-    public partial data.@this<EventType> Type { get; init; }
+    public partial data.@this<Trigger> Trigger { get; init; }
     /// <summary>Goal to execute when the event fires.</summary>
     public partial data.@this<GoalCall> GoalToCall { get; init; }
     /// <summary>Glob or regex pattern to match goal names. Null matches all goals.</summary>
@@ -47,7 +47,7 @@ public partial class On : IContext
             async (context, _, _) => await context.App!.RunGoalAsync(goalToCall, targetActor.Context, context.CancellationToken);
 
         var binding = new EventBinding(
-            Type.Value,
+            Trigger.Value,
             handler,
             goalNamePattern: GoalPattern?.Value,
             stepPattern: StepPattern?.Value,

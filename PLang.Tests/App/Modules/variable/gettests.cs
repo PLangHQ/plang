@@ -22,7 +22,7 @@ public class GetTests
         var action = new Get { Context = context, Name = new app.variable.@this("testVar") };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo("testValue");
         await Assert.That(result.Name).IsEqualTo("testVar");
     }
@@ -35,7 +35,7 @@ public class GetTests
         var action = new Get { Context = context, Name = new app.variable.@this("nonexistent") };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsNull();
     }
 }

@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "Merged type-kind-strict + lazy-deserialize: strict-kind x lazy passthrough seam traced clean, suites green (273/273 + 4025/0) on clean rebuild, post-merge work test-only; one systemic provenance-comment nit." }

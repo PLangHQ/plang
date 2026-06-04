@@ -19,7 +19,7 @@ public class ISerializerInputContractTests
         using var ms = new MemoryStream();
         var result = await json.SerializeAsync(ms, global::app.data.@this.Ok("hello"));
         await Assert.That(result).IsNotNull();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     // 1.2 — Old polymorphic SerializeAsync(Stream, object, …) overload is gone.
@@ -58,7 +58,7 @@ public class ISerializerInputContractTests
         var probe = new ProbeSerializer();
 
         await using var app = new global::app.@this("/tmp/stream-channel-write-test");
-        var ch = new global::app.channel.stream.@this(
+        var ch = new global::app.channel.type.stream.@this(
             "probe", new MemoryStream(), global::app.channel.ChannelDirection.Output)
         {
             Mime = probe.Type,

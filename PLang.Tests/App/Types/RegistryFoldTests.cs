@@ -43,13 +43,12 @@ public class RegistryFoldTests
     [Test]
     public async Task ResolveName_And_ResolveType_RoundTrip_PerBuiltIn()
     {
+        // Round-trip for primitives whose CLR↔name mapping is 1:1.
+        // Numerics (int/long/decimal/double) collapse to name "number" so they
+        // don't per-CLR-type round-trip — covered separately below.
         foreach (var (name, clr) in new (string, System.Type)[]
         {
-            ("string", typeof(string)),
-            ("int", typeof(int)),
-            ("long", typeof(long)),
-            ("double", typeof(double)),
-            ("decimal", typeof(decimal)),
+            ("text", typeof(string)),
             ("bool", typeof(bool)),
             ("datetime", typeof(System.DateTimeOffset)),
         })
@@ -57,6 +56,12 @@ public class RegistryFoldTests
             await Assert.That(_types.ResolveType(name)).IsEqualTo(clr);
             await Assert.That(_types.ResolveName(clr)).IsEqualTo(name);
         }
+        // Numerics: many-to-one — every numeric CLR primitive names "number"
+        // (the kind carries the precision on the entity).
+        await Assert.That(_types.ResolveName(typeof(int))).IsEqualTo("number");
+        await Assert.That(_types.ResolveName(typeof(long))).IsEqualTo("number");
+        await Assert.That(_types.ResolveName(typeof(decimal))).IsEqualTo("number");
+        await Assert.That(_types.ResolveName(typeof(double))).IsEqualTo("number");
     }
 
     [Test]
@@ -74,7 +79,7 @@ public class RegistryFoldTests
     [Test]
     public async Task Conversion_TryConvertTo_RoutesThroughRegistry_NotPrimitivesDict()
     {
-        var (value, error) = global::app.type.list.@this.TryConvertTo("42", typeof(int));
+        var (value, error) = global::app.type.list.@this.TryConvert("42", typeof(int));
         await Assert.That(error).IsNull();
         await Assert.That(value).IsEqualTo(42);
     }

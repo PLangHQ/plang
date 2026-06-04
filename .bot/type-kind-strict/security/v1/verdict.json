@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "type-kind-strict + lazy-deserialize merged — strict×lazy seam holds (Value.Value materialisation closes the passthrough bypass); 3 low/info findings (process-local imprint accepted by threat model, new text.Convert default-options semgrep hit, pre-existing Span.SequenceEqual on hash compare); no critical/high."
+}

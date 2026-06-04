@@ -18,7 +18,7 @@ public class FullVarMatchTests
             parameters: new[] { ("path", (object?)"%path%") },
             variables: new Dictionary<string, object?> { ["path"] = "/tmp/x.txt" });
 
-        await Assert.That(result.Data.Success).IsTrue();
+        await result.Data.IsSuccess();
         var typed = result.Data as global::app.data.@this<string>;
         await Assert.That(typed!.Value).IsEqualTo("/tmp/x.txt");
     }
@@ -33,7 +33,7 @@ public class FullVarMatchTests
         var result = await MatrixRunner.RunAsync<FullVarMatch>(app,
             parameters: new[] { ("path", (object?)"%count%") });
 
-        await Assert.That(result.Data.Success).IsTrue();
+        await result.Data.IsSuccess();
         // FullVarMatch's Path is Data<string>; "42" should be the converted string form.
         var typed = result.Data as global::app.data.@this<string>;
         await Assert.That(typed!.Value).IsEqualTo("42");

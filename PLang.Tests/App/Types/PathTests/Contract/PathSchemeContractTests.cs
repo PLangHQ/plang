@@ -42,9 +42,9 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
         {
             var content = $"contract {Guid.NewGuid()}";
             var written = await p.WriteText(content);
-            await Assert.That(written.Success).IsTrue();
+            await written.IsSuccess();
             var read = await p.ReadText();
-            await Assert.That(read.Success).IsTrue();
+            await read.IsSuccess();
             await Assert.That(read.Value).IsEqualTo(content);
         }
         finally { await Fixture.Cleanup(p); }
@@ -75,7 +75,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
         {
             await p.WriteText("1234567");
             var stat = await p.Stat();
-            await Assert.That(stat.Success).IsTrue();
+            await stat.IsSuccess();
             var info = (Path.StatInfo)stat.Value!;
             await Assert.That(info.Length).IsEqualTo(7L);
         }
@@ -91,7 +91,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
         {
             await src.WriteText("copy me");
             var copied = await src.CopyTo(dst, overwrite: true, includeSubfolders: true);
-            await Assert.That(copied.Success).IsTrue();
+            await copied.IsSuccess();
             var read = await dst.ReadText();
             await Assert.That(read.Value).IsEqualTo("copy me");
             var srcStill = await src.ExistsAsync();
@@ -109,7 +109,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
         {
             await src.WriteText("move me");
             var moved = await src.MoveTo(dst, overwrite: true);
-            await Assert.That(moved.Success).IsTrue();
+            await moved.IsSuccess();
             var read = await dst.ReadText();
             await Assert.That(read.Value).IsEqualTo("move me");
             var srcGone = await src.ExistsAsync();
@@ -124,7 +124,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
         try
         {
             var read = await p.ReadText();
-            await Assert.That(read.Success).IsFalse();
+            await read.IsFailure();
             await Assert.That(read.Error).IsTypeOf<global::app.error.PermissionDenied>();
         }
         finally { await Fixture.Cleanup(p); }
@@ -136,7 +136,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
         try
         {
             var write = await p.WriteText("should not land");
-            await Assert.That(write.Success).IsFalse();
+            await write.IsFailure();
             await Assert.That(write.Error).IsTypeOf<global::app.error.PermissionDenied>();
         }
         finally { await Fixture.Cleanup(p); }
@@ -148,7 +148,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
         try
         {
             var read = await p.ReadText();
-            await Assert.That(read.Success).IsFalse();
+            await read.IsFailure();
             // Every scheme routes refusal through the same base Authorize gate —
             // the Error is a PermissionDenied with the same key/status.
             await Assert.That(read.Error!.Key).IsEqualTo("PermissionDenied");

@@ -45,7 +45,7 @@ public class ListAddIdentityTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // Same List<object?> reference — direct mutation, not a snapshot copy stored.
         var live = vars.Get("products").Value as List<object?>;
         await Assert.That(live).IsNotNull();
@@ -102,7 +102,7 @@ public class ListAddIdentityTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var live = vars.Get("products").Value as List<object?>;
         await Assert.That(live!.Count).IsEqualTo(1);
         // list.add snapshot-clones simple values via Value.Clone() — assert the value, not ref.
@@ -134,7 +134,7 @@ public class ListAddIdentityTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // fresh got the new entry; orphan stayed at 1.
         await Assert.That(fresh.Count).IsEqualTo(2);
         await Assert.That(orphan.Count).IsEqualTo(1);

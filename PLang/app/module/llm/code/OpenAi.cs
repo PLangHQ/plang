@@ -70,8 +70,19 @@ public sealed class OpenAi : ILlm
         model ??= await ResolveConfigAsync(settings, "llm.model", null, "gpt-5.4-nano");
 
         // --- Validate ---
-        if (action.Messages.Value!.Count == 0)
-            return global::app.data.@this<object>.FromError(new ActionError("Messages list is empty", "ValidationError", 400));
+        // HACK (minimal): Messages.Value can be NULL (not just empty) — the [IsNotNull]
+        // guard checks the parameter's presence, not the lazily-resolved value. Seen in the
+        // builder self-build: when error.handle RETRIES QueryAndValidatePlan
+        // (BuildGoal/Plan.goal:26), the parent-scope %messages% variable resolves to null on
+        // the retry (it's fine on the first call), so `action.Messages.Value!.Count` NRE'd
+        // and crashed the whole build with a bare NullReferenceException. Treat null like
+        // empty → clean ValidationError instead of a crash.
+        // TODO(coder): real fix is in the retry/scope handling — a sub-goal's access to a
+        // parent-scope variable should survive an error.handle retry (or pass %messages% as
+        // a goal.call parameter to QueryAndValidatePlan so it re-binds each attempt). See
+        // .bot/type-kind-strict/builder/v2/baseline-findings.md.
+        if (action.Messages.Value is not { Count: > 0 })
+            return global::app.data.@this<object>.FromError(new ActionError("Messages list is empty or null", "ValidationError", 400));
 
         // --- Build messages ---
         var messages = CloneMessages(action.Messages.Value!);
@@ -123,8 +134,15 @@ public sealed class OpenAi : ILlm
         OnBeforeRequest?.Invoke(messages, schema);
 
         // --- Cache check ---
+        // A build with caching disabled (--build={"cache":false}) bypasses the LLM
+        // cache for EVERY query, not only the ones that thread cache=%!build.cache%.
+        // The build-wide flag is authoritative; relying on each builder goal to pass
+        // the per-call param is fragile (most don't), so the override lives here.
+        // Gating cacheKey also skips the write below (guarded by cacheKey != null),
+        // so cache:false is a full bypass: no read, no stale entry left behind.
+        var buildCacheOff = app.Builder.IsEnabled && !app.Builder.Cache;
         string? cacheKey = null;
-        if (action.Cache.Value && action.Tools?.Value == null)
+        if (action.Cache.Value && action.Tools?.Value == null && !buildCacheOff)
         {
             cacheKey = ComputeCacheKey(messages, model, action.Temperature.Value, schema, action.Format?.Value);
             var cached = await settings.Get(CacheTable, cacheKey);
@@ -210,10 +228,10 @@ public sealed class OpenAi : ILlm
                 return global::app.data.@this<object>.From(httpResult);
 
             // --- Parse response ---
-            // http.request now wraps the wire body in Data<Response> where
-            // Response.Body carries the deserialized JSON object — unwrap that
-            // before handing it to ParseApiResponse.
-            var responseBody = (httpResult.Value as global::app.http.response.@this)?.Body ?? httpResult.Value;
+            // http.request returns plain Data with the body as its lazy value
+            // (http.response dissolved). Touching .Value materializes the body
+            // (json → object) through the reader.
+            var responseBody = httpResult.Value;
             var (responseJson, parseEx) = ParseApiResponse(responseBody);
             if (responseJson == null)
             {
@@ -819,7 +837,7 @@ public sealed class OpenAi : ILlm
         {
             props[param.Name] = new Dictionary<string, string>
             {
-                ["type"] = MapPlangTypeToJsonSchema(param.Type?.Value)
+                ["type"] = MapPlangTypeToJsonSchema(param.Type?.Name, param.Type?.Kind)
             };
             if (param.Value == null)
                 required.Add(param.Name);
@@ -836,8 +854,18 @@ public sealed class OpenAi : ILlm
         return result;
     }
 
-    private static string MapPlangTypeToJsonSchema(string? typeName)
+    private static string MapPlangTypeToJsonSchema(string? typeName, string? kind = null)
     {
+        // Post-Stage-2: typeName "number" with kind discriminates precision.
+        // int/long → integer; decimal/double/float → number.
+        if (string.Equals(typeName, "number", System.StringComparison.OrdinalIgnoreCase))
+        {
+            return kind?.ToLowerInvariant() switch
+            {
+                "int" or "long" => "integer",
+                _ => "number"
+            };
+        }
         return typeName?.ToLowerInvariant() switch
         {
             "int" or "long" or "int32" or "int64" => "integer",

@@ -15,21 +15,51 @@ namespace app.type.image;
 /// Routing key / serializer always stays <c>image</c>: no <c>path|image</c>
 /// union. See plan/build-vs-runtime.md "composition, not union".</para>
 /// </summary>
-public sealed partial class @this : global::app.data.IBooleanResolvable
+public sealed partial class @this : global::app.data.IBooleanResolvable, global::app.data.IKindValidatable, global::app.data.IStrictKindEnforcer, global::app.data.ILoadable
 {
     public static string Example => "/some/photo.jpg";
     public static string Shape => "string";
 
-    [global::app.Out, global::app.Store]
-    public byte[] Bytes { get; }
+    /// <summary>
+    /// The types this one inherits — self included, declared as <c>typeof</c>
+    /// tokens (compiler-checked, rename-safe). An image <em>is-a</em> path
+    /// (it has-a path facet), so <c>image : path</c>. Read by
+    /// <c>type.@this.Is</c> (the static-<c>Type</c> convention): <c>variable.set</c>
+    /// keeps an image bound to a <c>path</c> slot as-is (image wins) rather than
+    /// downgrading it. Substitutability only — no state/behaviour is inherited,
+    /// so multiple entries here carry none of OOP MI's diamond/MRO baggage.
+    /// </summary>
+    public static System.Collections.Generic.IReadOnlyList<System.Type> Type { get; }
+        = new[] { typeof(@this), typeof(global::app.type.path.@this) };
 
-    [global::app.Out, global::app.Store]
-    public string Mime { get; }
+    // Null until loaded — a path-backed image reads nothing until first content
+    // access. A bytes-backed image sets this in the constructor.
+    private byte[]? _bytes;
+    private string? _mime;
+
+    // Imprinted strict-kind requirement (from `as image/<kind> strict`). When
+    // set, the content must sniff to this kind the moment bytes are present —
+    // checked at the set for an already-loaded image, or at BytesAsync for a
+    // lazy path-backed one (which throws).
+    private string? _requiredKind;
 
     /// <summary>
-    /// Optional source path. Null when the image was constructed from raw bytes
-    /// (e.g. base64 decode, network fetch). Carries the path's typed properties
-    /// (<c>Exists</c>, <c>Relative</c>, …) when present.
+    /// The in-memory image bytes. For a path-backed image this is empty until
+    /// <see cref="BytesAsync"/> has loaded the content (the lazy load is async
+    /// because path reads pass through the actor permission gate — a sync getter
+    /// must not block on I/O). Use <see cref="BytesAsync"/> to load-then-read.
+    /// </summary>
+    [global::app.Out, global::app.Store]
+    public byte[] Bytes => _bytes ?? System.Array.Empty<byte>();
+
+    [global::app.Out, global::app.Store]
+    public string Mime => _mime ??= (Path?.MimeType ?? "application/octet-stream");
+
+    /// <summary>
+    /// Source path. Set for a path-backed image (content lazy-loads from here)
+    /// or as provenance for a bytes-backed one (network fetch, base64 decode);
+    /// null when the image is purely in-memory. Carries the path's typed
+    /// properties (<c>Exists</c>, <c>Relative</c>, …) when present.
     /// </summary>
     [global::app.LlmBuilder, global::app.Out, global::app.Store]
     public global::app.type.path.@this? Path { get; init; }
@@ -37,21 +67,140 @@ public sealed partial class @this : global::app.data.IBooleanResolvable
     private int? _width;
     private int? _height;
 
-    /// <summary>Lazy width — read on first access via SixLabors.ImageSharp.</summary>
+    /// <summary>Lazy width — read on first access via SixLabors.ImageSharp.
+    /// Valid once bytes are in memory (bytes-backed, or after <see cref="BytesAsync"/>).</summary>
     public int Width => _width ??= ProbeDimensions().w;
 
     /// <summary>Lazy height — read on first access via SixLabors.ImageSharp.</summary>
     public int Height => _height ??= ProbeDimensions().h;
 
+    /// <summary>Bytes-backed: the content is already in hand (network fetch, base64 decode).</summary>
     public @this(byte[] bytes, string mime, global::app.type.path.@this? path = null)
     {
-        Bytes = bytes ?? System.Array.Empty<byte>();
-        Mime = mime ?? "application/octet-stream";
+        _bytes = bytes ?? System.Array.Empty<byte>();
+        _mime = mime ?? "application/octet-stream";
         Path = path;
     }
 
-    public System.Threading.Tasks.Task<bool> AsBooleanAsync()
-        => System.Threading.Tasks.Task.FromResult(Bytes.Length > 0);
+    /// <summary>
+    /// Bytes-backed but path-aware: content already read, the SAME source path
+    /// object retained (Mime derives from it). file.read's image lift uses this
+    /// so the value carries its path without decomposing it into loose
+    /// primitives (bytes + mime + a re-resolved path).
+    /// </summary>
+    public @this(byte[] bytes, global::app.type.path.@this path)
+    {
+        _bytes = bytes ?? System.Array.Empty<byte>();
+        Path = path;
+    }
+
+    /// <summary>
+    /// Path-backed: a lazy handle. <c>.Path</c> is set and <b>nothing is read</b>
+    /// — the content materializes from the path on the first
+    /// <see cref="BytesAsync"/>. The proving instance for reference-fundamental
+    /// laziness (audio/video follow the same shape).
+    /// </summary>
+    public @this(global::app.type.path.@this path)
+    {
+        Path = path ?? throw new System.ArgumentNullException(nameof(path));
+    }
+
+    /// <summary>
+    /// The image bytes, loaded through the path's auth gate on first access and
+    /// cached. A bytes-backed image returns its in-memory bytes with no I/O; a
+    /// path-backed image reads <see cref="Path"/> exactly once (subsequent calls
+    /// return the cache). Async because the read goes through
+    /// <c>FilePath.AuthGate</c> — never a blocking read in a sync getter. A read
+    /// failure (missing file, denied) surfaces here, at first content access.
+    /// </summary>
+    public async System.Threading.Tasks.Task<byte[]> BytesAsync()
+    {
+        if (_bytes != null) return _bytes;
+        if (Path == null) return _bytes = System.Array.Empty<byte>();
+        var read = await Path.ReadBytes();
+        if (!read.Success)
+            throw new System.IO.IOException(read.Error?.Message ?? $"Could not read image from '{Path}'.");
+        _bytes = read.Value ?? System.Array.Empty<byte>();
+        // Strict kind fires here, at byte-materialization — the set stayed lazy.
+        if (CheckStrictKind() is { ok: false } mismatch)
+            throw new global::app.data.StrictKindMismatchException(_requiredKind!, mismatch.actualKind);
+        return _bytes;
+    }
+
+    /// <summary>Imprint the strict kind this image's content must match (from `as image/<kind> strict`).</summary>
+    public void RequireStrictKind(string kind) => _requiredKind = kind;
+
+    /// <summary>
+    /// <see cref="global::app.data.ILoadable"/> seam: pull a path-backed image's
+    /// bytes into memory (and run the strict check) so the sync renderers that
+    /// run below the serializer's STJ wall read real content. A bytes-backed
+    /// image is already loaded — <see cref="BytesAsync"/> returns on its fast path.
+    /// </summary>
+    public async System.Threading.Tasks.Task LoadAsync() => await BytesAsync();
+
+    /// <summary>
+    /// Sniff the loaded bytes against the imprinted kind. Null when no strict
+    /// kind was required or the bytes are not loaded yet (a lazy path-backed
+    /// image defers enforcement to <see cref="BytesAsync"/>).
+    /// </summary>
+    public (bool ok, string? actualKind)? CheckStrictKind()
+    {
+        if (_requiredKind == null || _bytes == null || _bytes.Length == 0) return null;
+        return ValidateKind(_bytes, _requiredKind);
+    }
+
+    public async System.Threading.Tasks.Task<bool> AsBooleanAsync()
+    {
+        // Truthiness without forcing a full load: in-memory bytes are truthy
+        // when non-empty; a path-backed image is truthy when its resource exists
+        // (existence probe, not a byte read — keeps the handle lazy).
+        if (_bytes != null) return _bytes.Length > 0;
+        if (Path != null)
+        {
+            var exists = await Path.ExistsAsync();
+            return exists.Success && exists.Value;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Sniffs the magic bytes of <paramref name="value"/> (a <c>byte[]</c>) via
+    /// ImageSharp's <c>DetectFormat</c>, and compares the format's primary
+    /// extension to <paramref name="requiredKind"/>. Returns <c>(true, null)</c>
+    /// on match, <c>(false, actualKind)</c> on mismatch.
+    /// </summary>
+    public (bool ok, string? actualKind) ValidateKind(object value, string requiredKind)
+    {
+        // Sniff the realistic value shapes: raw byte[], or a loaded image
+        // instance (read-lift) — read its own bytes, not the probe's empty ones.
+        var bytes = value switch
+        {
+            byte[] b => b,
+            @this img => img.Bytes,
+            _ => Bytes
+        };
+        if (bytes == null || bytes.Length == 0) return (false, null);
+        try
+        {
+            var fmt = SixLabors.ImageSharp.Image.DetectFormat(bytes);
+            if (fmt == null) return (false, null);
+            // ImageSharp's IImageFormat exposes FileExtensions (e.g. ["gif"],
+            // ["jpg","jpeg"]); the canonical form for "kind" is the shortest.
+            string? actual = null;
+            foreach (var ext in fmt.FileExtensions)
+            {
+                if (actual == null || ext.Length < actual.Length) actual = ext;
+            }
+            if (actual == null) return (false, null);
+            if (string.Equals(actual, requiredKind, System.StringComparison.OrdinalIgnoreCase))
+                return (true, null);
+            return (false, actual);
+        }
+        catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
+        {
+            return (false, null);
+        }
+    }
 
     private (int w, int h) ProbeDimensions()
     {

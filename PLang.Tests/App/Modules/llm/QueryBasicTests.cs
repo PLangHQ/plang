@@ -53,7 +53,7 @@ public class QueryBasicTests
         var action = LlmTestHelper.MakeQuery(Ctx);
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value?.ToString()).IsEqualTo("Hello world");
     }
 
@@ -78,7 +78,7 @@ public class QueryBasicTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // Verify model was sent to API
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
         await Assert.That(reqBody).Contains("gpt-4o");
@@ -102,7 +102,7 @@ public class QueryBasicTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
         await Assert.That(reqBody).Contains("0.7");
         await Assert.That(reqBody).Contains("2000");
@@ -121,7 +121,7 @@ public class QueryBasicTests
         var action = LlmTestHelper.MakeQuery(Ctx);
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error?.Key).IsEqualTo("HttpError");
         await Assert.That(result.Error?.Message).Contains("400");
     }
@@ -136,7 +136,7 @@ public class QueryBasicTests
         var action = LlmTestHelper.MakeQuery(Ctx);
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error?.Key).IsEqualTo("HttpError");
         await Assert.That(result.Error?.Message).Contains("500");
     }
@@ -156,7 +156,7 @@ public class QueryBasicTests
         var action = LlmTestHelper.MakeQuery(Ctx);
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Properties["RawResponse"]?.ToString()).IsEqualTo("result text");
         await Assert.That(result.Properties["Model"]?.ToString()).IsEqualTo("gpt-5.4-nano");
         await Assert.That(result.Properties["PromptTokens"]).IsEqualTo(15);
@@ -189,7 +189,7 @@ public class QueryBasicTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Properties["Cost"]).IsNull();
     }
 
@@ -210,7 +210,7 @@ public class QueryBasicTests
         var action = LlmTestHelper.MakeQuery(Ctx);
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         decimal expected = (60m * 0.20m + 40m * 0.02m + 50m * 1.25m) / 1_000_000m;
         await Assert.That((decimal?)result.Properties["Cost"]).IsEqualTo(expected);
         // CachedTokens surfaces on Properties too (F5).
@@ -243,7 +243,7 @@ public class QueryBasicTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // 1e6·0.75/1e6 + 1e6·4.50/1e6 = 5.25 exact.
         await Assert.That((decimal?)result.Properties["Cost"]).IsEqualTo(5.25m);
     }
@@ -283,7 +283,7 @@ public class QueryBasicTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(_handler.CallCount).IsEqualTo(2);
 
         // Call 1 (tool-call response, default usage: 10 prompt, 5 completion, 0 cached):

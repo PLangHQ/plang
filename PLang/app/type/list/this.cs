@@ -33,10 +33,19 @@ public sealed partial class @this
     /// Per-App build-time kind dispatcher — discovers and invokes each
     /// registered type's <c>static string? Build(object?)</c> hook (the
     /// build-time sibling of <c>Resolve</c>). Owns the reflection cache.
-    /// Call: <c>App.Types.Kinds.Of(declaredType, value)</c> during build to
-    /// stamp <c>Data.Kind</c> alongside <c>Data.Type</c>.
+    /// Call: <c>App.Type.KindHooks.Of(declaredType, value)</c> during build to
+    /// stamp <c>Type.Kind</c> alongside <c>Type.Name</c>. Renamed from
+    /// <c>Kinds</c> so the word stops colliding with <see cref="@this.Kind"/>
+    /// (per-value subtype) and the advertised-vocabulary <c>type.Kinds</c>.
     /// </summary>
-    public kind.@this Kinds { get; } = new();
+    public kind.@this KindHooks { get; } = new();
+
+    /// <summary>
+    /// Per-type <c>static Convert(object?, string? kind, context)</c> hooks — the
+    /// runtime sibling of <see cref="KindHooks"/>. A type owns how a value becomes
+    /// an instance of itself; <c>app.type.@this.Convert</c> routes through here.
+    /// </summary>
+    public convert.@this Conversions { get; } = new();
 
     /// <summary>
     /// Per-(type, format) renderer dispatch — feeds the writer's
@@ -46,6 +55,15 @@ public sealed partial class @this
     /// runtime-registration seam for DLLs loaded at runtime.
     /// </summary>
     public renderer.@this Renderers { get; } = new();
+
+    /// <summary>
+    /// Per-(type, kind) reader dispatch — the read-side mirror of
+    /// <see cref="Renderers"/>. Discovers <c>app/type/&lt;name&gt;/serializer/&lt;kind&gt;.cs</c>
+    /// classes exposing a static <c>Read(object, string?, ReadContext)</c> and
+    /// exposes the same runtime-registration seam. The single json
+    /// <c>Converter</c> routes mid-graph typed fields through here.
+    /// </summary>
+    public reader.@this Readers { get; } = new();
 
     // --- Primitive lookup tables ---
     // Aliases / canonical-name data lives on app.type.primitive.@this — one
@@ -175,20 +193,20 @@ public sealed partial class @this
             {
                 // Collision resolution: when two CLR types map to the same PLang
                 // name (e.g. `app.goal.@this` the goal entity and
-                // `app.channel.goal.@this` the goal-channel both lowercase to
+                // `app.channel.type.goal.@this` the goal-channel both lowercase to
                 // "goal" via the @this convention), prefer the catalog-richer
                 // entry.  First-wins TryAdd over reflection-ordered types is
                 // non-deterministic — a Scalar entry could shadow a Record with
                 // populated Fields depending on assembly load order.
                 // Richness rank: Record (has Fields) > Enum (has Values) > Scalar.
                 // (codeanalyzer v2 finding #1.)
-                if (!dict.TryGetValue(entry.Value, out var existing))
+                if (!dict.TryGetValue(entry.Name, out var existing))
                 {
-                    dict[entry.Value] = entry;
+                    dict[entry.Name] = entry;
                     continue;
                 }
                 if (Rank(entry) > Rank(existing))
-                    dict[entry.Value] = entry;
+                    dict[entry.Name] = entry;
             }
             return dict;
         });
@@ -547,6 +565,16 @@ public sealed partial class @this
 
             var typeName = GetTypeName(type);
 
+            // Skip the type entity itself — its wire shape ({name, kind?, strict?})
+            // and kind vocabulary are taught explicitly in the compile prompt's
+            // "Type reference" block. Rendering it as a catalog scalar
+            // ("type: string") confuses the LLM.
+            if (type == typeof(app.type.@this)) continue;
+            // Skip `data.@this` — actions with polymorphic Value slots (variable.set
+            // etc.) declare it as `object`; surfacing it again as a scalar
+            // ("object: string") in the catalog is redundant and confusing.
+            if (type == typeof(data.@this)) continue;
+
             // Catalog metadata sourced from static-property convention on the type:
             //   public static string Example => "...";
             //   public static string Description => "...";
@@ -591,7 +619,11 @@ public sealed partial class @this
             {
                 if (!prop.CanRead || prop.Name == "EqualityContract") continue;
                 if (!Attribute.IsDefined(prop, typeof(LlmBuilderAttribute))) continue;
-                if (Attribute.IsDefined(prop, typeof(JsonIgnoreAttribute))) continue;
+                // [LlmBuilder] is the explicit opt-in for catalog visibility;
+                // [JsonIgnore] only governs STJ wire shape. A property can be
+                // both (e.g. type.Kind: not on the entity's own wire — the
+                // wire emits `kind` from data.Type.Kind via Wire.cs — but
+                // discoverable as a builder field).
 
                 llmProps.Add(new app.type.Field
                 {

@@ -268,6 +268,7 @@ public class TypeMappingTests
     [Test]
     public async Task GetType_GenericDictStringInt_ReturnsDictionary()
     {
+        // Legacy short form still resolves via the alias table.
         var type = TypeMapping.GetType("dict<string,int>");
 
         await Assert.That(type).IsEqualTo(typeof(Dictionary<string, int>));
@@ -318,7 +319,7 @@ public class TypeMappingTests
     {
         var name = TypeMapping.GetTypeName(typeof(string));
 
-        await Assert.That(name).IsEqualTo("string");
+        await Assert.That(name).IsEqualTo("text");
     }
 
     [Test]
@@ -326,7 +327,7 @@ public class TypeMappingTests
     {
         var name = TypeMapping.GetTypeName(typeof(int));
 
-        await Assert.That(name).IsEqualTo("int");
+        await Assert.That(name).IsEqualTo("number");
     }
 
     [Test]
@@ -334,7 +335,7 @@ public class TypeMappingTests
     {
         var name = TypeMapping.GetTypeName(typeof(long));
 
-        await Assert.That(name).IsEqualTo("long");
+        await Assert.That(name).IsEqualTo("number");
     }
 
     [Test]
@@ -342,7 +343,7 @@ public class TypeMappingTests
     {
         var name = TypeMapping.GetTypeName(typeof(float));
 
-        await Assert.That(name).IsEqualTo("float");
+        await Assert.That(name).IsEqualTo("number");
     }
 
     [Test]
@@ -350,7 +351,7 @@ public class TypeMappingTests
     {
         var name = TypeMapping.GetTypeName(typeof(double));
 
-        await Assert.That(name).IsEqualTo("double");
+        await Assert.That(name).IsEqualTo("number");
     }
 
     [Test]
@@ -358,7 +359,7 @@ public class TypeMappingTests
     {
         var name = TypeMapping.GetTypeName(typeof(decimal));
 
-        await Assert.That(name).IsEqualTo("decimal");
+        await Assert.That(name).IsEqualTo("number");
     }
 
     [Test]
@@ -424,7 +425,7 @@ public class TypeMappingTests
     {
         var name = TypeMapping.GetTypeName(typeof(int?));
 
-        await Assert.That(name).IsEqualTo("int?");
+        await Assert.That(name).IsEqualTo("number?");
     }
 
     [Test]
@@ -440,7 +441,7 @@ public class TypeMappingTests
     {
         var name = TypeMapping.GetTypeName(typeof(List<string>));
 
-        await Assert.That(name).IsEqualTo("list<string>");
+        await Assert.That(name).IsEqualTo("list<text>");
     }
 
     [Test]
@@ -448,7 +449,7 @@ public class TypeMappingTests
     {
         var name = TypeMapping.GetTypeName(typeof(IList<int>));
 
-        await Assert.That(name).IsEqualTo("list<int>");
+        await Assert.That(name).IsEqualTo("list<number>");
     }
 
     [Test]
@@ -456,7 +457,7 @@ public class TypeMappingTests
     {
         var name = TypeMapping.GetTypeName(typeof(Dictionary<string, int>));
 
-        await Assert.That(name).IsEqualTo("dict<string,int>");
+        await Assert.That(name).IsEqualTo("dict<text,number>");
     }
 
     [Test]
@@ -464,7 +465,7 @@ public class TypeMappingTests
     {
         var name = TypeMapping.GetTypeName(typeof(IDictionary<string, object>));
 
-        await Assert.That(name).IsEqualTo("dict<string,object>");
+        await Assert.That(name).IsEqualTo("dict<text,object>");
     }
 
     [Test]
@@ -472,7 +473,7 @@ public class TypeMappingTests
     {
         var name = TypeMapping.GetTypeName(typeof(int[]));
 
-        await Assert.That(name).IsEqualTo("list<int>");
+        await Assert.That(name).IsEqualTo("list<number>");
     }
 
     [Test]
@@ -480,7 +481,7 @@ public class TypeMappingTests
     {
         var name = TypeMapping.GetTypeName(typeof(string[]));
 
-        await Assert.That(name).IsEqualTo("list<string>");
+        await Assert.That(name).IsEqualTo("list<text>");
     }
 
     [Test]
@@ -691,7 +692,7 @@ public class TypeMappingTests
     {
         var name = TypeMapping.GetTypeName(typeof(global::app.data.@this<List<string>>));
 
-        await Assert.That(name).IsEqualTo("list<string>");
+        await Assert.That(name).IsEqualTo("list<text>");
     }
 
     [Test]

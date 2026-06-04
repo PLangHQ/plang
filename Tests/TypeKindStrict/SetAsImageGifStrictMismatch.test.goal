@@ -1,0 +1,9 @@
+Start
+/ A path-backed image reads nothing at the set, so a strict mismatch does NOT
+/ fail here — it is deferred to byte-materialization (first content load). The
+/ set itself is clean; the throw-at-load is covered by the C#
+/ LazyPathHandleTests.BytesAsync_StrictKindMismatch_ThrowsAtLoad. Requires the
+/ committed photo.png fixture.
+- set %img% = "photo.png" as image/gif strict
+- assert %img.Type.Name% equals "image"
+- assert %img.Type.Kind% equals "gif"

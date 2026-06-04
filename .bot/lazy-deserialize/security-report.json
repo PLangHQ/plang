@@ -1,0 +1,102 @@
+{
+  "analyst": "security",
+  "branch": "lazy-deserialize",
+  "timestamp": "2026-06-04T17:45:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "lazy-data-materialize",
+      "exposure": "Data.FromRaw stores raw bytes/string verbatim; .Value triggers Materialize() on first touch, dispatching to per-(type, kind) reader registry.",
+      "trust_boundary": "channel.read stamps {type, kind} from Mime; deferredRaw arrives unverified from any inbound channel.",
+      "mitigations": [
+        "Catch-all in Materialize() (excludes NRE/OOM/SOF) converts reader failures into a touch-time Error rather than escaping into couriers.",
+        "Wire.MaxReadDepth (64) caps wire-recursion through LiftDataIfShaped/GetRawText restart paths.",
+        "Reader registry exact-match precedence (runtime > generated, exact > '*'); no string-similarity dispatch.",
+        "AsCanonical short-circuits for RawUntouched so couriers don't trigger materialize."
+      ],
+      "gaps": [
+        "No size cap on captured deferredRaw at the Wire layer — bounded only by upstream channel input (Stream channel buffer-ignore is a separate standing memory item).",
+        "Catch-all is broad; a future kind reader raising CryptographicException/SecurityException would be silenced (F2)."
+      ]
+    },
+    {
+      "area": "wire-signing-roundtrip",
+      "exposure": "Wire.Write must emit byte-identical canonical bytes for RawUntouched Data so signing.verify rehashes match the signer's hash.",
+      "trust_boundary": "Cross-actor wire — the outer Signature is the trust anchor.",
+      "mitigations": [
+        "Fixed key order: name (suppressed in hash), type, value, properties, signature (suppressed in hash).",
+        "type entity has its own JsonConverter writing name/kind?/strict? in fixed order.",
+        "EmitRawVerbatim: WriteRawValue for object/json (byte-identical to GetRawText capture), WriteStringValue for other shapes (STJ canonical round-trip).",
+        "Dictionary properties iterate in .NET insertion order (deterministic per-sender).",
+        "MarkOuterForHash is ref-counted on ReferenceEqualityComparer so nested Hash composes correctly."
+      ],
+      "gaps": [
+        "Non-canonical third-party wire (non-STJ writer, permuted keys, non-canonical escapes) fails verify — conservative-correct, not a gap."
+      ]
+    },
+    {
+      "area": "channel-read-boundary",
+      "exposure": "StampReadAsync/StampValue stamp {type, kind} from channel.Mime; lazy Data flows through Variables, callstack, routing without parsing.",
+      "trust_boundary": "Inbound channel bytes from any source (file, http, socket, stream).",
+      "mitigations": [
+        "File channel routes through FilePath.ReadBytes (AuthGate enforced).",
+        "Container vs value distinction is by registered serializer ownership of the Mime, not string match — no application/plang-* prefix collision.",
+        "Plang container read explicitly does NOT auto-verify (consumer's signing.verify step is the seam)."
+      ],
+      "gaps": [
+        "Standing: Stream channel buffer-ignore (separate memory item)."
+      ]
+    },
+    {
+      "area": "reader-registry",
+      "exposure": "Per-(type, kind) reader dispatch via reflection (delegate cached on first lookup); runtime registrations from code.load-loaded DLLs can shadow generated entries.",
+      "trust_boundary": "DLLs loaded via Assembly.LoadFrom — same accepted-risk as Module.add/provider.load (.pr is the trust boundary).",
+      "mitigations": [
+        "Same precedence as renderer registry (drift-resistant).",
+        "Reflection invoke wraps TargetInvocationException to surface the inner cause."
+      ],
+      "gaps": [
+        "Runtime override could replace a built-in reader silently — same as renderer."
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "Future kind reader raises CryptographicException / SecurityException; Materialize() silently absorbs and returns null with a benign Error.",
+      "preconditions": "A new reader integrates cryptographic verification or input-policy enforcement (none today raise these types).",
+      "impact": "Callers that don't check .Error before re-using the Data see Value=null with no security signal.",
+      "affected_files": ["PLang/app/data/this.cs"],
+      "exploit_sketch": "Add a custom reader for type=secure-blob/kind=verified that throws SecurityException on policy failure. Materialize swallows it; downstream sees null and may default-pass.",
+      "proposed_fix": "Add the security-exception types to the not-caught list as readers that can raise them ship. Lives next to the existing NRE/OOM/SOF exclusion in Materialize().",
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "Wire.Read captures the value slot as a string via JsonDocument.ParseValue + GetRawText/GetString; the string lives on the Data until first touch or variable replacement.",
+      "preconditions": "Inbound wire with a large signed object/<kind> value held across the goal graph.",
+      "impact": "Increased working-set vs. eager-then-discard. Bounded only by upstream channel input.",
+      "affected_files": ["PLang/app/data/Wire.cs"],
+      "exploit_sketch": "Stream a 100MB signed JSON value through a relay actor; the deferredRaw stays in memory across the routing path.",
+      "proposed_fix": "Tracked under the existing standing memory item for Channel.Stream.ReadAllBytesAsync ignoring Buffer — fixing the upstream cap covers this leg.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "Lazy parse defers parser-DoS attack vectors (billion-laughs, deeply nested YAML/XML/JSON) from channel.read time to first .Value touch.",
+      "preconditions": "Wire-arriving Data with type=object/yaml or object/xml and a malicious payload; receiver navigates a field.",
+      "impact": "Same as the pre-lazy eager-parse path — same parser, same payload, same context. Net-neutral. Verbatim relay never triggers, a small defense-in-depth gain.",
+      "affected_files": ["PLang/app/data/this.cs", "PLang/app/type/reader/this.cs"],
+      "exploit_sketch": "Pre-existing — independent of this branch. Reader-level mitigations (YamlDotNet limits, XML XXE disable) are the right layer.",
+      "proposed_fix": "Out of scope for this audit — reader-level concern.",
+      "status": "open"
+    }
+  ],
+  "summary": "lazy-deserialize PASS. The signing pipeline composes cleanly with the new verbatim-passthrough leg — a relayed RawUntouched Data canonicalizes to byte-identical bytes under crypto.Hash + MarkOuterForHash, so signing.verify holds end-to-end. No auto-verify regression (parity with prior behavior). The reader registry adds a new lazy materialization seam whose catch-all is broad enough to be worth tightening as new readers ship (F2). Three low/info findings, no critical or high. Standing memory items unchanged."
+}

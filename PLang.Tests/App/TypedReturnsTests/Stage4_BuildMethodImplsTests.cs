@@ -41,27 +41,37 @@ public class Stage4_BuildMethodImplsTests
 
     // --- file.read.Build() ---
 
+    // The producer stamps a structured {name, kind} type entity, not a bare
+    // extension string — so the build-time stamp and the runtime stamp share
+    // the same shape and can't drift. ".csv" → {table, csv}, ".json" → {object,
+    // json}: the name is the value's shape (table=grid, object=tree), the kind
+    // is the extension.
+    private static global::app.type.@this AsType(Data result)
+        => (global::app.type.@this)result.Value!;
+
     [Test]
     public async Task FileRead_Build_LiteralCsvPath_ReturnsOkWithCsv()
     {
         var result = await Build("file", "read", ("Path", "foo.csv"));
-        await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value).IsEqualTo("csv");
+        await result.IsSuccess();
+        await Assert.That(AsType(result).Name).IsEqualTo("table");
+        await Assert.That(AsType(result).Kind).IsEqualTo("csv");
     }
 
     [Test]
     public async Task FileRead_Build_LiteralJsonPath_ReturnsOkWithJson()
     {
         var result = await Build("file", "read", ("Path", "data.json"));
-        await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value).IsEqualTo("json");
+        await result.IsSuccess();
+        await Assert.That(AsType(result).Name).IsEqualTo("object");
+        await Assert.That(AsType(result).Kind).IsEqualTo("json");
     }
 
     [Test]
     public async Task FileRead_Build_LiteralUnknownExtension_FallsBackToOk()
     {
         var result = await Build("file", "read", ("Path", "foo.zzz"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsNull();
     }
 
@@ -69,19 +79,19 @@ public class Stage4_BuildMethodImplsTests
     public async Task FileRead_Build_NonLiteralPath_ReturnsBareOk()
     {
         var result = await Build("file", "read", ("Path", "%p%"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsNull();
     }
 
     [Test]
     public async Task FileRead_Build_LiteralMissingFile_WritesBuildWarning()
     {
-        var channel = (global::app.channel.stream.@this)
+        var channel = (global::app.channel.type.stream.@this)
             _app.User.Channel.CreateMemoryChannel("builder");
 
         const string missing = "definitely-missing-stage4.csv";
         var result = await Build("file", "read", ("Path", missing));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         channel.Stream.Position = 0;
         var written = await channel.ReadAllTextAsync();
@@ -93,9 +103,10 @@ public class Stage4_BuildMethodImplsTests
     public async Task FileRead_Build_LiteralMissingFile_StillReturnsOkWithInferredType()
     {
         var result = await Build("file", "read", ("Path", "definitely-missing-stage4b.csv"));
-        await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value).IsEqualTo("csv")
+        await result.IsSuccess();
+        await Assert.That(AsType(result).Name).IsEqualTo("table")
             .Because("Missing file is non-fatal at build time — the inferred type still surfaces.");
+        await Assert.That(AsType(result).Kind).IsEqualTo("csv");
     }
 
     // --- llm.query.Build() ---
@@ -105,7 +116,7 @@ public class Stage4_BuildMethodImplsTests
     {
         var result = await Build("llm", "query",
             ("System", "you are a bot"), ("User", "hi"), ("Schema", "{\"type\":\"object\"}"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo("json");
     }
 
@@ -114,7 +125,7 @@ public class Stage4_BuildMethodImplsTests
     {
         var result = await Build("llm", "query",
             ("System", "you are a bot"), ("User", "hi"), ("Format", "md"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo("md");
     }
 
@@ -123,7 +134,7 @@ public class Stage4_BuildMethodImplsTests
     {
         var result = await Build("llm", "query",
             ("System", "you are a bot"), ("User", "hi"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsNull();
     }
 
@@ -133,18 +144,22 @@ public class Stage4_BuildMethodImplsTests
     public async Task HttpRequest_Build_LiteralUrlWithExtension_InfersTypeFromExtension()
     {
         var result = await Build("http", "request", ("Url", "https://api/x.json"));
-        await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value).IsEqualTo("json");
+        await result.IsSuccess();
+        await Assert.That(AsType(result).Name).IsEqualTo("object");
+        await Assert.That(AsType(result).Kind).IsEqualTo("json");
     }
 
     [Test]
-    public async Task HttpRequest_Build_LiteralUrlWithUnregisteredExtension_ReturnsBareOk()
+    public async Task HttpRequest_Build_LiteralUrlWithUnregisteredExtension_InfersObjectWithExtensionKind()
     {
-        // .pdf has a known mime but is not a registered PLang type. Stamping
-        // "pdf" would make the trailing variable.set fail with "Unknown type 'pdf'".
+        // .pdf has a known mime (application/pdf) that materializes to object;
+        // the extension is the kind. The name "object" is a registered type, so
+        // the stamp is safe — and it matches what the runtime response-body
+        // derivation produces for the same Content-Type (no build/runtime drift).
         var result = await Build("http", "request", ("Url", "https://x/report.pdf"));
-        await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value).IsNull();
+        await result.IsSuccess();
+        await Assert.That(AsType(result).Name).IsEqualTo("object");
+        await Assert.That(AsType(result).Kind).IsEqualTo("pdf");
     }
 
     [Test]
@@ -153,7 +168,7 @@ public class Stage4_BuildMethodImplsTests
         var result = await Build("http", "upload",
             ("Url", "%endpoint%"),
             ("FilePath", "/tmp/dummy.txt"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsNull();
     }
 }

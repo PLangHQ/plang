@@ -1,5 +1,5 @@
 using EventBinding = global::app.@event.lifecycle.binding.@this;
-using EventType = global::app.@event.EventType;
+using Trigger = global::app.@event.Trigger;
 
 namespace app.channel.@event;
 
@@ -39,7 +39,7 @@ public sealed class @this
     /// Returned as a snapshot so the caller can iterate without holding the lock
     /// while invoking handlers.
     /// </summary>
-    public IEnumerable<EventBinding> Match(EventType type, string channelName)
+    public IEnumerable<EventBinding> Match(Trigger type, string channelName)
     {
         EventBinding[] snapshot;
         lock (_lock) snapshot = _list.ToArray();

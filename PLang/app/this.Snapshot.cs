@@ -27,6 +27,28 @@ public sealed partial class @this
     }
 
     /// <summary>
+    /// Throw-time snapshot for an error callback. By the time an error reaches its
+    /// handler the live CallStack has unwound past the failing action, so the
+    /// snapshot must use the chain the error carried from its throw point
+    /// (<see cref="global::app.error.IError.CallFrames"/>) and the throw-time
+    /// variable view (<see cref="global::app.variable.list.@this.SnapshotAt"/>).
+    /// Everything else (modes, providers, statics) is unchanged across handling,
+    /// so it captures live.
+    /// </summary>
+    public snapshot.@this Snapshot(global::app.error.IError error)
+    {
+        var s = new snapshot.@this();
+        CurrentActor.Context.Variable.SnapshotAt(error).Capture(s.Section("Variables"));
+        Error.Capture(s.Section("Errors"));
+        Code.Capture(s.Section("Providers"));
+        Statics.Capture(s.Section("Statics"));
+        Builder.Capture(s.Section("Build"));
+        Tester.Capture(s.Section("Testing"));
+        CallStack.Capture(s.Section("CallStack"), error.CallFrames);
+        return s;
+    }
+
+    /// <summary>
     /// Dispatches each captured subtree to the matching subsystem's static
     /// Restore. Order matches Snapshot — Providers' two-step replay must run
     /// before any subsystem that might consume providers, but for the Stage 1

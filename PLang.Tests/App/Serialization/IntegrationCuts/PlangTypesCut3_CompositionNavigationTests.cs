@@ -84,7 +84,7 @@ public class PlangTypesCut3_CompositionNavigationTests
     {
         var types = new global::app.type.list.@this();
         var entries = types.BuildTypeEntries(null);
-        var imageEntry = entries.FirstOrDefault(e => e.Value == "image");
+        var imageEntry = entries.FirstOrDefault(e => e.Name == "image");
         await Assert.That(imageEntry).IsNotNull();
         await Assert.That(imageEntry!.Properties).IsNotNull();
         var pathProp = imageEntry.Properties!.FirstOrDefault(p => p.Name == "path");

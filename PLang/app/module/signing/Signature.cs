@@ -40,32 +40,47 @@ public class Signature
     public data.@this Hash { get; internal set; } = app.data.@this.Ok("");
 
     /// <summary>
-    /// Serializes Data as { "type": "algorithm", "value": "base64hash" } in the signing object.
+    /// Serializes the data hash as <c>{ "type": "algorithm", "value": "base64digest" }</c>
+    /// in the signing object. The <c>type</c> slot carries the algorithm (the
+    /// hash's kind) — the deterministic signing bytes need it to recompute, and
+    /// it round-trips a <see cref="app.module.crypto.type.hash.@this"/> value so
+    /// the verify path reads the digest off the value, not loose bytes.
     /// </summary>
     internal class HashDataConverter : JsonConverter<data.@this>
     {
         public override data.@this Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
         {
-            string type = "", value = "";
+            string algorithm = "", value = "";
             while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
             {
                 if (reader.TokenType != JsonTokenType.PropertyName) continue;
                 var prop = reader.GetString();
                 reader.Read();
-                if (prop == "type") type = reader.GetString() ?? "";
+                if (prop == "type") algorithm = reader.GetString() ?? "";
                 else if (prop == "value") value = reader.GetString() ?? "";
             }
-            var typeObj = string.IsNullOrEmpty(type) ? null : app.type.@this.FromName(type);
+            if (string.IsNullOrEmpty(algorithm)) algorithm = "keccak256";
             byte[] bytes;
             try { bytes = Convert.FromBase64String(value); } catch (FormatException) { bytes = Array.Empty<byte>(); }
-            return app.data.@this.Ok(bytes, typeObj);
+            var hashValue = new app.module.crypto.type.hash.@this(bytes, algorithm);
+            return app.data.@this.Ok(hashValue, app.type.@this.Create("hash", kind: algorithm));
         }
 
         public override void Write(Utf8JsonWriter writer, data.@this value, JsonSerializerOptions options)
         {
             writer.WriteStartObject();
-            writer.WriteString("type", value.Type?.Value ?? "");
-            var base64 = value.Value is byte[] bytes ? Convert.ToBase64String(bytes) : value.Value?.ToString() ?? "";
+            // The hash carries its own algorithm; fall back to the stamped kind
+            // (or the keccak256 signing default) for a legacy bare-bytes hash.
+            var algorithm = value.Value is app.module.crypto.type.hash.@this hash
+                ? hash.Algorithm
+                : value.Type?.Kind ?? "keccak256";
+            writer.WriteString("type", algorithm);
+            var base64 = value.Value switch
+            {
+                app.module.crypto.type.hash.@this h => h.ToBase64(),
+                byte[] bytes => Convert.ToBase64String(bytes),
+                _ => value.Value?.ToString() ?? ""
+            };
             writer.WriteString("value", base64);
             writer.WriteEndObject();
         }

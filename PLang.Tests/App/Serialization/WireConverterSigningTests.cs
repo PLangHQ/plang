@@ -110,7 +110,7 @@ public class WireConverterSigningTests
         var json = plang.Serialize(data).Value!;
 
         var back = plang.Deserialize(json);
-        await Assert.That(back.Success).IsTrue();
+        await back.IsSuccess();
         var roundTripped = back.Value as global::app.data.@this;
         await Assert.That(roundTripped).IsNotNull();
         await Assert.That(roundTripped!.Signature).IsNotNull()

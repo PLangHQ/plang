@@ -21,7 +21,7 @@ public class ActionRunAsyncTests
         var context = app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%v%"), ("value", "ok"));
         var result = await action.RunAsync(context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(context.Variable.GetValue("v")).IsEqualTo("ok");
     }
 

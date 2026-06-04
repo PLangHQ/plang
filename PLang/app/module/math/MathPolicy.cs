@@ -22,7 +22,10 @@ internal static class MathPolicy
         return new NumberPolicy
         {
             Overflow = stepOverflow ?? view.Resolve("overflow", POverflow.Promote),
-            Precision = stepPrecision ?? view.Resolve("precision", PPrecision.Double),
+            // double ⊕ decimal requires an explicit choice by default (neither
+            // represents the other exactly) — matches NumberPolicy's Error default.
+            // Override per-step (Precision=) or via config when a carrier is intended.
+            Precision = stepPrecision ?? view.Resolve("precision", PPrecision.Error),
         };
     }
 }

@@ -1,0 +1,1 @@
+Resume a snapshot value: restore its captured Variables/CallStack and re-enter the suspended step. A step phrased `resume %snapshot%` maps here. The `Snapshot` parameter is the snapshot value — usually a variable read back from a `.snapshot` file (`read 'x.snapshot' into %snap% as snapshot`). Distinct from `goal.call`: it leads with the word `resume`, not `call`.

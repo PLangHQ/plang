@@ -7,9 +7,13 @@ using app.data;
 namespace app.type.list;
 
 /// <summary>
-/// Conversion partial of <see cref="@this"/> — absorbs the former <c>Utils.TypeConverter</c>.
-/// Public methods (ConvertTo, Populate, TryConvertTo) stay <c>public static</c>; pure-logic
-/// helpers stay <c>private static</c> (Rule C exception class for stateless behaviour).
+/// Conversion partial of <see cref="@this"/>. The public surface is the infra dispatch
+/// door <see cref="Convert(object?, System.Type, actor.context.@this?, string?)"/>; the
+/// shared dispatcher (<c>TryConvert</c>) + its helpers stay <c>internal static</c> — the
+/// type-agnostic plumbing + residual primitive leaf both doors share. Per-type construction
+/// knowledge lives on the owning types (their <c>Convert</c> hooks), reached here via the
+/// hook dispatch; this file holds no per-type arms. Pure-logic helpers stay
+/// <c>private static</c> (Rule C stateless behaviour).
 /// </summary>
 public sealed partial class @this
 {
@@ -32,10 +36,10 @@ public sealed partial class @this
             new JsonStringEnumConverter(allowIntegerValues: true),
             new app.data.EmptyStringToNullEnumConverterFactory(),
             new global::app.channel.serializer.TimeSpanIso8601(),
-            // Context-less PathJsonConverter — produces stub Paths. Callers
+            // Context-less json Converter — produces stub Paths. Callers
             // with a Context in scope use ContextualReadOptions instead so
             // deserialized Paths are wired immediately.
-            new global::app.type.path.JsonConverter(),
+            new global::app.channel.serializer.json.Converter(),
         },
         NumberHandling = JsonNumberHandling.AllowReadingFromString
     };
@@ -44,7 +48,7 @@ public sealed partial class @this
     /// Builds a one-shot JsonSerializerOptions equivalent to
     /// <see cref="_caseInsensitiveRead"/> but with a Context-bound
     /// <see cref="app.type.path.JsonConverter"/> in place of the stub one.
-    /// Used when <see cref="TryConvertTo"/> receives a non-null context so
+    /// Used when <see cref="TryConvert"/> receives a non-null context so
     /// every <see cref="app.type.path.@this"/> field in the deserialized
     /// graph lands fully Context-wired.
     /// </summary>
@@ -57,7 +61,7 @@ public sealed partial class @this
                 new JsonStringEnumConverter(allowIntegerValues: true),
                 new app.data.EmptyStringToNullEnumConverterFactory(),
                 new global::app.channel.serializer.TimeSpanIso8601(),
-                new global::app.type.path.JsonConverter(context),
+                new global::app.channel.serializer.json.Converter(context),
             },
             NumberHandling = JsonNumberHandling.AllowReadingFromString
         };
@@ -66,18 +70,34 @@ public sealed partial class @this
     /// <summary>Internal accessor for the test facade — see <see cref="_caseInsensitiveRead"/>.</summary>
     internal static JsonSerializerOptions CaseInsensitiveRead => _caseInsensitiveRead;
 
+    /// <summary>
+    /// Infra dispatch door — used by callers that hold only a CLR target (Data.As&lt;T&gt;,
+    /// wire reconstruct, the variable navigator, Sqlite, builder validators). Resolves the
+    /// owning family from <paramref name="clrTarget"/>, asks its <c>Convert</c> hook, and
+    /// falls through to the residual primitive leaf + plumbing in <see cref="TryConvert"/>.
+    /// The primary door (<c>type.@this.Convert</c>) is for callers holding a PLang type entity.
+    /// <paramref name="slot"/> names the binding target so an action-parameter bind failure
+    /// reads naturally.
+    /// </summary>
+    public global::app.data.@this Convert(object? value, System.Type clrTarget,
+        actor.context.@this? context = null, string? slot = null)
+    {
+        var (result, error) = TryConvert(value, clrTarget, context, slot);
+        return error != null ? global::app.data.@this.FromError(error) : global::app.data.@this.Ok(result);
+    }
+
     /// <summary>Attempts to convert a value to the specified type. Generic convenience overload.</summary>
-    public static T? ConvertTo<T>(object? value, actor.context.@this? context = null)
+    internal static T? ConvertTo<T>(object? value, actor.context.@this? context = null)
         => (T?)ConvertTo(value, typeof(T), context);
 
     /// <summary>
-    /// Attempts to convert a value to the specified type. Returns null on failure — use TryConvertTo for error details.
+    /// Attempts to convert a value to the specified type. Returns null on failure — use TryConvert for error details.
     /// A <paramref name="context"/> is required to convert a string into a <see cref="path.@this"/> (the per-App
     /// scheme registry needs it); without one, string→path conversions yield null.
     /// </summary>
-    public static object? ConvertTo(object? value, System.Type targetType, actor.context.@this? context = null)
+    internal static object? ConvertTo(object? value, System.Type targetType, actor.context.@this? context = null)
     {
-        var (result, _) = TryConvertTo(value, targetType, context);
+        var (result, _) = TryConvert(value, targetType, context);
         return result;
     }
 
@@ -87,7 +107,7 @@ public sealed partial class @this
     /// Pass <paramref name="context"/> when any target property is <see cref="path.@this"/>-typed
     /// (or a list of them) — without it those properties stay unset.
     /// </summary>
-    public static void Populate(object target, IDictionary<string, object?> values,
+    internal static void Populate(object target, IDictionary<string, object?> values,
         actor.context.@this? context = null)
     {
         foreach (var kvp in values)
@@ -105,8 +125,8 @@ public sealed partial class @this
     /// Returns the converted value and null error on success,
     /// or null value and an Error describing what went wrong.
     /// </summary>
-    public static (object? Value, error.Error? Error) TryConvertTo(object? value, System.Type targetType,
-        actor.context.@this? context = null)
+    internal static (object? Value, error.Error? Error) TryConvert(object? value, System.Type targetType,
+        actor.context.@this? context = null, string? targetName = null)
     {
         if (value == null)
             return (targetType.IsValueType ? System.Activator.CreateInstance(targetType) : null, null);
@@ -115,14 +135,44 @@ public sealed partial class @this
         if (targetType.IsAssignableFrom(sourceType))
             return (value, null);
 
-        // data.@this is the universal value wrapper — any value can become Data
+        // data.@this is the universal value wrapper — any value can become Data.
+        // A wire-shaped object ({value, type, ...}) IS a serialized Data, so
+        // reconstruct it as a whole (value + type) rather than nesting the dict as a
+        // Data value — nesting mislabels the type as `object` and loses the inner
+        // value's real type, so sign and verify would hash different canonical shapes.
         if (targetType == typeof(data.@this) && value is not data.@this)
+        {
+            if (data.@this.IsWireShape(value))
+                return (data.@this.FromWireShape((IDictionary<string, object?>)value, "", context), null);
             return (new data.@this("", value), null);
+        }
 
         // Handle nullable target types
         var underlying = System.Nullable.GetUnderlyingType(targetType);
         if (underlying != null)
-            return TryConvertTo(value, underlying, context);
+            return TryConvert(value, underlying, context, targetName);
+
+        // OBP: ask the owning type to build the value — the type knows its own
+        // construction (number/text/datetime/duration/path/image/goal.call). When a
+        // family owns the target it is authoritative: success returns the value, an
+        // error surfaces (enriched with the slot name). A null result means the family
+        // declined this value shape (e.g. image for raw bytes) — fall through to the
+        // residual leaf + plumbing below.
+        if (context != null)
+        {
+            var (family, kind) = global::app.type.convert.@this.OwnerOf(targetType);
+            if (family != null)
+            {
+                var owned = context.App.Type.Conversions.Of(family, value, kind, context);
+                if (owned != null)
+                {
+                    if (owned.Success) return (owned.Value, null);
+                    var hookErr = owned.Error as error.Error
+                        ?? new error.Error(owned.Error!.Message, "TypeConversionFailed", 400);
+                    return (null, WithSlot(hookErr, targetName));
+                }
+            }
+        }
 
         // String → JsonNode: use ToJson() extension with fix-and-retry
         if (targetType == typeof(JsonNode) && value is string jsonNodeStr)
@@ -130,6 +180,23 @@ public sealed partial class @this
             var (node, jsonError) = jsonNodeStr.ToJson();
             if (jsonError is error.Error err) return (null, err);
             return (node, null);
+        }
+
+        // A target type that owns its wire reconstruction — a static
+        // `object? FromWire(string, string?)` — rebuilds from the raw string
+        // itself (the snapshot / crypto.hash seam). Checked before the generic
+        // JSON deserialize below, which would produce a broken object for types
+        // whose state isn't plain public properties (snapshot's private section
+        // tree). Kind is null here — FromWire types needing a kind carry it on
+        // the type entity, not on this conversion path.
+        if (value is string wireStr)
+        {
+            var reader = global::app.type.@this.WireReader(targetType);
+            if (reader != null)
+            {
+                var built = reader.Invoke(null, new object?[] { wireStr, null });
+                if (built != null) return (built, null);
+            }
         }
 
         // String → complex type: try JSON deserialization before list handling
@@ -177,7 +244,7 @@ public sealed partial class @this
                 var targetList = (System.Collections.IList)System.Activator.CreateInstance(targetType)!;
                 foreach (var elem in jeArr.EnumerateArray())
                 {
-                    var (convertedElem, _) = TryConvertTo(elem, listElementType, context);
+                    var (convertedElem, _) = TryConvert(elem, listElementType, context);
                     if (convertedElem != null) targetList.Add(convertedElem);
                 }
                 return (targetList, null);
@@ -191,7 +258,7 @@ public sealed partial class @this
                 var targetList = (System.Collections.IList)System.Activator.CreateInstance(targetType)!;
                 foreach (var elem in jArr)
                 {
-                    var (convertedElem, _) = TryConvertTo(elem, listElementType, context);
+                    var (convertedElem, _) = TryConvert(elem, listElementType, context);
                     if (convertedElem != null) targetList.Add(convertedElem);
                 }
                 return (targetList, null);
@@ -203,7 +270,7 @@ public sealed partial class @this
                 var errors = new List<error.Error>();
                 for (int i = 0; i < sourceList.Count; i++)
                 {
-                    var (convertedItem, itemError) = TryConvertTo(sourceList[i], listElementType, context);
+                    var (convertedItem, itemError) = TryConvert(sourceList[i], listElementType, context);
                     if (itemError != null)
                     {
                         itemError = new error.Error(
@@ -227,13 +294,25 @@ public sealed partial class @this
                 return (targetList, null);
             }
 
+            // The value IS a collection, but none of the arms above recognized it
+            // (e.g. a generic-only IList<T>/IEnumerable<T> that isn't the non-generic
+            // IList — a domain collection like step.actions.@this). Falling through to
+            // the single-element wrap below would silently bury the whole collection in
+            // one slot and hide the gap. Throw loudly so it surfaces and the list
+            // converter grows a real arm for this shape instead of masking it.
+            if (value is System.Collections.IEnumerable && value is not string)
+                throw new System.InvalidOperationException(
+                    $"List-conversion gap: cannot convert {sourceType.FullName} into {targetType.FullName}. " +
+                    "It is a collection the list converter doesn't recognize (likely a generic-only IList<T>); " +
+                    "add an arm for it rather than coercing the whole collection into a single element.");
+
             if (listElementType.IsAssignableFrom(sourceType))
             {
                 var list = (System.Collections.IList)System.Activator.CreateInstance(targetType)!;
                 list.Add(value);
                 return (list, null);
             }
-            var (converted, convError) = TryConvertTo(value, listElementType, context);
+            var (converted, convError) = TryConvert(value, listElementType, context);
             if (converted != null && listElementType.IsAssignableFrom(converted.GetType()))
             {
                 var list = (System.Collections.IList)System.Activator.CreateInstance(targetType)!;
@@ -244,28 +323,8 @@ public sealed partial class @this
                 return (null, convError);
         }
 
-        // Path: route through the per-App scheme registry. The abstract base
-        // can't be constructed directly; the registry dispatches to the right
-        // subclass (file → FilePath, http/https → HttpPath, …) based on the
-        // raw string's scheme prefix.
-        if (value is string rawPath
-            && context != null
-            && typeof(global::app.type.path.@this).IsAssignableFrom(targetType))
-        {
-            try
-            {
-                return (context.App.Type.Scheme.From(rawPath, context), null);
-            }
-            catch (global::app.type.path.scheme.SchemeNotRegistered snr)
-            {
-                return (null, new error.Error(snr.Message, "SchemeNotRegistered", 400)
-                    { FixSuggestion = $"Register a factory for scheme '{snr.Scheme}' via app.Type.Scheme.Register, or use a bare/file:// path." });
-            }
-            catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
-            {
-                return (null, new error.Error(ex.Message, "PathConstructionFailed", 400));
-            }
-        }
+        // (string → path and string → path-backed reference fundamental (image) are
+        // owned by path.Convert / image.Convert, dispatched via the hook above.)
 
         // Types with a constructor that accepts a single string (may have optional params).
         if (value is string ctorStr)
@@ -301,21 +360,7 @@ public sealed partial class @this
             }
         }
 
-        // TimeSpan: parse ISO 8601 (e.g. "PT30S", "PT1H30M") via XmlConvert,
-        // fall back to .NET TimeSpan.Parse (e.g. "00:30:00"). Same wire shape
-        // the TimeSpanIso8601 uses for JSON.
-        if (targetType == typeof(TimeSpan) && value is string tsStr)
-        {
-            try { return (System.Xml.XmlConvert.ToTimeSpan(tsStr), null); }
-            catch (FormatException)
-            {
-                if (TimeSpan.TryParse(tsStr, System.Globalization.CultureInfo.InvariantCulture, out var ts))
-                    return (ts, null);
-                return (null, new error.Error(
-                    $"Cannot parse '{tsStr}' as TimeSpan — expected ISO 8601 (e.g. PT30S) or .NET format (e.g. 00:00:30).",
-                    "TimeSpanParseFailed", 400));
-            }
-        }
+        // (string → TimeSpan is owned by duration.Convert, dispatched via the hook above.)
 
         // Enum types
         if (targetType.IsEnum)
@@ -337,59 +382,7 @@ public sealed partial class @this
                 "EnumConversionFailed", 400)); }
         }
 
-        // GoalCall: convert from string, JsonElement, or Dictionary (UnwrapJsonElement output)
-        if (targetType == typeof(app.goal.GoalCall))
-        {
-            if (value is string goalName)
-            {
-                if (context?.App.Type.IsClrTypeName(goalName) ?? false)
-                    return (null, new error.Error(
-                        $"GoalCall.Name was set to a CLR type name '{goalName}' from a string source.",
-                        "ClrTypeNameInGoalSlot", 500)
-                        { FixSuggestion = "Build pipeline leaked a typed object's ToString() into a goal-name slot." });
-                return (new app.goal.GoalCall { Name = goalName }, null);
-            }
-            if (value is JsonElement je)
-            {
-                try
-                {
-                    return (JsonSerializer.Deserialize<app.goal.GoalCall>(
-                        je.GetRawText(),
-                        _caseInsensitiveRead), null);
-                }
-                catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
-                {
-                    return (null, new error.Error(
-                        $"Failed to deserialize GoalCall from JSON: {ex.Message}",
-                        "GoalCallDeserializationFailed", 400));
-                }
-            }
-            if (value is IDictionary<string, object?> dict)
-            {
-                var name = dict.TryGetValue("name", out var n) ? n?.ToString() ?? "" : "";
-                if (context?.App.Type.IsClrTypeName(name) ?? false)
-                    return (null, new error.Error(
-                        $"GoalCall.Name was set to a CLR type name '{name}'.",
-                        "ClrTypeNameInGoalSlot", 500)
-                        { FixSuggestion = "Build pipeline leaked a typed object's ToString() into a goal-name slot " +
-                            "(likely a Fluid template rendering an object via ToString() instead of navigating to .Name)." });
-                var prPathStr = dict.TryGetValue("prPath", out var pr) ? pr?.ToString() : null;
-                var prPath = (prPathStr != null && context != null)
-                    ? global::app.type.path.@this.Resolve(prPathStr, context)
-                    : null;
-                List<data.@this>? parameters = null;
-                if (dict.TryGetValue("parameters", out var p) && p is IList<object?> pList)
-                {
-                    parameters = pList
-                        .OfType<IDictionary<string, object?>>()
-                        .Select(d => new data.@this(
-                            d.TryGetValue("name", out var dn) ? dn?.ToString() ?? "" : "",
-                            d.TryGetValue("value", out var dv) ? dv : null))
-                        .ToList();
-                }
-                return (new app.goal.GoalCall { Name = name, PrPath = prPath, Parameters = parameters }, null);
-            }
-        }
+        // (string/JsonElement/dict → goal.call is owned by GoalCall.Convert, dispatched via the hook above.)
 
         // Primitives via Convert.ChangeType. InvariantCulture so JSON-shaped
         // numbers ("3.14", "1000") parse identically regardless of the user's locale.
@@ -401,8 +394,11 @@ public sealed partial class @this
             }
             catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
             {
+                // Lead with target type + parameter name + actual content; never
+                // surface the raw C# exception text (e.g. "Object must implement
+                // IConvertible") as the headline — it's meaningless to a PLang dev.
                 var convErr = new error.Error(
-                    $"Cannot convert '{value}' ({sourceType.Name}) to {targetType.Name}: {ex.Message}",
+                    BindFailureMessage(value, sourceType, targetType, targetName),
                     "PrimitiveConversionFailed", 400)
                 { Exception = ex };
                 if (value is error.Error sourceErr)
@@ -455,7 +451,7 @@ public sealed partial class @this
         if (!targetType.IsAssignableFrom(sourceType))
         {
             return (null, new error.Error(
-                FormatTypeMismatch(value, sourceType, targetType),
+                FormatTypeMismatch(value, sourceType, targetType, targetName),
                 "TypeMismatch", 400)
                 { FixSuggestion = TypeMismatchHint(value, sourceType, targetType) });
         }
@@ -463,9 +459,58 @@ public sealed partial class @this
         return (value, null);
     }
 
-    private static string FormatTypeMismatch(object? value, System.Type sourceType, System.Type targetType)
+    /// <summary>
+    /// A parameter-binding failure in plain language: what we tried to convert
+    /// <em>to</em> (target PLang type), <em>where</em> (the parameter name, when
+    /// the binding layer threaded it in), and <em>from</em> (the actual value's
+    /// type + a content preview). Leads with these three facts and never the raw
+    /// C# exception text.
+    /// </summary>
+    private static string BindFailureMessage(object? value, System.Type sourceType, System.Type targetType, string? targetName)
     {
-        return $"Cannot convert {sourceType.FullName} to {targetType.FullName}. Source value: {FormatValuePreview(value)}";
+        var expected = PlangTypeLabel(targetType);
+        var slot = string.IsNullOrEmpty(targetName) ? "" : $" parameter '{targetName}'";
+        var actual = value is error.Error err
+            ? $"an Error object ({err.Key}: {Truncate(err.Message, 120)})"
+            : $"{PlangTypeLabel(sourceType)} {FormatValuePreview(value)}";
+        return $"Could not bind{slot}: expected {expected} but the value is {actual}.";
+    }
+
+    /// <summary>PLang type name + CLR type for a target/source, e.g. "text (string)".</summary>
+    private static string PlangTypeLabel(System.Type type)
+    {
+        var u = System.Nullable.GetUnderlyingType(type) ?? type;
+        return app.type.primitive.@this.Canonical.TryGetValue(u, out var plang)
+            ? $"{plang} ({u.Name})"
+            : u.Name;
+    }
+
+    /// <summary>
+    /// Prepends the binding slot (parameter/variable name) to an owning-type hook's
+    /// error so an action-parameter bind failure still names where it failed — the hooks
+    /// don't carry the slot, the door does. No-op when the slot is unknown or already named.
+    /// </summary>
+    private static error.Error WithSlot(error.Error e, string? targetName)
+    {
+        if (string.IsNullOrEmpty(targetName) || e.Message.Contains($"'{targetName}'"))
+            return e;
+        return new error.Error($"parameter '{targetName}': {e.Message}", e.Key, e.StatusCode)
+        {
+            FixSuggestion = e.FixSuggestion,
+            Exception = e.Exception
+        };
+    }
+
+    private static string Truncate(string? s, int max)
+        => string.IsNullOrEmpty(s) ? "" : (s!.Length <= max ? s : s[..max] + "…");
+
+    private static string FormatTypeMismatch(object? value, System.Type sourceType, System.Type targetType, string? targetName = null)
+    {
+        // FullName (not Name) so an OBP `@this` target disambiguates; value
+        // preview surfaces an unresolved %var% in the headline. Lead with the
+        // parameter name when the binding layer threaded it in.
+        var slot = string.IsNullOrEmpty(targetName) ? "" : $"parameter '{targetName}': ";
+        return $"{slot}Cannot convert {sourceType.FullName} to {targetType.FullName}. Source value: {FormatValuePreview(value)}";
     }
 
     private static string TypeMismatchHint(object? value, System.Type sourceType, System.Type targetType)
@@ -486,8 +531,11 @@ public sealed partial class @this
         }
         if (value is System.Collections.ICollection col)
             return $"<{value.GetType().Name} @ {col.Count} items>";
-        var str = value.ToString() ?? "?";
-        return str.Length <= 100 ? $"{str} ({value.GetType().Name})" : $"{str[..100]}… ({value.GetType().Name})";
+        // A value that is neither string nor collection: show its TYPE, never
+        // ToString() it. A domain object's ToString() leaks the CLR type name as if
+        // it were content and masks the real defect (an object reaching a text slot);
+        // the type name alone is the honest, useful signal for a bind-failure message.
+        return $"<{value.GetType().FullName}>";
     }
 
     private static System.Type? GetListElementType(System.Type targetType)

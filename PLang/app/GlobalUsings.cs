@@ -14,7 +14,7 @@ global using Bindings = app.@event.lifecycle.binding.list.@this;
 
 // Event types WITH conflicts — require per-file handling:
 // global::app.@event.list.@this alias (not "Events") avoids collision with PLang.Events namespace
-// EventType: v1 PLang.Events conflict — use: using app.@event; or per-file alias
+// Trigger: v1 PLang.Events conflict — use: using app.@event; or per-file alias
 // EventBinding: v1 PLang.Events conflict — use: using EventBinding = app.@event.lifecycle.binding.@this;
 
 // Channels subsystem

@@ -1,25 +1,74 @@
-## Type Information
+## Step text (the line to compile)
 
-Primitive types: {{ typeInfo.TypeNames }}
-{% if typeInfo.TypeSchemas != "" %}
-Catalog types referenced by this step's actions:
-{{ typeInfo.TypeSchemas }}{% endif %}
+```
+{{ step.Text }}
+```
 
-## Action Detail
+## What to map to — the planner picked these actions
+
+{% for a in planStep.actions %}{{ a }}{% unless forloop.last %}, {% endunless %}{% endfor %}
+
+## Action detail (parameters + notes)
 
 {{ actionDetails }}
 
-## Step
+## Variables in scope (from prior steps)
 
-STEP TEXT (the exact source line to compile — values inside it are LITERAL, do not expand or include the surrounding prompt content into any value):
---- BEGIN STEP TEXT ---
+{% if stepVarTypes %}{% for kv in stepVarTypes %}`%{{ kv[0] }}%` ({{ kv[1] }}){% unless forloop.last %}, {% endunless %}{% endfor %}{% else %}(none — this is the first step or no variables introduced yet){% endif %}
+
+## Type reference
+
+**Primitive type names** (use these as the top-level `name` in a parameter `type` field): {% for n in typeInfo.PrimitiveNames %}{{ n }}{% unless forloop.last %}, {% endunless %}{% endfor %}
+
+**Every parameter wrapper has three fields**: `name` (the parameter name), `value` (the actual value), `type` (the value's PLang type as a structured `{name, kind?, strict?}` dict). `type` is ONE field — never split into sibling `type` + `kind` keys.
+
+Examples of complete wrappers:
+
+- raw value `5` → `{"name":"X","value":5,"type":{"name":"number","kind":"int"}}`
+- raw value `3.14` → `{"name":"X","value":3.14,"type":{"name":"number","kind":"decimal"}}`
+- raw value `"hi"` → `{"name":"X","value":"hi","type":{"name":"text"}}`
+- raw value `"readme.md"` (a string literal — its value IS the 9 characters "readme.md", which is text, NOT a markdown document) → `{"name":"X","value":"readme.md","type":{"name":"text"}}`
+- raw value `true` → `{"name":"X","value":true,"type":{"name":"bool"}}`
+- raw value `{a:1, b:2}` → `{"name":"X","value":{"a":1,"b":2},"type":{"name":"object"}}`
+
+A bare string literal is `text` with **no kind** — never promote it by its spelling. A file extension in a literal (`.md`, `.jpg`, `.csv`) does NOT make the value that kind: the value is the path string, not the content it points at. A `kind` on a literal comes from exactly two places, never the spelling:
+- an explicit `as <name>/<kind>` the developer wrote, or
+- a producing action that read the real content/path (e.g. `read file.md` → `{text, md}` — there the value IS the markdown).
+
+A reference fundamental (`image`, `video`, `audio`, `path`) is never tagged onto a raw literal — there is no image literal, only a path. The LLM emits `{name: image}` only when the developer wrote `as image`; the runtime parses the kind from the path.
+
+A parameter whose DECLARED schema type is `type` (e.g. `variable.set.Type`) carries a type entity AS ITS VALUE. The wrapper is:
+
+```
+{"name":"Type","value":{"name":"text","kind":"md"},"type":{"name":"type"}}
+```
+
+`value` is the type entity `{name, kind?, strict?}`; `type` is the wrapper's own type field, set to `{"name":"type"}`.
+
+**Kind vocabulary** — for each `name`, the kinds you may emit under it (a kind is the file extension or numeric precision):
+
+| name | kind |
+|---|---|
+{% for entry in typeInfo.Kinds %}| {{ entry[0] }} | {% for k in entry[1] %}{{ k }}{% unless forloop.last %}, {% endunless %}{% endfor %} |
+{% endfor %}
+
+Rules:
+- `string` is NOT a name — use `text`. `int`/`long`/`decimal`/`double` are NOT names — use `number` with the precision as the kind.
+- Step-text `as <name>` → `{"name":"<name>"}`. For a reference fundamental (`image`/`video`/`audio`/`path`) the runtime parses the kind from the value's path; for `text` no kind is derived from a literal's spelling.
+- Step-text `as <name>/<kind>` → `{"name":"<name>","kind":"<kind>"}`.
+- Step-text `as <name>/<kind> strict` → adds `"strict":true`. Strict on a name with no kind is allowed (no-op).
+- Step-text `(<kind>)` after a write target → match the kind to its name in the table above. `(json)`/`(csv)`/`(xml)` → `text`; `(int)`/`(long)` → `number`; `(gif)`/`(jpg)` → `image`. Unknown free strings pass through as `{"name":"<that>"}`.
+
+{% if typeInfo.Types.size > 0 %}
+**Catalog types referenced by this step's actions** (record/enum field shapes; primitives stay in the Primitive list above, kinds in the table above):
+
+{% for t in typeInfo.Types %}- `{{ t.Name }}`{% if t.Values %}: {% for v in t.Values %}{{ v }}{% unless forloop.last %} | {% endunless %}{% endfor %}{% elsif t.Fields %}: { {% for f in t.Fields %}{{ f.Name }}: {{ f.TypeName }}{% unless forloop.last %}, {% endunless %}{% endfor %} }{% elsif t.ConstructorSignature %} ({{ t.ConstructorSignature }}){% elsif t.Shape %} ({{ t.Shape }}){% endif %}{% if t.Description %} — {{ t.Description }}{% endif %}{% if t.Example %} (e.g. `{{ t.Example }}`){% endif %}
+{% endfor %}{% endif %}
+
+## Compile this exact line
+
+```
 {{ step.Text }}
---- END STEP TEXT ---
+```
 
-Actions involved (planner's set — compiler decides chain order and shape from the action examples):
-{% for a in planStep.actions %}{{ a }}{% unless forloop.last %}, {% endunless %}{% endfor %}
-
-Variables in scope at this step (name → PLang type, derived from prior steps). Lookups are case-INSENSITIVE; the snapshot may lowercase names for display.
-{% if stepVarTypes %}{% for kv in stepVarTypes %}%{{ kv[0] }}%({{ kv[1] }}){% unless forloop.last %}, {% endunless %}{% endfor %}{% else %}(none — this is the first step or no variables introduced yet){% endif %}
-
-Produce the actions for this step.
+Produce the actions for this step — map the line above verbatim. Copy every identifier, path, and argument exactly as written (e.g. a goal name `Folder/Goal` keeps `/Goal`; a `%var%` stays a `%var%`).

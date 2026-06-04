@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Json.Serialization;
 using app.Attributes;
 using app.Utils;
@@ -11,15 +10,16 @@ namespace app.builder.type;
 ///
 /// Two roles in one type:
 ///   - Host (the instance held at <c>app.builder.type</c>) — has <c>_modules</c>
-///     and exposes <see cref="Build"/> + <see cref="Render"/>. Its
-///     <see cref="PrimitiveNames"/> / <see cref="Types"/> are empty arrays.
+///     and exposes <see cref="Build"/>. Its <see cref="PrimitiveNames"/> /
+///     <see cref="Types"/> are empty arrays.
 ///   - Built result (returned by <see cref="Build"/>) — same instance shape,
-///     populated PrimitiveNames + Types. Consumers (builder template, trace
-///     viewer) use the built result.
+///     populated. Consumers (builder Liquid template, trace viewer) read the
+///     strongly-typed fields directly; the template owns the rendering.
 ///
 /// OBP: schema is a real object owned by Modules. Reach it via
 /// <c>app.builder.type</c>; build a snapshot via
-/// <c>app.builder.type.Build()</c>.
+/// <c>app.builder.type.Build()</c>. Rendering belongs in the template, not
+/// in pre-rendered string properties.
 /// </summary>
 public sealed partial class @this
 {
@@ -35,106 +35,56 @@ public sealed partial class @this
     [LlmBuilder]
     public IReadOnlyList<global::app.type.@this> Types { get; init; } = System.Array.Empty<global::app.type.@this>();
 
-    // ---- Template conveniences (pre-rendered views the Liquid prompt consumes) ----
-
-    /// <summary>Comma-joined primitive names — the string the builder template drops in.</summary>
-    [JsonIgnore]
-    public string TypeNames => string.Join(", ", PrimitiveNames);
-
     /// <summary>
-    /// The full schema block rendered as the markdown shape the builder prompt expects:
-    ///   `name: v1 | v2 | ...`           for Enum entries
-    ///   `name: { k: T, ... }`            for Record entries
-    /// Pre-rendered so the Liquid template stays a dumb stitcher.
+    /// Per-family kind vocabulary the LLM may emit for the <c>type</c> parameter.
+    /// Inverted from the format registry's extension→family map — e.g.
+    /// <c>image → [jpg, jpeg, png, gif, ...]</c>, <c>text → [txt, json, csv,
+    /// md, ...]</c>. Numerics (kinds of <c>number</c>) are added explicitly
+    /// since they aren't extensions. Stable, catalog-derived — teaches the
+    /// LLM what (name, kind) combos are valid without a per-action override.
     /// </summary>
-    [JsonIgnore]
-    public string TypeSchemas
-    {
-        get
-        {
-            var sb = new StringBuilder();
-            foreach (var t in Types)
-            {
-                sb.Append("  ").Append(t.Value).Append(": ");
-                if (t.Values != null)
-                {
-                    sb.Append(string.Join(" | ", t.Values));
-                }
-                else if (t.Fields != null)
-                {
-                    sb.Append("{ ");
-                    for (int i = 0; i < t.Fields.Count; i++)
-                    {
-                        if (i > 0) sb.Append(", ");
-                        sb.Append(t.Fields[i].Name).Append(": ").Append(t.Fields[i].TypeName);
-                    }
-                    sb.Append(" }");
-                }
-                else
-                {
-                    // Scalar: emit just the constructor-input type, not the
-                    // `constructor(name: type), properties: ...` verbose form.
-                    // The verbose form misleads the LLM into emitting a record
-                    // (dict) for parameters of this type; what it actually wants
-                    // is a scalar matching the input form (e.g. a string for
-                    // `path`). The dot-path properties (extension, exists, ...)
-                    // stay accessible at runtime via type registration; they
-                    // don't need to live in the catalog summary.
-                    if (t.ConstructorSignature != null)
-                    {
-                        var sig = t.ConstructorSignature;
-                        var colonIdx = sig.IndexOf(':');
-                        sb.Append(colonIdx > 0 ? sig[(colonIdx + 1)..].Trim() : sig);
-                    }
-                    else if (t.Shape != null)
-                    {
-                        sb.Append(t.Shape);
-                    }
-                }
-                if (t.Kinds != null && t.Kinds.Count > 0)
-                    sb.Append(" (kinds: ").Append(string.Join(" | ", t.Kinds)).Append(')');
-                if (!string.IsNullOrEmpty(t.Description))
-                    sb.Append(" — ").Append(t.Description);
-                if (!string.IsNullOrEmpty(t.Example))
-                    sb.Append(" (e.g. ").Append(t.Example).Append(')');
-                sb.AppendLine();
-            }
-            return sb.ToString().TrimEnd();
-        }
-    }
+    [LlmBuilder]
+    public IReadOnlyDictionary<string, IReadOnlyList<string>> Kinds { get; init; }
+        = new Dictionary<string, IReadOnlyList<string>>();
 
     /// <summary>
     /// Builds a fresh Schema by walking <c>_modules</c>' action parameter types.
     /// Discovery is transitive: every type referenced in a schema is itself surfaced.
-    /// The @this decision (OBP types are catalog-visible by convention), [PlangType]
-    /// resolution, enum handling, and [LlmBuilder]-filtered fields all live in
-    /// TypeMapping — Build just assembles the result.
     /// </summary>
     public @this Build()
     {
         var primitives = _modules.App?.Type.GetBuilderTypeNames() ?? new List<string>();
         var types = _modules.App?.Type.BuildTypeEntries(_modules) ?? new List<global::app.type.@this>();
 
+        // name → kind vocabulary the LLM may emit, scoped to the FUNDAMENTAL
+        // vocabulary only — never every registered type's Kinds. A result type
+        // like `hash` stays fully registered (app.Type["hash"], getTypes) but
+        // its algorithms never join the always-on prompt: the LLM doesn't choose
+        // `as hash`, so listing them is pure noise. Two sources, both filtered
+        // to fundamentals:
+        //   - Format registry's extension→family map (text, image, audio, video)
+        //     — the file-extension kinds.
+        //   - Fundamentals that ADVERTISE a static `Kinds` vocabulary (number's
+        //     precisions) — pulled from the catalog entry's folded Kinds so the
+        //     type owns its list (no hardcoding here).
+        var kindsByName = new Dictionary<string, IReadOnlyList<string>>(System.StringComparer.OrdinalIgnoreCase);
+        if (_modules.App?.Format is { } fmt)
+        {
+            foreach (var kvp in fmt.KindsByFamily())
+                if (app.type.primitive.@this.Fundamentals.Contains(kvp.Key))
+                    kindsByName[kvp.Key] = kvp.Value;
+        }
+        var allKnown = _modules.App?.Type.BuildTypeEntries(null) ?? new List<global::app.type.@this>();
+        foreach (var t in allKnown)
+            if (t.Kinds is { Count: > 0 } && app.type.primitive.@this.Fundamentals.Contains(t.Name))
+                kindsByName[t.Name] = t.Kinds;
+
         return new @this(_modules)
         {
             PrimitiveNames = primitives,
             Types = types,
+            Kinds = kindsByName,
         };
     }
 
-    /// <summary>
-    /// Serializes the schema as JSON — structured Types + PrimitiveNames, with
-    /// camelCase keys. ClrType is hidden (tagged JsonIgnore on Entry). The
-    /// result is safe to expose to docs/UI/trace-viewer consumers.
-    /// </summary>
-    public string ToJson(bool indent = true)
-    {
-        var options = new System.Text.Json.JsonSerializerOptions
-        {
-            WriteIndented = indent,
-            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
-        };
-        return System.Text.Json.JsonSerializer.Serialize(this, options);
-    }
 }

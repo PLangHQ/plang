@@ -1,0 +1,133 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %x% = \u0022a\u0022 as text",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "\u0060as text\u0060 without strict \u2192 builds clean; text.Build(\u0022a\u0022) returns null\n(no extension); kind stays null; no validation runs.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%x%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": "a",
+              "type": {
+                "name": "text"
+              }
+            },
+            {
+              "name": "Type",
+              "value": {
+                "name": "text"
+              },
+              "type": {
+                "name": "type"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%x%, Value=\u0022a\u0022, Type={\u0022name\u0022:\u0022text\u0022})",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %x.Type.Name% equals \u0022text\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "%x.Type.Name%",
+              "type": {
+                "name": "text"
+              }
+            },
+            {
+              "name": "Actual",
+              "value": "text",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=%x.Type.Name%, Actual=\u0022text\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %x.Type.Kind% is null",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%x.Type.Kind%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.isNull(Value=%x.Type.Kind%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/TypeKindStrict/SetAsTextDefaultNoValidation.test.goal",
+  "prPath": "/TypeKindStrict/.build/setastextdefaultnovalidation.test.pr",
+  "hash": "affbb8737eb216c39d6f092dda3b0e7bd2367493d71a2b37ba4c065b1735ee42",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

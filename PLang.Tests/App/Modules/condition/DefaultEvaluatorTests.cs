@@ -129,7 +129,7 @@ public class DefaultEvaluatorTests
     public async Task Evaluate_NonComparable_GreaterThan_ReturnsError()
     {
         var result = await Eval(new object(), ">", 5);
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");
     }
 

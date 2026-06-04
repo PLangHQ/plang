@@ -18,10 +18,10 @@ public class ThrowTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Throw { Context = context, Message = "Something went wrong", StatusCode = 500 };
+        var action = new Throw { Context = context, Message = Data.Ok("Something went wrong"), StatusCode = 500 };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Message).IsEqualTo("Something went wrong");
     }
@@ -31,10 +31,10 @@ public class ThrowTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Throw { Context = context, Message = "Not found", StatusCode = 404, Key = "NotFound" };
+        var action = new Throw { Context = context, Message = Data.Ok("Not found"), StatusCode = 404, Key = "NotFound" };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
         await Assert.That(result.Error.StatusCode).IsEqualTo(404);
     }
@@ -44,10 +44,27 @@ public class ThrowTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Throw { Context = context, Message = "Server error" };
+        var action = new Throw { Context = context, Message = Data.Ok("Server error") };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
+    }
+
+    [Test]
+    public async Task Throw_ReRaisesErrorObject_PreservingKeyMessageStatus()
+    {
+        // `- throw %!error%` re-raises an existing Error as-is (Key, Message,
+        // StatusCode preserved) — not stringified into the string slot.
+        var (context, _) = CreateContext();
+        var original = new global::app.error.ServiceError("original boom", "OriginalKey", 418);
+
+        var action = new Throw { Context = context, Message = Data.Ok(original) };
+        var result = await action.Run();
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("OriginalKey");
+        await Assert.That(result.Error.Message).IsEqualTo("original boom");
+        await Assert.That(result.Error.StatusCode).IsEqualTo(418);
     }
 }

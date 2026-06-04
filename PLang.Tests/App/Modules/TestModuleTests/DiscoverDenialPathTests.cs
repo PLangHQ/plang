@@ -42,7 +42,7 @@ public class DiscoverDenialPathTests
         };
         var result = await action.Run();
         // Denial surfaces as Fail, not as an empty list of tests.
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
     }
 
     [Test] public async Task Discover_WithDotDotTraversal_DeniedByAuthGate()

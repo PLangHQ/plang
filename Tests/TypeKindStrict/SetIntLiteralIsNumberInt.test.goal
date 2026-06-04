@@ -1,0 +1,7 @@
+Start
+/ A bare integer literal binds Type to {name:number, kind:int} — the int
+/ primitive is no longer a top-level name; it surfaces as a kind of number.
+/ Pins the architect's "set %x% = 5 → {number, int}" rule end-to-end.
+- set %x% = 5
+- assert %x.Type.Name% equals "number"
+- assert %x.Type.Kind% equals "int"

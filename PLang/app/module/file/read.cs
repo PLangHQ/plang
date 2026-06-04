@@ -21,25 +21,28 @@ public partial class Read : IContext
     [Default(false)]
     public partial data.@this<bool> ResolveVariables { get; init; }
 
-    // Bare Data — polymorphic by MIME (text → string, binary → byte[], json → structured,
-    // image → app.type.image.@this). The Type stamp carries the high-level type; the
-    // value is the typed instance.
+    // Opens a file channel and reads through the one boundary — `channel.read`
+    // stamps {type, kind} from the file's Mime and returns LAZY Data. Nothing is
+    // converted at read time; the value (string / dict / image / table / bytes)
+    // materializes on first touch through the reader registry. So `read
+    // config.json` untouched stays the raw json string; navigating it parses.
     public async Task<data.@this> Run()
     {
-        if (!Path.Success) return Path;   // codeanalyzer v1 F4 — typed scheme error, not an NRE
-        var read = await Path.Value!.ReadText();
+        if (!Path.Success) return Path;   // typed scheme error, not an NRE
+        var channel = new global::app.channel.type.file.@this(Path.Value!);
+        var read = await channel.Read();
         if (!read.Success || read.Type?.ClrType.Exit() == true) return read;
 
-        // plang-types Stage 5: when the read result is image-MIME bytes, lift
-        // to an image value. Bytes are loaded once here; image is the leaf
-        // owner of width/height/mime — width/height stay lazy until accessed.
-        var mime = read.Type?.Value ?? "";
-        if (read.Value is byte[] bytes && mime.StartsWith("image/", System.StringComparison.OrdinalIgnoreCase))
-        {
-            var image = new global::app.type.image.@this(bytes, mime, Path.Value);
-            return new data.@this(read.Name, image, app.type.@this.FromName("image"));
-        }
+        // A file-backed image carries a source-path facet (image.Path → the
+        // file, so %img.Path.Exists% works) that only the read site knows — the
+        // generic byte→image reader can't recover it. Build the path-backed image
+        // here from the raw bytes (no decode); every other type stays lazy.
+        if (read.Type?.Name == "image" && read.Raw is byte[] imageBytes)
+            return new data.@this(read.Name,
+                new global::app.type.image.@this(imageBytes, Path.Value!), read.Type);
 
+        // ResolveVariables is an explicit opt-in that needs the text in hand, so
+        // it forces materialization and resolves %var% — the only non-lazy path.
         if (ResolveVariables.Value && read.Value is string content)
         {
             var resolved = Context.Variable.Resolve(content, skipInfrastructure: true);
@@ -68,21 +71,14 @@ public partial class Read : IContext
         if (p == null || string.IsNullOrEmpty(p.Extension)) return data.@this.Ok();
         if (p.MimeType == "application/octet-stream") return data.@this.Ok();
 
-        // plang-types Stage 5: resolve extension → HIGH-LEVEL type (image, code,
-        // …) via app.formats when the high-level name is a registered typed
-        // value (image has Build/kind/serializer). For text-shaped extensions
-        // (csv/json/xml/yaml/md/txt/ini) keep the extension stamp — they're
-        // string aliases that read more clearly than the generic "text".
-        var ext = p.Extension.TrimStart('.').ToLowerInvariant();
-        string typeName = ext;
-        var highLevel = Context.App.Format.Kind(ext);
-        if (highLevel != null
-            && !string.Equals(highLevel, "text", System.StringComparison.OrdinalIgnoreCase)
-            && Context.App.Type.Get(highLevel) != null)
-        {
-            typeName = highLevel;
-        }
-        if (Context.App.Type.Get(typeName) == null) return data.@this.Ok();
+        // Stage 6: the SAME shared derivation the runtime (FilePath.ReadText)
+        // uses — so the build-time stamp and the runtime stamp can't drift.
+        // `read foo.md` → {text, md}, `read data.json` → {object, json},
+        // `read pic.png` → {image, png}. The terminal variable.set carries the
+        // structured type, not a bare extension string.
+        var inferred = Context.App.Format.TypeFromExtension(p.Extension);
+        if (inferred.IsNull || Context.App.Type.Get(inferred.Name) == null) return data.@this.Ok();
+        inferred.Context = Context;
 
         // Best-effort missing-file warning. Channel("builder") falls back to a
         // no-op sink when no build is active, so this is safe outside builds.
@@ -98,6 +94,6 @@ public partial class Read : IContext
         }
         catch (System.Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { /* best-effort warning — never block Build() */ }
 
-        return data.@this.Ok(typeName);
+        return data.@this.Ok(inferred);
     }
 }

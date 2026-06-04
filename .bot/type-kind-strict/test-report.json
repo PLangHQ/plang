@@ -1,0 +1,30 @@
+{
+  "tester": "tester",
+  "branch": "type-kind-strict",
+  "timestamp": "2026-06-04T19:50:32Z",
+  "tested_version": "v13",
+  "test_run": {
+    "csharp": { "total": 4025, "passed": 4025, "failed": 0, "skipped": 0 },
+    "plang": { "total": 273, "passed": 273, "failed": 0, "skipped": 0, "stale": 0, "note": "Deterministic across 2 consecutive clean-binary runs; git status clean after each (zero .pr rewritten). The v8 reproducibility blocker is resolved." }
+  },
+  "coverage": {
+    "changed_files_covered": 2,
+    "changed_files_total": 2,
+    "uncovered_files": [],
+    "note": "coder v13 is test-only (two new C# files). Both honest; set-path MaterializeFailed contract independently mutation-verified by tester."
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "type": "missing-plang-test",
+      "test_file": "Tests/TypeKindStrict/SetAsImageGifStrictMismatch.test.goal",
+      "code_file": "PLang/app/type/image/this.cs",
+      "issue": "Carry-forward of v8 F2 (now non-blocking, fixtures stable). No end-to-end PLang goal walks set -> store -> retrieve -> load -> throw for a LAZY strict image. SetAsImageGifStrictMismatch sets 'photo.png' as image/gif strict but only asserts Type.Name/Kind; it never forces a byte load, so the deferred StrictKindMismatchException never fires in PLang. The throw-at-load is unit-tested directly on image (LazyPathHandleTests.BytesAsync_StrictKindMismatch) and the set-seam imprint survival is established by C# (Cut2). The PLang goal layer does not exercise the seam end-to-end.",
+      "impact": "If a future refactor drops the strict imprint at the variable.set seam for path-backed values, no PLang goal test would catch it — only the C# unit tests would. Low risk: the C# layer is covered and deterministic.",
+      "suggestion": "Add a goal that reads %img.Width% or %img.Bytes% after a mismatched strict set on the committed photo.png fixture and asserts the error surfaces (test.report error-capture). Optional polish — C# coverage already pins the contract."
+    }
+  ],
+  "verdict": "approved",
+  "summary": "PASS. The branch I FAILed at v8 (PLang suite not reproducibly green; committed .pr stale vs stage-4 variable.set.Type entity; 0-4 flapping fails, '262/262' a warm-cache artifact) is honestly green after the lazy-deserialize merge. Clean-binary PLang 273/273/0/0-stale, IDENTICAL across two consecutive runs, git status clean after each (zero .pr rewritten) — the reproducibility blocker is dead. C# 4025/4025/0 on clean rebuild. coder v13 is test-only: MaterialiseErrorPathTests (+2 set-path) and SignedDataSurvivesVariableSetListTests — both honest (assert Error.Key=='MaterializeFailed' distinct from NotFound; signature survives the real variable.set handler and verifies). I independently mutation-tested the set-path MaterializeFailed contract: neutralizing the guard at variable/list/this.cs:311 flips exactly those two tests red, passes on revert; source reverted clean. Strict-kind enforcement coverage (read-lift Cut2 + lazy path-backed LazyPathHandleTests) survived the merge intact. One minor carry-forward (no end-to-end PLang goal for lazy strict image load-throw), non-blocking."
+}

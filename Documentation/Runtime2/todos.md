@@ -1,5 +1,7 @@
 # Runtime2 TODOs
 
+> **OBP shape violations** go in their own running collection: `Documentation/Runtime2/obp-cleanup.md` — parked for dedicated passes, not mixed into feature branches.
+
 > **Audited 2026-05-11** (`runtime2-foundation-verify` v1, architect). Every
 > entry in this file was checked against the current code. Resolved entries
 > are marked inline (`✅ RESOLVED`). Entries still open were re-verified and
@@ -763,3 +765,124 @@ it works on paper.
 When we build a module that can transcribe audio, check out
 https://nemorize.com/roadmaps/building-real-time-voice-agents-from-scratch
 as a reference for the design (real-time voice agent architecture).
+
+## 2026-05-30 — lazy JSON parse on file read (don't parse at read time)
+
+Context (from `type-kind-strict` branch, architect/Ingi). `FilePath.ReadText`
+(`PLang/app/type/path/file/this.Operations.cs:61`) currently parses eagerly:
+for a non-string CLR target (`.json` → dict, etc.) it runs
+`TryConvertTo(text, clr)` at read time, so reading a `.json` file always
+deserializes to a dict even when the caller only wanted the raw text.
+
+Change: read the file as text and stamp the type from the extension
+(`{name: object, kind: json}` for `.json`), but keep the value as the raw
+string and only parse to the JSON object on **first access** (lazy). The
+mechanism already exists — `Data.SetValue(Func<object?>)` for the deferred
+factory and `Data.ConvertValue()` ("if value is a string and Type knows the
+conversion, convert once on first navigation"). Route the read through those
+instead of converting inline.
+
+Why: matches the settled type/kind decision — `text` means "the value is a
+string"; JSON stays `object` with kind `json`. No reason to pay the parse
+cost (or commit to a shape) until someone navigates into the value. Text
+reads (`.md`/`.txt`/`.csv`) already stay string; this makes the structured
+formats lazy too.
+
+Scope (settled 2026-05-30, Ingi): applies to **every** non-string conversion
+in `ReadText`, not just JSON. The rule is "read returns raw text, materialize
+to the structured shape on first access" — JSON/dict/any non-string CLR target
+all go lazy via the same factory.
+
+## 2026-05-31 — event type/property rename (Lifecycle / Bindings)
+
+Still pending (confirmed on `type-kind-strict` by Ingi). Agreed target naming for the
+event surface, not yet landed:
+- `GoalStepEvents` / `ActionEvents` → `Lifecycle` (one type for all entities)
+- `EventList` → `Bindings`
+- Navigation reads: `goal.Lifecycle.Before.Run(context)`, `step.Lifecycle.After.Run(context)`
+
+Why: `Lifecycle` with `.Before`/`.After` IS a lifecycle (noun = identity); `Bindings`
+with `.Add()`/`.Run()` IS a collection of bindings. Current names describe shape, not
+identity. (Lifted out of the old `good_to_know.md` "OBP Naming Principle" block when it
+was consolidated into `obp-smells.md`, so the intent isn't lost.)
+
+## 2026-05-31 — feature idea: event-driven parallel branch (fan-out the remaining steps)
+
+Scenario:
+
+```
+DoStuff
+- read numbers.csv, write to %csv%
+- run calculate.cs for %csv%, write to %result%
+- write out %result%
+```
+
+Bind an event to step 1 (`read numbers.csv`). The handler sends the numbers to an
+LLM and gets back **two new sets**. It then tells the runtime: *"here are two sets —
+branch, and run the rest of the steps (2,3) in parallel, once per set."* Result: two
+parallel pipelines, each computing on its own set.
+
+**Core capability:** an event handler can **return a branch/fork instruction** that
+forks the remaining step execution into N parallel processes, each with its own
+variable binding. A scatter driven by an event's return.
+
+Open design questions (seeds, not decided):
+- **How the event returns the instruction.** A typed return the engine recognises —
+  analogous to how a suspending value (`IExitsGoal`/`Ask`) or an error-recovery value
+  flows back through the step loop. e.g. a `Branch`/`Fork` Data carrying N binding-sets;
+  the engine sees it and forks.
+- **Fork point = continue-from-here.** The event fired at step 1; the branch forks the
+  *remaining* steps (N+1…) — N continuations of the same step-chain, each with its own
+  scope (`%csv%` = set1 / set2).
+- **Parallelism + scope isolation.** N parallel runs of the remaining chain, each with
+  an isolated variable scope / forked CallStack. Ties to the existing fork-safe
+  `_current` AsyncLocal (each branch is its own context).
+- **Fan-in / rejoin.** Does the goal end as N independent `write out %result%` (no join),
+  or do branches rejoin (collect the N `%result%`s into one)? The instruction may carry
+  the join policy, or a later step is the join.
+- **Relationship to `loop.foreach`.** foreach already fans per-item by *calling a goal*,
+  sequentially. This is different: an event injects a *parallel* fan-out of the
+  *remaining pipeline*. Could unify (foreach = sequential case) or stay distinct.
+- **Where it lives.** Event-handler return → the step-execution loop forks the remaining
+  steps. Connects to "the event collection owns the run" (obp-cleanup #4) and the step loop.
+
+A real new runtime primitive (event-driven scatter / parallel-branch). Captured as a
+seed; design when picked up.
+
+## type.Kind vs type.Kinds — singular sweep candidate (2026-05-31, Ingi)
+
+`type.@this` carries both `Kind` (the per-value subtype — `"png"`, `"md"`) and
+`Kinds` (the advertised vocabulary — `["keccak256","sha256"]`). Two names one
+letter apart for two different concepts reads suspiciously, and OBP leans
+singular. Left as-is for now (the vocabulary `Kinds` is a genuine "all valid
+kinds" collection, which is a defensible plural). Investigate whether the
+vocabulary should be renamed to a distinct singular noun so `Kind`/`Kinds` stop
+looking like a typo of each other — without merging the two concepts.
+
+## Render a `table` to a UI — write half of lazy-deserialize (2026-06-03, Ingi)
+
+Follow-on to the `lazy-deserialize` branch, which is the *read* half. That branch types csv/xlsx as `type=table` (grid shape) and carries it untouched to the render boundary — the precondition for Ingi's vision: "read a csv, nothing in the runtime cares about it until I render it, then it draws a table in the UI."
+
+Because csv/xlsx are typed by *shape* (`table`) rather than by encoding, the renderer needs **no kind-awareness** — it dispatches on `type=table` through its existing `(type, format)` model. The follow-on is simply a `(table, html)` renderer entry that draws a grid (and whatever other UI formats), alongside `(table, csv)`/`(table, xlsx)` write-back. Read half + the `table` type ship in `lazy-deserialize`; this is the write half. (Earlier framing of this todo asked for kind-awareness on a `text`/csv value — superseded: typing by shape moved the "it's a table" knowledge onto `type`, where the renderer already looks.)
+
+## Unify TimeSpan's two wire forms (2026-06-03, coder/lazy-deserialize)
+
+Latent inconsistency surfaced during the reader-registry consolidation: a CLR
+`TimeSpan` has **two** wire forms depending on the path it takes.
+- `IWriter.TimeSpan` (json/writer.cs:42) writes `ToString("c")` → `"00:00:30"`.
+- `TimeSpanIso8601` (channel/serializer/TimeSpanIso8601.cs) reads/writes ISO-8601 → `"PT30S"`.
+
+So the same value serializes differently on the plang-value-tree path vs the
+STJ-converter path. Real, but out of scope for `lazy-deserialize` and risky to
+unify mid-branch (it's load-bearing on snapshot/signing wires). `duration` (the
+PLang type) parses both forms via `duration.Resolve`, so reads are tolerant; the
+divergence is on the *write* side. Architect's call (2026-06-03): flag, don't fix
+here. Unify later — pick one canonical TimeSpan wire form and route both paths
+through it (likely the duration type's own renderer/Read once the format-layer
+`TimeSpanIso8601` converter is reconsidered).
+
+## Fully type-driven nested Data — retire envelope-recognition (2026-06-03, architect; from `lazy-deserialize` Stage 3)
+
+`lazy-deserialize` Stage 3 keeps a **lean** `LiftDataIfShaped` (`app/data/Wire.cs`): it recognizes a nested Data by its envelope shape (`name`+`value` keys) in the eager-untyped path, because a nested Data in a bare value slot has **no type slot** to drive reconstruction (there is no `data` type, and `json.Writer` emits a nested Data inline with a type slot only when `!Type.IsNull`). The `GetRawText` double-parse was dropped, but the shape-recognition remains.
+
+Endgame (separate branch): add a `data` type to the registry, stamp a Data-valued slot with it on **write**, and reconstruct nested Data purely via `Readers.Of("data", …)` — then the envelope-recognition can be deleted entirely and reconstruction is 100% type-driven (the branch thesis). This is a **wire-format + new-type change on the serialization core** (touches snapshot + signing round-trips), so it was held out of Stage 3. Pick up when the snapshot branch or a dedicated pass touches the wire shape. Note: recognizing the Data envelope is legitimately a leaf serializer's job (not the banned content-sniffing, not a courier #7) — so the lean version is correct interim, not a smell to rush.

@@ -63,7 +63,7 @@ public class HttpStaticFileDenialTests
         var file = System.IO.Path.Combine(root, "public.txt");
         System.IO.File.WriteAllText(file, "hello");
         var result = await global::app.module.http.code.Default.CreateFileContentAsync(app, app.User.Context, file);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var bytes = await result.Value!.ReadAsByteArrayAsync();
         await Assert.That(System.Text.Encoding.UTF8.GetString(bytes)).IsEqualTo("hello");
     }

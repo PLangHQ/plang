@@ -47,7 +47,7 @@ public class EdgeCaseTests
     public async Task Config_Timeout_Negative_RejectedWithError()
     {
         var result = _app.Tester.Apply(new Dictionary<string, object?> { ["timeout"] = -5 });
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("timeout");
     }
 
@@ -58,10 +58,10 @@ public class EdgeCaseTests
     public async Task Config_Parallel_ZeroOrNegative_RejectedWithError()
     {
         var zero = _app.Tester.Apply(new Dictionary<string, object?> { ["parallel"] = 0 });
-        await Assert.That(zero.Success).IsFalse();
+        await zero.IsFailure();
 
         var neg = _app.Tester.Apply(new Dictionary<string, object?> { ["parallel"] = -1 });
-        await Assert.That(neg.Success).IsFalse();
+        await neg.IsFailure();
     }
 
     // A test whose goal calls test.run itself (nested runner). The inner run's
@@ -87,7 +87,7 @@ public class EdgeCaseTests
         };
         var outerResult = await outerAction.Run();
 
-        await Assert.That(outerResult.Success).IsTrue();
+        await outerResult.IsSuccess();
         await Assert.That(_app.Tester.Results.Count).IsEqualTo(0);
     }
 
@@ -178,7 +178,7 @@ public class EdgeCaseTests
     public async Task Config_Format_InvalidValue_RejectedWithError()
     {
         var result = _app.Tester.Apply(new Dictionary<string, object?> { ["format"] = "csv" });
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("format");
     }
 }

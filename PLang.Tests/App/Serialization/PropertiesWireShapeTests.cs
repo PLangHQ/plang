@@ -217,7 +217,7 @@ public class PropertiesWireShapeTests
                     Data = back,
                     SkipFreshnessCheck = new global::app.data.@this<bool>("", true)
                 }, d.Context);
-            await Assert.That(verify.Success).IsFalse();
+            await verify.IsFailure();
         }
         finally { dispose(); }
     }

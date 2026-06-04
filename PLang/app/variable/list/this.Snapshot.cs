@@ -43,4 +43,8 @@ public partial class @this : ISnapshot
             target.Set(data.Name, data.Clone());
         }
     }
+
+    /// <summary>Rehydrates the variables list into the section for Restore to consume.</summary>
+    public static void Read(snapshot.Io io, snapshot.@this section)
+        => section.Write("variables", io.Get<List<data.@this>>("variables") ?? new());
 }

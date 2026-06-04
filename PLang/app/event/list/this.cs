@@ -95,7 +95,7 @@ public sealed class @this
     /// <summary>
     /// Gets all bindings of a specific type.
     /// </summary>
-    public IReadOnlyList<EventBinding> GetBindings(EventType type)
+    public IReadOnlyList<EventBinding> GetBindings(Trigger type)
     {
         lock (_lock)
         {
@@ -107,7 +107,7 @@ public sealed class @this
     /// Gets matching bindings for a goal/step/action.
     /// </summary>
     public IReadOnlyList<EventBinding> GetMatchingBindings(
-        EventType type,
+        Trigger type,
         string? goalName = null,
         string? stepText = null,
         string? module = null,

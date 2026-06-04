@@ -10,7 +10,7 @@ public class DataResultTests
     {
         var result = Data.Ok();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsNull();
         await Assert.That(result.Error).IsNull();
     }
@@ -22,7 +22,7 @@ public class DataResultTests
 
         var result = Data.Ok(value);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo(value);
         await Assert.That(result.Error).IsNull();
     }
@@ -32,7 +32,7 @@ public class DataResultTests
     {
         var result = Data.Ok(null);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsNull();
     }
 
@@ -43,7 +43,7 @@ public class DataResultTests
 
         var result = Data.FromError(error);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Value).IsNull();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Message).IsEqualTo("Test error");
@@ -54,7 +54,7 @@ public class DataResultTests
     {
         var result = Data.FromError(new Error("Something went wrong"));
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Message).IsEqualTo("Something went wrong");
         await Assert.That(result.Error!.Key).IsEqualTo("Error");
@@ -66,7 +66,7 @@ public class DataResultTests
     {
         var result = Data.FromError(new Error("Not found", "NotFound", 404));
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Message).IsEqualTo("Not found");
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
         await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
@@ -195,7 +195,7 @@ public class DataResultTests
 
         var result = Data.Ok(data);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsNotNull();
     }
 
@@ -212,9 +212,9 @@ public class DataResultTests
     public async Task Error_IsMutable()
     {
         var result = Data.Ok();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         result.Error = new Error("now failed");
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
     }
 }

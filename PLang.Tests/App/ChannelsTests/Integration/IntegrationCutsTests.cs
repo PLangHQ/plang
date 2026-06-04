@@ -53,7 +53,7 @@ public class IntegrationCutsTests
         app.User.Channel.Register(metrics);
 
         // BeforeWrite on audit: reject if value contains "REJECT".
-        audit.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, payload) =>
+        audit.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, payload) =>
         {
             if (payload?.Value is string s && s.Contains("REJECT"))
                 throw new InvalidOperationException("rejected by approval");
@@ -63,7 +63,7 @@ public class IntegrationCutsTests
         // AfterWrite on audit: write "+1" to metrics. Stage 8 contract:
         // BeforeWrite-abort suppresses AfterWrite — so metrics fires only on
         // the successful write.
-        audit.Events.Add(new EventBinding(EventType.AfterWrite, async (_, _, _) =>
+        audit.Events.Add(new EventBinding(Trigger.AfterWrite, async (_, _, _) =>
         {
             await metrics.WriteAsync(Data.Ok("+1"));
             return Data.Ok();
@@ -72,8 +72,8 @@ public class IntegrationCutsTests
         var ok = await audit.WriteAsync(Data.Ok("ok-payload"));
         var bad = await audit.WriteAsync(Data.Ok("REJECT-this"));
 
-        await Assert.That(ok.Success).IsTrue();
-        await Assert.That(bad.Success).IsFalse();
+        await ok.IsSuccess();
+        await bad.IsFailure();
 
         var auditText = global::System.Text.Encoding.UTF8.GetString(auditCapture.ToArray());
         await Assert.That(auditText.Contains("ok-payload")).IsTrue();
@@ -83,7 +83,7 @@ public class IntegrationCutsTests
         await Assert.That(metricsText.Contains("+1")).IsTrue();
     }
 
-    private sealed class GoalChannelProbe : global::app.channel.goal.@this
+    private sealed class GoalChannelProbe : global::app.channel.type.goal.@this
     {
         private readonly Action _onInvoke;
         public GoalChannelProbe(string name, global::app.goal.@this goal, global::app.actor.@this actor, Action onInvoke)

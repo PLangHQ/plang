@@ -1,0 +1,169 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %x% = \u0022irrelevant\u0022 as image strict",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Strict without a kind \u2192 no byte probe runs (nothing to check against);\nbuilds clean. Soft-degradation contract: strict implies \u0022match what was\nasked\u0022, and nothing was asked for kind.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%x%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": "irrelevant",
+              "type": {
+                "name": "text"
+              }
+            },
+            {
+              "name": "Type",
+              "value": {
+                "name": "image",
+                "strict": true
+              },
+              "type": {
+                "name": "type"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%x%, Value=\u0022irrelevant\u0022, Type={\u0022name\u0022:\u0022image\u0022 ,\u0022strict\u0022:true})",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %x.Type.Name% equals \u0022image\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "image",
+              "type": {
+                "name": "text"
+              }
+            },
+            {
+              "name": "Actual",
+              "value": "%x.Type.Name%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022image\u0022, Actual=%x.Type.Name%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %x.Type.Kind% is null",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%x.Type.Kind%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.isNull(Value=%x.Type.Kind%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %x.Type.Strict% equals true",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "%x.Type.Strict%",
+              "type": {
+                "name": "object"
+              }
+            },
+            {
+              "name": "Actual",
+              "value": true,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=%x.Type.Strict%, Actual=true)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/TypeKindStrict/SetAsImageStrictNoKind.test.goal",
+  "prPath": "/TypeKindStrict/.build/setasimagestrictnokind.test.pr",
+  "hash": "8f19996905ddb48b1dfb13355974c882050e2536837dbccd20244ed30d76c203",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

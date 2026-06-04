@@ -1,0 +1,215 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "read file \u0027report.csv\u0027, write to %report%",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": "Architect 829785fbe \u2014 csv lands \u0060{table, csv}\u0060 (the new shape-based\nstamp). Stamping does not parse: %report% untouched is still the raw\ncsv string. The hard probe (\u0022row/column navigation surface\u0022) lives in\nC# Cut2 / TableTypeTests; this goal test pins the type stamp and the\nuntouched-is-raw invariant.",
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "report.csv",
+              "scalarValue": "report.csv",
+              "type": {
+                "name": "path",
+                "kind": "file"
+              }
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%report%",
+              "scalarValue": "%report%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "scalarValue": "%!data%",
+              "type": {
+                "name": "object"
+              }
+            },
+            {
+              "name": "Type",
+              "value": {
+                "name": "table",
+                "kind": "csv"
+              },
+              "scalarValue": {
+                "name": "table",
+                "kind": "csv"
+              },
+              "type": {
+                "name": "type"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "file.read(Path=\u0027report.csv\u0027, ResolveVariables=false) | variable.set(Name=%report%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %report.Type.Name% equals \u0022table\u0022",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "table",
+              "scalarValue": "table",
+              "type": {
+                "name": "text"
+              }
+            },
+            {
+              "name": "Actual",
+              "value": "%report.Type.Name%",
+              "scalarValue": "%report.Type.Name%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022table\u0022, Actual=%report.Type.Name%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %report.Type.Kind% equals \u0022csv\u0022",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "csv",
+              "scalarValue": "csv",
+              "type": {
+                "name": "text",
+                "kind": "csv"
+              }
+            },
+            {
+              "name": "Actual",
+              "value": "%report.Type.Kind%",
+              "scalarValue": "%report.Type.Kind%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022csv\u0022, Actual=%report.Type.Kind%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %report% equals \u0022name,age\\nAda,42\\n\u0022",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "name,age\nAda,42\n",
+              "scalarValue": "name,age\nAda,42\n",
+              "type": {
+                "name": "text"
+              }
+            },
+            {
+              "name": "Actual",
+              "value": "%report%",
+              "scalarValue": "%report%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022name,age\\nAda,42\\n\u0022, Actual=%report%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/LazyDeserialize/ReadCsv_LandsAsTable.test.goal",
+  "prPath": "/LazyDeserialize/.build/readcsv_landsastable.test.pr",
+  "hash": "71d41322e63c43439271fc54f5f04389fcedeb828ce916ed8c0eb85aba8f8ce9",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

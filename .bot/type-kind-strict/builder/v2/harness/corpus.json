@@ -1,0 +1,31 @@
+{
+  "_note": "Builder-prompt eval corpus. buildFiles are relative to the Tests/ dir (the validated build cwd). oracle maps each produced .pr (relative to Tests/) to {goalName: [[expected module.action per step], ...]}. Each step's expected list includes modifiers flattened in (e.g. ['goal.call','error.handle']). Pass = produced == expected exactly. Seed corpus = BuilderSanity (already in-tree). Hard-construct cases (error.handle nesting, llm.query+%!data%, cache.wrap) get added under Tests/BuilderHarness/ next.",
+  "buildFiles": [
+    "BuilderSanity/BuilderSanity.test.goal",
+    "BuilderSanity/AddItem.goal",
+    "BuilderSanity/MarkBig.goal",
+    "BuilderSanity/Finalize.goal"
+  ],
+  "oracle": {
+    "BuilderSanity/.build/buildersanity.test.pr": {
+      "Start": [
+        ["variable.set"],
+        ["variable.set"],
+        ["goal.call", "loop.foreach"],
+        ["condition.if", "goal.call"],
+        ["goal.call"],
+        ["assert.equals"],
+        ["assert.equals"]
+      ]
+    },
+    "BuilderSanity/.build/additem.pr": {
+      "AddItem": [["math.add", "variable.set"]]
+    },
+    "BuilderSanity/.build/markbig.pr": {
+      "MarkBig": [["variable.set"]]
+    },
+    "BuilderSanity/.build/finalize.pr": {
+      "Finalize": [["variable.set"]]
+    }
+  }
+}

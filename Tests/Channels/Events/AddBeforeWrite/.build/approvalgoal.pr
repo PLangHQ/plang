@@ -17,29 +17,32 @@
             {
               "name": "Name",
               "value": "%approvalCalled%",
-              "type": "variable"
+              "type": {
+                "name": "variable"
+              }
             },
             {
               "name": "Value",
               "value": true,
-              "type": "bool"
+              "type": {
+                "name": "bool"
+              }
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
               "value": false,
-              "type": "bool"
+              "type": {
+                "name": "bool"
+              }
             }
           ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": "Use variable.set to assign the boolean value true to %approvalCalled%.",
-      "level": "high",
-      "confidence": 99,
-      "formal": null,
+      "formal": "variable.set(Name=%approvalCalled%, Value=true)",
       "source": null,
       "waitForExecution": true
     }
@@ -49,7 +52,7 @@
   "path": "/Channels/Events/AddBeforeWrite/ApprovalGoal.goal",
   "prPath": "/Channels/Events/AddBeforeWrite/.build/approvalgoal.pr",
   "hash": "e7bbc838ba640c60b01f539a6cfb9675d0678e7ca0000c676d3bfc8440fcf005",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -157,8 +157,26 @@ public sealed class @this
     /// </summary>
     public Task<data.@this> SerializeAsync(SerializeOptions options)
     {
-        var serializer = ResolveSerializer(new ResolveOptions { Type = options.Type, Extension = options.Extension });
+        var serializer = ResolveForWrite(options.Type, options.Extension, options.Data);
         return serializer.SerializeAsync(options.Stream, options.Data, cancellationToken: options.CancellationToken);
+    }
+
+    /// <summary>
+    /// Serializer selection for a write, content-aware on the fallback. An
+    /// explicit MIME or a registered extension wins; otherwise the value's shape
+    /// decides — a <c>string</c> writes as text, anything else (a structured
+    /// object) rides the Data wire (<c>application/plang</c>), which renders
+    /// domain types via their per-type serializers. The plain <c>application/json</c>
+    /// STJ path can't render a domain object like a snapshot, so it is NOT the
+    /// structured fallback. (<c>byte[]</c> never reaches here — path.Save writes
+    /// raw bytes before the channel.)
+    /// </summary>
+    private ISerializer ResolveForWrite(string? type, string? extension, data.@this data)
+    {
+        if (!string.IsNullOrEmpty(type)) return GetOrDefault(type);
+        if (!string.IsNullOrEmpty(extension) && GetByExtension(extension) is { } byExt) return byExt;
+        if (data.Value is string) return GetByType("text/plain") ?? _default;
+        return GetByType("application/plang") ?? _default;
     }
 
     /// <summary>

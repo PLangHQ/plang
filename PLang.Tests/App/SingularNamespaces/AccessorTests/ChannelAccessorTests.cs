@@ -7,7 +7,7 @@ namespace PLang.Tests.App.SingularNamespaces.AccessorTests;
 
 // Batch B — actor.channel collection + I/O on the element (Stage 3).
 // Registry is selection + lifecycle only — no WriteText, no type-switch.
-// channel.@this owns Write(data)/Read(); channel.stream.@this overrides for the stream path.
+// channel.@this owns Write(data)/Read(); channel.type.stream.@this overrides for the stream path.
 // Index-miss throws; writing to a wrong-direction channel returns a typed data.Fail (CanWrite on the element).
 public class ChannelAccessorTests
 {
@@ -32,7 +32,7 @@ public class ChannelAccessorTests
         await using var app = new PLangEngine("/test");
         var channel = app.User.Channel["output"];
         var result = await channel.WriteAsync(new global::app.data.@this<string>("", "hello"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test] public async Task ChannelEntity_Read_ReturnsTheLastWrittenData()
@@ -43,12 +43,12 @@ public class ChannelAccessorTests
         await Assert.That(t.GetMethod("Read")).IsNotNull();
     }
 
-    // Polymorphism replaces the registry's `is channel.stream.@this` type-switch.
+    // Polymorphism replaces the registry's `is channel.type.stream.@this` type-switch.
     [Test] public async Task StreamChannel_Write_UsesTheStreamOptimizedOverride()
     {
-        var streamWrite = typeof(global::app.channel.stream.@this).GetMethod("Write");
+        var streamWrite = typeof(global::app.channel.type.stream.@this).GetMethod("Write");
         await Assert.That(streamWrite).IsNotNull();
-        await Assert.That(streamWrite!.DeclaringType).IsEqualTo(typeof(global::app.channel.stream.@this));
+        await Assert.That(streamWrite!.DeclaringType).IsEqualTo(typeof(global::app.channel.type.stream.@this));
     }
 
     // The contract: registry has selection + lifecycle. The polymorphic Write/Read/Ask

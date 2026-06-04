@@ -1,0 +1,60 @@
+Building path: /workspace/plang/Tests
+
+
+Found  goals
+
+
+Building goal: Start
+
+
+  [≡] set %total% = 0
+
+
+  [✓] set %items% = [1, 2, 3]
+
+
+  [✓] foreach %items%, call AddItem item=System.Collections.Generic.Dictionary`2[System.String,System.Object]
+
+
+  [✓] if %total% is greater than 5, call MarkBig
+
+
+  [✓] call Finalize
+
+
+  [✓] assert %total% equals 6
+
+
+  [✓] assert %label% equals 'big-and-done'
+
+
+🔴   ================== ValidationErrors(400) ==================   🔴
+🧩 Key:  ValidationErrors
+#️⃣  StatusCode:  400
+🕑 Time: 06/02/2026 00:31:43
+
+🔍   ================== Error Details ==================   🔍
+
+🧐 Reason: 
+    - Step[0]: no actions. Every step must have at least one action with module and action.
+
+🛝  Call stack:
+    Start - /workspace/plang/PlangConsole/bin/Debug/net10.0/os/system/builder/BuildGoal/Start.goal:28
+    Start - /workspace/plang/PlangConsole/bin/Debug/net10.0/os/system/builder/BuildGoal/Start.goal:4
+    BuildGoal - /workspace/plang/PlangConsole/bin/Debug/net10.0/os/system/builder/BuildGoal.goal:4
+    BuildGoal - /workspace/plang/PlangConsole/bin/Debug/net10.0/os/system/builder/BuildGoal.goal:4
+    Build - /workspace/plang/PlangConsole/bin/Debug/net10.0/os/system/builder/Build.goal:15
+    Build - /workspace/plang/PlangConsole/bin/Debug/net10.0/os/system/builder/Build.goal:15
+    Build - /workspace/plang/PlangConsole/bin/Debug/net10.0/os/system/builder/Build.goal:6
+
+📥 Parameters at dispatch:
+    Goal (app.data.@this<app.goal.@this>)
+        .pr value:  "%goal%" [goal]
+        final:      Start
+- set %total% = 0
+- set %items% = [1, 2, 3]
+- foreach %items%, call AddItem item=%item%
+- if %total% is greater than 5, call MarkBig
+- call Finalize
+- assert %total% equals 6
+- assert %label% eq... (219 chars)

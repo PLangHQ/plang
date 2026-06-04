@@ -37,7 +37,7 @@ public class FileSystemPermissionFlowTests
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok(_answer));
     }
 
-    private sealed class StatelessChannel : global::app.channel.message.@this
+    private sealed class StatelessChannel : global::app.channel.type.message.@this
     {
         public StatelessChannel() { Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
@@ -98,8 +98,8 @@ public class FileSystemPermissionFlowTests
         var path = new Path(targetPath, app.User.Context);
 
         var result = await Dispatch(method, path);
-        await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Type?.Value).IsNotEqualTo("ask");
+        await result.IsSuccess();
+        await Assert.That(result.Type?.Name).IsNotEqualTo("ask");
     }
 
     [Test]
@@ -122,7 +122,7 @@ public class FileSystemPermissionFlowTests
         var path = new Path(targetPath, app.User.Context);
 
         var result = await Dispatch(method, path);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         var verb = method switch
         {
@@ -153,7 +153,7 @@ public class FileSystemPermissionFlowTests
         var path = new Path(targetPath, app.User.Context);
 
         var result = await Dispatch(method, path);
-        await Assert.That(result.Type?.Value).IsEqualTo("ask");
+        await Assert.That(result.Type?.Name).IsEqualTo("ask");
         await Assert.That(result.Snapshot).IsNotNull();
     }
 }

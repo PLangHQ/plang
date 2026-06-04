@@ -50,7 +50,7 @@ public class ForeachErrorPropagationTests
 
         var result = await step.RunAsync(context);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
         // Loop must stop on first failure — item stays on first element, not last.
@@ -125,7 +125,7 @@ public class ForeachErrorPropagationTests
 
         // The 404 from MissingGoal must propagate all the way up — not be
         // swallowed by condition.if's Handled flag.
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
         // First iteration failed → item variable stays on first element.
@@ -166,7 +166,7 @@ public class ForeachErrorPropagationTests
 
         var result = await step.RunAsync(context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(context.Variable.GetValue("item")).IsEqualTo("c");
     }
 }

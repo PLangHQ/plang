@@ -82,7 +82,7 @@ public class Cut3_MultiActorForwardingTests
                     Data = chain.RoundTripped,
                     SkipFreshnessCheck = new global::app.data.@this<bool>("", true)
                 }, chain.AppB.User.Context);
-            await Assert.That(outerVerify.Success).IsTrue();
+            await outerVerify.IsSuccess();
 
             var innerAfter = (global::app.data.@this)chain.RoundTripped.Value!;
             innerAfter.Context = chain.AppA.User.Context;
@@ -92,7 +92,7 @@ public class Cut3_MultiActorForwardingTests
                     Data = innerAfter,
                     SkipFreshnessCheck = new global::app.data.@this<bool>("", true)
                 }, chain.AppA.User.Context);
-            await Assert.That(innerVerify.Success).IsTrue();
+            await innerVerify.IsSuccess();
         }
     }
 
@@ -108,7 +108,7 @@ public class Cut3_MultiActorForwardingTests
             var plangB = (global::app.channel.serializer.plang.@this)
                 chain.AppB.User.Channel.Serializers.GetByMimeType("application/plang");
             var back = plangB.Deserialize(tampered);
-            await Assert.That(back.Success).IsTrue();
+            await back.IsSuccess();
             var restored = (global::app.data.@this)back.Value!;
             restored.Context = chain.AppB.User.Context;
 
@@ -118,7 +118,7 @@ public class Cut3_MultiActorForwardingTests
                     Data = restored,
                     SkipFreshnessCheck = new global::app.data.@this<bool>("", true)
                 }, chain.AppB.User.Context);
-            await Assert.That(verify.Success).IsFalse();
+            await verify.IsFailure();
         }
     }
 }

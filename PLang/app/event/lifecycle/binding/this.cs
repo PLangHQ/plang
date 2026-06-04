@@ -12,7 +12,7 @@ namespace app.@event.lifecycle.binding;
 public sealed class @this
 {
     public string Id { get; }
-    public EventType Type { get; }
+    public Trigger Type { get; }
     public string? GoalNamePattern { get; }
     public string? StepPattern { get; }
     public string? ActionPattern { get; }
@@ -57,7 +57,7 @@ public sealed class @this
         // Check if handler set an override via event.skipAction.
         // Only consume the override for action-level events (BeforeAction/AfterAction)
         // to prevent step/goal-level events from accidentally eating the override.
-        if (Type == EventType.BeforeAction || Type == EventType.AfterAction)
+        if (Type == Trigger.BeforeAction || Type == Trigger.AfterAction)
         {
             var @override = context.EventOverride;
             if (@override != null)
@@ -75,7 +75,7 @@ public sealed class @this
     }
 
     public @this(
-        EventType type,
+        Trigger type,
         Func<actor.context.@this, Action?, data.@this?, Task<data.@this>> handler,
         string? goalNamePattern = null,
         string? stepPattern = null,

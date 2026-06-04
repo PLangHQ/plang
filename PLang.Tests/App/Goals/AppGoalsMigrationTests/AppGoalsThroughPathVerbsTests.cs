@@ -29,7 +29,7 @@ public class AppGoalsThroughPathVerbsTests
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "b.pr"), "{\"name\":\"B\",\"path\":\"/B.goal\"}");
 
         var result = await app.Goal.LoadFromDirectoryAsync(app, root);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(app.Goal.Get("A")).IsNotNull();
         await Assert.That(app.Goal.Get("B")).IsNotNull();
     }
@@ -42,7 +42,7 @@ public class AppGoalsThroughPathVerbsTests
         System.IO.File.WriteAllText(System.IO.Path.Combine(sub, "deepgoal.pr"),
             "{\"name\":\"DeepGoal\",\"path\":\"/sub/deep/DeepGoal.goal\"}");
         var result = await app.Goal.LoadFromDirectoryAsync(app, root);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(app.Goal.Get("DeepGoal")).IsNotNull();
     }
 
@@ -54,7 +54,7 @@ public class AppGoalsThroughPathVerbsTests
         var prAbs = System.IO.Path.Combine(buildDir, "start.pr");
         System.IO.File.WriteAllText(prAbs, "{\"name\":\"Start\",\"path\":\"/Start.goal\"}");
         var result = await app.Goal.LoadFromFileAsync(app, "/.build/start.pr");
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var goal = result.Value as Goal;
         await Assert.That(goal!.Name).IsEqualTo("Start");
     }
@@ -110,7 +110,7 @@ public class AppGoalsThroughPathVerbsTests
         await Assert.That(app.Name).IsEqualTo(nameBefore);
         // And the App is still operable — subsequent Save round-trips.
         var savedResult = await app.Save();
-        await Assert.That(savedResult.Success).IsTrue();
+        await savedResult.IsSuccess();
     }
 
     [Test] public async Task AppSave_RoundTrip_WrittenAppPr_RehydratesUnderAppLoad()

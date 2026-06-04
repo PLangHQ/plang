@@ -59,7 +59,7 @@ public class HttpPathRedirectTests
 
         var result = await new HttpPath(origin, context).ReadText();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         // The deny comes from PermissionDenied on the redirect target —
         // not from the origin (which was granted).
         await Assert.That(result.Error!.Key).IsEqualTo("PermissionDenied");
@@ -81,7 +81,7 @@ public class HttpPathRedirectTests
 
         var result = await new HttpPath(origin, context).ReadText();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo("target-body");
     }
 
@@ -96,7 +96,7 @@ public class HttpPathRedirectTests
 
         var result = await new HttpPath(origin, context).ReadText();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("UnsupportedRedirectScheme");
     }
 
@@ -121,7 +121,7 @@ public class HttpPathRedirectTests
 
         var result = await new HttpPath(chain[0], context).ReadText();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("TooManyRedirects");
     }
 
@@ -145,11 +145,11 @@ public class HttpPathRedirectTests
         await Grant(context, target);
 
         var writeResult = await new HttpPath(origin, context).WriteText("preserved-body");
-        await Assert.That(writeResult.Success).IsTrue();
+        await writeResult.IsSuccess();
 
         // Round-trip: the target should now hold the body that 307 carried.
         var readResult = await new HttpPath(target, context).ReadText();
-        await Assert.That(readResult.Success).IsTrue();
+        await readResult.IsSuccess();
         await Assert.That(readResult.Value).IsEqualTo("preserved-body");
     }
 
@@ -166,7 +166,7 @@ public class HttpPathRedirectTests
         await Grant(context, target);
 
         var result = await new HttpPath(origin, context).ReadText();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         // The second non-write request is the GET that followed the redirect.
         // Find the captured GET on the target's path and decode its X-Signature

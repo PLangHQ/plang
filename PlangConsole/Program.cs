@@ -17,10 +17,13 @@ Console.CancelKeyPress += (_, e) =>
 
 var executor = new Executor(Path.GetFullPath(currentDirectory));
 var result = executor.Run(args, cts.Token).GetAwaiter().GetResult();
+// Process-boundary last resort (the permitted Console.* exception): a failed run
+// must surface its error here, or it exits silently and nothing reports why.
 if (!result.Success && result.Error != null)
 {
 	Console.Error.WriteLine(result.Error.Format());
 }
+return result.Success ? 0 : 1;
 
 (string, string[]) GetCurrentDirectory(string[] args)
 {

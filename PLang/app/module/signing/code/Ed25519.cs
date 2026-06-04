@@ -125,16 +125,17 @@ public class Ed25519 : ISigning
             }
         }
 
-        // 7. Data hash verification
-        if (signedData.Hash?.Value is not byte[] storedHash || storedHash.Length == 0)
+        // 7. Data hash verification — the stored digest is a hash value that
+        // carries its own algorithm.
+        if (signedData.Hash?.Value is not global::app.module.crypto.type.hash.@this storedHash || storedHash.Bytes.Length == 0)
             return global::app.data.@this<bool>.FromError(new ActionError("Missing data hash", "DataHashMismatch", 400));
 
         if (action.Data?.Value != null)
         {
             var rehash = await app.RunAction<Hash>(
-                new Hash { Data = action.Data, Algorithm = new data.@this<string>("", signedData.Hash!.Type?.Value ?? "keccak256") }, action.Context);
+                new Hash { Data = action.Data, Algorithm = new data.@this<string>("", storedHash.Algorithm) }, action.Context);
             if (!rehash.Success) return global::app.data.@this<bool>.From(rehash);
-            if (rehash.Value is not byte[] rehashBytes || !rehashBytes.AsSpan().SequenceEqual(storedHash))
+            if (rehash.Value is not global::app.module.crypto.type.hash.@this rehashValue || !rehashValue.DigestEquals(storedHash))
                 return global::app.data.@this<bool>.FromError(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
         }
 

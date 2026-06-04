@@ -10,7 +10,7 @@ public class TypeTests
     {
         var type = new Type("string");
 
-        await Assert.That(type.Value).IsEqualTo("string");
+        await Assert.That(type.Name).IsEqualTo("text");
         await Assert.That(type.ClrType).IsEqualTo(typeof(string));
     }
 
@@ -19,7 +19,7 @@ public class TypeTests
     {
         var type = new Type("int");
 
-        await Assert.That(type.Value).IsEqualTo("int");
+        await Assert.That(type.Name).IsEqualTo("number");
         await Assert.That(type.ClrType).IsEqualTo(typeof(int));
     }
 
@@ -29,7 +29,7 @@ public class TypeTests
         var type = Type.FromName("string");
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(string));
-        await Assert.That(type.Value).IsEqualTo("string");
+        await Assert.That(type.Name).IsEqualTo("text");
     }
 
     [Test]
@@ -61,7 +61,7 @@ public class TypeTests
     {
         var type = Type.FromName("unknowntype");
 
-        await Assert.That(type.Value).IsEqualTo("unknowntype");
+        await Assert.That(type.Name).IsEqualTo("unknowntype");
         await Assert.That(type.ClrType).IsNull();
     }
 
@@ -70,7 +70,7 @@ public class TypeTests
     {
         var type = Type.FromMime("text/plain");
 
-        await Assert.That(type.Value).IsEqualTo("text/plain");
+        await Assert.That(type.Name).IsEqualTo("text/plain");
         await Assert.That(type.ClrType).IsEqualTo(typeof(string));
     }
 
@@ -79,7 +79,7 @@ public class TypeTests
     {
         var type = Type.FromMime("text/markdown");
 
-        await Assert.That(type.Value).IsEqualTo("text/markdown");
+        await Assert.That(type.Name).IsEqualTo("text/markdown");
         await Assert.That(type.ClrType).IsEqualTo(typeof(string));
     }
 
@@ -88,7 +88,7 @@ public class TypeTests
     {
         var type = Type.FromMime("image/jpeg");
 
-        await Assert.That(type.Value).IsEqualTo("image/jpeg");
+        await Assert.That(type.Name).IsEqualTo("image/jpeg");
         await Assert.That(type.ClrType).IsEqualTo(typeof(byte[]));
     }
 
@@ -97,7 +97,7 @@ public class TypeTests
     {
         var type = Type.FromMime("application/json");
 
-        await Assert.That(type.Value).IsEqualTo("application/json");
+        await Assert.That(type.Name).IsEqualTo("application/json");
         await Assert.That(type.ClrType).IsEqualTo(typeof(object));
     }
 
@@ -106,7 +106,7 @@ public class TypeTests
     {
         var type = Type.FromMime("application/octet-stream");
 
-        await Assert.That(type.Value).IsEqualTo("application/octet-stream");
+        await Assert.That(type.Name).IsEqualTo("application/octet-stream");
         await Assert.That(type.ClrType).IsEqualTo(typeof(byte[]));
     }
 
@@ -116,7 +116,7 @@ public class TypeTests
         var type = Type.String;
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(string));
-        await Assert.That(type.Value).IsEqualTo("string");
+        await Assert.That(type.Name).IsEqualTo("text");
     }
 
     [Test]
@@ -125,7 +125,7 @@ public class TypeTests
         var type = Type.Int;
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(int));
-        await Assert.That(type.Value).IsEqualTo("int");
+        await Assert.That(type.Name).IsEqualTo("number");
     }
 
     [Test]
@@ -134,7 +134,7 @@ public class TypeTests
         var type = Type.Long;
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(long));
-        await Assert.That(type.Value).IsEqualTo("long");
+        await Assert.That(type.Name).IsEqualTo("number");
     }
 
     [Test]
@@ -143,7 +143,7 @@ public class TypeTests
         var type = Type.Double;
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(double));
-        await Assert.That(type.Value).IsEqualTo("double");
+        await Assert.That(type.Name).IsEqualTo("number");
     }
 
     [Test]
@@ -152,7 +152,7 @@ public class TypeTests
         var type = Type.Bool;
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(bool));
-        await Assert.That(type.Value).IsEqualTo("bool");
+        await Assert.That(type.Name).IsEqualTo("bool");
     }
 
     [Test]
@@ -162,7 +162,7 @@ public class TypeTests
         var type = Type.DateTime;
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(DateTimeOffset));
-        await Assert.That(type.Value).IsEqualTo("datetime");
+        await Assert.That(type.Name).IsEqualTo("datetime");
     }
 
     [Test]
@@ -171,17 +171,18 @@ public class TypeTests
         var type = Type.Object;
 
         await Assert.That(type.ClrType).IsEqualTo(typeof(object));
-        await Assert.That(type.Value).IsEqualTo("object");
+        await Assert.That(type.Name).IsEqualTo("object");
     }
 
     [Test]
     public async Task ToString_ReturnsValue()
     {
+        // Constructor canonicalises "string" → "text" (post-Stage-2).
         var type = new Type("string");
 
         var str = type.ToString();
 
-        await Assert.That(str).IsEqualTo("string");
+        await Assert.That(str).IsEqualTo("text");
     }
 
     [Test]

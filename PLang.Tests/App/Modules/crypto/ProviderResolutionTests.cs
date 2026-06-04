@@ -44,8 +44,8 @@ public class ProviderResolutionTests
         var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
-        var hash = (byte[])result.Value!;
+        await result.IsSuccess();
+        var hash = ((global::app.module.crypto.type.hash.@this)result.Value!).Bytes;
         // Mock returns all-zero bytes
         await Assert.That(hash).IsEquivalentTo(new byte[32]);
     }
@@ -57,8 +57,8 @@ public class ProviderResolutionTests
         var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
-        var hash = (byte[])result.Value!;
+        await result.IsSuccess();
+        var hash = ((global::app.module.crypto.type.hash.@this)result.Value!).Bytes;
         // Should not be all zeros (global::app.module.crypto.code.Default produces real keccak256)
         await Assert.That(hash).IsNotEquivalentTo(new byte[32]);
         await Assert.That(hash.Length).IsEqualTo(32);
@@ -72,10 +72,10 @@ public class ProviderResolutionTests
         _app.Code.SetDefault<ICrypto>("always-true");
 
         // Even with garbage hash, mock returns true
-        var action = new Verify { Context = Ctx, Data = Data.Ok("hello"), Hash = Convert.ToBase64String(new byte[32]), Algorithm = "keccak256" };
+        var action = new Verify { Context = Ctx, Data = Data.Ok("hello"), Hash = Data.Ok(Convert.ToBase64String(new byte[32])), Algorithm = "keccak256" };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That((bool)result.Value!).IsTrue();
     }
 
@@ -87,7 +87,7 @@ public class ProviderResolutionTests
         public bool IsBuiltIn { get; set; }
 
         public string? Source { get; set; }
-        public global::app.data.@this<byte[]> Hash(Hash action) => global::app.data.@this<byte[]>.Ok(new byte[32]); // all zeros
+        public global::app.data.@this<global::app.module.crypto.type.hash.@this> Hash(Hash action) => global::app.data.@this<global::app.module.crypto.type.hash.@this>.Ok(new global::app.module.crypto.type.hash.@this(new byte[32], "keccak256"), global::app.type.@this.Create("hash", kind: "keccak256")); // all zeros
         public global::app.data.@this<bool> Verify(Verify action) => global::app.data.@this<bool>.Ok(false);
     }
 
@@ -99,7 +99,7 @@ public class ProviderResolutionTests
         public bool IsBuiltIn { get; set; }
 
         public string? Source { get; set; }
-        public global::app.data.@this<byte[]> Hash(Hash action) => global::app.data.@this<byte[]>.Ok(new byte[32]);
+        public global::app.data.@this<global::app.module.crypto.type.hash.@this> Hash(Hash action) => global::app.data.@this<global::app.module.crypto.type.hash.@this>.Ok(new global::app.module.crypto.type.hash.@this(new byte[32], "keccak256"), global::app.type.@this.Create("hash", kind: "keccak256"));
         public global::app.data.@this<bool> Verify(Verify action) => global::app.data.@this<bool>.Ok(true);
     }
 }

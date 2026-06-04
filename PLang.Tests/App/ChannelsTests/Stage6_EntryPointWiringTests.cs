@@ -49,7 +49,7 @@ public class Stage6_EntryPointWiringTests
             ChannelDirection.Input, ownsStream: true));
 
         var result = app.User.Channel.Verify();
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("MissingRequiredChannelAtBoot");
     }
 
@@ -63,7 +63,7 @@ public class Stage6_EntryPointWiringTests
             ChannelDirection.Input, ownsStream: true));
 
         var result = app.User.Channel.Verify();
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("MissingRequiredChannelAtBoot");
     }
 
@@ -77,7 +77,7 @@ public class Stage6_EntryPointWiringTests
             ChannelDirection.Output, ownsStream: true));
 
         var result = app.User.Channel.Verify();
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("MissingRequiredChannelAtBoot");
     }
 
@@ -88,7 +88,7 @@ public class Stage6_EntryPointWiringTests
         global::app.@this.WireDefaultConsoleChannels(app.User);
 
         var result = app.User.Channel.Verify();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]

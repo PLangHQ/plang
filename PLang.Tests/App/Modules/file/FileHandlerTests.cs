@@ -43,7 +43,7 @@ public class FileHandlerTests : IDisposable
         var action = new Save { Context = _app.User.Context, Path = MakePath("test.txt"), Value = Data.Ok("hello") };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var f = result.Value as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Absolute).IsEqualTo(TempPath("test.txt"));
@@ -69,7 +69,7 @@ public class FileHandlerTests : IDisposable
         var action = new Read { Context = _app.User.Context, Path = MakePath("read.txt") };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo("content here");
     }
 
@@ -83,12 +83,12 @@ public class FileHandlerTests : IDisposable
         var context = _app.User.Context;
         var failedPath = new Data("path", "s3://bucket/key") { Context = context }
             .As<PLangPath>(context);
-        await Assert.That(failedPath.Success).IsFalse();   // conversion already failed
+        await failedPath.IsFailure();   // conversion already failed
 
         var action = new Read { Context = context, Path = failedPath };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("SchemeNotRegistered");
     }
 
@@ -109,7 +109,7 @@ public class FileHandlerTests : IDisposable
         var action = new Read { Context = _app.User.Context, Path = MakePath("nonexistent.txt") };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
     }
 
     // --- Read with ResolveVariables (Gap 2 from coder handover) ---
@@ -128,7 +128,7 @@ public class FileHandlerTests : IDisposable
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo("Hello Ingi, welcome");
     }
 
@@ -148,7 +148,7 @@ public class FileHandlerTests : IDisposable
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo("Hello %name%, welcome");
     }
 
@@ -168,7 +168,7 @@ public class FileHandlerTests : IDisposable
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // The literal stays — infrastructure variable was not resolved.
         await Assert.That(result.Value).IsEqualTo("id is %!app.Id%");
     }
@@ -183,7 +183,7 @@ public class FileHandlerTests : IDisposable
         var action = new Copy { Context = _app.User.Context, Source = MakePath("src.txt"), Destination = MakePath("dst.txt") };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var f = result.Value as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Source).IsNotNull();
@@ -196,7 +196,7 @@ public class FileHandlerTests : IDisposable
         var action = new Copy { Context = _app.User.Context, Source = MakePath("nope.txt"), Destination = MakePath("dst.txt") };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
     }
 
     [Test]
@@ -209,7 +209,7 @@ public class FileHandlerTests : IDisposable
         var action = new Copy { Context = _app.User.Context, Source = MakeAbsPath(srcDir), Destination = MakePath("copy_dir_dst") };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(TempPath("copy_dir_dst"), "a.txt"))).IsTrue();
     }
 
@@ -223,7 +223,7 @@ public class FileHandlerTests : IDisposable
         var action = new Move { Context = _app.User.Context, Source = MakePath("move_src.txt"), Destination = MakePath("move_dst.txt") };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var f = result.Value as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Source).IsNotNull();
@@ -236,7 +236,7 @@ public class FileHandlerTests : IDisposable
         var action = new Move { Context = _app.User.Context, Source = MakePath("nope.txt"), Destination = MakePath("dst.txt") };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
     }
 
     [Test]
@@ -249,7 +249,7 @@ public class FileHandlerTests : IDisposable
         var action = new Move { Context = _app.User.Context, Source = MakeAbsPath(srcDir), Destination = MakePath("move_dir_dst") };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(System.IO.Directory.Exists(srcDir)).IsFalse();
         await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(TempPath("move_dir_dst"), "a.txt"))).IsTrue();
     }
@@ -264,7 +264,7 @@ public class FileHandlerTests : IDisposable
         var action = new Delete { Context = _app.User.Context, Path = MakePath("del.txt") };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var f = result.Value as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(await f!.AsBooleanAsync()).IsFalse();
@@ -276,7 +276,7 @@ public class FileHandlerTests : IDisposable
         var action = new Delete { Context = _app.User.Context, Path = MakePath("nope.txt") };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
     }
 
     [Test]
@@ -285,7 +285,7 @@ public class FileHandlerTests : IDisposable
         var action = new Delete { Context = _app.User.Context, Path = MakePath("nope.txt"), IgnoreIfNotFound = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -298,7 +298,7 @@ public class FileHandlerTests : IDisposable
         var action = new Delete { Context = _app.User.Context, Path = MakeAbsPath(dir), Recursive = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(System.IO.Directory.Exists(dir)).IsFalse();
     }
 
@@ -312,7 +312,7 @@ public class FileHandlerTests : IDisposable
         var action = new Exists { Context = _app.User.Context, Path = MakePath("check.txt") };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var f = result.Value as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(await f!.AsBooleanAsync()).IsTrue();
@@ -324,7 +324,7 @@ public class FileHandlerTests : IDisposable
         var action = new Exists { Context = _app.User.Context, Path = MakePath("missing.txt") };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var f = result.Value as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(await f!.AsBooleanAsync()).IsFalse();
@@ -343,7 +343,7 @@ public class FileHandlerTests : IDisposable
         var action = new List { Context = _app.User.Context, Path = MakeAbsPath(subDir) };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var files = result.Value as System.Collections.Generic.List<PLangPath>;
         await Assert.That(files).IsNotNull();
         await Assert.That(files!.Count).IsEqualTo(2);
@@ -360,7 +360,7 @@ public class FileHandlerTests : IDisposable
         var action = new List { Context = _app.User.Context, Path = MakeAbsPath(subDir), Pattern = "*.txt" };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var files = result.Value as System.Collections.Generic.List<PLangPath>;
         await Assert.That(files).IsNotNull();
         await Assert.That(files!.Count).IsEqualTo(1);
@@ -379,7 +379,7 @@ public class FileHandlerTests : IDisposable
         var action = new List { Context = _app.User.Context, Path = MakeAbsPath(subDir), Recursive = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var files = result.Value as System.Collections.Generic.List<PLangPath>;
         await Assert.That(files).IsNotNull();
         await Assert.That(files!.Count).IsEqualTo(2);
@@ -391,7 +391,7 @@ public class FileHandlerTests : IDisposable
         var action = new List { Context = _app.User.Context, Path = MakePath("nodir") };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
     }
 
     // --- File type object properties ---
@@ -404,7 +404,10 @@ public class FileHandlerTests : IDisposable
         var action = new Read { Context = _app.User.Context, Path = MakePath("doc.md") };
         var result = await action.Run();
 
-        await Assert.That(result.Type!.Value).IsEqualTo("text/markdown");
+        // Structured type: name is the materialized family (text), kind is the
+        // file extension (md) — not the raw MIME "text/markdown".
+        await Assert.That(result.Type!.Name).IsEqualTo("text");
+        await Assert.That(result.Type!.Kind).IsEqualTo("md");
     }
 
     [Test]
@@ -493,7 +496,7 @@ public class FileHandlerTests : IDisposable
         var context = _app.User.Context;
         var goalResult = await _app.RunGoalAsync(goal, context);
 
-        await Assert.That(goalResult.Success).IsTrue();
+        await goalResult.IsSuccess();
 
         var fileData = context.Variable.Get("fileResult");
         await Assert.That(fileData).IsNotNull();
@@ -569,7 +572,7 @@ public class FileHandlerTests : IDisposable
         var context = _app.User.Context;
         var goalResult = await _app.RunGoalAsync(goal, context);
 
-        await Assert.That(goalResult.Success).IsTrue();
+        await goalResult.IsSuccess();
 
         var existsData = context.Variable.Get("fileResult.Exists");
         await Assert.That(existsData).IsNotNull();

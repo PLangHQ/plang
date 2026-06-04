@@ -128,7 +128,10 @@ public class Stage4_TypeHintPrecedenceTests
         var typeParam = setAction.Parameters.FirstOrDefault(p =>
             string.Equals(p.Name, "Type", System.StringComparison.OrdinalIgnoreCase));
         await Assert.That(typeParam).IsNotNull();
-        await Assert.That(typeParam!.Value).IsEqualTo("csv");
+        // foo.csv infers the structured {table, csv} entity (name = the value's
+        // shape, kind = extension), stamped on the terminal variable.set.
+        await Assert.That(((global::app.type.@this)typeParam!.Value!).Name).IsEqualTo("table");
+        await Assert.That(((global::app.type.@this)typeParam!.Value!).Kind).IsEqualTo("csv");
     }
 
     [Test]
@@ -157,7 +160,7 @@ public class Stage4_TypeHintPrecedenceTests
         classified.SetAction(action, _app.User.Context);
         var result = await classified.Build();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsNull()
             .Because("output.ask defers Type to the (type) hint on the write target.");
     }

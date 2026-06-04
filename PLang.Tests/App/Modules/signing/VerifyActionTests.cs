@@ -77,7 +77,7 @@ public class VerifyActionTests
         var signed = await SignHelper("hello", contracts: new List<string> { "C0" });
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     #endregion
@@ -90,7 +90,7 @@ public class VerifyActionTests
         var data = Data.Ok("unsigned");
         var result = await VerifyHelper(data, contracts: new List<string> { "C0" });
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NoSignature");
     }
 
@@ -101,7 +101,7 @@ public class VerifyActionTests
         signed.Signature!.Algorithm = "unknown-algo";
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         // Tampered algorithm changes the signing bytes, so signature verification fails
         await Assert.That(result.Error!.Key).IsEqualTo("SignatureInvalid");
     }
@@ -113,7 +113,7 @@ public class VerifyActionTests
         await Task.Delay(100);
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Expired");
     }
 
@@ -125,7 +125,7 @@ public class VerifyActionTests
         signed.Signature!.Created = DateTimeOffset.UtcNow.AddHours(-1);
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" }, timeoutMs: 1000);
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("TimedOut");
     }
 
@@ -135,11 +135,11 @@ public class VerifyActionTests
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
         // First verify — succeeds and caches nonce
         var first = await VerifyHelper(signed, contracts: new List<string> { "C0" });
-        await Assert.That(first.Success).IsTrue();
+        await first.IsSuccess();
 
         // Second verify — same nonce → replay
         var second = await VerifyHelper(signed, contracts: new List<string> { "C0" });
-        await Assert.That(second.Success).IsFalse();
+        await second.IsFailure();
         await Assert.That(second.Error!.Key).IsEqualTo("NonceReplay");
     }
 
@@ -149,7 +149,7 @@ public class VerifyActionTests
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C1" });
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ContractMismatch");
     }
 
@@ -161,7 +161,7 @@ public class VerifyActionTests
         var result = await VerifyHelper(signed,
             contracts: new List<string> { "C0" },
             headers: new Dictionary<string, object> { { "method", "GET" } });
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("HeaderMismatch");
     }
 
@@ -170,10 +170,10 @@ public class VerifyActionTests
     {
         var signed = await SignHelper(new { amount = 100 }, contracts: new List<string> { "C0" });
         // Tamper the hash
-        signed.Signature!.Hash = Data.Ok(new byte[32], global::app.type.@this.FromName("keccak256"));
+        signed.Signature!.Hash = Data.Ok(new global::app.module.crypto.type.hash.@this(new byte[32], "keccak256"), global::app.type.@this.Create("hash", kind: "keccak256"));
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("DataHashMismatch");
     }
 
@@ -187,7 +187,7 @@ public class VerifyActionTests
         signed.Signature.Value = Convert.ToBase64String(sigBytes);
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("SignatureInvalid");
     }
 
@@ -201,7 +201,7 @@ public class VerifyActionTests
         var signed = await SignHelper("test", contracts: new List<string> { "C0", "C1" });
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C1", "C0" });
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -210,7 +210,7 @@ public class VerifyActionTests
         var signed = await SignHelper("test");
 
         var result = await VerifyHelper(signed, contracts: null);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -219,7 +219,7 @@ public class VerifyActionTests
         var signed = await SignHelper("test", contracts: new List<string> { "C0", "C1" });
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0", "C1" });
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     #endregion
@@ -233,7 +233,7 @@ public class VerifyActionTests
         await Assert.That(signed.Signature!.Algorithm).IsEqualTo("ed25519");
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     #endregion
@@ -246,7 +246,7 @@ public class VerifyActionTests
         var signed = await SignHelper("test", contracts: new List<string> { "C0" }, headers: new Dictionary<string, object> { { "method", "POST" } });
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" }, headers: null);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     #endregion
@@ -260,7 +260,7 @@ public class VerifyActionTests
         var nonce = signed.Signature!.Nonce;
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         // Check nonce is in cache
         var cached = await _app.Cache.GetAsync($"nonce:{nonce}");
@@ -276,7 +276,7 @@ public class VerifyActionTests
     {
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" }, timeoutMs: 60_000);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     #endregion
@@ -289,7 +289,7 @@ public class VerifyActionTests
         var signed = await SignHelper("test", contracts: new List<string>());
         var result = await VerifyHelper(signed, contracts: new List<string>());
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -298,7 +298,7 @@ public class VerifyActionTests
         var signed = await SignHelper("test");
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ContractMismatch");
     }
 
@@ -315,8 +315,8 @@ public class VerifyActionTests
         var result1 = await VerifyHelper(signed1, contracts: new List<string> { "C0" });
         var result2 = await VerifyHelper(signed2, contracts: new List<string> { "C0" });
 
-        await Assert.That(result1.Success).IsTrue();
-        await Assert.That(result2.Success).IsTrue();
+        await result1.IsSuccess();
+        await result2.IsSuccess();
     }
 
     #endregion
@@ -330,7 +330,7 @@ public class VerifyActionTests
         signed.Signature!.Type = "hash";
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("InvalidType");
     }
 
@@ -345,7 +345,7 @@ public class VerifyActionTests
         signed.Signature!.Contracts = null;
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ContractMismatch");
     }
 
@@ -361,7 +361,7 @@ public class VerifyActionTests
         var result = await VerifyHelper(signed,
             contracts: new List<string> { "C0" },
             headers: new Dictionary<string, object> { { "method", "GET" } });
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("HeaderMismatch");
     }
 
@@ -380,7 +380,7 @@ public class VerifyActionTests
 
         // Second verify — both expired AND nonce replayed
         var second = await VerifyHelper(signed, contracts: new List<string> { "C0" });
-        await Assert.That(second.Success).IsFalse();
+        await second.IsFailure();
         // Expired is checked before NonceReplay
         await Assert.That(second.Error!.Key).IsEqualTo("Expired");
     }
@@ -395,7 +395,7 @@ public class VerifyActionTests
         var result = await VerifyHelper(signed,
             contracts: new List<string> { "C1" },
             timeoutMs: 1000);
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("TimedOut");
     }
 
@@ -413,7 +413,7 @@ public class VerifyActionTests
         signed.Signature!.Algorithm = "throwing";
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("SignatureInvalid");
     }
 
@@ -468,7 +468,7 @@ public class VerifyActionTests
         catch (FormatException) { /* expected */ }
         var result = provider.Verify(sd.ToSigningBytes(), new byte[64], sd.Identity);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("SignatureInvalid");
     }
 

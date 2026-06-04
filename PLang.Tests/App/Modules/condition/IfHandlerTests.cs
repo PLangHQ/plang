@@ -32,7 +32,7 @@ public class IfHandlerTests : IDisposable
         var action = new If { Context = _app.User.Context, Left = Data.Ok(42), Operator = new Operator("=="), Right = Data.Ok(true) };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo(true);
     }
 
@@ -42,7 +42,7 @@ public class IfHandlerTests : IDisposable
         var action = new If { Context = _app.User.Context, Left = new Data(""), Operator = new Operator("=="), Right = Data.Ok(true) };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo(false);
     }
 
@@ -52,7 +52,7 @@ public class IfHandlerTests : IDisposable
         var action = new If { Context = _app.User.Context, Left = Data.Ok(10), Operator = new Operator(">"), Right = Data.Ok(5) };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo(true);
     }
 
@@ -89,7 +89,7 @@ public class IfHandlerTests : IDisposable
 
         var result = await step.RunAsync(_app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
@@ -128,7 +128,7 @@ public class IfHandlerTests : IDisposable
 
         var result = await step.RunAsync(_app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
@@ -181,7 +181,7 @@ public class IfHandlerTests : IDisposable
 
         var result = await step.RunAsync(_app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
@@ -235,7 +235,7 @@ public class IfHandlerTests : IDisposable
 
         var result = await step.RunAsync(_app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
@@ -248,7 +248,7 @@ public class IfHandlerTests : IDisposable
         var action = new If { Context = _app.User.Context, Left = Data.Ok(10), Operator = new Operator(">"), Right = Data.Ok(5) };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo(true);
     }
 
@@ -258,7 +258,7 @@ public class IfHandlerTests : IDisposable
         var action = new If { Context = _app.User.Context, Left = Data.Ok(3), Operator = new Operator(">"), Right = Data.Ok(5) };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo(false);
     }
 
@@ -268,7 +268,7 @@ public class IfHandlerTests : IDisposable
         var action = new If { Context = _app.User.Context, Left = Data.Ok(10), Operator = new Operator(">"), Right = Data.Ok(5) };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value is bool).IsTrue();
         await Assert.That((bool)result.Value!).IsTrue();
     }
@@ -279,7 +279,7 @@ public class IfHandlerTests : IDisposable
         var action = new If { Context = _app.User.Context, Left = Data.Ok(3), Operator = new Operator(">"), Right = Data.Ok(5) };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value is bool).IsTrue();
         await Assert.That((bool)result.Value!).IsFalse();
     }
@@ -290,7 +290,7 @@ public class IfHandlerTests : IDisposable
         var action = new If { Context = _app.User.Context, Left = Data.Ok(10), Operator = new Operator(">"), Right = Data.Ok(5), Negate = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo(false);
     }
 
@@ -300,7 +300,7 @@ public class IfHandlerTests : IDisposable
         var action = new If { Context = _app.User.Context, Left = Data.Ok(3), Operator = new Operator(">"), Right = Data.Ok(5), Negate = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo(true);
     }
 
@@ -327,7 +327,7 @@ public class IfHandlerTests : IDisposable
         var action = new If { Context = _app.User.Context, Left = data, Operator = new Operator("=="), Right = Data.Ok(true) };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo(true);
     }
 
@@ -338,7 +338,7 @@ public class IfHandlerTests : IDisposable
         var action = new If { Context = _app.User.Context, Left = data, Operator = new Operator("=="), Right = Data.Ok(true) };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo(false);
     }
 
@@ -355,7 +355,7 @@ public class IfHandlerTests : IDisposable
         var action = new If { Context = _app.User.Context, Left = Data.Ok(new object()), Operator = new Operator(">"), Right = Data.Ok(5) };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");
         await Assert.That(result.Error!.Message).Contains("does not support comparison");
     }
@@ -419,7 +419,7 @@ public class IfHandlerTests : IDisposable
         // Run the inner step (which shares the same context as the outer)
         var result = await innerStep.RunAsync(context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();

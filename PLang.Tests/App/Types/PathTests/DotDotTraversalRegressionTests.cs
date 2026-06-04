@@ -108,7 +108,7 @@ public class DotDotTraversalRegressionTests
             // The Read MUST surface a permission decision (Fail), not the
             // secret file's bytes.
             var result = await p.ReadText();
-            await Assert.That(result.Success).IsFalse();
+            await result.IsFailure();
             await Assert.That(result.Value?.ToString() ?? "").IsNotEqualTo(secretContent);
         }
         finally

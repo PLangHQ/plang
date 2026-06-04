@@ -38,7 +38,7 @@ public class AbsoluteDisciplineTests
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "db.sqlite");
         var p = new FilePath(outOfRoot, app.User.Context);
         var auth = await p.Authorize(new Verb { Write = new Write() });
-        await Assert.That(auth.Success).IsFalse();
+        await auth.IsFailure();
     }
 
     [Test] public async Task TakeOverApi_AuthorizeFirst_InRootGrant_AllowsAbsoluteUse()
@@ -46,7 +46,7 @@ public class AbsoluteDisciplineTests
         var app = NewApp(out var root);
         var p = new FilePath(System.IO.Path.Combine(root, "db.sqlite"), app.User.Context);
         var auth = await p.Authorize(new Verb { Write = new Write() });
-        await Assert.That(auth.Success).IsTrue();
+        await auth.IsSuccess();
         // .Absolute is now safe to read.
         await Assert.That(p.Absolute).IsNotNull();
     }
@@ -75,7 +75,7 @@ public class AbsoluteDisciplineTests
         // on an in-root Path (the .Absolute reach inside the verb is allowed).
         await p.WriteText("hi");
         var r = await p.ReadText();
-        await Assert.That(r.Success).IsTrue();
+        await r.IsSuccess();
     }
 
     [Test] public async Task DiagnosticString_UsesAbsolute_InErrorMessage_IsAllowed()

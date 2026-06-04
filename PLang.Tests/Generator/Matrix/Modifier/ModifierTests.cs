@@ -86,6 +86,6 @@ public class ModifierActionTests
             Parameters = new List<Data> { new Data("path", "x") }
         };
         var result = await action.RunAsync(app.User.Context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 }

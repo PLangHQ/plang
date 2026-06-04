@@ -333,7 +333,7 @@ public sealed class @this : IAsyncDisposable
                     if (isNullable && !typeName.EndsWith("?"))
                         typeName += "?";
 
-                    // Enum valid-values (operator, httpmethod, eventtype, ...) are NOT inlined
+                    // Enum valid-values (operator, httpmethod, trigger, ...) are NOT inlined
                     // on each parameter any more — they're declared once in Type Information
                     // so repeating them here would just bloat the prompt. The type name alone
                     // (e.g. "operator") points the LLM to the Type Information entry.

@@ -66,7 +66,7 @@ public class AssertionErrorVariablesTests
         var action = new AssertEquals { Context = context, Expected = D(1), Actual = D(2) };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         var err = result.Error as AssertionError;
         await Assert.That(err).IsNotNull();
         await Assert.That(err!.Variables).IsNotNull();
@@ -85,7 +85,7 @@ public class AssertionErrorVariablesTests
         var action = new AssertEquals { Context = context, Expected = D(5), Actual = D(5) };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // On success, data.Error is null — nothing to populate.
         await Assert.That(result.Error).IsNull();
     }
@@ -115,7 +115,7 @@ public class AssertionErrorVariablesTests
 
         foreach (var result in failures)
         {
-            await Assert.That(result.Success).IsFalse();
+            await result.IsFailure();
             var err = result.Error as AssertionError;
             await Assert.That(err).IsNotNull();
             await Assert.That(err!.Variables).IsNotNull();

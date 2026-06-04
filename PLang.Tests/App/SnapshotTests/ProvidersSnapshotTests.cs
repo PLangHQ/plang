@@ -72,7 +72,7 @@ public class ProvidersSnapshotTests
         dst.Restore(snap, dst.User.Context);
 
         var defaultGrep = dst.Code.Get<global::app.data.code.IGrep>();
-        await Assert.That(defaultGrep.Success).IsTrue();
+        await defaultGrep.IsSuccess();
         await Assert.That(defaultGrep.Value!.Name).IsEqualTo("custom");
     }
 

@@ -57,11 +57,10 @@ public partial class request : IContext
     [Code]
     public partial IHttp Http { get; }
 
-    public async Task<data.@this<global::app.http.response.@this>> Run()
-    {
-        var result = await Http.SendAsync(this);
-        return data.@this<global::app.http.response.@this>.From(result);
-    }
+    // Returns plain Data — the response body is the lazy value (type/kind from
+    // Content-Type); status/headers/duration ride as Properties (read with `!`).
+    // The parallel http.response record dissolved (Decision 6).
+    public async Task<data.@this> Run() => await Http.SendAsync(this);
 
     /// <summary>
     /// Compile-time hint: if Url is a literal with a recognized extension

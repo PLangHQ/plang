@@ -15,14 +15,18 @@
           "action": "on",
           "parameters": [
             {
-              "name": "Type",
+              "name": "Trigger",
               "value": "OnAsk",
-              "type": "eventtype"
+              "type": {
+                "name": "trigger"
+              }
             },
             {
               "name": "ChannelName",
               "value": "input",
-              "type": "string"
+              "type": {
+                "name": "text"
+              }
             },
             {
               "name": "GoalToCall",
@@ -32,19 +36,26 @@
                 "parameters": null,
                 "prPath": "/Channels/Events/AddOnAsk/.build/captchagoal.pr"
               },
-              "type": "goal.call"
+              "type": {
+                "name": "goal.call"
+              }
             }
           ],
           "defaults": [
             {
               "name": "isregex",
               "value": false,
-              "type": "bool"
+              "type": {
+                "name": "bool"
+              }
             },
             {
               "name": "priority",
               "value": 0,
-              "type": "int"
+              "type": {
+                "name": "number",
+                "kind": "int"
+              }
             }
           ],
           "modifiers": []
@@ -56,29 +67,32 @@
             {
               "name": "Name",
               "value": "%bindingId%",
-              "type": "variable"
+              "type": {
+                "name": "variable"
+              }
             },
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": {
+                "name": "object"
+              }
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
               "value": false,
-              "type": "bool"
+              "type": {
+                "name": "bool"
+              }
             }
           ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": "Register a lifecycle event handler for OnAsk, scoped to the input channel, that calls CaptchaGoal. Capture the returned binding id into %bindingId% for later verification.",
-      "level": "high",
-      "confidence": 92,
-      "formal": "event.on(Type=OnAsk, GoalToCall={name:\u0022CaptchaGoal\u0022}), output.ask(Question=%!data%, Variables=%!data%) | variable.set(Name=%bindingId%, Value=%!data%)",
+      "formal": "event.on(Trigger=OnAsk, ChannelName=\u0022input\u0022, GoalToCall=goal.call CaptchaGoal) | variable.set(Name=%bindingId%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -96,7 +110,9 @@
             {
               "name": "Value",
               "value": "%bindingId%",
-              "type": "object"
+              "type": {
+                "name": "object"
+              }
             }
           ],
           "defaults": null,
@@ -104,9 +120,6 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that the binding id was produced (not null).",
-      "level": "high",
-      "confidence": 95,
       "formal": "assert.isNotNull(Value=%bindingId%)",
       "source": null,
       "waitForExecution": true

@@ -16,7 +16,7 @@ global using Goal = app.goal.@this;
 global using Visibility = app.goal.Visibility;
 
 // Event types
-global using EventType = app.@event.EventType;
+global using Trigger = app.@event.Trigger;
 global using EventBinding = app.@event.lifecycle.binding.@this;
 global using Lifecycle = app.@event.lifecycle.@this;
 global using Bindings = app.@event.lifecycle.binding.list.@this;
@@ -25,7 +25,7 @@ global using Bindings = app.@event.lifecycle.binding.list.@this;
 
 // Channels subsystem
 global using Channel = app.channel.@this;
-global using StreamChannel = app.channel.stream.@this;
+global using StreamChannel = app.channel.type.stream.@this;
 global using ChannelDirection = app.channel.ChannelDirection;
 global using Serializers = app.channel.serializer.list.@this;
 global using SerializeOptions = app.channel.serializer.list.SerializeOptions;

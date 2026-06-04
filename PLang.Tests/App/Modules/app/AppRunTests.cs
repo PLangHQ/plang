@@ -31,7 +31,7 @@ public class AppRunTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -44,7 +44,7 @@ public class AppRunTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
     }
 
     [Test]
@@ -63,7 +63,7 @@ public class AppRunTests
         var result = await action.Run();
 
         // Step with no actions returns Ok
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -78,7 +78,7 @@ public class AppRunTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("MissingInput");
     }
 }

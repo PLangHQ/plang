@@ -101,7 +101,7 @@ public class TestingClassTests
 
         var result = _app.Tester.Apply(config);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(_app.Tester.TimeoutSeconds).IsEqualTo(60);
         await Assert.That(_app.Tester.Parallel).IsEqualTo(4);
         await Assert.That(_app.Tester.Include.Contains("fast")).IsTrue();
@@ -123,7 +123,7 @@ public class TestingClassTests
             ["exclude"] = new List<object?> { "newExclude" }
         });
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(_app.Tester.Include.Count).IsEqualTo(1);
         await Assert.That(_app.Tester.Include.Contains("newInclude")).IsTrue();
         await Assert.That(_app.Tester.Include.Contains("oldInclude")).IsFalse();
@@ -143,7 +143,7 @@ public class TestingClassTests
             ["futureOption"] = "not a valid key yet"
         });
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(_app.Tester.TimeoutSeconds).IsEqualTo(10);
     }
 }

@@ -1,5 +1,5 @@
 using BuildWarning = global::app.module.builder.warning.@this;
-using NoopChannel = global::app.channel.noop.@this;
+using NoopChannel = global::app.channel.type.noop.@this;
 
 namespace PLang.Tests.App.TypedReturnsTests;
 
@@ -57,7 +57,7 @@ public class Stage0_NamedChannelsTests
     {
         var sink = Channels.Channel("nonexistent");
         var result = await sink.WriteAsync(Data.Ok("payload"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     // After a build-side Register, Channel("builder") returns the real channel,
@@ -112,7 +112,7 @@ public class Stage0_NamedChannelsTests
         var payload = new BuildWarning(action, "missing file");
 
         var writeResult = await Channels.WriteAsync("builder", payload);
-        await Assert.That(writeResult.Success).IsTrue();
+        await writeResult.IsSuccess();
         await Assert.That(Channels.Channel("builder")).IsNotTypeOf<NoopChannel>()
             .Because("Write must have routed to the real channel, not the no-op fallback.");
     }
@@ -128,7 +128,7 @@ public class Stage0_NamedChannelsTests
         var action = (global::app.module.IClass)new global::app.module.typedreturns.NoopBuild();
         var result = await sink.WriteAsync(Data.Ok(new BuildWarning(action, "msg")));
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     // Two distinct channel names resolve to two distinct channel instances —

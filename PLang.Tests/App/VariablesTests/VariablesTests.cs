@@ -944,7 +944,7 @@ public class VariablesAccessorTests
 
         // GetChild returns Data.FromError on depth exceeded
         await Assert.That(result).IsNotNull();
-        await Assert.That(result!.Success).IsFalse();
+        await result!.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NavigationDepthExceeded");
     }
 

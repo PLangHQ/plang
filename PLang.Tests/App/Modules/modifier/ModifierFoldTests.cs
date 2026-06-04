@@ -61,7 +61,7 @@ public class ModifierFoldTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(Ctx.Variable.GetValue("x")).IsEqualTo("hello");
     }
 
@@ -89,7 +89,7 @@ public class ModifierFoldTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(Ctx.Variable.GetValue("y")).IsEqualTo("wrapped");
     }
 
@@ -123,7 +123,7 @@ public class ModifierFoldTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(Ctx.Variable.GetValue("z")).IsEqualTo("nested");
     }
 
@@ -165,7 +165,7 @@ public class ModifierFoldTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(Ctx.Variable.GetValue("q")).IsEqualTo("full");
     }
 
@@ -197,7 +197,7 @@ public class ModifierFoldTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ModifierError");
         await Assert.That(result.Error!.Message).Contains("not a modifier");
     }

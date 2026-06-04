@@ -58,7 +58,7 @@ public sealed class @this : IList<PrAction>
         foreach (var modifier in _items)
         {
             var lifecycle = context.LifecycleFor(modifier);
-            await lifecycle.After.Run(context, app.@event.EventType.AfterAction, modifier, result);
+            await lifecycle.After.Run(context, app.@event.Trigger.AfterAction, modifier, result);
         }
 
         return result;

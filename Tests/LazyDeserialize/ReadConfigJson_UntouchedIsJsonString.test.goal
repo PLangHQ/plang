@@ -1,0 +1,11 @@
+Start
+/ A read of config.json lands the file as {object, json} (architect's
+/ shape-based typing — keeps today's json→object). The critical lazy
+/ invariant: stamping `type=object` does NOT parse — `%cfg%` untouched is
+/ still the raw json *string*. Materialisation only fires on navigation
+/ (see ReadConfigJson_NavigateMaterialisesField). Requires the config.json
+/ fixture committed alongside.
+- read file 'config.json', write to %cfg%
+- assert %cfg.Type.Name% equals "object"
+- assert %cfg.Type.Kind% equals "json"
+- assert %cfg% equals "{\"port\":8080}"

@@ -52,13 +52,13 @@ public class SaveGoalsTests
         var action = new goalsSave { Context = _app.User.Context, Goal = goal };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         // Verify file content
         var prPath = System.IO.Path.Combine(_tempDir, ".build", "start.pr");
         var json = System.IO.File.ReadAllText(prPath);
         var saved = JsonSerializer.Deserialize<Goal>(json,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true, Converters = { new global::app.type.path.JsonConverter(_app.User.Context) } });
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true, Converters = { new global::app.channel.serializer.json.Converter(_app.User.Context) } });
         await Assert.That(saved).IsNotNull();
         await Assert.That(saved!.Name).IsEqualTo("Start");
         await Assert.That(saved.Steps.Count).IsEqualTo(1);
@@ -105,12 +105,12 @@ public class SaveGoalsTests
         var action = new goalsSave { Context = _app.User.Context, Goal = goal };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         var prPath = System.IO.Path.Combine(_tempDir, ".build", "multi.pr");
         var json = System.IO.File.ReadAllText(prPath);
         var saved = JsonSerializer.Deserialize<Goal>(json,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true, Converters = { new global::app.type.path.JsonConverter(_app.User.Context) } });
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true, Converters = { new global::app.channel.serializer.json.Converter(_app.User.Context) } });
 
         await Assert.That(saved).IsNotNull();
         await Assert.That(saved!.Name).IsEqualTo("Public");
@@ -125,7 +125,7 @@ public class SaveGoalsTests
         var action = new goalsSave { Context = _app.User.Context, Goal = goal };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NoPrPath");
     }
 }

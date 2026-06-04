@@ -62,7 +62,7 @@ public class SignActionTests
     {
         var result = await SignData(new { message = "hello" });
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var sd = result.Signature;
         await Assert.That(sd).IsNotNull();
         await Assert.That(sd!.Type).IsNotEmpty();
@@ -78,7 +78,7 @@ public class SignActionTests
     {
         var result = await SignData(new { message = "hello" });
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var sd = result.Signature!;
         await Assert.That(sd.Type).IsEqualTo("signature");
         await Assert.That(sd.Algorithm).IsEqualTo("ed25519");
@@ -93,7 +93,7 @@ public class SignActionTests
 
         var result = await SignData("test data");
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Signature!.Identity).IsEqualTo(publicKey);
     }
 
@@ -108,7 +108,7 @@ public class SignActionTests
         var result = await SignData("test");
         var after = DateTimeOffset.UtcNow;
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var created = result.Signature!.Created;
         await Assert.That(created >= before.AddSeconds(-1)).IsTrue();
         await Assert.That(created <= after.AddSeconds(1)).IsTrue();
@@ -123,7 +123,7 @@ public class SignActionTests
     {
         var result = await SignData("test");
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Signature!.Contracts).IsNull();
     }
 
@@ -132,7 +132,7 @@ public class SignActionTests
     {
         var result = await SignData("test", contracts: new List<string> { "C0", "C1" });
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Signature!.Contracts!.Count).IsEqualTo(2);
         await Assert.That(result.Signature!.Contracts).Contains("C0");
         await Assert.That(result.Signature!.Contracts).Contains("C1");
@@ -147,7 +147,7 @@ public class SignActionTests
     {
         var result = await SignData("test", expires: TimeSpan.FromSeconds(5));
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var sd = result.Signature!;
         await Assert.That(sd.Expires).IsNotNull();
         var diff = (sd.Expires!.Value - sd.Created).TotalMilliseconds;
@@ -160,7 +160,7 @@ public class SignActionTests
     {
         var result = await SignData("test");
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Signature!.Expires).IsNull();
     }
 
@@ -174,7 +174,7 @@ public class SignActionTests
         var headers = new Dictionary<string, object> { { "method", "POST" } };
         var result = await SignData("test", headers: headers);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Signature!.Headers).IsNotNull();
         await Assert.That(result.Signature!.Headers!["method"].ToString()).IsEqualTo("POST");
     }
@@ -184,11 +184,11 @@ public class SignActionTests
     {
         var result = await SignData("test");
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var hash = result.Signature!.Hash;
         await Assert.That(hash).IsNotNull();
-        await Assert.That(hash.Value is byte[]).IsTrue();
-        await Assert.That(((byte[])hash.Value!).Length).IsGreaterThan(0);
+        await Assert.That(hash.Value is global::app.module.crypto.type.hash.@this).IsTrue();
+        await Assert.That(((global::app.module.crypto.type.hash.@this)hash.Value!).Bytes.Length).IsGreaterThan(0);
     }
 
     #endregion
@@ -199,7 +199,7 @@ public class SignActionTests
     public async Task Sign_Signature_CryptographicallyValid()
     {
         var result = await SignData("test");
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         var sd = result.Signature!;
         var sigBytes = Convert.FromBase64String(sd.Value!);
@@ -207,7 +207,7 @@ public class SignActionTests
 
         var provider = new Ed25519();
         var verifyResult = provider.Verify(signingBytes, sigBytes, sd.Identity);
-        await Assert.That(verifyResult.Success).IsTrue();
+        await verifyResult.IsSuccess();
         await Assert.That((bool)verifyResult.Value!).IsTrue();
     }
 
@@ -226,7 +226,7 @@ public class SignActionTests
         _app.Code.SetDefault<ISigning>("mock");
 
         var result = await SignData("test");
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Signature).IsNotNull();
         await Assert.That(mock.SignCalled).IsTrue();
     }
@@ -239,7 +239,7 @@ public class SignActionTests
     public async Task Sign_EmptyContracts_Succeeds()
     {
         var result = await SignData("test", contracts: new List<string>());
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Signature!.Contracts).IsNotNull();
         await Assert.That(result.Signature!.Contracts!.Count).IsEqualTo(0);
     }
@@ -257,7 +257,7 @@ public class SignActionTests
         _app.Code.SetDefault<IKey>("throwing-key");
 
         var result = await SignData("test");
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         // Key generation fails, identity creation fails, sign fails
         await Assert.That(result.Error).IsNotNull();
     }
@@ -273,7 +273,7 @@ public class SignActionTests
         _app.Code.SetDefault<ISigning>("throwing");
 
         var result = await SignData("test");
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("SigningError");
     }
 

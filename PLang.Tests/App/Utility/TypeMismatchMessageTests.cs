@@ -65,4 +65,18 @@ public class TypeMismatchMessageTests
         await Assert.That(error!.FixSuggestion).Contains("System.Int64");
         await Assert.That(error.FixSuggestion).Contains("System.IO.Stream");
     }
+
+    [Test]
+    public async Task PrimitiveBindFailure_NamesParameter_AndNeverLeaksIConvertible()
+    {
+        // Binding a non-IConvertible object into a string slot used to surface
+        // the raw "Object must implement IConvertible". It must instead name the
+        // parameter and the expected type. (An Error VALUE is special-cased: the
+        // original error propagates, chained — see error.throw F1.)
+        var (_, error) = TypeConverter.TryConvertTo(new object(), typeof(string), context: null, targetName: "Message");
+        await Assert.That(error).IsNotNull();
+        await Assert.That(error!.Message).DoesNotContain("IConvertible");
+        await Assert.That(error.Message).Contains("Message");
+        await Assert.That(error.Message).Contains("text");
+    }
 }

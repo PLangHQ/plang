@@ -69,7 +69,7 @@ public class ActorPermissionStorageTests
         // must NOT appear there — proves Add's signature-presence heuristic
         // sends the two grants to different homes.
         var stored = await app.SettingsStore.GetAll<global::app.data.@this<PermissionRecord>>("permission");
-        await Assert.That(stored.Success).IsTrue();
+        await stored.IsSuccess();
         var paths = stored.Value!.Where(d => d.Value != null).Select(d => d.Value!.Path).ToList();
         await Assert.That(paths).Contains("/disk");
         await Assert.That(paths).DoesNotContain("/mem");
@@ -193,7 +193,7 @@ public class ActorPermissionStorageTests
         // SettingsStore.Set is keyed by path — the table must hold one row
         // for `/p`, not two.
         var stored = await app.SettingsStore.GetAll<global::app.data.@this<PermissionRecord>>("permission");
-        await Assert.That(stored.Success).IsTrue();
+        await stored.IsSuccess();
         var rowsForP = stored.Value!.Count(d => d.Value?.Path == "/p");
         await Assert.That(rowsForP).IsEqualTo(1);
     }

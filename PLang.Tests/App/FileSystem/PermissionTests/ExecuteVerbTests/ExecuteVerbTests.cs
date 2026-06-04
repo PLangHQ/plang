@@ -38,7 +38,7 @@ public class ExecuteVerbTests
         }
     }
 
-    private sealed class StatelessChannel : global::app.channel.message.@this
+    private sealed class StatelessChannel : global::app.channel.type.message.@this
     {
         public StatelessChannel() { Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
@@ -108,7 +108,7 @@ public class ExecuteVerbTests
         System.IO.File.Copy(srcAssembly, copyAt, overwrite: true);
         var p = new FilePath(copyAt, app.User.Context);
         var result = await p.LoadAssemblyAsync();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(canned.Prompts.Count).IsEqualTo(0);
     }
 
@@ -123,7 +123,7 @@ public class ExecuteVerbTests
         var p = new FilePath(outOfRoot, app.User.Context);
         var result = await p.LoadAssemblyAsync();
         // Stateless channels surface "ask" as a Data type signal, not a stored grant.
-        await Assert.That(result.Type?.Value == "ask" || !result.Success).IsTrue();
+        await Assert.That(result.Type?.Name == "ask" || !result.Success).IsTrue();
     }
 
     [Test] public async Task LoadAssemblyAsync_OutOfRoot_DeniedAnswer_DoesNotLoadAssembly()
@@ -136,7 +136,7 @@ public class ExecuteVerbTests
         System.IO.File.WriteAllText(outOfRoot, "stub");
         var p = new FilePath(outOfRoot, app.User.Context);
         var result = await p.LoadAssemblyAsync();
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         // The fail must be a permission decision — not file-not-found or a
         // malformed-DLL throw. Differentiate via Error.Key.
         await Assert.That(result.Error).IsNotNull();

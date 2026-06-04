@@ -1,0 +1,8 @@
+Start
+/ Regression: a signed Data added to a list keeps its Signature, and the element
+/ verifies through the list. list.add stores the whole Data (not a decomposed value),
+/ and element reads return that Data unchanged — so %list[0]% is still verifiable.
+- sign "hello world", write to %signed%
+- add %signed% to %list%
+- verify %list[0]%, write to %ok%
+- assert %ok% equals true

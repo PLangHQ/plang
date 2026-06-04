@@ -46,7 +46,7 @@ public class GoalRunFromTests
         step.Actions.Add(actionA); step.Actions.Add(actionB);
 
         var result = await step.RunFrom(context, 0);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(context.Variable.GetValue("a")).IsEqualTo("A");
         await Assert.That(context.Variable.GetValue("b")).IsEqualTo("B");
     }
@@ -63,7 +63,7 @@ public class GoalRunFromTests
         step.Actions.Add(actionA); step.Actions.Add(actionB);
 
         var result = await step.RunFrom(context, 1);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(context.Variable.Get("a").IsInitialized).IsFalse(); // skipped
         await Assert.That(context.Variable.GetValue("b")).IsEqualTo("B");
     }
@@ -79,7 +79,7 @@ public class GoalRunFromTests
             SetStep(2, "s2", "and-after"));
 
         var result = await goal.RunFrom(context, stepIdx: 1, actionIdx: 0);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(context.Variable.Get("s0").IsInitialized).IsFalse();
         await Assert.That(context.Variable.GetValue("s1")).IsEqualTo("from-here");
         await Assert.That(context.Variable.GetValue("s2")).IsEqualTo("and-after");

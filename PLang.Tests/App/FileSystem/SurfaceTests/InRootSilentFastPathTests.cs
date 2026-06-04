@@ -41,7 +41,7 @@ public class InRootSilentFastPathTests
         System.IO.File.WriteAllText(file, "hello");
         var p = new FilePath(file, app.User.Context);
         var r = await p.ReadText();
-        await Assert.That(r.Success).IsTrue();
+        await r.IsSuccess();
         await Assert.That(ch.AskCount).IsEqualTo(0);
     }
 
@@ -53,7 +53,7 @@ public class InRootSilentFastPathTests
         var file = System.IO.Path.Combine(root, "w.txt");
         var p = new FilePath(file, app.User.Context);
         var r = await p.WriteText("hello");
-        await Assert.That(r.Success).IsTrue();
+        await r.IsSuccess();
         await Assert.That(ch.AskCount).IsEqualTo(0);
     }
 
@@ -66,7 +66,7 @@ public class InRootSilentFastPathTests
             System.IO.File.WriteAllText(System.IO.Path.Combine(root, $"f{i}.txt"), $"f{i}");
         var dir = new FilePath(root, app.User.Context);
         var listed = await dir.List("*.txt", recursive: false);
-        await Assert.That(listed.Success).IsTrue();
+        await listed.IsSuccess();
         foreach (var f in listed.Value!)
             await f.ReadText();
         await Assert.That(ch.AskCount).IsEqualTo(0);
@@ -82,7 +82,7 @@ public class InRootSilentFastPathTests
         System.IO.File.Copy(srcAssembly, copyAt, overwrite: true);
         var p = new FilePath(copyAt, app.User.Context);
         var r = await p.LoadAssemblyAsync();
-        await Assert.That(r.Success).IsTrue();
+        await r.IsSuccess();
         await Assert.That(ch.AskCount).IsEqualTo(0);
     }
 }

@@ -1,0 +1,26 @@
+{
+  "plan.md": [
+    {
+      "id": "2ccc719b82",
+      "line": 18,
+      "text": "regarding 'SOURCE (file / http / channel / wire)', I feel like channel should somehow the top, and then others below, because http ultimately uses channel, right? same with file, right?",
+      "anchor": "```",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-06-03T13:59:57",
+      "drifted": false
+    },
+    {
+      "id": "fd9ab98385",
+      "line": 18,
+      "text": "Fixed. Redrew the target-shape diagram with channel as the foundation — file / http / stream are channel kinds below it, channel.read is the one boundary, and 'wire' isn't a peer source, it's the case where the channel's Mime is the wire format. Part 4 now makes file and http channel kinds (app/channel/file/, app/channel/http/) that read through channel.read instead of doing their own I/O. You're right that both ultimately go through channel. Also added a 'Code file structure' section with the resulting tree + a write→read symmetry map.",
+      "anchor": "```",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "2ccc719b82",
+      "ts": "2026-06-03T14:10:07",
+      "drifted": false
+    }
+  ]
+}

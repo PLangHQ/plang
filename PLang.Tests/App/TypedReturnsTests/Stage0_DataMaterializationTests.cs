@@ -38,7 +38,7 @@ public class Stage0_DataMaterializationTests
         var src = new Data("x", "{\"a\":1}") { Context = _app.User.Context };
         var materialized = src.As("json");
 
-        await Assert.That(materialized.Success).IsTrue();
+        await materialized.IsSuccess();
         await Assert.That(materialized.Value).IsTypeOf<Dictionary<string, object?>>();
     }
 
@@ -102,7 +102,7 @@ public class Stage0_DataMaterializationTests
             .Because("Setting with an unknown declared type stays cleanly stored.");
 
         var result = src.As("bogus", _app.User.Context);
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("UnknownType");
     }
@@ -120,7 +120,7 @@ public class Stage0_DataMaterializationTests
 
         var asJson = src.As("json");
 
-        await Assert.That(asJson.Success).IsTrue();
+        await asJson.IsSuccess();
         await Assert.That(asJson.Value).IsTypeOf<Dictionary<string, object?>>()
             .Because("As('json') must dispatch on the argument, not src.Type.");
     }

@@ -35,7 +35,7 @@ public sealed class @this : IAsyncDisposable
 
     /// <summary>
     /// Named channels owned by this actor. Goal-channel recursion isolation lives
-    /// on <see cref="channel.goal.@this.IsExecuting"/> — the registry's <c>Get</c>
+    /// on <see cref="channel.type.goal.@this.IsExecuting"/> — the registry's <c>Get</c>
     /// treats an executing goal-channel as not-found.
     /// </summary>
     public global::app.channel.list.@this Channel => _channels;

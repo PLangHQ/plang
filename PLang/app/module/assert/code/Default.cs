@@ -12,17 +12,24 @@ public class Default : IAssert
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
+    // Compares the SCALAR form (access-driven resolution): `assert %x% equals …`
+    // is scalar access, so a raw-backed value compares as its raw source form
+    // (e.g. config.json untouched is the raw json string), not its materialized
+    // shape. For authored/navigated values ScalarValue == Value, so this is a
+    // no-op for everything except untouched raw-backed reads.
     public data.@this<bool> Equals(Equals action)
     {
-        if (AreEqual(action.Expected?.Value, action.Actual?.Value))
+        if (AreEqual(action.Expected?.ScalarValue, action.Actual?.ScalarValue))
             return app.data.@this<bool>.Ok(true);
 
+        // Error display keeps .Value (the masked/rendered path); only the
+        // comparison uses the scalar form.
         return app.data.@this<bool>.FromError(new AssertionError(action.Expected?.Value, action.Actual?.Value, action.Message?.Value));
     }
 
     public data.@this<bool> NotEquals(NotEquals action)
     {
-        if (!AreEqual(action.Expected?.Value, action.Actual?.Value))
+        if (!AreEqual(action.Expected?.ScalarValue, action.Actual?.ScalarValue))
             return app.data.@this<bool>.Ok(true);
 
         return app.data.@this<bool>.FromError(new AssertionError(action.Expected?.Value, action.Actual?.Value,

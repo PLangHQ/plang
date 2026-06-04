@@ -110,16 +110,16 @@ public class SetupTests
 
         // Run setup — step1 should be skipped, step2 should run
         var result = await _app.Goal.Setup.RunAsync(_app, _app.User.Context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         // Verify step1 was skipped: marker value should still be there (not overwritten by Record)
         var step1Data = await _app.SettingsStore.Get("setup", "skip_hash1");
-        await Assert.That(step1Data.Success).IsTrue();
+        await step1Data.IsSuccess();
         await Assert.That(step1Data.Value?.ToString()).IsEqualTo("MARKER_NOT_RE_EXECUTED");
 
         // Verify step2 was executed and recorded (has executedAt metadata, not our marker)
         var step2Data = await _app.SettingsStore.Get("setup", "skip_hash2");
-        await Assert.That(step2Data.Success).IsTrue();
+        await step2Data.IsSuccess();
         await Assert.That(step2Data.Value?.ToString()).IsNotEqualTo("MARKER_NOT_RE_EXECUTED");
     }
 
@@ -165,7 +165,7 @@ public class SetupTests
 
         var result = await _app.Goal.Setup.RunAsync(_app, context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(context.Setup).IsNull(); // cleared after RunAsync
     }
 
@@ -200,7 +200,7 @@ public class SetupTests
         var result = await _app.Goal.Setup.RunAsync(_app, _app.User.Context);
 
         // Setup should fail
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         // Step should NOT be recorded — it needs to re-run on next startup
         await Assert.That(await _app.Goal.Setup.IsExecuted(step, _app)).IsFalse();
     }
@@ -227,7 +227,7 @@ public class SetupTests
         var result = await _app.Goal.Setup.RunAsync(_app, _app.User.Context);
 
         // Setup should abort with cancellation error
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("Cancelled");
     }
@@ -250,7 +250,7 @@ public class SetupTests
 
         var result = await _app.Goal.Setup.RunAsync(_app, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // Only the setup goal should be in the collection
         var setupGoals = _app.Goal.Setup.Goals.ToList();
         await Assert.That(setupGoals.Count).IsEqualTo(1);
@@ -291,7 +291,7 @@ public class SetupTests
         // No .pr files at all — RunAsync discovers nothing and succeeds
         var result = await _app.Goal.Setup.RunAsync(_app, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(_app.Goal.Setup.Goals.Any()).IsFalse();
     }
 
@@ -308,7 +308,7 @@ public class SetupTests
 
         var result = await _app.Goal.Setup.RunAsync(_app, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var setupGoals = _app.Goal.Setup.Goals.ToList();
         await Assert.That(setupGoals.Count).IsEqualTo(1);
         await Assert.That(setupGoals[0].Name).IsEqualTo("Setup");
@@ -327,7 +327,7 @@ public class SetupTests
 
         var result = await _app.Goal.Setup.RunAsync(_app, _app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // No setup goals discovered from non-convention path
         await Assert.That(_app.Goal.Setup.Goals.Any()).IsFalse();
     }

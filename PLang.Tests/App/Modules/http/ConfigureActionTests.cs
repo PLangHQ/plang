@@ -47,7 +47,7 @@ public class ConfigureActionTests
         var action = new configure { Context = Ctx, TimeoutInSec = 60 };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var view = _app.Config.For<Config>(Ctx);
         await Assert.That(view.Resolve("TimeoutInSec", 30)).IsEqualTo(60);
     }
@@ -58,7 +58,7 @@ public class ConfigureActionTests
         var action = new configure { Context = Ctx, BaseUrl = "https://api.example.com/v2" };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var view = _app.Config.For<Config>(Ctx);
         await Assert.That(view.Resolve<string?>("BaseUrl", null)).IsEqualTo("https://api.example.com/v2");
     }
@@ -69,7 +69,7 @@ public class ConfigureActionTests
         var action = new configure { Context = Ctx, TimeoutInSec = 120, Default = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         // New context should still see the engine-level default
         var newContext = _app.User.Context;
@@ -83,7 +83,7 @@ public class ConfigureActionTests
         var action = new configure { Context = Ctx, TimeoutInSec = 90, Default = false };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         // Current context sees 90
         var view = _app.Config.For<Config>(Ctx);
@@ -110,7 +110,7 @@ public class ConfigureActionTests
         var action = new configure { Context = Ctx, FollowRedirects = false };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ConfigLocked");
     }
 
@@ -121,7 +121,7 @@ public class ConfigureActionTests
         var action = new configure { Context = Ctx, BaseUrl = "https://api.example.com" };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var view = _app.Config.For<Config>(Ctx);
         // TimeoutInSec was not set — should still be class default
         await Assert.That(view.Resolve("TimeoutInSec", 30)).IsEqualTo(30);
@@ -156,7 +156,7 @@ public class ConfigureActionTests
         var result = await requestAction.Run();
 
         // Should timeout at 1s (per-step), not wait 60s (configured)
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Timeout");
     }
 

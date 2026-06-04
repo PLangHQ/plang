@@ -17,19 +17,25 @@
             {
               "name": "Name",
               "value": "%label%",
-              "type": "variable"
+              "type": {
+                "name": "variable"
+              }
             },
             {
               "name": "Value",
               "value": "big",
-              "type": "string"
+              "type": {
+                "name": "text"
+              }
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
               "value": false,
-              "type": "bool"
+              "type": {
+                "name": "bool"
+              }
             }
           ],
           "modifiers": []

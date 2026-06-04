@@ -29,16 +29,14 @@ internal static class HttpBuildHelpers
             return Task.FromResult(data.@this.Ok());
 
         var ext = clean[lastDot..];
-        var mime = app?.Format.Mime(ext) ?? "application/octet-stream";
-        if (mime == "application/octet-stream") return Task.FromResult(data.@this.Ok());
+        if (app?.Format is not { } fmt) return Task.FromResult(data.@this.Ok());
 
-        var typeName = ext.TrimStart('.').ToLowerInvariant();
+        // Stage 6: same shared {name, kind} derivation file.read uses, so the
+        // URL-extension build stamp matches the runtime response-body stamp.
+        var inferred = fmt.TypeFromExtension(ext);
+        if (inferred.IsNull || app.Type.Get(inferred.Name) == null)
+            return Task.FromResult(data.@this.Ok());
 
-        // Only stamp if the extension is a registered PLang type — otherwise
-        // downstream variable.set tries to convert via an unknown type and
-        // surfaces "Unknown type 'X'". Mirrors the gate in file/read.cs.
-        if (app?.Type.Get(typeName) == null) return Task.FromResult(data.@this.Ok());
-
-        return Task.FromResult(data.@this.Ok(typeName));
+        return Task.FromResult(data.@this.Ok(inferred));
     }
 }

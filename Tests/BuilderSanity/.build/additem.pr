@@ -17,12 +17,16 @@
             {
               "name": "A",
               "value": "%total%",
-              "type": "object"
+              "type": {
+                "name": "object"
+              }
             },
             {
               "name": "B",
               "value": "%item%",
-              "type": "object"
+              "type": {
+                "name": "object"
+              }
             }
           ],
           "defaults": null,
@@ -35,19 +39,25 @@
             {
               "name": "Name",
               "value": "%total%",
-              "type": "variable"
+              "type": {
+                "name": "variable"
+              }
             },
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": {
+                "name": "object"
+              }
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
               "value": false,
-              "type": "bool"
+              "type": {
+                "name": "bool"
+              }
             }
           ],
           "modifiers": []

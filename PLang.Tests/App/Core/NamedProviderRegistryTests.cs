@@ -49,7 +49,7 @@ public class NamedProviderRegistryTests
         _app.Code.Register<ISigning>(provider);
 
         var result = _app.Code.Get<ISigning>("custom");
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsSameReferenceAs(provider);
         await Assert.That(result.Value!.Name).IsEqualTo("custom");
     }
@@ -97,7 +97,7 @@ public class NamedProviderRegistryTests
         // "ed25519" already registered at startup
         var result = _app.Code.Register<ISigning>(new MockSigningProvider("ed25519"));
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderExists");
     }
 
@@ -111,7 +111,7 @@ public class NamedProviderRegistryTests
         _app.Code.Register<ISigning>(new MockSigningProvider("second"));
 
         var result = _app.Code.Get<ISigning>();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value!.IsDefault).IsTrue();
         await Assert.That(result.Value.Name).IsEqualTo("ed25519");
     }
@@ -122,7 +122,7 @@ public class NamedProviderRegistryTests
         // Use a bare registry with no built-in registrations
         var bare = new EngineProviders();
         var result = bare.Get<IKey>();
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
     }
 
@@ -130,7 +130,7 @@ public class NamedProviderRegistryTests
     public async Task Get_ByName_NonExistent_ReturnsError()
     {
         var result = _app.Code.Get<ISigning>("ecdsa");
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
     }
 
@@ -144,20 +144,20 @@ public class NamedProviderRegistryTests
         _app.Code.Register<ISigning>(new MockSigningProvider("second"));
 
         var result = _app.Code.Remove<ISigning>("second");
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         var getRemoved = _app.Code.Get<ISigning>("second");
-        await Assert.That(getRemoved.Success).IsFalse();
+        await getRemoved.IsFailure();
 
         var getBuiltIn = _app.Code.Get<ISigning>("ed25519");
-        await Assert.That(getBuiltIn.Success).IsTrue();
+        await getBuiltIn.IsSuccess();
     }
 
     [Test]
     public async Task Remove_DefaultCryptoProvider_ReturnsCannotRemoveDefaultError()
     {
         var result = _app.Code.Remove<ISigning>("ed25519");
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("CannotRemoveDefault");
     }
 
@@ -165,7 +165,7 @@ public class NamedProviderRegistryTests
     public async Task Remove_NonExistent_ReturnsProviderNotFoundError()
     {
         var result = _app.Code.Remove<ISigning>("unknown");
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
     }
 
@@ -180,7 +180,7 @@ public class NamedProviderRegistryTests
         _app.Code.Register<ISigning>(second);
 
         var result = _app.Code.SetDefault<ISigning>("second");
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(second.IsDefault).IsTrue();
 
         var builtIn = _app.Code.Get<ISigning>("ed25519");
@@ -191,7 +191,7 @@ public class NamedProviderRegistryTests
     public async Task SetDefault_NonExistent_ReturnsProviderNotFoundError()
     {
         var result = _app.Code.SetDefault<ISigning>("unknown");
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
     }
 
@@ -287,7 +287,7 @@ public class NamedProviderRegistryTests
     public async Task Remove_NullName_ReturnsValidationError()
     {
         var result = _app.Code.Remove<ISigning>(null!);
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
     }
 
@@ -295,7 +295,7 @@ public class NamedProviderRegistryTests
     public async Task Remove_EmptyName_ReturnsValidationError()
     {
         var result = _app.Code.Remove<ISigning>("");
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
     }
 
@@ -303,7 +303,7 @@ public class NamedProviderRegistryTests
     public async Task SetDefault_NullName_ReturnsValidationError()
     {
         var result = _app.Code.SetDefault<ISigning>(null!);
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
     }
 
@@ -311,7 +311,7 @@ public class NamedProviderRegistryTests
     public async Task SetDefault_EmptyName_ReturnsValidationError()
     {
         var result = _app.Code.SetDefault<ISigning>("");
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
     }
 

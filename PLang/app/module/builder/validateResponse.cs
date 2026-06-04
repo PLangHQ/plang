@@ -157,15 +157,15 @@ public partial class validateResponse : IContext
                 if (a.Parameters == null) continue;
                 foreach (var p in a.Parameters)
                 {
-                    if (p.Type?.Value == null || p.Value == null) continue;
+                    if (p.Type?.Name == null || p.Value == null) continue;
 
-                    var targetType = (goal.App ?? app)?.Type.Get(p.Type.Value);
+                    var targetType = (goal.App ?? app)?.Type.Get(p.Type.Name);
                     if (targetType == null) continue;
                     if (!global::app.type.list.@this.IsScalarPlangType(targetType)) continue;
 
                     if (p.Value is not string)
                         errors.Add(
-                            $"Step[{step.Index}] {a.Module}.{a.ActionName}: parameter '{p.Name}' has type '{p.Type.Value}' but value is not a plain string. " +
+                            $"Step[{step.Index}] {a.Module}.{a.ActionName}: parameter '{p.Name}' has type '{p.Type.Name}' but value is not a plain string. " +
                             $"Scalar types (e.g. tstring, path) must be emitted as bare string values, not records like {{value, key}}.");
                 }
             }
@@ -194,17 +194,17 @@ public partial class validateResponse : IContext
 
                 foreach (var p in a.Parameters)
                 {
-                    if (p.Type?.Value == null || p.Value == null) continue;
+                    if (p.Type?.Name == null || p.Value == null) continue;
                     if (p.Value is string sv && sv.StartsWith('%') && sv.EndsWith('%')) continue;
                     if (ValidateResponseHelpers.IsActionRecord(p.Value)) continue;
 
                     // LLMs emit "" for unset nullable slots even when the prompt says
                     // omit them. Map "" → null when the schema prop is nullable, so the
-                    // .pr doesn't store the empty string and TryConvertTo doesn't get
+                    // .pr doesn't store the empty string and TryConvert doesn't get
                     // a string it can't possibly satisfy ("" is not in any actor's
                     // ValidValues, can't parse to int, etc.). For non-nullable slots we
                     // *want* the convertibility error to surface — leave it for the
-                    // TryConvertTo path below.
+                    // TryConvert path below.
                     if (p.Value is string emptyCheck && emptyCheck.Length == 0)
                     {
                         if (ValidateResponseHelpers.IsNullableSchemaProp(actionType, p.Name))
@@ -214,7 +214,7 @@ public partial class validateResponse : IContext
                         }
                     }
 
-                    var targetType = (goal.App ?? app)?.Type.Get(p.Type.Value);
+                    var targetType = (goal.App ?? app)?.Type.Get(p.Type.Name);
                     if (targetType == null) continue;
                     // Scalar PlangTypes (path, tstring, ...) accept the raw primitive at
                     // build time — runtime wraps via Resolve. Already covered by the
@@ -234,11 +234,11 @@ public partial class validateResponse : IContext
                         if (sval != null && choices.Any(c => string.Equals(c, sval, StringComparison.OrdinalIgnoreCase)))
                             continue;
                         errors.Add(
-                            $"Step[{step.Index}] {a.Module}.{a.ActionName}: parameter '{p.Name}' = {ValidateResponseHelpers.FormatValueForError(p.Value)} is not a valid {p.Type.Value}. Valid values: {string.Join(", ", choices)}.");
+                            $"Step[{step.Index}] {a.Module}.{a.ActionName}: parameter '{p.Name}' = {ValidateResponseHelpers.FormatValueForError(p.Value)} is not a valid {p.Type.Name}. Valid values: {string.Join(", ", choices)}.");
                         continue;
                     }
 
-                    var (_, error) = global::app.type.list.@this.TryConvertTo(p.Value, targetType);
+                    var (_, error) = global::app.type.list.@this.TryConvert(p.Value, targetType);
                     if (error == null) continue;
 
                     var validValues = (goal.App ?? app)?.Type.GetValidValues(targetType);
@@ -246,7 +246,7 @@ public partial class validateResponse : IContext
                         ? $" Valid values: {string.Join(", ", validValues)}."
                         : "";
                     errors.Add(
-                        $"Step[{step.Index}] {a.Module}.{a.ActionName}: parameter '{p.Name}' = {ValidateResponseHelpers.FormatValueForError(p.Value)} cannot be converted to type '{p.Type.Value}'.{hint} If the parameter is optional and you don't have a value, omit it from the parameters list — never emit \"\" as a placeholder.");
+                        $"Step[{step.Index}] {a.Module}.{a.ActionName}: parameter '{p.Name}' = {ValidateResponseHelpers.FormatValueForError(p.Value)} cannot be converted to type '{p.Type.Name}'.{hint} If the parameter is optional and you don't have a value, omit it from the parameters list — never emit \"\" as a placeholder.");
                 }
             }
         }

@@ -1,6 +1,8 @@
 Start
-/ Documented round-trip: 0.1 + 0.2 under default policy (Promote/Double) produces the
-/ same value the LLM-facing docs cite. Pins that "lenient default" doesn't quietly
-/ become "doubles eat your decimals" — kinds stay decimal when both operands are decimal.
-- math.add A=0.1 B=0.2, write to %sum%
-- assert %sum% equals 0.3
+/ Decimal exactness is opt-in: bare literals are double (0.1 + 0.2 → 0.30000…4),
+/ so for exact decimal arithmetic both operands are cast `as number/decimal`. Pins
+/ that decimal operands stay decimal and add exactly (0.1 + 0.2 = 0.3).
+- set %a% = "0.1" as number/decimal
+- set %b% = "0.2" as number/decimal
+- math.add A=%a% B=%b%, write to %sum%
+- assert %sum% equals "0.3" as number/decimal

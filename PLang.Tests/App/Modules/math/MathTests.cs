@@ -23,7 +23,7 @@ public class MathTests
         var action = new Add { Context = context, A = new global::app.data.@this("", 3), B = new global::app.data.@this("", 4)};
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo(7);
         // plang-types Stage 4: math.* returns Data<number>; the underlying kind
         // is Int (not the CLR `int`).
@@ -78,7 +78,7 @@ public class MathTests
         var action = new Divide { Context = context, A = new global::app.data.@this("", 10.0), B = new global::app.data.@this("", 3.0)};
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var value = Convert.ToDouble(result.Value);
         await Assert.That(Math.Abs(value - 3.333333) < 0.001).IsTrue();
     }
@@ -91,7 +91,7 @@ public class MathTests
         var action = new Divide { Context = context, A = new global::app.data.@this("", 10), B = new global::app.data.@this("", 0)};
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
     }
 
     // --- Modulo ---
@@ -141,7 +141,7 @@ public class MathTests
         var action = new Sqrt { Context = context, Value = new global::app.data.@this("", -1)};
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         // Pin the handler-boundary contract: negative input surfaces as
         // ArithmeticError (via number.Sqrt → Wrap), one canonical key.
         await Assert.That(result.Error?.Key).IsEqualTo("ArithmeticError");
@@ -231,7 +231,7 @@ public class MathTests
         var action = new global::app.module.math.Random { Context = context, Min = 1, Max = 10 };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var value = Convert.ToInt32(result.Value);
         await Assert.That(value >= 1 && value <= 10).IsTrue();
     }

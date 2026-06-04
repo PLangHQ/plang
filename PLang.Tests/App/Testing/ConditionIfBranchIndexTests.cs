@@ -57,7 +57,7 @@ public class ConditionIfBranchIndexTests
 
         Data? captured = null;
         _app.User.Context.Events.Register(new EventBinding(
-            EventType.AfterAction,
+            Trigger.AfterAction,
             (context, action, result) =>
             {
                 if (action?.Module == "condition" && action.ActionName == "if")
@@ -142,7 +142,7 @@ public class ConditionIfBranchIndexTests
         // Capture the first-if's AfterAction (the orchestrator emits its result there).
         var first = actions[0];
         _app.User.Context.Events.Register(new EventBinding(
-            EventType.AfterAction,
+            Trigger.AfterAction,
             (context, action, result) =>
             {
                 if (ReferenceEquals(action, first))
@@ -227,7 +227,7 @@ public class ConditionIfBranchIndexTests
         // the branchIndex-absence check is vacuously true and the test proves nothing.
         // If this assertion fires, the fixture needs to be strengthened (pick a
         // different non-comparable pair) rather than relaxing the guard.
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Properties.Contains("branchIndex")).IsFalse();
     }
 }

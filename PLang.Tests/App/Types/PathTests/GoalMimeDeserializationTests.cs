@@ -35,7 +35,7 @@ public class GoalMimeDeserializationTests
         await System.IO.File.WriteAllTextAsync(abs, SimpleGoalText);
         var p = new FilePath(abs, app.User.Context);
         var read = await p.ReadText();
-        await Assert.That(read.Success).IsTrue();
+        await read.IsSuccess();
         await Assert.That(read.Value as string).IsEqualTo(SimpleGoalText);
     }
 
@@ -46,7 +46,7 @@ public class GoalMimeDeserializationTests
         await System.IO.File.WriteAllTextAsync(abs, SimpleGoalText);
         var p = new FilePath(abs, app.User.Context);
         var read = await p.ReadText();
-        await Assert.That(read.Success).IsTrue();
+        await read.IsSuccess();
         await Assert.That(read.Value as string).IsEqualTo(SimpleGoalText);
     }
 
@@ -58,7 +58,7 @@ public class GoalMimeDeserializationTests
         await System.IO.File.WriteAllTextAsync(prAbs, json);
         var p = new FilePath(prAbs, app.User.Context);
         var read = await p.ReadText();
-        await Assert.That(read.Success).IsTrue();
+        await read.IsSuccess();
         await Assert.That(read.Value is Goal).IsTrue();
     }
 

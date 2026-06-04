@@ -50,7 +50,7 @@ public class DefaultHttpProviderTests
 
         var result = provider.Configure(action);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         provider.Dispose();
     }
 
@@ -66,7 +66,7 @@ public class DefaultHttpProviderTests
 
         var result = provider.Configure(action);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // Verify via settings scope
         var view = _app.Config.For<Config>(Ctx);
         var timeout = view.Resolve("TimeoutInSec", 30);
@@ -86,7 +86,7 @@ public class DefaultHttpProviderTests
 
         var result = provider.Configure(action);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var view = _app.Config.For<Config>(Ctx);
         var baseUrl = view.Resolve<string?>("BaseUrl", null);
         await Assert.That(baseUrl).IsEqualTo("https://api.example.com");

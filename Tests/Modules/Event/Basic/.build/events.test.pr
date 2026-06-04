@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Sets %name% to \u0027hello\u0027, asserts it, calls TestGoal, then asserts %name% still equals \u0027hello\u0027. Also registers before/after hooks around each goal call to LogBefore/LogAfter.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -15,24 +15,48 @@
           "action": "on",
           "parameters": [
             {
-              "name": "Type",
+              "name": "Trigger",
               "value": "BeforeGoal",
-              "type": "string"
+              "type": {
+                "name": "trigger"
+              }
             },
             {
               "name": "GoalToCall",
               "value": {
                 "name": "LogBefore",
-                "parameters": []
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/Modules/Event/Basic/.build/logbefore.pr"
               },
-              "type": "goal.call"
+              "type": {
+                "name": "goal.call"
+              }
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "isregex",
+              "value": false,
+              "type": {
+                "name": "bool"
+              }
+            },
+            {
+              "name": "priority",
+              "value": 0,
+              "type": {
+                "name": "number",
+                "kind": "int"
+              }
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "formal": "event.on(Trigger=BeforeGoal, GoalToCall={name:\u0022LogBefore\u0022})",
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -47,24 +71,48 @@
           "action": "on",
           "parameters": [
             {
-              "name": "Type",
+              "name": "Trigger",
               "value": "AfterGoal",
-              "type": "string"
+              "type": {
+                "name": "trigger"
+              }
             },
             {
               "name": "GoalToCall",
               "value": {
                 "name": "LogAfter",
-                "parameters": []
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/Modules/Event/Basic/.build/logafter.pr"
               },
-              "type": "goal.call"
+              "type": {
+                "name": "goal.call"
+              }
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "isregex",
+              "value": false,
+              "type": {
+                "name": "bool"
+              }
+            },
+            {
+              "name": "priority",
+              "value": 0,
+              "type": {
+                "name": "number",
+                "kind": "int"
+              }
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "formal": "event.on(Trigger=\u0022AfterGoal\u0022, GoalToCall={name:\u0022LogAfter\u0022})",
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -81,19 +129,33 @@
             {
               "name": "Name",
               "value": "%name%",
-              "type": "string"
+              "type": {
+                "name": "variable"
+              }
             },
             {
               "name": "Value",
               "value": "hello",
-              "type": "string"
+              "type": {
+                "name": "text"
+              }
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "formal": "variable.set(Name=%name%, Value=\u0022hello\u0022)",
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -110,12 +172,16 @@
             {
               "name": "Expected",
               "value": "hello",
-              "type": "string"
+              "type": {
+                "name": "text"
+              }
             },
             {
               "name": "Actual",
               "value": "%name%",
-              "type": "object"
+              "type": {
+                "name": "object"
+              }
             }
           ],
           "defaults": null,
@@ -123,6 +189,8 @@
         }
       ],
       "intent": null,
+      "formal": "assert.equals(Expected=\u0022hello\u0022, Actual=%name%)",
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -140,9 +208,13 @@
               "name": "GoalName",
               "value": {
                 "name": "TestGoal",
-                "parameters": []
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/Modules/Event/Basic/.build/testgoal.pr"
               },
-              "type": "goal.call"
+              "type": {
+                "name": "goal.call"
+              }
             }
           ],
           "defaults": null,
@@ -150,6 +222,8 @@
         }
       ],
       "intent": null,
+      "formal": "goal.call(GoalName={name:\u0022TestGoal\u0022, parameters:[]})",
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -166,17 +240,16 @@
             {
               "name": "Expected",
               "value": "hello",
-              "type": "string"
+              "type": {
+                "name": "text"
+              }
             },
             {
               "name": "Actual",
               "value": "%name%",
-              "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": "variable should survive goal call",
-              "type": "tstring"
+              "type": {
+                "name": "object"
+              }
             }
           ],
           "defaults": null,
@@ -184,6 +257,8 @@
         }
       ],
       "intent": null,
+      "formal": "assert.equals(Expected=\u0022hello\u0022, Actual=%name%)",
+      "source": null,
       "waitForExecution": true
     }
   ],

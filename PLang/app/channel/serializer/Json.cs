@@ -44,8 +44,8 @@ public sealed class Json : ISerializer
             {
                 new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
                 context != null
-                    ? new global::app.type.path.JsonConverter(context)
-                    : new global::app.type.path.JsonConverter()
+                    ? new global::app.channel.serializer.json.Converter(context)
+                    : new global::app.channel.serializer.json.Converter()
             }
         };
     }
@@ -72,6 +72,10 @@ public sealed class Json : ISerializer
     {
         try
         {
+            // Materialize lazy reference fundamentals (image bytes) above the
+            // STJ converter wall — the sync renderers below cannot await.
+            var loadError = await data.Load();
+            if (loadError != null) return loadError;
             var value = data.Value;
             if (value == null)
             {

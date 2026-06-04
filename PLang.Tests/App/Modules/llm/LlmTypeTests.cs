@@ -92,7 +92,7 @@ public class LlmTypeTests
             PrPath = global::app.type.path.@this.Resolve("/test/.build/mygoal.pr", context)
         };
 
-        var opts = new JsonSerializerOptions { Converters = { new global::app.type.path.JsonConverter(context) } };
+        var opts = new JsonSerializerOptions { Converters = { new global::app.channel.serializer.json.Converter(context) } };
         var json = JsonSerializer.Serialize(gc, opts);
         var deserialized = JsonSerializer.Deserialize<GoalCall>(json, opts)!;
 

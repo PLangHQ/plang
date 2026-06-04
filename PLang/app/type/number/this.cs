@@ -1,38 +1,41 @@
+using System.Numerics;
+
 namespace app.type.number;
 
 /// <summary>
-/// PLang <c>number</c> value — an immutable, kind-tagged scalar that unifies
-/// CLR <c>int</c>/<c>long</c>/<c>decimal</c>/<c>float</c>/<c>double</c> under
-/// one type. <c>int</c>/<c>long</c>/<c>decimal</c>/… are <em>kinds</em> of
-/// <c>number</c>, not separate top-level PLang types — see
-/// <see cref="Build"/> for the build-time kind derivation.
+/// PLang <c>number</c> value (Way 3) — an immutable scalar that holds its
+/// <em>exact</em> CLR numeric value; the <see cref="Kind"/> <em>is</em> that
+/// value's CLR type (no separate stored label to drift). The full C# scalar
+/// tower is supported as kinds: <c>sbyte byte short ushort int uint long ulong
+/// Int128 UInt128 Half float double decimal BigInteger</c>.
 ///
-/// <para><c>sealed class</c> for codebase consistency with the rest of
-/// <c>app/types/</c>; value semantics by way of <see cref="IEquatable{T}"/>
-/// + value-equal <see cref="GetHashCode"/>. No <c>Context</c>, no
-/// <see cref="module.IContext"/> — a number has no use for per-request state
-/// after construction.</para>
+/// <para>Arithmetic promotes operands to a carrier that cannot lose
+/// (<c>BigInteger</c> for integers, <c>double</c> for binary floats,
+/// <c>decimal</c> for base-10), then narrows the result to the smallest kind
+/// that fits — so <c>3000000000u + 2000000000u</c> lands as <c>5000000000</c>
+/// (a <c>long</c>) rather than wrapping. <c>double ⊕ decimal</c> requires an
+/// explicit precision choice (see <see cref="NumberPolicy"/>).</para>
 ///
-/// <para>Storage is a tagged union over three slots (<c>_i</c>, <c>_d</c>,
-/// <c>_f</c>); exactly one is meaningful per <see cref="NumberKind"/>.
-/// <see cref="NumberKind.Float"/> shares the <c>_f</c> slot with
-/// <see cref="NumberKind.Double"/>: float widens to double on entry and
-/// re-narrows at the explicit-OUT cast; the Float label keeps round-trip
-/// identity for catalog/print.</para>
+/// <para>Storage is a single boxed CLR numeric (<see cref="BoxedValue"/>);
+/// boxing was already the baseline since <c>Data.Value</c> is <c>object</c>.
+/// The old <c>_i/_d/_f</c> tagged union and the <c>float→double</c> collapse
+/// are gone.</para>
 /// </summary>
 public sealed partial class @this : System.IEquatable<@this>, System.IComparable<@this>, System.IComparable, global::app.data.IBooleanResolvable, System.IConvertible
 {
-    public NumberKind Kind { get; }
+    // The exact boxed CLR numeric — the single source of truth. Kind derives from its type.
+    private readonly object _value;
 
-    // Tagged union — exactly one slot is meaningful per Kind.
-    private readonly long _i;     // Int, Long
-    private readonly decimal _d;  // Decimal
-    private readonly double _f;   // Float (widened), Double
+    private @this(object value) { _value = value; }
 
-    private @this(NumberKind kind, long i = 0, decimal d = 0m, double f = 0.0)
-    {
-        Kind = kind; _i = i; _d = d; _f = f;
-    }
+    /// <summary>The exact boxed CLR numeric value (int, uint, BigInteger, Half, decimal, …).</summary>
+    public object BoxedValue => _value;
+
+    /// <summary>The kind — derived from the boxed value's CLR type, never stored separately.</summary>
+    public NumberKind Kind => ClrToKind(_value.GetType());
+
+    /// <summary>The PLang kind name ("int", "uint", "biginteger", "half", …).</summary>
+    public string KindLabel => KindName(Kind);
 
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
     public static string Example => "3.14";
@@ -41,27 +44,39 @@ public sealed partial class @this : System.IEquatable<@this>, System.IComparable
     public static string Shape => "string";
 
     /// <summary>
-    /// Developer-meaningful kind vocabulary the LLM catalog renders. Number is
-    /// the one type that advertises its kinds; for every other type the kind
-    /// is derivation-only (silent <see cref="Build"/> stamping).
+    /// The advertised kind vocabulary — the full C# scalar tower. Distinct from
+    /// <see cref="Kind"/> (the per-value derived kind).
     /// </summary>
     public static System.Collections.Generic.IReadOnlyList<string> Kinds { get; }
-        = new[] { "int", "long", "decimal", "double" };
+        = new[]
+        {
+            "sbyte", "byte", "short", "ushort", "int", "uint", "long", "ulong",
+            "int128", "uint128", "half", "float", "double", "decimal", "biginteger",
+        };
 
-    // ---- Construction — static factories per kind ----
+    // ---- Construction — one factory per CLR type ----
 
-    public static @this From(int v) => new(NumberKind.Int, i: v);
-    public static @this From(long v) => new(NumberKind.Long, i: v);
-    public static @this From(decimal v) => new(NumberKind.Decimal, d: v);
-    public static @this From(float v) => new(NumberKind.Float, f: v);
-    public static @this From(double v) => new(NumberKind.Double, f: v);
+    public static @this From(sbyte v) => new(v);
+    public static @this From(byte v) => new(v);
+    public static @this From(short v) => new(v);
+    public static @this From(ushort v) => new(v);
+    public static @this From(int v) => new(v);
+    public static @this From(uint v) => new(v);
+    public static @this From(long v) => new(v);
+    public static @this From(ulong v) => new(v);
+    public static @this From(Int128 v) => new(v);
+    public static @this From(UInt128 v) => new(v);
+    public static @this From(BigInteger v) => new(v);
+    public static @this From(Half v) => new(v);
+    public static @this From(float v) => new(v);
+    public static @this From(double v) => new(v);
+    public static @this From(decimal v) => new(v);
 
     /// <summary>
-    /// Polymorphic coercion — accepts CLR primitives, a string (routed through
-    /// <see cref="Parse"/>), or an existing <see cref="@this"/>. Throws
-    /// <see cref="System.FormatException"/> for inputs that don't represent a
-    /// number; null returns null. The conversion entry point math.* handlers
-    /// use to lift untyped Data values into the number space.
+    /// Polymorphic coercion — accepts any CLR numeric (boxed verbatim, exact
+    /// kind preserved), a string (routed through <see cref="Parse"/>), or an
+    /// existing <see cref="@this"/>. Throws <see cref="System.FormatException"/>
+    /// for non-numbers; null returns null.
     /// </summary>
     public static @this? FromObject(object? value)
     {
@@ -69,17 +84,21 @@ public sealed partial class @this : System.IEquatable<@this>, System.IComparable
         {
             case null: return null;
             case @this n: return n;
-            case int i: return From(i);
-            case long l: return From(l);
-            case decimal d: return From(d);
-            case float f: return From(f);
-            case double dbl: return From(dbl);
-            case sbyte sb: return From((int)sb);
-            case byte b: return From((int)b);
-            case short s16: return From((int)s16);
-            case ushort us: return From((int)us);
-            case uint u: return From((long)u);
-            case ulong ul: return From((decimal)ul);
+            case sbyte v: return From(v);
+            case byte v: return From(v);
+            case short v: return From(v);
+            case ushort v: return From(v);
+            case int v: return From(v);
+            case uint v: return From(v);
+            case long v: return From(v);
+            case ulong v: return From(v);
+            case Int128 v: return From(v);
+            case UInt128 v: return From(v);
+            case BigInteger v: return From(v);
+            case Half v: return From(v);
+            case float v: return From(v);
+            case double v: return From(v);
+            case decimal v: return From(v);
             case string s:
                 var parsed = Parse(s);
                 if (parsed == null) throw new System.FormatException($"number.FromObject: '{s}' is not a valid number");
@@ -105,112 +124,100 @@ public sealed partial class @this : System.IEquatable<@this>, System.IComparable
     public static explicit operator double(@this n) => n.ToDouble();
     public static explicit operator float(@this n) => n.ToSingle();
 
-    public int ToInt32() => Kind switch
+    // ---- Raw widest-carrier accessors (used across the partials) ----
+
+    internal BigInteger AsBigInteger() => _value switch
     {
-        NumberKind.Int => checked((int)_i),
-        NumberKind.Long => checked((int)_i),
-        NumberKind.Decimal => checked((int)_d),
-        NumberKind.Double or NumberKind.Float =>
-            double.IsNaN(_f) || double.IsInfinity(_f)
-                ? throw new System.ArithmeticException("number is NaN or Infinity, cannot convert to int")
-                : checked((int)_f),
-        _ => throw new System.InvalidOperationException()
+        sbyte v => v, byte v => v, short v => v, ushort v => v,
+        int v => v, uint v => v, long v => v, ulong v => v,
+        Int128 v => (BigInteger)v, UInt128 v => (BigInteger)v, BigInteger v => v,
+        decimal d when d == System.Math.Truncate(d) => (BigInteger)d,
+        _ => throw new System.InvalidOperationException($"number kind '{KindLabel}' is not an exact integer."),
     };
 
-    public long ToInt64() => Kind switch
+    internal decimal AsDecimal() => _value switch
     {
-        NumberKind.Int or NumberKind.Long => _i,
-        NumberKind.Decimal => checked((long)_d),
-        NumberKind.Double or NumberKind.Float =>
-            double.IsNaN(_f) || double.IsInfinity(_f)
-                ? throw new System.ArithmeticException("number is NaN or Infinity, cannot convert to long")
-                : checked((long)_f),
-        _ => throw new System.InvalidOperationException()
+        sbyte v => v, byte v => v, short v => v, ushort v => v,
+        int v => v, uint v => v, long v => v, ulong v => v,
+        Int128 v => (decimal)v, UInt128 v => (decimal)v, BigInteger v => (decimal)v,
+        Half v => (decimal)(double)v, float v => (decimal)v, double v => (decimal)v, decimal v => v,
+        _ => throw new System.InvalidOperationException(),
     };
 
-    public decimal ToDecimal() => Kind switch
+    internal double AsDouble() => _value switch
     {
-        NumberKind.Int or NumberKind.Long => _i,
-        NumberKind.Decimal => _d,
-        NumberKind.Double or NumberKind.Float =>
-            double.IsNaN(_f) || double.IsInfinity(_f)
-                ? throw new System.ArithmeticException("number is NaN or Infinity, cannot convert to decimal")
-                : (decimal)_f,
-        _ => throw new System.InvalidOperationException()
+        sbyte v => v, byte v => v, short v => v, ushort v => v,
+        int v => v, uint v => v, long v => v, ulong v => v,
+        Int128 v => (double)v, UInt128 v => (double)v, BigInteger v => (double)v,
+        Half v => (double)v, float v => v, double v => v, decimal v => (double)v,
+        _ => throw new System.InvalidOperationException(),
     };
 
-    /// <summary>
-    /// IEEE-754 has no failure mode for over-range — saturates to ±Infinity,
-    /// which is a valid double. Lossy on Decimal past ~15 digits; never throws.
-    /// </summary>
-    public double ToDouble() => Kind switch
+    // ---- Public typed conversions ----
+
+    public int ToInt32() => Cat switch
     {
-        NumberKind.Int or NumberKind.Long => _i,
-        NumberKind.Decimal => (double)_d,
-        NumberKind.Double or NumberKind.Float => _f,
-        _ => throw new System.InvalidOperationException()
+        Category.Integer => checked((int)AsBigInteger()),
+        Category.Decimal => checked((int)AsDecimal()),
+        _ => double.IsNaN(AsDouble()) || double.IsInfinity(AsDouble())
+            ? throw new System.ArithmeticException("number is NaN or Infinity, cannot convert to int")
+            : checked((int)AsDouble()),
     };
 
-    public float ToSingle() => Kind switch
+    public long ToInt64() => Cat switch
     {
-        NumberKind.Int or NumberKind.Long => _i,
-        NumberKind.Decimal => (float)_d,
-        NumberKind.Double or NumberKind.Float => (float)_f,
-        _ => throw new System.InvalidOperationException()
+        Category.Integer => checked((long)AsBigInteger()),
+        Category.Decimal => checked((long)AsDecimal()),
+        _ => double.IsNaN(AsDouble()) || double.IsInfinity(AsDouble())
+            ? throw new System.ArithmeticException("number is NaN or Infinity, cannot convert to long")
+            : checked((long)AsDouble()),
     };
 
-    // ---- Internal slot accessors (used by the partial files) ----
-
-    internal long AsInt64() => Kind switch
+    public decimal ToDecimal() => Cat switch
     {
-        NumberKind.Int or NumberKind.Long => _i,
-        NumberKind.Decimal => (long)_d,
-        NumberKind.Double or NumberKind.Float => (long)_f,
-        _ => throw new System.InvalidOperationException()
+        Category.Integer => (decimal)AsBigInteger(),
+        Category.Decimal => AsDecimal(),
+        _ => double.IsNaN(AsDouble()) || double.IsInfinity(AsDouble())
+            ? throw new System.ArithmeticException("number is NaN or Infinity, cannot convert to decimal")
+            : (decimal)AsDouble(),
     };
 
-    internal decimal AsDecimal() => Kind switch
-    {
-        NumberKind.Int or NumberKind.Long => _i,
-        NumberKind.Decimal => _d,
-        NumberKind.Double or NumberKind.Float => (decimal)_f,
-        _ => throw new System.InvalidOperationException()
-    };
+    /// <summary>IEEE-754 saturates over-range to ±Infinity; never throws.</summary>
+    public double ToDouble() => AsDouble();
 
-    internal double AsDouble() => Kind switch
-    {
-        NumberKind.Int or NumberKind.Long => _i,
-        NumberKind.Decimal => (double)_d,
-        NumberKind.Double or NumberKind.Float => _f,
-        _ => throw new System.InvalidOperationException()
-    };
+    public float ToSingle() => (float)AsDouble();
+
+    /// <summary>The exact BigInteger value of an integer-kind number.</summary>
+    public BigInteger ToBigInteger() => AsBigInteger();
 
     // ---- IBooleanResolvable ----
 
-    /// <summary>
-    /// Zero is falsy; NaN is falsy; everything else is truthy. Synchronous —
-    /// the async signature is inherited from <see cref="global::app.data.IBooleanResolvable"/>
-    /// to allow type-defined probes (path's HEAD), but number's answer is local.
-    /// </summary>
+    /// <summary>Zero is falsy; NaN is falsy; everything else is truthy.</summary>
     public System.Threading.Tasks.Task<bool> AsBooleanAsync()
     {
-        bool truthy = Kind switch
+        bool truthy = Cat switch
         {
-            NumberKind.Int or NumberKind.Long => _i != 0,
-            NumberKind.Decimal => _d != 0m,
-            NumberKind.Double or NumberKind.Float => !double.IsNaN(_f) && _f != 0.0,
-            _ => false
+            Category.Integer => AsBigInteger() != BigInteger.Zero,
+            Category.Decimal => AsDecimal() != 0m,
+            _ => !double.IsNaN(AsDouble()) && AsDouble() != 0.0,
         };
         return System.Threading.Tasks.Task.FromResult(truthy);
     }
 
-    public override string ToString() => Kind switch
+    public override string ToString() => _value switch
     {
-        NumberKind.Int or NumberKind.Long => _i.ToString(System.Globalization.CultureInfo.InvariantCulture),
-        NumberKind.Decimal => _d.ToString(System.Globalization.CultureInfo.InvariantCulture),
-        NumberKind.Double or NumberKind.Float => _f.ToString("R", System.Globalization.CultureInfo.InvariantCulture),
-        _ => "(number?)"
+        decimal d => d.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        Half h => ((double)h).ToString("R", System.Globalization.CultureInfo.InvariantCulture),
+        float f => f.ToString("R", System.Globalization.CultureInfo.InvariantCulture),
+        double db => db.ToString("R", System.Globalization.CultureInfo.InvariantCulture),
+        System.IFormattable fmt => fmt.ToString(null, System.Globalization.CultureInfo.InvariantCulture),
+        _ => _value.ToString() ?? "(number?)",
     };
 }
 
-public enum NumberKind { Int, Long, Float, Double, Decimal }
+/// <summary>The full C# scalar tower as number kinds. The kind is derived from the value's CLR type.</summary>
+public enum NumberKind
+{
+    SByte, Byte, Short, UShort, Int, UInt, Long, ULong,
+    Int128, UInt128, BigInteger, Half, Float, Double, Decimal,
+}

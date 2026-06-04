@@ -64,7 +64,7 @@ public class QueryImageTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
         await Assert.That(reqBody).Contains("https://example.com/photo.jpg");
         await Assert.That(reqBody).Contains("image_url");
@@ -97,7 +97,7 @@ public class QueryImageTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
         // Verify file was read, base64-encoded, and MIME type detected
         await Assert.That(reqBody).Contains(expectedBase64);
@@ -129,7 +129,7 @@ public class QueryImageTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
         await Assert.That(reqBody).Contains("image/jpeg");
     }
@@ -158,7 +158,7 @@ public class QueryImageTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
         // Should wrap in data URI format
         await Assert.That(reqBody).Contains($"data:image/png;base64,{base64Image}");
@@ -189,7 +189,7 @@ public class QueryImageTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
         await Assert.That(reqBody).Contains("image1.jpg");
         await Assert.That(reqBody).Contains("image2.jpg");

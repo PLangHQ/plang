@@ -60,7 +60,7 @@ public class Default : IBuilder
         if (filter is { Count: > 0 })
         {
             var allTypeNames = new HashSet<string>(
-                schema.Types.Select(t => t.Value), StringComparer.OrdinalIgnoreCase);
+                schema.Types.Select(t => t.Name), StringComparer.OrdinalIgnoreCase);
             var refs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var tokenRx = new System.Text.RegularExpressions.Regex(@"\b[a-zA-Z][\w]*\b");
             var wantedActions = new HashSet<string>(filter, StringComparer.OrdinalIgnoreCase);
@@ -94,7 +94,7 @@ public class Default : IBuilder
                 changed = false;
                 foreach (var t in schema.Types)
                 {
-                    if (!refs.Contains(t.Value)) continue;
+                    if (!refs.Contains(t.Name)) continue;
                     var pieces = new[] { t.ConstructorSignature ?? "" };
                     foreach (var s in pieces)
                         foreach (System.Text.RegularExpressions.Match m in tokenRx.Matches(s))
@@ -111,11 +111,12 @@ public class Default : IBuilder
                 }
             }
 
-            var filteredTypes = schema.Types.Where(t => refs.Contains(t.Value)).ToList();
+            var filteredTypes = schema.Types.Where(t => refs.Contains(t.Name)).ToList();
             schema = new global::app.builder.type.@this(modules)
             {
                 PrimitiveNames = schema.PrimitiveNames,
                 Types = filteredTypes,
+                Kinds = schema.Kinds,
             };
         }
 
@@ -478,14 +479,14 @@ public class Default : IBuilder
             {
                 foreach (var p in a.Parameters)
                 {
-                    if (!string.Equals(p.Type?.Value, "goal.call", StringComparison.OrdinalIgnoreCase)) continue;
+                    if (!string.Equals(p.Type?.Name, "goal.call", StringComparison.OrdinalIgnoreCase)) continue;
                     // Catalog descriptions (e.g. "goal.call", "goal.call?") aren't real values —
                     // they're schema metadata from Modules.Describe(). Same skip as in
                     // NormalizeParameterTypes; without it, ToGoalCall parses "goal.call" as a
                     // dotted name and the type-name guard below false-positives on every
                     // goal.call slot in the catalog.
-                    if (p.Value is string desc && IsCatalogDescription(desc, p.Type!.Value)) continue;
-                    var goalCall = ToGoalCall(p.Value);
+                    if (p.Value is string desc && IsCatalogDescription(desc, p.Type!.Name)) continue;
+                    var goalCall = ToGoalCall(p.Value, context);
                     if (goalCall == null || string.IsNullOrEmpty(goalCall.Name)) continue;
                     if (goalCall.Name.Contains('%')) continue;  // %var% resolves at runtime
                     // Hard reject CLR type names — these are the known leak vector
@@ -494,7 +495,35 @@ public class Default : IBuilder
                     if (app.Type.IsClrTypeName(goalCall.Name))
                         validationErrors.Add($"{a.Module}.{a.ActionName}: goal.call.Name '{goalCall.Name}' is a CLR type name. This is a build pipeline leak (likely a template rendering an object via ToString() instead of .Name). Use the actual goal name from the step text.");
                     else if (goalCall.Name.Contains('.'))
-                        validationErrors.Add($"{a.Module}.{a.ActionName}: goal.call.Name '{goalCall.Name}' looks like a type name. Goal names are simple identifiers (e.g. 'BuildGoalCore', 'HandleValidationError'). Use the actual goal name from the @known mapping or the step text.");
+                    {
+                        // Repair the recurring LLM leak of stuffing the formal goal.call
+                        // notation into the goal NAME itself — e.g. event.on's GoalToCall
+                        // coming back as "goal.call(LogBefore)" / "goal.call LogBefore".
+                        // The real name is the inner identifier. Repair + warn rather than
+                        // reject: rejecting triggers a FixValidation retry that tends to
+                        // DEGRADE (nano returns prose in `formal` and a bare `goal` param,
+                        // dropping the required Trigger → "trigger must have a value" at
+                        // runtime). Mirrors the module-name-separator repair above.
+                        var m = System.Text.RegularExpressions.Regex.Match(
+                            goalCall.Name, @"^goal\.call\s*\(?\s*([A-Za-z_][\w/]*)\s*\)?$",
+                            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                        if (m.Success)
+                        {
+                            a.Warnings.Add(new Info {
+                                Key = "GoalCallNameRepaired",
+                                Message = $"goal.call.Name '{goalCall.Name}' carried the formal goal.call notation; repaired to '{m.Groups[1].Value}'."
+                            });
+                            // Name is init-only; rebuild with the repaired name, carry the rest.
+                            p.Value = new GoalCall {
+                                Name = m.Groups[1].Value,
+                                Parallel = goalCall.Parallel,
+                                Parameters = goalCall.Parameters,
+                                PrPath = goalCall.PrPath,
+                            };
+                        }
+                        else
+                            validationErrors.Add($"{a.Module}.{a.ActionName}: goal.call.Name '{goalCall.Name}' looks like a type name. Goal names are simple identifiers (e.g. 'BuildGoalCore', 'HandleValidationError'). Use the actual goal name from the @known mapping or the step text.");
+                    }
                 }
             }
 
@@ -592,8 +621,14 @@ public class Default : IBuilder
                 errors.Add($"{a.Module}.{a.ActionName}: {buildResult.Error?.Message ?? "Build() failed"}");
                 break;
             }
-            if (buildResult.Value is string typeName && !string.IsNullOrEmpty(typeName))
-                StampOnTerminalVariableSet(actions, typeName);
+            // Build() may return either the structured type entity (file.read,
+            // post-Stage-6) or a bare type-name string (llm.query → "json",
+            // legacy handlers). Normalize a string to the structured form so
+            // the terminal variable.set always gets a {name, kind?} Type.
+            if (buildResult.Value is global::app.type.@this typeEntity)
+                StampOnTerminalVariableSet(actions, typeEntity);
+            else if (buildResult.Value is string typeName && !string.IsNullOrEmpty(typeName))
+                StampOnTerminalVariableSet(actions, app.type.@this.Create(typeName, context: context));
         }
         return errors;
     }
@@ -603,7 +638,7 @@ public class Default : IBuilder
     /// stamps the inferred typeName on its "Type" parameter (replace-or-insert).
     /// Last-write wins when multiple Build()s in the same step produce types.
     /// </summary>
-    private static void StampOnTerminalVariableSet(Actions actions, string typeName)
+    private static void StampOnTerminalVariableSet(Actions actions, app.type.@this inferred)
     {
         for (int i = actions.Count - 1; i >= 0; i--)
         {
@@ -618,7 +653,9 @@ public class Default : IBuilder
             var existing = a.Parameters.FirstOrDefault(p =>
                 string.Equals(p.Name, "Type", StringComparison.OrdinalIgnoreCase));
             if (existing != null) return;
-            a.Parameters.Add(new data.@this("Type", typeName) { Type = new app.type.@this("string") });
+            // The Type parameter VALUE is the structured type entity; the
+            // parameter's own type is "type" (post-Stage-4 shape).
+            a.Parameters.Add(new data.@this("Type", inferred) { Type = new app.type.@this("type") });
             return;
         }
     }
@@ -707,7 +744,7 @@ public class Default : IBuilder
                 if (i > 0) sb.Append(", ");
                 var p = a.Parameters[i];
                 sb.Append(p.Name).Append('(');
-                if (p.Type != null) sb.Append('[').Append(p.Type.Value).Append("] ");
+                if (p.Type != null) sb.Append('[').Append(p.Type.Name).Append("] ");
                 sb.Append(FormatValue(p.Value));
                 sb.Append(')');
             }
@@ -892,7 +929,7 @@ public class Default : IBuilder
                         var underlying = System.Nullable.GetUnderlyingType(declared) ?? declared;
                         if (underlying.IsGenericType && underlying.GetGenericTypeDefinition() == typeof(global::app.data.@this<>))
                             underlying = underlying.GetGenericArguments()[0];
-                        var kind = context.App.Type.Kinds.Of(underlying, p.Value);
+                        var kind = context.App.Type.KindHooks.Of(underlying, p.Value);
                         if (kind != null) p.Kind = kind;
                     }
                 }
@@ -907,7 +944,7 @@ public class Default : IBuilder
                 // LLM-emitted "" for an unset nullable slot — same shape as
                 // validateResponse's normalization, repeated here so detail-pass
                 // results (which bypass validateResponse) also get the fix instead
-                // of failing in TryConvertTo below. For non-nullable slots leave the
+                // of failing in TryConvert below. For non-nullable slots leave the
                 // empty string in place so the conversion error surfaces and
                 // LlmFixer retries.
                 if (p.Value is string empty && empty.Length == 0
@@ -921,9 +958,9 @@ public class Default : IBuilder
                 // metadata produced by Modules.Describe(), not values to normalize. They
                 // surface when the catalog is fed back through validate (BuilderValidateValid
                 // smoke test). Skip — coercing a description string to its declared type fails.
-                if (p.Value is string desc && IsCatalogDescription(desc, p.Type.Value)) continue;
+                if (p.Value is string desc && IsCatalogDescription(desc, p.Type.Name)) continue;
 
-                var targetType = context.App.Type.Get(p.Type.Value);
+                var targetType = context.App.Type.Get(p.Type.Name);
                 if (targetType == null) continue;
 
                 // Scalar PlangType domain types (Path, etc.) carry their wire representation
@@ -947,11 +984,11 @@ public class Default : IBuilder
                 // Convert in either direction: string → bool/int/double/etc., or
                 // numeric/bool → string when the parameter is declared string. The LLM
                 // emitting `Key=404 (int)` for a string-declared Key gets normalized here.
-                var (converted, error) = global::app.type.list.@this.TryConvertTo(p.Value, targetType, context);
-                if (converted != null)
-                    p.Value = converted;
-                else if (error != null)
-                    errors.Add($"{a.Module}.{a.ActionName}.{p.Name}: {error.Message}");
+                var conv = context.App.Type.Convert(p.Value, targetType, context);
+                if (conv.Value != null)
+                    p.Value = conv.Value;
+                else if (conv.Error != null)
+                    errors.Add($"{a.Module}.{a.ActionName}.{p.Name}: {conv.Error.Message}");
             }
         }
         return errors;
@@ -1067,10 +1104,10 @@ public class Default : IBuilder
 
         foreach (var param in action.Parameters)
         {
-            if (!string.Equals(param.Type?.Value, "goal.call", StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(param.Type?.Name, "goal.call", StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            var goalCall = ToGoalCall(param.Value);
+            var goalCall = ToGoalCall(param.Value, context);
             if (goalCall == null || string.IsNullOrEmpty(goalCall.Name))
                 continue;
 
@@ -1100,9 +1137,12 @@ public class Default : IBuilder
         }
     }
 
-    private static GoalCall? ToGoalCall(object? value)
+    private static GoalCall? ToGoalCall(object? value, actor.context.@this context)
     {
         if (value is GoalCall gc) return gc;
-        return global::app.type.list.@this.ConvertTo<GoalCall>(value);
+        // GoalCall owns its own assembly (string / JsonElement / dict → goal.call);
+        // reach it through the infra door, which needs context for name-leak guards
+        // and prPath resolution.
+        return context.App.Type.Convert(value, typeof(GoalCall), context).Value as GoalCall;
     }
 }

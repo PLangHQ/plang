@@ -17,19 +17,25 @@
             {
               "name": "Name",
               "value": "%total%",
-              "type": "variable"
+              "type": {
+                "name": "variable"
+              }
             },
             {
               "name": "Value",
               "value": 0,
-              "type": "object"
+              "type": {
+                "name": "number"
+              }
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
               "value": false,
-              "type": "bool"
+              "type": {
+                "name": "bool"
+              }
             }
           ],
           "modifiers": []
@@ -54,7 +60,9 @@
             {
               "name": "Name",
               "value": "%items%",
-              "type": "variable"
+              "type": {
+                "name": "variable"
+              }
             },
             {
               "name": "Value",
@@ -63,21 +71,25 @@
                 2,
                 3
               ],
-              "type": "list\u00601"
+              "type": {
+                "name": "list"
+              }
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
               "value": false,
-              "type": "bool"
+              "type": {
+                "name": "bool"
+              }
             }
           ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%items%, Value=[1, 2, 3], Type=json)",
+      "formal": "variable.set(Name=%items%, Value=[1, 2, 3])",
       "source": null,
       "waitForExecution": true
     },
@@ -95,7 +107,9 @@
             {
               "name": "Collection",
               "value": "%items%",
-              "type": "object"
+              "type": {
+                "name": "object"
+              }
             }
           ],
           "defaults": null,
@@ -114,12 +128,16 @@
                   {
                     "name": "item",
                     "value": "%item%",
-                    "type": "string"
+                    "type": {
+                      "name": "text"
+                    }
                   }
                 ],
                 "prPath": "/BuilderSanity/.build/additem.pr"
               },
-              "type": "goal.call"
+              "type": {
+                "name": "goal.call"
+              }
             }
           ],
           "defaults": null,
@@ -127,7 +145,7 @@
         }
       ],
       "intent": null,
-      "formal": "loop.foreach(Collection=%items%), goal.call(GoalName={name:\u0022AddItem\u0022, parameters:[{name:\u0022item\u0022, value:%item%, type:\u0022string\u0022}]})",
+      "formal": "loop.foreach(Collection=%items%) | goal.call(GoalName={name:\u0022AddItem\u0022, parameters:[{name:\u0022item\u0022, value:\u0022%item%\u0022, type:{name:\u0022text\u0022}}]})",
       "source": null,
       "waitForExecution": true
     },
@@ -145,24 +163,32 @@
             {
               "name": "Left",
               "value": "%total%",
-              "type": "object"
+              "type": {
+                "name": "object"
+              }
             },
             {
               "name": "Operator",
               "value": "\u003E",
-              "type": "operator"
+              "type": {
+                "name": "operator"
+              }
             },
             {
               "name": "Right",
               "value": 5,
-              "type": "object"
+              "type": {
+                "name": "object"
+              }
             }
           ],
           "defaults": [
             {
               "name": "negate",
               "value": false,
-              "type": "bool"
+              "type": {
+                "name": "bool"
+              }
             }
           ],
           "modifiers": []
@@ -179,7 +205,9 @@
                 "parameters": null,
                 "prPath": "/BuilderSanity/.build/markbig.pr"
               },
-              "type": "goal.call"
+              "type": {
+                "name": "goal.call"
+              }
             }
           ],
           "defaults": null,
@@ -210,7 +238,9 @@
                 "parameters": [],
                 "prPath": "/BuilderSanity/.build/finalize.pr"
               },
-              "type": "goal.call"
+              "type": {
+                "name": "goal.call"
+              }
             }
           ],
           "defaults": null,
@@ -236,12 +266,17 @@
             {
               "name": "Expected",
               "value": 6,
-              "type": "object"
+              "type": {
+                "name": "number",
+                "kind": "int"
+              }
             },
             {
               "name": "Actual",
               "value": "%total%",
-              "type": "object"
+              "type": {
+                "name": "object"
+              }
             }
           ],
           "defaults": null,
@@ -267,12 +302,16 @@
             {
               "name": "Expected",
               "value": "big-and-done",
-              "type": "object"
+              "type": {
+                "name": "text"
+              }
             },
             {
               "name": "Actual",
               "value": "%label%",
-              "type": "object"
+              "type": {
+                "name": "object"
+              }
             }
           ],
           "defaults": null,

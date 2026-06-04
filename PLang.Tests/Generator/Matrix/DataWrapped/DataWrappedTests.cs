@@ -154,7 +154,7 @@ public class DataWrappedStringUsesCycleTests
             parameters: new[] { ("body", (object?)"%a%") });
 
         // %a% holds the literal bytes "%b%" (3 chars). No chain, no cycle.
-        await Assert.That(result.Data.Success).IsTrue();
+        await result.Data.IsSuccess();
         await Assert.That(result.Data.Value).IsEqualTo(3);
     }
 
@@ -169,7 +169,7 @@ public class DataWrappedStringUsesCycleTests
             parameters: new[] { ("body", (object?)"%a%") });
 
         // %a% holds the literal bytes "X-%b%" (5 chars). No re-resolution into surrounding text.
-        await Assert.That(result.Data.Success).IsTrue();
+        await result.Data.IsSuccess();
         await Assert.That(result.Data.Value).IsEqualTo(5);
     }
 
@@ -182,7 +182,7 @@ public class DataWrappedStringUsesCycleTests
             parameters: new[] { ("body", (object?)"%greeting%") },
             variables: new Dictionary<string, object?> { ["greeting"] = "hello" });
 
-        await Assert.That(result.Data.Success).IsTrue();
+        await result.Data.IsSuccess();
         // Run() returns Data.Ok(int) — base Data with boxed int, not Data<int>.
         await Assert.That(result.Data.Value).IsEqualTo(5);
     }

@@ -41,7 +41,7 @@ public class PathAuthorizeTests
         }
     }
 
-    private sealed class StatelessChannel : global::app.channel.message.@this
+    private sealed class StatelessChannel : global::app.channel.type.message.@this
     {
         public StatelessChannel() { Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
@@ -62,7 +62,7 @@ public class PathAuthorizeTests
         await app.User.Permission.Add(grantData);
 
         var result = await path.Authorize(new Verb { Read = new Read() });
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test] public async Task Authorize_StatefulAnswerA_Signs_Adds_ReturnsOk()
@@ -73,7 +73,7 @@ public class PathAuthorizeTests
         var path = new Path("/p", context);
 
         var result = await path.Authorize(new Verb { Read = new Read() });
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // Subsequent Find should hit since Add ran.
         await Assert.That(await app.User.Permission.Find(path, new Verb { Read = new Read() })).IsNotNull();
     }
@@ -86,7 +86,7 @@ public class PathAuthorizeTests
         var path = new Path("/p", context);
 
         var result = await path.Authorize(new Verb { Read = new Read() });
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(await app.User.Permission.Find(path, new Verb { Read = new Read() })).IsNotNull();
     }
 
@@ -98,7 +98,7 @@ public class PathAuthorizeTests
         var path = new Path("/p", context);
 
         var result = await path.Authorize(new Verb { Read = new Read() });
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>();
     }
 
@@ -111,7 +111,7 @@ public class PathAuthorizeTests
         var path = new Path("/p", context);
 
         var result = await path.Authorize(new Verb { Read = new Read() });
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test] public async Task Authorize_StatelessChannel_BubblesDataAskUnchanged()
@@ -123,7 +123,7 @@ public class PathAuthorizeTests
 
         var result = await path.Authorize(new Verb { Read = new Read() });
         // Stateless: bubble the Exit-typed Data up so the step loop short-circuits.
-        await Assert.That(result.Type?.Value).IsEqualTo("ask");
+        await Assert.That(result.Type?.Name).IsEqualTo("ask");
         await Assert.That(result.Snapshot).IsNotNull();
     }
 
@@ -174,7 +174,7 @@ public class PathAuthorizeTests
         var path = new Path(uppered, context);
 
         var result = await path.Authorize(new Verb { Read = new Read() });
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>();
     }
 
@@ -192,7 +192,7 @@ public class PathAuthorizeTests
         var path = new Path(osPath, context);
 
         var result = await path.Authorize(new Verb { Read = new Read() });
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test] public async Task PermissionDenied_Error_RoundTripsThroughErrorShape()

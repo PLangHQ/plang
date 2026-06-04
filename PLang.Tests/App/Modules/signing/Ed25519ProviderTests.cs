@@ -86,7 +86,7 @@ public class Ed25519ProviderTests
         var data = Encoding.UTF8.GetBytes("hello");
 
         var result = _provider.Sign(data, kp.PrivateKey);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var signature = (byte[])result.Value!;
 
         await Assert.That(signature.Length).IsEqualTo(64);
@@ -111,7 +111,7 @@ public class Ed25519ProviderTests
         var data = Encoding.UTF8.GetBytes("hello");
         var result = _provider.Sign(data, "not-valid-base64!!!");
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("SigningError");
     }
 
@@ -128,7 +128,7 @@ public class Ed25519ProviderTests
 
         var result = _provider.Verify(data, signature, kp.PublicKey);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That((bool)result.Value!).IsTrue();
     }
 
@@ -140,7 +140,7 @@ public class Ed25519ProviderTests
 
         var result = _provider.Verify(Encoding.UTF8.GetBytes("different"), signature, kp.PublicKey);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("SignatureInvalid");
     }
 
@@ -154,7 +154,7 @@ public class Ed25519ProviderTests
 
         var result = _provider.Verify(data, signature, kp2.PublicKey);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("SignatureInvalid");
     }
 
@@ -170,7 +170,7 @@ public class Ed25519ProviderTests
 
         var result = _provider.Verify(data, signature, kp.PublicKey);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("SignatureInvalid");
     }
 
@@ -182,7 +182,7 @@ public class Ed25519ProviderTests
 
         var result = _provider.Verify(data, signature, "not-valid-base64!!!");
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("SignatureInvalid");
     }
 

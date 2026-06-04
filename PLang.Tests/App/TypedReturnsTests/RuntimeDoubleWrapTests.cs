@@ -40,7 +40,7 @@ public class RuntimeDoubleWrapTests
         var action = new First { Context = context, ListName = new @this("xs") };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await AssertNotDoubleWrapped(result, "list.first");
         // Sanity — value is the raw 42L, not Data{42L}.
         await Assert.That(result.Value).IsEqualTo(42L);
@@ -55,7 +55,7 @@ public class RuntimeDoubleWrapTests
         var action = new Get { Context = context, ListName = new @this("xs"), Index = 1 };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await AssertNotDoubleWrapped(result, "list.get");
         await Assert.That(result.Value).IsEqualTo("b");
     }
@@ -69,7 +69,7 @@ public class RuntimeDoubleWrapTests
         var action = new Last { Context = context, ListName = new @this("xs") };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await AssertNotDoubleWrapped(result, "list.last");
         await Assert.That(result.Value).IsEqualTo(3L);
     }
@@ -81,7 +81,7 @@ public class RuntimeDoubleWrapTests
         var action = new MathAdd { Context = context, A = new Data("", 5L), B = new Data("", 3L) };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await AssertNotDoubleWrapped(result, "math.add");
         await Assert.That(result.Value).IsEqualTo(8L);
     }

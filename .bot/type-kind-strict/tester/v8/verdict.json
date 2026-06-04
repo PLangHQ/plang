@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "C# 3815/3815 and F1 strict-kind honestly covered, but PLang --test flaps 0-4 fail across clean runs: committed .pr fixtures are stale vs the branch's stage-4 variable.set.Type entity change (688/703 bare-string), forcing non-deterministic LLM rebuilds (cache gitignored)." }

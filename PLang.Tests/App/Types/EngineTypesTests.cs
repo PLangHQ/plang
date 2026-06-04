@@ -143,13 +143,13 @@ public class EngineTypesTests
     [Test]
     public async Task Name_String_ReturnsString()
     {
-        await Assert.That(_types.Name(typeof(string))).IsEqualTo("string");
+        await Assert.That(_types.Name(typeof(string))).IsEqualTo("text");
     }
 
     [Test]
     public async Task Name_Int_ReturnsInt()
     {
-        await Assert.That(_types.Name(typeof(int))).IsEqualTo("int");
+        await Assert.That(_types.Name(typeof(int))).IsEqualTo("number");
     }
 
     [Test]
@@ -161,31 +161,31 @@ public class EngineTypesTests
     [Test]
     public async Task Name_NullableInt_ReturnsIntQuestionMark()
     {
-        await Assert.That(_types.Name(typeof(int?))).IsEqualTo("int?");
+        await Assert.That(_types.Name(typeof(int?))).IsEqualTo("number?");
     }
 
     [Test]
     public async Task Name_ListOfString_ReturnsListString()
     {
-        await Assert.That(_types.Name(typeof(List<string>))).IsEqualTo("list<string>");
+        await Assert.That(_types.Name(typeof(List<string>))).IsEqualTo("list<text>");
     }
 
     [Test]
     public async Task Name_IListOfInt_ReturnsListInt()
     {
-        await Assert.That(_types.Name(typeof(IList<int>))).IsEqualTo("list<int>");
+        await Assert.That(_types.Name(typeof(IList<int>))).IsEqualTo("list<number>");
     }
 
     [Test]
     public async Task Name_DictionaryStringInt_ReturnsDictStringInt()
     {
-        await Assert.That(_types.Name(typeof(Dictionary<string, int>))).IsEqualTo("dict<string,int>");
+        await Assert.That(_types.Name(typeof(Dictionary<string, int>))).IsEqualTo("dict<text,number>");
     }
 
     [Test]
     public async Task Name_IntArray_ReturnsListInt()
     {
-        await Assert.That(_types.Name(typeof(int[]))).IsEqualTo("list<int>");
+        await Assert.That(_types.Name(typeof(int[]))).IsEqualTo("list<number>");
     }
 
     [Test]
@@ -417,51 +417,51 @@ public class EngineTypesTests
     [Test]
     public async Task KindOf_KnownKindName_ReturnsSelf()
     {
-        await Assert.That(_formats.KindOf("image")).IsEqualTo("image");
-        await Assert.That(_formats.KindOf("video")).IsEqualTo("video");
-        await Assert.That(_formats.KindOf("text")).IsEqualTo("text");
-        await Assert.That(_formats.KindOf("archive")).IsEqualTo("archive");
-        await Assert.That(_formats.KindOf("code")).IsEqualTo("code");
+        await Assert.That(_formats.FamilyOf("image")).IsEqualTo("image");
+        await Assert.That(_formats.FamilyOf("video")).IsEqualTo("video");
+        await Assert.That(_formats.FamilyOf("text")).IsEqualTo("text");
+        await Assert.That(_formats.FamilyOf("archive")).IsEqualTo("archive");
+        await Assert.That(_formats.FamilyOf("code")).IsEqualTo("code");
     }
 
     [Test]
     public async Task KindOf_KnownKindName_CaseInsensitive()
     {
-        await Assert.That(_formats.KindOf("IMAGE")).IsEqualTo("image");
-        await Assert.That(_formats.KindOf("Video")).IsEqualTo("video");
+        await Assert.That(_formats.FamilyOf("IMAGE")).IsEqualTo("image");
+        await Assert.That(_formats.FamilyOf("Video")).IsEqualTo("video");
     }
 
     [Test]
     public async Task KindOf_MimeType_ReturnsKind()
     {
-        await Assert.That(_formats.KindOf("image/jpeg")).IsEqualTo("image");
-        await Assert.That(_formats.KindOf("video/mp4")).IsEqualTo("video");
-        await Assert.That(_formats.KindOf("audio/mpeg")).IsEqualTo("audio");
-        await Assert.That(_formats.KindOf("text/plain")).IsEqualTo("text");
-        await Assert.That(_formats.KindOf("application/json")).IsEqualTo("text");
-        await Assert.That(_formats.KindOf("application/pdf")).IsEqualTo("document");
+        await Assert.That(_formats.FamilyOf("image/jpeg")).IsEqualTo("image");
+        await Assert.That(_formats.FamilyOf("video/mp4")).IsEqualTo("video");
+        await Assert.That(_formats.FamilyOf("audio/mpeg")).IsEqualTo("audio");
+        await Assert.That(_formats.FamilyOf("text/plain")).IsEqualTo("text");
+        await Assert.That(_formats.FamilyOf("application/json")).IsEqualTo("text");
+        await Assert.That(_formats.FamilyOf("application/pdf")).IsEqualTo("document");
     }
 
     [Test]
     public async Task KindOf_PlangTypeName_ReturnsNull()
     {
-        await Assert.That(_formats.KindOf("string")).IsNull();
-        await Assert.That(_formats.KindOf("int")).IsNull();
-        await Assert.That(_formats.KindOf("datetime")).IsNull();
-        await Assert.That(_formats.KindOf("bool")).IsNull();
+        await Assert.That(_formats.FamilyOf("string")).IsNull();
+        await Assert.That(_formats.FamilyOf("int")).IsNull();
+        await Assert.That(_formats.FamilyOf("datetime")).IsNull();
+        await Assert.That(_formats.FamilyOf("bool")).IsNull();
     }
 
     [Test]
     public async Task KindOf_UnknownMime_ReturnsNull()
     {
-        await Assert.That(_formats.KindOf("application/x-unknown-test")).IsNull();
+        await Assert.That(_formats.FamilyOf("application/x-unknown-test")).IsNull();
     }
 
     [Test]
     public async Task KindOf_NullOrEmpty_ReturnsNull()
     {
-        await Assert.That(_formats.KindOf(null!)).IsNull();
-        await Assert.That(_formats.KindOf("")).IsNull();
+        await Assert.That(_formats.FamilyOf(null!)).IsNull();
+        await Assert.That(_formats.FamilyOf("")).IsNull();
     }
 
     // --- Finding #1: Add() must update _allKinds/_mimeToKind for KindOf ---
@@ -471,7 +471,7 @@ public class EngineTypesTests
     {
         _formats.Add(".custom", "custom-kind", "application/custom");
 
-        await Assert.That(_formats.KindOf("custom-kind")).IsEqualTo("custom-kind");
+        await Assert.That(_formats.FamilyOf("custom-kind")).IsEqualTo("custom-kind");
     }
 
     [Test]
@@ -479,7 +479,7 @@ public class EngineTypesTests
     {
         _formats.Add(".custom", "custom-kind", "application/custom");
 
-        await Assert.That(_formats.KindOf("application/custom")).IsEqualTo("custom-kind");
+        await Assert.That(_formats.FamilyOf("application/custom")).IsEqualTo("custom-kind");
     }
 
     [Test]
@@ -489,8 +489,8 @@ public class EngineTypesTests
 
         _formats.Remove(".custom");
 
-        await Assert.That(_formats.KindOf("unique-kind")).IsNull();
-        await Assert.That(_formats.KindOf("application/unique")).IsNull();
+        await Assert.That(_formats.FamilyOf("unique-kind")).IsNull();
+        await Assert.That(_formats.FamilyOf("application/unique")).IsNull();
     }
 
     [Test]
@@ -499,7 +499,7 @@ public class EngineTypesTests
         // .jpg and .jpeg both map to "image" — removing .jpg should NOT remove "image" from _allKinds
         _formats.Remove(".jpg");
 
-        await Assert.That(_formats.KindOf("image")).IsEqualTo("image");
+        await Assert.That(_formats.FamilyOf("image")).IsEqualTo("image");
     }
 
     // --- Finding #2: Kind(null)/Mime(null) null guard ---
@@ -535,7 +535,7 @@ public class EngineTypesTests
     {
         // Set/HashSet/IEnumerable all normalize to list<T> per catalog conventions
         // (commit 197729d "Catalog: normalize collection type names").
-        await Assert.That(_types.Name(typeof(HashSet<string>))).IsEqualTo("list<string>");
+        await Assert.That(_types.Name(typeof(HashSet<string>))).IsEqualTo("list<text>");
     }
 
     [Test]
@@ -561,8 +561,8 @@ public class EngineTypesTests
     {
         var names = _types.BuilderNames();
 
-        await Assert.That(names).Contains("string");
-        await Assert.That(names).Contains("int");
+        await Assert.That(names).Contains("text");
+        await Assert.That(names).Contains("number");
         await Assert.That(names).Contains("bool");
         await Assert.That(names).Contains("datetime");
     }
@@ -618,8 +618,10 @@ public class EngineTypesTests
             global::app.type.@this.FromMime("application/custom"));
         data.Context = context;
 
-        // Type.Kind goes through Engine.Types.KindOf — which sees our custom mapping
-        await Assert.That(data.Type!.Kind).IsEqualTo("custom-kind");
+        // Family-Kind accessor went away with the rename; `data.Type.Kind` now
+        // means subtype (set explicitly), not family-derived. Family resolution
+        // is now an explicit registry call against the type's Name.
+        await Assert.That(engine.Format.FamilyOf(data.Type!.Name)).IsEqualTo("custom-kind");
     }
 
     // --- Engine integration ---

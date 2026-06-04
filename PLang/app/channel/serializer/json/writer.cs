@@ -60,7 +60,7 @@ public sealed class Writer : IWriter
         _writer.WriteStartObject();
         _writer.WriteString("name", record.Name);
 
-        var typeVal = record.Type?.Value;
+        var typeVal = record.Type?.Name;
         if (typeVal != null)
             _writer.WriteString("type", typeVal);
 

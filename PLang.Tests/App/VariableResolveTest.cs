@@ -114,7 +114,7 @@ public class VariableResolveTest
             Value = global::app.data.@this.Ok(100),
         }, context);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("InvalidVariableReference");
     }
 }

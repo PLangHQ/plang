@@ -15,7 +15,7 @@ public class OutputAskRoutingTests
         new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-rt-" + System.Guid.NewGuid().ToString("N")[..8]));
 
-    private sealed class TestMessageChannel : global::app.channel.message.@this
+    private sealed class TestMessageChannel : global::app.channel.type.message.@this
     {
         public TestMessageChannel(string name)
         {
@@ -36,7 +36,7 @@ public class OutputAskRoutingTests
 
         var handler = new ask { Context = context, Question = new global::app.data.@this<string>("", "name?") };
         var result = await handler.Run();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value?.Answer).IsEqualTo("Alice");
         await Assert.That(context.Variable.Get(ask.AnswerVariableName).IsInitialized).IsFalse();
     }
@@ -51,7 +51,7 @@ public class OutputAskRoutingTests
 
         var handler = new ask { Context = context, Question = new global::app.data.@this<string>("", "name?") };
         var result = await handler.Run();
-        await Assert.That(result.Type?.Value).IsEqualTo("ask");
+        await Assert.That(result.Type?.Name).IsEqualTo("ask");
         await Assert.That(result.Snapshot).IsNotNull();
     }
 
@@ -59,14 +59,14 @@ public class OutputAskRoutingTests
     {
         var app = NewApp();
         var ms = new MemoryStream(global::System.Text.Encoding.UTF8.GetBytes("Alice\n"));
-        var ch = new global::app.channel.stream.@this("i", ms,
+        var ch = new global::app.channel.type.stream.@this("i", ms,
             global::app.channel.ChannelDirection.Bidirectional, ownsStream: false)
         { Mime = "text/plain" };
         // Empty question to skip WriteCore — exercises Ask's read-line path
         // without needing a registered Channels collection for the serializer.
         var action = new ask { Context = app.User.Context, Question = new global::app.data.@this<string>("", "") };
         var result = await ch.Ask(action);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value as string).IsEqualTo("Alice");
     }
 
@@ -91,7 +91,7 @@ public class OutputAskRoutingTests
         var result = await ch.Ask(action);
         await Assert.That(result.Value).IsTypeOf<global::app.module.output.Ask>();
         await Assert.That(((global::app.module.output.Ask)result.Value!).Answer).IsNull();
-        await Assert.That(result.Type?.Value).IsEqualTo("ask");
+        await Assert.That(result.Type?.Name).IsEqualTo("ask");
     }
 
     [Test] public async Task MessageChannelAsk_AttachesSnapshotToReturnedData()

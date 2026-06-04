@@ -22,7 +22,7 @@ public class ExistsTests
         var action = new Exists { Context = context, Name = new app.variable.@this("testVar") };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That((bool)result.Value!).IsTrue();
     }
 
@@ -34,7 +34,7 @@ public class ExistsTests
         var action = new Exists { Context = context, Name = new app.variable.@this("nonexistent") };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That((bool)result.Value!).IsFalse();
     }
 }

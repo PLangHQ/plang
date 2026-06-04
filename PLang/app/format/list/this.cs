@@ -333,6 +333,18 @@ public sealed class @this
         "image", "video", "audio", "archive"
     };
 
+    // Tabular content — a grid of rows/columns. Stamped as the `table` type by
+    // shape (csv and xlsx are the SAME type, differing only by kind), which is
+    // what lets one renderer draw a grid by dispatching on type=table alone.
+    // The value is the kind the `table` reader dispatches on.
+    private static readonly Dictionary<string, string> _tabularMimeToKind = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["text/csv"] = "csv",
+        ["application/vnd.ms-excel"] = "xls",
+        ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"] = "xlsx",
+        ["application/vnd.oasis.opendocument.spreadsheet"] = "ods",
+    };
+
     private readonly object _derivedLock = new();
     private readonly HashSet<string> _allKinds;
     private readonly ConcurrentDictionary<string, string> _mimeToKind;
@@ -346,6 +358,27 @@ public sealed class @this
             if (_extensionToKind.TryGetValue(kvp.Key, out var kind))
                 _mimeToKind.TryAdd(kvp.Value, kind);
         }
+    }
+
+    /// <summary>
+    /// Family → list of extension kinds the LLM may emit for it (e.g.
+    /// "image" → ["jpg","jpeg","png","gif",...]). Inverted from the
+    /// extension→family map; the LLM teaching surface for "what kinds
+    /// belong to what type name." Dots are stripped; original casing of
+    /// the extension keys preserved.
+    /// </summary>
+    public IReadOnlyDictionary<string, IReadOnlyList<string>> KindsByFamily()
+    {
+        var byFamily = new Dictionary<string, List<string>>(System.StringComparer.OrdinalIgnoreCase);
+        foreach (var kvp in _extensionToKind)
+        {
+            var family = kvp.Value;
+            if (!byFamily.TryGetValue(family, out var list))
+                byFamily[family] = list = new List<string>();
+            var ext = kvp.Key.StartsWith('.') ? kvp.Key[1..] : kvp.Key;
+            list.Add(ext);
+        }
+        return byFamily.ToDictionary(k => k.Key, k => (IReadOnlyList<string>)k.Value);
     }
 
     /// <summary>
@@ -379,6 +412,67 @@ public sealed class @this
     }
 
     /// <summary>
+    /// The structured <c>{name, kind}</c> a read producer (file/http) stamps
+    /// for content of this MIME. ONE derivation both build and runtime call so
+    /// they can't drift (the bug this replaces: build said <c>type=md</c>,
+    /// runtime said <c>type=text/markdown</c>).
+    ///
+    /// <para><c>name</c> is the family for media (image/audio/video — the value
+    /// is a typed blob, not raw bytes) and otherwise the materialized CLR
+    /// type's canonical PLang name (text/object/bytes/...). <c>kind</c> is the
+    /// MIME subtype, canonicalised to the file-extension form
+    /// (<c>markdown→md</c>). Returns the <c>type.@this.Null</c> sentinel for an
+    /// unknown/octet-stream MIME so callers stamp nothing.</para>
+    /// </summary>
+    public global::app.type.@this TypeFromMime(string mime)
+    {
+        if (string.IsNullOrWhiteSpace(mime) || mime == "application/octet-stream")
+            return global::app.type.@this.Null;
+
+        // Tabular shape wins before the generic name derivation — csv/xlsx name
+        // the value `table` (a grid), not `text`/`object`.
+        if (_tabularMimeToKind.TryGetValue(mime, out var tableKind))
+            return new global::app.type.@this("table", tableKind);
+
+        var slash = mime.IndexOf('/');
+        var family = slash > 0 ? mime[..slash].ToLowerInvariant() : "";
+        var subtype = slash >= 0 && slash < mime.Length - 1 ? mime[(slash + 1)..] : null;
+        var kind = subtype != null ? CanonicaliseKind(subtype) : null;
+
+        // Media families name the value by family — the read lifts the bytes to
+        // a typed value (image today; audio/video are bytes-backed blobs that
+        // still read cleaner as their family than as "bytes").
+        if (family is "image" or "audio" or "video")
+            return new global::app.type.@this(family, kind);
+
+        // Everything else: name = the CLR type the content materializes to,
+        // canonicalised (string→text, object→object, byte[]→bytes). A non-
+        // primitive CLR type keeps its own PLang name (e.g. application/plang-goal
+        // → `goal`) rather than collapsing to `object` — its reader materializes
+        // toward that name. Unknown/no CLR type falls back to `object`.
+        var clr = global::app.type.list.@this.ClrFromMime(mime);
+        var name = clr != null
+            ? (global::app.type.list.@this.GetPrimitiveName(clr)
+               ?? global::app.type.list.@this.GetTypeNameStatic(clr))
+            : "object";
+        return new global::app.type.@this(name, kind);
+    }
+
+    /// <summary>
+    /// <see cref="TypeFromMime"/> keyed by file extension — the kind is the
+    /// extension itself (the authoritative subtype for a file), the name comes
+    /// from the extension's MIME. <c>.md → {text, md}</c>, <c>.json → {object,
+    /// json}</c>, <c>.png → {image, png}</c>.
+    /// </summary>
+    public global::app.type.@this TypeFromExtension(string extension)
+    {
+        if (string.IsNullOrEmpty(extension)) return global::app.type.@this.Null;
+        var t = TypeFromMime(Mime(extension));
+        if (t.IsNull) return t;
+        return new global::app.type.@this(t.Name, CanonicaliseKind(NormalizeExtension(extension).TrimStart('.')));
+    }
+
+    /// <summary>
     /// Whether content of this Kind benefits from compression. Image, video,
     /// audio, archive are already compressed — returns false.
     /// </summary>
@@ -390,10 +484,13 @@ public sealed class @this
     }
 
     /// <summary>
-    /// PLang type value → Kind. Recognizes known kind names and MIME types.
-    /// Returns null for PLang type names (string, int, etc.) and unknown values.
+    /// PLang type value → Family ("image", "text", "spreadsheet"). Recognizes
+    /// known family names and MIME types. Returns null for PLang type names
+    /// (string, int, etc.) and unknown values. Renamed from <c>KindOf</c> —
+    /// the formats registry called the family the "kind"; under the new
+    /// vocabulary the family is the *name*, and the kind is the subtype.
     /// </summary>
-    public string? KindOf(string typeValue)
+    public string? FamilyOf(string typeValue)
     {
         if (string.IsNullOrEmpty(typeValue))
             return null;
@@ -408,8 +505,39 @@ public sealed class @this
     }
 
     /// <summary>
+    /// Canonicalises a kind token to its file-extension form. Accepts both
+    /// long and short kind forms (<c>markdown</c> → <c>md</c>, <c>jpeg</c> →
+    /// <c>jpg</c>). Derived from the extension→MIME registry — the inverse of
+    /// the registry's MIME-subtype mapping, with the primary extension winning
+    /// when two share a MIME (the <c>.jpg</c>/<c>.jpeg</c> case → <c>"jpg"</c>).
+    /// Unknown free-string kinds pass through unchanged. Null/empty → null.
+    /// </summary>
+    public string? CanonicaliseKind(string? kind)
+    {
+        if (string.IsNullOrWhiteSpace(kind)) return null;
+        var lower = kind.Trim().ToLowerInvariant();
+        // Is this a MIME subtype (e.g. "markdown" for text/markdown,
+        // "jpeg" for image/jpeg)? Find every extension whose MIME subtype
+        // matches, pick the shortest (jpg < jpeg) — the primary extension wins
+        // when two share a MIME.
+        string? best = null;
+        foreach (var kvp in _extensionToMime)
+        {
+            var mime = kvp.Value;
+            var slash = mime.IndexOf('/');
+            if (slash < 0) continue;
+            var sub = mime[(slash + 1)..];
+            if (!string.Equals(sub, lower, System.StringComparison.OrdinalIgnoreCase)) continue;
+            var ext = kvp.Key;
+            if (ext.StartsWith('.')) ext = ext[1..];
+            if (best == null || ext.Length < best.Length) best = ext;
+        }
+        return best ?? lower;
+    }
+
+    /// <summary>
     /// Add a file extension mapping at runtime. Updates derived lookup
-    /// structures (_allKinds, _mimeToKind) so KindOf() sees the new mapping.
+    /// structures (_allKinds, _mimeToKind) so FamilyOf() sees the new mapping.
     /// </summary>
     public void Add(string extension, string kind, string? mime = null)
     {

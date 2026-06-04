@@ -40,7 +40,7 @@ public class SettingsDataTests
         // %Settings.ApiKey% goes through Variables.RegisterNavigable("Settings", ...)
         var resolved = _app.User.Context.Variable.Get("Settings.ApiKey");
         await Assert.That(resolved).IsNotNull();
-        await Assert.That(resolved!.Success).IsTrue();
+        await resolved!.IsSuccess();
         await Assert.That(resolved.Value?.ToString()).IsEqualTo("sk-test-123");
     }
 
@@ -49,7 +49,7 @@ public class SettingsDataTests
     {
         var resolved = _app.User.Context.Variable.Get("Settings.NonExistentKey");
         await Assert.That(resolved).IsNotNull();
-        await Assert.That(resolved!.Success).IsFalse();
+        await resolved!.IsFailure();
         await Assert.That(resolved.Error is AskError).IsTrue();
 
         var askError = (AskError)resolved.Error!;
@@ -66,7 +66,7 @@ public class SettingsDataTests
         // Resolve via User Variables dot notation (simulates %Settings.TestKey% in PLang code)
         var result = _app.User.Context.Variable.Get("Settings.TestKey");
         await Assert.That(result).IsNotNull();
-        await Assert.That(result!.Success).IsTrue();
+        await result!.IsSuccess();
         await Assert.That(result.Value?.ToString()).IsEqualTo("TestValue");
     }
 
@@ -104,7 +104,7 @@ public class SettingsDataTests
             Value = new global::app.data.@this("", "HandlerValue")        };
 
         var result = await handler.Run();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         // Verify via User Variables (what PLang code uses)
         var setting = _app.User.Context.Variable.Get("Settings.HandlerKey");
@@ -124,7 +124,7 @@ public class SettingsDataTests
         };
 
         var result = await handler.Run();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value?.ToString()).IsEqualTo("TestValue");
     }
 
@@ -138,7 +138,7 @@ public class SettingsDataTests
         };
 
         var result = await handler.Run();
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error is AskError).IsTrue();
     }
 
@@ -154,7 +154,7 @@ public class SettingsDataTests
         };
 
         var result = await handler.Run();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         // Verify removed
         var getResult = await _app.SettingsStore.Get("settings", "ToRemove");
@@ -184,7 +184,7 @@ public class SettingsDataTests
         // Resolve %Settings.Config.SubKey% via User Variables
         var result = _app.User.Context.Variable.Get("Settings.Config.SubKey");
         await Assert.That(result).IsNotNull();
-        await Assert.That(result!.Success).IsTrue();
+        await result!.IsSuccess();
         await Assert.That(result.Value?.ToString()).IsEqualTo("nested-value");
     }
 
@@ -202,7 +202,7 @@ public class SettingsDataTests
         // Settings should still work in the cloned stack
         var result = cloned.Get("Settings.CloneKey");
         await Assert.That(result).IsNotNull();
-        await Assert.That(result!.Success).IsTrue();
+        await result!.IsSuccess();
         await Assert.That(result.Value?.ToString()).IsEqualTo("clone-value");
     }
 
@@ -215,7 +215,7 @@ public class SettingsDataTests
         // Missing key in cloned stack should still return AskError
         var result = cloned.Get("Settings.MissingInClone");
         await Assert.That(result).IsNotNull();
-        await Assert.That(result!.Success).IsFalse();
+        await result!.IsFailure();
         await Assert.That(result.Error is AskError).IsTrue();
     }
 
@@ -236,7 +236,7 @@ public class SettingsDataTests
 
         // The generated code checks: if (__resolved != null && !__resolved.Success)
         await Assert.That(resolved).IsNotNull();
-        await Assert.That(resolved!.Success).IsFalse();
+        await resolved!.IsFailure();
 
         // Verify the error is AskError (so runtime can prompt user)
         await Assert.That(resolved.Error).IsNotNull();
@@ -256,7 +256,7 @@ public class SettingsDataTests
 
         // Generated code checks: if (__resolved != null && !__resolved.Success) — should NOT trigger
         await Assert.That(resolved).IsNotNull();
-        await Assert.That(resolved!.Success).IsTrue();
+        await resolved!.IsSuccess();
         await Assert.That(resolved.Value?.ToString()).IsEqualTo("sk-real-key");
     }
 
@@ -276,7 +276,7 @@ public class SettingsDataTests
         // not throw and not return AskError.
         var resolved = _app.User.Context.Variable.Get("Settings.AnyKey");
         await Assert.That(resolved).IsNotNull();
-        await Assert.That(resolved!.Success).IsFalse();
+        await resolved!.IsFailure();
         await Assert.That(resolved.Error is SettingsError).IsTrue();
     }
 
@@ -305,13 +305,13 @@ public class SettingsDataTests
         // Read from User context (what PLang code actually uses)
         var result = _app.User.Context.Variable.Get("Settings.SharedKey");
         await Assert.That(result).IsNotNull();
-        await Assert.That(result!.Success).IsTrue();
+        await result!.IsSuccess();
         await Assert.That(result.Value?.ToString()).IsEqualTo("shared-value");
 
         // Read from Service context (should also work)
         var serviceResult = _app.System.Context.Variable.Get("Settings.SharedKey");
         await Assert.That(serviceResult).IsNotNull();
-        await Assert.That(serviceResult!.Success).IsTrue();
+        await serviceResult!.IsSuccess();
         await Assert.That(serviceResult.Value?.ToString()).IsEqualTo("shared-value");
     }
 }

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Standalone OBP-shape scanner. NOT in PLang.sln on purpose, so it cannot
+       perturb the main build. Run it with: dotnet run from this folder, passing
+       the scan root as an argument. The detection logic is meant to graduate
+       into a build-time DiagnosticAnalyzer. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
+  </ItemGroup>
+</Project>

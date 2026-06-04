@@ -78,7 +78,7 @@ public class QueryCallbackTests
 
         // Should complete without crashing even though LogToolCall goal doesn't exist
         var result = await action.Run();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -117,7 +117,7 @@ public class QueryCallbackTests
         };
 
         var result = await action.Run();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value?.ToString()).IsEqualTo("got data");
         // Verify tool execution happened: 2 HTTP calls (tool call + re-query with result)
         await Assert.That(_handler.CallCount).IsEqualTo(2);
@@ -142,7 +142,7 @@ public class QueryCallbackTests
         var action = LlmTestHelper.MakeQuery(Ctx);
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value?.ToString()).IsEqualTo("valid response");
     }
 
@@ -172,7 +172,7 @@ public class QueryCallbackTests
 
         var result = await action.Run();
         // After MaxValidationRetries, should return error
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error?.Key).IsEqualTo("ValidationFailed");
     }
 
@@ -199,7 +199,7 @@ public class QueryCallbackTests
         };
 
         var result = await action.Run();
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         // Validation goal doesn't exist → file-not-found error on each retry
         // After max retries, returns "LLM validation failed: <last error>"
         await Assert.That(result.Error?.Message).Contains("LLM validation failed");

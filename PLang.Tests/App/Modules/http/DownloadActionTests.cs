@@ -77,7 +77,7 @@ public class DownloadActionTests
 
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var bytes = result.Value as byte[];
         await Assert.That(bytes).IsNotNull();
         await Assert.That(Encoding.UTF8.GetString(bytes!)).IsEqualTo("downloaded data");
@@ -100,7 +100,7 @@ public class DownloadActionTests
 
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("HttpError");
         await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
     }

@@ -48,7 +48,7 @@ public class IdentityKeyProviderTests
         var action = new Create { Context = Ctx, Name = "test-identity", SetAsDefault = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var identity = result.Value as Identity;
         await Assert.That(identity).IsNotNull();
         await Assert.That(identity!.PublicKey).IsEqualTo("mock-pub-key");
@@ -61,7 +61,7 @@ public class IdentityKeyProviderTests
         var action = new Create { Context = Ctx, Name = "test-identity", SetAsDefault = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var identity = result.Value as Identity;
         await Assert.That(identity).IsNotNull();
 
@@ -82,7 +82,7 @@ public class IdentityKeyProviderTests
         var action = new Create { Context = Ctx, Name = "test-identity", SetAsDefault = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
     }
 
@@ -95,11 +95,11 @@ public class IdentityKeyProviderTests
 
         var action = new Create { Context = Ctx, Name = "stored-test", SetAsDefault = true };
         var result = await action.Run();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         // Load it back via Get action
         var getResult = await new Get { Context = Ctx, Name = "stored-test" }.Run();
-        await Assert.That(getResult.Success).IsTrue();
+        await getResult.IsSuccess();
         var loaded = getResult.Value as Identity;
         await Assert.That(loaded).IsNotNull();
         await Assert.That(loaded!.PublicKey).IsEqualTo("stored-pub");
@@ -116,7 +116,7 @@ public class IdentityKeyProviderTests
         var action = new Create { Context = Ctx, Name = "named-test", SetAsDefault = true, Provider = "mock" };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var identity = result.Value as Identity;
         await Assert.That(identity!.PublicKey).IsEqualTo("named-pub");
     }

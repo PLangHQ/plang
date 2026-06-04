@@ -66,7 +66,7 @@ public class QueryFormatTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // Verify the request had format instruction
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
         await Assert.That(reqBody).Contains("You MUST respond in JSON");
@@ -86,7 +86,7 @@ public class QueryFormatTests
         var action = LlmTestHelper.MakeQuery(Ctx);
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
         await Assert.That(reqBody).DoesNotContain("You MUST respond");
     }
@@ -113,7 +113,7 @@ public class QueryFormatTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // Value should be parsed JSON
         await Assert.That(result.Value).IsNotNull();
         var json = result.Value is JsonElement je ? je : JsonSerializer.SerializeToElement(result.Value);
@@ -138,7 +138,7 @@ public class QueryFormatTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error?.Key).IsEqualTo("JsonParseError");
     }
 
@@ -160,7 +160,7 @@ public class QueryFormatTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     #endregion
@@ -185,7 +185,7 @@ public class QueryFormatTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value?.ToString()).IsEqualTo("print('hello')");
     }
 
@@ -207,7 +207,7 @@ public class QueryFormatTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value?.ToString()).IsEqualTo("# Hello World");
     }
 
@@ -228,7 +228,7 @@ public class QueryFormatTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value?.ToString()).IsEqualTo("Just plain text");
     }
 

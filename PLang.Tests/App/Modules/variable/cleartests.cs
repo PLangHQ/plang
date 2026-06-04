@@ -23,7 +23,7 @@ public class ClearTests
         var action = new Clear { Context = context };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(memory.Contains("var1")).IsFalse();
         await Assert.That(memory.Contains("var2")).IsFalse();
     }

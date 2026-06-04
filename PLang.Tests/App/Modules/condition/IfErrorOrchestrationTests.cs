@@ -68,7 +68,7 @@ public class IfErrorOrchestrationTests : IDisposable
         // control-flow signal to Step.RunAsync (don't re-iterate siblings),
         // not a license to swallow the error. Pin the error identity so an
         // unrelated error path leaking through wouldn't pass.
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
@@ -107,7 +107,7 @@ public class IfErrorOrchestrationTests : IDisposable
 
         var result = await step.RunAsync(_app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         // Sanity: branch actually ran.
         captureStream.Position = 0;

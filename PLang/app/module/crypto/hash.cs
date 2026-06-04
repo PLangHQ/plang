@@ -15,5 +15,8 @@ public partial class Hash : IContext
     [Code]
     public partial ICrypto Crypto { get; }
 
-    public async Task<data.@this<byte[]>> Run() => Crypto.Hash(this);
+    // Returns a hash value (not bytes) so the digest carries its algorithm as
+    // the type kind: the builder annotates the write-to variable as `%x% (hash)`
+    // for later steps, and crypto.verify reads the algorithm off the value.
+    public async Task<data.@this<global::app.module.crypto.type.hash.@this>> Run() => Crypto.Hash(this);
 }

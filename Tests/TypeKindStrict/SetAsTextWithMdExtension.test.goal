@@ -1,0 +1,7 @@
+Start
+/ A bare `as text` on a literal does NOT read the .md extension as a kind:
+/ the value is the string "readme.md", not a markdown document. Kind stays
+/ null — it comes only from an explicit `as text/<kind>` or a producing action.
+- set %doc% = "readme.md" as text
+- assert %doc.Type.Name% equals "text"
+- assert %doc.Type.Kind% is null

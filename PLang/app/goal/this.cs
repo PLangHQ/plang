@@ -252,7 +252,7 @@ public sealed partial class @this : module.IDataWrappable
         var lifecycle = context.LifecycleFor(this);
 
         // BeforeGoal events
-        var beforeResult = await lifecycle.Before.Run(context, EventType.BeforeGoal);
+        var beforeResult = await lifecycle.Before.Run(context, Trigger.BeforeGoal);
         if (!beforeResult.Success) { context.Goal = previousGoal; return beforeResult; }
         if (beforeResult.Handled) { context.Goal = previousGoal; return beforeResult; }
 
@@ -287,7 +287,7 @@ public sealed partial class @this : module.IDataWrappable
             }
 
             // AfterGoal events
-            var afterResult = await lifecycle.After.Run(context, EventType.AfterGoal);
+            var afterResult = await lifecycle.After.Run(context, Trigger.AfterGoal);
             if (!afterResult.Success) return afterResult;
 
             return result;

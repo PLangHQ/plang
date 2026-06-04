@@ -486,6 +486,11 @@
                   "name": "Cache",
                   "value": "%!build.cache%",
                   "type": "bool"
+                },
+                {
+                  "name": "Model",
+                  "value": "gpt-5.4-nano",
+                  "type": "text"
                 }
               ],
               "defaults": [

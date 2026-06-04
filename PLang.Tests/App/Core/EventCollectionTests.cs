@@ -25,7 +25,7 @@ public class EventsTests
     public async Task Register_Binding_IncreasesCount()
     {
         var events = new global::app.@event.list.@this();
-        var binding = new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()));
+        var binding = new EventBinding(Trigger.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()));
 
         events.Register(binding);
 
@@ -36,7 +36,7 @@ public class EventsTests
     public async Task Register_Binding_ReturnsBindingId()
     {
         var events = new global::app.@event.list.@this();
-        var binding = new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()));
+        var binding = new EventBinding(Trigger.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()));
 
         var id = events.Register(binding);
 
@@ -48,7 +48,7 @@ public class EventsTests
     {
         var events = new global::app.@event.list.@this();
 
-        var id = events.Register(new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok())));
+        var id = events.Register(new EventBinding(Trigger.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok())));
 
         await Assert.That(id).IsNotNull();
         await Assert.That(id.Length).IsEqualTo(8);
@@ -58,7 +58,7 @@ public class EventsTests
     public async Task Unregister_ById_RemovesBinding()
     {
         var events = new global::app.@event.list.@this();
-        var id = events.Register(new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok())));
+        var id = events.Register(new EventBinding(Trigger.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok())));
 
         var removed = events.Unregister(id);
 
@@ -80,8 +80,8 @@ public class EventsTests
     public async Task Clear_RemovesAllBindings()
     {
         var events = new global::app.@event.list.@this();
-        events.Register(new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok())));
-        events.Register(new EventBinding(EventType.AfterGoal, (_, _, _) => Task.FromResult(Data.Ok())));
+        events.Register(new EventBinding(Trigger.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok())));
+        events.Register(new EventBinding(Trigger.AfterGoal, (_, _, _) => Task.FromResult(Data.Ok())));
 
         events.Clear();
 
@@ -92,11 +92,11 @@ public class EventsTests
     public async Task GetBindings_ReturnsBindingsOfType()
     {
         var events = new global::app.@event.list.@this();
-        events.Register(new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok())));
-        events.Register(new EventBinding(EventType.AfterGoal, (_, _, _) => Task.FromResult(Data.Ok())));
-        events.Register(new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok())));
+        events.Register(new EventBinding(Trigger.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok())));
+        events.Register(new EventBinding(Trigger.AfterGoal, (_, _, _) => Task.FromResult(Data.Ok())));
+        events.Register(new EventBinding(Trigger.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok())));
 
-        var bindings = events.GetBindings(EventType.BeforeGoal);
+        var bindings = events.GetBindings(Trigger.BeforeGoal);
 
         await Assert.That(bindings.Count).IsEqualTo(2);
     }
@@ -105,9 +105,9 @@ public class EventsTests
     public async Task GetBindings_NoMatchingType_ReturnsEmpty()
     {
         var events = new global::app.@event.list.@this();
-        events.Register(new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok())));
+        events.Register(new EventBinding(Trigger.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok())));
 
-        var bindings = events.GetBindings(EventType.OnError);
+        var bindings = events.GetBindings(Trigger.OnError);
 
         await Assert.That(bindings.Count).IsEqualTo(0);
     }
@@ -116,10 +116,10 @@ public class EventsTests
     public async Task GetMatchingBindings_MatchesGoalPattern()
     {
         var events = new global::app.@event.list.@this();
-        events.Register(new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()), goalNamePattern: "Start"));
-        events.Register(new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()), goalNamePattern: "Other"));
+        events.Register(new EventBinding(Trigger.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()), goalNamePattern: "Start"));
+        events.Register(new EventBinding(Trigger.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()), goalNamePattern: "Other"));
 
-        var bindings = events.GetMatchingBindings(EventType.BeforeGoal, "Start");
+        var bindings = events.GetMatchingBindings(Trigger.BeforeGoal, "Start");
 
         await Assert.That(bindings.Count).IsEqualTo(1);
     }
@@ -128,9 +128,9 @@ public class EventsTests
     public async Task GetMatchingBindings_WildcardPattern_MatchesAll()
     {
         var events = new global::app.@event.list.@this();
-        events.Register(new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()), goalNamePattern: "*"));
+        events.Register(new EventBinding(Trigger.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()), goalNamePattern: "*"));
 
-        var bindings = events.GetMatchingBindings(EventType.BeforeGoal, "AnyGoal");
+        var bindings = events.GetMatchingBindings(Trigger.BeforeGoal, "AnyGoal");
 
         await Assert.That(bindings.Count).IsEqualTo(1);
     }
@@ -139,10 +139,10 @@ public class EventsTests
     public async Task GetMatchingBindings_PrefixPattern_MatchesPrefix()
     {
         var events = new global::app.@event.list.@this();
-        events.Register(new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()), goalNamePattern: "User*"));
+        events.Register(new EventBinding(Trigger.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()), goalNamePattern: "User*"));
 
-        var matchUser = events.GetMatchingBindings(EventType.BeforeGoal, "UserLogin");
-        var matchOther = events.GetMatchingBindings(EventType.BeforeGoal, "AdminLogin");
+        var matchUser = events.GetMatchingBindings(Trigger.BeforeGoal, "UserLogin");
+        var matchOther = events.GetMatchingBindings(Trigger.BeforeGoal, "AdminLogin");
 
         await Assert.That(matchUser.Count).IsEqualTo(1);
         await Assert.That(matchOther.Count).IsEqualTo(0);
@@ -152,9 +152,9 @@ public class EventsTests
     public async Task GetMatchingBindings_NullGoalPattern_MatchesAll()
     {
         var events = new global::app.@event.list.@this();
-        events.Register(new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok())));
+        events.Register(new EventBinding(Trigger.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok())));
 
-        var bindings = events.GetMatchingBindings(EventType.BeforeGoal, "AnyGoal");
+        var bindings = events.GetMatchingBindings(Trigger.BeforeGoal, "AnyGoal");
 
         await Assert.That(bindings.Count).IsEqualTo(1);
     }
@@ -163,10 +163,10 @@ public class EventsTests
     public async Task GetMatchingBindings_StepPattern_MatchesContaining()
     {
         var events = new global::app.@event.list.@this();
-        events.Register(new EventBinding(EventType.BeforeStep, (_, _, _) => Task.FromResult(Data.Ok()), stepPattern: "http"));
+        events.Register(new EventBinding(Trigger.BeforeStep, (_, _, _) => Task.FromResult(Data.Ok()), stepPattern: "http"));
 
-        var matchHttp = events.GetMatchingBindings(EventType.BeforeStep, stepText: "call http endpoint");
-        var matchOther = events.GetMatchingBindings(EventType.BeforeStep, stepText: "set variable");
+        var matchHttp = events.GetMatchingBindings(Trigger.BeforeStep, stepText: "call http endpoint");
+        var matchOther = events.GetMatchingBindings(Trigger.BeforeStep, stepText: "set variable");
 
         await Assert.That(matchHttp.Count).IsEqualTo(1);
         await Assert.That(matchOther.Count).IsEqualTo(0);
@@ -179,7 +179,7 @@ public class EventBindingTests
     [Test]
     public async Task Constructor_GeneratesId()
     {
-        var binding = new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()));
+        var binding = new EventBinding(Trigger.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()));
 
         await Assert.That(binding.Id).IsNotNull();
         await Assert.That(binding.Id.Length).IsEqualTo(8);
@@ -190,9 +190,9 @@ public class EventBindingTests
     {
         Func<global::app.actor.context.@this, PrAction?, Data?, Task<Data>> handler =
             (_, _, _) => Task.FromResult(Data.Ok());
-        var binding = new EventBinding(EventType.AfterStep, handler, "TestGoal", "http", null, 10, false);
+        var binding = new EventBinding(Trigger.AfterStep, handler, "TestGoal", "http", null, 10, false);
 
-        await Assert.That(binding.Type).IsEqualTo(EventType.AfterStep);
+        await Assert.That(binding.Type).IsEqualTo(Trigger.AfterStep);
         await Assert.That(binding.GoalNamePattern).IsEqualTo("TestGoal");
         await Assert.That(binding.StepPattern).IsEqualTo("http");
         await Assert.That(binding.Priority).IsEqualTo(10);
@@ -202,7 +202,7 @@ public class EventBindingTests
     [Test]
     public async Task MatchesGoal_NullPattern_ReturnsTrue()
     {
-        var binding = new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()), goalNamePattern: null);
+        var binding = new EventBinding(Trigger.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()), goalNamePattern: null);
 
         await Assert.That(binding.MatchesGoal("AnyGoal")).IsTrue();
     }
@@ -210,7 +210,7 @@ public class EventBindingTests
     [Test]
     public async Task MatchesGoal_EmptyPattern_ReturnsTrue()
     {
-        var binding = new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()), goalNamePattern: "");
+        var binding = new EventBinding(Trigger.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()), goalNamePattern: "");
 
         await Assert.That(binding.MatchesGoal("AnyGoal")).IsTrue();
     }
@@ -218,7 +218,7 @@ public class EventBindingTests
     [Test]
     public async Task MatchesGoal_WildcardPattern_ReturnsTrue()
     {
-        var binding = new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()), goalNamePattern: "*");
+        var binding = new EventBinding(Trigger.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()), goalNamePattern: "*");
 
         await Assert.That(binding.MatchesGoal("AnyGoal")).IsTrue();
     }
@@ -226,7 +226,7 @@ public class EventBindingTests
     [Test]
     public async Task MatchesGoal_PrefixPattern_MatchesPrefix()
     {
-        var binding = new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()), goalNamePattern: "User*");
+        var binding = new EventBinding(Trigger.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()), goalNamePattern: "User*");
 
         await Assert.That(binding.MatchesGoal("UserLogin")).IsTrue();
         await Assert.That(binding.MatchesGoal("UserRegister")).IsTrue();
@@ -236,7 +236,7 @@ public class EventBindingTests
     [Test]
     public async Task MatchesGoal_ExactPattern_MatchesExact()
     {
-        var binding = new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()), goalNamePattern: "Start");
+        var binding = new EventBinding(Trigger.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()), goalNamePattern: "Start");
 
         await Assert.That(binding.MatchesGoal("Start")).IsTrue();
         await Assert.That(binding.MatchesGoal("StartGoal")).IsFalse();
@@ -245,7 +245,7 @@ public class EventBindingTests
     [Test]
     public async Task MatchesGoal_CaseInsensitive()
     {
-        var binding = new EventBinding(EventType.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()), goalNamePattern: "start");
+        var binding = new EventBinding(Trigger.BeforeGoal, (_, _, _) => Task.FromResult(Data.Ok()), goalNamePattern: "start");
 
         await Assert.That(binding.MatchesGoal("START")).IsTrue();
         await Assert.That(binding.MatchesGoal("Start")).IsTrue();
@@ -254,7 +254,7 @@ public class EventBindingTests
     [Test]
     public async Task MatchesStep_NullPattern_ReturnsTrue()
     {
-        var binding = new EventBinding(EventType.BeforeStep, (_, _, _) => Task.FromResult(Data.Ok()), stepPattern: null);
+        var binding = new EventBinding(Trigger.BeforeStep, (_, _, _) => Task.FromResult(Data.Ok()), stepPattern: null);
 
         await Assert.That(binding.MatchesStep("any step")).IsTrue();
     }
@@ -262,7 +262,7 @@ public class EventBindingTests
     [Test]
     public async Task MatchesStep_EmptyPattern_ReturnsTrue()
     {
-        var binding = new EventBinding(EventType.BeforeStep, (_, _, _) => Task.FromResult(Data.Ok()), stepPattern: "");
+        var binding = new EventBinding(Trigger.BeforeStep, (_, _, _) => Task.FromResult(Data.Ok()), stepPattern: "");
 
         await Assert.That(binding.MatchesStep("any step")).IsTrue();
     }
@@ -270,7 +270,7 @@ public class EventBindingTests
     [Test]
     public async Task MatchesStep_WildcardPattern_ReturnsTrue()
     {
-        var binding = new EventBinding(EventType.BeforeStep, (_, _, _) => Task.FromResult(Data.Ok()), stepPattern: "*");
+        var binding = new EventBinding(Trigger.BeforeStep, (_, _, _) => Task.FromResult(Data.Ok()), stepPattern: "*");
 
         await Assert.That(binding.MatchesStep("any step")).IsTrue();
     }
@@ -278,7 +278,7 @@ public class EventBindingTests
     [Test]
     public async Task MatchesStep_ContainsPattern_MatchesSubstring()
     {
-        var binding = new EventBinding(EventType.BeforeStep, (_, _, _) => Task.FromResult(Data.Ok()), stepPattern: "http");
+        var binding = new EventBinding(Trigger.BeforeStep, (_, _, _) => Task.FromResult(Data.Ok()), stepPattern: "http");
 
         await Assert.That(binding.MatchesStep("call http endpoint")).IsTrue();
         await Assert.That(binding.MatchesStep("set variable")).IsFalse();
@@ -287,7 +287,7 @@ public class EventBindingTests
     [Test]
     public async Task MatchesStep_CaseInsensitive()
     {
-        var binding = new EventBinding(EventType.BeforeStep, (_, _, _) => Task.FromResult(Data.Ok()), stepPattern: "HTTP");
+        var binding = new EventBinding(Trigger.BeforeStep, (_, _, _) => Task.FromResult(Data.Ok()), stepPattern: "HTTP");
 
         await Assert.That(binding.MatchesStep("call http endpoint")).IsTrue();
     }

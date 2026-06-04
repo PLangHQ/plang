@@ -94,10 +94,10 @@ public class RequestActionTests
         var action = new request { Context = Ctx, Url = "https://api.example.com/users/1", Unsigned = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsNotNull();
-        // JSON deserializes as JsonElement on Response.Body — serialize back to verify.
-        var json = JsonSerializer.Serialize(result.Value!.Body);
+        // The body is the lazy value; touching it materializes json → object.
+        var json = JsonSerializer.Serialize(result.Value);
         await Assert.That(json).Contains("Alice");
     }
 
@@ -107,7 +107,7 @@ public class RequestActionTests
         var action = new request { Context = Ctx, Url = "api.example.com/users", Unsigned = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(_handler.LastRequest!.RequestUri!.Scheme).IsEqualTo("https");
         await Assert.That(_handler.LastRequest!.RequestUri!.Host).IsEqualTo("api.example.com");
     }
@@ -134,7 +134,7 @@ public class RequestActionTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(_handler.LastRequest!.Method).IsEqualTo(System.Net.Http.HttpMethod.Post);
         var sentBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
         await Assert.That(sentBody).Contains("Alice");
@@ -154,7 +154,7 @@ public class RequestActionTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(_handler.LastRequest!.Content).IsTypeOf<FormUrlEncodedContent>();
     }
 
@@ -170,7 +170,7 @@ public class RequestActionTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(_handler.LastRequest!.Headers.Contains("X-Custom")).IsTrue();
         await Assert.That(_handler.LastRequest!.Headers.GetValues("X-Custom").First()).IsEqualTo("test-value");
     }
@@ -186,8 +186,8 @@ public class RequestActionTests
         var action = new request { Context = Ctx, Url = "https://api.example.com/xml", Unsigned = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value!.Body?.ToString()).Contains("<root>");
+        await result.IsSuccess();
+        await Assert.That(result.ScalarValue?.ToString()).Contains("<root>");
     }
 
     [Test]
@@ -201,8 +201,8 @@ public class RequestActionTests
         var action = new request { Context = Ctx, Url = "https://api.example.com/text", Unsigned = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value!.Body?.ToString()).IsEqualTo("Hello World");
+        await result.IsSuccess();
+        await Assert.That(result.ScalarValue?.ToString()).IsEqualTo("Hello World");
     }
 
     [Test]
@@ -218,7 +218,7 @@ public class RequestActionTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(_handler.LastRequest!.Content).IsNull();
     }
 
@@ -237,7 +237,7 @@ public class RequestActionTests
         var action = new request { Context = Ctx, Url = "https://api.example.com/missing", Unsigned = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("HttpError");
         await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
     }
@@ -253,7 +253,7 @@ public class RequestActionTests
         var action = new request { Context = Ctx, Url = "https://api.example.com/error", Unsigned = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("HttpError");
         await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
     }
@@ -268,7 +268,7 @@ public class RequestActionTests
         var action = new request { Context = Ctx, Url = "/users", Unsigned = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NoBaseUrl");
     }
 
@@ -280,7 +280,7 @@ public class RequestActionTests
         var action = new request { Context = Ctx, Url = "/users/1", Unsigned = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(_handler.LastRequest!.RequestUri!.ToString()).IsEqualTo("https://api.example.com/users/1");
     }
 
@@ -304,7 +304,7 @@ public class RequestActionTests
         var action = new request { Context = Ctx, Url = "https://api.example.com/test", Unsigned = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Properties["StatusCode"]).IsEqualTo(200);
         await Assert.That(result.Properties["IsSuccess"]).IsEqualTo(true);
         await Assert.That(result.Properties["Method"]).IsEqualTo("GET");
@@ -333,7 +333,7 @@ public class RequestActionTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Timeout");
     }
 
@@ -347,7 +347,7 @@ public class RequestActionTests
         var action = new request { Context = Ctx, Url = "https://api.example.com/public", Unsigned = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(_handler.LastRequest!.Headers.Contains("X-Signature")).IsFalse();
     }
 
@@ -362,7 +362,7 @@ public class RequestActionTests
         var action = new request { Context = Ctx, Url = "https://api.example.com/plang", Unsigned = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("UnsignedPlang");
     }
 
@@ -409,8 +409,8 @@ public class RequestActionTests
         var action = new request { Context = Ctx, Url = "https://api.example.com/bad-json", Unsigned = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value!.Body?.ToString()).IsEqualTo("not json at all");
+        await result.IsSuccess();
+        await Assert.That(result.ScalarValue?.ToString()).IsEqualTo("not json at all");
     }
 
     [Test]
@@ -428,9 +428,9 @@ public class RequestActionTests
         var action = new request { Context = Ctx, Url = "https://api.example.com/image", Unsigned = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value!.Body).IsTypeOf<byte[]>();
-        await Assert.That((byte[])result.Value!.Body!).IsEquivalentTo(bytes);
+        await result.IsSuccess();
+        await Assert.That(result.ScalarValue).IsTypeOf<byte[]>();
+        await Assert.That((byte[])result.ScalarValue!).IsEquivalentTo(bytes);
     }
 
     #endregion
@@ -445,7 +445,7 @@ public class RequestActionTests
         var action = new request { Context = Ctx, Url = "https://api.example.com/down", Unsigned = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("HttpError");
         await Assert.That(result.Error!.StatusCode).IsEqualTo(503);
     }
@@ -458,7 +458,7 @@ public class RequestActionTests
         var action = new request { Context = Ctx, Url = "https://api.example.com/reset", Unsigned = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("IOError");
         await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
     }
@@ -471,7 +471,7 @@ public class RequestActionTests
         var action = new request { Context = Ctx, Url = "https://api.example.com/bad", Unsigned = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("InvalidContent");
         await Assert.That(result.Error!.StatusCode).IsEqualTo(400);
     }
@@ -498,7 +498,7 @@ public class RequestActionTests
         var result = await action.Run();
 
         // Stream processed successfully (callback goal not found writes to stderr, doesn't abort)
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // Last line set on Variables
         var lastValue = Ctx.Variable.Get("chunk");
         await Assert.That(lastValue).IsNotNull();
@@ -523,7 +523,7 @@ public class RequestActionTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var lastValue = Ctx.Variable.Get("chunk");
         await Assert.That(lastValue).IsNotNull();
         await Assert.That(lastValue!.ToString()).IsEqualTo("world");
@@ -547,7 +547,7 @@ public class RequestActionTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var lastValue = Ctx.Variable.Get("chunk");
         await Assert.That(lastValue!.ToString()).IsEqualTo("part1\npart2");
     }
@@ -574,7 +574,7 @@ public class RequestActionTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var lastData = Ctx.Variable.Get("chunk");
         await Assert.That(lastData).IsNotNull();
         // Verify byte content was delivered (last chunk contains the input bytes)
@@ -600,7 +600,7 @@ public class RequestActionTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("HttpError");
         await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
     }
@@ -626,7 +626,7 @@ public class RequestActionTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var lastValue = Ctx.Variable.Get("myChunk");
         await Assert.That(lastValue).IsNotNull();
         await Assert.That(lastValue!.ToString()).IsEqualTo("chunk1");
@@ -649,7 +649,7 @@ public class RequestActionTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("UnsignedPlang");
     }
 
@@ -669,12 +669,12 @@ public class RequestActionTests
 
         var sign1 = new sign { Context = Ctx, Data = new Data("", "chunk-1") };
         var signResult1 = await sign1.Run();
-        await Assert.That(signResult1.Success).IsTrue();
+        await signResult1.IsSuccess();
         var line1Data = new Data("chunk-1") { Signature = signResult1.Signature };
 
         var sign2 = new sign { Context = Ctx, Data = new Data("", "chunk-2") };
         var signResult2 = await sign2.Run();
-        await Assert.That(signResult2.Success).IsTrue();
+        await signResult2.IsSuccess();
         var line2Data = new Data("chunk-2") { Signature = signResult2.Signature };
 
         var ndjson = JsonSerializer.Serialize(line1Data, transportOptions) + "\n"
@@ -694,7 +694,7 @@ public class RequestActionTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // Verify !ServiceIdentity was set and matches the signing key
         var identity = Ctx.Variable.Get("!ServiceIdentity");
         await Assert.That(identity).IsNotNull();
@@ -734,7 +734,7 @@ public class RequestActionTests
         var result = await action.Run();
 
         // Stream completes (errors are per-line, not fatal)
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // NOTE: Weak assertion — verifying exact Variables state after failed plang stream
         // verification + failed goal callback is complex. The non-streaming test
         // (Get_PlangResponseInvalidSignature_ReturnsError) covers the verification error path.
@@ -761,7 +761,7 @@ public class RequestActionTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // Default header present
         await Assert.That(_handler.LastRequest!.Headers.GetValues("X-Api-Key").First()).IsEqualTo("default-key");
         // Step header present
@@ -784,7 +784,7 @@ public class RequestActionTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // Content-Encoding goes to Content.Headers
         await Assert.That(_handler.LastRequest!.Content!.Headers.Contains("Content-Encoding")).IsTrue();
         // X-Custom goes to Request.Headers
@@ -806,7 +806,7 @@ public class RequestActionTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(_handler.LastRequest!.Headers.Contains("X-Signature")).IsTrue();
         // Verify X-Signature deserializes to a valid Signature
         var sigHeader = _handler.LastRequest!.Headers.GetValues("X-Signature").First();
@@ -842,7 +842,7 @@ public class RequestActionTests
         // First, sign some data to get a valid signed response
         var signAction = new sign { Context = Ctx, Data = new Data("", "response-payload") };
         var signResult = await signAction.Run();
-        await Assert.That(signResult.Success).IsTrue();
+        await signResult.IsSuccess();
 
         // Build a Data object with the signature, serialize with transport options
         var responseData = new Data("response-payload");
@@ -871,7 +871,7 @@ public class RequestActionTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var identity = Ctx.Variable.Get("!ServiceIdentity");
         await Assert.That(identity).IsNotNull();
         // Identity should match the signing key used (same as the one in the signed response)
@@ -912,7 +912,7 @@ public class RequestActionTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsNotEmpty();
     }
 
@@ -935,7 +935,7 @@ public class RequestActionTests
         var action = new request { Context = Ctx, Url = "https://api.example.com/big", Unsigned = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ResponseTooLarge");
         await Assert.That(result.Error!.StatusCode).IsEqualTo(413);
     }
@@ -956,7 +956,7 @@ public class RequestActionTests
         var action = new request { Context = Ctx, Url = "https://api.example.com/big-binary", Unsigned = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ResponseTooLarge");
     }
 
@@ -973,7 +973,7 @@ public class RequestActionTests
         var action = new request { Context = Ctx, Url = "https://api.example.com/small", Unsigned = true };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -999,7 +999,7 @@ public class RequestActionTests
         var result = await action.Run();
 
         // Stream completes (overflow is non-fatal — emits error to stderr, clears buffer, continues)
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // The second (small) message should still be delivered
         var lastValue = Ctx.Variable.Get("chunk");
         await Assert.That(lastValue).IsNotNull();

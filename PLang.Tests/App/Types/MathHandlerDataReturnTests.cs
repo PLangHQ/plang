@@ -64,7 +64,7 @@ public class MathHandlerDataReturnTests
         // Covered end-to-end by NumberArithmeticTests.Overflow_Throw_HandlerPathReturnsDataError.
         var r = number.Add(number.From(decimal.MaxValue), number.From(decimal.MaxValue),
             global::app.type.number.NumberPolicy.Strict);
-        await Assert.That(r.Success).IsFalse();
+        await r.IsFailure();
         await Assert.That(r.Error?.Key).IsEqualTo("MathOverflow");
     }
 
@@ -72,7 +72,7 @@ public class MathHandlerDataReturnTests
     {
         var r = number.Divide(number.From(7), number.From(0),
             global::app.type.number.NumberPolicy.Lenient);
-        await Assert.That(r.Success).IsFalse();
+        await r.IsFailure();
         await Assert.That(r.Error?.Key).IsEqualTo("DivideByZero");
     }
 

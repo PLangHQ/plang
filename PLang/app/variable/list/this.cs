@@ -146,17 +146,17 @@ public partial class @this
                         dv.OnCreate = prevFrame.OnCreate;
                         dv.OnChange = prevFrame.OnChange;
                         dv.OnDelete = prevFrame.OnDelete;
-                        var prevValue = prevFrame.Value;
+                        var prevValue = prevFrame.ScalarValue;
                         prevFrame.FireOnChange(dv);
                         frame.Set(name, dv);
-                        OnSet?.Invoke(name, prevValue, dv.Value);
+                        OnSet?.Invoke(name, prevValue, dv.ScalarValue);
                         return dv;
                     }
                     else if (!hadPrev)
                     {
                         dv.FireOnCreate();
                         frame.Set(name, dv);
-                        OnCreate?.Invoke(name, dv.Value);
+                        OnCreate?.Invoke(name, dv.ScalarValue);
                         return dv;
                     }
                     frame.Set(name, dv);
@@ -172,17 +172,17 @@ public partial class @this
                     dv.OnCreate = prev.OnCreate;
                     dv.OnChange = prev.OnChange;
                     dv.OnDelete = prev.OnDelete;
-                    var prevValue = prev.Value;
+                    var prevValue = prev.ScalarValue;
                     prev.FireOnChange(dv);
                     _variables[name] = dv;
-                    OnSet?.Invoke(name, prevValue, dv.Value);
+                    OnSet?.Invoke(name, prevValue, dv.ScalarValue);
                     return dv;
                 }
                 else if (prev == null)
                 {
                     dv.FireOnCreate();
                     _variables[name] = dv;
-                    OnCreate?.Invoke(name, dv.Value);
+                    OnCreate?.Invoke(name, dv.ScalarValue);
                     return dv;
                 }
 
@@ -272,10 +272,16 @@ public partial class @this
         }
 
         if (!parent.IsInitialized && parent.Value == null)
+        {
+            // A parse failure on a raw-backed parent stamps MaterializeFailed —
+            // surface it rather than masking the real cause with NotFound.
+            if (parent.Error?.Key == "MaterializeFailed")
+                return data.@this.FromError(parent.Error);
             return data.@this.NotFound(name);
+        }
 
-        // Lazy convert if parent is a typed string (e.g., json) — must happen before navigation
-        parent.ConvertValue();
+        // Lazy materialize if parent is a typed string (e.g., json) — must happen before navigation
+        parent.ForceMaterialize();
 
         // For dot-path, extract raw value from Data — we're setting a property on a C# object.
         // Dict/list values are snapshot-cloned so the target doesn't alias the source's
@@ -300,7 +306,12 @@ public partial class @this
             }
         }
         var target = parent.Value;
-        if (target == null) return data.@this.NotFound(name);
+        if (target == null)
+        {
+            if (parent.Error?.Key == "MaterializeFailed")
+                return data.@this.FromError(parent.Error);
+            return data.@this.NotFound(name);
+        }
         var result = SetValueOnObject(target, propertyName, rawValue);
         if (!ReferenceEquals(result, target))
             parent.Value = result;
@@ -315,6 +326,15 @@ public partial class @this
     /// </summary>
     private static object SetValueOnObject(object target, string propertyName, object? value)
     {
+        // Snapshot — editing a captured variable routes to the snapshot's own
+        // SetVariable (the owner), so `set %snap.variables.x% = 2` lands on the
+        // list Restore reads. Behavior on the owner, not reached-into here.
+        if (target is global::app.snapshot.@this snap)
+        {
+            snap.SetVariable(propertyName, value);
+            return target;
+        }
+
         // Dictionary — set key directly (case-insensitive lookup)
         if (target is IDictionary<string, object?> dict)
         {
@@ -364,7 +384,7 @@ public partial class @this
                             : typeof(object);
                         if (!elementType.IsAssignableFrom(value.GetType()))
                         {
-                            var (typedValue, _) = type.list.@this.TryConvertTo(value, elementType);
+                            var (typedValue, _) = type.list.@this.TryConvert(value, elementType);
                             if (typedValue != null) value = typedValue;
                         }
                     }
@@ -383,7 +403,7 @@ public partial class @this
                         {
                             if (value != null && !indexer.PropertyType.IsAssignableFrom(value.GetType()))
                             {
-                                var (typedValue, _) = type.list.@this.TryConvertTo(value, indexer.PropertyType);
+                                var (typedValue, _) = type.list.@this.TryConvert(value, indexer.PropertyType);
                                 if (typedValue != null) value = typedValue;
                             }
                             indexer.SetValue(collection, value, new object[] { gIdx });
@@ -401,7 +421,7 @@ public partial class @this
         {
             if (value != null && !clrProp.PropertyType.IsAssignableFrom(value.GetType()))
             {
-                var (typedValue, _) = type.list.@this.TryConvertTo(value, clrProp.PropertyType);
+                var (typedValue, _) = type.list.@this.TryConvert(value, clrProp.PropertyType);
                 if (typedValue != null) value = typedValue;
             }
             clrProp.SetValue(target, value);
@@ -478,7 +498,7 @@ public partial class @this
             }
         }
 
-        var (typedValue, _) = type.list.@this.TryConvertTo(value, slotType);
+        var (typedValue, _) = type.list.@this.TryConvert(value, slotType);
         return typedValue ?? value;
     }
 
@@ -615,7 +635,13 @@ public partial class @this
             var varName = match.Groups[1].Value;
             if (skipInfrastructure && varName.StartsWith('!'))
                 return match.Value; // Leave %!var% unresolved for untrusted input
-            return Get(varName)?.Value?.ToString() ?? match.Value;
+            // Scalar/output access (access-driven resolution): a bare `%x%` renders
+            // the value's raw source form, not a structured parse — `%cfg%` of a
+            // lazily-read config.json is the raw json string. ScalarValue equals
+            // the materialized value for authored/navigated Data, so this only
+            // changes raw-backed full matches (dotted paths navigate via Get and
+            // come back already materialized).
+            return Get(varName)?.ScalarValue?.ToString() ?? match.Value;
         });
     }
 

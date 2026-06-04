@@ -79,7 +79,7 @@ public sealed record @this(
         sb.AppendLine($"                Name = \"{Name}\",");
         sb.AppendLine($"                DeclaredType = \"{declaredType}\",");
         sb.AppendLine($"                PrValue = {prValueExpr},");
-        sb.AppendLine($"                PrType = __pr?.Type?.Value,");
+        sb.AppendLine($"                PrType = __pr?.Type?.Name,");
         sb.AppendLine($"                FinalValue = {finalValueExpr},");
         sb.AppendLine($"                WasAccessed = {SetFlag}");
         sb.AppendLine($"            }});");

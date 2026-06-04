@@ -1,0 +1,1 @@
+{"version":"v2","verdict":"PASS","next":"ingi","head":"7b438a4e5","supersedes":"v1","scope":"add strict-kind enforcement story + Data.Load() chokepoint to v0.2 docs","files":["Documentation/v0.2/type-system.md","Documentation/v0.2/wire-serialization.md","Documentation/v0.2/good_to_know.md"]}

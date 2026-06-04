@@ -1,0 +1,346 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "sign \u0022hello world\u0022, write to %signed%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "Cut 3 at the goal layer \u2014 sign a Data, transport across a goal-call\nboundary, verify. The C# integration test pins \u0022verify against raw\nwithout materialising\u0022; this one pins the developer surface succeeds\nend-to-end. The hard probe stays in C#.",
+      "actions": [
+        {
+          "module": "signing",
+          "action": "sign",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": {
+                "name": "text",
+                "value": "hello world",
+                "type": {
+                  "name": "text"
+                }
+              },
+              "scalarValue": {
+                "name": "text",
+                "value": "hello world",
+                "type": {
+                  "name": "text"
+                }
+              },
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%signed%",
+              "scalarValue": "%signed%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "scalarValue": "%!data%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "signing.sign(Data={\u0022name\u0022:\u0022text\u0022,\u0022value\u0022:\u0022hello world\u0022}, Headers={}, Contracts=[], Expires=undefined) | variable.set(Name=%signed%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "call VerifyOnReceiver signed=%signed%, write to %ok%",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "VerifyOnReceiver",
+                "parallel": false,
+                "parameters": [
+                  {
+                    "name": "signed",
+                    "value": "%signed%",
+                    "scalarValue": "%signed%",
+                    "type": {
+                      "name": "text"
+                    }
+                  }
+                ],
+                "prPath": "/LazyDeserialize/.build/signandverifyroundtrip.test.pr"
+              },
+              "scalarValue": {
+                "name": "VerifyOnReceiver",
+                "parallel": false,
+                "parameters": [
+                  {
+                    "name": "signed",
+                    "value": "%signed%",
+                    "scalarValue": "%signed%",
+                    "type": {
+                      "name": "text"
+                    }
+                  }
+                ],
+                "prPath": "/LazyDeserialize/.build/signandverifyroundtrip.test.pr"
+              },
+              "type": {
+                "name": "goal.call"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%ok%",
+              "scalarValue": "%ok%",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "scalarValue": "%!data%",
+              "type": {
+                "name": "object"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "goal.call(GoalName={name:\u0022VerifyOnReceiver\u0022, parameters:[{name:\u0022signed\u0022, value:%signed%, type:{name:\u0022object\u0022}}]}) , variable.set(Name=%ok%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %ok% equals true",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "%ok%",
+              "scalarValue": "%ok%",
+              "type": {
+                "name": "object"
+              }
+            },
+            {
+              "name": "Actual",
+              "value": true,
+              "scalarValue": true,
+              "type": {
+                "name": "bool"
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=%ok%, Actual=true)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "VerifyOnReceiver",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "verify %signed%, write to %ok%",
+          "lineNumber": 11,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "signing",
+              "action": "verify",
+              "parameters": [
+                {
+                  "name": "Data",
+                  "value": "%signed%",
+                  "scalarValue": "%signed%",
+                  "type": {
+                    "name": "object"
+                  }
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "skipfreshnesscheck",
+                  "value": false,
+                  "scalarValue": false,
+                  "type": {
+                    "name": "bool"
+                  }
+                }
+              ],
+              "modifiers": []
+            },
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%ok%",
+                  "scalarValue": "%ok%",
+                  "type": {
+                    "name": "variable"
+                  }
+                },
+                {
+                  "name": "Value",
+                  "value": "%!data%",
+                  "scalarValue": "%!data%",
+                  "type": {
+                    "name": "bool"
+                  }
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "scalarValue": false,
+                  "type": {
+                    "name": "bool"
+                  }
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "formal": "signing.verify(Data=%signed%) , variable.set(Name=%ok%, Value=%!data%)",
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "return %ok%",
+          "lineNumber": 12,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "goal",
+              "action": "return",
+              "parameters": [
+                {
+                  "name": "Data",
+                  "value": "%ok%",
+                  "scalarValue": "%ok%",
+                  "type": {
+                    "name": "bool"
+                  }
+                },
+                {
+                  "name": "Depth",
+                  "value": 1,
+                  "scalarValue": 1,
+                  "type": {
+                    "name": "number"
+                  }
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "formal": "goal.return(Data=%ok%, Depth=1)",
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/LazyDeserialize/SignAndVerifyRoundTrip.test.goal",
+      "prPath": "/LazyDeserialize/.build/signandverifyroundtrip.test.pr",
+      "hash": "d728ba56be16107eaa209767d52aca7cef6e39ef79cfdc089ddd622744a7a291",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/LazyDeserialize/SignAndVerifyRoundTrip.test.goal",
+  "prPath": "/LazyDeserialize/.build/signandverifyroundtrip.test.pr",
+  "hash": "2e3e762a0975cb123198400c3ad502f79c7eb34d9bba93eb7782b356c2550136",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

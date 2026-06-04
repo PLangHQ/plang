@@ -29,7 +29,7 @@ public class SkipActionTests
         var action = new SkipAction { Context = context, Value = new global::app.data.@this("", "override-value")};
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(context.EventOverride).IsNotNull();
         await Assert.That(context.EventOverride!.Value).IsEqualTo("override-value");
     }
@@ -42,7 +42,7 @@ public class SkipActionTests
         var action = new SkipAction { Context = context, Value = null };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(context.EventOverride).IsNotNull();
         await Assert.That(context.EventOverride!.Value).IsNull();
     }
@@ -55,7 +55,7 @@ public class SkipActionTests
         var action = new SkipAction { Context = context, Value = new global::app.data.@this("", 42)};
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo(42);
     }
 
@@ -68,7 +68,7 @@ public class SkipActionTests
         var action = new SkipAction { Context = context, Value = new global::app.data.@this("", obj)};
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(context.EventOverride!.Value).IsEqualTo(obj);
     }
 }

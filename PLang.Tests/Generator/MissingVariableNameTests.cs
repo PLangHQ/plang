@@ -62,7 +62,7 @@ public class MissingVariableNameTests
 
         var result = await act.RunAsync(context);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("MissingRequiredParameter");
         await Assert.That(result.Error!.Message).Contains(slotName);

@@ -21,7 +21,7 @@ public class EventCacheInvalidationTests
 
         // Register first event
         context.Events.Register(new EventBinding(
-            EventType.BeforeGoal,
+            Trigger.BeforeGoal,
             async (context, _, _) => Data.Ok(),
             goalNamePattern: "TestGoal"));
 
@@ -31,7 +31,7 @@ public class EventCacheInvalidationTests
 
         // Register second event at runtime
         context.Events.Register(new EventBinding(
-            EventType.BeforeGoal,
+            Trigger.BeforeGoal,
             async (context, _, _) => Data.Ok(),
             goalNamePattern: "TestGoal"));
 
@@ -51,7 +51,7 @@ public class EventCacheInvalidationTests
 
         // Register first step event
         context.Events.Register(new EventBinding(
-            EventType.BeforeStep,
+            Trigger.BeforeStep,
             async (context, _, _) => Data.Ok(),
             goalNamePattern: "TestGoal",
             stepPattern: "do something"));
@@ -62,7 +62,7 @@ public class EventCacheInvalidationTests
 
         // Register another step event at runtime
         context.Events.Register(new EventBinding(
-            EventType.BeforeStep,
+            Trigger.BeforeStep,
             async (context, _, _) => Data.Ok(),
             goalNamePattern: "TestGoal",
             stepPattern: "do something"));
@@ -85,7 +85,7 @@ public class EventCacheInvalidationTests
 
         // Register first action event
         context.Events.Register(new EventBinding(
-            EventType.BeforeAction,
+            Trigger.BeforeAction,
             async (context, _, _) => Data.Ok(),
             actionPattern: "variable.set"));
 
@@ -95,7 +95,7 @@ public class EventCacheInvalidationTests
 
         // Register another action event at runtime
         context.Events.Register(new EventBinding(
-            EventType.BeforeAction,
+            Trigger.BeforeAction,
             async (context, _, _) => Data.Ok(),
             actionPattern: "variable.set"));
 
@@ -113,7 +113,7 @@ public class EventCacheInvalidationTests
 
         // Register and cache
         context.Events.Register(new EventBinding(
-            EventType.BeforeGoal,
+            Trigger.BeforeGoal,
             async (context, _, _) => Data.Ok(),
             goalNamePattern: "TestGoal"));
         var events1 = context.LifecycleFor(goal);
@@ -121,7 +121,7 @@ public class EventCacheInvalidationTests
 
         // Register new event + manually invalidate cache
         context.Events.Register(new EventBinding(
-            EventType.BeforeGoal,
+            Trigger.BeforeGoal,
             async (context, _, _) => Data.Ok(),
             goalNamePattern: "TestGoal"));
         context.InvalidateEventCache();

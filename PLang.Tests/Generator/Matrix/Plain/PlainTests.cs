@@ -80,7 +80,7 @@ public class IntPlainTests
         var result = await MatrixRunner.RunAsync<IntPlain>(app,
             parameters: new[] { ("count", (object?)"not-a-number") });
         // Conversion failure surfaces as Data.FromError with non-null Error.
-        await Assert.That(result.Data.Success).IsFalse();
+        await result.Data.IsFailure();
     }
 }
 

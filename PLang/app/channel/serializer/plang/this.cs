@@ -41,34 +41,47 @@ public sealed class @this : ISerializer
     private readonly JsonSerializerOptions _outbound;
     private readonly JsonSerializerOptions _inbound;
     private readonly JsonSerializerOptions _store;
+    private readonly JsonSerializerOptions _snapshot;
 
     public @this() : this(null) { }
 
     public @this(actor.context.@this? context)
     {
         var pathConverter = context != null
-            ? new global::app.type.path.JsonConverter(context)
-            : new global::app.type.path.JsonConverter();
+            ? new global::app.channel.serializer.json.Converter(context)
+            : new global::app.channel.serializer.json.Converter();
 
+        // Pass context so a lazily-deferred value slot read back through this
+        // (per-actor) serializer carries the context it needs to materialize.
         _outbound = BuildOptions(
-            new global::app.data.Wire(global::app.View.Out),
+            new global::app.data.Wire(global::app.View.Out, context: context),
             pathConverter,
             global::app.channel.serializer.filter.Transport.ForOutbound);
 
         _inbound = BuildOptions(
-            new global::app.data.Wire(global::app.View.Out),
+            new global::app.data.Wire(global::app.View.Out, context: context),
             pathConverter,
             global::app.channel.serializer.filter.Transport.ForInbound);
 
         _store = BuildOptions(
-            new global::app.data.Wire(global::app.View.Store),
+            new global::app.data.Wire(global::app.View.Store, context: context),
             pathConverter,
             global::app.channel.serializer.filter.Transport.ForOutbound);
+
+        // Snapshot durable-execution wire: Store view (local round-trip, keeps
+        // [Sensitive]) but NON-signing — a snapshot is internal in-process state,
+        // not an actor-boundary crossing. Adds the polymorphic IError converter
+        // for the Errors trail section. Same recipe otherwise → one source of truth.
+        _snapshot = BuildOptions(
+            new global::app.data.Wire(global::app.View.Store, sign: false),
+            pathConverter,
+            global::app.channel.serializer.filter.Transport.ForOutbound);
+        _snapshot.Converters.Add(new global::app.error.ErrorWire());
     }
 
     private static JsonSerializerOptions BuildOptions(
         global::app.data.Wire wire,
-        global::app.type.path.JsonConverter pathConverter,
+        global::app.channel.serializer.json.Converter pathConverter,
         System.Action<JsonTypeInfo> modifier)
         => new()
         {
@@ -95,6 +108,22 @@ public sealed class @this : ISerializer
     internal JsonSerializerOptions OutboundOptions => _outbound;
 
     /// <summary>
+    /// Store-view options — the [Store]-including, Sensitive-keeping recipe used
+    /// for local persistence. Exposed so the snapshot wire serializer
+    /// (<see cref="global::app.snapshot.Io"/>) layers its IError converter on top
+    /// of this one recipe rather than duplicating the camelCase + Wire + path +
+    /// transport-modifier construction.
+    /// </summary>
+    internal JsonSerializerOptions StoreOptions => _store;
+
+    /// <summary>
+    /// Options for the snapshot durable-execution wire — Store view, non-signing,
+    /// with the polymorphic <see cref="global::app.error.ErrorWire"/> for the
+    /// Errors trail. Consumed by <c>App.SnapshotToWire</c>/<c>SnapshotFromWire</c>.
+    /// </summary>
+    internal JsonSerializerOptions SnapshotOptions => _snapshot;
+
+    /// <summary>
     /// Context-less fallback instance — used by callers (crypto.Hash,
     /// Data.CompressAsync/DecompressAsync) that may run outside an actor
     /// scope and still need the canonical wire shape. Single source of truth
@@ -107,6 +136,10 @@ public sealed class @this : ISerializer
     {
         try
         {
+            // Materialize lazy reference fundamentals (image bytes) above the
+            // STJ converter wall — the sync Wire.Write below cannot await.
+            var loadError = await data.Load();
+            if (loadError != null) return loadError;
             await JsonSerializer.SerializeAsync(stream, data, _outbound, cancellationToken);
             return global::app.data.@this.Ok();
         }

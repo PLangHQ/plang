@@ -80,7 +80,7 @@ public class Cut4_PropertiesWireTests
                     Data = back,
                     SkipFreshnessCheck = new global::app.data.@this<bool>("", true)
                 }, app.User.Context);
-            await Assert.That(verify.Success).IsFalse();
+            await verify.IsFailure();
         }
     }
 }

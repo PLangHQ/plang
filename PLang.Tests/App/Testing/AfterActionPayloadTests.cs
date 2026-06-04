@@ -4,8 +4,8 @@ namespace PLang.Tests.App.Tester;
 
 /// <summary>
 /// Batch 6 — AfterAction event payload widening.
-/// Today: lifecycle.After.Run(context, EventType.AfterAction).
-/// After:  lifecycle.After.Run(context, EventType.AfterAction, this, result).
+/// Today: lifecycle.After.Run(context, Trigger.AfterAction).
+/// After:  lifecycle.After.Run(context, Trigger.AfterAction, this, result).
 /// Subscribers now receive (Context, Action, Data) — unlocking module.action coverage
 /// and branch coverage without touching the Data type itself. All call sites and
 /// subscribers updated in the same commit; no backward-compat shim.
@@ -64,7 +64,7 @@ public class AfterActionPayloadTests
     {
         PrAction? captured = null;
         _app.User.Context.Events.Register(new EventBinding(
-            EventType.AfterAction,
+            Trigger.AfterAction,
             (context, action, result) => { captured = action; return Task.FromResult(Data.Ok()); },
             priority: int.MaxValue,
             stopOnError: false));
@@ -83,7 +83,7 @@ public class AfterActionPayloadTests
     {
         Data? captured = null;
         _app.User.Context.Events.Register(new EventBinding(
-            EventType.AfterAction,
+            Trigger.AfterAction,
             (context, action, result) => { captured = result; return Task.FromResult(Data.Ok()); },
             priority: int.MaxValue,
             stopOnError: false));
@@ -91,7 +91,7 @@ public class AfterActionPayloadTests
         await RunSimpleGoal();
 
         await Assert.That(captured).IsNotNull();
-        await Assert.That(captured!.Success).IsTrue();
+        await captured!.IsSuccess();
     }
 
     // timeout.after wrapping http.request emits two AfterAction events — one for the
@@ -135,7 +135,7 @@ public class AfterActionPayloadTests
 
         var observed = new List<(string Module, string ActionName)>();
         _app.User.Context.Events.Register(new EventBinding(
-            EventType.AfterAction,
+            Trigger.AfterAction,
             (context, action, result) =>
             {
                 if (action != null) observed.Add((action.Module, action.ActionName));
@@ -156,7 +156,7 @@ public class AfterActionPayloadTests
     }
 
     // Regression guard: architect widened only AfterAction. BeforeAction stays at
-    // (context, EventType). If BeforeAction is widened in the future, this test flags
+    // (context, Trigger). If BeforeAction is widened in the future, this test flags
     // it as an intentional scope change.
     [Test]
     public async Task BeforeAction_SignatureUnchanged_NoPayloadWidening()
@@ -166,7 +166,7 @@ public class AfterActionPayloadTests
         PrAction? seenAction = null;
         Data? seenResult = null;
         _app.User.Context.Events.Register(new EventBinding(
-            EventType.BeforeAction,
+            Trigger.BeforeAction,
             (context, action, result) =>
             {
                 seenAction = action;
@@ -219,7 +219,7 @@ public class AfterActionPayloadTests
 
         Data? captured = null;
         _app.User.Context.Events.Register(new EventBinding(
-            EventType.AfterAction,
+            Trigger.AfterAction,
             (context, action, result) => { captured = result; return Task.FromResult(Data.Ok()); },
             priority: int.MaxValue,
             stopOnError: false));
@@ -227,7 +227,7 @@ public class AfterActionPayloadTests
         await _app.RunGoalAsync(goal, _app.User.Context);
 
         await Assert.That(captured).IsNotNull();
-        await Assert.That(captured!.Success).IsFalse();
+        await captured!.IsFailure();
         await Assert.That(captured.Error).IsNotNull();
     }
 
@@ -238,7 +238,7 @@ public class AfterActionPayloadTests
     {
         PrAction? captured = null;
         _app.User.Context.Events.Register(new EventBinding(
-            EventType.AfterAction,
+            Trigger.AfterAction,
             (context, action, result) => { captured = action; return Task.FromResult(Data.Ok()); },
             priority: int.MaxValue,
             stopOnError: false));

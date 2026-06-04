@@ -23,7 +23,7 @@ public class CompressFlattenedTests
         await using var app = NewApp();
         var d = NewCompressibleData(app, "the quick brown fox jumps over the lazy dog");
         var archived = d.Compress();
-        await Assert.That(archived.Type?.Value).IsEqualTo("archived");
+        await Assert.That(archived.Type?.Name).IsEqualTo("archived");
         await Assert.That(archived.Value).IsTypeOf<byte[]>();
     }
 
@@ -95,7 +95,7 @@ public class CompressFlattenedTests
         var d = NewCompressibleData(app, "via plang serializer");
         var archived = d.Compress();
         var restored = archived.Decompress();
-        await Assert.That(restored.Success).IsTrue();
+        await restored.IsSuccess();
         await Assert.That(restored.Value as string).IsEqualTo("via plang serializer");
     }
 

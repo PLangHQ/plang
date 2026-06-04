@@ -238,7 +238,7 @@ public sealed partial class @this : module.IDataWrappable
     {
         var lifecycle = context.LifecycleFor(this);
 
-        var beforeResult = await lifecycle.Before.Run(context, app.@event.EventType.BeforeAction);
+        var beforeResult = await lifecycle.Before.Run(context, app.@event.Trigger.BeforeAction);
         if (!beforeResult.Success) return beforeResult;
 
         global::app.data.@this result;
@@ -267,7 +267,7 @@ public sealed partial class @this : module.IDataWrappable
             context.Variable.Set("!data", result);
         }
 
-        var afterResult = await lifecycle.After.Run(context, app.@event.EventType.AfterAction, this, result);
+        var afterResult = await lifecycle.After.Run(context, app.@event.Trigger.AfterAction, this, result);
         if (!afterResult.Success) return afterResult;
 
         return result;

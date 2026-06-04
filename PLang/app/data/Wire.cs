@@ -54,11 +54,31 @@ public sealed class Wire : JsonConverter<@this>
     /// </summary>
     public global::app.View View { get; }
 
+    /// <summary>
+    /// Whether sign-if-missing fires during the Write walk. True for every wire
+    /// that crosses an actor boundary (the default). False for the snapshot
+    /// durable-execution wire: a snapshot is internal in-process state replayed
+    /// into the same actor, so signing it is both unnecessary and a side effect
+    /// (it mutates the captured Data and needs writable identity I/O, which is
+    /// absent headless). Read is unaffected — signatures already present still
+    /// rehydrate.
+    /// </summary>
+    public bool Sign { get; }
+
+    // The actor context a lazily-deferred value slot carries so it can
+    // materialize through the reader registry on touch. Null for the context-less
+    // fallback (hashing, headless) — a deferred Data then materializes via the
+    // type's own Convert. Owned per-instance, like View, set at the per-actor
+    // serializer's construction site.
+    private readonly actor.context.@this? _context;
+
     public Wire() : this(global::app.View.Out) { }
 
-    public Wire(global::app.View view)
+    public Wire(global::app.View view, bool sign = true, actor.context.@this? context = null)
     {
         View = view;
+        Sign = sign;
+        _context = context;
     }
 
     /// <summary>
@@ -208,16 +228,26 @@ public sealed class Wire : JsonConverter<@this>
         string name = "";
         object? value = null;
         type? typeRef = null;
-        string? kind = null;
         app.module.signing.Signature? signature = null;
         Properties? properties = null;
+        string? deferredRaw = null;   // set when the value slot is captured for lazy materialization
 
         while (reader.Read())
         {
             if (reader.TokenType == JsonTokenType.EndObject)
             {
+                if (deferredRaw != null && typeRef != null)
+                {
+                    // Lazy value slot: a shape-typed value (object/table) rides as
+                    // its raw source form and materializes on first touch through
+                    // the reader — verbatim passthrough for untouched relay Data.
+                    var lazy = @this.FromRaw(deferredRaw, typeRef, _context);
+                    lazy.Name = name;
+                    if (signature != null) lazy.Signature = signature;
+                    if (properties != null) lazy.Properties = properties;
+                    return lazy;
+                }
                 var data = new @this(name, value, typeRef);
-                if (kind != null) data.Kind = kind;
                 if (signature != null) data.Signature = signature;
                 if (properties != null) data.Properties = properties;
                 return data;
@@ -232,31 +262,36 @@ public sealed class Wire : JsonConverter<@this>
                     name = reader.TokenType == JsonTokenType.Null ? "" : reader.GetString() ?? "";
                     break;
                 case "type":
+                    // The structured entity {name, kind?, strict?} — its own
+                    // JsonConverter handles both string-form ("text") and
+                    // dict-form. No sibling `kind` key on the wire — the
+                    // entity owns its full identity in one slot.
                     if (reader.TokenType == JsonTokenType.Null) typeRef = null;
-                    else if (reader.TokenType == JsonTokenType.String)
-                    {
-                        var typeStr = reader.GetString();
-                        typeRef = string.IsNullOrEmpty(typeStr) ? null : new type(typeStr);
-                    }
-                    else throw new JsonException("type field must be a JSON string");
-                    break;
-                case "kind":
-                    if (reader.TokenType == JsonTokenType.Null) kind = null;
-                    else if (reader.TokenType == JsonTokenType.String)
-                    {
-                        var kindStr = reader.GetString();
-                        kind = string.IsNullOrEmpty(kindStr) ? null : kindStr;
-                    }
-                    else throw new JsonException("kind field must be a JSON string");
+                    else typeRef = JsonSerializer.Deserialize<type>(ref reader, options);
                     break;
                 case "value":
+                    // Defer a shape-typed value (object/table) — capture its raw
+                    // source form and let it materialize lazily on first touch.
+                    // The type slot precedes value on the wire, so typeRef is known
+                    // here. A json-string token unwraps to its content (the text a
+                    // text-shaped reader expects); object/array/number keep their
+                    // raw json. Scoped to object/table so scalars, domain objects,
+                    // and dict<…>-typed values keep their eager path unchanged.
+                    if (typeRef != null && IsDeferrableShape(typeRef))
+                    {
+                        using var vdoc = JsonDocument.ParseValue(ref reader);
+                        var el = vdoc.RootElement;
+                        deferredRaw = el.ValueKind == JsonValueKind.String
+                            ? el.GetString() ?? ""
+                            : el.GetRawText();
+                    }
                     // Peek at the token to see whether the value slot is a
                     // nested Data (recognised by its {name, value, [signature]}
                     // shape) — STJ alone would surface a Dictionary because the
                     // destination type is object. Without rehydration the inner
                     // Data's Signature would be observable as a sub-dictionary
                     // but never reach signing.verify or App-level navigation.
-                    if (reader.TokenType == JsonTokenType.StartObject)
+                    else if (reader.TokenType == JsonTokenType.StartObject)
                     {
                         // Buffer the sub-object so we can decide.
                         using var doc = JsonDocument.ParseValue(ref reader);
@@ -280,6 +315,36 @@ public sealed class Wire : JsonConverter<@this>
         }
 
         throw new JsonException("Unterminated app.data.@this wire shape");
+    }
+
+    // Shape-typed values that read themselves from a raw *encoded* source form (a
+    // tree or a grid). Requires a real encoding kind (json/xml/csv/…): a bare
+    // {object} with no kind is a nested Data envelope (Data's PLang name is
+    // "object"), which LiftDataIfShaped must rehydrate — not a raw payload to
+    // defer. Scalars/domain/dict<…> values also stay eager. Narrow, additive.
+    private static bool IsDeferrableShape(type t)
+        => t.Name is "object" or "table" && !string.IsNullOrEmpty(t.Kind);
+
+    // Emits an untouched raw-backed value verbatim into the value slot, keeping
+    // the slot valid json. Raw json (object/json) and number literals are already
+    // json — write them raw (byte-identical passthrough). Any other raw string
+    // (text, csv, xml, yaml) json-encodes as a string; raw bytes base64.
+    private static void EmitRawVerbatim(Utf8JsonWriter writer, @this data)
+    {
+        var raw = data.Raw;
+        if (raw is byte[] bytes) { writer.WriteBase64StringValue(bytes); return; }
+        if (raw is string s)
+        {
+            var t = data.Type;
+            bool isJson = (t.Name == "object" && string.Equals(t.Kind, "json", System.StringComparison.OrdinalIgnoreCase))
+                          || t.Name == "number";
+            if (isJson) writer.WriteRawValue(s);
+            else writer.WriteStringValue(s);
+            return;
+        }
+        // No raw of a known shape — fall back to null (should not happen: caller
+        // gates on RawUntouched, which requires a non-null raw).
+        writer.WriteNullValue();
     }
 
     private static Properties ReadPropertiesObject(ref Utf8JsonReader reader)
@@ -312,7 +377,8 @@ public sealed class Wire : JsonConverter<@this>
             case JsonTokenType.False: return false;
             case JsonTokenType.Number:
                 if (reader.TryGetInt64(out var l)) return l;
-                if (reader.TryGetDecimal(out var dec)) return dec;
+                // A bare decimal-point literal defaults to double (universal language
+                // convention); decimal is opt-in via `as number/decimal`.
                 return reader.GetDouble();
             case JsonTokenType.StartArray:
             {
@@ -353,12 +419,20 @@ public sealed class Wire : JsonConverter<@this>
             if (hasName && hasValue) break;
         }
 
+        // Lean: deserialize straight from the parsed element (no GetRawText
+        // string round-trip — one parse, not two). Envelope-recognition stays:
+        // recognizing our own canonical Data shape is the Wire serializer's job
+        // as a leaf, not the banned content-format sniffing (Stage 5) and not a
+        // courier reaching into .Value. A nested Data in a bare untyped slot has
+        // no type slot to drive it (no `data` type exists, and json.Writer emits
+        // a nested Data inline with a type slot only when !Type.IsNull), so this
+        // recognition is what keeps it from degrading to a dict.
         if (!(hasName && hasValue))
         {
-            return JsonSerializer.Deserialize<object?>(element.GetRawText(), options);
+            return element.Deserialize<object?>(options);
         }
 
-        return JsonSerializer.Deserialize<@this>(element.GetRawText(), options);
+        return element.Deserialize<@this>(options);
     }
 
     public override void Write(Utf8JsonWriter writer, @this data, JsonSerializerOptions options)
@@ -371,7 +445,7 @@ public sealed class Wire : JsonConverter<@this>
         // and skipping silently keeps those paths working. Production
         // discipline (Variables.Set / Channels.Register) always sets Actor
         // before any wire crossing.
-        if (!isHashOuter && data.Signature == null && data.Context?.Actor != null)
+        if (Sign && !isHashOuter && data.Signature == null && data.Context?.Actor != null)
         {
             data.EnsureSigned();
         }
@@ -379,29 +453,35 @@ public sealed class Wire : JsonConverter<@this>
         // Inner Datas in the value graph are emitted inline by json.Writer
         // (no STJ recursion), so the sign-if-missing check above only fires
         // for the outer. Walk the graph once here so every Data in scope
-        // gets sealed before any byte leaves.
-        EnsureInnerSigned(data.Value);
+        // gets sealed before any byte leaves. Skip an untouched raw-backed Data:
+        // its value is raw text/bytes (no nested Data to seal), and reading
+        // .Value would materialize it and break verbatim passthrough.
+        if (Sign && !data.RawUntouched) EnsureInnerSigned(data.Value);
 
         writer.WriteStartObject();
-        writer.WriteString("name", data.Name);
+        // The variable name is a binding label, not part of the data's identity —
+        // exclude it from the signed hash (isHashOuter) so a value verifies the
+        // same no matter which variable holds it (sign "x" → write to %a% → verify
+        // %a% must match sign's hash). The normal wire still carries the name.
+        if (!isHashOuter)
+            writer.WriteString("name", data.Name);
 
-        // type — emit as a plain JSON string (the data.@this.Type's wire form).
-        // Skipped for the Null sentinel (the type entity that replaces the
-        // historical `Type == null` state) — keeps the wire shape compact and
-        // identical to the pre-Null-type world.
+        // type — emit as the structured entity {name, kind?, strict?} via the
+        // type's own JsonConverter. ONE field carrying the full identity; the
+        // historical flat sibling-key shape (`type` string + `kind` string)
+        // is gone. Null sentinel is skipped entirely so the wire stays compact.
         if (!data.Type.IsNull)
         {
-            writer.WriteString("type", data.Type.Value);
-        }
-
-        // kind — refinement of type, separate sibling field per plang-types design.
-        // Skipped entirely when null (types with no kind, polymorphic results).
-        if (!string.IsNullOrEmpty(data.Kind))
-        {
-            writer.WriteString("kind", data.Kind);
+            writer.WritePropertyName("type");
+            JsonSerializer.Serialize(writer, data.Type, options);
         }
 
         writer.WritePropertyName("value");
+        // Verbatim passthrough: an untouched raw-backed Data (read lazily, relayed
+        // by a courier, never navigated) serializes its raw source form straight
+        // back out — no materialize, no parse-then-reserialize. The value slot
+        // must stay valid json, so raw json (object/json) and number literals emit
+        // raw; other raw strings json-encode; raw bytes base64.
         // The value slot routes through Normalize + json.Writer. Domain
         // objects emit as their filtered property bag;
         // primitives, nested Data, and lists pass through unchanged. View
@@ -411,10 +491,12 @@ public sealed class Wire : JsonConverter<@this>
         //   - View.Store — local persistence (sqlite). [Store] only,
         //     Sensitive included, Masked ignored. Round-trips local state.
         //   - View.Debug — diagnostic dump.
-        var normalizedValue = data.Normalize(View);
         var jsonWriter = new app.channel.serializer.json.Writer(writer, options, View,
             renderers: data.Context?.App?.Type.Renderers);
-        jsonWriter.Value(normalizedValue);
+        if (data.RawUntouched)
+            EmitRawVerbatim(writer, data);
+        else
+            jsonWriter.Value(data.Normalize(View));
 
         // properties — nested object, omitted when empty to keep the wire compact.
         // Sign-if-missing walks Value-graph Datas only, never Properties; the

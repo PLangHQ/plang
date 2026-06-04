@@ -375,13 +375,13 @@ public sealed class @this : IDisposable
             var lifecycle = new Lifecycle();
             var events = Events;
 
-            foreach (var b in events.GetMatchingBindings(EventType.OnBeforeGoalLoad, goalName: goal.Name))
+            foreach (var b in events.GetMatchingBindings(Trigger.OnBeforeGoalLoad, goalName: goal.Name))
                 lifecycle.Before.Add(b);
-            foreach (var b in events.GetMatchingBindings(EventType.OnAfterGoalLoad, goalName: goal.Name))
+            foreach (var b in events.GetMatchingBindings(Trigger.OnAfterGoalLoad, goalName: goal.Name))
                 lifecycle.After.Add(b);
-            foreach (var b in events.GetMatchingBindings(EventType.BeforeGoal, goalName: goal.Name))
+            foreach (var b in events.GetMatchingBindings(Trigger.BeforeGoal, goalName: goal.Name))
                 lifecycle.Before.Add(b);
-            foreach (var b in events.GetMatchingBindings(EventType.AfterGoal, goalName: goal.Name))
+            foreach (var b in events.GetMatchingBindings(Trigger.AfterGoal, goalName: goal.Name))
                 lifecycle.After.Add(b);
 
             return lifecycle;
@@ -399,13 +399,13 @@ public sealed class @this : IDisposable
             var events = Events;
             var goalName = step.Goal?.Name;
 
-            foreach (var b in events.GetMatchingBindings(EventType.OnBeforeStepLoad, goalName: goalName, stepText: step.Text))
+            foreach (var b in events.GetMatchingBindings(Trigger.OnBeforeStepLoad, goalName: goalName, stepText: step.Text))
                 lifecycle.Before.Add(b);
-            foreach (var b in events.GetMatchingBindings(EventType.OnAfterStepLoad, goalName: goalName, stepText: step.Text))
+            foreach (var b in events.GetMatchingBindings(Trigger.OnAfterStepLoad, goalName: goalName, stepText: step.Text))
                 lifecycle.After.Add(b);
-            foreach (var b in events.GetMatchingBindings(EventType.BeforeStep, goalName: goalName, stepText: step.Text))
+            foreach (var b in events.GetMatchingBindings(Trigger.BeforeStep, goalName: goalName, stepText: step.Text))
                 lifecycle.Before.Add(b);
-            foreach (var b in events.GetMatchingBindings(EventType.AfterStep, goalName: goalName, stepText: step.Text))
+            foreach (var b in events.GetMatchingBindings(Trigger.AfterStep, goalName: goalName, stepText: step.Text))
                 lifecycle.After.Add(b);
 
             return lifecycle;
@@ -422,9 +422,9 @@ public sealed class @this : IDisposable
             var lifecycle = new Lifecycle();
             var events = Events;
 
-            foreach (var b in events.GetMatchingBindings(EventType.BeforeAction, module: action.Module, actionName: action.ActionName))
+            foreach (var b in events.GetMatchingBindings(Trigger.BeforeAction, module: action.Module, actionName: action.ActionName))
                 lifecycle.Before.Add(b);
-            foreach (var b in events.GetMatchingBindings(EventType.AfterAction, module: action.Module, actionName: action.ActionName))
+            foreach (var b in events.GetMatchingBindings(Trigger.AfterAction, module: action.Module, actionName: action.ActionName))
                 lifecycle.After.Add(b);
 
             return lifecycle;
@@ -441,10 +441,10 @@ public sealed class @this : IDisposable
         var events = Events;
         var (beforeType, afterType) = owner switch
         {
-            Action action => (EventType.BeforeAction, EventType.AfterAction),
-            Step step => (EventType.BeforeStep, EventType.AfterStep),
-            Goal goal => (EventType.BeforeGoal, EventType.AfterGoal),
-            _ => (EventType.BeforeStep, EventType.AfterStep) // fallback
+            Action action => (Trigger.BeforeAction, Trigger.AfterAction),
+            Step step => (Trigger.BeforeStep, Trigger.AfterStep),
+            Goal goal => (Trigger.BeforeGoal, Trigger.AfterGoal),
+            _ => (Trigger.BeforeStep, Trigger.AfterStep) // fallback
         };
 
         var eventType = phase == module.EventPhase.Before ? beforeType : afterType;

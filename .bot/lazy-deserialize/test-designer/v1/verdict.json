@@ -1,0 +1,1 @@
+{"verdict": "PASS", "version": "v1.2", "cs_files": 35, "cs_tests": 183, "goal_files": 10, "build": "clean", "warnings_introduced": 0, "rebased_onto": "Converter resolution (mid-graph) per architect test-designer-sync.md"}

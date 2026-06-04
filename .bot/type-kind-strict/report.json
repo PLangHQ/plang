@@ -1,0 +1,1028 @@
+{
+  "branch": "type-kind-strict",
+  "sessions": [
+    {
+      "id": "4bb00ef3-1dd1-4a3d-8396-43cfb77a81ef",
+      "bot": "architect",
+      "timestamp_start": "2026-05-30T11:42:40+00:00",
+      "timestamp_end": "2026-05-30T11:55:00+00:00",
+      "intent": "Design the structured type value {name, kind, strict}, the text type, build-time kind derivation + strict validation, and the restructured LLM type representation.",
+      "before": {
+        "assumptions": "The plang-types merge already added app.data.type (a flat string wrapper), Data.Kind (separate field stamped at build via the Build(value) hook), number (advertises kinds int|long|decimal|double), image (kind extension-derived), the formats registry, and the catalog TypeSchemas renderer with (kinds: ...). variable.set.Type is a bare string?; 'as text' is taught purely as prose in the action's Notes. The type vocabulary reaches the LLM in three disagreeing places: a hardcoded list in the Compile.llm system prompt, a flat 'Primitive types:' line repeated per step, and a scoped catalog block.",
+        "risk": "Folding Data.Kind into type, dropping string in favour of text globally, and moving int/long/... under number all change the wire/.pr shape and the catalog the LLM sees. Broad blast radius across builder prompts, tests asserting type=='string', and the formats registry's 'kind'-means-family naming. Mitigated by routing through the existing ValidateBuild + NormalizeParameterTypes seams rather than new passes."
+      },
+      "plan": ".bot/type-kind-strict/architect/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/modules/variable/set.cs",
+            "PLang/app/types/number/this.cs",
+            "PLang/app/types/image/this.cs",
+            "PLang/app/types/primitives/this.cs",
+            "PLang/app/formats/this.cs",
+            "PLang/app/builder/Types/this.cs",
+            "PLang/app/builder/Types/Entry.cs",
+            "PLang/app/modules/builder/code/Default.cs",
+            "os/system/builder/llm/Compile.llm",
+            "os/system/builder/llm/CompileUser.llm",
+            "os/system/builder/BuildStep/Start.goal"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read the type system end-to-end and captured a fresh compile trace (Tests/Simple, --build cache:false) to ground the design in the actual prompt the LLM receives rather than assumptions. Confirmed: number already advertises kinds, image's kind is extension-derived, variable.set.Type is a bare string with 'as text' taught only in prose, and the type vocabulary reaches the LLM in three disagreeing surfaces. Reverted the build churn (start.test.pr) and removed the scratch trace dir."
+        },
+        {
+          "paths": [
+            ".bot/type-kind-strict/architect/plan.md",
+            ".bot/type-kind-strict/architect/plan/type-value-model.md",
+            ".bot/type-kind-strict/architect/plan/kind-derivation-and-validation.md",
+            ".bot/type-kind-strict/architect/plan/llm-type-representation.md",
+            ".bot/type-kind-strict/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote the spine (plan.md) and three topic deep-dives (type value model, kind derivation/validation, LLM type representation). Stage files were drafted then removed at Ingi's request \u2014 he wants to comment on the design before the implementation stages are carved; the sequence is sketched in plan.md and becomes stage-N-*.md after review."
+        },
+        {
+          "paths": [
+            ".bot/type-kind-strict/architect/plan.md",
+            ".bot/type-kind-strict/architect/plan/type-value-model.md",
+            ".bot/type-kind-strict/architect/plan/kind-derivation-and-validation.md",
+            ".bot/type-kind-strict/architect/plan/llm-type-representation.md",
+            ".bot/type-kind-strict/architect/plan/test-coverage.md",
+            ".bot/type-kind-strict/architect/plan/test-strategy.md",
+            ".bot/type-kind-strict/architect/stage-1-type-value-model.md",
+            ".bot/type-kind-strict/architect/stage-2-text-type-and-names.md",
+            ".bot/type-kind-strict/architect/stage-3-kind-derivation.md",
+            ".bot/type-kind-strict/architect/stage-4-set-and-strict.md",
+            ".bot/type-kind-strict/architect/stage-5-llm-representation.md",
+            ".bot/type-kind-strict/architect/summary.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Merged latest runtime2 (d96ec269f) into the branch (clean, .bot-only) and rebased the entire plan onto the singular-namespaces world. The merge promoted the type descriptor to an entity (app.type.@this) that absorbed the catalog \u2014 so the descriptor\u2194catalog unification the plan reached for is already done. Reconciled all paths/namespaces (types\u2192type, formats\u2192format, modules\u2192module, variables\u2192variable), reframed Stage 1 around the promoted entity, adjusted Stage 5 for the folded catalog + app.builder.type renderer, and resolved the now three-way kind-naming knot (name=family, kind=subtype, Kinds=vocabulary, dispatcher\u2192KindHooks). Design substance unchanged; all five stages still needed."
+        }
+      ],
+      "after": {
+        "status": "Design approved; plan rebased onto latest runtime2 (singular-namespaces + type-entity promotion). Five stages + test prep all reconciled to the new paths/structure. Nothing built; ready for test-designer / coder.",
+        "health": "green",
+        "notes": "Branch now descends from runtime2 d96ec269f via merge 67792cf00. The type descriptor is now the promoted entity app.type.@this (folded catalog); the plan adds Name/Kind/Strict + folds Data.Kind + resolves the three-way kind-naming knot. Numerics resolved as {number, kind} per Ingi."
+      }
+    },
+    {
+      "id": "db1b76a7-d3a6-48be-95f2-efaa5861a8b1",
+      "bot": "test-designer",
+      "timestamp_start": "2026-05-30T13:00:00Z",
+      "timestamp_end": "2026-05-30T16:13:39Z",
+      "intent": "Translate the architect's 5-stage type-kind-strict plan into failing-test contracts: C# TUnit + PLang .test.goal signatures covering the structured type value model (Name/Kind/Strict + Data.Kind fold + IKindValidatable marker + ClrType reroute), the text type, kind canonicalisation, image byte-sniff, variable.set strict ValidateBuild + Run, LLM representation, and three integration cuts. Add 16 rows beyond the architect's matrix (case insensitivity, null-safety, soft-degradation contracts, build/runtime convergence).",
+      "before": {
+        "assumptions": "Architect plan complete on rebased-onto-singular-namespaces base (plan.md + 5 stage files + 4 deep dives + test-strategy + test-coverage). The type entity already exists at app.type.@this with the folded catalog (plang-types/singular-namespaces work); current state has type.Value (renaming to Name), a stored Data.Kind (folding to Type.Kind), public ClrType (going non-public), App.Type.Kinds dispatcher (renaming KindHooks), no IKindValidatable, no text type, no Strict, primitive.Canonical[string]==\"string\" and BuilderNames includes string+int+long+decimal+double. TUnit convention: Assert.Fail(\"Not implemented\") + await Task.CompletedTask. PLang convention: Start goal + - throw \"not implemented\" + comments as spec.",
+        "risk": "Coverage gaps if I only translate the architect's coverage matrix. The architect listed ~50 rows; many are surface confirmations. Real risk lies in: case-insensitivity at the factory/parser boundary, null-safety on the new text.Build hook, the Data.Kind setter contract (must pin one behaviour to avoid silent no-op), legacy .pr.json backward-compat, strict-without-a-kind soft-degradation, build/runtime convergence on numeric inference, negative-presence on IKindValidatable for number, and a sibling Cut-3 assertion that the constructor teaching for `type(name, kind?, strict?)` reaches the LLM."
+      },
+      "plan": ".bot/type-kind-strict/test-designer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/type-kind-strict/architect/plan.md",
+            ".bot/type-kind-strict/architect/summary.md",
+            ".bot/type-kind-strict/architect/stage-1-type-value-model.md",
+            ".bot/type-kind-strict/architect/stage-2-text-type-and-names.md",
+            ".bot/type-kind-strict/architect/stage-3-kind-derivation.md",
+            ".bot/type-kind-strict/architect/stage-4-set-and-strict.md",
+            ".bot/type-kind-strict/architect/stage-5-llm-representation.md",
+            ".bot/type-kind-strict/architect/plan/test-strategy.md",
+            ".bot/type-kind-strict/architect/plan/test-coverage.md",
+            "PLang/app/type/this.cs",
+            "PLang/app/data/this.cs",
+            "PLang/app/data/Wire.cs",
+            "PLang/app/type/primitive/this.cs",
+            "PLang/app/type/number/this.cs",
+            "PLang/app/type/number/this.Build.cs",
+            "PLang/app/type/image/this.cs",
+            "PLang/app/type/image/this.Build.cs",
+            "PLang/app/type/kind/this.cs",
+            "PLang/app/format/list/this.cs",
+            "PLang/app/module/variable/set.cs",
+            "PLang/app/type/list/this.cs",
+            "PLang/app/data/IBooleanResolvable.cs",
+            "PLang/app/builder/type/this.cs",
+            "PLang.Tests/GlobalUsings.cs",
+            "PLang.Tests/App/Types/KindFieldTests.cs",
+            "Tests/Types/SetDecimalLiteralStampsKind.test.goal"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mapped the architect's 5-stage plan against current code surfaces via Explore subagent. Confirmed: type.Value (renaming Name), type.Kind exists today as family-derived (going away), stored Data.Kind (folding), public ClrType (going non-public), App.Type.Kinds dispatcher (renaming KindHooks), App.Format.KindOf (renaming FamilyOf), no IKindValidatable yet, no text type yet, no Strict yet, primitive.Canonical[string]==string + BuilderNames includes numerics. Sampled existing KindFieldTests.cs for the wire-test convention (System.Text.Json options accessed via reflection on plang serializer's _outbound). Confirmed TUnit + PLang test placement convention (PLang.Tests/App/<Topic>Tests/ and Tests/<Topic>/)."
+        },
+        {
+          "paths": [
+            ".bot/type-kind-strict/test-designer/v1/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote the test-designer plan: 8 batches (TypeValueModelTests, TextTypeTests, PrimitiveTableTests, KindDerivationTests, SetAndStrictTests, LlmRepresentationTests, Tests/TypeKindStrict/ goals, IntegrationCutsTests). Listed 16 independent additions beyond the architect's matrix with reasons. Flagged 3 open items where one contract is pinned and either alternative is acceptable: Data.Kind setter behaviour, empty-Name rejection, strict-without-a-kind degradation."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/TypeFactoryTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/TypeEntityShapeTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/DataKindFoldTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/WireKindShapeTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/IKindValidatableMarkerTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/ClrTypeRerouteTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/DispatcherRenameTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TextTypeTests/TextBuildHookTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TextTypeTests/TextTypeShapeTests.cs",
+            "PLang.Tests/App/TypeKindStrict/PrimitiveTableTests/PrimitiveTableTests.cs",
+            "PLang.Tests/App/TypeKindStrict/KindDerivationTests/NumberBuildHookTests.cs",
+            "PLang.Tests/App/TypeKindStrict/KindDerivationTests/KindCanonicalisationTests.cs",
+            "PLang.Tests/App/TypeKindStrict/KindDerivationTests/ImageValidateKindTests.cs",
+            "PLang.Tests/App/TypeKindStrict/KindDerivationTests/FamilyOfRenameTests.cs",
+            "PLang.Tests/App/TypeKindStrict/KindDerivationTests/NumericInferenceTests.cs",
+            "PLang.Tests/App/TypeKindStrict/SetAndStrictTests/VariableSetTypeParamTests.cs",
+            "PLang.Tests/App/TypeKindStrict/SetAndStrictTests/StrictValidateBuildTests.cs",
+            "PLang.Tests/App/TypeKindStrict/SetAndStrictTests/StrictRunTests.cs",
+            "PLang.Tests/App/TypeKindStrict/SetAndStrictTests/SetMintCarriesKindTests.cs",
+            "PLang.Tests/App/TypeKindStrict/LlmRepresentationTests/TypeSchemasRendererTests.cs",
+            "PLang.Tests/App/TypeKindStrict/LlmRepresentationTests/BuilderNamesTests.cs",
+            "PLang.Tests/App/TypeKindStrict/IntegrationCutsTests/Cut1_TypedSetRoundTripsKind.cs",
+            "PLang.Tests/App/TypeKindStrict/IntegrationCutsTests/Cut2_StrictMismatchFailsAtRightLayer.cs",
+            "PLang.Tests/App/TypeKindStrict/IntegrationCutsTests/Cut3_LlmSeesOneUnifiedVocabulary.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Wrote 24 C# TUnit test files / 107 test signatures. Bodies are Assert.Fail(\"Not implemented\") + await Task.CompletedTask; names + comments are the contract. dotnet build PLang.Tests is green (0 errors, 347 pre-existing warnings). Comments are contract-focused \u2014 no stage references, no timeline pointers, per the no-stage-or-task-refs-in-comments feedback rule."
+        },
+        {
+          "paths": [
+            "Tests/TypeKindStrict/SetIntLiteralIsNumberInt.test.goal",
+            "Tests/TypeKindStrict/SetAsTextWithMdExtension.test.goal",
+            "Tests/TypeKindStrict/SetAsTextSlashMarkdownNormalises.test.goal",
+            "Tests/TypeKindStrict/SetAsImageGifStrictMatching.test.goal",
+            "Tests/TypeKindStrict/SetAsImageGifStrictMismatch.test.goal",
+            "Tests/TypeKindStrict/SetAsImageGifStrictRuntimeVarMismatch.test.goal",
+            "Tests/TypeKindStrict/SetAsTextSlashMarkdownStrictUnverifiable.test.goal",
+            "Tests/TypeKindStrict/SetAsTextDefaultNoValidation.test.goal",
+            "Tests/TypeKindStrict/SetAsTextUppercase.test.goal",
+            "Tests/TypeKindStrict/SetAsImageStrictNoKind.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Wrote 10 PLang .test.goal files covering the developer-facing surfaces: `as text` with extension-derived kind, `as text/markdown` slash-form, strict matching/mismatching for image, strict unverifiable for text, case-insensitivity (TEXT), strict-without-a-kind soft degradation, bare numeric literal binding to {number, int}. Strict + image mismatch tests need real.gif and photo.png fixtures the coder generates at implementation."
+        },
+        {
+          "paths": [
+            ".bot/type-kind-strict/test-designer/summary.md",
+            ".bot/type-kind-strict/test-designer/v1/verdict.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote summary.md + verdict.json. Verdict PASS: 24 C# files / 107 tests + 10 PLang goals on disk, build green, 0 introduced warnings. Coder is unblocked to start stage 1."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "summary_path": ".bot/type-kind-strict/test-designer/summary.md",
+        "verdict_path": ".bot/type-kind-strict/test-designer/v1/verdict.json",
+        "build_status": "dotnet build PLang.Tests \u2014 0 errors, 347 pre-existing warnings (none introduced)",
+        "test_files_csharp": 24,
+        "test_signatures_csharp": 107,
+        "test_files_plang": 10,
+        "ready_for": "coder"
+      }
+    },
+    {
+      "id": "c0de1001-stage1-name-kind-strict-fold",
+      "bot": "coder",
+      "timestamp_start": "2026-05-30T16:30:00Z",
+      "timestamp_end": "2026-05-30T18:15:00Z",
+      "intent": "Stage 1 only \u2014 give app.type.@this {Name,Kind,Strict}; fold Data.Kind into Type.Kind; rename App.Type.Kinds\u2192KindHooks; internalise ClrType; add IKindValidatable marker. Leave Stage 2\u20135 stubs failing as planned.",
+      "before": {
+        "assumptions": "Baseline: 3696 pre-existing C# tests pass, 107 new TypeKindStrict stubs fail with Assert.Fail. PLang: 253 pass, 0 fail, 10 stale (Stage 4+ goals). Stage order strict per architect/test-designer.",
+        "risk": "Value\u2192Name rename has ~16 caller sites (manageable). Data.Kind fold may affect wire serialization tests if the converter is anywhere outside Wire.cs. App.Type.Kinds rename hits the dispatcher's existing callers."
+      },
+      "plan": ".bot/type-kind-strict/coder/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/type/this.cs",
+            "PLang/app/data/this.cs",
+            "PLang/app/data/Wire.cs",
+            "PLang/app/data/IKindValidatable.cs",
+            "PLang/app/data/this.Transport.cs",
+            "PLang/app/type/list/this.cs",
+            "PLang/app/type/image/this.cs",
+            "PLang/app/module/builder/code/Default.cs",
+            "PLang/app/module/builder/validateResponse.cs",
+            "PLang/app/module/variable/set.cs",
+            "PLang/app/module/settings/Sqlite.cs",
+            "PLang/app/module/file/read.cs",
+            "PLang/app/module/goal/getTypes.cs",
+            "PLang/app/module/llm/code/OpenAi.cs",
+            "PLang/app/module/signing/code/Ed25519.cs",
+            "PLang/app/module/signing/Signature.cs",
+            "PLang/app/module/debug/this.cs",
+            "PLang/app/error/Error.cs",
+            "PLang/app/channel/serializer/json/writer.cs",
+            "PLang/app/builder/type/this.cs",
+            "PLang/app/data/Json.cs",
+            "PLang.Generators/Emission/Property/Data/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage 1 spine: type.@this gains Name/Kind/Strict and a normalising factory; Data.Kind folds to Type.Kind (stored field deleted); Wire reads/writes kind via the entity; App.Type.Kinds renamed KindHooks; public ClrType internalised; IKindValidatable marker added (image implements with stub body, text/number do not). Family-Kind accessor removed; consumers (Wrap, Compressible, DataTests, EngineTypesTests) updated to call App.Format.KindOf(Name) directly. Value\u2192Name fan-out across ~25 files (sed + manual fixups for Default.cs's t.Values that the regex over-matched). Generator's PrType emission updated to use Name."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/TypeFactoryTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/TypeEntityShapeTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/DataKindFoldTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/WireKindShapeTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/IKindValidatableMarkerTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/ClrTypeRerouteTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TypeValueModelTests/DispatcherRenameTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Replaced Assert.Fail('Not implemented') with real bodies for all 28 Stage 1 contract tests. Comments pin the contract per test-designer's intent; no stage references in source."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/DataTests/DataTests.cs",
+            "PLang.Tests/App/Types/EngineTypesTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Updated pre-existing tests that asserted the OLD family-Kind accessor on type.@this. Family resolution is now an explicit App.Format.KindOf(Name) call; the tests' intent (Context propagation, Compressible, custom-type lazy derivation) is preserved against the new shape."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/DataTests/TypeInfoTests.cs",
+            "PLang.Tests/App/Types/TypedPropertyCatalogTests.cs",
+            "PLang.Tests/App/Modules/builder/ComplexTypeDiscoveryTests.cs",
+            "PLang.Tests/App/Modules/Schema/SchemaTests.cs",
+            "PLang.Tests/App/SingularNamespaces/AccessorTests/TypeAccessorTests.cs",
+            "PLang.Tests/App/Serialization/IntegrationCuts/PlangTypesCut3_CompositionNavigationTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Mechanical Value\u2192Name rename across test files that touched the type entity's name property."
+        }
+      ],
+      "after": {
+        "status": "PASS \u2014 Stage 1 complete. C# 3732/3803 (was 3696/3803); +36 tests passing. 71 remaining failures = Stage 2\u20135 stubs deferred to future versions. PLang unchanged: 253/253 + 10 stale (Stage 2+/4 stubs).",
+        "health": "green",
+        "notes": "All 28 Stage 1 contract tests green. Ready for Stage 2 (text type + numerics under number) or codeanalyzer review."
+      }
+    },
+    {
+      "id": "18551ed0-5143-4c41-8e89-69b84cad4a2a",
+      "bot": "architect",
+      "timestamp_start": "2026-05-30T19:30:00Z",
+      "timestamp_end": "2026-05-30T20:35:00Z",
+      "intent": "Find the producers gap (file.read/http stamp muddy MIME, no kind) and carve stages 6-7 (structured type at producers + the hash type).",
+      "before": {
+        "assumptions": "Stages 1-5 (model + variable.set consumer) landed and wire unified to one structured type field. Open question from Ingi: scan codebase for string-returning methods and change to text; how is kind set on file.read.",
+        "risk": "Treating string->text as a codebase-wide return-type scan would be wrong scope; the real gap is unmigrated producers."
+      },
+      "plan": ".bot/type-kind-strict/architect/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/type/path/file/this.Operations.cs",
+            "PLang/app/module/file/read.cs",
+            "PLang/app/type/this.cs",
+            "PLang/app/type/primitive/this.cs",
+            "PLang/app/data/this.cs",
+            "PLang/app/module/http/HttpBuildHelpers.cs",
+            "PLang/app/module/http/request.cs",
+            "PLang/app/module/crypto/code/Default.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Traced the read path. Confirmed string->text is one boundary (Canonical[typeof(string)] now text); Data.Type getter auto-derives name + numeric kind. file.read ReadText stamps FromMime (full MIME, no kind, bypasses Create); Build() stamps bare extension; the two disagree. http identical. crypto.hash stamps FromName(algorithm) on bytes."
+        },
+        {
+          "paths": [
+            "Documentation/Runtime2/todos.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Captured lazy structured-parse-on-file-read todo; scoped (per Ingi) to every non-string conversion in ReadText, not just JSON."
+        },
+        {
+          "paths": [
+            ".bot/type-kind-strict/architect/stage-6-structured-type-producers.md",
+            ".bot/type-kind-strict/architect/stage-7-hash-type.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "medium",
+          "context": "Stage 6: one shared (extension|mime)->type{name,kind} derivation, migrate file.read + http, lazy materialization. Stage 7: hash type with algorithm-as-kind, crypto.verify reads kind. Split because two mechanisms (extension-derived vs advertised kind). hash name chosen over checksum."
+        },
+        {
+          "paths": [
+            ".bot/type-kind-strict/architect/plan.md",
+            ".bot/type-kind-strict/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added stages 6-7 to the stage index with a superseded-wire note; new summary entry at top with stage status."
+        }
+      ],
+      "after": {
+        "status": "Stages 6-7 written and confirmed (hash name settled; supported-type-list deliverable added to stage 7). Handing stage 6 to coder.",
+        "health": "green",
+        "notes": "Stages 1-5 complete via coder v1-v5. 6/7 split accepted."
+      }
+    },
+    {
+      "id": "8b38c0bb-0cdf-43b8-815b-0e67f1ce0b6d",
+      "bot": "coder",
+      "timestamp_start": "2026-05-30T22:30:00",
+      "timestamp_end": "2026-05-31T13:30:00Z",
+      "intent": "Ship Stages 6 & 7: hash type (algorithm-as-kind) + structured {name,kind} at the file/http producers via one shared derivation.",
+      "before": {
+        "assumptions": "Stage 7 already committed (62a23c4e7); Stage 6 producer migration was in-progress (file.read + path done, http pending).",
+        "risk": "Producer return-shape change (bare string -> type entity) breaks pre-existing build/runtime tests that asserted the old bare-extension contract."
+      },
+      "plan": ".bot/type-kind-strict/coder/v6/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/module/http/HttpBuildHelpers.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "InferTypeFromUrl now calls Format.TypeFromExtension (shared derivation) instead of returning the bare extension string -> closes the build-side http drift."
+        },
+        {
+          "paths": [
+            "PLang/app/module/http/code/Default.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Tried an image value-lift on response bodies; reverted as scope creep (breaks explicit byte[] body contract; wrapper has no typed-Data seam). Runtime body stamp deferred."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/TypedReturnsTests/Stage4_BuildMethodImplsTests.cs",
+            "PLang.Tests/App/TypedReturnsTests/Stage0_BuildMethodTests.cs",
+            "PLang.Tests/App/TypedReturnsTests/Stage4_TypeHintPrecedenceTests.cs",
+            "PLang.Tests/App/Modules/file/FileHandlerTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Updated 11 pre-existing tests from the bare-string producer contract to the structured {name,kind} entity. .pdf test flipped from bail-out to {object,pdf} (anti-drift decision)."
+        },
+        {
+          "paths": [
+            "PLang/app/module/file/read.cs",
+            "PLang/app/type/path/file/this.Operations.cs",
+            "PLang/app/format/list/this.cs",
+            "PLang/app/module/builder/code/Default.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage 6 producer migration carried over from prior session: shared TypeFromMime/TypeFromExtension seam; file.read Build+Run; builder stamps the entity on the terminal variable.set."
+        },
+        {
+          "paths": [
+            ".bot/type-kind-strict/architect/plan/build-time-type-flow.md",
+            ".bot/type-kind-strict/architect/stage-8-type-flow-and-vocabulary.md",
+            ".bot/type-kind-strict/architect/plan.md",
+            ".bot/type-kind-strict/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Settled the build-time type-flow model with Ingi (spine: runtime is cross-step memory, LLM compiles each step independently; two fundamental categories inline-vs-reference; four rules incl. kind-only-from-as-or-producing-Build and bare-literal->text-no-kind). Wrote the model topic doc + stage 8 mapping divergences: variable.set literal rule, CompileUser.llm teaching, per-step prompt scoping (subsumes stage 7 emit-table fix), define fundamental vocabulary with image/video/audio/path first-class."
+        },
+        {
+          "paths": [
+            ".bot/type-kind-strict/architect/stage-9-lazy-reference-handles.md",
+            ".bot/type-kind-strict/architect/plan/build-time-type-flow.md",
+            ".bot/type-kind-strict/architect/plan.md",
+            ".bot/type-kind-strict/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 9 (with Ingi): reference fundamentals are lazy path-handles at runtime. set %x%=\"file.jpg\" as image mints an image with .Path set, no read; content loads from path on first access. Divergences: image ctor requires bytes (needs path-backed lazy); variable.set mints Data<string> carve-out instead of a path-handle image. Flagged the async wrinkle (lazy load is async I/O through auth gate; Bytes/Width/Height sync getters need async content surface). Mutation/save parked per Ingi."
+        }
+      ],
+      "after": {
+        "status": "Stages 6 clean; 7 rev2, 8, 9 defined and pending coder. Stage 9 unpushed.",
+        "health": "green",
+        "notes": "Model in plan/build-time-type-flow.md. Nothing pushed (Ingi holding)."
+      }
+    },
+    {
+      "id": "7e5d3ec1-95c1-4170-92da-17d55becc807",
+      "bot": "coder",
+      "timestamp_start": "2026-05-31T00:00:00Z",
+      "timestamp_end": "2026-05-31T00:00:00Z",
+      "intent": "Implement stage 7 rev 2 (hash crypto-owned, returned as value), stage 8 (build-time type flow + fundamentals), stage 9 (lazy path-handles).",
+      "before": {
+        "assumptions": "Stages 1-6 + stage 7 rev 1 committed and green. Rev 2 reworks rev 1 (return Data<hash.@this>); stage 8 scopes the builder prompt to fundamentals; stage 9 makes reference fundamentals lazy path-handles.",
+        "risk": "Changing crypto.hash's return type ripples through every crypto/signing test asserting byte[]. Scoping the prompt Kinds table changes the builder catalog (golden tests). text-no-kind reverses existing as-text tests."
+      },
+      "plan": ".bot/type-kind-strict/coder/v7/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/module/crypto/type/hash/this.cs",
+            "PLang/app/module/crypto/type/hash/serializer/Default.cs",
+            "PLang/app/module/crypto/code/Default.cs",
+            "PLang/app/module/crypto/code/ICrypto.cs",
+            "PLang/app/module/crypto/hash.cs",
+            "PLang/app/module/crypto/verify.cs",
+            "PLang/app/module/signing/Signature.cs",
+            "PLang/app/module/signing/code/Ed25519.cs",
+            "PLang/app/type/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage 7 rev 2: relocate hash type, crypto.hash returns Data<hash.@this>, untyped verify Hash param, FromWire wire read-back, signing round-trips a hash value."
+        },
+        {
+          "paths": [
+            "PLang/app/type/primitive/this.cs",
+            "PLang/app/builder/type/this.cs",
+            "PLang/app/module/variable/set.cs",
+            "os/system/builder/llm/CompileUser.llm"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage 8: fundamental vocabulary (two categories), prompt Kinds scoped to fundamentals (hash excluded), text never derives kind from a literal, dropped spelling-promotion teaching."
+        },
+        {
+          "paths": [
+            "PLang/app/type/image/this.cs",
+            "PLang/app/type/list/Conversion.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage 9: image path-backed lazy ctor + BytesAsync through auth gate; general TryConvertTo path-string->reference-fundamental arm replacing the Data<string> carve-out."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/TypeKindStrict/HashTypeTests.cs",
+            "PLang.Tests/App/Modules/crypto/DefaultProviderTests.cs",
+            "PLang.Tests/App/Modules/crypto/HashActionTests.cs",
+            "PLang.Tests/App/Modules/crypto/ProviderRegistryTests.cs",
+            "PLang.Tests/App/Modules/crypto/ProviderResolutionTests.cs",
+            "PLang.Tests/App/Modules/signing/Ed25519 tests",
+            "PLang.Tests/App/Serialization/CanonicalizationTests.cs",
+            "PLang.Tests/App/TypeKindStrict/LlmRepresentationTests/BuilderNamesTests.cs",
+            "PLang.Tests/App/TypeKindStrict/IntegrationCutsTests/Cut1_TypedSetRoundTripsKind.cs",
+            "PLang.Tests/App/TypeKindStrict/SetAndStrictTests/SetMintCarriesKindTests.cs",
+            "PLang.Tests/App/TypeKindStrict/SetAndStrictTests/StrictRunTests.cs",
+            "PLang.Tests/App/SingularNamespaces/BuilderSchemaTests/BuilderSchemaGoldenTests.cs",
+            "PLang.Tests/App/TypeKindStrict/ReferenceFundamentalTests/LazyPathHandleTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Repointed crypto/signing tests to read the hash value; updated as-text tests to no-kind contract; new lazy-path-handle tests. C# 3818/3818."
+        }
+      ],
+      "after": {
+        "status": "stages 7 rev 2, 8, 9 complete; all committed and pushed",
+        "health": "C# suite 3818/3818 green",
+        "notes": "PLang --test not re-run this session (user deferred). Recommended next: clean rebuild + plang --test, then builder bot for the CompileUser.llm teaching + fundamental-vocabulary prompt changes."
+      }
+    },
+    {
+      "id": "codeanalyzer-v1-type-kind-strict",
+      "bot": "codeanalyzer",
+      "timestamp_end": "2026-05-31T00:00:00Z",
+      "verdict": "fail",
+      "next": "coder",
+      "intent": "Review coder v1-v7 (type-system reshape, stages 1-9): {Name,Kind,Strict} entity + Data.Kind fold, strict kind validation, hash-type relocation + signing, lazy path-backed reference fundamentals, LLM vocabulary scoping.",
+      "plan": ".bot/type-kind-strict/codeanalyzer/v1/report.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/module/variable/set.cs",
+            "PLang/app/type/image/this.cs",
+            "PLang/app/data/IKindValidatable.cs",
+            "Tests/TypeKindStrict/SetAsImageGifStrictMismatch.test.goal",
+            "Tests/TypeKindStrict/SetAsImageGifStrictRuntimeVarMismatch.test.goal"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1 (MAJOR, blocking): strict kind enforcement no-ops for path-literal and read-lifted image.@this values (TryInstantiateValidator/ValidateKind only handle byte[]); the two mismatch .test.goal files pass while asserting nothing. C# Cut2 tests pass only on the raw-byte[] path. Verdict FAIL -> coder."
+        },
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/type/this.cs",
+            "PLang/app/type/text/this.Build.cs",
+            "PLang/app/format/list/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F2 (medium): kind double-written on wire (type entity + Data.Kind sibling). F3-F5 minor: type.Scheme null-deref, text-kind gate at call site, dead CanonicaliseKind fast-path. Build clean, C# 3818/3818, PLang 263/263 on rebuilt-clean binary."
+        }
+      ]
+    },
+    {
+      "id": "9542baaa-007f-4e87-a7f9-084f6111ea2f",
+      "bot": "coder",
+      "timestamp_start": "2026-05-31T18:00:00Z",
+      "timestamp_end": "2026-05-31T20:00:00Z",
+      "intent": "Address codeanalyzer v1 findings F1-F5 (F1 blocking: strict kind must validate at byte-materialization).",
+      "before": {
+        "assumptions": "v7 green but strict as-image enforced nothing for path-literal and read-lift shapes; Ingi ruled validate-at-byte-load.",
+        "risk": "Strict enforcement spans set (loaded) and BytesAsync (lazy); image must carry its requirement; PLang goals encode the old contract."
+      },
+      "plan": ".bot/type-kind-strict/coder/v8/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/data/IStrictKindEnforcer.cs",
+            "PLang/app/type/image/this.cs",
+            "PLang/app/module/variable/set.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1: value-side IStrictKindEnforcer; image imprints+self-validates (set for loaded, BytesAsync throw for lazy); ValidateKind reads image.@this; set.cs drives generically."
+        },
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/type/this.cs",
+            "PLang/app/type/text/this.Build.cs",
+            "PLang/app/type/primitive/this.cs",
+            "PLang/app/format/list/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "F2 drop flat kind wire sibling; F3 Scheme null-guard; F4 delete text.Build + remove gate; F5 dead fast-path + wrapper."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/TypeKindStrict/IntegrationCutsTests/Cut2_StrictMismatchFailsAtRightLayer.cs",
+            "PLang.Tests/App/TypeKindStrict/ReferenceFundamentalTests/LazyPathHandleTests.cs",
+            "PLang.Tests/App/TypeKindStrict/TextTypeTests/TextBuildHookTests.cs",
+            "Tests/TypeKindStrict/SetAsImageGifStrictMismatch.test.goal",
+            "Tests/TypeKindStrict/SetAsImageGifStrictRuntimeVarMismatch.test.goal"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "C# read-lift-fails-at-set + BytesAsync-throws-at-load; deleted TextBuildHookTests; PLang strict goals to lazy contract (Mismatch clean-at-set; RuntimeVarMismatch deleted)."
+        }
+      ],
+      "after": {
+        "status": "F1-F5 addressed",
+        "health": "C# 3815/3815, PLang 262/262 (0 fail, 0 stale)",
+        "notes": "Re-run codeanalyzer; on PASS chain is codeanalyzer -> tester."
+      }
+    },
+    {
+      "id": "codeanalyzer-v2-type-kind-strict",
+      "bot": "codeanalyzer",
+      "timestamp_end": "2026-05-31T00:00:00Z",
+      "verdict": "pass",
+      "next": "tester",
+      "intent": "Re-review coder v8's response to the v1 FAIL (F1 blocking + F2-F5): strict kind enforcement via IStrictKindEnforcer, Data.Kind wire de-dup, Scheme null-guard, text.Build deletion, dead-code removal.",
+      "plan": ".bot/type-kind-strict/codeanalyzer/v2/report.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/data/IStrictKindEnforcer.cs",
+            "PLang/app/type/image/this.cs",
+            "PLang/app/module/variable/set.cs",
+            "PLang.Tests/App/TypeKindStrict/IntegrationCutsTests/Cut2_StrictMismatchFailsAtRightLayer.cs",
+            "PLang.Tests/App/TypeKindStrict/ReferenceFundamentalTests/LazyPathHandleTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1 fixed correctly: read-lift/loaded image fails at set, lazy path-backed throws at BytesAsync load, ValidateKind reads image instances, imprint survives Variables.Set (by-reference). Mutation-verified non-vacuous (forced CheckStrictKind always-pass -> both new tests fail -> revert -> pass; git clean). F2-F5 clean. Build clean, C# 3815/3815, PLang 262/262. PASS -> tester. Three minor non-blocking residuals."
+        }
+      ]
+    },
+    {
+      "id": "63147875-e47f-4e82-9a27-4f2067646ad4",
+      "bot": "tester",
+      "timestamp_start": "2026-05-31T20:18:17.028575+00:00",
+      "timestamp_end": "2026-05-31T20:20:16.267788+00:00",
+      "intent": "Validate coder v8 test honesty + suite reproducibility on type-kind-strict.",
+      "before": {
+        "assumptions": "coder v8 + codeanalyzer v2 both report C# 3815/3815, PLang 262/262 (0 fail). F1 strict-kind is the review-driven high-risk area.",
+        "risk": "F1 false-greens (the v1 failure mode); stale PLang fixtures masking real behavior."
+      },
+      "plan": ".bot/type-kind-strict/tester/v8/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild + dotnet run PLang.Tests = 3815/3815. Deterministic; immune to fixture staleness."
+        },
+        {
+          "paths": [
+            "PLang/app/data/IStrictKindEnforcer.cs",
+            "PLang/app/type/image/this.cs",
+            "PLang/app/module/variable/set.cs",
+            "PLang.Tests/App/TypeKindStrict/IntegrationCutsTests/Cut2_StrictMismatchFailsAtRightLayer.cs",
+            "PLang.Tests/App/TypeKindStrict/ReferenceFundamentalTests/LazyPathHandleTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "F1 strict-kind: two distinct enforcement-path tests (read-lift fail-at-set; lazy throw-at-load) + byte[] probe. Builder .pr faithful. Honest, not vacuous. Did a code-read deletion test; codeanalyzer ran the live mutation."
+        },
+        {
+          "paths": [
+            "Tests/Types/.build/readphotostampsimage.test.pr",
+            "Tests/Serialization/.build/compressroundtrip.test.pr",
+            "Tests/.db/system.sqlite"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "CRITICAL: plang --test flaps 0-4 fail across clean runs. Committed .pr stale vs stage-4 variable.set.Type entity (688/703 bare-string). Runtime runs them wrong or LLM-rebuilds (non-deterministic; cache gitignored, cold on fresh clone)."
+        },
+        {
+          "paths": [
+            ".bot/type-kind-strict/test-report.json",
+            ".bot/type-kind-strict/tester/v8/result.md",
+            ".bot/type-kind-strict/tester/v8/verdict.json",
+            ".bot/type-kind-strict/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Tester v8 outputs; verdict FAIL."
+        }
+      ],
+      "after": {
+        "status": "fail",
+        "health": "C# solid (3815/3815) and F1 honestly covered; PLang suite not reproducibly green",
+        "notes": "FAIL on PLang fixture reproducibility, not on F1-F5 logic. Fix: rebuild+commit Tests/ .pr to stage-4 Type shape; prove >=2 consecutive clean-binary green runs with git clean after."
+      }
+    },
+    {
+      "id": "9e4144f2-2180-4671-9bad-95e658b1e4dd",
+      "bot": "builder",
+      "timestamp_start": "2026-05-31T19:40:00+00:00",
+      "timestamp_end": "2026-05-31T20:35:00+00:00",
+      "intent": "Verify type-kind-strict LLM mapping via trace files (PASS); note two build-time runtime errors surfaced when building the builder and hand them to coder.",
+      "before": {
+        "assumptions": "Type-kind work landed; builder prompts restructured for the unified type vocabulary.",
+        "risk": "Building the builder exercises old-flat-.pr back-compat + new dict shape; failures could be regressions or pre-existing."
+      },
+      "plan": ".bot/type-kind-strict/builder/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/type-kind-strict/builder/v1/result.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Confirmed structured type entity flows through compile (trace LLM-raw vs final .pr) and CompileUser.llm renders the Type-reference block. Flat->dict back-compat observed live. No builder source changed."
+        },
+        {
+          "paths": [
+            "os/system/Run.goal"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "medium",
+          "context": "Flagged two runtime errors (error.throw string-coercion; unhelpful conversion messages) for coder, and an event.on/GoalToCall gap on Run.goal for the team. Diagnosis only; Run.goal read-only; no C# or goal edits by builder."
+        }
+      ],
+      "after": {
+        "status": "complete -- mapping review PASS; runtime findings handed to coder",
+        "health": "branch builds clean; only .bot additions in tree",
+        "notes": "coder v9 (e8c70d62) already addressed the two findings."
+      }
+    },
+    {
+      "id": "93bb8cbb-324f-4773-8895-a9f93594a5ca",
+      "bot": "coder",
+      "timestamp_start": "2026-05-31T21:00:00Z",
+      "timestamp_end": "2026-05-31T22:00:00Z",
+      "intent": "Respond to builder v1 (F1/F2 fixed) and tester v8 (PLang fixture flapping).",
+      "before": {
+        "assumptions": "Tester wants the whole Tests/ tree regenerated to current type wire shape.",
+        "risk": "A 700-goal LLM rebuild bakes in spurious Type hints and flakes; image read write-to is stamped {path} by the LLM."
+      },
+      "plan": ".bot/type-kind-strict/coder/v9/result.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/type-kind-strict/coder/v9/result.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Diagnosed ReadPhotoStampsImage: file.read already returns Data<image> with image.Path=source; break is the spurious LLM Type={path} hint forcing image->path downgrade (image HAS-A path, not IS-A). Precedence patch contradicts Stage4_TypeHintPrecedenceTests; reverted. Full rebuild rejected (bakes wrong fixtures + LLM build non-determinism). Routed: builder teaching (no Type on bare write-to) + architect determinism."
+        }
+      ],
+      "after": {
+        "status": "builder F1/F2 done+pushed; tester blocker analyzed and routed (not a coder rebuild)",
+        "health": "C# 3817/3817",
+        "notes": "No code change this session beyond F1/F2 already pushed. Tester report written."
+      }
+    },
+    {
+      "id": "46c41c5b-f579-4b50-a7bf-fbac52c1e606",
+      "bot": "coder",
+      "timestamp_start": "2026-06-01T23:26:01.300403+00:00",
+      "timestamp_end": "2026-06-02T00:00:36.420380+00:00",
+      "intent": "Stage 10: dissolve the central TryConvertTo god-switch into per-type Convert hooks + two dispatch doors (primary type.Convert, infra App.Type.Convert) + a residual primitive leaf.",
+      "before": {
+        "assumptions": "text.Convert already proves the per-type model; number/image/path/datetime/duration/GoalCall still route through the 400-line target-keyed switch in type/list/Conversion.cs; channel/serializer/Text.cs reimplements the string->primitive arm with CurrentCulture (locale bug).",
+        "risk": "15 call sites + a god-switch removal; element-recursion plumbing and the json seam are the tricky parts. C# 3822 green, PLang 259/262 (3 pre-existing event fails) is the floor."
+      },
+      "plan": ".bot/type-kind-strict/coder/v10/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/type/number/this.Convert.cs",
+            "PLang/app/type/datetime/this.Convert.cs",
+            "PLang/app/type/duration/this.Convert.cs",
+            "PLang/app/type/path/this.Convert.cs",
+            "PLang/app/type/image/this.Convert.cs",
+            "PLang/app/goal/GoalCall.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Per-type Convert(object?,string? kind,ctx) hooks \u2014 each type owns its own construction. Moved the matching domain arms off the central switch."
+        },
+        {
+          "paths": [
+            "PLang/app/type/convert/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added static OwnerOf routing table (CLR target -> owning family + number-kind), App-less so the infra door serves context-less callers."
+        },
+        {
+          "paths": [
+            "PLang/app/type/list/Conversion.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Hook-first bridge (authoritative on success+error, decline falls through); drained path/image/TimeSpan/GoalCall arms; TryConvertTo->internal TryConvert; added public infra door Convert(value,clrTarget,ctx,slot); WithSlot enriches hook errors with binding slot."
+        },
+        {
+          "paths": [
+            "PLang/app/channel/serializer/Text.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Deleted divergent twin ConvertFromString+IsSimpleType (CurrentCulture locale bug); route Deserialize<T> through the one converter (invariant); IsSimpleType->IsPrimitive; kept empty->default and text->utf8 as serializer-local FromText<T>."
+        },
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/type/path/file/this.Operations.cs",
+            "PLang/app/module/builder/code/Default.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Migrated context-ful cross-module call sites onto the infra door App.Type.Convert; ToGoalCall now threads context (GoalCall.Convert requires it)."
+        },
+        {
+          "paths": [
+            "PLang/app/type/this.cs",
+            "PLang/app/module/builder/validateResponse.cs",
+            "PLang/app/module/test/discover.cs",
+            "PLang/app/module/variable/set.cs",
+            "PLang/app/variable/list/this.cs",
+            "PLang/app/type/path/this.JsonConverter.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "TryConvertTo->TryConvert rename at internal/context-optional call sites and crefs."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/ValueConversionHookTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "11 tests: locale guard (de-DE), each hook isolated + via infra door, json-string->record, bool/guid/enum residual leaf, hook-less string-ctor plumbing fallback."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Support/TypeMappingTestFacade.cs",
+            "PLang.Tests/App/Types/PathTests/PathTypeMapperTests.cs",
+            "PLang.Tests/App/Types/RegistryFoldTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Updated direct converter callers for the TryConvertTo->TryConvert rename (IVT)."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "C# 3833/3833 (+11). PLang 259/262, 0 stale \u2014 identical to baseline (3 pre-existing event/Trigger fails). Public TryConvertTo god-switch gone; per-type Convert hooks + two doors + residual leaf. Locale bug fixed. One flagged decision: json-text->structure parse kept on JsonString.ToJson (text's CLR-mate extension) rather than relocated onto a text.@this.Convert overload \u2014 architect to confirm."
+      }
+    },
+    {
+      "id": "1f8f66d5-13ff-4cf6-b206-093a622fcf4d",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-06-04T19:41:40+00:00",
+      "timestamp_end": "2026-06-04T19:45:00+00:00",
+      "intent": "Re-review the merged type-kind-strict + lazy-deserialize state for integration-seam regressions.",
+      "before": {
+        "assumptions": "v2 PASSed type-kind-strict at coder v8; lazy-deserialize PASSed on its own branch. Risk concentrated at the seams where both touch the same files (variable/set.cs, type/**, Data/Wire), not in either body.",
+        "risk": "A strict-kind value could slip through the new lazy RawUntouched verbatim-passthrough unenforced."
+      },
+      "plan": ".bot/type-kind-strict/codeanalyzer/v3/report.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/module/variable/set.cs",
+            "PLang/app/data/this.cs",
+            "PLang/app/type/image/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Traced strict-kind x lazy materialization. The RawUntouched passthrough (set.cs:203) returns before the IStrictKindEnforcer stamp (264), but for IKindValidatable types the probe at line 184 reads Value.Value which materializes _value (this.cs:182), flipping RawUntouched false -> strict images always reach the stamp; path-backed images defer to image.BytesAsync. CLEAN."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/LazyDeserialize/LazyDataTests/MaterialiseErrorPathTests.cs",
+            "PLang.Tests/App/LazyDeserialize/IntegrationCutsTests/SignedDataSurvivesVariableSetListTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "coder v9-v13 changes are test-only (verified d4fdd030c..HEAD = these two files). Real assertions: MaterializeFailed key distinct from NotFound; signature non-null + verify==true through live handlers. Mutation-verified per coder report."
+        },
+        {
+          "paths": [
+            "PLang/app/module/variable/set.cs",
+            "PLang/app/type/",
+            "PLang/app/data/"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Pass 2: pervasive Stage N / provenance comments (set.cs:27,72 + ~18 across type/data). Systemic house style accepted by prior passes; flagged as F1 MINOR non-blocking, cleanup is docs/architect."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "green",
+        "notes": "Clean rebuild: PLang 273/273, C# 4025/0/0. No PLNG001/002, no System.IO/Console in changed prod files. Integration seam (strict x lazy) traced sound. One systemic non-blocking provenance-comment finding. Next bot: tester."
+      }
+    },
+    {
+      "id": "4ebdb422-f2df-4043-bee9-e9e50bf69b5f",
+      "bot": "tester",
+      "timestamp_start": "2026-06-04T19:42:00Z",
+      "timestamp_end": "2026-06-04T19:51:00Z",
+      "intent": "Re-test merged type-kind-strict+lazy-deserialize; verify the v8 reproducibility FAIL is resolved and v13 tests are honest.",
+      "before": {
+        "assumptions": "v8 FAILed on PLang reproducibility (stale .pr vs stage-4 entity, 0-4 flapping, warm-cache 262/262). coder claims merge resolved it; codeanalyzer v3 PASS 273/273+4025/0.",
+        "risk": "Warm-cache false green could persist; new v13 tests could be weak."
+      },
+      "plan": ".bot/type-kind-strict/tester/v13/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "Tests/"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Reproducibility gate (the v8 FAIL). Clean binary, plang --test x2: 273/273/0/0-stale identical both runs, git clean after each (0 .pr rewritten). Blocker resolved by the lazy-deserialize merge regenerating+committing the Tests tree."
+        },
+        {
+          "paths": [
+            "PLang.Tests/"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild C# suite 4025/4025/0. Matches codeanalyzer v3."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/LazyDeserialize/LazyDataTests/MaterialiseErrorPathTests.cs",
+            "PLang.Tests/App/LazyDeserialize/IntegrationCutsTests/SignedDataSurvivesVariableSetListTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "coder v13 test-only work. Both honest: Error.Key==MaterializeFailed (distinct from NotFound) + source-name; signature survives real variable.set + verify==true. Not Data.Ok rubber-stamps."
+        },
+        {
+          "paths": [
+            "PLang/app/variable/list/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Independent mutation test: neutralized MaterializeFailed guard at line 311 -> exactly the 2 set-path tests flip red (4023/2), revert -> green. Source reverted clean, no non-.bot dirty. Tests genuinely catch the regression."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "green",
+        "notes": "v8 reproducibility blocker dead: PLang 273/273 deterministic x2, git clean. C# 4025/0. v13 tests honest + mutation-verified. One minor non-blocking carry-forward (no end-to-end PLang goal for lazy strict image load-throw; pinned in C#). Next: security/auditor or merge per Ingi."
+      }
+    },
+    {
+      "id": "bc3abef3-0eab-46d7-b557-372d95f9aa0c",
+      "bot": "security",
+      "timestamp_start": "2026-06-04T19:55:06.257372+00:00",
+      "intent": "Security audit of type-kind-strict (merged with lazy-deserialize) \u2014 focus on strict-kind enforcement seams + reflection-based ctor invocation + wire/signing carry of Strict imprint.",
+      "before": {
+        "assumptions": "codeanalyzer v3 PASS, tester v13 PASS, lazy-deserialize half already security-PASS on ca6e2fb7c. Scope = type-kind-strict-specific additions: IStrictKindEnforcer, IKindValidatable, image strict enforcement, TryInstantiateValidator reflection, strict\u00d7lazy seam.",
+        "risk": "Reflection ctor invocation surface (TryInstantiateValidator), ImageSharp DetectFormat on pre-verify wire bytes, strict imprint cross-process semantics, kind canonicalization on hostile strings."
+      },
+      "actions": [
+        {
+          "paths": [
+            ".bot/type-kind-strict/security/v1/plan.md",
+            ".bot/type-kind-strict/security/v1/result.md",
+            ".bot/type-kind-strict/security/v1/verdict.json",
+            ".bot/type-kind-strict/security/summary.md",
+            ".bot/type-kind-strict/security-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v1 audit artefacts; strict x lazy seam re-traced, semgrep delta"
+        },
+        {
+          "paths": [
+            "PLang/app/module/variable/set.cs",
+            "PLang/app/type/image/this.cs",
+            "PLang/app/data/IStrictKindEnforcer.cs",
+            "PLang/app/data/IKindValidatable.cs",
+            "PLang/app/type/this.json.cs",
+            "PLang/app/type/text/this.Convert.cs",
+            "PLang/app/module/crypto/code/Default.cs",
+            "PLang/app/module/crypto/type/hash/this.cs",
+            "PLang/app/module/signing/Signature.cs",
+            "PLang/app/module/signing/code/Ed25519.cs",
+            "PLang/app/module/file/read.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "attack surface audit"
+        }
+      ],
+      "plan": ".bot/type-kind-strict/security/v1/plan.md",
+      "timestamp_end": "2026-06-04T20:01:37.386326+00:00",
+      "after": {
+        "status": "PASS",
+        "health": "green",
+        "notes": "3 low/info findings (F1 text.Convert default-options OPEN, F2 process-local imprint accepted, F3 Span.SequenceEqual info). No critical/high. Strict x lazy seam holds. Next: auditor."
+      }
+    }
+  ]
+}

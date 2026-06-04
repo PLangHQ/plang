@@ -87,13 +87,33 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
         if (bottom != null)
             for (var node = bottom; node != null; node = node.Caller)
                 ordered.Insert(0, node);
+        CaptureFrames(s, ordered);
+    }
 
+    /// <summary>
+    /// Captures a supplied call chain (an error's throw-time <c>CallFrames</c>,
+    /// bottom-first) rather than the live stack. By handler time the live stack
+    /// has unwound past the failing action, so an error callback must snapshot
+    /// the chain the error carried from its throw point.
+    /// </summary>
+    public void Capture(global::app.snapshot.@this s, IReadOnlyList<call.@this> chainBottomFirst)
+    {
+        var ordered = new List<call.@this>(chainBottomFirst.Count);
+        for (int i = chainBottomFirst.Count - 1; i >= 0; i--) // bottom-first → outer-first
+            ordered.Add(chainBottomFirst[i]);
+        CaptureFrames(s, ordered);
+    }
+
+    private static void CaptureFrames(global::app.snapshot.@this s, List<call.@this> orderedOuterFirst)
+    {
         var frames = new List<global::app.snapshot.@this>();
-        foreach (var call in ordered)
+        foreach (var call in orderedOuterFirst)
         {
             var frame = new global::app.snapshot.@this();
-            call.Capture(frame);
-            frames.Add(frame);
+            // The Call captures itself and reports whether it's a resumable position;
+            // goal-enter frames say no (no step/action to re-enter from).
+            if (call.Capture(frame))
+                frames.Add(frame);
         }
         s.Write("frames", frames);
     }
@@ -114,15 +134,21 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
 
         foreach (var frame in captured)
         {
+            var goalName   = frame.Read<string>("goalName")   ?? "";
             var goalPrPath = frame.Read<string>("goalPrPath") ?? "";
             var goalHash   = frame.Read<string>("goalHash")   ?? "";
             var stepIndex  = frame.Read<int>("stepIndex");
             var actionIndex = frame.Read<int>("actionIndex");
             var id         = frame.Read<string>("id") ?? "";
 
-            var liveGoal = context.App.Goal.Get(goalPrPath);
+            // Resolve by name — the goal's identity. A v0.2 .pr holds many goals on
+            // one PrPath (the file), so a PrPath lookup picks the wrong goal; the
+            // hash check below then catches any residual mismatch. PrPath is the
+            // fallback for snapshots captured before names were carried.
+            var liveGoal = (!string.IsNullOrEmpty(goalName) ? context.App.Goal.Get(goalName) : null)
+                           ?? context.App.Goal.Get(goalPrPath);
             if (liveGoal == null)
-                throw new CallbackGoalNotFound(goalPrPath);
+                throw new CallbackGoalNotFound(string.IsNullOrEmpty(goalName) ? goalPrPath : goalName);
 
             var liveHash = liveGoal.Hash ?? "";
             if (!string.Equals(liveHash, goalHash, StringComparison.OrdinalIgnoreCase))
@@ -140,6 +166,18 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
         }
 
         context.App.CallStack._restoredChain = restored;
+    }
+
+    public static void Read(global::app.snapshot.Io io, global::app.snapshot.@this s)
+    {
+        var frames = new List<global::app.snapshot.@this>();
+        foreach (var frameIo in io.GetSectionList("frames"))
+        {
+            var frame = new global::app.snapshot.@this();
+            call.@this.ReadFrame(frameIo, frame);
+            frames.Add(frame);
+        }
+        s.Write("frames", frames);
     }
 
     /// <summary>

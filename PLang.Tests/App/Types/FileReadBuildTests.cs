@@ -56,9 +56,9 @@ public class FileReadBuildTests
                 Path = global::app.data.@this<global::app.type.path.@this>.Ok(p),
             };
             var result = await action.Run();
-            await Assert.That(result.Success).IsTrue();
+            await result.IsSuccess();
             await Assert.That(result.Value).IsTypeOf<image>();
-            await Assert.That(result.Type?.Value).IsEqualTo("image");
+            await Assert.That(result.Type?.Name).IsEqualTo("image");
         }
         finally { try { System.IO.File.Delete(abs); } catch { } }
     }
@@ -79,7 +79,7 @@ public class FileReadBuildTests
                 Path = global::app.data.@this<global::app.type.path.@this>.Ok(p),
             };
             var result = await action.Run();
-            await Assert.That(result.Success).IsTrue();
+            await result.IsSuccess();
             await Assert.That(result.Value).IsEqualTo("hello");
         }
         finally { try { System.IO.File.Delete(abs); } catch { } }

@@ -1,0 +1,245 @@
+{
+  "branch": "lazy-deserialize",
+  "sessions": [
+    {
+      "id": "ca-v1-lazy-deserialize-0001",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-06-04T14:20:00Z",
+      "timestamp_end": "2026-06-04T15:05:00Z",
+      "intent": "First codeanalyzer pass over the lazy-deserialize feature (Data lazy materialize, reader registry, binding-clone, wire read/write, goal-call params).",
+      "before": {
+        "assumptions": "Coder v3 reports GREEN (272/272 goal, 4021/0 C#). Feature is large (~414 .cs files vs runtime2 base). Highest risk is the recent binding/clone + wire-shape reconstruction commits and the dense variable.set Run().",
+        "risk": "set.cs Run() is ~190 lines with deep branching; lazy materialize + clone semantics + wire-shape sniffing are subtle and could carry root-cause-vs-symptom smells."
+      },
+      "plan": ".bot/lazy-deserialize/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/data/this.Navigation.cs",
+            "PLang/app/data/Wire.cs",
+            "PLang/app/module/variable/set.cs",
+            "PLang/app/module/list/add.cs",
+            "PLang/app/type/reader/this.cs",
+            "PLang/app/type/list/Conversion.cs",
+            "PLang/app/goal/GoalCall.cs",
+            "PLang/app/variable/navigator/List.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Five-pass review focused on the lazy-deserialize mechanism + the highest-risk recent commits (binding-clone, wire-shape reconstruction, goal-call param clone). Mechanical bans (System.IO, Console, OBP #9) grepped clean across the whole changed surface."
+        },
+        {
+          "paths": [
+            "PLang.Tests",
+            "Tests/LazyDeserialize/HttpStatusRead_DoesNotMaterialiseBody.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Rebuilt clean. C# suite 4021/0. Goal suite 271 pass / 1 fail \u2014 the single fail is a live httpbin.org 503 (network-flaky, passed at 14485ms earlier same session, failed at 574ms now). Not a regression; flagged R1 to disable in-goal like its 8 siblings."
+        },
+        {
+          "paths": [
+            ".bot/lazy-deserialize/codeanalyzer/v1/report.md",
+            ".bot/lazy-deserialize/codeanalyzer/v1/verdict.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Findings F1 (list-element raw-vs-Data, OBP #5, blocker), F2 (Materialise/Materialize naming footgun), F3 (duplicated AsT Resolve block), F4 (CanonicaliseKind re-derive symptom), F5 (set.cs Run length), R1 (flaky httpbin test). Verdict NEEDS WORK / FAIL."
+        }
+      ],
+      "after": {
+        "status": "NEEDS WORK (fail)",
+        "health": "Green suites, no correctness regression. Blocker-level cleanups F1+F2 before PASS.",
+        "notes": "F1 is the strongest: this branch's own shallow-clone fix made list.add store Data while list-creation still stores raw; consumers (List.Element, WrapItem) defensively unwrap. Store uniformly + add the signed-Data-in-collection regression the coder already identified. Next bot: coder."
+      }
+    },
+    {
+      "id": "ca-v2-lazy-deserialize-0002",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-06-04T15:50:00Z",
+      "timestamp_end": "2026-06-04T16:15:00Z",
+      "intent": "Re-review the coder's response (55037aa32) to v1 findings F1-F5/R1.",
+      "before": {
+        "assumptions": "Coder commit 55037aa32 claims F1/F3/F5/R1 addressed; F2 + ctor-unwrap routed to a collections-are-data architect handoff.",
+        "risk": "F1 was the blocker \u2014 verify storage uniform OR contract documented + regression test green. Verify F3 extraction is behavior-preserving. Verify the F2 deferral is actually tracked, not just claimed."
+      },
+      "plan": ".bot/lazy-deserialize/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/module/variable/set.cs",
+            "Tests/LazyDeserialize/SignedDataSurvivesInList.test.goal",
+            "Tests/LazyDeserialize/HttpStatusRead_DoesNotMaterialiseBody.test.goal"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1 RESOLVED via documented element contract on WrapItem + the signed-Data-in-collection regression test (passes 28ms, deterministic). F3 RESOLVED: TryStaticResolve<T> extraction verified behavior-preserving. F5 RESOLVED: three-strict-kind-checks comment added. R1 RESOLVED: httpbin test disabled in-goal."
+        },
+        {
+          "paths": [
+            ".bot/lazy-deserialize/architect",
+            "Documentation/Runtime2/todos.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "F2 deferral check: commit message claims F2 + ctor-unwrap 'routed to the collections-are-data architect handoff', but no such handoff/todo artifact exists. Deferral is untracked \u2014 flagged as required follow-up, not a blocker."
+        },
+        {
+          "paths": [
+            ".bot/lazy-deserialize/codeanalyzer/v2/report.md",
+            ".bot/lazy-deserialize/codeanalyzer/v2/verdict.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Re-review verdict: PASS. Rebuilt (this.cs changed \u2192 stale binary). Goal 273/273, C# 4021/0 unaffected by the behavior-preserving diff. Only open item F2 (Low/Med naming footgun, untracked deferral)."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "Green (273/273 goal, 4021/0 C#). No correctness regression. Blocker F1 resolved with the regression test.",
+        "notes": "F2 is the only open item \u2014 Low/Med naming footgun whose 'routed to architect' deferral has no artifact. Rename now or file the handoff so it isn't lost. Does not gate the feature. Next bot: tester."
+      },
+      "security_comment": "security v1: confirmed your PASS holds from the security angle. The shallow-clone + signing-survives-binding work (F1 regression test, ShallowClone copying _raw) is correct security-wise \u2014 a signed lazy Data flowing through variable.set/list.add/goal-call preserves its Signature and verifies end-to-end via the verbatim-emit + MarkOuterForHash round-trip. No additional findings from me on the code paths you reviewed."
+    },
+    {
+      "id": "tester-v3-f5bf1ea0",
+      "bot": "tester",
+      "tested_version": "v3",
+      "timestamp_start": "2026-06-04T16:27:22.142397+00:00",
+      "timestamp_end": "2026-06-04T16:44:39.654375+00:00",
+      "intent": "Validate test quality for lazy-deserialize v3 (lazy Data, signing round-trip, shallow-clone binding).",
+      "before": {
+        "assumptions": "Coder v3 reports 272/272 plang + 4021/0 C#; codeanalyzer v2 PASS. No baseline-tests.md exists (process violation to note).",
+        "risk": "Signing/lazy regression tests may be false-greens; collection-identity gap flagged by coder."
+      },
+      "plan": ".bot/lazy-deserialize/tester/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "Tests/LazyDeserialize/.build/*.test.pr"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Builder false-green check: every step text matches actions[0]; no index drift."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Serialization/FailureMatrixTests.cs",
+            "PLang.Tests/App/LazyDeserialize/OneBoundaryTests/HttpChannelTests.cs",
+            "PLang.Tests/App/LazyDeserialize/AccessResolutionTests/NavigationAccessTests.cs",
+            "PLang.Tests/App/LazyDeserialize/IntegrationCutsTests/Cut5_NumberTowerRoundTrip.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Audited 9 C# anchors the goal smoke-tests defer to; all exist with strong assertions (error keys, exact values, MaterializeCount==0)."
+        },
+        {
+          "paths": [
+            "PLang/app/module/variable/set.cs",
+            "PLang.Tests/App/_ProbeListSetSignature.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "False-green hunt: probed the untested variable.set List arm (symmetric half of ead0caa83) with a throwaway C# test. PASS -> behavior correct, gap is regression-pinning only. Probe deleted, no source committed."
+        },
+        {
+          "paths": [
+            ".bot/lazy-deserialize/test-report.json",
+            ".bot/lazy-deserialize/tester/v3/result.md",
+            ".bot/lazy-deserialize/tester/v3/verdict.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Reports + verdict: PASS, 3 minor findings."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "green",
+        "notes": "C# 4021/4021, PLang 273/273 deterministic. No builder false-greens. All C# deferral anchors strong. One minor coverage gap (variable.set List arm) probe-confirmed benign. Source untouched, git clean except .bot/."
+      },
+      "security_comment": "security v1: PASS aligned. The SignedDataSurvivesInList regression test you confirmed is the right shape \u2014 it pins the lazy/signing handshake at the point that previously regressed. No additional test gaps from the security angle."
+    },
+    {
+      "id": "30dbbc2b-e2c6-4b3b-acbd-b9fcb5fbdc6a",
+      "bot": "security",
+      "timestamp_start": "2026-06-04T17:30:00Z",
+      "timestamp_end": "2026-06-04T17:50:00Z",
+      "intent": "Security audit of the lazy-deserialize mechanism \u2014 does deferred materialization change the signing trust model, the parser-confusion surface, or the canonical-hash round-trip?",
+      "before": {
+        "assumptions": "codeanalyzer v2 PASS, tester v3 PASS. The Data lazy seam is the headline change (FromRaw + Materialize + Wire deferral + EmitRawVerbatim). Signing pipeline (Ed25519/keccak256/MarkOuterForHash) untouched architecturally but the verbatim-emit leg is new and must produce byte-identical output for a relayed lazy Data so signature verify holds.",
+        "risk": "Lazy materialization defers a parse to first-touch \u2014 could (a) widen parser-confusion via attacker-stamped kind, (b) silently swallow security-exception classes in the Materialize catch-all, (c) break canonical-hash recomputation through Properties dictionary iteration order or type-entity serialization order, (d) bypass sign-if-missing on RawUntouched values, or (e) leave deferredRaw unbounded in size."
+      },
+      "plan": ".bot/lazy-deserialize/security/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/data/Wire.cs",
+            "PLang/app/type/reader/this.cs",
+            "PLang/app/channel/this.cs",
+            "PLang/app/channel/type/file/this.cs",
+            "PLang/app/channel/type/http/this.cs",
+            "PLang/app/channel/serializer/plang/this.cs",
+            "PLang/app/module/crypto/code/Default.cs",
+            "PLang/app/module/file/read.cs",
+            "PLang/app/module/variable/set.cs",
+            "PLang/app/goal/GoalCall.cs",
+            "PLang/app/type/this.json.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "End-to-end read of the lazy seam: FromRaw / Materialize / RawUntouched, Wire.Read deferred-raw branch + MaxReadDepth, Wire.Write EmitRawVerbatim + EnsureInnerSigned + MarkOuterForHash interaction with crypto.Hash for canonical-hash round-trip, the channel.read single-boundary stamping, file/http source-providers, the per-actor plang serializer's Read-does-not-auto-verify contract, the type entity's deterministic JSON writer. Answered the six threat-model questions in v1/plan.md."
+        },
+        {
+          "paths": [
+            ".bot/lazy-deserialize/security-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Findings registry: 4 attack-surface areas, 3 low/info findings (F1 future security-exception silencing, F2 deferredRaw unbounded size, F3 lazy-parse defers parser-DoS surface). No critical/high."
+        },
+        {
+          "paths": [
+            ".bot/lazy-deserialize/security/v1/plan.md",
+            ".bot/lazy-deserialize/security/v1/result.md",
+            ".bot/lazy-deserialize/security/v1/verdict.json",
+            ".bot/lazy-deserialize/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v1 plan, result, verdict, and bot summary. Verdict: PASS."
+        },
+        {
+          "paths": [
+            "scripts/semgrep-scan.sh"
+          ],
+          "type": "review",
+          "category": "config",
+          "confidence": "high",
+          "context": "Semgrep baseline: 17 hits, all at parity with runtime2 merge-base. http/code/Default.cs (4 JsonSerializer.Serialize hits) and identity/code/Default.cs (1) are pre-existing serializer-hygiene candidates already on memory/reference_semgrep_ruleset.md's audit list, not new on this branch."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "green",
+        "notes": "No critical/high on lazy-deserialize surface. The verbatim-passthrough leg (EmitRawVerbatim under MarkOuterForHash) preserves byte-identical hash for relayed lazy Data, so signing.verify holds. Wire.Read does NOT auto-verify (documented contract, parity with prior). 3 low/info notes: F1 catch-all could silence future security-class exceptions from kind readers (tighten as new readers ship); F2 deferredRaw unbounded (covered by standing Stream-channel buffer-ignore memory item); F3 parser-DoS surface deferred to first-touch (net-neutral, pre-existing concern at reader layer). Carry-forward memory items unchanged. Next bot: auditor."
+      }
+    }
+  ]
+}

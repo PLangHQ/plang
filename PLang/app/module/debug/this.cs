@@ -228,21 +228,21 @@ public sealed class @this
         var events = _engine.CurrentActor.Context.Events;
 
         events.Register(new EventBinding(
-            EventType.BeforeStep,
+            Trigger.BeforeStep,
             (context, _, _) => BeforeStepHandler(context, Step),
             goalNamePattern: Goal ?? "*",
             priority: int.MaxValue,
             stopOnError: false));
 
         events.Register(new EventBinding(
-            EventType.AfterStep,
+            Trigger.AfterStep,
             (context, _, _) => AfterStepHandler(context, Step),
             goalNamePattern: Goal ?? "*",
             priority: int.MaxValue,
             stopOnError: false));
 
         events.Register(new EventBinding(
-            EventType.AfterGoal,
+            Trigger.AfterGoal,
             (context, _, _) => AfterGoalHandler(context),
             goalNamePattern: Goal ?? "*",
             priority: int.MaxValue,
@@ -251,14 +251,14 @@ public sealed class @this
         if (string.Equals(Level, "action", StringComparison.OrdinalIgnoreCase))
         {
             events.Register(new EventBinding(
-                EventType.BeforeAction,
+                Trigger.BeforeAction,
                 (context, _, _) => BeforeActionHandler(context, Step),
                 goalNamePattern: Goal ?? "*",
                 priority: int.MaxValue,
                 stopOnError: false));
 
             events.Register(new EventBinding(
-                EventType.AfterAction,
+                Trigger.AfterAction,
                 (context, _, _) => AfterActionHandler(context, Step),
                 goalNamePattern: Goal ?? "*",
                 priority: int.MaxValue,
@@ -603,7 +603,7 @@ public sealed class @this
                 continue;
             }
 
-            sb.AppendLine($"    %{name}% = {FormatValue(data.Value, context)} ({data.Type?.Value ?? "?"})");
+            sb.AppendLine($"    %{name}% = {FormatValue(data.Value, context)} ({data.Type?.Name ?? "?"})");
 
             if (data.Properties.Count > 0)
             {

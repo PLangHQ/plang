@@ -4,14 +4,14 @@ using app.variable;
 
 namespace PLang.Tests.App.actions.variable;
 
-// Phase 4 contract — variable.set is the SOLE binding-mint site. With Phase 3's
-// Variables.Set reduced to dumb storage (Set(Data dv) only), variable.set has
-// to construct the Data itself. Architect/v1 §Phase 4:
-//   1. If [Type] parameter set → construct Data<T> via App.Data.Type.FromName.
-//   2. Else if-chain on Value.Value's runtime type.
-//   3. Mutable refs (List, Dict) snapshot-cloned via JSON roundtrip.
-//   4. null → plain Data (un-typed).
-//   5. Anything else → reflection fallback.
+// variable.set binding contract:
+//   - No `as` clause → shallow-clone the source Data under the target name (plain
+//     Data; no Data<T> mint, no materialize, no deep clone). The PLang type is what's
+//     inferred — it derives from the value's CLR type and rides on .Type. Containers
+//     are structurally copied by the param-resolution walk (new list/dict, shared
+//     leaves), so the stored value is a distinct instance.
+//   - `as` clause → convert and mint the declared Data<T>.
+//   - null → plain Data (un-typed).
 
 public class SetTypeInferenceTests
 {
@@ -24,101 +24,103 @@ public class SetTypeInferenceTests
     public async Task TearDown() { await _app.DisposeAsync(); }
 
     [Test]
-    public async Task Set_StringValue_MintsDataOfString()
+    public async Task Set_StringValue_InfersTextType()
     {
         var context = _app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%s%"), ("value", "hello"));
         var result = await action.RunAsync(context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var stored = context.Variable.Get("s");
-        await Assert.That(stored).IsTypeOf<global::app.data.@this<string>>();
+        await Assert.That(stored.Value).IsEqualTo("hello");
+        await Assert.That(stored.Type.Name).IsEqualTo("text");
     }
 
     [Test]
-    public async Task Set_IntValue_MintsDataOfInt()
+    public async Task Set_IntValue_InfersNumberType()
     {
         var context = _app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%n%"), ("value", 42));
         var result = await action.RunAsync(context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var stored = context.Variable.Get("n");
-        // The .pr/JSON pipeline normalizes integers to long; that's consistent with the
-        // architect's hot-types if-chain (long arm fires for the LLM-emitted form).
-        var t = stored.GetType();
-        var isInt = t == typeof(global::app.data.@this<int>);
-        var isLong = t == typeof(global::app.data.@this<long>);
-        await Assert.That(isInt || isLong).IsTrue();
+        // The .pr/JSON pipeline normalizes integers to long; .Type derives "number".
+        await Assert.That(System.Convert.ToInt64(stored.Value)).IsEqualTo(42L);
+        await Assert.That(stored.Type.Name).IsEqualTo("number");
     }
 
     [Test]
-    public async Task Set_LongValue_MintsDataOfLong()
+    public async Task Set_LongValue_InfersNumberType()
     {
         var context = _app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%n%"), ("value", 42L));
         var result = await action.RunAsync(context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var stored = context.Variable.Get("n");
-        await Assert.That(stored).IsTypeOf<global::app.data.@this<long>>();
+        await Assert.That(stored.Value).IsEqualTo(42L);
+        await Assert.That(stored.Type.Name).IsEqualTo("number");
     }
 
     [Test]
-    public async Task Set_DoubleValue_MintsDataOfDouble()
+    public async Task Set_DoubleValue_InfersNumberType()
     {
         var context = _app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%d%"), ("value", 3.14));
         var result = await action.RunAsync(context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var stored = context.Variable.Get("d");
-        await Assert.That(stored).IsTypeOf<global::app.data.@this<double>>();
+        await Assert.That(stored.Value).IsEqualTo(3.14);
+        await Assert.That(stored.Type.Name).IsEqualTo("number");
     }
 
     [Test]
-    public async Task Set_BoolValue_MintsDataOfBool()
+    public async Task Set_BoolValue_InfersBoolType()
     {
         var context = _app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%b%"), ("value", true));
         var result = await action.RunAsync(context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var stored = context.Variable.Get("b");
-        await Assert.That(stored).IsTypeOf<global::app.data.@this<bool>>();
+        await Assert.That(stored.Value).IsEqualTo(true);
+        await Assert.That(stored.Type.Name).IsEqualTo("bool");
     }
 
     [Test]
-    public async Task Set_DateTimeValue_MintsDataOfDateTime()
+    public async Task Set_DateTimeValue_InfersDateTimeType()
     {
         var context = _app.User.Context;
         var when = DateTime.UtcNow;
         var action = TestAction.Create("variable", "set", ("name", "%t%"), ("value", when));
         var result = await action.RunAsync(context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var stored = context.Variable.Get("t");
-        await Assert.That(stored).IsTypeOf<global::app.data.@this<DateTime>>();
+        await Assert.That(stored.Value).IsEqualTo(when);
+        await Assert.That(stored.Type.Name).IsEqualTo("datetime");
     }
 
     [Test]
-    public async Task Set_ListValue_MintsDataOfListAndSnapshotClones()
+    public async Task Set_ListValue_StoresDistinctListInstance()
     {
         var context = _app.User.Context;
         var src = new List<object?> { "a", "b" };
         var action = TestAction.Create("variable", "set", ("name", "%list%"), ("value", src));
         var result = await action.RunAsync(context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var stored = context.Variable.Get("list");
-        await Assert.That(stored).IsTypeOf<global::app.data.@this<List<object?>>>();
-        // Snapshot-clone: stored.Value is a separate list instance.
+        await Assert.That(stored.Value).IsTypeOf<List<object?>>();
+        // The param-resolution walk copies the container — stored.Value is a distinct list.
         await Assert.That(ReferenceEquals(stored.Value, src)).IsFalse();
     }
 
     [Test]
-    public async Task Set_DictValue_MintsDataOfDictionary()
+    public async Task Set_DictValue_StoresDistinctDictInstance()
     {
         var context = _app.User.Context;
         var src = new Dictionary<string, object?> { ["k"] = "v" };
         var action = TestAction.Create("variable", "set", ("name", "%d%"), ("value", src));
         var result = await action.RunAsync(context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var stored = context.Variable.Get("d");
-        await Assert.That(stored).IsTypeOf<global::app.data.@this<Dictionary<string, object?>>>();
+        await Assert.That(stored.Value).IsTypeOf<Dictionary<string, object?>>();
         await Assert.That(ReferenceEquals(stored.Value, src)).IsFalse();
     }
 
@@ -129,7 +131,7 @@ public class SetTypeInferenceTests
         // Source value is int 42; forced Type="string" should produce Data<string> "42".
         var action = TestAction.Create("variable", "set", ("name", "%n%"), ("value", 42), ("type", "string"));
         var result = await action.RunAsync(context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var stored = context.Variable.Get("n");
         await Assert.That(stored).IsTypeOf<global::app.data.@this<string>>();
         await Assert.That(stored.Value).IsEqualTo("42");
@@ -142,7 +144,7 @@ public class SetTypeInferenceTests
         // "abc" can't convert to int → handler returns Data with Error.
         var action = TestAction.Create("variable", "set", ("name", "%n%"), ("value", "abc"), ("type", "int"));
         var result = await action.RunAsync(context);
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
     }
 
     [Test]
@@ -151,7 +153,7 @@ public class SetTypeInferenceTests
         var context = _app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%x%"), ("value", null));
         var result = await action.RunAsync(context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var stored = context.Variable.Get("x");
         // Plain Data (not Data<T>) — null can't be type-inferred.
         await Assert.That(stored.GetType()).IsEqualTo(typeof(global::app.data.@this));
@@ -163,7 +165,7 @@ public class SetTypeInferenceTests
         var context = _app.User.Context;
         await TestAction.Create("variable", "set", ("name", "%x%"), ("value", "first")).RunAsync(context);
         var result = await TestAction.Create("variable", "set", ("name", "%x%"), ("value", "second"), ("asdefault", true)).RunAsync(context);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(context.Variable.GetValue("x")).IsEqualTo("first");
     }
 }

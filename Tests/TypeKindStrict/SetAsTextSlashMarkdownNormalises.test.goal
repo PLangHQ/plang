@@ -1,0 +1,6 @@
+Start
+/ `as text/markdown` exercises the slash-tolerant type factory + the kind
+/ canonicaliser: "markdown" is the MIME subtype; canonical kind is "md".
+- set %x% = "a" as text/markdown
+- assert %x.Type.Name% equals "text"
+- assert %x.Type.Kind% equals "md"

@@ -1,0 +1,8 @@
+Start
+/ `as TEXT` (uppercase) → case-insensitive at the parser→factory boundary.
+/ Type.Name lowercases to "text". A literal's spelling is not its kind, so
+/ the .md extension does NOT become a kind here (kind only from `as text/<kind>`
+/ or a producing action).
+- set %x% = "readme.md" as TEXT
+- assert %x.Type.Name% equals "text"
+- assert %x.Type.Kind% is null

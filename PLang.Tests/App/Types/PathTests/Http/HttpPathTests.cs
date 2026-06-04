@@ -38,7 +38,7 @@ public class HttpPathTests
         await new HttpPath(url, context).WriteText("the body");
 
         var result = await new HttpPath(url, context).ReadText();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo("the body");
     }
 
@@ -50,7 +50,7 @@ public class HttpPathTests
         await Grant(app, context, url);
 
         var result = await new HttpPath(url, context).ReadText();
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
         await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
     }
@@ -63,7 +63,7 @@ public class HttpPathTests
         await Grant(app, context, url);
 
         var write = await new HttpPath(url, context).WriteText("posted body");
-        await Assert.That(write.Success).IsTrue();
+        await write.IsSuccess();
 
         var read = await new HttpPath(url, context).ReadText();
         await Assert.That(read.Value).IsEqualTo("posted body");
@@ -77,7 +77,7 @@ public class HttpPathTests
         await Grant(app, context, url);
 
         var result = await new HttpPath(url, context).WriteText("nope");
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("MethodNotAllowed");
         await Assert.That(result.Error!.StatusCode).IsEqualTo(405);
     }
@@ -91,10 +91,10 @@ public class HttpPathTests
         await new HttpPath(url, context).WriteText("to delete");
 
         var del = await new HttpPath(url, context).Delete();
-        await Assert.That(del.Success).IsTrue();
+        await del.IsSuccess();
 
         var read = await new HttpPath(url, context).ReadText();
-        await Assert.That(read.Success).IsFalse();
+        await read.IsFailure();
         await Assert.That(read.Error!.StatusCode).IsEqualTo(404);
     }
 
@@ -107,7 +107,7 @@ public class HttpPathTests
         await new HttpPath(url, context).WriteText("12345");
 
         var stat = await new HttpPath(url, context).Stat();
-        await Assert.That(stat.Success).IsTrue();
+        await stat.IsSuccess();
         var info = (global::app.type.path.@this.StatInfo)stat.Value!;
         await Assert.That(info.Exists).IsTrue();
         await Assert.That(info.Length).IsEqualTo(5L);
@@ -141,11 +141,11 @@ public class HttpPathTests
         await new HttpPath(present, context).WriteText("here");
 
         var existsPresent = await new HttpPath(present, context).ExistsAsync();
-        await Assert.That(existsPresent.Success).IsTrue();
+        await existsPresent.IsSuccess();
         await Assert.That(existsPresent.Value).IsEqualTo(true);
 
         var existsAbsent = await new HttpPath(absent, context).ExistsAsync();
-        await Assert.That(existsAbsent.Success).IsTrue();
+        await existsAbsent.IsSuccess();
         await Assert.That(existsAbsent.Value).IsEqualTo(false);
     }
 
@@ -173,7 +173,7 @@ public class HttpPathTests
         await Grant(app, context, u);
 
         var result = await new HttpPath(u, context).ReadText();
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.StatusCode).IsEqualTo(401);
     }
 
@@ -189,7 +189,7 @@ public class HttpPathTests
         await Grant(app, context, url);
 
         var result = await new HttpPath(url, context).ReadText();
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NetworkError");
     }
 

@@ -107,7 +107,7 @@ public class AppRunScaffoldingTests
         var action = MakeAction("matrix.throwing", "throw");
         var result = await action.RunAsync(_app.User.Context);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ServiceError");
 
         await Assert.That(_app.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
@@ -123,7 +123,7 @@ public class AppRunScaffoldingTests
         var action = MakeAction("matrix.plain", "stringplain", ("path", "ok"));
         var result = await action.RunAsync(_app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(_app.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
 
@@ -158,7 +158,7 @@ public class AppRunScaffoldingTests
         // Should NOT throw — OCE is caught and translated.
         var result = await action.RunAsync(_app.User.Context);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ServiceError");
         await Assert.That(result.Error.Exception).IsTypeOf<OperationCanceledException>();
     }

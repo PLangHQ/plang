@@ -298,11 +298,31 @@ def _list_all_traces(with_summary: bool = True):
                     'fullPath': full,
                 })
 
-    # Group by (bucket, goalName); each group's traces sorted newest-first.
+    # Group by (bucket, goalPath); each group's traces sorted newest-first.
+    # Keying on the goal's SOURCE PATH (not the trace filename) is what lets
+    # the sidebar show distinct rows for PLang test goals — every test goal is
+    # named "Start", so its trace file is "Start.json", and a filename-keyed
+    # grouping collapses all of them into one row. The path
+    # (/TypeKindStrict/SetAsText...test.goal) is unique per goal. Summaries are
+    # cached by (fullPath, mtime), so the parse needed to read the path
+    # amortizes to ~0 across calls.
     from collections import defaultdict
+
+    def _group_key(e):
+        cached = _SUMMARY_CACHE.get(e['fullPath'])
+        if cached is not None and cached[0] == e['mtime']:
+            s = cached[1]
+        else:
+            s = _summarize_trace(e['fullPath'])
+            _SUMMARY_CACHE[e['fullPath']] = (e['mtime'], s)
+        path = (s or {}).get('path') if s else None
+        # Fall back to the filename-derived name when a trace has no path
+        # (legacy/empty traces) so they still group sanely.
+        return (e['bucket'], path or e['goalName'])
+
     by_goal = defaultdict(list)
     for e in all_entries:
-        by_goal[(e['bucket'], e['goalName'])].append(e)
+        by_goal[_group_key(e)].append(e)
     for entries in by_goal.values():
         entries.sort(key=lambda e: e['traceId'], reverse=True)
 

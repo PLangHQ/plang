@@ -2,10 +2,8 @@ using System.Text.Json;
 
 namespace PLang.Tests.App.Types;
 
-// plang-types — Stage 1
-// .pr parameter shape grows an optional `kind` sibling to `type`.
-// NEVER a "type:kind" string — splitting a string is runtime work.
-
+// Wire shape: `type` is the structured entity `{name, kind?, strict?}` —
+// one field carrying full identity, no flat sibling `kind` key.
 public class KindFieldTests
 {
     private static JsonSerializerOptions Options
@@ -23,58 +21,49 @@ public class KindFieldTests
         => JsonSerializer.Deserialize<global::app.data.@this>(json, Options)!;
 
     [Test]
-    public async Task PrParameter_HasOptionalKindField_OmittedWhenAbsent()
+    public async Task PrParameter_OmitsKindWhenAbsent()
     {
-        // No kind set ⇒ no "kind" key on the wire.
         var data = new global::app.data.@this("x", "hello")
         {
-            Type = new global::app.type.@this("string")
+            Type = new global::app.type.@this("text")
         };
         var json = ToJson(data);
+        await Assert.That(json.Contains("\"type\":{\"name\":\"text\"}")).IsTrue();
         await Assert.That(json.Contains("\"kind\"")).IsFalse();
     }
 
     [Test]
-    public async Task PrParameter_KindWritten_WhenTypeProducesOne()
+    public async Task PrParameter_TypeCarriesKindInsideTheStructuredEntity()
     {
-        // Builder sets Kind explicitly after calling Types.Kinds.Of(...);
-        // the wire emits "kind":"<value>" alongside "type".
         var data = new global::app.data.@this("photo", "/srv/a.jpg")
         {
-            Type = new global::app.type.@this("path"),
-            Kind = "file"
+            Type = new global::app.type.@this("path", "file")
         };
         var json = ToJson(data);
-        await Assert.That(json.Contains("\"kind\":\"file\"")).IsTrue();
-        await Assert.That(json.Contains("\"type\":\"path\"")).IsTrue();
+        await Assert.That(json.Contains("\"type\":{\"name\":\"path\",\"kind\":\"file\"}")).IsTrue();
     }
 
     [Test]
-    public async Task PrParameter_KindAndTypeAreSeparateFields_NeverColonString()
+    public async Task PrParameter_NeverColonStringForTypeKind()
     {
-        // The fields are separate. Combined "type:kind" form must never appear.
         var data = new global::app.data.@this("p", "http://x")
         {
-            Type = new global::app.type.@this("path"),
-            Kind = "http"
+            Type = new global::app.type.@this("path", "http")
         };
         var json = ToJson(data);
         await Assert.That(json.Contains("\"path:http\"")).IsFalse();
-        await Assert.That(json.Contains("\"path\"")).IsTrue();
-        await Assert.That(json.Contains("\"http\"")).IsTrue();
+        await Assert.That(json.Contains("\"type\":\"path/http\"")).IsFalse();
     }
 
     [Test]
-    public async Task PrParameter_KindNull_NotSerializedAsLiteralNull()
+    public async Task PrParameter_KindNull_OmittedFromWire()
     {
         var data = new global::app.data.@this("x", 1)
         {
-            Type = new global::app.type.@this("int"),
-            Kind = null,
+            Type = new global::app.type.@this("number"),
         };
         var json = ToJson(data);
         await Assert.That(json.Contains("\"kind\":null")).IsFalse();
-        await Assert.That(json.Contains("\"kind\"")).IsFalse();
     }
 
     [Test]
@@ -82,12 +71,12 @@ public class KindFieldTests
     {
         var original = new global::app.data.@this("photo", "/srv/a.jpg")
         {
-            Type = new global::app.type.@this("path"),
-            Kind = "file"
+            Type = new global::app.type.@this("path", "file")
         };
         var json = ToJson(original);
         var read = FromJson(json);
-        await Assert.That(read.Type?.Value).IsEqualTo("path");
+        await Assert.That(read.Type?.Name).IsEqualTo("path");
+        await Assert.That(read.Type?.Kind).IsEqualTo("file");
         await Assert.That(read.Kind).IsEqualTo("file");
     }
 }

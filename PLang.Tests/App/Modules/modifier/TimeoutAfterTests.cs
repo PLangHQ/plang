@@ -43,7 +43,7 @@ public class TimeoutAfterTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(Ctx.Variable.GetValue("fast")).IsEqualTo("done");
     }
 
@@ -60,7 +60,7 @@ public class TimeoutAfterTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Timeout");
         await Assert.That(result.Error!.StatusCode).IsEqualTo(408);
     }
@@ -82,7 +82,7 @@ public class TimeoutAfterTests
         var elapsed = DateTimeOffset.UtcNow - start;
 
         await Assert.That(elapsed.TotalMilliseconds).IsLessThan(2000);
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Timeout");
     }
 
@@ -121,7 +121,7 @@ public class TimeoutAfterTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Timeout");
     }
 
@@ -147,7 +147,7 @@ public class TimeoutAfterTests
 
         var result = await modifiers.RunAsync(throwingInner, Ctx);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Timeout");
         await Assert.That(result.Error!.StatusCode).IsEqualTo(408);
     }
@@ -176,6 +176,6 @@ public class TimeoutAfterTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 }

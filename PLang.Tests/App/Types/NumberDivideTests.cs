@@ -16,7 +16,7 @@ public class NumberDivideTests
     [Test] public async Task Divide_SevenByTwo_ReturnsThreeAndHalf_NotThree()
     {
         var r = number.Divide(number.From(7), number.From(2), P);
-        await Assert.That(r.Success).IsTrue();
+        await r.IsSuccess();
         await Assert.That((decimal)r.Value!).IsEqualTo(3.5m);
     }
 
@@ -29,14 +29,14 @@ public class NumberDivideTests
     [Test] public async Task Divide_OneByMillion_FullPrecision_NotSilentZero()
     {
         var r = number.Divide(number.From(1), number.From(1000000), P);
-        await Assert.That(r.Success).IsTrue();
+        await r.IsSuccess();
         await Assert.That((decimal)r.Value!).IsEqualTo(0.000001m);
     }
 
     [Test] public async Task IntDiv_SevenByTwo_ReturnsThree()
     {
         var r = number.IntDivide(number.From(7), number.From(2), P);
-        await Assert.That(r.Success).IsTrue();
+        await r.IsSuccess();
         await Assert.That((int)r.Value!).IsEqualTo(3);
     }
 
@@ -49,21 +49,21 @@ public class NumberDivideTests
     [Test] public async Task Divide_ByZero_Integer_DataFailDivideByZero()
     {
         var r = number.Divide(number.From(7), number.From(0), P);
-        await Assert.That(r.Success).IsFalse();
+        await r.IsFailure();
         await Assert.That(r.Error?.Key).IsEqualTo("DivideByZero");
     }
 
     [Test] public async Task Divide_ByZero_Decimal_DataFailDivideByZero()
     {
         var r = number.Divide(number.From(7m), number.From(0m), P);
-        await Assert.That(r.Success).IsFalse();
+        await r.IsFailure();
         await Assert.That(r.Error?.Key).IsEqualTo("DivideByZero");
     }
 
     [Test] public async Task IntDiv_ByZero_DataFailDivideByZero()
     {
         var r = number.IntDivide(number.From(7), number.From(0), P);
-        await Assert.That(r.Success).IsFalse();
+        await r.IsFailure();
         await Assert.That(r.Error?.Key).IsEqualTo("DivideByZero");
     }
 }

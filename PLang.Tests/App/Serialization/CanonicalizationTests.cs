@@ -38,10 +38,10 @@ public class CanonicalizationTests
                 Algorithm = new global::app.data.@this<string>("", "keccak256")
             }, app.User.Context);
 
-        await Assert.That(hashResult.Success).IsTrue();
+        await hashResult.IsSuccess();
         // The hash is 32 bytes; the wire-bytes are the input to the hash.
         var expectedHash = new Nethereum.Util.Sha3Keccack().CalculateHash(wireBytesWithoutOuterSig);
-        await Assert.That(((byte[])hashResult.Value!).SequenceEqual(expectedHash)).IsTrue();
+        await Assert.That(((global::app.module.crypto.type.hash.@this)hashResult.Value!).Bytes.SequenceEqual(expectedHash)).IsTrue();
     }
 
     [Test] public async Task CryptoHash_BytesMatch_WireSerializerBytesMinusOuterSignature()
@@ -60,7 +60,9 @@ public class CanonicalizationTests
 
         var hashInputJson = System.Text.Encoding.UTF8.GetString(hashInputBytes);
         await Assert.That(hashInputJson).DoesNotContain("signature");
-        await Assert.That(hashInputJson).Contains("\"name\":\"x\"");
+        // The variable name is excluded from the signed hash — a value verifies the
+        // same regardless of which variable holds it (sign → write to %a% → verify %a%).
+        await Assert.That(hashInputJson).DoesNotContain("\"name\":\"x\"");
         await Assert.That(hashInputJson).Contains("\"value\":\"y\"");
     }
 
@@ -85,7 +87,7 @@ public class CanonicalizationTests
         await Assert.That(tampered).IsNotEqualTo(json);
 
         var back = plang.Deserialize(tampered);
-        await Assert.That(back.Success).IsTrue();
+        await back.IsSuccess();
         var roundTripped = back.Value as global::app.data.@this;
         await Assert.That(roundTripped).IsNotNull();
         roundTripped!.Context = app.User.Context;

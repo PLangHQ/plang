@@ -29,7 +29,7 @@ public class SnapshotResumeTests
         var data = global::app.data.@this.Ok("v"); // Snapshot = null
         var handler = new run { Context = app.User.Context, Callback = data };
         var result = await handler.Run();
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NoSnapshot");
     }
 
@@ -50,7 +50,7 @@ public class SnapshotResumeTests
         var app = NewApp();
         var snap = new global::app.snapshot.@this();
         var result = await snap.Resume(app.User.Context);
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NoPosition");
     }
 
@@ -74,7 +74,7 @@ public class SnapshotResumeTests
             await call.DisposeAsync();
 
             var result = await snap.Resume(context);
-            await Assert.That(result.Success).IsTrue();
+            await result.IsSuccess();
             // Step 1 ran on resume; step 0 should NOT have run (we resumed mid-goal).
             await Assert.That(context.Variable.GetValue("s1")).IsEqualTo("second");
             await Assert.That(context.Variable.Get("s0").IsInitialized).IsFalse();

@@ -42,10 +42,10 @@ public class DataSourceTests
     {
         using var ds = CreateDataSource();
         var setResult = await ds.Set("settings", "ApiKey", new Data("ApiKey", "sk-123"));
-        await Assert.That(setResult.Success).IsTrue();
+        await setResult.IsSuccess();
 
         var getResult = await ds.Get("settings", "ApiKey");
-        await Assert.That(getResult.Success).IsTrue();
+        await getResult.IsSuccess();
         await Assert.That(getResult.Value?.ToString()).IsEqualTo("sk-123");
     }
 
@@ -54,7 +54,7 @@ public class DataSourceTests
     {
         using var ds = CreateDataSource();
         var result = await ds.Get("settings", "NonExistent");
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsNull();
     }
 
@@ -75,7 +75,7 @@ public class DataSourceTests
         using var ds = CreateDataSource();
         await ds.Set("settings", "ApiKey", new Data("ApiKey", "sk-123"));
         var removeResult = await ds.Remove("settings", "ApiKey");
-        await Assert.That(removeResult.Success).IsTrue();
+        await removeResult.IsSuccess();
 
         var result = await ds.Get("settings", "ApiKey");
         await Assert.That(result.Value).IsNull();
@@ -86,7 +86,7 @@ public class DataSourceTests
     {
         using var ds = CreateDataSource();
         var result = await ds.Remove("settings", "NonExistent");
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -95,7 +95,7 @@ public class DataSourceTests
         using var ds = CreateDataSource();
         await ds.Set("settings", "ApiKey", new Data("ApiKey", "sk-123"));
         var result = await ds.Exists("settings", "ApiKey");
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That((bool)result.Value!).IsTrue();
     }
 
@@ -104,7 +104,7 @@ public class DataSourceTests
     {
         using var ds = CreateDataSource();
         var result = await ds.Exists("settings", "NonExistent");
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That((bool)result.Value!).IsFalse();
     }
 
@@ -116,7 +116,7 @@ public class DataSourceTests
         await ds.Set("settings", "Key2", new Data("Key2", "Value2"));
 
         var result = await ds.GetAll("settings");
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var items = result.Value as List<Data>;
         await Assert.That(items).IsNotNull();
         await Assert.That(items!.Count).IsEqualTo(2);
@@ -130,7 +130,7 @@ public class DataSourceTests
         await ds.Set("encryption", "Key2", new Data("Key2", "Value2"));
 
         var result = await ds.Tables();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var tables = result.Value as List<string>;
         await Assert.That(tables).IsNotNull();
         await Assert.That(tables!.Count).IsGreaterThanOrEqualTo(2);
@@ -142,7 +142,7 @@ public class DataSourceTests
         using var ds = CreateDataSource();
         await ds.Set("settings", "NullKey", new Data("NullKey", null));
         var result = await ds.Get("settings", "NullKey");
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsNull();
     }
 
@@ -152,7 +152,7 @@ public class DataSourceTests
         using var ds = CreateDataSource();
         await ds.Set("settings", "Count", new Data("Count", 42));
         var result = await ds.Get("settings", "Count");
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // JSON deserialization may box as long
         var value = Convert.ToInt64(result.Value);
         await Assert.That(value).IsEqualTo(42L);
@@ -187,11 +187,11 @@ public class DataSourceTests
         using var ds = CreateDataSource();
         // Special chars should be stripped, leaving "settingsDROPTABLEsettings"
         var result = await ds.Set("settings; DROP TABLE settings", "Key", new Data("Key", "Value"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         // Should be retrievable using the same dirty name (sanitized identically)
         var getResult = await ds.Get("settings; DROP TABLE settings", "Key");
-        await Assert.That(getResult.Success).IsTrue();
+        await getResult.IsSuccess();
         await Assert.That(getResult.Value?.ToString()).IsEqualTo("Value");
     }
 
@@ -200,7 +200,7 @@ public class DataSourceTests
     {
         using var ds = CreateDataSource();
         var result = await ds.Set("my_table", "Key", new Data("Key", "Value"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         var getResult = await ds.Get("my_table", "Key");
         await Assert.That(getResult.Value?.ToString()).IsEqualTo("Value");
@@ -212,7 +212,7 @@ public class DataSourceTests
         using var ds = CreateDataSource();
         // All chars stripped → empty → "default_table"
         var result = await ds.Set("!!!", "Key", new Data("Key", "Value"));
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         var getResult = await ds.Get("!!!", "Key");
         await Assert.That(getResult.Value?.ToString()).IsEqualTo("Value");
@@ -281,11 +281,11 @@ public class DataSourceTests
 
         // Set
         var setResult = await ds.Set("items", "key1", new Data("key1", "value1"));
-        await Assert.That(setResult.Success).IsTrue();
+        await setResult.IsSuccess();
 
         // Get
         var getResult = await ds.Get("items", "key1");
-        await Assert.That(getResult.Success).IsTrue();
+        await getResult.IsSuccess();
         await Assert.That(getResult.Value?.ToString()).IsEqualTo("value1");
 
         // Exists
@@ -301,7 +301,7 @@ public class DataSourceTests
 
         // Remove
         var removeResult = await ds.Remove("items", "key1");
-        await Assert.That(removeResult.Success).IsTrue();
+        await removeResult.IsSuccess();
         var afterRemove = await ds.Exists("items", "key1");
         await Assert.That((bool)afterRemove.Value!).IsFalse();
     }
@@ -316,7 +316,7 @@ public class DataSourceTests
 
         // Second operation should see the same table (no re-creation needed)
         var result = await ds.Get("persistent", "key1");
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value?.ToString()).IsEqualTo("value1");
 
         // Tables() should list it
@@ -353,7 +353,7 @@ public class DataSourceTests
         // New datasource with same name should start empty (sentinel closed → DB vanished)
         using var ds2 = global::app.module.settings.Sqlite.InMemory("disposable_db");
         var result = await ds2.Get("data", "key");
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsNull();
     }
 
@@ -366,7 +366,7 @@ public class DataSourceTests
         // app.SettingsStore is in-memory under Testing — no .db directory created.
         var ds = engine.SettingsStore;
         var setResult = await ds.Set("test_table", "k", new Data("k", "v"));
-        await Assert.That(setResult.Success).IsTrue();
+        await setResult.IsSuccess();
 
         var getResult = await ds.Get("test_table", "k");
         await Assert.That(getResult.Value?.ToString()).IsEqualTo("v");
@@ -384,7 +384,7 @@ public class DataSourceTests
 
         var ds = engine.SettingsStore;
         var setResult = await ds.Set("file_table", "k", new Data("k", "v"));
-        await Assert.That(setResult.Success).IsTrue();
+        await setResult.IsSuccess();
 
         // Verify .db directory WAS created on disk
         var dbDir = System.IO.Path.Combine(_tempDir, ".db");

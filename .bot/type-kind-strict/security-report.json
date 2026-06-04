@@ -1,0 +1,82 @@
+{
+  "analyst": "security",
+  "branch": "type-kind-strict",
+  "timestamp": "2026-06-04T00:00:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "strict-kind enforcement",
+      "exposure": "IStrictKindEnforcer / IKindValidatable; three gates in variable.set (build, runtime probe, byte-materialization imprint); image is the sole implementor today",
+      "trust_boundary": "Build-time literals (no trust), runtime %var% (caller-supplied), wire-arrived Data (signing-gated)",
+      "mitigations": ["Strict flag covered by Ed25519 canonical hash; probe gate forces materialisation which closes the lazy-passthrough bypass; image ctors are side-effect-free"],
+      "gaps": ["_requiredKind imprint is process-local (Strict from wire only applies when receiver opts in via `as ... strict`) — threat-model accepted"]
+    },
+    {
+      "area": "reflection-ctor probe (TryInstantiateValidator)",
+      "exposure": "variable.set walks public ctors of IKindValidatable types and Invokes with user-data; image is the only implementor today",
+      "trust_boundary": "targetType is constrained to PLang type registry + IKindValidatable; user data flows as ctor arg 0",
+      "mitigations": ["IKindValidatable gate; type registry not attacker-controlled; image ctors are field assignment only"],
+      "gaps": ["Forward-looking: new IKindValidatable types (audio/video planned) MUST have side-effect-free public ctors; discipline lives in convention only"]
+    },
+    {
+      "area": "text.Convert default serialiser",
+      "exposure": "JsonSerializer.Serialize with no options when binding a structured value `as text`",
+      "trust_boundary": "User-opt-in via `as text`; the source structure may reach a path.@this or [Sensitive] property",
+      "mitigations": ["User must explicitly bind as text; resulting text usually flows to user-controlled channels"],
+      "gaps": ["No PathJsonConverter / SensitivePropertyFilter / IgnoreCycles — pattern matches the documented test/report.cs incident; flagged by semgrep"]
+    },
+    {
+      "area": "crypto hash + signing pipeline",
+      "exposure": "Hash now returns hash.@this carrying algorithm; signing reads algorithm off value; HashDataConverter deserialises algorithm from wire",
+      "trust_boundary": "Outer Ed25519 covers the canonical signing bytes incl. algorithm string",
+      "mitigations": ["Algorithm whitelist (keccak256 only) in Hash switch; algorithm string included in Ed25519 canonical hash; unknown algo returns UnsupportedAlgorithm"],
+      "gaps": ["DigestEquals uses Span.SequenceEqual (not constant-time) — info only; pre-image resistance dwarfs timing leaks for data hash; would matter only if MAC verification is added"]
+    },
+    {
+      "area": "ImageSharp parser surface",
+      "exposure": "image.ValidateKind calls DetectFormat on caller-supplied bytes",
+      "trust_boundary": "Pre-verify reachable via `set %x% = %wireBytes% as image/X strict`",
+      "mitigations": ["User explicit opt-in via `as image/X strict`; DetectFormat is header-only (lightweight); catch-all guard except OOM/SOE"],
+      "gaps": ["Same opt-in surface that Width/Height already exposed; no new exposure"]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "set %s% = %dictWithPath% as text — text.Convert JSON-serialises with no options",
+      "preconditions": "User opts into `as text`; source dict graph reaches a path.@this or a [Sensitive] property",
+      "impact": "path.@this graphs leak absolute filesystem paths in the rendered text; [Sensitive] fields render plaintext; cycles throw",
+      "affected_files": ["PLang/app/type/text/this.Convert.cs:27"],
+      "exploit_sketch": "Build a dict containing a path value (e.g. result of a file.read result), `set %t% = %d% as text`, then echo %t% — the absolute path is in the output",
+      "proposed_fix": "Thread the context onto the call: JsonSerializer.Serialize(value, Context.App.Format.Options) (or Conversion.ContextualReadOptions(context))",
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "Strict imprint is process-local — wire Strict=true does not auto-impose RequireStrictKind on receiver",
+      "preconditions": "Receiver does `set %img% = %wireImage%` WITHOUT `as ... strict` clause",
+      "impact": "BytesAsync runs without strict check on receiver even if sender stamped Strict=true; receiver gets unvalidated bytes labeled as a specific kind",
+      "affected_files": ["PLang/app/data/IStrictKindEnforcer.cs", "PLang/app/module/variable/set.cs"],
+      "exploit_sketch": "Sender signs Data{Type:{image,gif,strict=true}, value:path-shape}; receiver does `set %x% = %sig%` (no as-clause); BytesAsync loads PNG without throwing",
+      "proposed_fix": "By design — strict is process-local developer ergonomic, not cross-process contract. Trust boundary is signing (which DOES cover the Strict flag). No fix; documented as standing note.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "hash.@this.DigestEquals uses Span.SequenceEqual (not constant-time)",
+      "preconditions": "Attacker has timing oracle on Verify and controls the comparison target",
+      "impact": "Theoretical timing leak; not practically exploitable for SHA-256/keccak256 due to pre-image resistance",
+      "affected_files": ["PLang/app/module/crypto/type/hash/this.cs:77", "PLang/app/module/signing/code/Ed25519.cs (step 7)"],
+      "exploit_sketch": "Repeatedly call verify with adaptive hash inputs and measure response time — but no useful information leaks for cryptographic-strength digests",
+      "proposed_fix": "Switch to CryptographicOperations.FixedTimeEquals if/when PLang grows MAC verification (same key, attacker-controlled input). Not needed today.",
+      "status": "accepted-risk"
+    }
+  ],
+  "summary": "PASS. type-kind-strict + lazy-deserialize merged at ced2a2517. Strict×lazy seam independently re-traced: the IKindValidatable probe block at set.cs:181-195 forces Value.Value materialisation (RawUntouched=false) BEFORE the lazy-passthrough check, closing the bypass that would otherwise let a wire-strict image store raw with no imprint. Reflection-ctor probe is narrow today (image only); forward-looking discipline (IKindValidatable ctors must be side-effect free) recorded for memory. One new low-severity semgrep hit (text.Convert default-options) with a two-line fix. Two info/low standing notes (process-local imprint, Span.SequenceEqual on hash compare). No critical/high open."
+}

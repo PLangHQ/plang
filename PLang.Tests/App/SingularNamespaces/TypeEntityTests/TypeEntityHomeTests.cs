@@ -25,10 +25,13 @@ public class TypeEntityHomeTests
 
     [Test] public async Task DataType_OnStampedData_ResolvesViaAppTypeIndexer()
     {
-        // ClrType walks through context.app.Type.Clr today — same result as app.Type[Value].ClrType.
+        // Use a 1:1 primitive (bool) to avoid the text-name/text.@this-class
+        // duality: post-Stage-2 "text" is both a primitive (typeof(string))
+        // and a domain type (app.type.text.@this), legitimately different
+        // ClrType depending on the door used.
         await using var app = new PLangEngine("/test");
-        var d = new global::app.data.@this<string>("", "hello") { Context = app.User.Context };
-        var fromRegistry = app.Type[d.Type!.Value];
+        var d = new global::app.data.@this<bool>("", true) { Context = app.User.Context };
+        var fromRegistry = app.Type[d.Type!.Name];
         fromRegistry.Context = app.User.Context;
         await Assert.That(d.Type.ClrType).IsEqualTo(fromRegistry.ClrType);
     }

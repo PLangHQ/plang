@@ -64,7 +64,7 @@ public class ValidateResponseTests
         };
         var result = await Make(response, MakeGoal(2), _app).Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -76,7 +76,7 @@ public class ValidateResponseTests
         };
         var result = await Make(response, MakeGoal(3), _app).Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("Step count");
         await Assert.That(result.Error!.Message).Contains("returned 1, expected 3");
     }
@@ -90,7 +90,7 @@ public class ValidateResponseTests
         };
         var result = await Make(response, MakeGoal(1), _app).Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("no actions");
     }
 
@@ -107,7 +107,7 @@ public class ValidateResponseTests
         };
         var result = await Make(response, MakeGoal(2), _app).Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("indexes must be 0..1");
     }
 
@@ -122,7 +122,7 @@ public class ValidateResponseTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
         // Pin which validation fired — multiple ValidationError variants exist
         // (null inputs, step-count mismatch, gap in indexes, Keep-without-prior).
@@ -141,7 +141,7 @@ public class ValidateResponseTests
         };
         var result = await Make(response, MakeGoalWithPriorActions(1), _app).Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -153,7 +153,7 @@ public class ValidateResponseTests
         };
         var result = await Make(response, MakeGoal(1), _app).Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("keep:true but the prior .pr has no actions");
     }
 
@@ -173,7 +173,7 @@ public class ValidateResponseTests
         var response = new BuildResponse { Steps = new() { step } };
         var result = await Make(response, MakeGoal(1), _app).Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test]
@@ -192,7 +192,7 @@ public class ValidateResponseTests
         var response = new BuildResponse { Steps = new() { step } };
         var result = await Make(response, MakeGoal(1), _app).Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("type 'tstring' but value is not a plain string");
         await Assert.That(result.Error!.Message).Contains("bare string values");
     }
@@ -213,7 +213,7 @@ public class ValidateResponseTests
         var response = new BuildResponse { Steps = new() { step } };
         var result = await Make(response, MakeGoal(1), _app).Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("type 'path' but value is not a plain string");
     }
 
@@ -232,6 +232,6 @@ public class ValidateResponseTests
         var response = new BuildResponse { Steps = new() { step } };
         var result = await Make(response, MakeGoalWithPriorActions(1), _app).Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 }

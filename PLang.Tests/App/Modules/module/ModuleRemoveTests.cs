@@ -29,7 +29,7 @@ public class ModuleRemoveTests
         var action = new Remove { Context = _app.User.Context, Name = "variable" };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(_app.Module.Contains("variable")).IsFalse();
     }
 
@@ -39,7 +39,7 @@ public class ModuleRemoveTests
         var action = new Remove { Context = _app.User.Context, Name = "nonexistent" };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
         await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
     }

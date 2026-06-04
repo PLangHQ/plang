@@ -76,7 +76,7 @@ public class QueryToolTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(_handler.CallCount).IsEqualTo(2); // Tool call + re-query
         // Second request should contain tool results
         var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
@@ -116,7 +116,7 @@ public class QueryToolTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(_handler.CallCount).IsEqualTo(2);
     }
 
@@ -153,7 +153,7 @@ public class QueryToolTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value?.ToString()).IsEqualTo("parallel done");
     }
 
@@ -190,7 +190,7 @@ public class QueryToolTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     #endregion
@@ -227,7 +227,7 @@ public class QueryToolTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // Tool error was sent back to LLM, which recovered
         var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
         await Assert.That(secondReq).Contains("Error:");
@@ -263,7 +263,7 @@ public class QueryToolTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
         await Assert.That(secondReq).Contains("unknown tool");
     }
@@ -300,7 +300,7 @@ public class QueryToolTests
         // Round 3: execute 1 tool (count=3), continue
         // Round 4: toolCallCount >= 3 → break
         await Assert.That(_handler.CallCount).IsEqualTo(4);
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // Loop exited via MaxToolCalls — result carries Truncated property
         await Assert.That(result.Properties["Truncated"]).IsEqualTo(true);
         await Assert.That(result.Properties["ToolCallCount"]).IsNotNull();
@@ -451,7 +451,7 @@ public class QueryToolTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // The second HTTP request should contain the tool result — tool was executed.
         // The key assertion: tool was called successfully despite LLM omitting "units".
         // If defaults weren't filled in, the goal call would have missing parameters.
@@ -540,7 +540,7 @@ public class QueryToolTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // Tool was executed and re-queried — tool result sent back to LLM
         await Assert.That(_handler.CallCount).IsEqualTo(2);
         var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
@@ -584,7 +584,7 @@ public class QueryToolTests
         };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         // Verify both tool results are in the re-query request
         var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
         await Assert.That(secondReq).Contains("call_1");

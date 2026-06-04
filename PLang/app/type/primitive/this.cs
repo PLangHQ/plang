@@ -74,12 +74,18 @@ public static class @this
     public static IReadOnlyDictionary<System.Type, string> Canonical { get; } =
         new Dictionary<System.Type, string>
         {
-            [typeof(string)] = "string",
-            [typeof(int)] = "int",
-            [typeof(long)] = "long",
-            [typeof(float)] = "float",
-            [typeof(double)] = "double",
-            [typeof(decimal)] = "decimal",
+            // `text` is the canonical PLang name for textual content; `string`
+            // stays as an accepted alias (Aliases still has both entries → typeof(string)).
+            [typeof(string)] = "text",
+            // Numeric primitives surface as `number` with kind carried separately
+            // — `int/long/decimal/double/float` are kinds of `number`, not
+            // top-level names. The kind comes from the `number.Build` hook (for
+            // literals) or the CLR numeric type (for declared returns).
+            [typeof(int)] = "number",
+            [typeof(long)] = "number",
+            [typeof(float)] = "number",
+            [typeof(double)] = "number",
+            [typeof(decimal)] = "number",
             [typeof(bool)] = "bool",
             [typeof(System.DateTime)] = "datetime",   // legacy; new code targets DateTimeOffset
             [typeof(System.DateTimeOffset)] = "datetime",
@@ -93,13 +99,45 @@ public static class @this
         };
 
     /// <summary>
-    /// Names exposed to the LLM builder catalog — every alias-less canonical
-    /// name (no <c>?</c> suffixes). Domain types are surfaced separately via
-    /// schemas, not listed here.
+    /// The always-on fundamental vocabulary the LLM builder sees, split by the
+    /// one question that decides where a kind comes from: can the value be
+    /// written inline in a goal, or only referenced?
+    ///
+    /// <para><b>Inline fundamentals</b> — the value can be a literal
+    /// (<c>5</c> → number, <c>true</c> → bool, <c>"hi"</c> → text). The LLM tags
+    /// these by looking at the written value. Their kind is the numeric
+    /// precision or comes from an explicit <c>as</c> — never the literal's
+    /// spelling.</para>
     /// </summary>
-    public static IReadOnlyList<string> BuilderNames { get; } = Aliases
-        .Where(kvp => !kvp.Key.EndsWith("?"))
-        .GroupBy(kvp => kvp.Value)
-        .Select(g => g.First().Key)
-        .ToList();
+    public static IReadOnlyList<string> InlineFundamentals { get; } = new[]
+        { "text", "number", "bool", "object", "list", "dict", "datetime", "date", "time", "duration", "guid" };
+
+    /// <summary>
+    /// <b>Reference fundamentals</b> — PLang is higher-level than C# (it is
+    /// <em>for</em> files, media, web, AI), so these are fundamental language
+    /// types, not library types. You can only write a path/handle to one, never
+    /// the data inline — there is no image literal in a goal. Their kind is
+    /// declared (<c>as image</c>) or produced by an action (<c>read</c>), parsed
+    /// from the path's extension. (<c>bytes</c> is borderline — base64 is
+    /// sort-of-writable — but behaves like a reference fundamental.)
+    /// </summary>
+    public static IReadOnlyList<string> ReferenceFundamentals { get; } = new[]
+        { "image", "video", "audio", "path", "bytes" };
+
+    /// <summary>The full fundamental set — membership test for prompt scoping.</summary>
+    public static IReadOnlySet<string> Fundamentals { get; } =
+        new HashSet<string>(InlineFundamentals.Concat(ReferenceFundamentals), System.StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Names exposed to the LLM builder catalog — the fundamental vocabulary,
+    /// always-on so the LLM can tag inline literals and recognise a developer's
+    /// <c>as image</c>. `text` is canonical for strings, `number` for numerics
+    /// (kind carries the precision); the media/path reference fundamentals are
+    /// first-class here, not buried in the format-family kinds. Domain/result
+    /// types are surfaced separately via schemas; their kinds never join the
+    /// always-on table.
+    /// </summary>
+    public static IReadOnlyList<string> BuilderNames { get; } =
+        InlineFundamentals.Concat(ReferenceFundamentals).ToList();
+
 }

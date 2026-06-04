@@ -49,7 +49,7 @@ public class CacheWrapTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(Ctx.Variable.GetValue("x")).IsEqualTo("first");
 
         // Cache was populated on miss
@@ -78,7 +78,7 @@ public class CacheWrapTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo("cached-value");
         // The underlying action did NOT run (no %y%)
         await Assert.That(Ctx.Variable.Get("y").Value).IsNull();
@@ -96,7 +96,7 @@ public class CacheWrapTests
 
         var result = await action.RunAsync(Ctx);
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
 
         // Nothing was cached for that key
         var cached = await Ctx.App!.Cache.GetAsync("fail-key");

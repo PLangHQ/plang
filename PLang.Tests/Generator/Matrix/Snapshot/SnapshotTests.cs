@@ -13,7 +13,7 @@ public class SnapshotOnErrorTests
         var result = await MatrixRunner.RunAsync<SnapshotOnError>(app,
             parameters: new[] { ("first", (object?)"a"), ("second", (object?)42) });
 
-        await Assert.That(result.Data.Success).IsFalse();
+        await result.Data.IsFailure();
         await Assert.That(result.Snapshot).IsNotNull();
         await Assert.That(result.Snapshot!.Count).IsEqualTo(2);
     }
@@ -62,7 +62,7 @@ public class SnapshotOnErrorTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<StringPlain>(app,
             parameters: new[] { ("path", (object?)"hello") });
-        await Assert.That(result.Data.Success).IsTrue();
+        await result.Data.IsSuccess();
         // Snapshot is null on success.
         await Assert.That(result.Snapshot).IsNull();
     }
@@ -81,7 +81,7 @@ public class SnapshotOnErrorTests
                 ("endpoint", (object?)"https://api.example.com")
             });
 
-        await Assert.That(result.Data.Success).IsFalse();
+        await result.Data.IsFailure();
         await Assert.That(result.Snapshot).IsNotNull();
 
         var apiKey = result.Snapshot!.FirstOrDefault(p => p.Name == "ApiKey");
@@ -112,7 +112,7 @@ public class SnapshotOnErrorTests
                 ("endpoint", (object?)"https://api.example.com")
             });
 
-        await Assert.That(result.Data.Success).IsFalse();
+        await result.Data.IsFailure();
         var apiKey = result.Snapshot!.FirstOrDefault(p => p.Name == "ApiKey");
         await Assert.That(apiKey).IsNotNull();
         // PrValue is null in the .pr → mask short-circuits to null (no false "******").

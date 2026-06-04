@@ -31,7 +31,7 @@ public class CompareHandlerTests : IDisposable
         var action = new Compare { Context = _app.User.Context, Left = Data.Ok(10), Operator = new Operator(">"), Right = Data.Ok(5) };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo(true);
     }
 
@@ -41,7 +41,7 @@ public class CompareHandlerTests : IDisposable
         var action = new Compare { Context = _app.User.Context, Left = Data.Ok(3), Operator = new Operator(">"), Right = Data.Ok(5) };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo(false);
     }
 
@@ -68,7 +68,7 @@ public class CompareHandlerTests : IDisposable
         var action = new Compare { Context = _app.User.Context, Left = Data.Ok(new object()), Operator = new Operator(">"), Right = Data.Ok(5) };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");
         await Assert.That(result.Error!.Message).Contains("does not support comparison");
     }

@@ -59,7 +59,7 @@ public partial class intercept : IContext
         };
 
         var binding = new EventBinding(
-            EventType.BeforeAction,
+            Trigger.BeforeAction,
             handler,
             actionPattern: Pattern.Value!);
 

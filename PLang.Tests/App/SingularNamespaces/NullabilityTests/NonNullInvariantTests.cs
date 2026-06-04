@@ -115,7 +115,8 @@ public class NonNullInvariantTests
         // method stays as the documented no-App surface; the assertion here is
         // that the static surface still returns the right answer.
         var t = global::app.type.list.@this.GetTypeNameStatic(typeof(int));
-        await Assert.That(t).IsEqualTo("int");
+        // Post-Stage-2: typeof(int) canonicalises to "number".
+        await Assert.That(t).IsEqualTo("number");
     }
 
     [Test] public async Task AppParent_OnRootApp_IsNull_ByDesign()

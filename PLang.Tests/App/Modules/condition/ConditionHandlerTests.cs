@@ -34,7 +34,7 @@ public class ConditionHandlerTests : IDisposable
         var action = new If { Context = _app.User.Context, Left = Data.Ok(true), Operator = new Operator("=="), Right = Data.Ok(true) };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo(true);
     }
 
@@ -44,7 +44,7 @@ public class ConditionHandlerTests : IDisposable
         var action = new If { Context = _app.User.Context, Left = Data.Ok(false), Operator = new Operator("=="), Right = Data.Ok(true) };
         var result = await action.Run();
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         await Assert.That(result.Value).IsEqualTo(false);
     }
 
@@ -82,7 +82,7 @@ public class ConditionHandlerTests : IDisposable
 
         var result = await step.RunAsync(_app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
@@ -134,7 +134,7 @@ public class ConditionHandlerTests : IDisposable
 
         var result = await step.RunAsync(_app.User.Context);
 
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();

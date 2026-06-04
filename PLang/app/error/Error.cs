@@ -47,10 +47,11 @@ public class Error : IError
 
     /// <summary>
     /// PLang surface <c>%!error.callback%</c> resolves through here. First read invokes
-    /// <c>app.Snapshot()</c> (which captures Variables.SnapshotAt(this) for the throw-time
-    /// view) and wraps the snapshot directly — <c>Data&lt;Snapshot&gt;</c>. Resume goes
-    /// through <see cref="app.snapshot.@this.Resume"/>, same path as ask-resume.
-    /// Cached per Error instance — reading twice returns the same Data reference.
+    /// <c>app.Snapshot(this)</c> — the THROW-TIME snapshot: CallStack from this error's
+    /// <see cref="CallFrames"/> (the live stack has unwound past the failing action by
+    /// handler time) and variables via <c>SnapshotAt(this)</c>. Wrapped directly as
+    /// <c>Data&lt;Snapshot&gt;</c>; resume goes through <see cref="app.snapshot.@this.Resume"/>,
+    /// same path as ask-resume. Cached per Error instance — reading twice returns the same Data.
     /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public global::app.data.@this<global::app.snapshot.@this> Callback
@@ -61,7 +62,7 @@ public class Error : IError
             if (App == null)
                 throw new InvalidOperationException(
                     "Error.Callback requires App reference; ensure the error went through Errors.Push.");
-            var snap = App.Snapshot();
+            var snap = App.Snapshot(this);
             _callback = global::app.data.@this<global::app.snapshot.@this>.Ok(snap);
             _callback.Context = App.User.Context;
             _callback.Snapshot = snap;
@@ -92,6 +93,35 @@ public class Error : IError
         StatusCode = statusCode;
         CreatedUtc = DateTime.UtcNow;
     }
+
+    /// <summary>
+    /// Snapshot-restore ctor — reconstructs an Error from wire with its original
+    /// <see cref="Id"/> and <see cref="CreatedUtc"/> preserved (both are otherwise
+    /// set only at first construction). The live back-references (Step, Goal,
+    /// CallFrames, Exception) are intentionally NOT restored: the CallStack
+    /// section already carries the frame chain, and a live Exception / Goal
+    /// object graph cannot round-trip. Used by <see cref="ErrorWire"/>.
+    /// </summary>
+    private Error(string id, string message, string key, int statusCode, DateTime createdUtc)
+    {
+        Id = id;
+        Message = message;
+        Key = key;
+        StatusCode = statusCode;
+        CreatedUtc = createdUtc;
+    }
+
+    /// <summary>
+    /// Factory mirror of the snapshot-restore ctor that also re-applies the
+    /// init-only advisory fields. See <see cref="ErrorWire"/>.
+    /// </summary>
+    internal static Error Restore(string id, string message, string key, int statusCode,
+        DateTime createdUtc, string? fixSuggestion, string? helpfulLinks)
+        => new Error(id, message, key, statusCode, createdUtc)
+        {
+            FixSuggestion = fixSuggestion,
+            HelpfulLinks = helpfulLinks,
+        };
 
     /// <summary>
     /// Creates an error tied to a specific step. Goal is inferred from step.Goal.
@@ -299,7 +329,7 @@ public class Error : IError
                 foreach (var kvp in allVars)
                 {
                     var val = FormatVerboseValue(kvp.Value.Value);
-                    sb.AppendLine($"{indent}    %{kvp.Key}% = {val} ({kvp.Value.Type?.Value ?? "?"})");
+                    sb.AppendLine($"{indent}    %{kvp.Key}% = {val} ({kvp.Value.Type?.Name ?? "?"})");
                 }
             }
         }

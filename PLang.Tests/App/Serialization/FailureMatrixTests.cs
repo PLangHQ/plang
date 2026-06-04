@@ -47,7 +47,7 @@ public class FailureMatrixTests
                 Data = back,
                 SkipFreshnessCheck = new global::app.data.@this<bool>("", true)
             }, app.User.Context);
-        await Assert.That(verify.Success).IsFalse();
+        await verify.IsFailure();
         await Assert.That(verify.Error!.Key).IsEqualTo("DataHashMismatch");
     }
 
@@ -59,7 +59,7 @@ public class FailureMatrixTests
         // top-level fields). Typed-failure here means the call doesn't throw;
         // the resulting Data is observable as empty.
         var result = plang.Deserialize("{\"unknown\":42}");
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
         var back = result.Value as global::app.data.@this;
         await Assert.That(back).IsNotNull();
         await Assert.That(back!.Properties.ContainsKey("unknown")).IsFalse();
@@ -70,14 +70,14 @@ public class FailureMatrixTests
         var d = new global::app.data.@this("x", "y", global::app.type.@this.FromName("text/plain"));
         var result = d.Decompress();
         await Assert.That(ReferenceEquals(d, result)).IsTrue();
-        await Assert.That(result.Success).IsTrue();
+        await result.IsSuccess();
     }
 
     [Test] public async Task Decompress_OnArchivedWithoutByteArrayValue_ReturnsDataWithDecompressError()
     {
         var d = new global::app.data.@this("x", "not bytes", global::app.type.@this.FromName("archived"));
         var result = d.Decompress();
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("DecompressError");
     }
 
@@ -90,37 +90,37 @@ public class FailureMatrixTests
             Algorithm = new global::app.data.@this<string>("", "md5")
         };
         var result = crypto.Hash(action);
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("UnsupportedAlgorithm");
     }
 
     [Test] public async Task ChannelWrite_OnInputOnlyChannel_ReturnsServiceErrorChannelReadOnly()
     {
-        var ch = global::app.channel.stream.@this.Input("stdin", new MemoryStream());
+        var ch = global::app.channel.type.stream.@this.Input("stdin", new MemoryStream());
         var result = await ch.Write(global::app.data.@this.Ok("x"));
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ChannelReadOnly");
     }
 
     [Test] public async Task ChannelRead_OnOutputOnlyChannel_ReturnsServiceErrorChannelWriteOnly()
     {
-        var ch = global::app.channel.stream.@this.Output("stdout", new MemoryStream());
+        var ch = global::app.channel.type.stream.@this.Output("stdout", new MemoryStream());
         var result = await ch.Read();
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ChannelWriteOnly");
     }
 
     [Test] public async Task ChannelAsk_OnClosedPipe_ReturnsServiceErrorChannelEof()
     {
         // Empty MemoryStream — ReadLineAsync returns null (EOF).
-        var ch = new global::app.channel.stream.@this("input", new MemoryStream(),
+        var ch = new global::app.channel.type.stream.@this("input", new MemoryStream(),
             global::app.channel.ChannelDirection.Bidirectional);
         var action = new global::app.module.output.ask
         {
             Question = new global::app.data.@this<string>("", "")
         };
         var result = await ch.Ask(action);
-        await Assert.That(result.Success).IsFalse();
+        await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ChannelEof");
     }
 }
