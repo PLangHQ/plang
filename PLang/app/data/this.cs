@@ -830,7 +830,7 @@ public partial class @this
         // when %x% isn't set. The `if (value is @this) return value` guard inside
         // SubstitutePrimitive only fires for already-typed Data, not for the dict
         // representation that comes off the LLM response.
-        if (context != null && IsWalkableContainer(raw) && !IsActionDestination(typeof(T)))
+        if (context != null && IsWalkableContainer(raw) && !IsActionDestination(typeof(T)) && !IsSelfResolvingParams(typeof(T)))
             return WrapAs<T>(WalkContainerVars(raw, context), context);
 
         // T has static Resolve(string, Context.@this) — Path-style domain types. Done before
@@ -1038,6 +1038,30 @@ public partial class @this
         return value;
     }
 
+    /// <summary>
+    /// Builds a named goal-call parameter from a raw param value. A full-match
+    /// <c>%var%</c> clones the live variable's Data under the parameter name — value,
+    /// type and signature shared by reference, no JSON round-trip — so signed/typed
+    /// values survive the call intact. Anything else (literal, partial interpolation,
+    /// container) resolves through the normal substitution and wraps as a fresh Data.
+    /// </summary>
+    public static @this ResolveParameter(string name, object? rawValue, actor.context.@this context)
+    {
+        if (rawValue is string s && TryFullVarMatch(s, out var varName))
+        {
+            var live = context.Variable.Get(varName);
+            if (live != null && live.IsInitialized)
+                return live.ShallowClone(name);
+        }
+        return new @this(name, SubstitutePrimitive(rawValue, context));
+    }
+
+    // GoalCall resolves its own parameters (GoalCall.Convert → ResolveParameter) so a
+    // full-match %var% param clones the live Data — signature/type preserved — instead of
+    // being flattened to a bare value by the generic container walk.
+    private static bool IsSelfResolvingParams(System.Type t) =>
+        t == typeof(global::app.goal.GoalCall);
+
     private static bool IsActionDestination(System.Type t)
     {
         var actionType = typeof(global::app.goal.steps.step.actions.action.@this);
@@ -1089,9 +1113,16 @@ public partial class @this
     /// Events (OnChange/OnCreate/OnDelete) are intentionally not copied —
     /// clones that go through Variables.Set() get events wired at storage time.
     /// </summary>
-    public @this ShallowClone()
+    public @this ShallowClone() => ShallowClone(Name);
+
+    /// <summary>
+    /// Shallow clone under a new name — same value, type, signature and properties
+    /// (all shared by reference). Renaming a value into a new slot (e.g. a goal-call
+    /// parameter) without copying or re-serializing it, so signed/typed values survive.
+    /// </summary>
+    public @this ShallowClone(string newName)
     {
-        var clone = new @this(Name, _value, _type)
+        var clone = new @this(newName, _value, _type)
         {
             Error = Error,
             Handled = Handled,
