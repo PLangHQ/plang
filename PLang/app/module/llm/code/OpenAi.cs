@@ -134,8 +134,15 @@ public sealed class OpenAi : ILlm
         OnBeforeRequest?.Invoke(messages, schema);
 
         // --- Cache check ---
+        // A build with caching disabled (--build={"cache":false}) bypasses the LLM
+        // cache for EVERY query, not only the ones that thread cache=%!build.cache%.
+        // The build-wide flag is authoritative; relying on each builder goal to pass
+        // the per-call param is fragile (most don't), so the override lives here.
+        // Gating cacheKey also skips the write below (guarded by cacheKey != null),
+        // so cache:false is a full bypass: no read, no stale entry left behind.
+        var buildCacheOff = app.Builder.IsEnabled && !app.Builder.Cache;
         string? cacheKey = null;
-        if (action.Cache.Value && action.Tools?.Value == null)
+        if (action.Cache.Value && action.Tools?.Value == null && !buildCacheOff)
         {
             cacheKey = ComputeCacheKey(messages, model, action.Temperature.Value, schema, action.Format?.Value);
             var cached = await settings.Get(CacheTable, cacheKey);
