@@ -40,6 +40,41 @@ Higher-level PLang values (`number`, `image`, `code`, `path`, `datetime`, `durat
 
 Full design (movie, build-vs-runtime trace, dispatch mechanism): the architect plan on the `plang-types` branch — `.bot/plang-types/architect/plan.md` and the seven stage files alongside.
 
+## Strict kind — `as image/gif strict` validates wherever the bytes appear
+
+`as <type>/<kind> strict` says "the value must really be a `<kind>`, not just declared as one". A PNG written to disk as `photo.gif` and bound with `as image/gif strict` must fail — but the failure can happen at three genuinely different moments depending on when the bytes are available. Two interfaces on `app.data` carry the discipline, and `image.@this` is the sole implementor today (audio/video planned).
+
+```csharp
+public interface IKindValidatable                              // stateless sniffer
+{
+    (bool ok, string? actualKind) ValidateKind(object value, string requiredKind);
+}
+
+public interface IStrictKindEnforcer                           // imprint that rides with the value
+{
+    void RequireStrictKind(string kind);
+    (bool ok, string? actualKind)? CheckStrictKind();          // null = not loaded yet → defer
+}
+
+public sealed class StrictKindMismatchException : Exception { ... }
+```
+
+**Two interfaces because validation and enforcement are different jobs.** `IKindValidatable` is a pure sniffer — "do these bytes match this kind?" — usable without state. `IStrictKindEnforcer` is the imprint that travels with a path-backed value so its own load seam (`image.BytesAsync`) can throw on mismatch the `set` never saw. The markers live next to `Data` (the dispatcher), not on the concrete value type, so strict's machinery depends only on the marker, not on `image` specifically.
+
+**Why both `text.@this` and `image.@this` don't implement these the same way.** `text` doesn't implement `IKindValidatable` — there is no probe that distinguishes plain text from markdown by content, so `as text/md strict` degrades to "kind name accepted". `image` implements both: magic-byte sniffing answers "are these bytes really a GIF?", and the imprint defers the check to load time.
+
+**Three enforcement gates in `variable.set` — not redundant, each catches a case the others can't.** The chain at `variable/set.cs:131-274` is annotated in-source with exactly this rationale:
+
+1. **Build time** — `ValidateBuild` rejects a literal value when its spelling can be checked at compile (`set %img% = "real.png" as image/gif strict` with a literal path the builder reads).
+2. **Run time, `IKindValidatable` probe** — `set.cs:181-195`. A `%var%` value resolved at run time is fed through `TryInstantiateValidator` (constructs a probe from raw `byte[]` when the type's primary ctor accepts them) and rejected before the binding mints.
+3. **Materialization time, `IStrictKindEnforcer` imprint** — `set.cs:264-274`. The `RequireStrictKind` imprint rides with the value; for a path-backed image where bytes aren't in memory yet, `CheckStrictKind()` returns `null` (defer) and `image.BytesAsync` throws `StrictKindMismatchException` when bytes finally load.
+
+**Strict×lazy at the chokepoint — handled by `Data.Load()`.** A path-backed strict image never throws at `set` (the bytes aren't loaded yet); without intervention, every consumer reads sync `image.Bytes` → `Array.Empty<byte>()` and strict never fires. The fix is an async pre-pass run at the serialize chokepoint — see [`Data.Load()` in wire-serialization](wire-serialization.md#dataload--async-pre-materialization-at-the-serialize-chokepoint).
+
+**Receiver-side discipline.** The `Strict=true` flag stamped on the wire does **not** auto-impose strict on the receiver without an explicit `as ... strict` clause. Signing is the trust boundary; strict is a developer ergonomic for the side that owns the binding. (Security audit: `.bot/type-kind-strict/security/v1/result.md` F2.)
+
+**Forward-looking discipline for future implementors.** Any new `IKindValidatable` ctor is auto-invoked on user data by `TryInstantiateValidator` — **public ctors of `IKindValidatable` types must be side-effect-free**. Anything that opens a connection, writes a file, or otherwise touches the world from a constructor breaks the strict-probe contract.
+
 ## Reader registry — `app.type.reader.@this`, the read-side mirror
 
 The renderer writes; the reader reads. `app/type/reader/this.cs` (`app.type.reader.@this`) mirrors `app.type.renderer.@this` exactly — same dispatch shape, same precedence order, same wildcard token. It exists so the read half is one symmetric registry instead of the fragmented set it replaced (`type.Convert`, the per-family `Convert` hook, `FromWire`/`WireReader`, `path.JsonConverter`, per-type `JsonConverter<T>`, and three separate parse moments across `file.read` / `http.get` / `channel.read`).

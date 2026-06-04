@@ -75,6 +75,8 @@ Notes are split across the topic docs below. Each section title maps to its doc 
 - Reader registry — `app.type.reader.@this`, the read-side mirror → `type-system.md`
 - Lazy materialization — `_raw`, `Materialize`, `ForceMaterialize` → `data-internals.md`
 - Wire passthrough — `RawUntouched` / `EmitRawVerbatim` → `wire-serialization.md`
+- Strict kind — `IKindValidatable` / `IStrictKindEnforcer` / three enforcement gates → `type-system.md`
+- `Data.Load()` — async pre-materialization at the serialize chokepoint → `wire-serialization.md`
 - `channel.read` — the single read boundary → `io-channels.md`
 - `app.X` is the collection node — `[name]` / `.list` / `.current` → `type-system.md`
 - Producer-stamping invariant — `Data.Type` propagation → `type-system.md`

@@ -102,6 +102,44 @@ Every `ISerializer` method (`Deserialize<T>`, `DeserializeAsync<T>`, `SerializeA
 
 Call sites read `.Success` and `.Value` / `.Error` instead of try/catch around the call. The registry methods pass `Data` through (`Registry.Deserialize<T>` returns `Data<T>`, `Registry.DeserializeAsync<T>` returns `Task<Data<T>>`, `Registry.SerializeAsync` returns `Task<Data>`).
 
+### `Data.Load()` — async pre-materialization at the serialize chokepoint
+
+Lazy reference fundamentals (an `image` minted from a path, with no bytes in memory yet) need their I/O run before the sync renderer wall — `JsonConverter<T>.Write` is sync by the System.Text.Json contract, so nothing below it can `await`. **The load has to happen above the STJ wall**, exactly once, at the serialize chokepoint.
+
+```csharp
+// PLang/app/data/this.Load.cs
+public async Task<@this?> Load()
+{
+    var visited = new HashSet<object>(ReferenceEqualityComparer.Instance);
+    try
+    {
+        await LoadValue(Value, visited, depth: 0);          // walks the value graph
+        return null;                                         // success
+    }
+    catch (StrictKindMismatchException ex)                   // strict reference fundamental tripped
+    {
+        return FromError(new Error(ex.Message, "StrictKindMismatch", 400) { Exception = ex });
+    }
+}
+
+// PLang/app/data/ILoadable.cs
+public interface ILoadable { Task LoadAsync(); }             // image.LoadAsync => BytesAsync
+```
+
+**Walks the same shapes `Normalize` does.** `LoadValue` recurses nested `Data`, dictionaries, lists/arrays — same cycle guard (`ReferenceEqualityComparer`), same `MaxNormalizeDepth` cap. Tree-native leaves (string / `byte[]` / `ValueType` / null) carry no lazy content and short-circuit. The walk is plain — no reflection, no domain-object descent (reference fundamentals always arrive as the value itself or inside a dict/list).
+
+**Distinct from `IStrictKindEnforcer`.** A lazy reference fundamental needs loading whether or not it is strict — an unloaded handle renders empty regardless. Strict enforcement piggybacks because the load seam (`image.BytesAsync`) is also where `StrictKindMismatchException` throws. `image.@this` implements both: `LoadAsync` is just `=> BytesAsync()`, which does the work and runs the strict check.
+
+**Idempotent and cheap.** An already-loaded image returns from its load seam immediately; a graph with no `ILoadable` is a pure walk and allocates only the visited set.
+
+**Call site — first line inside the `try` of each `ISerializer.SerializeAsync`** (`plang/this.cs`, `Json.cs`). `Text.cs` delegates non-primitives to the Json fallback, so all three impls are covered through one of two files. The leaf impl is the un-bypassable chokepoint: both channel output and wire egress (`ContextLessFallback` → `plang.@this`) pass through it.
+
+**Strict mismatch surfaces before any bytes write.** The error returned from `Load()` (key `StrictKindMismatch`) becomes the serializer's `Data.FromError` return; the stream stays untouched (0 bytes written). Read failures (missing file, denied path) propagate as `IOException` to the serializer's existing catch (see the closed list above).
+
+**Why this lives on Data, not on the serializer.** The walk is over Data's own value graph (nested Data envelopes, dictionaries, lists) and the courier rule still holds — `Load()` doesn't read `.Value` to *interpret* it, only to `await` registered `ILoadable.LoadAsync` markers and recurse. Putting it on `ISerializer` would either duplicate the graph walk per impl or invent a separate "pre-pass coordinator" type to hold it.
+
+**Sync `.Bytes` and `Width`/`Height` are still sync by design.** They run below the load pass; by the time they read, the bytes are in memory. Off-the-serialize-wall callers (action handlers in async context that read `image.Width` directly) are a separate concern — those can `await BytesAsync()` at their own call sites if they need to. The flagged-but-not-folded follow-up is captured in `.bot/type-kind-strict/coder/v14/report.md`.
+
 ### http body dispatch through the registry
 
 `http.request` / `http.upload` return `Task<Data<app.http.Response.@this>>`. The `Response` record is `(int Status, Dictionary<string,string> Headers, object? Body, TimeSpan Duration)`; `Body` is dispatched by Content-Type via `Serializers.GetByType` + a `TextFallback` for text-shaped misses (`text/*`, `application/xml`, `application/json`, `text/csv`). Binary content-types and missing Content-Type fall back to `byte[]`.
