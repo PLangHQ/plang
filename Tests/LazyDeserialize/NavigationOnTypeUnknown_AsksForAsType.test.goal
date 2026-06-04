@@ -5,7 +5,7 @@ Start
 / rises (the no-guessing rule).
 - set %x% = "{\"port\":8080}"
 - set %p% = %x.port%, on error call CaughtIt
-- assert false equals true
+- assert %caught% equals true
 
 CaughtIt
-- assert %!error% is not null
+- set %caught% = true
