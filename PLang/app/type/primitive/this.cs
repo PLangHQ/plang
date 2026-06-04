@@ -47,9 +47,13 @@ public static class @this
             ["bytes"] = typeof(byte[]),
             ["list"] = typeof(List<object>),
             ["array"] = typeof(object[]),
-            ["dictionary"] = typeof(Dictionary<string, object>),
-            ["dict"] = typeof(Dictionary<string, object>),
-            ["map"] = typeof(Dictionary<string, object>),
+            // dict/dictionary/map → the native object value type (collections
+            // hold Data). The raw Dictionary<string,object> entry that used to
+            // back these is retired; typed dictionaries still surface as the
+            // generic `dict<k,v>` shape via GetTypeName, separate from this.
+            ["dictionary"] = typeof(app.type.dict.@this),
+            ["dict"] = typeof(app.type.dict.@this),
+            ["map"] = typeof(app.type.dict.@this),
             ["object"] = typeof(object),
             ["dynamic"] = typeof(object),
             ["json"] = typeof(JsonNode),
@@ -96,6 +100,9 @@ public static class @this
             [typeof(byte)] = "byte",
             [typeof(byte[])] = "bytes",
             [typeof(object)] = "object",
+            // Native object value type → "dict" (keeps the no-context Data.Type
+            // derivation from collapsing to the @this class name "this").
+            [typeof(app.type.dict.@this)] = "dict",
         };
 
     /// <summary>

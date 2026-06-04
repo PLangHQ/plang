@@ -143,9 +143,22 @@ public sealed partial class @this
         if (targetType == typeof(data.@this) && value is not data.@this)
         {
             if (data.@this.IsWireShape(value))
-                return (data.@this.FromWireShape((IDictionary<string, object?>)value, "", context), null);
+            {
+                var wire = value as IDictionary<string, object?>
+                    ?? ((app.type.dict.@this)value).ToRaw();
+                return (data.@this.FromWireShape(wire, "", context), null);
+            }
+            // A non-wire-shaped dict stays a dict inside the Data — don't unwrap
+            // to raw here, that would lose the native value type.
             return (new data.@this("", value), null);
         }
+
+        // The native dict unwraps to a raw Dictionary at the typed-conversion
+        // boundary (dict → domain record, dict → Dictionary<K,V>, JSON round-trip)
+        // so the existing dictionary→T reconstruction below applies unchanged.
+        // dict → dict was already returned by the IsAssignableFrom check above.
+        if (value is app.type.dict.@this nativeDict)
+            return TryConvert(nativeDict.ToRaw(), targetType, context, targetName);
 
         // Handle nullable target types
         var underlying = System.Nullable.GetUnderlyingType(targetType);

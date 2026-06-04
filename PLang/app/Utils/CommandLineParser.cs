@@ -131,7 +131,11 @@ public class CommandLineParser
 			var element = doc.RootElement;
 			return element.ValueKind switch
 			{
-				JsonValueKind.Object => data.@this.UnwrapJsonElement(element),
+				// CLI config is infra (a flag property bag, not a PLang value), so
+				// keep it as a raw Dictionary/List rather than the native dict/list
+				// value types — the --debug/--test/--app consumers branch on
+				// IDictionary<string,object?>.
+				JsonValueKind.Object => ((app.type.dict.@this)data.@this.UnwrapJsonElement(element)!).ToRaw(),
 				JsonValueKind.Array => data.@this.UnwrapJsonElement(element),
 				JsonValueKind.Number => element.TryGetInt64(out var l) ? (object)l : element.GetDouble(),
 				JsonValueKind.True => true,

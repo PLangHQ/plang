@@ -247,6 +247,8 @@ public partial class discover : IContext
             string s => s,
             System.Text.Json.JsonElement je when je.ValueKind == System.Text.Json.JsonValueKind.Object
                 && je.TryGetProperty("Name", out var np) => np.GetString(),
+            // A goal.call param read back from the .pr is the native dict value type.
+            app.type.dict.@this nd when nd.Get("Name") is { } nameData => nameData.ScalarValue?.ToString(),
             System.Collections.Generic.IDictionary<string, object?> dict when dict.TryGetValue("Name", out var nm) => nm?.ToString(),
             _ => null
         };

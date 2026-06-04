@@ -2,4 +2,6 @@ TestDictLiteralSetsAndNavigates
 / A dict literal binds field-by-field — %u.name% is "a" and %u.age% is 30 after
 / set %u% = {name:"a", age:30}. The Dictionary navigator collapses into the dict
 / value type so navigation hits Get(key) directly.
-- throw "not implemented"
+- set %u% = {name:"a", age:30}
+- assert %u.name% equals "a"
+- assert %u.age% equals 30

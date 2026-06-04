@@ -116,7 +116,7 @@ public class QueryFormatTests
         await result.IsSuccess();
         // Value should be parsed JSON
         await Assert.That(result.Value).IsNotNull();
-        var json = result.Value is JsonElement je ? je : JsonSerializer.SerializeToElement(result.Value);
+        var json = result.Value is JsonElement je ? je : JsonSerializer.SerializeToElement(result.Value is global::app.type.dict.@this _nd ? _nd.ToRaw() : result.Value);
         await Assert.That(json.GetProperty("sentiment").GetString()).IsEqualTo("positive");
     }
 

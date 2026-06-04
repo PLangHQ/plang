@@ -1,3 +1,4 @@
+using PLang.Tests.App.DataTests;
 using app.data;
 
 namespace PLang.Tests.App.Serialization;
@@ -20,7 +21,7 @@ public class FailureMatrixNormalizeTests
         // Sensitive wins — the property is hard-excluded even when Out is also present.
         // Stage 2 enforces this via the Wire filter ordering: Sensitive check first.
         var s = new SensitiveAndOut { S = "leak" };
-        var children = (List<Data>)new Data("", s).Normalize()!;
+        var children = (new Data("", s).Normalize())!.Children();
         await Assert.That(children.Any(c => c.Name == "s")).IsFalse();
     }
 
@@ -30,7 +31,7 @@ public class FailureMatrixNormalizeTests
         // NormalizeException. Stage 2 in isolation can't surface this; pin the symmetry:
         // a type with no [Out] properties normalizes to an empty children list rather
         // than throwing, which is the Normalize side of the same "no strategy" gap.
-        var children = (List<Data>)new Data("", new object()).Normalize()!;
+        var children = (new Data("", new object()).Normalize())!.Children();
         await Assert.That(children.Count).IsEqualTo(0);
     }
 
@@ -86,7 +87,7 @@ public class FailureMatrixNormalizeTests
     {
         // Covered by NormalizeCycleAndDepthTests.Normalize_GetterThrows_* — pin the
         // residue: an indexed property is skipped (not invoked), so no failure.
-        var children = (List<Data>)new Data("", new System.Collections.Generic.Dictionary<string, int>()).Normalize()!;
+        var children = (new Data("", new System.Collections.Generic.Dictionary<string, int>()).Normalize())!.Children();
         await Assert.That(children).IsNotNull();
     }
 }

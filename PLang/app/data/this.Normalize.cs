@@ -98,21 +98,38 @@ public partial class @this
             finally { visited.Remove(nested); }
         }
 
-        // Dictionaries: become List<Data> with keys as names.
-        if (value is IDictionary dict)
+        // Native dict: walk its entries into a fresh dict of normalized values.
+        // Observation-only — the source dict is never mutated (outbound
+        // serialization must not rewrite in-memory values).
+        if (value is app.type.dict.@this nativeDict)
+        {
+            if (!visited.Add(nativeDict))
+                throw CycleError(nativeDict);
+            try
+            {
+                var copy = new app.type.dict.@this();
+                foreach (var entry in nativeDict.Entries)
+                    copy.Set(new @this(entry.Name, NormalizeValue(entry.Value, mode, visited, depth + 1, types)));
+                return copy;
+            }
+            finally { visited.Remove(nativeDict); }
+        }
+
+        // Raw dictionaries (infra dicts that still flow as values): become a
+        // native dict with keys as entry names — one object shape on the wire.
+        if (value is IDictionary rawDict)
         {
             if (!visited.Add(value))
                 throw CycleError(value);
             try
             {
-                var list = new List<@this>(dict.Count);
-                foreach (DictionaryEntry e in dict)
+                var built = new app.type.dict.@this();
+                foreach (DictionaryEntry e in rawDict)
                 {
                     var name = e.Key?.ToString() ?? "";
-                    var child = new @this(name, NormalizeValue(e.Value, mode, visited, depth + 1, types));
-                    list.Add(child);
+                    built.Set(new @this(name, NormalizeValue(e.Value, mode, visited, depth + 1, types)));
                 }
-                return list;
+                return built;
             }
             finally { visited.Remove(value); }
         }
@@ -167,7 +184,9 @@ public partial class @this
         return NormalizeObject(value, mode, visited, depth, types);
     }
 
-    private static List<@this> NormalizeObject(object obj, View mode, HashSet<object> visited, int depth,
+    // A C# domain record reflects into the one object form — a native `dict`,
+    // not a parallel "property bag" list. One object shape across the wire.
+    private static app.type.dict.@this NormalizeObject(object obj, View mode, HashSet<object> visited, int depth,
         app.type.list.@this? types)
     {
         if (!visited.Add(obj))
@@ -175,7 +194,7 @@ public partial class @this
         try
         {
             var entries = app.channel.serializer.filter.Tagged.PropertiesFor(obj.GetType(), mode);
-            var children = new List<@this>(entries.Count);
+            var built = new app.type.dict.@this();
 
             foreach (var entry in entries)
             {
@@ -185,7 +204,7 @@ public partial class @this
                 {
                     // [Masked] never invokes the getter — the value must not
                     // traverse memory boundaries it shouldn't cross.
-                    children.Add(new @this(name, "****"));
+                    built.Set(new @this(name, "****"));
                     continue;
                 }
 
@@ -201,10 +220,10 @@ public partial class @this
                         "NormalizeGetterThrew", ex);
                 }
 
-                children.Add(new @this(name, NormalizeValue(raw, mode, visited, depth + 1, types: types)));
+                built.Set(new @this(name, NormalizeValue(raw, mode, visited, depth + 1, types: types)));
             }
 
-            return children;
+            return built;
         }
         finally { visited.Remove(obj); }
     }

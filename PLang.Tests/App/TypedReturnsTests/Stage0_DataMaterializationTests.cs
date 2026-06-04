@@ -39,7 +39,7 @@ public class Stage0_DataMaterializationTests
         var materialized = src.As("json");
 
         await materialized.IsSuccess();
-        await Assert.That(materialized.Value).IsTypeOf<Dictionary<string, object?>>();
+        await Assert.That(materialized.Value).IsTypeOf<app.type.dict.@this>();
     }
 
     // Reading a property off a typed string-Value triggers ConvertValue() on the
@@ -121,7 +121,7 @@ public class Stage0_DataMaterializationTests
         var asJson = src.As("json");
 
         await asJson.IsSuccess();
-        await Assert.That(asJson.Value).IsTypeOf<Dictionary<string, object?>>()
+        await Assert.That(asJson.Value).IsTypeOf<app.type.dict.@this>()
             .Because("As('json') must dispatch on the argument, not src.Type.");
     }
 }

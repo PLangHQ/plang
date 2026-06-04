@@ -149,16 +149,19 @@ public sealed class Writer : IWriter
                 Value(nested.Value);
                 EndRecord(nested);
                 return;
-            case List<app.data.@this> propertyBag:
-                // NormalizeObject (a domain class → property bag) always returns
-                // List<Data>. Emit as JSON object — including the empty case,
-                // so a record-with-no-properties (Execute) round-trips as `{}`
-                // not `[]`.
+            case app.type.dict.@this dict:
+                // The native object shape. Normalize hands the writer a `dict`
+                // for every object form — a json-object value, a raw infra dict,
+                // and a reflected C# domain record all converge here. Emit as a
+                // JSON object keyed by entry name, including the empty case so a
+                // record-with-no-properties round-trips as `{}` not `[]`. The
+                // writer disambiguates object-vs-array by value type: `dict`→`{}`,
+                // any other IEnumerable→`[]`.
                 _writer.WriteStartObject();
-                foreach (var child in propertyBag)
+                foreach (var entry in dict.Entries)
                 {
-                    _writer.WritePropertyName(child.Name);
-                    Value(child.Value);
+                    _writer.WritePropertyName(entry.Name);
+                    Value(entry.Value);
                 }
                 _writer.WriteEndObject();
                 return;

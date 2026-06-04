@@ -257,8 +257,14 @@ public sealed class @this
     public object? Convert(string raw)
     {
         if (string.Equals(Name, "json", System.StringComparison.OrdinalIgnoreCase))
-            return JsonSerializer.Deserialize<Dictionary<string, object?>>(raw,
+        {
+            // Parse to the native value graph (dict / list / primitives), not a
+            // raw Dictionary — collections hold Data, and an unexamined json
+            // object narrows to `dict` on first touch.
+            var parsed = JsonSerializer.Deserialize<object?>(raw,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return global::app.data.@this.UnwrapJsonElement(parsed);
+        }
 
         // Kinded scalar read-back: a string-shaped type whose value carries a
         // sub-format the CLR type can't express (a hash's algorithm) reconstructs

@@ -96,11 +96,11 @@ public class TypeOwnedReadParityTests
         var r = new global::app.type.reader.@this();
         var ctx = new global::app.type.reader.ReadContext(null);
         var via = r.Of("object", "json")!(json, "json", ctx);
-        await Assert.That(via).IsTypeOf<Dictionary<string, object?>>();
-        var dict = (Dictionary<string, object?>)via!;
-        await Assert.That(dict.ContainsKey("a")).IsTrue();
-        await Assert.That(dict.ContainsKey("b")).IsTrue();
-        await Assert.That(dict.ContainsKey("c")).IsTrue();
+        await Assert.That(via).IsTypeOf<app.type.dict.@this>();
+        var dict = (app.type.dict.@this)via!;
+        await Assert.That(dict.Has("a")).IsTrue();
+        await Assert.That(dict.Has("b")).IsTrue();
+        await Assert.That(dict.Has("c")).IsTrue();
 
         // Parity against the incumbent inline json read on the type entity.
         var prior = global::app.type.@this.Create("json").Convert(json);

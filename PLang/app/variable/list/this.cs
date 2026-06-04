@@ -335,6 +335,17 @@ public partial class @this
             return target;
         }
 
+        // Native dict — set the key directly. Without this the dict matches no
+        // arm below and falls into ConvertToDictionary, which reflects its C#
+        // surface (Context/Count/Keys/Entries) into a junk dictionary — losing
+        // every real key AND dragging Context (→ App → Culture) into the value,
+        // which then cycles when the value is snapshot-cloned.
+        if (target is app.type.dict.@this nativeDict)
+        {
+            nativeDict.Set(propertyName, value);
+            return target;
+        }
+
         // Dictionary — set key directly (case-insensitive lookup)
         if (target is IDictionary<string, object?> dict)
         {

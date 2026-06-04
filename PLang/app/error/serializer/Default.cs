@@ -18,30 +18,31 @@ public static class Default
 
     private static object? Render(IError e)
     {
-        var node = new List<data.@this>
-        {
-            new("$type", e.GetType().Name),
-            new("id", e.Id),
-            new("message", e.Message),
-            new("key", e.Key),
-            new("statusCode", e.StatusCode),
-            new("createdUtc", e.CreatedUtc),
-            new("category", e.Category.ToString()),
-        };
-        if (e.FixSuggestion != null) node.Add(new("fixSuggestion", e.FixSuggestion));
-        if (e.HelpfulLinks != null) node.Add(new("helpfulLinks", e.HelpfulLinks));
+        // The error renders as an object — a native dict keyed by field name, not
+        // a List<Data> property bag. The writer emits dict as `{}`, which is what
+        // the read side (ErrorWire) expects.
+        var node = new global::app.type.dict.@this();
+        node.Set(new("$type", e.GetType().Name));
+        node.Set(new("id", e.Id));
+        node.Set(new("message", e.Message));
+        node.Set(new("key", e.Key));
+        node.Set(new("statusCode", e.StatusCode));
+        node.Set(new("createdUtc", e.CreatedUtc));
+        node.Set(new("category", e.Category.ToString()));
+        if (e.FixSuggestion != null) node.Set(new("fixSuggestion", e.FixSuggestion));
+        if (e.HelpfulLinks != null) node.Set(new("helpfulLinks", e.HelpfulLinks));
 
         if (e is AskError ask)
         {
-            node.Add(new("table", ask.Table));
-            node.Add(new("dataKey", ask.DataKey));
+            node.Set(new("table", ask.Table));
+            node.Set(new("dataKey", ask.DataKey));
         }
 
         if (e.ErrorChain is { Count: > 0 })
         {
             var chain = new List<object?>();
             foreach (var c in e.ErrorChain) chain.Add(new TypedValueNode(c, "error"));
-            node.Add(new("errorChain", chain));
+            node.Set(new("errorChain", chain));
         }
         return node;
     }

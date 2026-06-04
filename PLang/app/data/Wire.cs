@@ -185,6 +185,13 @@ public sealed class Wire : JsonConverter<@this>
             EnsureInnerSigned(inner.Value);
             return;
         }
+        // Native dict: its entries ARE Data — recurse into each so a signed value
+        // held under a key gets sealed before any byte leaves.
+        if (value is app.type.dict.@this nativeDict)
+        {
+            foreach (var entry in nativeDict.Entries) EnsureInnerSigned(entry);
+            return;
+        }
         // IDictionary's IEnumerable yields DictionaryEntry boxes, not values —
         // foreach over the dict would walk DictionaryEntry which is neither
         // Data nor IEnumerable, and inner Datas held as dict values would

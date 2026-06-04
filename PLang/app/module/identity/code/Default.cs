@@ -323,6 +323,11 @@ public sealed class Default : IIdentity
         if (value is Identity identity)
             return identity;
 
+        // A stored identity now reads back as the native dict value type — unwrap
+        // to raw so the json round-trip below reconstructs it.
+        if (value is app.type.dict.@this nativeDict)
+            value = nativeDict.ToRaw();
+
         if (value is Dictionary<string, object?> dict)
         {
             try

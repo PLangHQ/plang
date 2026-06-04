@@ -20,12 +20,12 @@ public static class Default
     /// <summary>A snapshot node renders as an object: its entries then its sub-sections.</summary>
     private static object? Render(global::app.snapshot.@this node)
     {
-        var obj = new List<data.@this>();
+        var obj = new global::app.type.dict.@this();
         foreach (var (key, value) in node.Entries)
-            obj.Add(new data.@this(key, Render(value)));
+            obj.Set(new data.@this(key, Render(value)));
         foreach (var (name, section) in node.Sections)
-            obj.Add(new data.@this(name, Render(section)));
-        return obj; // List<data.@this> → object on the wire
+            obj.Set(new data.@this(name, Render(section)));
+        return obj; // native dict → `{}` on the wire
     }
 
     /// <summary>One entry value → a wire-tree node.</summary>
@@ -46,9 +46,9 @@ public static class Default
                 return new TypedValueNode(err, "error"); // error owns its renderer
             case System.Collections.IDictionary dict:
             {
-                var obj = new List<data.@this>();
+                var obj = new global::app.type.dict.@this();
                 foreach (System.Collections.DictionaryEntry e in dict)
-                    obj.Add(new data.@this(e.Key?.ToString() ?? "", Render(e.Value)));
+                    obj.Set(new data.@this(e.Key?.ToString() ?? "", Render(e.Value)));
                 return obj;
             }
             case List<data.@this> records:
@@ -63,12 +63,12 @@ public static class Default
                 // A plain domain record (Provider Registration / DefaultOverride):
                 // reflect its public properties into an object. camelCase the keys
                 // so the Io read (case-insensitive) rebinds the record's ctor.
-                var node = new List<data.@this>();
+                var node = new global::app.type.dict.@this();
                 foreach (var p in value.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
                 {
                     if (p.GetIndexParameters().Length > 0) continue;
                     var name = char.ToLowerInvariant(p.Name[0]) + p.Name[1..];
-                    node.Add(new data.@this(name, Render(p.GetValue(value))));
+                    node.Set(new data.@this(name, Render(p.GetValue(value))));
                 }
                 return node;
         }

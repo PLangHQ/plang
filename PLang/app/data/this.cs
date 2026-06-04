@@ -478,6 +478,13 @@ public partial class @this
     /// </summary>
     public IEnumerable<(@this key, @this value)> EnumerateItems()
     {
+        if (_value is app.type.dict.@this nativeDict)
+        {
+            foreach (var entry in nativeDict.Entries)
+                yield return (new @this("", entry.Name) { Context = _context }, entry);
+            yield break;
+        }
+
         if (_value is IDictionary<string, object?> typedDict)
         {
             foreach (var kvp in typedDict)
@@ -684,7 +691,7 @@ public partial class @this
             // whole) rather than wrapping the dict as a Data value, which would mislabel
             // the type as `object` and lose the inner value's real type.
             @this transient = IsWireShape(walked)
-                ? FromWireShape((IDictionary<string, object?>)walked!, Name, context)
+                ? FromWireShape(AsRawWireDict(walked)!, Name, context)
                 : new @this(Name, walked, _type, Parent) { Context = context };
             transient.Properties = Properties;
             transient.OnCreate   = OnCreate;
@@ -701,13 +708,23 @@ public partial class @this
     // checks WalkContainerVars makes — kept separate so AsCanonical can decide whether
     // to wrap into a fresh Data without invoking the walker on non-container values.
     private static bool IsWalkableContainer(object? raw) =>
-        raw is IList<object?> || raw is IDictionary<string, object?>;
+        raw is IList<object?> || raw is IDictionary<string, object?> || raw is app.type.dict.@this;
+
+    // A native dict and a raw string-keyed dict both read out as a raw
+    // Dictionary<string,object?> at the wire-shape boundary (the native dict
+    // keeps Data-keyed entries in memory; here we want the raw read-out form).
+    private static IDictionary<string, object?>? AsRawWireDict(object? raw) => raw switch
+    {
+        IDictionary<string, object?> d => d,
+        app.type.dict.@this nd => nd.ToRaw(),
+        _ => null,
+    };
 
     // A dict carrying the canonical Data wire shape — a `value` slot paired with a
     // structured `type` entity. Such an object IS a serialized Data, so binding it to a
     // Data slot must reconstruct the Data (value + type as a whole), not nest the dict.
-    internal static bool IsWireShape(object? raw) =>
-        raw is IDictionary<string, object?> d && d.ContainsKey("value") && d.ContainsKey("type");
+    internal static bool IsWireShape(object? raw)
+        => AsRawWireDict(raw) is { } d && d.ContainsKey("value") && d.ContainsKey("type");
 
     // Reconstruct a Data from its wire shape ({name?, value, type}). The value is set
     // as a whole under its real type; a nested wire-shaped value is itself a Data. The
@@ -716,7 +733,7 @@ public partial class @this
     {
         object? rawValue = wire.TryGetValue("value", out var v) ? v : null;
         object? innerValue = IsWireShape(rawValue)
-            ? FromWireShape((IDictionary<string, object?>)rawValue!, "", context)
+            ? FromWireShape(AsRawWireDict(rawValue)!, "", context)
             : rawValue;
         type? typeEntity = wire.TryGetValue("type", out var t) ? TypeFromWire(t, context) : null;
         return new @this(name, innerValue, typeEntity) { Context = context };
@@ -726,6 +743,9 @@ public partial class @this
     // structured {name, kind?, strict?} dict.
     private static type? TypeFromWire(object? t, actor.context.@this? context)
     {
+        // A structured type wire ({name, kind?, strict?}) round-trips as a native
+        // dict now — read it out raw so the IDictionary case below covers both.
+        if (t is app.type.dict.@this ndType) t = ndType.ToRaw();
         switch (t)
         {
             case string s when !string.IsNullOrWhiteSpace(s):
@@ -747,6 +767,7 @@ public partial class @this
     private static object? WalkContainerVars(object? raw, actor.context.@this context)
     {
         if (raw is IList<object?> list) return WalkList(list, context);
+        if (raw is app.type.dict.@this nativeDict) return WalkNativeDict(nativeDict, context);
         if (raw is IDictionary<string, object?> dict) return WalkDict(dict, context);
         return raw;
     }
@@ -1040,6 +1061,17 @@ public partial class @this
         return result;
     }
 
+    // Walk a native dict's entry values for nested %var%, preserving dict-ness so
+    // downstream navigation still hits the value type. A fresh dict is built — the
+    // source is never mutated (mirrors WalkDict's fresh-container contract).
+    private static app.type.dict.@this WalkNativeDict(app.type.dict.@this dict, actor.context.@this context)
+    {
+        var result = new app.type.dict.@this { Context = context };
+        foreach (var entry in dict.Entries)
+            result.Set(new @this(entry.Name, SubstitutePrimitive(entry.Value, context)));
+        return result;
+    }
+
     // Shape contract: WalkList / WalkDict / SubstitutePrimitive only match the typed-generic
     // shapes IList<object?> / IDictionary<string, object?>. A non-generic IList (ArrayList)
     // or IDictionary (Hashtable) passes through to the fall-through and is returned as-is —
@@ -1072,6 +1104,7 @@ public partial class @this
         }
 
         if (value is IList<object?> innerList) return WalkList(innerList, context);
+        if (value is app.type.dict.@this innerNativeDict) return WalkNativeDict(innerNativeDict, context);
         if (value is IDictionary<string, object?> innerDict) return WalkDict(innerDict, context);
 
         // Non-recursion guards: don't walk into Data, Action templates, or typed Action lists.
@@ -1316,13 +1349,14 @@ public partial class @this
         return UnwrapJsonElement(doc.RootElement, depth);
     }
 
-    private static Dictionary<string, object?> UnwrapJsonObject(JsonElement element, int depth)
+    // A json object narrows to the native `dict` value type — collections hold
+    // Data end to end, so each property value is wrapped in a named Data (which
+    // keeps its own type-tag and signature) rather than decomposed to raw CLR.
+    private static app.type.dict.@this UnwrapJsonObject(JsonElement element, int depth)
     {
-        var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        var dict = new app.type.dict.@this();
         foreach (var prop in element.EnumerateObject())
-        {
-            dict[prop.Name] = UnwrapJsonElement(prop.Value, depth + 1);
-        }
+            dict.Set(new @this(prop.Name, UnwrapJsonElement(prop.Value, depth + 1)));
         return dict;
     }
 

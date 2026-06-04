@@ -1,4 +1,5 @@
 TestDictNestedNavigation
 / Nested dot-path navigation %person.address.city% reaches through nested dicts;
 / each step is dict.Get, no reflection arm needed.
-- throw "not implemented"
+- set %person% = {name:"a", address:{city:"Reyk"}}
+- assert %person.address.city% equals "Reyk"

@@ -123,6 +123,9 @@ public sealed class Properties : IDictionary<string, object?>
                 nameof(value));
         if (value is string or bool or int or long or double or decimal or float
             or DateTime or DateTimeOffset or byte[] or Guid) return;
+        // Container types (the native dict/list, raw IDictionary/IEnumerable) are
+        // accepted structurally — a json-object property value is a `dict` now.
+        if (value is global::app.type.dict.@this) return;
         if (value is System.Collections.IDictionary or System.Collections.IEnumerable) return;
         throw new ArgumentException(
             $"Property value of type {value.GetType()} is not a wire-supported primitive.",

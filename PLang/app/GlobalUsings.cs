@@ -33,6 +33,12 @@ global using path = app.type.path.@this;
 global using filepath = app.type.path.file.@this;
 global using httppath = app.type.path.http.@this;
 
+// Native collection value types — collections hold Data end to end.
+// Lowercase aliases match the PLang concept names. Inside `namespace app.type`
+// the bare names are ambiguous with the child namespaces; those files qualify
+// with `global::app.type.dict.@this` / `global::app.type.list.list.@this`.
+global using dict = app.type.dict.@this;
+
 // Config subsystem
 global using AppConfig = app.config.@this;
 global using ConfigScope = app.config.Scope;
