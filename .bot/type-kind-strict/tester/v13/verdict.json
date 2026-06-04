@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "Merged type-kind-strict+lazy-deserialize honestly green: PLang 273/273 deterministic x2 (git clean after each — v8 reproducibility blocker dead), C# 4025/0; coder v13 tests honest + set-path MaterializeFailed mutation-verified by tester." }

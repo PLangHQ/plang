@@ -916,6 +916,62 @@
         "health": "green",
         "notes": "Clean rebuild: PLang 273/273, C# 4025/0/0. No PLNG001/002, no System.IO/Console in changed prod files. Integration seam (strict x lazy) traced sound. One systemic non-blocking provenance-comment finding. Next bot: tester."
       }
+    },
+    {
+      "id": "4ebdb422-f2df-4043-bee9-e9e50bf69b5f",
+      "bot": "tester",
+      "timestamp_start": "2026-06-04T19:42:00Z",
+      "timestamp_end": "2026-06-04T19:51:00Z",
+      "intent": "Re-test merged type-kind-strict+lazy-deserialize; verify the v8 reproducibility FAIL is resolved and v13 tests are honest.",
+      "before": {
+        "assumptions": "v8 FAILed on PLang reproducibility (stale .pr vs stage-4 entity, 0-4 flapping, warm-cache 262/262). coder claims merge resolved it; codeanalyzer v3 PASS 273/273+4025/0.",
+        "risk": "Warm-cache false green could persist; new v13 tests could be weak."
+      },
+      "plan": ".bot/type-kind-strict/tester/v13/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "Tests/"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Reproducibility gate (the v8 FAIL). Clean binary, plang --test x2: 273/273/0/0-stale identical both runs, git clean after each (0 .pr rewritten). Blocker resolved by the lazy-deserialize merge regenerating+committing the Tests tree."
+        },
+        {
+          "paths": [
+            "PLang.Tests/"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild C# suite 4025/4025/0. Matches codeanalyzer v3."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/LazyDeserialize/LazyDataTests/MaterialiseErrorPathTests.cs",
+            "PLang.Tests/App/LazyDeserialize/IntegrationCutsTests/SignedDataSurvivesVariableSetListTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "coder v13 test-only work. Both honest: Error.Key==MaterializeFailed (distinct from NotFound) + source-name; signature survives real variable.set + verify==true. Not Data.Ok rubber-stamps."
+        },
+        {
+          "paths": [
+            "PLang/app/variable/list/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Independent mutation test: neutralized MaterializeFailed guard at line 311 -> exactly the 2 set-path tests flip red (4023/2), revert -> green. Source reverted clean, no non-.bot dirty. Tests genuinely catch the regression."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "green",
+        "notes": "v8 reproducibility blocker dead: PLang 273/273 deterministic x2, git clean. C# 4025/0. v13 tests honest + mutation-verified. One minor non-blocking carry-forward (no end-to-end PLang goal for lazy strict image load-throw; pinned in C#). Next: security/auditor or merge per Ingi."
+      }
     }
   ]
 }

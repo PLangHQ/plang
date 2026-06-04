@@ -1,40 +1,30 @@
 {
   "tester": "tester",
   "branch": "type-kind-strict",
-  "timestamp": "2026-05-31T20:19:17Z",
-  "tested_version": "v8",
+  "timestamp": "2026-06-04T19:50:32Z",
+  "tested_version": "v13",
   "test_run": {
-    "csharp": { "total": 3815, "passed": 3815, "failed": 0, "skipped": 0 },
-    "plang": { "total": 262, "passed": 258, "failed": 4, "skipped": 0, "note": "Worst clean-binary run. Flaps 0-4 fail across identical runs; see finding 1." }
+    "csharp": { "total": 4025, "passed": 4025, "failed": 0, "skipped": 0 },
+    "plang": { "total": 273, "passed": 273, "failed": 0, "skipped": 0, "stale": 0, "note": "Deterministic across 2 consecutive clean-binary runs; git status clean after each (zero .pr rewritten). The v8 reproducibility blocker is resolved." }
   },
   "coverage": {
-    "changed_files_covered": 0,
-    "changed_files_total": 0,
+    "changed_files_covered": 2,
+    "changed_files_total": 2,
     "uncovered_files": [],
-    "note": "F1-F5 production files are covered by the C# suite (3815 green). The defect is PLang fixture reproducibility, not C# line coverage."
+    "note": "coder v13 is test-only (two new C# files). Both honest; set-path MaterializeFailed contract independently mutation-verified by tester."
   },
   "findings": [
     {
       "id": 1,
-      "severity": "critical",
-      "type": "missing-coverage",
-      "test_file": "Tests/Types/.build/readphotostampsimage.test.pr (and ~688 stale .pr across Tests/)",
-      "code_file": "PLang/app/module/variable/set.cs",
-      "issue": "plang --test is not reproducibly green from a clean binary. Five+ clean runs gave 4, 0, 1, 0 failures (and a back-to-back run went 0 then 1). Committed .pr fixtures encode variable.set's Type parameter in the PRE-stage-4 bare-string shape ({\"value\":\"image\",\"type\":\"string\"}); stage 4 (coder v4) changed Type to a structured {name,kind,strict} entity. The runtime runs the stale .pr wrong (ReadPhotoStampsImage: runtime error 'Cannot convert app.type.image.this to String') or LLM-rebuilds it on the fly. The builder is non-deterministic (it logs 'step count didn't match ... the LLM is non-deterministic') and the builder LLM cache (Tests/.db/system.sqlite) is gitignored, so a fresh clone is cold and flaps. 688/703 committed .pr are still old-format; only 15 (the TypeKindStrict goals) are new-format.",
-      "impact": "A fresh reviewer / CI cannot get a reliable green PLang suite. The coder's and codeanalyzer's '262/262, 0 fail' is a warm-cache artifact, not the committed clean-checkout state. Real type-semantics behavior on this branch (image/text/number kind stamping) is verified only when the LLM happens to rebuild correctly.",
-      "suggestion": "Run `plang build` to regenerate the whole Tests/ tree against the current binary and COMMIT the refreshed .pr so they match the stage-4 Type entity shape. Then prove it: clean-binary `plang --test` green across >=2 consecutive runs with `git status` clean after each (zero .pr modified by the run)."
-    },
-    {
-      "id": 2,
       "severity": "minor",
       "type": "missing-plang-test",
       "test_file": "Tests/TypeKindStrict/SetAsImageGifStrictMismatch.test.goal",
       "code_file": "PLang/app/type/image/this.cs",
-      "issue": "No end-to-end PLang test walks set -> store -> retrieve -> load -> throw for a LAZY strict image. SetAsImageGifStrictMismatch sets `\"photo.png\" as image/gif strict` but only asserts Type.Name/Kind; it never forces a byte load, so the deferred StrictKindMismatchException never fires in PLang. Imprint-survival across storage is established only by code-read of Variables.Set's by-reference aliasing (codeanalyzer residual #2).",
-      "impact": "If a future refactor clones Data on Set (breaking the by-reference imprint), or drops the imprint at the variable.set seam for path-backed values, no PLang test would catch it; the throw-at-load is unit-tested on image directly, bypassing the set seam.",
-      "suggestion": "Once fixtures are stable, add a goal that reads `%img.Width%` or `%img.Bytes%` after a mismatched strict set on the committed photo.png fixture and asserts the error surfaces (or use test.report error-capture)."
+      "issue": "Carry-forward of v8 F2 (now non-blocking, fixtures stable). No end-to-end PLang goal walks set -> store -> retrieve -> load -> throw for a LAZY strict image. SetAsImageGifStrictMismatch sets 'photo.png' as image/gif strict but only asserts Type.Name/Kind; it never forces a byte load, so the deferred StrictKindMismatchException never fires in PLang. The throw-at-load is unit-tested directly on image (LazyPathHandleTests.BytesAsync_StrictKindMismatch) and the set-seam imprint survival is established by C# (Cut2). The PLang goal layer does not exercise the seam end-to-end.",
+      "impact": "If a future refactor drops the strict imprint at the variable.set seam for path-backed values, no PLang goal test would catch it — only the C# unit tests would. Low risk: the C# layer is covered and deterministic.",
+      "suggestion": "Add a goal that reads %img.Width% or %img.Bytes% after a mismatched strict set on the committed photo.png fixture and asserts the error surfaces (test.report error-capture). Optional polish — C# coverage already pins the contract."
     }
   ],
-  "verdict": "needs-fixes",
-  "summary": "C# suite is solid and deterministic (3815/3815); the F1 strict-kind fix that failed v1 is now honestly covered (two distinct enforcement-path tests, builder .pr faithful, codeanalyzer mutation-verified, my code-read confirms). F2-F5 confirmed. BUT the PLang suite is not reproducibly green from a clean binary: committed .pr fixtures are stale w.r.t. the branch's own stage-4 variable.set.Type entity change (688/703 still bare-string format), so the runtime runs them wrong at runtime or LLM-rebuilds them non-deterministically (cache gitignored, cold on fresh clone). Observed 0-4 flapping failures across identical clean runs. FAIL until the Tests/ tree is rebuilt, committed, and shown green over >=2 consecutive clean runs."
+  "verdict": "approved",
+  "summary": "PASS. The branch I FAILed at v8 (PLang suite not reproducibly green; committed .pr stale vs stage-4 variable.set.Type entity; 0-4 flapping fails, '262/262' a warm-cache artifact) is honestly green after the lazy-deserialize merge. Clean-binary PLang 273/273/0/0-stale, IDENTICAL across two consecutive runs, git status clean after each (zero .pr rewritten) — the reproducibility blocker is dead. C# 4025/4025/0 on clean rebuild. coder v13 is test-only: MaterialiseErrorPathTests (+2 set-path) and SignedDataSurvivesVariableSetListTests — both honest (assert Error.Key=='MaterializeFailed' distinct from NotFound; signature survives the real variable.set handler and verifies). I independently mutation-tested the set-path MaterializeFailed contract: neutralizing the guard at variable/list/this.cs:311 flips exactly those two tests red, passes on revert; source reverted clean. Strict-kind enforcement coverage (read-lift Cut2 + lazy path-backed LazyPathHandleTests) survived the merge intact. One minor carry-forward (no end-to-end PLang goal for lazy strict image load-throw), non-blocking."
 }
