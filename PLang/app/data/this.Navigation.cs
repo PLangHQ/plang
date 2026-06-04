@@ -309,13 +309,13 @@ public partial class @this
             return new @this(key, ownProp.GetValue(this), parent: this);
         }
 
-        // Access-driven resolution: navigating by key into a value whose type is
-        // unknown is NOT a guess — no content sniffing. A bare string with no
-        // structured type stamp can't be walked, so the developer gets a clear,
-        // actionable error pointing at the fix (`as <type>`) rather than a silent
-        // NotFound. A typed string (e.g. {object, json}) already materialized
-        // above, so it never reaches here.
-        if (val is string && (_type == null || _type.IsNull))
+        // Access-driven resolution: navigating by key into a plain string is NOT a
+        // guess — no content sniffing. A string (whether stamped `text` or
+        // un-typed) can't be walked by key, so the developer gets a clear,
+        // actionable error pointing at the fix (`as object/json`) rather than a
+        // silent null. A structured value (object/json) materialized above, so it
+        // never reaches here.
+        if (val is string)
             return TypeUnknownError(key);
 
         return NotFound(key);
@@ -330,8 +330,10 @@ public partial class @this
     private @this TypeUnknownError(string key)
     {
         var nameHint = string.IsNullOrEmpty(Name) ? "value" : $"%{Name}%";
+        var isText = _type is { IsNull: false } t && t.Name == "text";
+        var what = isText ? "is text" : "has no type";
         var err = FromError(new global::app.error.Error(
-            $"cannot navigate .{key}: {nameHint} has no type; add `as <type>` (e.g. `as object/json`)",
+            $"cannot navigate .{key}: {nameHint} {what}; add `as <type>` (e.g. `as object/json`) to navigate it",
             "TypeUnknown", 400));
         err.Name = key;
         return err;
