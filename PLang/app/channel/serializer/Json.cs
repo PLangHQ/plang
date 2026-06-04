@@ -72,6 +72,10 @@ public sealed class Json : ISerializer
     {
         try
         {
+            // Materialize lazy reference fundamentals (image bytes) above the
+            // STJ converter wall — the sync renderers below cannot await.
+            var loadError = await data.Load();
+            if (loadError != null) return loadError;
             var value = data.Value;
             if (value == null)
             {

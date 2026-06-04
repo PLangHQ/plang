@@ -136,6 +136,10 @@ public sealed class @this : ISerializer
     {
         try
         {
+            // Materialize lazy reference fundamentals (image bytes) above the
+            // STJ converter wall — the sync Wire.Write below cannot await.
+            var loadError = await data.Load();
+            if (loadError != null) return loadError;
             await JsonSerializer.SerializeAsync(stream, data, _outbound, cancellationToken);
             return global::app.data.@this.Ok();
         }

@@ -15,7 +15,7 @@ namespace app.type.image;
 /// Routing key / serializer always stays <c>image</c>: no <c>path|image</c>
 /// union. See plan/build-vs-runtime.md "composition, not union".</para>
 /// </summary>
-public sealed partial class @this : global::app.data.IBooleanResolvable, global::app.data.IKindValidatable, global::app.data.IStrictKindEnforcer
+public sealed partial class @this : global::app.data.IBooleanResolvable, global::app.data.IKindValidatable, global::app.data.IStrictKindEnforcer, global::app.data.ILoadable
 {
     public static string Example => "/some/photo.jpg";
     public static string Shape => "string";
@@ -129,6 +129,14 @@ public sealed partial class @this : global::app.data.IBooleanResolvable, global:
 
     /// <summary>Imprint the strict kind this image's content must match (from `as image/<kind> strict`).</summary>
     public void RequireStrictKind(string kind) => _requiredKind = kind;
+
+    /// <summary>
+    /// <see cref="global::app.data.ILoadable"/> seam: pull a path-backed image's
+    /// bytes into memory (and run the strict check) so the sync renderers that
+    /// run below the serializer's STJ wall read real content. A bytes-backed
+    /// image is already loaded — <see cref="BytesAsync"/> returns on its fast path.
+    /// </summary>
+    public async System.Threading.Tasks.Task LoadAsync() => await BytesAsync();
 
     /// <summary>
     /// Sniff the loaded bytes against the imprinted kind. Null when no strict
