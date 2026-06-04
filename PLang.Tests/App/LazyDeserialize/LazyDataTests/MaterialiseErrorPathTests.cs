@@ -62,4 +62,37 @@ public class MaterialiseErrorPathTests
         await Assert.That(child.Error!.Key).IsEqualTo("MaterializeFailed");
         await Assert.That(child.Error!.Message.Contains("cfg")).IsTrue();
     }
+
+    // The set-path twin of the navigation seam — `set %cfg.host% = ...` on a
+    // malformed-JSON parent surfaces MaterializeFailed, not NotFound. Read and
+    // write reach the parent through the same materialize; the fix shape is
+    // identical, so without this the write path could regress with no red test.
+    [Test] public async Task SetPath_OnMalformedJson_SurfacesMaterializeFailed_NotNotFound()
+    {
+        await using var app = NewApp();
+        var ctx = app.User.Context;
+        ctx.Variable.Set(MalformedJson(ctx, "cfg"));
+
+        var result = ctx.Variable.Set("cfg.host", "value");
+
+        await Assert.That(result.Error).IsNotNull();
+        await Assert.That(result.Error!.Key).IsEqualTo("MaterializeFailed");
+        await Assert.That(result.Error!.Message.Contains("cfg")).IsTrue();
+    }
+
+    // The deeper set-path — `set %cfg.a.host% = ...` reaches the parent through an
+    // intermediate GetChild, which materializes the malformed root and arrives
+    // already-failed. The same MaterializeFailed must surface, not NotFound.
+    [Test] public async Task SetPath_NestedOnMalformedJson_SurfacesMaterializeFailed_NotNotFound()
+    {
+        await using var app = NewApp();
+        var ctx = app.User.Context;
+        ctx.Variable.Set(MalformedJson(ctx, "cfg"));
+
+        var result = ctx.Variable.Set("cfg.a.host", "value");
+
+        await Assert.That(result.Error).IsNotNull();
+        await Assert.That(result.Error!.Key).IsEqualTo("MaterializeFailed");
+        await Assert.That(result.Error!.Message.Contains("cfg")).IsTrue();
+    }
 }
