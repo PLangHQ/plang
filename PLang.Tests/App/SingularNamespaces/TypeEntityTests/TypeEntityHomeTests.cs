@@ -25,12 +25,14 @@ public class TypeEntityHomeTests
 
     [Test] public async Task DataType_OnStampedData_ResolvesViaAppTypeIndexer()
     {
-        // Use a 1:1 primitive (bool) to avoid the text-name/text.@this-class
-        // duality: post-Stage-2 "text" is both a primitive (typeof(string))
-        // and a domain type (app.type.text.@this), legitimately different
-        // ClrType depending on the door used.
+        // Use a 1:1 primitive (guid) with no @this wrapper to avoid the
+        // name/@this-class duality: scalars-as-native gives text/number/datetime/
+        // date/time/bool/duration all a domain wrapper, so "bool" now resolves to
+        // app.type.bool.@this (legitimately different ClrType than System.Boolean
+        // depending on the door used). guid has no wrapper, so the registry door
+        // and the value door agree.
         await using var app = new PLangEngine("/test");
-        var d = new global::app.data.@this<bool>("", true) { Context = app.User.Context };
+        var d = new global::app.data.@this<System.Guid>("", System.Guid.NewGuid()) { Context = app.User.Context };
         var fromRegistry = app.Type[d.Type!.Name];
         fromRegistry.Context = app.User.Context;
         await Assert.That(d.Type.ClrType).IsEqualTo(fromRegistry.ClrType);

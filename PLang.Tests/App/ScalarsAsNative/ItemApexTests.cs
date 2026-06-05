@@ -17,10 +17,20 @@ public class ItemApexTests
     {
         // Every value wrapper is `: item.@this`. The compiler is the proof; this
         // reflection probe records it explicitly across the wrappers that exist.
-        // Stage 1 wires number/dict/list; later stages add the rest (text,
-        // datetime/date/time, duration, bool, null) and Stage 7 locks the
-        // `where T : item` constraint that makes the compiler the full census.
-        System.Type[] wrappers = { typeof(Number), typeof(Dict), typeof(PList) };
+        // Every built value wrapper is `: item.@this`. (path/image/code/Variable/
+        // Ask/snapshot join in the constraint-lock pass; Stage 7 then turns on
+        // `where T : item` so the compiler is the full census.)
+        System.Type[] wrappers =
+        {
+            typeof(Number), typeof(Dict), typeof(PList),
+            typeof(global::app.type.text.@this),
+            typeof(global::app.type.datetime.@this),
+            typeof(global::app.type.date.@this),
+            typeof(global::app.type.time.@this),
+            typeof(global::app.type.duration.@this),
+            typeof(global::app.type.@bool.@this),
+            typeof(global::app.type.@null.@this),
+        };
         foreach (var w in wrappers)
             await Assert.That(typeof(Item).IsAssignableFrom(w)).IsTrue();
     }
