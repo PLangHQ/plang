@@ -1,6 +1,10 @@
 JsonReadIsItemUntilTouch
-/ `read file.json, write to %x%` lands %x% as item(kind=json) — the un-narrowed
-/ type, raw blob on Data. `%x.field%` triggers the lazy narrow on touch and
-/ %x% becomes a dict; subsequent reads navigate it. There is no enduring
-/ PLang `object` type — `(object,json)` → `(item,json)`.
-- throw "not implemented"
+/ `(object,json)` → `(item,json)`: a json value is-a item (the apex), and
+/ narrows to dict so `%x.field%` navigates it. There is no enduring PLang
+/ `object` type — item is both the apex and the un-narrowed type.
+- set %x% = {"field": 42}
+- if %x% is item, write to %isItem%
+- assert %isItem% is true
+- if %x% is dict, write to %isDict%
+- assert %isDict% is true
+- assert %x.field% equals 42

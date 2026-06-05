@@ -2,4 +2,9 @@ ListIsItemSortsAsBefore
 / A list is `: item` AND still sorts. list owns IOrderableValue (item does not),
 / so the inheritance is no-op for ordering — the sort produces the same shape
 / collections-are-data shipped.
-- throw "not implemented"
+- set %nums% = [3, 1, 2]
+- sort %nums%
+- get first item from %nums%, write to %first%
+- assert %first% equals 1
+- get last item from %nums%, write to %last%
+- assert %last% equals 3

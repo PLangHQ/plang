@@ -21,7 +21,7 @@ namespace app.type.number;
 /// The old <c>_i/_d/_f</c> tagged union and the <c>float→double</c> collapse
 /// are gone.</para>
 /// </summary>
-public sealed partial class @this : System.IEquatable<@this>, System.IComparable<@this>, System.IComparable, global::app.data.IBooleanResolvable, System.IConvertible
+public sealed partial class @this : global::app.type.item.@this, System.IEquatable<@this>, System.IComparable<@this>, System.IComparable, System.IConvertible
 {
     // The exact boxed CLR numeric — the single source of truth. Kind derives from its type.
     private readonly object _value;
@@ -190,19 +190,15 @@ public sealed partial class @this : System.IEquatable<@this>, System.IComparable
     /// <summary>The exact BigInteger value of an integer-kind number.</summary>
     public BigInteger ToBigInteger() => AsBigInteger();
 
-    // ---- IBooleanResolvable ----
+    // ---- Truthiness (item) ----
 
     /// <summary>Zero is falsy; NaN is falsy; everything else is truthy.</summary>
-    public System.Threading.Tasks.Task<bool> AsBooleanAsync()
+    public override bool IsTruthy() => Cat switch
     {
-        bool truthy = Cat switch
-        {
-            Category.Integer => AsBigInteger() != BigInteger.Zero,
-            Category.Decimal => AsDecimal() != 0m,
-            _ => !double.IsNaN(AsDouble()) && AsDouble() != 0.0,
-        };
-        return System.Threading.Tasks.Task.FromResult(truthy);
-    }
+        Category.Integer => AsBigInteger() != BigInteger.Zero,
+        Category.Decimal => AsDecimal() != 0m,
+        _ => !double.IsNaN(AsDouble()) && AsDouble() != 0.0,
+    };
 
     public override string ToString() => _value switch
     {

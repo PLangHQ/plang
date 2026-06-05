@@ -22,7 +22,7 @@ namespace app.type.dict;
 // json.Writer's dict arm (an object `{}`), never STJ — so the "domain types ride
 // the wire as property bags" rule is intact; this is the value's JSON view.
 [System.Text.Json.Serialization.JsonConverter(typeof(Json))]
-public sealed partial class @this : module.IContext, global::app.data.IBooleanResolvable,
+public sealed partial class @this : global::app.type.item.@this, module.IContext,
     global::app.data.IEquatableValue
 {
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
@@ -137,10 +137,10 @@ public sealed partial class @this : module.IContext, global::app.data.IBooleanRe
     };
 
     /// <summary>
-    /// IBooleanResolvable: an empty dict is falsy, a dict with any entry is truthy —
+    /// item truthiness: an empty dict is falsy, a dict with any entry is truthy —
     /// matches the falsiness of an empty list / string / null.
     /// </summary>
-    public Task<bool> AsBooleanAsync() => Task.FromResult(_entries.Count > 0);
+    public override bool IsTruthy() => _entries.Count > 0;
 
     /// <summary>
     /// IEquatableValue: structural, key-based — two dicts are equal when they have

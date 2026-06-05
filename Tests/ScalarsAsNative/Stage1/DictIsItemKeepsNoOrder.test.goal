@@ -2,4 +2,6 @@ DictIsItemKeepsNoOrder
 / A dict is `: item` AND still rejects ordering — `item` carries no IOrderableValue
 / to leak in. sort over a list-of-dict throws (the equality-only-dict policy
 / collections-are-data settled, regressed nowhere).
-- throw "not implemented"
+- set %people% = [{"name":"b"}, {"name":"a"}]
+- sort %people%, on error set %caught% = true
+- assert %caught% is true

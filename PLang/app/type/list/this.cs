@@ -18,7 +18,7 @@ namespace app.type.list;
 /// surface into junk — the same failure that gave <c>dict</c> its converter.</para>
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Json))]
-public sealed partial class @this : module.IContext, global::app.data.IBooleanResolvable,
+public sealed partial class @this : global::app.type.item.@this, module.IContext,
     global::app.data.IEquatableValue, global::app.data.IOrderableValue, global::app.data.IListLeaf
 {
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
@@ -307,10 +307,10 @@ public sealed partial class @this : module.IContext, global::app.data.IBooleanRe
     };
 
     /// <summary>
-    /// IBooleanResolvable: an empty list is falsy, a non-empty list is truthy —
+    /// item truthiness: an empty list is falsy, a non-empty list is truthy —
     /// matches the falsiness of an empty dict / string / null.
     /// </summary>
-    public Task<bool> AsBooleanAsync() => Task.FromResult(Count > 0);
+    public override bool IsTruthy() => Count > 0;
 
     /// <summary>
     /// IEquatableValue: structural, positional — same length and equal items in

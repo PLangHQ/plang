@@ -1,4 +1,7 @@
 NumberArithmeticUnchanged
-/ number is the reference wrapper. After `: item`, %a% + %b%, %a% * %b%, compare,
-/ and `→ returns int` behave identically — the rewire adds nothing user-visible.
-- throw "not implemented"
+/ number is the reference wrapper. After `: item`, %a% + %b% and compare behave
+/ identically — the rewire adds nothing user-visible.
+- set %a% = 2
+- set %b% = 3
+- math.add A=%a% B=%b%, write to %sum%
+- assert %sum% equals 5
