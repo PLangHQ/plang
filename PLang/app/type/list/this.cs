@@ -67,15 +67,15 @@ public sealed partial class @this : module.IContext, global::app.data.IBooleanRe
         get
         {
             int n = 0;
-            foreach (var row in _items) n += Weight(row);
+            foreach (var row in _items) n += LeafCount(row);
             return n;
         }
     }
 
-    // A row's weight — a value that dissolves into the list (IListLeaf, i.e. a list)
+    // A row's leaf count — a value that dissolves into the list (IListLeaf, i.e. a list)
     // contributes its own leaf count; anything else is one whole item. The value owns
     // the answer, so there's no `is list` type-switch here.
-    private static int Weight(Data row) => row.Value is global::app.data.IListLeaf leaf ? leaf.LeafCount : 1;
+    private static int LeafCount(Data row) => row.Value is global::app.data.IListLeaf leaf ? leaf.LeafCount : 1;
 
     /// <summary>The flattened element Data in order — a row that dissolves (IListLeaf)
     /// yields its leaves; a scalar/dict/table row is yielded whole, weight 1.</summary>
