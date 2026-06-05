@@ -1,0 +1,52 @@
+{
+  "branch": "collections-are-data",
+  "sessions": [
+    {
+      "id": "ca31a5cb-1bc0-46e6-bba8-14394ef6a276",
+      "bot": "tester",
+      "timestamp_start": "2026-06-05T09:38:00Z",
+      "timestamp_end": "2026-06-05T09:46:00Z",
+      "intent": "Validate test quality for collections-are-data v3 (dict/list native Data, one compare path, list/dict ops).",
+      "before": {
+        "assumptions": "codeanalyzer v2 PASS, C# 4082/0 + plang 273/273 claimed. coder env note: sandbox build LLM mis-compiles, plang .pr built elsewhere.",
+        "risk": "Branch rewrites the compare path (review-driven, highest false-green risk) and adds native collection types; new where action; two comparison-operator .pr were rebuilt by the bad LLM and committed."
+      },
+      "plan": ".bot/collections-are-data/tester/v3/plan.md",
+      "actions": [
+        {
+          "paths": ["PLang.Tests/App/CollectionsAreData/"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Read Stage1-6 C# tests. Stage4 (compare) and Stage5 (list/dict ops) verify intent: numeric-vs-lexical order, trichotomy, structural equality, equality-only types throw on Order, where/group/unique behavior incl. edge cases (WhereOnApex/SortOnListOfDict throw)."
+        },
+        {
+          "paths": ["PLang/app/data/Compare.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mutation test: flipped text-order arm OrdinalIgnoreCase->Ordinal; Stage4 Compare_TextCaseInsensitive_OrderAndEqualsAgree failed as expected; reverted. Compare-path green is real, not false."
+        },
+        {
+          "paths": ["Tests/Modules/Condition/Operators/LessThan/.build/whenless.pr", "Tests/Modules/Condition/Operators/LTE/.build/whenlte.pr"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Two called-sub-goal .pr were rebuilt by the bad sandbox LLM and committed (builderVersion null, path collapsed to /WhenLess.goal). The actual test .pr (conditionlessthan.test.pr) is unchanged and still exercises the < operator. Process smell, not a test-integrity break."
+        },
+        {
+          "paths": ["PLang/app/module/list/where.cs", "Tests/Modules/List/"],
+          "type": "review",
+          "category": "test",
+          "confidence": "medium",
+          "context": "where is a NEW action (Stage5) with C# coverage (WhereOnList/Dict/Apex) but no plang .test.goal. Builder step->action mapping unverified; builder env (bad LLM) blocks closing it here."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "C# 4082/4082, plang 273/273, both deterministic, git clean across two runs.",
+        "notes": "Findings are minor: missing plang test for new where action; bad-LLM .pr rebuilds committed; missing coder baseline-tests.md. None are red tests or confirmed false-greens."
+      }
+    }
+  ]
+}

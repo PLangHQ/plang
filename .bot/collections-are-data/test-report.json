@@ -1,0 +1,50 @@
+{
+  "tester": "tester",
+  "branch": "collections-are-data",
+  "timestamp": "2026-06-05T09:46:00Z",
+  "tested_version": "v3",
+  "test_run": {
+    "csharp": { "total": 4082, "passed": 4082, "failed": 0, "skipped": 0 },
+    "plang": { "total": 273, "passed": 273, "failed": 0, "skipped": 0 }
+  },
+  "coverage": {
+    "changed_files_covered": 0,
+    "changed_files_total": 0,
+    "uncovered_files": [],
+    "note": "Full line-coverage tooling not run (not wired for this repo). Coverage assessed by reading the Stage1-6 test suites against the changed C# surface; the new compare path, native list/dict value types, navigators, writer disambiguation, and where/group/sort/unique handlers are all behaviorally exercised. The one user-facing gap is the new `where` action's PLang surface (see finding 1)."
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "type": "missing-plang-test",
+      "test_file": "Tests/Modules/List/ (no where/filter .test.goal)",
+      "code_file": "PLang/app/module/list/where.cs",
+      "issue": "`where` is a new action (Stage5, file new on this branch). It has solid C# coverage (Stage5_ListDictOpsTests: WhereOnList/WhereOnDict/WhereOnApex incl. error paths), but no PLang .test.goal exercises it.",
+      "impact": "The builder step-text -> list.where mapping is unverified. A PLang author writing `filter %users% where age > 20` has no proof it compiles to the right action and runs end-to-end. C# tests construct the Where action directly, bypassing the build path.",
+      "suggestion": "Add a `Tests/Modules/List/Where.test.goal` (filter a list by a field predicate; filter-or-drop a dict; assert the filtered count/values). Must be built with a good-LLM env — the sandbox LLM cannot build it reliably."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "type": "false-green",
+      "test_file": "Tests/Modules/Condition/Operators/LessThan/.build/whenless.pr, Tests/Modules/Condition/Operators/LTE/.build/whenlte.pr",
+      "code_file": "PLang/app/module/condition/Operator.cs",
+      "issue": "Both called-sub-goal .pr were rebuilt by the bad sandbox LLM and committed in this branch (builderVersion -> null, path collapsed to /WhenLess.goal, a stray condition.if step dropped). These are NOT the test .pr.",
+      "impact": "Low. The actual test .pr (conditionlessthan.test.pr / conditionlte.test.pr) are unchanged from base and still exercise the `<` / `<=` operators with a real assert; the sub-goal still sets %result%. But committing bad-LLM rebuilds risks the next rebuild diverging and is a process smell on a branch that rewrites the compare path.",
+      "suggestion": "git checkout these two .pr back to their base content (or rebuild in a good-LLM env). Do not commit sandbox-LLM rebuilds."
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": ".bot/collections-are-data/coder/v3/baseline-tests.md (absent)",
+      "code_file": "(process)",
+      "issue": "Coder left no baseline-tests.md for any version. Per my workflow this is a process violation; I could not diff against a recorded pre-coder baseline.",
+      "impact": "Cannot mechanically separate regressions from pre-existing failures. Mitigated here because both suites are fully green (0 failures), so the distinction is moot this round.",
+      "suggestion": "Coder should record baseline-tests.md before starting each version."
+    }
+  ],
+  "verdict": "approved",
+  "summary": "collections-are-data v3 is a real green. C# 4082/4082 and plang 273/273, both deterministic across two clean runs with git clean after (no warm-cache .pr churn). The Stage1-6 suites verify intent, not implementation: Stage4 pins numeric-vs-lexical order, trichotomy, structural equality, and equality-only-types-throw; Stage5 pins where/group/sort/unique including error edges (WhereOnApex, SortOnListOfDict throws); the F1 signed-element-in-list survival is proven through the .plang wire. A mutation test on the highest-risk review-driven code (the compare text-order arm) was caught, confirming the Stage4 case-policy green is honest. Findings are all minor: the new `where` action lacks a PLang test (builder env blocks closing it here), two comparison-operator sub-goal .pr were rebuilt by the bad sandbox LLM and committed, and the coder left no baseline file. None are red tests or confirmed false-greens. PASS."
+}
