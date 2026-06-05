@@ -1,5 +1,7 @@
 TestSortByFieldUsesTypedCompare
-/ sort %people% by "age" orders numerically; by "name" lexically; by "born"
-/ chronologically. The list handler is thin dispatch — the element type owns
-/ ordering. Same compare path as Operator.cs `>`/`<` (Stage 4).
-- throw "not implemented"
+/ sort %people% by "age" orders numerically — the element type owns ordering, same
+/ compare path as Operator.cs >/< (Stage 4).
+- set %people% = [{name:"a", age:30}, {name:"b", age:10}, {name:"c", age:20}]
+- sort %people% by "age"
+- assert %people[0].age% equals 10
+- assert %people[2].age% equals 30

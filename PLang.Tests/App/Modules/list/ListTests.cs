@@ -413,17 +413,24 @@ public class ListTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        var groups = (result.Value as global::app.module.list.type.list)?.value as List<Dictionary<string, object?>>;
+        var groups = (result.Value as global::app.module.list.type.list)?.value as global::app.type.list.@this;
         await Assert.That(groups).IsNotNull();
         await Assert.That(groups!.Count).IsEqualTo(2);
 
-        var alice = groups.First(g => g["key"]?.ToString() == "Alice");
-        var aliceItems = alice["steps"] as List<object?>;
-        await Assert.That(aliceItems!.Count).IsEqualTo(2);
+        await Assert.That(BucketCount(groups, "Alice")).IsEqualTo(2);
+        await Assert.That(BucketCount(groups, "Bob")).IsEqualTo(1);
+    }
 
-        var bob = groups.First(g => g["key"]?.ToString() == "Bob");
-        var bobItems = bob["steps"] as List<object?>;
-        await Assert.That(bobItems!.Count).IsEqualTo(1);
+    // Helper: find a group bucket by key and return its items list count.
+    private static int BucketCount(global::app.type.list.@this groups, string key)
+    {
+        foreach (var b in groups.Items)
+        {
+            var d = (global::app.type.dict.@this)b.Value!;
+            if (d.Get("key")?.Value?.ToString() == key)
+                return ((global::app.type.list.@this)d.Get("items")!.Value!).Count;
+        }
+        return -1;
     }
 
     [Test]
@@ -436,7 +443,7 @@ public class ListTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        var groups = (result.Value as global::app.module.list.type.list)?.value as List<Dictionary<string, object?>>;
+        var groups = (result.Value as global::app.module.list.type.list)?.value as global::app.type.list.@this;
         await Assert.That(groups!.Count).IsEqualTo(0);
     }
 
@@ -454,10 +461,10 @@ public class ListTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        var groups = (result.Value as global::app.module.list.type.list)?.value as List<Dictionary<string, object?>>;
+        var groups = (result.Value as global::app.module.list.type.list)?.value as global::app.type.list.@this;
         // All items grouped under empty key since "category" doesn't exist
         await Assert.That(groups!.Count).IsEqualTo(1);
-        await Assert.That(groups[0]["key"]).IsEqualTo("");
+        await Assert.That(((global::app.type.dict.@this)groups.At(0)!.Value!).Get("key")!.Value).IsEqualTo("");
     }
 
     // --- Flatten ---

@@ -107,11 +107,32 @@ public sealed class @this : module.IContext, global::app.data.IBooleanResolvable
     /// sort last, and a list of mixed value types (or an equality-only type) throws.
     /// </summary>
     public void SortByValue(bool descending)
-        => _items.Sort((a, b) =>
+        => SortGuarded((a, b) =>
         {
             var c = global::app.data.Compare.Order(a, b);
             return descending ? -c : c;
         });
+
+    /// <summary>
+    /// Sorts in place by an element field (`sort %people% by "age"`) — each element's
+    /// <paramref name="field"/> is compared through the one typed-compare path.
+    /// </summary>
+    public void SortByField(string field, bool descending)
+        => SortGuarded((a, b) =>
+        {
+            var c = global::app.data.Compare.Order(a.GetChild(field), b.GetChild(field));
+            return descending ? -c : c;
+        });
+
+    // List.Sort wraps a comparer exception in InvalidOperationException; unwrap the
+    // typed compare error (e.g. "cannot order dict") so callers see the real cause.
+    private void SortGuarded(System.Comparison<Data> cmp)
+    {
+        try { _items.Sort(cmp); }
+        catch (System.InvalidOperationException ex)
+            when (ex.InnerException is global::app.data.Compare.NotOrderableException inner)
+        { throw inner; }
+    }
 
     /// <summary>Replaces (or appends at Count) the element Data at <paramref name="index"/>.</summary>
     public void SetAt(int index, Data value)

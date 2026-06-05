@@ -1,5 +1,6 @@
 TestUniqueUsesCompareEquality
-/ unique %values% deduplicates via the type's Equals (not raw CLR reference). A
-/ list of equivalent dicts collapses to one. Works for equality-only types where
-/ sort would throw.
-- throw "not implemented"
+/ unique %values% deduplicates via the type's structural Equals. A list of
+/ equivalent dicts collapses to one.
+- set %values% = [{city:"Reyk"}, {city:"Reyk"}, {city:"Oslo"}]
+- unique %values%, write to %deduped%
+- assert %deduped.count% equals 2

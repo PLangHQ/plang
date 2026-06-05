@@ -1,5 +1,7 @@
 TestWhereOnListFilters
-/ where %users% age > 20 — list.where evaluates the predicate per element Data
-/ and returns only those that keep. Bare field name "age" scopes against each
-/ element. list.where delegates to dict.where per element.
-- throw "not implemented"
+/ where %users% age > 20 — list.where evaluates the predicate per element Data and
+/ returns only those that keep. Bare field name "age" scopes against each element.
+- set %users% = [{name:"a", age:25}, {name:"b", age:15}, {name:"c", age:40}]
+- where %users% age > 20, write to %adults%
+- assert %adults.count% equals 2
+- assert %adults[0].name% equals "a"

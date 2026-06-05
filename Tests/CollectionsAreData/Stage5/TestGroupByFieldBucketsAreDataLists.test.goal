@@ -1,4 +1,6 @@
 TestGroupByFieldBucketsAreDataLists
-/ group %people% by "city" — buckets are Data<List<data>>, keyed by city. Each
-/ bucket is itself a navigable list value type; you can sort or where inside one.
-- throw "not implemented"
+/ group %people% by "city" — buckets are navigable lists keyed by city.
+- set %people% = [{city:"Reyk"}, {city:"Oslo"}, {city:"Reyk"}]
+- group %people% by "city", write to %groups%
+- assert %groups.count% equals 2
+- assert %groups[0].items.count% equals 2

@@ -112,6 +112,10 @@ public class RuntimeDoubleWrapTests
             "app.module.list.First",
             "app.module.list.Get",
             "app.module.list.Last",
+            // where is genuinely polymorphic (filtered list | kept dict | apex error)
+            // and owned-construction (wraps a list/dict value, never a Data) — no
+            // double-wrap. Verified by ListWhere_ResultValueIsListNotData below.
+            "app.module.list.Where",
             "app.module.math.Random",
             "app.module.signing.sign",
         };
@@ -120,5 +124,32 @@ public class RuntimeDoubleWrapTests
                 "New Data<object> Run() handler? Either narrow T to a concrete type, " +
                 "or add a runtime double-wrap invocation test in this file. " +
                 "Forwarders that polymorphically return a Data produced elsewhere should be Task<Data>, not Task<Data<object>>.");
+    }
+
+    [Test]
+    public async Task ListWhere_ResultValueIsListNotData()
+    {
+        // where wraps a list/dict value (owned construction), never an inner Data —
+        // so Data<object>.Ok does not double-wrap.
+        var app = new global::app.@this("/app");
+        var context = app.User.Context;
+        var users = new global::app.type.list.@this();
+        var u1 = new global::app.type.dict.@this(); u1.Set(new global::app.data.@this("age", 25L)); users.Add(new global::app.data.@this("", u1));
+        var u2 = new global::app.type.dict.@this(); u2.Set(new global::app.data.@this("age", 15L)); users.Add(new global::app.data.@this("", u2));
+        context.Variable.Set("users", users);
+
+        var action = new global::app.module.list.Where
+        {
+            Context = context,
+            ListName = new @this("users"),
+            Field = new global::app.data.@this<string>("", "age"),
+            Operator = new global::app.data.@this<global::app.module.condition.Operator>("", new global::app.module.condition.Operator(">")),
+            Value = new global::app.data.@this("", 20L),
+        };
+        var result = await action.Run();
+        await result.IsSuccess();
+        await Assert.That(result.Value).IsTypeOf<global::app.type.list.@this>();
+        await Assert.That(((global::app.type.list.@this)result.Value!).Count).IsEqualTo(1);
+        await app.DisposeAsync();
     }
 }
