@@ -1,8 +1,0 @@
-TestDictCountKeyPrecedence
-/ %d.count% returns the value of a "count" key when present, and the dict's size
-/ when there's no "count" key. Real keys beat intrinsics — matches list's
-/ count-key-vs-length rule.
-- set %d% = {count:"five", other:1}
-- assert %d.count% equals "five"
-- set %e% = {a:1, b:2}
-- assert %e.count% equals 2

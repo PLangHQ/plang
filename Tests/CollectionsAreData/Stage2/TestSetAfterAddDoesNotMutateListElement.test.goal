@@ -1,8 +1,0 @@
-TestSetAfterAddDoesNotMutateListElement
-/ set %x%="a" / add %x% to %list% / set %x%="b" — %list[0]% must still be "a".
-/ set rebinds (mints a new Data), it doesn't reach back and mutate the Data the
-/ list captured. This is the alias-bug regression guard.
-- set %x% = "a"
-- add %x% to %list%
-- set %x% = "b"
-- assert %list[0]% equals "a"

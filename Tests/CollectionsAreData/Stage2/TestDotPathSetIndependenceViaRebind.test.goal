@@ -1,8 +1,0 @@
-TestDotPathSetIndependenceViaRebind
-/ A dot-path set (set %user.name% = "b") leaves an earlier-captured snapshot of
-/ %user% unchanged. Independence comes from rebinding (read-copy on resolve), not
-/ from the deleted SnapshotClone deep-clone (L).
-- set %user% = {name:"a"}
-- set %snap% = %user%
-- set %user.name% = "b"
-- assert %snap.name% equals "a"

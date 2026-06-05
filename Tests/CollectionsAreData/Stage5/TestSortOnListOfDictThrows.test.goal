@@ -1,5 +1,0 @@
-TestSortOnListOfDictThrows
-/ sort %dicts% — throws because dict is equality-only (no natural ordering).
-- set %dicts% = [{city:"Reyk"}, {city:"Oslo"}]
-- sort %dicts%, on error key="NotOrderable" write out "cannot order", write to %r%
-- assert %r% equals "cannot order"

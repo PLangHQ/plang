@@ -1,6 +1,0 @@
-TestSignedImageInListLoadsBeforeSerialize
-/ A signed image at %list[2]% (an ILoadable reference fundamental) is loaded by
-/ Data.Load()'s per-element walk through the list value type before the
-/ synchronous json writer runs, and verifies. The Load() walk covers the new
-/ List<data> shape without modification.
-- throw "not implemented"

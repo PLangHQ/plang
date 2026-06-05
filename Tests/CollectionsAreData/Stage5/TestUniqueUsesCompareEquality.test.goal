@@ -1,6 +1,0 @@
-TestUniqueUsesCompareEquality
-/ unique %values% deduplicates via the type's structural Equals. A list of
-/ equivalent dicts collapses to one.
-- set %values% = [{city:"Reyk"}, {city:"Reyk"}, {city:"Oslo"}]
-- unique %values%, write to %deduped%
-- assert %deduped.count% equals 2

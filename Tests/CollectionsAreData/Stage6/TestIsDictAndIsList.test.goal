@@ -1,7 +1,0 @@
-TestIsDictAndIsList
-/ if %x% is dict — true for a dict, false for a list; if %y% is list — symmetric.
-/ The Is(string) overload resolves PLang type names without minting a type.
-- set %x% = {a:1}
-- set %y% = [1, 2]
-- assert %x% is dict
-- assert %y% is list

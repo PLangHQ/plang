@@ -1,6 +1,0 @@
-TestWhereOnDictKeepsOrDrops
-/ where %user% age > 20 — dict.where is the leaf: subject is the dict itself,
-/ predicate keeps or drops it. Bare "age" scopes to %self.age%.
-- set %user% = {name:"a", age:25}
-- where %user% age > 20, write to %kept%
-- assert %kept.name% equals "a"

@@ -22,7 +22,7 @@ namespace app.type.dict;
 // json.Writer's dict arm (an object `{}`), never STJ — so the "domain types ride
 // the wire as property bags" rule is intact; this is the value's JSON view.
 [System.Text.Json.Serialization.JsonConverter(typeof(Json))]
-public sealed class @this : module.IContext, global::app.data.IBooleanResolvable
+public sealed partial class @this : module.IContext, global::app.data.IBooleanResolvable
 {
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
     public static string Example => "{\"name\":\"a\"}";

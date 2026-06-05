@@ -18,7 +18,7 @@ namespace app.type.list;
 /// surface into junk — the same failure that gave <c>dict</c> its converter.</para>
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Json))]
-public sealed class @this : module.IContext, global::app.data.IBooleanResolvable
+public sealed partial class @this : module.IContext, global::app.data.IBooleanResolvable
 {
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
     public static string Example => "[1, 2, 3]";
