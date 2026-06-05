@@ -61,9 +61,9 @@ public class LazyMaterialisationTests
         var ctx = app.User.Context;
         var d = data.FromRaw("{\"port\":8080}", type.Create("object", "json", context: ctx), ctx, "cfg");
         d.ForceMaterialize();      // the navigation seam (was ConvertValue)
-        await Assert.That(d.Value).IsTypeOf<System.Collections.Generic.Dictionary<string, object?>>();
-        var dict = (System.Collections.Generic.Dictionary<string, object?>)d.Value!;
-        await Assert.That(dict.ContainsKey("port")).IsTrue();
+        await Assert.That(d.Value).IsTypeOf<app.type.dict.@this>();
+        var dict = (app.type.dict.@this)d.Value!;
+        await Assert.That(dict.Has("port")).IsTrue();
     }
 
     // Unchanged contract — `%var%` in an authored value is RAW per read.

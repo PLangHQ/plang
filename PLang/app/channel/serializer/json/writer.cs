@@ -58,6 +58,9 @@ public sealed class Writer : IWriter
     public void BeginRecord(app.data.@this record)
     {
         _writer.WriteStartObject();
+        // @schema:data — every Data marks itself, nested ones too, so the read side
+        // recognizes a Data inside a value the same way as the top-level one.
+        _writer.WriteString(global::app.data.@this.WireSchema, global::app.data.@this.WireSchemaData);
         _writer.WriteString("name", record.Name);
 
         var typeVal = record.Type?.Name;
@@ -149,18 +152,30 @@ public sealed class Writer : IWriter
                 Value(nested.Value);
                 EndRecord(nested);
                 return;
-            case List<app.data.@this> propertyBag:
-                // NormalizeObject (a domain class → property bag) always returns
-                // List<Data>. Emit as JSON object — including the empty case,
-                // so a record-with-no-properties (Execute) round-trips as `{}`
-                // not `[]`.
+            case app.type.dict.@this dict:
+                // The native object shape. Normalize hands the writer a `dict`
+                // for every object form — a json-object value, a raw infra dict,
+                // and a reflected C# domain record all converge here. Emit as a
+                // JSON object keyed by entry name, including the empty case so a
+                // record-with-no-properties round-trips as `{}` not `[]`. The
+                // writer disambiguates object-vs-array by value type: `dict`→`{}`,
+                // any other IEnumerable→`[]`.
                 _writer.WriteStartObject();
-                foreach (var child in propertyBag)
+                foreach (var entry in dict.Entries)
                 {
-                    _writer.WritePropertyName(child.Name);
-                    Value(child.Value);
+                    _writer.WritePropertyName(entry.Name);
+                    Value(entry.Value);
                 }
                 _writer.WriteEndObject();
+                return;
+            case app.type.list.@this nativeList:
+                // The native list shape. On the wire each element self-describes —
+                // Value(item) routes an element Data through the record arm, so a
+                // signed element carries its envelope. Disambiguated by wrapper
+                // type from dict (`{}`); a bare IEnumerable still falls to `[]` below.
+                BeginArray(nativeList.Count);
+                foreach (var item in nativeList.Items) Value(item);
+                EndArray();
                 return;
             case System.Collections.IEnumerable list:
                 BeginArray(-1);

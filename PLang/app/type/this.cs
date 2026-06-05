@@ -20,7 +20,7 @@ namespace app.type;
 ///
 /// <para>Both doors — <c>data.Type</c> and <c>app.Type[name]</c> — return the
 /// same entity shape; <c>app.Type</c> resolves names through the registry and
-/// stamps <c>Context</c>, while <c>type.list.@this.BuildTypeEntries</c> walks
+/// stamps <c>Context</c>, while <c>type.catalog.@this.BuildTypeEntries</c> walks
 /// the action catalog and populates the catalog properties at construction.
 /// Entities minted outside <c>BuildTypeEntries</c> lazily resolve the catalog
 /// properties on first read via <see cref="Promote"/>.</para>
@@ -166,7 +166,7 @@ public sealed class @this
         if (target == null)
             return global::app.data.@this.FromError(new global::app.error.Error(
                 $"Unknown type '{Name}'", "UnknownType", 400));
-        var (c, err) = global::app.type.list.@this.TryConvert(value, target, context);
+        var (c, err) = global::app.type.catalog.@this.TryConvert(value, target, context);
         return err != null ? global::app.data.@this.FromError(err) : global::app.data.@this.Ok(c);
     }
 
@@ -257,8 +257,14 @@ public sealed class @this
     public object? Convert(string raw)
     {
         if (string.Equals(Name, "json", System.StringComparison.OrdinalIgnoreCase))
-            return JsonSerializer.Deserialize<Dictionary<string, object?>>(raw,
+        {
+            // Parse to the native value graph (dict / list / primitives), not a
+            // raw Dictionary — collections hold Data, and an unexamined json
+            // object narrows to `dict` on first touch.
+            var parsed = JsonSerializer.Deserialize<object?>(raw,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return global::app.data.@this.UnwrapJsonElement(parsed);
+        }
 
         // Kinded scalar read-back: a string-shaped type whose value carries a
         // sub-format the CLR type can't express (a hash's algorithm) reconstructs
@@ -306,12 +312,31 @@ public sealed class @this
     {
         if (other == null) return false;
         if (string.Equals(Name, other.Name, System.StringComparison.OrdinalIgnoreCase)) return true;
+        // `item` is the apex of the value-type lattice (≈ C# object) — every value
+        // is-a item. The narrow (item+kind=json → dict/list) keeps this true.
+        if (string.Equals(other.Name, "item", System.StringComparison.OrdinalIgnoreCase)) return true;
         var thisClr = ClrType;
         var otherClr = other.ClrType;
         if (thisClr == null || otherClr == null) return false;
         // Walk the inheritance chain by CLR-type identity (transitive: image : path,
         // path : X ⟹ image Is X), guarding against self/cycles.
         return Reaches(thisClr, otherClr, new HashSet<System.Type>());
+    }
+
+    /// <summary>
+    /// Name-string IS-A query — resolves <paramref name="typeName"/> to a type and
+    /// asks <see cref="Is(@this)"/>. Lets <c>if %x% is dict</c> / <c>is number</c> /
+    /// <c>is item</c> resolve from a PLang type name without the caller minting a
+    /// comparison entity. <c>item</c> is the apex: true for any value.
+    /// </summary>
+    public bool Is(string typeName)
+    {
+        if (string.IsNullOrWhiteSpace(typeName)) return false;
+        if (string.Equals(typeName, "item", System.StringComparison.OrdinalIgnoreCase)) return true;
+        if (string.Equals(Name, typeName, System.StringComparison.OrdinalIgnoreCase)) return true;
+        var other = Context?.App.Type[typeName] ?? FromName(typeName);
+        other.Context ??= Context;
+        return Is(other);
     }
 
     private static bool Reaches(System.Type clr, System.Type target, HashSet<System.Type> seen)

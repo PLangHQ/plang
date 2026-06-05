@@ -852,6 +852,9 @@ public class Default : IBuilder
     {
         if (steps is List<object> list) return list;
         if (steps is List<object?> nullableList) return nullableList.Where(s => s != null).Select(s => s!).ToList();
+        // The steps value is the native list type now — read each element's value.
+        if (steps is app.type.list.@this nativeList)
+            return nativeList.Items.Select(d => d.Value).Where(v => v != null).Select(v => v!).ToList();
         if (steps is System.Collections.IList rawList)
         {
             var result = new List<object>();
@@ -969,7 +972,7 @@ public class Default : IBuilder
                 // fully reflected record (Raw, Absolute, FileName, ...) that round-trips
                 // poorly. Leave the primitive in the .pr; runtime auto-wraps via the source
                 // generator's Resolve convention when the action actually executes.
-                if (global::app.type.list.@this.IsScalarPlangType(targetType)) continue;
+                if (global::app.type.catalog.@this.IsScalarPlangType(targetType)) continue;
 
                 // [Choices]-bearing types (Actor, Operator, ...) keep their string form in
                 // the .pr — runtime resolves the chosen name via the type's own path

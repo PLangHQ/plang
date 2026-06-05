@@ -1,759 +1,357 @@
-using System.Reflection;
-using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
-using app.Attributes;
-using app.module;
+using Data = global::app.data.@this;
 
 namespace app.type.list;
 
 /// <summary>
-/// Owns PLang name ↔ CLR type identity, the [Choices] vocabulary registry, and the
-/// type-conversion entry points. The primary partial holds the public surface; the
-/// <c>Registry</c> partial (formerly <c>Utils.PlangTypeIndex</c>) absorbs assembly
-/// indexing for [PlangType] and the @this convention.
+/// The native PLang list/array value type. Holds an ordered <c>List&lt;data&gt;</c> —
+/// collections hold Data end to end, so an element keeps its own type-tag and
+/// signature instead of being decomposed to a raw CLR value. Peer of
+/// <c>app.type.dict.@this</c>: <c>dict</c> owns key-lookup and serialize-as-<c>{}</c>;
+/// <c>list</c> owns index/accessor navigation and serialize-as-<c>[]</c>.
 ///
-/// File-format characteristics (extension → Kind, extension → MIME, Kind →
-/// compressibility) live separately on <see cref="app.format.list.@this"/> at
-/// <c>app.Format</c>.
+/// <para>The <c>[JsonConverter]</c> governs the RAW-STJ projection only (plain
+/// <c>application/json</c>, snapshot-clone, debug display): a list renders as a
+/// <em>bare</em> value array — <c>[1,"two"]</c>, signatures absent. The
+/// <c>application/plang</c> wire rides <c>Data.Normalize</c> → the json.Writer's
+/// list arm, where each element self-describes as Data (so a signature survives).
+/// Without the converter, raw STJ would reflect each element's <c>Data</c> C#
+/// surface into junk — the same failure that gave <c>dict</c> its converter.</para>
 /// </summary>
-public sealed partial class @this
+[System.Text.Json.Serialization.JsonConverter(typeof(Json))]
+public sealed partial class @this : module.IContext, global::app.data.IBooleanResolvable,
+    global::app.data.IEquatableValue, global::app.data.IOrderableValue, global::app.data.IListLeaf
 {
-    /// <summary>[Choices] vocabulary registry — reachable as <c>app.type.choices</c>.</summary>
-    public choice.list.@this Choices { get; } = new();
+    /// <summary>Catalog example — read via reflection by the schema builder.</summary>
+    public static string Example => "[1, 2, 3]";
+
+    private readonly List<Data> _items;
+
+    public @this() => _items = new();
+    public @this(IEnumerable<Data> items) => _items = new(items);
 
     /// <summary>
-    /// Per-App scheme registry for <see cref="path.@this"/>. Populated at App
-    /// construction with built-in factories (<c>"file"</c>; later <c>"http"</c>
-    /// and <c>"https"</c>). External DLLs loaded via <c>code.load</c> add their
-    /// own schemes via <see cref="path.scheme.@this.Register"/>.
+    /// Context for runtime access. Propagates onto every element Data so nested
+    /// navigation / serialization has a wired scope — mirrors dict.
     /// </summary>
-    public path.scheme.@this Scheme { get; } = new();
-
-    /// <summary>
-    /// Per-App build-time kind dispatcher — discovers and invokes each
-    /// registered type's <c>static string? Build(object?)</c> hook (the
-    /// build-time sibling of <c>Resolve</c>). Owns the reflection cache.
-    /// Call: <c>App.Type.KindHooks.Of(declaredType, value)</c> during build to
-    /// stamp <c>Type.Kind</c> alongside <c>Type.Name</c>. Renamed from
-    /// <c>Kinds</c> so the word stops colliding with <see cref="@this.Kind"/>
-    /// (per-value subtype) and the advertised-vocabulary <c>type.Kinds</c>.
-    /// </summary>
-    public kind.@this KindHooks { get; } = new();
-
-    /// <summary>
-    /// Per-type <c>static Convert(object?, string? kind, context)</c> hooks — the
-    /// runtime sibling of <see cref="KindHooks"/>. A type owns how a value becomes
-    /// an instance of itself; <c>app.type.@this.Convert</c> routes through here.
-    /// </summary>
-    public convert.@this Conversions { get; } = new();
-
-    /// <summary>
-    /// Per-(type, format) renderer dispatch — feeds the writer's
-    /// <see cref="data.TypedValueNode"/> case. Discovers
-    /// <c>app/types/&lt;name&gt;/serializer/&lt;format&gt;.cs</c> classes via
-    /// reflection over <see cref="renderer.@this.Assemblies"/> and exposes a
-    /// runtime-registration seam for DLLs loaded at runtime.
-    /// </summary>
-    public renderer.@this Renderers { get; } = new();
-
-    /// <summary>
-    /// Per-(type, kind) reader dispatch — the read-side mirror of
-    /// <see cref="Renderers"/>. Discovers <c>app/type/&lt;name&gt;/serializer/&lt;kind&gt;.cs</c>
-    /// classes exposing a static <c>Read(object, string?, ReadContext)</c> and
-    /// exposes the same runtime-registration seam. The single json
-    /// <c>Converter</c> routes mid-graph typed fields through here.
-    /// </summary>
-    public reader.@this Readers { get; } = new();
-
-    // --- Primitive lookup tables ---
-    // Aliases / canonical-name data lives on app.type.primitive.@this — one
-    // home for the seeded entries that both the registry (instance lookup) and
-    // the static no-context fallback (GetPrimitiveOrMime / GetPrimitiveName)
-    // read from.
-
-    private const int MaxGenericDepth = 20;
-
-    /// <summary>
-    /// Static-friendly subset of <see cref="Get"/> that handles primitives and MIME without
-    /// touching the per-App registry. Used as a fallback when no <c>Context</c> is available
-    /// (e.g. <c>Data.Type.ClrType</c> on a Data minted outside an action's context).
-    /// </summary>
-    public static System.Type? GetPrimitiveOrMime(string typeName)
+    [System.Text.Json.Serialization.JsonIgnore]
+    public actor.context.@this? Context
     {
-        if (string.IsNullOrWhiteSpace(typeName)) return null;
-        if (app.type.primitive.@this.Aliases.TryGetValue(typeName, out var primitive)) return primitive;
-        return ClrFromMime(typeName);
-    }
-
-    /// <summary>
-    /// Static-friendly subset of <see cref="GetTypeName"/> covering the primitive table only —
-    /// returns null for domain/[Choices]/array/generic types. Used as a no-context fallback by
-    /// <see cref="data.@this"/> when inferring a Type from a value without an active Context.
-    /// </summary>
-    public static string? GetPrimitiveName(System.Type type)
-    {
-        var underlying = Nullable.GetUnderlyingType(type) ?? type;
-        return app.type.primitive.@this.Canonical.TryGetValue(underlying, out var name) ? name : null;
-    }
-
-    /// <summary>
-    /// Static-friendly variant of <see cref="GetTypeName"/> — handles primitives, generics,
-    /// nullable, arrays, Data&lt;T&gt; unwrap, and reads [PlangType] / @this convention names
-    /// directly off the type via reflection (no per-App registry). For callers that don't
-    /// have an App in scope (e.g. <see cref="app.module.@this"/> instances constructed
-    /// without an App backing in test fixtures).
-    /// </summary>
-    public static string GetTypeNameStatic(System.Type type)
-    {
-        if (type == null) return "object";
-
-        var underlying = Nullable.GetUnderlyingType(type);
-        if (underlying != null) return GetTypeNameStatic(underlying) + "?";
-
-        if (type.IsGenericType)
+        get => _context;
+        set
         {
-            var generic = type.GetGenericTypeDefinition();
-            if (generic == typeof(data.@this<>))
-                return GetTypeNameStatic(type.GetGenericArguments()[0]);
-            if (generic == typeof(List<>) || generic == typeof(IList<>)
-                || generic == typeof(IEnumerable<>) || generic == typeof(ICollection<>)
-                || generic == typeof(IReadOnlyCollection<>) || generic == typeof(IReadOnlyList<>)
-                || generic == typeof(HashSet<>))
-                return $"list<{GetTypeNameStatic(type.GetGenericArguments()[0])}>";
-            if (generic == typeof(Dictionary<,>) || generic == typeof(IDictionary<,>))
-            {
-                var args = type.GetGenericArguments();
-                return $"dict<{GetTypeNameStatic(args[0])},{GetTypeNameStatic(args[1])}>";
-            }
+            _context = value;
+            if (value == null) return;
+            foreach (var item in _items)
+                item.Context = value;
         }
-
-        if (type == typeof(data.@this)) return "object";
-
-        if (type.IsArray)
-        {
-            var elementType = type.GetElementType()!;
-            if (elementType == typeof(byte)) return "bytes";
-            return $"list<{GetTypeNameStatic(elementType)}>";
-        }
-
-        if (app.type.primitive.@this.Canonical.TryGetValue(type, out var name)) return name;
-
-        var listIface = type.GetInterfaces().FirstOrDefault(i =>
-            i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
-        if (listIface != null)
-            return $"list<{GetTypeNameStatic(listIface.GetGenericArguments()[0])}>";
-
-        // [PlangType("name")] direct attribute read — first non-null Name wins.
-        var plangAttr = type.GetCustomAttributes<PlangTypeAttribute>(inherit: false)
-            .FirstOrDefault(a => a.Name != null);
-        if (plangAttr?.Name != null) return plangAttr.Name;
-
-        // @this convention: last-namespace-segment lowercased.
-        if (string.Equals(type.Name, "this", StringComparison.Ordinal) && !string.IsNullOrEmpty(type.Namespace))
-        {
-            var ns = type.Namespace!;
-            var lastDot = ns.LastIndexOf('.');
-            return (lastDot >= 0 ? ns[(lastDot + 1)..] : ns).ToLowerInvariant();
-        }
-
-        return StripGenericArity(type.Name).ToLowerInvariant();
     }
+    private actor.context.@this? _context;
 
-    // --- PLang name → CLR type ---
-
-    /// <summary>
-    /// PLang type name → CLR type. Handles generics (list&lt;string&gt;), dictionaries,
-    /// nullable (int?), and MIME types. Depth-guarded against unbounded generic nesting.
-    /// </summary>
-    public System.Type? Get(string typeName) => Get(typeName, 0);
-
-    /// <summary>Alias for <see cref="Get(string)"/> — preserves existing <c>app.type.Clr</c> caller habit.</summary>
-    public System.Type? Clr(string plangName) => Get(plangName);
-
-    // --- Stage 3 accessor surface ---
-
-    // Catalog cache keyed by PLang type name.  The no-module catalog walk is
-    // App-global (only the KnownTypes() seed varies, and that seed is identity
-    // to this registry instance), so a single Lazy is enough: BuildTypeEntries
-    // runs once per registry instance and every fold-property read of
-    // app.Type[name] then comes from the cache.
-    //
-    // The (modules)-overload of BuildTypeEntries stays uncached — its input is
-    // the App's module set which can change at runtime via code.load.
-    private readonly Lazy<Dictionary<string, app.type.@this>> _catalogByName;
-
-    private Dictionary<string, app.type.@this> CatalogByName => _catalogByName.Value;
-
-    public @this()
+    actor.context.@this module.IContext.Context
     {
-        _catalogByName = new Lazy<Dictionary<string, app.type.@this>>(() =>
-        {
-            var dict = new Dictionary<string, app.type.@this>(StringComparer.OrdinalIgnoreCase);
-            foreach (var entry in BuildTypeEntries(null))
-            {
-                // Collision resolution: when two CLR types map to the same PLang
-                // name (e.g. `app.goal.@this` the goal entity and
-                // `app.channel.type.goal.@this` the goal-channel both lowercase to
-                // "goal" via the @this convention), prefer the catalog-richer
-                // entry.  First-wins TryAdd over reflection-ordered types is
-                // non-deterministic — a Scalar entry could shadow a Record with
-                // populated Fields depending on assembly load order.
-                // Richness rank: Record (has Fields) > Enum (has Values) > Scalar.
-                // (codeanalyzer v2 finding #1.)
-                if (!dict.TryGetValue(entry.Name, out var existing))
-                {
-                    dict[entry.Name] = entry;
-                    continue;
-                }
-                if (Rank(entry) > Rank(existing))
-                    dict[entry.Name] = entry;
-            }
-            return dict;
-        });
+        get => _context!;
+        set => Context = value;
     }
 
-    // Higher = catalog-richer.  Used to break same-name ties deterministically.
-    private static int Rank(app.type.@this entry)
-    {
-        if (entry.Fields != null && entry.Fields.Count > 0) return 3;  // Record
-        if (entry.Values != null && entry.Values.Count > 0) return 2;  // Enum
-        if (entry.Shape != null || entry.ConstructorSignature != null) return 1;  // Scalar
-        return 0;  // barren
-    }
+    // A list is a list of ROWS (`_items`). Each row holds the Data it was added with.
+    // The PUBLIC surface (Count/Items/At/...) is the FLATTENED view: a row whose value
+    // is itself a list contributes its leaves, everything else is one item. The row
+    // (chunk) structure is never observable — `add` appends a row without reading the
+    // existing ones, and reads walk the rows to present the flattened sequence.
 
-    /// <summary>
-    /// Index by PLang type name.  Returns the catalog-built entity — fully
-    /// populated with Fields / Values / Shape / Example / Description / Kinds
-    /// / ClrType.  Throws on miss; index-miss is a hard error.
-    /// </summary>
-    /// <remarks>
-    /// Both doors (<c>app.Type[name]</c> and <c>data.Type</c>) hand back
-    /// equivalent entities — same catalog fold data, same ClrType.  Per
-    /// codeanalyzer v1 finding #1: returning <c>new app.type.@this(name)</c>
-    /// here would ship a contextless half-entity whose fold properties
-    /// silently null; cached catalog lookup closes that gap.
-    /// </remarks>
-    public app.type.@this this[string typeName]
+    /// <summary>Number of leaves — the flattened item count (a list row contributes its
+    /// own count; a scalar/dict row contributes 1). Walked on demand: a row may alias a
+    /// list mutated elsewhere, so a stored counter would stale.</summary>
+    public int Count
     {
         get
         {
-            if (CatalogByName.TryGetValue(typeName, out var built)) return built;
-            if (Get(typeName) == null)
-                throw new KeyNotFoundException($"No PLang type registered under name '{typeName}'.");
-            // Primitive / MIME / generic-shape: not in the catalog (catalog covers
-            // domain types only) but the name resolves.  Hand back a bare entity
-            // with ClrType pre-stamped from the static path — no Promote() rebuild
-            // can populate fold data for primitives, so this is the right answer.
-            return new app.type.@this(typeName, Get(typeName));
+            int n = 0;
+            foreach (var row in _items) n += LeafCount(row);
+            return n;
         }
     }
 
-    /// <summary>Compile-time generic lookup — returns the catalog-built entity for T.</summary>
-    public app.type.@this of<T>()
+    // A row's leaf count — a value that dissolves into the list (IListLeaf, i.e. a list)
+    // contributes its own leaf count; anything else is one whole item. The value owns
+    // the answer, so there's no `is list` type-switch here.
+    private static int LeafCount(Data row) => row.Value is global::app.data.IListLeaf leaf ? leaf.LeafCount : 1;
+
+    /// <summary>The flattened element Data in order — a row that dissolves (IListLeaf)
+    /// yields its leaves; a scalar/dict/table row is yielded whole, weight 1.</summary>
+    public IReadOnlyList<Data> Items
     {
-        var name = GetTypeName(typeof(T));
-        return CatalogByName.TryGetValue(name, out var built)
-            ? built
-            : new app.type.@this(name, typeof(T));
-    }
-
-    private System.Type? Get(string typeName, int depth)
-    {
-        if (string.IsNullOrWhiteSpace(typeName)) return null;
-        if (depth > MaxGenericDepth) return null;
-
-        if (typeName.StartsWith("list<", StringComparison.OrdinalIgnoreCase) && typeName.EndsWith(">"))
+        get
         {
-            var innerTypeName = typeName[5..^1];
-            var innerType = Get(innerTypeName, depth + 1);
-            return innerType != null ? typeof(List<>).MakeGenericType(innerType) : null;
-        }
-
-        if ((typeName.StartsWith("dict<", StringComparison.OrdinalIgnoreCase) ||
-             typeName.StartsWith("dictionary<", StringComparison.OrdinalIgnoreCase)) && typeName.EndsWith(">"))
-        {
-            var prefix = typeName.StartsWith("dict<", StringComparison.OrdinalIgnoreCase) ? 5 : 11;
-            var inner = typeName[prefix..^1];
-            var parts = inner.Split(',');
-            if (parts.Length == 2)
+            var flat = new List<Data>();
+            foreach (var row in _items)
             {
-                var keyType = Get(parts[0].Trim(), depth + 1);
-                var valueType = Get(parts[1].Trim(), depth + 1);
-                if (keyType == null || valueType == null) return null;
-                return typeof(Dictionary<,>).MakeGenericType(keyType, valueType);
+                if (row.Value is global::app.data.IListLeaf leaf) flat.AddRange(leaf.Leaves);
+                else flat.Add(row);
+            }
+            return flat;
+        }
+    }
+
+    // IListLeaf — a list dissolves into its container list: its leaves are this list's
+    // flattened items. (The mutation-addressing helper Locate still resolves to the
+    // concrete list, since editing a nested element needs the mutable surface.)
+    int global::app.data.IListLeaf.LeafCount => Count;
+    IReadOnlyList<Data> global::app.data.IListLeaf.Leaves => Items;
+
+    /// <summary>The flattened element Data at <paramref name="index"/>, or C# null when out of range.</summary>
+    public Data? At(int index)
+        => Locate(index, out int row, out int offset, out @this? inner)
+            ? (inner != null ? inner.At(offset) : _items[row])
+            : null;
+
+    /// <summary>First flattened element, or null when empty.</summary>
+    public Data? First => At(0);
+
+    /// <summary>Last flattened element, or null when empty.</summary>
+    public Data? Last => At(Count - 1);
+
+    // Resolve a flattened index to the owning row + the offset within it. `inner` is the
+    // row's list when the row is a list (offset indexes into it); null for a weight-1 row
+    // (offset 0). Returns false when the index is out of range.
+    private bool Locate(int flatIndex, out int rowIndex, out int offset, out @this? inner)
+    {
+        rowIndex = 0; offset = 0; inner = null;
+        if (flatIndex < 0) return false;
+        for (int r = 0; r < _items.Count; r++)
+        {
+            if (_items[r].Value is @this list)
+            {
+                int w = list.Count;
+                if (flatIndex < w) { rowIndex = r; offset = flatIndex; inner = list; return true; }
+                flatIndex -= w;
+            }
+            else
+            {
+                if (flatIndex == 0) { rowIndex = r; return true; }
+                flatIndex -= 1;
             }
         }
+        return false;
+    }
 
-        // Registry is the single source of truth — primitives are seeded into
-        // it at init via SeedClrPrimitives. The static Primitives dict still
-        // backs the no-context fallback (GetPrimitiveOrMime / GetPrimitiveName).
-        var domainType = ResolveType(typeName);
-        if (domainType != null) return domainType;
-
-        var mimeType = ClrFromMime(typeName);
-        if (mimeType != null) return mimeType;
-
-        return null;
+    /// <summary>Appends one row holding <paramref name="item"/> (build-at-edge for the
+    /// parse seam and list.add). O(1) — never reads or merges the existing rows; the
+    /// row's weight (1, or the item's flattened count when it is a list) surfaces via Count.</summary>
+    public @this Add(Data item)
+    {
+        if (_context != null) item.Context = _context;
+        _items.Add(item);
+        return this;
     }
 
     /// <summary>
-    /// MIME content-type → CLR type for deserialization. Returns <c>null</c>
-    /// when the input isn't a MIME string (no slash) or isn't a recognised family.
-    /// Pure logic with no instance state — exposed as static so it's reachable from
-    /// any caller, and from <see cref="Get"/>'s internal path.
+    /// A structural copy for the merge surface (`add`/`set` a list into a list): a new list
+    /// with its OWN rows, so a later in-place mutation of either side (set/remove/insert)
+    /// leaves the other untouched. Leaf element Data are shared by reference — safe, because
+    /// `set %x% = …` rebinds rather than mutates. A nested list element is copied recursively,
+    /// so no mutable list structure is shared at any depth.
     /// </summary>
-    public static System.Type? ClrFromMime(string mimeType)
+    public @this CopyStructure() => CopyStructure(0);
+
+    // Mirrors data.@this.MaxJsonDepth (the inbound construction cap) so a pathologically
+    // deep nested list throws rather than stack-overflowing, even if a future build path
+    // loses the inbound depth cap.
+    private const int MaxCopyDepth = 128;
+
+    private @this CopyStructure(int depth)
     {
-        if (string.IsNullOrWhiteSpace(mimeType) || !mimeType.Contains('/')) return null;
-
-        if (mimeType.StartsWith("text/", StringComparison.OrdinalIgnoreCase))
-            return typeof(string);
-        if (mimeType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)
-            || mimeType.StartsWith("audio/", StringComparison.OrdinalIgnoreCase)
-            || mimeType.StartsWith("video/", StringComparison.OrdinalIgnoreCase))
-            return typeof(byte[]);
-        if (mimeType.Equals("application/json", StringComparison.OrdinalIgnoreCase))
-            return typeof(object);
-        if (mimeType.Equals("application/plang-goal", StringComparison.OrdinalIgnoreCase))
-            return typeof(app.goal.@this);
-        if (mimeType.Equals("application/octet-stream", StringComparison.OrdinalIgnoreCase))
-            return typeof(byte[]);
-
-        return null;
+        if (depth > MaxCopyDepth)
+            throw new System.InvalidOperationException($"List nesting exceeds maximum depth ({MaxCopyDepth})");
+        var copy = new @this { Context = _context };
+        foreach (var el in _items)
+            copy._items.Add(el.Value is @this nested
+                ? new Data(el.Name, nested.CopyStructure(depth + 1)) { Context = _context }
+                : el);
+        return copy;
     }
 
-    // --- CLR type → PLang name ---
-
-    /// <summary>
-    /// CLR type → PLang type name.
-    /// </summary>
-    public string GetTypeName(System.Type type)
+    /// <summary>Inserts <paramref name="item"/> at the flattened <paramref name="index"/>
+    /// (clamped to [0, Count]).</summary>
+    public @this Insert(int index, Data item)
     {
-        if (type == null) return "object";
-
-        var underlying = Nullable.GetUnderlyingType(type);
-        if (underlying != null)
-            return GetTypeName(underlying) + "?";
-
-        if (type.IsGenericType)
+        if (_context != null) item.Context = _context;
+        if (index < 0) index = 0;
+        if (Locate(index, out int row, out int offset, out @this? inner))
         {
-            var generic = type.GetGenericTypeDefinition();
-            if (generic == typeof(data.@this<>))
-                return GetTypeName(type.GetGenericArguments()[0]);
-            if (generic == typeof(List<>) || generic == typeof(IList<>)
-                || generic == typeof(IEnumerable<>) || generic == typeof(ICollection<>)
-                || generic == typeof(IReadOnlyCollection<>) || generic == typeof(IReadOnlyList<>)
-                || generic == typeof(HashSet<>)
-                || (generic.FullName != null && (
-                    generic.FullName.StartsWith("System.Collections.Immutable.ImmutableList`", StringComparison.Ordinal)
-                    || generic.FullName.StartsWith("System.Collections.Generic.ISet`", StringComparison.Ordinal))))
-            {
-                return $"list<{GetTypeName(type.GetGenericArguments()[0])}>";
-            }
-            if (generic == typeof(Dictionary<,>) || generic == typeof(IDictionary<,>)
-                || (generic.FullName != null && (
-                    generic.FullName.StartsWith("System.Collections.Concurrent.ConcurrentDictionary`", StringComparison.Ordinal)
-                    || generic.FullName.StartsWith("System.Collections.ObjectModel.ReadOnlyDictionary`", StringComparison.Ordinal)
-                    || generic.FullName.StartsWith("System.Collections.Generic.SortedDictionary`", StringComparison.Ordinal)
-                    || generic.FullName.StartsWith("System.Collections.Immutable.ImmutableDictionary`", StringComparison.Ordinal))))
-            {
-                var args = type.GetGenericArguments();
-                return $"dict<{GetTypeName(args[0])},{GetTypeName(args[1])}>";
-            }
+            if (inner != null) inner.Insert(offset, item);
+            else _items.Insert(row, item);
         }
+        else _items.Add(item);   // index >= Count → append
+        return this;
+    }
 
-        if (type == typeof(data.@this))
-            return "object";
+    // --- In-place mutation surface for the list action handlers. The index args are
+    //     FLATTENED — Locate maps each to its (row, offset) before editing. ---
 
-        if (type.IsArray)
+    /// <summary>Removes the leaf at the flattened <paramref name="index"/> (no-op when out of range).</summary>
+    public void RemoveAt(int index)
+    {
+        if (!Locate(index, out int row, out int offset, out @this? inner)) return;
+        if (inner != null)
         {
-            var elementType = type.GetElementType()!;
-            if (elementType == typeof(byte))
-                return "bytes";
-            return $"list<{GetTypeName(elementType)}>";
+            inner.RemoveAt(offset);
+            if (inner.Count == 0) _items.RemoveAt(row);   // drop an emptied chunk
         }
-
-        if (app.type.primitive.@this.Canonical.TryGetValue(type, out var name))
-            return name;
-
-        var listIface = type.GetInterfaces().FirstOrDefault(i =>
-            i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
-        if (listIface != null)
-            return $"list<{GetTypeName(listIface.GetGenericArguments()[0])}>";
-
-        var declared = ResolveName(type);
-        if (declared != null) return declared;
-
-        if (Choices.Has(type))
-            return StripGenericArity(type.Name).ToLowerInvariant();
-
-        return StripGenericArity(type.Name).ToLowerInvariant();
+        else _items.RemoveAt(row);
     }
 
-    /// <summary>Alias for <see cref="GetTypeName"/> — preserves existing <c>app.type.Name</c> caller habit.</summary>
-    public string Name(System.Type clrType) => GetTypeName(clrType);
-
-    private static string StripGenericArity(string name)
+    /// <summary>Removes the first leaf whose value equals <paramref name="value"/> through
+    /// the one compare path (structural for dict/list, case-insensitive text).</summary>
+    public bool Remove(object? value)
     {
-        var idx = name.IndexOf('`');
-        return idx >= 0 ? name[..idx] : name;
+        // Scan the flattened view once to find the leaf, then a single RemoveAt — avoid
+        // the O(n²) of At(i) per iteration.
+        var flat = Items;
+        for (int i = 0; i < flat.Count; i++)
+            if (global::app.data.Compare.AreEqualValues(flat[i].Value, value)) { RemoveAt(i); return true; }
+        return false;
     }
 
-    // --- Registration ---
-
-    /// <summary>
-    /// Registers a domain type for deserialization and type resolution.
-    /// Prefer declaring [PlangType(name)] on the class itself — that's the single
-    /// source of truth. This API remains for test harnesses that synthesize types.
-    /// </summary>
-    public void Register(string plangName, System.Type clrType)
+    /// <summary>Reverses the flattened items — collapses the rows into one flat list
+    /// (a new order is a new flat list, per the row model).</summary>
+    public void Reverse()
     {
-        RegisterRuntime(plangName, clrType);
+        var flat = new List<Data>(Items);
+        flat.Reverse();
+        ResetTo(flat);
     }
 
     /// <summary>
-    /// Registers domain types needed for settings store rehydration.
-    /// Called by App constructor. Today this is a no-op — Identity carries
-    /// <c>[PlangType("identity")]</c> on the class itself, which the assembly
-    /// scan picks up. The hook stays so future domain types that need
-    /// runtime registration (test harness shims, dynamically loaded plugins)
-    /// have an obvious entry point.
+    /// Sorts by element value through the one typed-compare path
+    /// (<c>app.data.Compare.Order</c>) — so `sort` and `if a &gt; b` agree, nulls
+    /// sort last, and a mixed-type list throws. Collapses the rows into one flat list.
     /// </summary>
-    public void RegisterDomainTypes()
+    public void SortByValue(bool descending)
     {
-    }
-
-    // --- Constrained-value catalog ---
-
-    /// <summary>
-    /// Gets the valid values for a constrained type — enum names for real enums,
-    /// or the [Choices] vocabulary for types that declare one. Returns null when
-    /// the type is neither an enum nor a [Choices]-bearing type.
-    /// </summary>
-    public string[]? GetValidValues(System.Type type, actor.context.@this? context = null)
-    {
-        var underlying = Nullable.GetUnderlyingType(type);
-        if (underlying != null) type = underlying;
-
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(data.@this<>))
-            type = type.GetGenericArguments()[0];
-
-        if (type.IsEnum)
-            return Enum.GetNames(type);
-
-        return Choices.Get(type, context);
-    }
-
-    /// <summary>Alias for <see cref="GetValidValues"/> — preserves existing <c>app.type.ValidValues</c> caller habit.</summary>
-    public string[]? ValidValues(System.Type type, actor.context.@this? context = null) => GetValidValues(type, context);
-
-    // --- Type-kind queries ---
-
-    /// <summary>
-    /// True for [PlangType] domain types whose wire form is a primitive (typically string).
-    /// Pure reflection — kept static so it's reachable from <see cref="Utils.TypeConverter"/>'s
-    /// static path without needing an App instance.
-    /// </summary>
-    public static bool IsScalarPlangType(System.Type type)
-    {
-        // A type is catalog-visible when it's named via [PlangType] override OR is
-        // an @this class (last-namespace-segment convention).
-        var hasPlangName = type
-            .GetCustomAttributes(typeof(PlangTypeAttribute), inherit: false)
-            .Length > 0;
-        var isThisClass = string.Equals(type.Name, "this", System.StringComparison.Ordinal);
-        if (!hasPlangName && !isThisClass) return false;
-
-        // Resolve(input, context) factory → catalog derives the wire shape from the
-        // first parameter. Marks the type as scalar without further checks.
-        if (type.GetMethod("Resolve", BindingFlags.Public | BindingFlags.Static) != null)
-            return true;
-
-        // Static Shape property → caller asserts the wire form explicitly.
-        if (ReadStaticString(type, "Shape") != null)
-            return true;
-
-        // Final fallback: a catalog-named type with no [LlmBuilder] properties is, by
-        // convention, a wrapped primitive (TString). The catalog renders it as a string.
-        foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        var flat = new List<Data>(Items);
+        SortGuarded(flat, (a, b) =>
         {
-            if (System.Attribute.IsDefined(prop, typeof(LlmBuilderAttribute)))
-                return false;
+            int c = global::app.data.Compare.Order(a, b);
+            return descending ? -c : c;
+        });
+        ResetTo(flat);
+    }
+
+    /// <summary>
+    /// Sorts by an element field (`sort %people% by "age"`) — each element's
+    /// <paramref name="field"/> is compared through the one typed-compare path.
+    /// </summary>
+    public void SortByField(string field, bool descending)
+    {
+        var flat = new List<Data>(Items);
+        SortGuarded(flat, (a, b) =>
+        {
+            int c = global::app.data.Compare.Order(a.GetChild(field), b.GetChild(field));
+            return descending ? -c : c;
+        });
+        ResetTo(flat);
+    }
+
+    // Replace the rows with a flat sequence (post sort/reverse). The result is all
+    // weight-1 rows — a new order is a new flat list.
+    private void ResetTo(List<Data> flat)
+    {
+        _items.Clear();
+        if (_context != null) foreach (var d in flat) d.Context = _context;
+        _items.AddRange(flat);
+    }
+
+    // List.Sort wraps a comparer exception in InvalidOperationException; unwrap the
+    // typed compare error (e.g. "cannot order dict") so callers see the real cause.
+    private static void SortGuarded(List<Data> items, System.Comparison<Data> cmp)
+    {
+        try { items.Sort(cmp); }
+        catch (System.InvalidOperationException ex)
+            when (ex.InnerException is global::app.data.Compare.NotOrderableException inner)
+        { throw inner; }
+    }
+
+    /// <summary>Replaces (or appends at Count) the leaf at the flattened <paramref name="index"/>.</summary>
+    public void SetAt(int index, Data value)
+    {
+        if (_context != null) value.Context = _context;
+        if (Locate(index, out int row, out int offset, out @this? inner))
+        {
+            if (inner != null) inner.SetAt(offset, value);
+            else _items[row] = value;
         }
+        else if (index == Count) _items.Add(value);
+    }
+
+    /// <summary>
+    /// Unwraps to a raw <c>List&lt;object?&gt;</c> — the bridge at the typed-conversion
+    /// boundary (list → typed List&lt;T&gt;, JSON round-trip). Each element's value is
+    /// taken (Data unwrapped); nested dict/list elements recurse. Read-out form only;
+    /// the in-memory representation stays Data-keyed.
+    /// </summary>
+    public List<object?> ToRaw()
+    {
+        var flat = Items;
+        var raw = new List<object?>(flat.Count);
+        foreach (var item in flat)
+            raw.Add(Unwrap(item.Value));
+        return raw;
+    }
+
+    private static object? Unwrap(object? value) => value switch
+    {
+        @this nestedList => nestedList.ToRaw(),
+        app.type.dict.@this nestedDict => nestedDict.ToRaw(),
+        _ => value,
+    };
+
+    /// <summary>
+    /// IBooleanResolvable: an empty list is falsy, a non-empty list is truthy —
+    /// matches the falsiness of an empty dict / string / null.
+    /// </summary>
+    public Task<bool> AsBooleanAsync() => Task.FromResult(Count > 0);
+
+    /// <summary>
+    /// IEquatableValue: structural, positional — same length and equal items in
+    /// order. Each item routes back through the mediator so nested values widen /
+    /// compare case-insensitive.
+    /// </summary>
+    public bool AreEqual(object? other)
+    {
+        if (other is not @this ol) return false;
+        // Materialize the flattened views once — At(i)/Count are O(rows) walks, so a
+        // per-iteration call would make this O(n²) on a large list.
+        var mine = Items;
+        var theirs = ol.Items;
+        if (mine.Count != theirs.Count) return false;
+        for (int i = 0; i < mine.Count; i++)
+            if (!global::app.data.Compare.AreEqualValues(mine[i].Value, theirs[i].Value)) return false;
         return true;
     }
 
     /// <summary>
-    /// True when <paramref name="type"/> is a primitive PLang type. Pure logic — static.
+    /// IOrderableValue: lexicographic — compare item i against item i through the
+    /// mediator, the first differing pair decides; a prefix sorts before the longer
+    /// list (<c>[1,2] &lt; [1,2,3]</c>). Comparing against a non-list, or two
+    /// non-comparable items, throws — same as a mixed-type list.
     /// </summary>
-    public static bool IsPrimitive(System.Type type)
+    public int Order(object? other)
     {
-        var underlying = Nullable.GetUnderlyingType(type) ?? type;
-        return underlying.IsPrimitive
-            || underlying == typeof(string)
-            || underlying == typeof(decimal)
-            || underlying == typeof(DateTime)
-            || underlying == typeof(DateTimeOffset)
-            || underlying == typeof(DateOnly)
-            || underlying == typeof(TimeOnly)
-            || underlying == typeof(TimeSpan)
-            || underlying == typeof(Guid);
+        if (other is not @this ol)
+            throw new global::app.data.Compare.NotOrderableException(
+                $"cannot order list against {other?.GetType().Name.ToLowerInvariant() ?? "null"}");
+        // Materialize once (see AreEqual) — avoid O(n²) from per-iteration At()/Count.
+        var mine = Items;
+        var theirs = ol.Items;
+        int shared = System.Math.Min(mine.Count, theirs.Count);
+        for (int i = 0; i < shared; i++)
+        {
+            int c = global::app.data.Compare.Order(mine[i], theirs[i]);
+            if (c != 0) return c;
+        }
+        return mine.Count.CompareTo(theirs.Count);
     }
 
-    // --- Conversion methods now live in Types/Conversion.cs (the partial). ---
-
-    // --- Catalog support ---
-
-    /// <summary>
-    /// Returns the primitive type names exposed to the builder (excludes aliases like
-    /// "text"→"string" and all nullable variants). Domain types are surfaced through
-    /// the schemas block via [PlangType] declarations, not listed here.
-    /// </summary>
-    public List<string> GetBuilderTypeNames() => app.type.primitive.@this.BuilderNames.ToList();
-
-    /// <summary>Alias for <see cref="GetBuilderTypeNames"/> — preserves existing <c>app.type.BuilderNames</c> caller habit.</summary>
-    public List<string> BuilderNames() => GetBuilderTypeNames();
-
-    /// <summary>
-    /// Walks action parameter types and returns structured catalog entries.
-    /// Discovery is transitive: every type referenced in a schema is itself surfaced.
-    ///   - Enum (or ValidValues) → TypeEntry with Values populated.
-    ///   - Record                → TypeEntry with Fields built from [LlmBuilder] props.
-    ///   - Opaque (no markers)   → not surfaced.
-    /// </summary>
-    public List<app.type.@this> BuildTypeEntries(app.module.@this? modules)
-    {
-        var entries = new List<app.type.@this>();
-        var seen = new HashSet<System.Type>();
-        var queue = new Queue<System.Type>();
-
-        void Enqueue(System.Type? t)
-        {
-            if (t == null || seen.Contains(t)) return;
-            if (IsPrimitive(t) || t == typeof(object)) return;
-            if (t.IsArray || t.IsGenericType) return;
-            queue.Enqueue(t);
-        }
-
-        if (modules != null)
-        {
-            foreach (var ns in modules.Names)
-            {
-                foreach (var actionName in modules.GetActions(ns))
-                {
-                    var actionType = modules.GetActionType(ns, actionName);
-                    if (actionType == null) continue;
-
-                    foreach (var prop in actionType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-                    {
-                        if (prop.Name == "EqualityContract" || prop.Name == "Context") continue;
-                        Enqueue(UnwrapType(prop.PropertyType));
-                    }
-                }
-            }
-        }
-        else
-        {
-            foreach (var t in KnownTypes())
-                Enqueue(t);
-        }
-
-        while (queue.Count > 0)
-        {
-            var type = queue.Dequeue();
-            if (!seen.Add(type)) continue;
-
-            var typeName = GetTypeName(type);
-
-            // Skip the type entity itself — its wire shape ({name, kind?, strict?})
-            // and kind vocabulary are taught explicitly in the compile prompt's
-            // "Type reference" block. Rendering it as a catalog scalar
-            // ("type: string") confuses the LLM.
-            if (type == typeof(app.type.@this)) continue;
-            // Skip `data.@this` — actions with polymorphic Value slots (variable.set
-            // etc.) declare it as `object`; surfacing it again as a scalar
-            // ("object: string") in the catalog is redundant and confusing.
-            if (type == typeof(data.@this)) continue;
-
-            // Catalog metadata sourced from static-property convention on the type:
-            //   public static string Example => "...";
-            //   public static string Description => "...";
-            //   public static string Shape => "string";
-            // Missing properties → null. Replaces the former [PlangType(Example=, ...)]
-            // parameters; the attribute now only carries Name overrides for divergent
-            // cases (goal.call, catalog).
-            string? staticExample = ReadStaticString(type, "Example");
-            string? staticDescription = ReadStaticString(type, "Description");
-            string? staticShape = ReadStaticString(type, "Shape");
-            IReadOnlyList<string>? staticKinds = ReadStaticStringList(type, "Kinds");
-
-            var values = GetValidValues(type);
-            if (values != null)
-            {
-                entries.Add(new app.type.@this(typeName, type)
-                {
-                    Values = values,
-                    Description = staticDescription,
-                    Example = staticExample,
-                });
-                continue;
-            }
-
-            var resolveMethod = type.GetMethod("Resolve",
-                BindingFlags.Public | BindingFlags.Static);
-            string? constructorSignature = null;
-            string? derivedShape = null;
-            if (resolveMethod != null)
-            {
-                var resolveParams = resolveMethod.GetParameters();
-                if (resolveParams.Length >= 1)
-                {
-                    var first = resolveParams[0];
-                    derivedShape = GetTypeName(first.ParameterType);
-                    constructorSignature = $"{first.Name}: {derivedShape}";
-                }
-            }
-
-            var llmProps = new List<app.type.Field>();
-            foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-            {
-                if (!prop.CanRead || prop.Name == "EqualityContract") continue;
-                if (!Attribute.IsDefined(prop, typeof(LlmBuilderAttribute))) continue;
-                // [LlmBuilder] is the explicit opt-in for catalog visibility;
-                // [JsonIgnore] only governs STJ wire shape. A property can be
-                // both (e.g. type.Kind: not on the entity's own wire — the
-                // wire emits `kind` from data.Type.Kind via Wire.cs — but
-                // discoverable as a builder field).
-
-                llmProps.Add(new app.type.Field
-                {
-                    Name = char.ToLower(prop.Name[0]) + prop.Name[1..],
-                    TypeName = GetTypeName(prop.PropertyType),
-                });
-                Enqueue(UnwrapType(prop.PropertyType));
-            }
-
-            // Scalar discriminant: either has a Resolve(input, context) factory (so the
-            // wire shape is derivable), declares a static Shape property, or is
-            // catalog-named but has no LLM-builder properties (a domain wrapper around
-            // a primitive). Records have llmProps; scalars don't.
-            var hasPlangName = type.GetCustomAttributes<PlangTypeAttribute>().Any();
-            var isThisClass = string.Equals(type.Name, "this", System.StringComparison.Ordinal);
-            bool isScalar = constructorSignature != null
-                || staticShape != null
-                || ((hasPlangName || isThisClass) && llmProps.Count == 0);
-
-            if (isScalar)
-            {
-                entries.Add(new app.type.@this(typeName, type)
-                {
-                    Shape = derivedShape ?? staticShape ?? "string",
-                    ConstructorSignature = constructorSignature,
-                    Properties = llmProps.Count > 0 ? llmProps : null,
-                    Description = staticDescription,
-                    Example = staticExample,
-                    Kinds = staticKinds,
-                });
-                continue;
-            }
-
-            if (llmProps.Count > 0)
-            {
-                entries.Add(new app.type.@this(typeName, type)
-                {
-                    Fields = llmProps,
-                    Description = staticDescription,
-                    Example = staticExample,
-                    Kinds = staticKinds,
-                });
-            }
-        }
-
-        return entries;
-    }
-
-    /// <summary>
-    /// Returns the catalog's record/enum entries, keyed by name. When two distinct
-    /// CLR types resolve to the same PLang name (e.g. two <c>@this</c> classes
-    /// sharing a last-namespace-segment), the first one wins — the registry's
-    /// <c>ResolveName</c> follows the same first-wins rule so consumers stay
-    /// consistent across the catalog and the type lookup.
-    /// </summary>
-    public Dictionary<string, app.type.@this> ComplexSchemas() => CatalogByName;
-
-    /// <summary>
-    /// Reads a public-static string property by name from <paramref name="type"/>.
-    /// Used to source catalog metadata (Example, Description, Shape) from a
-    /// convention rather than from a per-parameter attribute — see
-    /// <see cref="BuildTypeEntries"/>. Returns null when the property is absent,
-    /// non-string, or throws.
-    /// </summary>
-    private static string? ReadStaticString(System.Type type, string propertyName)
-    {
-        var prop = type.GetProperty(propertyName,
-            BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
-        if (prop == null || prop.PropertyType != typeof(string)) return null;
-        try
-        {
-            return prop.GetValue(null) as string;
-        }
-        catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
-        {
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Reads a public-static <c>IReadOnlyList&lt;string&gt;</c> (or <c>IEnumerable&lt;string&gt;</c>)
-    /// property — the catalog's opt-in <c>Kinds</c> vocabulary convention. Returns null when
-    /// the property is absent, the wrong shape, or throws.
-    /// </summary>
-    private static IReadOnlyList<string>? ReadStaticStringList(System.Type type, string propertyName)
-    {
-        var prop = type.GetProperty(propertyName,
-            BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
-        if (prop == null) return null;
-        try
-        {
-            var raw = prop.GetValue(null);
-            if (raw is IReadOnlyList<string> list) return list;
-            if (raw is IEnumerable<string> seq) return seq.ToList();
-            return null;
-        }
-        catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
-        {
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Unwraps generic wrappers (List&lt;T&gt;, Nullable&lt;T&gt;) to get the inner type.
-    /// </summary>
-    private static System.Type? UnwrapType(System.Type type)
-    {
-        var underlying = Nullable.GetUnderlyingType(type);
-        if (underlying != null) return UnwrapType(underlying);
-
-        if (type.IsGenericType)
-        {
-            var generic = type.GetGenericTypeDefinition();
-            if (generic == typeof(data.@this<>))
-                return UnwrapType(type.GetGenericArguments()[0]);
-            if (generic == typeof(List<>) || generic == typeof(IList<>))
-                return UnwrapType(type.GetGenericArguments()[0]);
-            if (generic == typeof(Dictionary<,>) || generic == typeof(IDictionary<,>))
-                return null;
-        }
-
-        var listIface = type.GetInterfaces().FirstOrDefault(i =>
-            i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
-        if (listIface != null)
-            return UnwrapType(listIface.GetGenericArguments()[0]);
-
-        if (type.IsArray)
-            return UnwrapType(type.GetElementType()!);
-
-        if (IsPrimitive(type)) return null;
-        return type;
-    }
+    public override string ToString() => $"[{string.Join(", ", Items.Select(e => e.ScalarValue))}]";
 }

@@ -34,7 +34,9 @@ public class ListAddIdentityTests
     public async Task ListAdd_PlainDataList_MutatesLiveVariableValueDirectly()
     {
         var (context, vars) = Ctx();
-        var existing = new List<object?> { "a", "b" };
+        var existing = new global::app.type.list.@this();
+        existing.Add(new Data("", "a"));
+        existing.Add(new Data("", "b"));
         vars.Set("products", existing);
 
         var action = new Add
@@ -46,8 +48,8 @@ public class ListAddIdentityTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        // Same List<object?> reference — direct mutation, not a snapshot copy stored.
-        var live = vars.Get("products").Value as List<object?>;
+        // Same list.@this reference — direct mutation, not a fresh object stored.
+        var live = vars.Get("products").Value as global::app.type.list.@this;
         await Assert.That(live).IsNotNull();
         await Assert.That(ReferenceEquals(live, existing)).IsTrue();
         await Assert.That(live!.Count).IsEqualTo(3);
@@ -61,7 +63,9 @@ public class ListAddIdentityTests
     public async Task ListAdd_ReturnsLiveVariableData_NotNewData()
     {
         var (context, vars) = Ctx();
-        var live = new List<object?> { 1, 2 };
+        var live = new global::app.type.list.@this();
+        live.Add(new Data("", 1));
+        live.Add(new Data("", 2));
         vars.Set("products", live);
 
         var action = new Add
@@ -72,7 +76,7 @@ public class ListAddIdentityTests
         };
         var result = await action.Run();
 
-        // The result Data has a types.list Value; .value of that struct points at the LIVE list.
+        // The result Data has a types.list Value; .value of that record points at the LIVE list.
         await Assert.That(result.Value).IsNotNull();
         var resultListProp = result.Value!.GetType().GetProperty("value");
         await Assert.That(resultListProp).IsNotNull();
@@ -87,7 +91,7 @@ public class ListAddIdentityTests
     public async Task ListAdd_ItemAsLiveVarRef_AppendsCurrentValue()
     {
         var (context, vars) = Ctx();
-        vars.Set("products", new List<object?>());
+        vars.Set("products", new global::app.type.list.@this());
 
         // C# direct-composition path bypasses the .pr resolver, so we wrap "hello"
         // explicitly the same way Data emit would after AsCanonical resolves %item%.
@@ -103,12 +107,10 @@ public class ListAddIdentityTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        var live = vars.Get("products").Value as List<object?>;
+        var live = vars.Get("products").Value as global::app.type.list.@this;
         await Assert.That(live!.Count).IsEqualTo(1);
-        // list.add snapshot-clones simple values via Value.Clone() — assert the value, not ref.
-        // Unwrap one Data layer (snapshot stores the cloned Data wrapping the value).
-        var entry = live![0] is Data d ? d.Value : live![0];
-        await Assert.That(entry).IsEqualTo("hello");
+        // list.add stores the element Data by reference now (Stage 2 rebind makes it safe).
+        await Assert.That(live!.At(0)!.Value).IsEqualTo("hello");
     }
 
     // After the variable is reassigned with Variables.Set("products", newList), the next
@@ -119,11 +121,13 @@ public class ListAddIdentityTests
     public async Task ListAdd_AfterReplacement_HandlerSeesNewValue()
     {
         var (context, vars) = Ctx();
-        var orphan = new List<object?> { "x" };
+        var orphan = new global::app.type.list.@this();
+        orphan.Add(new Data("", "x"));
         vars.Set("products", orphan);
 
         // Replace under the same name — variable.set's Variables.Set replaces the binding.
-        var fresh = new List<object?> { "y" };
+        var fresh = new global::app.type.list.@this();
+        fresh.Add(new Data("", "y"));
         vars.Set("products", fresh);
 
         var action = new Add

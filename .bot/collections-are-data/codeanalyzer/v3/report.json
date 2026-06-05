@@ -1,0 +1,49 @@
+{
+  "bot": "codeanalyzer",
+  "branch": "collections-are-data",
+  "version": 3,
+  "verdict": "FAIL",
+  "next_bot": "coder",
+  "reviewed_range": "65cd08a2d..a3cdb5f7a",
+  "suites": { "csharp": "4087/0", "plang": "273/273", "build": "0 errors" },
+  "summary": "Re-review of coder v4 (compare-on-value + chunk/row list model) and v5 (@schema:'data' wire marker). Compare refactor and wire marker are clean and correct (the marker resolves my v2 open-for-Ingi discriminator item). The chunk/row list model ships a silent cross-variable aliasing bug: list.add stores the element by reference, so 'add list to list' entangles source and target in both directions (write-through corruption + read-view tracking) instead of merging. Proven via a deterministic C# probe; both suites miss it because no test holds the added sub-list in a second variable. Blocking.",
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "blocking",
+      "title": "add list to list aliases the source list instead of merging",
+      "files": ["PLang/app/module/list/add.cs:32", "PLang/app/type/list/this.cs:141", "PLang/app/type/list/this.cs:117", "PLang/app/type/list/this.cs:248"],
+      "detail": "list.add stores the element Data by reference; a list row's .Value is the same instance as the added list variable. Flattened reads and the in-place mutators (SetAt/RemoveAt/Insert via Locate) descend into that shared instance, so the two lists are entangled both ways. Proven: b=[50,60]; a=[10,20]; a.Add(D(b)); a.SetAt(2,99) => b[0]==99 (write-through corruption); b.Add(70) => a.Count==5 (read-view tracking, expected 4). Contradicts stated merge semantics (list-rope-model.md). Suites green because no test holds the sub-list in a second variable (RowModelTests uses inline nested lists).",
+      "fix": "Architect call. (a) snapshot the added list's element references into independent rows at add time (O(k) in added size; still never reads existing rows) or (b) copy-on-write the shared row before any descend. Add a RowModelTests case asserting independence in both directions."
+    },
+    {
+      "id": "F2",
+      "severity": "major",
+      "title": "2 signing round-trip tests disabled; verify-after-roundtrip regressed by @schema marker",
+      "files": ["Tests/LazyDeserialize/SignAndVerifyRoundTrip.test.goal", "Tests/LazyDeserialize/SignedDataSurvivesInList.test.goal"],
+      "detail": "Both were active+green at v2 PASS (65cd08a2d); v5 disabled them. The @schema marker makes a signed Data correctly round-trip AS a Data, which the old verify path can't handle (hashes a Data-wrapping-a-Data). Honestly documented (v5 report, commit, todos.md, signature-as-schema-wrapper branch spec) — not a silent mask, so not the gating blocker. But: this branch must not merge to main ahead of signature-as-schema-wrapper or verify of any signed value crossing a goal/list/store boundary is broken. C# verify-against-raw probe still passes; only the round-trip surface is affected.",
+      "fix": "Land with or after signature-as-schema-wrapper; re-enable + rebuild the two goals there. Tester to confirm scope is exactly these two."
+    },
+    {
+      "id": "F3",
+      "severity": "minor",
+      "title": "materializing Count/Items/At inside list's own loops -> O(n^2)",
+      "files": ["PLang/app/type/list/this.cs:292", "PLang/app/type/list/this.cs:306", "PLang/app/type/list/this.cs:180", "PLang/app/module/list/unique.cs:23"],
+      "detail": "Count/Items/At went from O(1) to O(n) walks (Items allocates a fresh flat list each call). list.AreEqual re-evaluates Count per iteration and calls At(i) both sides; Order/Remove call At(i) in loop; unique re-materializes deduped.Items each outer iter. Quadratic for large lists (db rows). Correctness unaffected.",
+      "fix": "Hoist Items to a local and cache Count at the top of those loops."
+    },
+    {
+      "id": "F4",
+      "severity": "nit",
+      "title": "stale comments describe deleted name+value heuristic / old type names / scheme-vs-schema",
+      "files": ["PLang/app/data/Wire.cs:422", "PLang/app/type/dict/this.cs:13", "PLang/app/data/this.cs:757"],
+      "detail": "Wire.cs:422-427 still explains the old name+value recognizer 'without an explicit type marker' (code now keys on @schema). dict/this.cs:13 references app.type.catalog.@this for the list type (it's app.type.list.@this). Several comments say 'scheme=data' while the constant is WireSchema='@schema'.",
+      "fix": "Comment-only sweep."
+    }
+  ],
+  "clean": [
+    "Compare-on-value (v4 step 1): Compare thinned to mediator; Family()/Orderable HashSet deleted (verified no is dict/is list/Family/Orderable in Compare.cs); ScalarComparer is the single legal type-switch; number equality+order both via Number.CompareTo (kills old split); recursion contract holds; dispatch symmetric across all four arg orderings; SortGuarded unwraps List.Sort's wrapped typed error.",
+    "@schema marker (v5): strict single-recognizer marker (IsDataMarked/HasDataMarker/IsWireShape); old value+type and name+value heuristics deleted; WireLocal gives one canonical shape on every STJ path while channel signing Wire outranks it; Data<T> re-declares the attribute (no generic inheritance); no parallel wrapper type. Resolves my v2 open-for-Ingi discriminator ambiguity."
+  ],
+  "verification_method": "Clean rebuild + both suites. Compare/marker reviewed by trace + grep for leftover type-switches. F1 confirmed by a throwaway C# probe against app.type.list.@this (LLM planner mis-builds ad-hoc goals, so a green .test.goal proves nothing); probe deleted, git status clean."
+}

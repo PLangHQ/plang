@@ -20,15 +20,24 @@ public sealed class Operator
         {
             ["=="] = Equal,
             ["!="] = async (l, r) => !await Equal(l, r),
-            [">"] = (l, r) => Task.FromResult(Compare(Val(l), Val(r)) > 0),
-            ["<"] = (l, r) => Task.FromResult(Compare(Val(l), Val(r)) < 0),
-            [">="] = (l, r) => Task.FromResult(Compare(Val(l), Val(r)) >= 0),
-            ["<="] = (l, r) => Task.FromResult(Compare(Val(l), Val(r)) <= 0),
+            // Ordering routes through the one typed-compare path (app.data.Compare) so
+            // `if a > b` and `sort by …` can never drift. It throws for equality-only
+            // types and genuinely-different value types — surfaced as the step error.
+            // A null operand is incomparable on the if-path (returns false), distinct
+            // from sort's nulls-last — sort calls Order directly.
+            [">"] = (l, r) => Task.FromResult(BothPresent(l, r) && global::app.data.Compare.Order(l, r) > 0),
+            ["<"] = (l, r) => Task.FromResult(BothPresent(l, r) && global::app.data.Compare.Order(l, r) < 0),
+            [">="] = (l, r) => Task.FromResult(BothPresent(l, r) && global::app.data.Compare.Order(l, r) >= 0),
+            ["<="] = (l, r) => Task.FromResult(BothPresent(l, r) && global::app.data.Compare.Order(l, r) <= 0),
             ["contains"] = (l, r) => Task.FromResult(Contains(Val(l), Val(r))),
             ["startswith"] = (l, r) => Task.FromResult(StringOp(Val(l), Val(r), (s, v) => s.StartsWith(v, StringComparison.OrdinalIgnoreCase))),
             ["endswith"] = (l, r) => Task.FromResult(StringOp(Val(l), Val(r), (s, v) => s.EndsWith(v, StringComparison.OrdinalIgnoreCase))),
             ["in"] = (l, r) => Task.FromResult(In(Val(l), Val(r))),
             ["isempty"] = (l, _) => Task.FromResult(IsEmpty(Val(l))),
+            // `%x% is dict` / `is number` / `is item` — IS-A query against the
+            // value-type lattice. The right operand is the PLang type name. `item`
+            // is the apex (true for any value).
+            ["is"] = (l, r) => Task.FromResult(IsType(l, r)),
             ["and"] = async (l, r) => await IsTruthy(l) && await IsTruthy(r),
             ["or"] = async (l, r) => await IsTruthy(l) || await IsTruthy(r),
         };
@@ -57,6 +66,17 @@ public sealed class Operator
     /// <summary>Unwrap Data to raw value.</summary>
     private static object? Val(data.@this? data) => data?.Value;
 
+    /// <summary>Both operands have a non-null value — the ordering operators are false otherwise.</summary>
+    private static bool BothPresent(data.@this? left, data.@this? right) => left?.Value != null && right?.Value != null;
+
+    /// <summary>IS-A: does the left value's type satisfy the named type (right operand)?</summary>
+    private static bool IsType(data.@this? left, data.@this? right)
+    {
+        var typeName = right?.Value?.ToString();
+        if (left == null || string.IsNullOrWhiteSpace(typeName)) return false;
+        return left.Type.Is(typeName);
+    }
+
     /// <summary>
     /// Truthy check on Data. Routes through <c>Data.ToBooleanAsync()</c> so an
     /// <see cref="app.data.IBooleanResolvable"/> value (a path) answers for
@@ -80,33 +100,9 @@ public sealed class Operator
             return rb ? leftTruthy : !leftTruthy;
         }
 
-        // == true/false with bool left: normal equality
-        return AreEqual(Val(left), Val(right));
-    }
-
-    private static bool AreEqual(object? left, object? right)
-    {
-        (left, right) = NormalizeTypes(left, right);
-        if (left == null && right == null) return true;
-        if (left == null || right == null) return false;
-
-        if (left is string ls && right is string rs)
-            return string.Equals(ls, rs, StringComparison.OrdinalIgnoreCase);
-
-        return left.Equals(right);
-    }
-
-    // --- Comparison ---
-
-    private static int Compare(object? left, object? right)
-    {
-        (left, right) = NormalizeTypes(left, right);
-        if (left == null || right == null)
-            return left == null && right == null ? 0 : (left == null ? -1 : 1);
-        if (left is IComparable lc)
-            return lc.CompareTo(right);
-        throw new ArgumentException(
-            $"Type '{left.GetType().Name}' does not support comparison operators (>, <, >=, <=)");
+        // == true/false with bool left: structural equality via the one compare path
+        // (so equivalent dicts/lists compare equal, matching group/unique).
+        return global::app.data.Compare.AreEqual(left, right);
     }
 
     // --- Collection/String operators ---
@@ -116,19 +112,26 @@ public sealed class Operator
         return left switch
         {
             string s when right is string sub => s.Contains(sub, StringComparison.OrdinalIgnoreCase),
+            app.type.list.@this list => ContainsValue(list, right),
             IEnumerable coll when left is not string => ContainsElement(coll, right),
             _ => false
         };
     }
 
+    // Membership routes through the one compare path (Compare.AreEqualValues) so
+    // `%list% contains %x%` agrees with `%elem% == %x%` — structural for dict/list,
+    // case-insensitive for text. A native list holds Data; raw IEnumerable holds values.
+    private static bool ContainsValue(app.type.list.@this list, object? target)
+    {
+        foreach (var item in list.Items)
+            if (global::app.data.Compare.AreEqualValues(item.Value, target)) return true;
+        return false;
+    }
+
     private static bool ContainsElement(IEnumerable coll, object? target)
     {
         foreach (var item in coll)
-        {
-            var (normalizedItem, normalizedTarget) = NormalizeTypes(item, target);
-            if (AreEqual(normalizedItem, normalizedTarget))
-                return true;
-        }
+            if (global::app.data.Compare.AreEqualValues(item, target)) return true;
         return false;
     }
 
@@ -142,6 +145,8 @@ public sealed class Operator
 
     private static bool In(object? left, object? right)
     {
+        if (right is app.type.list.@this list)
+            return ContainsValue(list, left);
         if (right is IEnumerable enumerable and not string)
             return ContainsElement(enumerable, left);
         return false;

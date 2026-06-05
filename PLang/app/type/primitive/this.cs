@@ -3,7 +3,7 @@ using System.Text.Json.Nodes;
 namespace app.type.primitive;
 
 /// <summary>
-/// The CLR-primitive entries seeded into <c>app.type.list.@this</c>'s registry
+/// The CLR-primitive entries seeded into <c>app.type.catalog.@this</c>'s registry
 /// at App init — the "no folder, no Resolve, no Build" types that still need
 /// a PLang name (<c>string</c>, <c>int</c>, <c>decimal</c>, …) plus their
 /// aliases (<c>text</c>, <c>integer</c>, <c>boolean</c>, …).
@@ -12,11 +12,11 @@ namespace app.type.primitive;
 ///   <see cref="Aliases"/> — every name (including aliases) → CLR type.
 ///   <see cref="Canonical"/> — CLR type → canonical short PLang name.
 ///   <see cref="MimeMap"/>  — MIME content-type → CLR type (read by
-///     <c>app.type.list.@this.ClrFromMime</c>, kept here so the seeded data
+///     <c>app.type.catalog.@this.ClrFromMime</c>, kept here so the seeded data
 ///     stays in one place).
 ///
 /// Pure data, no per-App divergence — exposed as static so the no-context
-/// fallback helpers on <c>app.type.list.@this</c> can read it without an
+/// fallback helpers on <c>app.type.catalog.@this</c> can read it without an
 /// instance.
 /// </summary>
 public static class @this
@@ -45,11 +45,18 @@ public static class @this
             ["guid"] = typeof(System.Guid),
             ["byte"] = typeof(byte),
             ["bytes"] = typeof(byte[]),
-            ["list"] = typeof(List<object>),
-            ["array"] = typeof(object[]),
-            ["dictionary"] = typeof(Dictionary<string, object>),
-            ["dict"] = typeof(Dictionary<string, object>),
-            ["map"] = typeof(Dictionary<string, object>),
+            // list/array → the native list value type (collections hold Data).
+            // The raw List<object> entry that used to back "list" is retired;
+            // typed lists still surface as the generic `list<t>` shape via GetTypeName.
+            ["list"] = typeof(app.type.list.@this),
+            ["array"] = typeof(app.type.list.@this),
+            // dict/dictionary/map → the native object value type (collections
+            // hold Data). The raw Dictionary<string,object> entry that used to
+            // back these is retired; typed dictionaries still surface as the
+            // generic `dict<k,v>` shape via GetTypeName, separate from this.
+            ["dictionary"] = typeof(app.type.dict.@this),
+            ["dict"] = typeof(app.type.dict.@this),
+            ["map"] = typeof(app.type.dict.@this),
             ["object"] = typeof(object),
             ["dynamic"] = typeof(object),
             ["json"] = typeof(JsonNode),
@@ -96,6 +103,11 @@ public static class @this
             [typeof(byte)] = "byte",
             [typeof(byte[])] = "bytes",
             [typeof(object)] = "object",
+            // Native object value type → "dict" (keeps the no-context Data.Type
+            // derivation from collapsing to the @this class name "this").
+            [typeof(app.type.dict.@this)] = "dict",
+            // Native list value type → "list" (same no-context derivation reason).
+            [typeof(app.type.list.@this)] = "list",
         };
 
     /// <summary>

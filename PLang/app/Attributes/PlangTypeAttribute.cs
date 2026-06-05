@@ -21,7 +21,7 @@ namespace app.Attributes;
 /// Catalog metadata (example value, description, scalar shape) used to live
 /// on this attribute as <c>Shape</c>/<c>Example</c>/<c>Description</c>
 /// parameters; those moved to a static-property convention read via
-/// reflection by <c>app.type.list.@this.BuildTypeEntries</c> — declare
+/// reflection by <c>app.type.catalog.@this.BuildTypeEntries</c> — declare
 /// <c>public static string Example =&gt; "…";</c> on the type itself.
 /// </para>
 /// </summary>

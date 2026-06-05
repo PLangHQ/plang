@@ -9,13 +9,25 @@ public partial class Unique : IContext
 
     public Task<data.@this<type.list>> Run()
     {
-        var existing = Context.Variable.Get(ListName.Value).Value;
-        if (existing is not List<object?> list)
+        var nl = app.type.list.@this.FromRaw(Context.Variable.Get(ListName.Value).Value, Context);
+        if (nl == null)
             return Task.FromResult(global::app.data.@this<type.list>.FromError(
                 new app.error.ValidationError($"Variable '{ListName.Value}' is not a list")));
 
-        var distinct = list.Distinct().Cast<object?>().ToList();
+        // Dedup through the one compare path's structural equality — so a list of
+        // equivalent dicts collapses to one (reference-equality HashSet would not).
+        // Accumulate in a plain list so the inner scan doesn't re-materialize Items
+        // (a fresh flat List) on every outer iteration.
+        var kept = new List<global::app.data.@this>();
+        foreach (var item in nl.Items)
+        {
+            bool dup = false;
+            foreach (var k in kept)
+                if (global::app.data.Compare.AreEqual(item, k)) { dup = true; break; }
+            if (!dup) kept.Add(item);
+        }
+        var deduped = new app.type.list.@this(kept) { Context = Context };
         return Task.FromResult(global::app.data.@this<type.list>.Ok(
-            new type.list { count = distinct.Count, value = distinct }, app.type.@this.FromName("list")));
+            new type.list { count = deduped.Count, value = deduped }, app.type.@this.FromName("list")));
     }
 }

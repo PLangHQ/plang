@@ -149,7 +149,7 @@ public class TypeMappingTests
     {
         var type = TypeMapping.GetType("list");
 
-        await Assert.That(type).IsEqualTo(typeof(List<object>));
+        await Assert.That(type).IsEqualTo(typeof(app.type.list.@this));
     }
 
     [Test]
@@ -157,7 +157,7 @@ public class TypeMappingTests
     {
         var type = TypeMapping.GetType("array");
 
-        await Assert.That(type).IsEqualTo(typeof(object[]));
+        await Assert.That(type).IsEqualTo(typeof(app.type.list.@this));
     }
 
     [Test]
@@ -165,7 +165,7 @@ public class TypeMappingTests
     {
         var type = TypeMapping.GetType("dictionary");
 
-        await Assert.That(type).IsEqualTo(typeof(Dictionary<string, object>));
+        await Assert.That(type).IsEqualTo(typeof(app.type.dict.@this));
     }
 
     [Test]
@@ -173,7 +173,7 @@ public class TypeMappingTests
     {
         var type = TypeMapping.GetType("dict");
 
-        await Assert.That(type).IsEqualTo(typeof(Dictionary<string, object>));
+        await Assert.That(type).IsEqualTo(typeof(app.type.dict.@this));
     }
 
     [Test]
@@ -181,7 +181,7 @@ public class TypeMappingTests
     {
         var type = TypeMapping.GetType("map");
 
-        await Assert.That(type).IsEqualTo(typeof(Dictionary<string, object>));
+        await Assert.That(type).IsEqualTo(typeof(app.type.dict.@this));
     }
 
     [Test]

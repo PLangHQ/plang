@@ -11,78 +11,51 @@
       "comment": null,
       "actions": [
         {
-          "module": "condition",
-          "action": "if",
-          "parameters": [
-            {
-              "name": "Left",
-              "value": "%result%",
-              "type": "object"
-            },
-            {
-              "name": "Operator",
-              "value": "\u003C=",
-              "type": "string"
-            },
-            {
-              "name": "Right",
-              "value": "%result%",
-              "type": "object"
-            },
-            {
-              "name": "Negate",
-              "value": false,
-              "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": "this",
-              "type": "string"
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
-        },
-        {
           "module": "variable",
           "action": "set",
           "parameters": [
             {
               "name": "Name",
               "value": "%result%",
-              "type": "string"
+              "scalarValue": "%result%",
+              "type": {
+                "name": "variable"
+              }
             },
             {
               "name": "Value",
               "value": "lte",
-              "type": "string"
+              "scalarValue": "lte",
+              "type": {
+                "name": "text"
+              }
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
               "value": false,
-              "type": "bool"
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
             }
           ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%result%, Value=\u0022lte\u0022)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Modules/Condition/Operators/LTE/WhenLTE.goal",
-  "prPath": "/Modules/Condition/Operators/LTE/.build/whenlte.pr",
+  "path": "/WhenLTE.goal",
+  "prPath": "/.build/whenlte.pr",
   "hash": "6f6d08cdd0d061b9851262b738c479468c504dc7a9f1d895452abcf4f2d3d7c1",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

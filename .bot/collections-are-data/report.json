@@ -1,0 +1,237 @@
+{
+  "branch": "collections-are-data",
+  "sessions": [
+    {
+      "id": "ca31a5cb-1bc0-46e6-bba8-14394ef6a276",
+      "bot": "tester",
+      "timestamp_start": "2026-06-05T09:38:00Z",
+      "timestamp_end": "2026-06-05T09:46:00Z",
+      "intent": "Validate test quality for collections-are-data v3 (dict/list native Data, one compare path, list/dict ops).",
+      "before": {
+        "assumptions": "codeanalyzer v2 PASS, C# 4082/0 + plang 273/273 claimed. coder env note: sandbox build LLM mis-compiles, plang .pr built elsewhere.",
+        "risk": "Branch rewrites the compare path (review-driven, highest false-green risk) and adds native collection types; new where action; two comparison-operator .pr were rebuilt by the bad LLM and committed."
+      },
+      "plan": ".bot/collections-are-data/tester/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/CollectionsAreData/"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Read Stage1-6 C# tests. Stage4 (compare) and Stage5 (list/dict ops) verify intent: numeric-vs-lexical order, trichotomy, structural equality, equality-only types throw on Order, where/group/unique behavior incl. edge cases (WhereOnApex/SortOnListOfDict throw)."
+        },
+        {
+          "paths": [
+            "PLang/app/data/Compare.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mutation test: flipped text-order arm OrdinalIgnoreCase->Ordinal; Stage4 Compare_TextCaseInsensitive_OrderAndEqualsAgree failed as expected; reverted. Compare-path green is real, not false."
+        },
+        {
+          "paths": [
+            "Tests/Modules/Condition/Operators/LessThan/.build/whenless.pr",
+            "Tests/Modules/Condition/Operators/LTE/.build/whenlte.pr"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Two called-sub-goal .pr were rebuilt by the bad sandbox LLM and committed (builderVersion null, path collapsed to /WhenLess.goal). The actual test .pr (conditionlessthan.test.pr) is unchanged and still exercises the < operator. Process smell, not a test-integrity break."
+        },
+        {
+          "paths": [
+            "PLang/app/module/list/where.cs",
+            "Tests/Modules/List/"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "medium",
+          "context": "where is a NEW action (Stage5) with C# coverage (WhereOnList/Dict/Apex) but no plang .test.goal. Builder step->action mapping unverified; builder env (bad LLM) blocks closing it here."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "C# 4082/4082, plang 273/273, both deterministic, git clean across two runs.",
+        "notes": "Findings are minor: missing plang test for new where action; bad-LLM .pr rebuilds committed; missing coder baseline-tests.md. None are red tests or confirmed false-greens."
+      }
+    },
+    {
+      "id": "922cffd3-f41f-46a2-a0c7-dc185c9eba87",
+      "bot": "tester",
+      "timestamp_start": "2026-06-05T15:10:00Z",
+      "timestamp_end": "2026-06-05T15:32:00Z",
+      "intent": "Validate test quality for collections-are-data v6; confirm scope of the F2 disabled signing tests as codeanalyzer v4 requested.",
+      "before": {
+        "assumptions": "codeanalyzer v4 PASS (C# 4089/0 + plang 273/273); F2 = two signing tests disabled as a documented, merge-gated deferral. Asked tester to confirm scope + that the C# probe still covers the primitive.",
+        "risk": "Disabled tests are a classic false-green vector; the branch reworks the signing/Data-wrapping path."
+      },
+      "plan": ".bot/collections-are-data/tester/v6/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "Tests/LazyDeserialize/SignedDataSurvivesInList.test.goal",
+            "Tests/LazyDeserialize/SignAndVerifyRoundTrip.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Both were green regression tests at base (verify a signed value through %list[0]% and across a goal call). On this branch they were gutted: real steps commented out, replaced with a no-op `write out '...disabled'` that PASSES and counts in plang 273/273 (0 skipped). Masks a real regression (Data-wrapping-Data rehash mismatch)."
+        },
+        {
+          "paths": [
+            "Tests/LazyDeserialize/SignedDataSurvivesInList.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "REPRO: restored the un-gutted goal + base .pr, ran on the current branch binary -> [Fail] (200ms). Proves verify-signed-through-list is broken now, not just per the comment. Reverted; git clean."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/LazyDeserialize/IntegrationCutsTests/SignedDataSurvivesVariableSetListTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "The cited C# probe passes only because it reads the element via raw (IList)[0] as data cast and verifies the bare element \u2014 bypasses the broken plang %list[0]% / goal-call surface. So broken developer behavior has zero surface coverage."
+        },
+        {
+          "paths": [
+            "PLang/app/type/list/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1 aliasing fix independently mutation-verified: CopyStructure -> return this reds Add_List_DoesNotAliasSourceVariable + AddList_StructureCopy_NoAliasBothDirections and only those. Reverted. Honest fix."
+        }
+      ],
+      "after": {
+        "status": "FAIL",
+        "health": "C# 4089/4089 genuine. plang 273/273 is a FALSE GREEN: 2 gutted no-op tests masking a live regression (verify of signed value across list/goal boundary).",
+        "notes": "Blocker = finding 1 (masked regression). Signing fix legitimately deferred to signature-as-schema-wrapper + merge gate; on-branch fix is small: make the two goals Skipped (tag exclude) instead of no-op passes. F1/F3/F4 genuinely resolved."
+      }
+    },
+    {
+      "id": "b6449c54-e052-4c1a-8f46-a8f9ef387faf",
+      "bot": "tester",
+      "timestamp_start": "2026-06-05T15:40:00Z",
+      "timestamp_end": "2026-06-05T15:57:00Z",
+      "intent": "Re-review coder v7, which resolves the v6 false-green by making the 2 signing tests honestly Skipped.",
+      "before": {
+        "assumptions": "Coder v7 replaced the no-op-pass disable with a source-text `skip` tag (HasSkipTag) -> Status.Skipped; claims 271 pass + 2 skipped + 0 fail.",
+        "risk": "New discovery mechanism (regex on goal source) is itself a potential false-green vector if it over-matches and silently skips real tests."
+      },
+      "plan": ".bot/collections-are-data/tester/v7/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "Tests/LazyDeserialize/SignedDataSurvivesInList.test.goal",
+            "Tests/LazyDeserialize/SignAndVerifyRoundTrip.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Both goals now hold their REAL steps again (sign -> store/goal-call/list -> verify -> assert) with a leading `- tag this test 'skip'` + comment. Parked, not gutted; re-enable = delete the tag line. Confirmed both register [Skipped], not Pass."
+        },
+        {
+          "paths": [
+            "PLang/app/module/test/discover.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "HasSkipTag: anchored regex ^\\s*tag\\s+this\\s+test\\s+['\"]skip['\"]\\s*$ on goal source steps, short-circuits to Skipped before build/.pr check. Over-match check: a `tag this test 'http'`/`'fast','slow'` goal still RUNS+PASSES (live proof, not skipped). No C# regression test for HasSkipTag itself -> minor finding 1."
+        },
+        {
+          "paths": [
+            "Tests/"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "plang suite: 271 pass + 2 skipped + 0 fail, deterministic across isolated runs, git clean. One flaky timeout on a timing-sensitive enforce-timeout test while C# suite ran concurrently; cleared on every isolated run (CPU contention, not a branch bug). C# 4089/0."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "C# 4089/4089; plang 271 pass + 2 skipped + 0 fail (honest count, was a false 273/273 in v6). Deterministic, git clean.",
+        "notes": "v6 blocker resolved and verified (not just asserted). Signing regression genuinely still deferred to signature-as-schema-wrapper, merge gate intact. Minor findings: HasSkipTag lacks a regression test (over-match = future false-green vector, empirically safe today); `where` still lacks a plang test."
+      }
+    },
+    {
+      "id": "72023633-540f-4157-b2f5-03e5fa5dd6d1",
+      "bot": "security",
+      "timestamp_start": "2026-06-05T16:01:13Z",
+      "timestamp_end": "2026-06-05T16:20:00Z",
+      "intent": "Security review of collections-are-data v1: wire @schema marker, list/dict native types, where, F2 signing regression reframe.",
+      "before": {
+        "assumptions": "codeanalyzer v4 PASS, tester v7 PASS (271 pass + 2 skipped). F2 is a documented disabled-test deferral with a real verify-through-list/goal regression behind it.",
+        "risk": "Wire @schema recognizer could be a deserialization gadget; chunk/row CopyStructure could miss depth guard; new where action filter expr provenance unknown; honest-Skipped pattern could hide regressions if HasSkipTag is loose."
+      },
+      "plan": ".bot/collections-are-data/security/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/data/Wire.cs",
+            "PLang/app/data/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Wire @schema marker recognizer (LiftDataIfShaped/HasDataMarker/UnwrapJsonElement lift). Strict marker (object + @schema:data string), MaxJsonDepth=128 cap. No bypass of strict-kind validator (variable.set runs post-lift). Clean."
+        },
+        {
+          "paths": [
+            "PLang/app/type/list/this.cs",
+            "PLang/app/type/dict/this.cs",
+            "PLang/app/module/list/where.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "CopyStructure: clean aliasing fix (codeanalyzer v4 regression test verified). No depth guard (F3 low). dict OrdinalIgnoreCase last-wins documented. where action: Field is a name, Operator typed, no injection."
+        },
+        {
+          "paths": [
+            "Tests/LazyDeserialize/SignedDataSurvivesInList.test.goal",
+            "Tests/LazyDeserialize/SignAndVerifyRoundTrip.test.goal",
+            "PLang/app/module/signing/code/Ed25519.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F2 deferred regression: verify-through-list/goal fails because Data wraps Data and rehash mismatches. Step 7 in Ed25519.VerifyAsync is the rejection point. Fail-CLOSED \u2014 denial-of-trust, not signature forgery. Merge gate (do not ship ahead of signature-as-schema-wrapper) carries."
+        },
+        {
+          "paths": [
+            "PLang/app/type/text/this.Convert.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Net-new semgrep finding F2/low: JsonSerializer.Serialize(value) with no options on native dict/list arm loses [Sensitive] redactor. Reach narrow today (Identity.PrivateKey via list-then-as-text)."
+        },
+        {
+          "paths": [
+            ".bot/collections-are-data/security-report.json",
+            ".bot/collections-are-data/security/v1/result.md",
+            ".bot/collections-are-data/security/v1/verdict.json",
+            ".bot/collections-are-data/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote security-report.json (3 findings: F1 medium accepted-risk signing-regression, F2 low open text.Convert sensitive leak, F3 low open CopyStructure depth guard), v1 result + verdict, summary.md."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "No critical/high open. Merge gate carries from codeanalyzer v4 (do not ship to main ahead of signature-as-schema-wrapper).",
+        "notes": "F1 reframed as fail-closed denial-of-trust (not forgery). F2 text.Convert lost [Sensitive] options (matches standing Variables.Snapshot pattern). F3 CopyStructure unbounded recursion (latent, MaxJsonDepth=128 caps wire). Next: auditor."
+      }
+    }
+  ]
+}

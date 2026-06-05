@@ -966,11 +966,16 @@ public sealed class OpenAi : ILlm
     /// </summary>
     private static data.@this RestoreFromCache(data.@this cached)
     {
-        // The cached value is a dictionary with Value + metadata
+        // The cached value is a dictionary with Value + metadata. A json cache
+        // entry now materializes to the native dict value type — unwrap it to raw
+        // so the Dictionary branch below reads Value + the metadata props.
+        var cachedValue = cached.Value is app.type.dict.@this nativeDict
+            ? nativeDict.ToRaw()
+            : cached.Value;
         object? resultValue = null;
         var props = new Dictionary<string, object?>();
 
-        if (cached.Value is JsonElement je && je.ValueKind == JsonValueKind.Object)
+        if (cachedValue is JsonElement je && je.ValueKind == JsonValueKind.Object)
         {
             if (je.TryGetProperty("Value", out var valProp))
                 resultValue = valProp.ValueKind == JsonValueKind.Null ? null : valProp.Clone();
@@ -989,7 +994,7 @@ public sealed class OpenAi : ILlm
                 };
             }
         }
-        else if (cached.Value is Dictionary<string, object?> dict)
+        else if (cachedValue is Dictionary<string, object?> dict)
         {
             resultValue = dict.GetValueOrDefault("Value");
             foreach (var kvp in dict)
@@ -1000,7 +1005,7 @@ public sealed class OpenAi : ILlm
         }
         else
         {
-            resultValue = cached.Value;
+            resultValue = cachedValue;
         }
 
         var result = global::app.data.@this.Ok(resultValue);

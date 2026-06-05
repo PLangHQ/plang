@@ -1,0 +1,26 @@
+{
+  "bot": "codeanalyzer",
+  "branch": "collections-are-data",
+  "version": 2,
+  "verdict": "PASS",
+  "next_bot": "tester",
+  "reviewed_range": "2defdfc5f..a361d20ce",
+  "suites": { "csharp": "4082/0", "plang": "273/273", "build": "0 errors" },
+  "summary": "Re-review of coder v2 (F1-F4 + decline F5) and v3 (architect decompose handoff A/B/D). All v1 findings closed; compare path genuinely single; ToRaw decompose now strictly leaf-confined (the v3 A refactor removed the AsCanonical bind-path deep-decompose I under-weighted in v1). Both suites green. One open design decision escalated to Ingi (non-blocking, tracked).",
+  "findings_resolved": [
+    { "id": "F1", "status": "fixed", "detail": "Compare.Order text arm now OrdinalIgnoreCase (Compare.cs:62), matches AreEqualValues; trichotomy restored; regression test added." },
+    { "id": "F2", "status": "fixed", "detail": "contains/in route through Compare.AreEqualValues (public); native list.@this handled; private Operator.AreEqual deleted; regression test added." },
+    { "id": "F3", "status": "fixed", "detail": "dead Operator.Compare removed." },
+    { "id": "F4", "status": "fixed", "detail": "list.@this.FromRaw is the single native build-at-edge path; legacy List<object?>/Comparer<object>.Default/Distinct() arms deleted across sort/unique/reverse/set/remove/flatten; in-place mutators promote-and-write-back; range/split emit native. Bonus: Remove/contains/indexof moved onto Compare.AreEqualValues." },
+    { "id": "F5", "status": "declined_accepted", "detail": "Keying Wire.IsDataShaped on type/signature would fail to lift plain [1,2,3] elements (writer emits type only when non-null, signature only when signed). name+value is correct for this writer-controlled wire. Decline accepted." }
+  ],
+  "decompose_audit": {
+    "result": "leaf-confined",
+    "detail": "Architect decompose handoff A/B/D resolved in v3. A: AsCanonical bind path no longer deep-decomposes the dict (WireSlot/HasWireKey navigate via Get/Has; AsRawWireDict deleted) — corrects a v1 mis-classification. B: dict.ToRaw nested-list asymmetry bug fixed. D: CommandLineParser object/array symmetric. Every remaining ToRaw site is a typed-conversion leaf, external-lib leaf, or CLI perimeter; whole diff adds 2 raw allocations, both inside ToRaw."
+  },
+  "open_for_ingi": {
+    "blocking": false,
+    "title": "wire-shape discriminator keys on value+type presence",
+    "detail": "A user dict {value:9.99, type:'book'} is mis-detected as serialized Data on the bind path (IsWireShape, data/this.cs:737). Shared root of F5 and architect A.45. Language-semantics decision (reserve marker / key on signature / data type-stamp). Tracked: Documentation/Runtime2/todos.md 'Fully type-driven nested Data'. Not a blocker for PASS."
+  }
+}

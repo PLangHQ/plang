@@ -146,6 +146,33 @@ public interface ILoadable { Task LoadAsync(); }             // image.LoadAsync 
 
 Legacy properties (`%response.StatusCode%`, `%response.Body%` as raw string) remain reachable via `Response.BuildProperties` so existing PLang code keeps working alongside the new `%response.Status%` / typed `%response.Body%`.
 
+## `@schema:"data"` marker — Data self-identifies on the wire
+
+Every `Data` written through `Wire.Write` carries `{"@schema":"data",...}` as its
+first key. This is the **one canonical recognizer** — `Wire.HasDataMarker`,
+`@this.IsDataMarked`, and `LiftDataIfShaped`/`LiftArrayElements` all key off
+the same shape. No name+value+type shape-sniffing: a user map that happens to
+have `name`/`value`/`type` keys but no marker deserializes as a plain dict,
+unambiguously.
+
+**Written by two paths:**
+- `Wire.Write` (the `application/plang` serializer): `writer.WriteString(@this.WireSchema, @this.WireSchemaData)` is the first key of every Data object on the wire.
+- The json.Writer's list arm: each element of a Data-typed list is self-described with the marker so a full round-trip through a list restores the element's type and signature.
+
+**Read by three paths:**
+- `LiftDataIfShaped(element)` — value-slot object recognition: an object carries the marker → lift to `Data`; no marker → plain dict.
+- `LiftArrayElements(array)` — array arm: each element carrying the marker lifts to a `Data` (regaining its Signature); anything else wraps as a bare-element Data.
+- `@this.IsDataMarked` — used outside the wire (e.g., `data.Normalize`) to distinguish a value that was already encoded as Data.
+
+**Depth-capped.** `Wire.Read` stops at `MaxReadDepth = 64`; a marker-bombed
+deep payload throws `JsonException` rather than stack-overflowing.
+
+**The `name` key is excluded from signing.** `name` is a binding label (which
+variable holds this value), not part of the value's identity. A Data signed as
+`%x%` verifies the same when later held as `%y%`. The `@schema:data` marker
+itself IS inside the signed region (it's written before the name field is
+emitted) — changing the marker string would break all existing signatures.
+
 ## Wire passthrough — `RawUntouched` / `EmitRawVerbatim`
 
 A `Data` whose `_raw` is set and whose value has never been touched serializes its raw source form back out **byte-identical**. Couriers (variable memory, callstack, channel routing, signing) cannot force a parse mid-flight — the OBP courier rule (only leaves touch `.Value`) holds by construction. See [lazy materialization](data-internals.md#lazy-materialization--_raw-materialize-forcematerialize) for the read half.

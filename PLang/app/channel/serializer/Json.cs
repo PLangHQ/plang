@@ -43,6 +43,10 @@ public sealed class Json : ISerializer
             Converters =
             {
                 new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
+                // The native dict value type projects to a `{}` object under raw
+                // STJ — without this it reflects its C# surface (Entries → Data …)
+                // and cycles.
+                new global::app.type.dict.Json(),
                 context != null
                     ? new global::app.channel.serializer.json.Converter(context)
                     : new global::app.channel.serializer.json.Converter()

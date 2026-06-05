@@ -11,93 +11,51 @@
       "comment": null,
       "actions": [
         {
-          "module": "condition",
-          "action": "if",
-          "parameters": [
-            {
-              "name": "Left",
-              "value": "%result%",
-              "type": "string"
-            },
-            {
-              "name": "Operator",
-              "value": "\u003C=",
-              "type": "string"
-            },
-            {
-              "name": "Right",
-              "value": "less",
-              "type": "string"
-            },
-            {
-              "name": "Negate",
-              "value": false,
-              "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": {
-                "module": "variable",
-                "action": "set",
-                "parameters": [
-                  {
-                    "name": "Name",
-                    "value": "%result%",
-                    "type": "string"
-                  },
-                  {
-                    "name": "Value",
-                    "value": "less",
-                    "type": "string"
-                  }
-                ]
-              },
-              "type": "condition.if.step"
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
-        },
-        {
           "module": "variable",
           "action": "set",
           "parameters": [
             {
               "name": "Name",
               "value": "%result%",
-              "type": "string"
+              "scalarValue": "%result%",
+              "type": {
+                "name": "variable"
+              }
             },
             {
               "name": "Value",
               "value": "less",
-              "type": "string"
+              "scalarValue": "less",
+              "type": {
+                "name": "text"
+              }
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
               "value": false,
-              "type": "bool"
+              "scalarValue": false,
+              "type": {
+                "name": "bool"
+              }
             }
           ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%result%, Value=\u0022less\u0022)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Modules/Condition/Operators/LessThan/WhenLess.goal",
-  "prPath": "/Modules/Condition/Operators/LessThan/.build/whenless.pr",
+  "path": "/WhenLess.goal",
+  "prPath": "/.build/whenless.pr",
   "hash": "8ca0e5ed7d68a2df01d2bf088104851e5201618bc638a3ad359a4642b468c13f",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

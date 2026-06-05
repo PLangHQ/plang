@@ -31,7 +31,7 @@ using type = global::app.type.@this;
 /// shape, so the outer signature transitively binds inner attestations.
 /// </para>
 /// </summary>
-public sealed class Wire : JsonConverter<@this>
+public class Wire : JsonConverter<@this>
 {
     // Ref-counted "outer being hashed right now" tracking. A plain HashSet
     // would lose the marker when nested Hash calls run on the same Data
@@ -185,6 +185,13 @@ public sealed class Wire : JsonConverter<@this>
             EnsureInnerSigned(inner.Value);
             return;
         }
+        // Native dict: its entries ARE Data — recurse into each so a signed value
+        // held under a key gets sealed before any byte leaves.
+        if (value is app.type.dict.@this nativeDict)
+        {
+            foreach (var entry in nativeDict.Entries) EnsureInnerSigned(entry);
+            return;
+        }
         // IDictionary's IEnumerable yields DictionaryEntry boxes, not values —
         // foreach over the dict would walk DictionaryEntry which is neither
         // Data nor IEnumerable, and inner Datas held as dict values would
@@ -297,6 +304,15 @@ public sealed class Wire : JsonConverter<@this>
                         using var doc = JsonDocument.ParseValue(ref reader);
                         value = LiftDataIfShaped(doc.RootElement, options);
                     }
+                    else if (reader.TokenType == JsonTokenType.StartArray)
+                    {
+                        // An array value is the native list shape on the wire — every
+                        // element self-describes as a Data envelope. Lift each back to a
+                        // Data (a signed element regains its Signature); collections hold
+                        // Data, so the list value type holds the reconstructed elements.
+                        using var doc = JsonDocument.ParseValue(ref reader);
+                        value = LiftArrayElements(doc.RootElement, options);
+                    }
                     else
                     {
                         value = JsonSerializer.Deserialize<object?>(ref reader, options);
@@ -403,37 +419,47 @@ public sealed class Wire : JsonConverter<@this>
         }
     }
 
-    // A JSON object with both "name" and "value" keys is the canonical Data
-    // wire shape (the Wire always emits both on Write, including
-    // the "value": null case). Domain types Identity / Signature etc. have
-    // neither pair: Identity has "name" but no "value"; Signature has "type"
-    // but no "name" or "value". Requiring both keys keeps rehydration
-    // unambiguous across the value-graph without an explicit type marker.
+    // A value-slot object is a Data iff it carries the @schema:data marker (every Data
+    // writes it). The explicit marker replaced the old "has both name and value keys"
+    // shape-sniff — a user map that happens to have name/value/type keys but no marker
+    // stays a plain map, unambiguously, with no value-graph guessing.
     private static object? LiftDataIfShaped(System.Text.Json.JsonElement element, JsonSerializerOptions options)
     {
-        bool hasName = false, hasValue = false;
-        foreach (var prop in element.EnumerateObject())
-        {
-            if (!hasName && prop.Name.Equals("name", StringComparison.OrdinalIgnoreCase)) hasName = true;
-            else if (!hasValue && prop.Name.Equals("value", StringComparison.OrdinalIgnoreCase)) hasValue = true;
-            if (hasName && hasValue) break;
-        }
-
-        // Lean: deserialize straight from the parsed element (no GetRawText
-        // string round-trip — one parse, not two). Envelope-recognition stays:
-        // recognizing our own canonical Data shape is the Wire serializer's job
-        // as a leaf, not the banned content-format sniffing (Stage 5) and not a
-        // courier reaching into .Value. A nested Data in a bare untyped slot has
-        // no type slot to drive it (no `data` type exists, and json.Writer emits
-        // a nested Data inline with a type slot only when !Type.IsNull), so this
-        // recognition is what keeps it from degrading to a dict.
-        if (!(hasName && hasValue))
-        {
+        // A value-slot object is a Data strictly when it carries the @schema:data
+        // marker (every Data writes it). No shape-sniffing: a user map with name/value
+        // keys but no marker deserializes as a plain object, not lifted to a Data.
+        if (!HasDataMarker(element))
             return element.Deserialize<object?>(options);
-        }
 
         return element.Deserialize<@this>(options);
     }
+
+    // Reconstructs an array value slot into the native list value type. Every element
+    // on the wire self-describes as a Data (the writer's list arm marks each with
+    // @schema:data), so a marked element lifts back to a Data (regaining its Signature);
+    // anything else is wrapped as a bare element Data. The marker recognizes even a
+    // typeless element (the case the old name+value sniff existed for).
+    private static app.type.list.@this LiftArrayElements(System.Text.Json.JsonElement array, JsonSerializerOptions options)
+    {
+        var list = new app.type.list.@this();
+        foreach (var el in array.EnumerateArray())
+        {
+            if (HasDataMarker(el))
+                list.Add(el.Deserialize<@this>(options)!);
+            else
+                list.Add(new @this("", @this.UnwrapJsonElement(el)));
+        }
+        return list;
+    }
+
+    // A JSON object IS a Data iff it carries the @schema:data marker — the one strict,
+    // unambiguous recognizer for both the value slot (LiftDataIfShaped) and array
+    // elements (LiftArrayElements). Replaces the name+value shape heuristic.
+    private static bool HasDataMarker(System.Text.Json.JsonElement element)
+        => element.ValueKind == System.Text.Json.JsonValueKind.Object
+           && element.TryGetProperty(@this.WireSchema, out var s)
+           && s.ValueKind == System.Text.Json.JsonValueKind.String
+           && s.GetString() == @this.WireSchemaData;
 
     public override void Write(Utf8JsonWriter writer, @this data, JsonSerializerOptions options)
     {
@@ -459,6 +485,9 @@ public sealed class Wire : JsonConverter<@this>
         if (Sign && !data.RawUntouched) EnsureInnerSigned(data.Value);
 
         writer.WriteStartObject();
+        // @schema:data — the marker that says this JSON object IS a Data. First key,
+        // always present (signed: it's intrinsic wire identity, unlike name).
+        writer.WriteString(@this.WireSchema, @this.WireSchemaData);
         // The variable name is a binding label, not part of the data's identity —
         // exclude it from the signed hash (isHashOuter) so a value verifies the
         // same no matter which variable holds it (sign "x" → write to %a% → verify

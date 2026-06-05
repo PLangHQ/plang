@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "No critical/high open. F2 verify-through-list/goal is fail-closed (denial-of-trust, not forgery), deferred to signature-as-schema-wrapper with intact merge gate. Two new lows: text.Convert serializer lost [Sensitive] options; CopyStructure has no depth guard." }

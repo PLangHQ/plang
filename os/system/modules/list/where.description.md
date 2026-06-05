@@ -1,0 +1,1 @@
+Filter a list or dict by a scoped predicate. The predicate's bare field name resolves against the subject. On a list the subject is each element — `where %users% age > 20` keeps the elements whose `age` passes. On a dict the subject is the dict itself — `where %user% age > 20` keeps or drops the one dict. A scalar has no fields to scope into, so `where` on it is an error.

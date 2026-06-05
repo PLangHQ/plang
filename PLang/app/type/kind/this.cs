@@ -11,7 +11,7 @@ namespace app.type.kind;
 ///
 /// Why a separate noun: the dispatch + cache is real state with its own
 /// invariants (one cache entry per CLR type, computed lazily, never
-/// invalidated within an App). Folding it into <c>app.type.list.@this</c>
+/// invalidated within an App). Folding it into <c>app.type.catalog.@this</c>
 /// would force a verb onto the registry that isn't its concern.
 ///
 /// Pairs with the action-handler <c>IClass.Build()</c> — see

@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "C# 4082/4082, plang 273/273 (deterministic, git clean); compare path mutation-verified; only minor coverage gaps (new where action lacks plang test)." }

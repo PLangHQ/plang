@@ -18,7 +18,9 @@ public partial class Split : IContext
             : StringSplitOptions.None;
 
         var parts = Value.Value!.Split(new[] { Separator.Value! }, options);
-        var list = parts.Cast<object?>().ToList();
+        var list = new app.type.list.@this { Context = Context };
+        foreach (var part in parts)
+            list.Add(new global::app.data.@this("", part));
 
         return Task.FromResult(global::app.data.@this<type.list>.Ok(
             new type.list { count = list.Count, value = list }, app.type.@this.FromName("list")));

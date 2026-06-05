@@ -57,7 +57,7 @@ public partial class Set : IContext, IBuildValidatable
             var targetType = value.Type.ClrType;
             if (targetType != null && !targetType.IsInstanceOfType(value.Value))
             {
-                var (_, error) = global::app.type.list.@this.TryConvert(value.Value, targetType);
+                var (_, error) = global::app.type.catalog.@this.TryConvert(value.Value, targetType);
                 if (error != null)
                     return $"Parameter 'Value' has type={value.Type.Name} but value cannot be converted: {error.Message}";
             }

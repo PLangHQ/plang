@@ -14,24 +14,31 @@ public partial class Group : IContext
         var data = Context.Variable.Get(ListName.Value);
         var key = Key.Value!;
 
-        var groups = new Dictionary<string, List<object?>>();
+        // Buckets are native lists of the element Data — each bucket is itself
+        // navigable (you can sort/where inside one). Insertion order preserved.
+        var buckets = new Dictionary<string, app.type.list.@this>();
+        var order = new List<string>();
         foreach (var (_, item) in data.EnumerateItems())
         {
             var keyData = item.GetChild(key);
             var keyValue = keyData.IsInitialized ? keyData.Value?.ToString() ?? "" : "";
-            if (!groups.TryGetValue(keyValue, out var group))
+            if (!buckets.TryGetValue(keyValue, out var bucket))
             {
-                group = new List<object?>();
-                groups[keyValue] = group;
+                bucket = new app.type.list.@this { Context = Context };
+                buckets[keyValue] = bucket;
+                order.Add(keyValue);
             }
-            group.Add(item.Value);
+            bucket.Add(item);
         }
 
-        var result = groups.Select(g => new Dictionary<string, object?>
+        var result = new app.type.list.@this { Context = Context };
+        foreach (var k in order)
         {
-            ["key"] = g.Key,
-            ["steps"] = g.Value
-        }).ToList();
+            var bucketDict = new app.type.dict.@this { Context = Context };
+            bucketDict.Set(new global::app.data.@this("key", k));
+            bucketDict.Set(new global::app.data.@this("items", buckets[k]));
+            result.Add(new global::app.data.@this("", bucketDict));
+        }
 
         return Task.FromResult(global::app.data.@this<type.list>.Ok(
             new type.list { count = result.Count, value = result }, app.type.@this.FromName("list")));

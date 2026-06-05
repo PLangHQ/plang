@@ -325,7 +325,7 @@ public sealed class @this : IAsyncDisposable
                     if (capabilityProps.Contains(prop.Name)) continue;
                     if (prop.GetCustomAttribute<CodeAttribute>() != null) continue;
 
-                    var typeName = ((App?.Type?.GetTypeName(prop.PropertyType) ?? global::app.type.list.@this.GetTypeNameStatic(prop.PropertyType)));
+                    var typeName = ((App?.Type?.GetTypeName(prop.PropertyType) ?? global::app.type.catalog.@this.GetTypeNameStatic(prop.PropertyType)));
 
                     bool isNullable = Nullable.GetUnderlyingType(prop.PropertyType) != null;
                     if (!isNullable && !prop.PropertyType.IsValueType)
@@ -490,7 +490,7 @@ public sealed class @this : IAsyncDisposable
         {
             var t = returnType.GetGenericArguments()[0];
             if (t == typeof(object)) return "data";
-            return (App?.Type?.GetTypeName(t) ?? global::app.type.list.@this.GetTypeNameStatic(t));
+            return (App?.Type?.GetTypeName(t) ?? global::app.type.catalog.@this.GetTypeNameStatic(t));
         }
 
         // Something else — not a Data variant; surface nothing.
@@ -523,7 +523,7 @@ public sealed class @this : IAsyncDisposable
         foreach (var prop in returnType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
             if (baseProps.Contains(prop.Name)) continue;
-            var typeName = ((App?.Type?.GetTypeName(prop.PropertyType) ?? global::app.type.list.@this.GetTypeNameStatic(prop.PropertyType)));
+            var typeName = ((App?.Type?.GetTypeName(prop.PropertyType) ?? global::app.type.catalog.@this.GetTypeNameStatic(prop.PropertyType)));
             properties.Add(new data.@this(prop.Name, typeName));
         }
 

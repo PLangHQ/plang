@@ -68,7 +68,7 @@ namespace PLang
 
 			// App settings (--app={"create":true})
 			if (parameters.TryGetValue("!app", out var appValue) && appValue is IDictionary<string, object?> appDict)
-				global::app.type.list.@this.Populate(engine, appDict, engine.User.Context);
+				global::app.type.catalog.@this.Populate(engine, appDict, engine.User.Context);
 
 			// Builder mode (--builder or legacy --build). Either flag may be a bare
 			// `true` (e.g. `plang build` normalizes the subcommand to `--builder`) or
@@ -87,7 +87,7 @@ namespace PLang
 				var buildDict = builderValue as IDictionary<string, object?>
 				             ?? buildValue as IDictionary<string, object?>;
 				if (buildDict != null)
-					global::app.type.list.@this.Populate(engine.Builder, buildDict, engine.User.Context);
+					global::app.type.catalog.@this.Populate(engine.Builder, buildDict, engine.User.Context);
 
 				// Sync cache flag to %!build.cache% for Build.goal
 				userVars.Set("!build.cache", engine.Builder.Cache);

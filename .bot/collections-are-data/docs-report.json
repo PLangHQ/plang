@@ -1,0 +1,57 @@
+{
+  "reviewer": "docs",
+  "branch": "collections-are-data",
+  "timestamp": "2026-06-05T00:00:00Z",
+  "reviewed_version": "v1",
+  "summary": "Final docs gate for collections-are-data. Added three new sections to type-system.md (dict/list native types, Compare mediator, IListLeaf/chunk-row model), one to wire-serialization.md (@schema:data marker), updated the good_to_know.md index with four new entries, and filed a CLAUDE.md proposal for three new cross-cutting pattern bullets. No C# docstring drift — changed files carried fresh, accurate comments from the coder. Merge gate carries from security + auditor: hold behind signature-as-schema-wrapper.",
+  "stats": {
+    "gaps_found": 5,
+    "gaps_filled": 5,
+    "docs_updated": 3,
+    "docs_created": 0
+  },
+  "changes": [
+    {
+      "id": 1,
+      "type": "doc-section",
+      "action": "added",
+      "file": "Documentation/v0.2/type-system.md",
+      "description": "dict.@this and list.@this — native PLang collection types: symmetric peers, end-to-end Data, [JsonConverter] governs raw-STJ only, ToRaw() is read-out form."
+    },
+    {
+      "id": 2,
+      "type": "doc-section",
+      "action": "added",
+      "file": "Documentation/v0.2/type-system.md",
+      "description": "Compare — single typed-compare mediator: null policy, coercion, IEquatableValue/IOrderableValue dispatch, ScalarComparer (one legal type-switch), NotOrderableException, footgun warning."
+    },
+    {
+      "id": 3,
+      "type": "doc-section",
+      "action": "added",
+      "file": "Documentation/v0.2/type-system.md",
+      "description": "List chunk/row model and IListLeaf: rows-under-the-hood + flat-on-read, O(1) Add, IListLeaf = dissolve-into-list (value-owned, no type-switch), CopyStructure aliasing prevention."
+    },
+    {
+      "id": 4,
+      "type": "doc-section",
+      "action": "added",
+      "file": "Documentation/v0.2/wire-serialization.md",
+      "description": "@schema:\"data\" marker — canonical Data recognizer on the wire: two write paths, three read paths, depth-capped, name excluded from signing."
+    },
+    {
+      "id": 5,
+      "type": "index",
+      "action": "updated",
+      "file": "Documentation/v0.2/good_to_know.md",
+      "description": "Four new pointer entries for the new type-system.md and wire-serialization.md sections."
+    },
+    {
+      "id": 6,
+      "type": "claude-md-proposal",
+      "action": "filed",
+      "file": ".bot/collections-are-data/claude-md-proposals.md",
+      "description": "Three new CLAUDE.md bullets: IEquatableValue/IOrderableValue/Compare mediator, native collection types (dict/list), IListLeaf/CopyStructure."
+    }
+  ]
+}

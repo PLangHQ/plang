@@ -18,7 +18,7 @@ namespace app.type.renderer;
 /// <para>The runtime-registration seam (<see cref="Register"/>) is the
 /// hook DLLs loaded via <c>code.load</c> use to drop in renderers for
 /// runtime-registered types. Runtime registrations shadow generator-emitted
-/// entries — same precedence as <see cref="app.type.list.@this.ResolveType"/>.</para>
+/// entries — same precedence as <see cref="app.type.catalog.@this.ResolveType"/>.</para>
 /// </summary>
 public sealed class @this
 {

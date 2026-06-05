@@ -91,6 +91,18 @@ public partial class discover : IContext
             ?? Goal.Parse(goalRead.Value as string ?? "", goalFile)
             ?? new Goal { Path = goalFile };
 
+        // A goal whose source has a `tag this test 'skip'` step is PARKED: it registers
+        // Skipped straight from the source text — before any build/freshness/.pr check — so
+        // a deferred but REAL test reads honestly as Skipped, never as a no-op pass and never
+        // as a stale failure. The tag step needn't be built or run. Re-enable by removing it.
+        if (HasSkipTag(sourceGoal))
+            return new global::app.tester.test.@this
+            {
+                Goal = sourceGoal,
+                Status = global::app.tester.Status.Skipped,
+                StatusReason = "tagged 'skip'"
+            };
+
         // PrPath is derived on the goal from its Path. The corresponding
         // build artefact may or may not exist.
         var prFile = sourceGoal.PrPath as FilePath;
@@ -183,6 +195,28 @@ public partial class discover : IContext
         return file;
     }
 
+    // The `skip` tag, read from the SOURCE step text (not built actions) so it works
+    // before/without a build. Matches `tag this test 'skip'` (any quoting/casing/spacing).
+    private static readonly System.Text.RegularExpressions.Regex SkipTagRegex = new(
+        @"^\s*tag\s+this\s+test\s+['""]skip['""]\s*$",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    private static bool HasSkipTag(Goal goal)
+    {
+        foreach (var step in goal.Steps)
+            if (IsSkipTagStep(step.Text)) return true;
+        return false;
+    }
+
+    /// <summary>
+    /// True when a step's source text is exactly the skip directive
+    /// <c>tag this test 'skip'</c> (any quoting / casing / spacing). This is the gate
+    /// between an honest Skipped and a run, so it matches only the literal <c>skip</c> tag —
+    /// a different tag value, or trailing args, does not match. Exposed for tests to pin the
+    /// boundary.
+    /// </summary>
+    public static bool IsSkipTagStep(string text) => SkipTagRegex.IsMatch(text);
+
     private static void ExtractUserTags(Goal goal, HashSet<string> tags)
     {
         goal.ForEachAction((step, action) =>
@@ -191,7 +225,16 @@ public partial class discover : IContext
             if (!string.Equals(action.ActionName, "tag", StringComparison.OrdinalIgnoreCase)) return;
             var tagsParam = action.Parameters.FirstOrDefault(p =>
                 string.Equals(p.Name, "Tags", StringComparison.OrdinalIgnoreCase));
-            if (tagsParam?.Value is System.Collections.IEnumerable enumerable and not string)
+            if (tagsParam?.Value is app.type.list.@this nativeList)
+            {
+                // The Tags param is the native list value type — read each element's value.
+                foreach (var item in nativeList.Items)
+                {
+                    var s = item.ScalarValue?.ToString();
+                    if (!string.IsNullOrWhiteSpace(s)) tags.Add(s);
+                }
+            }
+            else if (tagsParam?.Value is System.Collections.IEnumerable enumerable and not string)
             {
                 foreach (var item in enumerable)
                 {
@@ -247,6 +290,8 @@ public partial class discover : IContext
             string s => s,
             System.Text.Json.JsonElement je when je.ValueKind == System.Text.Json.JsonValueKind.Object
                 && je.TryGetProperty("Name", out var np) => np.GetString(),
+            // A goal.call param read back from the .pr is the native dict value type.
+            app.type.dict.@this nd when nd.Get("Name") is { } nameData => nameData.ScalarValue?.ToString(),
             System.Collections.Generic.IDictionary<string, object?> dict when dict.TryGetValue("Name", out var nm) => nm?.ToString(),
             _ => null
         };

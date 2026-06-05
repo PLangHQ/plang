@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "plang 273/273 is a false green: two signing regression tests (green at base) were gutted into no-op passes, masking a live regression — verify of a signed value through a list / across a goal call is broken on this branch (proven by restoring the real test → red). Make the deferral an honest Skipped, don't ship it as a pass." }

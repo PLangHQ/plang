@@ -57,7 +57,7 @@ public class NormalizeCycleAndDepthTests
             cur = cur.Next;
         }
         var result = new Data("", head).Normalize();
-        await Assert.That(result).IsTypeOf<List<Data>>();
+        await Assert.That(result).IsTypeOf<app.type.dict.@this>();
     }
 
     [Test] public async Task Normalize_DepthExceedsCap_ThrowsMaxDepthExceededError()

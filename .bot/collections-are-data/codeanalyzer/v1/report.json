@@ -1,0 +1,56 @@
+{
+  "bot": "codeanalyzer",
+  "branch": "collections-are-data",
+  "version": 1,
+  "verdict": "NEEDS_WORK",
+  "next_bot": "coder",
+  "reviewed_range": "6b9b60976..2defdfc5f",
+  "suites": { "csharp": "4080/0", "plang": "273/273", "build": "0 errors" },
+  "summary": "Core feature (dict/list as native Data-holding types, signed elements survive the application/plang wire, set rebinds) is correctly implemented and fully green. NEEDS WORK on the Stage 4-5 'one compare path' goal: two live divergences inside the new Compare.cs/Operator.cs that the green suites do not catch.",
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "medium",
+      "blocking": true,
+      "title": "text equality is case-insensitive but text ordering is case-sensitive",
+      "file": "PLang/app/data/Compare.cs",
+      "lines": "59 (Order, CompareOrdinal) vs 98 (AreEqual, OrdinalIgnoreCase)",
+      "detail": "'a' == 'A' is true yet 'a' > 'A' is also true — trichotomy violated; sort and unique disagree. Impl also contradicts its own doc ('text lexical/invariant'). Fix: Order text arm should use string.Compare(a,b,OrdinalIgnoreCase)."
+    },
+    {
+      "id": "F2",
+      "severity": "medium",
+      "blocking": true,
+      "title": "contains/in use a second divergent equality path",
+      "file": "PLang/app/module/condition/Operator.cs",
+      "lines": "108 (local AreEqual) vs 105 (Compare.AreEqual)",
+      "detail": "==/group/unique compare dict/list structurally via Compare.AreEqual; contains/in use the local Operator.AreEqual (reference equality for dict/list). %list% contains %dict% returns false for a structurally-equal dict while == returns true. Route ContainsElement through Compare.AreEqual; delete the local helper."
+    },
+    {
+      "id": "F3",
+      "severity": "low",
+      "blocking": false,
+      "title": "dead code: Operator.Compare(object?,object?)",
+      "file": "PLang/app/module/condition/Operator.cs",
+      "lines": "122",
+      "detail": "Zero callers after ordering relocated to Compare.Order (assert's Compare is its own local helper). Remove."
+    },
+    {
+      "id": "F4",
+      "severity": "low",
+      "blocking": false,
+      "title": "legacy List<object?> branches in sort/unique bypass the one-compare-path",
+      "file": "PLang/app/module/list/sort.cs, PLang/app/module/list/unique.cs",
+      "detail": "sort legacy uses Comparer<object>.Default; unique legacy uses Distinct(). Divergent from Compare.Order/AreEqual (nulls-last, mixed-type-throw, structural equality lost). Either dead (delete) or reachable+divergent (unify)."
+    },
+    {
+      "id": "F5",
+      "severity": "info",
+      "blocking": false,
+      "title": "Wire.IsDataShaped name+value heuristic is fragile",
+      "file": "PLang/app/data/Wire.cs",
+      "detail": "Lifts any array element with name+value keys to a Data envelope. Safe for the wire it serves but keys off user-pluggable field names; prefer keying on type/signature presence."
+    }
+  ],
+  "notes": "Compare unification is partial by plan scope (row G named only condition operators + data.sort): assert.greaterThan/lessThan still use a private Compare (assert/code/Default.cs:185), pre-existing and outside this diff. Flagged for tracking, not counted as a regression."
+}

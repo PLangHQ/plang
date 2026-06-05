@@ -192,15 +192,23 @@ public partial class @this
 
             if (frame != null)
             {
-                // If the binding already exists in *this* overlay, mutate in place.
+                // If the binding already exists in *this* overlay, rebind it — mint a
+                // new Data and carry subscribers across, never mutate in place. This is
+                // the branch that bites inside channel-fire / parallel-foreach: a `set`
+                // in a forked flow mutating its overlay Data in place would rewrite a
+                // value the parent already stored. Rebinding keeps the captured value
+                // independent.
                 if (frame.ContainsLocal(name) && frame.TryGet(name, out var existingFrame))
                 {
-                    var prevValue = existingFrame.Value;
-                    existingFrame.Value = value;
-                    if (type != null)
-                        existingFrame.Type = type;
-                    OnSet?.Invoke(name, prevValue, value);
-                    return existingFrame;
+                    var rebound = new data.@this(name, value, type) { Context = _context };
+                    rebound.OnCreate = existingFrame.OnCreate;
+                    rebound.OnChange = existingFrame.OnChange;
+                    rebound.OnDelete = existingFrame.OnDelete;
+                    var prevValue = existingFrame.ScalarValue;
+                    existingFrame.FireOnChange(rebound);
+                    frame.Set(name, rebound);
+                    OnSet?.Invoke(name, prevValue, rebound.ScalarValue);
+                    return rebound;
                 }
 
                 // Either nothing visible, or only visible via Caller chain — mint a
@@ -223,12 +231,21 @@ public partial class @this
 
             if (_variables.TryGetValue(name, out var existing))
             {
-                var prevValue = existing.Value;
-                existing.Value = value;
-                if (type != null)
-                    existing.Type = type;
-                OnSet?.Invoke(name, prevValue, value);
-                return existing;
+                // Rebind, don't mutate: mint a new Data and carry the name's event
+                // subscribers across (mirrors the Data-value branch above). In-place
+                // mutation of `existing` is the alias bug — a Data the variable shared
+                // elsewhere (e.g. stored in a list by `add`) gets rewritten underfoot
+                // when the variable is re-set. Reassignment rebinds the binding; it
+                // does not reach back into a value already captured elsewhere.
+                var rebound = new data.@this(name, value, type) { Context = _context };
+                rebound.OnCreate = existing.OnCreate;
+                rebound.OnChange = existing.OnChange;
+                rebound.OnDelete = existing.OnDelete;
+                var prevValue = existing.ScalarValue;
+                existing.FireOnChange(rebound);
+                _variables[name] = rebound;
+                OnSet?.Invoke(name, prevValue, rebound.ScalarValue);
+                return rebound;
             }
             else
             {
@@ -283,28 +300,14 @@ public partial class @this
         // Lazy materialize if parent is a typed string (e.g., json) — must happen before navigation
         parent.ForceMaterialize();
 
-        // For dot-path, extract raw value from Data — we're setting a property on a C# object.
-        // Dict/list values are snapshot-cloned so the target doesn't alias the source's
-        // mutable container — without the clone, later `set %source.x% = ...` would
-        // silently mutate the target too (this bit the builder trace: trace.pass1
-        // aliased %currentPass%._value and got overwritten by every sub-goal build).
-        // JSON roundtrip honors [JsonIgnore] so cyclic runtime types (Goal↔Step↔Action)
-        // don't deadlock the deep-clone pass.
+        // For dot-path, extract the raw value from Data — we're setting a property on
+        // a C# object. No defensive deep-clone here: independence comes from rebinding.
+        // Reading a container variable (`%source%`) resolves through WalkContainerVars,
+        // which builds a fresh dict/list, so the captured value is already independent
+        // of the source's live container — a later `set %source.x% = ...` cannot reach
+        // it. The old SnapshotClone deep-copy was a redundant defense (and only ever
+        // fired for raw IDictionary/IList, never the native dict).
         var rawValue = value is data.@this dv2 ? dv2.Value : value;
-        if (rawValue is System.Collections.IDictionary || (rawValue is System.Collections.IList && rawValue is not string))
-        {
-            try
-            {
-                rawValue = data.@this.SnapshotClone(rawValue!);
-            }
-            catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException)
-            {
-                // If serialize fails, fall back to direct value — alias risk but
-                // better than throwing. Surface the failure so the alias-bug repro
-                // path stays debuggable instead of silently reverting to it.
-                _ = _context?.App?.Debug?.Write($"[Variables.Set] snapshot-clone failed for '{name}': {ex.GetType().Name}: {ex.Message} — proceeding with alias (mutation risk)");
-            }
-        }
         var target = parent.Value;
         if (target == null)
         {
@@ -332,6 +335,17 @@ public partial class @this
         if (target is global::app.snapshot.@this snap)
         {
             snap.SetVariable(propertyName, value);
+            return target;
+        }
+
+        // Native dict — set the key directly. Without this the dict matches no
+        // arm below and falls into ConvertToDictionary, which reflects its C#
+        // surface (Context/Count/Keys/Entries) into a junk dictionary — losing
+        // every real key AND dragging Context (→ App → Culture) into the value,
+        // which then cycles when the value is snapshot-cloned.
+        if (target is app.type.dict.@this nativeDict)
+        {
+            nativeDict.Set(propertyName, value);
             return target;
         }
 
@@ -384,7 +398,7 @@ public partial class @this
                             : typeof(object);
                         if (!elementType.IsAssignableFrom(value.GetType()))
                         {
-                            var (typedValue, _) = type.list.@this.TryConvert(value, elementType);
+                            var (typedValue, _) = type.catalog.@this.TryConvert(value, elementType);
                             if (typedValue != null) value = typedValue;
                         }
                     }
@@ -403,7 +417,7 @@ public partial class @this
                         {
                             if (value != null && !indexer.PropertyType.IsAssignableFrom(value.GetType()))
                             {
-                                var (typedValue, _) = type.list.@this.TryConvert(value, indexer.PropertyType);
+                                var (typedValue, _) = type.catalog.@this.TryConvert(value, indexer.PropertyType);
                                 if (typedValue != null) value = typedValue;
                             }
                             indexer.SetValue(collection, value, new object[] { gIdx });
@@ -421,7 +435,7 @@ public partial class @this
         {
             if (value != null && !clrProp.PropertyType.IsAssignableFrom(value.GetType()))
             {
-                var (typedValue, _) = type.list.@this.TryConvert(value, clrProp.PropertyType);
+                var (typedValue, _) = type.catalog.@this.TryConvert(value, clrProp.PropertyType);
                 if (typedValue != null) value = typedValue;
             }
             clrProp.SetValue(target, value);
@@ -498,7 +512,7 @@ public partial class @this
             }
         }
 
-        var (typedValue, _) = type.list.@this.TryConvert(value, slotType);
+        var (typedValue, _) = type.catalog.@this.TryConvert(value, slotType);
         return typedValue ?? value;
     }
 

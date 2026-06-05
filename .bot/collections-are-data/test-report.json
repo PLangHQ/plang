@@ -1,0 +1,40 @@
+{
+  "tester": "tester",
+  "branch": "collections-are-data",
+  "timestamp": "2026-06-05T15:55:28Z",
+  "tested_version": "v7",
+  "test_run": {
+    "csharp": { "total": 4089, "passed": 4089, "failed": 0, "skipped": 0 },
+    "plang": { "total": 273, "passed": 271, "failed": 0, "skipped": 2, "note": "Honest count: the 2 deferred signing regression tests now register as Skipped (was a false 273/273 with 2 gutted no-op passes in v6). Deterministic across runs." }
+  },
+  "coverage": {
+    "changed_files_covered": 0,
+    "changed_files_total": 0,
+    "uncovered_files": ["PLang/app/module/test/discover.cs (HasSkipTag — new, no regression test)"],
+    "note": "v6 blocker resolved. The verify-signed-across-a-boundary behavior remains deferred to signature-as-schema-wrapper; its two tests are now honestly Skipped (real steps parked), not masked as passes."
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/App/Testing/DiscoverActionTests.cs (no HasSkipTag test)",
+      "code_file": "PLang/app/module/test/discover.cs",
+      "issue": "v7 adds a new discovery mechanism — HasSkipTag reads `tag this test 'skip'` from goal source text and short-circuits to Status.Skipped before the build/.pr check. It has no dedicated regression test. The existing skip tests cover only the include/exclude tag-FILTER path, not this source-text short-circuit.",
+      "impact": "If the SkipTagRegex is later broadened, it could silently skip unintended tests — a future false-green vector (skipped reads benign). The fail-safe direction (regex breaks -> real test runs -> red) is the safe one, but over-match is unguarded. Empirically safe today: a goal with `tag this test 'http'`/`'fast','slow'` still runs (verified not skipped), so the `^...'skip'...$` anchoring scopes correctly.",
+      "suggestion": "Add two cheap C# tests in DiscoverActionTests: (a) a goal whose source has `- tag this test 'skip'` -> Status.Skipped with reason 'tagged skip'; (b) a near-miss `- tag this test 'slow'` (and a multi-tag step) -> NOT Skipped. Pins the regex against over-match regression."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "type": "missing-plang-test",
+      "test_file": "Tests/Modules/List/ (no where/filter .test.goal)",
+      "code_file": "PLang/app/module/list/where.cs",
+      "issue": "Carried from v3/v6: the new `where` action has C# coverage but no PLang .test.goal exercising the builder step->list.where mapping.",
+      "impact": "Developer-surface compile path for `where` unverified end-to-end. Not the blocker.",
+      "suggestion": "Add a Where.test.goal (built in a good-LLM env)."
+    }
+  ],
+  "verdict": "approved",
+  "summary": "v6 blocker resolved and the fix is honest, not asserted. The two signing regression tests no longer gut to passing no-ops — v7's source-text `skip` tag (HasSkipTag, short-circuits before the .pr check) registers them as Skipped, so the suite now reports 271 pass + 2 skipped + 0 fail, deterministically across runs with git clean. I confirmed: exactly the two intended goals are skipped (no over-match — a non-`skip` `tag this test` goal still runs); both goals hold their REAL steps again (parked, re-enable by deleting the tag line); and the underlying signing regression is genuinely still deferred to signature-as-schema-wrapper with the merge gate intact. C# 4089/0; F1 aliasing fix was mutation-verified in v6, compare path in v3. One clean run showed a flaky timeout on a timing-sensitive enforce-timeout test while the C# suite ran concurrently; it cleared on every isolated run (env contention, not a branch regression). Findings are minor: the new HasSkipTag mechanism should get a regression test (over-match would be a future false-green vector; empirically scoped correctly today), and the `where` action still lacks a plang test. PASS."
+}

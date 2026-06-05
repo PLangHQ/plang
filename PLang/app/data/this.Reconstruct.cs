@@ -50,6 +50,16 @@ public partial class @this
         return (T?)AppTypes.ConvertTo(result, typeof(T));
     }
 
+    // Normalize emits an object / dict as the native `dict` value type (older
+    // callers expected a List<Data> property bag). Yield the child Data either
+    // way so the reconstruction walk reads both shapes.
+    private static IEnumerable<@this> NamedChildren(object? value) => value switch
+    {
+        app.type.dict.@this nd => nd.Entries,
+        System.Collections.IEnumerable seq => seq.OfType<@this>(),
+        _ => System.Array.Empty<@this>(),
+    };
+
     private static bool IsLeafShape(object? v)
         => v is null
         || v is string || v is bool
@@ -104,11 +114,9 @@ public partial class @this
             var keyType = underlying.GetGenericArguments()[0];
             var valueType = underlying.GetGenericArguments()[1];
             var dictInstance = (System.Collections.IDictionary)Activator.CreateInstance(underlying)!;
-            if (value is System.Collections.IEnumerable seq)
             {
-                foreach (var item in seq)
+                foreach (var child in NamedChildren(value))
                 {
-                    if (item is not @this child) continue;
                     var k = AppTypes.ConvertTo(child.Name, keyType);
                     if (k == null)
                     {
@@ -134,9 +142,8 @@ public partial class @this
         // Gather children by name first — needed for both parameterless and
         // positional-ctor paths.
         var byName = new Dictionary<string, @this>(StringComparer.OrdinalIgnoreCase);
-        if (value is System.Collections.IEnumerable seqEarly)
-            foreach (var item in seqEarly)
-                if (item is @this child) byName[child.Name] = child;
+        foreach (var child in NamedChildren(value))
+            byName[child.Name] = child;
 
         // Positional-ctor path: types with no parameterless ctor (records with
         // positional parameters, immutable classes) reconstruct by gathering
@@ -264,21 +271,21 @@ public partial class @this
                         "NormalizeContextRequired");
 
                 string? relative = null;
-                if (data.Value is System.Collections.IEnumerable children)
+                if (data.Value is string raw)
                 {
-                    foreach (var item in children)
+                    // Bridge: incoming as a bare string (pre-Stage-2-wiring shape).
+                    relative = raw;
+                }
+                else
+                {
+                    foreach (var child in NamedChildren(data.Value))
                     {
-                        if (item is @this child && child.Name.Equals("relative", StringComparison.OrdinalIgnoreCase))
+                        if (child.Name.Equals("relative", StringComparison.OrdinalIgnoreCase))
                         {
                             relative = child.Value?.ToString();
                             break;
                         }
                     }
-                }
-                else if (data.Value is string raw)
-                {
-                    // Bridge: incoming as a bare string (pre-Stage-2-wiring shape).
-                    relative = raw;
                 }
 
                 if (relative == null)

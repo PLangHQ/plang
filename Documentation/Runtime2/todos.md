@@ -886,3 +886,97 @@ through it (likely the duration type's own renderer/Read once the format-layer
 `lazy-deserialize` Stage 3 keeps a **lean** `LiftDataIfShaped` (`app/data/Wire.cs`): it recognizes a nested Data by its envelope shape (`name`+`value` keys) in the eager-untyped path, because a nested Data in a bare value slot has **no type slot** to drive reconstruction (there is no `data` type, and `json.Writer` emits a nested Data inline with a type slot only when `!Type.IsNull`). The `GetRawText` double-parse was dropped, but the shape-recognition remains.
 
 Endgame (separate branch): add a `data` type to the registry, stamp a Data-valued slot with it on **write**, and reconstruct nested Data purely via `Readers.Of("data", …)` — then the envelope-recognition can be deleted entirely and reconstruction is 100% type-driven (the branch thesis). This is a **wire-format + new-type change on the serialization core** (touches snapshot + signing round-trips), so it was held out of Stage 3. Pick up when the snapshot branch or a dedicated pass touches the wire shape. Note: recognizing the Data envelope is legitimately a leaf serializer's job (not the banned content-sniffing, not a courier #7) — so the lean version is correct interim, not a smell to rush.
+
+## Cleanup CommandLineParser — too low-level (2026-06-05, Ingi)
+
+`app/Utils/CommandLineParser.cs` hand-parses each flag value through
+`JsonDocument` + `UnwrapJsonElement` + per-`ValueKind` branching, then decomposes
+the native dict/list back to raw for the config bag (architect's item D on
+`collections-are-data`). In theory the whole thing should be roughly
+`JsonSerializer.Deserialize<Build>(--build)` (and the equivalent typed shape for
+`--debug`/`--test`/`--app`) — parse straight into the strongly-typed option record
+instead of a raw `IDictionary<string,object?>` the consumers then re-read by key.
+Kills the build-native-then-flatten round-trip and the stringly-typed property bag
+in one move. Perimeter/infra, low priority — do it as a focused pass, not mid-branch.
+
+## Make Data._type non-null — kill the `if (_type != null)` derive-fork (2026-06-05, Ingi)
+
+`Data.Type` (`app/data/this.cs:341`) lazily derives the type from the value's CLR
+type (`AppTypes.GetPrimitiveName(clr)` / `App.Type.Name(clr)`, + number kind) and
+caches into `_type`; `_type == null` means "no explicit type, derive on access".
+Goal: make `_type` always populated so the getter is trivial and the scattered
+`Type != null` / `Type?.` guards can go.
+
+**Watch out — the null is currently load-bearing, not just a cache flag.** It also
+encodes "*explicitly* typed vs derived", and a few sites branch on that meaning:
+- `this.Navigation.cs:275` (`val is string && _type != null`) and `:316`
+  (`_value is string raw && _type != null`) — string→type coercion fires only when
+  the user *explicitly* typed the value (`set %x% = "5" as number` coerces; bare
+  `set %x% = "5"` stays text). Eager-derive would make these always-true and try to
+  coerce plain strings.
+- setter `_type = value.IsNull ? null : value` (`:378`) — assigning the `type.Null`
+  sentinel means "clear to derive-mode".
+- `Value` setter `_type = null` (`:193`) — a rebind drops the cached/explicit type.
+
+So a clean "non-null `_type`" needs to preserve the explicit-vs-derived distinction
+(eager-derive at construction/context-wiring + a separate marker, or rework the two
+coercion gates to compare against the derived-default instead of null) — not just
+flip the field. Derivation for primitives works without context; only runtime-loaded
+types need it, so eager stamping is feasible for the common case. Medium-size change
+touching the Data core + ~15 `Type?.`/`Type != null` call sites; do as a focused pass.
+
+## List rope/chunked model — spec written (2026-06-05, Ingi)
+
+Decided: PLang `list` is a flat sequence (no observable nesting; 2-D goes to a
+`matrix`/`table` type). Internally a rope of `Data` chunks, one per `add`: `add`/`remove`
+are O(1) chunk edits that never read existing leaves; `count` is a running leaf counter;
+`GetEnumerator` walks chunks yielding the next leaf (no flatten op, no copy); only
+list-producing ops (sort/where/unique/map) materialize a flat list. Observable shift:
+`add list to list` becomes merge, not nest. Full spec + open bits (flat-index addressing,
+internal representation swap, wire shape) in `.bot/collections-are-data/list-rope-model.md`.
+
+## Re-enable 2 signing round-trip tests after signature rework (2026-06-05)
+
+`Tests/LazyDeserialize/{SignAndVerifyRoundTrip, SignedDataSurvivesInList}.test.goal`
+are SKIPPED (real steps intact, with a `- tag this test 'skip'` first step). The `@schema`
+Data marker makes a signed Data correctly round-trip AS a Data through the
+store/goal-call/list; the old `verify` path then hashes a Data-wrapping-a-Data and
+mismatches. The fix is the signature redesign (branch `signature-as-schema-wrapper`, spec in
+its `.bot/`): a signature wraps the data (`@schema:"signature"`), `verify` peels-and-validates,
+`Data.Signature` is removed. **Re-enable: delete the `tag this test 'skip'` line and rebuild
+the two .pr** on that branch. (The skip is detected from the goal source by
+`test.discover.HasSkipTag`, so the stale `.pr` for these two is never read until re-enabled.)
+
+## Collection mutation: copy-on-write / immutability (the "C" model) — 2026-06-05 (auditor O1, low)
+
+**Problem (raised by auditor v1 O1 on `collections-are-data`).** Collection mutation mixes
+value- and reference-semantics, so aliasing leaks in some paths and not others:
+- `set %x% = %y%` SHARES the value (`Data.ShallowClone` → same `_value` by reference; the old
+  deep-copy was deliberately removed as "redundant", `variable/list/this.cs:308`).
+- `add %b% to %a%` COPIES the added list (F1 fix, `list.@this.CopyStructure` in `add.cs`/`set.cs`).
+- `add %d% to %list%` SHARES the dict, and `set %d.x%` mutates it in place
+  (`SetValueOnObject` → `dict.Set`, `variable/list/this.cs:346`).
+
+So these leak (write-through to a different variable), beyond the one F1 patched:
+```
+set %x% = %y%;  set item N of %x%        # mutates the shared list → %y% changes too
+add %d% to %list%;  set %d.x% = 5        # mutates the shared dict → %list[0].x% changes (O1)
+```
+Under the flatten/row model, `set item N of %x%` reaching into a shared list is the same
+write-through codeanalyzer F1 called "indefensible" — still open via `set`. Copying dicts on
+add ("option A") does NOT fix it: `set` still shares.
+
+**The fix — "C": finish the immutability the codebase half-built.** It already chose
+share-by-default (ShallowClone) and `set %x%` already rebinds; the in-place mutators don't.
+Make EVERY mutator (`add`, set-item, set-path, `remove`, `insert`, `sort`, `reverse`)
+**copy-on-write**: mutate in place when the collection is uniquely owned (so `add`-build stays
+O(1)), copy-once-then-mutate when it is shared. Needs a cheap "am I shared?" signal (a flag set
+when a collection is ShallowCloned into a variable or stored inside another collection).
+Result: sharing is cheap AND safe, lists/dicts behave the same, and the F1 `CopyStructure` /
+copy-on-add **dissolves** (replaced by the uniform guard). This is the Clojure/persistent-
+structure model; full structural sharing (O(log n) mutators) is a later optimization over the
+first copy-on-write cut.
+
+**Sequencing.** Own branch + spec (supersedes the F1 copy on `collections-are-data`). Not urgent
+(low): on `collections-are-data` the F1 copy stays as the interim patch for the most-flagged
+path; the residual `set`-share / dict-in-list leaks ride until C lands.

@@ -77,8 +77,8 @@ public class NormalizeTreeShapeTests
         var dict = new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 };
         var d = new Data("", dict);
         var result = d.Normalize();
-        await Assert.That(result).IsTypeOf<List<Data>>();
-        var list = (List<Data>)result!;
+        await Assert.That(result).IsTypeOf<app.type.dict.@this>();
+        var list = result.Children();
         await Assert.That(list.Count).IsEqualTo(2);
         await Assert.That(list.Any(c => c.Name == "a" && (int)c.Value! == 1)).IsTrue();
         await Assert.That(list.Any(c => c.Name == "b" && (int)c.Value! == 2)).IsTrue();
@@ -95,8 +95,8 @@ public class NormalizeTreeShapeTests
         };
         var d = new Data("", identity);
         var result = d.Normalize();
-        await Assert.That(result).IsTypeOf<List<Data>>();
-        var children = (List<Data>)result!;
+        await Assert.That(result).IsTypeOf<app.type.dict.@this>();
+        var children = result.Children();
         // Only [Out] props ship: Name + PublicKey. PrivateKey [Sensitive], others local.
         await Assert.That(children.Count).IsEqualTo(2);
         await Assert.That(children.Any(c => c.Name == "name" && (string?)c.Value == "alice")).IsTrue();
@@ -108,7 +108,7 @@ public class NormalizeTreeShapeTests
         var setting = new global::app.module.settings.type.setting { key = "DATABASE_URL", value = "postgres://..." };
         var d = new Data("", setting);
         var result = d.Normalize();
-        var children = (List<Data>)result!;
+        var children = result.Children();
         await Assert.That(children.Count).IsEqualTo(2);
         await Assert.That(children.Any(c => c.Name == "key" && (string?)c.Value == "DATABASE_URL")).IsTrue();
         // [Masked] — value is "****", real value never reached.
@@ -121,9 +121,9 @@ public class NormalizeTreeShapeTests
         var r1 = d.Normalize();
         var r2 = d.Normalize();
         // Shape stable across calls: same type, same count, same contents.
-        await Assert.That(r1).IsTypeOf<List<Data>>();
-        await Assert.That(r2).IsTypeOf<List<Data>>();
-        await Assert.That(((List<Data>)r1!).Count).IsEqualTo(((List<Data>)r2!).Count);
+        await Assert.That(r1).IsTypeOf<app.type.dict.@this>();
+        await Assert.That(r2).IsTypeOf<app.type.dict.@this>();
+        await Assert.That(r1.Children().Count).IsEqualTo(r2.Children().Count);
     }
 
     [Test] public async Task Normalize_PropertyLookupCache_ReturnsSameReferenceForSameKey()

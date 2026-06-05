@@ -218,3 +218,104 @@ consequences:
   `IsNull => Value == "null"` is string-magic instead of
   `ReferenceEquals`; a future coder pass will tighten this. Today, the
   only correct way to get the sentinel is `type.@this.Null`.
+
+## `dict.@this` and `list.@this` — native PLang collection types
+
+`dict.@this` (`PLang/app/type/dict/this.cs`) and `list.@this`
+(`PLang/app/type/list/this.cs`) are the native PLang value types for
+objects and arrays. They are symmetric peers:
+
+- **`dict`** — an ordered key→Data map (`_entries` list + `_index`
+  dictionary for O(1) case-insensitive lookup). Implements
+  `IBooleanResolvable` (empty = falsy) and `IEquatableValue` (structural,
+  order-insensitive). Does **not** implement `IOrderableValue` — dict is
+  equality-only; `Compare.Order` throws for it.
+- **`list`** — an indexed sequence of Data rows. Implements
+  `IBooleanResolvable`, `IEquatableValue` (element-by-element), and
+  `IOrderableValue` (lexicographic). Also implements `IListLeaf` (see
+  below).
+
+**Collections hold Data end-to-end.** An element stored inside a dict or
+list keeps its own type-tag and signature; nothing is decomposed to a raw
+CLR scalar on entry. Nested access (`%obj.key%`, `%list[0]%`) retrieves
+the full Data, so type and signing round-trip through nested structures.
+
+**`[JsonConverter]` governs the raw STJ view only.** The `application/json`
+channel, snapshot-clone round-trips, and debug display use the converter;
+the `application/plang` wire never does — there, values ride through
+`Data.Normalize` → the json.Writer's dict/list arm. The converter is not
+a violation of "domain types ride the wire as property bags" — it is the
+raw-json view only, not the wire path. Without it, STJ would reflect the
+C# `_entries`/`_items` surface instead of the PLang key/element layout.
+
+**`dict.ToRaw()` / `list.ToRaw()`** unwrap to `Dictionary<string, object?>`
+and `List<object?>` at the typed-conversion boundary (record construction,
+`set ... type=json`, wire-shape reconstruction). The in-memory graph stays
+Data-keyed; `ToRaw()` is the read-out form only, not a mutation path.
+
+## `Compare` — single typed-compare mediator
+
+`app.data.Compare` (`PLang/app/data/Compare.cs`) is the one place where
+two values are ordered or tested for equality. Both the condition operators
+(`>`, `<`, `==` via `app.module.condition.Operator`) and `list.sort` route
+through it — so `if a.age > b.age` and `sort by "age"` can never drift.
+
+The mediator owns three things only:
+
+1. **Null policy** — both null = equal; null sorts last.
+2. **Coercion** — `Operator.NormalizeTypes` (numeric widening,
+   string↔number) before hitting the scalar leaf.
+3. **Dispatch** — if the left value implements `IEquatableValue` or
+   `IOrderableValue`, call it; otherwise forward to `ScalarComparer`.
+
+`ScalarComparer` (`PLang/app/data/ScalarComparer.cs`) is the one legal
+type-switch over raw CLR scalars (number, string, datetime, duration, bool).
+It is internal; only `Compare` reaches it. A value type that owns its own
+ordering/equality implements the interface and recurses **back through
+`Compare`** for its children — so a nested number inside a list still
+widens, and nested text still compares case-insensitively.
+
+**`Compare.NotOrderableException`** is raised for an equality-only type
+(dict has no natural ordering) or two genuinely different value types. It
+derives from `ArgumentException` so the condition evaluator surfaces it as
+a clean `EvaluationError` rather than an unhandled exception.
+
+**Don't add type-specific cases to `Compare` itself.** A new value type
+that has a natural order implements `IOrderableValue`; the mediator
+dispatches automatically. Adding an `is MyNewType` arm to `Compare` is
+the smell — it violates OBP Rule #9 (behavior belongs on the value, not
+a dispatcher).
+
+## List chunk/row model and `IListLeaf`
+
+`list.@this` stores elements as **rows** (`_items: List<Data>`), but
+exposes a **flattened** public surface (`Count`, `Items`, `At`, `Locate`).
+A row whose value implements `IListLeaf` (currently only `list.@this`
+itself) contributes its leaves to the flat view; a scalar, dict, or table
+row is one item at weight 1.
+
+`Add` is O(1) — it appends a new row without reading the existing rows.
+The flat view is computed on demand by walking rows. This means:
+
+```
+add [1,2,3] to %x%   // one row, dissolves → Count = 3 in flat view
+add {a:1} to %x%     // one row, stays whole → Count +1
+```
+
+**`IListLeaf`** (`PLang/app/data/IListLeaf.cs`) is the interface a value
+implements to say "I dissolve into my container list." The only implementer
+is `list.@this` — adding a nested list to a list flattens it; adding a
+dict stays whole. The container never asks `is list.@this` — it dispatches
+to `IListLeaf.LeafCount` / `IListLeaf.Leaves`. A `table`, `dict`, or any
+future collection type that wants to stay whole simply does not implement
+the interface.
+
+**List-in-list aliasing prevention (`CopyStructure`).** When `add %src%
+to %target%` would store a nested list, `list.@this.CopyStructure` makes a
+shallow copy (deep only for nested lists, not nested dicts). This prevents
+the most common write-through: mutating the source list after adding it to
+a container. Dict elements **share by reference** inside the copy — `set
+%d.x% = 5` after `add %d% to %list%` mutates the shared dict. This is
+consistent with JS/Python object reference semantics and is documented as
+intentional; a future copy-on-write pass (branch `collections-are-data`
+todo, auditor O1) will close it uniformly.

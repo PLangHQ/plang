@@ -1,0 +1,12 @@
+{
+  "reviewer": "docs",
+  "branch": "collections-are-data",
+  "version": "v1",
+  "verdict": "PASS",
+  "next": "none — merge gate is human-driven (hold behind signature-as-schema-wrapper)",
+  "gaps_found": 5,
+  "gaps_filled": 5,
+  "docs_updated": 3,
+  "docs_created": 0,
+  "bot_files_created": 4
+}

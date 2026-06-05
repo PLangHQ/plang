@@ -81,4 +81,8 @@ Notes are split across the topic docs below. Each section title maps to its doc 
 - `app.X` is the collection node — `[name]` / `.list` / `.current` → `type-system.md`
 - Producer-stamping invariant — `Data.Type` propagation → `type-system.md`
 - `type.@this.Null` — non-null sentinel on `Data.Type` → `type-system.md`
+- `dict.@this` and `list.@this` — native PLang collection types → `type-system.md`
+- `Compare` — single typed-compare mediator (`IEquatableValue` / `IOrderableValue` / `ScalarComparer`) → `type-system.md`
+- List chunk/row model and `IListLeaf` — rows under the hood, flattened on read → `type-system.md`
+- `@schema:"data"` marker — Data self-identifies on the wire → `wire-serialization.md`
 - OBP Naming Principle / Smell Checklist / Variant Design → `obp-smells.md`

@@ -21,12 +21,12 @@ public class TypedValueNodeNormalizeTests
         public string Payload { get; init; } = "";
     }
 
-    private global::app.type.list.@this _types = null!;
+    private global::app.type.catalog.@this _types = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _types = new global::app.type.list.@this();
+        _types = new global::app.type.catalog.@this();
         _types.Assemblies.Add(typeof(TypedValueNodeNormalizeTests).Assembly);
         _types.Renderers.Assemblies.Add(typeof(TypedValueNodeNormalizeTests).Assembly);
         _types.Renderers.Register("normalize-fixture-with-renderer",
@@ -88,10 +88,10 @@ public class TypedValueNodeNormalizeTests
         var outer = new { Inner = new FixtureWithRenderer { Payload = "p" } };
         var visited = new HashSet<object>(System.Collections.Generic.ReferenceEqualityComparer.Instance);
         var result = global::app.data.@this.NormalizeValue(outer, global::app.View.Out, visited, 0, _types);
-        // The outer becomes a property bag List<Data>; the Inner child's value
+        // The outer becomes the native dict object; the Inner child's value
         // is the TypedValueNode.
-        await Assert.That(result).IsTypeOf<List<global::app.data.@this>>();
-        var bag = (List<global::app.data.@this>)result!;
+        await Assert.That(result).IsTypeOf<global::app.type.dict.@this>();
+        var bag = ((global::app.type.dict.@this)result!).Entries;
         var innerChild = bag.FirstOrDefault(d => d.Name == "inner");
         await Assert.That(innerChild).IsNotNull();
         await Assert.That(innerChild!.Value).IsTypeOf<global::app.data.TypedValueNode>();

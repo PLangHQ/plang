@@ -1051,10 +1051,10 @@ public class DataTests
         // convention); decimal is opt-in via `as number/decimal`.
         var json = "{\"price\":19.99}";
         using var doc = System.Text.Json.JsonDocument.Parse(json);
-        var result = Data.UnwrapJsonElement(doc.RootElement) as Dictionary<string, object?>;
+        var result = Data.UnwrapJsonElement(doc.RootElement) as app.type.dict.@this;
 
         await Assert.That(result).IsNotNull();
-        var price = result!["price"];
+        var price = result!.Get("price")!.Value;
         await Assert.That(price).IsTypeOf<double>();
         await Assert.That(price).IsEqualTo(19.99d);
     }
@@ -1064,10 +1064,10 @@ public class DataTests
     {
         var json = "{\"count\":42}";
         using var doc = System.Text.Json.JsonDocument.Parse(json);
-        var result = Data.UnwrapJsonElement(doc.RootElement) as Dictionary<string, object?>;
+        var result = Data.UnwrapJsonElement(doc.RootElement) as app.type.dict.@this;
 
         await Assert.That(result).IsNotNull();
-        var count = result!["count"];
+        var count = result!.Get("count")!.Value;
         await Assert.That(count).IsTypeOf<long>();
         await Assert.That(count).IsEqualTo(42L);
     }

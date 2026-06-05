@@ -1,4 +1,4 @@
-using app.type.list;
+using app.type.catalog;
 using System.Text.Json.Serialization;
 
 namespace app.data;

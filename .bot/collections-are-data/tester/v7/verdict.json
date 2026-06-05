@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "v6 false-green resolved: the 2 signing tests now register as honest Skipped (271 pass + 2 skipped + 0 fail, deterministic), hold their real steps, and the signing regression stays correctly deferred + gated. C# 4089/0. Minor: new HasSkipTag mechanism lacks a regression test (over-match empirically safe today)." }

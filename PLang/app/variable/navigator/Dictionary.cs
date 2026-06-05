@@ -21,6 +21,7 @@ public sealed class Dictionary : INavigator
     {
         var v = data.Value;
         if (v is null) return false;
+        if (v is dict) return true;
         if (v is IDictionary<string, object?>) return true;
         if (v is IDictionary) return true;
         return GetStringKeyedDictType(v) != null;
@@ -30,6 +31,18 @@ public sealed class Dictionary : INavigator
     {
         var value = data.Value;
         if (value == null) return global::app.data.@this.NotFound(key);
+
+        // The native `dict` value type owns key-lookup — one shape, no per-arm
+        // dispatch. `count` is an intrinsic that loses to a real `count` key
+        // (Get wins; the intrinsic only answers when the key is absent).
+        if (value is dict d)
+        {
+            var entry = d.Get(key);
+            if (entry != null) return entry;
+            if (string.Equals(key, "count", StringComparison.OrdinalIgnoreCase))
+                return new data.@this(key, d.Count, parent: data);
+            return global::app.data.@this.NotFound(key);
+        }
 
         // Rule across all three arms: user keys win — "Count" only resolves to dict.Count
         // when no key with that name exists. Otherwise a dict literal `{count: "x"}`

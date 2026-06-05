@@ -4,7 +4,7 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using app.data;
 
-namespace app.type.list;
+namespace app.type.catalog;
 
 /// <summary>
 /// Conversion partial of <see cref="@this"/>. The public surface is the infra dispatch
@@ -143,9 +143,24 @@ public sealed partial class @this
         if (targetType == typeof(data.@this) && value is not data.@this)
         {
             if (data.@this.IsWireShape(value))
-                return (data.@this.FromWireShape((IDictionary<string, object?>)value, "", context), null);
+            {
+                var wire = value as IDictionary<string, object?>
+                    ?? ((app.type.dict.@this)value).ToRaw();
+                return (data.@this.FromWireShape(wire, "", context), null);
+            }
+            // A non-wire-shaped dict stays a dict inside the Data — don't unwrap
+            // to raw here, that would lose the native value type.
             return (new data.@this("", value), null);
         }
+
+        // The native dict/list unwrap to a raw Dictionary/List at the typed-conversion
+        // boundary (→ domain record, → Dictionary<K,V> / List<T>, JSON round-trip) so
+        // the existing reconstruction arms below apply unchanged. Same-type was already
+        // returned by the IsAssignableFrom check above.
+        if (value is app.type.dict.@this nativeDict)
+            return TryConvert(nativeDict.ToRaw(), targetType, context, targetName);
+        if (value is app.type.list.@this nativeList)
+            return TryConvert(nativeList.ToRaw(), targetType, context, targetName);
 
         // Handle nullable target types
         var underlying = System.Nullable.GetUnderlyingType(targetType);

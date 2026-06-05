@@ -1,0 +1,75 @@
+{
+  "analyst": "security",
+  "branch": "collections-are-data",
+  "timestamp": "2026-06-05T16:01:13Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "wire-@schema-marker",
+      "exposure": "Data self-identifies on the wire via `@schema:\"data\"`; recognizer in Wire.LiftDataIfShaped / data.UnwrapJsonElement lifts a JSON object carrying the marker into a Data<T> with attacker-chosen Name/Type/Value/Signature.",
+      "trust_boundary": "Inbound JSON parsed by application/plang Wire converter, plus any variable.set that runs a payload through UnwrapJsonElement.",
+      "mitigations": ["Explicit marker constant (`@schema`:`data`) replaces the old name+value shape-sniff — no value-graph guessing", "MaxJsonDepth=128 on UnwrapJsonElement caps nesting", "Signature == null fails verify closed (Ed25519.VerifyAsync step 0)", "Strict-kind validation lives in variable.set, runs after lift regardless of how Data was built"],
+      "gaps": ["Lifted Data inherits attacker-chosen Type.{Name,Kind,Strict}; downstream strict-kind probe (pattern_strict_kind_reflection_probe) is the gate but is narrow today (image only)", "An unsigned-but-marked Data lifted on inbound flows through any code that treats `Data` as an integrity envelope (none today; matters once channels ingest)"]
+    },
+    {
+      "area": "list-dict-native-types",
+      "exposure": "list.@this and dict.@this are now native Data-holding containers (chunk/row model). list.CopyStructure recurses through nested lists; dict.@this uses OrdinalIgnoreCase index with last-wins on duplicate keys.",
+      "trust_boundary": "Inbound wire JSON, variable.set, list.add/set/insert/where, dict navigation.",
+      "mitigations": ["CopyStructure only recurses on Data.Value is list (other shapes shared by reference)", "MaxJsonDepth=128 caps wire-in nesting depth → CopyStructure recursion is bounded by JSON depth on wire-fed lists", "dict.@this duplicate-key replace is documented insertion-order; no key shadowing across distinct lookups"],
+      "gaps": ["CopyStructure has no explicit depth guard; for in-process construction (variable.set + add in a loop) recursion is unbounded by anything except StackOverflowException. PLang threat model: user-sovereign in-process construction is not an attack — informational only.", "dict.@this OrdinalIgnoreCase: a payload with two keys differing only by case (`Foo`, `foo`) silently collapses to the last write. Documented contract; flag only if a downstream consumer treats key case as an integrity property."]
+    },
+    {
+      "area": "where-action",
+      "exposure": "New list/dict filter primitive (`where %list% age > 20`).",
+      "trust_boundary": "Filter is `Field` (a bare name) + `Operator` + `Value` — all action parameters resolved from the signed .pr.",
+      "mitigations": ["Field is `Data<string>` (a name lookup via GetChild), not an expression — no expression injection.", "Operator is a typed Operator enum/registry — no arbitrary operator string.", "Subject is the named variable; iteration stays inside the list/dict the user pointed at."],
+      "gaps": ["None reachable. GetChild(field) is a key/property lookup; navigator-level path-traversal is the existing dict navigator surface (no new vector introduced by `where`)."]
+    },
+    {
+      "area": "signature-verify-through-list-or-goal-call (F2, deferred)",
+      "exposure": "A legitimately signed Data dropped into a list or passed through a goal call rehashes as `Data{value: Data{value: original}}`; Ed25519.VerifyAsync step 7 (Data hash rehash + DigestEquals) detects the mismatch and returns false.",
+      "trust_boundary": "User's own signed Data flowing through PLang's variable / list / goal-call infrastructure.",
+      "mitigations": ["Fail-CLOSED: verify returns false when the rehash disagrees. No attacker capability is granted — no signature is accepted that wasn't validly signed; a legitimate signature is REJECTED.", "Documented in 2 disabled .test.goal with the skip tag + un-gut path, plus a merge gate in the codeanalyzer v4 report.", "Tester v7 verified the disable is honestly Skipped (not false-greened) — 273/273 includes 271 pass + 2 skipped, deterministic across two runs."],
+      "gaps": ["Branch ships a runtime regression in signature semantics for any user that signs a value and then puts it in a list or passes it to a sub-goal. Severity is denial-of-trust (UX/correctness), not signature forgery — covered under F1 below."]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "medium",
+      "category": "deserialization",
+      "vector": "Signed Data round-tripping through list[i] or goal-call becomes Data{value: Data{value: original}}; Ed25519.VerifyAsync step 7 rehashes the outer and the digest no longer matches the signed hash. Verify returns false on a legitimately signed value.",
+      "preconditions": "User signs a Data, then either (a) adds it to a list and verifies via `%list[0]%`, or (b) passes it to a sub-goal as a parameter and verifies inside the callee.",
+      "impact": "Denial-of-trust against legitimate users: legitimately signed values fail verify. Fail-CLOSED — no attacker capability is granted, no forged signature is accepted. Risk shape: users may route around the regression (skip verify, strip signatures, hand-roll their own check) which weakens posture for the next channel-ingress branch.",
+      "affected_files": ["PLang/app/data/Wire.cs", "PLang/app/data/this.cs", "PLang/app/module/signing/code/Ed25519.cs", "PLang/app/module/signing/Signature.cs", "Tests/LazyDeserialize/SignedDataSurvivesInList.test.goal", "Tests/LazyDeserialize/SignAndVerifyRoundTrip.test.goal"],
+      "exploit_sketch": "No attacker exploit (fail-closed). Reproduction: un-gut either of the two disabled .test.goal (remove `tag this test 'skip'` and the / comments, restore the real steps); plang --test reports [Fail] with hash-mismatch error per tester v7 actions log.",
+      "proposed_fix": "Deferred to sibling branch `signature-as-schema-wrapper` — the architect's plan separates the signature into a wrapper schema so a Data inside another Data round-trips with a stable hash. Merge gate carries: do NOT merge collections-are-data to main ahead of signature-as-schema-wrapper.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 2,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "text/this.Convert.cs:32 routes native dict/list and IEnumerable through JsonSerializer.Serialize(value) with NO options object — no `[Sensitive]` redactor, no PathJsonConverter, no IgnoreCycles. Any user that does `set %t% = %x% as text` where %x% reaches a [Sensitive] property (e.g. Identity.PrivateKey) gets the secret in plain JSON.",
+      "preconditions": "User code (or LLM-generated code) routes a value graph containing a [Sensitive] property through `as text`. Today the only first-class [Sensitive] surface is Identity; reach requires an Identity (or its private key) embedded in a list/dict.",
+      "impact": "Sensitive value leaks into a text variable that may be logged, returned, or written to disk.",
+      "affected_files": ["PLang/app/type/text/this.Convert.cs"],
+      "exploit_sketch": "Pseudocode: `set %list% = [%identity%]` then `set %t% = %list% as text` — the JsonSerializer.Serialize on `app.type.list.@this` walks Entries, each entry is a Data, the value is the Identity, which serializes by reflection without [Sensitive] filtering and emits PrivateKey in plain JSON.",
+      "proposed_fix": "Pass `Conversion.ContextualReadOptions(context)` (or `Format.Options`) into the JsonSerializer.Serialize call so the [Sensitive] redactor and IgnoreCycles apply. Same pattern as the http response-cap finding closed earlier on data-normalize. Standing-finding precedent (memory/feedback_secrets_in_test_artefacts).",
+      "status": "open"
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "list.@this.CopyStructure() recurses on every nested list value; no explicit depth guard. A deeply nested in-process list (`set %x% = ...` building 10,000 levels) triggers StackOverflowException on the first list.add/set into a parent.",
+      "preconditions": "In-process construction of a list nested >>128 deep. PLang threat model: user-sovereign in-process construction is not an attack vector; wire-fed lists are capped at MaxJsonDepth=128 (Data.UnwrapJsonElement), which CopyStructure can handle in a single stack.",
+      "impact": "Local DoS on a self-built pathological list. Not reachable from untrusted wire data today.",
+      "affected_files": ["PLang/app/type/list/this.cs"],
+      "exploit_sketch": "C# probe: build N nested `new list.@this()` levels and call CopyStructure on the outer. Confirm SO at N≈10k–20k frames.",
+      "proposed_fix": "Add `int depth = 0` parameter, throw `InvalidOperationException` past `MaxJsonDepth` (mirror UnwrapJsonElement). Trivial; future-proofs against any new lift path that loses the MaxJsonDepth gate.",
+      "status": "open"
+    }
+  ],
+  "summary": "Branch is sound at the security boundary. The headline F2 regression (verify-through-list/goal returns false) is fail-CLOSED — denial-of-trust to legitimate users, not signature forgery — and is properly deferred to signature-as-schema-wrapper with an honest merge gate (tester v7 confirmed 2 honestly Skipped tests, not false-greened). The new @schema wire marker is a sharper recognizer than the old name+value shape-sniff (less ambiguity, more strictness). list/dict native types and the new `where` action introduce no new injection or path-traversal vectors. Two new low findings: text/this.Convert.cs lost the [Sensitive] redactor in its JsonSerializer.Serialize call, and CopyStructure has no explicit depth guard (bounded today by MaxJsonDepth=128 on wire ingress, so latent). No critical/high open findings → PASS. Merge gate: do NOT ship collections-are-data to main ahead of signature-as-schema-wrapper landing."
+}
