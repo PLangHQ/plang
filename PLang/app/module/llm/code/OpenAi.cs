@@ -467,7 +467,13 @@ public sealed class OpenAi : ILlm
             {
                 var cacheEntry = new Dictionary<string, object?>
                 {
-                    ["Value"] = resultValue,
+                    // Store the UNWRAPPED native value (result.Value), not the raw
+                    // JsonElement: a JsonElement does not survive the cache's disk
+                    // serialization — Normalize reflects it to {"valuekind":"Object"},
+                    // losing all content, so every cached JSON response would restore
+                    // empty. Data.Ok already materialized resultValue into a native
+                    // dict/list (or scalar) that serializes round-trip.
+                    ["Value"] = result.Value,
                     ["RawResponse"] = rawResponse,
                     ["Model"] = model,
                     ["PromptTokens"] = totalPromptTokens,
@@ -800,6 +806,30 @@ public sealed class OpenAi : ILlm
         return content;
     }
 
+    /// <summary>
+    /// Reproduces the live path's "raw response → result value" parse: strips a
+    /// ```json/```fmt code fence when present and parses JSON to the element the
+    /// caller wraps via <c>Data.Ok</c> (which materializes it to a native value).
+    /// Shared by the live build and cache-restore so a restored result is
+    /// byte-identical to a fresh one — the cache round-trips the plain
+    /// <c>RawResponse</c> string, never a fragile parsed object.
+    /// </summary>
+    internal static object? ParseResultValue(string rawResponse, string? effectiveFormat)
+    {
+        var extracted = ExtractResponse(rawResponse, effectiveFormat);
+        if (effectiveFormat != "json")
+            return extracted;
+
+        var parsed = TryParseJson(extracted);
+        if (parsed == null)
+        {
+            var fromBlock = ExtractJsonFromCodeBlock(rawResponse);
+            if (fromBlock != null)
+                parsed = TryParseJson(fromBlock);
+        }
+        return parsed;
+    }
+
     private static JsonElement? TryParseJson(string text)
     {
         try
@@ -1006,6 +1036,18 @@ public sealed class OpenAi : ILlm
         else
         {
             resultValue = cachedValue;
+        }
+
+        // Authoritative reconstruction: re-parse the round-tripped RawResponse
+        // string with the same logic the live path uses. The plain string
+        // survives disk serialization losslessly, whereas a parsed JsonElement /
+        // native value does not always round-trip its element shape — so trusting
+        // the stored "Value" can yield a list/dict the consumer can't convert.
+        if (props.TryGetValue("RawResponse", out var rawObj) && rawObj is string rawResp
+            && !string.IsNullOrEmpty(rawResp))
+        {
+            var fmt = props.TryGetValue("Format", out var fmtObj) ? fmtObj as string : null;
+            resultValue = ParseResultValue(rawResp, fmt) ?? resultValue;
         }
 
         var result = global::app.data.@this.Ok(resultValue);
