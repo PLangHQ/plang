@@ -1,6 +1,6 @@
-# Architect handoff — compare lives on the value, not in a type-switch
+# Architect handoff — compare lives on the value; list is orderable and nests
 
-**To:** coder · **From:** architect · Re: the `Compare.AreEqualValues` / `Compare.Order` type-switch
+**To:** coder · **From:** architect · Re: the `Compare.AreEqualValues` / `Compare.Order` type-switch **and** list semantics (supersedes `list-rope-model.md`)
 
 **You own the final shape.** Interface names, file placement, and signatures below are anchors — change what reads wrong, keep the dispositions and the recursion contract.
 
@@ -28,7 +28,7 @@ No `is dict` / `is list` / `Family()` / `Orderable`-set here anymore.
 - `IOrderableValue { int Order(object? other); }`
 
 - `dict` implements **`IEquatableValue`** only — structural, key-based (the current `is dict` arm moves here verbatim). **Not** `IOrderableValue`: dict equality is order-insensitive (`{a:1,b:2} == {b:2,a:1}`), so no positional order is consistent with it → equality-only, and `Compare.Order` throws NotOrderable for a dict exactly as today.
-- `list` implements **`IEquatableValue`** (structural, positional — the current `is list` arm). **Decision pending — see below** for `IOrderableValue`.
+- `list` implements **`IEquatableValue`** (structural, positional — the current `is list` arm) **and `IOrderableValue`** (lexicographic) — see the list section below.
 
 **Recursion contract (important):** `dict.AreEqual` / `list.AreEqual` compare each child by calling **back into the mediator** (`Compare.AreEqualValues`), not a direct `.Equals` — so a number nested in a dict still widens and text still compares case-insensitive. The collection owns *how to walk itself*; the leaves still route through the one path.
 
@@ -50,16 +50,25 @@ Net deletions: `Compare.Family()` and the `Orderable` HashSet both go — ordera
 
 **Consumers don't change.** `indexof`/`contains`/`in`/`remove`/`unique`/`sort` and `list.SortByValue/SortByField` already call `Compare.AreEqual`/`Compare.Order` — the refactor is entirely behind the mediator surface. Confirm none of them reach past it after the change.
 
-## The one open decision — is `list` orderable?
+## List — orderable lexicographically, and it nests (the rope/flatten model is rejected)
 
-We discussed but didn't lock it. **My recommendation: yes — `list` implements `IOrderableValue`, lexicographically.** It's standard (Python/Ruby/Rust/Haskell), its equality is positional so a positional order is trichotomy-consistent, and the use cases are everyday (multi-key sort = "ORDER BY col1, col2", version numbers, sorting coordinate/row lists).
+Two things settled here, and they're linked: **list ordering requires list nesting.**
 
-Contract if yes:
+**`list` IS orderable — lexicographic.** Implement `list : IOrderableValue` (Ingi confirmed). Contract:
 - compare element `i` vs `i` via `Compare.Order`; first differing index decides
 - one list a prefix of the other → shorter sorts first (count only as the prefix tie-break — **not** count-based otherwise: `[1,2,3] < [9]` because `1 < 9`)
 - elements must be mutually orderable, else the `NotOrderable` throw propagates (same as a scalar mixed-type list)
 
-**This is gated on Ingi's confirm.** Build the layer-1/2/3 refactor regardless (it's agreed); add `list : IOrderableValue` only once Ingi says go. If he says leave it equality-only for now, `list` mirrors `dict` (equality only) and `sort` of a list-of-lists throws NotOrderable as today.
+Standard (Python/Ruby/Rust/Haskell), and trichotomy-consistent with list's positional equality.
+
+**`list` nests like every other type — keep the flat `List<Data>`.** A list element can be a `list.@this`; `add %listB% to %listA%` adds listB as **one** element (count +1) — which is already the current behavior (`list/add.cs` does `list.Add(Value)`). **Do not implement the rope/flatten model** in `list-rope-model.md` — it's superseded by this handoff. Reasons:
+
+- It singles out `list` as the one type that *can't* be a list element (its enumerator merges list-chunks but yields dict/matrix/table chunks whole). Every other type nests — that asymmetry is the bug, and no mainstream language has it.
+- **Orderability needs nesting.** The killer use case for lexicographic list order is sorting rows / coordinates / tuples — i.e. a list *of lists*. Flattening kills exactly that.
+- Its motivations don't require flattening: O(1) append is already what `List<Data>.Add` does (it never rewrites existing leaves — the rope's chunks only existed to make a *merge* O(1), and there is no merge); `count`/`foreach`/`print` already agree under honest nesting (a nested list is one element → count 1, one iteration, prints `[...]`); the "count 2 vs print 5" footgun was a symptom of *half*-flattening, which honest nesting removes. The wire-shape concern (don't envelope bare scalars) is independent and stays as the F5 / "type-driven nested Data" todo.
+- Rejecting it is *less* work — don't change `add`, don't build chunks. Just add `IOrderableValue`.
+
+If a merge ("flatten listB's elements into listA") is ever wanted, it's a **separate verb** (`concat`/`addRange`), never a silent behavior of `add` — `add` adds exactly one element, whatever its type. `matrix`/`table` stay available as specialized rectangular/headered types; they're a *choice* for column semantics, not a forced detour because lists can't nest.
 
 ## Not in this handoff
 
