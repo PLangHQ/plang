@@ -25,8 +25,10 @@ Everywhere else, asking *what a value is* to decide behavior is the smell — it
 |---|---|---|
 | `number` | **complete** (`IComparable`/`IEquatable`/`IBooleanResolvable`/`IConvertible`) | reference shape — mostly ensure it always *flows* native |
 | `text` | thin (`Value` + implicit `string`) | build out: ops (length/case/contains/substring/split/trim…), compare, truthiness, value-equality, serializer, `[atomic]` (no char-iterate) |
-| `datetime` | thin (`Value` + `ToString`) | build out: compare, truthiness, formatting/parts, value-equality, serializer |
-| `duration` | thin (`Value` + `ToString`) | build out: compare, truthiness, parts, value-equality, serializer |
+| `datetime` | thin (`Value` + `ToString`) | backed by `DateTimeOffset` (accepts CLR `DateTime`); build out: compare, truthiness, formatting/parts, value-equality, serializer |
+| `duration` | thin (`Value` + `ToString`) | backed by `TimeSpan`; build out: compare, truthiness, parts, value-equality, serializer |
+| `date` | **none** | create `date.@this`, backed by `DateOnly` — its own type (not a `datetime` kind); compare, truthiness, parts, value-equality, serializer |
+| `time` | **none** | create `time.@this`, backed by `TimeOnly` — its own type; compare, truthiness, parts, value-equality, serializer |
 | `bool` | **none** | create `bool.@this` — the truthiness primitive; equality + serializer. (Decided — see below.) |
 | `null` | **none** (flows as `Data.Null()`) | create singleton `null.@this` — truthiness (always false), `null == null` equality, bare `null` serializer; hosts null's behavior so the `is null` value-switches dissolve. (Decided — see below.) |
 
@@ -50,12 +52,14 @@ Enforcement — two options Ingi raised:
 - **Runtime guard:** reject `Data<T>` whose `T` isn't a known plang value type. Catches misuse, but it's a runtime check.
 - **`item.@this` as a base class** all value-wrappers inherit (recommended). Then `Data<item>` is the polymorphic slot and `T : item` is enforced at compile time; `Data<object>` stops being writable for the value case, and the double-wrap footgun dies structurally — `Data` is the *box*, not an `item`, so a `Data<item>` can never nest a `Data`.
 
-Recommendation: **introduce `item.@this` as an abstract base** and fold onto it the shared value contract this branch is already adding to each wrapper — value-equality, `IOrderableValue`, `IBooleanResolvable`, bare serialization — instead of N parallel interfaces. The box/apex rule ([[plang-value-and-type-model]]) pins three points:
+Recommendation: **introduce `item.@this` as an abstract base** and fold onto it the shared value contract this branch is already adding to each wrapper — value-equality, ordering, truthiness, bare serialization — as abstract members, instead of N parallel interfaces (see the contract-delivery note below). The box/apex rule ([[plang-value-and-type-model]]) pins three points:
 - `item.@this` is **abstract** — the apex stores nothing; there is never a bare `item` instance holding a value.
 - Every *value* slot is `Data<wrapper>`, **never** `Data<raw-CLR>` (Ingi): `Data<int>` → `Data<number>`, `Data<string>` → `Data<text>`, `Data<bool>` → `Data<bool.@this>`, **`Data<List<data>>` → `Data<list>`**. The raw CLR (`int`, `string`, `List<data>`) is the wrapper's backing `.Value`, one level down — `list.@this` holds `List<data>` (`_items`) exactly as `number.@this` holds `int` — unwrapped once at the BCL perimeter / conversion leaf.
 - That backing is `List<data>` (each element a box, carrying its own name/type/signature), **never** `List<item>` (bare apexes). So `Data<T> where T : item` holds for **every** value slot — no carve-out. **`Variable : item` too** (Ingi): it rides a `Data<Variable>` slot, so structurally it is-a item; its name-binding job stays on `IRawNameResolvable` (orthogonal — a type is both `: item` and `IRawNameResolvable`, structural fit vs. resolution behavior). So the `Data<T>` class **can** carry a blanket `where T : item`, and the build gate needs no exemption — though the constraint lands as the *final* lock, after every slot is migrated, not day 1. The only non-item handler property is `[Code] T`, and that isn't a `Data<T>` at all: it's compiled C# behavior injected from the `app.Code` escape-hatch (the generator emits `app.Code.Get<T>()`; e.g. `[Code] IEvaluator Evaluator` on `condition/if`), a separate property kind the PLNG001 gate already splits out. Base class (option b) covers every value; the gate (option a) enforces it — complementary, **do both**.
 
-Scope: this is structural and ripples across every wrapper. It's tightly coupled to this branch (we build all the wrappers here), so it sequences as **step 0** — define `item.@this`, make `number` (the reference wrapper) inherit it, then each wrapper inherits as it's built out. It also turns every typed `Data<int>`/`Data<string>`/`Data<DateTime>` handler param and action return into `Data<number>`/`Data<text>`/`Data<datetime>` — mechanical but broad, folded into each wrapper's build-out. If it bloats the branch it can split to a fast-follow; the `Data<object>`→`Data<item>` rename is the visible deliverable either way. **Confirm fold-in-now vs. fast-follow with Ingi.**
+Scope — **folded into this branch** (Ingi): `item.@this` and the constraint are core, not optional. The null/bool/Variable decisions already depend on the base existing. There is **no `item` C# type today** — `item` is only a type *name* (the apex in `type/this.cs`); this branch creates `app/type/item/this.cs` as the abstract base, makes `number` (the reference wrapper) inherit it, then each wrapper inherits as it's built out. It also swaps every typed `Data<int>`/`Data<string>`/`Data<DateTime>` handler param and action return to its wrapper (`Data<number>`/`Data<text>`/`Data<datetime>`). That swap is **compiler-driven**: turn on `Data<T> where T : item` and every remaining `Data<rawCLR>` slot becomes a build error — fix until green, no manual census for the signatures.
+
+Contract delivery (resolves the base-vs-interface ambiguity): equality / order / truthiness are **abstract members on `item.@this`** that each wrapper overrides — not interfaces re-implemented per wrapper. Where an interface is load-bearing across non-scalar code (`IBooleanResolvable` — `path`, the async condition pipeline), `item.@this` implements it once and the abstract member backs it.
 
 ## Seam map + dispositions (the leaf-trace, at seam granularity)
 
@@ -65,7 +69,7 @@ Five seams carry scalar behavior today. Each gets the same treatment: the per-ty
 
    **The `Unwrap*`/`Wrap*` family is the target, not the tool.** A method named `Unwrap…`/`Wrap…` is the canonical tell of the internal round-trip smell ([[plang-value-and-type-model]]). Producing wrappers *at* the parse seam is what lets these retire: `UnwrapJsonElement` becomes parse-to-native (emits `text`/`number`/`bool`/… directly), not parse-to-raw-then-rewrap. **Delete `UnwrapNewtonsoftToken`** — Newtonsoft is not our serializer (no package ref; the shim only sniffs JTokens by namespace string for a dead v1 path). Verify nothing live still feeds JTokens, then remove it. Full elimination of every `Unwrap*`/`Wrap*` may not all land this round (some sit on other seams), but seam 1 is where the bulk goes — and none should be *added*.
 
-2. **Compare** — `data/Compare.cs` (`Family`, `Order`, `AreEqualValues`), `Operator.NormalizeTypes`. **Disposition:** the scalar arms (`"text" => CompareOrdinal/ignore-case`, `"datetime" => offset compare`, `"duration"`, the `lf switch`) move onto each wrapper as `AreEqual`/`Order` (the `IEquatableValue`/`IOrderableValue` interfaces from the collections-are-data compare handoff). `Family()` and the `Orderable` HashSet **delete** — orderability is "implements `IOrderableValue`." Coercion stays in the mediator. *This seam is the direct continuation of the compare handoff on `collections-are-data` — that one leaves scalars in a shared C# comparer; this one relocates them onto the wrappers and the shared comparer shrinks to coercion + a thin `IComparable` fallback.*
+2. **Compare** — `data/Compare.cs` (`Family`, `Order`, `AreEqualValues`), `Operator.NormalizeTypes`. **Disposition:** the scalar arms (`"text" => CompareOrdinal/ignore-case`, `"datetime" => offset compare`, `"duration"`, the `lf switch`) move onto each wrapper as the `AreEqual`/`Order` abstract members on `item.@this` (see the contract note above; the collections-are-data compare handoff seeds the per-type logic). `Family()` and the `Orderable` HashSet **delete** — orderability is "overrides `item.Order`." The coercion mediator stays, but its **internals are rewritten** to inspect wrapper types (the one blessed type-discrimination site), not raw CLR. *This seam is the direct continuation of the compare handoff on `collections-are-data` — that one leaves scalars in a shared C# comparer; this one relocates them onto the wrappers and the shared comparer shrinks to coercion + a thin `IComparable` fallback.*
 
 3. **Truthiness** — already `IBooleanResolvable`. **Disposition:** `text`/`datetime`/`duration`/`bool` implement it (empty text falsy, etc.); `number` already does. The `Data.ToBoolean()` raw-scalar fallbacks (`is string ""`, `is bool`) become unreachable for wrapped values and are kept only for the perimeter.
 
@@ -73,9 +77,13 @@ Five seams carry scalar behavior today. Each gets the same treatment: the per-ty
 
 5. **Conversion** — `type/catalog/Conversion.cs` (value → typed `T`). **Disposition:** unwrap the wrapper to its raw `.Value` at the typed-conversion leaf (like `dict.ToRaw`/`list.ToRaw`), so `→ returns string`/`int`/`DateTime` reconstruct unchanged. One unwrap at the leaf, not at every call site.
 
-## The consumer sweep (the ~197 sites)
+## The consumer sweep — body sites (the ~197)
 
-Census every `is string` / `(string)value` / `value is int|long|double|decimal|bool` / `is System.DateTime|TimeSpan` in production C#, and classify each — this is the bulk of the branch and where the OBP win lands:
+Two sweeps, two mechanisms — don't conflate them:
+- **Signatures** (`Data<int>` params, `Task<Data<bool>>` returns): the `where T : item` constraint makes the **compiler** enumerate them — every raw slot is a build error. No manual census; covered by the construction/swap step.
+- **Bodies** (the ~197 here): these still **compile** after the swap but go silently wrong — `.Value` is now a wrapper, so `value is string` is just false. The compiler can't see them; **grep + tests are the only backstop.**
+
+Census every `is string` / `(string)value` / `value is int|long|double|decimal|bool` / `is System.DateTimeOffset|TimeSpan|DateOnly|TimeOnly` (and legacy `DateTime`) / `.Value is <scalar>` in production C#, and classify each — this is the bulk of the branch and where the OBP win lands:
 
 - **Behavioral** (`is string str => str.Length`, `.ToUpper()`, `.Contains()`, arithmetic, date math) → **becomes a method on the wrapper.** The if disappears. This is the majority and the point of the branch.
 - **Perimeter** (`is string s` right before `JsonSerializer.Serialize(s)`, a `Regex`, a BCL call) → **becomes a single `.Value` unwrap** at the edge. Legitimate, not a smell.
@@ -88,19 +96,25 @@ Disposition rule: if removing the `is` requires asking the value to *do* somethi
 - **Transition leakage.** Mid-sweep, a raw scalar slips through a not-yet-converted producer and a consumer that now expects a wrapper NREs (or vice-versa). Mitigation: seam 1 (construction) first, then a wrapper-side **implicit operator** (`text.@this ↔ string`, like `number`'s and `Variable`'s) so a missed perimeter site still compiles and runs — but treat implicit operators as a transition aid, not a license to leave `.Value` reaches un-swept. Tests are the backstop.
 - **Implicit-operator double-wrap** — the `Data<object>` footgun in CLAUDE.md ("Action `Run()` returns are typed"). A wrapper with an implicit `object` conversion + `Data<object>` can silently double-box. Keep implicit operators to the *raw backing type* (`text.@this ↔ string`), never to `object`. The `Data<object>`→`Data<item>` decision above kills this structurally where adopted: `Data` is not an `item`, so a `Data<item>` slot can't nest a `Data`.
 - **String atomicity.** `foreach %s%` must not char-iterate a `text.@this`. The `IsPlangAssignable`/`IsPlangIterable` carve-out (`data/this.cs`) that already exempts raw `string` must be extended to `text.@this` (it is not `IEnumerable`, so it should be safe — verify).
-- **Value-equality of wrappers.** Two `text.@this("a")` must be equal (dict keys, `HashSet`, dedup). Every wrapper implements `IEquatable<@this>` with value semantics, not reference — `number` shows the shape.
+- **Value-equality of wrappers.** Two `text.@this("a")` must be equal (dict keys, `HashSet`, dedup). Value-equality is an abstract member on `item.@this`, overridden per wrapper with value (not reference) semantics — `number` shows the shape. (Also wire up `Equals`/`GetHashCode` so they work as dictionary keys.)
 - **Allocation.** Every scalar boxes into a wrapper. Marginal — values already box into `Data`'s `object?` slot — but measure if a hot list-of-ints path regresses.
 
 ## Sequencing within the branch
 
-1. **Census + classify** the ~197 sites (behavioral / perimeter / coercion). Output the list before editing — it scopes the branch.
-2. **Build out the wrappers** — `text`, `datetime`, `duration` get their ops + `IEquatableValue`/`IOrderableValue`/`IBooleanResolvable` + value-equality + serializer; create `bool.@this` (pending decision).
-3. **Construction seam** — materialization produces wrappers (do this before the sweep).
-4. **Compare** — relocate scalar arms onto wrappers; delete `Family`/`Orderable`.
-5. **Serialization + conversion** — bare render; unwrap at the conversion leaf.
-6. **Consumer sweep** — behavioral → methods, perimeter → unwrap.
-7. **Delete the dead** — `Family()`, raw-scalar special-cases in `ToBoolean`/compare, the shared-C# scalar comparer collapses to coercion + `IComparable` fallback.
+1. **Census the body sites** — grep the patterns above, classify behavioral / perimeter / coercion. Output the list before editing — it scopes the branch. (Signatures are *not* in this census; the constraint finds those in step 5.)
+2. **Create `item.@this`** — the abstract base + the contract (equality / order / truthiness as abstract members). Make `number` (the reference wrapper) inherit it.
+3. **Build the wrappers** — build out `text` / `datetime` / `duration`; create `bool` / `null` (singleton) / `date` / `time`; all inherit `item.@this`; `Variable : item`.
+4. **Construction seam** — materialisation produces wrappers (before the sweep); JSON `null` → `Data.Null()`; start retiring `Unwrap*`/`Wrap*` (delete `UnwrapNewtonsoftToken`).
+5. **Swap the `Data<T>` slots + lock the constraint** — every `Data<rawCLR>` handler param + action return → its wrapper; turn on `Data<T> where T : item`; the compiler enumerates the rest; fix until it builds. `Data<object>` → `Data<item>`.
+6. **Compare** — relocate scalar arms onto the wrappers; delete `Family`/`Orderable`; rewrite the coercion mediator to inspect wrappers.
+7. **Serialization + conversion** — bare render; unwrap at the conversion leaf.
+8. **Body sweep** — execute the step-1 census: behavioral → method, perimeter → `.Value`, coercion → mediator.
+9. **Delete the dead** — `Family()`, raw-scalar special-cases in `ToBoolean`/compare; the shared-C# scalar comparer collapses to coercion + a thin `IComparable` fallback.
 
 ## Done when
 
-Both suites green; no `is <scalar-type>` / `(string)value` survives outside the two legal sites (perimeter unwrap, coercion mediator); `Compare.Family` and the `Orderable` set are gone; a scalar value read out of a variable is its wrapper, and `→ returns string`/`int`/`DateTime` still reconstruct at the conversion leaf.
+- Both suites green.
+- `Data<T> where T : item` is in place and **compiles** — no `Data<rawCLR>` slot survives; `Data<object>` is gone (→ `Data<item>`).
+- No `is <scalar>` / `(string)value` / `.Value is <scalar>` survives outside the two legal sites (perimeter unwrap, coercion mediator); `Compare.Family` and the `Orderable` set are gone.
+- `item.@this`, `bool.@this`, `null.@this`, `date.@this`, `time.@this` exist; every value-wrapper (and `Variable`) inherits `item`.
+- A scalar read from a variable is its wrapper, and `→ returns string`/`int`/`DateTime`/`DateTimeOffset` still reconstruct at the conversion leaf.
