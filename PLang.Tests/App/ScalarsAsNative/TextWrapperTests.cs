@@ -1,48 +1,63 @@
+using Text = global::app.type.text.@this;
+using Item = global::app.type.item.@this;
+
 namespace PLang.Tests.App.ScalarsAsNative;
 
 // text.@this is the canonical wrapper for textual content; backs a CLR string.
 // After build-out it carries ops, ordinal compare, value-equality + GetHashCode,
-// IBooleanResolvable, a bare serializer, and atomicity (NOT IEnumerable as chars).
+// truthiness, and atomicity (NOT IEnumerable as chars). Order/equality are
+// ordinal case-insensitive — matching the historical ScalarComparer policy.
 public class TextWrapperTests
 {
     [Test]
     public async Task Text_Length_ReturnsCodepointCount()
     {
-        // %s.length% via a method on the wrapper, not via raw string fallback.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // Length via a method on the wrapper, not via raw string fallback.
+        await Assert.That(new Text("hello").Length).IsEqualTo(5);
+        await Assert.That(new Text("").Length).IsEqualTo(0);
     }
 
     [Test]
     public async Task Text_CaseAndTrim_ReturnTextNotRawString()
     {
         // upper/lower/trim return text.@this, not raw string — flow stays native.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        Text upper = new Text("abc").Upper();
+        Text lower = new Text("ABC").Lower();
+        Text trimmed = new Text("  x  ").Trim();
+        await Assert.That(upper.Value).IsEqualTo("ABC");
+        await Assert.That(lower.Value).IsEqualTo("abc");
+        await Assert.That(trimmed.Value).IsEqualTo("x");
     }
 
     [Test]
     public async Task Text_ContainsStartsEndsWith_BehavioralOps()
     {
-        // contains/startsWith/endsWith on the wrapper; case policy documented.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // contains/startsWith/endsWith on the wrapper; case-insensitive policy.
+        var s = new Text("Hello World");
+        await Assert.That(s.Contains("world")).IsTrue();
+        await Assert.That(s.StartsWith("hello")).IsTrue();
+        await Assert.That(s.EndsWith("WORLD")).IsTrue();
+        await Assert.That(s.Contains("xyz")).IsFalse();
     }
 
     [Test]
     public async Task Text_SubstringAndSplit_BehavioralOps()
     {
-        // substring(start, len) and split(sep) return wrappers (text / list of text).
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // substring(start, len) returns text; split(sep) returns a list of text.
+        await Assert.That(new Text("hello").Substring(1, 3).Value).IsEqualTo("ell");
+        var parts = new Text("a,b,c").Split(",");
+        await Assert.That(parts.Count).IsEqualTo(3);
+        await Assert.That(((Text)parts.At(0)!.Value!).Value).IsEqualTo("a");
+        await Assert.That(((Text)parts.At(2)!.Value!).Value).IsEqualTo("c");
     }
 
     [Test]
     public async Task Text_Order_OrdinalCompare()
     {
-        // text.@this implements IOrderableValue; "a" < "b" ordinally, settled case policy.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // text.@this implements IOrderableValue; "a" < "b" ordinally.
+        await Assert.That(new Text("a").Order(new Text("b"))).IsLessThan(0);
+        await Assert.That(new Text("b").Order(new Text("a"))).IsGreaterThan(0);
+        await Assert.That(new Text("a").Order(new Text("A"))).IsEqualTo(0); // case-insensitive
     }
 
     [Test]
@@ -50,8 +65,12 @@ public class TextWrapperTests
     {
         // text("a") and text("a") are Equal AND share GetHashCode — usable as a
         // dict key and inside a HashSet without surprise.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var a1 = new Text("a");
+        var a2 = new Text("a");
+        await Assert.That(a1.Equals(a2)).IsTrue();
+        await Assert.That(a1.GetHashCode()).IsEqualTo(a2.GetHashCode());
+        var set = new HashSet<Text> { a1 };
+        await Assert.That(set.Contains(a2)).IsTrue();
     }
 
     [Test]
@@ -59,29 +78,28 @@ public class TextWrapperTests
     {
         // Mid-migration aliasing guard: the implicit text↔string operator compiles
         // but does NOT make a raw string "a" hash-equal to a text.@this("a").
-        // A HashSet (or list-element dedup) populated across a not-yet-swept window
-        // must not silently miss matches. Stage-2 bound: construction flip + sweep
-        // land together for text.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // A HashSet<object> populated across a not-yet-swept window must not
+        // silently treat the two as the same member.
+        var set = new HashSet<object> { new Text("a") };
+        await Assert.That(set.Contains("a")).IsFalse();          // raw string ≠ text member
+        await Assert.That(set.Contains(new Text("a"))).IsTrue(); // text ≡ text member
     }
 
     [Test]
     public async Task Text_Truthiness_EmptyFalsyNonEmptyTruthy()
     {
-        // text("") falsy via IBooleanResolvable; text("x") truthy. Sync path reachable
-        // through Data.ToBoolean() — no async hop for the hot if %s%.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // text("") falsy via item truthiness; text("x") truthy. Sync path.
+        Item empty = new Text("");
+        Item nonEmpty = new Text("x");
+        await Assert.That(empty.IsTruthy()).IsFalse();
+        await Assert.That(nonEmpty.IsTruthy()).IsTrue();
+        await Assert.That(await empty.AsBooleanAsync()).IsFalse();
     }
 
     [Test]
     public async Task Text_IsNotIEnumerable_ForeachDoesNotCharIterate()
     {
-        // text.@this must not implement IEnumerable (chars). The Data
-        // IsPlangAssignable/IsPlangIterable carve-out that exempts raw `string`
-        // extends to text.@this — confirmed by reflection + a Data.IsIterable probe.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // text.@this must not implement IEnumerable (chars) — it is an atomic scalar.
+        await Assert.That(typeof(System.Collections.IEnumerable).IsAssignableFrom(typeof(Text))).IsFalse();
     }
 }
