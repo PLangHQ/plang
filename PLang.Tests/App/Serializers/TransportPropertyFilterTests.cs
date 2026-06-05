@@ -42,8 +42,12 @@ public class TransportPropertyFilterTests
     };
 
     [Test]
-    public async Task DefaultJson_ExcludesSignature_BecauseJsonIgnore()
+    public async Task DefaultJson_UsesCanonicalShape_IncludingSignature()
     {
+        // Data carries its converter on every STJ path (not just the channel), so even
+        // "default" options emit the canonical {@schema, name, type, value, signature}
+        // shape rather than a reflected property bag. The signature rides along — that's
+        // what lets a cloned/stored signed Data keep its signature and stay verifiable.
         var data = Data.Ok("test-value");
         data.Signature = new Signature
         {
@@ -53,9 +57,9 @@ public class TransportPropertyFilterTests
 
         var json = JsonSerializer.Serialize(data, _defaultOptions);
 
-        await Assert.That(json).DoesNotContain("test-key");
-        await Assert.That(json).DoesNotContain("abc123");
-        await Assert.That(json).DoesNotContain("signature");
+        await Assert.That(json).Contains("@schema");
+        await Assert.That(json).Contains("signature");
+        await Assert.That(json).Contains("test-key");
     }
 
     [Test]

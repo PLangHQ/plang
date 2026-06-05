@@ -934,3 +934,13 @@ are O(1) chunk edits that never read existing leaves; `count` is a running leaf 
 list-producing ops (sort/where/unique/map) materialize a flat list. Observable shift:
 `add list to list` becomes merge, not nest. Full spec + open bits (flat-index addressing,
 internal representation swap, wire shape) in `.bot/collections-are-data/list-rope-model.md`.
+
+## Re-enable 2 signing round-trip tests after signature rework (2026-06-05)
+
+`Tests/LazyDeserialize/{SignAndVerifyRoundTrip, SignedDataSurvivesInList}.test.goal`
+are DISABLED (steps commented, inert `write out`). The `@schema` Data marker makes a
+signed Data correctly round-trip AS a Data through the store/goal-call/list; the old
+`verify` path then hashes a Data-wrapping-a-Data and mismatches. The fix is the
+signature redesign (branch `signature-as-schema-wrapper`, spec in its `.bot/`): a
+signature wraps the data (`@schema:"signature"`), `verify` peels-and-validates,
+`Data.Signature` is removed. Re-enable + rebuild these goals on that branch.

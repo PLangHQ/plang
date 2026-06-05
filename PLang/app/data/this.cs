@@ -18,6 +18,10 @@ using type = global::app.type.@this;
 /// Also serves as the universal result type (replaces Return).
 /// Partial class — split by concern: data.cs (core), data.Result.cs, data.Navigation.cs, data.Transport.cs.
 /// </summary>
+// A Data serializes as the canonical {@schema, name, type, value, …} shape on EVERY STJ
+// path via WireLocal, so it round-trips back to a Data (marker recognized) instead of a
+// reflected map. The channel's options-registered signing Wire outranks this on the wire.
+[System.Text.Json.Serialization.JsonConverter(typeof(WireLocal))]
 public partial class @this
 {
     private object? _value;
@@ -36,6 +40,32 @@ public partial class @this
     private int _materializeCount;
     private type? _type;
     private actor.context.@this _context = null!;
+
+    /// <summary>
+    /// Wire marker. Every Data written to the application/plang wire carries
+    /// <c>"@schema":"data"</c> — the language-agnostic signal that a JSON object IS a
+    /// Data, not a user map that happens to share key names. The read side recognizes
+    /// a Data strictly by this marker, never by sniffing value/type/name shape. The
+    /// <c>@</c> sigil (JSON-LD convention) marks it reserved so a user map never
+    /// collides; the value <c>data</c> names this format (a future schema could name
+    /// another). Not a property of Data — pure wire identity, written by the wire
+    /// writers and read by the recognizers.
+    /// </summary>
+    public const string WireSchema = "@schema";
+    /// <summary>The <see cref="WireSchema"/> value that identifies a Data.</summary>
+    public const string WireSchemaData = "data";
+
+    /// <summary>
+    /// True when a JSON object carries the <c>@schema:"data"</c> marker — i.e. it IS a
+    /// serialized Data, not a user map. The single recognizer for every read path (the
+    /// universal <see cref="UnwrapJsonElement"/> parse and the wire reader), so a Data is
+    /// lifted back to a Data everywhere a marked object is parsed.
+    /// </summary>
+    internal static bool IsDataMarked(System.Text.Json.JsonElement element)
+        => element.ValueKind == System.Text.Json.JsonValueKind.Object
+           && element.TryGetProperty(WireSchema, out var s)
+           && s.ValueKind == System.Text.Json.JsonValueKind.String
+           && s.GetString() == WireSchemaData;
 
     /// <summary>Cache for As&lt;T&gt;() Resolve method lookups — avoids per-call reflection.</summary>
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Reflection.MethodInfo?>
@@ -724,18 +754,12 @@ public partial class @this
         _ => null,
     };
 
-    private static bool HasWireKey(object? raw, string key) => raw switch
-    {
-        app.type.dict.@this nd => nd.Has(key),
-        IDictionary<string, object?> d => d.ContainsKey(key),
-        _ => false,
-    };
-
-    // A dict carrying the canonical Data wire shape — a `value` slot paired with a
-    // structured `type` entity. Such an object IS a serialized Data, so binding it to a
-    // Data slot must reconstruct the Data (value + type as a whole), not nest the dict.
+    // A dict that carries the `scheme=data` marker IS a serialized Data, so binding it
+    // to a Data slot must reconstruct the Data (value + type as a whole), not nest the
+    // dict. Strict: only the marker counts — a user map with value/type/name keys but no
+    // marker stays a plain dict.
     internal static bool IsWireShape(object? raw)
-        => HasWireKey(raw, "value") && HasWireKey(raw, "type");
+        => WireSlot(raw, WireSchema) as string == WireSchemaData;
 
     // Reconstruct a Data from its wire shape ({name?, value, type}). The value is set
     // as a whole under its real type; a nested wire-shaped value is itself a Data. The
@@ -1317,7 +1341,13 @@ public partial class @this
                 JsonValueKind.False => false,
                 JsonValueKind.Null => null,
                 JsonValueKind.Undefined => null,
-                JsonValueKind.Object => UnwrapJsonObject(element, depth),
+                // A @schema-marked object IS a Data — lift it back to one (its converter
+                // reads name/type/value/signature) rather than leaving it a raw dict. This
+                // is what keeps a Data nested in a parsed value (a signed list element, a
+                // stored Data) from degrading to a map on the universal parse path.
+                JsonValueKind.Object => IsDataMarked(element)
+                    ? element.Deserialize<@this>()
+                    : UnwrapJsonObject(element, depth),
                 JsonValueKind.Array => UnwrapJsonArray(element, depth),
                 _ => element
             };
@@ -1426,6 +1456,9 @@ public partial class @this
 /// Generic Data that carries a strongly-typed value.
 /// Inherits from Data, so it satisfies Task&lt;Data&gt; in the interface chain.
 /// </summary>
+// Type attributes don't inherit through the generic, so Data<T> carries WireLocal too
+// (its CanConvert/Read handle the typed wrap) — same one-shape-everywhere guarantee.
+[System.Text.Json.Serialization.JsonConverter(typeof(WireLocal))]
 public class @this<T> : @this
 {
     public new T? Value

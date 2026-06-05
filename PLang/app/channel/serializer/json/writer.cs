@@ -58,6 +58,9 @@ public sealed class Writer : IWriter
     public void BeginRecord(app.data.@this record)
     {
         _writer.WriteStartObject();
+        // scheme=data — every Data marks itself, nested ones too, so the read side
+        // recognizes a Data inside a value the same way as the top-level one.
+        _writer.WriteString(global::app.data.@this.WireSchema, global::app.data.@this.WireSchemaData);
         _writer.WriteString("name", record.Name);
 
         var typeVal = record.Type?.Name;
