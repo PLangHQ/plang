@@ -31,7 +31,7 @@ Secondary load-bearing proof (whole-branch): **the constraint compiles.** After 
 
 ## Per-stage integration cuts
 
-- **Stage 1 (`item` base)** — `number` behaves identically (arithmetic, compare, `if`, `→ returns int`); a C# test treats a `number` as `item` and gets compare/equality/truthiness through the base; `item` is abstract (cannot instantiate).
+- **Stage 1 (`item` apex)** — `number` behaves identically (arithmetic, compare, `if`, `→ returns int`); `number`/`dict`/`list` are `: item`; the load-bearing one: **`dict : item` and `Compare.Order(dict)` still throws** (`item` carries no order to leak) while `list : item` still sorts; a read-but-unexamined json value is `item(kind=json)` and narrows on touch.
 - **Stage 2 (`text`)** — `set %s%="Hello"` → `%s.length%`/upper/contains; `→ returns string` reconstructs; two `text("a")` equal as dict keys; **`foreach %s%` does not char-iterate**; empty text falsy; signed text survives `.plang`, bare on `.json`.
 - **Stage 3 (`datetime`/`date`/`time`)** — the load-bearing `date is date` / `not datetime` proof; `time` value is a `time`, not unhandled; date/datetime/time each sort within their own type; `→ returns DateOnly`/`DateTimeOffset`/`TimeOnly` reconstruct; ISO round-trip `.plang`, bare `.json`; a `DateTime` input lands as `datetime`.
 - **Stage 4 (`duration`)** — duration parts + compare; equal durations value-equal; `→ returns TimeSpan`; documented zero-duration truthiness; `.plang`/`.json`.

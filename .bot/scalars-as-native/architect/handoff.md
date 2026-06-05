@@ -6,7 +6,7 @@ Read `plan.md` first — it carries the Why, the law (the two legal `is`-switch 
 
 ## The shape of the work
 
-Every scalar value should flow as its native wrapper (`text.@this`, `number.@this`, `datetime.@this`, `duration.@this`, `bool.@this`, `null.@this`, `date.@this`, `time.@this`), each a subtype of a new abstract `item.@this`. Behavior (compare, truthiness, ops, serialize) becomes a virtual member on the type; the ~197 `is string` / `(string)value` / `value is int|bool|DateTimeOffset|TimeSpan` switches collapse into method calls or single `.Value` unwraps.
+Every scalar value should flow as its native wrapper (`text.@this`, `number.@this`, `datetime.@this`, `duration.@this`, `bool.@this`, `null.@this`, `date.@this`, `time.@this`), each `: item.@this` — where `item` is the apex *and* the un-narrowed/lazy type (the PLang `object` type folds into it). Behavior (compare, truthiness, ops, serialize) becomes a member on the type; the ~197 `is string` / `(string)value` / `value is int|bool|DateTimeOffset|TimeSpan` switches collapse into method calls or single `.Value` unwraps. **`item` carries only the universal contract** (truthiness + the lazy narrow); ordering and value-equality stay opt-in interfaces (`list` orders, `dict` doesn't), so the base never forces a contract a value can't honor.
 
 ## Why the stages are cut per-type (not per-seam)
 
@@ -18,13 +18,13 @@ The central dispatchers already make this gentle: `Compare` dispatches `lv is IO
 
 | # | Stage | Lands |
 |---|---|---|
-| 1 | `item.@this` base + contract | the abstract base; `number` inherits it as the reference |
+| 1 | `item.@this` apex + universal contract | the apex/un-narrowed type (`object` folds in); `number`/`dict`/`list` inherit; `item` carries truthiness + the lazy narrow, **not** ordering |
 | 2 | `text` native | `text.@this` built out; strings born as `text`; `is string` swept |
 | 3 | `datetime` + `date` + `time` native | three wrappers; **date stops collapsing into datetime**; date/datetime/time values born native |
 | 4 | `duration` native | `duration.@this` built out; `TimeSpan` values born native |
 | 5 | `bool` native | `bool.@this` created; bools born native; `is bool` swept |
 | 6 | `null` native | singleton `null.@this`; `Data.Null()` stamps it; `is null` value-checks swept |
-| 7 | Lock + cleanup | `Variable : item`; swap remaining `Data<rawCLR>` signatures; turn on `where T : item`; `Data<object>`→`Data<item>`; collapse `ScalarComparer`; rewrite the coercion mediator; retire `Unwrap*`/`Wrap*` |
+| 7 | Lock + cleanup | everything-`: item` (`path`/`image`/`code`/`Variable`/`Ask`/`snapshot`); swap `Data<rawCLR>`/`Data<object>` signatures; thread `where T : item` through the generic layer (~25 sites — the real cost); collapse `ScalarComparer`; rewrite the coercion mediator; retire `Unwrap*`/`Wrap*` |
 
 Each of stages 1–6 ends with **both suites green**. Stage 7 ends green **and** the `where T : item` constraint compiles (the compiler is the census for the signature swap).
 
