@@ -16,16 +16,16 @@ public partial class Range : IContext
             return Task.FromResult(global::app.data.@this<type.list>.FromError(
                 new app.error.ValidationError("Step cannot be zero", "InvalidStep")));
 
-        var list = new List<object?>();
+        var list = new app.type.list.@this { Context = Context };
         if (Step.Value > 0)
         {
             for (int i = Start.Value; i <= End.Value; i += Step.Value)
-                list.Add(i);
+                list.Add(new global::app.data.@this("", i));
         }
         else
         {
             for (int i = Start.Value; i >= End.Value; i += Step.Value)
-                list.Add(i);
+                list.Add(new global::app.data.@this("", i));
         }
 
         return Task.FromResult(global::app.data.@this<type.list>.Ok(new type.list { count = list.Count, value = list }, app.type.@this.FromName("list")));

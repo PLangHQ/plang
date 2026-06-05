@@ -15,7 +15,7 @@ public partial class Contains : IContext
 
         foreach (var (_, item) in data.EnumerateItems())
         {
-            if (Equals(item.Value, target))
+            if (global::app.data.Compare.AreEqualValues(item.Value, target))
                 return Task.FromResult(global::app.data.@this<bool>.Ok(true));
         }
 

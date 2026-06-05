@@ -105,31 +105,6 @@ public sealed class Operator
         return global::app.data.Compare.AreEqual(left, right);
     }
 
-    private static bool AreEqual(object? left, object? right)
-    {
-        (left, right) = NormalizeTypes(left, right);
-        if (left == null && right == null) return true;
-        if (left == null || right == null) return false;
-
-        if (left is string ls && right is string rs)
-            return string.Equals(ls, rs, StringComparison.OrdinalIgnoreCase);
-
-        return left.Equals(right);
-    }
-
-    // --- Comparison ---
-
-    private static int Compare(object? left, object? right)
-    {
-        (left, right) = NormalizeTypes(left, right);
-        if (left == null || right == null)
-            return left == null && right == null ? 0 : (left == null ? -1 : 1);
-        if (left is IComparable lc)
-            return lc.CompareTo(right);
-        throw new ArgumentException(
-            $"Type '{left.GetType().Name}' does not support comparison operators (>, <, >=, <=)");
-    }
-
     // --- Collection/String operators ---
 
     private static bool Contains(object? left, object? right)
@@ -137,19 +112,26 @@ public sealed class Operator
         return left switch
         {
             string s when right is string sub => s.Contains(sub, StringComparison.OrdinalIgnoreCase),
+            app.type.list.@this list => ContainsValue(list, right),
             IEnumerable coll when left is not string => ContainsElement(coll, right),
             _ => false
         };
     }
 
+    // Membership routes through the one compare path (Compare.AreEqualValues) so
+    // `%list% contains %x%` agrees with `%elem% == %x%` — structural for dict/list,
+    // case-insensitive for text. A native list holds Data; raw IEnumerable holds values.
+    private static bool ContainsValue(app.type.list.@this list, object? target)
+    {
+        foreach (var item in list.Items)
+            if (global::app.data.Compare.AreEqualValues(item.Value, target)) return true;
+        return false;
+    }
+
     private static bool ContainsElement(IEnumerable coll, object? target)
     {
         foreach (var item in coll)
-        {
-            var (normalizedItem, normalizedTarget) = NormalizeTypes(item, target);
-            if (AreEqual(normalizedItem, normalizedTarget))
-                return true;
-        }
+            if (global::app.data.Compare.AreEqualValues(item, target)) return true;
         return false;
     }
 
@@ -163,6 +145,8 @@ public sealed class Operator
 
     private static bool In(object? left, object? right)
     {
+        if (right is app.type.list.@this list)
+            return ContainsValue(list, left);
         if (right is IEnumerable enumerable and not string)
             return ContainsElement(enumerable, left);
         return false;

@@ -10,7 +10,7 @@ namespace app.data;
 ///
 /// <para>Settled contract:
 /// natural order within a type (number numeric incl. kind widening, datetime
-/// chronological, duration by length, text lexical/invariant); nulls sort last;
+/// chronological, duration by length, text lexical/case-insensitive); nulls sort last;
 /// ordering two genuinely different value types throws "cannot order X against Y";
 /// orderable = number/datetime/duration/text; equality-only = dict/list/bool/table/null
 /// (Compare throws, Equals works). The if-path coercions (numeric widening,
@@ -56,7 +56,10 @@ public static class Compare
         return lf switch
         {
             "number"   => Number.FromObject(lv)!.CompareTo(Number.FromObject(rv)),
-            "text"     => string.CompareOrdinal((string)lv, (string)rv),
+            // Case-insensitive to agree with AreEqualValues' text arm — one case
+            // policy across ordering and equality, so `"a" == "A"` and `"a" > "A"`
+            // can't contradict (sort+unique stays consistent).
+            "text"     => string.Compare((string)lv, (string)rv, System.StringComparison.OrdinalIgnoreCase),
             "duration" => ((System.TimeSpan)lv).CompareTo((System.TimeSpan)rv),
             "datetime" => ToOffset(lv).CompareTo(ToOffset(rv)),
             _          => throw new NotOrderableException($"cannot order {lf}"),
@@ -70,7 +73,12 @@ public static class Compare
     /// </summary>
     public static bool AreEqual(@this? left, @this? right) => AreEqualValues(left?.Value, right?.Value);
 
-    private static bool AreEqualValues(object? lv, object? rv)
+    /// <summary>
+    /// Structural equality on two raw values — the same path <see cref="AreEqual"/>
+    /// uses, exposed for callers that hold unwrapped values (<c>contains</c>/<c>in</c>).
+    /// Routes dict/list through structural comparison so membership agrees with <c>==</c>.
+    /// </summary>
+    public static bool AreEqualValues(object? lv, object? rv)
     {
         if (lv == null || rv == null) return lv == null && rv == null;
 

@@ -60,6 +60,35 @@ public class Stage4_TypedCompareTests
     }
 
     [Test]
+    public async Task Compare_TextCaseInsensitive_OrderAndEqualsAgree()
+    {
+        // One case policy across ordering and equality: "a" and "A" are equal AND
+        // order as equal — no trichotomy violation (equal-and-greater can't coexist),
+        // so a sort+unique pipeline stays consistent.
+        await Assert.That(Cmp.AreEqual(D("a"), D("A"))).IsTrue();
+        await Assert.That(Cmp.Order(D("a"), D("A"))).IsEqualTo(0);
+        // Lexical ordering still holds across distinct letters, case ignored.
+        await Assert.That(Cmp.Order(D("apple"), D("Banana"))).IsLessThan(0);
+        await Assert.That(Cmp.Order(D("Banana"), D("apple"))).IsGreaterThan(0);
+    }
+
+    [Test]
+    public async Task Contains_StructuralDictEquality_MatchesEqualsPath()
+    {
+        // `contains` / `in` route through the same structural equality as `==`,
+        // so a list containing a structurally-equal dict matches (not reference-equal).
+        var inner = new DictV(); inner.Set(new Data("city", "Reyk"));
+        var list = new ListV(); list.Add(new Data("", inner));
+        var probe = new DictV(); probe.Set(new Data("city", "Reyk"));
+
+        await Assert.That(await new Op("contains").Evaluate(D(list), D(probe))).IsTrue();
+        await Assert.That(await new Op("in").Evaluate(D(probe), D(list))).IsTrue();
+
+        var miss = new DictV(); miss.Set(new Data("city", "Oslo"));
+        await Assert.That(await new Op("contains").Evaluate(D(list), D(miss))).IsFalse();
+    }
+
+    [Test]
     public async Task Compare_NullElement_SortsLast()
     {
         // Compare(non-null, null) < 0 and Compare(null, non-null) > 0 — nulls last.

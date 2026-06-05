@@ -89,10 +89,11 @@ public sealed partial class @this : module.IContext, global::app.data.IBooleanRe
     /// <summary>Removes the element at <paramref name="index"/> (no-op when out of range).</summary>
     public void RemoveAt(int index) { if (index >= 0 && index < _items.Count) _items.RemoveAt(index); }
 
-    /// <summary>Removes the first element whose value equals <paramref name="value"/>.</summary>
+    /// <summary>Removes the first element whose value equals <paramref name="value"/>
+    /// through the one compare path (structural for dict/list, case-insensitive text).</summary>
     public bool Remove(object? value)
     {
-        var idx = _items.FindIndex(d => Equals(d.Value, value));
+        var idx = _items.FindIndex(d => global::app.data.Compare.AreEqualValues(d.Value, value));
         if (idx < 0) return false;
         _items.RemoveAt(idx);
         return true;
