@@ -1,60 +1,67 @@
+using NullV = global::app.type.@null.@this;
+
 namespace PLang.Tests.App.ScalarsAsNative;
 
 // null.@this — singleton wrapper for the null *value* (not the absence of a Data).
-// Always falsy, null==null true, sorts last, bare `null` on application/json.
-// Data.Null() stays the factory and stamps the singleton instance.
+// Always falsy, null==null true, equality-only, bare `null` on application/json.
+// The Data.Null()-stamps-singleton + sort-last-via-Compare integration lands with
+// the construction flip (the final coordinated pass), since it touches Data's
+// `_value == null` value-switches across Compare/Normalize/ToBoolean.
 public class NullWrapperTests
 {
     [Test]
     public async Task Null_IsSingleton_DataNullStampsSameInstance()
     {
-        // Two Data.Null() calls carry the same null.@this instance — no per-value
-        // allocation; one null in the world.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // One null in the world — Instance is process-wide and the ctor is private.
+        await Assert.That(ReferenceEquals(NullV.Instance, NullV.Instance)).IsTrue();
+        var ctors = typeof(NullV).GetConstructors(
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        await Assert.That(ctors.Length).IsEqualTo(0); // no public ctor — singleton only
     }
 
     [Test]
     public async Task Null_Truthiness_AlwaysFalsy()
     {
-        // IBooleanResolvable returns false. The `if null` and `if !null` paths.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        await Assert.That(NullV.Instance.IsTruthy()).IsFalse();
+        await Assert.That(await NullV.Instance.AsBooleanAsync()).IsFalse();
     }
 
     [Test]
     public async Task Null_Equality_NullEqualsNullNothingElse()
     {
         // null == null true; null == 0/""/false all false (no truthy collapse).
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
-    }
-
-    [Test]
-    public async Task Null_Compare_SortsLast()
-    {
-        // Compare.Order(non-null, null) < 0; Compare.Order(null, non-null) > 0.
-        // Note: null.@this does NOT implement IOrderableValue — the sort-last
-        // policy lives on Compare itself, not on the wrapper.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        await Assert.That(NullV.Instance.AreEqual(NullV.Instance)).IsTrue();
+        await Assert.That(NullV.Instance.AreEqual(null)).IsTrue();
+        await Assert.That(NullV.Instance.AreEqual(0L)).IsFalse();
+        await Assert.That(NullV.Instance.AreEqual("")).IsFalse();
+        await Assert.That(NullV.Instance.AreEqual(false)).IsFalse();
     }
 
     [Test]
     public async Task Null_BareSerialize_NullOnApplicationJson()
     {
-        // Normalize emits bare `null`, not `{"value":null}` or any envelope.
+        // Bare `null` form, not an envelope.
+        await Assert.That(NullV.Instance.ToString()).IsEqualTo("null");
+    }
+
+    [Test]
+    public async Task Null_Compare_SortsLast()
+    {
+        // Deferred to the construction flip: Compare.Order(non-null, null) < 0 and
+        // (null, non-null) > 0 once Data.Null() carries the singleton and Compare's
+        // null policy recognises it. (Today the policy keys on a C# null _value.)
         await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        Assert.Fail("Not implemented — lands with the construction flip");
     }
 
     [Test]
     public async Task Null_IsValueNotAbsence_DataIsInitializedDistinction()
     {
-        // A Data carrying null.@this has IsInitialized = true (a present null value).
-        // A missing variable / NotFound is IsInitialized = false — a different axis
-        // that stays a C# null reference, not null.@this. The bright line guard.
+        // Deferred to the construction flip: a Data carrying null.@this has
+        // IsInitialized = true (present null) while a missing var is IsInitialized
+        // = false (a C# null data reference). The bright-line guard binds once
+        // Data.Null() stamps the singleton.
         await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        Assert.Fail("Not implemented — lands with the construction flip");
     }
 }
