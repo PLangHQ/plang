@@ -153,12 +153,14 @@ public sealed partial class @this
             return (new data.@this("", value), null);
         }
 
-        // The native dict unwraps to a raw Dictionary at the typed-conversion
-        // boundary (dict → domain record, dict → Dictionary<K,V>, JSON round-trip)
-        // so the existing dictionary→T reconstruction below applies unchanged.
-        // dict → dict was already returned by the IsAssignableFrom check above.
+        // The native dict/list unwrap to a raw Dictionary/List at the typed-conversion
+        // boundary (→ domain record, → Dictionary<K,V> / List<T>, JSON round-trip) so
+        // the existing reconstruction arms below apply unchanged. Same-type was already
+        // returned by the IsAssignableFrom check above.
         if (value is app.type.dict.@this nativeDict)
             return TryConvert(nativeDict.ToRaw(), targetType, context, targetName);
+        if (value is app.type.list.@this nativeList)
+            return TryConvert(nativeList.ToRaw(), targetType, context, targetName);
 
         // Handle nullable target types
         var underlying = System.Nullable.GetUnderlyingType(targetType);

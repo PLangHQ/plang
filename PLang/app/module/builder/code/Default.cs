@@ -852,6 +852,9 @@ public class Default : IBuilder
     {
         if (steps is List<object> list) return list;
         if (steps is List<object?> nullableList) return nullableList.Where(s => s != null).Select(s => s!).ToList();
+        // The steps value is the native list type now — read each element's value.
+        if (steps is app.type.list.@this nativeList)
+            return nativeList.Items.Select(d => d.Value).Where(v => v != null).Select(v => v!).ToList();
         if (steps is System.Collections.IList rawList)
         {
             var result = new List<object>();

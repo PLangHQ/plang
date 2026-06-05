@@ -29,6 +29,12 @@ public partial class @this
     /// </summary>
     public async System.Threading.Tasks.Task<@this?> Load()
     {
+        // Byte-passthrough (row Q): a RawUntouched value is unparsed bytes/text with
+        // no in-memory reference fundamental to load (those only appear once a json
+        // value materializes into dict/list). Reading .Value here would parse it and
+        // defeat verbatim passthrough — so short-circuit. The writer emits _raw.
+        if (RawUntouched) return null;
+
         var visited = new HashSet<object>(System.Collections.Generic.ReferenceEqualityComparer.Instance);
         try
         {
@@ -67,6 +73,23 @@ public partial class @this
             if (!visited.Add(nested)) return;
             try { await LoadValue(nested.Value, visited, depth + 1); }
             finally { visited.Remove(nested); }
+            return;
+        }
+
+        // Native dict / list: recurse each element Data (the per-element walk that
+        // loads a signed image at %list[2]% before the sync writer runs).
+        if (value is app.type.dict.@this nativeDict)
+        {
+            if (!visited.Add(nativeDict)) return;
+            try { foreach (var entry in nativeDict.Entries) await LoadValue(entry, visited, depth + 1); }
+            finally { visited.Remove(nativeDict); }
+            return;
+        }
+        if (value is app.type.list.@this nativeList)
+        {
+            if (!visited.Add(nativeList)) return;
+            try { foreach (var item in nativeList.Items) await LoadValue(item, visited, depth + 1); }
+            finally { visited.Remove(nativeList); }
             return;
         }
 

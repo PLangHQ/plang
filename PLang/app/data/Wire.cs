@@ -304,6 +304,15 @@ public sealed class Wire : JsonConverter<@this>
                         using var doc = JsonDocument.ParseValue(ref reader);
                         value = LiftDataIfShaped(doc.RootElement, options);
                     }
+                    else if (reader.TokenType == JsonTokenType.StartArray)
+                    {
+                        // An array value is the native list shape on the wire — every
+                        // element self-describes as a Data envelope. Lift each back to a
+                        // Data (a signed element regains its Signature); collections hold
+                        // Data, so the list value type holds the reconstructed elements.
+                        using var doc = JsonDocument.ParseValue(ref reader);
+                        value = LiftArrayElements(doc.RootElement, options);
+                    }
                     else
                     {
                         value = JsonSerializer.Deserialize<object?>(ref reader, options);
@@ -440,6 +449,35 @@ public sealed class Wire : JsonConverter<@this>
         }
 
         return element.Deserialize<@this>(options);
+    }
+
+    // Reconstructs an array value slot into the native list value type. Every element
+    // on the wire self-describes as a Data envelope (the writer's list arm emits each
+    // via the record shape), so a name+value-shaped element lifts back to a Data
+    // (regaining its Signature); anything else is wrapped as a bare element Data.
+    private static app.type.list.@this LiftArrayElements(System.Text.Json.JsonElement array, JsonSerializerOptions options)
+    {
+        var list = new app.type.list.@this();
+        foreach (var el in array.EnumerateArray())
+        {
+            if (el.ValueKind == System.Text.Json.JsonValueKind.Object && IsDataShaped(el))
+                list.Add(el.Deserialize<@this>(options)!);
+            else
+                list.Add(new @this("", @this.UnwrapJsonElement(el)));
+        }
+        return list;
+    }
+
+    private static bool IsDataShaped(System.Text.Json.JsonElement element)
+    {
+        bool hasName = false, hasValue = false;
+        foreach (var prop in element.EnumerateObject())
+        {
+            if (!hasName && prop.Name.Equals("name", StringComparison.OrdinalIgnoreCase)) hasName = true;
+            else if (!hasValue && prop.Name.Equals("value", StringComparison.OrdinalIgnoreCase)) hasValue = true;
+            if (hasName && hasValue) return true;
+        }
+        return false;
     }
 
     public override void Write(Utf8JsonWriter writer, @this data, JsonSerializerOptions options)

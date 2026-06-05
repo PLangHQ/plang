@@ -191,7 +191,16 @@ public partial class discover : IContext
             if (!string.Equals(action.ActionName, "tag", StringComparison.OrdinalIgnoreCase)) return;
             var tagsParam = action.Parameters.FirstOrDefault(p =>
                 string.Equals(p.Name, "Tags", StringComparison.OrdinalIgnoreCase));
-            if (tagsParam?.Value is System.Collections.IEnumerable enumerable and not string)
+            if (tagsParam?.Value is app.type.list.@this nativeList)
+            {
+                // The Tags param is the native list value type — read each element's value.
+                foreach (var item in nativeList.Items)
+                {
+                    var s = item.ScalarValue?.ToString();
+                    if (!string.IsNullOrWhiteSpace(s)) tags.Add(s);
+                }
+            }
+            else if (tagsParam?.Value is System.Collections.IEnumerable enumerable and not string)
             {
                 foreach (var item in enumerable)
                 {

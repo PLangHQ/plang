@@ -485,11 +485,22 @@ public partial class @this
             yield break;
         }
 
+        if (_value is app.type.list.@this nativeList)
+        {
+            int li = 0;
+            foreach (var item in nativeList.Items)
+                yield return (new @this("", li++) { Context = _context }, item);
+            yield break;
+        }
+
+        // Raw infra collections (the native dict/list above handle value-flow). An
+        // element already a Data passes through; a bare value is wrapped. WrapItem
+        // is gone — native collections hold Data, so there's no general raw→Data path.
         if (_value is IDictionary<string, object?> typedDict)
         {
             foreach (var kvp in typedDict)
                 yield return (new @this("", kvp.Key) { Context = _context },
-                              WrapItem(kvp.Value));
+                              kvp.Value is @this kd ? kd : new @this("", kvp.Value) { Context = _context });
             yield break;
         }
 
@@ -497,7 +508,7 @@ public partial class @this
         {
             foreach (System.Collections.DictionaryEntry entry in untypedDict)
                 yield return (new @this("", entry.Key) { Context = _context },
-                              WrapItem(entry.Value));
+                              entry.Value is @this ed ? ed : new @this("", entry.Value) { Context = _context });
             yield break;
         }
 
@@ -506,22 +517,13 @@ public partial class @this
         {
             foreach (var item in (System.Collections.IEnumerable)_value!)
                 yield return (new @this("", index++) { Context = _context },
-                              WrapItem(item));
+                              item is @this id ? id : new @this("", item) { Context = _context });
             yield break;
         }
 
         if (_value != null)
             yield return (new @this("", 0) { Context = _context }, this);
     }
-
-    // Collection-element contract: an element is EITHER a Data (e.g. a value added by
-    // list.add, which carries Type/Signature) OR a bare value (e.g. an element of a list
-    // parsed from JSON). Reads normalize to Data — an existing Data passes through unchanged
-    // (identity, Type, Signature preserved), a bare value is wrapped. The navigator's element
-    // accessor (variable/navigator/List.Element) applies the same recognition rule (it wraps
-    // with the index as the name + parent link, so it can't simply call this).
-    private @this WrapItem(object? item) =>
-        item is @this data ? data : new @this("", item) { Context = _context };
 
     [JsonIgnore]
     public bool IsEmpty => !IsInitialized || _value == null ||
@@ -708,7 +710,8 @@ public partial class @this
     // checks WalkContainerVars makes — kept separate so AsCanonical can decide whether
     // to wrap into a fresh Data without invoking the walker on non-container values.
     private static bool IsWalkableContainer(object? raw) =>
-        raw is IList<object?> || raw is IDictionary<string, object?> || raw is app.type.dict.@this;
+        raw is IList<object?> || raw is IDictionary<string, object?>
+        || raw is app.type.dict.@this || raw is app.type.list.@this;
 
     // A native dict and a raw string-keyed dict both read out as a raw
     // Dictionary<string,object?> at the wire-shape boundary (the native dict
@@ -767,6 +770,7 @@ public partial class @this
     private static object? WalkContainerVars(object? raw, actor.context.@this context)
     {
         if (raw is IList<object?> list) return WalkList(list, context);
+        if (raw is app.type.list.@this nativeList) return WalkNativeList(nativeList, context);
         if (raw is app.type.dict.@this nativeDict) return WalkNativeDict(nativeDict, context);
         if (raw is IDictionary<string, object?> dict) return WalkDict(dict, context);
         return raw;
@@ -1072,6 +1076,16 @@ public partial class @this
         return result;
     }
 
+    // Walk a native list's element values for nested %var%, preserving list-ness and
+    // each element's name. Fresh list — the source is never mutated.
+    private static app.type.list.@this WalkNativeList(app.type.list.@this list, actor.context.@this context)
+    {
+        var result = new app.type.list.@this { Context = context };
+        foreach (var item in list.Items)
+            result.Add(new @this(item.Name, SubstitutePrimitive(item.Value, context)));
+        return result;
+    }
+
     // Shape contract: WalkList / WalkDict / SubstitutePrimitive only match the typed-generic
     // shapes IList<object?> / IDictionary<string, object?>. A non-generic IList (ArrayList)
     // or IDictionary (Hashtable) passes through to the fall-through and is returned as-is —
@@ -1104,6 +1118,7 @@ public partial class @this
         }
 
         if (value is IList<object?> innerList) return WalkList(innerList, context);
+        if (value is app.type.list.@this innerNativeList) return WalkNativeList(innerNativeList, context);
         if (value is app.type.dict.@this innerNativeDict) return WalkNativeDict(innerNativeDict, context);
         if (value is IDictionary<string, object?> innerDict) return WalkDict(innerDict, context);
 
@@ -1360,13 +1375,14 @@ public partial class @this
         return dict;
     }
 
-    private static List<object?> UnwrapJsonArray(JsonElement element, int depth)
+    // A json array narrows to the native `list` value type — collections hold Data
+    // end to end, so each element is wrapped in a Data (keeping its own type-tag and,
+    // when present, signature) rather than decomposed to raw CLR.
+    private static app.type.list.@this UnwrapJsonArray(JsonElement element, int depth)
     {
-        var list = new List<object?>();
+        var list = new app.type.list.@this();
         foreach (var item in element.EnumerateArray())
-        {
-            list.Add(UnwrapJsonElement(item, depth + 1));
-        }
+            list.Add(new @this("", UnwrapJsonElement(item, depth + 1)));
         return list;
     }
 

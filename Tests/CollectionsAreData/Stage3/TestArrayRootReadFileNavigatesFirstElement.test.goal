@@ -1,5 +1,10 @@
 TestArrayRootReadFileNavigatesFirstElement
 / read file.json whose root is an array — %content[0].name% resolves; the
 / implicit-first trick %content.name% also resolves to content[0].name when no
-/ list-intrinsic key matches. Acceptance from the plan's movie.
-- throw "not implemented"
+/ list-intrinsic key matches.
+- set %people% = [{name:"alice"}, {name:"bob"}]
+- write %people% to file %arrFile%
+- read file %arrFile%, write to %content%
+- assert %content[0].name% equals "alice"
+- assert %content.name% equals "alice"
+- delete file %arrFile%

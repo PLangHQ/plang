@@ -165,6 +165,15 @@ public sealed class Writer : IWriter
                 }
                 _writer.WriteEndObject();
                 return;
+            case app.type.list.@this nativeList:
+                // The native list shape. On the wire each element self-describes —
+                // Value(item) routes an element Data through the record arm, so a
+                // signed element carries its envelope. Disambiguated by wrapper
+                // type from dict (`{}`); a bare IEnumerable still falls to `[]` below.
+                BeginArray(nativeList.Count);
+                foreach (var item in nativeList.Items) Value(item);
+                EndArray();
+                return;
             case System.Collections.IEnumerable list:
                 BeginArray(-1);
                 foreach (var item in list) Value(item);

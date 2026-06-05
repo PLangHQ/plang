@@ -31,10 +31,10 @@ public class ListTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        var list = memory.GetValue("myList") as List<object?>;
+        var list = memory.GetValue("myList") as global::app.type.list.@this;
         await Assert.That(list).IsNotNull();
         await Assert.That(list!.Count).IsEqualTo(1);
-        await Assert.That(Unwrap(list[0])).IsEqualTo("first");
+        await Assert.That(list.At(0)!.Value).IsEqualTo("first");
     }
 
     [Test]
@@ -47,9 +47,9 @@ public class ListTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        var list = memory.GetValue("myList") as List<object?>;
+        var list = memory.GetValue("myList") as global::app.type.list.@this;
         await Assert.That(list!.Count).IsEqualTo(3);
-        await Assert.That(Unwrap(list[2])).IsEqualTo("c");
+        await Assert.That(list.At(2)!.Value).IsEqualTo("c");
     }
 
     [Test]
@@ -62,8 +62,8 @@ public class ListTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        var list = memory.GetValue("myList") as List<object?>;
-        await Assert.That(Unwrap(list![1])).IsEqualTo("b");
+        var list = memory.GetValue("myList") as global::app.type.list.@this;
+        await Assert.That(list!.At(1)!.Value).IsEqualTo("b");
     }
 
     // --- Remove ---

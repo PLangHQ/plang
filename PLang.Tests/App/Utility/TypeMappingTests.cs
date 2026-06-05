@@ -149,7 +149,7 @@ public class TypeMappingTests
     {
         var type = TypeMapping.GetType("list");
 
-        await Assert.That(type).IsEqualTo(typeof(List<object>));
+        await Assert.That(type).IsEqualTo(typeof(app.type.list.@this));
     }
 
     [Test]
@@ -157,7 +157,7 @@ public class TypeMappingTests
     {
         var type = TypeMapping.GetType("array");
 
-        await Assert.That(type).IsEqualTo(typeof(object[]));
+        await Assert.That(type).IsEqualTo(typeof(app.type.list.@this));
     }
 
     [Test]

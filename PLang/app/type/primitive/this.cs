@@ -45,8 +45,11 @@ public static class @this
             ["guid"] = typeof(System.Guid),
             ["byte"] = typeof(byte),
             ["bytes"] = typeof(byte[]),
-            ["list"] = typeof(List<object>),
-            ["array"] = typeof(object[]),
+            // list/array → the native list value type (collections hold Data).
+            // The raw List<object> entry that used to back "list" is retired;
+            // typed lists still surface as the generic `list<t>` shape via GetTypeName.
+            ["list"] = typeof(app.type.list.@this),
+            ["array"] = typeof(app.type.list.@this),
             // dict/dictionary/map → the native object value type (collections
             // hold Data). The raw Dictionary<string,object> entry that used to
             // back these is retired; typed dictionaries still surface as the
@@ -103,6 +106,8 @@ public static class @this
             // Native object value type → "dict" (keeps the no-context Data.Type
             // derivation from collapsing to the @this class name "this").
             [typeof(app.type.dict.@this)] = "dict",
+            // Native list value type → "list" (same no-context derivation reason).
+            [typeof(app.type.list.@this)] = "list",
         };
 
     /// <summary>

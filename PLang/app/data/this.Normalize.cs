@@ -134,6 +134,24 @@ public partial class @this
             finally { visited.Remove(value); }
         }
 
+        // Native list: walk its element Data into a fresh list, normalizing each
+        // element's value. Elements stay Data so the wire writer self-describes
+        // them (a signed element keeps its envelope). Observation-only — the
+        // source list is never mutated.
+        if (value is app.type.list.@this nativeList)
+        {
+            if (!visited.Add(nativeList))
+                throw CycleError(nativeList);
+            try
+            {
+                var copy = new app.type.list.@this();
+                foreach (var item in nativeList.Items)
+                    copy.Add((@this)NormalizeValue(item, mode, visited, depth + 1, types)!);
+                return copy;
+            }
+            finally { visited.Remove(nativeList); }
+        }
+
         // Lists / arrays --------------------------------------------------
         if (value is IEnumerable enumerable)
         {

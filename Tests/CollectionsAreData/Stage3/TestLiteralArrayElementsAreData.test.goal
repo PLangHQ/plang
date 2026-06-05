@@ -2,4 +2,6 @@ TestLiteralArrayElementsAreData
 / set %list% = [1, "two"] — both elements are Data carrying their type tag
 / (number, text), not raw primitives. %list[0]% = 1, %list[1]% = "two". After
 / Stage 3, every list element is a Data — the [raw, Data] split is gone.
-- throw "not implemented"
+- set %list% = [1, "two"]
+- assert %list[0]% equals 1
+- assert %list[1]% equals "two"

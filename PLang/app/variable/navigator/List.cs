@@ -9,10 +9,15 @@ namespace app.variable.navigator;
 public sealed class List : INavigator
 {
     public bool CanNavigate(global::app.data.@this data)
-        => data.Value is IList || IsGenericList(data.Value);
+        => data.Value is app.type.list.@this || data.Value is IList || IsGenericList(data.Value);
 
     public global::app.data.@this Navigate(global::app.data.@this data, string key)
     {
+        // The native `list` value type owns index/accessor navigation — its elements
+        // are already Data, so they return directly (no WrapItem). Symmetric to dict.
+        if (data.Value is app.type.list.@this nativeList)
+            return NavigateNative(nativeList, key, data);
+
         var value = data.Value;
         var list = value as IList ?? WrapGenericList(value);
         if (list == null || list.Count == 0)
@@ -47,9 +52,37 @@ public sealed class List : INavigator
     }
 
     /// <summary>
-    /// Returns a list element as Data. If the raw slot is already a Data (list.add stores
-    /// the whole Data), return it as-is — don't double-wrap — so callers get the
-    /// element's original type, context, and metadata intact.
+    /// Navigation on the native list value type. Intrinsics (count/length, first, last,
+    /// random, index) win; any other key falls through to the implicit-first element
+    /// (`%addresses.street%` → `addresses[0].street`). Every element IS a Data already,
+    /// so it returns directly — no raw-vs-Data recognition, no WrapItem.
+    /// </summary>
+    private static global::app.data.@this NavigateNative(app.type.list.@this list, string key, global::app.data.@this parent)
+    {
+        if (string.Equals(key, "count", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(key, "length", StringComparison.OrdinalIgnoreCase))
+            return new data.@this(key, list.Count, parent: parent);
+
+        if (list.Count == 0) return global::app.data.@this.NotFound(key);
+
+        if (string.Equals(key, "first", StringComparison.OrdinalIgnoreCase))
+            return list.First!;
+        if (string.Equals(key, "last", StringComparison.OrdinalIgnoreCase))
+            return list.Last!;
+        if (string.Equals(key, "random", StringComparison.OrdinalIgnoreCase))
+            return list.At(Random.Shared.Next(list.Count))!;
+
+        if (int.TryParse(key, out var index))
+            return list.At(index) ?? global::app.data.@this.NotFound(key);
+
+        // Implicit first: delegate to the first element's navigator.
+        return ValueNavigators.Navigate(list.First!, key);
+    }
+
+    /// <summary>
+    /// Returns a raw list element as Data — fallback for genuine raw IList values
+    /// (infra collections). A native `list`'s elements never reach here. An element
+    /// already a Data returns as-is; a bare value is wrapped.
     /// </summary>
     private static global::app.data.@this Element(object? raw, string key, global::app.data.@this parent)
     {

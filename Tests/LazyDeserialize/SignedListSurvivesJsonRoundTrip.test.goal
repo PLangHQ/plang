@@ -1,6 +1,11 @@
 Start
-/ Signed Data added to a list, persisted as JSON, then read back, must still verify
-/ at %list[0]%. Sister to SignedDataSurvivesInList (in-memory add path) — closes the
-/ parse seam where today UnwrapJsonArray decomposes elements to raw and the signature
-/ is lost.
-- throw "not implemented"
+/ F1 (load-bearing): a signed Data added to a list, persisted via the .plang wire
+/ and read back, still verifies at %list[0]%. The wire self-describes each element
+/ as Data so the signature survives at rest inside the collection.
+- sign "hello world", write to %signed%
+- add %signed% to %list%
+- save %list% to file 'signed_list_roundtrip.plang'
+- read file 'signed_list_roundtrip.plang', write to %roundtrip%
+- verify %roundtrip[0]%, write to %ok%
+- assert %ok% equals true
+- delete file 'signed_list_roundtrip.plang'

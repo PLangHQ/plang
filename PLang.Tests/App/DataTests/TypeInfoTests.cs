@@ -45,7 +45,7 @@ public class TypeTests
     {
         var type = Type.FromName("list");
 
-        await Assert.That(type.ClrType).IsEqualTo(typeof(List<object>));
+        await Assert.That(type.ClrType).IsEqualTo(typeof(app.type.list.@this));
     }
 
     [Test]

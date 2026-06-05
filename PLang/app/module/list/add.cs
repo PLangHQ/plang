@@ -14,38 +14,28 @@ public partial class Add : IContext
     {
         var data = Context.Variable.Get(ListName.Value);
         var existing = data.Value;
-        var list = existing as List<object?>;
+        var list = existing as app.type.list.@this;
 
         if (list == null)
         {
-            // Convert non-list value or create new list
-            if (existing is System.Collections.IList rawList)
-            {
-                list = new List<object?>();
-                foreach (var item in rawList) list.Add(item);
-            }
+            // Promote a non-list (or legacy raw list) value into the native list type.
+            list = new app.type.list.@this { Context = Context };
+            if (existing is app.type.list.@this) { /* unreachable — the cast above hit */ }
+            else if (existing is System.Collections.IEnumerable seq && existing is not string)
+                foreach (var item in seq)
+                    list.Add(item as data.@this ?? new data.@this("", item));
             else if (existing != null)
-            {
-                list = new List<object?> { existing };
-            }
-            else
-            {
-                list = new List<object?>();
-            }
+                list.Add(existing as data.@this ?? new data.@this("", existing));
             Context.Variable.Set(ListName.Value, list);
         }
 
-        // Shallow-clone into its own Data so the entry is an independent binding —
-        // value (lazy raw included), type and signature shared by reference, no
-        // materialize, no deep clone. `set %x% = ...` replaces the binding (it never
-        // mutates an aliased Data), so a later reassignment of %x% leaves the entry
-        // untouched. Reference semantics for in-place mutation of a shared value object.
-        data.@this snapshot = Value.ShallowClone(Value.Name);
-
+        // Store the element Data by reference — no clone. Stage 2's rebind means
+        // `set %x% = ...` mints a new Data rather than mutating the one the list
+        // holds, so the captured element stays untouched without a defensive copy.
         if (AtIndex.Value >= 0 && AtIndex.Value <= list.Count)
-            list.Insert(AtIndex.Value, snapshot);
+            list.Insert(AtIndex.Value, Value);
         else
-            list.Add(snapshot);
+            list.Add(Value);
 
         return Task.FromResult(global::app.data.@this<type.list>.Ok(new type.list { count = list.Count, value = list }, app.type.@this.FromName("list")));
     }
