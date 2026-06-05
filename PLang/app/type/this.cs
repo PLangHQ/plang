@@ -312,12 +312,31 @@ public sealed class @this
     {
         if (other == null) return false;
         if (string.Equals(Name, other.Name, System.StringComparison.OrdinalIgnoreCase)) return true;
+        // `item` is the apex of the value-type lattice (≈ C# object) — every value
+        // is-a item. The narrow (item+kind=json → dict/list) keeps this true.
+        if (string.Equals(other.Name, "item", System.StringComparison.OrdinalIgnoreCase)) return true;
         var thisClr = ClrType;
         var otherClr = other.ClrType;
         if (thisClr == null || otherClr == null) return false;
         // Walk the inheritance chain by CLR-type identity (transitive: image : path,
         // path : X ⟹ image Is X), guarding against self/cycles.
         return Reaches(thisClr, otherClr, new HashSet<System.Type>());
+    }
+
+    /// <summary>
+    /// Name-string IS-A query — resolves <paramref name="typeName"/> to a type and
+    /// asks <see cref="Is(@this)"/>. Lets <c>if %x% is dict</c> / <c>is number</c> /
+    /// <c>is item</c> resolve from a PLang type name without the caller minting a
+    /// comparison entity. <c>item</c> is the apex: true for any value.
+    /// </summary>
+    public bool Is(string typeName)
+    {
+        if (string.IsNullOrWhiteSpace(typeName)) return false;
+        if (string.Equals(typeName, "item", System.StringComparison.OrdinalIgnoreCase)) return true;
+        if (string.Equals(Name, typeName, System.StringComparison.OrdinalIgnoreCase)) return true;
+        var other = Context?.App.Type[typeName] ?? FromName(typeName);
+        other.Context ??= Context;
+        return Is(other);
     }
 
     private static bool Reaches(System.Type clr, System.Type target, HashSet<System.Type> seen)

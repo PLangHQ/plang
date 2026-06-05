@@ -34,6 +34,10 @@ public sealed class Operator
             ["endswith"] = (l, r) => Task.FromResult(StringOp(Val(l), Val(r), (s, v) => s.EndsWith(v, StringComparison.OrdinalIgnoreCase))),
             ["in"] = (l, r) => Task.FromResult(In(Val(l), Val(r))),
             ["isempty"] = (l, _) => Task.FromResult(IsEmpty(Val(l))),
+            // `%x% is dict` / `is number` / `is item` — IS-A query against the
+            // value-type lattice. The right operand is the PLang type name. `item`
+            // is the apex (true for any value).
+            ["is"] = (l, r) => Task.FromResult(IsType(l, r)),
             ["and"] = async (l, r) => await IsTruthy(l) && await IsTruthy(r),
             ["or"] = async (l, r) => await IsTruthy(l) || await IsTruthy(r),
         };
@@ -64,6 +68,14 @@ public sealed class Operator
 
     /// <summary>Both operands have a non-null value — the ordering operators are false otherwise.</summary>
     private static bool BothPresent(data.@this? left, data.@this? right) => left?.Value != null && right?.Value != null;
+
+    /// <summary>IS-A: does the left value's type satisfy the named type (right operand)?</summary>
+    private static bool IsType(data.@this? left, data.@this? right)
+    {
+        var typeName = right?.Value?.ToString();
+        if (left == null || string.IsNullOrWhiteSpace(typeName)) return false;
+        return left.Type.Is(typeName);
+    }
 
     /// <summary>
     /// Truthy check on Data. Routes through <c>Data.ToBooleanAsync()</c> so an

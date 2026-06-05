@@ -1,5 +1,11 @@
 TestIsApexSurvivesLazyNarrow
-/ An unread Data with type=item, kind=json is-a item. After first navigation it
-/ narrows to dict (or list) — and stays is-a item too. IS-A is preserved through
-/ the lazy narrow; the type tree never loses its top.
-- throw "not implemented"
+/ A json value is-a item before and after the lazy narrow: after first navigation
+/ it narrows to dict and stays is-a item too. IS-A is preserved through the narrow.
+- set %f% = "narrow.json"
+- write {city:"Reyk"} to file %f%
+- read file %f%, write to %content%
+- assert %content% is item
+- assert %content.city% equals "Reyk"
+- assert %content% is dict
+- assert %content% is item
+- delete file %f%

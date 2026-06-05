@@ -9,9 +9,18 @@ public class Stage6_ItemApexTests
     [Test]
     public async Task TypeIs_ItemApex_TrueForAnyValue()
     {
-        // data.Type.Is("item") is true for every value (number, dict, list, path, image, …).
+        // data.Type.Is("item") is true for every value (number, dict, list, bool, text).
         // Item is the top of the lattice; nothing falls outside it.
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        await Assert.That(new Data("", 1L).Type.Is("item")).IsTrue();
+        await Assert.That(new Data("", "x").Type.Is("item")).IsTrue();
+        await Assert.That(new Data("", true).Type.Is("item")).IsTrue();
+        await Assert.That(new Data("", new global::app.type.dict.@this()).Type.Is("item")).IsTrue();
+        await Assert.That(new Data("", new global::app.type.list.@this()).Type.Is("item")).IsTrue();
+
+        // The is-query reaches down the lattice from item to the concrete type:
+        // `is dict` is true for a dict, false for a list; `is number` for a literal.
+        await Assert.That(new Data("", new global::app.type.dict.@this()).Type.Is("dict")).IsTrue();
+        await Assert.That(new Data("", new global::app.type.list.@this()).Type.Is("dict")).IsFalse();
+        await Assert.That(new Data("", 1L).Type.Is("number")).IsTrue();
     }
 }

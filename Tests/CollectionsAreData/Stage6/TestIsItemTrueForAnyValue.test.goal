@@ -1,4 +1,11 @@
 TestIsItemTrueForAnyValue
-/ if %x% is item — true for every value: a number, a text, a dict, a list, a
-/ path, an image. item is the apex of the type lattice; nothing falls outside.
-- throw "not implemented"
+/ if %x% is item — true for every value: a number, a text, a dict, a list.
+/ item is the apex of the type lattice; nothing falls outside.
+- set %n% = 1
+- assert %n% is item
+- set %t% = "hi"
+- assert %t% is item
+- set %d% = {a:1}
+- assert %d% is item
+- set %l% = [1, 2]
+- assert %l% is item
