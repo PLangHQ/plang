@@ -51,20 +51,15 @@ Today `list.@this` is a flat `List<Data> _items`. It becomes a list of rows + a 
 
 `FromRaw` (the build-at-edge) wraps its source as a **single row**. The in-place mutators' promote-and-write-back stays — the mutation is now a row edit.
 
-## The one decision that defines this branch
+## A row holds a `Data`, whole
 
-**What does a row store?** `add %b%` (b=[50,60]) — the row holds [50,60]. Two ways:
+Each row is the `Data` you added — type, signature, and properties intact. A list never decomposes a `Data` to its raw value; the collections-are-data rule holds inside the row model too. `add` stores the `Data` it's handed as one new row and never touches the existing rows. A row's weight is its value's flattened item count.
 
-- **Raw payload** — store `[50,60]` as a plain value. Cheap (one row Data per `add`, not one Data per leaf — this is the whole point, your reason for the model). But the leaves 50/60 have no per‑element `Data`/signature sitting in memory.
-- **Native list** — the row holds a `list.@this` (a Data per leaf). Each leaf keeps its signature, but you're back to a Data per element — **no memory win.**
+## Implementation notes
 
-Recommended: **store raw, and wrap each leaf as a `Data` on iteration** (re-deriving its type from the value), keeping a real stored `Data` only for the few leaves that actually carry a signature. That's what makes the chunk model a memory win instead of just a reshuffle. **Confirm with Ingi** — it's the crux.
-
-## Other open items
-
-- **Flat-index → `(row, offset)`** for `get/set/remove at N` — cheap with the running weights; spell it out so no read API leaks the row structure.
-- **Wire shape** — a leaf rides bare when its type is recoverable from the JSON token, envelope only when not (signature, decimal-vs-double, datetime-as-string, bytes). Ties into the F5 / "type-driven nested Data" todo — same decision, don't solve twice.
-- **`matrix` type** for 2‑D positional data — deferred; flagged only so "lists are flat sequences" has a home for grids.
+- **Flat-index → `(row, offset)`** for `get/set/remove at N` — cheap with the running weights; keep it internal so no read API leaks the row structure.
+- **Wire is unaffected** — serialization consumes the flattened `Items`, so `Normalize`/the json writer work as today.
+- **`matrix` type** for 2‑D positional data — out of scope; noted so "lists are flat sequences" has a home for grids later.
 
 ## Done when
 
