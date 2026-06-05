@@ -693,7 +693,7 @@ public partial class @this
             // whole) rather than wrapping the dict as a Data value, which would mislabel
             // the type as `object` and lose the inner value's real type.
             @this transient = IsWireShape(walked)
-                ? FromWireShape(AsRawWireDict(walked)!, Name, context)
+                ? FromWireShape(walked, Name, context)
                 : new @this(Name, walked, _type, Parent) { Context = context };
             transient.Properties = Properties;
             transient.OnCreate   = OnCreate;
@@ -713,46 +713,55 @@ public partial class @this
         raw is IList<object?> || raw is IDictionary<string, object?>
         || raw is app.type.dict.@this || raw is app.type.list.@this;
 
-    // A native dict and a raw string-keyed dict both read out as a raw
-    // Dictionary<string,object?> at the wire-shape boundary (the native dict
-    // keeps Data-keyed entries in memory; here we want the raw read-out form).
-    private static IDictionary<string, object?>? AsRawWireDict(object? raw) => raw switch
+    // Reads a wire slot from either a native dict (Get hands back the inner Data —
+    // its value's type/signature stays intact) or a raw string-keyed dict, WITHOUT
+    // decomposing the whole container. Only the value/type slots are ever touched,
+    // so unrelated nested values keep their native Data-keying.
+    private static object? WireSlot(object? raw, string key) => raw switch
     {
-        IDictionary<string, object?> d => d,
-        app.type.dict.@this nd => nd.ToRaw(),
+        app.type.dict.@this nd => nd.Get(key)?.Value,
+        IDictionary<string, object?> d => d.TryGetValue(key, out var v) ? v : null,
         _ => null,
+    };
+
+    private static bool HasWireKey(object? raw, string key) => raw switch
+    {
+        app.type.dict.@this nd => nd.Has(key),
+        IDictionary<string, object?> d => d.ContainsKey(key),
+        _ => false,
     };
 
     // A dict carrying the canonical Data wire shape — a `value` slot paired with a
     // structured `type` entity. Such an object IS a serialized Data, so binding it to a
     // Data slot must reconstruct the Data (value + type as a whole), not nest the dict.
     internal static bool IsWireShape(object? raw)
-        => AsRawWireDict(raw) is { } d && d.ContainsKey("value") && d.ContainsKey("type");
+        => HasWireKey(raw, "value") && HasWireKey(raw, "type");
 
     // Reconstruct a Data from its wire shape ({name?, value, type}). The value is set
     // as a whole under its real type; a nested wire-shaped value is itself a Data. The
     // slot's name (not the wire dict's) is used so the value's identity is its content.
-    internal static @this FromWireShape(IDictionary<string, object?> wire, string name, actor.context.@this? context)
+    internal static @this FromWireShape(object? wire, string name, actor.context.@this? context)
     {
-        object? rawValue = wire.TryGetValue("value", out var v) ? v : null;
+        object? rawValue = WireSlot(wire, "value");
         object? innerValue = IsWireShape(rawValue)
-            ? FromWireShape(AsRawWireDict(rawValue)!, "", context)
+            ? FromWireShape(rawValue, "", context)
             : rawValue;
-        type? typeEntity = wire.TryGetValue("type", out var t) ? TypeFromWire(t, context) : null;
+        type? typeEntity = TypeFromWire(WireSlot(wire, "type"), context);
         return new @this(name, innerValue, typeEntity) { Context = context };
     }
 
     // Build a type entity from its wire form — a bare name string ("text") or the
-    // structured {name, kind?, strict?} dict.
+    // structured {name, kind?, strict?} object (a native dict, navigated in place).
     private static type? TypeFromWire(object? t, actor.context.@this? context)
     {
-        // A structured type wire ({name, kind?, strict?}) round-trips as a native
-        // dict now — read it out raw so the IDictionary case below covers both.
-        if (t is app.type.dict.@this ndType) t = ndType.ToRaw();
         switch (t)
         {
             case string s when !string.IsNullOrWhiteSpace(s):
                 return type.Create(s, context: context);
+            case app.type.dict.@this nd when nd.Get("name")?.Value is { } nativeName:
+                return type.Create(nativeName.ToString()!,
+                    nd.Get("kind")?.Value?.ToString(),
+                    nd.Get("strict")?.Value is bool nb && nb, context);
             case IDictionary<string, object?> td when td.TryGetValue("name", out var nm) && nm != null:
                 string? kind = td.TryGetValue("kind", out var k) ? k?.ToString() : null;
                 bool strict = td.TryGetValue("strict", out var st) && st is bool b && b;

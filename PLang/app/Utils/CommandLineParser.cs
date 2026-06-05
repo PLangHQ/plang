@@ -134,9 +134,10 @@ public class CommandLineParser
 				// CLI config is infra (a flag property bag, not a PLang value), so
 				// keep it as a raw Dictionary/List rather than the native dict/list
 				// value types — the --debug/--test/--app consumers branch on
-				// IDictionary<string,object?>.
+				// IDictionary<string,object?>. Object and array stay symmetric: both
+				// decompose to raw via ToRaw (dict.ToRaw now recurses nested lists too).
 				JsonValueKind.Object => ((app.type.dict.@this)data.@this.UnwrapJsonElement(element)!).ToRaw(),
-				JsonValueKind.Array => data.@this.UnwrapJsonElement(element),
+				JsonValueKind.Array => ((app.type.list.@this)data.@this.UnwrapJsonElement(element)!).ToRaw(),
 				JsonValueKind.Number => element.TryGetInt64(out var l) ? (object)l : element.GetDouble(),
 				JsonValueKind.True => true,
 				JsonValueKind.False => false,

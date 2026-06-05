@@ -886,3 +886,15 @@ through it (likely the duration type's own renderer/Read once the format-layer
 `lazy-deserialize` Stage 3 keeps a **lean** `LiftDataIfShaped` (`app/data/Wire.cs`): it recognizes a nested Data by its envelope shape (`name`+`value` keys) in the eager-untyped path, because a nested Data in a bare value slot has **no type slot** to drive reconstruction (there is no `data` type, and `json.Writer` emits a nested Data inline with a type slot only when `!Type.IsNull`). The `GetRawText` double-parse was dropped, but the shape-recognition remains.
 
 Endgame (separate branch): add a `data` type to the registry, stamp a Data-valued slot with it on **write**, and reconstruct nested Data purely via `Readers.Of("data", …)` — then the envelope-recognition can be deleted entirely and reconstruction is 100% type-driven (the branch thesis). This is a **wire-format + new-type change on the serialization core** (touches snapshot + signing round-trips), so it was held out of Stage 3. Pick up when the snapshot branch or a dedicated pass touches the wire shape. Note: recognizing the Data envelope is legitimately a leaf serializer's job (not the banned content-sniffing, not a courier #7) — so the lean version is correct interim, not a smell to rush.
+
+## Cleanup CommandLineParser — too low-level (2026-06-05, Ingi)
+
+`app/Utils/CommandLineParser.cs` hand-parses each flag value through
+`JsonDocument` + `UnwrapJsonElement` + per-`ValueKind` branching, then decomposes
+the native dict/list back to raw for the config bag (architect's item D on
+`collections-are-data`). In theory the whole thing should be roughly
+`JsonSerializer.Deserialize<Build>(--build)` (and the equivalent typed shape for
+`--debug`/`--test`/`--app`) — parse straight into the strongly-typed option record
+instead of a raw `IDictionary<string,object?>` the consumers then re-read by key.
+Kills the build-native-then-flatten round-trip and the stringly-typed property bag
+in one move. Perimeter/infra, low priority — do it as a focused pass, not mid-branch.

@@ -124,9 +124,12 @@ public sealed partial class @this : module.IContext, global::app.data.IBooleanRe
     private static object? Unwrap(object? value) => value switch
     {
         @this nested => nested.ToRaw(),
-        // A list value may hold dict elements (Stage 1 lists are still
-        // List<object?>); unwrap each so a nested object inside a list reads out
-        // raw too — otherwise STJ would reflect the dict's C# surface.
+        // A nested native list decomposes through its own ToRaw (symmetric with
+        // list.ToRaw's nested-dict arm) — list.@this is not IEnumerable, so without
+        // this arm it would survive un-decomposed in the supposedly-raw dictionary.
+        app.type.list.@this nestedList => nestedList.ToRaw(),
+        // A raw CLR list may still hold dict/list elements; unwrap each so a nested
+        // object reads out raw too — otherwise STJ would reflect its C# surface.
         string or byte[] => value,
         System.Collections.IEnumerable seq => seq.Cast<object?>().Select(Unwrap).ToList(),
         _ => value,
