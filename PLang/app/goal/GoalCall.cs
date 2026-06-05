@@ -83,20 +83,59 @@ public sealed class GoalCall : module.IEvent
                 var prPathStr = dict.TryGetValue("prPath", out var pr) ? pr?.ToString() : null;
                 var prPath = prPathStr != null ? path.Resolve(prPathStr, context) : null;
                 List<data.@this>? parameters = null;
-                if (dict.TryGetValue("parameters", out var p) && p is IList<object?> pList)
+                if (dict.TryGetValue("parameters", out var p))
                 {
-                    parameters = pList
-                        .OfType<IDictionary<string, object?>>()
-                        .Select(d => data.@this.ResolveParameter(
-                            d.TryGetValue("name", out var dn) ? dn?.ToString() ?? "" : "",
-                            d.TryGetValue("value", out var dv) ? dv : null,
-                            context))
+                    var entries = ParamEntries(p)
+                        .Select(e => data.@this.ResolveParameter(e.name, e.value, context))
                         .ToList();
+                    if (entries.Count > 0) parameters = entries;
                 }
                 return data.@this.Ok(new GoalCall { Name = name, PrPath = prPath, Parameters = parameters });
             default:
                 return data.@this.FromError(new global::app.error.Error(
                     $"Cannot convert {value.GetType().Name} to a goal call.", "GoalCallConversionFailed", 400));
+        }
+    }
+
+    /// <summary>
+    /// Normalises the <c>parameters</c> slot to a flat (name, value) sequence,
+    /// independent of the container/element CLR shape. The collections-are-data
+    /// world hands this slot as a native <c>list.@this</c> of <c>Data</c>-wrapped
+    /// <c>dict.@this</c> entries; the legacy/CLR path hands an
+    /// <c>IList&lt;object?&gt;</c> of <c>IDictionary&lt;string,object?&gt;</c>. Both
+    /// (and a Data-wrapped element of either) collapse here so a goal-call's
+    /// <c>goal=%item%</c> parameter is never silently dropped.
+    /// </summary>
+    private static IEnumerable<(string name, object? value)> ParamEntries(object? p)
+    {
+        IEnumerable<object?> Elements()
+        {
+            switch (p)
+            {
+                case app.type.list.@this nativeList:
+                    foreach (var item in nativeList.Items) yield return item;
+                    break;
+                case System.Collections.IEnumerable seq when p is not string:
+                    foreach (var item in seq) yield return item;
+                    break;
+            }
+        }
+
+        foreach (var element in Elements())
+        {
+            // A native list element is a Data wrapping the entry dict; unwrap it.
+            var entry = element is data.@this d ? d.Value : element;
+            switch (entry)
+            {
+                case app.type.dict.@this nd:
+                    yield return (nd.Get("name")?.Value?.ToString() ?? "", nd.Get("value")?.Value);
+                    break;
+                case IDictionary<string, object?> id:
+                    yield return (
+                        id.TryGetValue("name", out var en) ? en?.ToString() ?? "" : "",
+                        id.TryGetValue("value", out var ev) ? ev : null);
+                    break;
+            }
         }
     }
 
