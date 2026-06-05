@@ -28,12 +28,19 @@ Everywhere else, asking *what a value is* to decide behavior is the smell — it
 | `datetime` | thin (`Value` + `ToString`) | build out: compare, truthiness, formatting/parts, value-equality, serializer |
 | `duration` | thin (`Value` + `ToString`) | build out: compare, truthiness, parts, value-equality, serializer |
 | `bool` | **none** | create `bool.@this` — the truthiness primitive; equality + serializer. (Decided — see below.) |
+| `null` | **none** (flows as `Data.Null()`) | create singleton `null.@this` — truthiness (always false), `null == null` equality, bare `null` serializer; hosts null's behavior so the `is null` value-switches dissolve. (Decided — see below.) |
 
-Out of scope: `dict`/`list` (done), `path`/`image`/`code` (already flow as wrappers), the wire format. `object`/`primitive` are registry plumbing, not values. **`null` is already native** — a null value flows as `Data.Null()` (a present Data with type `null`, value `null`; the factory exists on `data/this.cs`). What's out of scope is a `null.@this` *wrapper class*: null has no behavior to carry and `Data.ToBoolean()` already reads it as falsy.
+Out of scope: `dict`/`list` (done), `path`/`image`/`code` (already flow as wrappers), the wire format. `object`/`primitive` are registry plumbing, not values.
 
 ### Decided — `bool` gets a wrapper
 
 `bool` is special: it *is* the truthiness primitive, and `IBooleanResolvable.AsBooleanAsync()` always bottoms out at a raw `bool`, so the wrapper can't be turtles-all-the-way. **Decided (Ingi): create `bool.@this`** — same compare/equality/serialize surface as the others, the truthiness contract bottoming out at the raw `bool` it wraps. The reason is consistency: `Compare.Family`'s `bool =>` arm and the `is bool` sites dissolve like the rest. Simpler code, no special-case `if` — the value just flows.
+
+### Decided — `null` gets a singleton wrapper
+
+Reconsidered (Ingi): give null a `null/this.cs` (`null.@this`) too. It hosts null's behavior — truthiness (always false), `null == null` equality, bare `null` serialization — so the scattered `is null` / `_value == null` value-switches dissolve exactly like the other scalars, finishing the thesis for null. Two constraints keep it cheap and correct:
+- **Singleton.** There is one null; `null.@this` is a shared instance (`null.@this.Instance`), not a per-value allocation. `Data.Null()` stays the factory and stamps the singleton; `null.@this : item.@this`, so it flows in `Data<item>` slots.
+- **It is the null *value*, not the absence of a Data.** A Data whose value is null → `null.@this`. A missing variable / `NotFound` / uninitialised read is a null *`data` reference* (no box at all, `IsInitialized = false`) — a different axis that stays a C# null. Don't let `null.@this` try to represent "no Data."
 
 ### Decided — the polymorphic value slot is `item`, not `object`
 
@@ -43,12 +50,12 @@ Enforcement — two options Ingi raised:
 - **Runtime guard:** reject `Data<T>` whose `T` isn't a known plang value type. Catches misuse, but it's a runtime check.
 - **`item.@this` as a base class** all value-wrappers inherit (recommended). Then `Data<item>` is the polymorphic slot and `T : item` is enforced at compile time; `Data<object>` stops being writable for the value case, and the double-wrap footgun dies structurally — `Data` is the *box*, not an `item`, so a `Data<item>` can never nest a `Data`.
 
-Recommendation: **introduce `item.@this` as an abstract base** and fold onto it the shared value contract this branch is already adding to each wrapper — value-equality, `IOrderableValue`, `IBooleanResolvable`, bare serialization — instead of N parallel interfaces. Three cautions, all from the box/apex rule ([[plang-value-and-type-model]]):
+Recommendation: **introduce `item.@this` as an abstract base** and fold onto it the shared value contract this branch is already adding to each wrapper — value-equality, `IOrderableValue`, `IBooleanResolvable`, bare serialization — instead of N parallel interfaces. The box/apex rule ([[plang-value-and-type-model]]) pins three points:
 - `item.@this` is **abstract** — the apex stores nothing; there is never a bare `item` instance holding a value.
 - Collection element slots stay `Data<List<data>>`, **not** `List<item>` — elements are the box, carrying their own name/type/signature.
-- The constraint is **not** `Data<T> where T : item` globally — typed leaf slots (`Data<int>`, `Data<Variable>`, `[Code] T`) legitimately carry non-item CLR types at the perimeter / name-binding / code seams. Only the *polymorphic* slot moves `Data<object>` → `Data<item>`.
+- Every *value* slot is `Data<wrapper>`, **never** `Data<raw-CLR>` (Ingi): `Data<int>` → `Data<number>`, `Data<string>` → `Data<text>`, `Data<bool>` → `Data<bool.@this>`. Raw CLR (`int`, `string`, `DateTime`) shows up only as the wrapper's backing `.Value`, unwrapped once at the BCL perimeter / conversion leaf. So `Data<T> where T : item` *does* hold for value slots — the win you're after. Two carve-outs, neither a value: `Data<Variable>` (name-binding — a *reference* to a variable, the `IRawNameResolvable` slot) is the lone non-item `Data<T>`, and `[Code] T` isn't a `Data<T>` at all (separate property kind). So the `Data<T>` class can't carry a blanket `where T : item`; the build gate (option a) enforces "value `Data<T>` → `T : item`" and exempts the name-binding slot, while the base class (option b) covers every value. **The two options are complementary, not either/or — do both.**
 
-Scope: this is structural and ripples across every wrapper. It's tightly coupled to this branch (we build all the wrappers here), so it sequences as **step 0** — define `item.@this`, make `number` (the reference wrapper) inherit it, then each wrapper inherits as it's built out. If it bloats the branch it can split to a fast-follow; the `Data<object>`→`Data<item>` rename is the visible deliverable either way. **Confirm fold-in-now vs. fast-follow with Ingi.**
+Scope: this is structural and ripples across every wrapper. It's tightly coupled to this branch (we build all the wrappers here), so it sequences as **step 0** — define `item.@this`, make `number` (the reference wrapper) inherit it, then each wrapper inherits as it's built out. It also turns every typed `Data<int>`/`Data<string>`/`Data<DateTime>` handler param and action return into `Data<number>`/`Data<text>`/`Data<datetime>` — mechanical but broad, folded into each wrapper's build-out. If it bloats the branch it can split to a fast-follow; the `Data<object>`→`Data<item>` rename is the visible deliverable either way. **Confirm fold-in-now vs. fast-follow with Ingi.**
 
 ## Seam map + dispositions (the leaf-trace, at seam granularity)
 
