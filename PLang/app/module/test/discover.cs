@@ -91,6 +91,18 @@ public partial class discover : IContext
             ?? Goal.Parse(goalRead.Value as string ?? "", goalFile)
             ?? new Goal { Path = goalFile };
 
+        // A goal whose source has a `tag this test 'skip'` step is PARKED: it registers
+        // Skipped straight from the source text — before any build/freshness/.pr check — so
+        // a deferred but REAL test reads honestly as Skipped, never as a no-op pass and never
+        // as a stale failure. The tag step needn't be built or run. Re-enable by removing it.
+        if (HasSkipTag(sourceGoal))
+            return new global::app.tester.test.@this
+            {
+                Goal = sourceGoal,
+                Status = global::app.tester.Status.Skipped,
+                StatusReason = "tagged 'skip'"
+            };
+
         // PrPath is derived on the goal from its Path. The corresponding
         // build artefact may or may not exist.
         var prFile = sourceGoal.PrPath as FilePath;
@@ -181,6 +193,19 @@ public partial class discover : IContext
             file.Status = global::app.tester.Status.Ready;
         }
         return file;
+    }
+
+    // The `skip` tag, read from the SOURCE step text (not built actions) so it works
+    // before/without a build. Matches `tag this test 'skip'` (any quoting/casing/spacing).
+    private static readonly System.Text.RegularExpressions.Regex SkipTagRegex = new(
+        @"^\s*tag\s+this\s+test\s+['""]skip['""]\s*$",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    private static bool HasSkipTag(Goal goal)
+    {
+        foreach (var step in goal.Steps)
+            if (SkipTagRegex.IsMatch(step.Text)) return true;
+        return false;
     }
 
     private static void ExtractUserTags(Goal goal, HashSet<string> tags)

@@ -1,9 +1,13 @@
 Start
-/ DISABLED — verify-through-a-goal-call doesn't yet handle a signed Data that is
-/ correctly preserved AS a Data on round-trip (it ends up hashing a Data wrapping a
-/ Data, so the rehash differs from the signed hash). Re-enable when signing is reworked
-/ to wrap the data in a signature object instead of hanging a Signature off Data.
-/ - sign "hello world", write to %signed%
-/ - call VerifyOnReceiver signed=%signed%, write to %ok%
-/ - assert %ok% equals true
-- write out 'SignAndVerifyRoundTrip disabled (pending signature rework)'
+- tag this test 'skip'
+/ Skipped pending the signature rework — verify-through-a-goal-call can't yet handle a signed
+/ Data that round-trips AS a Data (it ends up hashing a Data wrapping a Data, so the rehash
+/ differs from the signed hash). The test below is real and ready; remove the 'skip' tag to
+/ re-enable once signing wraps the data in a signature object (see signature-as-schema-wrapper).
+- sign "hello world", write to %signed%
+- call VerifyOnReceiver signed=%signed%, write to %ok%
+- assert %ok% equals true
+
+VerifyOnReceiver
+- verify %signed%, write to %ok%
+- return %ok%

@@ -938,9 +938,11 @@ internal representation swap, wire shape) in `.bot/collections-are-data/list-rop
 ## Re-enable 2 signing round-trip tests after signature rework (2026-06-05)
 
 `Tests/LazyDeserialize/{SignAndVerifyRoundTrip, SignedDataSurvivesInList}.test.goal`
-are DISABLED (steps commented, inert `write out`). The `@schema` Data marker makes a
-signed Data correctly round-trip AS a Data through the store/goal-call/list; the old
-`verify` path then hashes a Data-wrapping-a-Data and mismatches. The fix is the
-signature redesign (branch `signature-as-schema-wrapper`, spec in its `.bot/`): a
-signature wraps the data (`@schema:"signature"`), `verify` peels-and-validates,
-`Data.Signature` is removed. Re-enable + rebuild these goals on that branch.
+are SKIPPED (real steps intact, with a `- tag this test 'skip'` first step). The `@schema`
+Data marker makes a signed Data correctly round-trip AS a Data through the
+store/goal-call/list; the old `verify` path then hashes a Data-wrapping-a-Data and
+mismatches. The fix is the signature redesign (branch `signature-as-schema-wrapper`, spec in
+its `.bot/`): a signature wraps the data (`@schema:"signature"`), `verify` peels-and-validates,
+`Data.Signature` is removed. **Re-enable: delete the `tag this test 'skip'` line and rebuild
+the two .pr** on that branch. (The skip is detected from the goal source by
+`test.discover.HasSkipTag`, so the stale `.pr` for these two is never read until re-enabled.)
