@@ -1,0 +1,19 @@
+{
+  "bot": "codeanalyzer",
+  "branch": "collections-are-data",
+  "version": 4,
+  "verdict": "PASS",
+  "next_bot": "tester",
+  "reviewed_range": "e4974bcad..fecbb4dfb",
+  "suites": { "csharp": "4089/0", "plang": "273/273", "build": "0 errors" },
+  "summary": "Re-review of coder v6. F1 list-aliasing blocker fixed: add/set structure-copy a list value (CopyStructure, recursive, leaf/dict by-ref which is rebind-safe), applied at both store-into-list handlers; O(k) in added list, never reads existing rows. Coder turned my v3 probe into a permanent end-to-end regression test (ListTests.Add_List_DoesNotAliasSourceVariable) asserting independence both directions; I deletion-tested it (revert fix -> only that test fails -> revert). F3 O(n^2) hoists and F4 comments fixed. F2 (2 signing tests) stays the documented deferral with merge gate. Both suites green.",
+  "findings_resolved": [
+    { "id": "F1", "status": "fixed", "detail": "list.CopyStructure() at the merge boundary (add.cs:37, set.cs:24): new list with own rows, recursive on nested lists, leaf/dict Data shared by ref (rebind-safe). O(k) in added list, never reads existing rows. Verified by deletion test (reverting to by-ref store fails only ListTests.Add_List_DoesNotAliasSourceVariable). Scope correct: Locate only descends into list rows, so dict/scalar by-ref is fine; where/group/unique/map yield flattened leaves, no shared mutable list row." },
+    { "id": "F3", "status": "fixed", "detail": "AreEqual/Order materialize both flattened views once and index off locals; Remove scans Items once + single RemoveAt; unique accumulates into a plain List<Data>. Linear instead of O(n^2)." },
+    { "id": "F4", "status": "fixed", "detail": "Wire.cs LiftDataIfShaped comment rewritten; dict/this.cs catalog->list; scheme=data->@schema:data across recognizer comments (matches WireSchema constant)." }
+  ],
+  "findings_open": [
+    { "id": "F2", "severity": "major", "status": "deferred_accepted", "title": "2 signing round-trip tests disabled; verify-after-roundtrip regressed by @schema marker", "detail": "Unchanged. Documented (report/todos/signature-as-schema-wrapper spec). MERGE GATE: do not merge to main ahead of signature-as-schema-wrapper, or verify of a signed value crossing a goal/list/store boundary is broken. Tester to confirm scope is exactly the two LazyDeserialize goals and that the C# verify-against-raw probe still covers the primitive." }
+  ],
+  "verification_method": "Clean rebuild + both suites. F1 read end-to-end (CopyStructure recursion + both call sites + by-ref-leaf scope) and deletion-tested on add.cs (announced, reverted, git status clean)."
+}
