@@ -1,6 +1,6 @@
 # Architect handoff — compare lives on the value; lists are orderable
 
-**To:** coder · **From:** architect · Re: the `Compare.AreEqualValues` / `Compare.Order` type-switch, plus list ordering (the list model itself stays in `list-rope-model.md`)
+**To:** coder · **From:** architect · **Step 1 of 2** (then `coder-handoff-list-chunks.md`) · Re: the `Compare.AreEqualValues` / `Compare.Order` type-switch, plus list ordering (the list model itself stays in `list-rope-model.md`)
 
 **You own the final shape.** Interface names, file placement, and signatures below are anchors — change what reads wrong, keep the dispositions and the recursion contract.
 
