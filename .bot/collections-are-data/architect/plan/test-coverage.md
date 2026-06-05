@@ -15,7 +15,8 @@ For the test-designer. The coverage matrix (stage × surface), the failure/mutat
 | dot-path `SnapshotClone` removed | 2 | integration | dot-path `set` independence via rebind, not clone |
 | `UnwrapJsonArray` → `List<data>` | 3 | C# unit | elements are `Data`, not raw |
 | `Element` raw branch + `WrapItem` gone | 3 | C# unit | navigation returns the element `Data` directly |
-| signed `Data` survives in a list | 3 | integration | **sign→add→verify `%list[0]%`** (load-bearing) |
+| signed `Data` survives in a list | 3 | integration | **sign→add→save `.plang`→read→verify `%list[0]%`** (load-bearing, wire round-trip) |
+| `.json` of a signed list is bare | 3 | integration | save signed list to `.json` → value present, signature absent (signatures are wire-only) |
 | `Conversion` element-unwrap | 3 | C# unit | coerce `List<data>` → typed `List<T>` |
 | typed compare on the type | 4 | C# unit | number/date/duration/text order; nulls last; two-type sort throws; equality-only types reject sort; one path for `if` and `sort` |
 | `where` on `dict`+`list` | 5 | integration | dict keep/drop; list filter; same syntax both cardinalities |
@@ -46,7 +47,7 @@ For the load-bearing proof, mutation-test it: with Stage 3 in, revert the `Eleme
 Surfaces that don't exist yet and need first tests:
 
 - `app/type/dict/` — value type, navigation, serializer, truthiness.
-- `app/type/list/` value type (sibling to the `type/list` registry) — navigation moved off `navigator/List.cs`.
+- `app.type.list.@this` value type (promoted into the `app.type.list` slot; the registry renamed to `app.type.catalog.@this`) — navigation moved off `navigator/List.cs`.
 - `where` action — new, on `dict` and `list`.
 - `item` apex registration + `Is(string)` overload (if added).
 - typed compare entry point (the adapter that takes two element `Data`, picks the type, compares).
