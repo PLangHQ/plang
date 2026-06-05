@@ -94,6 +94,46 @@
         "health": "C# 4089/4089 genuine. plang 273/273 is a FALSE GREEN: 2 gutted no-op tests masking a live regression (verify of signed value across list/goal boundary).",
         "notes": "Blocker = finding 1 (masked regression). Signing fix legitimately deferred to signature-as-schema-wrapper + merge gate; on-branch fix is small: make the two goals Skipped (tag exclude) instead of no-op passes. F1/F3/F4 genuinely resolved."
       }
+    },
+    {
+      "id": "b6449c54-e052-4c1a-8f46-a8f9ef387faf",
+      "bot": "tester",
+      "timestamp_start": "2026-06-05T15:40:00Z",
+      "timestamp_end": "2026-06-05T15:57:00Z",
+      "intent": "Re-review coder v7, which resolves the v6 false-green by making the 2 signing tests honestly Skipped.",
+      "before": {
+        "assumptions": "Coder v7 replaced the no-op-pass disable with a source-text `skip` tag (HasSkipTag) -> Status.Skipped; claims 271 pass + 2 skipped + 0 fail.",
+        "risk": "New discovery mechanism (regex on goal source) is itself a potential false-green vector if it over-matches and silently skips real tests."
+      },
+      "plan": ".bot/collections-are-data/tester/v7/plan.md",
+      "actions": [
+        {
+          "paths": ["Tests/LazyDeserialize/SignedDataSurvivesInList.test.goal", "Tests/LazyDeserialize/SignAndVerifyRoundTrip.test.goal"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Both goals now hold their REAL steps again (sign -> store/goal-call/list -> verify -> assert) with a leading `- tag this test 'skip'` + comment. Parked, not gutted; re-enable = delete the tag line. Confirmed both register [Skipped], not Pass."
+        },
+        {
+          "paths": ["PLang/app/module/test/discover.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "HasSkipTag: anchored regex ^\\s*tag\\s+this\\s+test\\s+['\"]skip['\"]\\s*$ on goal source steps, short-circuits to Skipped before build/.pr check. Over-match check: a `tag this test 'http'`/`'fast','slow'` goal still RUNS+PASSES (live proof, not skipped). No C# regression test for HasSkipTag itself -> minor finding 1."
+        },
+        {
+          "paths": ["Tests/"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "plang suite: 271 pass + 2 skipped + 0 fail, deterministic across isolated runs, git clean. One flaky timeout on a timing-sensitive enforce-timeout test while C# suite ran concurrently; cleared on every isolated run (CPU contention, not a branch bug). C# 4089/0."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "C# 4089/4089; plang 271 pass + 2 skipped + 0 fail (honest count, was a false 273/273 in v6). Deterministic, git clean.",
+        "notes": "v6 blocker resolved and verified (not just asserted). Signing regression genuinely still deferred to signature-as-schema-wrapper, merge gate intact. Minor findings: HasSkipTag lacks a regression test (over-match = future false-green vector, empirically safe today); `where` still lacks a plang test."
+      }
     }
   ]
 }
