@@ -933,4 +933,4 @@ are O(1) chunk edits that never read existing leaves; `count` is a running leaf 
 `GetEnumerator` walks chunks yielding the next leaf (no flatten op, no copy); only
 list-producing ops (sort/where/unique/map) materialize a flat list. Observable shift:
 `add list to list` becomes merge, not nest. Full spec + open bits (flat-index addressing,
-internal representation swap, wire shape) in `Documentation/v0.2/list-rope-model.md`.
+internal representation swap, wire shape) in `.bot/collections-are-data/list-rope-model.md`.
