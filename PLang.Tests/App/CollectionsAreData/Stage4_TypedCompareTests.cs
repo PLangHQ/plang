@@ -108,10 +108,29 @@ public class Stage4_TypedCompareTests
     [Test]
     public async Task Compare_EqualityOnlyType_Throws()
     {
-        // dict/list/bool are equality-only; Order on them throws a clear error.
+        // dict/bool are equality-only; Order on them throws a clear error.
+        // (list is orderable — see Compare_TwoLists_Lexicographic.)
         await Assert.That(() => Cmp.Order(D(new DictV()), D(new DictV()))).Throws<Cmp.NotOrderableException>();
-        await Assert.That(() => Cmp.Order(D(new ListV()), D(new ListV()))).Throws<Cmp.NotOrderableException>();
         await Assert.That(() => Cmp.Order(D(true), D(false))).Throws<Cmp.NotOrderableException>();
+    }
+
+    [Test]
+    public async Task Compare_TwoLists_Lexicographic()
+    {
+        // list owns IOrderableValue — item-by-item, first differing pair decides;
+        // a prefix sorts before the longer list.
+        static ListV L(params long[] xs)
+        {
+            var l = new ListV();
+            foreach (var x in xs) l.Add(new Data("", x));
+            return l;
+        }
+        await Assert.That(Cmp.Order(D(L(1, 2, 3)), D(L(1, 3)))).IsLessThan(0);     // 2 < 3 at item 2
+        await Assert.That(Cmp.Order(D(L(1, 2)), D(L(1, 2, 3)))).IsLessThan(0);     // prefix sorts first
+        await Assert.That(Cmp.Order(D(L(1, 2, 3)), D(L(9)))).IsLessThan(0);        // 1 < 9 at item 1 (not by length)
+        await Assert.That(Cmp.Order(D(L(1, 2)), D(L(1, 2)))).IsEqualTo(0);
+        // A list can't be ordered against a scalar.
+        await Assert.That(() => Cmp.Order(D(L(1)), D(5L))).Throws<Cmp.NotOrderableException>();
     }
 
     [Test]

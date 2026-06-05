@@ -22,7 +22,8 @@ namespace app.type.dict;
 // json.Writer's dict arm (an object `{}`), never STJ — so the "domain types ride
 // the wire as property bags" rule is intact; this is the value's JSON view.
 [System.Text.Json.Serialization.JsonConverter(typeof(Json))]
-public sealed partial class @this : module.IContext, global::app.data.IBooleanResolvable
+public sealed partial class @this : module.IContext, global::app.data.IBooleanResolvable,
+    global::app.data.IEquatableValue
 {
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
     public static string Example => "{\"name\":\"a\"}";
@@ -140,6 +141,24 @@ public sealed partial class @this : module.IContext, global::app.data.IBooleanRe
     /// matches the falsiness of an empty list / string / null.
     /// </summary>
     public Task<bool> AsBooleanAsync() => Task.FromResult(_entries.Count > 0);
+
+    /// <summary>
+    /// IEquatableValue: structural, key-based — two dicts are equal when they have
+    /// the same keys mapping to equal values (order-insensitive). Each child routes
+    /// back through the mediator so a nested number widens / nested text is
+    /// case-insensitive. Dict is equality-only — it does not implement IOrderableValue.
+    /// </summary>
+    public bool AreEqual(object? other)
+    {
+        if (other is not @this od || _entries.Count != od.Count) return false;
+        foreach (var entry in _entries)
+        {
+            var match = od.Get(entry.Name);
+            if (match == null || !global::app.data.Compare.AreEqualValues(entry.Value, match.Value))
+                return false;
+        }
+        return true;
+    }
 
     public override string ToString() => $"{{{string.Join(", ", _entries.Select(e => $"{e.Name}: {e.ScalarValue}"))}}}";
 }

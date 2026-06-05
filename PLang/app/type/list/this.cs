@@ -18,7 +18,8 @@ namespace app.type.list;
 /// surface into junk — the same failure that gave <c>dict</c> its converter.</para>
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Json))]
-public sealed partial class @this : module.IContext, global::app.data.IBooleanResolvable
+public sealed partial class @this : module.IContext, global::app.data.IBooleanResolvable,
+    global::app.data.IEquatableValue, global::app.data.IOrderableValue
 {
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
     public static string Example => "[1, 2, 3]";
@@ -169,6 +170,39 @@ public sealed partial class @this : module.IContext, global::app.data.IBooleanRe
     /// matches the falsiness of an empty dict / string / null.
     /// </summary>
     public Task<bool> AsBooleanAsync() => Task.FromResult(_items.Count > 0);
+
+    /// <summary>
+    /// IEquatableValue: structural, positional — same length and equal items in
+    /// order. Each item routes back through the mediator so nested values widen /
+    /// compare case-insensitive.
+    /// </summary>
+    public bool AreEqual(object? other)
+    {
+        if (other is not @this ol || Count != ol.Count) return false;
+        for (int i = 0; i < Count; i++)
+            if (!global::app.data.Compare.AreEqualValues(At(i)!.Value, ol.At(i)!.Value)) return false;
+        return true;
+    }
+
+    /// <summary>
+    /// IOrderableValue: lexicographic — compare item i against item i through the
+    /// mediator, the first differing pair decides; a prefix sorts before the longer
+    /// list (<c>[1,2] &lt; [1,2,3]</c>). Comparing against a non-list, or two
+    /// non-comparable items, throws — same as a mixed-type list.
+    /// </summary>
+    public int Order(object? other)
+    {
+        if (other is not @this ol)
+            throw new global::app.data.Compare.NotOrderableException(
+                $"cannot order list against {other?.GetType().Name.ToLowerInvariant() ?? "null"}");
+        int shared = System.Math.Min(Count, ol.Count);
+        for (int i = 0; i < shared; i++)
+        {
+            int c = global::app.data.Compare.Order(At(i), ol.At(i));
+            if (c != 0) return c;
+        }
+        return Count.CompareTo(ol.Count);
+    }
 
     public override string ToString() => $"[{string.Join(", ", _items.Select(e => e.ScalarValue))}]";
 }
