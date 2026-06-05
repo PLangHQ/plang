@@ -53,22 +53,83 @@ public sealed partial class @this : module.IContext, global::app.data.IBooleanRe
         set => Context = value;
     }
 
-    /// <summary>Number of elements.</summary>
-    public int Count => _items.Count;
+    // A list is a list of ROWS (`_items`). Each row holds the Data it was added with.
+    // The PUBLIC surface (Count/Items/At/...) is the FLATTENED view: a row whose value
+    // is itself a list contributes its leaves, everything else is one item. The row
+    // (chunk) structure is never observable — `add` appends a row without reading the
+    // existing ones, and reads walk the rows to present the flattened sequence.
 
-    /// <summary>The element Data values in order.</summary>
-    public IReadOnlyList<Data> Items => _items;
+    /// <summary>Number of leaves — the flattened item count (a list row contributes its
+    /// own count; a scalar/dict row contributes 1). Walked on demand: a row may alias a
+    /// list mutated elsewhere, so a stored counter would stale.</summary>
+    public int Count
+    {
+        get
+        {
+            int n = 0;
+            foreach (var row in _items) n += Weight(row);
+            return n;
+        }
+    }
 
-    /// <summary>The element Data at <paramref name="index"/>, or C# null when out of range.</summary>
-    public Data? At(int index) => index >= 0 && index < _items.Count ? _items[index] : null;
+    // A row's weight — a list row flattens to its own leaf count; anything else is one.
+    private static int Weight(Data row) => row.Value is @this inner ? inner.Count : 1;
 
-    /// <summary>First element Data, or null when empty.</summary>
-    public Data? First => _items.Count > 0 ? _items[0] : null;
+    /// <summary>The flattened element Data in order — descends into list rows only
+    /// (a scalar/dict/table row is yielded whole, weight 1).</summary>
+    public IReadOnlyList<Data> Items
+    {
+        get
+        {
+            var flat = new List<Data>();
+            foreach (var row in _items)
+            {
+                if (row.Value is @this inner) flat.AddRange(inner.Items);
+                else flat.Add(row);
+            }
+            return flat;
+        }
+    }
 
-    /// <summary>Last element Data, or null when empty.</summary>
-    public Data? Last => _items.Count > 0 ? _items[^1] : null;
+    /// <summary>The flattened element Data at <paramref name="index"/>, or C# null when out of range.</summary>
+    public Data? At(int index)
+        => Locate(index, out int row, out int offset, out @this? inner)
+            ? (inner != null ? inner.At(offset) : _items[row])
+            : null;
 
-    /// <summary>Appends an element Data (build-at-edge surface for the parse seam and list.add).</summary>
+    /// <summary>First flattened element, or null when empty.</summary>
+    public Data? First => At(0);
+
+    /// <summary>Last flattened element, or null when empty.</summary>
+    public Data? Last => At(Count - 1);
+
+    // Resolve a flattened index to the owning row + the offset within it. `inner` is the
+    // row's list when the row is a list (offset indexes into it); null for a weight-1 row
+    // (offset 0). Returns false when the index is out of range.
+    private bool Locate(int flatIndex, out int rowIndex, out int offset, out @this? inner)
+    {
+        rowIndex = 0; offset = 0; inner = null;
+        if (flatIndex < 0) return false;
+        for (int r = 0; r < _items.Count; r++)
+        {
+            if (_items[r].Value is @this list)
+            {
+                int w = list.Count;
+                if (flatIndex < w) { rowIndex = r; offset = flatIndex; inner = list; return true; }
+                flatIndex -= w;
+            }
+            else
+            {
+                if (flatIndex == 0) { rowIndex = r; return true; }
+                flatIndex -= 1;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>Appends one row holding <paramref name="item"/> (build-at-edge for the
+    /// parse seam and list.add). O(1) — never reads or merges the existing rows; the
+    /// row's weight (1, or the item's flattened count when it is a list) surfaces via Count.</summary>
     public @this Add(Data item)
     {
         if (_context != null) item.Context = _context;
@@ -76,72 +137,115 @@ public sealed partial class @this : module.IContext, global::app.data.IBooleanRe
         return this;
     }
 
-    /// <summary>Inserts an element Data at <paramref name="index"/> (clamped to [0, Count]).</summary>
+    /// <summary>Inserts <paramref name="item"/> at the flattened <paramref name="index"/>
+    /// (clamped to [0, Count]).</summary>
     public @this Insert(int index, Data item)
     {
         if (_context != null) item.Context = _context;
-        _items.Insert(System.Math.Clamp(index, 0, _items.Count), item);
+        if (index < 0) index = 0;
+        if (Locate(index, out int row, out int offset, out @this? inner))
+        {
+            if (inner != null) inner.Insert(offset, item);
+            else _items.Insert(row, item);
+        }
+        else _items.Add(item);   // index >= Count → append
         return this;
     }
 
-    // --- In-place mutation surface for the list action handlers (Stage 5 relocates
-    //     the algorithms onto the type fully; these keep element Data identity). ---
+    // --- In-place mutation surface for the list action handlers. The index args are
+    //     FLATTENED — Locate maps each to its (row, offset) before editing. ---
 
-    /// <summary>Removes the element at <paramref name="index"/> (no-op when out of range).</summary>
-    public void RemoveAt(int index) { if (index >= 0 && index < _items.Count) _items.RemoveAt(index); }
-
-    /// <summary>Removes the first element whose value equals <paramref name="value"/>
-    /// through the one compare path (structural for dict/list, case-insensitive text).</summary>
-    public bool Remove(object? value)
+    /// <summary>Removes the leaf at the flattened <paramref name="index"/> (no-op when out of range).</summary>
+    public void RemoveAt(int index)
     {
-        var idx = _items.FindIndex(d => global::app.data.Compare.AreEqualValues(d.Value, value));
-        if (idx < 0) return false;
-        _items.RemoveAt(idx);
-        return true;
+        if (!Locate(index, out int row, out int offset, out @this? inner)) return;
+        if (inner != null)
+        {
+            inner.RemoveAt(offset);
+            if (inner.Count == 0) _items.RemoveAt(row);   // drop an emptied chunk
+        }
+        else _items.RemoveAt(row);
     }
 
-    /// <summary>Reverses the elements in place.</summary>
-    public void Reverse() => _items.Reverse();
+    /// <summary>Removes the first leaf whose value equals <paramref name="value"/> through
+    /// the one compare path (structural for dict/list, case-insensitive text).</summary>
+    public bool Remove(object? value)
+    {
+        int n = Count;
+        for (int i = 0; i < n; i++)
+            if (global::app.data.Compare.AreEqualValues(At(i)!.Value, value)) { RemoveAt(i); return true; }
+        return false;
+    }
+
+    /// <summary>Reverses the flattened items — collapses the rows into one flat list
+    /// (a new order is a new flat list, per the row model).</summary>
+    public void Reverse()
+    {
+        var flat = new List<Data>(Items);
+        flat.Reverse();
+        ResetTo(flat);
+    }
 
     /// <summary>
-    /// Sorts in place by element value through the one typed-compare path
+    /// Sorts by element value through the one typed-compare path
     /// (<c>app.data.Compare.Order</c>) — so `sort` and `if a &gt; b` agree, nulls
-    /// sort last, and a list of mixed value types (or an equality-only type) throws.
+    /// sort last, and a mixed-type list throws. Collapses the rows into one flat list.
     /// </summary>
     public void SortByValue(bool descending)
-        => SortGuarded((a, b) =>
+    {
+        var flat = new List<Data>(Items);
+        SortGuarded(flat, (a, b) =>
         {
-            var c = global::app.data.Compare.Order(a, b);
+            int c = global::app.data.Compare.Order(a, b);
             return descending ? -c : c;
         });
+        ResetTo(flat);
+    }
 
     /// <summary>
-    /// Sorts in place by an element field (`sort %people% by "age"`) — each element's
+    /// Sorts by an element field (`sort %people% by "age"`) — each element's
     /// <paramref name="field"/> is compared through the one typed-compare path.
     /// </summary>
     public void SortByField(string field, bool descending)
-        => SortGuarded((a, b) =>
+    {
+        var flat = new List<Data>(Items);
+        SortGuarded(flat, (a, b) =>
         {
-            var c = global::app.data.Compare.Order(a.GetChild(field), b.GetChild(field));
+            int c = global::app.data.Compare.Order(a.GetChild(field), b.GetChild(field));
             return descending ? -c : c;
         });
+        ResetTo(flat);
+    }
+
+    // Replace the rows with a flat sequence (post sort/reverse). The result is all
+    // weight-1 rows — a new order is a new flat list.
+    private void ResetTo(List<Data> flat)
+    {
+        _items.Clear();
+        if (_context != null) foreach (var d in flat) d.Context = _context;
+        _items.AddRange(flat);
+    }
 
     // List.Sort wraps a comparer exception in InvalidOperationException; unwrap the
     // typed compare error (e.g. "cannot order dict") so callers see the real cause.
-    private void SortGuarded(System.Comparison<Data> cmp)
+    private static void SortGuarded(List<Data> items, System.Comparison<Data> cmp)
     {
-        try { _items.Sort(cmp); }
+        try { items.Sort(cmp); }
         catch (System.InvalidOperationException ex)
             when (ex.InnerException is global::app.data.Compare.NotOrderableException inner)
         { throw inner; }
     }
 
-    /// <summary>Replaces (or appends at Count) the element Data at <paramref name="index"/>.</summary>
+    /// <summary>Replaces (or appends at Count) the leaf at the flattened <paramref name="index"/>.</summary>
     public void SetAt(int index, Data value)
     {
         if (_context != null) value.Context = _context;
-        if (index >= 0 && index < _items.Count) _items[index] = value;
-        else if (index == _items.Count) _items.Add(value);
+        if (Locate(index, out int row, out int offset, out @this? inner))
+        {
+            if (inner != null) inner.SetAt(offset, value);
+            else _items[row] = value;
+        }
+        else if (index == Count) _items.Add(value);
     }
 
     /// <summary>
@@ -152,8 +256,9 @@ public sealed partial class @this : module.IContext, global::app.data.IBooleanRe
     /// </summary>
     public List<object?> ToRaw()
     {
-        var raw = new List<object?>(_items.Count);
-        foreach (var item in _items)
+        var flat = Items;
+        var raw = new List<object?>(flat.Count);
+        foreach (var item in flat)
             raw.Add(Unwrap(item.Value));
         return raw;
     }
@@ -169,7 +274,7 @@ public sealed partial class @this : module.IContext, global::app.data.IBooleanRe
     /// IBooleanResolvable: an empty list is falsy, a non-empty list is truthy —
     /// matches the falsiness of an empty dict / string / null.
     /// </summary>
-    public Task<bool> AsBooleanAsync() => Task.FromResult(_items.Count > 0);
+    public Task<bool> AsBooleanAsync() => Task.FromResult(Count > 0);
 
     /// <summary>
     /// IEquatableValue: structural, positional — same length and equal items in
@@ -204,5 +309,5 @@ public sealed partial class @this : module.IContext, global::app.data.IBooleanRe
         return Count.CompareTo(ol.Count);
     }
 
-    public override string ToString() => $"[{string.Join(", ", _items.Select(e => e.ScalarValue))}]";
+    public override string ToString() => $"[{string.Join(", ", Items.Select(e => e.ScalarValue))}]";
 }
