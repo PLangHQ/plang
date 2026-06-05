@@ -1,0 +1,6 @@
+Start
+- set %d% = 2026-01-01
+- if %d% is date, write to %isDate%
+- if %d% is datetime, write to %isDatetime%
+- assert %isDate% equals true
+- assert %isDatetime% equals false

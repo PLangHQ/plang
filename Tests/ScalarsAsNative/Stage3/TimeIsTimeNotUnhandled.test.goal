@@ -1,0 +1,6 @@
+Start
+- set %t% = 14:30:00
+- if %t% is time, write to %isTime%
+- if %t% is datetime, write to %isDatetime%
+- assert %isTime% equals true
+- assert %isDatetime% equals false
