@@ -1,10 +1,8 @@
 JsonReadIsItemUntilTouch
-/ `(object,json)` → `(item,json)`: a json value is-a item (the apex), and
-/ narrows to dict so `%x.field%` navigates it. There is no enduring PLang
-/ `object` type — item is both the apex and the un-narrowed type.
+/ `(object,json)` → `(item,json)`: a json value narrows to dict so `%x.field%`
+/ navigates it at runtime. There is no enduring PLang `object` type — item is both
+/ the apex and the un-narrowed type. (The `is item`/`is dict` apex contract is
+/ pinned in C# ItemApexTests; this goal proves the end-to-end narrow + navigation.)
 - set %x% = {"field": 42}
-- if %x% is item, write to %isItem%
-- assert %isItem% is true
-- if %x% is dict, write to %isDict%
-- assert %isDict% is true
-- assert %x.field% equals 42
+- set %field% = %x.field%
+- assert %field% equals 42

@@ -75,16 +75,38 @@ text first. Land `Variable` record→class + everything-`: item` before turning 
 the constraint (it is the final lock). Do it with the PLang integration suite
 running so the body sweep has a net.
 
-## Blocker — PLang integration suite unbuildable
+## Builder blocker — root-caused and FIXED (the LLM cache poisoning)
 
-`plang build` fails with `BuilderPlannerFailed` / empty-action steps even for
-trivial goals (`set %a% = 2`) — the LLM builder is systemically unavailable in
-this environment. So the `Tests/ScalarsAsNative/Stage*/` goals could not be built
-or run. The C# unit suite (recompiles in-place, no LLM) is the deterministic
-backstop used throughout and covers every wrapper, the apex contract, and the
-caught regression. The PLang goals authored in v1/v2 by the test-designer remain
-as committed source for the tester bot / a healthy builder; the Stage-1 goals
-were filled with real assertions, the rest stay as the test-designer left them.
+Initially `plang build` failed with `BuilderPlannerFailed` / "no actions" for
+*every* goal (even `set %a% = 2`). It was **not** the environment and **not** the
+scalar work — confirmed by building at the pre-branch commit in a worktree (same
+failure). Traced via `--debug={"llmTrace":true}`: the LLM returned a perfect
+plan, but `%plan.steps%` was null.
+
+**Root cause:** the LLM cache (`OpenAi.cs`) stored the parsed response as a raw
+`JsonElement`. A `JsonElement` does not survive the cache's disk serialization —
+`Normalize` has no `JsonElement` leaf arm, so it reflects to its `ValueKind`
+property (`{"valuekind":"Object"}`), losing all content. Every cached JSON LLM
+response (every planner/compiler call) restored empty. Live (cache-miss) calls
+worked because `Data.Ok` unwraps the `JsonElement`; only the **cache-read** path
+broke — so builds failed on the *second* run onward (the first write poisoned the
+cache for every subsequent build).
+
+**Fix** (committed, separate from the scalar work): cache the plain `RawResponse`
+string (lossless on disk) and re-parse it on restore via a shared
+`ParseResultValue` helper, so a restored result is byte-identical to a live one.
+After the fix the builder works again — the existing PLang suite goes from
+all-failing to **271/309 passing**. C# suite unaffected (still only the 23
+lock-phase stubs fail).
+
+Remaining: a few `Tests/ScalarsAsNative/Stage*/` goals still hit the builder's
+*pre-existing, documented* compile-phase non-determinism (`building_plang_tests.md`
+"the LLM is non-deterministic") — a different step's actions are intermittently
+dropped per run on goals mixing `if`/`assert`/navigation. That is builder-prompt
+tuning (out of scope for the cache fix). The Stage-1 goals are authored as
+committed source; `.pr` artifacts are left for the tester to build with the fixed
+builder (`plang --build={"cache":false}` forces fresh calls). The C# unit suite
+(recompiles in-place) remains the deterministic backstop for the wrapper work.
 
 ## Verification
 - `dotnet build PlangConsole` — 0 errors.
