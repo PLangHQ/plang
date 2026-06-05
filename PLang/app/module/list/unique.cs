@@ -16,14 +16,17 @@ public partial class Unique : IContext
 
         // Dedup through the one compare path's structural equality — so a list of
         // equivalent dicts collapses to one (reference-equality HashSet would not).
-        var deduped = new app.type.list.@this { Context = Context };
+        // Accumulate in a plain list so the inner scan doesn't re-materialize Items
+        // (a fresh flat List) on every outer iteration.
+        var kept = new List<global::app.data.@this>();
         foreach (var item in nl.Items)
         {
             bool dup = false;
-            foreach (var kept in deduped.Items)
-                if (global::app.data.Compare.AreEqual(item, kept)) { dup = true; break; }
-            if (!dup) deduped.Add(item);
+            foreach (var k in kept)
+                if (global::app.data.Compare.AreEqual(item, k)) { dup = true; break; }
+            if (!dup) kept.Add(item);
         }
+        var deduped = new app.type.list.@this(kept) { Context = Context };
         return Task.FromResult(global::app.data.@this<type.list>.Ok(
             new type.list { count = deduped.Count, value = deduped }, app.type.@this.FromName("list")));
     }

@@ -35,6 +35,27 @@ public class RowModelTests
     }
 
     [Test]
+    public async Task AddList_StructureCopy_NoAliasBothDirections()
+    {
+        // `add %b% to %a%` stores a structure-copy of b (what add.cs does for a list
+        // value), so a and b stay independent — mutating either leaves the other alone.
+        var b = Of(50, 60);
+        var a = Of(10, 20);
+        a.Add(D(b.CopyStructure()));            // copy, not the shared b instance
+
+        await Assert.That(a.Count).IsEqualTo(4);
+
+        // write-through: set a leaf in a that came from b → b must be untouched.
+        a.SetAt(2, D(99L));
+        await Assert.That(a.At(2)!.Value).IsEqualTo(99L);
+        await Assert.That(b.At(0)!.Value).IsEqualTo(50L);
+
+        // read-view: mutate b → a must not track it.
+        b.Add(D(70L));
+        await Assert.That(a.Count).IsEqualTo(4);
+    }
+
+    [Test]
     public async Task RemoveAt_FlattenedIndex_RemovesNestedLeaf()
     {
         var a = Of(10, 20);

@@ -419,15 +419,13 @@ public class Wire : JsonConverter<@this>
         }
     }
 
-    // A JSON object with both "name" and "value" keys is the canonical Data
-    // wire shape (the Wire always emits both on Write, including
-    // the "value": null case). Domain types Identity / Signature etc. have
-    // neither pair: Identity has "name" but no "value"; Signature has "type"
-    // but no "name" or "value". Requiring both keys keeps rehydration
-    // unambiguous across the value-graph without an explicit type marker.
+    // A value-slot object is a Data iff it carries the @schema:data marker (every Data
+    // writes it). The explicit marker replaced the old "has both name and value keys"
+    // shape-sniff — a user map that happens to have name/value/type keys but no marker
+    // stays a plain map, unambiguously, with no value-graph guessing.
     private static object? LiftDataIfShaped(System.Text.Json.JsonElement element, JsonSerializerOptions options)
     {
-        // A value-slot object is a Data strictly when it carries the scheme=data
+        // A value-slot object is a Data strictly when it carries the @schema:data
         // marker (every Data writes it). No shape-sniffing: a user map with name/value
         // keys but no marker deserializes as a plain object, not lifted to a Data.
         if (!HasDataMarker(element))
@@ -438,7 +436,7 @@ public class Wire : JsonConverter<@this>
 
     // Reconstructs an array value slot into the native list value type. Every element
     // on the wire self-describes as a Data (the writer's list arm marks each with
-    // scheme=data), so a marked element lifts back to a Data (regaining its Signature);
+    // @schema:data), so a marked element lifts back to a Data (regaining its Signature);
     // anything else is wrapped as a bare element Data. The marker recognizes even a
     // typeless element (the case the old name+value sniff existed for).
     private static app.type.list.@this LiftArrayElements(System.Text.Json.JsonElement array, JsonSerializerOptions options)
@@ -454,7 +452,7 @@ public class Wire : JsonConverter<@this>
         return list;
     }
 
-    // A JSON object IS a Data iff it carries the scheme=data marker — the one strict,
+    // A JSON object IS a Data iff it carries the @schema:data marker — the one strict,
     // unambiguous recognizer for both the value slot (LiftDataIfShaped) and array
     // elements (LiftArrayElements). Replaces the name+value shape heuristic.
     private static bool HasDataMarker(System.Text.Json.JsonElement element)
@@ -487,7 +485,7 @@ public class Wire : JsonConverter<@this>
         if (Sign && !data.RawUntouched) EnsureInnerSigned(data.Value);
 
         writer.WriteStartObject();
-        // scheme=data — the marker that says this JSON object IS a Data. First key,
+        // @schema:data — the marker that says this JSON object IS a Data. First key,
         // always present (signed: it's intrinsic wire identity, unlike name).
         writer.WriteString(@this.WireSchema, @this.WireSchemaData);
         // The variable name is a binding label, not part of the data's identity —

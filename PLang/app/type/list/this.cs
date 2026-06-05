@@ -145,6 +145,23 @@ public sealed partial class @this : module.IContext, global::app.data.IBooleanRe
         return this;
     }
 
+    /// <summary>
+    /// A structural copy for the merge surface (`add`/`set` a list into a list): a new list
+    /// with its OWN rows, so a later in-place mutation of either side (set/remove/insert)
+    /// leaves the other untouched. Leaf element Data are shared by reference — safe, because
+    /// `set %x% = …` rebinds rather than mutates. A nested list element is copied recursively,
+    /// so no mutable list structure is shared at any depth.
+    /// </summary>
+    public @this CopyStructure()
+    {
+        var copy = new @this { Context = _context };
+        foreach (var el in _items)
+            copy._items.Add(el.Value is @this nested
+                ? new Data(el.Name, nested.CopyStructure()) { Context = _context }
+                : el);
+        return copy;
+    }
+
     /// <summary>Inserts <paramref name="item"/> at the flattened <paramref name="index"/>
     /// (clamped to [0, Count]).</summary>
     public @this Insert(int index, Data item)
@@ -179,9 +196,11 @@ public sealed partial class @this : module.IContext, global::app.data.IBooleanRe
     /// the one compare path (structural for dict/list, case-insensitive text).</summary>
     public bool Remove(object? value)
     {
-        int n = Count;
-        for (int i = 0; i < n; i++)
-            if (global::app.data.Compare.AreEqualValues(At(i)!.Value, value)) { RemoveAt(i); return true; }
+        // Scan the flattened view once to find the leaf, then a single RemoveAt — avoid
+        // the O(n²) of At(i) per iteration.
+        var flat = Items;
+        for (int i = 0; i < flat.Count; i++)
+            if (global::app.data.Compare.AreEqualValues(flat[i].Value, value)) { RemoveAt(i); return true; }
         return false;
     }
 
@@ -291,9 +310,14 @@ public sealed partial class @this : module.IContext, global::app.data.IBooleanRe
     /// </summary>
     public bool AreEqual(object? other)
     {
-        if (other is not @this ol || Count != ol.Count) return false;
-        for (int i = 0; i < Count; i++)
-            if (!global::app.data.Compare.AreEqualValues(At(i)!.Value, ol.At(i)!.Value)) return false;
+        if (other is not @this ol) return false;
+        // Materialize the flattened views once — At(i)/Count are O(rows) walks, so a
+        // per-iteration call would make this O(n²) on a large list.
+        var mine = Items;
+        var theirs = ol.Items;
+        if (mine.Count != theirs.Count) return false;
+        for (int i = 0; i < mine.Count; i++)
+            if (!global::app.data.Compare.AreEqualValues(mine[i].Value, theirs[i].Value)) return false;
         return true;
     }
 
@@ -308,13 +332,16 @@ public sealed partial class @this : module.IContext, global::app.data.IBooleanRe
         if (other is not @this ol)
             throw new global::app.data.Compare.NotOrderableException(
                 $"cannot order list against {other?.GetType().Name.ToLowerInvariant() ?? "null"}");
-        int shared = System.Math.Min(Count, ol.Count);
+        // Materialize once (see AreEqual) — avoid O(n²) from per-iteration At()/Count.
+        var mine = Items;
+        var theirs = ol.Items;
+        int shared = System.Math.Min(mine.Count, theirs.Count);
         for (int i = 0; i < shared; i++)
         {
-            int c = global::app.data.Compare.Order(At(i), ol.At(i));
+            int c = global::app.data.Compare.Order(mine[i], theirs[i]);
             if (c != 0) return c;
         }
-        return Count.CompareTo(ol.Count);
+        return mine.Count.CompareTo(theirs.Count);
     }
 
     public override string ToString() => $"[{string.Join(", ", Items.Select(e => e.ScalarValue))}]";

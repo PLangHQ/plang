@@ -754,7 +754,7 @@ public partial class @this
         _ => null,
     };
 
-    // A dict that carries the `scheme=data` marker IS a serialized Data, so binding it
+    // A dict that carries the `@schema:data` marker IS a serialized Data, so binding it
     // to a Data slot must reconstruct the Data (value + type as a whole), not nest the
     // dict. Strict: only the marker counts — a user map with value/type/name keys but no
     // marker stays a plain dict.

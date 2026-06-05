@@ -29,13 +29,19 @@ public partial class Add : IContext
             Context.Variable.Set(ListName.Value, list);
         }
 
-        // Store the element Data by reference — no clone. Stage 2's rebind means
-        // `set %x% = ...` mints a new Data rather than mutating the one the list
-        // holds, so the captured element stays untouched without a defensive copy.
+        // A list value is structure-copied so the target doesn't alias the source
+        // variable — `add %b% to %a%` then set/remove/insert on either must stay
+        // independent (merge semantics, like extend). A scalar/dict element is stored by
+        // reference: Stage 2's rebind means `set %x% = ...` mints a new Data rather than
+        // mutating the one the list holds, so no defensive copy is needed there.
+        data.@this toAdd = Value.Value is app.type.list.@this nl
+            ? new data.@this(Value.Name, nl.CopyStructure(), Value.Type) { Context = Context }
+            : Value;
+
         if (AtIndex.Value >= 0 && AtIndex.Value <= list.Count)
-            list.Insert(AtIndex.Value, Value);
+            list.Insert(AtIndex.Value, toAdd);
         else
-            list.Add(Value);
+            list.Add(toAdd);
 
         return Task.FromResult(global::app.data.@this<type.list>.Ok(new type.list { count = list.Count, value = list }, app.type.@this.FromName("list")));
     }

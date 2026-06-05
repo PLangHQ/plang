@@ -66,6 +66,35 @@ public class ListTests
         await Assert.That(list!.At(1)!.Value).IsEqualTo("b");
     }
 
+    [Test]
+    public async Task Add_List_DoesNotAliasSourceVariable()
+    {
+        // `add %b% to %a%` must leave %a% and %b% independent (merge, like extend).
+        var (context, memory) = CreateContext();
+        var aList = new global::app.type.list.@this { Context = context };
+        aList.Add(new global::app.data.@this("", 10L)); aList.Add(new global::app.data.@this("", 20L));
+        var bList = new global::app.type.list.@this { Context = context };
+        bList.Add(new global::app.data.@this("", 50L)); bList.Add(new global::app.data.@this("", 60L));
+        memory.Set("a", aList);
+        memory.Set("b", bList);
+
+        var action = new Add { Context = context, ListName = new app.variable.@this("a"), Value = memory.Get("b") };
+        await (await action.Run()).IsSuccess();
+
+        var a = memory.GetValue("a") as global::app.type.list.@this;
+        var b = memory.GetValue("b") as global::app.type.list.@this;
+        await Assert.That(a!.Count).IsEqualTo(4);   // flat [10,20,50,60]
+
+        // write-through: mutate the leaf in %a% that came from %b% → %b% untouched.
+        a.SetAt(2, new global::app.data.@this("", 99L));
+        await Assert.That(a.At(2)!.Value).IsEqualTo(99L);
+        await Assert.That(b!.At(0)!.Value).IsEqualTo(50L);
+
+        // read-view: mutate %b% → %a% doesn't track it.
+        b.Add(new global::app.data.@this("", 70L));
+        await Assert.That(a.Count).IsEqualTo(4);
+    }
+
     // --- Remove ---
 
     [Test]

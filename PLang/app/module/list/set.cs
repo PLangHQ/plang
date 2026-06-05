@@ -21,7 +21,12 @@ public partial class Set : IContext
         if (Index.Value < 0 || Index.Value >= nl.Count)
             return Task.FromResult(global::app.data.@this<type.list>.FromError(
                 new app.error.ValidationError($"Index {Index.Value} out of range (0..{nl.Count - 1})")));
-        nl.SetAt(Index.Value, Value ?? new global::app.data.@this("", null));
+        // A list value is structure-copied so the slot doesn't alias the source variable
+        // (same reason as list.add); scalars/dicts are stored by reference (rebind-safe).
+        global::app.data.@this item = Value?.Value is app.type.list.@this nlv
+            ? new global::app.data.@this(Value.Name, nlv.CopyStructure(), Value.Type) { Context = Context }
+            : Value ?? new global::app.data.@this("", null);
+        nl.SetAt(Index.Value, item);
         return Task.FromResult(global::app.data.@this<type.list>.Ok(new type.list { count = nl.Count, value = nl }, app.type.@this.FromName("list")));
     }
 }
