@@ -204,9 +204,18 @@ public partial class discover : IContext
     private static bool HasSkipTag(Goal goal)
     {
         foreach (var step in goal.Steps)
-            if (SkipTagRegex.IsMatch(step.Text)) return true;
+            if (IsSkipTagStep(step.Text)) return true;
         return false;
     }
+
+    /// <summary>
+    /// True when a step's source text is exactly the skip directive
+    /// <c>tag this test 'skip'</c> (any quoting / casing / spacing). This is the gate
+    /// between an honest Skipped and a run, so it matches only the literal <c>skip</c> tag —
+    /// a different tag value, or trailing args, does not match. Exposed for tests to pin the
+    /// boundary.
+    /// </summary>
+    public static bool IsSkipTagStep(string text) => SkipTagRegex.IsMatch(text);
 
     private static void ExtractUserTags(Goal goal, HashSet<string> tags)
     {

@@ -152,12 +152,21 @@ public sealed partial class @this : module.IContext, global::app.data.IBooleanRe
     /// `set %x% = …` rebinds rather than mutates. A nested list element is copied recursively,
     /// so no mutable list structure is shared at any depth.
     /// </summary>
-    public @this CopyStructure()
+    public @this CopyStructure() => CopyStructure(0);
+
+    // Mirrors data.@this.MaxJsonDepth (the inbound construction cap) so a pathologically
+    // deep nested list throws rather than stack-overflowing, even if a future build path
+    // loses the inbound depth cap.
+    private const int MaxCopyDepth = 128;
+
+    private @this CopyStructure(int depth)
     {
+        if (depth > MaxCopyDepth)
+            throw new System.InvalidOperationException($"List nesting exceeds maximum depth ({MaxCopyDepth})");
         var copy = new @this { Context = _context };
         foreach (var el in _items)
             copy._items.Add(el.Value is @this nested
-                ? new Data(el.Name, nested.CopyStructure()) { Context = _context }
+                ? new Data(el.Name, nested.CopyStructure(depth + 1)) { Context = _context }
                 : el);
         return copy;
     }
