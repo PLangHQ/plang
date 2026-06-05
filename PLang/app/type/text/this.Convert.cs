@@ -20,7 +20,12 @@ public sealed partial class @this
         if (value is string s) return global::app.data.@this.Ok(s);
         if (value is @this self) return global::app.data.@this.Ok(self.Value);
 
-        if (value is System.Collections.IDictionary
+        // Native dict/list value types are not IDictionary/IEnumerable, but their
+        // [JsonConverter] renders the canonical {}/[] textual form — text/json means
+        // json TEXT, so route them through serialization like any other structured value.
+        if (value is app.type.dict.@this
+            || value is app.type.list.@this
+            || value is System.Collections.IDictionary
             || value is JsonElement
             || value is System.Text.Json.Nodes.JsonNode
             || (value is System.Collections.IEnumerable && value is not byte[]))
