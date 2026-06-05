@@ -6,7 +6,7 @@
       "text": "I see Data<object> mentioned here, but it should be Data<item> becuase that is the 'object' type in plang, just make sure to take a not of that. we could catch them by checking if T in Data<T> is part of our type list and then throw, or would it even be better if Data<T> when class T is item, that would mean all have to inherit correctly",
       "anchor": "## The law (carried from collections-are-data)",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-06-05T16:26:16",
       "drifted": false
@@ -17,7 +17,7 @@
       "text": "it would never be List<item>, always list<data>, and we would never have Data<int>, but Data<number>, right?",
       "anchor": "## The law (carried from collections-are-data)",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "a1b2c3d4e5",
       "ts": "2026-06-05T16:54:49",
       "drifted": false
@@ -28,7 +28,7 @@
       "text": "Noted in the plan as a Decided section. The polymorphic slot is `Data<item>` (item is the apex, ~= object; `object` is only its CLR realization). On enforcement I recommend your option (b): `item.@this` as an abstract base every value-wrapper inherits, so `T : item` is compile-time enforced and the double-wrap footgun dies structurally (Data is the box, not an item, so a Data<item> can't nest a Data). Three guards from the box/apex rule: item stays abstract (apex stores nothing); list element slots stay Data<List<data>>, not List<item>; and we do NOT constrain Data<T> globally -- typed leaf slots (Data<int>, Data<Variable>, [Code] T) keep raw CLR types at the perimeter/name-binding/code seams. It sequences as step 0. One call for you: fold it into this branch now, or fast-follow? It's structural and ripples across every wrapper.",
       "anchor": "",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "7d46a3d478",
       "ts": "2026-06-05T17:35:02",
       "drifted": false
@@ -39,7 +39,7 @@
       "text": "isn't null == Data.Null()? would that be a thing?",
       "anchor": "Out of scope: `dict`/`list` (done), `path`/`image`/`code` (already flow as wrappers), `null` (stays null), the wire format. `object`/`primitive` are registry plumbing, not values.",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-06-05T16:13:33",
       "drifted": true
@@ -50,10 +50,10 @@
       "text": "maybe not bad idea to have null/this.cs",
       "anchor": "Out of scope: `dict`/`list` (done), `path`/`image`/`code` (already flow as wrappers), the wire format. `object`/`primitive` are registry plumbing, not values. **`null` is already native** — a null value flows as `Data.Null()` (a present Data with type `null`, value `null`; the factory exists on `data/this.cs`). What's out of scope is a `null.@this` *wrapper class*: null has no behavior to carry and `Data.ToBoolean()` already reads it as falsy.",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "b2c3d4e5f6",
       "ts": "2026-06-05T16:55:26",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "b2c3d4e5f6",
@@ -61,7 +61,7 @@
       "text": "Right -- Data.Null() already exists (data/this.cs:570) and a null value flows as a present Data with type `null`. 'stays null' was imprecise; fixed the out-of-scope line to say null is already native as Data.Null(). What's out of scope is a null.@this wrapper class -- null has no behavior to carry and ToBoolean() already reads it falsy. Also pinned seam 1: JSON null -> Data.Null(), not a null-wrapping scalar, so null stays unambiguous once every scalar is wrapped.",
       "anchor": "",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "5f75deacf1",
       "ts": "2026-06-05T17:35:04",
       "drifted": false
@@ -116,9 +116,10 @@
       "text": "Yes to both. List elements are always Data<List<data>> (the box), never List<item>. And value slots are Data<wrapper>, not raw CLR -- Data<int> becomes Data<number>, Data<string> -> Data<text>, Data<bool> -> Data<bool.@this>. Raw CLR only shows up as the wrapper's backing .Value, unwrapped once at the BCL perimeter / conversion leaf. That makes `Data<T> where T : item` actually hold for value slots -- so both your enforcement options apply together: the item base class covers every value, the build gate enforces it. Two non-value carve-outs stay: Data<Variable> (name-binding, a reference not a value) is the one non-item Data<T>, and [Code] T isn't a Data<T> at all. Fixed the plan -- my earlier 'keep raw CLR at leaf slots' was too conservative. Still open: fold the item base + the Data<int>->Data<number> sweep into this branch now, or fast-follow?",
       "anchor": "",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "7c221c3b2e",
-      "ts": "2026-06-05T18:10:02"
+      "ts": "2026-06-05T18:10:02",
+      "drifted": false
     },
     {
       "id": "f6a7b8c9d0",
@@ -126,9 +127,10 @@
       "text": "Agreed -- moved null from out-of-scope to a Decided singleton wrapper. null.@this hosts null's behavior (truthiness always false, null==null, bare `null` serialization) so the is-null value-switches dissolve like the rest. Two guards: it's a singleton (one null, no per-value alloc; Data.Null() stays the factory and stamps it; null.@this : item.@this so it flows in Data<item>), and it's the null *value*, not the absence of a Data -- a missing variable / NotFound stays a C# null `data` reference (IsInitialized=false), a different axis. null.@this shouldn't try to represent 'no Data'.",
       "anchor": "",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "2a6a9febb1",
-      "ts": "2026-06-05T18:10:04"
+      "ts": "2026-06-05T18:10:04",
+      "drifted": false
     }
   ]
 }
