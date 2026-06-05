@@ -50,12 +50,16 @@ flattened view**. The row (chunk) structure is never observable.
 - `FromRaw` left building one row per source element (observably identical to a single chunk
   under flattening, and it's what the parse seam already does).
 
-**Observable change:** `add list to list` now **merges** (flattened), where it previously
-nested the list as one element. Confirmed by the new `RowModelTests`. No plang goal relied on
-the old nest behavior (273/273). `matrix` (2-D positional) remains out of scope — until it
-exists, a nested list literal `[[1,2],[3,4]]` flattens, per "lists are flat sequences."
+**Observable change:** `add list to list` changes the **flattened read view** — `count`,
+`foreach`, `print`, `at N` now see the added list's elements (so `count` jumps by the added
+list's length), where before the list was one nested element (`count` +1). Nothing merges
+*physically* on `add`: the added list stays one row; the rows only collapse into a flat list
+when `sort`/`where`/`reverse`/etc. build a new list. Confirmed by the new `RowModelTests`. No
+plang goal relied on the old nested-element behavior (273/273). `matrix` (2-D positional)
+remains out of scope — until it exists, a nested list literal `[[1,2],[3,4]]` reads flat, per
+"lists are flat sequences."
 
-New tests: `RowModelTests` (merge-on-add, flattened `count`/`at N`, nested-`RemoveAt`, dict
-weight-1, sort-collapses).
+New tests: `RowModelTests` (added-list flattens into the read view, flattened `count`/`at N`,
+nested-`RemoveAt`, dict weight-1, sort-collapses).
 
 Hand back to **codeanalyzer**.
