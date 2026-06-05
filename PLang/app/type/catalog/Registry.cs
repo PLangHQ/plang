@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Reflection;
 using app.Attributes;
 
-namespace app.type.list;
+namespace app.type.catalog;
 
 /// <summary>
 /// Registry partial of <see cref="@this"/> — absorbs the former <c>PlangTypeIndex</c>

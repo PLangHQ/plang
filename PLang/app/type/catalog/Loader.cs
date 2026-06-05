@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace app.type.list;
+namespace app.type.catalog;
 
 /// <summary>
 /// Runtime scan-and-register for type-bearing assemblies — the type-system

@@ -20,7 +20,7 @@ namespace app.type;
 ///
 /// <para>Both doors — <c>data.Type</c> and <c>app.Type[name]</c> — return the
 /// same entity shape; <c>app.Type</c> resolves names through the registry and
-/// stamps <c>Context</c>, while <c>type.list.@this.BuildTypeEntries</c> walks
+/// stamps <c>Context</c>, while <c>type.catalog.@this.BuildTypeEntries</c> walks
 /// the action catalog and populates the catalog properties at construction.
 /// Entities minted outside <c>BuildTypeEntries</c> lazily resolve the catalog
 /// properties on first read via <see cref="Promote"/>.</para>
@@ -166,7 +166,7 @@ public sealed class @this
         if (target == null)
             return global::app.data.@this.FromError(new global::app.error.Error(
                 $"Unknown type '{Name}'", "UnknownType", 400));
-        var (c, err) = global::app.type.list.@this.TryConvert(value, target, context);
+        var (c, err) = global::app.type.catalog.@this.TryConvert(value, target, context);
         return err != null ? global::app.data.@this.FromError(err) : global::app.data.@this.Ok(c);
     }
 

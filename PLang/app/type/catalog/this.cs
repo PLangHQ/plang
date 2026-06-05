@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 using app.Attributes;
 using app.module;
 
-namespace app.type.list;
+namespace app.type.catalog;
 
 /// <summary>
 /// Owns PLang name ↔ CLR type identity, the [Choices] vocabulary registry, and the

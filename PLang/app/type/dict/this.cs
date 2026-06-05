@@ -10,7 +10,7 @@ namespace app.type.dict;
 /// plain domain class wrapped in <c>Data&lt;dict&gt;</c> by the parse seam and
 /// the navigators, not a Data subclass.
 ///
-/// <para>Symmetric to <c>app.type.list.list.@this</c> (the list value type):
+/// <para>Symmetric to <c>app.type.catalog.@this</c> (the list value type):
 /// <c>dict</c> owns key-lookup and serialize-as-<c>{}</c>; <c>list</c> owns
 /// index navigation and serialize-as-<c>[]</c>.</para>
 /// </summary>

@@ -18,7 +18,7 @@ public sealed class Money
     public Money(decimal amount, string currency) { Amount = amount; Currency = currency; }
 }
 
-public sealed class MoneyRenderer : global::app.type.list.ITypeRenderer
+public sealed class MoneyRenderer : global::app.type.catalog.ITypeRenderer
 {
     public string TypeName => "money";
     public string Format => global::app.type.renderer.@this.AnyFormat;
@@ -43,7 +43,7 @@ public sealed class CustomInt
     public static string Shape => "string";
 }
 
-public sealed class CustomIntRenderer : global::app.type.list.ITypeRenderer
+public sealed class CustomIntRenderer : global::app.type.catalog.ITypeRenderer
 {
     public string TypeName => "int";
     public string Format => global::app.type.renderer.@this.AnyFormat;

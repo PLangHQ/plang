@@ -72,7 +72,7 @@ public sealed partial class @this
                 var mime = Context!.App.Format.Mime(Extension);
                 var snapshotType = Context!.App.Format.TypeFromMime(mime);
                 snapshotType.Context = Context;
-                var snapshotClr = global::app.type.list.@this.ClrFromMime(mime);
+                var snapshotClr = global::app.type.catalog.@this.ClrFromMime(mime);
                 if (snapshotClr != null && snapshotClr != typeof(string))
                 {
                     var converted = Context!.App.Type.Convert(snapshot, snapshotClr, Context).Value;
@@ -95,7 +95,7 @@ public sealed partial class @this
             // separate decision keyed off the materialized CLR, below.
             var type = Context!.App.Format.TypeFromMime(mime);
             type.Context = Context;
-            var materialized = global::app.type.list.@this.ClrFromMime(mime);
+            var materialized = global::app.type.catalog.@this.ClrFromMime(mime);
             object content;
 
             if (materialized == typeof(byte[]))

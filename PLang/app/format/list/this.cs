@@ -450,10 +450,10 @@ public sealed class @this
         // primitive CLR type keeps its own PLang name (e.g. application/plang-goal
         // → `goal`) rather than collapsing to `object` — its reader materializes
         // toward that name. Unknown/no CLR type falls back to `object`.
-        var clr = global::app.type.list.@this.ClrFromMime(mime);
+        var clr = global::app.type.catalog.@this.ClrFromMime(mime);
         var name = clr != null
-            ? (global::app.type.list.@this.GetPrimitiveName(clr)
-               ?? global::app.type.list.@this.GetTypeNameStatic(clr))
+            ? (global::app.type.catalog.@this.GetPrimitiveName(clr)
+               ?? global::app.type.catalog.@this.GetTypeNameStatic(clr))
             : "object";
         return new global::app.type.@this(name, kind);
     }

@@ -60,7 +60,7 @@ public sealed class GoalCall : module.IEvent
                 try
                 {
                     return data.@this.Ok(System.Text.Json.JsonSerializer.Deserialize<GoalCall>(
-                        je.GetRawText(), global::app.type.list.@this.CaseInsensitiveRead));
+                        je.GetRawText(), global::app.type.catalog.@this.CaseInsensitiveRead));
                 }
                 catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
                 {

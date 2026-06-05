@@ -21,12 +21,12 @@ public class TypedValueNodeNormalizeTests
         public string Payload { get; init; } = "";
     }
 
-    private global::app.type.list.@this _types = null!;
+    private global::app.type.catalog.@this _types = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _types = new global::app.type.list.@this();
+        _types = new global::app.type.catalog.@this();
         _types.Assemblies.Add(typeof(TypedValueNodeNormalizeTests).Assembly);
         _types.Renderers.Assemblies.Add(typeof(TypedValueNodeNormalizeTests).Assembly);
         _types.Renderers.Register("normalize-fixture-with-renderer",

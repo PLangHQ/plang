@@ -52,7 +52,7 @@ public partial class @this
     /// tests / no-Context paths.
     /// </summary>
     internal static object? NormalizeValue(object? value, View mode, HashSet<object> visited, int depth,
-        app.type.list.@this? types)
+        app.type.catalog.@this? types)
     {
         if (depth > MaxNormalizeDepth)
             throw new NormalizeException(
@@ -187,7 +187,7 @@ public partial class @this
     // A C# domain record reflects into the one object form — a native `dict`,
     // not a parallel "property bag" list. One object shape across the wire.
     private static app.type.dict.@this NormalizeObject(object obj, View mode, HashSet<object> visited, int depth,
-        app.type.list.@this? types)
+        app.type.catalog.@this? types)
     {
         if (!visited.Add(obj))
             throw CycleError(obj);

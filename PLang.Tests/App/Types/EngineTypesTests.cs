@@ -2,13 +2,13 @@ namespace PLang.Tests.App.Types;
 
 public class EngineTypesTests
 {
-    private global::app.type.list.@this _types = null!;
+    private global::app.type.catalog.@this _types = null!;
     private global::app.format.list.@this _formats = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _types = new global::app.type.list.@this();
+        _types = new global::app.type.catalog.@this();
         _formats = new global::app.format.list.@this();
     }
 

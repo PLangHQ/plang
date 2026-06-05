@@ -216,7 +216,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Centralized type identity: PLang names ↔ CLR types. File-format
     /// characteristics live on <see cref="Format"/>.
     /// </summary>
-    public type.list.@this Type { get; }
+    public type.catalog.@this Type { get; }
 
     /// <summary>
     /// File-format characteristics: extension → Kind, extension → MIME,
@@ -308,7 +308,7 @@ public sealed partial class @this : IAsyncDisposable
         Debug = new Debugging(this);
         Tester = new global::app.tester.@this(this);
         Builder = new global::app.module.builder.@this(this);
-        Type = new type.list.@this();
+        Type = new type.catalog.@this();
         Config = new config.@this();
         _settingsStore = new Lazy<global::app.module.settings.IStore>(CreateSettingsStore);
         Settings = new global::app.module.settings.@this(this);

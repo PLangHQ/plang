@@ -969,7 +969,7 @@ public class Default : IBuilder
                 // fully reflected record (Raw, Absolute, FileName, ...) that round-trips
                 // poorly. Leave the primitive in the .pr; runtime auto-wraps via the source
                 // generator's Resolve convention when the action actually executes.
-                if (global::app.type.list.@this.IsScalarPlangType(targetType)) continue;
+                if (global::app.type.catalog.@this.IsScalarPlangType(targetType)) continue;
 
                 // [Choices]-bearing types (Actor, Operator, ...) keep their string form in
                 // the .pr — runtime resolves the chosen name via the type's own path
