@@ -27,7 +27,7 @@ For the test-designer. The coverage matrix (surface × stage × layer), the fail
 | `bool` truthiness primitive | 5 | C# unit | wraps raw `bool`; `AsBooleanAsync` bottoms out at it |
 | `bool` in a condition | 5 | integration | `if %b%`, `if !%b%`, `assert.IsTrue` read a `bool.@this` result |
 | `bool` born native | 5 | integration | JSON `true`/`false` → `bool.@this`; bare on `.json` |
-| `null` singleton + truthiness | 6 | C# unit | singleton instance; always falsy; `null==null`; sorts last |
+| `null` singleton + truthiness | 6 | C# unit | singleton instance; always falsy; `null==null`; **sorts last** (the sort places nulls last — `null` isn't self-orderable, doesn't implement `IOrderableValue`) |
 | **`null` value vs absent Data** | 6 | integration | `set %x%=null` → `null.@this`; **missing var → `NotFound`, not `null.@this`** |
 | coercion mediator over wrappers | 7 | C# unit | `"5"==5`, numeric widening, date-vs-datetime — inspects wrappers, not raw CLR |
 | `Variable : item` | 7 | C# unit | `Data<Variable>` satisfies `where T : item`; name-resolution still works |
