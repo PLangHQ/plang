@@ -1,0 +1,42 @@
+namespace app.type.@bool;
+
+/// <summary>
+/// PLang <c>bool</c> value — the truthiness primitive, backed by a raw CLR
+/// <see cref="bool"/>. This is where the <see cref="global::app.data.IBooleanResolvable"/>
+/// turtles stop: every other type's truthiness may delegate; <c>bool</c>'s
+/// <see cref="IsTruthy"/> <em>is</em> the value it wraps.
+///
+/// <para><b>Equality-only.</b> <c>bool</c> deliberately does NOT implement
+/// <see cref="global::app.data.IOrderableValue"/> — there is no natural order,
+/// so <c>Compare.Order(bool, bool)</c> throws, matching the equality-only policy
+/// dict carries. The bare wire form is lowercase <c>true</c>/<c>false</c>.</para>
+/// </summary>
+public sealed partial class @this : global::app.type.item.@this,
+    global::app.data.IEquatableValue, System.IEquatable<@this>
+{
+    public static string Example => "true";
+    public static string Shape => "bool";
+
+    public bool Value { get; }
+
+    public @this(bool value) { Value = value; }
+
+    public static implicit operator bool(@this b) => b.Value;
+
+    /// <summary>The truthiness primitive bottoms out here — the raw bool it wraps.</summary>
+    public override bool IsTruthy() => Value;
+
+    /// <summary>Bare lowercase <c>true</c>/<c>false</c> — the serializer renders this.</summary>
+    public override string ToString() => Value ? "true" : "false";
+
+    public bool AreEqual(object? other) => other switch
+    {
+        @this b => Value == b.Value,
+        bool b => Value == b,
+        _ => false,
+    };
+
+    public bool Equals(@this? other) => other is not null && Value == other.Value;
+    public override bool Equals(object? obj) => Equals(obj as @this);
+    public override int GetHashCode() => Value.GetHashCode();
+}

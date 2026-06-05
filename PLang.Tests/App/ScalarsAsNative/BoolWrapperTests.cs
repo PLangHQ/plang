@@ -1,51 +1,48 @@
+using Bool = global::app.type.@bool.@this;
+
 namespace PLang.Tests.App.ScalarsAsNative;
 
-// bool.@this — new wrapper, the truthiness primitive. Wraps a raw bool; this is
-// where the IBooleanResolvable turtles stop. Equality + bare serialize; ordering
-// optional (false<true) per coder's documented call. OwnedClrTypes = bool.
+// bool.@this — the truthiness primitive. Wraps a raw bool; this is where the
+// IBooleanResolvable turtles stop. Equality-only (Order throws). OwnedClrTypes = bool.
 public class BoolWrapperTests
 {
     [Test]
     public async Task Bool_WrapsRawBool_AsBooleanAsyncBottomsOutAtValue()
     {
-        // bool.@this.AsBooleanAsync returns the raw bool it wraps — every other
-        // type's truthiness may delegate; bool's is the value.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        await Assert.That(await new Bool(true).AsBooleanAsync()).IsTrue();
+        await Assert.That(await new Bool(false).AsBooleanAsync()).IsFalse();
+        await Assert.That(new Bool(true).IsTruthy()).IsTrue();
+        await Assert.That(new Bool(false).IsTruthy()).IsFalse();
     }
 
     [Test]
     public async Task Bool_Equality_TrueEqualsTrueAndHashEqual()
     {
-        // bool.@this(true) and bool.@this(true) Equal AND hash-equal.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        await Assert.That(new Bool(true).Equals(new Bool(true))).IsTrue();
+        await Assert.That(new Bool(true).Equals(new Bool(false))).IsFalse();
+        await Assert.That(new Bool(true).GetHashCode()).IsEqualTo(new Bool(true).GetHashCode());
     }
 
     [Test]
     public async Task Bool_BareSerialize_TrueFalseOnApplicationJson()
     {
-        // Normalize emits bare `true`/`false`, not enveloped.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // Bare lowercase true/false form.
+        await Assert.That(new Bool(true).ToString()).IsEqualTo("true");
+        await Assert.That(new Bool(false).ToString()).IsEqualTo("false");
     }
 
     [Test]
     public async Task Bool_OwnsClrBool_RegisteredInOwnedClrTypes()
     {
-        // primitive map declares bool owns CLR bool; UnwrapJsonElement True/False
-        // arms emit bool.@this.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        await Assert.That(Bool.OwnedClrTypes.Any(o => o.Clr == typeof(bool))).IsTrue();
     }
 
     [Test]
     public async Task Bool_NotOrderable_OrderThrows()
     {
-        // bool.@this does NOT implement IOrderableValue; Compare.Order(bool, bool)
-        // throws NotOrderableException — matches collections-are-data's settled
-        // equality-only-bool policy.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // bool.@this does NOT implement IOrderableValue; Compare.Order throws.
+        await Assert.That(typeof(global::app.data.IOrderableValue).IsAssignableFrom(typeof(Bool))).IsFalse();
+        await Assert.That(() => global::app.data.Compare.Order(new Data("", new Bool(true)), new Data("", new Bool(false))))
+            .Throws<global::app.data.Compare.NotOrderableException>();
     }
 }
