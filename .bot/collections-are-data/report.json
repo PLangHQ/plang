@@ -47,6 +47,53 @@
         "health": "C# 4082/4082, plang 273/273, both deterministic, git clean across two runs.",
         "notes": "Findings are minor: missing plang test for new where action; bad-LLM .pr rebuilds committed; missing coder baseline-tests.md. None are red tests or confirmed false-greens."
       }
+    },
+    {
+      "id": "922cffd3-f41f-46a2-a0c7-dc185c9eba87",
+      "bot": "tester",
+      "timestamp_start": "2026-06-05T15:10:00Z",
+      "timestamp_end": "2026-06-05T15:32:00Z",
+      "intent": "Validate test quality for collections-are-data v6; confirm scope of the F2 disabled signing tests as codeanalyzer v4 requested.",
+      "before": {
+        "assumptions": "codeanalyzer v4 PASS (C# 4089/0 + plang 273/273); F2 = two signing tests disabled as a documented, merge-gated deferral. Asked tester to confirm scope + that the C# probe still covers the primitive.",
+        "risk": "Disabled tests are a classic false-green vector; the branch reworks the signing/Data-wrapping path."
+      },
+      "plan": ".bot/collections-are-data/tester/v6/plan.md",
+      "actions": [
+        {
+          "paths": ["Tests/LazyDeserialize/SignedDataSurvivesInList.test.goal", "Tests/LazyDeserialize/SignAndVerifyRoundTrip.test.goal"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Both were green regression tests at base (verify a signed value through %list[0]% and across a goal call). On this branch they were gutted: real steps commented out, replaced with a no-op `write out '...disabled'` that PASSES and counts in plang 273/273 (0 skipped). Masks a real regression (Data-wrapping-Data rehash mismatch)."
+        },
+        {
+          "paths": ["Tests/LazyDeserialize/SignedDataSurvivesInList.test.goal"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "REPRO: restored the un-gutted goal + base .pr, ran on the current branch binary -> [Fail] (200ms). Proves verify-signed-through-list is broken now, not just per the comment. Reverted; git clean."
+        },
+        {
+          "paths": ["PLang.Tests/App/LazyDeserialize/IntegrationCutsTests/SignedDataSurvivesVariableSetListTests.cs"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "The cited C# probe passes only because it reads the element via raw (IList)[0] as data cast and verifies the bare element — bypasses the broken plang %list[0]% / goal-call surface. So broken developer behavior has zero surface coverage."
+        },
+        {
+          "paths": ["PLang/app/type/list/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1 aliasing fix independently mutation-verified: CopyStructure -> return this reds Add_List_DoesNotAliasSourceVariable + AddList_StructureCopy_NoAliasBothDirections and only those. Reverted. Honest fix."
+        }
+      ],
+      "after": {
+        "status": "FAIL",
+        "health": "C# 4089/4089 genuine. plang 273/273 is a FALSE GREEN: 2 gutted no-op tests masking a live regression (verify of signed value across list/goal boundary).",
+        "notes": "Blocker = finding 1 (masked regression). Signing fix legitimately deferred to signature-as-schema-wrapper + merge gate; on-branch fix is small: make the two goals Skipped (tag exclude) instead of no-op passes. F1/F3/F4 genuinely resolved."
+      }
     }
   ]
 }

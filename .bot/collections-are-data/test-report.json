@@ -1,50 +1,40 @@
 {
   "tester": "tester",
   "branch": "collections-are-data",
-  "timestamp": "2026-06-05T09:46:00Z",
-  "tested_version": "v3",
+  "timestamp": "2026-06-05T15:30:23Z",
+  "tested_version": "v6",
   "test_run": {
-    "csharp": { "total": 4082, "passed": 4082, "failed": 0, "skipped": 0 },
-    "plang": { "total": 273, "passed": 273, "failed": 0, "skipped": 0 }
+    "csharp": { "total": 4089, "passed": 4089, "failed": 0, "skipped": 0 },
+    "plang": { "total": 273, "passed": 273, "failed": 0, "skipped": 0, "note": "273 'pass' includes 2 gutted no-op tests masking a regression — see finding 1. Honest count is 271 pass + 2 broken." }
   },
   "coverage": {
     "changed_files_covered": 0,
     "changed_files_total": 0,
     "uncovered_files": [],
-    "note": "Full line-coverage tooling not run (not wired for this repo). Coverage assessed by reading the Stage1-6 test suites against the changed C# surface; the new compare path, native list/dict value types, navigators, writer disambiguation, and where/group/sort/unique handlers are all behaviorally exercised. The one user-facing gap is the new `where` action's PLang surface (see finding 1)."
+    "note": "Core collections work (CopyStructure aliasing fix, compare path, row model, where/group) is behaviorally covered and mutation-verified. The verify-signed-value-across-a-boundary developer surface now has ZERO test coverage — its two regression tests were disabled and the cited C# probe bypasses the broken path."
   },
   "findings": [
     {
       "id": 1,
-      "severity": "minor",
-      "type": "missing-plang-test",
-      "test_file": "Tests/Modules/List/ (no where/filter .test.goal)",
-      "code_file": "PLang/app/module/list/where.cs",
-      "issue": "`where` is a new action (Stage5, file new on this branch). It has solid C# coverage (Stage5_ListDictOpsTests: WhereOnList/WhereOnDict/WhereOnApex incl. error paths), but no PLang .test.goal exercises it.",
-      "impact": "The builder step-text -> list.where mapping is unverified. A PLang author writing `filter %users% where age > 20` has no proof it compiles to the right action and runs end-to-end. C# tests construct the Where action directly, bypassing the build path.",
-      "suggestion": "Add a `Tests/Modules/List/Where.test.goal` (filter a list by a field predicate; filter-or-drop a dict; assert the filtered count/values). Must be built with a good-LLM env — the sandbox LLM cannot build it reliably."
+      "severity": "critical",
+      "type": "false-green",
+      "test_file": "Tests/LazyDeserialize/SignedDataSurvivesInList.test.goal, Tests/LazyDeserialize/SignAndVerifyRoundTrip.test.goal",
+      "code_file": "PLang/app/data/* (signing / Data-in-Data wrapping on the collections path)",
+      "issue": "Both goals were regression tests that PASSED at base (pinning 'a signed Data added to a list verifies through %list[0]%' and 'sign → cross a goal-call → verify'). On this branch the behavior broke (verify rehashes a Data-wrapping-a-Data, so the hash differs from the signed hash). Instead of failing, each goal was gutted: real steps commented out, replaced with a no-op `write out '...disabled'` that PASSES. They are counted inside the plang 273/273 (0 skipped).",
+      "impact": "The suite reports a fully-green 273/273 while a real product regression is live: `verify %list[0]%` of a signed value, and `verify` of a signed value received across a goal call, both return wrong results on this branch. PROVEN: I restored the un-gutted SignedDataSurvivesInList test and ran it on the current branch binary — it FAILS ([Fail] ... 200ms). The cited C# probe (SignedDataInListLiteral_SurvivesVariableSet_AndVerifies) passes only because it reads the element via a raw `(IList)[0] as data` cast and verifies the bare element — it bypasses the plang element-read / goal-call surface that is actually broken. So the broken developer behavior has no surface coverage.",
+      "suggestion": "The signing fix itself is correctly deferred to the sibling branch `signature-as-schema-wrapper` (merge gate stands). But on THIS branch make the deferral HONEST: do not ship a known regression as a passing no-op. Mark the two goals so they register as Skipped, not Passed — plang supports a Skipped status via tag exclude (discover.cs:171 / Testing.Exclude). Then the suite reads e.g. 271 pass + 2 skipped, the green stops lying, and the merge gate + deferral are unchanged."
     },
     {
       "id": 2,
       "severity": "minor",
-      "type": "false-green",
-      "test_file": "Tests/Modules/Condition/Operators/LessThan/.build/whenless.pr, Tests/Modules/Condition/Operators/LTE/.build/whenlte.pr",
-      "code_file": "PLang/app/module/condition/Operator.cs",
-      "issue": "Both called-sub-goal .pr were rebuilt by the bad sandbox LLM and committed in this branch (builderVersion -> null, path collapsed to /WhenLess.goal, a stray condition.if step dropped). These are NOT the test .pr.",
-      "impact": "Low. The actual test .pr (conditionlessthan.test.pr / conditionlte.test.pr) are unchanged from base and still exercise the `<` / `<=` operators with a real assert; the sub-goal still sets %result%. But committing bad-LLM rebuilds risks the next rebuild diverging and is a process smell on a branch that rewrites the compare path.",
-      "suggestion": "git checkout these two .pr back to their base content (or rebuild in a good-LLM env). Do not commit sandbox-LLM rebuilds."
-    },
-    {
-      "id": 3,
-      "severity": "minor",
-      "type": "missing-coverage",
-      "test_file": ".bot/collections-are-data/coder/v3/baseline-tests.md (absent)",
-      "code_file": "(process)",
-      "issue": "Coder left no baseline-tests.md for any version. Per my workflow this is a process violation; I could not diff against a recorded pre-coder baseline.",
-      "impact": "Cannot mechanically separate regressions from pre-existing failures. Mitigated here because both suites are fully green (0 failures), so the distinction is moot this round.",
-      "suggestion": "Coder should record baseline-tests.md before starting each version."
+      "type": "missing-plang-test",
+      "test_file": "Tests/Modules/List/ (no where/filter .test.goal)",
+      "code_file": "PLang/app/module/list/where.cs",
+      "issue": "Carried over from v3: `where` is a new action with C# coverage (Stage5_ListDictOpsTests) but no PLang .test.goal exercising the builder step→list.where mapping.",
+      "impact": "The developer-surface compile path for `where` is unverified end-to-end.",
+      "suggestion": "Add a Where.test.goal (built in a good-LLM env). Not the blocker — finding 1 is."
     }
   ],
-  "verdict": "approved",
-  "summary": "collections-are-data v3 is a real green. C# 4082/4082 and plang 273/273, both deterministic across two clean runs with git clean after (no warm-cache .pr churn). The Stage1-6 suites verify intent, not implementation: Stage4 pins numeric-vs-lexical order, trichotomy, structural equality, and equality-only-types-throw; Stage5 pins where/group/sort/unique including error edges (WhereOnApex, SortOnListOfDict throws); the F1 signed-element-in-list survival is proven through the .plang wire. A mutation test on the highest-risk review-driven code (the compare text-order arm) was caught, confirming the Stage4 case-policy green is honest. Findings are all minor: the new `where` action lacks a PLang test (builder env blocks closing it here), two comparison-operator sub-goal .pr were rebuilt by the bad sandbox LLM and committed, and the coder left no baseline file. None are red tests or confirmed false-greens. PASS."
+  "verdict": "needs-fixes",
+  "summary": "The collections core is genuinely solid: C# 4089/0, the F1 list-aliasing fix is mutation-verified honest (CopyStructure→return this reds both aliasing tests and only those), F3/F4 resolved, the compare path stays mutation-verified from v3, and plang runs are deterministic with git clean. BUT the plang 273/273 is a false green. Two signing regression tests — green at base — were disabled by gutting them into no-op `write out` lines that still PASS and still count in the 273, masking a live regression: verify of a signed value through a list (`verify %list[0]%`) and across a goal call is broken on this branch. I proved it by restoring the real test on the current binary, where it fails. The cited C# probe covers signature-survival-at-rest via a raw element cast, not the broken plang surface. Per the strict standard (a confirmed regression masked by disabled tests is a FAIL, no deferral carve-out), this is needs-fixes. The signing fix legitimately belongs on `signature-as-schema-wrapper` and the merge gate is correct — the on-branch fix is small: convert the two gutted goals to an honest Skipped status so the suite stops reporting a regression as a pass."
 }
