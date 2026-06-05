@@ -898,3 +898,39 @@ the native dict/list back to raw for the config bag (architect's item D on
 instead of a raw `IDictionary<string,object?>` the consumers then re-read by key.
 Kills the build-native-then-flatten round-trip and the stringly-typed property bag
 in one move. Perimeter/infra, low priority — do it as a focused pass, not mid-branch.
+
+## Make Data._type non-null — kill the `if (_type != null)` derive-fork (2026-06-05, Ingi)
+
+`Data.Type` (`app/data/this.cs:341`) lazily derives the type from the value's CLR
+type (`AppTypes.GetPrimitiveName(clr)` / `App.Type.Name(clr)`, + number kind) and
+caches into `_type`; `_type == null` means "no explicit type, derive on access".
+Goal: make `_type` always populated so the getter is trivial and the scattered
+`Type != null` / `Type?.` guards can go.
+
+**Watch out — the null is currently load-bearing, not just a cache flag.** It also
+encodes "*explicitly* typed vs derived", and a few sites branch on that meaning:
+- `this.Navigation.cs:275` (`val is string && _type != null`) and `:316`
+  (`_value is string raw && _type != null`) — string→type coercion fires only when
+  the user *explicitly* typed the value (`set %x% = "5" as number` coerces; bare
+  `set %x% = "5"` stays text). Eager-derive would make these always-true and try to
+  coerce plain strings.
+- setter `_type = value.IsNull ? null : value` (`:378`) — assigning the `type.Null`
+  sentinel means "clear to derive-mode".
+- `Value` setter `_type = null` (`:193`) — a rebind drops the cached/explicit type.
+
+So a clean "non-null `_type`" needs to preserve the explicit-vs-derived distinction
+(eager-derive at construction/context-wiring + a separate marker, or rework the two
+coercion gates to compare against the derived-default instead of null) — not just
+flip the field. Derivation for primitives works without context; only runtime-loaded
+types need it, so eager stamping is feasible for the common case. Medium-size change
+touching the Data core + ~15 `Type?.`/`Type != null` call sites; do as a focused pass.
+
+## List rope/chunked model — spec written (2026-06-05, Ingi)
+
+Decided: PLang `list` is a flat sequence (no observable nesting; 2-D goes to a
+`matrix`/`table` type). Internally a rope of `Data` chunks, one per `add`: `add`/`remove`
+are O(1) chunk edits that never read existing leaves; `count` is a running leaf counter;
+`GetEnumerator` walks chunks yielding the next leaf (no flatten op, no copy); only
+list-producing ops (sort/where/unique/map) materialize a flat list. Observable shift:
+`add list to list` becomes merge, not nest. Full spec + open bits (flat-index addressing,
+internal representation swap, wire shape) in `Documentation/v0.2/list-rope-model.md`.
