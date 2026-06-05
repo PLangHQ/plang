@@ -1,0 +1,5 @@
+NullValueIsSingleton
+/ `set %x% = null` lands %x% as the null.@this singleton — `if %x%` falsy,
+/ `%x% == null` true. Data.Null() stamps the same instance every time; no per-
+/ value allocation.
+- throw "not implemented"

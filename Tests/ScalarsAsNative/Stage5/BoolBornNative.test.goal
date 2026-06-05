@@ -1,0 +1,4 @@
+BoolBornNative
+/ `set %b% = true` lands %b% with type "bool" — the value is bool.@this, not a
+/ raw CLR bool mid-flight. Same for false. JSON True/False arms emit the wrapper.
+- throw "not implemented"

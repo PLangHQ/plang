@@ -1,0 +1,4 @@
+BoolBareOnJson
+/ A bool value written to a .json file is bare `true` / `false`, not enveloped.
+/ Signed .plang round-trip keeps it as a bool wrapper.
+- throw "not implemented"

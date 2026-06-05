@@ -1,0 +1,4 @@
+DurationReturnsTimeSpan
+/ A goal that `→ returns TimeSpan` reconstructs the raw CLR TimeSpan from
+/ duration.@this at the conversion leaf.
+- throw "not implemented"

@@ -1,0 +1,6 @@
+MissingVarIsNotNullValue
+/ The bright-line guard: a *missing* variable / NotFound / uninitialised read is
+/ a null `data` reference (IsInitialized = false, no box) — NOT null.@this. A
+/ present null *value* (Data.Null() carrying the singleton) is a different
+/ axis. "variable not set" must not silently become "variable is null".
+- throw "not implemented"

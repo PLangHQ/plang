@@ -1,0 +1,5 @@
+DateDatetimeSortFamiliesSeparate
+/ A list of dates sorts as dates; a list of datetimes sorts as datetimes. The two
+/ are distinct types — neither sort folds the other in. A mixed list (date plus
+/ datetime) is a coercion outcome the mediator owns, not a silent merge.
+- throw "not implemented"

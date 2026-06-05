@@ -1,0 +1,4 @@
+IfBoolTruthy
+/ `if %b%` with %b% = true is truthy; `if !%b%` is falsy. bool.@this implements
+/ IBooleanResolvable; this is the load-bearing runtime path for conditions.
+- throw "not implemented"

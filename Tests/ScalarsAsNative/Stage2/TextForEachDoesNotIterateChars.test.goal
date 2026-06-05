@@ -1,0 +1,5 @@
+TextForEachDoesNotIterateChars
+/ `foreach %s%` over a text value does NOT iterate characters — text.@this is
+/ atomic (not IEnumerable). The IsPlangAssignable/IsPlangIterable carve-out that
+/ exempted raw `string` covers the wrapper.
+- throw "not implemented"

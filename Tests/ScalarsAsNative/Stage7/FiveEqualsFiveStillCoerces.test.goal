@@ -1,0 +1,5 @@
+FiveEqualsFiveStillCoerces
+/ The mediator survives the wrapper sweep — "5" == 5 still resolves to true via
+/ Operator.NormalizeTypes, now inspecting text vs number wrappers (not raw
+/ string vs int CLR). The one blessed type-discrimination site keeps working.
+- throw "not implemented"

@@ -1,0 +1,5 @@
+TextBornNative
+/ `set %s% = "Hello"` lands %s% with type "text" — the value is text.@this, not
+/ a raw string mid-flight. The construction seam (variable.set parsing,
+/ UnwrapJsonElement String arm) emits the wrapper at birth.
+- throw "not implemented"

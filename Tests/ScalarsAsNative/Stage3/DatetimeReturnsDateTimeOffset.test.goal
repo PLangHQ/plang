@@ -1,0 +1,4 @@
+DatetimeReturnsDateTimeOffset
+/ A goal that `→ returns DateTimeOffset` reconstructs the raw CLR DateTimeOffset
+/ from datetime.@this at the conversion leaf — single unwrap, instant preserved.
+- throw "not implemented"

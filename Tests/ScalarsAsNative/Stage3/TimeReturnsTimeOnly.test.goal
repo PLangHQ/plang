@@ -1,0 +1,5 @@
+TimeReturnsTimeOnly
+/ A goal that `→ returns TimeOnly` reconstructs the raw CLR TimeOnly from
+/ time.@this at the conversion leaf — closing the gap where TimeOnly was
+/ unhandled before this branch.
+- throw "not implemented"

@@ -1,0 +1,4 @@
+NumberArithmeticUnchanged
+/ number is the reference wrapper. After `: item`, %a% + %b%, %a% * %b%, compare,
+/ and `→ returns int` behave identically — the rewire adds nothing user-visible.
+- throw "not implemented"

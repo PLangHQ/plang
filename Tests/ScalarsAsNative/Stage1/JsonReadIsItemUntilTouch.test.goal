@@ -1,0 +1,6 @@
+JsonReadIsItemUntilTouch
+/ `read file.json, write to %x%` lands %x% as item(kind=json) — the un-narrowed
+/ type, raw blob on Data. `%x.field%` triggers the lazy narrow on touch and
+/ %x% becomes a dict; subsequent reads navigate it. There is no enduring
+/ PLang `object` type — `(object,json)` → `(item,json)`.
+- throw "not implemented"

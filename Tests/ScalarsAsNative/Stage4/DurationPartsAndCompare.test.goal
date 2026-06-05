@@ -1,0 +1,4 @@
+DurationPartsAndCompare
+/ Parts (days/hours/minutes/total-seconds) read through duration.@this; ordering
+/ (1s < 1m < 1h) via IOrderableValue. Equal durations are value-equal in a list.
+- throw "not implemented"

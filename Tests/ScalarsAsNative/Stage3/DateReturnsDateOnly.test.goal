@@ -1,0 +1,4 @@
+DateReturnsDateOnly
+/ A goal that `→ returns DateOnly` reconstructs the raw CLR DateOnly from
+/ date.@this at the conversion leaf — single unwrap, type-distinct from datetime.
+- throw "not implemented"

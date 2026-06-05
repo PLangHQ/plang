@@ -1,0 +1,4 @@
+AssertIsTrueOnBoolResult
+/ A condition action (assert.IsTrue / assert.IsFalse) reading a bool.@this result
+/ resolves via IBooleanResolvable — no `Val(d) is bool b` raw-switch leftover.
+- throw "not implemented"

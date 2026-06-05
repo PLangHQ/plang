@@ -1,0 +1,4 @@
+NumberWideningCrossesKinds
+/ int↔decimal↔double widening still resolves cross-kind via the mediator after
+/ everything flows native — 5 == 5.0 == 5m through the number tower.
+- throw "not implemented"

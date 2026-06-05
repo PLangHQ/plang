@@ -1,0 +1,5 @@
+DatetimeAcceptsClrDateTime
+/ A CLR DateTime input (e.g. from a C# action result that returns DateTime) lands
+/ as datetime.@this — primitive.cs's `DateTime → datetime` alias holds; the wrapper
+/ accepts both DateTimeOffset and DateTime on construction.
+- throw "not implemented"

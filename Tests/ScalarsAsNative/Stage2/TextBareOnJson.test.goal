@@ -1,0 +1,5 @@
+TextBareOnJson
+/ A text value written to a .json file lands as a bare string ("Hello"), not
+/ enveloped — Normalize emits text.@this bare on application/json, matching
+/ dict/list's bare-emission pattern.
+- throw "not implemented"

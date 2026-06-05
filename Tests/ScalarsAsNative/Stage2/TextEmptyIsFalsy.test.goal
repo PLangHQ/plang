@@ -1,0 +1,4 @@
+TextEmptyIsFalsy
+/ `if %s%` with %s% empty is falsy; non-empty is truthy. text.@this implements
+/ IBooleanResolvable via item; the hot path stays sync (no async hop for the if).
+- throw "not implemented"

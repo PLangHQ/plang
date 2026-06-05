@@ -1,0 +1,4 @@
+BoolReturnsBool
+/ A goal that `→ returns bool` reconstructs the raw CLR bool from bool.@this at
+/ the conversion leaf — single unwrap, no envelope.
+- throw "not implemented"

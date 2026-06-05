@@ -1,0 +1,4 @@
+TextReturnsString
+/ A goal that `→ returns string` reconstructs the raw CLR string from text.@this
+/ at the conversion leaf — one unwrap at the typed boundary, not per call site.
+- throw "not implemented"

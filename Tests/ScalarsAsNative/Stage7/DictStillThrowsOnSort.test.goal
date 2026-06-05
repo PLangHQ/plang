@@ -1,0 +1,5 @@
+DictStillThrowsOnSort
+/ Regression anchor for the whole branch: even with the constraint locked and
+/ every value `: item`, sorting a list of dicts still throws — `item` never
+/ leaked an order to dict.
+- throw "not implemented"

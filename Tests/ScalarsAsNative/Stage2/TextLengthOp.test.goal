@@ -1,0 +1,4 @@
+TextLengthOp
+/ %s.length% works through text.@this's length op (not via raw `string` fallback).
+/ The behavioral sweep moved `is string s => s.Length` onto the wrapper.
+- throw "not implemented"

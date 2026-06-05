@@ -1,0 +1,5 @@
+DurationBornNative
+/ A duration literal lands %d% with type "duration" — duration.@this, backed by
+/ TimeSpan, not a raw CLR TimeSpan mid-flight. timespan stays a deprecated alias
+/ via primitive.cs; duration is canonical.
+- throw "not implemented"

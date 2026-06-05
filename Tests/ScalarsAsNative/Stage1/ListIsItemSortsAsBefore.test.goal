@@ -1,0 +1,5 @@
+ListIsItemSortsAsBefore
+/ A list is `: item` AND still sorts. list owns IOrderableValue (item does not),
+/ so the inheritance is no-op for ordering — the sort produces the same shape
+/ collections-are-data shipped.
+- throw "not implemented"
