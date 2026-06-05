@@ -27,19 +27,36 @@ Everywhere else, asking *what a value is* to decide behavior is the smell — it
 | `text` | thin (`Value` + implicit `string`) | build out: ops (length/case/contains/substring/split/trim…), compare, truthiness, value-equality, serializer, `[atomic]` (no char-iterate) |
 | `datetime` | thin (`Value` + `ToString`) | build out: compare, truthiness, formatting/parts, value-equality, serializer |
 | `duration` | thin (`Value` + `ToString`) | build out: compare, truthiness, parts, value-equality, serializer |
-| `bool` | **none** | create `bool.@this` — the truthiness primitive; equality + serializer. (Decision below: create vs. leave raw.) |
+| `bool` | **none** | create `bool.@this` — the truthiness primitive; equality + serializer. (Decided — see below.) |
 
-Out of scope: `dict`/`list` (done), `path`/`image`/`code` (already flow as wrappers), `null` (stays null), the wire format. `object`/`primitive` are registry plumbing, not values.
+Out of scope: `dict`/`list` (done), `path`/`image`/`code` (already flow as wrappers), the wire format. `object`/`primitive` are registry plumbing, not values. **`null` is already native** — a null value flows as `Data.Null()` (a present Data with type `null`, value `null`; the factory exists on `data/this.cs`). What's out of scope is a `null.@this` *wrapper class*: null has no behavior to carry and `Data.ToBoolean()` already reads it as falsy.
 
-### Open decision — does `bool` get a wrapper?
+### Decided — `bool` gets a wrapper
 
-`bool` is special: it *is* the truthiness primitive. A `bool.@this` would carry compare/equality/serialize like the others (uniformity), but every `IBooleanResolvable.AsBooleanAsync()` ultimately returns a raw `bool`, so the wrapper can't be turtles-all-the-way. Recommendation: **create `bool.@this`** for uniform flow (so `Compare.Family`'s `bool =>` arm and the `is bool` sites dissolve like the rest), with the truthiness contract bottoming out at the raw `bool` it wraps. Confirm with Ingi before building.
+`bool` is special: it *is* the truthiness primitive, and `IBooleanResolvable.AsBooleanAsync()` always bottoms out at a raw `bool`, so the wrapper can't be turtles-all-the-way. **Decided (Ingi): create `bool.@this`** — same compare/equality/serialize surface as the others, the truthiness contract bottoming out at the raw `bool` it wraps. The reason is consistency: `Compare.Family`'s `bool =>` arm and the `is bool` sites dissolve like the rest. Simpler code, no special-case `if` — the value just flows.
+
+### Decided — the polymorphic value slot is `item`, not `object`
+
+`item` is the apex of the value-type lattice (≈ C# `object`); every value is-a `item` (`type/this.cs` `Is`). So where C# writes `Data<object>` for a genuinely-polymorphic value (the `→ returns data` convention; the double-wrap footgun in CLAUDE.md), the plang type is **`item`** — `object` is only its CLR realization. Note it everywhere: the polymorphic slot is `Data<item>`.
+
+Enforcement — two options Ingi raised:
+- **Runtime guard:** reject `Data<T>` whose `T` isn't a known plang value type. Catches misuse, but it's a runtime check.
+- **`item.@this` as a base class** all value-wrappers inherit (recommended). Then `Data<item>` is the polymorphic slot and `T : item` is enforced at compile time; `Data<object>` stops being writable for the value case, and the double-wrap footgun dies structurally — `Data` is the *box*, not an `item`, so a `Data<item>` can never nest a `Data`.
+
+Recommendation: **introduce `item.@this` as an abstract base** and fold onto it the shared value contract this branch is already adding to each wrapper — value-equality, `IOrderableValue`, `IBooleanResolvable`, bare serialization — instead of N parallel interfaces. Three cautions, all from the box/apex rule ([[plang-value-and-type-model]]):
+- `item.@this` is **abstract** — the apex stores nothing; there is never a bare `item` instance holding a value.
+- Collection element slots stay `Data<List<data>>`, **not** `List<item>` — elements are the box, carrying their own name/type/signature.
+- The constraint is **not** `Data<T> where T : item` globally — typed leaf slots (`Data<int>`, `Data<Variable>`, `[Code] T`) legitimately carry non-item CLR types at the perimeter / name-binding / code seams. Only the *polymorphic* slot moves `Data<object>` → `Data<item>`.
+
+Scope: this is structural and ripples across every wrapper. It's tightly coupled to this branch (we build all the wrappers here), so it sequences as **step 0** — define `item.@this`, make `number` (the reference wrapper) inherit it, then each wrapper inherits as it's built out. If it bloats the branch it can split to a fast-follow; the `Data<object>`→`Data<item>` rename is the visible deliverable either way. **Confirm fold-in-now vs. fast-follow with Ingi.**
 
 ## Seam map + dispositions (the leaf-trace, at seam granularity)
 
 Five seams carry scalar behavior today. Each gets the same treatment: the per-type arm moves onto the wrapper; the cross-type/perimeter logic stays.
 
-1. **Construction (where scalars are born raw).** `data/this.cs` `UnwrapJsonElement` (`String → GetString()`, `Number → UnwrapJsonNumber`, `True/False → raw bool`), `UnwrapNewtonsoftToken`, the STJ-DOM path, `variable.set` parsing, CLI parsing, action results. **Disposition:** these produce the wrapper, not the raw value — `text.@this`/`number.@this`/`datetime.@this`/`duration.@this`/`bool.@this`. This is the load-bearing seam: do it **first** so every value is wrapped at birth, then sweep consumers against a world where raw scalars no longer appear mid-flight. (Mirrors how `collections-are-data` built native dict/list at the parse seam first.)
+1. **Construction (where scalars are born raw).** `data/this.cs` `UnwrapJsonElement` (`String → GetString()`, `Number → UnwrapJsonNumber`, `True/False → raw bool`, `Null → Data.Null()`), the STJ-DOM path, `variable.set` parsing, CLI parsing, action results. **Disposition:** these produce the wrapper, not the raw value — `text.@this`/`number.@this`/`datetime.@this`/`duration.@this`/`bool.@this`; JSON `null`/absent produces `Data.Null()` (type `null`), **not** a null-wrapping scalar, so null stays unambiguous. This is the load-bearing seam: do it **first** so every value is wrapped at birth, then sweep consumers against a world where raw scalars no longer appear mid-flight. (Mirrors how `collections-are-data` built native dict/list at the parse seam first.)
+
+   **The `Unwrap*`/`Wrap*` family is the target, not the tool.** A method named `Unwrap…`/`Wrap…` is the canonical tell of the internal round-trip smell ([[plang-value-and-type-model]]). Producing wrappers *at* the parse seam is what lets these retire: `UnwrapJsonElement` becomes parse-to-native (emits `text`/`number`/`bool`/… directly), not parse-to-raw-then-rewrap. **Delete `UnwrapNewtonsoftToken`** — Newtonsoft is not our serializer (no package ref; the shim only sniffs JTokens by namespace string for a dead v1 path). Verify nothing live still feeds JTokens, then remove it. Full elimination of every `Unwrap*`/`Wrap*` may not all land this round (some sit on other seams), but seam 1 is where the bulk goes — and none should be *added*.
 
 2. **Compare** — `data/Compare.cs` (`Family`, `Order`, `AreEqualValues`), `Operator.NormalizeTypes`. **Disposition:** the scalar arms (`"text" => CompareOrdinal/ignore-case`, `"datetime" => offset compare`, `"duration"`, the `lf switch`) move onto each wrapper as `AreEqual`/`Order` (the `IEquatableValue`/`IOrderableValue` interfaces from the collections-are-data compare handoff). `Family()` and the `Orderable` HashSet **delete** — orderability is "implements `IOrderableValue`." Coercion stays in the mediator. *This seam is the direct continuation of the compare handoff on `collections-are-data` — that one leaves scalars in a shared C# comparer; this one relocates them onto the wrappers and the shared comparer shrinks to coercion + a thin `IComparable` fallback.*
 
@@ -62,7 +79,7 @@ Disposition rule: if removing the `is` requires asking the value to *do* somethi
 ## Risks / footguns
 
 - **Transition leakage.** Mid-sweep, a raw scalar slips through a not-yet-converted producer and a consumer that now expects a wrapper NREs (or vice-versa). Mitigation: seam 1 (construction) first, then a wrapper-side **implicit operator** (`text.@this ↔ string`, like `number`'s and `Variable`'s) so a missed perimeter site still compiles and runs — but treat implicit operators as a transition aid, not a license to leave `.Value` reaches un-swept. Tests are the backstop.
-- **Implicit-operator double-wrap** — the `Data<object>` footgun in CLAUDE.md ("Action `Run()` returns are typed"). A wrapper with an implicit `object` conversion + `Data<object>` can silently double-box. Keep implicit operators to the *raw backing type* (`text.@this ↔ string`), never to `object`.
+- **Implicit-operator double-wrap** — the `Data<object>` footgun in CLAUDE.md ("Action `Run()` returns are typed"). A wrapper with an implicit `object` conversion + `Data<object>` can silently double-box. Keep implicit operators to the *raw backing type* (`text.@this ↔ string`), never to `object`. The `Data<object>`→`Data<item>` decision above kills this structurally where adopted: `Data` is not an `item`, so a `Data<item>` slot can't nest a `Data`.
 - **String atomicity.** `foreach %s%` must not char-iterate a `text.@this`. The `IsPlangAssignable`/`IsPlangIterable` carve-out (`data/this.cs`) that already exempts raw `string` must be extended to `text.@this` (it is not `IEnumerable`, so it should be safe — verify).
 - **Value-equality of wrappers.** Two `text.@this("a")` must be equal (dict keys, `HashSet`, dedup). Every wrapper implements `IEquatable<@this>` with value semantics, not reference — `number` shows the shape.
 - **Allocation.** Every scalar boxes into a wrapper. Marginal — values already box into `Data`'s `object?` slot — but measure if a hot list-of-ints path regresses.

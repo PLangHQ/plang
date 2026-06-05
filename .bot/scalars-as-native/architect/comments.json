@@ -1,0 +1,87 @@
+{
+  "plan.md": [
+    {
+      "id": "7d46a3d478",
+      "line": 13,
+      "text": "I see Data<object> mentioned here, but it should be Data<item> becuase that is the 'object' type in plang, just make sure to take a not of that. we could catch them by checking if T in Data<T> is part of our type list and then throw, or would it even be better if Data<T> when class T is item, that would mean all have to inherit correctly",
+      "anchor": "## The law (carried from collections-are-data)",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-06-05T16:26:16"
+    },
+    {
+      "id": "5f75deacf1",
+      "line": 32,
+      "text": "isn't null == Data.Null()? would that be a thing?",
+      "anchor": "Out of scope: `dict`/`list` (done), `path`/`image`/`code` (already flow as wrappers), `null` (stays null), the wire format. `object`/`primitive` are registry plumbing, not values.",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-06-05T16:13:33",
+      "drifted": false
+    },
+    {
+      "id": "363aeb9369",
+      "line": 36,
+      "text": "I think it should to keep consistency, what do you think? simpler code, no if statement, just flows.",
+      "anchor": "`bool` is special: it *is* the truthiness primitive. A `bool.@this` would carry compare/equality/serialize like the others (uniformity), but every `IBooleanResolvable.AsBooleanAsync()` ultimately returns a raw `bool`, so the wrapper can't be turtles-all-the-way. Recommendation: **create `bool.@this`** for uniform flow (so `Compare.Family`'s `bool =>` arm and the `is bool` sites dissolve like the rest), with the truthiness contract bottoming out at the raw `bool` it wraps. Confirm with Ingi before building.",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-06-05T16:14:22",
+      "drifted": false
+    },
+    {
+      "id": "283f492fe8",
+      "line": 42,
+      "text": "UnwrapNewtonsoftToken shouldn not exist in the project, we dont use Newtonsoft. I also really would love to see those Unwrap*/Wrap* methods disapear from the code base, not sure if it will happen this round.",
+      "anchor": "1. **Construction (where scalars are born raw).** `data/this.cs` `UnwrapJsonElement` (`String → GetString()`, `Number → UnwrapJsonNumber`, `True/False → raw bool`), `UnwrapNewtonsoftToken`, the STJ-DOM path, `variable.set` parsing, CLI parsing, action results. **Disposition:** these produce the wrapper, not the raw value — `text.@this`/`number.@this`/`datetime.@this`/`duration.@this`/`bool.@this`. This is the load-bearing seam: do it **first** so every value is wrapped at birth, then sweep consumers against a world where raw scalars no longer appear mid-flight. (Mirrors how `collections-are-data` built native dict/list at the parse seam first.)",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-06-05T16:20:31",
+      "drifted": false
+    },
+    {
+      "id": "a1b2c3d4e5",
+      "line": 13,
+      "text": "Noted in the plan as a Decided section. The polymorphic slot is `Data<item>` (item is the apex, ~= object; `object` is only its CLR realization). On enforcement I recommend your option (b): `item.@this` as an abstract base every value-wrapper inherits, so `T : item` is compile-time enforced and the double-wrap footgun dies structurally (Data is the box, not an item, so a Data<item> can't nest a Data). Three guards from the box/apex rule: item stays abstract (apex stores nothing); list element slots stay Data<List<data>>, not List<item>; and we do NOT constrain Data<T> globally -- typed leaf slots (Data<int>, Data<Variable>, [Code] T) keep raw CLR types at the perimeter/name-binding/code seams. It sequences as step 0. One call for you: fold it into this branch now, or fast-follow? It's structural and ripples across every wrapper.",
+      "anchor": "",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "7d46a3d478",
+      "ts": "2026-06-05T17:35:02"
+    },
+    {
+      "id": "b2c3d4e5f6",
+      "line": 32,
+      "text": "Right -- Data.Null() already exists (data/this.cs:570) and a null value flows as a present Data with type `null`. 'stays null' was imprecise; fixed the out-of-scope line to say null is already native as Data.Null(). What's out of scope is a null.@this wrapper class -- null has no behavior to carry and ToBoolean() already reads it falsy. Also pinned seam 1: JSON null -> Data.Null(), not a null-wrapping scalar, so null stays unambiguous once every scalar is wrapped.",
+      "anchor": "",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "5f75deacf1",
+      "ts": "2026-06-05T17:35:04"
+    },
+    {
+      "id": "c3d4e5f6a7",
+      "line": 36,
+      "text": "Agreed -- flipped 'Open decision' to 'Decided: create bool.@this'. Consistency wins: the Compare.Family bool arm and the is-bool sites dissolve like the rest, no special-case if, the value just flows.",
+      "anchor": "",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "363aeb9369",
+      "ts": "2026-06-05T17:35:06"
+    },
+    {
+      "id": "d4e5f6a7b8",
+      "line": 42,
+      "text": "Confirmed -- Newtonsoft is not a package ref; UnwrapNewtonsoftToken is a dead v1 reflection shim (sniffs JTokens by namespace string). Dropped it from the seam list and added an explicit 'delete UnwrapNewtonsoftToken' step. On the bigger wish: made eliminating Unwrap*/Wrap* an explicit goal of seam 1 -- producing wrappers AT the parse seam is what retires them (UnwrapJsonElement becomes parse-to-native). Flagged honestly that not every Unwrap*/Wrap* will go this round; some sit on other seams. None should be added.",
+      "anchor": "",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "283f492fe8",
+      "ts": "2026-06-05T17:35:08"
+    }
+  ]
+}
