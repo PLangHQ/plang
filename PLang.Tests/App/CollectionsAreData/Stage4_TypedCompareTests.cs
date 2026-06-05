@@ -1,95 +1,115 @@
+using Cmp = global::app.data.Compare;
+using DictV = global::app.type.dict.@this;
+using ListV = global::app.type.list.@this;
+using Op = global::app.module.condition.Operator;
+
 namespace PLang.Tests.App.CollectionsAreData;
 
 // Stage 4 — typed compare on the type, one compare path.
-// Operator.Compare relocates onto the type (number/datetime/duration/text own ordering),
-// and data.sort routes through the same entry. Compare contract is settled:
-// natural order within a type, nulls last, mixed value types throw, equality-only types
-// (dict/list/bool/table) error on Compare but work for Equals/group/unique.
+// app.data.Compare.Order is the single entry both the condition operators
+// (Operator) and list.sort route through. Settled contract: natural order within
+// a type, nulls last, mixed value types throw, equality-only types (dict/list/
+// bool/table) error on Order but work for AreEqual/group/unique.
 public class Stage4_TypedCompareTests
 {
+    private static Data D(object? v) => new("", v);
+
     [Test]
     public async Task Compare_TwoNumbers_NaturalNumericOrder()
     {
         // number's own Compare gives natural numeric order (1 < 2 < 10), not lexical.
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        await Assert.That(Cmp.Order(D(1L), D(2L))).IsLessThan(0);
+        await Assert.That(Cmp.Order(D(10L), D(2L))).IsGreaterThan(0); // lexical would put "10" < "2"
+        await Assert.That(Cmp.Order(D(2L), D(2L))).IsEqualTo(0);
     }
 
     [Test]
     public async Task Compare_NumbersAcrossKinds_WidensCorrectly()
     {
-        // long vs decimal, int vs double — numeric widening yields the right total order
-        // (5 == 5m, 5 < 5.1m). Existing IsNumeric coercion preserved.
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // long vs decimal, int vs double — numeric widening yields the right total order.
+        await Assert.That(Cmp.Order(D(5L), D(5m))).IsEqualTo(0);
+        await Assert.That(Cmp.Order(D(5L), D(5.1m))).IsLessThan(0);
+        await Assert.That(Cmp.Order(D(5), D(5.0d))).IsEqualTo(0);
     }
 
     [Test]
     public async Task Compare_TwoDatetimes_Chronological()
     {
-        // datetime owns chronological compare (earlier < later), independent of representation.
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // datetime owns chronological compare (earlier < later).
+        var early = new System.DateTimeOffset(2020, 1, 1, 0, 0, 0, System.TimeSpan.Zero);
+        var late = new System.DateTimeOffset(2024, 6, 1, 0, 0, 0, System.TimeSpan.Zero);
+        await Assert.That(Cmp.Order(D(early), D(late))).IsLessThan(0);
+        await Assert.That(Cmp.Order(D(late), D(early))).IsGreaterThan(0);
     }
 
     [Test]
     public async Task Compare_TwoDurations_ByLength()
     {
         // duration compares by length (1s < 1m < 1h).
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        await Assert.That(Cmp.Order(D(System.TimeSpan.FromSeconds(1)), D(System.TimeSpan.FromMinutes(1)))).IsLessThan(0);
+        await Assert.That(Cmp.Order(D(System.TimeSpan.FromHours(1)), D(System.TimeSpan.FromMinutes(1)))).IsGreaterThan(0);
     }
 
     [Test]
     public async Task Compare_TwoTexts_Lexical()
     {
-        // text compares lexically ("a" < "b"); culture-invariant (no surprises across locales).
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // text compares lexically and culture-invariant ("a" < "b").
+        await Assert.That(Cmp.Order(D("a"), D("b"))).IsLessThan(0);
+        await Assert.That(Cmp.Order(D("b"), D("a"))).IsGreaterThan(0);
+        await Assert.That(Cmp.Order(D("a"), D("a"))).IsEqualTo(0);
     }
 
     [Test]
     public async Task Compare_NullElement_SortsLast()
     {
-        // Compare(non-null, null) < 0 and Compare(null, non-null) > 0 in both directions — nulls last.
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // Compare(non-null, null) < 0 and Compare(null, non-null) > 0 — nulls last.
+        await Assert.That(Cmp.Order(D(5L), D(null))).IsLessThan(0);
+        await Assert.That(Cmp.Order(D(null), D(5L))).IsGreaterThan(0);
+        await Assert.That(Cmp.Order(D(null), D(null))).IsEqualTo(0);
     }
 
     [Test]
     public async Task Compare_TwoDifferentValueTypes_Throws()
     {
-        // Compare(number, datetime) throws "cannot order X against Y" — no invented cross-type order.
-        // The if-path coercions (numeric widening, string↔number) are preserved separately.
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // Compare(number, datetime) throws — no invented cross-type order.
+        await Assert.That(() => Cmp.Order(D(5L), D(System.DateTimeOffset.UnixEpoch)))
+            .Throws<Cmp.NotOrderableException>();
     }
 
     [Test]
     public async Task Compare_EqualityOnlyType_Throws()
     {
-        // dict/list/bool/table are equality-only; Compare on them throws a clear error. sort
-        // on a list of these types throws upstream; group/unique still work via Equals.
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // dict/list/bool are equality-only; Order on them throws a clear error.
+        await Assert.That(() => Cmp.Order(D(new DictV()), D(new DictV()))).Throws<Cmp.NotOrderableException>();
+        await Assert.That(() => Cmp.Order(D(new ListV()), D(new ListV()))).Throws<Cmp.NotOrderableException>();
+        await Assert.That(() => Cmp.Order(D(true), D(false))).Throws<Cmp.NotOrderableException>();
     }
 
     [Test]
     public async Task Equals_EqualityOnlyType_WorksForGroupAndUnique()
     {
-        // Equals on dict/list/bool/table works structurally for group/unique buckets.
-        // The type implements only what's meaningful — equality without ordering.
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // AreEqual on dict/list works structurally — equivalent collections collapse.
+        var a = new DictV(); a.Set(new Data("city", "Reyk"));
+        var b = new DictV(); b.Set(new Data("city", "Reyk"));
+        var c = new DictV(); c.Set(new Data("city", "Oslo"));
+        await Assert.That(Cmp.AreEqual(D(a), D(b))).IsTrue();
+        await Assert.That(Cmp.AreEqual(D(a), D(c))).IsFalse();
+
+        var la = new ListV(); la.Add(new Data("", 1L)); la.Add(new Data("", 2L));
+        var lb = new ListV(); lb.Add(new Data("", 1L)); lb.Add(new Data("", 2L));
+        await Assert.That(Cmp.AreEqual(D(la), D(lb))).IsTrue();
+        await Assert.That(Cmp.AreEqual(D(true), D(true))).IsTrue();
     }
 
     [Test]
     public async Task Compare_OnePath_IfOperatorsAndDataSortAgree()
     {
-        // The relocated compare is the single source of truth: Operator.cs `>` / `<` / `==`
-        // and data.sort both call through it. `if a.age > b.age` and `sort by "age"` agree
-        // for every supported type (G).
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // Operator.cs `>` / `<` and Compare.Order are the same source of truth.
+        var gt = new Op(">");
+        var lt = new Op("<");
+        await Assert.That(await gt.Evaluate(D(10L), D(2L))).IsTrue();   // 10 > 2 numerically
+        await Assert.That(await lt.Evaluate(D(10L), D(2L))).IsFalse();
+        // Agreement with Order's sign.
+        await Assert.That(Cmp.Order(D(10L), D(2L)) > 0).IsEqualTo(await gt.Evaluate(D(10L), D(2L)));
     }
 }

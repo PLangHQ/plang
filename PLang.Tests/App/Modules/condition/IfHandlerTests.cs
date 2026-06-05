@@ -357,7 +357,7 @@ public class IfHandlerTests : IDisposable
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");
-        await Assert.That(result.Error!.Message).Contains("does not support comparison");
+        await Assert.That(result.Error!.Message).Contains("cannot order");
     }
 
     /// <summary>

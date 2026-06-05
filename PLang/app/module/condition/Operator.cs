@@ -20,10 +20,15 @@ public sealed class Operator
         {
             ["=="] = Equal,
             ["!="] = async (l, r) => !await Equal(l, r),
-            [">"] = (l, r) => Task.FromResult(Compare(Val(l), Val(r)) > 0),
-            ["<"] = (l, r) => Task.FromResult(Compare(Val(l), Val(r)) < 0),
-            [">="] = (l, r) => Task.FromResult(Compare(Val(l), Val(r)) >= 0),
-            ["<="] = (l, r) => Task.FromResult(Compare(Val(l), Val(r)) <= 0),
+            // Ordering routes through the one typed-compare path (app.data.Compare) so
+            // `if a > b` and `sort by …` can never drift. It throws for equality-only
+            // types and genuinely-different value types — surfaced as the step error.
+            // A null operand is incomparable on the if-path (returns false), distinct
+            // from sort's nulls-last — sort calls Order directly.
+            [">"] = (l, r) => Task.FromResult(BothPresent(l, r) && global::app.data.Compare.Order(l, r) > 0),
+            ["<"] = (l, r) => Task.FromResult(BothPresent(l, r) && global::app.data.Compare.Order(l, r) < 0),
+            [">="] = (l, r) => Task.FromResult(BothPresent(l, r) && global::app.data.Compare.Order(l, r) >= 0),
+            ["<="] = (l, r) => Task.FromResult(BothPresent(l, r) && global::app.data.Compare.Order(l, r) <= 0),
             ["contains"] = (l, r) => Task.FromResult(Contains(Val(l), Val(r))),
             ["startswith"] = (l, r) => Task.FromResult(StringOp(Val(l), Val(r), (s, v) => s.StartsWith(v, StringComparison.OrdinalIgnoreCase))),
             ["endswith"] = (l, r) => Task.FromResult(StringOp(Val(l), Val(r), (s, v) => s.EndsWith(v, StringComparison.OrdinalIgnoreCase))),
@@ -57,6 +62,9 @@ public sealed class Operator
     /// <summary>Unwrap Data to raw value.</summary>
     private static object? Val(data.@this? data) => data?.Value;
 
+    /// <summary>Both operands have a non-null value — the ordering operators are false otherwise.</summary>
+    private static bool BothPresent(data.@this? left, data.@this? right) => left?.Value != null && right?.Value != null;
+
     /// <summary>
     /// Truthy check on Data. Routes through <c>Data.ToBooleanAsync()</c> so an
     /// <see cref="app.data.IBooleanResolvable"/> value (a path) answers for
@@ -80,8 +88,9 @@ public sealed class Operator
             return rb ? leftTruthy : !leftTruthy;
         }
 
-        // == true/false with bool left: normal equality
-        return AreEqual(Val(left), Val(right));
+        // == true/false with bool left: structural equality via the one compare path
+        // (so equivalent dicts/lists compare equal, matching group/unique).
+        return global::app.data.Compare.AreEqual(left, right);
     }
 
     private static bool AreEqual(object? left, object? right)

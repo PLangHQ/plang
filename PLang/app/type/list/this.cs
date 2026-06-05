@@ -102,13 +102,14 @@ public sealed class @this : module.IContext, global::app.data.IBooleanResolvable
     public void Reverse() => _items.Reverse();
 
     /// <summary>
-    /// Sorts in place by element value (Stage 3 placeholder using CLR comparison;
-    /// Stage 4 routes ordering through the one typed-compare path).
+    /// Sorts in place by element value through the one typed-compare path
+    /// (<c>app.data.Compare.Order</c>) — so `sort` and `if a &gt; b` agree, nulls
+    /// sort last, and a list of mixed value types (or an equality-only type) throws.
     /// </summary>
     public void SortByValue(bool descending)
         => _items.Sort((a, b) =>
         {
-            var c = Comparer<object>.Default.Compare(a.Value, b.Value);
+            var c = global::app.data.Compare.Order(a, b);
             return descending ? -c : c;
         });
 
