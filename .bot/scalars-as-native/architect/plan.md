@@ -27,8 +27,8 @@ Everywhere else, asking *what a value is* to decide behavior is the smell — it
 | `text` | thin (`Value` + implicit `string`) | build out: ops (length/case/contains/substring/split/trim…), compare, truthiness, value-equality, serializer, `[atomic]` (no char-iterate) |
 | `datetime` | thin (`Value` + `ToString`) | backed by `DateTimeOffset` (accepts CLR `DateTime`); build out: compare, truthiness, formatting/parts, value-equality, serializer |
 | `duration` | thin (`Value` + `ToString`) | backed by `TimeSpan`; build out: compare, truthiness, parts, value-equality, serializer |
-| `date` | **none** | create `date.@this`, backed by `DateOnly` — its own type (not a `datetime` kind); compare, truthiness, parts, value-equality, serializer |
-| `time` | **none** | create `time.@this`, backed by `TimeOnly` — its own type; compare, truthiness, parts, value-equality, serializer |
+| `date` | no wrapper; `DateOnly` **folds into `datetime`** today (`ScalarComparer` coerces it to `DateTimeOffset` and classes it `datetime`) | create `date.@this`, backed by `DateOnly` — its own type; **stop the collapse into `datetime`**; compare, truthiness, parts, value-equality, serializer |
+| `time` | no wrapper; `TimeOnly` **unhandled** today (`ScalarComparer` has no time arm) | create `time.@this`, backed by `TimeOnly` — its own type; compare, truthiness, parts, value-equality, serializer |
 | `bool` | **none** | create `bool.@this` — the truthiness primitive; equality + serializer. (Decided — see below.) |
 | `null` | **none** (flows as `Data.Null()`) | create singleton `null.@this` — truthiness (always false), `null == null` equality, bare `null` serializer; hosts null's behavior so the `is null` value-switches dissolve. (Decided — see below.) |
 
