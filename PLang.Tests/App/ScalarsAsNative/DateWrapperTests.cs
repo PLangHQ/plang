@@ -1,3 +1,6 @@
+using DateT = global::app.type.date.@this;
+using DateTimeT = global::app.type.datetime.@this;
+
 namespace PLang.Tests.App.ScalarsAsNative;
 
 // date.@this is its own type, backed by DateOnly. Distinct from datetime — the
@@ -5,44 +8,55 @@ namespace PLang.Tests.App.ScalarsAsNative;
 // this branch. OwnedClrTypes = DateOnly.
 public class DateWrapperTests
 {
+    private static global::app.@this NewApp()
+        => new(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-date-" + System.Guid.NewGuid().ToString("N")[..8]));
+
     [Test]
     public async Task Date_IsDistinctFromDatetime_TypeNameIsDate()
     {
-        // A Data carrying date.@this reports its type name "date", not "datetime".
-        // The load-bearing C# pin matching the integration proof in v1.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // A Data carrying date.@this reports type "date", not "datetime"; and
+        // date.@this is not a datetime.@this. OwnedClrTypes pins DateOnly.
+        await using var app = NewApp();
+        var d = new Data("", new DateT(new System.DateOnly(2024, 3, 15))) { Context = app.User.Context };
+        await Assert.That(d.Type.Name).IsEqualTo("date");
+        await Assert.That(typeof(DateTimeT).IsAssignableFrom(typeof(DateT))).IsFalse();
+        var owned = DateT.OwnedClrTypes;
+        await Assert.That(owned.Any(o => o.Clr == typeof(System.DateOnly))).IsTrue();
     }
 
     [Test]
     public async Task Date_Order_ChronologicalWithinDateOnly()
     {
-        // Day-precision compare; same day equals, day before/after orders.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var d1 = new DateT(new System.DateOnly(2024, 1, 1));
+        var d2 = new DateT(new System.DateOnly(2024, 1, 2));
+        await Assert.That(d1.Order(d2)).IsLessThan(0);
+        await Assert.That(d2.Order(d1)).IsGreaterThan(0);
+        await Assert.That(d1.Order(new DateT(new System.DateOnly(2024, 1, 1)))).IsEqualTo(0);
     }
 
     [Test]
     public async Task Date_Equality_SameDayValueEqualAndHashEqual()
     {
-        // HashSet/dedup behavior — value-equality + hash agree.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var a = new DateT(new System.DateOnly(2024, 3, 15));
+        var b = new DateT(new System.DateOnly(2024, 3, 15));
+        await Assert.That(a.Equals(b)).IsTrue();
+        await Assert.That(a.GetHashCode()).IsEqualTo(b.GetHashCode());
     }
 
     [Test]
     public async Task Date_Parts_YearMonthDay()
     {
-        // Parts on the wrapper, not via raw DateOnly at the call site.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var d = new DateT(new System.DateOnly(2024, 3, 15));
+        await Assert.That(d.Year).IsEqualTo(2024);
+        await Assert.That(d.Month).IsEqualTo(3);
+        await Assert.That(d.Day).IsEqualTo(15);
     }
 
     [Test]
     public async Task Date_BareSerialize_IsoYyyyMmDdOnApplicationJson()
     {
-        // Normalize emits bare ISO date (yyyy-MM-dd), not promoted to a datetime.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // Bare ISO date (yyyy-MM-dd), not promoted to a datetime instant.
+        await Assert.That(new DateT(new System.DateOnly(2024, 3, 15)).ToString()).IsEqualTo("2024-03-15");
     }
 }

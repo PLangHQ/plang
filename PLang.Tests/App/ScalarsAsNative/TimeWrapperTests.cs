@@ -1,39 +1,50 @@
+using TimeT = global::app.type.time.@this;
+using DateTimeT = global::app.type.datetime.@this;
+
 namespace PLang.Tests.App.ScalarsAsNative;
 
 // time.@this is its own type, backed by TimeOnly. Today ScalarComparer has no
 // TimeOnly arm at all — this wrapper closes that gap. OwnedClrTypes = TimeOnly.
 public class TimeWrapperTests
 {
+    private static global::app.@this NewApp()
+        => new(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-time-" + System.Guid.NewGuid().ToString("N")[..8]));
+
     [Test]
     public async Task Time_IsDistinctFromDatetime_TypeNameIsTime()
     {
-        // A Data carrying time.@this reports its type name "time"; not unhandled,
-        // not folded into datetime.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        await using var app = NewApp();
+        var d = new Data("", new TimeT(new System.TimeOnly(10, 30))) { Context = app.User.Context };
+        await Assert.That(d.Type.Name).IsEqualTo("time");
+        await Assert.That(typeof(DateTimeT).IsAssignableFrom(typeof(TimeT))).IsFalse();
+        await Assert.That(TimeT.OwnedClrTypes.Any(o => o.Clr == typeof(System.TimeOnly))).IsTrue();
     }
 
     [Test]
     public async Task Time_Order_WithinTimeOnly()
     {
-        // 09:00 < 14:30 < 23:59, same time equals.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var morning = new TimeT(new System.TimeOnly(9, 0));
+        var afternoon = new TimeT(new System.TimeOnly(14, 30));
+        var night = new TimeT(new System.TimeOnly(23, 59));
+        await Assert.That(morning.Order(afternoon)).IsLessThan(0);
+        await Assert.That(afternoon.Order(night)).IsLessThan(0);
+        await Assert.That(morning.Order(new TimeT(new System.TimeOnly(9, 0)))).IsEqualTo(0);
     }
 
     [Test]
     public async Task Time_Equality_SameTimeValueEqualAndHashEqual()
     {
-        // HashSet/dedup behavior — value-equality + hash agree.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var a = new TimeT(new System.TimeOnly(14, 30, 0));
+        var b = new TimeT(new System.TimeOnly(14, 30, 0));
+        await Assert.That(a.Equals(b)).IsTrue();
+        await Assert.That(a.GetHashCode()).IsEqualTo(b.GetHashCode());
     }
 
     [Test]
     public async Task Time_BareSerialize_IsoTimeOnApplicationJson()
     {
-        // Normalize emits bare ISO time (HH:mm:ss[.fff]), not promoted to a datetime.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // Bare ISO time form, not promoted to a datetime.
+        await Assert.That(new TimeT(new System.TimeOnly(10, 30, 0)).ToString()).StartsWith("10:30:00");
     }
 }
