@@ -19,7 +19,7 @@ namespace app.type.list;
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : module.IContext, global::app.data.IBooleanResolvable,
-    global::app.data.IEquatableValue, global::app.data.IOrderableValue
+    global::app.data.IEquatableValue, global::app.data.IOrderableValue, global::app.data.IListLeaf
 {
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
     public static string Example => "[1, 2, 3]";
@@ -72,11 +72,13 @@ public sealed partial class @this : module.IContext, global::app.data.IBooleanRe
         }
     }
 
-    // A row's weight — a list row flattens to its own leaf count; anything else is one.
-    private static int Weight(Data row) => row.Value is @this inner ? inner.Count : 1;
+    // A row's weight — a value that dissolves into the list (IListLeaf, i.e. a list)
+    // contributes its own leaf count; anything else is one whole item. The value owns
+    // the answer, so there's no `is list` type-switch here.
+    private static int Weight(Data row) => row.Value is global::app.data.IListLeaf leaf ? leaf.LeafCount : 1;
 
-    /// <summary>The flattened element Data in order — descends into list rows only
-    /// (a scalar/dict/table row is yielded whole, weight 1).</summary>
+    /// <summary>The flattened element Data in order — a row that dissolves (IListLeaf)
+    /// yields its leaves; a scalar/dict/table row is yielded whole, weight 1.</summary>
     public IReadOnlyList<Data> Items
     {
         get
@@ -84,12 +86,18 @@ public sealed partial class @this : module.IContext, global::app.data.IBooleanRe
             var flat = new List<Data>();
             foreach (var row in _items)
             {
-                if (row.Value is @this inner) flat.AddRange(inner.Items);
+                if (row.Value is global::app.data.IListLeaf leaf) flat.AddRange(leaf.Leaves);
                 else flat.Add(row);
             }
             return flat;
         }
     }
+
+    // IListLeaf — a list dissolves into its container list: its leaves are this list's
+    // flattened items. (The mutation-addressing helper Locate still resolves to the
+    // concrete list, since editing a nested element needs the mutable surface.)
+    int global::app.data.IListLeaf.LeafCount => Count;
+    IReadOnlyList<Data> global::app.data.IListLeaf.Leaves => Items;
 
     /// <summary>The flattened element Data at <paramref name="index"/>, or C# null when out of range.</summary>
     public Data? At(int index)

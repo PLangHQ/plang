@@ -43,6 +43,12 @@ flattened view**. The row (chunk) structure is never observable.
 - **`Items`/`At`/`First`/`Last`** present the flattened leaves; a private `Locate` maps a
   flattened index → `(row, offset)`. Walking descends into **list** rows only — a dict/scalar
   row is yielded whole, so `[{...},{...}]` still iterates as two dicts.
+- **`IListLeaf`** (`app/data/`) owns the transparency question — a value that *dissolves* into
+  its container list exposes `LeafCount`/`Leaves`; `list` is the only implementer, so `Weight`
+  and the flatten-walk dispatch on the interface, not `is list`. This is distinct from a value's
+  own `.count`: a `table` owns a count (rows) yet is **not** `IListLeaf`, so `[table1, table2]`
+  stays two tables, not their rows. (`Locate`, the mutation-addressing helper, still resolves to
+  the concrete list — editing a nested element needs the mutable surface.)
 - **`RemoveAt`/`SetAt`/`Insert`** take a flattened index (mapped via `Locate`; an emptied
   nested chunk is dropped). **`Remove(value)`** finds the first flattened leaf.
 - **`sort`/`reverse`** collapse the rows into one flat list at materialization (`ResetTo`),
