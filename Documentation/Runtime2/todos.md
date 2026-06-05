@@ -946,3 +946,37 @@ its `.bot/`): a signature wraps the data (`@schema:"signature"`), `verify` peels
 `Data.Signature` is removed. **Re-enable: delete the `tag this test 'skip'` line and rebuild
 the two .pr** on that branch. (The skip is detected from the goal source by
 `test.discover.HasSkipTag`, so the stale `.pr` for these two is never read until re-enabled.)
+
+## Collection mutation: copy-on-write / immutability (the "C" model) — 2026-06-05 (auditor O1, low)
+
+**Problem (raised by auditor v1 O1 on `collections-are-data`).** Collection mutation mixes
+value- and reference-semantics, so aliasing leaks in some paths and not others:
+- `set %x% = %y%` SHARES the value (`Data.ShallowClone` → same `_value` by reference; the old
+  deep-copy was deliberately removed as "redundant", `variable/list/this.cs:308`).
+- `add %b% to %a%` COPIES the added list (F1 fix, `list.@this.CopyStructure` in `add.cs`/`set.cs`).
+- `add %d% to %list%` SHARES the dict, and `set %d.x%` mutates it in place
+  (`SetValueOnObject` → `dict.Set`, `variable/list/this.cs:346`).
+
+So these leak (write-through to a different variable), beyond the one F1 patched:
+```
+set %x% = %y%;  set item N of %x%        # mutates the shared list → %y% changes too
+add %d% to %list%;  set %d.x% = 5        # mutates the shared dict → %list[0].x% changes (O1)
+```
+Under the flatten/row model, `set item N of %x%` reaching into a shared list is the same
+write-through codeanalyzer F1 called "indefensible" — still open via `set`. Copying dicts on
+add ("option A") does NOT fix it: `set` still shares.
+
+**The fix — "C": finish the immutability the codebase half-built.** It already chose
+share-by-default (ShallowClone) and `set %x%` already rebinds; the in-place mutators don't.
+Make EVERY mutator (`add`, set-item, set-path, `remove`, `insert`, `sort`, `reverse`)
+**copy-on-write**: mutate in place when the collection is uniquely owned (so `add`-build stays
+O(1)), copy-once-then-mutate when it is shared. Needs a cheap "am I shared?" signal (a flag set
+when a collection is ShallowCloned into a variable or stored inside another collection).
+Result: sharing is cheap AND safe, lists/dicts behave the same, and the F1 `CopyStructure` /
+copy-on-add **dissolves** (replaced by the uniform guard). This is the Clojure/persistent-
+structure model; full structural sharing (O(log n) mutators) is a later optimization over the
+first copy-on-write cut.
+
+**Sequencing.** Own branch + spec (supersedes the F1 copy on `collections-are-data`). Not urgent
+(low): on `collections-are-data` the F1 copy stays as the interim patch for the most-flagged
+path; the residual `set`-share / dict-in-list leaks ride until C lands.
