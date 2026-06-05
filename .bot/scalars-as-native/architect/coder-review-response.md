@@ -25,3 +25,15 @@ Added as a Stage-2 regression + coverage row: `HashSet`/list-element equality of
 - double-wrap kill promoted to a first-class **Stage-7 acceptance criterion** (`Data<data.@this>` must not compile).
 
 Re-ground anchors against the rebased `runtime2` base when you start — the plan's file:line cites predate the merge.
+
+---
+
+## Follow-up (architect-review-2) — accepted, pinned
+
+Right call — Stage 1 contradicted itself ("item holds the serialized form" vs. "item carries behavior, not a value slot"). Resolution accepted and it *restores* "the apex stores nothing":
+
+- **The un-narrowed serialized form rides on `Data`** (`Data{ type=item, kind=json, value=<raw blob> }`), via lazy materialization — stamping a type does not parse (`type-system.md:111`).
+- **`item`-the-type is storage-free** — carries truthiness + the narrow as *behavior* (a method reading `Data`'s raw value), not a blob field. No dead un-narrowed field inherited by `number`/`dict`/`Ask` (OBP smell #6 avoided).
+- **`item.@this` abstract-vs-concrete is a free C# call** (stores nothing either way); already-typed subtypes inherit a no-op narrow ("already narrowed → self").
+
+Pinned in `stage-1-item-base.md` ("What `item` is" + the narrow bullet) and `plan.md`'s decided section. Nothing else to change — ready to implement off `runtime2`.

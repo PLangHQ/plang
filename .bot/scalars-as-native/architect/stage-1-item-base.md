@@ -6,7 +6,9 @@
 
 ## What `item` is (read first — this changed)
 
-`item` is **two things at once**: the apex of the value lattice (`%x% is item` always true) **and** the un-narrowed/lazy type a value carries before examination. `read file.json` → `Data<item(kind=json)>`, type not yet judged, narrows to `dict`/`list` on first touch. So `item` is **not** a thin marker and **not** pure-abstract — an un-narrowed value sits as `item` holding its serialized form until narrowed. "The apex stores nothing" holds only for *narrowed* values (a `number` is stored as `number`, never as bare `item`).
+`item` is **two things at once**: the apex of the value lattice (`%x% is item` always true) **and** the type tag an un-narrowed value carries before examination. `read file.json` → `Data{ type=item, kind=json, value=<raw blob> }`, type not yet judged; the narrow (`{` vs `[` → `dict`/`list`) reads `Data`'s raw value on first touch and re-stamps the type.
+
+**The un-narrowed serialized form rides on `Data`, not on `item.@this`** (coder pin). Stamping a type does not parse — `type=item` is a promise about the shape, the raw value rides on `Data` until touch-time (lazy materialization, `type-system.md`). So `item`-the-type is **storage-free** — "the apex stores nothing" holds — and it carries *behavior* (truthiness + the narrow, a method that reads `Data`'s raw value), **not** a blob field. That avoids OBP smell #6: no narrowed subtype (`number`/`dict`/`Ask`) inherits a dead un-narrowed field. Whether `item.@this` is abstract or a trivial concrete form is a free C# call (it stores nothing either way). So `item` is more than a marker (it has behavior) but not a storage hub.
 
 **`object` folds into `item`.** The tree currently names the un-narrowed tree type `object` (`config.json → (object, json)`). This branch makes it `item` — `(item, kind=json)`. Both senses of `object` collapse in: the PLang `object` type → `item`, and CLR `Data<object>` → `Data<item>`. There is no enduring PLang `object`.
 
@@ -15,7 +17,7 @@
 Create `app/type/item/this.cs` — the apex/un-narrowed type, base of every value type. It carries **only the universal contract**:
 
 - **Truthiness** — virtual-with-default (un-narrowed / reference-ish items truthy-if-present; concrete types override). Keep a **sync** path reachable (`Data.ToBoolean()`) so a hot `if %bool%` doesn't eat an async hop; `IBooleanResolvable.AsBooleanAsync` is only for I/O truthiness (`path`).
-- **The lazy narrow** — the examine-and-become-`dict`/`list` behavior, since `item` *is* the un-narrowed type. (Reuse / relocate whatever today drives `(object, json)` → `dict`/`list`.)
+- **The lazy narrow** — behavior that reads `Data`'s raw value at touch and re-stamps the type (`{` vs `[` → `dict`/`list`), **not** a field on the base. (Reuse / relocate whatever today drives `(object, json)` → `dict`/`list`.) The default for an already-typed subtype (`number`/`dict`/`Ask`/…) is a **no-op — "already narrowed, return self"** — so typed subtypes carry no un-narrowed state.
 
 It does **NOT** carry:
 - **Ordering.** `IOrderableValue` stays opt-in per type — `list` and the orderable scalars implement it; `dict`/`bool`/`null`/`Variable`/`Ask` do not. `item` must not implement it, or `dict : item` inherits an order it can't honor (`dict` is equality-only; its `Compare.Order` throws — the model `type-system.md` documents).
