@@ -1,6 +1,6 @@
-# Architect handoff — compare lives on the value; list is orderable and nests
+# Architect handoff — compare lives on the value; lists are orderable
 
-**To:** coder · **From:** architect · Re: the `Compare.AreEqualValues` / `Compare.Order` type-switch **and** list semantics (supersedes `list-rope-model.md`)
+**To:** coder · **From:** architect · Re: the `Compare.AreEqualValues` / `Compare.Order` type-switch, plus list ordering (the list model itself stays in `list-rope-model.md`)
 
 **You own the final shape.** Interface names, file placement, and signatures below are anchors — change what reads wrong, keep the dispositions and the recursion contract.
 
@@ -50,39 +50,21 @@ Net deletions: `Compare.Family()` and the `Orderable` HashSet both go — ordera
 
 **Consumers don't change.** `indexof`/`contains`/`in`/`remove`/`unique`/`sort` and `list.SortByValue/SortByField` already call `Compare.AreEqual`/`Compare.Order` — the refactor is entirely behind the mediator surface. Confirm none of them reach past it after the change.
 
-## List — orderable lexicographically, and it nests (the rope/flatten model is rejected)
+## Lists are orderable
 
-Two things settled here, and they're linked: **list ordering requires list nesting.**
+`list` implements `IOrderableValue` — two lists compare **lexicographically**, item by item:
 
-**`list` IS orderable — lexicographic.** Implement `list : IOrderableValue` (Ingi confirmed). Contract:
-- compare element `i` vs `i` via `Compare.Order`; first differing index decides
-- one list a prefix of the other → shorter sorts first (count only as the prefix tie-break — **not** count-based otherwise: `[1,2,3] < [9]` because `1 < 9`)
-- elements must be mutually orderable, else the `NotOrderable` throw propagates (same as a scalar mixed-type list)
+```
+[1, 2, 3]  <  [1, 3]      → true    (first differ at item 2: 2 < 3)
+[1, 2]     <  [1, 2, 3]   → true    (a is a prefix of b — shorter wins)
+[1, 2, 3]  <  [9]         → true    (first differ at item 1: 1 < 9 — not by length)
+```
 
-Standard (Python/Ruby/Rust/Haskell), and trichotomy-consistent with list's positional equality.
+Rule: compare item `i` against item `i`; the first pair that differs decides. If one list runs out first (it's a prefix of the other), the shorter sorts first. If two items aren't comparable, it errors — same as a mixed-type list. `list.Order` just walks the items through `Compare.Order`.
 
-**`list` nests like every other type — keep the flat `List<Data>`.** A list element can be a `list.@this`; `add %listB% to %listA%` adds listB as **one** element (count +1) — which is already the current behavior (`list/add.cs` does `list.Add(Value)`). **Do not implement the rope/flatten model** in `list-rope-model.md` — it's superseded by this handoff. Reasons:
+Standard in Python/Ruby/Rust. Use: version compare `[1,2,0] < [1,3,0]`, ordering sequences.
 
-Reject the **flatten *semantics*** (the rope's claim that a list can't nest):
-
-- It singles out `list` as the one type that *can't* be a list element (its enumerator merges list-chunks but yields dict/matrix/table chunks whole). Every other type nests — that asymmetry is the bug, and no mainstream language has it.
-- **Orderability needs nesting.** The killer use case for lexicographic list order is sorting rows / coordinates / tuples — i.e. a list *of lists*. Flattening kills exactly that.
-- `count`/`foreach`/`print` already agree under honest nesting (a nested list is one element → count 1, one iteration, prints `[...]`); the "count 2 vs print 5" footgun was a symptom of *half*-flattening, which honest nesting removes.
-
-For **this branch**, rejecting the flatten model is *less* work — don't change `add` (it already nests), just add `IOrderableValue`.
-
-### The rope's real motivation — per-element `Data` cost — is real, and separate
-
-The rope's strongest point was **cost, not semantics**, and it's verified: every element is wrapped in a `Data` at materialization (`UnwrapJsonArray`/`UnwrapJsonObject`/`FromRaw` all do `new @this(…)` per element), and a `Data` eagerly allocates three event-lists (`OnChange`/`OnCreate`/`OnDelete`) + a `Properties` + `Created`/`Updated` — **~5 allocations per element** before the value. A flat list of N scalars is ~5N allocations of pure overhead. That's a genuine problem.
-
-But it's an **internal-representation** problem, **orthogonal** to the observable nest/order semantics — flattening neither is required to fix it nor fixes it. Handle it as its own work item, gated behind this compare/orderability work, keeping lists nestable:
-
-- **First, lighter `Data`** — lazy-allocate `OnChange`/`OnCreate`/`OnDelete` + `Properties` (null until first use; a plain scalar element never touches them). ~5× per-element drop with **no** model change and **no** loss of per-element signatures. Lowest-risk, biggest win.
-- **Then, if profiling still shows it hot, a hybrid rep** — store raw values, promote to `Data` only the few elements that carry a type/signature. That's the rope's valid core *minus* the flatten semantics: still presents as a nestable, orderable list.
-
-Do **not** bundle this with the flatten semantics (the rope doc's mistake), and do **not** block the compare/orderability refactor on it.
-
-If a merge ("flatten listB's elements into listA") is ever wanted, it's a **separate verb** (`concat`/`addRange`), never a silent behavior of `add` — `add` adds exactly one element, whatever its type. `matrix`/`table` stay available as specialized rectangular/headered types; they're a *choice* for column semantics, not a forced detour because lists can't nest.
+> The full list model — flat sequence, chunk storage, `count`/`foreach`/`print` all on the **flattened** items — is in `list-rope-model.md` (Ingi's design). This handoff changes **one** thing about it: lists are *orderable*, not equality-only. It does not reject or alter that model.
 
 ## Not in this handoff
 

@@ -1,13 +1,12 @@
 # List semantics — the rope/chunked model (proposed)
 
-> **SUPERSEDED (2026-06-05).** This flatten/rope model is **not** the direction. A PLang
-> `list` nests like every other type (a list element can be a list), `add` adds exactly one
-> element, and `list` is orderable lexicographically. See
-> `architect/coder-handoff-compare.md` § "List — orderable lexicographically, and it nests"
-> for the reasoning. Kept for the record; do not implement.
-
 **Status:** proposed design, not implemented · **Owner:** Ingi · **Date:** 2026-06-05 ·
 Captured from a design discussion on the `collections-are-data` branch.
+
+> **Plus: lists are orderable.** Two lists compare **lexicographically** over their flattened
+> items (`[1,2,3] < [1,3]` because `2 < 3` at item 2; a prefix sorts first: `[1,2] < [1,2,3]`).
+> This is the one thing added since the original discussion — lists are orderable, not
+> equality-only. The compare wiring is in `architect/coder-handoff-compare.md`.
 
 ## The decision
 
