@@ -173,9 +173,21 @@ public class Default : IAssert
     private static bool ContainsValue(object? container, object? value)
     {
         if (container == null) return false;
+        // Born-native: a text container/value rides as text.@this — unwrap so the
+        // substring check fires (the wrapper isn't a CLR string). Native dict/list
+        // stay as-is (handled by the IEnumerable arm / their own structure).
+        if (container is global::app.type.text.@this ct) container = ct.Value;
+        if (value is global::app.type.text.@this vt) value = vt.Value;
 
         if (container is string str)
             return str.Contains(value?.ToString() ?? "", StringComparison.OrdinalIgnoreCase);
+
+        if (container is app.type.list.@this nl)
+        {
+            foreach (var item in nl.Items)
+                if (AreEqual(item.Value, value)) return true;
+            return false;
+        }
 
         if (container is IEnumerable enumerable)
         {
