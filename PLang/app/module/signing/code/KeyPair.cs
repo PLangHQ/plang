@@ -1,6 +1,15 @@
 namespace app.module.signing.code;
 
 /// <summary>
-/// A public/private key pair returned by IKey.
+/// A public/private key pair returned by IKey. A PLang value (: item).
 /// </summary>
-public record KeyPair(string PublicKey, string PrivateKey);
+public sealed class KeyPair : global::app.type.item.@this
+{
+    public string PublicKey { get; }
+    public string PrivateKey { get; }
+    public KeyPair(string PublicKey, string PrivateKey)
+    {
+        this.PublicKey = PublicKey;
+        this.PrivateKey = PrivateKey;
+    }
+}

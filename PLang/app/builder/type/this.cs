@@ -21,7 +21,7 @@ namespace app.builder.type;
 /// <c>app.builder.type.Build()</c>. Rendering belongs in the template, not
 /// in pre-rendered string properties.
 /// </summary>
-public sealed partial class @this
+public sealed partial class @this : global::app.type.item.@this
 {
     private readonly app.module.@this _modules;
 

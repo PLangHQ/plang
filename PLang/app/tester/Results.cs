@@ -9,7 +9,7 @@ namespace app.tester;
 /// concurrently during parallel execution — thread-safety is required.
 /// </summary>
 [PlangType]
-public sealed class Results : IEnumerable<Run>
+public sealed class Results : global::app.type.item.@this, IEnumerable<Run>
 {
     private readonly ConcurrentQueue<Run> _items = new();
 

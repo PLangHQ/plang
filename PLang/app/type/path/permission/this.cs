@@ -24,12 +24,21 @@ public enum Match
 /// window doesn't apply. The grant lives for its signature's <c>Expires</c>
 /// field — null today (permanent), parameterised later.
 /// </summary>
-public sealed record @this(
-    [property: Out, Store] string Actor,
-    [property: Out, Store] string Path,
-    [property: Out, Store] verb.@this Verb,
-    [property: Out, Store] Match Match)
+public sealed class @this : global::app.type.item.@this
 {
+    [Out, Store] public string Actor { get; }
+    [Out, Store] public string Path { get; }
+    [Out, Store] public verb.@this Verb { get; }
+    [Out, Store] public Match Match { get; }
+
+    public @this(string Actor, string Path, verb.@this Verb, Match Match)
+    {
+        this.Actor = Actor;
+        this.Path = Path;
+        this.Verb = Verb;
+        this.Match = Match;
+    }
+
     public bool Covers(@this request) =>
         Actor == request.Actor
         && PathMatches(request.Path)

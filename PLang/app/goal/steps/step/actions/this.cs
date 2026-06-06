@@ -2,7 +2,7 @@ using System.Collections;
 
 namespace app.goal.steps.step.actions;
 
-public sealed class @this : IList<action.@this>
+public sealed class @this : global::app.type.item.@this, IList<action.@this>
 {
     private readonly List<action.@this> _items = new();
 

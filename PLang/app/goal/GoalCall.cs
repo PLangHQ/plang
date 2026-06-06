@@ -10,7 +10,7 @@ namespace app.goal;
 /// PrPath is nullable because dynamic goal names (containing %variable%) can't resolve at build time.
 /// </summary>
 [PlangType("goal.call")]
-public sealed class GoalCall : module.IEvent
+public sealed class GoalCall : global::app.type.item.@this, module.IEvent
 {
     /// <summary>Event context — set by Events.Stamp when this GoalCall is an event binding.</summary>
     [System.Text.Json.Serialization.JsonIgnore]

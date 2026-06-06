@@ -7,7 +7,7 @@ namespace app.module.signing;
 /// Signs data using the configured signing provider.
 /// </summary>
 [Action("sign", Cacheable = false)]
-public partial class sign : IContext
+public partial class sign : global::app.type.item.@this, IContext
 {
     /// <summary>The data to sign.</summary>
     [IsInitiated]

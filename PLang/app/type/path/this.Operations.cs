@@ -19,11 +19,17 @@ public abstract partial class @this
     /// IsFile=true → file (Length set). IsFile=false → directory.
     /// Nested under path so callers reach it as <c>path.@this.StatInfo</c>.
     /// </summary>
-    public sealed record StatInfo(
-        [property: Out] bool Exists,
-        [property: Out] bool? IsFile = null,
-        [property: Out] long? Length = null,
-        [property: Out] DateTime? Modified = null);
+    public sealed class StatInfo : global::app.type.item.@this
+    {
+        [Out] public bool Exists { get; }
+        [Out] public bool? IsFile { get; }
+        [Out] public long? Length { get; }
+        [Out] public DateTime? Modified { get; }
+        public StatInfo(bool Exists, bool? IsFile = null, long? Length = null, DateTime? Modified = null)
+        {
+            this.Exists = Exists; this.IsFile = IsFile; this.Length = Length; this.Modified = Modified;
+        }
+    }
 
     /// <summary>
     /// Authorize + Exit-bubble guard. Returns non-null when the caller should

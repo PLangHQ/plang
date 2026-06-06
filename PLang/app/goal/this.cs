@@ -19,7 +19,7 @@ public enum Visibility
 /// <summary>
 /// Represents a goal (a .goal file or sub-goal) for App.
 /// </summary>
-public sealed partial class @this : module.IDataWrappable
+public sealed partial class @this : global::app.type.item.@this, module.IDataWrappable
 {
     private module.Events? _events;
     [JsonIgnore]

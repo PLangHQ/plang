@@ -6,7 +6,7 @@ namespace app.goal.steps.step.actions.action;
 /// A single action within a step — the LLM-mapped unit of execution.
 /// Identifies the module and handler to invoke, with typed parameters, return mappings, and defaults.
 /// </summary>
-public sealed partial class @this : module.IDataWrappable
+public sealed partial class @this : global::app.type.item.@this, module.IDataWrappable
 {
     /// <summary>
     /// OBP: Action is responsible for its own Data representation.
