@@ -10,6 +10,8 @@ POCOs but **not** native `dict`/`list`/`JsonNode` (they lack `IEnumerable`/
 `IDictionary`). That mismatch silently renders template sections empty and was the
 root cause of a branch-wide builder failure. Knowing the engine + this trap up front
 would have saved a long investigation; it'll recur for anyone touching templates.
+**Reference:** full debugging runbook for this failure class —
+[`Documentation/v0.2/debugging-builder-failures.md`](../../../Documentation/v0.2/debugging-builder-failures.md).
 **Proposed change:** add to the "Key Files" section (or a new "Templating" note):
 
 ```
