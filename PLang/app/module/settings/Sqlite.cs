@@ -114,7 +114,7 @@ public sealed class Sqlite : IStore
 
             var deserResult = _serializer.Load(result.ToString()!);
             if (!deserResult.Success) return Task.FromResult(app.data.@this.FromError(deserResult.Error!));
-            return Task.FromResult(deserResult.Value ?? app.data.@this.Ok(null));
+            return Task.FromResult((data.@this?)deserResult.Value ?? app.data.@this.Ok(null));
         }
         catch (Exception ex)
         {
@@ -169,7 +169,7 @@ public sealed class Sqlite : IStore
                 if (raw != null)
                 {
                     var deserResult = _serializer.Load(raw);
-                    if (deserResult.Success && deserResult.Value != null) items.Add(deserResult.Value);
+                    if (deserResult.Success && deserResult.Value != null) items.Add((data.@this)deserResult.Value);
                 }
             }
             return Task.FromResult(app.data.@this.Ok((object)items));
@@ -181,7 +181,7 @@ public sealed class Sqlite : IStore
         }
     }
 
-    public Task<data.@this<List<T>>> GetAll<T>(string table) where T : data.@this
+    public Task<data.@this<global::app.type.list.@this>> GetAll<T>(string table) where T : data.@this
     {
         try
         {
@@ -191,7 +191,7 @@ public sealed class Sqlite : IStore
             using var cmd = connection.CreateCommand();
             cmd.CommandText = $"SELECT key, data FROM [{SanitizeTableName(table)}];";
 
-            var list = new List<T>();
+            var list = new global::app.type.list.@this();
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
@@ -206,11 +206,11 @@ public sealed class Sqlite : IStore
                     }
                 }
             }
-            return Task.FromResult(data.@this<List<T>>.Ok(list));
+            return Task.FromResult(data.@this<global::app.type.list.@this>.Ok(list));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(data.@this<List<T>>.FromError(
+            return Task.FromResult(data.@this<global::app.type.list.@this>.FromError(
                 SettingsError.FromException(ex, table)));
         }
     }
@@ -288,7 +288,7 @@ public sealed class Sqlite : IStore
         }
     }
 
-    public Task<data.@this<List<string>>> Tables()
+    public Task<data.@this<global::app.type.list.@this>> Tables()
     {
         try
         {
@@ -297,16 +297,16 @@ public sealed class Sqlite : IStore
             using var cmd = connection.CreateCommand();
             cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;";
 
-            var tables = new List<string>();
+            var tables = new global::app.type.list.@this();
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
-                tables.Add(reader.GetString(0));
+                tables.Add(new app.data.@this("", reader.GetString(0)));
 
-            return Task.FromResult(app.data.@this<List<string>>.Ok(tables));
+            return Task.FromResult(app.data.@this<global::app.type.list.@this>.Ok(tables));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(app.data.@this<List<string>>.FromError(
+            return Task.FromResult(app.data.@this<global::app.type.list.@this>.FromError(
                 SettingsError.FromException(ex)));
         }
     }

@@ -31,7 +31,7 @@ public interface IStore : IDisposable
     /// Gets all key-value pairs in a table, deserializing each value to T.
     /// Returns Data with List&lt;T&gt; value, or Data with error on failure.
     /// </summary>
-    Task<data.@this<List<T>>> GetAll<T>(string table) where T : data.@this;
+    Task<data.@this<global::app.type.list.@this>> GetAll<T>(string table) where T : data.@this;
 
     /// <summary>
     /// Sets a Data value by table and key. Creates the table if it doesn't exist.
@@ -55,7 +55,7 @@ public interface IStore : IDisposable
     /// Lists all tables in this store.
     /// Returns Data with List&lt;string&gt; value.
     /// </summary>
-    Task<data.@this<List<string>>> Tables();
+    Task<data.@this<global::app.type.list.@this>> Tables();
 
     /// <summary>
     /// Resolves the table name from a System.Type.

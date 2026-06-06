@@ -131,7 +131,7 @@ public class DataSourceTests
 
         var result = await ds.Tables();
         await result.IsSuccess();
-        var tables = result.Value as List<string>;
+        var tables = result.GetValue<List<string>>();
         await Assert.That(tables).IsNotNull();
         await Assert.That(tables!.Count).IsGreaterThanOrEqualTo(2);
     }
@@ -321,7 +321,7 @@ public class DataSourceTests
 
         // Tables() should list it
         var tablesResult = await ds.Tables();
-        var tables = tablesResult.Value as List<string>;
+        var tables = tablesResult.GetValue<List<string>>();
         await Assert.That(tables).IsNotNull();
         await Assert.That(tables!).Contains("persistent");
     }

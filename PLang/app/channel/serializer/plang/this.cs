@@ -219,18 +219,18 @@ public sealed class @this : ISerializer
     /// <see cref="Store"/>; reads through the Store-view options so any
     /// [Store]-only property (re-)hydrates on the inbound side.
     /// </summary>
-    public global::app.data.@this<global::app.data.@this> Load(string s)
+    public global::app.data.@this Load(string s)
     {
         try
         {
             if (string.IsNullOrEmpty(s) || s == "null")
-                return global::app.data.@this<global::app.data.@this>.Ok(default!);
-            return global::app.data.@this<global::app.data.@this>.Ok(
-                JsonSerializer.Deserialize<global::app.data.@this>(s, _store)!);
+                return global::app.data.@this.Ok(null);
+            return global::app.data.@this.Ok(
+                (object?)JsonSerializer.Deserialize<global::app.data.@this>(s, _store)!);
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {
-            return global::app.data.@this<global::app.data.@this>.FromError(new error.ServiceError(
+            return global::app.data.@this.FromError(new error.ServiceError(
                 $"Plang Load failed: {ex.Message}", "PlangDeserializeError", 400) { Exception = ex });
         }
     }
