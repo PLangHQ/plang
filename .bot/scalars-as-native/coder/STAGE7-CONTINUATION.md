@@ -464,3 +464,36 @@ REMAINING (the finish line):
 5. **FLIP `where T : item` ON** in data.@this<T>; residual-fix pass; both suites green.
 
 ~17 commits this session; tree green throughout. Everything except returns+generics+flip done.
+
+## DESIGN PIVOT (Ingi): collections → generic list<T> : item (not Data<list>+[Element])
+
+The Data<list>+[Element] approach for collection RETURNS hit the return-element-advertising
+gap (ReturnTypeName "list" not "list<goal>" — breaks builder chaining). I built a [Element]
+return-attribute for it; Ingi rejected [Element] as a SECOND SOURCE OF TRUTH for the element
+type (drift risk / OBP smell). **Decision: make the native list GENERIC — `app.type.list.@this<T>
+where T : item`** so the element type is intrinsic. Then Data<list<Goal>> advertises list<goal>
+naturally, params get element schemas free, NO attribute anywhere.
+
+The uncommitted RETURNS work + [Element] attribute were REVERTED (tree green at the
+collections-params commit). The generic-list<T> refactor supersedes the Data<list>+[Element]
+approach for BOTH params and returns. Saved to memory: project_generic_list_t.md.
+
+### Generic list<T> refactor — the plan (next major task)
+- `app.type.list.@this` is non-generic today (holds Data elements), used EVERYWHERE
+  (serializers, navigators, conversions, FromRaw, every list param/return). Likely shape:
+  keep a non-generic base `list.@this` (the untyped/heterogeneous + serializer/navigator
+  surface) and add generic `list.@this<T> : list.@this where T : item` for typed slots. OR
+  make `list.@this<item>` the default untyped form.
+- Rework committed collection PARAMS: Data<list> + [Element] → Data<list<X>>; drop [Element].
+  (Messages→list<LlmMessage>, Tools→list<GoalCall>, Tests→list<test>, Contracts→list<text>,
+  builder Actions→list<text>, Tags→list<text>, Pairs→dict (or dict<text,text>),
+  ui.render Parameters→list<data>... but data isn't item → list<item>.)
+- Collection RETURNS → Data<list<X>>: path.List→list<path>, file.list, builder.goals→list<goal>,
+  getTypes→list<dict>, identity.list→list<identity>, test.discover→list<test>.
+- Generic store GetAll<T>/Tables.
+- ReturnTypeName/Describe + GetValidValues read the generic arg naturally (no [Element]).
+- dict: parallel question — generic dict<K,V>? or dict stays (Pairs is dict<text,text>).
+- Then: Data<Data>→bare, generic threading of where T:item, FLIP.
+
+GOOD note: the identity LoadAllAsync→tuple de-Data (uncommitted, reverted) was correct and
+independent — redo it during the refactor (internal helper, consumed as List<Identity>).
