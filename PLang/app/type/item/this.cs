@@ -52,6 +52,27 @@ public abstract class @this : global::app.data.IBooleanResolvable
     public virtual @this Narrow() => this;
 
     /// <summary>
+    /// True for a scalar leaf — a value with no sub-structure that rides the wire as
+    /// a single bare token (text/number/bool/date-family/duration/binary/null/choice).
+    /// Normalize passes a leaf straight to the writer (which renders it bare); a
+    /// non-leaf (<c>dict</c>/<c>list</c> with children, <c>path</c>/<c>image</c>/<c>code</c>
+    /// and other domain values that reflect) takes its own normalization branch. A new
+    /// scalar type opts in here instead of being listed inside Normalize.
+    /// </summary>
+    public virtual bool IsLeaf => false;
+
+    /// <summary>
+    /// Render this value's bare wire form into the format-neutral
+    /// <see cref="global::app.channel.serializer.IWriter"/> — the leaf-serializer
+    /// behavior (OBP Rule 9: the value owns its wire shape, the writer never
+    /// type-switches). Only leaves are asked (Normalize routes non-leaves through
+    /// their own branches); the default throws so a missing override is loud.
+    /// </summary>
+    public virtual void Write(global::app.channel.serializer.IWriter writer)
+        => throw new System.NotSupportedException(
+            $"{GetType().Name} has no bare wire form — it is not a leaf value.");
+
+    /// <summary>
     /// The raw CLR projection of this value — the single unwrap at the
     /// typed-conversion leaf (<c>→ returns string/int/DateTime/…</c>). A scalar
     /// returns its backing CLR scalar (<c>text → string</c>, <c>number → the

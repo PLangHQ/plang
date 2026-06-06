@@ -16,6 +16,8 @@ public sealed partial class @this : global::app.type.item.@this,
 
     public System.TimeOnly Value { get; }
     public override object? ToRaw() => Value;
+    public override bool IsLeaf => true;
+    public override void Write(global::app.channel.serializer.IWriter w) => w.String(ToString());
 
     public @this(System.TimeOnly value) { Value = value; }
 

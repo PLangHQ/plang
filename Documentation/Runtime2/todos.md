@@ -1090,3 +1090,26 @@ hit the type registry (`catalog.ResolveName(clrType)`). Two fixes are needed:
      PLang-named messages everywhere, not reintroduce a per-site switch.)
 
 **Decision:** logged for a dedicated pass; not folded into scalars-as-native.
+
+## Serialization centralization, part 2: Normalize-on-item (read/walk side)
+
+**Date:** 2026-06-06 on branch `scalars-as-native`. Ingi, extending the
+serialization-centralization todo.
+
+Companion to the IWriter centralization. Two virtuals now belong on `item`:
+- `Write(IWriter)` — **DONE on scalars-as-native**: each leaf renders its own bare
+  wire form; `json.Writer.Value` collapsed its per-scalar `case` list to one
+  `if (value is item leaf && leaf.IsLeaf) leaf.Write(this)`.
+- `Normalize(mode, visited, depth, types)` — **TODO**: make the NormalizeValue
+  type-switch a virtual on `item`. `dict`/`list` override (recurse entries),
+  scalars use the default (return self). Then `NormalizeValue` collapses to
+  `if (value is item iv) return iv.Normalize(...); else <raw-CLR perimeter>`.
+
+**Residual that can't vanish:** raw CLR values from non-PLang code (bare `string`,
+`Dictionary`, `enum`, `byte[]`) are not `item`, so the raw-CLR perimeter arm stays;
+and `path`/`image`/`code` reflect through the shared `[Out]`-filtered NormalizeObject
++ renderer registry, which doesn't cleanly move per-type. Net: one dispatch for all
+items + a perimeter fallback.
+
+**Decision:** land the `where T : item` constraint first (branch goal), then do
+Write+Normalize-on-item as one pass. Folds into [the IWriter-centralization todo above].

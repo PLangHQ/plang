@@ -47,6 +47,8 @@ public sealed partial class @this : global::app.type.item.@this,
 
     public string Value { get; }
     public override object? ToRaw() => Value;
+    public override bool IsLeaf => true;
+    public override void Write(global::app.channel.serializer.IWriter w) => w.String(Value);
 
     public @this(string value) { Value = value ?? string.Empty; }
 

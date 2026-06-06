@@ -25,6 +25,8 @@ public sealed partial class @this : global::app.type.item.@this,
 
     public System.TimeSpan Value { get; }
     public override object? ToRaw() => Value;
+    public override bool IsLeaf => true;
+    public override void Write(global::app.channel.serializer.IWriter w) => w.TimeSpan(Value);
 
     public @this(System.TimeSpan value) { Value = value; }
 

@@ -32,6 +32,8 @@ public sealed partial class @this : global::app.type.item.@this,
 
     /// <summary>Null is always falsy.</summary>
     public override bool IsTruthy() => false;
+    public override bool IsLeaf => true;
+    public override void Write(global::app.channel.serializer.IWriter w) => w.Null();
 
     /// <summary>The raw form of null is C# null.</summary>
     public override object? ToRaw() => null;

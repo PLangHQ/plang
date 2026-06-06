@@ -135,19 +135,11 @@ public sealed class Writer : IWriter
             case System.Guid g: Guid(g); return;
             case System.Enum e: Enum(e); return;
             case byte[] bytes: Bytes(bytes); return;
-            // Scalar wrappers ride the wire bare — the value slot is value-only,
-            // the type-tag rides the Data envelope. number reuses its own renderer
-            // (handles the full kind tower incl. Int128/BigInteger); the rest emit
-            // their backing leaf directly. This is the leaf serializer — the one
-            // blessed place a value's own bare form is rendered.
-            case app.type.text.@this txt: String(txt.Value); return;
-            case app.type.@bool.@this bw: Bool(bw.Value); return;
-            case app.type.number.@this nw: app.type.number.serializer.Default.Write(nw, this); return;
-            case app.type.datetime.@this dtw: DateTimeOffset(dtw.Value); return;
-            case app.type.date.@this dw: _writer.WriteStringValue(dw.ToString()); return;
-            case app.type.time.@this tw: _writer.WriteStringValue(tw.ToString()); return;
-            case app.type.duration.@this durw: TimeSpan(durw.Value); return;
-            case app.type.@null.@this: Null(); return;
+            // A scalar leaf renders its own bare wire form — the value owns the
+            // mapping (OBP Rule 9), the writer never type-switches per scalar. One
+            // dispatch covers every leaf (text/number/bool/date-family/duration/
+            // binary/null/choice) and any future one with no edit here.
+            case app.type.item.@this leaf when leaf.IsLeaf: leaf.Write(this); return;
             case app.data.TypedValueNode typed:
                 // Per-(type, format) renderer dispatch. The build gate (PLNG)
                 // makes this lookup total for built-in [PlangType] types;

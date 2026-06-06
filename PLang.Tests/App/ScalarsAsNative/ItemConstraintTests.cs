@@ -1,58 +1,76 @@
+using System.Reflection;
+
 namespace PLang.Tests.App.ScalarsAsNative;
 
-// The locking step. `data.@this<T> where T : item` turns the type system into
-// the census: every Data<rawCLR> is a build error; Data<data.@this> is a build
-// error (double-wrap kill, since Data is not an item). Everything riding a
-// Data<T> slot is `: item` — Variable, Ask, snapshot, path, image, code, plus
-// the scalars and collections.
+// The value lattice the `data.@this<T> where T : item` constraint enforces. These
+// verify the STRUCTURE the constraint rests on — every value/domain wrapper is
+// `: item`, while `Data` itself and raw CLR scalars are NOT — so once the constraint
+// is switched on (the slot re-typing across handlers), `Data<rawCLR>` and the
+// double-wrap `Data<Data>` are compile errors by construction.
+//
+// NOTE: the hard `where T : item` clause is the branch's final lock and lands with
+// the handler-slot re-typing (scalars→wrappers, enum/binary wrapper types, domain
+// objects→`: item`, Dictionary/List→dict/list). Until then these pin the lattice so
+// the eventual flip compiles with no surprises.
 public class ItemConstraintTests
 {
+    private static bool IsItem(System.Type t) =>
+        typeof(global::app.type.item.@this).IsAssignableFrom(t);
+
     [Test]
     public async Task Constraint_WhereTIsItem_CompilesForEveryValueWrapper()
     {
-        // Data<number>, Data<text>, Data<datetime>, Data<date>, Data<time>,
-        // Data<duration>, Data<bool>, Data<null>, Data<dict>, Data<list>,
-        // Data<path>, Data<image>, Data<code>, Data<Variable>, Data<Ask>,
-        // Data<snapshot> all satisfy `where T : item` — reflection probe.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // Every value type that rides a Data<T> slot is : item.
+        System.Type[] wrappers =
+        {
+            typeof(global::app.type.number.@this), typeof(global::app.type.text.@this),
+            typeof(global::app.type.datetime.@this), typeof(global::app.type.date.@this),
+            typeof(global::app.type.time.@this), typeof(global::app.type.duration.@this),
+            typeof(global::app.type.@bool.@this), typeof(global::app.type.@null.@this),
+            typeof(global::app.type.dict.@this), typeof(global::app.type.list.@this),
+            typeof(global::app.type.path.@this), typeof(global::app.type.image.@this),
+            typeof(global::app.type.code.@this), typeof(global::app.variable.@this),
+            typeof(global::app.module.output.Ask), typeof(global::app.snapshot.@this),
+        };
+        foreach (var t in wrappers)
+            await Assert.That(IsItem(t)).IsTrue();
     }
 
     [Test]
     public async Task Constraint_DataOfRawClrInt_DoesNotSatisfyTheConstraint()
     {
-        // A guarded reflection check that `typeof(int) : item.@this` is false —
-        // Data<int> can NOT be constructed under the constraint. Catches a
-        // regression that reintroduces a raw-scalar handler param.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // A raw CLR scalar is not an item — Data<int> can't satisfy `where T : item`.
+        await Assert.That(IsItem(typeof(int))).IsFalse();
+        await Assert.That(IsItem(typeof(string))).IsFalse();
+        await Assert.That(IsItem(typeof(bool))).IsFalse();
+        await Assert.That(IsItem(typeof(System.DateTimeOffset))).IsFalse();
     }
 
     [Test]
     public async Task Constraint_DataOfDataItself_DoesNotSatisfyTheConstraint_DoubleWrapKilled()
     {
-        // The structural double-wrap kill. Data is NOT an item, so Data<data.@this>
-        // is rejected by `where T : item`. The strongest single payoff of the branch.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // The structural double-wrap kill: Data is NOT an item, so Data<Data> is
+        // rejected by the constraint — a Data<item> slot can never nest a Data.
+        await Assert.That(IsItem(typeof(global::app.data.@this))).IsFalse();
     }
 
     [Test]
     public async Task Variable_IsItem_SatisfiesSlotAndKeepsIRawNameResolvable()
     {
-        // Variable : item (for Data<Variable> slot-fit) AND still IRawNameResolvable
-        // (for raw-name binding). The two concerns are orthogonal.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // Variable : item (slot-fit) AND still IRawNameResolvable (raw-name binding).
+        // Orthogonal concerns, both held.
+        await Assert.That(IsItem(typeof(global::app.variable.@this))).IsTrue();
+        await Assert.That(typeof(global::app.variable.IRawNameResolvable)
+            .IsAssignableFrom(typeof(global::app.variable.@this))).IsTrue();
     }
 
     [Test]
     public async Task AskSnapshotPath_AreItem_CompileUnderConstraint()
     {
-        // Data<Ask>, Data<snapshot>, Data<path> all compile post-branch. They
-        // implement no ordering/equality contracts they can't honor — `item`
-        // forces none, so no stubs.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // Ask (resume sentinel), snapshot (execution-state), path (domain value) are
+        // all : item — they honor no ordering/equality contract they can't keep.
+        await Assert.That(IsItem(typeof(global::app.module.output.Ask))).IsTrue();
+        await Assert.That(IsItem(typeof(global::app.snapshot.@this))).IsTrue();
+        await Assert.That(IsItem(typeof(global::app.type.path.@this))).IsTrue();
     }
 }
