@@ -166,7 +166,7 @@ public class Ed25519 : ISigning
 
     // --- Low-level crypto ---
 
-    public data.@this<KeyPair> GenerateKeyPair()
+    public (KeyPair? keys, global::app.error.IError? error) GenerateKeyPair()
     {
         try
         {
@@ -180,14 +180,13 @@ public class Ed25519 : ISigning
             var publicKeyBytes = key.Export(KeyBlobFormat.RawPublicKey);
             var privateKeyBytes = key.Export(KeyBlobFormat.RawPrivateKey);
 
-            return data.@this<KeyPair>.Ok(new KeyPair(
+            return (new KeyPair(
                 Convert.ToBase64String(publicKeyBytes),
-                Convert.ToBase64String(privateKeyBytes)
-            ));
+                Convert.ToBase64String(privateKeyBytes)), null);
         }
         catch (Exception ex)
         {
-            return data.@this<KeyPair>.FromError(ActionError.FromException(ex, "KeyGenerationError", 500));
+            return (null, ActionError.FromException(ex, "KeyGenerationError", 500));
         }
     }
 

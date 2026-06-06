@@ -6,9 +6,10 @@ namespace app.module.signing.code;
 
 /// <summary>
 /// Provider that can generate key pairs. Used by identity module for key generation delegation.
-/// Returns Data — never throws.
+/// A KeyPair never crosses the PLang boundary (the user gets an Identity), so this is an
+/// internal C# result — a (keys, error) tuple, not a Data. Never throws.
 /// </summary>
 public interface IKey : ICode
 {
-    data.@this<KeyPair> GenerateKeyPair();
+    (KeyPair? keys, global::app.error.IError? error) GenerateKeyPair();
 }

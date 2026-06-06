@@ -3,7 +3,7 @@ namespace app.module.signing.code;
 /// <summary>
 /// A public/private key pair returned by IKey. A PLang value (: item).
 /// </summary>
-public sealed class KeyPair : global::app.type.item.@this
+public sealed class KeyPair
 {
     public string PublicKey { get; }
     public string PrivateKey { get; }

@@ -298,16 +298,16 @@ public sealed class Default : IIdentity
         if (!keyResult.Success)
             return data.@this<Identity>.FromError(keyResult.Error!);
 
-        var keysResult = keyResult.Value!.GenerateKeyPair();
-        if (!keysResult.Success)
-            return data.@this<Identity>.FromError(keysResult.Error!);
+        var (keys, keyErr) = keyResult.Value!.GenerateKeyPair();
+        if (keyErr != null)
+            return data.@this<Identity>.FromError(keyErr);
 
         var now = (DateTimeOffset)action.Context.Variable.GetValue("NowUtc")!;
 
         var identity = new Identity(name)
         {
-            PublicKey = keysResult.Value!.PublicKey,
-            PrivateKey = keysResult.Value.PrivateKey,
+            PublicKey = keys!.PublicKey,
+            PrivateKey = keys.PrivateKey,
             IsDefault = isDefault,
             IsArchived = false,
             Created = now
