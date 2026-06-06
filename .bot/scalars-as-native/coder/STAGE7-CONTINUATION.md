@@ -28,6 +28,38 @@ constraint is finished:
   **structural lattice tests** (verify every value/domain type `: item`; int/Data
   not) — they pass NOW and pin the invariant the hard constraint will enforce.
 
+## PROGRESS on the constraint cascade (committed green, constraint still OFF)
+
+- **Domain objects → `: item` DONE**: GoalCall, Identity, actor, goal, step, action,
+  stepactions, sign, mock, BuildResponse, Results, hash, builder.type (classes);
+  list, setting, StatInfo, permission (records→class). Build green.
+- **KeyPair de-Data DONE**: `IKey.GenerateKeyPair() → (KeyPair?, IError?)`; KeyPair is
+  a plain class (internal crypto result, never crosses PLang). Ingi confirmed.
+- Census re-harvested AFTER domain :item → **1428 errors remain** (was 1742). The
+  domain-type rows are gone. Remaining (turn constraint on at `data/this.cs` ~line
+  1468/1473 to re-list): scalars string(478)/bool(286)/int(178)/long(18)/double(12)/
+  TimeSpan(14); enums PrecisionMode(54)/OverflowMode(54)/HttpMethod(12)/StreamFormat(6)/
+  ContentAs(6)/ErrorOrder(6)/Trigger(6)→choice; BCL Dictionary(40+2+2)/List<string>(34)/
+  List<path>(10)/List<test>(8)/List<Identity>(8)/string[](6)/List<LlmMessage>(6)/
+  List<action>(6)/List<GoalCall>(6)/List<Data>(6)/Dictionary<string,string>(6)/
+  List<goal>(2)/List<List<Dict>>(2)→dict/list; object(26)→item; Operator(32)→[Code]/bare;
+  type(6)→bare/item; Assembly(4)+HttpContent(6)→de-Data; generic T(46)/TResult(2)/
+  List<T>(4)→thread; data.@this(2)→double-wrap kill (bare Data).
+
+### The big remaining grind (scalar/BCL/enum slot swaps)
+- **75 handler files** declare scalar `Data<rawCLR>` props. Each needs the property
+  type swap (`@this<string>`→`@this<text>`, `<int>/<long>/<double>`→`<number>`,
+  `<bool>`→`<bool>`, `<TimeSpan>`→`<duration>`) AND a per-handler **body sweep** —
+  the body reads `.Value` which is now a wrapper. text.@this mirrors much of the
+  string API (Length/Contains/etc.) + has `implicit operator string`, so many reads
+  survive; `==`/`switch`/`string.IsNullOrEmpty(x.Value)` and number→int reads
+  (`(int)x.Value` / `x.Value.ToInt32()`) need touching. This is the bulk — budget
+  per-handler care, not a blind find-replace.
+- **Assembly de-Data is intricate**: `path.LoadAssemblyAsync()` (base + file override
+  + 4 callers incl. code.load, module.add, code.Snapshot) uses `AuthGate` whose
+  exit-bubble returns a `Data` — the tuple conversion must preserve the Exit-typed
+  early-return. HttpContent: ~10 internal helpers in http/Default.cs + callers.
+
 ## What REMAINS = turn on `where T : item` (the 1742-site cascade)
 
 Adding `where T : item` to `data.@this<T>` (revert: it was on `data/this.cs`
