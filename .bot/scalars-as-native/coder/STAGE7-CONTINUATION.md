@@ -428,3 +428,39 @@ REMAINING:
 Everything risky/novel (born-native scalars, choice generalization + build-time path, enums,
 Operator, de-Data) is DONE and verified. Collections is the last big mechanical-but-invasive
 refactor + the flip. ~15 commits this session; tree green throughout.
+
+## Collections PARAMS done (+[Element] feature) — returns + generics + FLIP remain
+
+DONE (committed, green, zero regressions):
+- All list/dict PARAMS → native list/dict via Data<list>/Data<dict> + GetValue<List<X>>():
+  signing.Contracts, builder Actions, test.tag Tags, llm Messages/Tools, test.run Tests,
+  debug.tag Pairs, ui.render Parameters.
+- **NEW `[Element(type)]` attribute** (app/Attributes/ElementAttribute.cs): a native-list slot
+  is element-agnostic, so the builder lost the element schema. [Element] names it; BuildTypeEntries
+  walks it. On Messages(LlmMessage)/Tools(GoalCall)/Tests(test). Pattern: any LLM-built typed
+  list param needs [Element(T)].
+- **error.handle Actions → Data<step.actions.@this>** (the StepActions collection IS :item),
+  NOT native list — a structural action chain doesn't roundtrip through native-list
+  reconstruction (broke CallStack recovery). Lesson: structural/domain collections use their
+  own :item collection type; only value/LLM-literal lists go native list.
+- Test helper CollectionTestExtensions.ToListData()/ToDictData() (context-free FromRaw).
+
+REMAINING (the finish line):
+1. **Collection RETURNS** → Data<list>/Data<dict> (or the :item collection type where one
+   exists). Each has CALLERS that iterate .Value — convert callers to GetValue<List<X>>()
+   or .Items. Sites + callers:
+   - path.List() (abstract+http+file) → callers: goal/list:432-437, MarkdownTeaching:83,
+     test/discover:52, file/list:20 (forwards).
+   - file.list.Run (List<path>), builder.goals (List<Goal>), goal.getTypes (List<Dict>),
+     identity.list/ListAsync (List<Identity>), test.discover (List<test>),
+     IStore/Sqlite GetAll<T>/Tables (List<T>/List<string>).
+   Prefer the :item collection type (like step.actions) when the elements are domain objects
+   that don't roundtrip; native list for value elements.
+2. **Data<Data> (4)** → bare Data.
+3. **Stragglers**: re-grep after returns for any `data.@this<Operator>` / `<Trigger>` missed.
+4. **Generic threading**: add `where T : item` to data.@this<T> + From<T>/As<T> + generic
+   handlers (GetAll<T> where T:data.@this already). Verify domain types compile under the
+   constraint (Identity/GoalCall/Variable/etc. confirmed :item).
+5. **FLIP `where T : item` ON** in data.@this<T>; residual-fix pass; both suites green.
+
+~17 commits this session; tree green throughout. Everything except returns+generics+flip done.
