@@ -260,7 +260,7 @@ public class IdentityHandlerTests
         var result = await handler.Run();
         await result.IsSuccess();
 
-        var list = result.Value as List<Identity>;
+        var list = result.GetValue<List<Identity>>();
         await Assert.That(list!.Count).IsEqualTo(2);
         await Assert.That(list.Any(i => i.Name == "archived")).IsFalse();
     }
@@ -278,7 +278,7 @@ public class IdentityHandlerTests
         var result = await handler.Run();
         await result.IsSuccess();
 
-        var list = result.Value as List<Identity>;
+        var list = result.GetValue<List<Identity>>();
         await Assert.That(list!.Count).IsEqualTo(0);
     }
 

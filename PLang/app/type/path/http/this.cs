@@ -213,10 +213,10 @@ public sealed partial class @this : global::app.type.path.@this
     /// Fail, but routes through <see cref="@this.AuthGate"/> first so the verb
     /// surface is consistent with every other HttpPath verb.
     /// </summary>
-    public override async Task<data.@this<List<global::app.type.path.@this>>> List(string pattern, bool recursive)
+    public override async Task<data.@this<global::app.type.list.@this<global::app.type.path.@this>>> List(string pattern, bool recursive)
     {
-        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return data.@this<List<global::app.type.path.@this>>.From(early);
-        return data.@this<List<global::app.type.path.@this>>.FromError(new Error(
+        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return data.@this<global::app.type.list.@this<global::app.type.path.@this>>.From(early);
+        return data.@this<global::app.type.list.@this<global::app.type.path.@this>>.FromError(new Error(
             "HTTP scheme does not support directory listing.", "NotSupported", 400));
     }
 

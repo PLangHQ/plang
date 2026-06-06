@@ -344,7 +344,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        var files = result.Value as System.Collections.Generic.List<PLangPath>;
+        var files = result.GetValue<List<PLangPath>>();
         await Assert.That(files).IsNotNull();
         await Assert.That(files!.Count).IsEqualTo(2);
     }
@@ -361,7 +361,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        var files = result.Value as System.Collections.Generic.List<PLangPath>;
+        var files = result.GetValue<List<PLangPath>>();
         await Assert.That(files).IsNotNull();
         await Assert.That(files!.Count).IsEqualTo(1);
     }
@@ -380,7 +380,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        var files = result.Value as System.Collections.Generic.List<PLangPath>;
+        var files = result.GetValue<List<PLangPath>>();
         await Assert.That(files).IsNotNull();
         await Assert.That(files!.Count).IsEqualTo(2);
     }

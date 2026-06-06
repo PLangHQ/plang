@@ -164,7 +164,7 @@ public class Default : IBuilder
         if (!listResult.Success)
             return listResult;
 
-        var files = listResult.Value as List<path>;
+        var files = listResult.GetValue<List<path>>();
         if (files == null || files.Count == 0)
             return data.@this.Ok(new List<Goal>());
 

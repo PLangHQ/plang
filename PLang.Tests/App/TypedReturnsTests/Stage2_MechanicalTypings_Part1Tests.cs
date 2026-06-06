@@ -22,7 +22,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     public async Task TestDiscover_Run_ReturnsTaskDataListOfTest()
     {
         var ret = RunReturnType<global::app.module.test.discover>();
-        var expected = typeof(Task<global::app.data.@this<List<global::app.tester.test.@this>>>);
+        var expected = typeof(Task<global::app.data.@this<global::app.type.list.@this<global::app.tester.test.@this>>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
 
@@ -42,7 +42,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     public async Task GoalGetTypes_Run_ReturnsTaskDataOfStronglyTypedRecord()
     {
         var ret = RunReturnType<global::app.module.goal.getTypes>();
-        var expected = typeof(Task<global::app.data.@this<List<Dictionary<string, string>>>>);
+        var expected = typeof(Task<global::app.data.@this<global::app.type.list.@this<global::app.type.dict.@this>>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
 

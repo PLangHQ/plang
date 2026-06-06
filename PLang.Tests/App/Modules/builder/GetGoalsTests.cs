@@ -49,7 +49,7 @@ public class GetGoalsTests
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();
-        var goals = result.Value as List<Goal>;
+        var goals = result.GetValue<List<Goal>>();
         await Assert.That(goals).IsNotNull();
         await Assert.That(goals!.Count).IsGreaterThanOrEqualTo(1);
         await Assert.That(goals[0].Name).IsEqualTo("Start");
@@ -73,7 +73,7 @@ public class GetGoalsTests
 
         var action = new goals { Context = _app.User.Context, Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.RunAction(action, _app.User.Context);
-        var goals = result.Value as List<Goal>;
+        var goals = result.GetValue<List<Goal>>();
 
         await Assert.That(goals).IsNotNull();
         // System goals should be present but marked
@@ -123,7 +123,7 @@ public class GetGoalsTests
 
         var action = new goals { Context = _app.User.Context, Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(".", _app.User.Context)) };
         var result = await _app.RunAction(action, _app.User.Context);
-        var goals = result.Value as List<Goal>;
+        var goals = result.GetValue<List<Goal>>();
 
         await Assert.That(goals).IsNotNull();
         var startGoal = goals!.FirstOrDefault(g => g.Name == "Start");
@@ -151,7 +151,7 @@ public class GetGoalsTests
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();
-        var goals = result.Value as List<Goal>;
+        var goals = result.GetValue<List<Goal>>();
         await Assert.That(goals).IsNotNull();
         await Assert.That(goals!.Count).IsEqualTo(1);
         await Assert.That(goals[0].Name).IsEqualTo("Start");
@@ -171,7 +171,7 @@ public class GetGoalsTests
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();
-        var goals = result.Value as List<Goal>;
+        var goals = result.GetValue<List<Goal>>();
         await Assert.That(goals).IsNotNull();
         await Assert.That(goals!.Count).IsEqualTo(1);
         await Assert.That(goals[0].Name).IsEqualTo("MyGoal");
@@ -191,7 +191,7 @@ public class GetGoalsTests
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();
-        var goals = result.Value as List<Goal>;
+        var goals = result.GetValue<List<Goal>>();
         await Assert.That(goals).IsNotNull();
         await Assert.That(goals!.Count).IsEqualTo(0);
     }
@@ -216,7 +216,7 @@ public class GetGoalsTests
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();
-        var goals = result.Value as List<Goal>;
+        var goals = result.GetValue<List<Goal>>();
         await Assert.That(goals).IsNotNull();
         await Assert.That(goals!.Count).IsEqualTo(2);
         await Assert.That(goals.Any(g => g.Name == "First")).IsTrue();
@@ -230,7 +230,7 @@ public class GetGoalsTests
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();
-        var goals = result.Value as List<Goal>;
+        var goals = result.GetValue<List<Goal>>();
         await Assert.That(goals).IsNotNull();
         await Assert.That(goals!.Count).IsEqualTo(0);
     }
@@ -254,7 +254,7 @@ public class GetGoalsTests
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();
-        var goals = result.Value as List<Goal>;
+        var goals = result.GetValue<List<Goal>>();
         await Assert.That(goals).IsNotNull();
         await Assert.That(goals!.Count).IsGreaterThanOrEqualTo(1);
         // Steps should have empty actions (no merge happened)

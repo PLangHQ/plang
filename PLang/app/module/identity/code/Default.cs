@@ -43,9 +43,8 @@ public sealed class Default : IIdentity
         if (string.IsNullOrWhiteSpace(action.Name.Value))
             return data.@this<Identity>.FromError(new ActionError("Identity name cannot be empty", "ValidationError", 400));
 
-        var all = await LoadAllAsync(action);
-        if (!all.Success) return data.@this<Identity>.From(all);
-        var items = all.Value!;
+        var (items, err) = await LoadAllAsync(action);
+        if (err != null) return data.@this<Identity>.FromError(err);
         if (items.Exists(i => string.Equals(i.Name, action.Name.Value, StringComparison.OrdinalIgnoreCase)))
             return data.@this<Identity>.FromError(new ActionError($"Identity '{action.Name.Value}' already exists", "DuplicateName", 409));
 
@@ -110,9 +109,8 @@ public sealed class Default : IIdentity
     public async Task<data.@this<Identity>> SetDefaultAsync(SetDefault action)
     {
         var app = action.Context.App;
-        var all = await LoadAllAsync(action);
-        if (!all.Success) return data.@this<Identity>.From(all);
-        var items = all.Value!;
+        var (items, err) = await LoadAllAsync(action);
+        if (err != null) return data.@this<Identity>.FromError(err);
 
         var target = items.Find(i => string.Equals(i.Name, action.Name.Value, StringComparison.OrdinalIgnoreCase));
         if (target == null)
@@ -150,9 +148,8 @@ public sealed class Default : IIdentity
         if (!loadResult.Success) return loadResult;
         var identity = loadResult.Value!;
 
-        var all = await LoadAllAsync(action);
-        if (!all.Success) return data.@this<Identity>.From(all);
-        var items = all.Value!;
+        var (items, err) = await LoadAllAsync(action);
+        if (err != null) return data.@this<Identity>.FromError(err);
         if (items.Exists(i => string.Equals(i.Name, action.NewName.Value, StringComparison.OrdinalIgnoreCase)))
             return data.@this<Identity>.FromError(new ActionError($"Identity '{action.NewName.Value}' already exists", "DuplicateName", 409));
 
@@ -173,12 +170,12 @@ public sealed class Default : IIdentity
         return data.@this<Identity>.Ok(identity);
     }
 
-    public async Task<data.@this<List<Identity>>> ListAsync(list action)
+    public async Task<data.@this<global::app.type.list.@this<Identity>>> ListAsync(list action)
     {
-        var all = await LoadAllAsync(action);
-        if (!all.Success) return all;
-        var active = all.Value!.Where(i => !i.IsArchived).ToList();
-        return data.@this<List<Identity>>.Ok(active);
+        var (items, err) = await LoadAllAsync(action);
+        if (err != null) return data.@this<global::app.type.list.@this<Identity>>.FromError(err);
+        var active = items!.Where(i => !i.IsArchived).ToList();
+        return data.@this<global::app.type.list.@this<Identity>>.Ok(global::app.type.list.@this<Identity>.Of(active));
     }
 
     public async Task<data.@this<Identity>> ExportAsync(Export action)
@@ -221,11 +218,11 @@ public sealed class Default : IIdentity
     }
 
     /// <summary>Loads all identities (including archived) from the settings store.</summary>
-    internal async Task<data.@this<List<Identity>>> LoadAllAsync(IContext action)
+    internal async Task<(List<Identity>? Identities, global::app.error.IError? Error)> LoadAllAsync(IContext action)
     {
         var store = action.Context.App.SettingsStore;
         var result = await store.GetAll(Table);
-        if (!result.Success) return data.@this<List<Identity>>.From(result);
+        if (!result.Success) return (null, result.Error);
 
         var identities = new List<Identity>();
         if (result.Value is List<data.@this> dataList)
@@ -237,7 +234,7 @@ public sealed class Default : IIdentity
                     identities.Add(identity);
             }
         }
-        return data.@this<List<Identity>>.Ok(identities);
+        return (identities, null);
     }
 
     /// <summary>
@@ -245,9 +242,8 @@ public sealed class Default : IIdentity
     /// </summary>
     public async Task<data.@this<Identity>> GetOrCreateDefaultAsync(IContext action)
     {
-        var all = await LoadAllAsync(action);
-        if (!all.Success) return data.@this<Identity>.From(all);
-        var items = all.Value!;
+        var (items, err) = await LoadAllAsync(action);
+        if (err != null) return data.@this<Identity>.FromError(err);
 
         var def = items.Find(i => i.IsDefault && !i.IsArchived);
         if (def != null) return data.@this<Identity>.Ok(def);

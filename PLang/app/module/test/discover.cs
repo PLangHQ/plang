@@ -40,31 +40,31 @@ public partial class discover : IContext
     [Default(true)]
     public partial data.@this<global::app.type.@bool.@this> Recursive { get; init; }
 
-    public async Task<data.@this<List<global::app.tester.test.@this>>> Run()
+    public async Task<data.@this<global::app.type.list.@this<global::app.tester.test.@this>>> Run()
     {
         var app = Context.App!;
-        var empty = data.@this<List<global::app.tester.test.@this>>.Ok(new List<global::app.tester.test.@this>());
+        var empty = data.@this<global::app.type.list.@this<global::app.tester.test.@this>>.Ok(new global::app.type.list.@this<global::app.tester.test.@this>());
 
         var root = Path.Value;
         if (root == null) return empty;
 
         // List routes through AuthGate(Read). Out-of-root: prompt or denial.
         var listed = await root.List(Pattern.Value!, Recursive.Value);
-        if (!listed.Success) return data.@this<List<global::app.tester.test.@this>>.FromError(listed.Error!);
+        if (!listed.Success) return data.@this<global::app.type.list.@this<global::app.tester.test.@this>>.FromError(listed.Error!);
         if (listed.Value == null) return empty;
 
         var include = Context.App.Tester.Include;
         var exclude = Context.App.Tester.Exclude;
 
         var files = new List<global::app.tester.test.@this>();
-        foreach (var match in listed.Value)
+        foreach (var match in listed.GetValue<List<global::app.type.path.@this>>()!)
         {
             // .test.goal files only resolve under the file scheme; foreign schemes
             // skip silently. The List call already returned filesystem paths.
             if (match is not FilePath fileMatch) continue;
             files.Add(await DiscoverOne(fileMatch, app, include, exclude));
         }
-        return data.@this<List<global::app.tester.test.@this>>.Ok(files);
+        return data.@this<global::app.type.list.@this<global::app.tester.test.@this>>.Ok(global::app.type.list.@this<global::app.tester.test.@this>.Of(files));
     }
 
     /// <summary>Discovers metadata for a single .test.goal file (FilePath form).</summary>

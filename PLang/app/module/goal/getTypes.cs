@@ -33,7 +33,7 @@ public partial class getTypes : IContext
 {
     public partial data.@this<global::app.goal.@this> Goal { get; init; }
 
-    public Task<data.@this<List<Dictionary<string, string>>>> Run()
+    public Task<data.@this<global::app.type.list.@this<global::app.type.dict.@this>>> Run()
     {
         var goal = Goal.Value!;
         var modules = Context.App!.Module;
@@ -60,7 +60,15 @@ public partial class getTypes : IContext
 
         // List indexed by step position — `%variablesByStep[stepResult.index]%` works
         // out of the box without dict-key coercion.
-        return Task.FromResult(data.@this<List<Dictionary<string, string>>>.Ok(perStep));
+        // Each step's type-map becomes a native dict; the per-step list is list<dict>.
+        var rows = perStep.Select(d =>
+        {
+            var nd = new global::app.type.dict.@this();
+            foreach (var kv in d) nd.Set(kv.Key, kv.Value);
+            return nd;
+        });
+        return Task.FromResult(data.@this<global::app.type.list.@this<global::app.type.dict.@this>>.Ok(
+            global::app.type.list.@this<global::app.type.dict.@this>.Of(rows)));
     }
 
     private static void ProcessAction(

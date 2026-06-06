@@ -434,7 +434,7 @@ public sealed class @this
                 return data.@this.Ok(0);
 
             var loadedCount = 0;
-            foreach (var file in listed.Value)
+            foreach (var file in listed.GetValue<List<global::app.type.path.@this>>()!)
             {
                 var result = await LoadFromFileAsync(app, file.Absolute, context, cancellationToken);
                 if (result) loadedCount++;

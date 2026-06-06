@@ -63,7 +63,7 @@ public class DiscoverDenialPathTests
         // can't slip through.
         if (result.Success)
         {
-            var files = result.Value as System.Collections.Generic.List<global::app.tester.test.@this>;
+            var files = result.GetValue<List<global::app.tester.test.@this>>();
             await Assert.That(files == null || files.Count == 0).IsTrue();
         }
         else

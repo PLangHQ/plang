@@ -112,7 +112,7 @@ public class EdgeCaseTests
         var result = await action.Run();
         if (result.Success)
         {
-            var files = result.Value as List<global::app.tester.test.@this> ?? new List<global::app.tester.test.@this>();
+            var files = result.GetValue<List<global::app.tester.test.@this>>() ?? new List<global::app.tester.test.@this>();
             await Assert.That(files.Count).IsEqualTo(0);
         }
     }

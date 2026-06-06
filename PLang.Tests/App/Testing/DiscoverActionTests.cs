@@ -145,7 +145,7 @@ public class DiscoverActionTests
             Recursive = new global::app.data.@this<global::app.type.@bool.@this>("Recursive", recursive)
         };
         var result = await action.Run();
-        return result.Value as List<global::app.tester.test.@this> ?? new List<global::app.tester.test.@this>();
+        return result.GetValue<List<global::app.tester.test.@this>>() ?? new List<global::app.tester.test.@this>();
     }
 
     // Walks the tree of *.test.goal files under the target path; every match surfaces

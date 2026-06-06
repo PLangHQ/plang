@@ -14,9 +14,9 @@ public partial class List : IContext
     [Default(false)]
     public partial data.@this<global::app.type.@bool.@this> Recursive { get; init; }
 
-    public async Task<data.@this<List<path>>> Run()
+    public async Task<data.@this<global::app.type.list.@this<path>>> Run()
     {
-        if (!Path.Success) return data.@this<List<path>>.From(Path);   // codeanalyzer v1 F4 — typed scheme error, not an NRE
+        if (!Path.Success) return data.@this<global::app.type.list.@this<path>>.From(Path);   // codeanalyzer v1 F4 — typed scheme error, not an NRE
         return await Path.Value!.List(Pattern.Value!, Recursive.Value);
     }
 }

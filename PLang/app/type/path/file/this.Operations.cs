@@ -168,22 +168,22 @@ public sealed partial class @this
     /// List directory entries matching <paramref name="pattern"/>. Returns an
     /// array of FilePaths (Data&lt;Path[]&gt;), each Context-wired.
     /// </summary>
-    public override async Task<data.@this<List<global::app.type.path.@this>>> List(string pattern, bool recursive)
+    public override async Task<data.@this<global::app.type.list.@this<global::app.type.path.@this>>> List(string pattern, bool recursive)
     {
-        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return data.@this<List<global::app.type.path.@this>>.From(early);
+        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return data.@this<global::app.type.list.@this<global::app.type.path.@this>>.From(early);
         if (!System.IO.Directory.Exists(Absolute))
-            return data.@this<List<global::app.type.path.@this>>.FromError(new global::app.error.ServiceError($"Directory not found: {Raw}", "NotFound", 404));
+            return data.@this<global::app.type.list.@this<global::app.type.path.@this>>.FromError(new global::app.error.ServiceError($"Directory not found: {Raw}", "NotFound", 404));
         try
         {
             var option = recursive ? System.IO.SearchOption.AllDirectories : System.IO.SearchOption.TopDirectoryOnly;
             var files = System.IO.Directory.GetFiles(Absolute, pattern, option)
                 .Select(f => (global::app.type.path.@this)new @this(f, Context))
                 .ToList();
-            return data.@this<List<global::app.type.path.@this>>.Ok(files);
+            return data.@this<global::app.type.list.@this<global::app.type.path.@this>>.Ok(global::app.type.list.@this<global::app.type.path.@this>.Of(files));
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {
-            return data.@this<List<global::app.type.path.@this>>.FromError(new global::app.error.ServiceError(ex.Message, "IOError", 500));
+            return data.@this<global::app.type.list.@this<global::app.type.path.@this>>.FromError(new global::app.error.ServiceError(ex.Message, "IOError", 500));
         }
     }
 
