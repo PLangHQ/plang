@@ -179,11 +179,11 @@ public sealed partial class @this : global::app.type.path.@this
         return await Send(HttpMethod.Get, content: null, readBody: true, verb);
     }
 
-    public override async Task<data.@this<byte[]>> ReadBytes()
+    public override async Task<data.@this<global::app.type.binary.@this>> ReadBytes()
     {
         var verb = new Verb { Read = new ReadVerb() };
-        if (await AuthGate(verb) is { } early) return data.@this<byte[]>.From(early);
-        return data.@this<byte[]>.From(await Send(HttpMethod.Get, content: null, readBody: true, verb, asBytes: true));
+        if (await AuthGate(verb) is { } early) return data.@this<global::app.type.binary.@this>.From(early);
+        return data.@this<global::app.type.binary.@this>.From(await Send(HttpMethod.Get, content: null, readBody: true, verb, asBytes: true));
     }
 
     public override async Task<data.@this<global::app.type.@bool.@this>> ExistsAsync()
@@ -358,8 +358,10 @@ public sealed partial class @this : global::app.type.path.@this
 
             if (!readBody) return data.@this.Ok();
 
+            // Wrap bytes born-native so ReadBytes→From<binary> extracts the value
+            // (From's `source.Value is T` test matches only the wrapper, not raw byte[]).
             if (asBytes)
-                return data.@this.Ok(await resp.Content.ReadAsByteArrayAsync());
+                return data.@this.Ok((object)new global::app.type.binary.@this(await resp.Content.ReadAsByteArrayAsync()));
             return data.@this.Ok(await resp.Content.ReadAsStringAsync());
         }
         catch (System.Exception ex) when (IsNetworkError(ex))

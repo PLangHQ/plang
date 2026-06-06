@@ -21,7 +21,7 @@ public partial class sign : global::app.type.item.@this, IContext
 
     /// <summary>Optional TTL. If set, signature.Expires = Created + this duration.
     /// Wire form is ISO 8601 (e.g. <c>"PT5M"</c>) via the global TimeSpan converter.</summary>
-    public partial data.@this<TimeSpan>? Expires { get; init; }
+    public partial data.@this<global::app.type.duration.@this>? Expires { get; init; }
 
     [Code]
     public partial ISigning Signer { get; }

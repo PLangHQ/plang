@@ -10,13 +10,15 @@ public sealed partial class @this
     public static global::app.data.@this Convert(object? value, string? kind,
         global::app.actor.context.@this context)
     {
+        bool returnWrapper = string.IsNullOrEmpty(kind);
+        global::app.data.@this B(byte[] bytes) => global::app.data.@this.Ok(returnWrapper ? (object?)(@this)bytes : bytes);
         switch (value)
         {
             case null: return global::app.data.@this.Ok(value);
-            case byte[]: return global::app.data.@this.Ok(value);
-            case @this self: return global::app.data.@this.Ok(self.Value);
+            case byte[] b2: return B(b2);
+            case @this self: return B(self.Value);
             case string s:
-                try { return global::app.data.@this.Ok(System.Convert.FromBase64String(s)); }
+                try { return B(System.Convert.FromBase64String(s)); }
                 catch (System.FormatException)
                 {
                     return global::app.data.@this.FromError(new global::app.error.Error(

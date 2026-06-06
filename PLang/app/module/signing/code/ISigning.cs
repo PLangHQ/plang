@@ -17,7 +17,7 @@ public interface ISigning : IKey
     Task<data.@this<global::app.type.@bool.@this>> VerifyAsync(verify action);
 
     /// <summary>Low-level: signs bytes with the given private key. Returns signature bytes.</summary>
-    data.@this<byte[]> Sign(byte[] data, string privateKey);
+    data.@this<global::app.type.binary.@this> Sign(byte[] data, string privateKey);
 
     /// <summary>Low-level: verifies a signature against data and public key.</summary>
     data.@this<global::app.type.@bool.@this> Verify(byte[] data, byte[] signature, string publicKey);

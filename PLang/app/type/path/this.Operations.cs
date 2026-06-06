@@ -58,7 +58,7 @@ public abstract partial class @this
     // shape (string for text, byte[] for binary, structured for json/yaml). The
     // other verbs have a single fixed shape — typed.
     public abstract Task<data.@this> ReadText();
-    public abstract Task<data.@this<byte[]>> ReadBytes();
+    public abstract Task<data.@this<global::app.type.binary.@this>> ReadBytes();
     public abstract Task<data.@this<global::app.type.@bool.@this>> ExistsAsync();
     public abstract Task<data.@this<StatInfo>> Stat();
 
@@ -140,9 +140,10 @@ public abstract partial class @this
     {
         var read = await ReadBytes();
         if (!read.Success || read.Type?.ClrType.Exit() == true) return data.@this<@this>.From(read);
-        if (read.Value is not byte[] bytes)
+        byte[]? copyBytes = read.Value?.Value;
+        if (copyBytes == null)
             return data.@this<@this>.FromError(new error.Error("CopyTo: source ReadBytes did not return bytes.", "CopyToReadShape", 500));
-        return await destination.WriteBytes(bytes);
+        return await destination.WriteBytes(copyBytes);
     }
 
     /// <summary>

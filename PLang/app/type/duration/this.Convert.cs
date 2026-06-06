@@ -14,14 +14,16 @@ public sealed partial class @this
         // Born-native: a duration literal arrives as text — unwrap so the string
         // parse below sees the ISO/timespan text instead of the wrapper.
         if (value is global::app.type.text.@this txt) value = txt.Value;
+        bool returnWrapper = string.IsNullOrEmpty(kind);
+        global::app.data.@this D(System.TimeSpan t) => global::app.data.@this.Ok(returnWrapper ? (object?)(@this)t : t);
         switch (value)
         {
             case null: return global::app.data.@this.Ok(value);
-            case System.TimeSpan: return global::app.data.@this.Ok(value);
-            case @this self: return global::app.data.@this.Ok(self.Value);
-            case string s:
-                var parsed = Resolve(s, context);
-                if (parsed != null) return global::app.data.@this.Ok(parsed.Value);
+        case System.TimeSpan ts2: return D(ts2);
+        case @this self: return D(self.Value);
+        case string s:
+            var parsed = Resolve(s, context);
+            if (parsed != null) return D(parsed.Value);
                 return global::app.data.@this.FromError(new global::app.error.Error(
                     $"Cannot parse '{s}' as duration — expected ISO-8601 (e.g. PT30S) or .NET format (e.g. 00:00:30).",
                     "DurationParseFailed", 400));

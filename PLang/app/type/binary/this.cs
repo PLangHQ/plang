@@ -16,7 +16,11 @@ public sealed partial class @this : global::app.type.item.@this,
 
     public @this(byte[] value) { Value = value ?? System.Array.Empty<byte>(); }
 
-    public static implicit operator byte[](@this b) => b.Value;
+    // Null-tolerant to-byte[] (an absent binary-typed Data has a null wrapper); from-byte[]
+    // so `.Ok(bytes)` constructs. byte[] is a reference type, so only @this==@this is
+    // defined (a byte[] overload would make `binary == null` ambiguous).
+    public static implicit operator byte[]?(@this? b) => b?.Value;
+    public static implicit operator @this(byte[] v) => new(v);
 
     public override object? ToRaw() => Value;
     public override bool IsLeaf => true;

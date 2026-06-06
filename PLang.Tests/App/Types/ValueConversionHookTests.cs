@@ -81,8 +81,8 @@ public class ValueConversionHookTests
     public async Task DurationHook_ParsesIsoAndDotNet()
     {
         var (_, ctx) = MakeApp();
-        await Assert.That(Duration.Convert("PT30S", null, ctx).Value).IsEqualTo(System.TimeSpan.FromSeconds(30));
-        await Assert.That(Duration.Convert("00:05:00", null, ctx).Value).IsEqualTo(System.TimeSpan.FromMinutes(5));
+        await Assert.That(Duration.Convert("PT30S", null, ctx).GetValue<System.TimeSpan>()).IsEqualTo(System.TimeSpan.FromSeconds(30));
+        await Assert.That(Duration.Convert("00:05:00", null, ctx).GetValue<System.TimeSpan>()).IsEqualTo(System.TimeSpan.FromMinutes(5));
     }
 
     [Test]

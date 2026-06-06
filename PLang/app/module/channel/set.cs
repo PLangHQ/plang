@@ -20,7 +20,7 @@ public partial class Set : IContext
     public partial data.@this<GoalCall> Goal { get; init; }
     public partial data.@this<global::app.actor.@this>? Actor { get; init; }
     public partial data.@this<global::app.type.number.@this>? Buffer { get; init; }
-    public partial data.@this<TimeSpan>? Timeout { get; init; }
+    public partial data.@this<global::app.type.duration.@this>? Timeout { get; init; }
     public partial data.@this<global::app.type.text.@this>? Mime { get; init; }
     public partial data.@this<global::app.type.text.@this>? Encoding { get; init; }
     /// <summary>"input", "output", or "bidirectional". Default: bidirectional unless

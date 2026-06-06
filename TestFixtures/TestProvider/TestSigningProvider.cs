@@ -18,8 +18,8 @@ public class TestSigningProvider : ISigning
     public (KeyPair? keys, app.error.IError? error) GenerateKeyPair()
         => (new KeyPair("testPub", "testPriv"), null);
 
-    public app.data.@this<byte[]> Sign(byte[] data, string privateKey)
-        => app.data.@this<byte[]>.Ok(new byte[64]);
+    public app.data.@this<global::app.type.binary.@this> Sign(byte[] data, string privateKey)
+        => app.data.@this<global::app.type.binary.@this>.Ok(new byte[64]);
 
     public app.data.@this<global::app.type.@bool.@this> Verify(byte[] data, byte[] signature, string publicKey)
         => app.data.@this<global::app.type.@bool.@this>.Ok(true);

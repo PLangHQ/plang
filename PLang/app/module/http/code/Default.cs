@@ -268,7 +268,7 @@ public sealed class Default : IHttp
     /// Returns Data so the size/throughput failures carry their own keys instead
     /// of being laundered through the outer catch.
     /// </summary>
-    private static async Task<data.@this<byte[]>> ReadLimitedBytesAsync(
+    private static async Task<data.@this<global::app.type.binary.@this>> ReadLimitedBytesAsync(
         HttpContent content, long maxBytes, CancellationToken ct = default)
     {
         using var stream = await content.ReadAsStreamAsync(ct);
@@ -283,7 +283,7 @@ public sealed class Default : IHttp
         {
             totalRead += bytesRead;
             if (totalRead > maxBytes)
-                return data.@this<byte[]>.FromError(new ServiceError(
+                return data.@this<global::app.type.binary.@this>.FromError(new ServiceError(
                     $"Response body exceeds maximum size of {FormatBytes(maxBytes)}",
                     "ResponseTooLarge", 413));
             limited.Write(buffer, 0, bytesRead);
@@ -293,7 +293,7 @@ public sealed class Default : IHttp
             if (elapsed >= 30)
             {
                 if (throughputBytes / elapsed < 1024)
-                    return data.@this<byte[]>.FromError(new ServiceError(
+                    return data.@this<global::app.type.binary.@this>.FromError(new ServiceError(
                         "Response too slow — possible slow-loris attack",
                         "SlowResponse", 408));
                 throughputStart = DateTimeOffset.UtcNow;
@@ -301,7 +301,7 @@ public sealed class Default : IHttp
             }
         }
 
-        return data.@this<byte[]>.Ok(limited.ToArray());
+        return data.@this<global::app.type.binary.@this>.Ok(limited.ToArray());
     }
 
     /// <summary>

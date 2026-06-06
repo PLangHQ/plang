@@ -44,7 +44,7 @@ public class Ed25519 : ISigning
             Algorithm = Name,
             Nonce = nonce,
             Created = now,
-            Expires = action.Expires?.Value is TimeSpan expiry ? now.Add(expiry) : null,
+            Expires = action.Expires?.Value is { } expiry ? now.Add(expiry) : null,
             Contracts = action.Contracts?.Value,
             Headers = action.Headers?.Value,
             Hash = hash
@@ -190,7 +190,7 @@ public class Ed25519 : ISigning
         }
     }
 
-    public data.@this<byte[]> Sign(byte[] data, string privateKeyBase64)
+    public data.@this<global::app.type.binary.@this> Sign(byte[] data, string privateKeyBase64)
     {
         try
         {
@@ -201,11 +201,11 @@ public class Ed25519 : ISigning
                 new KeyCreationParameters { ExportPolicy = KeyExportPolicies.AllowPlaintextExport });
 
             var signature = algorithm.Sign(key, data);
-            return global::app.data.@this<byte[]>.Ok(signature);
+            return global::app.data.@this<global::app.type.binary.@this>.Ok(signature);
         }
         catch (Exception ex)
         {
-            return global::app.data.@this<byte[]>.FromError(ActionError.FromException(ex, "SigningError", 500));
+            return global::app.data.@this<global::app.type.binary.@this>.FromError(ActionError.FromException(ex, "SigningError", 500));
         }
     }
 

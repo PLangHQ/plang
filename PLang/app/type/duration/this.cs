@@ -30,6 +30,18 @@ public sealed partial class @this : global::app.type.item.@this,
 
     public @this(System.TimeSpan value) { Value = value; }
 
+    // Both directions are lossless; the wrapper owns its conversions. TimeSpan is a
+    // value type so `d == null` is unambiguous (matches only @this==@this).
+    public static implicit operator System.TimeSpan(@this d) => d.Value;
+    public static implicit operator @this(System.TimeSpan t) => new(t);
+
+    public static bool operator ==(@this? a, @this? b) => a is null ? b is null : a.Equals(b);
+    public static bool operator !=(@this? a, @this? b) => !(a == b);
+    public static bool operator ==(@this? a, System.TimeSpan b) => a is not null && a.Value == b;
+    public static bool operator !=(@this? a, System.TimeSpan b) => !(a == b);
+    public static bool operator ==(System.TimeSpan a, @this? b) => b == a;
+    public static bool operator !=(System.TimeSpan a, @this? b) => !(b == a);
+
     // ---- Parts (behavioral targets of the is-TimeSpan sweep) ----
     public int Days => Value.Days;
     public int Hours => Value.Hours;

@@ -11,24 +11,24 @@ public partial class End : IContext, IStatic
 {
     public partial data.@this<global::app.type.text.@this>? Name { get; init; }
 
-    public Task<data.@this<TimeSpan>> Run()
+    public Task<data.@this<global::app.type.duration.@this>> Run()
     {
         // If no name given, use the last started timer
         var key = Name?.Value;
         if (key == null)
         {
             if (!Static.TryGetValue("__last__", out var lastObj) || lastObj is not string lastKey)
-                return Task.FromResult(global::app.data.@this<TimeSpan>.FromError(
+                return Task.FromResult(global::app.data.@this<global::app.type.duration.@this>.FromError(
                     new app.error.ValidationError("No timer has been started")));
             key = lastKey;
         }
 
         if (!Static.TryGetValue(key, out var entryObj) || entryObj is not TimerEntry entry)
-            return Task.FromResult(global::app.data.@this<TimeSpan>.FromError(
+            return Task.FromResult(global::app.data.@this<global::app.type.duration.@this>.FromError(
                 new app.error.ValidationError($"Timer '{key}' was not started")));
 
         var elapsed = DateTimeOffset.UtcNow - entry.StartedAt;
         Static.TryRemove(key, out _);
-        return Task.FromResult(global::app.data.@this<TimeSpan>.Ok(elapsed));
+        return Task.FromResult(global::app.data.@this<global::app.type.duration.@this>.Ok(elapsed));
     }
 }
