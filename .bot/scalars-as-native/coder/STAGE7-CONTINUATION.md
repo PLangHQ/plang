@@ -362,3 +362,36 @@ REMAINING (with Ingi's decisions):
 
 All scalar wrapper categories (number/bool/text/binary/duration) + object→bare Data are
 DONE. The remaining is choice-generalization + enums + collections + de-Data + flip.
+
+## Structural phase — choice/enum RISK RETIRED; final mile remains
+
+DONE (committed, green, zero runtime regressions each step):
+- **choice<T> generalized to any named-set type** (was enum-only). ChoiceMeta adapter:
+  enum → GetNames/Parse/ToString; named-set class → static Choices(context?) + ctor(string);
+  name == value.ToString() uniformly. catalog GetValidValues sees through choice<T>;
+  Conversion builds choice<T> from the chosen NAME; generator casts [Default(Enum.X)] on a
+  choice<X> slot through X. **Build-time VERIFIED**: built .pr carries the option NAME
+  ("GET"), runtime resolves via choice<T>.FromName, goals pass.
+- **HttpMethod** (enum pilot), **Operator** (class case — keeps its Evaluate closure),
+  **ErrorOrder / StreamFormat / PrecisionMode / OverflowMode** all → Data<choice<...>>.
+  Null-optional reads go via the choice's own value (X?.Value?.Value) to preserve
+  ?? config-fallthrough without NRE-ing the choice→T implicit.
+- Confirmed domain types are already `: item` (Identity, GoalCall, Variable, …) → their
+  Data<T> already satisfy the constraint. `Ask` is `: item` too.
+
+REMAINING (final mile to flip `where T : item`):
+1. **HttpContent (12) / Assembly (6) → de-Data** (architect): never PLang-exposed; return
+   `(T?, IError?)` tuples instead of Data<T>. Sites: http ResolveUploadContent/CreateFileContent;
+   path LoadAssemblyAsync (+ its callers in the module/Code loader).
+2. **Collections**: List<string>(9), Dictionary<string,object>(9), List<path>(10),
+   List<Identity>(7), List<test>(5), List<Goal>, List<Dictionary>, List<@this>, string[](1).
+   These aren't `: item`. Decide: native `list`/`dict` (holds Data elements) vs keep typed
+   and special-case the constraint. (Native list/dict is the born-native direction but a
+   semantic change for handlers that read List<X> directly.)
+3. **Data<Data> (4)** — `data.@this<global::app.data.@this>` — odd; likely should be bare Data.
+4. **Generic threading**: add `where T : item` to data.@this<T> and every generic that
+   forwards T (T, TResult, List<T> handlers, From<T>/As<T> already constrained?).
+5. **Flip the constraint ON**; residual-fix pass.
+
+The hard/risky part (choice + build-time) is DONE. The remainder is bounded mechanical work
++ one design call on collections (native list/dict vs typed).
