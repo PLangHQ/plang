@@ -326,3 +326,39 @@ regressions — same 7 pre-existing each time), committed + pushed separately:
 
 Order suggestion: object→bareData + Operator→[Code] + de-Data first (remove non-item T that
 isn't a wrapper), then enums→choice, then collections, then flip the constraint.
+
+## Structural phase — progress + Ingi's design decisions (resume here)
+
+DONE (committed, green, zero runtime regressions):
+- **Data<object> → bare Data / concrete** (commit 11644c527). Ingi's rule: polymorphic
+  return (type unknown at compile) = bare `Task<Data>` (no T → constraint can't be
+  violated); known return = `Data<concreteWrapper>` (math.random → Data<number>).
+  Forwarders `return innerData` (not `.Ok(x)` — no double-wrap). Rule saved to memory
+  `feedback_polymorphic_returns_bare_data.md`. RuntimeDoubleWrap tripwire now asserts
+  ZERO Data<object> handlers remain.
+
+REMAINING (with Ingi's decisions):
+1. **Operator → choice<Operator>**, and **enums → choice<TEnum>**. Ingi: "choice<Operator>,
+   no enum" + "Generalize choice<T> to ANY named-set type" (not enum-only). So:
+   - Generalize `app/type/choice/this.cs` (currently `where TEnum : struct, Enum`, uses
+     Enum.GetNames/EnumValue) to a unified `choice<T>` over any "named closed set":
+     a type that exposes its option names + a name→value factory. Enums adapt
+     (GetNames/Parse); a class like Operator adapts via its existing `[Choices]` + string
+     ctor. Operator stays a CLASS (keeps its per-operator Evaluate closure) — do NOT
+     convert it to an enum.
+   - Implementation options weighed: C# static-abstract interface (clean compile-time but
+     enums can't implement interfaces) vs reflection-in-choice<T> (unified, runtime). A
+     hybrid (interface for classes + enum special-case) is likely.
+   - Ingi: "Proceed, verify build-time FIRST" — do ONE enum (HttpMethod) end-to-end
+     (generator emission + Compile prompt + runtime resolve) and prove green before rolling
+     the rest. This is the architect's flagged real-risk (build-time enum/choice path).
+   - enum slots to convert after the mechanism is proven: HttpMethod, StreamFormat,
+     PPrecision, POverflow, ErrorOrder, ErrorScope, Direction, Ask, …
+2. **collections**: List<string>→list, Dictionary<string,object>→dict, List<Identity>→list,
+   List<path>, List<test>, … (typed collection → native list/dict holding Data elements).
+3. **HttpContent (12) / Assembly (6) → de-Data**: never exposed at PLang level; return
+   tuples, not Data (architect's call).
+4. **Flip `where T : item` ON**; residual-fix pass.
+
+All scalar wrapper categories (number/bool/text/binary/duration) + object→bare Data are
+DONE. The remaining is choice-generalization + enums + collections + de-Data + flip.
