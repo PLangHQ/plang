@@ -145,3 +145,42 @@ offending `Data<T>` slots, with Ingi's DECISIONS (do these):
 - PLang suite (Task 6, NOT started): author + build the 31 stubbed
   `Tests/ScalarsAsNative/Stage{2..7}/*.test.goal` to the test-plan, build green;
   fix `DictIsItemKeepsNoOrder` (lazy-narrow). Both suites to 100%.
+
+## PLang RUNTIME suite status (born-native integration — checked this session)
+
+Born-native (committed, C# green) introduced PLang-runtime regressions the C#
+component tests didn't catch. Ran `cd Tests && plang --test`:
+**241 pass / 31 fail (non-stub) / 35 stale / 2 skip** (baseline pre-born-native ~271).
+
+**FIXED this session** (conversion/serialization/condition seams unwrap item via ToRaw):
+- number.Convert + number.FromObject (text→parse), duration.Convert (text→parse),
+  assert.Compare (wrapper→raw before numeric/IComparable), Text.cs serializer
+  (scalar leaf → bare ToString, not JSON-quoted), Operator.Contains/IsEmpty
+  (unwrap text). 234→241.
+
+**REMAINING 31 (non-stub) — clusters, each needs per-case work:**
+- **bool-casing test-pins** (born-native bool.ToString = "true"/"false" lowercase;
+  tests assert "True"/"False"): ActorSwitch, SetAsImageStrictNoKind,
+  SetAsTextSlashMarkdownStrictUnverifiable, Mock — UPDATE the test expectations to
+  lowercase (born-native is correct).
+- **build-time type inference** (TypedReturns Stage0/4): TestUserTypeHintWins,
+  TestLlmQuerySchema(json), TestFileReadCsv, TestFileReadMissing, TestBuildMethod —
+  "object" vs "json/csv/txt". Born-native may have shifted type tagging; investigate
+  the build-time `→ returns` annotation path (or stale .pr — rebuild first).
+- **test-module meta** (TestTag, TestDiscover×2, TestConditionIfRecordsBranchIndex):
+  likely born-native value-in-test-result or stale .pr.
+- **residual quoting**: File.test, MultipleModifiersCompose, AssertComplete,
+  Permission/Start still show `"..."`-quoted output — the Text-serializer fix didn't
+  cover this path (the `save`/write path or a different serializer); root-cause the
+  save→file write for a text value.
+- **actor conversion**: Channels/Set/ExplicitActor — `channel.set Actor "system"`:
+  Cannot convert String→actor.@this. actor is now :item; wire the string→actor
+  lookup conversion (or the channel Actor param read).
+- **condition edge**: ConditionSubStepsTrue, ConditionNot, NavigationOnTypeUnknown.
+- **misc**: Cache, OnErrorMultilingual, ErrorOrdering, Audit.
+- **35 stale .pr**: rebuild (`plang build`) before trusting — some may be passing.
+
+**Approach for the remaining**: same as the fixed ones — find each `is string`/raw-CLR
+read of a now-wrapped value and unwrap via item.ToRaw/.Value at that leaf, OR update
+a test that pins old raw rendering (bool casing). Rebuild stale .pr first to clear
+false failures. THEN the scalar-swap constraint cascade (separate, documented above).
