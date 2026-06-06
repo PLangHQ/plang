@@ -131,6 +131,11 @@ public class Default : IAssert
 
     private static bool AreEqual(object? expected, object? actual)
     {
+        // Born-native: values arrive as wrappers. Unwrap to the raw backing so a
+        // bool.@this and a raw bool compare as bools (true==true), not as strings
+        // ("true" vs "True"); a text and a string compare by content.
+        if (expected is global::app.type.item.@this ie) expected = ie.ToRaw();
+        if (actual is global::app.type.item.@this ia) actual = ia.ToRaw();
         if (ReferenceEquals(expected, actual)) return true;
         if (expected == null || actual == null) return expected == null && actual == null;
 
