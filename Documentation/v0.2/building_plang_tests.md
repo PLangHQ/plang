@@ -94,6 +94,13 @@ The builder sends step text to an LLM which maps it to module/action/parameters.
 
 ## Debugging Build Problems
 
+> For a wrong **`.pr`** (bad mapping, hallucinated actions, dropped modifiers) —
+> especially deterministic/context-dependent ones — follow the triage in
+> [`debugging-builder-failures.md`](debugging-builder-failures.md): it isolates
+> planner vs compiler vs the rendered user message (the "blind compiler" class,
+> where the compile prompt renders empty because Fluid can't read native
+> collections) before you change any prompt.
+
 When a build produces wrong output, don't guess — use `!debug`:
 
 1. **See what the LLM receives**: `!debug=BuildGoal:4` shows `%goalForLlm%` (the goal text sent as user message)

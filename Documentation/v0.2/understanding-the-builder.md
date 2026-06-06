@@ -288,6 +288,11 @@ quality at the prompt/catalog layer (§5, §6) over changing the model.
 
 ## 12. Debugging a build — traces and `--debug`
 
+> Diagnosing a **wrong `.pr`**? Start with the triage runbook
+> [`debugging-builder-failures.md`](debugging-builder-failures.md) — it pins the
+> failure to planner / compiler / rendered-user-message before you touch a prompt.
+> The tools below are what it uses.
+
 Two complementary tools. **Traces** are written automatically and tell you *what
 the builder produced and what the LLM saw*. **`--debug`** is opt-in and tells you
 *how a value flowed through execution*.

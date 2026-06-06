@@ -30,7 +30,7 @@ Compile
 - call QueryAndVerify, on error key "missing-actions" call RefineActions, then retry 2 times
 
 / system prompt is stashed once at goal level (%trace.compileSystem%) — do not duplicate it here.
-- add {goal: %goal.Name%, index: %step.Index%, stepText: %step.Text%, actions: %planStep.actions%, user: %buildStepUserMsg%, response: %compileResult%, usage: {model: %compileResult.Model%, promptTokens: %compileResult.PromptTokens%, cachedTokens: %compileResult.CachedTokens%, completionTokens: %compileResult.CompletionTokens%, totalTokens: %compileResult.TotalTokens%, cost: %compileResult.Cost%, cached: %compileResult.Cached%}} to %trace.stepPasses%
+- add {goal: %goal.Name%, index: %step.Index%, stepText: %step.Text%, actions: %planStep.actions%, user: %buildStepUserMsg%, response: %compileResult%, rawResponse: %compileResult!RawResponse%, usage: {model: %compileResult.Model%, promptTokens: %compileResult.PromptTokens%, cachedTokens: %compileResult.CachedTokens%, completionTokens: %compileResult.CompletionTokens%, totalTokens: %compileResult.TotalTokens%, cost: %compileResult.Cost%, cached: %compileResult.Cached%}} to %trace.stepPasses%
 
 - set %goal.Steps[step.Index].Actions% = %compileResult.actions%
 - set %goal.Steps[step.Index].Formal% = %compileResult.formal%
