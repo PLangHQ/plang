@@ -569,7 +569,7 @@ public class RequestActionTests
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/bytes",
             OnStream = new global::app.goal.GoalCall { Name = (global::app.type.text.@this)"HandleBytes" },
-            StreamAs = StreamFormat.Bytes,
+            StreamAs = (global::app.type.choice.@this<global::app.module.http.StreamFormat>)StreamFormat.Bytes,
             Unsigned = (global::app.type.@bool.@this)true
         };
         var result = await action.Run();

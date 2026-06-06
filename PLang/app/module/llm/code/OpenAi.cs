@@ -213,7 +213,7 @@ public sealed class OpenAi : ILlm
                 Unsigned = new data.@this<global::app.type.@bool.@this>("", true),
                 TimeoutInSec = new data.@this<global::app.type.number.@this>("", 120),
                 OnStream = action.OnStream,
-                StreamAs = action.OnStream?.Value != null ? new data.@this<StreamFormat>("", StreamFormat.SSE) : default
+                StreamAs = action.OnStream?.Value != null ? new data.@this<global::app.type.choice.@this<StreamFormat>>("", StreamFormat.SSE) : default
             };
 
             data.@this httpResult = await app.RunAction(httpAction, context);

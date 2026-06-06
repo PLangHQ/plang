@@ -74,7 +74,7 @@ public partial class Handle : IContext, IModifier
     public partial global::app.data.@this<List<ActionEntity>>? Actions { get; init; }
     public partial global::app.data.@this<global::app.type.number.@this>? RetryCount { get; init; }
     public partial global::app.data.@this<global::app.type.number.@this>? RetryOverMs { get; init; }
-    public partial global::app.data.@this<ErrorOrder>? Order { get; init; }
+    public partial global::app.data.@this<global::app.type.choice.@this<ErrorOrder>>? Order { get; init; }
     [Default(false)]
     public partial global::app.data.@this<global::app.type.@bool.@this> IgnoreError { get; init; }
 

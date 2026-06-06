@@ -31,14 +31,14 @@ public partial class Divide : IContext
 
     public partial data.@this A { get; init; }
     public partial data.@this B { get; init; }
-    public partial data.@this<POverflow>? Overflow { get; init; }
-    public partial data.@this<PPrecision>? Precision { get; init; }
+    public partial data.@this<global::app.type.choice.@this<POverflow>>? Overflow { get; init; }
+    public partial data.@this<global::app.type.choice.@this<PPrecision>>? Precision { get; init; }
 
     // Divide leaves the integer track — 7/2 → 3.5. Truncating integer division
     // is the explicit math.intdiv action.
     public Task<data.@this<number>> Run()
     {
-        var policy = MathPolicy.Resolve(Context, Overflow?.Value, Precision?.Value);
+        var policy = MathPolicy.Resolve(Context, Overflow?.Value?.Value, Precision?.Value?.Value);
         var an = number.FromObject(A.Value);
         var bn = number.FromObject(B.Value);
         if (an == null || bn == null)

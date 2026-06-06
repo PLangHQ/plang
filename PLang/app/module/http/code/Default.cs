@@ -123,7 +123,7 @@ public sealed class Default : IHttp
         {
             var maxSSEBuffer = config.Resolve("MaxSSEBufferSize", 10L * 1024 * 1024);
             return await HandleStreamingAsync(
-                response, requestMessage, action.OnStream.Value, action.StreamAs?.Value,
+                response, requestMessage, action.OnStream.Value, action.StreamAs?.Value?.Value,
                 unsigned, app, action.Context, maxSSEBuffer, cts.Token);
         }
 

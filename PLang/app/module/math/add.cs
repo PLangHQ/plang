@@ -33,15 +33,15 @@ public partial class Add : IContext
     public partial data.@this B { get; init; }
 
     /// <summary>Per-step overflow override; nullable IS the optional marker.</summary>
-    public partial data.@this<POverflow>? Overflow { get; init; }
+    public partial data.@this<global::app.type.choice.@this<POverflow>>? Overflow { get; init; }
 
     /// <summary>Per-step precision-mix override; nullable IS the optional marker.</summary>
-    public partial data.@this<PPrecision>? Precision { get; init; }
+    public partial data.@this<global::app.type.choice.@this<PPrecision>>? Precision { get; init; }
 
     public Task<data.@this<number>> Run()
     {
         var policy = MathPolicy.Resolve(Context,
-            Overflow?.Value, Precision?.Value);
+            Overflow?.Value?.Value, Precision?.Value?.Value);
         var an = number.FromObject(A.Value);
         var bn = number.FromObject(B.Value);
         if (an == null || bn == null)

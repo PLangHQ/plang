@@ -52,7 +52,7 @@ public partial class request : IContext
     public partial data.@this<GoalCall>? OnStream { get; init; }
 
     /// <summary>Stream format: Line (NDJSON), SSE (Server-Sent Events), or Bytes (raw chunks).</summary>
-    public partial data.@this<StreamFormat>? StreamAs { get; init; }
+    public partial data.@this<global::app.type.choice.@this<StreamFormat>>? StreamAs { get; init; }
 
     [Code]
     public partial IHttp Http { get; }
