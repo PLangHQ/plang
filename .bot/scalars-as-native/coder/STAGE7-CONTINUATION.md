@@ -46,6 +46,27 @@ constraint is finished:
   type(6)→bare/item; Assembly(4)+HttpContent(6)→de-Data; generic T(46)/TResult(2)/
   List<T>(4)→thread; data.@this(2)→double-wrap kill (bare Data).
 
+### PILOT VALIDATED — the `number` slot swap (reverted, but findings hold)
+Bulk-swapped all `data.@this<int|long|double|decimal|float>` → `data.@this<number>`
+across 26 production files (constraint OFF). Results:
+- **Construction survives free**: `number` has FROM-raw implicit operators
+  (`int→number` etc.), so `Data<number>.Ok(5)` and defaults compile unchanged.
+- **Reads break: 46 production sites** — `number.@this` used as `int`/`double`/`long`
+  in handler bodies (`(int)x.Value` casts, `x.Value < n` operators). number has
+  EXPLICIT conversions, so each is a mechanical cast. ~18 files (list/http/llm/
+  error.handle/test.run/math/timer/timeout/signing/etc.).
+- **Source-generator fix needed**: generated lazy-param default emits `(number)-1`
+  for a negative default (list.Add/Remove `AtIndex`) → CS0075 ("cast negative value
+  must be parenthesized"). The Emission must parenthesize default exprs: `(T)(expr)`.
+- **DO NOT add implicit TO-raw on number** (or FROM-raw on text/bool): bidirectional
+  implicit makes `number == 5` / `text == "x"` ambiguous (CS0034) and breaks existing
+  comparisons. Reads stay explicit casts.
+This pattern repeats per scalar category (string→text, bool→bool, TimeSpan→duration:
+construction needs `new wrapper(raw)` since they LACK FROM-raw implicit + the `==`
+ambiguity blocks adding it; reads need unwrap). Budget the generator fix + per-site
+sweep per category; turn the constraint on only after all categories + BCL + enum +
+de-Data + generics are swapped.
+
 ### The big remaining grind (scalar/BCL/enum slot swaps)
 - **75 handler files** declare scalar `Data<rawCLR>` props. Each needs the property
   type swap (`@this<string>`→`@this<text>`, `<int>/<long>/<double>`→`<number>`,
