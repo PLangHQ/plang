@@ -279,3 +279,50 @@ the root (variable.set always wrap bool) is a small follow-up.
 
 Net: C# 100% green; PLang 265/309 (6 deeper + 35 ScalarsAsNative-Task6 stubs + 2 skip).
 Born-native runtime is solid. Next: the where-T:item cascade (foundations done) + Task 6.
+
+## Constraint cascade — scalar categories COMPLETE (5/5), structural phase remains
+
+Each scalar `Data<rawCLR>` → `Data<wrapper>` swap landed green (C# 100%, PLang zero new
+regressions — same 7 pre-existing each time), committed + pushed separately:
+
+- **number** (Data<int/long/double> → Data<number>): production reads use `GetValue<T>()`
+  (OBP accessor, Ingi's call) not `(T)x.Value`. Convert returns raw CLR when a concrete
+  kind is named (int/long/List<int>/serializer Read), wrapper when kind null (param path).
+- **bool** (value type): both implicits + explicit ==/!= (no null-ambiguity, value type).
+- **text** (reference type): null-safe to-string implicit, from-string, @this==@this ONLY
+  (string is a reference type → a string== overload makes `text==null` ambiguous; write
+  `text.Value == "lit"`). **SQLite store unwraps item→raw at the bind boundary** — the
+  load-bearing fix (237→6): wrappers can't bind as SQL params (take-over API).
+- **binary** (byte[], reference type) + **duration** (TimeSpan, value type): same patterns.
+  HttpPath.Send wraps bytes born-native so ReadBytes→From<binary> extracts (From's
+  `source.Value is T` matches only the wrapper, not raw byte[]).
+
+### Reusable patterns established (apply to remaining categories)
+1. Wrapper conversions: value type → both implicits + explicit ==; reference type →
+   null-safe to-raw implicit + from-raw + @this==@this only.
+2. `*.Convert` + `*.Owns`: `bool returnWrapper = string.IsNullOrEmpty(kind)` — concrete
+   kind ⇒ raw CLR (List<T>, `as T`, serializer Read), null ⇒ born-native wrapper.
+3. Take-over API boundaries (SQLite, any raw-binding sink) unwrap item→ToRaw().
+4. Catalog `IsPrimitive`: scalar wrappers appear as SCALAR catalog entries (Shape), never
+   COMPLEX (Fields) — the PrimitiveTypes test asserts complex-only now.
+5. Test construction: `{ Prop = literal }` needs `(wrapper)literal` cast (two user implicits
+   don't chain). Pattern sites (`is true`, `is byte[]`) don't use implicits → unwrap.
+6. Fixture DLLs (TestProvider/NoCtorProvider) rebuild + copy to App/Fixtures/dlls when an
+   implemented interface's Data<T> return type changes.
+
+### STRUCTURAL phase remaining (to turn `where T : item` ON) — has design decisions
+- **enums → choice<TEnum>**: PPrecision, POverflow, HttpMethod, StreamFormat, ErrorOrder,
+  ErrorScope, Direction, Ask… choice is :item. RISK (architect flagged): build-time LLM
+  emission + runtime resolution of an enum slot through choice — verify generator + Compile.
+- **Operator → [Code]** (5): architect's call — not a Data<T> param, a [Code] member.
+- **object → bare Data** (38): architect's call — polymorphic returns drop the <object>;
+  watch the data.@this<object> implicit double-wrap footgun (good_to_know.md).
+- **collections**: List<string>→list, Dictionary<string,object>→dict, List<Identity>→list,
+  List<path>… semantic change (typed list → native list holding Data elements).
+- **HttpContent (12) / Assembly (6) → de-Data**: architect's call — internal results, return
+  tuples, never Data (never exposed at PLang level).
+- **generic threading**: T, TResult, List<T> get `where T : item`.
+- **THEN** turn the constraint on; expect a residual-fix pass.
+
+Order suggestion: object→bareData + Operator→[Code] + de-Data first (remove non-item T that
+isn't a wrapper), then enums→choice, then collections, then flip the constraint.
