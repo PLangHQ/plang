@@ -18,7 +18,7 @@ namespace app.type.list;
 /// surface into junk — the same failure that gave <c>dict</c> its converter.</para>
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Json))]
-public sealed partial class @this : global::app.type.item.@this, module.IContext,
+public partial class @this : global::app.type.item.@this, module.IContext,
     global::app.data.IEquatableValue, global::app.data.IOrderableValue, global::app.data.IListLeaf
 {
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>

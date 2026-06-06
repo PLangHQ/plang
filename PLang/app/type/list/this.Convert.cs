@@ -1,6 +1,6 @@
 namespace app.type.list;
 
-public sealed partial class @this
+public partial class @this
 {
     /// <summary>
     /// OBP: <c>list</c> owns construction from a raw conversion source. A list-typed

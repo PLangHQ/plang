@@ -188,6 +188,27 @@ public sealed partial class @this
             }
         }
 
+        // list<T> target — the typed native list. Resolve the source to the base native
+        // list first (JSON string / IEnumerable / native list all handled there), then
+        // re-house its rows in a list<T>, converting each element to T. The element type
+        // is intrinsic to the slot, so no [Element] hint is needed.
+        if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(app.type.list.@this<>))
+        {
+            var elemType = targetType.GetGenericArguments()[0];
+            var (baseObj, baseErr) = TryConvert(value, typeof(app.type.list.@this), context, targetName);
+            if (baseErr != null) return (null, baseErr);
+            var typed = (app.type.list.@this)System.Activator.CreateInstance(targetType)!;
+            if (baseObj is app.type.list.@this baseList)
+            {
+                foreach (var row in baseList.Items)
+                {
+                    var (convEl, _) = TryConvert(row.Value, elemType, context);
+                    typed.Add(new data.@this("", convEl ?? row.Value));
+                }
+            }
+            return (typed, null);
+        }
+
         // Handle nullable target types
         var underlying = System.Nullable.GetUnderlyingType(targetType);
         if (underlying != null)

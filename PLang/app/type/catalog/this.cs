@@ -115,6 +115,9 @@ public sealed partial class @this
             var generic = type.GetGenericTypeDefinition();
             if (generic == typeof(data.@this<>))
                 return GetTypeNameStatic(type.GetGenericArguments()[0]);
+            // Native typed list — list<T> carries its element type intrinsically.
+            if (generic == typeof(app.type.list.@this<>))
+                return $"list<{GetTypeNameStatic(type.GetGenericArguments()[0])}>";
             if (generic == typeof(List<>) || generic == typeof(IList<>)
                 || generic == typeof(IEnumerable<>) || generic == typeof(ICollection<>)
                 || generic == typeof(IReadOnlyCollection<>) || generic == typeof(IReadOnlyList<>)
@@ -340,6 +343,9 @@ public sealed partial class @this
             var generic = type.GetGenericTypeDefinition();
             if (generic == typeof(data.@this<>))
                 return GetTypeName(type.GetGenericArguments()[0]);
+            // Native typed list — list<T> carries its element type intrinsically.
+            if (generic == typeof(app.type.list.@this<>))
+                return $"list<{GetTypeName(type.GetGenericArguments()[0])}>";
             if (generic == typeof(List<>) || generic == typeof(IList<>)
                 || generic == typeof(IEnumerable<>) || generic == typeof(ICollection<>)
                 || generic == typeof(IReadOnlyCollection<>) || generic == typeof(IReadOnlyList<>)
@@ -552,10 +558,15 @@ public sealed partial class @this
                     foreach (var prop in actionType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
                     {
                         if (prop.Name == "EqualityContract" || prop.Name == "Context") continue;
-                        Enqueue(UnwrapType(prop.PropertyType));
-                        // A native-collection slot (Data<list>) is element-agnostic; its
-                        // [Element(T)] hint names the element type so the builder still gets
-                        // T's schema (e.g. llm.query Messages -> LlmMessage).
+                        var unwrapped = UnwrapType(prop.PropertyType);
+                        Enqueue(unwrapped);
+                        // A native typed list<T> carries its element type intrinsically;
+                        // walk it so the builder gets T's schema (e.g. list<LlmMessage>).
+                        if (unwrapped is { IsGenericType: true } u
+                            && u.GetGenericTypeDefinition() == typeof(app.type.list.@this<>))
+                            Enqueue(u.GetGenericArguments()[0]);
+                        // Transitional: a still-untyped Data<list> slot names its element
+                        // via [Element(T)] until it migrates to Data<list<T>>.
                         var element = prop.GetCustomAttribute<app.Attributes.ElementAttribute>();
                         if (element != null) Enqueue(element.Element);
                     }
