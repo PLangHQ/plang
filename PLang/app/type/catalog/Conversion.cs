@@ -167,6 +167,27 @@ public sealed partial class @this
                 return TryConvert(raw, targetType, context, targetName);
         }
 
+        // choice<T> target — the LLM emits the chosen option's NAME (a string); build
+        // the typed choice from it. Also accepts the inner value (enum/named-set class)
+        // by re-resolving its ToString name. A choice<T> source was caught above.
+        if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(app.type.choice.@this<>))
+        {
+            string chosen = value as string ?? value.ToString() ?? "";
+            var fromName = targetType.GetMethod("FromName",
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            try
+            {
+                return (fromName!.Invoke(null, new object?[] { chosen, context }), null);
+            }
+            catch (System.Exception ex)
+            {
+                var inner = (ex as System.Reflection.TargetInvocationException)?.InnerException ?? ex;
+                return (null, WithSlot(new error.Error(
+                    $"'{chosen}' is not a valid {targetType.GetGenericArguments()[0].Name} option: {inner.Message}",
+                    "TypeConversionFailed", 400), targetName));
+            }
+        }
+
         // Handle nullable target types
         var underlying = System.Nullable.GetUnderlyingType(targetType);
         if (underlying != null)

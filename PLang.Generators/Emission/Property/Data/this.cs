@@ -45,7 +45,13 @@ public sealed record @this(
         }
         else if (DefaultValue != null)
         {
-            sb.AppendLine($"        get {{ if ({Backing} == null) {{ var __d = __ResolveData(\"{ParamName}\"); {Backing} = __d.IsEmpty ? new global::app.data.@this<{InnerType}>(\"{ParamName}\", ({InnerType})({DefaultValue})) : __d.As<{InnerType}>(Context); if (!{Backing}.Success) __resolutionError = {Backing}; {SetFlag} = true; }} return {Backing}!; }}");
+            // For choice<X>, a [Default(X.Member)] arrives as X's underlying value (an int
+            // for an enum). Cast through X so int → X → choice<X> chains: (choice<X>)(X)(0).
+            const string ChoicePrefix = "global::app.type.choice.@this<";
+            string defaultExpr = (InnerType != null && InnerType.StartsWith(ChoicePrefix, System.StringComparison.Ordinal))
+                ? $"({InnerType})({InnerType.Substring(ChoicePrefix.Length, InnerType.Length - ChoicePrefix.Length - 1)})({DefaultValue})"
+                : $"({InnerType})({DefaultValue})";
+            sb.AppendLine($"        get {{ if ({Backing} == null) {{ var __d = __ResolveData(\"{ParamName}\"); {Backing} = __d.IsEmpty ? new global::app.data.@this<{InnerType}>(\"{ParamName}\", {defaultExpr}) : __d.As<{InnerType}>(Context); if (!{Backing}.Success) __resolutionError = {Backing}; {SetFlag} = true; }} return {Backing}!; }}");
         }
         else
         {

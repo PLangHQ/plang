@@ -176,7 +176,7 @@ public class UploadActionTests
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", "data"),
-            Method = HttpMethod.PUT,
+            Method = (global::app.type.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.PUT,
             As = ContentAs.Text,
             Unsigned = (global::app.type.@bool.@this)true
         };

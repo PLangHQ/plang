@@ -4,8 +4,8 @@ using System.Text.Json.Serialization;
 namespace app.type.choice;
 
 /// <summary>
-/// Plain-JSON view of a <see cref="@this{TEnum}"/> — bare option name string. A
-/// factory because the type is generic; STJ knows the closed enum at the leaf.
+/// Plain-JSON view of a <see cref="@this{T}"/> — bare option name string. A
+/// factory because the type is generic; STJ knows the closed option type at the leaf.
 /// </summary>
 public sealed class JsonFactory : JsonConverterFactory
 {
@@ -14,21 +14,18 @@ public sealed class JsonFactory : JsonConverterFactory
 
     public override JsonConverter CreateConverter(System.Type t, JsonSerializerOptions options)
     {
-        var enumType = t.GetGenericArguments()[0];
-        var conv = typeof(Json<>).MakeGenericType(enumType);
+        var optionType = t.GetGenericArguments()[0];
+        var conv = typeof(Json<>).MakeGenericType(optionType);
         return (JsonConverter)System.Activator.CreateInstance(conv)!;
     }
 }
 
-public sealed class Json<TEnum> : JsonConverter<@this<TEnum>>
-    where TEnum : struct, System.Enum
+public sealed class Json<T> : JsonConverter<@this<T>>
+    where T : notnull
 {
-    public override void Write(Utf8JsonWriter writer, @this<TEnum> value, JsonSerializerOptions options)
-        => writer.WriteStringValue(value.Value.ToString());
+    public override void Write(Utf8JsonWriter writer, @this<T> value, JsonSerializerOptions options)
+        => writer.WriteStringValue(value.ToString());
 
-    public override @this<TEnum> Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
-    {
-        var s = reader.GetString() ?? "";
-        return new @this<TEnum>(System.Enum.Parse<TEnum>(s, ignoreCase: true));
-    }
+    public override @this<T> Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
+        => @this<T>.FromName(reader.GetString() ?? "", null);
 }

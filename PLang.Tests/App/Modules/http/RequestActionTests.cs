@@ -128,7 +128,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/users",
-            Method = HttpMethod.POST,
+            Method = (global::app.type.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.POST,
             Body = new global::app.data.@this("", new Dictionary<string, object> { ["name"] = "Alice" }),
             Unsigned = (global::app.type.@bool.@this)true
         };
@@ -147,7 +147,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/login",
-            Method = HttpMethod.POST,
+            Method = (global::app.type.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.POST,
             ContentType = (global::app.type.text.@this)"application/x-www-form-urlencoded",
             Body = new global::app.data.@this("", new Dictionary<string, object> { ["user"] = "alice", ["pass"] = "secret" }),
             Unsigned = (global::app.type.@bool.@this)true
@@ -212,7 +212,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/ping",
-            Method = HttpMethod.POST,
+            Method = (global::app.type.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.POST,
             Body = null,
             Unsigned = (global::app.type.@bool.@this)true
         };
@@ -777,7 +777,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/content",
-            Method = HttpMethod.POST,
+            Method = (global::app.type.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.POST,
             Body = new global::app.data.@this("", "test body"),
             Headers = new Dictionary<string, object> { ["Content-Encoding"] = "gzip", ["X-Custom"] = "req-header" },
             Unsigned = (global::app.type.@bool.@this)true

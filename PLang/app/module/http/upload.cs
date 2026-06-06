@@ -22,7 +22,7 @@ public partial class upload : IContext
 
     /// <summary>HTTP method. Default: POST.</summary>
     [Default(HttpMethod.POST)]
-    public partial data.@this<HttpMethod> Method { get; init; }
+    public partial data.@this<global::app.type.choice.@this<HttpMethod>> Method { get; init; }
 
     /// <summary>Per-request headers. Merged with Config.DefaultHeaders.</summary>
     public partial data.@this<Dictionary<string, object>>? Headers { get; init; }

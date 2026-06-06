@@ -207,7 +207,7 @@ public sealed class OpenAi : ILlm
             {
                 Context = context,
                 Url = new data.@this<global::app.type.text.@this>("", endpoint),
-                Method = new data.@this<PlangHttpMethod>("", PlangHttpMethod.POST),
+                Method = new data.@this<global::app.type.choice.@this<PlangHttpMethod>>("", PlangHttpMethod.POST),
                 Body = new data.@this("", body),
                 Headers = new data.@this<Dictionary<string, object>>("", headers),
                 Unsigned = new data.@this<global::app.type.@bool.@this>("", true),

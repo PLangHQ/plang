@@ -20,7 +20,7 @@ public partial class request : IContext
 
     /// <summary>HTTP method. Default: GET.</summary>
     [Default(HttpMethod.GET)]
-    public partial data.@this<HttpMethod> Method { get; init; }
+    public partial data.@this<global::app.type.choice.@this<HttpMethod>> Method { get; init; }
 
     /// <summary>Request body. Strings sent as-is; objects JSON-serialized. Null for bodyless methods (GET, HEAD).</summary>
     public partial data.@this? Body { get; init; }

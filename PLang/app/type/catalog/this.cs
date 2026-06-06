@@ -438,6 +438,11 @@ public sealed partial class @this
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(data.@this<>))
             type = type.GetGenericArguments()[0];
 
+        // choice<T> carries T's closed option set — the validation surface is T's
+        // names (enum members, or T's static [Choices] vocabulary).
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(app.type.choice.@this<>))
+            type = type.GetGenericArguments()[0];
+
         if (type.IsEnum)
             return Enum.GetNames(type);
 
