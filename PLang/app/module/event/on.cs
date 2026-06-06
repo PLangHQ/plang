@@ -29,7 +29,7 @@ public partial class On : IContext
     public partial data.@this<bool> IsRegex { get; init; }
     /// <summary>Execution priority — higher values run first. Default is 0.</summary>
     [Default(0)]
-    public partial data.@this<int> Priority { get; init; }
+    public partial data.@this<global::app.type.number.@this> Priority { get; init; }
 
     /// <summary>Actor to bind the event to. If null, uses current actor.</summary>
     public partial data.@this<actor.@this>? Actor { get; init; }
@@ -52,7 +52,7 @@ public partial class On : IContext
             goalNamePattern: GoalPattern?.Value,
             stepPattern: StepPattern?.Value,
             actionPattern: ActionPattern?.Value,
-            priority: Priority.Value,
+            priority: Priority.GetValue<int>(),
             isRegex: IsRegex.Value,
             goalToCall: goalToCall,
             channelName: ChannelName?.Value);

@@ -68,7 +68,7 @@ public sealed class Default : IHttp
         var config = app.Config.For<Config>(action.Context);
 
         var unsigned = action.Unsigned.Value || config.Resolve("Unsigned", false);
-        var timeout = action.TimeoutInSec.Value > 0 ? action.TimeoutInSec.Value : config.Resolve("TimeoutInSec", 30);
+        var timeout = action.TimeoutInSec.GetValue<double>() > 0 ? action.TimeoutInSec.GetValue<double>() : config.Resolve("TimeoutInSec", 30);
         var contentType = action.ContentType.Value ?? config.Resolve("ContentType", "application/json");
         var encoding = action.Encoding.Value ?? config.Resolve("Encoding", "utf-8");
 
@@ -141,7 +141,7 @@ public sealed class Default : IHttp
         var config = app.Config.For<Config>(action.Context);
 
         var unsigned = action.Unsigned.Value || config.Resolve("Unsigned", false);
-        var timeout = action.TimeoutInSec.Value > 0 ? action.TimeoutInSec.Value : config.Resolve("TimeoutInSec", 30);
+        var timeout = action.TimeoutInSec.GetValue<double>() > 0 ? action.TimeoutInSec.GetValue<double>() : config.Resolve("TimeoutInSec", 30);
         var urlResult = ResolveUrl(action.Url.Value!, config);
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = urlResult.Value!;
@@ -186,7 +186,7 @@ public sealed class Default : IHttp
         var config = app.Config.For<Config>(action.Context);
 
         var unsigned = action.Unsigned.Value || config.Resolve("Unsigned", false);
-        var timeout = action.TimeoutInSec.Value > 0 ? action.TimeoutInSec.Value : config.Resolve("TimeoutInSec", 30);
+        var timeout = action.TimeoutInSec.GetValue<double>() > 0 ? action.TimeoutInSec.GetValue<double>() : config.Resolve("TimeoutInSec", 30);
         var encoding = action.Encoding.Value ?? config.Resolve("Encoding", "utf-8");
 
         var urlResult = ResolveUrl(action.Url.Value!, config);

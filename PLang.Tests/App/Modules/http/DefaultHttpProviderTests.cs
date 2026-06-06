@@ -45,7 +45,7 @@ public class DefaultHttpProviderTests
         {
             Context = Ctx,
             FollowRedirects = true,
-            MaxRedirects = 5
+            MaxRedirects = (global::app.type.number.@this)5
         };
 
         var result = provider.Configure(action);
@@ -61,7 +61,7 @@ public class DefaultHttpProviderTests
         var action = new configure
         {
             Context = Ctx,
-            TimeoutInSec = 60
+            TimeoutInSec = (global::app.type.number.@this)60
         };
 
         var result = provider.Configure(action);

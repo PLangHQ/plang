@@ -328,7 +328,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/slow",
-            TimeoutInSec = 1,
+            TimeoutInSec = (global::app.type.number.@this)1,
             Unsigned = true
         };
         var result = await action.Run();

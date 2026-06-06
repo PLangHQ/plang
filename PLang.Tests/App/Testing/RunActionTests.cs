@@ -88,8 +88,8 @@ public class RunActionTests
         {
             Context = _app.User.Context,
             Tests = new global::app.data.@this<List<global::app.tester.test.@this>>("Tests", tests),
-            Parallel = parallel.HasValue ? new global::app.data.@this<int>("Parallel", parallel.Value) : null,
-            Timeout = timeoutSec.HasValue ? new global::app.data.@this<int>("Timeout", timeoutSec.Value) : null
+            Parallel = parallel.HasValue ? new global::app.data.@this<global::app.type.number.@this>("Parallel", parallel.Value) : null,
+            Timeout = timeoutSec.HasValue ? new global::app.data.@this<global::app.type.number.@this>("Timeout", timeoutSec.Value) : null
         };
         var result = await action.Run();
         return (Results)result.Value!;
@@ -126,7 +126,7 @@ public class RunActionTests
         await Assert.That(runs.All(r => r.Status == global::app.tester.Status.Pass)).IsTrue();
     }
 
-    // With Config.Parallel=2 and 4 tests, at most 2 tests run concurrently.
+    // With Config.Parallel = (global::app.type.number.@this)2 and 4 tests, at most 2 tests run concurrently.
     // Each fixture's BeforeAction delays asynchronously for long enough that another
     // fixture can enter the same window. The observed max concurrent depth equals the
     // semaphore size — parallel=2 → max 2; parallel=1 would observe max 1.

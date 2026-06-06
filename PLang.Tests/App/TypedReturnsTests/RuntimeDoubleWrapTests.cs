@@ -52,7 +52,7 @@ public class RuntimeDoubleWrapTests
         var context = _app.User.Context;
         context.Variable.Set("xs", new List<object?> { "a", "b", "c" });
 
-        var action = new Get { Context = context, ListName = new @this("xs"), Index = 1 };
+        var action = new Get { Context = context, ListName = new @this("xs"), Index = (global::app.type.number.@this)1 };
         var result = await action.Run();
 
         await result.IsSuccess();

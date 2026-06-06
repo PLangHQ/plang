@@ -19,7 +19,7 @@ public partial class verify : IContext
     public partial data.@this<Dictionary<string, object>>? Headers { get; init; }
 
     /// <summary>Optional timeout override in milliseconds.</summary>
-    public partial data.@this<long>? TimeoutMs { get; init; }
+    public partial data.@this<global::app.type.number.@this>? TimeoutMs { get; init; }
 
     /// <summary>
     /// When true, skip the Created-age wire-freshness check (step 2) and the

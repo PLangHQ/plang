@@ -107,7 +107,7 @@ public class MockTests
         {
             Context = context,
             Mock = handle,
-            ExpectedCount = 2
+            ExpectedCount = (global::app.type.number.@this)2
         };
 
         var result = await verify.Run();
@@ -129,7 +129,7 @@ public class MockTests
         {
             Context = context,
             Mock = handle,
-            ExpectedCount = 3
+            ExpectedCount = (global::app.type.number.@this)3
         };
 
         var result = await verify.Run();
@@ -151,7 +151,7 @@ public class MockTests
         {
             Context = context,
             Mock = handle,
-            ExpectedCount = 1,
+            ExpectedCount = (global::app.type.number.@this)1,
             Message = "file.read should be called once"
         };
 

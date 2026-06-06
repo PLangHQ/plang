@@ -8,7 +8,7 @@ public partial class Add : IContext
     public partial data.@this<app.variable.@this> ListName { get; init; }
     public partial data.@this Value { get; init; }
     [Default(-1)]
-    public partial data.@this<int> AtIndex { get; init; }
+    public partial data.@this<global::app.type.number.@this> AtIndex { get; init; }
 
     public Task<data.@this<type.list>> Run()
     {
@@ -38,8 +38,8 @@ public partial class Add : IContext
             ? new data.@this(Value.Name, nl.CopyStructure(), Value.Type) { Context = Context }
             : Value;
 
-        if (AtIndex.Value >= 0 && AtIndex.Value <= list.Count)
-            list.Insert(AtIndex.Value, toAdd);
+        if (AtIndex.GetValue<int>() >= 0 && AtIndex.GetValue<int>() <= list.Count)
+            list.Insert(AtIndex.GetValue<int>(), toAdd);
         else
             list.Add(toAdd);
 

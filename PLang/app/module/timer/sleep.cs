@@ -8,11 +8,11 @@ namespace app.module.timer;
 public partial class Sleep : IContext
 {
     [IsNotNull]
-    public partial data.@this<int> Ms { get; init; }
+    public partial data.@this<global::app.type.number.@this> Ms { get; init; }
 
     public async Task<global::app.data.@this> Run()
     {
-        await Task.Delay(Ms.Value, Context.CancellationToken);
+        await Task.Delay(Ms.GetValue<int>(), Context.CancellationToken);
         return global::app.data.@this.Ok();
     }
 }

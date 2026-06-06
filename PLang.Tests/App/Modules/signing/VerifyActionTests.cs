@@ -64,7 +64,7 @@ public class VerifyActionTests
             Data = signedData,
             Contracts = contracts,
             Headers = headers,
-            TimeoutMs = timeoutMs
+            TimeoutMs = timeoutMs.HasValue ? (global::app.type.number.@this)timeoutMs.Value : null
         };
         return await _app.RunAction<verify>(action, Ctx);
     }

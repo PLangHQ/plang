@@ -13,13 +13,13 @@ public partial class Return : IContext
 
     [Description("Number of goal levels to exit. 1 = current goal, 2 = current + caller.")]
     [Default(1)]
-    public partial data.@this<int> Depth { get; init; }
+    public partial data.@this<global::app.type.number.@this> Depth { get; init; }
 
     public Task<data.@this> Run()
     {
         var result = this.Data ?? global::app.data.@this.Ok();
         result.Returned = true;
-        result.ReturnDepth = Depth.Value > 0 ? Depth.Value : 1;
+        result.ReturnDepth = Depth.GetValue<int>() > 0 ? Depth.GetValue<int>() : 1;
         return Task.FromResult(result);
     }
 }

@@ -6,7 +6,7 @@ namespace app.module.list;
 public partial class Get : IContext
 {
     public partial data.@this<app.variable.@this> ListName { get; init; }
-    public partial data.@this<int> Index { get; init; }
+    public partial data.@this<global::app.type.number.@this> Index { get; init; }
 
     public Task<data.@this<object>> Run()
     {

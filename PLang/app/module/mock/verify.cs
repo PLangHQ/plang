@@ -7,7 +7,7 @@ namespace app.module.mock;
 public partial class Verify : IContext
 {
     public partial data.@this<global::app.mock.@this> Mock { get; init; }
-    public partial data.@this<int> ExpectedCount { get; init; }
+    public partial data.@this<global::app.type.number.@this> ExpectedCount { get; init; }
     public partial data.@this<string>? Message { get; init; }
 
     public Task<data.@this<bool>> Run()

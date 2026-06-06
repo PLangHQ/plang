@@ -12,7 +12,7 @@ public partial class Throw : IContext
     [IsNotNull]
     public partial data.@this Message { get; init; }
     [Default(500)]
-    public partial data.@this<int> StatusCode { get; init; }
+    public partial data.@this<global::app.type.number.@this> StatusCode { get; init; }
     public partial data.@this<string>? Key { get; init; }
 
     public Task<data.@this> Run()
@@ -24,6 +24,6 @@ public partial class Throw : IContext
             return Task.FromResult(Error(existing));
 
         return Task.FromResult(Error(
-            new ServiceError(Message.Value?.ToString() ?? "", Key?.Value ?? "UserError", StatusCode.Value)));
+            new ServiceError(Message.Value?.ToString() ?? "", Key?.Value ?? "UserError", StatusCode.GetValue<int>())));
     }
 }

@@ -38,7 +38,7 @@ public partial class request : IContext
 
     /// <summary>Request timeout in seconds. Default: 30. Overrides Config.TimeoutInSec.</summary>
     [Default(30)]
-    public partial data.@this<int> TimeoutInSec { get; init; }
+    public partial data.@this<global::app.type.number.@this> TimeoutInSec { get; init; }
 
     /// <summary>When true, skips request signing. Default: false (requests are signed).</summary>
     [Default(false)]

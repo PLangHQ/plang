@@ -31,15 +31,15 @@ public partial class run : IContext
     [IsNotNull]
     public partial data.@this<List<global::app.tester.test.@this>> Tests { get; init; }
 
-    public partial data.@this<int>? Parallel { get; init; }
-    public partial data.@this<int>? Timeout { get; init; }
+    public partial data.@this<global::app.type.number.@this>? Parallel { get; init; }
+    public partial data.@this<global::app.type.number.@this>? Timeout { get; init; }
 
     public async Task<data.@this<global::app.tester.Results>> Run()
     {
         var tests = Tests.Value ?? new List<global::app.tester.test.@this>();
         var parentApp = Context.App!;
-        var parallel = Parallel?.Value ?? parentApp.Tester.Parallel;
-        var timeoutSeconds = Timeout?.Value ?? parentApp.Tester.TimeoutSeconds;
+        int parallel = Parallel?.Value != null ? Parallel.GetValue<int>() : parentApp.Tester.Parallel;
+        double timeoutSeconds = Timeout?.Value != null ? Timeout.GetValue<double>() : parentApp.Tester.TimeoutSeconds;
         var timeout = TimeSpan.FromSeconds(timeoutSeconds);
 
         if (tests.Count == 0)

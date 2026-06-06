@@ -62,7 +62,7 @@ public partial class Handle : IContext, IModifier
             }),
     };
 
-    public partial global::app.data.@this<int>? StatusCode { get; init; }
+    public partial global::app.data.@this<global::app.type.number.@this>? StatusCode { get; init; }
     public partial global::app.data.@this<string>? Key { get; init; }
     public partial global::app.data.@this<string>? Message { get; init; }
     /// <summary>
@@ -72,8 +72,8 @@ public partial class Handle : IContext, IModifier
     /// them just like the main step chain.
     /// </summary>
     public partial global::app.data.@this<List<ActionEntity>>? Actions { get; init; }
-    public partial global::app.data.@this<int>? RetryCount { get; init; }
-    public partial global::app.data.@this<int>? RetryOverMs { get; init; }
+    public partial global::app.data.@this<global::app.type.number.@this>? RetryCount { get; init; }
+    public partial global::app.data.@this<global::app.type.number.@this>? RetryOverMs { get; init; }
     public partial global::app.data.@this<ErrorOrder>? Order { get; init; }
     [Default(false)]
     public partial global::app.data.@this<bool> IgnoreError { get; init; }
@@ -185,7 +185,7 @@ public partial class Handle : IContext, IModifier
         if (StatusCode?.Value == null && Key?.Value == null && Message?.Value == null) return true;
         if (error == null) return false;
 
-        if (StatusCode?.Value is int sc && error.StatusCode != sc) return false;
+        if (StatusCode?.Value != null && error.StatusCode != StatusCode.GetValue<int>()) return false;
         if (!string.IsNullOrEmpty(Key?.Value)
             && !string.Equals(error.Key, Key.Value, StringComparison.OrdinalIgnoreCase)) return false;
         if (!string.IsNullOrEmpty(Message?.Value)
@@ -196,11 +196,11 @@ public partial class Handle : IContext, IModifier
 
     private async Task<global::app.data.@this?> Retry(Func<Task<global::app.data.@this>> next, actor.context.@this context)
     {
-        var count = RetryCount?.Value;
+        int? count = RetryCount?.GetValue<int>();
         if (count == null || count <= 0) return null;
 
-        var delayMs = RetryOverMs?.Value != null && count > 0
-            ? RetryOverMs.Value / count.Value : 0;
+        int delayMs = RetryOverMs?.Value != null && count > 0
+            ? RetryOverMs.GetValue<int>() / count.Value : 0;
 
         for (int attempt = 0; attempt < count; attempt++)
         {

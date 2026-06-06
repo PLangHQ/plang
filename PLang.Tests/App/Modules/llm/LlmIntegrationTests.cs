@@ -60,8 +60,8 @@ public class LlmIntegrationTests
         {
             Context = Ctx,
             Messages = messages,
-            Temperature = 0.0,
-            MaxTokens = 50,
+            Temperature = (global::app.type.number.@this)0.0,
+            MaxTokens = (global::app.type.number.@this)50,
             Cache = false
         });
         if (result == null) return; // skipped, no API key
@@ -87,8 +87,8 @@ public class LlmIntegrationTests
             Context = Ctx,
             Messages = messages,
             Schema = "{\"sentiment\": \"string\", \"score\": \"number\"}",
-            Temperature = 0.0,
-            MaxTokens = 100,
+            Temperature = (global::app.type.number.@this)0.0,
+            MaxTokens = (global::app.type.number.@this)100,
             Cache = false
         });
         if (result == null) return;
@@ -117,8 +117,8 @@ public class LlmIntegrationTests
             Context = Ctx,
             Messages = messages,
             Format = "python",
-            Temperature = 0.0,
-            MaxTokens = 200,
+            Temperature = (global::app.type.number.@this)0.0,
+            MaxTokens = (global::app.type.number.@this)200,
             Cache = false
         });
         if (result == null) return;
@@ -146,8 +146,8 @@ public class LlmIntegrationTests
         {
             Context = Ctx,
             Messages = messages1,
-            Temperature = 0.0,
-            MaxTokens = 50,
+            Temperature = (global::app.type.number.@this)0.0,
+            MaxTokens = (global::app.type.number.@this)50,
             Cache = false
         });
         if (result1 == null) return;
@@ -164,8 +164,8 @@ public class LlmIntegrationTests
             Context = Ctx,
             Messages = messages2,
             ContinuePreviousConversation = true,
-            Temperature = 0.0,
-            MaxTokens = 50,
+            Temperature = (global::app.type.number.@this)0.0,
+            MaxTokens = (global::app.type.number.@this)50,
             Cache = false
         });
         if (result2 == null) return;
@@ -279,8 +279,8 @@ public class LlmIntegrationTests
             Context = Ctx,
             Messages = messages,
             Tools = tools,
-            Temperature = 0.0,
-            MaxTokens = 200,
+            Temperature = (global::app.type.number.@this)0.0,
+            MaxTokens = (global::app.type.number.@this)200,
             Cache = false
         };
 

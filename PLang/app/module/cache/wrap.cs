@@ -12,7 +12,7 @@ namespace app.module.cache;
 public partial class CacheWrap : IContext, IModifier
 {
     [IsNotNull]
-    public partial global::app.data.@this<long> DurationMs { get; init; }
+    public partial global::app.data.@this<global::app.type.number.@this> DurationMs { get; init; }
     [Default(false)]
     public partial global::app.data.@this<bool> Sliding { get; init; }
     public partial global::app.data.@this<string>? Key { get; init; }
@@ -22,7 +22,7 @@ public partial class CacheWrap : IContext, IModifier
     public Func<Task<global::app.data.@this>> Wrap(Func<Task<global::app.data.@this>> next, actor.context.@this context)
     {
         var cacheKey = !string.IsNullOrEmpty(Key?.Value) ? Key.Value! : DefaultKey(context);
-        var durationMs = DurationMs.Value;
+        long durationMs = DurationMs.GetValue<long>();
         var sliding = Sliding.Value;
 
         return async () =>

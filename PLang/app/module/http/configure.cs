@@ -12,7 +12,7 @@ namespace app.module.http;
 public partial class configure : IContext, IConfigure<Config>
 {
     /// <summary>Default request timeout in seconds.</summary>
-    public partial data.@this<int>? TimeoutInSec { get; init; }
+    public partial data.@this<global::app.type.number.@this>? TimeoutInSec { get; init; }
 
     /// <summary>Base URL for resolving relative request URLs.</summary>
     public partial data.@this<string>? BaseUrl { get; init; }
@@ -33,7 +33,7 @@ public partial class configure : IContext, IConfigure<Config>
     public partial data.@this<bool>? FollowRedirects { get; init; }
 
     /// <summary>Maximum number of redirects to follow. Default: 10.</summary>
-    public partial data.@this<int>? MaxRedirects { get; init; }
+    public partial data.@this<global::app.type.number.@this>? MaxRedirects { get; init; }
 
     /// <summary>When true, writes config to app-wide default scope instead of current scope.</summary>
     [Default(false)]

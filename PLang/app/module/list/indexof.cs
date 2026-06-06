@@ -8,7 +8,7 @@ public partial class IndexOf : IContext
     public partial data.@this<app.variable.@this> ListName { get; init; }
     public partial data.@this Value { get; init; }
 
-    public Task<data.@this<int>> Run()
+    public Task<data.@this<global::app.type.number.@this>> Run()
     {
         var data = Context.Variable.Get(ListName.Value);
         var target = Value.Value;
@@ -16,9 +16,9 @@ public partial class IndexOf : IContext
         foreach (var (key, item) in data.EnumerateItems())
         {
             if (global::app.data.Compare.AreEqualValues(item.Value, target))
-                return Task.FromResult(global::app.data.@this<int>.Ok(Convert.ToInt32(key.Value)));
+                return Task.FromResult(global::app.data.@this<global::app.type.number.@this>.Ok(Convert.ToInt32(key.Value)));
         }
 
-        return Task.FromResult(global::app.data.@this<int>.Ok(-1));
+        return Task.FromResult(global::app.data.@this<global::app.type.number.@this>.Ok(-1));
     }
 }

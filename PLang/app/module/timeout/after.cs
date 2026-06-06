@@ -11,13 +11,13 @@ namespace app.module.timeout;
 public partial class After : IContext, IModifier
 {
     [IsNotNull]
-    public partial global::app.data.@this<int> Ms { get; init; }
+    public partial global::app.data.@this<global::app.type.number.@this> Ms { get; init; }
 
     public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
 
     public Func<Task<global::app.data.@this>> Wrap(Func<Task<global::app.data.@this>> next, actor.context.@this context)
     {
-        var ms = Ms.Value;
+        int ms = Ms.GetValue<int>();
         return async () =>
         {
             // Capture parent token BEFORE pushing — after the push, context.CancellationToken

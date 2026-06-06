@@ -19,7 +19,7 @@ public partial class Set : IContext
     public partial data.@this<string> Name { get; init; }
     public partial data.@this<GoalCall> Goal { get; init; }
     public partial data.@this<global::app.actor.@this>? Actor { get; init; }
-    public partial data.@this<long>? Buffer { get; init; }
+    public partial data.@this<global::app.type.number.@this>? Buffer { get; init; }
     public partial data.@this<TimeSpan>? Timeout { get; init; }
     public partial data.@this<string>? Mime { get; init; }
     public partial data.@this<string>? Encoding { get; init; }
@@ -52,7 +52,7 @@ public partial class Set : IContext
 
         var ch = new app.channel.type.goal.@this(name, goalEntry, actor, direction)
         {
-            Buffer = Buffer != null ? Buffer.Value : 4096L,
+            Buffer = Buffer != null ? Buffer.GetValue<long>() : 4096L,
             Timeout = Timeout != null ? Timeout.Value : TimeSpan.FromSeconds(30),
             Mime = Mime?.Value ?? "text/plain",
             Encoding = Encoding?.Value ?? "utf-8",

@@ -58,7 +58,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "c" });
 
-        var action = new Add { Context = context, ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "b"), AtIndex = 1 };
+        var action = new Add { Context = context, ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "b"), AtIndex = (global::app.type.number.@this)1 };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -117,7 +117,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
-        var action = new Remove { Context = context, ListName = new app.variable.@this("myList"), AtIndex = 0 };
+        var action = new Remove { Context = context, ListName = new app.variable.@this("myList"), AtIndex = (global::app.type.number.@this)0 };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -133,7 +133,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
-        var action = new Get { Context = context, ListName = new app.variable.@this("myList"), Index = 1 };
+        var action = new Get { Context = context, ListName = new app.variable.@this("myList"), Index = (global::app.type.number.@this)1 };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -146,7 +146,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a" });
 
-        var action = new Get { Context = context, ListName = new app.variable.@this("myList"), Index = 5 };
+        var action = new Get { Context = context, ListName = new app.variable.@this("myList"), Index = (global::app.type.number.@this)5 };
         var result = await action.Run();
 
         await result.IsFailure();
@@ -325,7 +325,7 @@ public class ListTests
     {
         var (context, _) = CreateContext();
 
-        var action = new global::app.module.list.Range { Context = context, Start = 1, End = 5, Step = 1 };
+        var action = new global::app.module.list.Range { Context = context, Start = (global::app.type.number.@this)1, End = (global::app.type.number.@this)5, Step = (global::app.type.number.@this)1 };
         var result = await action.Run();
 
         var listResult = result.Value as ListResult;

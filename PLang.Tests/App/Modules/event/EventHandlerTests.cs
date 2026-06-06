@@ -28,7 +28,7 @@ public class EventHandlerTests
             StepPattern = stepPattern,
             ActionPattern = actionPattern,
             IsRegex = isRegex,
-            Priority = priority
+            Priority = (global::app.type.number.@this)priority
         };
 
     [Test]

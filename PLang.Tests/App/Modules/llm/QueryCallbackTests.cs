@@ -133,7 +133,7 @@ public class QueryCallbackTests
     public async Task Query_OnValidateResponse_Passes_ReturnsNormally()
     {
         // When OnValidateResponse goal doesn't exist, RunGoalAsync returns error
-        // which triggers retry. With MaxValidationRetries=0, it returns error immediately.
+        // which triggers retry. With MaxValidationRetries = (global::app.type.number.@this)0, it returns error immediately.
         // To test "passes" scenario, we need the validation goal to actually exist.
         // For unit test: no OnValidateResponse set → result returns normally
         _handler.Handler = _ => Task.FromResult(
@@ -167,7 +167,7 @@ public class QueryCallbackTests
                 new LlmMessage { Role = "user", Content = "validate me" }
             },
             OnValidateResponse = new GoalCall { Name = "NonExistentValidator" },
-            MaxValidationRetries = 2
+            MaxValidationRetries = (global::app.type.number.@this)2
         };
 
         var result = await action.Run();
@@ -195,7 +195,7 @@ public class QueryCallbackTests
                 new LlmMessage { Role = "user", Content = "validate" }
             },
             OnValidateResponse = new GoalCall { Name = "AlwaysFails" },
-            MaxValidationRetries = 3
+            MaxValidationRetries = (global::app.type.number.@this)3
         };
 
         var result = await action.Run();
@@ -232,12 +232,12 @@ public class QueryCallbackTests
                 new GoalCall { Name = "TestTool" }
             },
             OnValidateResponse = new GoalCall { Name = "Validator" },
-            MaxValidationRetries = 1
+            MaxValidationRetries = (global::app.type.number.@this)1
         };
 
         // Tool round should not trigger validation
         // Final content round will trigger validation (which fails since goal doesn't exist)
-        // But with MaxValidationRetries=1, we get one retry then error
+        // But with MaxValidationRetries = (global::app.type.number.@this)1, we get one retry then error
         var result = await action.Run();
         // The key thing: it should have made it past the tool round to the validation phase
         await Assert.That(_handler.CallCount).IsGreaterThanOrEqualTo(2);

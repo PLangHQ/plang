@@ -31,7 +31,7 @@ public class SettingsApplyTests
     [Test]
     public async Task Apply_WritesNonNullPropertiesToScope()
     {
-        var source = new configure { Context = _ctx, TimeoutInSec = 60, BaseUrl = "https://api.example.com" };
+        var source = new configure { Context = _ctx, TimeoutInSec = (global::app.type.number.@this)60, BaseUrl = "https://api.example.com" };
 
         _app.Config.Apply<Config>(source, _ctx);
 
@@ -44,7 +44,7 @@ public class SettingsApplyTests
     public async Task Apply_SkipsNullProperties()
     {
         // Only set TimeoutInSec, leave BaseUrl null
-        var source = new configure { Context = _ctx, TimeoutInSec = 45 };
+        var source = new configure { Context = _ctx, TimeoutInSec = (global::app.type.number.@this)45 };
 
         _app.Config.Apply<Config>(source, _ctx);
 
@@ -58,7 +58,7 @@ public class SettingsApplyTests
     public async Task Apply_IgnoresPropertiesNotInConfig()
     {
         // configure has a "Default" bool property that Config does not have
-        var source = new configure { Context = _ctx, TimeoutInSec = 10, Default = true };
+        var source = new configure { Context = _ctx, TimeoutInSec = (global::app.type.number.@this)10, Default = true };
 
         _app.Config.Apply<Config>(source, _ctx);
 
@@ -72,7 +72,7 @@ public class SettingsApplyTests
     [Test]
     public async Task Apply_IsDefaultTrue_WritesToEngineDefaults()
     {
-        var source = new configure { Context = _ctx, TimeoutInSec = 120 };
+        var source = new configure { Context = _ctx, TimeoutInSec = (global::app.type.number.@this)120 };
 
         _app.Config.Apply<Config>(source, _ctx, isDefault: true);
 
@@ -85,7 +85,7 @@ public class SettingsApplyTests
     [Test]
     public async Task Apply_IsDefaultFalse_ScopedToContext()
     {
-        var source = new configure { Context = _ctx, TimeoutInSec = 90 };
+        var source = new configure { Context = _ctx, TimeoutInSec = (global::app.type.number.@this)90 };
 
         _app.Config.Apply<Config>(source, _ctx, isDefault: false);
 
@@ -128,7 +128,7 @@ public class SettingsApplyTests
     public async Task Apply_MultipleCallsMergeInScope()
     {
         // First apply sets timeout
-        var source1 = new configure { Context = _ctx, TimeoutInSec = 60 };
+        var source1 = new configure { Context = _ctx, TimeoutInSec = (global::app.type.number.@this)60 };
         _app.Config.Apply<Config>(source1, _ctx);
 
         // Second apply sets base URL — timeout should still be there

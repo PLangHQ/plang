@@ -18,7 +18,7 @@ public class ThrowTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Throw { Context = context, Message = Data.Ok("Something went wrong"), StatusCode = 500 };
+        var action = new Throw { Context = context, Message = Data.Ok("Something went wrong"), StatusCode = (global::app.type.number.@this)500 };
         var result = await action.Run();
 
         await result.IsFailure();
@@ -31,7 +31,7 @@ public class ThrowTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Throw { Context = context, Message = Data.Ok("Not found"), StatusCode = 404, Key = "NotFound" };
+        var action = new Throw { Context = context, Message = Data.Ok("Not found"), StatusCode = (global::app.type.number.@this)404, Key = "NotFound" };
         var result = await action.Run();
 
         await result.IsFailure();

@@ -77,22 +77,22 @@ public partial class query : IContext, IBuildValidatable
 
     /// <summary>Sampling temperature. 0.0 = deterministic.</summary>
     [Default(0.0)]
-    public partial data.@this<double> Temperature { get; init; }
+    public partial data.@this<global::app.type.number.@this> Temperature { get; init; }
 
     /// <summary>Top-p (nucleus sampling). 0.0 = greedy, 1.0 = full distribution.</summary>
-    public partial data.@this<double>? TopP { get; init; }
+    public partial data.@this<global::app.type.number.@this>? TopP { get; init; }
 
     /// <summary>Maximum tokens in the response.</summary>
     [Default(16000)]
-    public partial data.@this<int> MaxTokens { get; init; }
+    public partial data.@this<global::app.type.number.@this> MaxTokens { get; init; }
 
     /// <summary>Maximum total individual tool calls before stopping the loop.</summary>
     [Default(10)]
-    public partial data.@this<int> MaxToolCalls { get; init; }
+    public partial data.@this<global::app.type.number.@this> MaxToolCalls { get; init; }
 
     /// <summary>Maximum validation retries before returning error.</summary>
     [Default(0)]
-    public partial data.@this<int> MaxValidationRetries { get; init; }
+    public partial data.@this<global::app.type.number.@this> MaxValidationRetries { get; init; }
 
     /// <summary>Whether to cache the response. Skipped when Tools is non-null.</summary>
     [Default(true)]

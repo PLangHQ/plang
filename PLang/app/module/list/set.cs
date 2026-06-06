@@ -6,7 +6,7 @@ namespace app.module.list;
 public partial class Set : IContext
 {
     public partial data.@this<app.variable.@this> ListName { get; init; }
-    public partial data.@this<int> Index { get; init; }
+    public partial data.@this<global::app.type.number.@this> Index { get; init; }
     public partial data.@this Value { get; init; }
 
     public Task<data.@this<type.list>> Run()
@@ -18,7 +18,7 @@ public partial class Set : IContext
         // Promote to native (no-op when already native) so the in-place set persists.
         Context.Variable.Set(ListName.Value, nl);
 
-        if (Index.Value < 0 || Index.Value >= nl.Count)
+        if (Index.GetValue<int>() < 0 || Index.GetValue<int>() >= nl.Count)
             return Task.FromResult(global::app.data.@this<type.list>.FromError(
                 new app.error.ValidationError($"Index {Index.Value} out of range (0..{nl.Count - 1})")));
         // A list value is structure-copied so the slot doesn't alias the source variable
@@ -26,7 +26,7 @@ public partial class Set : IContext
         global::app.data.@this item = Value?.Value is app.type.list.@this nlv
             ? new global::app.data.@this(Value.Name, nlv.CopyStructure(), Value.Type) { Context = Context }
             : Value ?? new global::app.data.@this("", null);
-        nl.SetAt(Index.Value, item);
+        nl.SetAt(Index.GetValue<int>(), item);
         return Task.FromResult(global::app.data.@this<type.list>.Ok(new type.list { count = nl.Count, value = nl }, app.type.@this.FromName("list")));
     }
 }

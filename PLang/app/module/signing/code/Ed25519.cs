@@ -69,7 +69,7 @@ public class Ed25519 : ISigning
         var app = action.Context.App;
         var now = (DateTimeOffset)action.Context.Variable.GetValue("NowUtc")!;
         var signingSettings = app.Config.For<Config>(action.Context);
-        var effectiveTimeout = action.TimeoutMs?.Value ?? signingSettings.Resolve<long>("TimeoutMs", 300_000);
+        long effectiveTimeout = action.TimeoutMs?.Value != null ? action.TimeoutMs.GetValue<long>() : signingSettings.Resolve<long>("TimeoutMs", 300_000);
         var skipFreshness = action.SkipFreshnessCheck?.Value ?? false;
 
         // 1. Type check

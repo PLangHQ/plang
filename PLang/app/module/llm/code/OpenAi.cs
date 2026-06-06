@@ -144,7 +144,7 @@ public sealed class OpenAi : ILlm
         string? cacheKey = null;
         if (action.Cache.Value && action.Tools?.Value == null && !buildCacheOff)
         {
-            cacheKey = ComputeCacheKey(messages, model, action.Temperature.Value, schema, action.Format?.Value);
+            cacheKey = ComputeCacheKey(messages, model, action.Temperature.GetValue<double>(), schema, action.Format?.Value);
             var cached = await settings.Get(CacheTable, cacheKey);
             if (cached.Success && cached.Value != null)
             {
@@ -185,11 +185,11 @@ public sealed class OpenAi : ILlm
             {
                 ["model"] = model,
                 ["messages"] = ToApiMessages(messages, app, context),
-                ["temperature"] = action.Temperature.Value,
-                ["max_completion_tokens"] = action.MaxTokens.Value
+                ["temperature"] = action.Temperature.GetValue<double>(),
+                ["max_completion_tokens"] = action.MaxTokens.GetValue<long>()
             };
-            if (action.TopP?.Value is double topPValue)
-                body["top_p"] = topPValue;
+            if (action.TopP?.Value != null)
+                body["top_p"] = action.TopP.GetValue<double>();
             if (apiTools != null)
                 body["tools"] = apiTools;
             if (action.OnStream?.Value != null)
@@ -211,7 +211,7 @@ public sealed class OpenAi : ILlm
                 Body = new data.@this("", body),
                 Headers = new data.@this<Dictionary<string, object>>("", headers),
                 Unsigned = new data.@this<bool>("", true),
-                TimeoutInSec = new data.@this<int>("", 120),
+                TimeoutInSec = new data.@this<global::app.type.number.@this>("", 120),
                 OnStream = action.OnStream,
                 StreamAs = action.OnStream?.Value != null ? new data.@this<StreamFormat>("", StreamFormat.SSE) : default
             };
@@ -324,14 +324,14 @@ public sealed class OpenAi : ILlm
             // --- Tool calls? ---
             if (message.TryGetProperty("tool_calls", out var toolCallsProp) && toolCallsProp.GetArrayLength() > 0)
             {
-                if (toolCallCount >= action.MaxToolCalls.Value)
+                if (toolCallCount >= action.MaxToolCalls.GetValue<long>())
                     break; // hit limit
 
                 lastContent = content;
                 var toolCalls = ParseToolCalls(toolCallsProp);
 
                 // Slice to remaining budget — never execute more tools than the limit allows
-                int remaining = action.MaxToolCalls.Value - toolCallCount;
+                int remaining = action.MaxToolCalls.GetValue<int>() - toolCallCount;
                 if (toolCalls.Count > remaining)
                     toolCalls = toolCalls.Take(remaining).ToList();
 
@@ -427,7 +427,7 @@ public sealed class OpenAi : ILlm
                 {
                     var validationError = validationResult.Error?.Message ?? "Unknown validation error";
 
-                    if (validationRetries >= action.MaxValidationRetries.Value)
+                    if (validationRetries >= action.MaxValidationRetries.GetValue<long>())
                     {
                         await app.CurrentActor.Channel.WriteTextAsync(global::app.channel.list.@this.Output,
                             $"  Validation failed (no retries left): {validationError}{Environment.NewLine}");

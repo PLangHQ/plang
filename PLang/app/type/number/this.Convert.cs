@@ -21,22 +21,30 @@ public sealed partial class @this
         // see what they expect instead of ChangeType-ing a wrapper.
         if (value is global::app.type.item.@this iv) value = iv.ToRaw();
 
+        // When the caller names a concrete CLR kind (the target was a raw numeric —
+        // int/long/double, e.g. a List<int> element or `as int`) the result is that
+        // RAW CLR numeric. When no kind is named (the target is `number` itself) the
+        // result is born-native: a `number.@this` wrapping the narrowest-fit value.
+        bool returnWrapper = string.IsNullOrEmpty(kind);
+
         NumberKind? k = KindFromName(kind);
         if (k == null)
         {
             k = value is string s ? KindFromName(Build(s)) : ClrToKindSafe(value.GetType());
             if (k == null && value is string)
             {
-                // free-form numeric string with no declared kind — parse narrowest-fit.
                 var parsed = Parse((string)value);
-                return parsed == null
-                    ? Fail(value, kind)
-                    : global::app.data.@this.Ok(parsed.BoxedValue);
+                if (parsed == null) return Fail(value, kind);
+                return global::app.data.@this.Ok(returnWrapper ? (object?)parsed : parsed.BoxedValue);
             }
         }
         if (k == null) return Fail(value, kind);
 
-        try { return global::app.data.@this.Ok(CoerceToKind(value, k.Value)); }
+        try
+        {
+            object raw = CoerceToKind(value, k.Value);
+            return global::app.data.@this.Ok(returnWrapper ? (object?)FromObject(raw) : raw);
+        }
         catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
         {
             return global::app.data.@this.FromError(new global::app.error.Error(

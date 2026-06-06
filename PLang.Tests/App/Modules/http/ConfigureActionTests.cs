@@ -44,7 +44,7 @@ public class ConfigureActionTests
     [Test]
     public async Task Configure_SetsTimeoutOnScopeChain()
     {
-        var action = new configure { Context = Ctx, TimeoutInSec = 60 };
+        var action = new configure { Context = Ctx, TimeoutInSec = (global::app.type.number.@this)60 };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -66,7 +66,7 @@ public class ConfigureActionTests
     [Test]
     public async Task Configure_DefaultTrue_SetsEngineLevel()
     {
-        var action = new configure { Context = Ctx, TimeoutInSec = 120, Default = true };
+        var action = new configure { Context = Ctx, TimeoutInSec = (global::app.type.number.@this)120, Default = true };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -80,7 +80,7 @@ public class ConfigureActionTests
     [Test]
     public async Task Configure_DefaultFalse_ScopedToContext()
     {
-        var action = new configure { Context = Ctx, TimeoutInSec = 90, Default = false };
+        var action = new configure { Context = Ctx, TimeoutInSec = (global::app.type.number.@this)90, Default = false };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -131,14 +131,14 @@ public class ConfigureActionTests
     public async Task Configure_PerStepTimeout_OverridesConfiguredTimeout()
     {
         // Configure module-level timeout = 60
-        var configAction = new configure { Context = Ctx, TimeoutInSec = 60 };
+        var configAction = new configure { Context = Ctx, TimeoutInSec = (global::app.type.number.@this)60 };
         await configAction.Run();
 
         // Verify config has 60
         var view = _app.Config.For<Config>(Ctx);
         await Assert.That(view.Resolve("TimeoutInSec", 30)).IsEqualTo(60);
 
-        // Make a request with per-step TimeoutInSec = 1
+        // Make a request with per-step TimeoutInSec = (global::app.type.number.@this)1
         // If timeout is respected, a slow handler will trigger Timeout error
         var handler = new MockHttpMessageHandler();
         handler.SlowDelay = 3000; // 3 seconds
@@ -150,7 +150,7 @@ public class ConfigureActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/slow",
-            TimeoutInSec = 1, // per-step override: 1 second
+            TimeoutInSec = (global::app.type.number.@this)1, // per-step override: 1 second
             Unsigned = true
         };
         var result = await requestAction.Run();

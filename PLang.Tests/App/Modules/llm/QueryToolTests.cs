@@ -290,11 +290,11 @@ public class QueryToolTests
             {
                 new GoalCall { Name = "InfiniteTool" }
             },
-            MaxToolCalls = 3
+            MaxToolCalls = (global::app.type.number.@this)3
         };
         var result = await action.Run();
 
-        // MaxToolCalls=3, 1 tool/round:
+        // MaxToolCalls = (global::app.type.number.@this)3, 1 tool/round:
         // Round 1: execute 1 tool (count=1), continue
         // Round 2: execute 1 tool (count=2), continue
         // Round 3: execute 1 tool (count=3), continue

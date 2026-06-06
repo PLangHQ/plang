@@ -167,7 +167,7 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Round { Context = context, Value = new global::app.data.@this("", 3.14159), Decimals = 2 };
+        var action = new Round { Context = context, Value = new global::app.data.@this("", 3.14159), Decimals = (global::app.type.number.@this)2 };
         var result = await action.Run();
 
         await Assert.That(result.Value).IsEqualTo(3.14);
@@ -228,7 +228,7 @@ public class MathTests
     {
         var (context, _) = CreateContext();
 
-        var action = new global::app.module.math.Random { Context = context, Min = 1, Max = 10 };
+        var action = new global::app.module.math.Random { Context = context, Min = (global::app.type.number.@this)1, Max = (global::app.type.number.@this)10 };
         var result = await action.Run();
 
         await result.IsSuccess();
