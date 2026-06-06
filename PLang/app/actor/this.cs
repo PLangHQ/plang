@@ -11,6 +11,31 @@ namespace app.actor;
 /// </summary>
 public sealed class @this : global::app.type.item.@this, IAsyncDisposable
 {
+    /// <summary>
+    /// OBP: actor is reached by NAME, not constructed. A name ("system"/"service"/
+    /// "user") resolves to the App's existing actor — so `set channel … actor "system"`
+    /// converts the name to the live actor. Self-owns conversion (OwnerOf discovers
+    /// any type with a Convert hook). Born-native: the name arrives as text — unwrap.
+    /// </summary>
+    public static global::app.data.@this Convert(object? value, string? kind,
+        global::app.actor.context.@this context)
+    {
+        if (value is global::app.type.text.@this t) value = t.Value;
+        switch (value)
+        {
+            case null: return global::app.data.@this.Ok(value);
+            case @this self: return global::app.data.@this.Ok(self);
+            case string name:
+                var (actor, err) = context.App.GetActor(name);
+                if (err != null) return global::app.data.@this.FromError(err);
+                return global::app.data.@this.Ok(actor);
+            default:
+                return global::app.data.@this.FromError(new global::app.error.Error(
+                    $"Cannot convert {value.GetType().Name} to actor — expected an actor name (system/service/user).",
+                    "ActorConversionFailed", 400));
+        }
+    }
+
     private readonly CancellationTokenSource _cts;
 
     /// <summary>
