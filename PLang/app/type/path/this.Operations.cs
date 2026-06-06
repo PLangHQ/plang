@@ -158,5 +158,5 @@ public abstract partial class @this
     /// <c>if %path% exists</c> asks the path itself. FilePath probes the
     /// filesystem; HttpPath issues an HTTP HEAD.
     /// </summary>
-    public abstract Task<bool> AsBooleanAsync();
+    public abstract override Task<bool> AsBooleanAsync();
 }

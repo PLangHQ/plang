@@ -1220,6 +1220,10 @@ public partial class @this
         if (!IsInitialized) return false;
         var val = Value;
         if (val == null) return false;
+        // A value owns its own truthiness (empty text / zero number / empty dict /
+        // null are falsy) — ask it before the raw-scalar fallbacks, which now only
+        // serve a perimeter where a bare CLR value slips through.
+        if (val is app.type.item.@this item) return item.IsTruthy();
         if (val is bool b) return b;
         if (val is string s) return s.Length > 0;
         if (val is int i) return i != 0;

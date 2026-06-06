@@ -1,64 +1,81 @@
+using TextV = global::app.type.text.@this;
+using NumberV = global::app.type.number.@this;
+using BoolV = global::app.type.@bool.@this;
+using NullV = global::app.type.@null.@this;
+using DateV = global::app.type.date.@this;
+using DateTimeV = global::app.type.datetime.@this;
+using Compare = global::app.data.Compare;
+
 namespace PLang.Tests.App.ScalarsAsNative;
 
 // The one binary-coercion mediator (Operator.NormalizeTypes + Compare dispatcher).
 // Post-branch: inspects wrapper types (the second of the two legal type-switch
 // sites), not raw CLR. Reconciles "5"==5, numeric widening, date-vs-datetime,
-// enum<->string.
+// enum<->text. Coercion runs BEFORE the value's own self-dispatch so a cross-type
+// pair reconciles instead of trivially failing text.AreEqual(number).
 public class CoercionMediatorTests
 {
+    private static Data D(object v) => new("", v);
+
     [Test]
     public async Task Mediator_FiveStringEqualsFiveNumber_StillCoerces()
     {
-        // "5" == 5 still true after every scalar is wrapped — mediator inspects
-        // text vs number and widens through the parser.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // text "5" == number 5 — the mediator inspects (text, number) and parses
+        // the text through the number tower.
+        await Assert.That(Compare.AreEqual(D(new TextV("5")), D(NumberV.From(5L)))).IsTrue();
+        await Assert.That(Compare.AreEqual(D(NumberV.From(5L)), D(new TextV("5")))).IsTrue();
+        await Assert.That(Compare.AreEqual(D(new TextV("6")), D(NumberV.From(5L)))).IsFalse();
     }
 
     [Test]
     public async Task Mediator_NumberWidening_IntDecimalDoubleEquivalent()
     {
-        // 5L == 5m == 5.0d — wrapper inspection routes through number's existing
-        // widening tower (no raw `int` switch survives).
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // 5L == 5m == 5.0d — number.@this widens in its own tower; no raw int switch.
+        await Assert.That(Compare.AreEqual(D(NumberV.From(5L)), D(NumberV.From(5m)))).IsTrue();
+        await Assert.That(Compare.AreEqual(D(NumberV.From(5L)), D(NumberV.From(5.0d)))).IsTrue();
+        await Assert.That(Compare.AreEqual(D(NumberV.From(5m)), D(NumberV.From(5.0d)))).IsTrue();
+        await Assert.That(Compare.Order(D(NumberV.From(5L)), D(NumberV.From(6.0d)))).IsLessThan(0);
     }
 
     [Test]
     public async Task Mediator_EnumString_CoerceOnEqualityAndCompare()
     {
-        // An enum-shaped wrapper compares/equals against a text value through
-        // the mediator (the one allowed cross-type reconciliation point).
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // An enum value (not a value wrapper — arrives raw) reconciles against a
+        // text literal by the enum's name. This is the one allowed cross-type point.
+        await Assert.That(Compare.AreEqualValues(global::app.tester.Status.Pass, new TextV("Pass"))).IsTrue();
+        await Assert.That(Compare.AreEqualValues(new TextV("Pass"), global::app.tester.Status.Pass)).IsTrue();
+        await Assert.That(Compare.AreEqualValues(global::app.tester.Status.Pass, new TextV("Fail"))).IsFalse();
     }
 
     [Test]
     public async Task Mediator_DateVsDatetime_ClearCoercionOutcomeNotSilentEqual()
     {
-        // A date and a datetime for "the same day" are NOT silently equal —
-        // they're a clean coercion outcome the mediator owns. (Pre-branch:
-        // ScalarComparer made them equal by folding date into datetime.)
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // A date and a datetime for the same day are NOT silently equal — distinct
+        // types, no fold. (Pre-branch ScalarComparer folded date into datetime.)
+        var date = D(new DateV(new System.DateOnly(2026, 1, 1)));
+        var dt = D(new DateTimeV(new System.DateTimeOffset(2026, 1, 1, 0, 0, 0, System.TimeSpan.Zero)));
+        await Assert.That(Compare.AreEqual(date, dt)).IsFalse();
     }
 
     [Test]
     public async Task Mediator_InspectsWrapperTypes_NotRawClr()
     {
-        // After the sweep, mediator-internal branches read `a is text`, `b is number`,
-        // never `a is string`, `b is int`. A reflection probe records the surface
-        // (or an explicit test ensures a raw-CLR scalar can't reach the mediator).
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // The coercion is driven by wrapper types: text<->number reconciles in both
+        // directions, and number<->number needs no coercion (widens in its tower).
+        // A raw-CLR scalar is not what the mediator keys on — the wrappers are.
+        var (l, r) = global::app.module.condition.Operator.NormalizeTypes(new TextV("5"), NumberV.From(5L));
+        await Assert.That(l).IsTypeOf<NumberV>();   // text coerced to number
+        await Assert.That(r).IsTypeOf<NumberV>();
     }
 
     [Test]
     public async Task Mediator_BoolAndNullRouteThroughMediatorEquality()
     {
-        // bool == bool and null == null routed via the mediator/Compare path, not
-        // a `Val(left) is bool b` raw-switch — the dispatch is wrapper-shaped.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // bool == bool and null == null route via Compare's wrapper-shaped dispatch
+        // (IEquatableValue), not a raw `is bool` switch.
+        await Assert.That(Compare.AreEqual(D(new BoolV(true)), D(new BoolV(true)))).IsTrue();
+        await Assert.That(Compare.AreEqual(D(new BoolV(true)), D(new BoolV(false)))).IsFalse();
+        await Assert.That(Compare.AreEqual(Data.Null(), Data.Null())).IsTrue();
+        await Assert.That(Compare.AreEqual(D(new BoolV(false)), Data.Null())).IsFalse();
     }
 }

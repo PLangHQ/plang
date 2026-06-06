@@ -1065,3 +1065,28 @@ Ingi's decision: ship A on this branch, do B as its own pass.
 
 **Where:** `app/data/` (the factory + Tagged filter), every `app/type/<t>/Json.cs`
 (delete), every value/domain class carrying `[Json*]` attributes (retag).
+
+## Error messages should show the PLang type name, not the CLR GetType().Name
+
+**Date:** 2026-06-06 on branch `scalars-as-native`. Raised by Ingi reviewing the
+collapsed ScalarComparer.
+
+**What:** Many error/diagnostic messages interpolate `value.GetType().Name` (CLR
+name, e.g. `@this`, `Dictionary``2`, `Int64`) where the PLang type name
+(`dict`, `number`, `text`) would read far better for a PLang developer. Example:
+`ScalarComparer.Order` throws `"cannot order {a.GetType().Name} against
+{b.GetType().Name}"` — should say `"cannot order dict against number"`.
+
+**Why not trivially done:** at many of these sites the value is a bare value
+object, not a `Data`, so `a.Type.Name` isn't reachable and there's no Context to
+hit the type registry (`catalog.ResolveName(clrType)`). Two fixes are needed:
+  1. A context-free value→PLang-name helper (the wrappers can expose a static
+     PLang name; the registry maps CLR→name for the rest), OR move the message up
+     to where a `Data`/Context is in scope and use `data.Type.Name`.
+  2. A sweep: grep `GetType().Name`/`GetType().FullName` in error/exception
+     message strings across production C# and convert each to the PLang name.
+     (The collapsed `ScalarComparer` removed the old per-type `Name()` switch that
+     used to do this for the comparer — the systematic replacement should restore
+     PLang-named messages everywhere, not reintroduce a per-site switch.)
+
+**Decision:** logged for a dedicated pass; not folded into scalars-as-native.

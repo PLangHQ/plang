@@ -67,8 +67,9 @@ public class ImageValueTests
 
     [Test] public async Task Image_DoesNotUnionWithPath_RoutingKeyAlwaysImage()
     {
-        // image inherits from object (not path); it carries Path as a property.
-        await Assert.That(typeof(image).BaseType).IsEqualTo(typeof(object));
+        // image is a value (: item.@this), NOT a path; it carries Path as a property.
+        // The point: image never unions with path — its routing key stays "image".
+        await Assert.That(typeof(image).BaseType).IsEqualTo(typeof(global::app.type.item.@this));
         await Assert.That(typeof(global::app.type.path.@this).IsAssignableFrom(typeof(image))).IsFalse();
     }
 }

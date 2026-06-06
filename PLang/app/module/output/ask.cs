@@ -17,7 +17,7 @@ namespace app.module.output;
 /// </list>
 /// </summary>
 [global::app.Attributes.PlangType]
-public sealed class Ask : global::app.IExitsGoal
+public sealed class Ask : global::app.type.item.@this, global::app.IExitsGoal
 {
     /// <summary>The user's response on the resume path. Null while the ask is
     /// pending — short-circuit semantics fire until this is bound.</summary>

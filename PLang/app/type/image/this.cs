@@ -15,7 +15,7 @@ namespace app.type.image;
 /// Routing key / serializer always stays <c>image</c>: no <c>path|image</c>
 /// union. See plan/build-vs-runtime.md "composition, not union".</para>
 /// </summary>
-public sealed partial class @this : global::app.data.IBooleanResolvable, global::app.data.IKindValidatable, global::app.data.IStrictKindEnforcer, global::app.data.ILoadable
+public sealed partial class @this : global::app.type.item.@this, global::app.data.IKindValidatable, global::app.data.IStrictKindEnforcer, global::app.data.ILoadable
 {
     public static string Example => "/some/photo.jpg";
     public static string Shape => "string";
@@ -149,7 +149,7 @@ public sealed partial class @this : global::app.data.IBooleanResolvable, global:
         return ValidateKind(_bytes, _requiredKind);
     }
 
-    public async System.Threading.Tasks.Task<bool> AsBooleanAsync()
+    public override async System.Threading.Tasks.Task<bool> AsBooleanAsync()
     {
         // Truthiness without forcing a full load: in-memory bytes are truthy
         // when non-empty; a path-backed image is truthy when its resource exists

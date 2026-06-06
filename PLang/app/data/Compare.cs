@@ -47,12 +47,16 @@ public static class Compare
         if (lv == null) return 1;
         if (rv == null) return -1;
 
-        // The value owns its order (lists: lexicographic). It recurses back through
-        // this mediator for its children.
+        // Coerce cross-type FIRST (text "5" vs number 5) so a value's own order runs
+        // on a reconciled pair. Same-type pairs pass through unchanged.
+        (lv, rv) = app.module.condition.Operator.NormalizeTypes(lv, rv);
+
+        // The value owns its order (lists: lexicographic; the scalar wrappers that
+        // honor ordering). It recurses back through this mediator for its children.
         if (lv is IOrderableValue orderable) return orderable.Order(rv);
 
-        // Scalars: coerce (numeric widening, string↔number), then the one scalar leaf.
-        (lv, rv) = app.module.condition.Operator.NormalizeTypes(lv, rv);
+        // Residual scalars (number — which widens in its own tower — and coerced
+        // raw strings) route through the one thin scalar leaf.
         return ScalarComparer.Order(lv, rv);
     }
 
@@ -73,11 +77,15 @@ public static class Compare
     {
         if (lv == null || rv == null) return lv == null && rv == null;
 
-        // The value owns its equality (collections: structural). It recurses back
-        // through this mediator for its children.
+        // Coerce cross-type FIRST (text "5" vs number 5) so the self-dispatch below
+        // runs on a reconciled pair — otherwise text.AreEqual(number) is trivially
+        // false and "5" == 5 breaks.
+        (lv, rv) = app.module.condition.Operator.NormalizeTypes(lv, rv);
+
+        // The value owns its equality (collections: structural; each scalar wrapper).
+        // It recurses back through this mediator for its children.
         if (lv is IEquatableValue equatable) return equatable.AreEqual(rv);
 
-        (lv, rv) = app.module.condition.Operator.NormalizeTypes(lv, rv);
         return ScalarComparer.AreEqual(lv, rv);
     }
 }

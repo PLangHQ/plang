@@ -16,8 +16,22 @@ namespace app.variable;
 /// Provenance lives on the wrapper — <c>Data&lt;Variable&gt;.Signature</c> when signing
 /// lands. Variable itself is a value, not a wrapper.
 /// </summary>
-public sealed record @this([property: Out] string Name, string RawValue, bool WasPercentWrapped) : IRawNameResolvable
+public sealed class @this : global::app.type.item.@this, IRawNameResolvable
 {
+    /// <summary>The canonical variable name (percent-stripped).</summary>
+    [Out] public string Name { get; }
+    /// <summary>The raw reference as emitted (e.g. <c>%x%</c> or bare <c>x</c>).</summary>
+    public string RawValue { get; }
+    /// <summary>True when the raw reference was percent-wrapped.</summary>
+    public bool WasPercentWrapped { get; }
+
+    public @this(string Name, string RawValue, bool WasPercentWrapped)
+    {
+        this.Name = Name;
+        this.RawValue = RawValue;
+        this.WasPercentWrapped = WasPercentWrapped;
+    }
+
     /// <summary>
     /// Optional Property suffix captured from the raw reference shape
     /// (<c>%x!cost%</c> sets this to <c>"cost"</c>). Variable.set's run path

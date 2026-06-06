@@ -162,63 +162,60 @@ public sealed class Operator
 
     // --- Type normalization ---
 
+    // The one binary-coercion mediator. Post-born-native it inspects WRAPPER types
+    // (text/number, and raw Enum which is not a value wrapper) — the one blessed
+    // cross-type reconciliation site. Numeric widening (5L == 5.0 == 5m) is NOT here:
+    // both sides are number.@this and number's own tower (CompareTo) widens. This only
+    // bridges the genuinely-different types: text↔number ("5" == 5) and enum↔text.
     public static (object? left, object? right) NormalizeTypes(object? left, object? right)
     {
         if (left == null || right == null) return (left, right);
 
-        if (IsNumeric(left) && IsNumeric(right))
+        // text <-> number: parse the text so "5" == 5 and "5" < 6 coerce through the
+        // number tower. Inspects the value's PLang shape (text/number) but tolerates a
+        // raw string/CLR-numeric that slips through a perimeter.
+        if (IsTextLike(left, out var lts) && IsNumberLike(right))
         {
-            var targetType = WiderNumericType(left.GetType(), right.GetType());
-            return (Convert.ChangeType(left, targetType, CultureInfo.InvariantCulture),
-                    Convert.ChangeType(right, targetType, CultureInfo.InvariantCulture));
+            var n = TryNumber(lts);
+            if (n != null) return (n, right);
+        }
+        if (IsTextLike(right, out var rts) && IsNumberLike(left))
+        {
+            var n = TryNumber(rts);
+            if (n != null) return (left, n);
         }
 
-        if (left is string ls && IsNumeric(right))
-        {
-            var converted = TryParseNumeric(ls);
-            if (converted != null)
-                return NormalizeTypes(converted, right);
-        }
-        if (right is string rs && IsNumeric(left))
-        {
-            var converted = TryParseNumeric(rs);
-            if (converted != null)
-                return NormalizeTypes(left, converted);
-        }
-
-        // Enum compared with string → normalize to the enum's name so PLang can
-        // write `where Status equals 'Timeout'` against a global::app.tester.Status field.
-        if (left is Enum leEnum && right is string)
-            return (leEnum.ToString(), right);
-        if (right is Enum reEnum && left is string)
-            return (left, reEnum.ToString());
+        // enum <-> text: an enum field compares by its name against a text literal
+        // (`where Status equals 'Timeout'`). Enums aren't value wrappers (they arrive
+        // raw); coerce both sides to their string form.
+        if (left is Enum le && IsTextLike(right, out var res)) return (le.ToString(), res);
+        if (right is Enum re && IsTextLike(left, out var les)) return (les, re.ToString());
 
         return (left, right);
     }
 
-    private static bool IsNumeric(object? value) =>
-        value is int or long or double or float or decimal or short or byte
-        // plang-types Stage 4: number@this is the canonical numeric value type.
-        // Recognise it so cross-comparison (number vs CLR primitive) normalises
-        // through the widening path instead of failing the IComparable check.
-        || value is global::app.type.number.@this;
-
-    private static readonly System.Type[] NumericOrder =
-        [typeof(byte), typeof(short), typeof(int), typeof(long), typeof(float), typeof(double), typeof(decimal)];
-
-    private static System.Type WiderNumericType(System.Type a, System.Type b)
+    // A value that carries text content — the text wrapper or (perimeter) a raw string.
+    private static bool IsTextLike(object? v, out string s)
     {
-        var ai = Array.IndexOf(NumericOrder, a);
-        var bi = Array.IndexOf(NumericOrder, b);
-        if (ai < 0) ai = NumericOrder.Length - 1;
-        if (bi < 0) bi = NumericOrder.Length - 1;
-        return NumericOrder[Math.Max(ai, bi)];
+        switch (v)
+        {
+            case global::app.type.text.@this t: s = t.Value; return true;
+            case string str: s = str; return true;
+            default: s = ""; return false;
+        }
     }
 
-    private static object? TryParseNumeric(string s)
+    // A value that carries a number — the number wrapper or (perimeter) a raw CLR numeric.
+    private static bool IsNumberLike(object? v) =>
+        v is global::app.type.number.@this
+        || v is int or long or short or byte or float or double or decimal;
+
+    private static global::app.type.number.@this? TryNumber(string s)
     {
+        if (long.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var l))
+            return global::app.type.number.@this.From(l);
         if (double.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var d))
-            return d;
+            return global::app.type.number.@this.From(d);
         return null;
     }
 }
