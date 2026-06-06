@@ -76,7 +76,7 @@ public sealed class Default : IHttp
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = urlResult.Value!;
 
-        var headers = MergeHeaders(action.Headers?.Value, config);
+        var headers = MergeHeaders(action.Headers?.GetValue<Dictionary<string, object>>(), config);
 
         // Build body
         HttpContent? httpContent = null;
@@ -146,7 +146,7 @@ public sealed class Default : IHttp
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = urlResult.Value!;
 
-        var headers = MergeHeaders(action.Headers?.Value, config);
+        var headers = MergeHeaders(action.Headers?.GetValue<Dictionary<string, object>>(), config);
         var requestMessage = new HttpRequestMessage(SysHttpMethod.Get, resolvedUrl);
         ApplyHeaders(requestMessage, headers);
 
@@ -193,7 +193,7 @@ public sealed class Default : IHttp
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = urlResult.Value!;
 
-        var headers = MergeHeaders(action.Headers?.Value, config);
+        var headers = MergeHeaders(action.Headers?.GetValue<Dictionary<string, object>>(), config);
 
         var (httpContent, contentErr) = await ResolveUploadContentAsync(action, app, encoding);
         if (contentErr != null) return global::app.data.@this.FromError(contentErr);
@@ -361,11 +361,11 @@ public sealed class Default : IHttp
         {
             Context = context,
             Data = new data.@this("", bodyContent ?? ""),
-            Headers = new data.@this<Dictionary<string, object>>("", new Dictionary<string, object>
+            Headers = new data.@this<global::app.type.dict.@this>("", global::app.type.dict.@this.FromRaw(new Dictionary<string, object>
             {
                 ["url"] = url,
                 ["method"] = method
-            }),
+            }, context)),
             Contracts = signOptions?.Contracts,
             Expires = signOptions?.Expires
         };
@@ -986,7 +986,7 @@ public sealed class Default : IHttp
     {
         var content = action.Content.Value;
         var context = action.Context;
-        if (action.As?.Value is ContentAs contentAs)
+        if (action.As?.Value is { } asChoice && asChoice is { } && (ContentAs?)asChoice is { } contentAs)
         {
             return contentAs switch
             {

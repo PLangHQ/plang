@@ -15,7 +15,7 @@ public partial class StringPlain : global::app.module.IContext
 [global::app.module.Action("intplain")]
 public partial class IntPlain : global::app.module.IContext
 {
-    public partial global::app.data.@this<int> Count { get; init; }
+    public partial global::app.data.@this<global::app.type.number.@this> Count { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Count);
 }
 

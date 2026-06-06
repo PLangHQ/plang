@@ -339,7 +339,7 @@ public sealed class @this : IDisposable
     /// Gets or creates a cached Data&lt;T&gt; wrapper for a structural domain object.
     /// Ensures identity: same object → same wrapper within this execution context.
     /// </summary>
-    public data.@this<T> GetOrCreate<T>(T key, Func<data.@this<T>> factory) where T : class
+    public data.@this<T> GetOrCreate<T>(T key, Func<data.@this<T>> factory) where T : global::app.type.item.@this
     {
         var data = _wrapperCache.GetOrAdd(key, _ => factory());
         return (data.@this<T>)data;

@@ -12,7 +12,7 @@ public partial class intercept : IContext
     public partial data.@this<global::app.type.text.@this> Pattern { get; init; }
     public partial data.@this? Return { get; init; }
     public partial data.@this<GoalCall>? Call { get; init; }
-    public partial data.@this<Dictionary<string, object?>>? Parameters { get; init; }
+    public partial data.@this<global::app.type.dict.@this>? Parameters { get; init; }
 
     public Task<data.@this<global::app.mock.@this>> Run()
     {
@@ -25,7 +25,7 @@ public partial class intercept : IContext
 
         var returnValue = Return?.Value;
         var goalToCall = Call?.Value;
-        var paramMatchers = Parameters?.Value;
+        var paramMatchers = Parameters?.GetValue<Dictionary<string, object?>>();
 
         Func<actor.context.@this, app.goal.steps.step.actions.action.@this?, data.@this?, Task<data.@this>> handler = async (context, _, _) =>
         {

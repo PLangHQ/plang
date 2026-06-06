@@ -39,7 +39,7 @@ public class ItemConstraintTests
     [Test]
     public async Task Constraint_DataOfRawClrInt_DoesNotSatisfyTheConstraint()
     {
-        // A raw CLR scalar is not an item — Data<int> can't satisfy `where T : item`.
+        // A raw CLR scalar is not an item — Data<global::app.type.number.@this> can't satisfy `where T : item`.
         await Assert.That(IsItem(typeof(int))).IsFalse();
         await Assert.That(IsItem(typeof(string))).IsFalse();
         await Assert.That(IsItem(typeof(bool))).IsFalse();

@@ -25,15 +25,15 @@ public class AsTIdentityTests
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
 
-    // Rule 1 — same-type fast path. As<int>() on Data<int> returns the source
+    // Rule 1 — same-type fast path. As<int>() on Data<global::app.type.number.@this> returns the source
     // instance. ReferenceEquals is the only check that proves zero allocation
     // and full identity (Properties, event lists, Name, Type, everything is
     // trivially shared because it's the same object).
     [Test]
     public async Task AsT_SameType_ReturnsSourceInstance()
     {
-        var source = new global::app.data.@this<int>("count", 42) { Context = _app.User.Context };
-        var result = source.As<int>();
+        var source = new global::app.data.@this<global::app.type.number.@this>("count", 42) { Context = _app.User.Context };
+        var result = source.As<global::app.type.number.@this>();
         await Assert.That(ReferenceEquals(source, result)).IsTrue();
     }
 
@@ -44,14 +44,14 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_SameType_PreservesProperties()
     {
-        var source = new global::app.data.@this<int>("count", 42) { Context = _app.User.Context };
+        var source = new global::app.data.@this<global::app.type.number.@this>("count", 42) { Context = _app.User.Context };
         source.Properties.Set("meta", "abc");
-        var result = source.As<int>();
+        var result = source.As<global::app.type.number.@this>();
         await Assert.That(ReferenceEquals(source.Properties, result.Properties)).IsTrue();
         await Assert.That(result.Properties["meta"]).IsEqualTo("abc");
     }
 
-    // Rule 2 — variance fast path. Data<List<int>>.As<IEnumerable>() produces
+    // Rule 2 — variance fast path. Data<global::app.type.list.@this<global::app.type.number.@this>>.As<IEnumerable>() produces
     // a new global::app.data.@this<IEnumerable> instance (Type changes), but .Value is the SAME
     // List<int> reference — cast-only, no copy. Mutating the underlying list
     // through wrapped.Value is visible through source.Value.
@@ -59,7 +59,7 @@ public class AsTIdentityTests
     public async Task AsT_Variance_ListToIEnumerable_ValueRefShared()
     {
         var list = new List<int> { 1, 2, 3 };
-        var source = new global::app.data.@this<List<int>>("nums", list) { Context = _app.User.Context };
+        var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", list) { Context = _app.User.Context };
         var wrapped = source.As<System.Collections.IEnumerable>();
         await Assert.That(ReferenceEquals(wrapped.Value, list)).IsTrue();
         // Mutate via the underlying list — wrapped sees the change.
@@ -76,7 +76,7 @@ public class AsTIdentityTests
     public async Task AsT_Variance_PropertiesAliased()
     {
         var list = new List<int> { 1, 2 };
-        var source = new global::app.data.@this<List<int>>("nums", list) { Context = _app.User.Context };
+        var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", list) { Context = _app.User.Context };
         var wrapped = source.As<System.Collections.IEnumerable>();
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();
         source.Properties.Set("annot", "via-source");
@@ -89,12 +89,12 @@ public class AsTIdentityTests
     public async Task AsT_Variance_OnChangeAliased_FireOnSourceVisibleThroughWrapped()
     {
         var list = new List<int> { 1 };
-        var source = new global::app.data.@this<List<int>>("nums", list) { Context = _app.User.Context };
+        var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", list) { Context = _app.User.Context };
         var wrapped = source.As<System.Collections.IEnumerable>();
         await Assert.That(ReferenceEquals(source.OnChange, wrapped.OnChange)).IsTrue();
         var seen = 0;
         wrapped.OnChange.Add((_, _) => seen++);
-        source.FireOnChange(new global::app.data.@this<List<int>>("nums", new List<int>()));
+        source.FireOnChange(new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", new List<int>()));
         await Assert.That(seen).IsEqualTo(1);
     }
 
@@ -106,23 +106,23 @@ public class AsTIdentityTests
     public async Task AsT_Variance_PostWrapSubscribe_VisibleThroughBothRefs()
     {
         var list = new List<int> { 1 };
-        var source = new global::app.data.@this<List<int>>("nums", list) { Context = _app.User.Context };
+        var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", list) { Context = _app.User.Context };
         var wrapped = source.As<System.Collections.IEnumerable>();
         Action<Data, Data> handler = (_, _) => { };
         wrapped.OnChange.Add(handler);
         await Assert.That(source.OnChange).Contains(handler);
     }
 
-    // Rule 3 — cross-type with conversion. Data<int>(42).As<string>() produces
+    // Rule 3 — cross-type with conversion. Data<global::app.type.number.@this>(42).As<global::app.type.text.@this>() produces
     // a NEW Data<global::app.type.text.@this> with converted .Value ("42"), but Properties + event
     // lists alias from source. The .Value is a fresh converted object —
     // ref-DISTINCT from source.Value (42 boxed) — but the metadata bag is shared.
     [Test]
     public async Task AsT_CrossType_ConversionWraps_PropertiesAliased()
     {
-        var source = new global::app.data.@this<int>("count", 42) { Context = _app.User.Context };
+        var source = new global::app.data.@this<global::app.type.number.@this>("count", 42) { Context = _app.User.Context };
         source.Properties.Set("note", "hello");
-        var wrapped = source.As<string>();
+        var wrapped = source.As<global::app.type.text.@this>();
         await Assert.That(ReferenceEquals(source, wrapped)).IsFalse();
         await Assert.That(wrapped.Value).IsEqualTo("42");
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();
@@ -138,7 +138,7 @@ public class AsTIdentityTests
     {
         var source = new global::app.data.@this<global::app.type.text.@this>("messy", "not-a-number") { Context = _app.User.Context };
         source.Properties.Set("extra", "leak-check");
-        var wrapped = source.As<int>();
+        var wrapped = source.As<global::app.type.number.@this>();
         await wrapped.IsFailure();
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsFalse();
         await Assert.That(ReferenceEquals(source.OnChange, wrapped.OnChange)).IsFalse();
@@ -162,7 +162,7 @@ public class AsTIdentityTests
     public async Task AsT_PlainDataTarget_VarReference_ReturnsLiveVariableData()
     {
         var context = _app.User.Context;
-        var live = new global::app.data.@this<List<object?>>("products", new List<object?> { "a", "b" }) { Context = context };
+        var live = new global::app.data.@this<global::app.type.list.@this<object?>>("products", new List<object?> { "a", "b" }) { Context = context };
         context.Variable.Set(live);
 
         var paramData = new Data("Slot", "%products%") { Context = context };

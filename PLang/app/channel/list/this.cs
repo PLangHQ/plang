@@ -180,7 +180,7 @@ public sealed class @this : IAsyncDisposable
     }
 
     /// <summary>Reads typed data from a channel.</summary>
-    public async Task<data.@this> ReadChannelAsync<T>(string channelName, CancellationToken cancellationToken = default)
+    public async Task<data.@this> ReadChannelAsync<T>(string channelName, CancellationToken cancellationToken = default) where T : global::app.type.item.@this
     {
         var (channel, error) = GetChannel(channelName, requireRead: true);
         if (error != null) return error;

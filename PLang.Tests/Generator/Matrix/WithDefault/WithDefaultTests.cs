@@ -32,7 +32,7 @@ public class IntWithDefaultTests
     {
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<IntWithDefault>(app);
-        var typed = result.Data as global::app.data.@this<int>;
+        var typed = result.Data as global::app.data.@this<global::app.type.number.@this>;
         await Assert.That(typed!.Value).IsEqualTo(42);
     }
 
@@ -42,7 +42,7 @@ public class IntWithDefaultTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<IntWithDefault>(app,
             parameters: new[] { ("count", (object?)"7") });
-        var typed = result.Data as global::app.data.@this<int>;
+        var typed = result.Data as global::app.data.@this<global::app.type.number.@this>;
         await Assert.That(typed!.Value).IsEqualTo(7);
     }
 }
@@ -54,7 +54,7 @@ public class EnumWithDefaultTests
     {
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<EnumWithDefault>(app);
-        var typed = result.Data as global::app.data.@this<MatrixEnum>;
+        var typed = result.Data as global::app.data.@this<global::app.type.choice.@this<MatrixEnum>>;
         await Assert.That(typed!.Value).IsEqualTo(MatrixEnum.A);
     }
 
@@ -64,7 +64,7 @@ public class EnumWithDefaultTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<EnumWithDefault>(app,
             parameters: new[] { ("choice", (object?)"B") });
-        var typed = result.Data as global::app.data.@this<MatrixEnum>;
+        var typed = result.Data as global::app.data.@this<global::app.type.choice.@this<MatrixEnum>>;
         await Assert.That(typed!.Value).IsEqualTo(MatrixEnum.B);
     }
 }

@@ -272,7 +272,7 @@ public class SerializerRegistryTests
         public Task<Data> DeserializeAsync(Stream stream, CancellationToken cancellationToken = default)
             => Task.FromResult(Data.Ok());
 
-        public Task<global::app.data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default)
+        public Task<global::app.data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default) where T : global::app.type.item.@this
             => Task.FromResult(global::app.data.@this<T>.Ok(default!));
 
         public global::app.data.@this<global::app.type.text.@this> Serialize(Data data)
@@ -280,6 +280,6 @@ public class SerializerRegistryTests
 
         public Data Deserialize(string s) => Data.Ok();
 
-        public global::app.data.@this<T> Deserialize<T>(string s) => global::app.data.@this<T>.Ok(default!);
+        public global::app.data.@this<T> Deserialize<T>(string s) where T : global::app.type.item.@this => global::app.data.@this<T>.Ok(default!);
     }
 }

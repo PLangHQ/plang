@@ -46,7 +46,7 @@ public class Ed25519 : ISigning
             Created = now,
             Expires = action.Expires?.Value is { } expiry ? now.Add(expiry) : null,
             Contracts = action.Contracts?.GetValue<List<string>>(),
-            Headers = action.Headers?.Value,
+            Headers = action.Headers?.GetValue<Dictionary<string, object>>(),
             Hash = hash
         };
 
@@ -107,12 +107,12 @@ public class Ed25519 : ISigning
             return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Contract mismatch", "ContractMismatch", 400));
 
         // 6. Header matching
-        if (action.Headers?.Value != null)
+        if (action.Headers != null)
         {
             if (signedData.Headers == null)
                 return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Signed data has no headers but verification expects headers", "HeaderMismatch", 400));
 
-            foreach (var kvp in action.Headers.Value)
+            foreach (var kvp in action.Headers.GetValue<Dictionary<string, object>>()!)
             {
                 if (!signedData.Headers.TryGetValue(kvp.Key, out var signedValue))
                     return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError($"Header mismatch for '{kvp.Key}'", "HeaderMismatch", 400));

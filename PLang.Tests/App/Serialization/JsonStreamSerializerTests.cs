@@ -114,7 +114,7 @@ public class JsonStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Json();
 
-        var result = serializer.Deserialize<string>("\"hello\"").Value!;
+        var result = serializer.Deserialize<global::app.type.text.@this>("\"hello\"").Value!;
 
         await Assert.That(result).IsEqualTo("hello");
     }
@@ -124,7 +124,7 @@ public class JsonStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Json();
 
-        var result = serializer.Deserialize<int>("42").Value!;
+        var result = serializer.Deserialize<global::app.type.number.@this>("42").Value!;
 
         await Assert.That(result).IsEqualTo(42);
     }
@@ -134,8 +134,8 @@ public class JsonStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Json();
 
-        var resultTrue = serializer.Deserialize<bool>("true").Value!;
-        var resultFalse = serializer.Deserialize<bool>("false").Value!;
+        var resultTrue = serializer.Deserialize<global::app.type.@bool.@this>("true").Value!;
+        var resultFalse = serializer.Deserialize<global::app.type.@bool.@this>("false").Value!;
 
         await Assert.That(resultTrue).IsTrue();
         await Assert.That(resultFalse).IsFalse();
@@ -146,7 +146,7 @@ public class JsonStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Json();
 
-        var result = serializer.Deserialize<string>("null").Value!;
+        var result = serializer.Deserialize<global::app.type.text.@this>("null").Value!;
 
         await Assert.That(result).IsNull();
     }
@@ -156,7 +156,7 @@ public class JsonStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Json();
 
-        var result = serializer.Deserialize<string>("").Value!;
+        var result = serializer.Deserialize<global::app.type.text.@this>("").Value!;
 
         await Assert.That(result).IsNull();
     }
@@ -395,7 +395,7 @@ public class JsonStreamSerializerTests
         await Assert.That(result.Error!.Key).IsEqualTo("JsonDeserializeError");
     }
 
-    private class TestClass
+    private class TestClass : global::app.type.item.@this
     {
         public string? Name { get; set; }
         public int? Value { get; set; }

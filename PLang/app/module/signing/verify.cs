@@ -16,7 +16,7 @@ public partial class verify : IContext
     public partial data.@this<global::app.type.list.@this>? Contracts { get; init; }
 
     /// <summary>Expected headers to match against signed headers.</summary>
-    public partial data.@this<Dictionary<string, object>>? Headers { get; init; }
+    public partial data.@this<global::app.type.dict.@this>? Headers { get; init; }
 
     /// <summary>Optional timeout override in milliseconds.</summary>
     public partial data.@this<global::app.type.number.@this>? TimeoutMs { get; init; }

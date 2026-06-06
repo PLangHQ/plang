@@ -11,7 +11,7 @@ public partial class StringNullable : global::app.module.IContext
 [global::app.module.Action("intnullable")]
 public partial class IntNullable : global::app.module.IContext
 {
-    public partial global::app.data.@this<int>? Maybe { get; init; }
+    public partial global::app.data.@this<global::app.type.number.@this>? Maybe { get; init; }
     public Task<global::app.data.@this> Run() =>
         Task.FromResult<global::app.data.@this>(Maybe ?? global::app.data.@this.Null("maybe"));
 }

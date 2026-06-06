@@ -209,7 +209,7 @@ public sealed class OpenAi : ILlm
                 Url = new data.@this<global::app.type.text.@this>("", endpoint),
                 Method = new data.@this<global::app.type.choice.@this<PlangHttpMethod>>("", PlangHttpMethod.POST),
                 Body = new data.@this("", body),
-                Headers = new data.@this<Dictionary<string, object>>("", headers),
+                Headers = new data.@this<global::app.type.dict.@this>("", global::app.type.dict.@this.FromRaw(headers, context)),
                 Unsigned = new data.@this<global::app.type.@bool.@this>("", true),
                 TimeoutInSec = new data.@this<global::app.type.number.@this>("", 120),
                 OnStream = action.OnStream,

@@ -42,10 +42,10 @@ public class ValueConversionHookTests
                 System.Globalization.CultureInfo.GetCultureInfo("de-DE");
 
             var serializer = new global::app.channel.serializer.Text();
-            var dec = serializer.Deserialize<decimal>("3.14").Value;
+            var dec = serializer.Deserialize<global::app.type.number.@this>("3.14").Value;
             await Assert.That(dec).IsEqualTo(3.14m);
 
-            var dbl = serializer.Deserialize<double>("3.14").Value;
+            var dbl = serializer.Deserialize<global::app.type.number.@this>("3.14").Value;
             await Assert.That(dbl).IsEqualTo(3.14d);
         }
         finally

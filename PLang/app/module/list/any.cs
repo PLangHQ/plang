@@ -13,7 +13,7 @@ public partial class Any : IContext
     [IsNotNull]
     public partial data.@this<global::app.type.text.@this> Key { get; init; }
     [IsNotNull]
-    public partial data.@this<condition.Operator> Operator { get; init; }
+    public partial data.@this<global::app.type.choice.@this<condition.Operator>> Operator { get; init; }
     public partial data.@this Value { get; init; }
 
     public async Task<data.@this<global::app.type.@bool.@this>> Run()
@@ -25,7 +25,7 @@ public partial class Any : IContext
         foreach (var (_, item) in data.EnumerateItems())
         {
             var left = item.GetChild(key);
-            if (await Operator.Value!.Evaluate(left, right))
+            if (await ((global::app.module.condition.Operator)Operator.Value!).Evaluate(left, right))
                 return global::app.data.@this<global::app.type.@bool.@this>.Ok(true, app.type.@this.FromName("bool"));
         }
 

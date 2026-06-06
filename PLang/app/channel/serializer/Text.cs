@@ -59,7 +59,7 @@ public sealed class Text : ISerializer
         }
     }
 
-    public async Task<data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default)
+    public async Task<data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default) where T : global::app.type.item.@this
     {
         var result = await DeserializeAsync(stream, cancellationToken);
         if (!result.Success) return global::app.data.@this<T>.From(result);
@@ -78,7 +78,7 @@ public sealed class Text : ISerializer
     public data.@this Deserialize(string s)
         => global::app.data.@this.Ok(s);
 
-    public data.@this<T> Deserialize<T>(string s)
+    public data.@this<T> Deserialize<T>(string s) where T : global::app.type.item.@this
         => global::app.data.@this<T>.Ok(FromText<T>(s));
 
     /// <summary>

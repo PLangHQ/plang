@@ -105,7 +105,7 @@ public class Plng002SystemIoBanTests
             namespace app.module.foo {
                 [app.module.Action]
                 public partial class Handler {
-                    public partial app.data.@this<string> Path { get; init; }
+                    public partial app.data.@this<global::app.type.text.@this> Path { get; init; }
                 }
             }
             """;

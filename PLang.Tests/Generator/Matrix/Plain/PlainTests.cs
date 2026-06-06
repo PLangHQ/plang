@@ -59,7 +59,7 @@ public class IntPlainTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<IntPlain>(app,
             parameters: new[] { ("count", (object?)"42") });
-        var typed = result.Data as global::app.data.@this<int>;
+        var typed = result.Data as global::app.data.@this<global::app.type.number.@this>;
         await Assert.That(typed!.Value).IsEqualTo(42);
     }
 
@@ -69,7 +69,7 @@ public class IntPlainTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<IntPlain>(app,
             parameters: new[] { ("count", (object?)42) });
-        var typed = result.Data as global::app.data.@this<int>;
+        var typed = result.Data as global::app.data.@this<global::app.type.number.@this>;
         await Assert.That(typed!.Value).IsEqualTo(42);
     }
 

@@ -612,7 +612,7 @@ public partial class @this
     /// the target PLang type at runtime, no generic at the call site).
     /// </para>
     /// </summary>
-    internal @this<T> As<T>(actor.context.@this? context = null)
+    internal @this<T> As<T>(actor.context.@this? context = null) where T : global::app.type.item.@this
     {
         context = context ?? _context;
         var raw = Value; // factory-resolved if any; never %var% substituted
@@ -835,7 +835,7 @@ public partial class @this
     private const int ResolveDepthLimit = 32;
     private static readonly AsyncLocal<HashSet<string>?> _resolvingValues = new();
 
-    private @this<T> AsT_Impl<T>(object? raw, actor.context.@this? context)
+    private @this<T> AsT_Impl<T>(object? raw, actor.context.@this? context) where T : global::app.type.item.@this
     {
         // Action-destination carve-out: when T is or contains Action.@this, sub-actions
         // hold raw %var% for deferred resolution at their own dispatch time. Skip the walk
@@ -965,7 +965,7 @@ public partial class @this
     /// Keeps the static-Resolve(string) carve-out for Path-style domain types, then delegates to
     /// WrapAs for identity-preserving wrap + conversion.
     /// </summary>
-    private @this<T> AsT_Convert<T>(object? raw, actor.context.@this? context)
+    private @this<T> AsT_Convert<T>(object? raw, actor.context.@this? context) where T : global::app.type.item.@this
     {
         var staticResolved = TryStaticResolve<T>(raw, context);
         if (staticResolved != null) return staticResolved;
@@ -980,7 +980,7 @@ public partial class @this
     /// through to WrapAs. Shared by AsT_Impl and AsT_Convert so the reflection lookup +
     /// invoke + wrap-or-error rule lives in one place.
     /// </summary>
-    private @this<T>? TryStaticResolve<T>(object? raw, actor.context.@this? context)
+    private @this<T>? TryStaticResolve<T>(object? raw, actor.context.@this? context) where T : global::app.type.item.@this
     {
         if (raw is not string srStr || context == null || raw is T) return null;
         var resolveMethod = ResolveMethodCache.GetOrAdd(typeof(T), t =>
@@ -1005,6 +1005,7 @@ public partial class @this
     /// </summary>
     private static (object? value, @this<T>? error) InvokeResolve<T>(
         System.Reflection.MethodInfo resolveMethod, string raw, actor.context.@this context)
+        where T : global::app.type.item.@this
     {
         try
         {
@@ -1035,7 +1036,7 @@ public partial class @this
     /// Caller passes the substituted/walked `value` separately because raw value is what we wrap,
     /// while `this` is the canonical Data whose Name + Properties + event lists we propagate.
     /// </summary>
-    private @this<T> WrapAs<T>(object? value, actor.context.@this? context)
+    private @this<T> WrapAs<T>(object? value, actor.context.@this? context) where T : global::app.type.item.@this
     {
         // Rule 1 — same-type fast path. If `this` is already Data<T> AND its raw value is T,
         // return `this`. No allocation, full identity (Name, Properties, events all native).
@@ -1081,7 +1082,7 @@ public partial class @this
     /// inherited; Properties + the three event lists are aliased by reference (shared list refs
     /// so subscribers and metadata mutations are visible through both source and view).
     /// </summary>
-    private @this<T> ConstructWrap<T>(T? value, actor.context.@this? context)
+    private @this<T> ConstructWrap<T>(T? value, actor.context.@this? context) where T : global::app.type.item.@this
     {
         var wrapped = new @this<T>(Name, value, _type, Parent) { Context = context };
         wrapped.Properties = Properties;
@@ -1470,6 +1471,7 @@ public partial class @this
 // (its CanConvert/Read handle the typed wrap) — same one-shape-everywhere guarantee.
 [System.Text.Json.Serialization.JsonConverter(typeof(WireLocal))]
 public class @this<T> : @this
+    where T : global::app.type.item.@this
 {
     public new T? Value
     {

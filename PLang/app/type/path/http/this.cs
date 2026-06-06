@@ -438,11 +438,11 @@ public sealed partial class @this : global::app.type.path.@this
             {
                 Context = Context,
                 Data = new data.@this("", body ?? ""),
-                Headers = new data.@this<Dictionary<string, object>>("", new Dictionary<string, object>
+                Headers = new data.@this<global::app.type.dict.@this>("", global::app.type.dict.@this.FromRaw(new Dictionary<string, object>
                 {
                     ["url"] = _uri.ToString(),
                     ["method"] = method,
-                }),
+                }, Context)),
             };
             var signResult = await Context.App.RunAction<module.signing.sign>(sign, Context);
             if (signResult.Success && signResult.Signature != null)
