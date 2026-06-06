@@ -195,9 +195,8 @@ public sealed class Default : IHttp
 
         var headers = MergeHeaders(action.Headers?.Value, config);
 
-        var contentResult = await ResolveUploadContentAsync(action, app, encoding);
-        if (!contentResult.Success) return contentResult;
-        var httpContent = contentResult.Value!;
+        var (httpContent, contentErr) = await ResolveUploadContentAsync(action, app, encoding);
+        if (contentErr != null) return global::app.data.@this.FromError(contentErr);
 
         var httpMethod = ToSystemMethod(action.Method.Value);
         var requestMessage = new HttpRequestMessage(httpMethod, resolvedUrl) { Content = httpContent };
@@ -980,7 +979,9 @@ public sealed class Default : IHttp
 
     // --- Upload content resolution ---
 
-    private static async Task<data.@this<HttpContent>> ResolveUploadContentAsync(
+    // HttpContent is a transport artifact, never a PLang value — it rides as a plain
+    // (HttpContent?, error) tuple, not Data<HttpContent>.
+    private static async Task<(HttpContent? Content, global::app.error.IError? Error)> ResolveUploadContentAsync(
         upload action, global::app.@this app, string encoding)
     {
         var content = action.Content.Value;
@@ -990,12 +991,12 @@ public sealed class Default : IHttp
             return contentAs switch
             {
                 ContentAs.File => await CreateFileContentAsync(app, context, content!.ToString()!),
-                ContentAs.Base64 => data.@this<HttpContent>.Ok(CreateBase64Content(content!.ToString()!)),
+                ContentAs.Base64 => (CreateBase64Content(content!.ToString()!), (global::app.error.IError?)null),
                 ContentAs.Form => await CreateFormContentAsync(app, context, content!),
-                ContentAs.Text => data.@this<HttpContent>.Ok(new StringContent(
+                ContentAs.Text => (new StringContent(
                     content is string s ? s : JsonSerializer.Serialize(content),
-                    Encoding.GetEncoding(encoding))),
-                _ => data.@this<HttpContent>.Ok(new StringContent(content!.ToString()!, Encoding.GetEncoding(encoding)))
+                    Encoding.GetEncoding(encoding)), (global::app.error.IError?)null),
+                _ => (new StringContent(content!.ToString()!, Encoding.GetEncoding(encoding)), (global::app.error.IError?)null)
             };
         }
 
@@ -1017,30 +1018,30 @@ public sealed class Default : IHttp
             if (exists.Success && exists.Value == true)
                 return await CreateFileContentAsync(app, context, str);
 
-            return data.@this<HttpContent>.Ok(new StringContent(str, Encoding.GetEncoding(encoding)));
+            return (new StringContent(str, Encoding.GetEncoding(encoding)), null);
         }
 
-        return data.@this<HttpContent>.Ok(new StringContent(
+        return (new StringContent(
             JsonSerializer.Serialize(content),
             Encoding.GetEncoding(encoding),
-            "application/json"));
+            "application/json"), null);
     }
 
     // internal so HttpStaticFileDenialTests can invoke the handler's read
     // path directly (driving the full upload action requires a real HTTP
     // endpoint).
-    internal static async Task<data.@this<HttpContent>> CreateFileContentAsync(global::app.@this app, actor.context.@this context, string path)
+    internal static async Task<(HttpContent? Content, global::app.error.IError? Error)> CreateFileContentAsync(global::app.@this app, actor.context.@this context, string path)
     {
         // Gated read via path verb. AuthGate(Read) fires inside ReadBytes;
         // out-of-root paths the actor hasn't granted bubble up as Fail.
         var resolved = global::app.type.path.@this.Resolve(path, context);
         var read = await resolved.ReadBytes();
         if (!read.Success || read.Value == null)
-            return data.@this<HttpContent>.FromError(read.Error
+            return (null, read.Error
                 ?? new ServiceError($"Could not read file: {path}", "FileReadError", 500));
         var content = new ByteArrayContent(read.Value);
         content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-        return data.@this<HttpContent>.Ok(content);
+        return (content, null);
     }
 
     private static HttpContent CreateBase64Content(string base64)
@@ -1051,7 +1052,7 @@ public sealed class Default : IHttp
         return content;
     }
 
-    private static async Task<data.@this<HttpContent>> CreateFormContentAsync(global::app.@this app, actor.context.@this context, object content)
+    private static async Task<(HttpContent? Content, global::app.error.IError? Error)> CreateFormContentAsync(global::app.@this app, actor.context.@this context, object content)
     {
         var form = new MultipartFormDataContent();
         Dictionary<string, object> fields;
@@ -1078,7 +1079,7 @@ public sealed class Default : IHttp
                 var fp = global::app.type.path.@this.Resolve(value[1..], context);
                 var read = await fp.ReadBytes();
                 if (!read.Success || read.Value == null)
-                    return data.@this<HttpContent>.FromError(read.Error
+                    return (null, read.Error
                         ?? new ServiceError($"Could not read form file: {value[1..]}", "FileReadError", 500));
                 var fileContent = new ByteArrayContent(read.Value);
                 fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
@@ -1090,7 +1091,7 @@ public sealed class Default : IHttp
             }
         }
 
-        return data.@this<HttpContent>.Ok(form);
+        return (form, null);
     }
 
     // --- Static utilities ---

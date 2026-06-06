@@ -26,19 +26,18 @@ public sealed partial class @this
     /// "execute" prompt distinct from "read", so granting read access to a
     /// folder doesn't accidentally permit code loading from it.
     /// </summary>
-    public override async Task<data.@this<System.Reflection.Assembly>> LoadAssemblyAsync()
+    public override async Task<data.@this> LoadAssemblyAsync()
     {
         if (await AuthGate(new Verb { Execute = new global::app.type.path.permission.verb.Execute() }) is { } early)
-            return data.@this<System.Reflection.Assembly>.From(early);
+            return early;
         try
         {
             var asm = System.Reflection.Assembly.LoadFrom(Absolute);
-            return data.@this<System.Reflection.Assembly>.Ok(asm);
+            return data.@this.Ok((object)asm);
         }
         catch (System.Exception ex) when (ex is System.IO.FileNotFoundException or System.IO.FileLoadException or System.BadImageFormatException)
         {
-            return data.@this<System.Reflection.Assembly>.FromError(
-                new global::app.error.ServiceError($"Failed to load assembly: {ex.Message}", "AssemblyLoadFailed", 500));
+            return data.@this.FromError(new global::app.error.ServiceError($"Failed to load assembly: {ex.Message}", "AssemblyLoadFailed", 500));
         }
     }
 

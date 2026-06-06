@@ -49,7 +49,7 @@ public class HttpStaticFileDenialTests
         try
         {
             var result = await global::app.module.http.code.Default.CreateFileContentAsync(app, app.User.Context, outOfRoot);
-            denied = !result.Success;
+            denied = result.Error != null;
         }
         catch (System.IO.IOException) { denied = true; }
         await Assert.That(denied).IsTrue();
@@ -63,8 +63,8 @@ public class HttpStaticFileDenialTests
         var file = System.IO.Path.Combine(root, "public.txt");
         System.IO.File.WriteAllText(file, "hello");
         var result = await global::app.module.http.code.Default.CreateFileContentAsync(app, app.User.Context, file);
-        await result.IsSuccess();
-        var bytes = await result.Value!.ReadAsByteArrayAsync();
+        await Assert.That(result.Error).IsNull();
+        var bytes = await result.Content!.ReadAsByteArrayAsync();
         await Assert.That(System.Text.Encoding.UTF8.GetString(bytes)).IsEqualTo("hello");
     }
 }

@@ -73,10 +73,12 @@ public abstract partial class @this
     /// — distinct from Read (Unix r/w/x model: reading a DLL is not permission
     /// to load it). FilePath implements; non-filesystem schemes return Fail.
     /// </summary>
-    public virtual Task<data.@this<System.Reflection.Assembly>> LoadAssemblyAsync() =>
-        Task.FromResult(data.@this<System.Reflection.Assembly>.FromError(
-            new error.ServiceError(
-                $"Scheme '{Scheme}' does not support assembly loading.", "NotSupported", 400)));
+    // Assembly is a CLR runtime artifact, not a PLang value — but it rides in a BARE
+    // Data (no generic T → satisfies `where T : item`) so the AuthGate ask/exit bubble
+    // (a Data Type signal) still propagates. .Value holds the Assembly.
+    public virtual Task<data.@this> LoadAssemblyAsync() =>
+        Task.FromResult(data.@this.FromError(
+            new error.ServiceError($"Scheme '{Scheme}' does not support assembly loading.", "NotSupported", 400)));
 
     // Content-shape verbs: when a third-party API needs the file's content
     // in a specific shape (base64, data URI, parsed JSON, ...), the verb

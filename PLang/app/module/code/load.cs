@@ -31,7 +31,7 @@ public partial class load : IContext
         var loadResult = await dllPath.LoadAssemblyAsync();
         if (!loadResult.Success)
             return Error(new ActionError(loadResult.Error?.Message ?? "Load failed", "LoadError", 500));
-        var assembly = loadResult.Value!;
+        var assembly = (System.Reflection.Assembly)loadResult.Value!;
 
         // plang-types Stage 7: scan the same assembly for [PlangType] classes
         // and ITypeRenderer implementations. The type-system additions outrank
