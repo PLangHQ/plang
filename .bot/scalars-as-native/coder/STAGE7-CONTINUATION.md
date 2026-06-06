@@ -248,3 +248,34 @@ quoted-expected — inspect goals); the `set %x%=<bool>` wrapping inconsistency 
 
 NEXT: `cd Tests && plang build` (rebuild stale duplicates) → re-run → the count should
 jump; then the scalar-swap constraint cascade with a trustworthy runtime backstop.
+
+## PLang runtime — FINAL this-session status: 234 → 265 / 309 pass
+
+All clear born-native runtime regressions FIXED (the count moved 234→265, +31):
+- conversion seams (number/duration/assert unwrap item)
+- serialization (text/plain bare; file save bare, no channel newline)
+- actor Convert-arm (name→actor)
+- condition Contains/IsEmpty + assert Compare/AreEqual/ContainsValue unwrap text
+- **ScalarComparer unwraps item at the leaf** — the big one: a raw bool vs bool.@this
+  (variable.set bool inconsistency) compared by reference → false. Unwrapping fixed the
+  whole condition/test-meta cluster (252→263).
+- build-helper param reads (file.read/llm.query/http Build) unwrap text via GetValue<string>.
+
+**Remaining 6 (deeper / separate subsystem — NOT clean born-native runtime bugs):**
+- **NavigationOnTypeUnknown** (1): `%x.port%` on a text JSON-string — should navigation
+  auto-narrow text→dict or error+ask-as-type? A navigation-SEMANTICS decision (ties to the
+  per-path-lazy-narrow todo). Needs Ingi's call.
+- **TypedReturns** (5: csv/json/txt/hint/build-method): build-time `→ returns` inference.
+  Root: `file.read.Build` read the Path param via `?.Value as string` (born-native null) —
+  FIXED to GetValue<string>. BUT the test re-builds via `builder.goals` which serves the
+  STALE LLM cache (Tests/.db, has the old "object" stamp), and a cache:false rebuild gives
+  a different (typeless) plan (LLM non-determinism). So: clear the relevant llmcache rows +
+  rebuild deterministically to validate, OR these resolve once the object→item fold (the
+  constraint cascade) lands. Build-inference + cache/non-determinism, not a runtime seam.
+
+**Variable.set bool inconsistency** (minor, noted): `set %x% = true` → bool.@this but
+`set %x% = false` sometimes → raw Boolean. ScalarComparer-unwrap masks it for compares;
+the root (variable.set always wrap bool) is a small follow-up.
+
+Net: C# 100% green; PLang 265/309 (6 deeper + 35 ScalarsAsNative-Task6 stubs + 2 skip).
+Born-native runtime is solid. Next: the where-T:item cascade (foundations done) + Task 6.
