@@ -144,7 +144,7 @@ The coverage rule reads as *"if the request needs feature X, the grant must have
 
 **The rules, tightly:**
 
-1. **Folders are singular** — `Permission/`, not `Permissions/`. The doubled type name (`…Permission.Permission`) is the accepted cost.
+1. **Folders are singular** — `Permission/`, not `Permissions/`.
 2. **A concept with N configurable variants is one folder.** Each variant is one file owning its record (sensible defaults) *and* its own `Covers(other)`.
 3. **Variants are always-present, non-nullable properties on the parent `@this`.** Narrowing is a record copy with explicit `false`; never a flag enum with parallel option records, never nullable variants as granted/not-granted signaling.
 4. **Managers compose, they don't implement.**
