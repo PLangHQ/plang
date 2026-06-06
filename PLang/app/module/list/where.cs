@@ -22,7 +22,7 @@ public partial class Where : IContext
     [IsNotNull]
     public partial data.@this<global::app.type.text.@this> Field { get; init; }
     [IsNotNull]
-    public partial data.@this<Operator> Operator { get; init; }
+    public partial data.@this<global::app.type.choice.@this<Operator>> Operator { get; init; }
     /// <summary>The right-hand comparison value of the predicate.</summary>
     public partial data.@this Value { get; init; }
 
@@ -30,7 +30,7 @@ public partial class Where : IContext
     {
         var subject = Context.Variable.Get(ListName.Value);
         var field = Field.Value!;
-        var op = Operator.Value;
+        Operator op = Operator.Value;
 
         if (subject.Value is app.type.list.@this list)
         {

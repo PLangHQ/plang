@@ -31,7 +31,7 @@ public class ConditionHandlerTests : IDisposable
     [Test]
     public async Task IfTrue_NoGoals_ReturnsSuccessWithTrue()
     {
-        var action = new If { Context = _app.User.Context, Left = Data.Ok(true), Operator = new Operator("=="), Right = Data.Ok(true) };
+        var action = new If { Context = _app.User.Context, Left = Data.Ok(true), Operator = (global::app.type.choice.@this<Operator>)new Operator("=="), Right = Data.Ok(true) };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -41,7 +41,7 @@ public class ConditionHandlerTests : IDisposable
     [Test]
     public async Task IfFalse_NoGoals_ReturnsSuccessWithFalse()
     {
-        var action = new If { Context = _app.User.Context, Left = Data.Ok(false), Operator = new Operator("=="), Right = Data.Ok(true) };
+        var action = new If { Context = _app.User.Context, Left = Data.Ok(false), Operator = (global::app.type.choice.@this<Operator>)new Operator("=="), Right = Data.Ok(true) };
         var result = await action.Run();
 
         await result.IsSuccess();

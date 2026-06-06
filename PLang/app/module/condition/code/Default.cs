@@ -26,13 +26,13 @@ public sealed class Default : IEvaluator
     /// identical semantics, and the guard + try/catch is identical.
     /// </summary>
     private static async Task<data.@this<global::app.type.@bool.@this>> EvaluateOperator(
-        data.@this<Operator> operatorData, data.@this? left, data.@this? right)
+        data.@this<global::app.type.choice.@this<Operator>> operatorData, data.@this? left, data.@this? right)
     {
         if (!operatorData.Success || operatorData.Value == null)
             return global::app.data.@this<global::app.type.@bool.@this>.From(operatorData);
         try
         {
-            bool result = await operatorData.Value.Evaluate(left, right);
+            Operator op = operatorData.Value; bool result = await op.Evaluate(left, right);
             return global::app.data.@this<global::app.type.@bool.@this>.Ok(result);
         }
         catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)

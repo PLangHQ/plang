@@ -28,7 +28,7 @@ public class CompareHandlerTests : IDisposable
     [Test]
     public async Task Run_GreaterThan_ReturnsDataWithTrue()
     {
-        var action = new Compare { Context = _app.User.Context, Left = Data.Ok(10), Operator = new Operator(">"), Right = Data.Ok(5) };
+        var action = new Compare { Context = _app.User.Context, Left = Data.Ok(10), Operator = (global::app.type.choice.@this<Operator>)new Operator(">"), Right = Data.Ok(5) };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -38,7 +38,7 @@ public class CompareHandlerTests : IDisposable
     [Test]
     public async Task Run_GreaterThan_Fails_ReturnsDataWithFalse()
     {
-        var action = new Compare { Context = _app.User.Context, Left = Data.Ok(3), Operator = new Operator(">"), Right = Data.Ok(5) };
+        var action = new Compare { Context = _app.User.Context, Left = Data.Ok(3), Operator = (global::app.type.choice.@this<Operator>)new Operator(">"), Right = Data.Ok(5) };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -48,7 +48,7 @@ public class CompareHandlerTests : IDisposable
     [Test]
     public async Task Run_ResultValueIsBool()
     {
-        var action = new Compare { Context = _app.User.Context, Left = Data.Ok(5), Operator = new Operator("=="), Right = Data.Ok(5) };
+        var action = new Compare { Context = _app.User.Context, Left = Data.Ok(5), Operator = (global::app.type.choice.@this<Operator>)new Operator("=="), Right = Data.Ok(5) };
         var result = await action.Run();
 
         await Assert.That(result.Value is global::app.type.@bool.@this).IsTrue();
@@ -65,7 +65,7 @@ public class CompareHandlerTests : IDisposable
     [Test]
     public async Task Run_NonComparableType_ReturnsEvaluationError()
     {
-        var action = new Compare { Context = _app.User.Context, Left = Data.Ok(new object()), Operator = new Operator(">"), Right = Data.Ok(5) };
+        var action = new Compare { Context = _app.User.Context, Left = Data.Ok(new object()), Operator = (global::app.type.choice.@this<Operator>)new Operator(">"), Right = Data.Ok(5) };
         var result = await action.Run();
 
         await result.IsFailure();

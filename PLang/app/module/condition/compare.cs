@@ -7,7 +7,7 @@ namespace app.module.condition;
 public partial class Compare : IContext
 {
     public partial data.@this? Left { get; init; }
-    public partial data.@this<Operator> Operator { get; init; }
+    public partial data.@this<global::app.type.choice.@this<Operator>> Operator { get; init; }
     public partial data.@this? Right { get; init; }
 
     [Code]

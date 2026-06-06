@@ -24,7 +24,7 @@ public class Stage5_ListDictOpsTests
 
     private static Where WhereAction(global::app.actor.context.@this ctx, string var, string field, string op, object? value)
         => new() { Context = ctx, ListName = new app.variable.@this(var), Field = new global::app.data.@this<global::app.type.text.@this>("", field),
-                   Operator = new global::app.data.@this<Op>("", new Op(op)), Value = D(value) };
+                   Operator = new global::app.data.@this<global::app.type.choice.@this<Op>>("", new Op(op)), Value = D(value) };
 
     [Test]
     public async Task WhereOnList_FiltersByPredicate()

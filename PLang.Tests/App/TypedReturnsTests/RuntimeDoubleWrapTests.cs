@@ -134,7 +134,7 @@ public class RuntimeDoubleWrapTests
             Context = context,
             ListName = new @this("users"),
             Field = new global::app.data.@this<global::app.type.text.@this>("", "age"),
-            Operator = new global::app.data.@this<global::app.module.condition.Operator>("", new global::app.module.condition.Operator(">")),
+            Operator = new global::app.data.@this<global::app.type.choice.@this<global::app.module.condition.Operator>>("", new global::app.module.condition.Operator(">")),
             Value = new global::app.data.@this("", 20L),
         };
         var result = await action.Run();
