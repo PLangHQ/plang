@@ -497,3 +497,50 @@ approach for BOTH params and returns. Saved to memory: project_generic_list_t.md
 
 GOOD note: the identity LoadAllAsync→tuple de-Data (uncommitted, reverted) was correct and
 independent — redo it during the refactor (internal helper, consumed as List<Identity>).
+
+## FLIP STATUS — proven in production; test redesign remains (overnight session)
+
+`where T : item` is the goal. This session drove it to: **PRODUCTION COMPILES with the
+constraint ON** (PlangConsole 0 errors). The full flip lives on branch **`scalars-flip-wip`**
+(commit 1c8f080e9, 71 files). `scalars-as-native` is kept GREEN (both suites) at the
+pre-flip-constraint commit (42ed9fa51) — the constraint is NOT on it.
+
+WHY split: my mechanical test-sweeps to adapt PLang.Tests CORRUPTED the As<T>/Data<T>-
+resolution suites (e.g. `new Data<list<number>>("nums", aList<int>)`). Those suites test the
+As<T> mechanism with RAW T (int/string/Guid/IEnumerable/DateTime) — which is now ITEM-ONLY.
+That's a DELIBERATE test redesign, not a sweep, and rushing it risks wrong-green. So I
+preserved the proven flip on a branch rather than commit a broken-tests or wrong-green state.
+
+### What the flip needed (all DONE on scalars-flip-wip — the recipe):
+1. `data.@this<T>` → add `where T : item`.
+2. Thread `where T : item` onto every generic that builds @this<T>: As<T>/WrapAs<T>/
+   ConstructWrap<T>/AsT_Impl/AsT_Convert/TryStaticResolve/InvokeResolve/From (data),
+   serializer Deserialize<T>/DeserializeAsync<T> (interface + Json/Text/plang/list impls),
+   channel.list ReadChannelAsync<T>, context.GetOrCreate<T>, App.RunAction<TAction,TResult>,
+   AssertSnapshot.WithVariables<T>, test D<T>.  (GetValue<T> stays UNCONSTRAINED — raw projection.)
+3. Off-the-constraint (not items, can't be Data<T>):
+   - code.Get<T> (providers) → BARE Data (.Value = provider; callers .Value cast). [Lower test
+     churn than a tuple — tests use .Success/.IsSuccess().]
+   - plang serializer Load<T:data> → (T?, IError?) tuple (store load: result IS a Data).
+   - variable.set Type slot (type entity) → bare Data; handler casts .Value to type.@this.
+4. Stragglers I'd missed: enums Trigger/ContentAs (event.on/http.upload) + Operator
+   (list.any) → choice<…>; LlmMessage + tester.test → :item; Headers Dictionary<string,object>
+   slots → Data<dict> (+ dict.FromRaw helper); reads via GetValue<Dictionary>.
+
+### REMAINING (the only thing between scalars-flip-wip and merge):
+- **Rewrite the As<T>/Data<T>-resolution test suites** for born-native:
+  `AsTIdentityTests`, `DataAsTResolutionTests`, the Generator/Matrix fixtures, serializer
+  stream tests, + scattered value-assertions. Rules:
+  - `As<rawScalar>` testing a wrapper slot → `As<number>/<text>/<@bool>` and assert the
+    wrapper (`.Value.ToString()` / cast).
+  - `As<raw>` testing RAW PROJECTION (int/Guid/IEnumerable/DateTime — no item wrapper) →
+    `GetValue<raw>()` (returns the raw value directly; drop the `.Value`/`IsTypeOf<Data<raw>>`).
+  - Construction `new Data<wrapper>("n", rawValue)` → the raw value must be the wrapper
+    (e.g. List<int> → list<number> via list.@this<number>.Of, or just test list<number>).
+  - `code.Get<X>()` callers: `.Value` is now object → cast `.Value as X` (bare Data).
+- Then `git checkout scalars-as-native && git merge scalars-flip-wip` (or cherry-pick), run
+  both suites, fix residual runtime failures, commit, push.
+
+Everything else in the cascade (scalars, choice, collections via generic list<T>, de-Data) is
+DONE and committed on scalars-as-native (green). The flip is the last mile; it COMPILES in
+production — only the As<T> test suite needs the deliberate (non-mechanical) redesign.
