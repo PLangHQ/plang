@@ -26,7 +26,11 @@ public sealed class Text : ISerializer
         try
         {
             var value = data.Value;
-            if (value != null && !AppTypes.IsPrimitive(value.GetType()))
+            // A scalar wrapper (text/number/bool/…) is a text leaf — render it bare
+            // via ToString (born-native: it's no longer a CLR primitive but IS a leaf).
+            // Only genuine containers/domain objects fall back to JSON.
+            if (value != null && !AppTypes.IsPrimitive(value.GetType())
+                && value is not global::app.type.item.@this { IsLeaf: true })
                 return await _jsonFallback.SerializeAsync(stream, data, cancellationToken);
 
             var bytes = _encoding.GetBytes((value?.ToString() ?? "") + Environment.NewLine);
@@ -65,7 +69,8 @@ public sealed class Text : ISerializer
     public data.@this<string> Serialize(data.@this data)
     {
         var value = data.Value;
-        if (value == null || AppTypes.IsPrimitive(value.GetType()))
+        if (value == null || AppTypes.IsPrimitive(value.GetType())
+            || value is global::app.type.item.@this { IsLeaf: true })
             return global::app.data.@this<string>.Ok(value?.ToString() ?? "");
         return _jsonFallback.Serialize(data);
     }
