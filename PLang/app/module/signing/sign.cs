@@ -14,7 +14,7 @@ public partial class sign : global::app.type.item.@this, IContext
     public partial data.@this? Data { get; init; }
 
     /// <summary>Contracts for this signature. Default: ["C0"].</summary>
-    public partial data.@this<List<string>>? Contracts { get; init; }
+    public partial data.@this<global::app.type.list.@this>? Contracts { get; init; }
 
     /// <summary>Optional headers to include in the signature object.</summary>
     public partial data.@this<Dictionary<string, object>>? Headers { get; init; }

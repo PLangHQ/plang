@@ -26,7 +26,7 @@ public class Default : IBuilder
         // Optional filter: restrict the catalog to the named module.action
         // entries. The Compile step passes the planner's action set so the
         // prompt carries only the relevant rows. Null/empty → full catalog.
-        var filter = action.Actions?.Value;
+        var filter = action.Actions?.GetValue<List<string>>();
         if (filter is { Count: > 0 })
         {
             var wanted = new HashSet<string>(filter, StringComparer.OrdinalIgnoreCase);
@@ -56,7 +56,7 @@ public class Default : IBuilder
         // referenced by the named module.action set. Primitive types and the
         // entries renderer (TypeSchemas/TypeNames) all stay intact. Empty/null
         // filter → full catalog (back-compat).
-        var filter = action.Actions?.Value;
+        var filter = action.Actions?.GetValue<List<string>>();
         if (filter is { Count: > 0 })
         {
             var allTypeNames = new HashSet<string>(
@@ -347,7 +347,7 @@ public class Default : IBuilder
                 $"What we got back: {planDetail}",
                 "BuilderPlannerFailed", 400));
         }
-        var input = action.Actions.Value ?? new List<string>();
+        var input = action.Actions.GetValue<List<string>>() ?? new List<string>();
         var modules = action.Context.App.Module;
 
         var result = new List<string>();

@@ -148,7 +148,7 @@ public class GetActionsTests
         var action = new GetActions
         {
             Context = _app.User.Context,
-            Actions = new global::app.data.@this<List<string>>("", new List<string> { "file.read", "file.save" })
+            Actions = new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(new List<string> { "file.read", "file.save" }, _app.User.Context))
         };
         var result = await _app.RunAction(action, _app.User.Context);
 
@@ -173,7 +173,7 @@ public class GetActionsTests
         var action = new GetActions
         {
             Context = _app.User.Context,
-            Actions = new global::app.data.@this<List<string>>("", new List<string>())
+            Actions = new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(new List<string>(), _app.User.Context))
         };
         var result = await _app.RunAction(action, _app.User.Context);
 
@@ -189,7 +189,7 @@ public class GetActionsTests
         var action = new GetActions
         {
             Context = _app.User.Context,
-            Actions = new global::app.data.@this<List<string>>("", new List<string> { "nonexistent.action" })
+            Actions = new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(new List<string> { "nonexistent.action" }, _app.User.Context))
         };
         var result = await _app.RunAction(action, _app.User.Context);
 
@@ -205,7 +205,7 @@ public class GetActionsTests
         var action = new GetActions
         {
             Context = _app.User.Context,
-            Actions = new global::app.data.@this<List<string>>("", new List<string> { "File.Read", "FILE.SAVE" })
+            Actions = new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(new List<string> { "File.Read", "FILE.SAVE" }, _app.User.Context))
         };
         var result = await _app.RunAction(action, _app.User.Context);
 

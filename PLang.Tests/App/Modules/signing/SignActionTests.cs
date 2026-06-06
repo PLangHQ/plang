@@ -48,7 +48,7 @@ public class SignActionTests
         {
             Context = Ctx,
             Data = new Data("", data),
-            Contracts = contracts,
+            Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(contracts, Ctx)),
             Expires = expires.HasValue ? (global::app.type.duration.@this)expires.Value : null,
             Headers = headers
         };

@@ -156,7 +156,7 @@ public class SigningSerializationTests
             {
                 Context = engine.User.Context,
                 Data = signedData,
-                Contracts = new List<string> { "C0" }
+                Contracts = new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(new List<string> { "C0" }, engine.User.Context))
             };
             var result = await action.Run();
             await result.IsFailure();

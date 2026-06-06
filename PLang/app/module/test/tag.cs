@@ -12,12 +12,12 @@ namespace app.module.test;
 [Action("tag")]
 public partial class Tag : IContext
 {
-    public partial data.@this<string[]> Tags { get; init; }
+    public partial data.@this<global::app.type.list.@this> Tags { get; init; }
 
     public Task<data.@this> Run()
     {
         var currentTest = Context.App!.Tester.CurrentTest;
-        if (currentTest != null && Tags.Value is { } tags)
+        if (currentTest != null && Tags?.GetValue<string[]>() is { } tags)
         {
             foreach (var tag in tags)
                 if (!string.IsNullOrWhiteSpace(tag))

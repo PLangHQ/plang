@@ -37,7 +37,7 @@ public class TagActionTests
         var action = new Tag
         {
             Context = _app.User.Context,
-            Tags = new global::app.data.@this<string[]>("Tags", new[] { "http", "fast" })
+            Tags = new global::app.data.@this<global::app.type.list.@this>("Tags", global::app.type.list.@this.FromRaw(new[] { "http", "fast" }, _app.User.Context))
         };
         var result = await action.Run();
 
@@ -58,7 +58,7 @@ public class TagActionTests
         var action = new Tag
         {
             Context = _app.User.Context,
-            Tags = new global::app.data.@this<string[]>("Tags", new[] { "t1" })
+            Tags = new global::app.data.@this<global::app.type.list.@this>("Tags", global::app.type.list.@this.FromRaw(new[] { "t1" }, _app.User.Context))
         };
         var result = await action.Run();
 
@@ -78,7 +78,7 @@ public class TagActionTests
         var action = new Tag
         {
             Context = _app.User.Context,
-            Tags = new global::app.data.@this<string[]>("Tags", new[] { "ignored" })
+            Tags = new global::app.data.@this<global::app.type.list.@this>("Tags", global::app.type.list.@this.FromRaw(new[] { "ignored" }, _app.User.Context))
         };
         var result = await action.Run();
 
@@ -97,17 +97,17 @@ public class TagActionTests
         await new Tag
         {
             Context = _app.User.Context,
-            Tags = new global::app.data.@this<string[]>("Tags", new[] { "http" })
+            Tags = new global::app.data.@this<global::app.type.list.@this>("Tags", global::app.type.list.@this.FromRaw(new[] { "http" }, _app.User.Context))
         }.Run();
         await new Tag
         {
             Context = _app.User.Context,
-            Tags = new global::app.data.@this<string[]>("Tags", new[] { "fast", "slow" })
+            Tags = new global::app.data.@this<global::app.type.list.@this>("Tags", global::app.type.list.@this.FromRaw(new[] { "fast", "slow" }, _app.User.Context))
         }.Run();
         await new Tag
         {
             Context = _app.User.Context,
-            Tags = new global::app.data.@this<string[]>("Tags", new[] { "http" }) // duplicate
+            Tags = new global::app.data.@this<global::app.type.list.@this>("Tags", global::app.type.list.@this.FromRaw(new[] { "http" }, _app.User.Context)) // duplicate
         }.Run();
 
         await Assert.That(_app.Tester.CurrentTest.UserTags.Count).IsEqualTo(3);

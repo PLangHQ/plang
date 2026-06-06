@@ -45,7 +45,7 @@ public class Ed25519 : ISigning
             Nonce = nonce,
             Created = now,
             Expires = action.Expires?.Value is { } expiry ? now.Add(expiry) : null,
-            Contracts = action.Contracts?.Value,
+            Contracts = action.Contracts?.GetValue<List<string>>(),
             Headers = action.Headers?.Value,
             Hash = hash
         };
@@ -103,7 +103,7 @@ public class Ed25519 : ISigning
         }
 
         // 5. Contract matching
-        if (!ContractsMatch(signedData.Contracts, action.Contracts?.Value))
+        if (!ContractsMatch(signedData.Contracts, action.Contracts?.GetValue<List<string>>()))
             return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Contract mismatch", "ContractMismatch", 400));
 
         // 6. Header matching
