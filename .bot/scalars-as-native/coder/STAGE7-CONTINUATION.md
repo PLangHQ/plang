@@ -220,3 +220,31 @@ false failures. THEN the scalar-swap constraint cascade (separate, documented ab
 
 Architect's ordering still holds: get these green + trustworthy BEFORE the scalar-swap
 cascade (the compiler-blind body-sweep needs this backstop). C# suite stays 100% green.
+
+## ROOT-CAUSE NAILED: the condition cluster is STALE .pr, not a born-native bug
+
+Deep-traced ConditionSubStepsTrue (env-var/throw probes through if.cs → steps loop →
+assert). Finding: the born-native condition CODE is correct — the current .pr copy
+evaluates `if %flag%` (flag=true) to res=True and runs the children. The FAILING copy
+is a DUPLICATE test tree (`Tests/Condition/*` alongside `Tests/Modules/Condition/*`)
+whose .pr is STALE OLD FORMAT:
+  - stale: `Operator type="string"`, `defaults: null`
+  - current: `Operator type="operator"`, `defaults:[{negate,false}]`
+The stale .pr evaluates the condition false → children skipped → assert fails. NOT a
+code regression. (`set %flag%=false` also showed an inconsistency: sometimes raw
+Boolean, sometimes bool.@this — a minor variable.set-bool wrapping gap, separate.)
+
+**So the PLang "regressions" are mostly STALE/DUPLICATE .pr** (condition cluster,
+TestDiscover, TestTag, etc. — old-format .pr in `Tests/Condition/*` and other pre-
+restructure trees). The architect's PREREQUISITE was exactly right: **rebuild stale
+.pr FIRST** (`plang build`, LLM). Many will go green on rebuild — they are not
+born-native code bugs. The genuinely-code born-native bugs (conversion/serialization/
+save-newline/actor/assert seams) are ALL FIXED (234→252).
+
+**Revised remaining (after a stale rebuild, est.):** TypedReturns build-inference (5,
+separate subsystem — object vs json/csv, needs the object→item fold or is pre-existing);
+a couple edge cases (NavigationOnTypeUnknown over-eager true; AssertComplete/ErrorOrdering
+quoted-expected — inspect goals); the `set %x%=<bool>` wrapping inconsistency (minor).
+
+NEXT: `cd Tests && plang build` (rebuild stale duplicates) → re-run → the count should
+jump; then the scalar-swap constraint cascade with a trustworthy runtime backstop.
