@@ -14,7 +14,7 @@ internal static class HttpBuildHelpers
         string paramName)
     {
         var raw = action?.Parameters?.FirstOrDefault(p =>
-            string.Equals(p.Name, paramName, System.StringComparison.OrdinalIgnoreCase))?.Value as string;
+            string.Equals(p.Name, paramName, System.StringComparison.OrdinalIgnoreCase))?.GetValue<string>();
         if (string.IsNullOrEmpty(raw) || raw.Contains('%'))
             return Task.FromResult(data.@this.Ok());
 

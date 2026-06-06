@@ -119,7 +119,7 @@ public partial class query : IContext, IBuildValidatable
             return Task.FromResult(data.@this.Ok("json"));
 
         var format = __action?.Parameters?.FirstOrDefault(p =>
-            string.Equals(p.Name, "Format", System.StringComparison.OrdinalIgnoreCase))?.Value as string;
+            string.Equals(p.Name, "Format", System.StringComparison.OrdinalIgnoreCase))?.GetValue<string>();
         if (!string.IsNullOrEmpty(format) && !format.Contains('%'))
             return Task.FromResult(data.@this.Ok(format));
 
