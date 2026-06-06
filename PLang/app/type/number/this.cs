@@ -88,6 +88,9 @@ public sealed partial class @this : global::app.type.item.@this, System.IEquatab
         {
             case null: return null;
             case @this n: return n;
+            case global::app.type.text.@this t:
+                return Parse(t.Value)
+                    ?? throw new System.FormatException($"number.FromObject: '{t.Value}' is not a valid number");
             case sbyte v: return From(v);
             case byte v: return From(v);
             case short v: return From(v);

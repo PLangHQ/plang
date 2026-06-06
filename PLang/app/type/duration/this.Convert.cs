@@ -11,6 +11,9 @@ public sealed partial class @this
     public static global::app.data.@this Convert(object? value, string? kind,
         global::app.actor.context.@this context)
     {
+        // Born-native: a duration literal arrives as text — unwrap so the string
+        // parse below sees the ISO/timespan text instead of the wrapper.
+        if (value is global::app.type.text.@this txt) value = txt.Value;
         switch (value)
         {
             case null: return global::app.data.@this.Ok(value);

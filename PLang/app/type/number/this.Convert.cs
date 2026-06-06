@@ -16,6 +16,10 @@ public sealed partial class @this
         global::app.actor.context.@this context)
     {
         if (value is null) return global::app.data.@this.Ok(value);
+        // Born-native: a value arrives as its wrapper (text "0.1", a number, …).
+        // Unwrap to the raw backing so the string-parse / CLR-numeric paths below
+        // see what they expect instead of ChangeType-ing a wrapper.
+        if (value is global::app.type.item.@this iv) value = iv.ToRaw();
 
         NumberKind? k = KindFromName(kind);
         if (k == null)

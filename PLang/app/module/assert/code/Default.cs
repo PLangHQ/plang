@@ -184,6 +184,11 @@ public class Default : IAssert
 
     private static int Compare(object? a, object? b)
     {
+        // Born-native: values arrive as wrappers; unwrap to the raw backing so the
+        // numeric/IComparable paths below compare CLR scalars (number→boxed numeric,
+        // text→string), not a wrapper a raw int's CompareTo can't handle.
+        if (a is global::app.type.item.@this ia) a = ia.ToRaw();
+        if (b is global::app.type.item.@this ib) b = ib.ToRaw();
         if (a == null && b == null) return 0;
         if (a == null) return -1;
         if (b == null) return 1;
