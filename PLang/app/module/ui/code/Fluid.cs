@@ -67,6 +67,25 @@ public class Fluid : ITemplate
         options.MemberAccessStrategy.IgnoreCasing = true;
         options.MemberAccessStrategy.MemberNameStrategy = MemberNameStrategies.Default;
 
+        // Make PLang native collections / JsonNode Fluid-readable WITHOUT copying.
+        // Fluid binds via reflection / IDictionary / IEnumerable only — it doesn't
+        // use PLang's variable navigator — so a native dict/list (which implement
+        // domain interfaces, not IDictionary/IEnumerable) and a JsonNode (what
+        // `set … type=json` produces) render empty: `{{ x.key }}` / `{% for %}`
+        // yield nothing even though `%x.key%` resolves in PLang. That silently
+        // blanked the builder's compile prompt (picked actions + per-action schemas)
+        // and made the compiler guess blind — the branch-wide build mis-maps.
+        //
+        // The converter wraps natives in lazy READ-THROUGH views (zero copy): a
+        // dict reads keys on demand (O(1) member access), a list streams its
+        // elements (Fluid arrays any IEnumerable eagerly anyway — same cost as a
+        // real CLR list, no extra copy; we do NOT deep-copy via ToRaw). Nested
+        // natives convert lazily because the converter re-runs at each member
+        // access. A JsonNode routes through the universal parse to natives, then
+        // the same views. Converters run wherever FluidValue.Create does — both
+        // the variable-binding loops below and nested access during rendering.
+        options.ValueConverters.Add(NativeCollectionConverter);
+
         // `formal` filter: renders any value the way the action catalog writes it —
         // strings with spaces/commas become quoted, %variables% stay bare, dicts/lists
         // become compact JSON, scalars use their literal form. Used by templates that
@@ -140,6 +159,102 @@ public class Fluid : ITemplate
         // Everything else — dicts, lists, POCOs — render as JSON.
         try { return System.Text.Json.JsonSerializer.Serialize(v); }
         catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException) { return v.ToString() ?? ""; }
+    }
+
+    /// <summary>
+    /// Fluid value converter — turns a PLang native <c>dict</c>/<c>list</c> or a
+    /// <c>JsonNode</c> into a lazy read-through view Fluid can navigate, without
+    /// copying. Returns <c>null</c> for anything else so Fluid's own mapping runs.
+    /// (See the registration site for why this is needed.)
+    /// </summary>
+    private static object? NativeCollectionConverter(object value) => value switch
+    {
+        app.type.dict.@this d => new NativeDictView(d),
+        app.type.list.@this l => new NativeListView(l),
+        // JsonNode isn't Fluid-readable either; parse it to natives (the parse is
+        // structural, JSON-DOM sized) and the natives then ride the views above.
+        System.Text.Json.Nodes.JsonNode jn => app.data.@this.UnwrapJsonElement(jn) switch
+        {
+            app.type.dict.@this d => new NativeDictView(d),
+            app.type.list.@this l => new NativeListView(l),
+            var scalar => scalar, // a bare JSON scalar — Fluid maps it directly
+        },
+        _ => null,
+    };
+
+    /// <summary>
+    /// Lazy read-through <see cref="IDictionary{TKey,TValue}"/> over a native
+    /// <c>dict</c> — Fluid maps <c>IDictionary&lt;string,object&gt;</c> to a
+    /// dictionary value with O(1) keyed access, so a member read touches one entry
+    /// (never copies the dict). Read-only: writes throw. Entry values stay raw so
+    /// nested natives re-convert lazily on access.
+    /// </summary>
+    private sealed class NativeDictView(app.type.dict.@this d) : IDictionary<string, object?>
+    {
+        public object? this[string key]
+        {
+            get => d.Get(key)?.Value;
+            set => throw new NotSupportedException("template view is read-only");
+        }
+        public ICollection<string> Keys => d.Keys.ToList();
+        public ICollection<object?> Values => d.Entries.Select(e => (object?)e.Value).ToList();
+        public int Count => d.Count;
+        public bool IsReadOnly => true;
+        public bool ContainsKey(string key) => d.Has(key);
+        public bool TryGetValue(string key, out object? value)
+        {
+            var entry = d.Get(key);
+            value = entry?.Value;
+            return entry != null;
+        }
+        public IEnumerator<KeyValuePair<string, object?>> GetEnumerator()
+        {
+            foreach (var e in d.Entries)
+                yield return new KeyValuePair<string, object?>(e.Name, e.Value);
+        }
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+        public void Add(string key, object? value) => throw new NotSupportedException("template view is read-only");
+        public void Add(KeyValuePair<string, object?> item) => throw new NotSupportedException("template view is read-only");
+        public bool Remove(string key) => throw new NotSupportedException("template view is read-only");
+        public bool Remove(KeyValuePair<string, object?> item) => throw new NotSupportedException("template view is read-only");
+        public void Clear() => throw new NotSupportedException("template view is read-only");
+        public bool Contains(KeyValuePair<string, object?> item) => d.Has(item.Key);
+        public void CopyTo(KeyValuePair<string, object?>[] array, int arrayIndex)
+        {
+            foreach (var kv in this) array[arrayIndex++] = kv;
+        }
+    }
+
+    /// <summary>
+    /// Lazy read-through <see cref="IList{T}"/> over a native <c>list</c>. Fluid
+    /// arrays any <see cref="System.Collections.IEnumerable"/> eagerly (the same
+    /// cost it pays for a real CLR list), so this streams the element values
+    /// once with no extra copy. Read-only: writes throw. Element values stay raw
+    /// so nested natives re-convert lazily.
+    /// </summary>
+    private sealed class NativeListView(app.type.list.@this l) : IList<object?>
+    {
+        public object? this[int index]
+        {
+            get => l.At(index)?.Value;
+            set => throw new NotSupportedException("template view is read-only");
+        }
+        public int Count => l.Count;
+        public bool IsReadOnly => true;
+        public IEnumerator<object?> GetEnumerator()
+        {
+            foreach (var item in l.Items)
+                yield return item.Value;
+        }
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+        public int IndexOf(object? item) { for (int i = 0; i < l.Count; i++) if (Equals(l.At(i)?.Value, item)) return i; return -1; }
+        public bool Contains(object? item) => IndexOf(item) >= 0;
+        public void CopyTo(object?[] array, int arrayIndex) { foreach (var v in this) array[arrayIndex++] = v; }
+        public void Add(object? item) => throw new NotSupportedException("template view is read-only");
+        public void Insert(int index, object? item) => throw new NotSupportedException("template view is read-only");
+        public void RemoveAt(int index) => throw new NotSupportedException("template view is read-only");
+        public bool Remove(object? item) => throw new NotSupportedException("template view is read-only");
+        public void Clear() => throw new NotSupportedException("template view is read-only");
     }
 
     /// <summary>
