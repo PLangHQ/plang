@@ -26,7 +26,7 @@ public class DownloadActionTests
         _app = new PLangEngine(_tempDir);
 
         _handler = new MockHttpMessageHandler();
-        var provider = new Default(_handler) { Name = "test" };
+        var provider = new Default(_handler) { Name = (global::app.type.text.@this)"test" };
         _app.Code.Register<IHttp>(provider);
         _app.Code.SetDefault<IHttp>("test");
     }
@@ -71,7 +71,7 @@ public class DownloadActionTests
         var action = new download
         {
             Context = Ctx,
-            Url = "https://example.com/file.txt",
+            Url = (global::app.type.text.@this)"https://example.com/file.txt",
             Unsigned = (global::app.type.@bool.@this)true
         };
 
@@ -94,7 +94,7 @@ public class DownloadActionTests
         var action = new download
         {
             Context = Ctx,
-            Url = "https://example.com/missing.txt",
+            Url = (global::app.type.text.@this)"https://example.com/missing.txt",
             Unsigned = (global::app.type.@bool.@this)true
         };
 

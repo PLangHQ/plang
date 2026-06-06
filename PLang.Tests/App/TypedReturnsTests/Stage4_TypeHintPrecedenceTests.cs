@@ -51,7 +51,7 @@ public class Stage4_TypeHintPrecedenceTests
         public Task<Data> SerializeAsync(System.IO.Stream s, Data d, System.Threading.CancellationToken ct = default) => Task.FromResult(Data.Ok());
         public Task<Data> DeserializeAsync(System.IO.Stream s, System.Threading.CancellationToken ct = default) => Task.FromResult(Data.Ok());
         public Task<global::app.data.@this<T>> DeserializeAsync<T>(System.IO.Stream s, System.Threading.CancellationToken ct = default) => Task.FromResult(global::app.data.@this<T>.Ok(default!));
-        public global::app.data.@this<string> Serialize(Data d) => global::app.data.@this<string>.Ok("");
+        public global::app.data.@this<global::app.type.text.@this> Serialize(Data d) => global::app.data.@this<global::app.type.text.@this>.Ok("");
         public Data Deserialize(string d) => Data.Ok();
         public global::app.data.@this<T> Deserialize<T>(string d) => global::app.data.@this<T>.Ok(default!);
     }

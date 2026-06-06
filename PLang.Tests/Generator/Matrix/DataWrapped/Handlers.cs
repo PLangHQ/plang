@@ -3,7 +3,7 @@ namespace app.module.matrix.datawrapped;
 [global::app.module.Action("datawrappedstring")]
 public partial class DataWrappedString : global::app.module.IContext
 {
-    public partial global::app.data.@this<string> Body { get; init; }
+    public partial global::app.data.@this<global::app.type.text.@this> Body { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Body);
 }
 
@@ -38,7 +38,7 @@ public partial class DataWrappedActionList : global::app.module.IContext
 [global::app.module.Action("datawrappedstringuses")]
 public partial class DataWrappedStringUses : global::app.module.IContext
 {
-    public partial global::app.data.@this<string> Body { get; init; }
+    public partial global::app.data.@this<global::app.type.text.@this> Body { get; init; }
     public Task<global::app.data.@this> Run()
     {
         var len = Body.Value?.Length ?? 0;

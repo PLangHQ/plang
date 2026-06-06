@@ -28,7 +28,7 @@ public class Stage3_HttpContentTypeDispatchTests
         _app = new global::app.@this(_tempDir);
 
         _handler = new StubHandler();
-        var provider = new Default(_handler) { Name = "test" };
+        var provider = new Default(_handler) { Name = (global::app.type.text.@this)"test" };
         _app.Code.Register<IHttp>(provider);
         _app.Code.SetDefault<IHttp>("test");
     }
@@ -54,7 +54,7 @@ public class Stage3_HttpContentTypeDispatchTests
             shape(resp);
             return resp;
         };
-        var action = new request { Context = _app.User.Context, Url = url, Unsigned = (global::app.type.@bool.@this)true };
+        var action = new request { Context = _app.User.Context, Url = (global::app.type.text.@this)url, Unsigned = (global::app.type.@bool.@this)true };
         var result = await action.Run();
         await result.IsSuccess();
         return result;

@@ -6,7 +6,7 @@ public enum MatrixEnum { A, B, C }
 public partial class StringWithDefault : global::app.module.IContext
 {
     [global::app.module.Default("hello")]
-    public partial global::app.data.@this<string> Greeting { get; init; }
+    public partial global::app.data.@this<global::app.type.text.@this> Greeting { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Greeting);
 }
 

@@ -45,7 +45,7 @@ public class IdentityKeyProviderTests
         _app.Code.Register<IKey>(mockProvider);
         _app.Code.SetDefault<IKey>("mock");
 
-        var action = new Create { Context = Ctx, Name = "test-identity", SetAsDefault = (global::app.type.@bool.@this)true };
+        var action = new Create { Context = Ctx, Name = (global::app.type.text.@this)"test-identity", SetAsDefault = (global::app.type.@bool.@this)true };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -58,7 +58,7 @@ public class IdentityKeyProviderTests
     [Test]
     public async Task Create_DefaultEd25519_WhenNoOverride()
     {
-        var action = new Create { Context = Ctx, Name = "test-identity", SetAsDefault = (global::app.type.@bool.@this)true };
+        var action = new Create { Context = Ctx, Name = (global::app.type.text.@this)"test-identity", SetAsDefault = (global::app.type.@bool.@this)true };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -79,7 +79,7 @@ public class IdentityKeyProviderTests
         _app.Code.Register<IKey>(throwingProvider);
         _app.Code.SetDefault<IKey>("throwing");
 
-        var action = new Create { Context = Ctx, Name = "test-identity", SetAsDefault = (global::app.type.@bool.@this)true };
+        var action = new Create { Context = Ctx, Name = (global::app.type.text.@this)"test-identity", SetAsDefault = (global::app.type.@bool.@this)true };
         var result = await action.Run();
 
         await result.IsFailure();
@@ -93,12 +93,12 @@ public class IdentityKeyProviderTests
         _app.Code.Register<IKey>(mockProvider);
         _app.Code.SetDefault<IKey>("mock");
 
-        var action = new Create { Context = Ctx, Name = "stored-test", SetAsDefault = (global::app.type.@bool.@this)true };
+        var action = new Create { Context = Ctx, Name = (global::app.type.text.@this)"stored-test", SetAsDefault = (global::app.type.@bool.@this)true };
         var result = await action.Run();
         await result.IsSuccess();
 
         // Load it back via Get action
-        var getResult = await new Get { Context = Ctx, Name = "stored-test" }.Run();
+        var getResult = await new Get { Context = Ctx, Name = (global::app.type.text.@this)"stored-test" }.Run();
         await getResult.IsSuccess();
         var loaded = getResult.Value as Identity;
         await Assert.That(loaded).IsNotNull();
@@ -113,7 +113,7 @@ public class IdentityKeyProviderTests
         var mock = new MockKeyProvider("named-pub", "named-priv") { ProviderName = "mock" };
         _app.Code.Register<IKey>(mock);
 
-        var action = new Create { Context = Ctx, Name = "named-test", SetAsDefault = (global::app.type.@bool.@this)true, Provider = "mock" };
+        var action = new Create { Context = Ctx, Name = (global::app.type.text.@this)"named-test", SetAsDefault = (global::app.type.@bool.@this)true, Provider = (global::app.type.text.@this)"mock" };
         var result = await action.Run();
 
         await result.IsSuccess();

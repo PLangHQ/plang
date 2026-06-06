@@ -15,7 +15,7 @@ namespace app.module.http;
 public partial class upload : IContext
 {
     /// <summary>URL to upload to. Relative URLs resolve against Config.BaseUrl.</summary>
-    public partial data.@this<string> Url { get; init; }
+    public partial data.@this<global::app.type.text.@this> Url { get; init; }
 
     /// <summary>Content to upload. Type determines format: string path = file, Dictionary = form, object = JSON.</summary>
     public partial data.@this Content { get; init; }
@@ -29,7 +29,7 @@ public partial class upload : IContext
 
     /// <summary>Character encoding. Default: "utf-8".</summary>
     [Default("utf-8")]
-    public partial data.@this<string> Encoding { get; init; }
+    public partial data.@this<global::app.type.text.@this> Encoding { get; init; }
 
     /// <summary>Upload timeout in seconds. Default: 30.</summary>
     [Default(30)]

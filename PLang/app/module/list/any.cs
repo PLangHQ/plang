@@ -11,7 +11,7 @@ public partial class Any : IContext
 {
     public partial data.@this<app.variable.@this> ListName { get; init; }
     [IsNotNull]
-    public partial data.@this<string> Key { get; init; }
+    public partial data.@this<global::app.type.text.@this> Key { get; init; }
     [IsNotNull]
     public partial data.@this<condition.Operator> Operator { get; init; }
     public partial data.@this Value { get; init; }

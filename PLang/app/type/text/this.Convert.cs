@@ -17,8 +17,12 @@ public sealed partial class @this
         global::app.actor.context.@this context)
     {
         if (value is null) return global::app.data.@this.Ok(value);
-        if (value is string s) return global::app.data.@this.Ok(s);
-        if (value is @this self) return global::app.data.@this.Ok(self.Value);
+        // kind named ("text") ⇒ a raw-string target (List<string>, `as text`) wants the
+        // raw CLR string; no kind ⇒ the target is `text` the type, so return the wrapper.
+        bool returnWrapper = string.IsNullOrEmpty(kind);
+        global::app.data.@this S(string? str) => global::app.data.@this.Ok(returnWrapper ? (object?)(@this)(str ?? string.Empty) : str);
+        if (value is string s) return S(s);
+        if (value is @this self) return S(self.Value);
 
         // Native dict/list value types are not IDictionary/IEnumerable, but their
         // [JsonConverter] renders the canonical {}/[] textual form — text/json means
@@ -29,11 +33,10 @@ public sealed partial class @this
             || value is JsonElement
             || value is System.Text.Json.Nodes.JsonNode
             || (value is System.Collections.IEnumerable && value is not byte[]))
-            return global::app.data.@this.Ok(JsonSerializer.Serialize(value));
+            return S(JsonSerializer.Serialize(value));
 
         if (value is System.IConvertible)
-            return global::app.data.@this.Ok(
-                System.Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture));
+            return S(System.Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture));
 
         return global::app.data.@this.FromError(new global::app.error.Error(
             $"Cannot bind a {value.GetType().Name} to text — it has no textual form.",

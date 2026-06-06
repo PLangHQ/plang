@@ -37,7 +37,7 @@ public class DiscoverDenialPathTests
             Context = app.User.Context,
             Path = global::app.data.@this<global::app.type.path.@this>.Ok(
                 global::app.type.path.@this.Resolve(outOfRoot, app.User.Context)),
-            Pattern = new global::app.data.@this<string>("Pattern", "*.test.goal"),
+            Pattern = new global::app.data.@this<global::app.type.text.@this>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<global::app.type.@bool.@this>("Recursive", false)
         };
         var result = await action.Run();
@@ -54,7 +54,7 @@ public class DiscoverDenialPathTests
             Context = app.User.Context,
             Path = global::app.data.@this<global::app.type.path.@this>.Ok(
                 global::app.type.path.@this.Resolve("//../../../etc", app.User.Context)),
-            Pattern = new global::app.data.@this<string>("Pattern", "*.test.goal"),
+            Pattern = new global::app.data.@this<global::app.type.text.@this>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<global::app.type.@bool.@this>("Recursive", false)
         };
         var result = await action.Run();

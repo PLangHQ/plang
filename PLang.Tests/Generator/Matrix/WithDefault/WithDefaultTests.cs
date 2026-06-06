@@ -10,7 +10,7 @@ public class StringWithDefaultTests
     {
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<StringWithDefault>(app);
-        var typed = result.Data as global::app.data.@this<string>;
+        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
         await Assert.That(typed!.Value).IsEqualTo("hello");
     }
 
@@ -20,7 +20,7 @@ public class StringWithDefaultTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<StringWithDefault>(app,
             parameters: new[] { ("greeting", (object?)"world") });
-        var typed = result.Data as global::app.data.@this<string>;
+        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
         await Assert.That(typed!.Value).IsEqualTo("world");
     }
 }

@@ -357,7 +357,7 @@ public class FileHandlerTests : IDisposable
         System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "a.txt"), "a");
         System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "b.md"), "b");
 
-        var action = new List { Context = _app.User.Context, Path = MakeAbsPath(subDir), Pattern = "*.txt" };
+        var action = new List { Context = _app.User.Context, Path = MakeAbsPath(subDir), Pattern = (global::app.type.text.@this)"*.txt" };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -444,11 +444,11 @@ public class FileHandlerTests : IDisposable
         _app.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
-        { Mime = "text/plain" });
+        { Mime = (global::app.type.text.@this)"text/plain" });
 
         var goal = new global::app.goal.@this
         {
-            Name = "TestFileExistsFlow",
+            Name = (global::app.type.text.@this)"TestFileExistsFlow",
             Steps = new global::app.goal.steps.@this
             {
                 new global::app.goal.steps.step.@this
@@ -520,11 +520,11 @@ public class FileHandlerTests : IDisposable
         _app.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
-        { Mime = "text/plain" });
+        { Mime = (global::app.type.text.@this)"text/plain" });
 
         var goal = new global::app.goal.@this
         {
-            Name = "TestFileNotExistsFlow",
+            Name = (global::app.type.text.@this)"TestFileNotExistsFlow",
             Steps = new global::app.goal.steps.@this
             {
                 new global::app.goal.steps.step.@this

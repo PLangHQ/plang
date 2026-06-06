@@ -275,8 +275,8 @@ public class SerializerRegistryTests
         public Task<global::app.data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default)
             => Task.FromResult(global::app.data.@this<T>.Ok(default!));
 
-        public global::app.data.@this<string> Serialize(Data data)
-            => global::app.data.@this<string>.Ok(data.Value?.ToString() ?? "");
+        public global::app.data.@this<global::app.type.text.@this> Serialize(Data data)
+            => global::app.data.@this<global::app.type.text.@this>.Ok(data.Value?.ToString() ?? "");
 
         public Data Deserialize(string s) => Data.Ok();
 

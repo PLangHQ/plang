@@ -87,7 +87,7 @@ public class FailureMatrixTests
         var action = new global::app.module.crypto.Hash
         {
             Data = global::app.data.@this.Ok("x"),
-            Algorithm = new global::app.data.@this<string>("", "md5")
+            Algorithm = new global::app.data.@this<global::app.type.text.@this>("", "md5")
         };
         var result = crypto.Hash(action);
         await result.IsFailure();
@@ -117,7 +117,7 @@ public class FailureMatrixTests
             global::app.channel.ChannelDirection.Bidirectional);
         var action = new global::app.module.output.ask
         {
-            Question = new global::app.data.@this<string>("", "")
+            Question = new global::app.data.@this<global::app.type.text.@this>("", "")
         };
         var result = await ch.Ask(action);
         await result.IsFailure();

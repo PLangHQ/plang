@@ -66,10 +66,10 @@ public partial class query : IContext, IBuildValidatable
     public partial data.@this<object>? Schema { get; init; }
 
     /// <summary>Response format: "json", "python", "md", etc. Non-json formats extract from code blocks.</summary>
-    public partial data.@this<string>? Format { get; init; }
+    public partial data.@this<global::app.type.text.@this>? Format { get; init; }
 
     /// <summary>Model override (e.g., "gpt-4o"). Falls back to provider settings default.</summary>
-    public partial data.@this<string>? Model { get; init; }
+    public partial data.@this<global::app.type.text.@this>? Model { get; init; }
 
     /// <summary>When true, prepends stored conversation history from previous queries.</summary>
     [Default(false)]

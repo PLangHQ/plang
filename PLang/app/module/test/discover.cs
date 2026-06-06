@@ -34,7 +34,7 @@ public partial class discover : IContext
 
     /// <summary>Filename pattern. Default matches PLang test convention.</summary>
     [Default("*.test.goal")]
-    public partial data.@this<string> Pattern { get; init; }
+    public partial data.@this<global::app.type.text.@this> Pattern { get; init; }
 
     /// <summary>Walk subdirectories. Default true.</summary>
     [Default(true)]

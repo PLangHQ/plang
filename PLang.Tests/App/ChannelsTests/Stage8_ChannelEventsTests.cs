@@ -178,7 +178,7 @@ public class Stage8_ChannelEventsTests
             receivedData = payload;
             return Task.FromResult(Data.Ok());
         }));
-        var result = await ch.AskAsync(new global::app.module.output.ask { Question = new global::app.data.@this<string>("", "") });
+        var result = await ch.AskAsync(new global::app.module.output.ask { Question = new global::app.data.@this<global::app.type.text.@this>("", "") });
         await Assert.That(result.Value as string).IsEqualTo("answer");
         await Assert.That(receivedData).IsNotNull();
         await Assert.That(receivedData!.Value as string).IsEqualTo("answer");
@@ -198,7 +198,7 @@ public class Stage8_ChannelEventsTests
             fired = true;
             return Task.FromResult(Data.Ok());
         }));
-        await ch.AskAsync(new global::app.module.output.ask { Question = new global::app.data.@this<string>("", "q?") });
+        await ch.AskAsync(new global::app.module.output.ask { Question = new global::app.data.@this<global::app.type.text.@this>("", "q?") });
         await Assert.That(fired).IsTrue();
     }
 

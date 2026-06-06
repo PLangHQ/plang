@@ -10,7 +10,7 @@ namespace app.module.module;
 public partial class Remove : IContext
 {
     /// <summary>Module name to unregister (e.g., "mymodule").</summary>
-    public partial data.@this<string> Name { get; init; }
+    public partial data.@this<global::app.type.text.@this> Name { get; init; }
 
     public Task<data.@this> Run()
     {

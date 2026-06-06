@@ -6,7 +6,7 @@ namespace app.module.@event;
 public partial class Remove : IContext
 {
     [IsNotNull]
-    public partial data.@this<string> EventId { get; init; }
+    public partial data.@this<global::app.type.text.@this> EventId { get; init; }
 
     public Task<data.@this<global::app.type.@bool.@this>> Run()
     {

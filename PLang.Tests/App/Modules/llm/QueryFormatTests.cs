@@ -181,7 +181,7 @@ public class QueryFormatTests
             {
                 new LlmMessage { Role = "user", Content = "write hello world" }
             },
-            Format = "python"
+            Format = (global::app.type.text.@this)"python"
         };
         var result = await action.Run();
 
@@ -203,7 +203,7 @@ public class QueryFormatTests
             {
                 new LlmMessage { Role = "user", Content = "write markdown" }
             },
-            Format = "md"
+            Format = (global::app.type.text.@this)"md"
         };
         var result = await action.Run();
 
@@ -224,7 +224,7 @@ public class QueryFormatTests
             {
                 new LlmMessage { Role = "user", Content = "test" }
             },
-            Format = "python"
+            Format = (global::app.type.text.@this)"python"
         };
         var result = await action.Run();
 

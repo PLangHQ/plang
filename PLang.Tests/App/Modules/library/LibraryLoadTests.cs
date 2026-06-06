@@ -49,7 +49,7 @@ public class ModuleAddTests
             {
                 Context = context,
                 Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
-                Namespace = "app.module"
+                Namespace = (global::app.type.text.@this)"app.module"
             };
 
             var countBefore = app.Module.Count;
@@ -71,7 +71,7 @@ public class ModuleAddTests
             {
                 Context = context,
                 Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
-                Namespace = "app.module"
+                Namespace = (global::app.type.text.@this)"app.module"
             };
 
             var result = await add.Run();
@@ -92,7 +92,7 @@ public class ModuleAddTests
             {
                 Context = context,
                 Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
-                Namespace = "Some.Completely.Wrong.Namespace"
+                Namespace = (global::app.type.text.@this)"Some.Completely.Wrong.Namespace"
             };
 
             var result = await add.Run();
@@ -113,7 +113,7 @@ public class ModuleAddTests
             {
                 Context = context,
                 Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
-                Namespace = "app.module"
+                Namespace = (global::app.type.text.@this)"app.module"
             };
 
             var result = await add.Run();
@@ -154,7 +154,7 @@ public class ModuleAddTests
             {
                 Context = context,
                 Path = global::app.data.@this<global::app.type.path.@this>.Ok(global::app.type.path.@this.Resolve(assemblyPath, context)),
-                Namespace = "app.module"
+                Namespace = (global::app.type.text.@this)"app.module"
             };
 
             var result = await add.Run();

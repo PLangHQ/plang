@@ -9,7 +9,7 @@ namespace app.module.mock;
 [Action("intercept", Cacheable = false)]
 public partial class intercept : IContext
 {
-    public partial data.@this<string> Pattern { get; init; }
+    public partial data.@this<global::app.type.text.@this> Pattern { get; init; }
     public partial data.@this? Return { get; init; }
     public partial data.@this<GoalCall>? Call { get; init; }
     public partial data.@this<Dictionary<string, object?>>? Parameters { get; init; }

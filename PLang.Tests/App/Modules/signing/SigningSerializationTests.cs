@@ -15,7 +15,7 @@ public class SigningSerializationTests
     public async Task SignedData_SigningBytes_ExcludesSignature()
     {
         var sd = CreateTestSignedData();
-        sd.Value = "some-signature-value";
+        sd.Value = (global::app.type.text.@this)"some-signature-value";
 
         // SigningOptions excludes the Signature property for thread-safe signing bytes
         var json = JsonSerializer.Serialize(sd, Signature.SigningOptions);
@@ -97,7 +97,7 @@ public class SigningSerializationTests
         // Hash some data using the crypto provider directly
         var cryptoProvider = new global::app.module.crypto.code.Default();
         var hashResult = cryptoProvider.Hash(new global::app.module.crypto.Hash
-            { Data = Data.Ok(System.Text.Encoding.UTF8.GetBytes("test data")), Algorithm = "sha256" });
+            { Data = Data.Ok(System.Text.Encoding.UTF8.GetBytes("test data")), Algorithm = (global::app.type.text.@this)"sha256" });
         var hashBytes = ((global::app.module.crypto.type.hash.@this)hashResult.Value!).Bytes;
         var base64Hash = Convert.ToBase64String(hashBytes);
 
@@ -193,8 +193,8 @@ public class SigningSerializationTests
     {
         return new Signature
         {
-            Type = "signature",
-            Algorithm = "ed25519",
+            Type = (global::app.type.text.@this)"signature",
+            Algorithm = (global::app.type.text.@this)"ed25519",
             Nonce = "abc123",
             Created = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero),
             Identity = "testPublicKey",

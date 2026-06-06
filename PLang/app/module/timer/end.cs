@@ -9,7 +9,7 @@ namespace app.module.timer;
 [Action("end", Cacheable = false)]
 public partial class End : IContext, IStatic
 {
-    public partial data.@this<string>? Name { get; init; }
+    public partial data.@this<global::app.type.text.@this>? Name { get; init; }
 
     public Task<data.@this<TimeSpan>> Run()
     {

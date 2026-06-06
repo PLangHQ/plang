@@ -10,7 +10,7 @@ namespace app.module.identity;
 [Action("setDefault", Cacheable = false)]
 public partial class SetDefault : IContext
 {
-    public partial data.@this<string> Name { get; init; }
+    public partial data.@this<global::app.type.text.@this> Name { get; init; }
 
     [Code]
     public partial IIdentity Identity { get; }

@@ -89,12 +89,12 @@ public abstract partial class @this
     /// OpenAI image attachments, sealing binary payloads into JSON-only
     /// transports. Auth is bundled (single Read prompt).
     /// </summary>
-    public virtual async Task<data.@this<string>> ReadAsBase64()
+    public virtual async Task<data.@this<global::app.type.text.@this>> ReadAsBase64()
     {
         var bytes = await ReadBytes();
         if (!bytes.Success || bytes.Value == null)
-            return data.@this<string>.From(bytes);
-        return data.@this<string>.Ok(System.Convert.ToBase64String(bytes.Value));
+            return data.@this<global::app.type.text.@this>.From(bytes);
+        return data.@this<global::app.type.text.@this>.Ok(System.Convert.ToBase64String(bytes.Value));
     }
 
     /// <summary>
@@ -102,13 +102,13 @@ public abstract partial class @this
     /// <c>data:&lt;mime&gt;;base64,</c>. Use sites: embedded image tags, mail
     /// attachments, any wire payload that wants self-contained binary.
     /// </summary>
-    public virtual async Task<data.@this<string>> ReadAsDataUri()
+    public virtual async Task<data.@this<global::app.type.text.@this>> ReadAsDataUri()
     {
         var bytes = await ReadBytes();
         if (!bytes.Success || bytes.Value == null)
-            return data.@this<string>.From(bytes);
+            return data.@this<global::app.type.text.@this>.From(bytes);
         var mime = string.IsNullOrEmpty(MimeType) ? "application/octet-stream" : MimeType;
-        return data.@this<string>.Ok($"data:{mime};base64,{System.Convert.ToBase64String(bytes.Value)}");
+        return data.@this<global::app.type.text.@this>.Ok($"data:{mime};base64,{System.Convert.ToBase64String(bytes.Value)}");
     }
 
     /// <summary>Delete with file-action options. Non-FS schemes ignore both.</summary>

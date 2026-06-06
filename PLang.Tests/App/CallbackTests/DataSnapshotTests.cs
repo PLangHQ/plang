@@ -32,7 +32,7 @@ public class DataSnapshotTests
 
     [Test] public async Task DataSnapshot_SettableAfterConstruction()
     {
-        var d = new global::app.data.@this<string>("", "x");
+        var d = new global::app.data.@this<global::app.type.text.@this>("", "x");
         await Assert.That(d.Snapshot).IsNull();
         d.Snapshot = new global::app.snapshot.@this();
         await Assert.That(d.Snapshot).IsNotNull();

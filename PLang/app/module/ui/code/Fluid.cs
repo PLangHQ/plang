@@ -26,7 +26,7 @@ public class Fluid : ITemplate
         return parser;
     }
 
-    public async Task<data.@this<string>> Render(Render action)
+    public async Task<data.@this<global::app.type.text.@this>> Render(Render action)
     {
         var templateContent = action.Template.Value!;
         var isFile = action.IsFile?.Value;
@@ -37,13 +37,13 @@ public class Fluid : ITemplate
         {
             var pathData = path.Resolve(templateContent, action.Context);
             if (!await pathData.AsBooleanAsync())
-                return app.data.@this<string>.FromError(new ServiceError(
+                return app.data.@this<global::app.type.text.@this>.FromError(new ServiceError(
                     $"Template file not found: {templateContent}", "NotFound", 404));
 
             sourceFile = pathData.Relative;
             var readResult = await pathData.ReadText();
             if (!readResult.Success)
-                return app.data.@this<string>.FromError(readResult.Error
+                return app.data.@this<global::app.type.text.@this>.FromError(readResult.Error
                     ?? new ServiceError("Template read failed", "IOError", 500));
             templateContent = readResult.Value?.ToString() ?? "";
         }
@@ -53,7 +53,7 @@ public class Fluid : ITemplate
         if (!parser.TryParse(templateContent, out var fluidTemplate, out var parseError))
         {
             var location = sourceFile != null ? $" in '{sourceFile}'" : "";
-            return app.data.@this<string>.FromError(new ServiceError(
+            return app.data.@this<global::app.type.text.@this>.FromError(new ServiceError(
                 $"Template syntax error{location}: {parseError}", "TemplateError", 400));
         }
 
@@ -125,12 +125,12 @@ public class Fluid : ITemplate
         {
             var writer = new StringWriter();
             await fluidTemplate.RenderAsync(writer, NullEncoder.Default, fluidContext);
-            return app.data.@this<string>.Ok(writer.ToString());
+            return app.data.@this<global::app.type.text.@this>.Ok(writer.ToString());
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
             var location = sourceFile != null ? $" in '{sourceFile}'" : "";
-            return app.data.@this<string>.FromError(new ServiceError(
+            return app.data.@this<global::app.type.text.@this>.FromError(new ServiceError(
                 $"Template render error{location}: {ex.Message}", "RenderError", 500));
         }
     }

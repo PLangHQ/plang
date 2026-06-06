@@ -43,7 +43,7 @@ public interface ISerializer
     /// Synchronous serialize-to-string convenience. Data.Value carries the
     /// rendered text; Data.Fail on serializer error.
     /// </summary>
-    data.@this<string> Serialize(data.@this data);
+    data.@this<global::app.type.text.@this> Serialize(data.@this data);
 
     /// <summary>
     /// Synchronous string deserialize. Data.Value carries the deserialized

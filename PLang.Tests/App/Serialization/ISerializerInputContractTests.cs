@@ -88,7 +88,7 @@ public class ISerializerInputContractTests
             => Task.FromResult(global::app.data.@this.Ok());
         public Task<global::app.data.@this<T>> DeserializeAsync<T>(Stream s, CancellationToken ct = default)
             => Task.FromResult(global::app.data.@this<T>.Ok(default!));
-        public global::app.data.@this<string> Serialize(global::app.data.@this data) => global::app.data.@this<string>.Ok("");
+        public global::app.data.@this<global::app.type.text.@this> Serialize(global::app.data.@this data) => global::app.data.@this<global::app.type.text.@this>.Ok("");
         public global::app.data.@this Deserialize(string s) => global::app.data.@this.Ok();
         public global::app.data.@this<T> Deserialize<T>(string s) => global::app.data.@this<T>.Ok(default!);
     }

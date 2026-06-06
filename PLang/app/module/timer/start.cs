@@ -8,9 +8,9 @@ namespace app.module.timer;
 [Action("start", Cacheable = false)]
 public partial class Start : IContext, IStatic
 {
-    public partial data.@this<string>? Name { get; init; }
+    public partial data.@this<global::app.type.text.@this>? Name { get; init; }
     [Default("goal")]
-    public partial data.@this<string> Scope { get; init; }
+    public partial data.@this<global::app.type.text.@this> Scope { get; init; }
 
     public Task<data.@this<global::app.type.@bool.@this>> Run()
     {

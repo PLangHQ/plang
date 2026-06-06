@@ -9,7 +9,7 @@ public partial class List : IContext
     public partial data.@this<path> Path { get; init; }
 
     [Default("*")]
-    public partial data.@this<string> Pattern { get; init; }
+    public partial data.@this<global::app.type.text.@this> Pattern { get; init; }
 
     [Default(false)]
     public partial data.@this<global::app.type.@bool.@this> Recursive { get; init; }

@@ -35,7 +35,7 @@ public class CanonicalizationTests
             new global::app.module.crypto.Hash
             {
                 Data = data,
-                Algorithm = new global::app.data.@this<string>("", "keccak256")
+                Algorithm = new global::app.data.@this<global::app.type.text.@this>("", "keccak256")
             }, app.User.Context);
 
         await hashResult.IsSuccess();

@@ -9,7 +9,7 @@ namespace app.module.settings;
 [Action("set", Cacheable = false)]
 public partial class Set : IContext
 {
-    public partial data.@this<string> Key { get; init; }
+    public partial data.@this<global::app.type.text.@this> Key { get; init; }
     public partial data.@this? Value { get; init; }
 
     public async Task<data.@this<type.setting>> Run()

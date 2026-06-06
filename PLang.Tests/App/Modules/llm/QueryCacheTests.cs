@@ -115,7 +115,7 @@ public class QueryCacheTests
             Cache = (global::app.type.@bool.@this)true,
             Tools = new List<GoalCall>
             {
-                new GoalCall { Name = "TestTool" }
+                new GoalCall { Name = (global::app.type.text.@this)"TestTool" }
             }
         };
 
@@ -144,7 +144,7 @@ public class QueryCacheTests
                 new LlmMessage { Role = "system", Content = "You are helpful" },
                 new LlmMessage { Role = "user", Content = "same" }
             },
-            Model = "gpt-4o"
+            Model = (global::app.type.text.@this)"gpt-4o"
         };
         await action2.Run();
 

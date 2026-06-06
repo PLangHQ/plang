@@ -5,9 +5,9 @@ namespace app.module.list;
 [Action("split")]
 public partial class Split : IContext
 {
-    public partial data.@this<string> Value { get; init; }
+    public partial data.@this<global::app.type.text.@this> Value { get; init; }
     [Default(",")]
-    public partial data.@this<string> Separator { get; init; }
+    public partial data.@this<global::app.type.text.@this> Separator { get; init; }
     [Default(false)]
     public partial data.@this<global::app.type.@bool.@this> RemoveEmpty { get; init; }
 
@@ -17,7 +17,7 @@ public partial class Split : IContext
             ? StringSplitOptions.RemoveEmptyEntries
             : StringSplitOptions.None;
 
-        var parts = Value.Value!.Split(new[] { Separator.Value! }, options);
+        var parts = ((string)Value.Value!).Split(new[] { (string)Separator.Value! }, options);
         var list = new app.type.list.@this { Context = Context };
         foreach (var part in parts)
             list.Add(new global::app.data.@this("", part));

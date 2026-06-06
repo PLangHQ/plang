@@ -13,7 +13,7 @@ public class StringPlainTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<StringPlain>(app,
             parameters: new[] { ("path", (object?)"hello") });
-        var typed = result.Data as global::app.data.@this<string>;
+        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
         await Assert.That(typed!.Value).IsEqualTo("hello");
     }
 
@@ -46,7 +46,7 @@ public class StringPlainTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<StringPlain>(app,
             parameters: new[] { ("path", (object?)"") });
-        var typed = result.Data as global::app.data.@this<string>;
+        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
         await Assert.That(typed!.Value).IsEqualTo("");
     }
 }

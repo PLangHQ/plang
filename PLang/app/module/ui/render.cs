@@ -8,7 +8,7 @@ public partial class Render : IContext
 {
     /// <summary>Template content (inline Liquid) or file path. Determined by IsFile.</summary>
     [IsNotNull]
-    public partial data.@this<string> Template { get; init; }
+    public partial data.@this<global::app.type.text.@this> Template { get; init; }
 
     /// <summary>Explicit parameters that override Variables in the template.</summary>
     public partial data.@this<List<data.@this>>? Parameters { get; init; }
@@ -24,5 +24,5 @@ public partial class Render : IContext
     [Code]
     public partial ITemplate Provider { get; }
 
-    public async Task<data.@this<string>> Run() => await Provider.Render(this);
+    public async Task<data.@this<global::app.type.text.@this>> Run() => await Provider.Render(this);
 }

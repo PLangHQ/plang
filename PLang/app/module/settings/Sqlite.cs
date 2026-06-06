@@ -231,7 +231,10 @@ public sealed class Sqlite : IStore
             // property (including [Sensitive] like Identity.PrivateKey).
             var serialized = _serializer.Store(data);
             if (!serialized.Success) return Task.FromResult(app.data.@this.FromError(serialized.Error!));
-            cmd.Parameters.AddWithValue("@data", serialized.Value);
+            // SQLite is a take-over API — it binds raw CLR values, not born-native
+            // wrappers. Collapse an item leaf (text→string) to its raw backing.
+            object? dataValue = serialized.Value is global::app.type.item.@this leaf ? leaf.ToRaw() : serialized.Value;
+            cmd.Parameters.AddWithValue("@data", dataValue);
             cmd.ExecuteNonQuery();
 
             return Task.FromResult(app.data.@this.Ok());

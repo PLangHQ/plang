@@ -81,7 +81,7 @@ public class DefaultHttpProviderTests
         var action = new configure
         {
             Context = Ctx,
-            BaseUrl = "https://api.example.com"
+            BaseUrl = (global::app.type.text.@this)"https://api.example.com"
         };
 
         var result = provider.Configure(action);

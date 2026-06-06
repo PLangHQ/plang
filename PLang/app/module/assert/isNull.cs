@@ -7,7 +7,7 @@ namespace app.module.assert;
 public partial class IsNull : IContext
 {
     public partial data.@this? Value { get; init; }
-    public partial data.@this<string>? Message { get; init; }
+    public partial data.@this<global::app.type.text.@this>? Message { get; init; }
 
     [Code]
     public partial IAssert Assert { get; }

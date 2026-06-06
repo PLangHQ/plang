@@ -12,7 +12,7 @@ public class DataWrappedStringTests
         var result = await MatrixRunner.RunAsync<DataWrappedString>(app,
             parameters: new[] { ("body", (object?)"%greeting%") },
             variables: new Dictionary<string, object?> { ["greeting"] = "hello" });
-        var typed = result.Data as global::app.data.@this<string>;
+        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
         await Assert.That(typed!.Value).IsEqualTo("hello");
     }
 
@@ -23,7 +23,7 @@ public class DataWrappedStringTests
         var result = await MatrixRunner.RunAsync<DataWrappedString>(app,
             parameters: new[] { ("body", (object?)"Hello %name%!") },
             variables: new Dictionary<string, object?> { ["name"] = "world" });
-        var typed = result.Data as global::app.data.@this<string>;
+        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
         await Assert.That(typed!.Value).IsEqualTo("Hello world!");
     }
 

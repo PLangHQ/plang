@@ -100,7 +100,7 @@ public class SettingsDataTests
         var handler = new global::app.module.settings.Set
         {
             Context = context,
-            Key = "HandlerKey",
+            Key = (global::app.type.text.@this)"HandlerKey",
             Value = new global::app.data.@this("", "HandlerValue")        };
 
         var result = await handler.Run();
@@ -120,7 +120,7 @@ public class SettingsDataTests
         var handler = new global::app.module.settings.Get
         {
             Context = _app.System.Context,
-            Key = "TestKey"
+            Key = (global::app.type.text.@this)"TestKey"
         };
 
         var result = await handler.Run();
@@ -134,7 +134,7 @@ public class SettingsDataTests
         var handler = new global::app.module.settings.Get
         {
             Context = _app.System.Context,
-            Key = "MissingKey"
+            Key = (global::app.type.text.@this)"MissingKey"
         };
 
         var result = await handler.Run();
@@ -150,7 +150,7 @@ public class SettingsDataTests
         var handler = new global::app.module.settings.Remove
         {
             Context = _app.System.Context,
-            Key = "ToRemove"
+            Key = (global::app.type.text.@this)"ToRemove"
         };
 
         var result = await handler.Run();

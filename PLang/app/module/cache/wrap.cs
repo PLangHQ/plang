@@ -15,13 +15,13 @@ public partial class CacheWrap : IContext, IModifier
     public partial global::app.data.@this<global::app.type.number.@this> DurationMs { get; init; }
     [Default(false)]
     public partial global::app.data.@this<global::app.type.@bool.@this> Sliding { get; init; }
-    public partial global::app.data.@this<string>? Key { get; init; }
+    public partial global::app.data.@this<global::app.type.text.@this>? Key { get; init; }
 
     public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
 
     public Func<Task<global::app.data.@this>> Wrap(Func<Task<global::app.data.@this>> next, actor.context.@this context)
     {
-        var cacheKey = !string.IsNullOrEmpty(Key?.Value) ? Key.Value! : DefaultKey(context);
+        string cacheKey = !string.IsNullOrEmpty(Key?.Value) ? (string)Key.Value! : DefaultKey(context);
         long durationMs = DurationMs.GetValue<long>();
         var sliding = Sliding.Value;
 

@@ -128,13 +128,13 @@ public class SetTypeInferenceTests
     public async Task Set_ForcedType_String_ConvertsAndMintsDataOfString()
     {
         var context = _app.User.Context;
-        // Source value is int 42; forced Type="string" should produce Data<string> "42".
+        // Source value is int 42; forced Type="string" should produce Data<global::app.type.text.@this> "42".
         var action = TestAction.Create("variable", "set", ("name", "%n%"), ("value", 42), ("type", "string"));
         var result = await action.RunAsync(context);
         await result.IsSuccess();
         var stored = context.Variable.Get("n");
-        await Assert.That(stored).IsTypeOf<global::app.data.@this<string>>();
-        await Assert.That(stored.Value).IsEqualTo("42");
+        await Assert.That(stored).IsTypeOf<global::app.data.@this<global::app.type.text.@this>>();
+        await Assert.That(stored.Value!.ToString()).IsEqualTo("42");
     }
 
     [Test]

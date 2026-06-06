@@ -8,7 +8,7 @@ public partial class LessThan : IContext
 {
     public partial data.@this? A { get; init; }
     public partial data.@this? B { get; init; }
-    public partial data.@this<string>? Message { get; init; }
+    public partial data.@this<global::app.type.text.@this>? Message { get; init; }
 
     [Code]
     public partial IAssert Assert { get; }

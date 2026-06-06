@@ -52,7 +52,20 @@ public sealed partial class @this : global::app.type.item.@this,
 
     public @this(string value) { Value = value ?? string.Empty; }
 
-    public static implicit operator string(@this t) => t.Value;
+    // Both directions are lossless, so the wrapper owns its conversions and call sites
+    // stay clean: `.Ok("x")` constructs, `string s = t.Value` reads. The explicit ==/!=
+    // overloads disambiguate `t == "x"` (otherwise ambiguous between the two implicits).
+    // Null-tolerant: an absent text-typed Data has a null wrapper, and consumers
+    // read `someText.Value` expecting the old `string?` null-through behaviour.
+    public static implicit operator string?(@this? t) => t?.Value;
+    public static implicit operator @this(string s) => new(s);
+
+    // Only the @this==@this overload — NOT a string overload. string is a reference
+    // type, so a string overload would make `text == null` ambiguous (null fits both).
+    // `text == "literal"` is written as `text.Value == "literal"` (to-string implicit).
+    public static bool operator ==(@this? a, @this? b) => a is null ? b is null : a.Equals(b);
+    public static bool operator !=(@this? a, @this? b) => !(a == b);
+
     public override string ToString() => Value;
 
     // ---- Ops (the behavioral targets of the `is string` sweep) ----

@@ -8,7 +8,7 @@ namespace app.module.matrix.plain;
 [global::app.module.Action("stringplain")]
 public partial class StringPlain : global::app.module.IContext
 {
-    public partial global::app.data.@this<string> Path { get; init; }
+    public partial global::app.data.@this<global::app.type.text.@this> Path { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Path);
 }
 

@@ -48,18 +48,18 @@ public class PlangAssignabilityTests
         await Assert.That(Data.IsPlangAssignable(typeof(IEnumerable), typeof(List<int>))).IsTrue();
     }
 
-    // Behavioral consequence of the carve-out: Data<string>("hello").As<IEnumerable>()
+    // Behavioral consequence of the carve-out: Data<global::app.type.text.@this>("hello").As<IEnumerable>()
     // wraps the string as a single-element IEnumerable. Iterating wrapped.Value yields
     // exactly one item: the whole string "hello". NOT 'h', 'e', 'l', 'l', 'o'.
     [Test]
     public async Task AsT_StringToIEnumerable_WrapsAsSingleElementList()
     {
-        var source = new global::app.data.@this<string>("text", "hello") { Context = _app.User.Context };
+        var source = new global::app.data.@this<global::app.type.text.@this>("text", "hello") { Context = _app.User.Context };
         var wrapped = source.As<IEnumerable>();
         var items = new List<object?>();
         foreach (var item in wrapped.Value!) items.Add(item);
         await Assert.That(items.Count).IsEqualTo(1);
-        await Assert.That(items[0]).IsEqualTo("hello");
+        await Assert.That(items[0]!.ToString()).IsEqualTo("hello");
     }
 
     // Same shape for any non-iterable scalar — Data<int>(42).As<IEnumerable>()
@@ -85,6 +85,6 @@ public class PlangAssignabilityTests
         var items = new List<object?>();
         foreach (var item in seq) items.Add(item);
         await Assert.That(items.Count).IsEqualTo(1);
-        await Assert.That(items[0]).IsEqualTo("hello");
+        await Assert.That(items[0]!.ToString()).IsEqualTo("hello");
     }
 }

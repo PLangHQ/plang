@@ -86,7 +86,7 @@ public class AssertTests
     public async Task Equals_CustomMessage_IncludedInError()
     {
         var (context, _) = CreateContext();
-        var action = new AssertEquals { Context = context, Expected = D(1), Actual = D(2), Message = "Sum check" };
+        var action = new AssertEquals { Context = context, Expected = D(1), Actual = D(2), Message = (global::app.type.text.@this)"Sum check" };
         var result = await action.Run();
         await result.IsFailure();
         var error = result.Error as AssertionError;

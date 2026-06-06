@@ -12,7 +12,7 @@ namespace app.module.channel;
 [Action("remove", Cacheable = false)]
 public partial class Remove : IContext
 {
-    public partial data.@this<string> Name { get; init; }
+    public partial data.@this<global::app.type.text.@this> Name { get; init; }
     public partial data.@this<global::app.actor.@this>? Actor { get; init; }
 
     public async Task<data.@this> Run()

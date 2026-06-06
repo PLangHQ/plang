@@ -16,7 +16,7 @@ namespace app.module.http;
 public partial class download : IContext
 {
     /// <summary>URL to download from. Relative URLs resolve against Config.BaseUrl.</summary>
-    public partial data.@this<string> Url { get; init; }
+    public partial data.@this<global::app.type.text.@this> Url { get; init; }
 
     /// <summary>Per-request headers. Merged with Config.DefaultHeaders.</summary>
     public partial data.@this<Dictionary<string, object>>? Headers { get; init; }

@@ -42,7 +42,7 @@ public class RenderTests : IDisposable
     {
         var context = _app.User.Context;
         context.Variable.Set(new Data("name", "World"));
-        var action = new Render { Context = context, Template = "Hello {{ name }}", IsFile = (global::app.type.@bool.@this)false };
+        var action = new Render { Context = context, Template = (global::app.type.text.@this)"Hello {{ name }}", IsFile = (global::app.type.@bool.@this)false };
 
         var result = await _provider.Render(action);
 
@@ -56,7 +56,7 @@ public class RenderTests : IDisposable
         WriteTemplateFile("greeting.html", "Hello {{ name }}!");
         var context = _app.User.Context;
         context.Variable.Set(new Data("name", "PLang"));
-        var action = new Render { Context = context, Template = "greeting.html", IsFile = (global::app.type.@bool.@this)true };
+        var action = new Render { Context = context, Template = (global::app.type.text.@this)"greeting.html", IsFile = (global::app.type.@bool.@this)true };
 
         var result = await _provider.Render(action);
 
@@ -68,7 +68,7 @@ public class RenderTests : IDisposable
     public async Task Render_MissingFile_ReturnsError()
     {
         var context = _app.User.Context;
-        var action = new Render { Context = context, Template = "nonexistent.html", IsFile = (global::app.type.@bool.@this)true };
+        var action = new Render { Context = context, Template = (global::app.type.text.@this)"nonexistent.html", IsFile = (global::app.type.@bool.@this)true };
 
         var result = await _provider.Render(action);
 
@@ -95,7 +95,7 @@ public class RenderTests : IDisposable
     public async Task Render_EmptyTemplate_ReturnsEmptyString()
     {
         var context = _app.User.Context;
-        var action = new Render { Context = context, Template = "", IsFile = (global::app.type.@bool.@this)false };
+        var action = new Render { Context = context, Template = (global::app.type.text.@this)"", IsFile = (global::app.type.@bool.@this)false };
 
         var result = await _provider.Render(action);
 
@@ -107,7 +107,7 @@ public class RenderTests : IDisposable
     public async Task Render_LiquidSyntaxError_ReturnsErrorWithPosition()
     {
         var context = _app.User.Context;
-        var action = new Render { Context = context, Template = "Hello {{ ", IsFile = (global::app.type.@bool.@this)false };
+        var action = new Render { Context = context, Template = (global::app.type.text.@this)"Hello {{ ", IsFile = (global::app.type.@bool.@this)false };
 
         var result = await _provider.Render(action);
 
@@ -123,7 +123,7 @@ public class RenderTests : IDisposable
         var context = _app.User.Context;
         context.Variable.Set(new Data("greeting", "Hello"));
         context.Variable.Set(new Data("target", "World"));
-        var action = new Render { Context = context, Template = "{{ greeting }} {{ target }}", IsFile = (global::app.type.@bool.@this)false };
+        var action = new Render { Context = context, Template = (global::app.type.text.@this)"{{ greeting }} {{ target }}", IsFile = (global::app.type.@bool.@this)false };
 
         var result = await _provider.Render(action);
 
@@ -140,7 +140,7 @@ public class RenderTests : IDisposable
         var action = new Render
         {
             Context = context,
-            Template = "Hello {{ name }}",
+            Template = (global::app.type.text.@this)"Hello {{ name }}",
             IsFile = (global::app.type.@bool.@this)false,
             Parameters = new List<Data> { overrideParam }
         };
@@ -159,7 +159,7 @@ public class RenderTests : IDisposable
         var action = new Render
         {
             Context = context,
-            Template = "Title: {{ title }}",
+            Template = (global::app.type.text.@this)"Title: {{ title }}",
             IsFile = (global::app.type.@bool.@this)false,
             Parameters = new List<Data> { aliasParam }
         };
@@ -179,7 +179,7 @@ public class RenderTests : IDisposable
         var action = new Render
         {
             Context = context,
-            Template = "visible={{ visible }} hidden={{ hidden }}",
+            Template = (global::app.type.text.@this)"visible={{ visible }} hidden={{ hidden }}",
             IsFile = (global::app.type.@bool.@this)false
         };
 
@@ -198,7 +198,7 @@ public class RenderTests : IDisposable
         // Create a real goal that sets a variable — the goal result is the last step's Data
         var goal = new Goal
         {
-            Name = "Greeter",
+            Name = (global::app.type.text.@this)"Greeter",
             Path = "/Greeter.goal",
             Steps = new GoalSteps
             {
@@ -213,7 +213,7 @@ public class RenderTests : IDisposable
         var action = new Render
         {
             Context = context,
-            Template = "Result: {% callGoal 'Greeter' %}",
+            Template = (global::app.type.text.@this)"Result: {% callGoal 'Greeter' %}",
             IsFile = (global::app.type.@bool.@this)false
         };
 
@@ -233,7 +233,7 @@ public class RenderTests : IDisposable
         var action = new Render
         {
             Context = context,
-            Template = "Before {% callGoal 'Missing' %} After",
+            Template = (global::app.type.text.@this)"Before {% callGoal 'Missing' %} After",
             IsFile = (global::app.type.@bool.@this)false
         };
 
@@ -259,7 +259,7 @@ public class RenderTests : IDisposable
         var action = new Render
         {
             Context = context,
-            Template = "Before {% include 'partial.html' %} After",
+            Template = (global::app.type.text.@this)"Before {% include 'partial.html' %} After",
             IsFile = (global::app.type.@bool.@this)false
         };
 
@@ -279,7 +279,7 @@ public class RenderTests : IDisposable
         var action = new Render
         {
             Context = context,
-            Template = "{% include 'greet.html' %}!",
+            Template = (global::app.type.text.@this)"{% include 'greet.html' %}!",
             IsFile = (global::app.type.@bool.@this)false
         };
 
@@ -297,7 +297,7 @@ public class RenderTests : IDisposable
     {
         var customProvider = new StubTemplateProvider();
         var context = _app.User.Context;
-        var action = new Render { Context = context, Template = "anything", IsFile = (global::app.type.@bool.@this)false };
+        var action = new Render { Context = context, Template = (global::app.type.text.@this)"anything", IsFile = (global::app.type.@bool.@this)false };
 
         var result = await customProvider.Render(action);
 
@@ -313,7 +313,7 @@ public class RenderTests : IDisposable
         var context = _app.User.Context;
         // Simulate a goal at goals/MyGoal.goal by setting Goal.Path
         // Path resolves relative to goal's directory
-        var action = new Render { Context = context, Template = "goals/templates/page.html", IsFile = (global::app.type.@bool.@this)true };
+        var action = new Render { Context = context, Template = (global::app.type.text.@this)"goals/templates/page.html", IsFile = (global::app.type.@bool.@this)true };
 
         var result = await _provider.Render(action);
 
@@ -326,7 +326,7 @@ public class RenderTests : IDisposable
     {
         WriteTemplateFile("templates/abs.html", "Absolute content");
         var context = _app.User.Context;
-        var action = new Render { Context = context, Template = "/templates/abs.html", IsFile = (global::app.type.@bool.@this)true };
+        var action = new Render { Context = context, Template = (global::app.type.text.@this)"/templates/abs.html", IsFile = (global::app.type.@bool.@this)true };
 
         var result = await _provider.Render(action);
 
@@ -345,7 +345,7 @@ public class RenderTests : IDisposable
         var action = new Render
         {
             Context = context,
-            Template = "{{ user.name }} is {{ user.age }}",
+            Template = (global::app.type.text.@this)"{{ user.name }} is {{ user.age }}",
             IsFile = (global::app.type.@bool.@this)false
         };
 
@@ -363,7 +363,7 @@ public class RenderTests : IDisposable
         var action = new Render
         {
             Context = context,
-            Template = "{% for item in items %}{{ item }}{% endfor %}",
+            Template = (global::app.type.text.@this)"{% for item in items %}{{ item }}{% endfor %}",
             IsFile = (global::app.type.@bool.@this)false
         };
 
@@ -381,7 +381,7 @@ public class RenderTests : IDisposable
         var action = new Render
         {
             Context = context,
-            Template = "Hello {{ name }}!",
+            Template = (global::app.type.text.@this)"Hello {{ name }}!",
             IsFile = (global::app.type.@bool.@this)false
         };
 
@@ -398,7 +398,7 @@ public class RenderTests : IDisposable
         var action = new Render
         {
             Context = context,
-            Template = "Hello {{ missing }}!",
+            Template = (global::app.type.text.@this)"Hello {{ missing }}!",
             IsFile = (global::app.type.@bool.@this)false
         };
 
@@ -418,7 +418,7 @@ public class RenderTests : IDisposable
         var action = new Render
         {
             Context = context,
-            Template = "{{ user.name }} is {{ user.age }}",
+            Template = (global::app.type.text.@this)"{{ user.name }} is {{ user.age }}",
             IsFile = (global::app.type.@bool.@this)false
         };
 
@@ -438,7 +438,7 @@ public class RenderTests : IDisposable
         var action = new Render
         {
             Context = context,
-            Template = "Hello {{ user.name }}!",
+            Template = (global::app.type.text.@this)"Hello {{ user.name }}!",
             IsFile = (global::app.type.@bool.@this)false
         };
 
@@ -455,14 +455,14 @@ public class RenderTests : IDisposable
     public async Task Render_CallGoal_EmptyGoalReturnsEmptyOutput()
     {
         // An empty goal (no steps) returns Data.Ok() — callGoal writes "" to output
-        var goal = new Goal { Name = "EmptyGoal", Path = "/EmptyGoal.goal" };
+        var goal = new Goal { Name = (global::app.type.text.@this)"EmptyGoal", Path = "/EmptyGoal.goal" };
         _app.Goal.Add(goal);
 
         var context = _app.User.Context;
         var action = new Render
         {
             Context = context,
-            Template = "Before{% callGoal 'EmptyGoal' %}After",
+            Template = (global::app.type.text.@this)"Before{% callGoal 'EmptyGoal' %}After",
             IsFile = (global::app.type.@bool.@this)false
         };
 
@@ -478,7 +478,7 @@ public class RenderTests : IDisposable
     public async Task Render_CallGoal_GoalNameFromVariable()
     {
         // callGoal can use a Liquid variable for the goal name
-        var goal = new Goal { Name = "DynamicGoal", Path = "/DynamicGoal.goal" };
+        var goal = new Goal { Name = (global::app.type.text.@this)"DynamicGoal", Path = "/DynamicGoal.goal" };
         _app.Goal.Add(goal);
 
         var context = _app.User.Context;
@@ -486,7 +486,7 @@ public class RenderTests : IDisposable
         var action = new Render
         {
             Context = context,
-            Template = "{% callGoal goalName %}",
+            Template = (global::app.type.text.@this)"{% callGoal goalName %}",
             IsFile = (global::app.type.@bool.@this)false
         };
 
@@ -503,7 +503,7 @@ public class RenderTests : IDisposable
         // Goal that sets a variable — verify the result value appears in template output
         var goal = new Goal
         {
-            Name = "GetNumber",
+            Name = (global::app.type.text.@this)"GetNumber",
             Path = "/GetNumber.goal",
             Steps = new GoalSteps
             {
@@ -521,7 +521,7 @@ public class RenderTests : IDisposable
         var action = new Render
         {
             Context = context,
-            Template = "Number: {% callGoal 'GetNumber' %}",
+            Template = (global::app.type.text.@this)"Number: {% callGoal 'GetNumber' %}",
             IsFile = (global::app.type.@bool.@this)false
         };
 
@@ -542,7 +542,7 @@ public class RenderTests : IDisposable
         var action = new Render
         {
             Context = context,
-            Template = "{% include 'nonexistent.html' %}",
+            Template = (global::app.type.text.@this)"{% include 'nonexistent.html' %}",
             IsFile = (global::app.type.@bool.@this)false
         };
 
@@ -563,7 +563,7 @@ public class RenderTests : IDisposable
         var action = new Render
         {
             Context = context,
-            Template = "{% include 'sub/a.html' %}",
+            Template = (global::app.type.text.@this)"{% include 'sub/a.html' %}",
             IsFile = (global::app.type.@bool.@this)false
         };
 
@@ -585,7 +585,7 @@ public class RenderTests : IDisposable
         var action = new Render
         {
             Context = context,
-            Template = "{{ name }}",
+            Template = (global::app.type.text.@this)"{{ name }}",
             IsFile = (global::app.type.@bool.@this)false
         };
 
@@ -608,7 +608,7 @@ public class RenderTests : IDisposable
         var action = new Render
         {
             Context = context,
-            Template = "Hello {{ name }}!"
+            Template = (global::app.type.text.@this)"Hello {{ name }}!"
             // IsFile not set — defaults to null
         };
 
@@ -628,7 +628,7 @@ public class RenderTests : IDisposable
         var action = new Render
         {
             Context = context,
-            Template = "auto.html"
+            Template = (global::app.type.text.@this)"auto.html"
             // IsFile not set — auto-detect should find the file
         };
 
@@ -646,7 +646,7 @@ public class RenderTests : IDisposable
         var action = new Render
         {
             Context = context,
-            Template = "just plain text with no extension"
+            Template = (global::app.type.text.@this)"just plain text with no extension"
         };
 
         var result = await _provider.Render(action);
@@ -665,7 +665,7 @@ public class RenderTests : IDisposable
         var context = _app.User.Context;
         var goal = new Goal
         {
-            Name = "SubGoal",
+            Name = (global::app.type.text.@this)"SubGoal",
             Path = global::app.type.path.@this.Resolve("/goals/SubGoal.goal", context)
         };
         _app.Goal.Add(goal);
@@ -674,7 +674,7 @@ public class RenderTests : IDisposable
         var action = new Render
         {
             Context = context,
-            Template = "{% include 'templates/footer.html' %}",
+            Template = (global::app.type.text.@this)"{% include 'templates/footer.html' %}",
             IsFile = (global::app.type.@bool.@this)false
         };
 
@@ -718,9 +718,9 @@ public class RenderTests : IDisposable
 
         public string? Source { get; set; }
 
-        public Task<global::app.data.@this<string>> Render(Render action)
+        public Task<global::app.data.@this<global::app.type.text.@this>> Render(Render action)
         {
-            return Task.FromResult(global::app.data.@this<string>.Ok("stub-rendered"));
+            return Task.FromResult(global::app.data.@this<global::app.type.text.@this>.Ok("stub-rendered"));
         }
     }
 }

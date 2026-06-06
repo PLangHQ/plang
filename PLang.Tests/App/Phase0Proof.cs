@@ -46,7 +46,7 @@ public class Phase0Proof
     public async Task Phase01_GenericDataFromError()
     {
         // INPUT: generic global::app.data.@this<T>.FromError
-        var result = global::app.data.@this<string>.FromError(new Error("oops"));
+        var result = global::app.data.@this<global::app.type.text.@this>.FromError(new Error("oops"));
 
         // OUTPUT: typed error result
         await result.IsFailure();

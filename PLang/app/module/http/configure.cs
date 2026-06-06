@@ -15,16 +15,16 @@ public partial class configure : IContext, IConfigure<Config>
     public partial data.@this<global::app.type.number.@this>? TimeoutInSec { get; init; }
 
     /// <summary>Base URL for resolving relative request URLs.</summary>
-    public partial data.@this<string>? BaseUrl { get; init; }
+    public partial data.@this<global::app.type.text.@this>? BaseUrl { get; init; }
 
     /// <summary>Default headers merged into every request.</summary>
     public partial data.@this<Dictionary<string, object>>? DefaultHeaders { get; init; }
 
     /// <summary>Default Content-Type for request bodies.</summary>
-    public partial data.@this<string>? ContentType { get; init; }
+    public partial data.@this<global::app.type.text.@this>? ContentType { get; init; }
 
     /// <summary>Default character encoding for request bodies.</summary>
-    public partial data.@this<string>? Encoding { get; init; }
+    public partial data.@this<global::app.type.text.@this>? Encoding { get; init; }
 
     /// <summary>When true, disables request signing by default.</summary>
     public partial data.@this<global::app.type.@bool.@this>? Unsigned { get; init; }

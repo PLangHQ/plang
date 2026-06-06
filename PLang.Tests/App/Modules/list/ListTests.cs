@@ -261,7 +261,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
-        var action = new Join { Context = context, ListName = new app.variable.@this("myList"), Separator = "-" };
+        var action = new Join { Context = context, ListName = new app.variable.@this("myList"), Separator = (global::app.type.text.@this)"-" };
         var result = await action.Run();
 
         await Assert.That(result.Value).IsEqualTo("a-b-c");
@@ -274,7 +274,7 @@ public class ListTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Split { Context = context, Value = "a,b,c", Separator = "," };
+        var action = new Split { Context = context, Value = (global::app.type.text.@this)"a,b,c", Separator = (global::app.type.text.@this)"," };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -348,7 +348,7 @@ public class ListTests
 		{
             Context = context,
             ListName = new app.variable.@this("items"),
-            Key = "level",
+            Key = (global::app.type.text.@this)"level",
             Operator = new global::app.module.condition.Operator("=="),
             Value = new global::app.data.@this("", "high")
         };
@@ -372,7 +372,7 @@ public class ListTests
 		{
             Context = context,
             ListName = new app.variable.@this("items"),
-            Key = "level",
+            Key = (global::app.type.text.@this)"level",
             Operator = new global::app.module.condition.Operator("=="),
             Value = new global::app.data.@this("", "high")
         };
@@ -392,7 +392,7 @@ public class ListTests
 		{
             Context = context,
             ListName = new app.variable.@this("items"),
-            Key = "level",
+            Key = (global::app.type.text.@this)"level",
             Operator = new global::app.module.condition.Operator("=="),
             Value = new global::app.data.@this("", "high")
         };
@@ -416,7 +416,7 @@ public class ListTests
 		{
             Context = context,
             ListName = new app.variable.@this("items"),
-            Key = "status",
+            Key = (global::app.type.text.@this)"status",
             Operator = new global::app.module.condition.Operator("!="),
             Value = new global::app.data.@this("", "active")
         };
@@ -439,7 +439,7 @@ public class ListTests
             new Dictionary<string, object?> { ["customer"] = "Alice", ["total"] = 20 }
         });
 
-        var action = new Group { Context = context, ListName = new app.variable.@this("orders"), Key = "customer" };
+        var action = new Group { Context = context, ListName = new app.variable.@this("orders"), Key = (global::app.type.text.@this)"customer" };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -469,7 +469,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("items", new List<object?>());
 
-        var action = new Group { Context = context, ListName = new app.variable.@this("items"), Key = "category" };
+        var action = new Group { Context = context, ListName = new app.variable.@this("items"), Key = (global::app.type.text.@this)"category" };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -487,7 +487,7 @@ public class ListTests
             new Dictionary<string, object?> { ["name"] = "Bob" }
         });
 
-        var action = new Group { Context = context, ListName = new app.variable.@this("items"), Key = "category" };
+        var action = new Group { Context = context, ListName = new app.variable.@this("items"), Key = (global::app.type.text.@this)"category" };
         var result = await action.Run();
 
         await result.IsSuccess();

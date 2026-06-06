@@ -11,13 +11,13 @@ namespace app.module.identity;
 public partial class Create : IContext
 {
     [Default("default")]
-    public partial data.@this<string> Name { get; init; }
+    public partial data.@this<global::app.type.text.@this> Name { get; init; }
 
     [Default(false)]
     public partial data.@this<global::app.type.@bool.@this> SetAsDefault { get; init; }
 
     /// <summary>Optional provider name override. Uses default IKey if not specified.</summary>
-    public partial data.@this<string>? Provider { get; init; }
+    public partial data.@this<global::app.type.text.@this>? Provider { get; init; }
 
     [Code]
     public partial IIdentity Identity { get; }

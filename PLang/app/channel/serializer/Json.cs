@@ -127,17 +127,17 @@ public sealed class Json : ISerializer
         }
     }
 
-    public data.@this<string> Serialize(data.@this data)
+    public data.@this<global::app.type.text.@this> Serialize(data.@this data)
     {
         try
         {
             var value = data.Value;
-            if (value == null) return global::app.data.@this<string>.Ok("null");
-            return global::app.data.@this<string>.Ok(JsonSerializer.Serialize(value, value.GetType(), _options));
+            if (value == null) return global::app.data.@this<global::app.type.text.@this>.Ok("null");
+            return global::app.data.@this<global::app.type.text.@this>.Ok(JsonSerializer.Serialize(value, value.GetType(), _options));
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {
-            return global::app.data.@this<string>.FromError(new error.ServiceError(
+            return global::app.data.@this<global::app.type.text.@this>.FromError(new error.ServiceError(
                 $"JSON serialize failed: {ex.Message}", "JsonSerializeError", 400) { Exception = ex });
         }
     }

@@ -16,7 +16,7 @@ namespace app.module.http;
 public partial class request : IContext
 {
     /// <summary>Target URL. Relative URLs resolve against Config.BaseUrl. Bare domains get https:// prefix.</summary>
-    public partial data.@this<string> Url { get; init; }
+    public partial data.@this<global::app.type.text.@this> Url { get; init; }
 
     /// <summary>HTTP method. Default: GET.</summary>
     [Default(HttpMethod.GET)]
@@ -30,11 +30,11 @@ public partial class request : IContext
 
     /// <summary>Content-Type for the request body. Default: "application/json".</summary>
     [Default("application/json")]
-    public partial data.@this<string> ContentType { get; init; }
+    public partial data.@this<global::app.type.text.@this> ContentType { get; init; }
 
     /// <summary>Character encoding for the request body. Default: "utf-8".</summary>
     [Default("utf-8")]
-    public partial data.@this<string> Encoding { get; init; }
+    public partial data.@this<global::app.type.text.@this> Encoding { get; init; }
 
     /// <summary>Request timeout in seconds. Default: 30. Overrides Config.TimeoutInSec.</summary>
     [Default(30)]

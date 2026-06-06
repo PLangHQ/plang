@@ -32,7 +32,7 @@ public class Ed25519 : ISigning
         var identity = (Identity)identityResult.Value!;
 
         // Hash the data
-        var hash = await app.RunAction<Hash>(new Hash { Data = action.Data, Algorithm = new data.@this<string>("", "keccak256") }, action.Context);
+        var hash = await app.RunAction<Hash>(new Hash { Data = action.Data, Algorithm = new data.@this<global::app.type.text.@this>("", "keccak256") }, action.Context);
         if (!hash.Success) return global::app.data.@this<object>.From(hash);
 
         var now = (DateTimeOffset)action.Context.Variable.GetValue("NowUtc")!;
@@ -133,7 +133,7 @@ public class Ed25519 : ISigning
         if (action.Data?.Value != null)
         {
             var rehash = await app.RunAction<Hash>(
-                new Hash { Data = action.Data, Algorithm = new data.@this<string>("", storedHash.Algorithm) }, action.Context);
+                new Hash { Data = action.Data, Algorithm = new data.@this<global::app.type.text.@this>("", storedHash.Algorithm) }, action.Context);
             if (!rehash.Success) return global::app.data.@this<global::app.type.@bool.@this>.From(rehash);
             if (rehash.Value is not global::app.module.crypto.type.hash.@this rehashValue || !rehashValue.DigestEquals(storedHash))
                 return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));

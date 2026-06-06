@@ -31,7 +31,7 @@ public class ChannelAccessorTests
     {
         await using var app = new PLangEngine("/test");
         var channel = app.User.Channel["output"];
-        var result = await channel.WriteAsync(new global::app.data.@this<string>("", "hello"));
+        var result = await channel.WriteAsync(new global::app.data.@this<global::app.type.text.@this>("", "hello"));
         await result.IsSuccess();
     }
 

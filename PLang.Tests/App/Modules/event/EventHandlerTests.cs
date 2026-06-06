@@ -23,10 +23,10 @@ public class EventHandlerTests
         {
             Context = context,
             Trigger = type,
-            GoalToCall = new GoalCall { Name = goalName },
-            GoalPattern = goalPattern,
-            StepPattern = stepPattern,
-            ActionPattern = actionPattern,
+            GoalToCall = new GoalCall { Name = (global::app.type.text.@this)goalName },
+            GoalPattern = (global::app.type.text.@this)goalPattern,
+            StepPattern = (global::app.type.text.@this)stepPattern,
+            ActionPattern = (global::app.type.text.@this)actionPattern,
             IsRegex = (global::app.type.@bool.@this)isRegex,
             Priority = (global::app.type.number.@this)priority
         };
@@ -38,7 +38,7 @@ public class EventHandlerTests
         var result = await MakeOn(context, global::app.@event.Trigger.BeforeGoal, "LogGoal", goalPattern: "TestGoal").Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value is string).IsTrue(); // returns binding id
+        await Assert.That(result.Value is global::app.type.text.@this).IsTrue(); // returns binding id
         await Assert.That(context.Events.Count).IsEqualTo(1);
     }
 
@@ -104,7 +104,7 @@ public class EventHandlerTests
 
         await Assert.That(context.Events.Count).IsEqualTo(1);
 
-        var removeHandler = new Remove { Context = context, EventId = eventId };
+        var removeHandler = new Remove { Context = context, EventId = (global::app.type.text.@this)eventId };
         var removeResult = await removeHandler.Run();
 
         await removeResult.IsSuccess();
@@ -170,10 +170,10 @@ public class EventHandlerTests
         var context = _app.User.Context;
 
         // Register the callback goal (empty — just needs to be found)
-        _app.Goal.Add(new Goal { Name = "OnBeforeCallback", Path = "/OnBeforeCallback.goal" });
+        _app.Goal.Add(new Goal { Name = (global::app.type.text.@this)"OnBeforeCallback", Path = "/OnBeforeCallback.goal" });
 
         // Register the target goal to run
-        _app.Goal.Add(new Goal { Name = "TargetGoal", Path = "/TargetGoal.goal" });
+        _app.Goal.Add(new Goal { Name = (global::app.type.text.@this)"TargetGoal", Path = "/TargetGoal.goal" });
 
         // Set a marker so we can detect the callback ran
         // The event handler passes GoalToCall with parameters — RunGoalAsync injects them
@@ -187,7 +187,7 @@ public class EventHandlerTests
         context.Variable.Set("eventFired", false);
 
         // Run the target goal — should trigger BeforeGoal event
-        var goalCall = new GoalCall { Name = "TargetGoal" };
+        var goalCall = new GoalCall { Name = (global::app.type.text.@this)"TargetGoal" };
         await _app.RunGoalAsync(goalCall, context);
 
         // The event handler calls RunGoalAsync(GoalToCall, targetActor.Context)
@@ -206,13 +206,13 @@ public class EventHandlerTests
 
         // The callback goal — when it runs, RunGoalAsync injects its parameters
         // We give it a parameter so we can verify it was called
-        _app.Goal.Add(new Goal { Name = "AfterCallback", Path = "/AfterCallback.goal" });
-        _app.Goal.Add(new Goal { Name = "MainGoal", Path = "/MainGoal.goal" });
+        _app.Goal.Add(new Goal { Name = (global::app.type.text.@this)"AfterCallback", Path = "/AfterCallback.goal" });
+        _app.Goal.Add(new Goal { Name = (global::app.type.text.@this)"MainGoal", Path = "/MainGoal.goal" });
 
         // Register AfterGoal event with a GoalCall that has a parameter
         var goalToCall = new GoalCall
         {
-            Name = "AfterCallback",
+            Name = (global::app.type.text.@this)"AfterCallback",
             Parameters = new List<Data> { new Data("callbackRan", true) }
         };
         var onAction = new On
@@ -220,12 +220,12 @@ public class EventHandlerTests
             Context = context,
             Trigger = global::app.@event.Trigger.AfterGoal,
             GoalToCall = goalToCall,
-            GoalPattern = "MainGoal"
+            GoalPattern = (global::app.type.text.@this)"MainGoal"
         };
         await onAction.Run();
 
         // Run the main goal
-        await _app.RunGoalAsync(new GoalCall { Name = "MainGoal" }, context);
+        await _app.RunGoalAsync(new GoalCall { Name = (global::app.type.text.@this)"MainGoal" }, context);
 
         // Verify the callback ran — parameter was injected on targetActor.Context.Variable
         var callbackRan = _app.User.Context.Variable.Get("callbackRan");

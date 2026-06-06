@@ -16,7 +16,7 @@ public partial class Verify : IContext
     public partial data.@this Hash { get; init; }
 
     [Default("keccak256")]
-    public partial data.@this<string> Algorithm { get; init; }
+    public partial data.@this<global::app.type.text.@this> Algorithm { get; init; }
 
     [Code]
     public partial ICrypto Crypto { get; }

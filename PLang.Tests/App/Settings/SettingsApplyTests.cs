@@ -31,7 +31,7 @@ public class SettingsApplyTests
     [Test]
     public async Task Apply_WritesNonNullPropertiesToScope()
     {
-        var source = new configure { Context = _ctx, TimeoutInSec = (global::app.type.number.@this)60, BaseUrl = "https://api.example.com" };
+        var source = new configure { Context = _ctx, TimeoutInSec = (global::app.type.number.@this)60, BaseUrl = (global::app.type.text.@this)"https://api.example.com" };
 
         _app.Config.Apply<Config>(source, _ctx);
 
@@ -132,7 +132,7 @@ public class SettingsApplyTests
         _app.Config.Apply<Config>(source1, _ctx);
 
         // Second apply sets base URL — timeout should still be there
-        var source2 = new configure { Context = _ctx, BaseUrl = "https://api.test.com" };
+        var source2 = new configure { Context = _ctx, BaseUrl = (global::app.type.text.@this)"https://api.test.com" };
         _app.Config.Apply<Config>(source2, _ctx);
 
         var view = _app.Config.For<Config>(_ctx);

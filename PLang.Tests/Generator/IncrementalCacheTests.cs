@@ -67,12 +67,12 @@ public class IncrementalCacheTests
     {
         var propsA = new PropertyBase[]
         {
-            new DataProperty("First", "global::app.data.@this<string>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
+            new DataProperty("First", "global::app.data.@this<global::app.type.text.@this>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
             new DataProperty("Second", "global::app.data.@this<int>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
         };
         var propsB = new PropertyBase[]
         {
-            new DataProperty("First", "global::app.data.@this<string>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
+            new DataProperty("First", "global::app.data.@this<global::app.type.text.@this>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
             new DataProperty("Second", "global::app.data.@this<int>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
         };
 
@@ -86,7 +86,7 @@ public class IncrementalCacheTests
     [Test]
     public async Task ActionClassInfo_DifferentPropertyOrder_AreNotEqual()
     {
-        var p1 = new DataProperty("A", "global::app.data.@this<string>", false, false, "string", null, false, false);
+        var p1 = new DataProperty("A", "global::app.data.@this<global::app.type.text.@this>", false, false, "string", null, false, false);
         var p2 = new DataProperty("B", "global::app.data.@this<int>", false, false, "int", null, false, false);
 
         var a = MakeInfo("X", p1, p2);
@@ -210,7 +210,7 @@ public class IncrementalCacheTests
         namespace app.Test {
             [app.module.Action]
             public partial class TestHandler {
-                public partial app.data.@this<string> Foo { get; init; }
+                public partial app.data.@this<global::app.type.text.@this> Foo { get; init; }
             }
         }
         """;
@@ -350,7 +350,7 @@ public class IncrementalCacheTests
 
         // Replace TestHandler's property type so ActionClassInfo's Properties array changes.
         var modifiedSource = MinimalSource.Replace(
-            "public partial app.data.@this<string> Foo { get; init; }",
+            "public partial app.data.@this<global::app.type.text.@this> Foo { get; init; }",
             "public partial app.data.@this<int> Foo { get; init; }");
         var compilation2 = CreateCompilation(modifiedSource);
         driver = driver.RunGenerators(compilation2);

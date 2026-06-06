@@ -26,7 +26,7 @@ public partial class Tag : IContext
     /// <summary>
     /// Bare-string label form. Sets <c>Tags[Label] = "true"</c>.
     /// </summary>
-    public partial global::app.data.@this<string>? Label { get; init; }
+    public partial global::app.data.@this<global::app.type.text.@this>? Label { get; init; }
 
     public Task<global::app.data.@this> Run()
     {

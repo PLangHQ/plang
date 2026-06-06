@@ -59,7 +59,7 @@ public class FluidIncludeDenialTests
         var action = new global::app.module.ui.Render
         {
             Context = app.User.Context,
-            Template = new global::app.data.@this<string>("Template",
+            Template = new global::app.data.@this<global::app.type.text.@this>("Template",
                 "{% include '" + outOfRoot + "/secret.liquid' %}"),
             IsFile = new global::app.data.@this<global::app.type.@bool.@this>("IsFile", false)
         };
@@ -91,7 +91,7 @@ public class FluidIncludeDenialTests
         var action = new global::app.module.ui.Render
         {
             Context = app.User.Context,
-            Template = new global::app.data.@this<string>("Template", "{% include 'partials/footer.liquid' %}"),
+            Template = new global::app.data.@this<global::app.type.text.@this>("Template", "{% include 'partials/footer.liquid' %}"),
             IsFile = new global::app.data.@this<global::app.type.@bool.@this>("IsFile", false)
         };
         var result = await fluid.Render(action);

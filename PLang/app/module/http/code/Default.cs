@@ -69,7 +69,7 @@ public sealed class Default : IHttp
 
         var unsigned = action.Unsigned.Value || config.Resolve("Unsigned", false);
         var timeout = action.TimeoutInSec.GetValue<double>() > 0 ? action.TimeoutInSec.GetValue<double>() : config.Resolve("TimeoutInSec", 30);
-        var contentType = action.ContentType.Value ?? config.Resolve("ContentType", "application/json");
+        string contentType = action.ContentType?.Value is { } ctv ? (string)ctv : config.Resolve("ContentType", "application/json");
         var encoding = action.Encoding.Value ?? config.Resolve("Encoding", "utf-8");
 
         var urlResult = ResolveUrl(action.Url.Value!, config);
@@ -309,12 +309,12 @@ public sealed class Default : IHttp
     /// over <see cref="ReadLimitedBytesAsync"/> — size-cap / slow-loris logic
     /// lives in one place.
     /// </summary>
-    private static async Task<data.@this<string>> ReadLimitedStringAsync(
+    private static async Task<data.@this<global::app.type.text.@this>> ReadLimitedStringAsync(
         HttpContent content, long maxBytes, CancellationToken ct = default)
     {
         var bytes = await ReadLimitedBytesAsync(content, maxBytes, ct);
-        if (!bytes.Success) return data.@this<string>.FromError(bytes.Error!);
-        return data.@this<string>.Ok(Encoding.UTF8.GetString(bytes.Value!));
+        if (!bytes.Success) return data.@this<global::app.type.text.@this>.FromError(bytes.Error!);
+        return data.@this<global::app.type.text.@this>.Ok(Encoding.UTF8.GetString(bytes.Value!));
     }
 
     // --- Internal HTTP transport ---
@@ -428,19 +428,19 @@ public sealed class Default : IHttp
 
     // --- URL resolution ---
 
-    private static data.@this<string> ResolveUrl(string url, ModuleView<Config> config)
+    private static data.@this<global::app.type.text.@this> ResolveUrl(string url, ModuleView<Config> config)
     {
         var baseUrl = config.Resolve<string?>("BaseUrl", null);
 
         if (url.StartsWith('/'))
         {
             if (string.IsNullOrEmpty(baseUrl))
-                return data.@this<string>.FromError(new ServiceError(
+                return data.@this<global::app.type.text.@this>.FromError(new ServiceError(
                     "Relative URL requires a BaseUrl configuration. Use 'configure http, base url https://...'",
                     "NoBaseUrl", 400));
 
             baseUrl = baseUrl.TrimEnd('/');
-            return data.@this<string>.Ok(baseUrl + url);
+            return data.@this<global::app.type.text.@this>.Ok(baseUrl + url);
         }
 
         if (!url.Contains("://"))
@@ -450,12 +450,12 @@ public sealed class Default : IHttp
         if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
         {
             if (uri.Scheme != "http" && uri.Scheme != "https")
-                return data.@this<string>.FromError(new ServiceError(
+                return data.@this<global::app.type.text.@this>.FromError(new ServiceError(
                     $"Only http:// and https:// URLs are allowed, got {uri.Scheme}://",
                     "InvalidUrlScheme", 400));
         }
 
-        return data.@this<string>.Ok(url);
+        return data.@this<global::app.type.text.@this>.Ok(url);
     }
 
     // --- Response parsing ---

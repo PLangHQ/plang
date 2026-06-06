@@ -102,7 +102,7 @@ public class EdgeCaseTests
             Context = _app.User.Context,
             Path = global::app.data.@this<global::app.type.path.@this>.Ok(
                 global::app.type.path.@this.Resolve("../../../etc", _app.User.Context)),
-            Pattern = new global::app.data.@this<string>("Pattern", "*.test.goal"),
+            Pattern = new global::app.data.@this<global::app.type.text.@this>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<global::app.type.@bool.@this>("Recursive", true)
         };
 

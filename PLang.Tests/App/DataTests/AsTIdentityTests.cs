@@ -114,7 +114,7 @@ public class AsTIdentityTests
     }
 
     // Rule 3 — cross-type with conversion. Data<int>(42).As<string>() produces
-    // a NEW Data<string> with converted .Value ("42"), but Properties + event
+    // a NEW Data<global::app.type.text.@this> with converted .Value ("42"), but Properties + event
     // lists alias from source. The .Value is a fresh converted object —
     // ref-DISTINCT from source.Value (42 boxed) — but the metadata bag is shared.
     [Test]
@@ -136,7 +136,7 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_CrossType_ConversionFailure_ReturnsFromError_NoAlias()
     {
-        var source = new global::app.data.@this<string>("messy", "not-a-number") { Context = _app.User.Context };
+        var source = new global::app.data.@this<global::app.type.text.@this>("messy", "not-a-number") { Context = _app.User.Context };
         source.Properties.Set("extra", "leak-check");
         var wrapped = source.As<int>();
         await wrapped.IsFailure();

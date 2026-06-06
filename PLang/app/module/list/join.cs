@@ -7,9 +7,9 @@ public partial class Join : IContext
 {
     public partial data.@this<app.variable.@this> ListName { get; init; }
     [Default(",")]
-    public partial data.@this<string> Separator { get; init; }
+    public partial data.@this<global::app.type.text.@this> Separator { get; init; }
 
-    public Task<data.@this<string>> Run()
+    public Task<data.@this<global::app.type.text.@this>> Run()
     {
         var data = Context.Variable.Get(ListName.Value);
         var strings = new List<string>();
@@ -18,6 +18,6 @@ public partial class Join : IContext
             strings.Add(item.Value?.ToString() ?? "");
 
         var result = string.Join(Separator.Value!, strings);
-        return Task.FromResult(global::app.data.@this<string>.Ok(result, app.type.@this.String));
+        return Task.FromResult(global::app.data.@this<global::app.type.text.@this>.Ok(result, app.type.@this.String));
     }
 }

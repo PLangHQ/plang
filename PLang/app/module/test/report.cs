@@ -22,7 +22,7 @@ namespace app.module.test;
 public partial class report : IContext
 {
     public partial data.@this<app.tester.Results>? Results { get; init; }
-    public partial data.@this<string>? Format { get; init; }
+    public partial data.@this<global::app.type.text.@this>? Format { get; init; }
 
     public async Task<data.@this> Run()
     {

@@ -23,7 +23,7 @@ public class Stage5_ListDictOpsTests
     private static DictV Person(string field, object? val) { var d = new DictV(); d.Set(new Data(field, val)); return d; }
 
     private static Where WhereAction(global::app.actor.context.@this ctx, string var, string field, string op, object? value)
-        => new() { Context = ctx, ListName = new app.variable.@this(var), Field = new global::app.data.@this<string>("", field),
+        => new() { Context = ctx, ListName = new app.variable.@this(var), Field = new global::app.data.@this<global::app.type.text.@this>("", field),
                    Operator = new global::app.data.@this<Op>("", new Op(op)), Value = D(value) };
 
     [Test]
@@ -78,7 +78,7 @@ public class Stage5_ListDictOpsTests
         people.Add(new Data("", Person("age", 20L)));
         vars.Set("people", people);
 
-        var action = new Sort { Context = ctx, ListName = new app.variable.@this("people"), By = new global::app.data.@this<string>("", "age") };
+        var action = new Sort { Context = ctx, ListName = new app.variable.@this("people"), By = new global::app.data.@this<global::app.type.text.@this>("", "age") };
         await (await action.Run()).IsSuccess();
         var sorted = (ListV)vars.Get("people").Value!;
         await Assert.That((long)sorted.At(0)!.GetChild("age").Value!).IsEqualTo(10L);
@@ -123,7 +123,7 @@ public class Stage5_ListDictOpsTests
         people.Add(new Data("", Person("city", "Oslo")));
         people.Add(new Data("", Person("city", "Reyk")));
         vars.Set("people", people);
-        var action = new Group { Context = ctx, ListName = new app.variable.@this("people"), Key = new global::app.data.@this<string>("", "city") };
+        var action = new Group { Context = ctx, ListName = new app.variable.@this("people"), Key = new global::app.data.@this<global::app.type.text.@this>("", "city") };
         var result = await action.Run();
         await result.IsSuccess();
         var groups = (ListV)result.Value!.value!;

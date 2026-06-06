@@ -40,7 +40,7 @@ public class HashActionTests
     [Test]
     public async Task Hash_StringInput_ReturnsBytesWithType()
     {
-        var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
+        var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = (global::app.type.text.@this)"keccak256" };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -54,9 +54,9 @@ public class HashActionTests
     [Test]
     public async Task Hash_ObjectInput_ProducesDeterministicHash()
     {
-        var refHash = new global::app.module.crypto.code.Default().Hash(new Hash { Data = Data.Ok("hello"), Algorithm = "keccak256" });
+        var refHash = new global::app.module.crypto.code.Default().Hash(new Hash { Data = Data.Ok("hello"), Algorithm = (global::app.type.text.@this)"keccak256" });
 
-        var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
+        var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = (global::app.type.text.@this)"keccak256" };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -66,7 +66,7 @@ public class HashActionTests
     [Test]
     public async Task Hash_ByteArrayInput_HashesRawBytes()
     {
-        var action = new Hash { Context = Ctx, Data = Data.Ok(new byte[] { 1, 2, 3 }), Algorithm = "keccak256" };
+        var action = new Hash { Context = Ctx, Data = Data.Ok(new byte[] { 1, 2, 3 }), Algorithm = (global::app.type.text.@this)"keccak256" };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -78,8 +78,8 @@ public class HashActionTests
     [Test]
     public async Task Hash_ExplicitAlgorithm_OverridesDefault()
     {
-        var keccakAction = new Hash { Context = Ctx, Data = Data.Ok("test"), Algorithm = "keccak256" };
-        var sha256Action = new Hash { Context = Ctx, Data = Data.Ok("test"), Algorithm = "sha256" };
+        var keccakAction = new Hash { Context = Ctx, Data = Data.Ok("test"), Algorithm = (global::app.type.text.@this)"keccak256" };
+        var sha256Action = new Hash { Context = Ctx, Data = Data.Ok("test"), Algorithm = (global::app.type.text.@this)"sha256" };
 
         var keccakResult = await keccakAction.Run();
         var sha256Result = await sha256Action.Run();
@@ -112,7 +112,7 @@ public class HashActionTests
     [Test]
     public async Task Hash_UnsupportedAlgorithm_ReturnsError()
     {
-        var action = new Hash { Context = Ctx, Data = Data.Ok("test"), Algorithm = "md5" };
+        var action = new Hash { Context = Ctx, Data = Data.Ok("test"), Algorithm = (global::app.type.text.@this)"md5" };
         var result = await action.Run();
 
         await result.IsFailure();
@@ -126,7 +126,7 @@ public class HashActionTests
         _app.Code.Register<ICrypto>(new FailingCryptoProvider());
         _app.Code.SetDefault<ICrypto>("failing");
 
-        var action = new Hash { Context = Ctx, Data = Data.Ok("test"), Algorithm = "keccak256" };
+        var action = new Hash { Context = Ctx, Data = Data.Ok("test"), Algorithm = (global::app.type.text.@this)"keccak256" };
         var result = await action.Run();
 
         await result.IsFailure();
@@ -139,11 +139,11 @@ public class HashActionTests
     [Test]
     public async Task Verify_RoundTrip_ReturnsTrue()
     {
-        var hashAction = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
+        var hashAction = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = (global::app.type.text.@this)"keccak256" };
         var hashResult = await hashAction.Run();
         var base64 = ((hash)hashResult.Value!).ToBase64();
 
-        var verifyAction = new Verify { Context = Ctx, Data = Data.Ok("hello"), Hash = Data.Ok(base64), Algorithm = "keccak256" };
+        var verifyAction = new Verify { Context = Ctx, Data = Data.Ok("hello"), Hash = Data.Ok(base64), Algorithm = (global::app.type.text.@this)"keccak256" };
         var result = await verifyAction.Run();
 
         await result.IsSuccess();
@@ -153,12 +153,12 @@ public class HashActionTests
     [Test]
     public async Task Verify_WrongHash_ReturnsFalse()
     {
-        var hashAction = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
+        var hashAction = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = (global::app.type.text.@this)"keccak256" };
         var hashResult = await hashAction.Run();
         var hashBytes = ((hash)hashResult.Value!).Bytes.ToArray();
         hashBytes[0] ^= 0xFF; // flip first byte
         var wrongHash = Convert.ToBase64String(hashBytes);
-        var verifyAction = new Verify { Context = Ctx, Data = Data.Ok("hello"), Hash = Data.Ok(wrongHash), Algorithm = "keccak256" };
+        var verifyAction = new Verify { Context = Ctx, Data = Data.Ok("hello"), Hash = Data.Ok(wrongHash), Algorithm = (global::app.type.text.@this)"keccak256" };
         var result = await verifyAction.Run();
 
         await result.IsSuccess();
@@ -168,7 +168,7 @@ public class HashActionTests
     [Test]
     public async Task Verify_CorruptedHashString_ReturnsError()
     {
-        var verifyAction = new Verify { Context = Ctx, Data = Data.Ok("hello"), Hash = Data.Ok("not-a-valid-base64!!!"), Algorithm = "keccak256" };
+        var verifyAction = new Verify { Context = Ctx, Data = Data.Ok("hello"), Hash = Data.Ok("not-a-valid-base64!!!"), Algorithm = (global::app.type.text.@this)"keccak256" };
         var result = await verifyAction.Run();
 
         await result.IsFailure();
@@ -179,7 +179,7 @@ public class HashActionTests
     [Test]
     public async Task Verify_NullHash_ReturnsError()
     {
-        var verifyAction = new Verify { Data = Data.Ok("hello"), Hash = null!, Algorithm = "keccak256" };
+        var verifyAction = new Verify { Data = Data.Ok("hello"), Hash = null!, Algorithm = (global::app.type.text.@this)"keccak256" };
         var result = await verifyAction.ExecuteAsync(new PrAction { Module = "crypto", ActionName = "verify" }, Ctx);
 
         await result.IsFailure();
@@ -210,7 +210,7 @@ public class HashActionTests
         _app.Code.Register<ICrypto>(new FailingCryptoProvider());
         _app.Code.SetDefault<ICrypto>("failing");
 
-        var verifyAction = new Verify { Context = Ctx, Data = Data.Ok("test"), Hash = Data.Ok(Convert.ToBase64String(new byte[32])), Algorithm = "keccak256" };
+        var verifyAction = new Verify { Context = Ctx, Data = Data.Ok("test"), Hash = Data.Ok(Convert.ToBase64String(new byte[32])), Algorithm = (global::app.type.text.@this)"keccak256" };
         var result = await verifyAction.Run();
 
         await result.IsFailure();

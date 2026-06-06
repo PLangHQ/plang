@@ -8,7 +8,7 @@ public partial class NotEquals : IContext
 {
     public partial data.@this? Expected { get; init; }
     public partial data.@this? Actual { get; init; }
-    public partial data.@this<string>? Message { get; init; }
+    public partial data.@this<global::app.type.text.@this>? Message { get; init; }
 
     [Code]
     public partial IAssert Assert { get; }

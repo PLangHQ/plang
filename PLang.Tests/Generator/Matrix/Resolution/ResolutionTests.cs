@@ -19,7 +19,7 @@ public class FullVarMatchTests
             variables: new Dictionary<string, object?> { ["path"] = "/tmp/x.txt" });
 
         await result.Data.IsSuccess();
-        var typed = result.Data as global::app.data.@this<string>;
+        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
         await Assert.That(typed!.Value).IsEqualTo("/tmp/x.txt");
     }
 
@@ -34,8 +34,8 @@ public class FullVarMatchTests
             parameters: new[] { ("path", (object?)"%count%") });
 
         await result.Data.IsSuccess();
-        // FullVarMatch's Path is Data<string>; "42" should be the converted string form.
-        var typed = result.Data as global::app.data.@this<string>;
+        // FullVarMatch's Path is Data<global::app.type.text.@this>; "42" should be the converted string form.
+        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
         await Assert.That(typed!.Value).IsEqualTo("42");
     }
 
@@ -47,7 +47,7 @@ public class FullVarMatchTests
         var result = await MatrixRunner.RunAsync<FullVarMatch>(app,
             parameters: new[] { ("path", (object?)"%does_not_exist%") });
 
-        var typed = result.Data as global::app.data.@this<string>;
+        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
         await Assert.That(typed!.Value).IsNull();
     }
 }
@@ -63,7 +63,7 @@ public class InterpolationTests
             parameters: new[] { ("greeting", (object?)"Hello %name%") },
             variables: new Dictionary<string, object?> { ["name"] = "world" });
 
-        var typed = result.Data as global::app.data.@this<string>;
+        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
         await Assert.That(typed!.Value).IsEqualTo("Hello world");
     }
 
@@ -76,7 +76,7 @@ public class InterpolationTests
             parameters: new[] { ("greeting", (object?)"%a% then %b% then %a%") },
             variables: new Dictionary<string, object?> { ["a"] = "first", ["b"] = "second" });
 
-        var typed = result.Data as global::app.data.@this<string>;
+        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
         await Assert.That(typed!.Value).IsEqualTo("first then second then first");
     }
 
@@ -88,7 +88,7 @@ public class InterpolationTests
         var result = await MatrixRunner.RunAsync<Interpolation>(app,
             parameters: new[] { ("greeting", (object?)"plain string") });
 
-        var typed = result.Data as global::app.data.@this<string>;
+        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
         await Assert.That(typed!.Value).IsEqualTo("plain string");
     }
 }
@@ -194,13 +194,13 @@ public class ReResolveAcrossCallsTests
         app.User.Context.Variable.Set("x", "first");
         var first = await MatrixRunner.RunAsync<ReResolveAcrossCalls>(app,
             parameters: new[] { ("value", (object?)"%x%") });
-        var firstTyped = first.Data as global::app.data.@this<string>;
+        var firstTyped = first.Data as global::app.data.@this<global::app.type.text.@this>;
         await Assert.That(firstTyped!.Value).IsEqualTo("first");
 
         app.User.Context.Variable.Set("x", "second");
         var second = await MatrixRunner.RunAsync<ReResolveAcrossCalls>(app,
             parameters: new[] { ("value", (object?)"%x%") });
-        var secondTyped = second.Data as global::app.data.@this<string>;
+        var secondTyped = second.Data as global::app.data.@this<global::app.type.text.@this>;
         await Assert.That(secondTyped!.Value).IsEqualTo("second");
     }
 
@@ -247,7 +247,7 @@ public class ReResolveAcrossCallsTests
             app.User.Context.Variable.Set("i", $"value-{i}");
             var r = await MatrixRunner.RunAsync<ReResolveAcrossCalls>(app,
                 parameters: new[] { ("value", (object?)"%i%") });
-            var typed = r.Data as global::app.data.@this<string>;
+            var typed = r.Data as global::app.data.@this<global::app.type.text.@this>;
             seen.Add(typed!.Value);
         }
         await Assert.That(seen[0]).IsEqualTo("value-0");
@@ -278,7 +278,7 @@ public class ConcurrentHandlersTests
                 Parameters = new List<Data> { sharedData }
             };
             var data = await action.RunAsync(app.User.Context);
-            return data.Success && (data is global::app.data.@this<string> typed) && typed.Value == "value";        })).ToArray();
+            return data.Success && (data is global::app.data.@this<global::app.type.text.@this> typed) && typed.Value == "value";        })).ToArray();
 
         var results = await Task.WhenAll(tasks);
         await Assert.That(results.All(b => b)).IsTrue();

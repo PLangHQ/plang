@@ -10,7 +10,7 @@ namespace app.module.settings;
 [Action("get")]
 public partial class Get : IContext
 {
-    public partial data.@this<string> Key { get; init; }
+    public partial data.@this<global::app.type.text.@this> Key { get; init; }
 
     public async Task<data.@this> Run()
     {

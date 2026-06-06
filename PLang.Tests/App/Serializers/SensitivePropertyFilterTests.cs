@@ -51,7 +51,7 @@ public class SensitivePropertyFilterTests
     {
         var identity = new Identity
         {
-            Name = "test",
+            Name = (global::app.type.text.@this)"test",
             PublicKey = "pubkey123",
             PrivateKey = "secret456",
             IsDefault = true,
@@ -72,7 +72,7 @@ public class SensitivePropertyFilterTests
     {
         var identity = new Identity
         {
-            Name = "test",
+            Name = (global::app.type.text.@this)"test",
             PublicKey = "pubkey123",
             PrivateKey = "secret456",
             IsDefault = true
@@ -89,7 +89,7 @@ public class SensitivePropertyFilterTests
     public async Task Sensitive_NoOpOnTypesWithoutAttribute()
     {
         // A type without [Sensitive] should serialize normally
-        var obj = new { Name = "test", Value = 42 };
+        var obj = new { Name = (global::app.type.text.@this)"test", Value = 42 };
 
         var serializer = new global::app.channel.serializer.Json();
         var json = serializer.Serialize(Data.Ok(obj)).Value!;
@@ -103,7 +103,7 @@ public class SensitivePropertyFilterTests
     {
         var identity = new Identity
         {
-            Name = "test",
+            Name = (global::app.type.text.@this)"test",
             PublicKey = "pubkey123",
             PrivateKey = "secret456",
             IsDefault = true
@@ -126,7 +126,7 @@ public class SensitivePropertyFilterTests
     {
         var identity = new Identity
         {
-            Name = "test",
+            Name = (global::app.type.text.@this)"test",
             PublicKey = "pubkey123",
             PrivateKey = "secret456",
             IsDefault = true
@@ -147,7 +147,7 @@ public class SensitivePropertyFilterTests
     {
         var identity = new Identity
         {
-            Name = "test",
+            Name = (global::app.type.text.@this)"test",
             PublicKey = "pubkey123",
             PrivateKey = "secret456",
             IsDefault = true
@@ -184,7 +184,7 @@ public class SensitivePropertyFilterTests
     [Test]
     public async Task Sensitive_NonStringProperty_RendersMaskedValueNotStripped()
     {
-        var obj = new NonStringSecretCarrier { Name = "ed25519", Key = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF } };
+        var obj = new NonStringSecretCarrier { Name = (global::app.type.text.@this)"ed25519", Key = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF } };
 
         var json = JsonSerializer.Serialize(obj, global::app.Utils.Json.DiagnosticOutput);
 
@@ -199,7 +199,7 @@ public class SensitivePropertyFilterTests
     public async Task Sensitive_IdentityData_PrivateKeyExcluded()
     {
         // End-to-end: create real identity, serialize, verify PrivateKey absent
-        var create = new Create { Context = _app.System.Context, Name = "e2e", SetAsDefault = (global::app.type.@bool.@this)true };
+        var create = new Create { Context = _app.System.Context, Name = (global::app.type.text.@this)"e2e", SetAsDefault = (global::app.type.@bool.@this)true };
         var result = await create.Run();
         var identity = result.Value as Identity;
 

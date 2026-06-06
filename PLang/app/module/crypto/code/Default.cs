@@ -51,7 +51,7 @@ public class Default : ICrypto
                 bytes = JsonSerializer.SerializeToUtf8Bytes(data, serializer.OutboundOptions);
             }
         }
-        var algorithm = action.Algorithm.Value!.ToLowerInvariant();
+        string algorithm = ((string)action.Algorithm.Value!).ToLowerInvariant();
         byte[]? hashBytes = algorithm switch
         {
             "keccak256" => new Sha3Keccack().CalculateHash(bytes),
@@ -101,7 +101,7 @@ public class Default : ICrypto
         {
             Context = action.Context,
             Data = action.Data,
-            Algorithm = new global::app.data.@this<string>("Algorithm", algorithm),
+            Algorithm = new global::app.data.@this<global::app.type.text.@this>("Algorithm", algorithm),
         });
         if (!hashResult.Success) return global::app.data.@this<global::app.type.@bool.@this>.FromError(hashResult.Error!);
 

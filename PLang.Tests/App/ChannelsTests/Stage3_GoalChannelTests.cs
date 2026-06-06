@@ -115,7 +115,7 @@ public class Stage3_GoalChannelTests
         var app = new global::app.@this("/tmp/g8");
         var goal = new EngineGoal { Name = "Asker", Path = "Asker.goal", PrPath = "/A.pr" };
         var ch = new GoalChannel("input", goal, app.User);
-        var result = await ch.Ask(new global::app.module.output.ask { Question = new global::app.data.@this<string>("", "q?") });
+        var result = await ch.Ask(new global::app.module.output.ask { Question = new global::app.data.@this<global::app.type.text.@this>("", "q?") });
         await result.IsSuccess();
     }
 

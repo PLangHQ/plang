@@ -77,7 +77,7 @@ public class HashTypeTests
         {
             Context = ctx,
             Data = global::app.data.@this.Ok("hello"),
-            Algorithm = new global::app.data.@this<string>("Algorithm", "sha256"),
+            Algorithm = new global::app.data.@this<global::app.type.text.@this>("Algorithm", "sha256"),
         });
         await digest.IsSuccess();
         await Assert.That(digest.Value is hash).IsTrue();

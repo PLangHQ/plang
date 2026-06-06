@@ -66,12 +66,12 @@ public sealed class Text : ISerializer
         return global::app.data.@this<T>.Ok(FromText<T>(result.Value as string ?? ""));
     }
 
-    public data.@this<string> Serialize(data.@this data)
+    public data.@this<global::app.type.text.@this> Serialize(data.@this data)
     {
         var value = data.Value;
         if (value == null || AppTypes.IsPrimitive(value.GetType())
             || value is global::app.type.item.@this { IsLeaf: true })
-            return global::app.data.@this<string>.Ok(value?.ToString() ?? "");
+            return global::app.data.@this<global::app.type.text.@this>.Ok(value?.ToString() ?? "");
         return _jsonFallback.Serialize(data);
     }
 

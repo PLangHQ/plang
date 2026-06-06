@@ -11,8 +11,8 @@ namespace app.module.identity;
 [Action("rename", Cacheable = false)]
 public partial class Rename : IContext
 {
-    public partial data.@this<string> Name { get; init; }
-    public partial data.@this<string> NewName { get; init; }
+    public partial data.@this<global::app.type.text.@this> Name { get; init; }
+    public partial data.@this<global::app.type.text.@this> NewName { get; init; }
 
     [Code]
     public partial IIdentity Identity { get; }

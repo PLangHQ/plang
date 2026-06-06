@@ -180,15 +180,15 @@ public sealed class @this : ISerializer
         }
     }
 
-    public global::app.data.@this<string> Serialize(global::app.data.@this data)
+    public global::app.data.@this<global::app.type.text.@this> Serialize(global::app.data.@this data)
     {
         try
         {
-            return global::app.data.@this<string>.Ok(JsonSerializer.Serialize(data, _outbound));
+            return global::app.data.@this<global::app.type.text.@this>.Ok(JsonSerializer.Serialize(data, _outbound));
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {
-            return global::app.data.@this<string>.FromError(new error.ServiceError(
+            return global::app.data.@this<global::app.type.text.@this>.FromError(new error.ServiceError(
                 $"Plang serialize failed: {ex.Message}", "PlangSerializeError", 400) { Exception = ex });
         }
     }
@@ -201,15 +201,15 @@ public sealed class @this : ISerializer
     /// like <c>Identity.PrivateKey</c> — round-trips. No observer on the
     /// local persistence path, so <c>[Masked]</c> is ignored too.
     /// </summary>
-    public global::app.data.@this<string> Store(global::app.data.@this data)
+    public global::app.data.@this<global::app.type.text.@this> Store(global::app.data.@this data)
     {
         try
         {
-            return global::app.data.@this<string>.Ok(JsonSerializer.Serialize(data, _store));
+            return global::app.data.@this<global::app.type.text.@this>.Ok(JsonSerializer.Serialize(data, _store));
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {
-            return global::app.data.@this<string>.FromError(new error.ServiceError(
+            return global::app.data.@this<global::app.type.text.@this>.FromError(new error.ServiceError(
                 $"Plang Store failed: {ex.Message}", "PlangSerializeError", 400) { Exception = ex });
         }
     }

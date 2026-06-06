@@ -13,7 +13,7 @@ public partial class Throw : IContext
     public partial data.@this Message { get; init; }
     [Default(500)]
     public partial data.@this<global::app.type.number.@this> StatusCode { get; init; }
-    public partial data.@this<string>? Key { get; init; }
+    public partial data.@this<global::app.type.text.@this>? Key { get; init; }
 
     public Task<data.@this> Run()
     {

@@ -140,7 +140,7 @@ public class GeneratorValidationTests
         var intPlainSrc = File.ReadAllText(Path.Combine(GeneratedDir,
             "app.module.matrix.plain.IntPlain.Action.g.cs"));
 
-        await Assert.That(stringPlainSrc).Contains("__ResolveData(\"path\").As<string>(Context)");
+        await Assert.That(stringPlainSrc).Contains("__ResolveData(\"path\").As<global::app.type.text.@this>(Context)");
         await Assert.That(intPlainSrc).Contains("__ResolveData(\"count\").As<int>(Context)");
     }
 

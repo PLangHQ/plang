@@ -28,7 +28,7 @@ public class UploadActionTests
         _app = new PLangEngine(_tempDir);
 
         _handler = new MockHttpMessageHandler();
-        var provider = new Default(_handler) { Name = "test" };
+        var provider = new Default(_handler) { Name = (global::app.type.text.@this)"test" };
         _app.Code.Register<IHttp>(provider);
         _app.Code.SetDefault<IHttp>("test");
     }
@@ -70,7 +70,7 @@ public class UploadActionTests
         var action = new upload
         {
             Context = Ctx,
-            Url = "https://api.example.com/upload",
+            Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", "Hello upload"),
             As = ContentAs.Text,
             Unsigned = (global::app.type.@bool.@this)true
@@ -93,7 +93,7 @@ public class UploadActionTests
         var action = new upload
         {
             Context = Ctx,
-            Url = "https://api.example.com/upload",
+            Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", "upload.txt"),
             As = ContentAs.File,
             Unsigned = (global::app.type.@bool.@this)true
@@ -115,7 +115,7 @@ public class UploadActionTests
         var action = new upload
         {
             Context = Ctx,
-            Url = "https://api.example.com/upload",
+            Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", b64),
             As = ContentAs.Base64,
             Unsigned = (global::app.type.@bool.@this)true
@@ -137,7 +137,7 @@ public class UploadActionTests
         var action = new upload
         {
             Context = Ctx,
-            Url = "https://api.example.com/upload",
+            Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", "auto.txt"),
             Unsigned = (global::app.type.@bool.@this)true
         };
@@ -156,7 +156,7 @@ public class UploadActionTests
         var action = new upload
         {
             Context = Ctx,
-            Url = "https://api.example.com/upload",
+            Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", "just a string, not a file path"),
             Unsigned = (global::app.type.@bool.@this)true
         };
@@ -174,7 +174,7 @@ public class UploadActionTests
         var action = new upload
         {
             Context = Ctx,
-            Url = "https://api.example.com/upload",
+            Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", "data"),
             Method = HttpMethod.PUT,
             As = ContentAs.Text,
@@ -198,7 +198,7 @@ public class UploadActionTests
         var action = new upload
         {
             Context = Ctx,
-            Url = "https://api.example.com/upload",
+            Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", "data"),
             As = ContentAs.Text,
             Unsigned = (global::app.type.@bool.@this)true
@@ -221,7 +221,7 @@ public class UploadActionTests
         var action = new upload
         {
             Context = Ctx,
-            Url = "https://api.example.com/upload",
+            Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", new Dictionary<string, object> { ["name"] = "Alice", ["age"] = "30" }),
             Unsigned = (global::app.type.@bool.@this)true
         };
@@ -245,7 +245,7 @@ public class UploadActionTests
         var action = new upload
         {
             Context = Ctx,
-            Url = "https://api.example.com/upload",
+            Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", new Dictionary<string, object> { ["field1"] = "value1" }),
             As = ContentAs.Form,
             Unsigned = (global::app.type.@bool.@this)true
@@ -272,7 +272,7 @@ public class UploadActionTests
         var action = new upload
         {
             Context = Ctx,
-            Url = "https://api.example.com/upload",
+            Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", new Dictionary<string, object> { ["title"] = "My Doc", ["file"] = "@document.pdf" }),
             As = ContentAs.Form,
             Unsigned = (global::app.type.@bool.@this)true
@@ -306,7 +306,7 @@ public class UploadActionTests
         var action = new upload
         {
             Context = Ctx,
-            Url = "https://api.example.com/upload",
+            Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", new List<string> { "a", "b", "c" }),
             Unsigned = (global::app.type.@bool.@this)true
         };

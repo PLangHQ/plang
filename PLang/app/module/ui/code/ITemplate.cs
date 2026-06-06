@@ -10,5 +10,5 @@ namespace app.module.ui.code;
 public interface ITemplate : ICode
 {
     /// <summary>Renders the template described by the action and returns the output string as Data.</summary>
-    Task<data.@this<string>> Render(Render action);
+    Task<data.@this<global::app.type.text.@this>> Render(Render action);
 }

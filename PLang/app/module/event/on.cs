@@ -19,11 +19,11 @@ public partial class On : IContext
     /// <summary>Goal to execute when the event fires.</summary>
     public partial data.@this<GoalCall> GoalToCall { get; init; }
     /// <summary>Glob or regex pattern to match goal names. Null matches all goals.</summary>
-    public partial data.@this<string>? GoalPattern { get; init; }
+    public partial data.@this<global::app.type.text.@this>? GoalPattern { get; init; }
     /// <summary>Glob or regex pattern to match step text. Only for step-level events.</summary>
-    public partial data.@this<string>? StepPattern { get; init; }
+    public partial data.@this<global::app.type.text.@this>? StepPattern { get; init; }
     /// <summary>Glob or regex pattern to match action names (e.g., "http.*"). Only for action-level events.</summary>
-    public partial data.@this<string>? ActionPattern { get; init; }
+    public partial data.@this<global::app.type.text.@this>? ActionPattern { get; init; }
     /// <summary>When true, patterns are treated as regular expressions instead of glob patterns.</summary>
     [Default(false)]
     public partial data.@this<global::app.type.@bool.@this> IsRegex { get; init; }
@@ -35,9 +35,9 @@ public partial class On : IContext
     public partial data.@this<actor.@this>? Actor { get; init; }
 
     /// <summary>Channel-name filter for channel lifecycle events (BeforeWrite/AfterWrite/BeforeRead/AfterRead/OnAsk). Null = no filter.</summary>
-    public partial data.@this<string>? ChannelName { get; init; }
+    public partial data.@this<global::app.type.text.@this>? ChannelName { get; init; }
 
-    public Task<data.@this<string>> Run()
+    public Task<data.@this<global::app.type.text.@this>> Run()
     {
         // Resolve target actor — default to current context's actor
         var targetActor = Actor?.Value ?? Context.Actor ?? Context.App!.User;
@@ -60,6 +60,6 @@ public partial class On : IContext
         // Register on the target actor's event scope
         targetActor.Context.Events.Register(binding);
 
-        return Task.FromResult(global::app.data.@this<string>.Ok(binding.Id));
+        return Task.FromResult(global::app.data.@this<global::app.type.text.@this>.Ok(binding.Id));
     }
 }

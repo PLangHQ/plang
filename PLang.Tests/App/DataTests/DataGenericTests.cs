@@ -9,7 +9,7 @@ public class DataGenericTests
     [Test]
     public async Task Ok_StoresTypedValue()
     {
-        var data = global::app.data.@this<string>.Ok("hello");
+        var data = global::app.data.@this<global::app.type.text.@this>.Ok("hello");
 
         await Assert.That(data.Value).IsEqualTo("hello");
         await data.IsSuccess();
@@ -28,7 +28,7 @@ public class DataGenericTests
     [Test]
     public async Task Value_ReturnsTypedValue()
     {
-        var data = global::app.data.@this<string>.Ok("world");
+        var data = global::app.data.@this<global::app.type.text.@this>.Ok("world");
 
         string? typed = data.Value;
 
@@ -49,7 +49,7 @@ public class DataGenericTests
     public async Task Fail_CreatesErrorResult()
     {
         var error = new ServiceError("something failed", "TestError", 500);
-        var data = global::app.data.@this<string>.FromError(error);
+        var data = global::app.data.@this<global::app.type.text.@this>.FromError(error);
 
         await data.IsFailure();
         await Assert.That(data.Error).IsNotNull();
@@ -59,11 +59,11 @@ public class DataGenericTests
     [Test]
     public async Task IsAssignableToData()
     {
-        global::app.data.@this<string> typed = global::app.data.@this<string>.Ok("test");
+        global::app.data.@this<global::app.type.text.@this> typed = global::app.data.@this<global::app.type.text.@this>.Ok("test");
         Data untyped = typed;
 
         await untyped.IsSuccess();
-        await Assert.That(untyped.Value).IsEqualTo("test");
+        await Assert.That(untyped.Value!.ToString()).IsEqualTo("test");
     }
 
     [Test]

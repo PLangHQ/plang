@@ -28,7 +28,7 @@ public class HttpChannelTests
         var app = new global::app.@this(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-httpchan-" + System.Guid.NewGuid().ToString("N")[..8]));
         handler = new StubHandler();
-        var provider = new Default(handler) { Name = "test" };
+        var provider = new Default(handler) { Name = (global::app.type.text.@this)"test" };
         app.Code.Register<IHttp>(provider);
         app.Code.SetDefault<IHttp>("test");
         return app;
@@ -38,7 +38,7 @@ public class HttpChannelTests
     {
         handler.Respond = _ => new HttpResponseMessage(HttpStatusCode.OK)
         { Content = new StringContent(body, Encoding.UTF8, contentType) };
-        var action = new request { Context = app.User.Context, Url = "https://x/y", Unsigned = (global::app.type.@bool.@this)true };
+        var action = new request { Context = app.User.Context, Url = (global::app.type.text.@this)"https://x/y", Unsigned = (global::app.type.@bool.@this)true };
         return await action.Run();
     }
 

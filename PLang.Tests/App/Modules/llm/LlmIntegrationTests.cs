@@ -116,7 +116,7 @@ public class LlmIntegrationTests
         {
             Context = Ctx,
             Messages = messages,
-            Format = "python",
+            Format = (global::app.type.text.@this)"python",
             Temperature = (global::app.type.number.@this)0.0,
             MaxTokens = (global::app.type.number.@this)200,
             Cache = (global::app.type.@bool.@this)false
@@ -189,7 +189,7 @@ public class LlmIntegrationTests
         {
             new GoalCall
             {
-                Name = "GetWeather",
+                Name = (global::app.type.text.@this)"GetWeather",
                 Parameters = new List<Data>
                 {
                     new Data("city", null, global::app.type.@this.String)
@@ -223,7 +223,7 @@ public class LlmIntegrationTests
         if (snapshot != null)
         {
             var handler = new SnapshotReplayHandler(new List<string> { snapshot });
-            var httpProvider = new Default(handler) { Name = "snapshot" };
+            var httpProvider = new Default(handler) { Name = (global::app.type.text.@this)"snapshot" };
             _app.Code.Register<IHttp>(httpProvider);
             _app.Code.SetDefault<IHttp>("snapshot");
         }
@@ -257,7 +257,7 @@ public class LlmIntegrationTests
         if (multiSnapshot != null)
         {
             var handler = new SnapshotReplayHandler(multiSnapshot);
-            var httpProvider = new Default(handler) { Name = "snapshot" };
+            var httpProvider = new Default(handler) { Name = (global::app.type.text.@this)"snapshot" };
             _app.Code.Register<IHttp>(httpProvider);
             _app.Code.SetDefault<IHttp>("snapshot");
         }
@@ -269,7 +269,7 @@ public class LlmIntegrationTests
         {
             // Capture all responses during the live call
             captureHandler = new CaptureHandler();
-            var httpProvider = new Default(captureHandler) { Name = "capture" };
+            var httpProvider = new Default(captureHandler) { Name = (global::app.type.text.@this)"capture" };
             _app.Code.Register<IHttp>(httpProvider);
             _app.Code.SetDefault<IHttp>("capture");
         }

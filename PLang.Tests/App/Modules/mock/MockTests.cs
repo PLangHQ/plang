@@ -24,7 +24,7 @@ public class MockTests
         var action = new intercept
         {
             Context = context,
-            Pattern = "file.read",
+            Pattern = (global::app.type.text.@this)"file.read",
             Return = new global::app.data.@this("", "test content")        };
 
         var result = await action.Run();
@@ -45,7 +45,7 @@ public class MockTests
         var action = new intercept
         {
             Context = context,
-            Pattern = "output.write"
+            Pattern = (global::app.type.text.@this)"output.write"
         };
 
         var result = await action.Run();
@@ -62,7 +62,7 @@ public class MockTests
         var action = new intercept
         {
             Context = context,
-            Pattern = "file.read",
+            Pattern = (global::app.type.text.@this)"file.read",
             Return = new global::app.data.@this("", "mocked")        };
 
         var beforeCount = context.Events.Count;
@@ -79,7 +79,7 @@ public class MockTests
         var action = new intercept
         {
             Context = context,
-            Pattern = "file.read",
+            Pattern = (global::app.type.text.@this)"file.read",
             Return = new global::app.data.@this("", "mocked")        };
 
         var result = await action.Run();
@@ -98,7 +98,7 @@ public class MockTests
         var handle = new global::app.mock.@this
         {
             Id = "test",
-            Pattern = "file.read"
+            Pattern = (global::app.type.text.@this)"file.read"
         };
         handle.RecordCall(new Dictionary<string, object?> { ["path"] = "test.txt" });
         handle.RecordCall(new Dictionary<string, object?> { ["path"] = "other.txt" });
@@ -121,7 +121,7 @@ public class MockTests
         var handle = new global::app.mock.@this
         {
             Id = "test",
-            Pattern = "file.read"
+            Pattern = (global::app.type.text.@this)"file.read"
         };
         handle.RecordCall(new Dictionary<string, object?> { ["path"] = "test.txt" });
 
@@ -144,7 +144,7 @@ public class MockTests
         var handle = new global::app.mock.@this
         {
             Id = "test",
-            Pattern = "file.read"
+            Pattern = (global::app.type.text.@this)"file.read"
         };
 
         var verify = new Verify
@@ -152,7 +152,7 @@ public class MockTests
             Context = context,
             Mock = handle,
             ExpectedCount = (global::app.type.number.@this)1,
-            Message = "file.read should be called once"
+            Message = (global::app.type.text.@this)"file.read should be called once"
         };
 
         var result = await verify.Run();
@@ -173,7 +173,7 @@ public class MockTests
         var mockAction = new intercept
         {
             Context = context,
-            Pattern = "file.read",
+            Pattern = (global::app.type.text.@this)"file.read",
             Return = new global::app.data.@this("", "mocked")        };
         var mockResult = await mockAction.Run();
         var handle = (global::app.mock.@this)mockResult.Value!;
@@ -200,14 +200,14 @@ public class MockTests
         var mock1 = new intercept
         {
             Context = context,
-            Pattern = "file.read",
+            Pattern = (global::app.type.text.@this)"file.read",
             Return = new global::app.data.@this("", "mocked1")        };
         await mock1.Run();
 
         var mock2 = new intercept
         {
             Context = context,
-            Pattern = "output.write",
+            Pattern = (global::app.type.text.@this)"output.write",
             Return = new global::app.data.@this("", "mocked2")        };
         await mock2.Run();
 
@@ -232,7 +232,7 @@ public class MockTests
         var handle = new global::app.mock.@this
         {
             Id = "test",
-            Pattern = "file.read"
+            Pattern = (global::app.type.text.@this)"file.read"
         };
 
         handle.RecordCall(new Dictionary<string, object?> { ["path"] = "config.json" });

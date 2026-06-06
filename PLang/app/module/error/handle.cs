@@ -63,8 +63,8 @@ public partial class Handle : IContext, IModifier
     };
 
     public partial global::app.data.@this<global::app.type.number.@this>? StatusCode { get; init; }
-    public partial global::app.data.@this<string>? Key { get; init; }
-    public partial global::app.data.@this<string>? Message { get; init; }
+    public partial global::app.data.@this<global::app.type.text.@this>? Key { get; init; }
+    public partial global::app.data.@this<global::app.type.text.@this>? Message { get; init; }
     /// <summary>
     /// Action chain to run when the error matches. Preferred over Goal — lets a
     /// developer express "on error, log + fall back + notify" inline without

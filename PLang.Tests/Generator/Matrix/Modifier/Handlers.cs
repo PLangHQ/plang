@@ -4,7 +4,7 @@ namespace app.module.matrix.modifier;
 [global::app.module.Modifier(Order = 1)]
 public partial class ModifierAction : global::app.module.IContext, global::app.module.IModifier
 {
-    public partial global::app.data.@this<string> Tag { get; init; }
+    public partial global::app.data.@this<global::app.type.text.@this> Tag { get; init; }
 
     public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
 

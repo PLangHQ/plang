@@ -12,7 +12,7 @@ namespace app.module.identity;
 [Action("archive", Cacheable = false)]
 public partial class Archive : IContext
 {
-    public partial data.@this<string> Name { get; init; }
+    public partial data.@this<global::app.type.text.@this> Name { get; init; }
 
     /// <summary>When true, allows archiving even if it's the default identity.</summary>
     [Default(false)]

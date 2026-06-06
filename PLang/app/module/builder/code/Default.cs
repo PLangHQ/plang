@@ -157,7 +157,7 @@ public class Default : IBuilder
         {
             Context = context,
             Path = data.@this<path>.Ok(path.Resolve(rootRelative, context)),
-            Pattern = new data.@this<string>("", "*.goal"),
+            Pattern = new data.@this<global::app.type.text.@this>("", "*.goal"),
             Recursive = new data.@this<global::app.type.@bool.@this>("", true)
         };
         var listResult = await app.RunAction(listAction, context);

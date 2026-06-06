@@ -204,8 +204,8 @@ public class ProviderModuleTests
         var action = new global::app.module.code.remove
         {
             Context = Ctx,
-            Name = "second",
-            Type = "signing"
+            Name = (global::app.type.text.@this)"second",
+            Type = (global::app.type.text.@this)"signing"
         };
         var result = await action.Run();
 
@@ -220,8 +220,8 @@ public class ProviderModuleTests
         var action = new global::app.module.code.remove
         {
             Context = Ctx,
-            Name = "ed25519",
-            Type = "signing"
+            Name = (global::app.type.text.@this)"ed25519",
+            Type = (global::app.type.text.@this)"signing"
         };
         var result = await action.Run();
 
@@ -235,8 +235,8 @@ public class ProviderModuleTests
         var action = new global::app.module.code.remove
         {
             Context = Ctx,
-            Name = "unknown",
-            Type = "signing"
+            Name = (global::app.type.text.@this)"unknown",
+            Type = (global::app.type.text.@this)"signing"
         };
         var result = await action.Run();
 
@@ -250,8 +250,8 @@ public class ProviderModuleTests
         var action = new global::app.module.code.remove
         {
             Context = Ctx,
-            Name = "anything",
-            Type = "invalid"
+            Name = (global::app.type.text.@this)"anything",
+            Type = (global::app.type.text.@this)"invalid"
         };
         var result = await action.Run();
 
@@ -274,8 +274,8 @@ public class ProviderModuleTests
         var action = new global::app.module.code.setDefault
         {
             Context = Ctx,
-            Name = "second",
-            Type = "signing"
+            Name = (global::app.type.text.@this)"second",
+            Type = (global::app.type.text.@this)"signing"
         };
         var result = await action.Run();
 
@@ -292,8 +292,8 @@ public class ProviderModuleTests
         var action = new global::app.module.code.setDefault
         {
             Context = Ctx,
-            Name = "unknown",
-            Type = "signing"
+            Name = (global::app.type.text.@this)"unknown",
+            Type = (global::app.type.text.@this)"signing"
         };
         var result = await action.Run();
 
@@ -307,8 +307,8 @@ public class ProviderModuleTests
         var action = new global::app.module.code.setDefault
         {
             Context = Ctx,
-            Name = "anything",
-            Type = "invalid"
+            Name = (global::app.type.text.@this)"anything",
+            Type = (global::app.type.text.@this)"invalid"
         };
         var result = await action.Run();
 
@@ -370,7 +370,7 @@ public class ProviderModuleTests
         var action = new global::app.module.code.list
         {
             Context = Ctx,
-            Type = "signing"
+            Type = (global::app.type.text.@this)"signing"
         };
         var result = await action.Run();
 
@@ -383,7 +383,7 @@ public class ProviderModuleTests
         var action = new global::app.module.code.list
         {
             Context = Ctx,
-            Type = "quantum"
+            Type = (global::app.type.text.@this)"quantum"
         };
         var result = await action.Run();
 
