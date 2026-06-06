@@ -44,7 +44,7 @@ public class CompressFlattenedTests
         var archived = d.Compress();
         var restored = archived.Decompress();
         await Assert.That(restored.Name).IsEqualTo("payload");
-        await Assert.That(restored.Value as string).IsEqualTo("round-trip value");
+        await Assert.That(restored.Value?.ToString()).IsEqualTo("round-trip value");
     }
 
     [Test] public async Task Decompress_AfterCompress_PreservesProperties()
@@ -56,7 +56,7 @@ public class CompressFlattenedTests
         var d = NewCompressibleData(app, "with props");
         var archived = d.Compress();
         var restored = archived.Decompress();
-        await Assert.That(restored.Value as string).IsEqualTo("with props");
+        await Assert.That(restored.Value?.ToString()).IsEqualTo("with props");
     }
 
     [Test] public async Task CompressedBytes_OnceGunzipped_ParseToApplicationPlangDocWithSignature()
@@ -96,7 +96,7 @@ public class CompressFlattenedTests
         var archived = d.Compress();
         var restored = archived.Decompress();
         await restored.IsSuccess();
-        await Assert.That(restored.Value as string).IsEqualTo("via plang serializer");
+        await Assert.That(restored.Value?.ToString()).IsEqualTo("via plang serializer");
     }
 
     [Test] public async Task DataTransport_EnvelopeJsonOptionsField_NoLongerExists()

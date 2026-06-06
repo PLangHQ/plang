@@ -80,8 +80,12 @@ public sealed class GoalCall : module.IEvent
                         "ClrTypeNameInGoalSlot", 500)
                         { FixSuggestion = "Build pipeline leaked a typed object's ToString() into a goal-name slot " +
                             "(likely a Fluid template rendering an object via ToString() instead of navigating to .Name)." });
-                var prPathStr = dict.TryGetValue("prPath", out var pr) ? pr?.ToString() : null;
-                var prPath = prPathStr != null ? path.Resolve(prPathStr, context) : null;
+                // A null prPath rides as the null.@this singleton after born-native;
+                // its ToString is the literal "null", so guard against it — otherwise
+                // path.Resolve("null") builds a bogus "/null".
+                var prRaw = dict.TryGetValue("prPath", out var pr) && pr is not app.type.@null.@this ? pr : null;
+                var prPathStr = prRaw?.ToString();
+                var prPath = !string.IsNullOrEmpty(prPathStr) ? path.Resolve(prPathStr, context) : null;
                 List<data.@this>? parameters = null;
                 if (dict.TryGetValue("parameters", out var p))
                 {

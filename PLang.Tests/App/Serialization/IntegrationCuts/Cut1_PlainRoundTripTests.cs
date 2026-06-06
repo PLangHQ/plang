@@ -54,7 +54,7 @@ public class Cut1_PlainRoundTripTests
         await using (app)
         {
             await Assert.That(back.Name).IsEqualTo("greeting");
-            await Assert.That(back.Value as string).IsEqualTo("hello");
+            await Assert.That(back.Value?.ToString()).IsEqualTo("hello");
         }
     }
 

@@ -25,7 +25,7 @@ public class SnapshotWireTests
         dst.Restore(wired, dst.User.Context);
 
         await Assert.That(dst.User.Context.Variable.Get("count")?.Value).IsEqualTo(42L);
-        await Assert.That(dst.User.Context.Variable.Get("name")?.Value).IsEqualTo("plang");
+        await Assert.That(dst.User.Context.Variable.Get("name")?.Value?.ToString()).IsEqualTo("plang");
     }
 
     [Test]

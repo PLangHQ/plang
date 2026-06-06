@@ -161,7 +161,11 @@ public static class @this
         {
             sb.Append("""
                         {
-                            var __channelName = __action?.Parameters?.FirstOrDefault(d => string.Equals(d.Name, "channel", System.StringComparison.OrdinalIgnoreCase))?.Value as string;
+                            // The channel param rides as a text value after born-native, so
+                            // read it through the type system (GetValue<string> → the conversion
+                            // leaf) rather than `as string`, which would null a text.@this and
+                            // silently default to Output.
+                            var __channelName = __action?.Parameters?.FirstOrDefault(d => string.Equals(d.Name, "channel", System.StringComparison.OrdinalIgnoreCase))?.GetValue<string>();
                             Channel = (context.Actor ?? app.User).Channel.Resolve(__channelName);
                             if (Channel == null)
                                 return global::app.data.@this.FromError(new global::app.error.ServiceError(

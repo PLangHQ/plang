@@ -581,12 +581,19 @@ public partial class @this
     }
 
     /// <summary>
-    /// Gets a value by name, returning the raw value or null.
+    /// Gets a value by name, returning the raw value or null. A scalar rides as
+    /// its wrapper (text/number/bool/…); this accessor is the "raw value" leaf, so
+    /// it unwraps the scalar to its backing CLR (text→string, number→numeric,
+    /// datetime→DateTimeOffset) — matching what C# callers expect (`as string`,
+    /// `(DateTimeOffset)…`). Collections stay native (dict/list keep their type);
+    /// callers that want the wrapper use <c>Get(name).Value</c>.
     /// </summary>
     public object? GetValue(string name)
     {
         var ov = Get(name);
-        return ov?.Value;
+        var v = ov?.Value;
+        if (v is app.type.dict.@this or app.type.list.@this) return v;
+        return v is app.type.item.@this iv ? iv.ToRaw() : v;
     }
 
     /// <summary>

@@ -108,7 +108,7 @@ public class ChannelReadBoundaryTests
 
         var ch = Input(app, "application/plang", Encoding.UTF8.GetBytes(wire));
         var d = await ch.Read();
-        await Assert.That(d.Value).IsEqualTo((object)"hello");
+        await Assert.That(d.Value?.ToString()).IsEqualTo("hello");
     }
 
     // app/channel/stream/this.cs today returned bare text and ignored the

@@ -73,7 +73,7 @@ public class WireReadLazyTests
         outer.Name = "outer";
         var back = RoundTrip(outer);
         await Assert.That(back.Value).IsTypeOf<data>();
-        await Assert.That(((data)back.Value!).Value).IsEqualTo((object)"hello");
+        await Assert.That(((data)back.Value!).Value?.ToString()).IsEqualTo("hello");
     }
 
     // The case LiftDataIfShaped covers: a genuinely nested Data round-trips and

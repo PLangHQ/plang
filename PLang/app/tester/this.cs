@@ -57,13 +57,17 @@ public sealed partial class @this
     {
         foreach (var kvp in config)
         {
+            // The config dict comes from a parsed --test={...} JSON, so values ride
+            // as scalar wrappers (number/bool/text). Unwrap each to its raw backing
+            // once at the boundary; the bound-checks below read raw CLR unchanged.
+            var value = kvp.Value is app.type.item.@this iv ? iv.ToRaw() : kvp.Value;
             switch (kvp.Key.ToLowerInvariant())
             {
                 case "timeout":
                 case "timeoutseconds":
                 {
-                    if (!TryToInt(kvp.Value, out var timeout))
-                        return data.@this.FromError(ConfigError($"--test.timeout must be an integer, got {Describe(kvp.Value)}"));
+                    if (!TryToInt(value, out var timeout))
+                        return data.@this.FromError(ConfigError($"--test.timeout must be an integer, got {Describe(value)}"));
                     if (timeout <= 0)
                         return data.@this.FromError(ConfigError($"--test.timeout must be positive, got {timeout}"));
                     TimeoutSeconds = timeout;
@@ -71,8 +75,8 @@ public sealed partial class @this
                 }
                 case "parallel":
                 {
-                    if (!TryToInt(kvp.Value, out var parallel))
-                        return data.@this.FromError(ConfigError($"--test.parallel must be an integer, got {Describe(kvp.Value)}"));
+                    if (!TryToInt(value, out var parallel))
+                        return data.@this.FromError(ConfigError($"--test.parallel must be an integer, got {Describe(value)}"));
                     if (parallel <= 0)
                         return data.@this.FromError(ConfigError($"--test.parallel must be positive, got {parallel}"));
                     Parallel = parallel;
@@ -81,29 +85,29 @@ public sealed partial class @this
                 case "include":
                 {
                     Include.Clear();
-                    foreach (var tag in ToStringList(kvp.Value))
+                    foreach (var tag in ToStringList(value))
                         Include.Add(tag);
                     break;
                 }
                 case "exclude":
                 {
                     Exclude.Clear();
-                    foreach (var tag in ToStringList(kvp.Value))
+                    foreach (var tag in ToStringList(value))
                         Exclude.Add(tag);
                     break;
                 }
                 case "verbose":
                 {
-                    if (kvp.Value is bool b) Verbose = b;
-                    else if (kvp.Value is string s && bool.TryParse(s, out var bs)) Verbose = bs;
-                    else return data.@this.FromError(ConfigError($"--test.verbose must be a boolean, got {Describe(kvp.Value)}"));
+                    if (value is bool b) Verbose = b;
+                    else if (value is string s && bool.TryParse(s, out var bs)) Verbose = bs;
+                    else return data.@this.FromError(ConfigError($"--test.verbose must be a boolean, got {Describe(value)}"));
                     break;
                 }
                 case "format":
                 {
-                    var format = kvp.Value?.ToString();
+                    var format = value?.ToString();
                     if (format != "json" && format != "junit")
-                        return data.@this.FromError(ConfigError($"--test.format must be \"json\" or \"junit\", got {Describe(kvp.Value)}"));
+                        return data.@this.FromError(ConfigError($"--test.format must be \"json\" or \"junit\", got {Describe(value)}"));
                     Format = format;
                     break;
                 }

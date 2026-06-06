@@ -799,7 +799,7 @@ public class DataTests
         await Assert.That(decompressed.Type!.Name).IsEqualTo("text");
         await Assert.That(decompressed.Value).IsTypeOf<Data>();
         var decompressedInner = (Data)decompressed.Value!;
-        await Assert.That(decompressedInner.Value).IsEqualTo("Hello world");
+        await Assert.That(decompressedInner.Value?.ToString()).IsEqualTo("Hello world");
     }
 
     [Test]
@@ -832,7 +832,7 @@ public class DataTests
 
         // Unwrap to get back to the content
         var unwrapped = decompressed.Unwrap();
-        await Assert.That(unwrapped.Value).IsEqualTo("The quick brown fox jumps over the lazy dog");
+        await Assert.That(unwrapped.Value?.ToString()).IsEqualTo("The quick brown fox jumps over the lazy dog");
     }
 
     [Test]
@@ -899,7 +899,7 @@ public class DataTests
         var inbound = outbound.Decrypt().Decompress().Unwrap();
 
         await inbound.IsSuccess();
-        await Assert.That(inbound.Value).IsEqualTo("Report content here");
+        await Assert.That(inbound.Value?.ToString()).IsEqualTo("Report content here");
     }
 
     // --- Phase 4 fixes: error paths + edge cases ---
@@ -1002,7 +1002,7 @@ public class DataTests
         await Assert.That(midResult.Value).IsTypeOf<Data>();
 
         var leafResult = (Data)midResult.Value!;
-        await Assert.That(leafResult.Value).IsEqualTo("deep content");
+        await Assert.That(leafResult.Value?.ToString()).IsEqualTo("deep content");
     }
 
     [Test]
