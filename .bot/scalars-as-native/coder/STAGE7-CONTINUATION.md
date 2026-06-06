@@ -395,3 +395,36 @@ REMAINING (final mile to flip `where T : item`):
 
 The hard/risky part (choice + build-time) is DONE. The remainder is bounded mechanical work
 + one design call on collections (native list/dict vs typed).
+
+## Final mile — de-Data DONE; collections + generics + flip remain
+
+DONE (committed, green, zero regressions):
+- **HttpContent → (HttpContent?, IError?) tuples** (http upload content builders).
+- **Assembly → BARE Data** (NOT tuple): LoadAssemblyAsync's AuthGate ask/exit bubble is a
+  Data Type signal that IS tested (…_StatelessChannel_ReturnsAsk), so it must stay a Data.
+  Bare Data (no T) satisfies the constraint AND preserves ask/Type/Error. (Pattern: when a
+  "de-Data" target still rides the AuthGate ask bubble, use bare Data, not a tuple.)
+
+REMAINING:
+1. **Collections → native list/dict** (Ingi's call). ~30 heterogeneous sites:
+   - PARAMS (LLM builds as lists): error.handle Actions(List<ActionEntity>), llm.query
+     Messages(List<LlmMessage>)+Tools(List<GoalCall>), test.run Tests, sign/verify
+     Contracts(List<string>), test.tag Tags(string[]), debug.tag Pairs(Dictionary),
+     ui.render Parameters(List<Data>), builder actions/types/validateStepActions(List<string>).
+     → Data<list>/Data<dict>; handler bodies change from typed List<X> iteration to native
+     list element access (each element is a Data — unwrap). VERIFY the LLM build path for a
+     list param (like the HttpMethod choice spike).
+   - RETURNS: path.List()/file.list → Data<list> (List<path>); builder.goals(List<Goal>);
+     goal.getTypes(List<Dict>); identity.list/ListAsync(List<Identity>); test.discover(List<test>);
+     IStore/Sqlite Tables()(List<string>). Consider bare Data for pure returns where callers
+     read .Value (less churn) vs Data<list> for typed iteration.
+   - GENERIC store: IStore.GetAll<T>/Sqlite.GetAll<T> where T:data.@this → Data<List<T>>.
+     Needs care (T is already Data-constrained).
+2. **Data<Data> (4 sites)** — data.@this<global::app.data.@this> → likely bare Data.
+3. **Generic threading**: add `where T : item` to data.@this<T> + forwarders (From<T>/As<T>);
+   thread through generic handlers. Then the lattice compiles.
+4. **Flip `where T : item` ON**; residual-fix pass; run both suites.
+
+Everything risky/novel (born-native scalars, choice generalization + build-time path, enums,
+Operator, de-Data) is DONE and verified. Collections is the last big mechanical-but-invasive
+refactor + the flip. ~15 commits this session; tree green throughout.
