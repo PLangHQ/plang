@@ -6,6 +6,7 @@ namespace app.type.time;
 /// unhandled); this wrapper closes that gap. Order/equality are within
 /// time-of-day; the bare wire form is ISO <c>HH:mm:ss[.fffffff]</c>.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : global::app.type.item.@this,
     global::app.data.IEquatableValue, global::app.data.IOrderableValue,
     System.IEquatable<@this>
@@ -14,6 +15,7 @@ public sealed partial class @this : global::app.type.item.@this,
     public static string Shape => "string";
 
     public System.TimeOnly Value { get; }
+    public override object? ToRaw() => Value;
 
     public @this(System.TimeOnly value) { Value = value; }
 

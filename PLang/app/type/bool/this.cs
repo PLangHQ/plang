@@ -11,6 +11,7 @@ namespace app.type.@bool;
 /// so <c>Compare.Order(bool, bool)</c> throws, matching the equality-only policy
 /// dict carries. The bare wire form is lowercase <c>true</c>/<c>false</c>.</para>
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : global::app.type.item.@this,
     global::app.data.IEquatableValue, System.IEquatable<@this>
 {
@@ -18,6 +19,7 @@ public sealed partial class @this : global::app.type.item.@this,
     public static string Shape => "bool";
 
     public bool Value { get; }
+    public override object? ToRaw() => Value;
 
     public @this(bool value) { Value = value; }
 

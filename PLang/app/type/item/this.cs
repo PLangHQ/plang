@@ -50,4 +50,17 @@ public abstract class @this : global::app.data.IBooleanResolvable
     /// <c>self</c>, so a typed value carries no un-narrowed state.
     /// </summary>
     public virtual @this Narrow() => this;
+
+    /// <summary>
+    /// The raw CLR projection of this value — the single unwrap at the
+    /// typed-conversion leaf (<c>→ returns string/int/DateTime/…</c>). A scalar
+    /// returns its backing CLR scalar (<c>text → string</c>, <c>number → the
+    /// boxed numeric</c>, <c>bool → bool</c>, the date-family → their CLR struct);
+    /// <c>dict</c>/<c>list</c> decompose to a raw <c>Dictionary</c>/<c>List</c>;
+    /// <c>null</c> → C# <c>null</c>. The default — a domain value that <em>is</em>
+    /// its own raw form (<c>path</c>/<c>image</c>/<c>code</c>) — returns
+    /// <c>self</c>. This replaces the per-type unwrap switch: the value owns its
+    /// own raw projection, so the conversion leaf asks once with no type-switch.
+    /// </summary>
+    public virtual object? ToRaw() => this;
 }

@@ -980,3 +980,88 @@ first copy-on-write cut.
 **Sequencing.** Own branch + spec (supersedes the F1 copy on `collections-are-data`). Not urgent
 (low): on `collections-are-data` the F1 copy stays as the interim patch for the most-flagged
 path; the residual `set`-share / dict-in-list leaks ride until C lands.
+
+## Per-path lazy narrowing of a materialized value
+
+**Date:** 2026-06-06 on branch `scalars-as-native`. Raised by Ingi during the
+born-native scalar flip.
+
+**What:** Today, the first touch of a json-backed value materializes the **whole
+tree** in one shot. `read user.json, write to %user%` holds only raw bytes until
+touched (genuinely lazy at the file boundary), but the moment you touch `%user%`
+*in any way* — `%user.name%`, `%user.address.zip%`, even writing `%user%` out —
+the `(object, json)` reader (`PLang/app/type/object/serializer/json.cs`) runs
+`JsonSerializer.Deserialize` + `UnwrapJsonElement`, which recursively walks the
+entire document and wraps every leaf (`name`→`text`, `zip`→`number`, the whole
+`address` subtree). There is no per-*path* laziness: touching `zip` does not
+narrow only the spine down to `zip` and leave the rest un-narrowed `item`.
+
+**Why consider it:** for a large document where a goal reads only one deep field,
+the whole tree is parsed and every leaf allocated a wrapper (~24 B/leaf, see the
+scalars-as-native allocation note). Per-path laziness would materialize only the
+navigated spine, leaving siblings as un-narrowed `item(kind=json)` slices of the
+raw blob until they too are touched.
+
+**Why NOT done in scalars-as-native:** this branch deliberately keeps the
+existing "whole value materializes on first touch" model (which predates it — it
+was already true for `dict`/`list`; the branch only changed the *leaf* from raw
+`int` → `number.@this`). Per-path laziness is a separate, larger change to the
+narrow/materialize machinery, orthogonal to making leaves native.
+
+**Where it would live:** the narrow seam — `Data.Materialize()` /
+`item.Narrow()` (`PLang/app/data/this.cs`, `PLang/app/type/item/this.cs`) and the
+`(object, json)` reader. A per-path design would have `Narrow()` produce a `dict`
+whose property values are themselves raw-backed `Data` (a `_raw` JSON slice +
+`item(kind=json)` type), materializing only when navigated — turning today's one
+eager walk into N lazy ones. Cost: more bookkeeping, holding the raw blob alive
+longer (GC trade-off), and re-parse-per-path unless slices are cached.
+
+**Decision:** Ingi is fine with the 2× allocation for now; logged for later.
+
+## Centralize value-type serialization to IWriter; purge STJ attributes from value/domain classes
+
+**Date:** 2026-06-06 on branch `scalars-as-native`. Raised by Ingi while adding
+bare serialization for the scalar wrappers.
+
+**Context / current state (Option A, what shipped on this branch):** each scalar
+wrapper (`text`/`number`/`bool`/`datetime`/`date`/`time`/`duration`/`null`) and
+each collection (`dict`/`list`, from collections-are-data) carries a per-type
+`[System.Text.Json.Serialization.JsonConverter(typeof(Json))]` attribute + a
+sibling `Json.cs` that does the raw-STJ projection. This is the "raw STJ" path
+(plain `JsonSerializer.Serialize` calls: LLM cache, snapshots, http bodies,
+`dict.Json.Write` recursion) — distinct from the format-agnostic
+`application/plang` wire (`Data.Normalize → IWriter → json.Writer`). Chosen for
+consistency with the already-merged dict/list precedent.
+
+**The problem Ingi flagged:** a value `this.cs` should NOT be aware of any
+concrete serializer. Today they are, two ways:
+  1. the `[JsonConverter(typeof(Json))]` attribute names System.Text.Json, and
+  2. domain/value classes are littered with STJ-specific attributes —
+     `[JsonIgnore]`, `[JsonPropertyName]`, `[JsonConstructor]`, `[JsonConverter]`.
+When a second IWriter ships (protobuf, MsgPack, CBOR), it must NOT have to know
+about `[JsonIgnore]` — that attribute is meaningless to protobuf. Serialization
+discipline (what crosses the wire, what's hidden, property names) must be
+declared in a **PLang-native, format-neutral** vocabulary that every IWriter
+honors uniformly.
+
+**Option B — the target shape:**
+  - **One** `JsonConverterFactory` registered at the `app/data` layer that
+    intercepts ANY `item` during raw STJ and bridges its format-neutral IWriter
+    bare-write onto STJ's `Utf8JsonWriter`. Delete every per-type `Json.cs` +
+    `[JsonConverter]` attribute (scalars AND dict/list, so there's one pattern,
+    not two).
+  - **PLang-native wire attributes** replacing the STJ ones on value/domain
+    classes: a `[WireIgnore]` (or reuse/extend the existing `[Out]`/`[Store]`/
+    `[LlmIgnore]` Tagged filter in `app.channel.serializer.filter`), a
+    PLang-native property-rename, and a PLang-native "construct from wire"
+    marker — so `[JsonIgnore]`/`[JsonPropertyName]`/`[JsonConstructor]` disappear
+    from the value/domain surface. Every IWriter (json, protobuf, …) reads the
+    SAME PLang-native tags; the json IWriter is the only thing that translates
+    them to STJ semantics, at the one bridge point.
+
+**Why not now:** it's a cross-cutting refactor touching every value/domain class
+and the already-merged dict/list; out of scope for locking the scalar wrappers.
+Ingi's decision: ship A on this branch, do B as its own pass.
+
+**Where:** `app/data/` (the factory + Tagged filter), every `app/type/<t>/Json.cs`
+(delete), every value/domain class carrying `[Json*]` attributes (retag).

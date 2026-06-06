@@ -15,6 +15,7 @@ namespace app.type.duration;
 /// the empty-is-falsy convention of the other scalars. The bare wire form is
 /// ISO-8601 (<see cref="ToString"/>).</para>
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : global::app.type.item.@this,
     global::app.data.IEquatableValue, global::app.data.IOrderableValue,
     System.IEquatable<@this>
@@ -23,6 +24,7 @@ public sealed partial class @this : global::app.type.item.@this,
     public static string Shape => "string";
 
     public System.TimeSpan Value { get; }
+    public override object? ToRaw() => Value;
 
     public @this(System.TimeSpan value) { Value = value; }
 

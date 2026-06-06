@@ -28,8 +28,9 @@ public class Stage3_ArraysAsDataTests
         await Assert.That(result).IsTypeOf<ListV>();
         var list = (ListV)result!;
         await Assert.That(list.Count).IsEqualTo(2);
-        await Assert.That(list.At(0)!.Value).IsEqualTo((object)1L);
-        await Assert.That((string?)list.At(1)!.Value).IsEqualTo("two");
+        // Born-native: elements are scalar wrappers; ToRaw yields the backing.
+        await Assert.That(((app.type.item.@this)list.At(0)!.Value!).ToRaw()).IsEqualTo((object)1L);
+        await Assert.That((string?)((app.type.item.@this)list.At(1)!.Value!).ToRaw()).IsEqualTo("two");
     }
 
     [Test]

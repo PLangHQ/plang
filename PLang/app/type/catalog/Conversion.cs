@@ -153,14 +153,19 @@ public sealed partial class @this
             return (new data.@this("", value), null);
         }
 
-        // The native dict/list unwrap to a raw Dictionary/List at the typed-conversion
-        // boundary (→ domain record, → Dictionary<K,V> / List<T>, JSON round-trip) so
-        // the existing reconstruction arms below apply unchanged. Same-type was already
-        // returned by the IsAssignableFrom check above.
-        if (value is app.type.dict.@this nativeDict)
-            return TryConvert(nativeDict.ToRaw(), targetType, context, targetName);
-        if (value is app.type.list.@this nativeList)
-            return TryConvert(nativeList.ToRaw(), targetType, context, targetName);
+        // Every value owns its raw CLR projection (item.ToRaw): a scalar wrapper
+        // yields its backing scalar (→ string/int/DateTime/…), dict/list decompose
+        // to a raw Dictionary/List, null → C# null, and a domain value that IS its
+        // own raw form (path/image/code) returns self (so it falls through to the
+        // OwnerOf reconstruction below). Same-type / item / object slots were already
+        // returned by IsAssignableFrom above. One unwrap at the leaf, no type-switch —
+        // the value decides. The reconstruction arms below then apply unchanged.
+        if (value is app.type.item.@this itemValue)
+        {
+            var raw = itemValue.ToRaw();
+            if (!ReferenceEquals(raw, value))
+                return TryConvert(raw, targetType, context, targetName);
+        }
 
         // Handle nullable target types
         var underlying = System.Nullable.GetUnderlyingType(targetType);

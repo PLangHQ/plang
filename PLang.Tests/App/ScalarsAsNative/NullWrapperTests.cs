@@ -47,21 +47,26 @@ public class NullWrapperTests
     [Test]
     public async Task Null_Compare_SortsLast()
     {
-        // Deferred to the construction flip: Compare.Order(non-null, null) < 0 and
-        // (null, non-null) > 0 once Data.Null() carries the singleton and Compare's
-        // null policy recognises it. (Today the policy keys on a C# null _value.)
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented — lands with the construction flip");
+        // Data.Null() carries the singleton; Compare's null policy coalesces it to
+        // a C# null and sorts it last (the policy lives on Compare, not the wrapper).
+        var present = new Data("", global::app.type.number.@this.From(5L));
+        var nul = Data.Null();
+        await Assert.That(global::app.data.Compare.Order(present, nul)).IsLessThan(0);
+        await Assert.That(global::app.data.Compare.Order(nul, present)).IsGreaterThan(0);
+        await Assert.That(global::app.data.Compare.Order(nul, Data.Null())).IsEqualTo(0);
     }
 
     [Test]
     public async Task Null_IsValueNotAbsence_DataIsInitializedDistinction()
     {
-        // Deferred to the construction flip: a Data carrying null.@this has
-        // IsInitialized = true (present null) while a missing var is IsInitialized
-        // = false (a C# null data reference). The bright-line guard binds once
-        // Data.Null() stamps the singleton.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented — lands with the construction flip");
+        // A Data carrying null.@this is a PRESENT null — IsInitialized = true and
+        // its Value is the singleton. A missing var (NotFound/Uninitialized) is the
+        // ABSENCE of a value — IsInitialized = false. Two different axes.
+        var presentNull = Data.Null();
+        await Assert.That(presentNull.IsInitialized).IsTrue();
+        await Assert.That(ReferenceEquals(presentNull.Value, NullV.Instance)).IsTrue();
+
+        var missing = Data.NotFound("x");
+        await Assert.That(missing.IsInitialized).IsFalse();
     }
 }

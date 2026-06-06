@@ -78,6 +78,17 @@ public partial class @this
         if (value is int || value is long || value is double || value is float)
             return value;
 
+        // Scalar wrappers are tree-leaves — they ride the wire bare (text→"abc",
+        // number→5, bool→true, datetime/date/time→ISO, duration→span, null→null).
+        // Pass the wrapper through unchanged; json.Writer renders each bare (number
+        // reuses its own renderer). The type-tag rides the Data envelope, so the
+        // value slot stays value-only — the same shape dict/list emit.
+        if (value is app.type.text.@this or app.type.@bool.@this
+            or app.type.number.@this or app.type.datetime.@this
+            or app.type.date.@this or app.type.time.@this
+            or app.type.duration.@this or app.type.@null.@this)
+            return value;
+
         // Nested Data: normalize its Value into a fresh tree. Do NOT mutate the
         // source Data — outbound serialization must be observation-only or
         // domain values (Identity etc.) get replaced with their property-bag

@@ -290,7 +290,7 @@ public sealed partial class @this : global::app.type.item.@this, module.IContext
     /// taken (Data unwrapped); nested dict/list elements recurse. Read-out form only;
     /// the in-memory representation stays Data-keyed.
     /// </summary>
-    public List<object?> ToRaw()
+    public override List<object?> ToRaw()
     {
         var flat = Items;
         var raw = new List<object?>(flat.Count);

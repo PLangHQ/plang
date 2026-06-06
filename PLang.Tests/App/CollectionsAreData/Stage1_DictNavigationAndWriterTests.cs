@@ -23,7 +23,7 @@ public class Stage1_DictNavigationAndWriterTests
         var d = Data.FromRaw("{\"port\":8080}", type.Create("object", "json", context: ctx), ctx, "cfg");
         d.ForceMaterialize();
         await Assert.That(d.Value).IsTypeOf<Dict>();
-        await Assert.That((long)((Dict)d.Value!).Get("port")!.Value!).IsEqualTo(8080L);
+        await Assert.That(((app.type.item.@this)((Dict)d.Value!).Get("port")!.Value!).ToRaw()).IsEqualTo(8080L);
     }
 
     [Test]

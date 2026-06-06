@@ -18,6 +18,7 @@ namespace app.type.@null;
 /// sort-last policy lives on <c>Compare</c>, not the wrapper). Bare wire form is
 /// <c>null</c>.</para>
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : global::app.type.item.@this,
     global::app.data.IEquatableValue
 {
@@ -31,6 +32,9 @@ public sealed partial class @this : global::app.type.item.@this,
 
     /// <summary>Null is always falsy.</summary>
     public override bool IsTruthy() => false;
+
+    /// <summary>The raw form of null is C# null.</summary>
+    public override object? ToRaw() => null;
 
     /// <summary>Bare <c>null</c> — the serializer renders this.</summary>
     public override string ToString() => "null";

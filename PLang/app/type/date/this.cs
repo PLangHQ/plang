@@ -7,6 +7,7 @@ namespace app.type.date;
 /// with this wrapper. Order/equality are day-precision; the bare wire form is
 /// ISO <c>yyyy-MM-dd</c>.
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : global::app.type.item.@this,
     global::app.data.IEquatableValue, global::app.data.IOrderableValue,
     System.IEquatable<@this>
@@ -15,6 +16,7 @@ public sealed partial class @this : global::app.type.item.@this,
     public static string Shape => "string";
 
     public System.DateOnly Value { get; }
+    public override object? ToRaw() => Value;
 
     public @this(System.DateOnly value) { Value = value; }
 

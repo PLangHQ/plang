@@ -27,6 +27,7 @@ namespace app.type.text;
 /// it deliberately does <b>not</b> implement <c>IEnumerable</c>, so
 /// <c>foreach %s%</c> never char-iterates it.</para>
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : global::app.type.item.@this,
     global::app.data.IEquatableValue, global::app.data.IOrderableValue,
     System.IEquatable<@this>
@@ -45,6 +46,7 @@ public sealed partial class @this : global::app.type.item.@this,
     // No static Kinds — text's kind is open (derived from extension at build).
 
     public string Value { get; }
+    public override object? ToRaw() => Value;
 
     public @this(string value) { Value = value ?? string.Empty; }
 

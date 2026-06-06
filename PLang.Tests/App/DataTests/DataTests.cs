@@ -373,7 +373,9 @@ public class DataTests
         var ov = Data.Null("test");
 
         await Assert.That(ov.Name).IsEqualTo("test");
-        await Assert.That(ov.Value).IsNull();
+        // Born-native: a present null value carries the null.@this singleton
+        // (not a C# null _value). IsInitialized stays true — value, not absence.
+        await Assert.That(ReferenceEquals(ov.Value, app.type.@null.@this.Instance)).IsTrue();
         await Assert.That(ov.IsInitialized).IsTrue();
     }
 
@@ -393,7 +395,7 @@ public class DataTests
         var ov = Data.Null();
 
         await Assert.That(ov.Name).IsEqualTo("");
-        await Assert.That(ov.Value).IsNull();
+        await Assert.That(ReferenceEquals(ov.Value, app.type.@null.@this.Instance)).IsTrue();
     }
 
     [Test]
@@ -1054,9 +1056,11 @@ public class DataTests
         var result = Data.UnwrapJsonElement(doc.RootElement) as app.type.dict.@this;
 
         await Assert.That(result).IsNotNull();
+        // Born-native: a JSON number is a number.@this wrapper; its backing
+        // (via ToRaw) is double for a bare decimal-point literal.
         var price = result!.Get("price")!.Value;
-        await Assert.That(price).IsTypeOf<double>();
-        await Assert.That(price).IsEqualTo(19.99d);
+        await Assert.That(price).IsTypeOf<app.type.number.@this>();
+        await Assert.That(((app.type.number.@this)price!).ToRaw()).IsEqualTo(19.99d);
     }
 
     [Test]
@@ -1067,9 +1071,10 @@ public class DataTests
         var result = Data.UnwrapJsonElement(doc.RootElement) as app.type.dict.@this;
 
         await Assert.That(result).IsNotNull();
+        // Born-native: a whole JSON number is a number.@this wrapper backed by long.
         var count = result!.Get("count")!.Value;
-        await Assert.That(count).IsTypeOf<long>();
-        await Assert.That(count).IsEqualTo(42L);
+        await Assert.That(count).IsTypeOf<app.type.number.@this>();
+        await Assert.That(((app.type.number.@this)count!).ToRaw()).IsEqualTo(42L);
     }
 
     [Test]

@@ -36,6 +36,12 @@ public static class Compare
         object? lv = left?.Value;
         object? rv = right?.Value;
 
+        // A present null value rides as the null.@this singleton; the sort-last
+        // policy lives here on Compare (the wrapper deliberately implements no
+        // IOrderableValue), so coalesce the singleton to a C# null for the policy.
+        if (lv is app.type.@null.@this) lv = null;
+        if (rv is app.type.@null.@this) rv = null;
+
         // Nulls sort last: null is the greatest element.
         if (lv == null && rv == null) return 0;
         if (lv == null) return 1;

@@ -140,8 +140,13 @@ public partial class @this
     /// True when the raw _value is a %variable% reference (starts and ends with %).
     /// Used to skip build-time validation on values that resolve at runtime.
     /// </summary>
+    // A %var%-reference value rides as text.@this after born-native (a .pr loads
+    // "%x%" through UnwrapJsonElement). The reference lives in the string either
+    // way, so resolution peeks through the wrapper to the backing string.
+    private string? VarString => _value as string ?? (_value as app.type.text.@this)?.Value;
+
     [JsonIgnore]
-    public bool IsVariable => _value is string s && s.StartsWith('%') && s.EndsWith('%') && s.Length > 2;
+    public bool IsVariable => VarString is string s && s.StartsWith('%') && s.EndsWith('%') && s.Length > 2;
 
     /// <summary>
     /// True when the raw _value contains any %variable% reference anywhere.
@@ -149,7 +154,7 @@ public partial class @this
     /// HasVariableReference is "%count% + 1", "hello %name%", etc. (contains one or more).
     /// </summary>
     [JsonIgnore]
-    public bool HasVariableReference => _value is string s && System.Text.RegularExpressions.Regex.IsMatch(s, @"%[^%]+%");
+    public bool HasVariableReference => VarString is string s && System.Text.RegularExpressions.Regex.IsMatch(s, @"%[^%]+%");
 
     [JsonIgnore]
     public DateTime Created { get; }
@@ -567,7 +572,11 @@ public partial class @this
     [System.Text.Json.Serialization.JsonIgnore]
     public object? RawValue => _value;
 
-    public static @this Null(string name = "") => new(name, null);
+    // The null *value* — a present null carrying the null.@this singleton, so
+    // IsInitialized is true (distinct from NotFound/Uninitialized, which leave a
+    // null `data` reference with IsInitialized false). The singleton hosts null's
+    // behavior (always falsy, null==null) so `is null` value-switches dissolve.
+    public static @this Null(string name = "") => new(name, app.type.@null.@this.Instance);
     public static @this NotFound(string name = "") => new(name, null) { IsInitialized = false };
     public static @this Uninitialized(string name) => new(name, null) { IsInitialized = false };
 
@@ -1128,6 +1137,11 @@ public partial class @this
     {
         if (value == null) return null;
 
+        // A %var% reference rides as text.@this after born-native — unwrap to the
+        // backing string so the reference resolves (a literal text with no % falls
+        // through `!s.Contains('%')` and returns its plain string, unchanged).
+        if (value is app.type.text.@this txt) value = txt.Value;
+
         if (value is string s)
         {
             if (!s.Contains('%')) return s;
@@ -1173,6 +1187,7 @@ public partial class @this
     /// </summary>
     public static @this ResolveParameter(string name, object? rawValue, actor.context.@this context)
     {
+        if (rawValue is app.type.text.@this txt) rawValue = txt.Value;
         if (rawValue is string s && TryFullVarMatch(s, out var varName))
         {
             var live = context.Variable.Get(varName);
@@ -1335,12 +1350,17 @@ public partial class @this
         {
             return element.ValueKind switch
             {
-                JsonValueKind.String => element.GetString(),
+                // Born native: every scalar leaf is its wrapper, never a raw CLR
+                // value mid-flight. A consumer asks the wrapper for behavior
+                // (length, truthiness, compare) instead of re-deriving the type
+                // with an `is string` switch. JSON null is the null *value* —
+                // the singleton, a present null — not a C# null reference.
+                JsonValueKind.String => WrapTextLeaf(element.GetString() ?? ""),
                 JsonValueKind.Number => UnwrapJsonNumber(element),
-                JsonValueKind.True => true,
-                JsonValueKind.False => false,
-                JsonValueKind.Null => null,
-                JsonValueKind.Undefined => null,
+                JsonValueKind.True => new app.type.@bool.@this(true),
+                JsonValueKind.False => new app.type.@bool.@this(false),
+                JsonValueKind.Null => app.type.@null.@this.Instance,
+                JsonValueKind.Undefined => app.type.@null.@this.Instance,
                 // A @schema-marked object IS a Data — lift it back to one (its converter
                 // reads name/type/value/signature) rather than leaving it a raw dict. This
                 // is what keeps a Data nested in a parsed value (a signed list element, a
@@ -1351,13 +1371,6 @@ public partial class @this
                 JsonValueKind.Array => UnwrapJsonArray(element, depth),
                 _ => element
             };
-        }
-
-        // Convert Newtonsoft JToken to CLR types (v1 runtime compatibility shim).
-        // Detected by namespace so App has no Newtonsoft import.
-        if (value != null && value.GetType().Namespace == "Newtonsoft.Json.Linq")
-        {
-            return UnwrapNewtonsoftToken(value, depth);
         }
 
         // System.Text.Json.Nodes DOM types (JsonObject, JsonArray, JsonValue) flow through
@@ -1377,30 +1390,6 @@ public partial class @this
         }
 
         return value;
-    }
-
-    /// <summary>
-    /// Converts a Newtonsoft JToken to plain CLR types without importing Newtonsoft.
-    /// JValue → extract underlying CLR value via reflection.
-    /// JObject/JArray → round-trip through JSON string → System.Text.Json.
-    /// </summary>
-    private static object? UnwrapNewtonsoftToken(object value, int depth)
-    {
-        var typeName = value.GetType().Name;
-
-        // JValue holds a CLR primitive in its Value property
-        if (typeName == "JValue")
-        {
-            var underlying = value.GetType().GetProperty("Value")?.GetValue(value);
-            return underlying;
-        }
-
-        // JObject/JArray → serialize to JSON string, re-parse with System.Text.Json
-        var json = value.ToString();
-        if (string.IsNullOrEmpty(json)) return null;
-
-        using var doc = JsonDocument.Parse(json);
-        return UnwrapJsonElement(doc.RootElement, depth);
     }
 
     // A json object narrows to the native `dict` value type — collections hold
@@ -1425,12 +1414,29 @@ public partial class @this
         return list;
     }
 
+    // A %var% reference is an UNRESOLVED reference, not yet a typed value — keep it
+    // a raw string so the resolution path (As<T>, SubstitutePrimitive, return
+    // mapping) reads it as the reference it is. Only a literal string with no
+    // %var% pattern is born native as text.@this. Cheap '%' presence guard before
+    // the (source-generated, compiled) variable-reference regex.
+    private static object WrapTextLeaf(string s)
+    {
+        // if/return, NOT a ternary: `cond ? s : new text.@this(s)` would compute a
+        // common type of (string, text.@this) and — because text.@this has an
+        // implicit string operator — silently convert the wrapper back to a string.
+        if (s.IndexOf('%') >= 0 && VarRefRegex().IsMatch(s)) return s;
+        return new app.type.text.@this(s);
+    }
+
+    [System.Text.RegularExpressions.GeneratedRegex("%[^%]+%")]
+    private static partial System.Text.RegularExpressions.Regex VarRefRegex();
+
     private static object UnwrapJsonNumber(JsonElement element)
     {
-        if (element.TryGetInt64(out var l)) return l;
+        if (element.TryGetInt64(out var l)) return app.type.number.@this.From(l);
         // Bare decimal-point literal → double by default (decimal is opt-in via
         // `as number/decimal`), matching universal language convention.
-        return element.GetDouble();
+        return app.type.number.@this.From(element.GetDouble());
     }
 
     private static string CleanName(string name)

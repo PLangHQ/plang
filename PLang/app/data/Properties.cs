@@ -123,6 +123,11 @@ public sealed class Properties : IDictionary<string, object?>
                 nameof(value));
         if (value is string or bool or int or long or double or decimal or float
             or DateTime or DateTimeOffset or byte[] or Guid) return;
+        // Any value type (scalar wrapper, dict, list) is wire-supported — they each
+        // ride the wire bare via their own renderer/converter. `item` is the apex
+        // of every value, so this one check covers number/text/bool/date-family/
+        // duration/null and the collections.
+        if (value is global::app.type.item.@this) return;
         // Container types (the native dict/list, raw IDictionary/IEnumerable) are
         // accepted structurally — a json-object property value is a `dict` now.
         if (value is global::app.type.dict.@this) return;

@@ -21,6 +21,7 @@ namespace app.type.number;
 /// The old <c>_i/_d/_f</c> tagged union and the <c>float→double</c> collapse
 /// are gone.</para>
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : global::app.type.item.@this, System.IEquatable<@this>, System.IComparable<@this>, System.IComparable, System.IConvertible
 {
     // The exact boxed CLR numeric — the single source of truth. Kind derives from its type.
@@ -30,6 +31,7 @@ public sealed partial class @this : global::app.type.item.@this, System.IEquatab
 
     /// <summary>The exact boxed CLR numeric value (int, uint, BigInteger, Half, decimal, …).</summary>
     public object BoxedValue => _value;
+    public override object? ToRaw() => _value;
 
     /// <summary>The kind — derived from the boxed value's CLR type, never stored separately.</summary>
     public NumberKind Kind => ClrToKind(_value.GetType());

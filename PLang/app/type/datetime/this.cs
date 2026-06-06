@@ -10,6 +10,7 @@ namespace app.type.datetime;
 /// collapse into method calls. Order is chronological by instant; equality is
 /// same-instant; the bare wire form is ISO round-trip (<c>"o"</c>).</para>
 /// </summary>
+[System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : global::app.type.item.@this,
     global::app.data.IEquatableValue, global::app.data.IOrderableValue,
     System.IEquatable<@this>
@@ -18,6 +19,7 @@ public sealed partial class @this : global::app.type.item.@this,
     public static string Shape => "string";
 
     public System.DateTimeOffset Value { get; }
+    public override object? ToRaw() => Value;
 
     public @this(System.DateTimeOffset value) { Value = value; }
     /// <summary>Accepts a CLR <see cref="System.DateTime"/> — stored as an offset.</summary>
