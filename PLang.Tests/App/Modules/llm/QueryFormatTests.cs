@@ -61,7 +61,7 @@ public class QueryFormatTests
             {
                 new LlmMessage { Role = "system", Content = "analyze" },
                 new LlmMessage { Role = "user", Content = "I love this" }
-            },
+            }.ToListData(),
             Schema = global::app.data.@this.Ok("{sentiment: string}")
         };
         var result = await action.Run();
@@ -108,7 +108,7 @@ public class QueryFormatTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
-            },
+            }.ToListData(),
             Schema = global::app.data.@this.Ok("{sentiment: string, score: number}")
         };
         var result = await action.Run();
@@ -133,7 +133,7 @@ public class QueryFormatTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
-            },
+            }.ToListData(),
             Schema = global::app.data.@this.Ok("{result: string}")
         };
         var result = await action.Run();
@@ -155,7 +155,7 @@ public class QueryFormatTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
-            },
+            }.ToListData(),
             Schema = global::app.data.@this.Ok("{answer: int}")
         };
         var result = await action.Run();
@@ -180,7 +180,7 @@ public class QueryFormatTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "write hello world" }
-            },
+            }.ToListData(),
             Format = (global::app.type.text.@this)"python"
         };
         var result = await action.Run();
@@ -202,7 +202,7 @@ public class QueryFormatTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "write markdown" }
-            },
+            }.ToListData(),
             Format = (global::app.type.text.@this)"md"
         };
         var result = await action.Run();
@@ -223,7 +223,7 @@ public class QueryFormatTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
-            },
+            }.ToListData(),
             Format = (global::app.type.text.@this)"python"
         };
         var result = await action.Run();
@@ -253,7 +253,7 @@ public class QueryFormatTests
             {
                 new LlmMessage { Role = "system", Content = "You are a helpful assistant" },
                 new LlmMessage { Role = "user", Content = "test" }
-            },
+            }.ToListData(),
             Schema = global::app.data.@this.Ok("{ok: bool}")
         };
         var result = await action.Run();

@@ -81,11 +81,11 @@ public sealed class OpenAi : ILlm
         // parent-scope variable should survive an error.handle retry (or pass %messages% as
         // a goal.call parameter to QueryAndValidatePlan so it re-binds each attempt). See
         // .bot/type-kind-strict/builder/v2/baseline-findings.md.
-        if (action.Messages.Value is not { Count: > 0 })
+        if (action.Messages.GetValue<List<LlmMessage>>() is not { Count: > 0 })
             return global::app.data.@this.FromError(new ActionError("Messages list is empty or null", "ValidationError", 400));
 
         // --- Build messages ---
-        var messages = CloneMessages(action.Messages.Value!);
+        var messages = CloneMessages(action.Messages.GetValue<List<LlmMessage>>()!);
         string? schema;
 
         // Serialize Schema at the LLM boundary. Schema is `Data<object>?` because the
@@ -142,7 +142,7 @@ public sealed class OpenAi : ILlm
         // so cache:false is a full bypass: no read, no stale entry left behind.
         var buildCacheOff = app.Builder.IsEnabled && !app.Builder.Cache;
         string? cacheKey = null;
-        if (action.Cache.Value && action.Tools?.Value == null && !buildCacheOff)
+        if (action.Cache.Value && action.Tools?.GetValue<List<GoalCall>>() == null && !buildCacheOff)
         {
             cacheKey = ComputeCacheKey(messages, model, action.Temperature.GetValue<double>(), schema, action.Format?.Value);
             var cached = await settings.Get(CacheTable, cacheKey);
@@ -154,9 +154,9 @@ public sealed class OpenAi : ILlm
 
         // --- Build tools for API ---
         List<object>? apiTools = null;
-        if (action.Tools?.Value != null && action.Tools.Value.Count > 0)
+        if (action.Tools?.GetValue<List<GoalCall>>() != null && action.Tools.GetValue<List<GoalCall>>().Count > 0)
         {
-            apiTools = action.Tools.Value.Select(t => (object)new Dictionary<string, object>
+            apiTools = action.Tools.GetValue<List<GoalCall>>().Select(t => (object)new Dictionary<string, object>
             {
                 ["type"] = "function",
                 ["function"] = new Dictionary<string, object?>
@@ -345,7 +345,7 @@ public sealed class OpenAi : ILlm
 
                 // Determine parallel execution
                 bool allParallel = toolCalls.All(tc =>
-                    action.Tools?.Value?.Find(t => t.Name == tc.Name)?.Parallel == true);
+                    action.Tools?.GetValue<List<GoalCall>>()?.Find(t => t.Name == tc.Name)?.Parallel == true);
 
                 // Execute tools
                 List<string> results;
@@ -547,7 +547,7 @@ public sealed class OpenAi : ILlm
         }
 
         string result;
-        var goalCall = action.Tools?.Value?.Find(t => t.Name == toolCall.Name);
+        var goalCall = action.Tools?.GetValue<List<GoalCall>>()?.Find(t => t.Name == toolCall.Name);
         if (goalCall == null)
         {
             result = $"Error: unknown tool '{toolCall.Name}'";

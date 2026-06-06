@@ -37,10 +37,12 @@ public partial class query : IContext, IBuildValidatable
 
     /// <summary>Conversation messages (system, user, assistant).</summary>
     [IsNotNull]
-    public partial data.@this<List<LlmMessage>> Messages { get; init; }
+    [app.Attributes.Element(typeof(LlmMessage))]
+    public partial data.@this<global::app.type.list.@this> Messages { get; init; }
 
     /// <summary>Goals available as tools for the LLM to call.</summary>
-    public partial data.@this<List<GoalCall>>? Tools { get; init; }
+    [app.Attributes.Element(typeof(GoalCall))]
+    public partial data.@this<global::app.type.list.@this>? Tools { get; init; }
 
     /// <summary>Callback fired before/after each tool execution. Receives: name, arguments, status, result.</summary>
     [GoalCallback("toolCallInfo")]

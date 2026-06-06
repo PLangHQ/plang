@@ -29,14 +29,15 @@ public partial class run : IContext
     internal static event Action<app.@this>? ChildAppCreated;
 
     [IsNotNull]
-    public partial data.@this<List<global::app.tester.test.@this>> Tests { get; init; }
+    [app.Attributes.Element(typeof(global::app.tester.test.@this))]
+    public partial data.@this<global::app.type.list.@this> Tests { get; init; }
 
     public partial data.@this<global::app.type.number.@this>? Parallel { get; init; }
     public partial data.@this<global::app.type.number.@this>? Timeout { get; init; }
 
     public async Task<data.@this<global::app.tester.Results>> Run()
     {
-        var tests = Tests.Value ?? new List<global::app.tester.test.@this>();
+        var tests = Tests.GetValue<List<global::app.tester.test.@this>>() ?? new List<global::app.tester.test.@this>();
         var parentApp = Context.App!;
         int parallel = Parallel?.Value != null ? Parallel.GetValue<int>() : parentApp.Tester.Parallel;
         double timeoutSeconds = Timeout?.Value != null ? Timeout.GetValue<double>() : parentApp.Tester.TimeoutSeconds;

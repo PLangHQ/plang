@@ -47,7 +47,7 @@ public class QueryEdgeCaseTests
         var action = new query
         {
             Context = Ctx,
-            Messages = new List<LlmMessage>()
+            Messages = new List<LlmMessage>().ToListData()
         };
         var result = await action.Run();
 
@@ -80,13 +80,13 @@ public class QueryEdgeCaseTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "multi tools" }
-            },
+            }.ToListData(),
             Tools = new List<GoalCall>
             {
                 new GoalCall { Name = "ToolA" },
                 new GoalCall { Name = "ToolB" },
                 new GoalCall { Name = "ToolC" }
-            },
+            }.ToListData(),
             MaxToolCalls = (global::app.type.number.@this)5
         };
         var result = await action.Run();
@@ -125,11 +125,11 @@ public class QueryEdgeCaseTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "null args" }
-            },
+            }.ToListData(),
             Tools = new List<GoalCall>
             {
                 new GoalCall { Name = "NoArgTool" }
-            }
+            }.ToListData()
         };
         var result = await action.Run();
 

@@ -18,9 +18,7 @@ public class TagActionTests
         var action = new Tag
         {
             Context = app.User.Context,
-            Pairs = new global::app.data.@this<Dictionary<string, string>>(
-                "Pairs",
-                new Dictionary<string, string> { ["k1"] = "v1", ["k2"] = "v2" })
+            Pairs = new Dictionary<string, string> { ["k1"] = "v1", ["k2"] = "v2" }.ToDictData()
         };
         await action.Run();
 

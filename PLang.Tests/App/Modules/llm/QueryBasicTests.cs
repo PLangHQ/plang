@@ -96,7 +96,7 @@ public class QueryBasicTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
-            },
+            }.ToListData(),
             Temperature = (global::app.type.number.@this)0.7,
             MaxTokens = (global::app.type.number.@this)2000
         };
@@ -184,7 +184,7 @@ public class QueryBasicTests
             {
                 new LlmMessage { Role = "system", Content = "You are helpful" },
                 new LlmMessage { Role = "user", Content = "Hello" }
-            },
+            }.ToListData(),
             Model = new global::app.data.@this<global::app.type.text.@this>("Model", "claude-99-future")
         };
         var result = await action.Run();
@@ -238,7 +238,7 @@ public class QueryBasicTests
             {
                 new LlmMessage { Role = "system", Content = "You are helpful" },
                 new LlmMessage { Role = "user", Content = "Hello" }
-            },
+            }.ToListData(),
             Model = new global::app.data.@this<global::app.type.text.@this>("Model", "gpt-5.4-mini-2026-03-17")
         };
         var result = await action.Run();
@@ -275,11 +275,11 @@ public class QueryBasicTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "go" }
-            },
+            }.ToListData(),
             Tools = new List<GoalCall>
             {
                 new GoalCall { Name = (global::app.type.text.@this)"Echo" }
-            }
+            }.ToListData()
         };
         var result = await action.Run();
 

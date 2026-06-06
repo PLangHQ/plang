@@ -114,7 +114,7 @@ public class Fluid : ITemplate
         // Override with explicit parameters
         if (action.Parameters?.Value != null)
         {
-            foreach (var param in action.Parameters.Value)
+            foreach (var param in action.Parameters.Value.Items)
             {
                 fluidContext.SetValue(param.Name, FluidValue.Create(param.Value, options));
             }

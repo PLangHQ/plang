@@ -553,6 +553,11 @@ public sealed partial class @this
                     {
                         if (prop.Name == "EqualityContract" || prop.Name == "Context") continue;
                         Enqueue(UnwrapType(prop.PropertyType));
+                        // A native-collection slot (Data<list>) is element-agnostic; its
+                        // [Element(T)] hint names the element type so the builder still gets
+                        // T's schema (e.g. llm.query Messages -> LlmMessage).
+                        var element = prop.GetCustomAttribute<app.Attributes.ElementAttribute>();
+                        if (element != null) Enqueue(element.Element);
                     }
                 }
             }

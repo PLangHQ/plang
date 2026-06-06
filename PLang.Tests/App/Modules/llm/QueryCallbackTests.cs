@@ -68,11 +68,11 @@ public class QueryCallbackTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "use tool" }
-            },
+            }.ToListData(),
             Tools = new List<GoalCall>
             {
                 new GoalCall { Name = "TestTool" }
-            },
+            }.ToListData(),
             OnToolCall = new GoalCall { Name = "LogToolCall" }
         };
 
@@ -108,11 +108,11 @@ public class QueryCallbackTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "get data" }
-            },
+            }.ToListData(),
             Tools = new List<GoalCall>
             {
                 new GoalCall { Name = "GetData" }
-            },
+            }.ToListData(),
             OnToolCall = new GoalCall { Name = "ToolCallHandler" }
         };
 
@@ -165,7 +165,7 @@ public class QueryCallbackTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "validate me" }
-            },
+            }.ToListData(),
             OnValidateResponse = new GoalCall { Name = "NonExistentValidator" },
             MaxValidationRetries = (global::app.type.number.@this)2
         };
@@ -193,7 +193,7 @@ public class QueryCallbackTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "validate" }
-            },
+            }.ToListData(),
             OnValidateResponse = new GoalCall { Name = "AlwaysFails" },
             MaxValidationRetries = (global::app.type.number.@this)3
         };
@@ -226,11 +226,11 @@ public class QueryCallbackTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "tools then validate" }
-            },
+            }.ToListData(),
             Tools = new List<GoalCall>
             {
                 new GoalCall { Name = "TestTool" }
-            },
+            }.ToListData(),
             OnValidateResponse = new GoalCall { Name = "Validator" },
             MaxValidationRetries = (global::app.type.number.@this)1
         };
@@ -261,7 +261,7 @@ public class QueryCallbackTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "stream test" }
-            },
+            }.ToListData(),
             OnStream = new GoalCall { Name = "HandleChunk" }
         };
 
@@ -288,7 +288,7 @@ public class QueryCallbackTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "stream" }
-            },
+            }.ToListData(),
             OnStream = new GoalCall { Name = "StreamHandler" }
         };
 

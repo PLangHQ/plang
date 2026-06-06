@@ -71,7 +71,7 @@ public partial class Handle : IContext, IModifier
     /// wrapping it in a goal. Actions execute in order; %!data% flows between
     /// them just like the main step chain.
     /// </summary>
-    public partial global::app.data.@this<List<ActionEntity>>? Actions { get; init; }
+    public partial global::app.data.@this<global::app.goal.steps.step.actions.@this>? Actions { get; init; }
     public partial global::app.data.@this<global::app.type.number.@this>? RetryCount { get; init; }
     public partial global::app.data.@this<global::app.type.number.@this>? RetryOverMs { get; init; }
     public partial global::app.data.@this<global::app.type.choice.@this<ErrorOrder>>? Order { get; init; }
@@ -104,7 +104,7 @@ public partial class Handle : IContext, IModifier
             {
                 if (hasRecovery)
                 {
-                    var recoveryResult = await RunRecoveryWithErrorScope(actions!, context, result.Error!);
+                    var recoveryResult = await RunRecoveryWithErrorScope(actions!.ToList(), context, result.Error!);
                     if (recoveryResult.Success)
                     {
                         if (erroredCall != null) erroredCall.Handled = true;
@@ -121,7 +121,7 @@ public partial class Handle : IContext, IModifier
                 if (retryResult?.Success == true) return retryResult;
                 if (hasRecovery)
                 {
-                    var recoveryResult = await RunRecoveryWithErrorScope(actions!, context, result.Error!);
+                    var recoveryResult = await RunRecoveryWithErrorScope(actions!.ToList(), context, result.Error!);
                     if (recoveryResult.Success)
                     {
                         if (erroredCall != null) erroredCall.Handled = true;

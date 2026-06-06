@@ -142,7 +142,7 @@ public class RenderTests : IDisposable
             Context = context,
             Template = (global::app.type.text.@this)"Hello {{ name }}",
             IsFile = (global::app.type.@bool.@this)false,
-            Parameters = new List<Data> { overrideParam }
+            Parameters = new List<Data> { overrideParam }.ToListData()
         };
 
         var result = await _provider.Render(action);
@@ -161,7 +161,7 @@ public class RenderTests : IDisposable
             Context = context,
             Template = (global::app.type.text.@this)"Title: {{ title }}",
             IsFile = (global::app.type.@bool.@this)false,
-            Parameters = new List<Data> { aliasParam }
+            Parameters = new List<Data> { aliasParam }.ToListData()
         };
 
         var result = await _provider.Render(action);

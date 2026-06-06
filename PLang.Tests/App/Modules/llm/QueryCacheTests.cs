@@ -89,7 +89,7 @@ public class QueryCacheTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "same question" }
-            },
+            }.ToListData(),
             Cache = (global::app.type.@bool.@this)false
         };
 
@@ -111,12 +111,12 @@ public class QueryCacheTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "use tools" }
-            },
+            }.ToListData(),
             Cache = (global::app.type.@bool.@this)true,
             Tools = new List<GoalCall>
             {
                 new GoalCall { Name = (global::app.type.text.@this)"TestTool" }
-            }
+            }.ToListData()
         };
 
         await action.Run();
@@ -143,7 +143,7 @@ public class QueryCacheTests
             {
                 new LlmMessage { Role = "system", Content = "You are helpful" },
                 new LlmMessage { Role = "user", Content = "same" }
-            },
+            }.ToListData(),
             Model = (global::app.type.text.@this)"gpt-4o"
         };
         await action2.Run();
