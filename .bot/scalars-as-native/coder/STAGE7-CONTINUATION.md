@@ -1,137 +1,94 @@
-# Stage 7 / lock-phase — continuation (read this first after a context clear)
+# Stage 7 / constraint-lock — continuation (read after context clear)
 
-**Goal of the resumed session:** finish the branch → **100% green BOTH suites**
-(C# `dotnet run --project PLang.Tests` AND PLang `cd Tests && plang --test`), no red
-stubs, all `Tests/ScalarsAsNative/Stage*/` goals built. This is the coder done-bar
-(see `claude-md-proposals.md` coder-v4). You write AND build the `.test.goal` files.
+## Where the branch stands (all committed, C# suite 100% GREEN)
 
-Read in order: this file → `.bot/scalars-as-native/architect/stage-7-lock-and-cleanup.md`
-→ `.bot/scalars-as-native/architect/plan.md` (the law + decisions) → the coder v1
-report (`.bot/scalars-as-native/coder/v1/report.md`).
+Born-native is **done and green**. Everything below the `where T : item` hard
+constraint is finished:
 
----
+- **Born-native construction**: `UnwrapJsonElement` emits wrappers
+  (`text`/`number`/`bool`) + the `null.@this` singleton; `%var%` refs stay raw
+  strings (WrapTextLeaf, guarded by the source-gen `VarRefRegex`); dead
+  `UnwrapNewtonsoftToken` deleted.
+- **Serialization**: each scalar wrapper rides the wire bare. `item.IsLeaf`
+  (scalars override true) → Normalize passthrough is ONE check. `item.Write(IWriter)`
+  (OBP Rule 9) → `json.Writer.Value` is ONE `leaf.Write(this)` dispatch. Each
+  wrapper has a `Json.cs` STJ converter (raw-STJ projection, dict/list precedent).
+- **Conversion leaf**: `item.ToRaw()` virtual — one unwrap; absorbed the dict/list
+  branches. `Variable.GetValue` unwraps scalars (collections stay native).
+- **Everything `: item`**: scalars, dict/list, path/image/code, Variable
+  (record→class), Ask, snapshot.
+- **ScalarComparer collapsed**: Name()/IsDateTime/ToOffset/date arms gone; numeric +
+  string + thin same-typed IComparable fallback (bool excluded — equality-only).
+  **Mediator** (`Operator.NormalizeTypes`) inspects wrapper types; coercion runs
+  BEFORE Compare's self-dispatch so `"5"==5` reconciles.
+- **New types built**: `binary` (`: item`, wraps byte[], base64) and
+  `choice<TEnum>` (`: item`, the first-class "enum" — typed via implicit op to
+  TEnum, validates vs the enum's names, `[Choices]`-aligned).
+- **C# stubs**: all 23 implemented. The 5 constraint tests are currently
+  **structural lattice tests** (verify every value/domain type `: item`; int/Data
+  not) — they pass NOW and pin the invariant the hard constraint will enforce.
 
-## What is DONE and committed (do not redo)
+## What REMAINS = turn on `where T : item` (the 1742-site cascade)
 
-- **`item.@this` apex** (`PLang/app/type/item/this.cs`): abstract, storage-free,
-  carries `IsTruthy()` (sync) + `IBooleanResolvable.AsBooleanAsync` (default → IsTruthy)
-  + virtual `Narrow()` (default no-op = return self). Does NOT implement
-  `IOrderableValue`/`IEquatableValue`.
-- **All 8 wrappers built out, each `: item.@this`** with compare/equality/truthiness/
-  parts/ops/bare-`ToString`:
-  - `number` (pre-existing, rewired `: item`), `text` (ops + ordinal-ci compare),
-    `datetime` (DateTime ctor + parts), **`date`** (new, DateOnly), **`time`** (new,
-    TimeOnly), `duration` (parts, zero-falsy), **`bool`** (new, equality-only,
-    truthiness primitive), **`null`** (new, singleton, equality-only).
-  - `date`/`time`/`bool` have `this.Convert.cs` hooks (yield raw CLR) + `this.Owns.cs`.
-- **~40 C# wrapper unit tests pass** (`PLang.Tests/App/ScalarsAsNative/`:
-  ItemApexTests, NumberRegressionTests, TextWrapperTests, DateTimeWrapperTests,
-  DateWrapperTests, TimeWrapperTests, DurationWrapperTests, BoolWrapperTests,
-  NullWrapperTests[4/6]).
-- **Builder fixed** (was breaking ALL builds, now works — suite 271→274):
-  - `OpenAi.cs`: LLM cache stored a `JsonElement` that serialized to
-    `{"valuekind":"Object"}`. Fixed: cache `RawResponse` string + re-parse on restore.
-  - `Fluid.cs`: Fluid couldn't read native `dict`/`list`/`JsonNode` (no IDictionary/
-    IEnumerable) → compile prompt rendered blank → compiler guessed blind (assert →
-    condition.if/error.throw). Fixed: a `ValueConverter` wraps natives in lazy
-    read-through views (`NativeDictView`/`NativeListView`), zero copy, O(1) dict access.
-- **Tool:** `python3 tools/pr-summary.py <path|folder> [--params]` — terse .pr
-  step→action mapping (flags dropped modifiers + empty actions). Use after every build.
-  Traces: `python3 Documentation/v0.2/inspect-trace.py`. **Never hand-edit a `.pr`.**
+Adding `where T : item` to `data.@this<T>` (revert: it was on `data/this.cs`
+~line 1468, then removed) produces **1742 errors / 101 handler files**. The
+offending `Data<T>` slots, with Ingi's DECISIONS (do these):
 
----
-
-## What REMAINS = the lock phase. Two failing groups, ONE root: born-native + narrow + constraint.
-
-### C# — 23 stubs (`Assert.Fail("Not implemented")`), grouped by the feature each needs
-
-| File | Needs |
+| Offending T (count) | Decision |
 |---|---|
-| `ConstructionBornNativeTests` (6) | **born-native flip**: `UnwrapJsonElement` String→`text`, Number→`number`, True/False→`bool`, Null→`Data.Null()` singleton; no raw scalar escapes; **delete `UnwrapNewtonsoftToken`** (`data/this.cs`, dead v1 shim) |
-| `ItemConstraintTests` (5) | **`where T : item` on `data.@this<T>`** + everything `: item` (`path`/`image`/`code`/`Variable`/`Ask`/`snapshot`); negative-compile for `Data<int>` and `Data<data.@this>` (double-wrap kill) |
-| `CoercionMediatorTests` (6) | rewrite `Operator.NormalizeTypes` to inspect **wrapper** types; `"5"==5`, widening, date-vs-datetime, bool/null routing |
-| `ScalarComparerCollapseTests` (4) | collapse `data/ScalarComparer.cs` Name()/per-type arms → coercion + thin IComparable fallback; `Compare.Order(text)` routes via `IOrderableValue` |
-| `NullWrapperTests` (2) | `Data.Null()` stamps the `null.@this` singleton; `IsInitialized` value-vs-absence; nulls sort last via `Compare` |
-| `ToBoolean_RawScalarFallbacks…` (1, in ScalarComparerCollapse) | raw fallbacks in `Data.ToBoolean()` unreachable for wrapped values |
+| `string` (478) | → `Data<text>` |
+| `bool` (286) | → `Data<bool>` (the wrapper) |
+| `int`/`long`/`double` (208) | → `Data<number>` |
+| `TimeSpan` (14) | → `Data<duration>` ; `DateTimeOffset`/`DateTime` → `Data<datetime>` |
+| enums: `HttpMethod`/`PrecisionMode`/`OverflowMode`/`Trigger`/`ErrorOrder`/`ContentAs`/`StreamFormat`/`hash` (~150) | → `Data<choice<TEnum>>`. Handler reads `param?.Value` (implicit op → TEnum). Conversion leaf must build `choice<TEnum>` from a text literal (Enum.TryParse ignorecase + validate vs names) — ADD this arm to `type/catalog/Conversion.cs`. |
+| `byte[]` (28) | → `Data<binary>` |
+| `Dictionary<string,object?>` (40+), `Dictionary<string,string>` | → `Data<dict>` |
+| `List<string>` (34), `List<X>` (various) | → `Data<list>` |
+| `object` (26) | → `Data<item>` |
+| **Domain objects** (GoalCall 66, Identity 52, actor 30, goal 24, step 24, sign 18, mock 14, BuildResponse 12, permission 10, Results 8, action 6, StatInfo 6, hash type 6, KeyPair 4[record→class], setting 4, list.type.list 20, step.actions 8, builder.type 2) | make each `: item.@this` (elevate the C# class to a PLang type). Records→class. Watch base-class clashes (most are `: interface` only — add item as the base). `IBooleanResolvable` methods → `override`. |
+| `app.type.@this` (the `type` entity, 6) | decide: `: item` or bare Data. Probably bare Data (a "type" isn't a value). |
+| `Operator` (32) | likely `[Code]` or bare Data (it's behavior). Investigate. |
+| `Assembly` (4), `HttpContent` (6) | **de-Data** — Ingi: these never reach PLang, shouldn't be `Data<T>`. `path.LoadAssemblyAsync` and http upload-content use `Data<T>` as a `Result<value|error>` carrier. Return a plain C# `(T?, IError?)` tuple (or a tiny `Result<T>`); the plang-facing handler builds the PLang Data from the OUTCOME, never putting Assembly/HttpContent in a Data. |
+| `T`/`TResult` (48) | thread `where T : item` through the ~25 generic infra methods (Merge/Clone/Ok/Fail). |
 
-### PLang — every `Tests/ScalarsAsNative/Stage{1..7}/*.test.goal`
+### Sequence
+1. Domain objects → `: item` (green-keeping, no constraint yet). Batch ~17 types.
+2. De-Data Assembly/HttpContent (green-keeping).
+3. Add `choice<TEnum>` conversion arm to Conversion.cs (text→choice, validate).
+4. Swap all handler `Data<rawCLR>` slots per the table — AND fix each handler BODY
+   that reads the param (it's now a wrapper; unwrap via `.Value`/ToRaw at the leaf).
+   This is a second body-sweep, per handler.
+5. Add `where T : item` to `data.@this<T>`; thread through the generic infra; fix
+   until it compiles.
+6. Flip the 5 lattice tests to also assert compile-enforcement (the double-wrap
+   `Data<Data>` and `Data<int>` must not compile — a negative-compile fixture).
+7. Both suites green.
 
-- Stage-1 goals built & 3/4 pass; **`DictIsItemKeepsNoOrder` fails** — proven cause:
-  `set %people% = [{…}]` lands elements as **un-narrowed `item` (kind object)**, never
-  narrowed to `dict`, so `sort` (→ `Compare.Order`) never hits dict's no-order throw.
-  Needs **lazy-narrow on touch/compare** (architect's `item.Narrow()` wired into the
-  value path so an un-narrowed json-object item becomes a `dict` when examined).
-- Stages 2–7 goals are `- throw "not implemented"` stubs — author them to the
-  test-plan (`.bot/scalars-as-native/test-designer/test-plan.md`) AND build them
-  green. They test born-native (`%s.type%` is text, `%dt%` is datetime, `if %b%`,
-  `%x% == null`, `"5"==5`, etc.).
+## Design decisions locked (from Ingi this session)
+- **`choice`** (not `enum`) — layperson term, aligns with `[Choices]`. Generic
+  `choice<TEnum>` keeps typing; implicit op → TEnum; one `.Value` at use.
+- **`binary`** type for byte[].
+- Dictionary/List → dict/list.
+- Domain classes → `: item` ("elevating a C# class to a PLang type, like `: object`").
+- Assembly/HttpContent → NOT Data (internal results → tuple/Result<T>).
 
----
+## Follow-up (logged in Documentation/Runtime2/todos.md, NOT this branch)
+- **Serialization centralization part 2**: `Normalize`-on-item virtual (read-side
+  mirror of the `Write`-on-item already done) — collapse the NormalizeValue switch.
+- **PLang-named errors**: replace `GetType().Name` in error messages with the PLang
+  type name (the collapsed ScalarComparer dropped the old `Name()` switch).
+- **Channel.Resolve**: the leaf is `Resolve`, not the generated action code — move
+  the wrapper→string unwrap into the consumer (OBP); discuss.
+- **Per-path lazy narrowing** of materialized json (whole-tree-on-first-touch today).
+- **Option B**: single JsonConverterFactory at `data` layer + PLang-native wire
+  attrs (replace `[JsonIgnore]`/`[JsonConverter]` so protobuf needn't know STJ).
 
-## The hard-won gotchas (these cost hours — don't rediscover them)
-
-1. **`Variable` is a `record`; `item.@this` is an abstract `class`. A record CANNOT
-   inherit a plain class.** This is THE blocker for `where T : item`. Either convert
-   `Variable` (`PLang/app/variable/this.cs`) from `record` to `class` (keep value
-   equality + `IRawNameResolvable`), or make `item` something a record can inherit.
-   Decide this BEFORE turning on the constraint.
-2. **`Ask`/`snapshot`/`path`/`image`/`code` already implement `IBooleanResolvable`.**
-   Making them `: item` → their `AsBooleanAsync` becomes `override` (item declares it
-   virtual). Mechanical but touches each file.
-3. **`JsonNode` is the recurring villain.** `set … type=json` (`variable/set.cs:~127`)
-   stores `System.Text.Json.Nodes.JsonNode`, which is IEnumerable-but-wrong-shaped.
-   It blanked Fluid (fixed) and mis-decomposed in `list.FromRaw` (a JsonObject is
-   IEnumerable→became a list-of-kvps). Consider the ROOT fix: make `type=json`
-   produce native `dict`/`list` (via `UnwrapJsonElement`) instead of `JsonNode`. If
-   you don't, audit every `is IEnumerable` / `IDictionary` consumer for the JsonNode trap.
-4. **`Data.Ok(JsonElement)` unwraps** to native via the ctor's `UnwrapJsonElement` —
-   that's why live LLM calls worked but the cache (raw JsonElement) didn't.
-5. **The constraint cascade is the real cost**: ~25 generic `Data<T>`/`Data<U>` infra
-   methods (`Merge`/`Clone`/`Ok`/`Fail`) each need `where T : item` threaded. Turn the
-   constraint on LAST; the compiler then enumerates every `Data<rawCLR>` slot to fix.
-6. **The ~197-site body sweep**: grep `is string` / `(string)value` / `value is int|
-   long|double|decimal|bool` / `is System.DateTimeOffset|TimeSpan|DateOnly|TimeOnly` /
-   `.Value is <scalar>`. Behavioral→method on wrapper; perimeter→single `.Value`;
-   coercion→mediator. Do it per-type WITH the construction flip for that type.
-
----
-
-## Suggested sequence (architect stage-7 + my findings)
-
-1. **born-native construction** first (`UnwrapJsonElement` → wrappers; `Data.Null()` →
-   null singleton; delete `UnwrapNewtonsoftToken`). Then the body sweep per type.
-   Wire `item.Narrow()` so un-narrowed json items narrow to dict/list on touch
-   (fixes DictIsItem + JsonReadIsItemUntilTouch semantics).
-2. **everything `: item`** (path/image/code/Variable[record→class]/Ask/snapshot).
-3. **Collapse ScalarComparer + rewrite `Operator.NormalizeTypes`** to inspect wrappers.
-4. **Serializers**: each wrapper renders bare on `application/json` (add `serializer/
-   <format>.cs` `Write`; they already expose the bare form via `ToString()`).
-5. **Turn on `where T : item`** + thread through the generic layer; fix until it compiles.
-6. **Fill in all C# stubs** (they're authored as Assert.Fail with intent comments) and
-   **author + build every Stage*/*.test.goal**. Run both suites to 100%.
-
----
-
-## Build / test mechanics (env-specific, verified this session)
-
-- Rebuild binary first (stale-binary trap): `dotnet build PlangConsole` (0 errors).
-- C# suite: `dotnet run --project PLang.Tests` (TUnit; only failures print; check `failed: N`).
-- PLang build: from `Tests/`: `../PlangConsole/bin/Debug/net10.0/plang build
-  '--build={"files":["ScalarsAsNative/Stage2/Foo.test.goal"],"cache":false}'`.
-  `cache:false` forces fresh LLM (avoids stale cache). Builder IS available + works now.
-- PLang run: `cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test`.
-- Verify a build: `python3 tools/pr-summary.py Tests/ScalarsAsNative/Stage2/.build/foo.test.pr --params`.
-- LLM cache lives in `Tests/.db/system.sqlite` (`llmcache` table); `DELETE FROM llmcache` to clear.
-- Builder phrasing that maps reliably: `assert %x% equals N`, `assert %x% is true`,
-  `if %x% is <type>`, `set %x% = …`, `math.add A=%a% B=%b%, write to %s%`. Keep goals
-  short; split nested navigation out of asserts if a step won't map.
-- A `cache:false` rebuild OVERWRITES the committed `.pr` — `cp` it aside / `git checkout`
-  after diagnostics so a bad build never lands. Don't commit non-deterministic `.pr`
-  until the goal builds correctly and the test passes; then it's fine to commit the green `.pr`.
-
-## Done-bar checklist
-- [ ] `where T : item` compiles; no `Data<rawCLR>`; `Data<object>`→`Data<item>`; double-wrap won't compile.
-- [ ] `ScalarComparer` Name()/per-type arms gone; `UnwrapNewtonsoftToken` gone.
-- [ ] All 23 C# stubs implemented & green; full C# suite green.
-- [ ] Every `Tests/ScalarsAsNative/Stage*/*.test.goal` built & green; full PLang suite green.
-- [ ] `dict` still throws on sort (regression guard); `"5"==5` + widening still coerce.
+## Mechanics (verified this session)
+- Rebuild: `dotnet build PlangConsole` (generator changes need full rebuild).
+- C# suite: `dotnet run --project PLang.Tests --no-build` — `--no-build` reads a
+  STALE PLang.dll unless you `dotnet build PLang.Tests` first (which rebuilds the
+  PLang.dll dep). The early "23 stubs / no regressions" reads this session were a
+  stale-binary artifact; always rebuild before trusting `--no-build`.
+- PLang suite (Task 6, NOT started): author + build the 31 stubbed
+  `Tests/ScalarsAsNative/Stage{2..7}/*.test.goal` to the test-plan, build green;
+  fix `DictIsItemKeepsNoOrder` (lazy-narrow). Both suites to 100%.
