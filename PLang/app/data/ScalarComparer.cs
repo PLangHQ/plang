@@ -19,6 +19,11 @@ internal static class ScalarComparer
     /// <summary>Equality on two coerced scalars (callers pass post-<c>NormalizeTypes</c> values).</summary>
     public static bool AreEqual(object? a, object? b)
     {
+        // A wrapper may reach this leaf (e.g. one side raw, the other a wrapper, after
+        // a not-yet-uniform construction). Unwrap to the raw backing so equality is by
+        // value (raw bool == bool.@this), not a wrapper's reference Equals.
+        if (a is global::app.type.item.@this ia) a = ia.ToRaw();
+        if (b is global::app.type.item.@this ib) b = ib.ToRaw();
         if (a == null || b == null) return a == null && b == null;
         if (IsNumeric(a) && IsNumeric(b))
             return Number.FromObject(a)!.CompareTo(Number.FromObject(b)) == 0;
@@ -34,6 +39,8 @@ internal static class ScalarComparer
     /// </summary>
     public static int Order(object? a, object? b)
     {
+        if (a is global::app.type.item.@this ia) a = ia.ToRaw();
+        if (b is global::app.type.item.@this ib) b = ib.ToRaw();
         if (a == null || b == null)
             throw new Compare.NotOrderableException("cannot order a null scalar");
 
