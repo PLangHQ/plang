@@ -10,10 +10,10 @@ public partial class Random : IContext
     [Default(100)]
     public partial data.@this<global::app.type.number.@this> Max { get; init; }
 
-    public Task<data.@this<object>> Run()
+    public Task<data.@this<global::app.type.number.@this>> Run()
     {
         var rng = System.Random.Shared;
-        var result = rng.Next(Min.GetValue<int>(), Max.GetValue<int>() + 1);
-        return Task.FromResult(data.@this<object>.Ok(result));
+        int result = rng.Next(Min.GetValue<int>(), Max.GetValue<int>() + 1);
+        return Task.FromResult(data.@this<global::app.type.number.@this>.Ok(result));
     }
 }

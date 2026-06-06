@@ -86,7 +86,7 @@ public class LlmIntegrationTests
         {
             Context = Ctx,
             Messages = messages,
-            Schema = "{\"sentiment\": \"string\", \"score\": \"number\"}",
+            Schema = global::app.data.@this.Ok("{\"sentiment\": \"string\", \"score\": \"number\"}"),
             Temperature = (global::app.type.number.@this)0.0,
             MaxTokens = (global::app.type.number.@this)100,
             Cache = (global::app.type.@bool.@this)false

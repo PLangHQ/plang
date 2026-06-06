@@ -26,7 +26,7 @@ public partial class Where : IContext
     /// <summary>The right-hand comparison value of the predicate.</summary>
     public partial data.@this Value { get; init; }
 
-    public async Task<data.@this<object>> Run()
+    public async Task<data.@this> Run()
     {
         var subject = Context.Variable.Get(ListName.Value);
         var field = Field.Value!;
@@ -38,19 +38,19 @@ public partial class Where : IContext
             var kept = new app.type.list.@this { Context = Context };
             foreach (var item in list.Items)
                 if (await Keep(item, field, op)) kept.Add(item);
-            return global::app.data.@this<object>.Ok(kept, app.type.@this.FromName("list"));
+            return global::app.data.@this.Ok(kept, app.type.@this.FromName("list"));
         }
 
         if (subject.Value is app.type.dict.@this)
         {
             // dict.where is the leaf — subject is the dict itself, kept or dropped.
             bool keep = await Keep(subject, field, op);
-            return global::app.data.@this<object>.Ok(keep ? subject.Value : null,
+            return global::app.data.@this.Ok(keep ? subject.Value : null,
                 app.type.@this.FromName("dict"));
         }
 
         // The apex has no fields to scope into — `5 where age > 20` is meaningless.
-        return global::app.data.@this<object>.FromError(new app.error.ValidationError(
+        return global::app.data.@this.FromError(new app.error.ValidationError(
             $"'where {field} …' needs a list or dict to scope into — '{ListName.Value}' is a {subject.Type.Name}, which has no fields.",
             "WhereOnApex"));
     }

@@ -11,7 +11,7 @@ namespace app.module.signing.code;
 public interface ISigning : IKey
 {
     /// <summary>Full signing pipeline: get identity, hash, build object, sign.</summary>
-    Task<data.@this<object>> SignAsync(sign action);
+    Task<data.@this> SignAsync(sign action);
 
     /// <summary>Full verification pipeline: type check, timeout, nonce, contracts, hash, verify.</summary>
     Task<data.@this<global::app.type.@bool.@this>> VerifyAsync(verify action);

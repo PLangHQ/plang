@@ -295,7 +295,7 @@ public class SignActionTests
         public (KeyPair? keys, global::app.error.IError? error) GenerateKeyPair() => _inner.GenerateKeyPair();
         public global::app.data.@this<global::app.type.binary.@this> Sign(byte[] data, string privateKey) => _inner.Sign(data, privateKey);
         public global::app.data.@this<global::app.type.@bool.@this> Verify(byte[] data, byte[] signature, string publicKey) => _inner.Verify(data, signature, publicKey);
-        public async Task<global::app.data.@this<object>> SignAsync(sign action) { SignCalled = true; return await _inner.SignAsync(action); }
+        public async Task<global::app.data.@this> SignAsync(sign action) { SignCalled = true; return await _inner.SignAsync(action); }
         public Task<global::app.data.@this<global::app.type.@bool.@this>> VerifyAsync(verify action) => _inner.VerifyAsync(action);
     }
 
@@ -310,7 +310,7 @@ public class SignActionTests
         public (KeyPair? keys, global::app.error.IError? error) GenerateKeyPair() => (null, new ActionError("Key generation failed", "KeyGenerationError", 500));
         public global::app.data.@this<global::app.type.binary.@this> Sign(byte[] data, string privateKey) => global::app.data.@this<global::app.type.binary.@this>.FromError(new ActionError("Sign failed", "SigningError", 500));
         public global::app.data.@this<global::app.type.@bool.@this> Verify(byte[] data, byte[] signature, string publicKey) => global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Verify failed", "SignatureInvalid", 400));
-        public Task<global::app.data.@this<object>> SignAsync(sign action) => Task.FromResult(global::app.data.@this<object>.FromError(new ActionError("Sign failed", "SigningError", 500)));
+        public Task<global::app.data.@this> SignAsync(sign action) => Task.FromResult(global::app.data.@this.FromError(new ActionError("Sign failed", "SigningError", 500)));
         public Task<global::app.data.@this<global::app.type.@bool.@this>> VerifyAsync(verify action) => Task.FromResult(global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Verify failed", "SignatureInvalid", 400)));
     }
 

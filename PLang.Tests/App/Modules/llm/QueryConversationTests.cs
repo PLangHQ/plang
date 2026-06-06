@@ -130,7 +130,7 @@ public class QueryConversationTests
                 new LlmMessage { Role = "system", Content = "analyze" },
                 new LlmMessage { Role = "user", Content = "test" }
             },
-            Schema = "{ok: bool}",
+            Schema = global::app.data.@this.Ok("{ok: bool}"),
             Cache = (global::app.type.@bool.@this)false
         };
         await action1.Run();
@@ -143,7 +143,7 @@ public class QueryConversationTests
             {
                 new LlmMessage { Role = "user", Content = "again" }
             },
-            Schema = "{ok: bool}",
+            Schema = global::app.data.@this.Ok("{ok: bool}"),
             ContinuePreviousConversation = (global::app.type.@bool.@this)true,
             Cache = (global::app.type.@bool.@this)false
         };
@@ -171,7 +171,7 @@ public class QueryConversationTests
                 new LlmMessage { Role = "system", Content = "analyze" },
                 new LlmMessage { Role = "user", Content = "test" }
             },
-            Schema = "{result: string}",
+            Schema = global::app.data.@this.Ok("{result: string}"),
             Cache = (global::app.type.@bool.@this)false
         };
         await action1.Run();
@@ -207,7 +207,7 @@ public class QueryConversationTests
             {
                 new LlmMessage { Role = "user", Content = "test" }
             },
-            Schema = "{oldSchema: string}",
+            Schema = global::app.data.@this.Ok("{oldSchema: string}"),
             Cache = (global::app.type.@bool.@this)false
         };
         await action1.Run();
@@ -220,7 +220,7 @@ public class QueryConversationTests
             {
                 new LlmMessage { Role = "user", Content = "test2" }
             },
-            Schema = "{newSchema: int}",
+            Schema = global::app.data.@this.Ok("{newSchema: int}"),
             ContinuePreviousConversation = (global::app.type.@bool.@this)true,
             Cache = (global::app.type.@bool.@this)false
         };

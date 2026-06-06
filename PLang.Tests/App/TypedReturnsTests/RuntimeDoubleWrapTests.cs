@@ -103,22 +103,13 @@ public class RuntimeDoubleWrapTests
             .OrderBy(n => n)
             .ToList();
 
-        // Note: math.Add/Subtract/Multiply/Divide/Modulo/Power/IntDiv migrated
-        // to Task<Data<number>> in plang-types Stage 4; abs/ceiling/floor/sqrt/
-        // round/min/max followed on the MathHelper-deletion branch. math.Random
-        // is still Data<object> until it gets its own number retype.
-        var expected = new[]
-        {
-            "app.module.list.First",
-            "app.module.list.Get",
-            "app.module.list.Last",
-            // where is genuinely polymorphic (filtered list | kept dict | apex error)
-            // and owned-construction (wraps a list/dict value, never a Data) — no
-            // double-wrap. Verified by ListWhere_ResultValueIsListNotData below.
-            "app.module.list.Where",
-            "app.module.math.Random",
-            "app.module.signing.sign",
-        };
+        // The scalars-as-native cascade removed every `Task<Data<object>>` Run handler:
+        // known-type returns took a concrete wrapper (math.Random → Data<number>), and
+        // genuinely-polymorphic ones (list.First/Get/Last/Where, signing.sign, llm.query)
+        // took bare Task<Data> (no T → the `where T : item` constraint can't be violated).
+        // No handler may reintroduce Data<object> — polymorphic = bare Data, known =
+        // Data<concreteWrapper>.
+        var expected = System.Array.Empty<string>();
         await Assert.That(dataObjectHandlers).IsEquivalentTo(expected)
             .Because(
                 "New Data<object> Run() handler? Either narrow T to a concrete type, " +

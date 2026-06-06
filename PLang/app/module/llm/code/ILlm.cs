@@ -13,5 +13,5 @@ public interface ILlm : ICode
     // Polymorphic — response shape depends on Schema/tool config (raw string,
     // structured object, tool-call object). The action declares Data<object>;
     // every implementation must match.
-    Task<data.@this<object>> Query(query action);
+    Task<data.@this> Query(query action);
 }

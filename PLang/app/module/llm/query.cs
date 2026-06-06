@@ -63,7 +63,7 @@ public partial class query : IContext, IBuildValidatable
     /// before sending to the LLM (JSON via System.Text.Json for structured shapes,
     /// pass-through for strings).
     /// </summary>
-    public partial data.@this<object>? Schema { get; init; }
+    public partial data.@this? Schema { get; init; }
 
     /// <summary>Response format: "json", "python", "md", etc. Non-json formats extract from code blocks.</summary>
     public partial data.@this<global::app.type.text.@this>? Format { get; init; }

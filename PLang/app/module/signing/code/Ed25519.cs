@@ -22,18 +22,18 @@ public class Ed25519 : ISigning
 
     // --- High-level pipeline ---
 
-    public virtual async Task<data.@this<object>> SignAsync(sign action)
+    public virtual async Task<data.@this> SignAsync(sign action)
     {
         var app = action.Context.App;
 
         // Get identity
         var identityResult = await app.RunAction<identity.Get>(new identity.Get(), action.Context);
-        if (!identityResult.Success) return global::app.data.@this<object>.From(identityResult);
+        if (!identityResult.Success) return identityResult;
         var identity = (Identity)identityResult.Value!;
 
         // Hash the data
         var hash = await app.RunAction<Hash>(new Hash { Data = action.Data, Algorithm = new data.@this<global::app.type.text.@this>("", "keccak256") }, action.Context);
-        if (!hash.Success) return global::app.data.@this<object>.From(hash);
+        if (!hash.Success) return hash;
 
         var now = (DateTimeOffset)action.Context.Variable.GetValue("NowUtc")!;
         var nonce = action.Context.Variable.GetValue("GUID")!.ToString()!;
@@ -53,11 +53,11 @@ public class Ed25519 : ISigning
         signedData.Identity = identity.PublicKey;
         var signingBytes = signedData.ToSigningBytes();
         var signResult = Sign(signingBytes, identity.PrivateKey);
-        if (!signResult.Success) return global::app.data.@this<object>.From(signResult);
+        if (!signResult.Success) return signResult;
         signedData.Value = Convert.ToBase64String((byte[])signResult.Value!);
 
         action.Data!.Signature = signedData;
-        return global::app.data.@this<object>.From(action.Data);
+        return action.Data;
     }
 
     public virtual async Task<data.@this<global::app.type.@bool.@this>> VerifyAsync(verify action)

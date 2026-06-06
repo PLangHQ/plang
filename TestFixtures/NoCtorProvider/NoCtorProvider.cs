@@ -24,8 +24,8 @@ public class NoCtorSigningProvider : ISigning
     public app.data.@this<global::app.type.@bool.@this> Verify(byte[] data, byte[] signature, string publicKey)
         => app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
-    public Task<app.data.@this<object>> SignAsync(sign action)
-        => Task.FromResult(new app.data.@this<object>());
+    public Task<app.data.@this> SignAsync(sign action)
+        => Task.FromResult(app.data.@this.Ok());
 
     public Task<app.data.@this<global::app.type.@bool.@this>> VerifyAsync(verify action)
         => Task.FromResult(app.data.@this<global::app.type.@bool.@this>.Ok(true));
