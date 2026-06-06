@@ -68,11 +68,11 @@ public class QueryToolTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "What's the weather?" }
-            }.ToListData(),
+            }.ToListData<LlmMessage>(),
             Tools = new List<GoalCall>
             {
                 new GoalCall { Name = "GetWeather", Parameters = new List<Data> { new Data("city", null, global::app.type.@this.String) } }
-            }.ToListData()
+            }.ToListData<GoalCall>()
         };
         var result = await action.Run();
 
@@ -107,12 +107,12 @@ public class QueryToolTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "do both" }
-            }.ToListData(),
+            }.ToListData<LlmMessage>(),
             Tools = new List<GoalCall>
             {
                 new GoalCall { Name = "ToolA", Parallel = false },
                 new GoalCall { Name = "ToolB", Parallel = false }
-            }.ToListData()
+            }.ToListData<GoalCall>()
         };
         var result = await action.Run();
 
@@ -144,12 +144,12 @@ public class QueryToolTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "do both parallel" }
-            }.ToListData(),
+            }.ToListData<LlmMessage>(),
             Tools = new List<GoalCall>
             {
                 new GoalCall { Name = "ToolA", Parallel = true },
                 new GoalCall { Name = "ToolB", Parallel = true }
-            }.ToListData()
+            }.ToListData<GoalCall>()
         };
         var result = await action.Run();
 
@@ -181,12 +181,12 @@ public class QueryToolTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "mixed" }
-            }.ToListData(),
+            }.ToListData<LlmMessage>(),
             Tools = new List<GoalCall>
             {
                 new GoalCall { Name = "ToolA", Parallel = true },
                 new GoalCall { Name = "ToolB", Parallel = false }
-            }.ToListData()
+            }.ToListData<GoalCall>()
         };
         var result = await action.Run();
 
@@ -219,11 +219,11 @@ public class QueryToolTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "call failing tool" }
-            }.ToListData(),
+            }.ToListData<LlmMessage>(),
             Tools = new List<GoalCall>
             {
                 new GoalCall { Name = "FailTool" }
-            }.ToListData()
+            }.ToListData<GoalCall>()
         };
         var result = await action.Run();
 
@@ -255,11 +255,11 @@ public class QueryToolTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "call unknown" }
-            }.ToListData(),
+            }.ToListData<LlmMessage>(),
             Tools = new List<GoalCall>
             {
                 new GoalCall { Name = "KnownTool" }
-            }.ToListData()
+            }.ToListData<GoalCall>()
         };
         var result = await action.Run();
 
@@ -285,11 +285,11 @@ public class QueryToolTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "loop forever" }
-            }.ToListData(),
+            }.ToListData<LlmMessage>(),
             Tools = new List<GoalCall>
             {
                 new GoalCall { Name = "InfiniteTool" }
-            }.ToListData(),
+            }.ToListData<GoalCall>(),
             MaxToolCalls = (global::app.type.number.@this)3
         };
         var result = await action.Run();
@@ -325,7 +325,7 @@ public class QueryToolTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
-            }.ToListData(),
+            }.ToListData<LlmMessage>(),
             Tools = new List<GoalCall>
             {
                 new GoalCall
@@ -337,7 +337,7 @@ public class QueryToolTests
                         new Data("units", "metric", global::app.type.@this.String) // optional (has default)
                     }
                 }
-            }.ToListData()
+            }.ToListData<GoalCall>()
         };
         var result = await action.Run();
 
@@ -359,7 +359,7 @@ public class QueryToolTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
-            }.ToListData(),
+            }.ToListData<LlmMessage>(),
             Tools = new List<GoalCall>
             {
                 new GoalCall
@@ -370,7 +370,7 @@ public class QueryToolTests
                         new Data("query", null, global::app.type.@this.String)
                     }
                 }
-            }.ToListData()
+            }.ToListData<GoalCall>()
         };
         await action.Run();
 
@@ -391,7 +391,7 @@ public class QueryToolTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
-            }.ToListData(),
+            }.ToListData<LlmMessage>(),
             Tools = new List<GoalCall>
             {
                 new GoalCall
@@ -399,7 +399,7 @@ public class QueryToolTests
                     Name = "NoParamTool",
                     Parameters = new List<Data>()
                 }
-            }.ToListData()
+            }.ToListData<GoalCall>()
         };
         await action.Run();
 
@@ -435,7 +435,7 @@ public class QueryToolTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "Weather in London?" }
-            }.ToListData(),
+            }.ToListData<LlmMessage>(),
             Tools = new List<GoalCall>
             {
                 new GoalCall
@@ -447,7 +447,7 @@ public class QueryToolTests
                         new Data("units", "metric", global::app.type.@this.String)   // optional, default "metric"
                     }
                 }
-            }.ToListData()
+            }.ToListData<GoalCall>()
         };
         var result = await action.Run();
 
@@ -476,7 +476,7 @@ public class QueryToolTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
-            }.ToListData(),
+            }.ToListData<LlmMessage>(),
             Tools = new List<GoalCall>
             {
                 new GoalCall
@@ -491,7 +491,7 @@ public class QueryToolTests
                         new Data("config", null, new global::app.type.@this("object"))
                     }
                 }
-            }.ToListData()
+            }.ToListData<GoalCall>()
         };
         await action.Run();
 
@@ -532,11 +532,11 @@ public class QueryToolTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "mixed types" }
-            }.ToListData(),
+            }.ToListData<LlmMessage>(),
             Tools = new List<GoalCall>
             {
                 new GoalCall { Name = "MixedTool" }
-            }.ToListData()
+            }.ToListData<GoalCall>()
         };
         var result = await action.Run();
 
@@ -575,12 +575,12 @@ public class QueryToolTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "parallel" }
-            }.ToListData(),
+            }.ToListData<LlmMessage>(),
             Tools = new List<GoalCall>
             {
                 new GoalCall { Name = "ToolA", Parallel = true },
                 new GoalCall { Name = "ToolB", Parallel = true }
-            }.ToListData()
+            }.ToListData<GoalCall>()
         };
         var result = await action.Run();
 

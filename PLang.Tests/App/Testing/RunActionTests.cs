@@ -87,7 +87,7 @@ public class RunActionTests
         var action = new global::app.module.test.run
         {
             Context = _app.User.Context,
-            Tests = tests.ToListData(),
+            Tests = tests.ToListData<global::app.tester.test.@this>(),
             Parallel = parallel.HasValue ? new global::app.data.@this<global::app.type.number.@this>("Parallel", parallel.Value) : null,
             Timeout = timeoutSec.HasValue ? new global::app.data.@this<global::app.type.number.@this>("Timeout", timeoutSec.Value) : null
         };

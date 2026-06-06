@@ -59,7 +59,7 @@ public class QueryConversationTests
             {
                 new LlmMessage { Role = "system", Content = "You are helpful" },
                 new LlmMessage { Role = "user", Content = "What is 2+2?" }
-            }.ToListData(),
+            }.ToListData<LlmMessage>(),
             Cache = (global::app.type.@bool.@this)false
         };
         await action1.Run();
@@ -71,7 +71,7 @@ public class QueryConversationTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "And 3+3?" }
-            }.ToListData(),
+            }.ToListData<LlmMessage>(),
             ContinuePreviousConversation = (global::app.type.@bool.@this)true,
             Cache = (global::app.type.@bool.@this)false
         };
@@ -104,7 +104,7 @@ public class QueryConversationTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "fresh start" }
-            }.ToListData(),
+            }.ToListData<LlmMessage>(),
             ContinuePreviousConversation = (global::app.type.@bool.@this)false,
             Cache = (global::app.type.@bool.@this)false
         };
@@ -129,7 +129,7 @@ public class QueryConversationTests
             {
                 new LlmMessage { Role = "system", Content = "analyze" },
                 new LlmMessage { Role = "user", Content = "test" }
-            }.ToListData(),
+            }.ToListData<LlmMessage>(),
             Schema = global::app.data.@this.Ok("{ok: bool}"),
             Cache = (global::app.type.@bool.@this)false
         };
@@ -142,7 +142,7 @@ public class QueryConversationTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "again" }
-            }.ToListData(),
+            }.ToListData<LlmMessage>(),
             Schema = global::app.data.@this.Ok("{ok: bool}"),
             ContinuePreviousConversation = (global::app.type.@bool.@this)true,
             Cache = (global::app.type.@bool.@this)false
@@ -170,7 +170,7 @@ public class QueryConversationTests
             {
                 new LlmMessage { Role = "system", Content = "analyze" },
                 new LlmMessage { Role = "user", Content = "test" }
-            }.ToListData(),
+            }.ToListData<LlmMessage>(),
             Schema = global::app.data.@this.Ok("{result: string}"),
             Cache = (global::app.type.@bool.@this)false
         };
@@ -183,7 +183,7 @@ public class QueryConversationTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "again" }
-            }.ToListData(),
+            }.ToListData<LlmMessage>(),
             ContinuePreviousConversation = (global::app.type.@bool.@this)true,
             Cache = (global::app.type.@bool.@this)false
         };
@@ -206,7 +206,7 @@ public class QueryConversationTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
-            }.ToListData(),
+            }.ToListData<LlmMessage>(),
             Schema = global::app.data.@this.Ok("{oldSchema: string}"),
             Cache = (global::app.type.@bool.@this)false
         };
@@ -219,7 +219,7 @@ public class QueryConversationTests
             Messages = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test2" }
-            }.ToListData(),
+            }.ToListData<LlmMessage>(),
             Schema = global::app.data.@this.Ok("{newSchema: int}"),
             ContinuePreviousConversation = (global::app.type.@bool.@this)true,
             Cache = (global::app.type.@bool.@this)false

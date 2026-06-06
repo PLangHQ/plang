@@ -8,7 +8,7 @@ namespace app.tester.test;
 /// Identity (path, name, hash, builder version, folder) lives on
 /// <see cref="Goal"/>; this record owns the discovery-only state.
 /// </summary>
-public sealed class @this
+public sealed class @this : global::app.type.item.@this
 {
     /// <summary>The discovered goal. Always populated — built from the .pr
     /// when available, otherwise parsed from the .goal source itself.</summary>

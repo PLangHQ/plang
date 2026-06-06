@@ -81,7 +81,7 @@ public class EdgeCaseTests
         var outerAction = new global::app.module.test.run
         {
             Context = _app.User.Context,
-            Tests = emptyList.ToListData(),
+            Tests = emptyList.ToListData<global::app.tester.test.@this>(),
             Parallel = null,
             Timeout = null
         };

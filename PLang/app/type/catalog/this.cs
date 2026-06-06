@@ -565,10 +565,6 @@ public sealed partial class @this
                         if (unwrapped is { IsGenericType: true } u
                             && u.GetGenericTypeDefinition() == typeof(app.type.list.@this<>))
                             Enqueue(u.GetGenericArguments()[0]);
-                        // Transitional: a still-untyped Data<list> slot names its element
-                        // via [Element(T)] until it migrates to Data<list<T>>.
-                        var element = prop.GetCustomAttribute<app.Attributes.ElementAttribute>();
-                        if (element != null) Enqueue(element.Element);
                     }
                 }
             }

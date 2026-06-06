@@ -10,6 +10,10 @@ public static class CollectionTestExtensions
     public static global::app.data.@this<global::app.type.list.@this> ToListData(this System.Collections.IEnumerable raw)
         => new("", global::app.type.list.@this.FromRaw(raw, null)!);
 
+    public static global::app.data.@this<global::app.type.list.@this<T>> ToListData<T>(this System.Collections.IEnumerable raw)
+        where T : global::app.type.item.@this
+        => new("", global::app.type.list.@this<T>.Of(raw));
+
     public static global::app.data.@this<global::app.type.dict.@this> ToDictData(this System.Collections.IDictionary raw)
     {
         var d = new global::app.type.dict.@this();

@@ -123,7 +123,7 @@ internal static class LlmTestHelper
             {
                 new LlmMessage { Role = "system", Content = systemText },
                 new LlmMessage { Role = "user", Content = userText }
-            }.ToListData()
+            }.ToListData<LlmMessage>()
         };
     }
 }

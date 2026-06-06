@@ -29,8 +29,7 @@ public partial class run : IContext
     internal static event Action<app.@this>? ChildAppCreated;
 
     [IsNotNull]
-    [app.Attributes.Element(typeof(global::app.tester.test.@this))]
-    public partial data.@this<global::app.type.list.@this> Tests { get; init; }
+    public partial data.@this<global::app.type.list.@this<global::app.tester.test.@this>> Tests { get; init; }
 
     public partial data.@this<global::app.type.number.@this>? Parallel { get; init; }
     public partial data.@this<global::app.type.number.@this>? Timeout { get; init; }

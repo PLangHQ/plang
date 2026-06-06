@@ -16,4 +16,13 @@ public sealed class @this<T> : @this
 {
     public @this() : base() { }
     public @this(System.Collections.Generic.IEnumerable<global::app.data.@this> items) : base(items) { }
+
+    /// <summary>Build a typed list from raw element values — each wrapped in a Data row.</summary>
+    public static @this<T> Of(System.Collections.IEnumerable items)
+    {
+        var l = new @this<T>();
+        foreach (var i in items)
+            l.Add(i is global::app.data.@this d ? d : new global::app.data.@this("", i));
+        return l;
+    }
 }

@@ -59,7 +59,7 @@ public class LlmIntegrationTests
         var result = await RunWithSnapshot("SimpleCalculation", messages, new query
         {
             Context = Ctx,
-            Messages = messages.ToListData(),
+            Messages = messages.ToListData<LlmMessage>(),
             Temperature = (global::app.type.number.@this)0.0,
             MaxTokens = (global::app.type.number.@this)50,
             Cache = (global::app.type.@bool.@this)false
@@ -85,7 +85,7 @@ public class LlmIntegrationTests
         var result = await RunWithSnapshot("JsonSchema", messages, new query
         {
             Context = Ctx,
-            Messages = messages.ToListData(),
+            Messages = messages.ToListData<LlmMessage>(),
             Schema = global::app.data.@this.Ok("{\"sentiment\": \"string\", \"score\": \"number\"}"),
             Temperature = (global::app.type.number.@this)0.0,
             MaxTokens = (global::app.type.number.@this)100,
@@ -115,7 +115,7 @@ public class LlmIntegrationTests
         var result = await RunWithSnapshot("PythonFormat", messages, new query
         {
             Context = Ctx,
-            Messages = messages.ToListData(),
+            Messages = messages.ToListData<LlmMessage>(),
             Format = (global::app.type.text.@this)"python",
             Temperature = (global::app.type.number.@this)0.0,
             MaxTokens = (global::app.type.number.@this)200,
@@ -145,7 +145,7 @@ public class LlmIntegrationTests
         var result1 = await RunWithSnapshot("ConvPart1", messages1, new query
         {
             Context = Ctx,
-            Messages = messages1.ToListData(),
+            Messages = messages1.ToListData<LlmMessage>(),
             Temperature = (global::app.type.number.@this)0.0,
             MaxTokens = (global::app.type.number.@this)50,
             Cache = (global::app.type.@bool.@this)false
@@ -162,7 +162,7 @@ public class LlmIntegrationTests
         var result2 = await RunWithSnapshot("ConvPart2", messages2, new query
         {
             Context = Ctx,
-            Messages = messages2.ToListData(),
+            Messages = messages2.ToListData<LlmMessage>(),
             ContinuePreviousConversation = (global::app.type.@bool.@this)true,
             Temperature = (global::app.type.number.@this)0.0,
             MaxTokens = (global::app.type.number.@this)50,
@@ -277,8 +277,8 @@ public class LlmIntegrationTests
         var action = new query
         {
             Context = Ctx,
-            Messages = messages.ToListData(),
-            Tools = tools.ToListData(),
+            Messages = messages.ToListData<LlmMessage>(),
+            Tools = tools.ToListData<GoalCall>(),
             Temperature = (global::app.type.number.@this)0.0,
             MaxTokens = (global::app.type.number.@this)200,
             Cache = (global::app.type.@bool.@this)false
