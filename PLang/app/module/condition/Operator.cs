@@ -109,6 +109,10 @@ public sealed class Operator
 
     private static bool Contains(object? left, object? right)
     {
+        // Born-native: a text value rides as text.@this — unwrap to string so the
+        // substring arm fires (the wrapper isn't a CLR string).
+        if (left is global::app.type.text.@this lt) left = lt.Value;
+        if (right is global::app.type.text.@this rt) right = rt.Value;
         return left switch
         {
             string s when right is string sub => s.Contains(sub, StringComparison.OrdinalIgnoreCase),
@@ -155,7 +159,11 @@ public sealed class Operator
     private static bool IsEmpty(object? value)
     {
         if (value == null) return true;
+        if (value is global::app.type.text.@this t) value = t.Value;
+        if (value is global::app.type.@null.@this) return true;
         if (value is string s) return string.IsNullOrWhiteSpace(s);
+        if (value is app.type.dict.@this d) return d.Entries.Count == 0;
+        if (value is app.type.list.@this l) return l.Count == 0;
         if (value is ICollection c) return c.Count == 0;
         return false;
     }
