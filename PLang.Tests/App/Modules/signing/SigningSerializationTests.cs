@@ -112,7 +112,7 @@ public class SigningSerializationTests
     public async Task SignedData_Signature_IsBase64()
     {
         var provider = new Ed25519();
-        var keys = provider.GenerateKeyPair().Value!;
+        var keys = provider.GenerateKeyPair().keys!;
 
         var data = System.Text.Encoding.UTF8.GetBytes("test");
         var sigResult = provider.Sign(data, keys.PrivateKey);

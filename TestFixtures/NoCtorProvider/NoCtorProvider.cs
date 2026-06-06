@@ -15,8 +15,8 @@ public class NoCtorSigningProvider : ISigning
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
-    public app.data.@this<KeyPair> GenerateKeyPair()
-        => app.data.@this<KeyPair>.Ok(new KeyPair("pub", "priv"));
+    public (KeyPair? keys, app.error.IError? error) GenerateKeyPair()
+        => (new KeyPair("pub", "priv"), null);
 
     public app.data.@this<byte[]> Sign(byte[] data, string privateKey)
         => app.data.@this<byte[]>.Ok(new byte[64]);

@@ -45,7 +45,7 @@ public sealed record @this(
         }
         else if (DefaultValue != null)
         {
-            sb.AppendLine($"        get {{ if ({Backing} == null) {{ var __d = __ResolveData(\"{ParamName}\"); {Backing} = __d.IsEmpty ? new global::app.data.@this<{InnerType}>(\"{ParamName}\", ({InnerType}){DefaultValue}) : __d.As<{InnerType}>(Context); if (!{Backing}.Success) __resolutionError = {Backing}; {SetFlag} = true; }} return {Backing}!; }}");
+            sb.AppendLine($"        get {{ if ({Backing} == null) {{ var __d = __ResolveData(\"{ParamName}\"); {Backing} = __d.IsEmpty ? new global::app.data.@this<{InnerType}>(\"{ParamName}\", ({InnerType})({DefaultValue})) : __d.As<{InnerType}>(Context); if (!{Backing}.Success) __resolutionError = {Backing}; {SetFlag} = true; }} return {Backing}!; }}");
         }
         else
         {

@@ -15,8 +15,8 @@ public class TestSigningProvider : ISigning
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
-    public app.data.@this<KeyPair> GenerateKeyPair()
-        => app.data.@this<KeyPair>.Ok(new KeyPair("testPub", "testPriv"));
+    public (KeyPair? keys, app.error.IError? error) GenerateKeyPair()
+        => (new KeyPair("testPub", "testPriv"), null);
 
     public app.data.@this<byte[]> Sign(byte[] data, string privateKey)
         => app.data.@this<byte[]>.Ok(new byte[64]);

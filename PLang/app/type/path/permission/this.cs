@@ -39,6 +39,13 @@ public sealed class @this : global::app.type.item.@this
         this.Match = Match;
     }
 
+    // Value equality (preserved from the former record shape) — two grants for the
+    // same actor/path/verb/match are equal, which the permission table dedup + the
+    // round-trip test rely on. verb.@this is a record (value-equal); Match is an enum.
+    public override bool Equals(object? obj) => obj is @this o
+        && Actor == o.Actor && Path == o.Path && Match == o.Match && Equals(Verb, o.Verb);
+    public override int GetHashCode() => System.HashCode.Combine(Actor, Path, Verb, Match);
+
     public bool Covers(@this request) =>
         Actor == request.Actor
         && PathMatches(request.Path)

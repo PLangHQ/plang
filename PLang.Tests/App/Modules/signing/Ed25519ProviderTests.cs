@@ -36,8 +36,7 @@ public class Ed25519ProviderTests
     [Test]
     public async Task GenerateKeyPair_ReturnsBase64Keys()
     {
-        var result = _provider.GenerateKeyPair();
-        var kp = result.Value!;
+        var kp = _provider.GenerateKeyPair().keys!;
 
         // Should not throw — valid base64
         var pubBytes = Convert.FromBase64String(kp.PublicKey);
@@ -50,7 +49,7 @@ public class Ed25519ProviderTests
     [Test]
     public async Task GenerateKeyPair_PublicKeyIs32Bytes()
     {
-        var kp = _provider.GenerateKeyPair().Value!;
+        var kp = _provider.GenerateKeyPair().keys!;
         var pubBytes = Convert.FromBase64String(kp.PublicKey);
 
         await Assert.That(pubBytes.Length).IsEqualTo(32);
@@ -59,7 +58,7 @@ public class Ed25519ProviderTests
     [Test]
     public async Task GenerateKeyPair_PrivateKeyIs32Bytes()
     {
-        var kp = _provider.GenerateKeyPair().Value!;
+        var kp = _provider.GenerateKeyPair().keys!;
         var privBytes = Convert.FromBase64String(kp.PrivateKey);
 
         await Assert.That(privBytes.Length).IsEqualTo(32);
@@ -68,8 +67,8 @@ public class Ed25519ProviderTests
     [Test]
     public async Task GenerateKeyPair_NonDeterministic()
     {
-        var kp1 = _provider.GenerateKeyPair().Value!;
-        var kp2 = _provider.GenerateKeyPair().Value!;
+        var kp1 = _provider.GenerateKeyPair().keys!;
+        var kp2 = _provider.GenerateKeyPair().keys!;
 
         await Assert.That(kp1.PublicKey).IsNotEqualTo(kp2.PublicKey);
         await Assert.That(kp1.PrivateKey).IsNotEqualTo(kp2.PrivateKey);
@@ -82,7 +81,7 @@ public class Ed25519ProviderTests
     [Test]
     public async Task Sign_ProducesNonEmpty64ByteSignature()
     {
-        var kp = _provider.GenerateKeyPair().Value!;
+        var kp = _provider.GenerateKeyPair().keys!;
         var data = Encoding.UTF8.GetBytes("hello");
 
         var result = _provider.Sign(data, kp.PrivateKey);
@@ -96,7 +95,7 @@ public class Ed25519ProviderTests
     [Test]
     public async Task Sign_DifferentData_DifferentSignatures()
     {
-        var kp = _provider.GenerateKeyPair().Value!;
+        var kp = _provider.GenerateKeyPair().keys!;
         var result1 = _provider.Sign(Encoding.UTF8.GetBytes("hello"), kp.PrivateKey);
         var result2 = _provider.Sign(Encoding.UTF8.GetBytes("world"), kp.PrivateKey);
         var sig1 = (byte[])result1.Value!;
@@ -122,7 +121,7 @@ public class Ed25519ProviderTests
     [Test]
     public async Task Verify_RoundTrip_ReturnsTrue()
     {
-        var kp = _provider.GenerateKeyPair().Value!;
+        var kp = _provider.GenerateKeyPair().keys!;
         var data = Encoding.UTF8.GetBytes("test data");
         var signature = (byte[])_provider.Sign(data, kp.PrivateKey).Value!;
 
@@ -135,7 +134,7 @@ public class Ed25519ProviderTests
     [Test]
     public async Task Verify_WrongData_ReturnsError()
     {
-        var kp = _provider.GenerateKeyPair().Value!;
+        var kp = _provider.GenerateKeyPair().keys!;
         var signature = (byte[])_provider.Sign(Encoding.UTF8.GetBytes("hello"), kp.PrivateKey).Value!;
 
         var result = _provider.Verify(Encoding.UTF8.GetBytes("different"), signature, kp.PublicKey);
@@ -147,8 +146,8 @@ public class Ed25519ProviderTests
     [Test]
     public async Task Verify_WrongPublicKey_ReturnsError()
     {
-        var kp1 = _provider.GenerateKeyPair().Value!;
-        var kp2 = _provider.GenerateKeyPair().Value!;
+        var kp1 = _provider.GenerateKeyPair().keys!;
+        var kp2 = _provider.GenerateKeyPair().keys!;
         var data = Encoding.UTF8.GetBytes("test data");
         var signature = (byte[])_provider.Sign(data, kp1.PrivateKey).Value!;
 
@@ -161,7 +160,7 @@ public class Ed25519ProviderTests
     [Test]
     public async Task Verify_TamperedSignature_ReturnsError()
     {
-        var kp = _provider.GenerateKeyPair().Value!;
+        var kp = _provider.GenerateKeyPair().keys!;
         var data = Encoding.UTF8.GetBytes("test data");
         var signature = (byte[])_provider.Sign(data, kp.PrivateKey).Value!;
 
