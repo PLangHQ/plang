@@ -184,3 +184,39 @@ component tests didn't catch. Ran `cd Tests && plang --test`:
 read of a now-wrapped value and unwrap via item.ToRaw/.Value at that leaf, OR update
 a test that pins old raw rendering (bool casing). Rebuild stale .pr first to clear
 false failures. THEN the scalar-swap constraint cascade (separate, documented above).
+
+## PLang runtime suite — UPDATED status (this session, all committed)
+
+**234 → 252 / 309 pass** (35 stale = the unbuilt ScalarsAsNative stage goals = Task 6;
+2 skip). Fixed the architect's flagged seams + more, each root-caused (not patched):
+- number.Convert/FromObject, duration.Convert: unwrap item→ToRaw at entry.
+- assert.Compare AND assert.AreEqual: unwrap item→ToRaw (bool/text compare by value,
+  not string — killed the "True" vs "true" cluster).
+- Text.cs serializer: scalar leaf → bare ToString (not JSON-quoted).
+- **save/write quoting was actually a NEWLINE seam**: born-native moved save<string>
+  off the raw-string WriteAllText path onto the channel Text serializer (appends \n).
+  Fixed FilePath.Save to unwrap text/binary and write bare (no \n). [Deeper: Text.cs's
+  \n is a channel concern, not serialization — unify the two write seams later.]
+- **actor conversion-arm**: actor.Convert(name→App.GetActor); self-wires via OwnerOf.
+  The pattern for any name-reached domain type now :item (goal/etc. if they surface).
+- Operator.Contains/IsEmpty: unwrap text wrapper.
+
+**REMAINING ~17 (non-stub), need runtime --debug tracing or are a separate subsystem:**
+- **condition-logic** (ConditionSubStepsTrue, ConditionNot, TestDiscover×2, TestTag,
+  TestConditionIfRecordsBranchIndex, Audit): `if %flag%` builds as `%flag% == true`;
+  STATIC ANALYSIS SAYS IT SHOULD PASS with the fixes (bool.@this==bool.@this via
+  bool.AreEqual). It fails anyway → a subtle interaction I could not pin without a
+  runtime trace. NEXT: run one with `plang '--debug={"goal":"Start"}'`, watch %flag%'s
+  type+value into condition.if and the Equal()/AreEqual dispatch. Could be `set %flag%
+  = true` not producing bool.@this, or the sub-step disable path. SubStepsFalse PASSES
+  (false path), so it's specific to the true/enabled path.
+- **TypedReturns build-inference** (5: object vs json/csv/txt): build-time `→ returns`
+  type tagging — a DIFFERENT subsystem from born-native runtime value-flow. Likely
+  pre-existing or needs the object→item fold (part of the constraint cascade, not done).
+  Architect: root-cause, don't patch the expectations.
+- **test-specific**: AssertComplete / ErrorOrdering show `Expected: ""world""` (embedded
+  quotes in the expected) — inspect the goal; NavigationOnTypeUnknown (over-eager true).
+- **Variable 'default' is not a list** (Mock): a list op on a non-list — born-native dict/list.
+
+Architect's ordering still holds: get these green + trustworthy BEFORE the scalar-swap
+cascade (the compiler-blind body-sweep needs this backstop). C# suite stays 100% green.
