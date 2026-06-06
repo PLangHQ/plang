@@ -229,6 +229,12 @@ public sealed partial class @this
         {
             EnsureParentDir();
             var raw = value?.Value;
+            // A born-native text/binary value rides as its wrapper. Persisted file
+            // content IS the value's bare form, so unwrap to the backing here —
+            // otherwise it falls to the channel serializer, whose text path appends a
+            // stdout-style newline that doesn't belong in file content.
+            if (raw is global::app.type.text.@this txtv) raw = txtv.Value;
+            else if (raw is global::app.type.binary.@this binv) raw = binv.Value;
             if (raw is byte[] bytes)
                 await System.IO.File.WriteAllBytesAsync(Absolute, bytes);
             else if (raw is string str)
