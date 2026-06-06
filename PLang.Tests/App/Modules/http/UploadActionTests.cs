@@ -73,7 +73,7 @@ public class UploadActionTests
             Url = "https://api.example.com/upload",
             Content = new global::app.data.@this("", "Hello upload"),
             As = ContentAs.Text,
-            Unsigned = true
+            Unsigned = (global::app.type.@bool.@this)true
         };
 
         var result = await action.Run();
@@ -96,7 +96,7 @@ public class UploadActionTests
             Url = "https://api.example.com/upload",
             Content = new global::app.data.@this("", "upload.txt"),
             As = ContentAs.File,
-            Unsigned = true
+            Unsigned = (global::app.type.@bool.@this)true
         };
 
         var result = await action.Run();
@@ -118,7 +118,7 @@ public class UploadActionTests
             Url = "https://api.example.com/upload",
             Content = new global::app.data.@this("", b64),
             As = ContentAs.Base64,
-            Unsigned = true
+            Unsigned = (global::app.type.@bool.@this)true
         };
 
         var result = await action.Run();
@@ -139,7 +139,7 @@ public class UploadActionTests
             Context = Ctx,
             Url = "https://api.example.com/upload",
             Content = new global::app.data.@this("", "auto.txt"),
-            Unsigned = true
+            Unsigned = (global::app.type.@bool.@this)true
         };
 
         var result = await action.Run();
@@ -158,7 +158,7 @@ public class UploadActionTests
             Context = Ctx,
             Url = "https://api.example.com/upload",
             Content = new global::app.data.@this("", "just a string, not a file path"),
-            Unsigned = true
+            Unsigned = (global::app.type.@bool.@this)true
         };
 
         var result = await action.Run();
@@ -178,7 +178,7 @@ public class UploadActionTests
             Content = new global::app.data.@this("", "data"),
             Method = HttpMethod.PUT,
             As = ContentAs.Text,
-            Unsigned = true
+            Unsigned = (global::app.type.@bool.@this)true
         };
 
         var result = await action.Run();
@@ -201,7 +201,7 @@ public class UploadActionTests
             Url = "https://api.example.com/upload",
             Content = new global::app.data.@this("", "data"),
             As = ContentAs.Text,
-            Unsigned = true
+            Unsigned = (global::app.type.@bool.@this)true
         };
 
         var result = await action.Run();
@@ -223,7 +223,7 @@ public class UploadActionTests
             Context = Ctx,
             Url = "https://api.example.com/upload",
             Content = new global::app.data.@this("", new Dictionary<string, object> { ["name"] = "Alice", ["age"] = "30" }),
-            Unsigned = true
+            Unsigned = (global::app.type.@bool.@this)true
         };
 
         var result = await action.Run();
@@ -248,7 +248,7 @@ public class UploadActionTests
             Url = "https://api.example.com/upload",
             Content = new global::app.data.@this("", new Dictionary<string, object> { ["field1"] = "value1" }),
             As = ContentAs.Form,
-            Unsigned = true
+            Unsigned = (global::app.type.@bool.@this)true
         };
 
         var result = await action.Run();
@@ -275,7 +275,7 @@ public class UploadActionTests
             Url = "https://api.example.com/upload",
             Content = new global::app.data.@this("", new Dictionary<string, object> { ["title"] = "My Doc", ["file"] = "@document.pdf" }),
             As = ContentAs.Form,
-            Unsigned = true
+            Unsigned = (global::app.type.@bool.@this)true
         };
 
         var result = await action.Run();
@@ -308,7 +308,7 @@ public class UploadActionTests
             Context = Ctx,
             Url = "https://api.example.com/upload",
             Content = new global::app.data.@this("", new List<string> { "a", "b", "c" }),
-            Unsigned = true
+            Unsigned = (global::app.type.@bool.@this)true
         };
 
         var result = await action.Run();

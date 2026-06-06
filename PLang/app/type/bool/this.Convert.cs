@@ -11,12 +11,17 @@ public sealed partial class @this
     public static global::app.data.@this Convert(object? value, string? kind,
         global::app.actor.context.@this context)
     {
+        // kind named ("bool") ⇒ a raw-bool target (List<bool>, `as bool`) wants the raw
+        // CLR bool; no kind ⇒ the target is `bool` the type, so return the born-native
+        // wrapper. B(...) packs the result in whichever form the caller asked for.
+        bool returnWrapper = string.IsNullOrEmpty(kind);
+        global::app.data.@this B(bool b) => global::app.data.@this.Ok(returnWrapper ? (object?)(@this)b : b);
         switch (value)
         {
             case null: return global::app.data.@this.Ok(value);
-            case bool: return global::app.data.@this.Ok(value);
-            case @this self: return global::app.data.@this.Ok(self.Value);
-            case string s when bool.TryParse(s, out var b): return global::app.data.@this.Ok(b);
+            case bool b2: return B(b2);
+            case @this self: return B(self.Value);
+            case string s when bool.TryParse(s, out var b): return B(b);
             case string s:
                 return global::app.data.@this.FromError(new global::app.error.Error(
                     $"Cannot parse '{s}' as bool — expected true or false.", "BoolParseFailed", 400));

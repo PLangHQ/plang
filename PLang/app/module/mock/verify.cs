@@ -10,15 +10,15 @@ public partial class Verify : IContext
     public partial data.@this<global::app.type.number.@this> ExpectedCount { get; init; }
     public partial data.@this<string>? Message { get; init; }
 
-    public Task<data.@this<bool>> Run()
+    public Task<data.@this<global::app.type.@bool.@this>> Run()
     {
         if (Mock.Value!.CallCount != ExpectedCount.Value)
         {
-            return Task.FromResult(global::app.data.@this<bool>.FromError(new AssertionError(
+            return Task.FromResult(global::app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(
                 ExpectedCount.Value, Mock.Value!.CallCount,
                 Message?.Value ?? $"Expected {Mock.Value!.Pattern} to be called {ExpectedCount.Value} time(s), but was called {Mock.Value!.CallCount} time(s)")));
         }
 
-        return Task.FromResult(global::app.data.@this<bool>.Ok(true));
+        return Task.FromResult(global::app.data.@this<global::app.type.@bool.@this>.Ok(true));
     }
 }

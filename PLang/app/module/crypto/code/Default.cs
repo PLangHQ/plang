@@ -71,7 +71,7 @@ public class Default : ICrypto
             global::app.type.@this.Create("hash", kind: algorithm));
     }
 
-    public data.@this<bool> Verify(Verify action)
+    public data.@this<global::app.type.@bool.@this> Verify(Verify action)
     {
         // The expected hash and its algorithm. The digest's own kind is
         // authoritative — a sha256 hash can only be verified by recomputing
@@ -92,7 +92,7 @@ public class Default : ICrypto
             // The hash type owns base64↔byte parsing (OBP) — Verify doesn't
             // reach for Convert.FromBase64String / SequenceEqual itself.
             try { expected = global::app.module.crypto.type.hash.@this.FromBase64(action.Hash.Value?.ToString() ?? "", algorithm); }
-            catch (FormatException) { return global::app.data.@this<bool>.FromError(new ActionError("Hash string is not valid base64", "InvalidHash", 400)); }
+            catch (FormatException) { return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Hash string is not valid base64", "InvalidHash", 400)); }
         }
 
         // Recompute through crypto.hash so the algorithm switch stays in one
@@ -103,8 +103,8 @@ public class Default : ICrypto
             Data = action.Data,
             Algorithm = new global::app.data.@this<string>("Algorithm", algorithm),
         });
-        if (!hashResult.Success) return global::app.data.@this<bool>.FromError(hashResult.Error!);
+        if (!hashResult.Success) return global::app.data.@this<global::app.type.@bool.@this>.FromError(hashResult.Error!);
 
-        return global::app.data.@this<bool>.Ok(((global::app.module.crypto.type.hash.@this)hashResult.Value!).DigestEquals(expected));
+        return global::app.data.@this<global::app.type.@bool.@this>.Ok(((global::app.module.crypto.type.hash.@this)hashResult.Value!).DigestEquals(expected));
     }
 }

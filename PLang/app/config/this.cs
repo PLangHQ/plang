@@ -86,9 +86,12 @@ public sealed class @this
         {
             if (!configProps.Contains(prop.Name)) continue;
 
-            // Action properties are Data<T> — unwrap to plain value for the scope chain
+            // Action properties are Data<T> — unwrap to plain value for the scope chain.
+            // Born-native scalars ride as their wrapper (bool→bool.@this); the config
+            // store and Resolve<T> want the raw CLR value, so collapse the leaf.
             var raw = prop.GetValue(source);
-            var value = raw is data.@this data ? data.Value : raw;
+            object? value = raw is data.@this data ? data.Value : raw;
+            if (value is global::app.type.item.@this leaf) value = leaf.ToRaw();
             if (value == null) continue;
 
             Set($"{prefix}.{prop.Name}", value, context, isDefault);

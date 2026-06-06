@@ -27,7 +27,7 @@ public class EventHandlerTests
             GoalPattern = goalPattern,
             StepPattern = stepPattern,
             ActionPattern = actionPattern,
-            IsRegex = isRegex,
+            IsRegex = (global::app.type.@bool.@this)isRegex,
             Priority = (global::app.type.number.@this)priority
         };
 

@@ -84,9 +84,9 @@ public class MyIdentityResolverTests
         var context = _app.System.Context;
 
         // Create two identities
-        var h1 = new Create { Context = context, Name = "first", SetAsDefault = true };
+        var h1 = new Create { Context = context, Name = "first", SetAsDefault = (global::app.type.@bool.@this)true };
         await h1.Run();
-        var h2 = new Create { Context = context, Name = "second", SetAsDefault = false };
+        var h2 = new Create { Context = context, Name = "second", SetAsDefault = (global::app.type.@bool.@this)false };
         await h2.Run();
 
         // Verify %MyIdentity% is "first" — DynamicData re-evaluates on each access

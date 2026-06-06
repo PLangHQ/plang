@@ -16,7 +16,7 @@ public partial class Archive : IContext
 
     /// <summary>When true, allows archiving even if it's the default identity.</summary>
     [Default(false)]
-    public partial data.@this<bool> Force { get; init; }
+    public partial data.@this<global::app.type.@bool.@this> Force { get; init; }
 
     [Code]
     public partial IIdentity Identity { get; }

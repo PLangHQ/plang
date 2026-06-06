@@ -210,7 +210,7 @@ public sealed class OpenAi : ILlm
                 Method = new data.@this<PlangHttpMethod>("", PlangHttpMethod.POST),
                 Body = new data.@this("", body),
                 Headers = new data.@this<Dictionary<string, object>>("", headers),
-                Unsigned = new data.@this<bool>("", true),
+                Unsigned = new data.@this<global::app.type.@bool.@this>("", true),
                 TimeoutInSec = new data.@this<global::app.type.number.@this>("", 120),
                 OnStream = action.OnStream,
                 StreamAs = action.OnStream?.Value != null ? new data.@this<StreamFormat>("", StreamFormat.SSE) : default

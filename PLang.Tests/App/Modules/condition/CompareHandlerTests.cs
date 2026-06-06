@@ -51,8 +51,8 @@ public class CompareHandlerTests : IDisposable
         var action = new Compare { Context = _app.User.Context, Left = Data.Ok(5), Operator = new Operator("=="), Right = Data.Ok(5) };
         var result = await action.Run();
 
-        await Assert.That(result.Value is bool).IsTrue();
-        await Assert.That((bool)result.Value!).IsTrue();
+        await Assert.That(result.Value is global::app.type.@bool.@this).IsTrue();
+        await Assert.That((bool)(global::app.type.@bool.@this)result.Value!).IsTrue();
     }
 
     [Test]

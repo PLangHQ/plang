@@ -264,7 +264,7 @@ public sealed class Sqlite : IStore
         }
     }
 
-    public Task<data.@this<bool>> Exists(string table, string key)
+    public Task<data.@this<global::app.type.@bool.@this>> Exists(string table, string key)
     {
         try
         {
@@ -276,11 +276,11 @@ public sealed class Sqlite : IStore
             cmd.Parameters.AddWithValue("@key", key);
 
             var count = Convert.ToInt64(cmd.ExecuteScalar());
-            return Task.FromResult(app.data.@this<bool>.Ok(count > 0));
+            return Task.FromResult(app.data.@this<global::app.type.@bool.@this>.Ok(count > 0));
         }
         catch (Exception ex)
         {
-            return Task.FromResult(app.data.@this<bool>.FromError(
+            return Task.FromResult(app.data.@this<global::app.type.@bool.@this>.FromError(
                 SettingsError.FromException(ex, table, key)));
         }
     }

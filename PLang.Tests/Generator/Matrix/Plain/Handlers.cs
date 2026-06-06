@@ -22,7 +22,7 @@ public partial class IntPlain : global::app.module.IContext
 [global::app.module.Action("boolplain")]
 public partial class BoolPlain : global::app.module.IContext
 {
-    public partial global::app.data.@this<bool> Flag { get; init; }
+    public partial global::app.data.@this<global::app.type.@bool.@this> Flag { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Flag);
 }
 

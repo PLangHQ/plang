@@ -37,7 +37,7 @@ public partial class upload : IContext
 
     /// <summary>When true, skips request signing. Default: false.</summary>
     [Default(false)]
-    public partial data.@this<bool> Unsigned { get; init; }
+    public partial data.@this<global::app.type.@bool.@this> Unsigned { get; init; }
 
     /// <summary>Custom signing options for the upload request.</summary>
     public partial data.@this<sign>? SignOptions { get; init; }

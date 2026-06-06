@@ -76,7 +76,7 @@ public partial class Handle : IContext, IModifier
     public partial global::app.data.@this<global::app.type.number.@this>? RetryOverMs { get; init; }
     public partial global::app.data.@this<ErrorOrder>? Order { get; init; }
     [Default(false)]
-    public partial global::app.data.@this<bool> IgnoreError { get; init; }
+    public partial global::app.data.@this<global::app.type.@bool.@this> IgnoreError { get; init; }
 
     public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
 

@@ -13,5 +13,5 @@ public partial class Compare : IContext
     [Code]
     public partial IEvaluator Evaluator { get; }
 
-    public Task<data.@this<bool>> Run() => Evaluator.Evaluate(this);
+    public Task<data.@this<global::app.type.@bool.@this>> Run() => Evaluator.Evaluate(this);
 }

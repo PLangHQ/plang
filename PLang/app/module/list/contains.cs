@@ -8,7 +8,7 @@ public partial class Contains : IContext
     public partial data.@this<app.variable.@this> ListName { get; init; }
     public partial data.@this Value { get; init; }
 
-    public Task<data.@this<bool>> Run()
+    public Task<data.@this<global::app.type.@bool.@this>> Run()
     {
         var data = Context.Variable.Get(ListName.Value);
         var target = Value.Value;
@@ -16,9 +16,9 @@ public partial class Contains : IContext
         foreach (var (_, item) in data.EnumerateItems())
         {
             if (global::app.data.Compare.AreEqualValues(item.Value, target))
-                return Task.FromResult(global::app.data.@this<bool>.Ok(true));
+                return Task.FromResult(global::app.data.@this<global::app.type.@bool.@this>.Ok(true));
         }
 
-        return Task.FromResult(global::app.data.@this<bool>.Ok(false));
+        return Task.FromResult(global::app.data.@this<global::app.type.@bool.@this>.Ok(false));
     }
 }

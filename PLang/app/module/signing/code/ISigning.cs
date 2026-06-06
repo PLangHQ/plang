@@ -14,11 +14,11 @@ public interface ISigning : IKey
     Task<data.@this<object>> SignAsync(sign action);
 
     /// <summary>Full verification pipeline: type check, timeout, nonce, contracts, hash, verify.</summary>
-    Task<data.@this<bool>> VerifyAsync(verify action);
+    Task<data.@this<global::app.type.@bool.@this>> VerifyAsync(verify action);
 
     /// <summary>Low-level: signs bytes with the given private key. Returns signature bytes.</summary>
     data.@this<byte[]> Sign(byte[] data, string privateKey);
 
     /// <summary>Low-level: verifies a signature against data and public key.</summary>
-    data.@this<bool> Verify(byte[] data, byte[] signature, string publicKey);
+    data.@this<global::app.type.@bool.@this> Verify(byte[] data, byte[] signature, string publicKey);
 }

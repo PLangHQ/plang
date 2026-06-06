@@ -463,12 +463,12 @@ public sealed class @this
 
         // First call to a given (goal, step) gets a clean name; subsequent retries get _N.
         var basePath = traceDir.Combine($"{safeGoal}_{stepKey}.txt");
-        if (basePath.ExistsAsync().GetAwaiter().GetResult() is { Success: true, Value: false }) return basePath;
+        if (basePath.ExistsAsync().GetAwaiter().GetResult() is { Success: true, Value.Value: false }) return basePath;
 
         for (int n = 2; n < 100; n++)
         {
             var candidate = traceDir.Combine($"{safeGoal}_{stepKey}_{n}.txt");
-            if (candidate.ExistsAsync().GetAwaiter().GetResult() is { Success: true, Value: false }) return candidate;
+            if (candidate.ExistsAsync().GetAwaiter().GetResult() is { Success: true, Value.Value: false }) return candidate;
         }
         // Fallback if 100 retries somehow aren't enough — counter guarantees uniqueness.
         return traceDir.Combine($"{safeGoal}_{stepKey}_call{_llmCallCounter}.txt");

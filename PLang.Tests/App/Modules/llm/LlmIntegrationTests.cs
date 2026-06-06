@@ -62,7 +62,7 @@ public class LlmIntegrationTests
             Messages = messages,
             Temperature = (global::app.type.number.@this)0.0,
             MaxTokens = (global::app.type.number.@this)50,
-            Cache = false
+            Cache = (global::app.type.@bool.@this)false
         });
         if (result == null) return; // skipped, no API key
 
@@ -89,7 +89,7 @@ public class LlmIntegrationTests
             Schema = "{\"sentiment\": \"string\", \"score\": \"number\"}",
             Temperature = (global::app.type.number.@this)0.0,
             MaxTokens = (global::app.type.number.@this)100,
-            Cache = false
+            Cache = (global::app.type.@bool.@this)false
         });
         if (result == null) return;
 
@@ -119,7 +119,7 @@ public class LlmIntegrationTests
             Format = "python",
             Temperature = (global::app.type.number.@this)0.0,
             MaxTokens = (global::app.type.number.@this)200,
-            Cache = false
+            Cache = (global::app.type.@bool.@this)false
         });
         if (result == null) return;
 
@@ -148,7 +148,7 @@ public class LlmIntegrationTests
             Messages = messages1,
             Temperature = (global::app.type.number.@this)0.0,
             MaxTokens = (global::app.type.number.@this)50,
-            Cache = false
+            Cache = (global::app.type.@bool.@this)false
         });
         if (result1 == null) return;
         await result1.IsSuccess();
@@ -163,10 +163,10 @@ public class LlmIntegrationTests
         {
             Context = Ctx,
             Messages = messages2,
-            ContinuePreviousConversation = true,
+            ContinuePreviousConversation = (global::app.type.@bool.@this)true,
             Temperature = (global::app.type.number.@this)0.0,
             MaxTokens = (global::app.type.number.@this)50,
-            Cache = false
+            Cache = (global::app.type.@bool.@this)false
         });
         if (result2 == null) return;
 
@@ -281,7 +281,7 @@ public class LlmIntegrationTests
             Tools = tools,
             Temperature = (global::app.type.number.@this)0.0,
             MaxTokens = (global::app.type.number.@this)200,
-            Cache = false
+            Cache = (global::app.type.@bool.@this)false
         };
 
         var result = await action.Run();

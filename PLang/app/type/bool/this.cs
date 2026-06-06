@@ -23,7 +23,22 @@ public sealed partial class @this : global::app.type.item.@this,
 
     public @this(bool value) { Value = value; }
 
+    public static readonly @this True = new(true);
+    public static readonly @this False = new(false);
+
+    // Both directions are lossless (bool carries no precision), so the wrapper owns
+    // its conversions and call sites stay clean: `.Ok(true)` constructs, `if (x.Value)`
+    // reads. The explicit ==/!= overloads below disambiguate `x == true` (which would
+    // otherwise be ambiguous between @this==@this via from-bool and bool==bool via to-bool).
     public static implicit operator bool(@this b) => b.Value;
+    public static implicit operator @this(bool b) => b ? True : False;
+
+    public static bool operator ==(@this? a, @this? b) => a is null ? b is null : a.Equals(b);
+    public static bool operator !=(@this? a, @this? b) => !(a == b);
+    public static bool operator ==(@this? a, bool b) => a is not null && a.Value == b;
+    public static bool operator !=(@this? a, bool b) => !(a == b);
+    public static bool operator ==(bool a, @this? b) => b == a;
+    public static bool operator !=(bool a, @this? b) => !(b == a);
 
     /// <summary>The truthiness primitive bottoms out here — the raw bool it wraps.</summary>
     public override bool IsTruthy() => Value;

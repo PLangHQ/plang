@@ -76,7 +76,7 @@ public partial class Set : IContext, IBuildValidatable
     /// </summary>
     public partial data.@this<global::app.type.@this>? Type { get; init; }
     [Default(false)]
-    public partial data.@this<bool> AsDefault { get; init; }
+    public partial data.@this<global::app.type.@bool.@this> AsDefault { get; init; }
 
     public Task<data.@this> Run()
     {

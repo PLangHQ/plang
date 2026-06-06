@@ -9,7 +9,7 @@ public partial class Split : IContext
     [Default(",")]
     public partial data.@this<string> Separator { get; init; }
     [Default(false)]
-    public partial data.@this<bool> RemoveEmpty { get; init; }
+    public partial data.@this<global::app.type.@bool.@this> RemoveEmpty { get; init; }
 
     public Task<data.@this<type.list>> Run()
     {

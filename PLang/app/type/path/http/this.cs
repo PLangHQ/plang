@@ -186,9 +186,9 @@ public sealed partial class @this : global::app.type.path.@this
         return data.@this<byte[]>.From(await Send(HttpMethod.Get, content: null, readBody: true, verb, asBytes: true));
     }
 
-    public override async Task<data.@this<bool>> ExistsAsync()
+    public override async Task<data.@this<global::app.type.@bool.@this>> ExistsAsync()
     {
-        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return data.@this<bool>.From(early);
+        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return data.@this<global::app.type.@bool.@this>.From(early);
         try
         {
             using var req = new HttpRequestMessage(HttpMethod.Head, _uri);
@@ -196,14 +196,14 @@ public sealed partial class @this : global::app.type.path.@this
             using var resp = await _client.SendAsync(req);
             // Exists answers a question — 2xx → true, 4xx → false, both Success.
             if ((int)resp.StatusCode >= 200 && (int)resp.StatusCode < 300)
-                return data.@this<bool>.Ok(true);
+                return data.@this<global::app.type.@bool.@this>.Ok(true);
             if ((int)resp.StatusCode >= 400 && (int)resp.StatusCode < 500)
-                return data.@this<bool>.Ok(false);
-            return data.@this<bool>.FromError(MapStatus(resp.StatusCode));
+                return data.@this<global::app.type.@bool.@this>.Ok(false);
+            return data.@this<global::app.type.@bool.@this>.FromError(MapStatus(resp.StatusCode));
         }
         catch (System.Exception ex) when (IsNetworkError(ex))
         {
-            return data.@this<bool>.FromError(NetworkError(ex));
+            return data.@this<global::app.type.@bool.@this>.FromError(NetworkError(ex));
         }
     }
 
@@ -228,7 +228,7 @@ public sealed partial class @this : global::app.type.path.@this
     public override async Task<bool> AsBooleanAsync()
     {
         var existsResult = await ExistsAsync();
-        return existsResult.Success && existsResult.Value is true;
+        return existsResult.Success && existsResult.Value;
     }
 
     public override async Task<data.@this<global::app.type.path.@this.StatInfo>> Stat()

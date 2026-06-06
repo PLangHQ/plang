@@ -66,7 +66,7 @@ public class ConfigureActionTests
     [Test]
     public async Task Configure_DefaultTrue_SetsEngineLevel()
     {
-        var action = new configure { Context = Ctx, TimeoutInSec = (global::app.type.number.@this)120, Default = true };
+        var action = new configure { Context = Ctx, TimeoutInSec = (global::app.type.number.@this)120, Default = (global::app.type.@bool.@this)true };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -80,7 +80,7 @@ public class ConfigureActionTests
     [Test]
     public async Task Configure_DefaultFalse_ScopedToContext()
     {
-        var action = new configure { Context = Ctx, TimeoutInSec = (global::app.type.number.@this)90, Default = false };
+        var action = new configure { Context = Ctx, TimeoutInSec = (global::app.type.number.@this)90, Default = (global::app.type.@bool.@this)false };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -104,10 +104,10 @@ public class ConfigureActionTests
         _app.Code.Register<IHttp>(provider);
         _app.Code.SetDefault<IHttp>("default");
 
-        var req = new request { Context = Ctx, Url = "https://example.com", Unsigned = true };
+        var req = new request { Context = Ctx, Url = "https://example.com", Unsigned = (global::app.type.@bool.@this)true };
         await req.Run(); // locks the client
 
-        var action = new configure { Context = Ctx, FollowRedirects = false };
+        var action = new configure { Context = Ctx, FollowRedirects = (global::app.type.@bool.@this)false };
         var result = await action.Run();
 
         await result.IsFailure();
@@ -151,7 +151,7 @@ public class ConfigureActionTests
             Context = Ctx,
             Url = "https://api.example.com/slow",
             TimeoutInSec = (global::app.type.number.@this)1, // per-step override: 1 second
-            Unsigned = true
+            Unsigned = (global::app.type.@bool.@this)true
         };
         var result = await requestAction.Run();
 

@@ -45,7 +45,7 @@ public class IdentityKeyProviderTests
         _app.Code.Register<IKey>(mockProvider);
         _app.Code.SetDefault<IKey>("mock");
 
-        var action = new Create { Context = Ctx, Name = "test-identity", SetAsDefault = true };
+        var action = new Create { Context = Ctx, Name = "test-identity", SetAsDefault = (global::app.type.@bool.@this)true };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -58,7 +58,7 @@ public class IdentityKeyProviderTests
     [Test]
     public async Task Create_DefaultEd25519_WhenNoOverride()
     {
-        var action = new Create { Context = Ctx, Name = "test-identity", SetAsDefault = true };
+        var action = new Create { Context = Ctx, Name = "test-identity", SetAsDefault = (global::app.type.@bool.@this)true };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -79,7 +79,7 @@ public class IdentityKeyProviderTests
         _app.Code.Register<IKey>(throwingProvider);
         _app.Code.SetDefault<IKey>("throwing");
 
-        var action = new Create { Context = Ctx, Name = "test-identity", SetAsDefault = true };
+        var action = new Create { Context = Ctx, Name = "test-identity", SetAsDefault = (global::app.type.@bool.@this)true };
         var result = await action.Run();
 
         await result.IsFailure();
@@ -93,7 +93,7 @@ public class IdentityKeyProviderTests
         _app.Code.Register<IKey>(mockProvider);
         _app.Code.SetDefault<IKey>("mock");
 
-        var action = new Create { Context = Ctx, Name = "stored-test", SetAsDefault = true };
+        var action = new Create { Context = Ctx, Name = "stored-test", SetAsDefault = (global::app.type.@bool.@this)true };
         var result = await action.Run();
         await result.IsSuccess();
 
@@ -113,7 +113,7 @@ public class IdentityKeyProviderTests
         var mock = new MockKeyProvider("named-pub", "named-priv") { ProviderName = "mock" };
         _app.Code.Register<IKey>(mock);
 
-        var action = new Create { Context = Ctx, Name = "named-test", SetAsDefault = true, Provider = "mock" };
+        var action = new Create { Context = Ctx, Name = "named-test", SetAsDefault = (global::app.type.@bool.@this)true, Provider = "mock" };
         var result = await action.Run();
 
         await result.IsSuccess();

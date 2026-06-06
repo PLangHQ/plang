@@ -215,7 +215,7 @@ public class PropertiesWireShapeTests
                 new global::app.module.signing.verify
                 {
                     Data = back,
-                    SkipFreshnessCheck = new global::app.data.@this<bool>("", true)
+                    SkipFreshnessCheck = new global::app.data.@this<global::app.type.@bool.@this>("", true)
                 }, d.Context);
             await verify.IsFailure();
         }

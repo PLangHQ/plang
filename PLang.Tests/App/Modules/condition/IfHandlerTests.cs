@@ -287,7 +287,7 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_Negate_FlipsTrue_ToFalse()
     {
-        var action = new If { Context = _app.User.Context, Left = Data.Ok(10), Operator = new Operator(">"), Right = Data.Ok(5), Negate = true };
+        var action = new If { Context = _app.User.Context, Left = Data.Ok(10), Operator = new Operator(">"), Right = Data.Ok(5), Negate = (global::app.type.@bool.@this)true };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -297,7 +297,7 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_Negate_FlipsFalse_ToTrue()
     {
-        var action = new If { Context = _app.User.Context, Left = Data.Ok(3), Operator = new Operator(">"), Right = Data.Ok(5), Negate = true };
+        var action = new If { Context = _app.User.Context, Left = Data.Ok(3), Operator = new Operator(">"), Right = Data.Ok(5), Negate = (global::app.type.@bool.@this)true };
         var result = await action.Run();
 
         await result.IsSuccess();

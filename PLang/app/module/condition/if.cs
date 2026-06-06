@@ -12,7 +12,7 @@ public partial class If : IContext, IStep
     public partial data.@this<Operator> Operator { get; init; }
     public partial data.@this? Right { get; init; }
     [Default(false)]
-    public partial data.@this<bool> Negate { get; init; }
+    public partial data.@this<global::app.type.@bool.@this> Negate { get; init; }
 
     [Code]
     public partial IEvaluator Evaluator { get; }
@@ -23,7 +23,7 @@ public partial class If : IContext, IStep
         // Evaluation errored → leave branchIndex unpublished (architect §5.7 / Batch 7 #6).
         if (!evalResult.Success) return evalResult;
 
-        var conditionResult = evalResult.Value is true;
+        var conditionResult = evalResult.GetValue<bool>();
         if (Negate.Value) conditionResult = !conditionResult;
 
         // Mark indented sub-steps: disabled when false, clean when true
@@ -111,7 +111,7 @@ public partial class If : IContext, IStep
 
             if (branchResult)
             {
-                data.@this lastResult = global::app.data.@this<bool>.Ok(true);
+                data.@this lastResult = global::app.data.@this<global::app.type.@bool.@this>.Ok(true);
                 foreach (var action in body)
                 {
                     lastResult = await action.RunAsync(Context);

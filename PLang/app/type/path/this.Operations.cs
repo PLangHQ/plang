@@ -59,7 +59,7 @@ public abstract partial class @this
     // other verbs have a single fixed shape — typed.
     public abstract Task<data.@this> ReadText();
     public abstract Task<data.@this<byte[]>> ReadBytes();
-    public abstract Task<data.@this<bool>> ExistsAsync();
+    public abstract Task<data.@this<global::app.type.@bool.@this>> ExistsAsync();
     public abstract Task<data.@this<StatInfo>> Stat();
 
     // Writes return the path itself wrapped — caller can chain or read .Exists.

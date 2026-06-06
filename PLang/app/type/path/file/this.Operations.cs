@@ -146,10 +146,10 @@ public sealed partial class @this
         }
     }
 
-    public override async Task<data.@this<bool>> ExistsAsync()
+    public override async Task<data.@this<global::app.type.@bool.@this>> ExistsAsync()
     {
-        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return data.@this<bool>.From(early);
-        return data.@this<bool>.Ok(System.IO.File.Exists(Absolute) || System.IO.Directory.Exists(Absolute));
+        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return data.@this<global::app.type.@bool.@this>.From(early);
+        return data.@this<global::app.type.@bool.@this>.Ok(System.IO.File.Exists(Absolute) || System.IO.Directory.Exists(Absolute));
     }
 
     /// <summary>
@@ -162,7 +162,7 @@ public sealed partial class @this
     public override async Task<bool> AsBooleanAsync()
     {
         var existsResult = await ExistsAsync();
-        return existsResult.Success && existsResult.Value is true;
+        return existsResult.Success && existsResult.Value;
     }
 
     /// <summary>

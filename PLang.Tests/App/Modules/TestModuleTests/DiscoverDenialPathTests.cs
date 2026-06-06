@@ -38,7 +38,7 @@ public class DiscoverDenialPathTests
             Path = global::app.data.@this<global::app.type.path.@this>.Ok(
                 global::app.type.path.@this.Resolve(outOfRoot, app.User.Context)),
             Pattern = new global::app.data.@this<string>("Pattern", "*.test.goal"),
-            Recursive = new global::app.data.@this<bool>("Recursive", false)
+            Recursive = new global::app.data.@this<global::app.type.@bool.@this>("Recursive", false)
         };
         var result = await action.Run();
         // Denial surfaces as Fail, not as an empty list of tests.
@@ -55,7 +55,7 @@ public class DiscoverDenialPathTests
             Path = global::app.data.@this<global::app.type.path.@this>.Ok(
                 global::app.type.path.@this.Resolve("//../../../etc", app.User.Context)),
             Pattern = new global::app.data.@this<string>("Pattern", "*.test.goal"),
-            Recursive = new global::app.data.@this<bool>("Recursive", false)
+            Recursive = new global::app.data.@this<global::app.type.@bool.@this>("Recursive", false)
         };
         var result = await action.Run();
         // Either denial → Fail, or the resolved path lands under root → empty.

@@ -80,7 +80,7 @@ public class Cut3_MultiActorForwardingTests
                 new global::app.module.signing.verify
                 {
                     Data = chain.RoundTripped,
-                    SkipFreshnessCheck = new global::app.data.@this<bool>("", true)
+                    SkipFreshnessCheck = new global::app.data.@this<global::app.type.@bool.@this>("", true)
                 }, chain.AppB.User.Context);
             await outerVerify.IsSuccess();
 
@@ -90,7 +90,7 @@ public class Cut3_MultiActorForwardingTests
                 new global::app.module.signing.verify
                 {
                     Data = innerAfter,
-                    SkipFreshnessCheck = new global::app.data.@this<bool>("", true)
+                    SkipFreshnessCheck = new global::app.data.@this<global::app.type.@bool.@this>("", true)
                 }, chain.AppA.User.Context);
             await innerVerify.IsSuccess();
         }
@@ -116,7 +116,7 @@ public class Cut3_MultiActorForwardingTests
                 new global::app.module.signing.verify
                 {
                     Data = restored,
-                    SkipFreshnessCheck = new global::app.data.@this<bool>("", true)
+                    SkipFreshnessCheck = new global::app.data.@this<global::app.type.@bool.@this>("", true)
                 }, chain.AppB.User.Context);
             await verify.IsFailure();
         }

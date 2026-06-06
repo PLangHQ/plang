@@ -37,7 +37,7 @@ public class IdentityHandlerTests
     [Test]
     public async Task Create_GeneratesValidEd25519KeyPair()
     {
-        var handler = new Create { Context = Ctx, Name = "test", SetAsDefault = true };
+        var handler = new Create { Context = Ctx, Name = "test", SetAsDefault = (global::app.type.@bool.@this)true };
         var result = await handler.Run();
         await result.IsSuccess();
 
@@ -56,7 +56,7 @@ public class IdentityHandlerTests
     [Test]
     public async Task Create_DefaultFalse_IsNotDefault()
     {
-        var handler = new Create { Context = Ctx, Name = "test", SetAsDefault = false };
+        var handler = new Create { Context = Ctx, Name = "test", SetAsDefault = (global::app.type.@bool.@this)false };
         var result = await handler.Run();
         await result.IsSuccess();
 
@@ -67,7 +67,7 @@ public class IdentityHandlerTests
     [Test]
     public async Task Create_SetAsDefaultTrue_BecomesDefault()
     {
-        var handler = new Create { Context = Ctx, Name = "test", SetAsDefault = true };
+        var handler = new Create { Context = Ctx, Name = "test", SetAsDefault = (global::app.type.@bool.@this)true };
         var result = await handler.Run();
         await result.IsSuccess();
 
@@ -78,10 +78,10 @@ public class IdentityHandlerTests
     [Test]
     public async Task Create_SetAsDefaultTrue_ClearsPreviousDefault()
     {
-        var h1 = new Create { Context = Ctx, Name = "first", SetAsDefault = true };
+        var h1 = new Create { Context = Ctx, Name = "first", SetAsDefault = (global::app.type.@bool.@this)true };
         await h1.Run();
 
-        var h2 = new Create { Context = Ctx, Name = "second", SetAsDefault = true };
+        var h2 = new Create { Context = Ctx, Name = "second", SetAsDefault = (global::app.type.@bool.@this)true };
         await h2.Run();
 
         // First should no longer be default
@@ -97,7 +97,7 @@ public class IdentityHandlerTests
     [Test]
     public async Task Create_StoresInSystemDataSource()
     {
-        var handler = new Create { Context = Ctx, Name = "stored", SetAsDefault = false };
+        var handler = new Create { Context = Ctx, Name = "stored", SetAsDefault = (global::app.type.@bool.@this)false };
         await handler.Run();
 
         var loadResult = await new Get { Context = Ctx, Name = "stored" }.Run();
@@ -109,10 +109,10 @@ public class IdentityHandlerTests
     [Test]
     public async Task Create_DuplicateName_ReturnsError()
     {
-        var h1 = new Create { Context = Ctx, Name = "dup", SetAsDefault = false };
+        var h1 = new Create { Context = Ctx, Name = "dup", SetAsDefault = (global::app.type.@bool.@this)false };
         await h1.Run();
 
-        var h2 = new Create { Context = Ctx, Name = "dup", SetAsDefault = false };
+        var h2 = new Create { Context = Ctx, Name = "dup", SetAsDefault = (global::app.type.@bool.@this)false };
         var result = await h2.Run();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("DuplicateName");
@@ -122,14 +122,14 @@ public class IdentityHandlerTests
     public async Task Create_DuplicateArchivedName_ReturnsError()
     {
         // Create and archive
-        var h1 = new Create { Context = Ctx, Name = "archived", SetAsDefault = false };
+        var h1 = new Create { Context = Ctx, Name = "archived", SetAsDefault = (global::app.type.@bool.@this)false };
         await h1.Run();
 
         var archiveH = new Archive { Context = Ctx, Name = "archived" };
         await archiveH.Run();
 
         // Try to create with same name — should fail
-        var h2 = new Create { Context = Ctx, Name = "archived", SetAsDefault = false };
+        var h2 = new Create { Context = Ctx, Name = "archived", SetAsDefault = (global::app.type.@bool.@this)false };
         var result = await h2.Run();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("DuplicateName");
@@ -138,12 +138,12 @@ public class IdentityHandlerTests
     [Test]
     public async Task Create_EmptyOrWhitespaceName_ReturnsError()
     {
-        var h1 = new Create { Context = Ctx, Name = "", SetAsDefault = false };
+        var h1 = new Create { Context = Ctx, Name = "", SetAsDefault = (global::app.type.@bool.@this)false };
         var result1 = await h1.Run();
         await result1.IsFailure();
         await Assert.That(result1.Error!.Key).IsEqualTo("ValidationError");
 
-        var h2 = new Create { Context = Ctx, Name = "   ", SetAsDefault = false };
+        var h2 = new Create { Context = Ctx, Name = "   ", SetAsDefault = (global::app.type.@bool.@this)false };
         var result2 = await h2.Run();
         await result2.IsFailure();
         await Assert.That(result2.Error!.Key).IsEqualTo("ValidationError");
@@ -164,10 +164,10 @@ public class IdentityHandlerTests
     public async Task Get_NullName_NoDefaultExists_PromotesExisting()
     {
         // Create two non-default identities
-        var h1 = new Create { Context = Ctx, Name = "a", SetAsDefault = false };
+        var h1 = new Create { Context = Ctx, Name = "a", SetAsDefault = (global::app.type.@bool.@this)false };
         var r1 = await h1.Run();
         var originalKey = (r1.Value as Identity)!.PublicKey;
-        var h2 = new Create { Context = Ctx, Name = "b", SetAsDefault = false };
+        var h2 = new Create { Context = Ctx, Name = "b", SetAsDefault = (global::app.type.@bool.@this)false };
         await h2.Run();
 
         // Get(null) should promote the first non-archived identity as default
@@ -184,7 +184,7 @@ public class IdentityHandlerTests
     [Test]
     public async Task Get_ByName_ReturnsMatchingIdentity()
     {
-        var create = new Create { Context = Ctx, Name = "alice", SetAsDefault = false };
+        var create = new Create { Context = Ctx, Name = "alice", SetAsDefault = (global::app.type.@bool.@this)false };
         await create.Run();
 
         var handler = new Get { Context = Ctx, Name = "alice" };
@@ -198,7 +198,7 @@ public class IdentityHandlerTests
     [Test]
     public async Task Get_NullName_ReturnsDefaultIdentity()
     {
-        var create = new Create { Context = Ctx, Name = "mydefault", SetAsDefault = true };
+        var create = new Create { Context = Ctx, Name = "mydefault", SetAsDefault = (global::app.type.@bool.@this)true };
         await create.Run();
 
         var handler = new Get { Context = Ctx, Name = null };
@@ -226,7 +226,7 @@ public class IdentityHandlerTests
     [Test]
     public async Task Get_ReturnsIdentityData_WithAllProperties()
     {
-        var create = new Create { Context = Ctx, Name = "full", SetAsDefault = true };
+        var create = new Create { Context = Ctx, Name = "full", SetAsDefault = (global::app.type.@bool.@this)true };
         await create.Run();
 
         var handler = new Get { Context = Ctx, Name = "full" };
@@ -246,11 +246,11 @@ public class IdentityHandlerTests
     [Test]
     public async Task GetAll_ReturnsOnlyNonArchived()
     {
-        var h1 = new Create { Context = Ctx, Name = "active1", SetAsDefault = false };
+        var h1 = new Create { Context = Ctx, Name = "active1", SetAsDefault = (global::app.type.@bool.@this)false };
         await h1.Run();
-        var h2 = new Create { Context = Ctx, Name = "active2", SetAsDefault = false };
+        var h2 = new Create { Context = Ctx, Name = "active2", SetAsDefault = (global::app.type.@bool.@this)false };
         await h2.Run();
-        var h3 = new Create { Context = Ctx, Name = "archived", SetAsDefault = false };
+        var h3 = new Create { Context = Ctx, Name = "archived", SetAsDefault = (global::app.type.@bool.@this)false };
         await h3.Run();
 
         var archiveH = new Archive { Context = Ctx, Name = "archived" };
@@ -268,7 +268,7 @@ public class IdentityHandlerTests
     [Test]
     public async Task GetAll_AllArchived_ReturnsEmptyList()
     {
-        var h1 = new Create { Context = Ctx, Name = "only", SetAsDefault = false };
+        var h1 = new Create { Context = Ctx, Name = "only", SetAsDefault = (global::app.type.@bool.@this)false };
         await h1.Run();
 
         var archiveH = new Archive { Context = Ctx, Name = "only" };
@@ -287,7 +287,7 @@ public class IdentityHandlerTests
     [Test]
     public async Task Archive_NonDefaultIdentity_SetsIsArchivedTrue()
     {
-        var create = new Create { Context = Ctx, Name = "toarchive", SetAsDefault = false };
+        var create = new Create { Context = Ctx, Name = "toarchive", SetAsDefault = (global::app.type.@bool.@this)false };
         await create.Run();
 
         var handler = new Archive { Context = Ctx, Name = "toarchive" };
@@ -307,7 +307,7 @@ public class IdentityHandlerTests
     [Test]
     public async Task Archive_DefaultIdentity_ReturnsError()
     {
-        var create = new Create { Context = Ctx, Name = "def", SetAsDefault = true };
+        var create = new Create { Context = Ctx, Name = "def", SetAsDefault = (global::app.type.@bool.@this)true };
         await create.Run();
 
         var handler = new Archive { Context = Ctx, Name = "def" };
@@ -328,7 +328,7 @@ public class IdentityHandlerTests
     [Test]
     public async Task Archive_AlreadyArchived_IsIdempotent()
     {
-        var create = new Create { Context = Ctx, Name = "twice", SetAsDefault = false };
+        var create = new Create { Context = Ctx, Name = "twice", SetAsDefault = (global::app.type.@bool.@this)false };
         await create.Run();
 
         var h1 = new Archive { Context = Ctx, Name = "twice" };
@@ -344,9 +344,9 @@ public class IdentityHandlerTests
     [Test]
     public async Task SetDefault_SwitchesDefault_ClearsOldDefault()
     {
-        var h1 = new Create { Context = Ctx, Name = "old", SetAsDefault = true };
+        var h1 = new Create { Context = Ctx, Name = "old", SetAsDefault = (global::app.type.@bool.@this)true };
         await h1.Run();
-        var h2 = new Create { Context = Ctx, Name = "new", SetAsDefault = false };
+        var h2 = new Create { Context = Ctx, Name = "new", SetAsDefault = (global::app.type.@bool.@this)false };
         await h2.Run();
 
         var handler = new SetDefault { Context = Ctx, Name = "new" };
@@ -372,7 +372,7 @@ public class IdentityHandlerTests
         await Assert.That(r1.Error!.Key).IsEqualTo("NotFound");
 
         // Archived
-        var create = new Create { Context = Ctx, Name = "arch", SetAsDefault = false };
+        var create = new Create { Context = Ctx, Name = "arch", SetAsDefault = (global::app.type.@bool.@this)false };
         await create.Run();
         var archive = new Archive { Context = Ctx, Name = "arch" };
         await archive.Run();
@@ -386,7 +386,7 @@ public class IdentityHandlerTests
     [Test]
     public async Task SetDefault_AlreadyDefault_IsIdempotent()
     {
-        var create = new Create { Context = Ctx, Name = "already", SetAsDefault = true };
+        var create = new Create { Context = Ctx, Name = "already", SetAsDefault = (global::app.type.@bool.@this)true };
         await create.Run();
 
         var handler = new SetDefault { Context = Ctx, Name = "already" };
@@ -402,7 +402,7 @@ public class IdentityHandlerTests
     [Test]
     public async Task Unarchive_RestoresArchivedIdentity()
     {
-        var create = new Create { Context = Ctx, Name = "restore", SetAsDefault = false };
+        var create = new Create { Context = Ctx, Name = "restore", SetAsDefault = (global::app.type.@bool.@this)false };
         await create.Run();
 
         var archiveH = new Archive { Context = Ctx, Name = "restore" };
@@ -430,7 +430,7 @@ public class IdentityHandlerTests
     [Test]
     public async Task Unarchive_NotArchived_IsIdempotent()
     {
-        var create = new Create { Context = Ctx, Name = "active", SetAsDefault = false };
+        var create = new Create { Context = Ctx, Name = "active", SetAsDefault = (global::app.type.@bool.@this)false };
         await create.Run();
 
         var handler = new Unarchive { Context = Ctx, Name = "active" };
@@ -446,7 +446,7 @@ public class IdentityHandlerTests
     [Test]
     public async Task Rename_ChangesName_KeepsKeys()
     {
-        var create = new Create { Context = Ctx, Name = "oldname", SetAsDefault = false };
+        var create = new Create { Context = Ctx, Name = "oldname", SetAsDefault = (global::app.type.@bool.@this)false };
         var createResult = await create.Run();
         var originalKey = (createResult.Value as Identity)!.PublicKey;
 
@@ -466,9 +466,9 @@ public class IdentityHandlerTests
     [Test]
     public async Task Rename_DuplicateNewName_ReturnsError()
     {
-        var h1 = new Create { Context = Ctx, Name = "a", SetAsDefault = false };
+        var h1 = new Create { Context = Ctx, Name = "a", SetAsDefault = (global::app.type.@bool.@this)false };
         await h1.Run();
-        var h2 = new Create { Context = Ctx, Name = "b", SetAsDefault = false };
+        var h2 = new Create { Context = Ctx, Name = "b", SetAsDefault = (global::app.type.@bool.@this)false };
         await h2.Run();
 
         var handler = new Rename { Context = Ctx, Name = "a", NewName = "b" };
@@ -489,7 +489,7 @@ public class IdentityHandlerTests
     [Test]
     public async Task Rename_DefaultIdentity_UpdatesMyIdentity()
     {
-        var create = new Create { Context = Ctx, Name = "def", SetAsDefault = true };
+        var create = new Create { Context = Ctx, Name = "def", SetAsDefault = (global::app.type.@bool.@this)true };
         await create.Run();
 
         var handler = new Rename { Context = Ctx, Name = "def", NewName = "renamed" };
@@ -503,7 +503,7 @@ public class IdentityHandlerTests
     [Test]
     public async Task Rename_EmptyNewName_ReturnsError()
     {
-        var create = new Create { Context = Ctx, Name = "valid", SetAsDefault = false };
+        var create = new Create { Context = Ctx, Name = "valid", SetAsDefault = (global::app.type.@bool.@this)false };
         await create.Run();
 
         var handler = new Rename { Context = Ctx, Name = "valid", NewName = "" };
@@ -526,7 +526,7 @@ public class IdentityHandlerTests
     [Test]
     public async Task Export_ReturnsFullIdentity()
     {
-        var create = new Create { Context = Ctx, Name = "exportme", SetAsDefault = true };
+        var create = new Create { Context = Ctx, Name = "exportme", SetAsDefault = (global::app.type.@bool.@this)true };
         var createResult = await create.Run();
         var expectedKey = (createResult.Value as Identity)!.PrivateKey;
 
@@ -541,7 +541,7 @@ public class IdentityHandlerTests
     [Test]
     public async Task Export_NullName_ReturnsDefaultIdentity()
     {
-        var create = new Create { Context = Ctx, Name = "mydefault", SetAsDefault = true };
+        var create = new Create { Context = Ctx, Name = "mydefault", SetAsDefault = (global::app.type.@bool.@this)true };
         var createResult = await create.Run();
         var expectedKey = (createResult.Value as Identity)!.PrivateKey;
 
@@ -557,9 +557,9 @@ public class IdentityHandlerTests
     [Test]
     public async Task Get_ByName_DoesNotOverwriteMyIdentity()
     {
-        var h1 = new Create { Context = Ctx, Name = "default", SetAsDefault = true };
+        var h1 = new Create { Context = Ctx, Name = "default", SetAsDefault = (global::app.type.@bool.@this)true };
         await h1.Run();
-        var h2 = new Create { Context = Ctx, Name = "other", SetAsDefault = false };
+        var h2 = new Create { Context = Ctx, Name = "other", SetAsDefault = (global::app.type.@bool.@this)false };
         await h2.Run();
 
         // Fetch non-default by name
@@ -577,7 +577,7 @@ public class IdentityHandlerTests
     public async Task GetOrCreateDefault_ExistingNonDefault_PromotesInsteadOfOverwriting()
     {
         // Create an identity named "default" but NOT as the default
-        var create = new Create { Context = Ctx, Name = "default", SetAsDefault = false };
+        var create = new Create { Context = Ctx, Name = "default", SetAsDefault = (global::app.type.@bool.@this)false };
         var createResult = await create.Run();
         var originalKey = (createResult.Value as Identity)!.PublicKey;
 

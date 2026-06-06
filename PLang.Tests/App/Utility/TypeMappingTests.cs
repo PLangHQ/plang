@@ -682,7 +682,7 @@ public class TypeMappingTests
     [Test]
     public async Task GetTypeName_DataOfBool_ReturnsBool()
     {
-        var name = TypeMapping.GetTypeName(typeof(global::app.data.@this<bool>));
+        var name = TypeMapping.GetTypeName(typeof(global::app.data.@this<global::app.type.@bool.@this>));
 
         await Assert.That(name).IsEqualTo("bool");
     }

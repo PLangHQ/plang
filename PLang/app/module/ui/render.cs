@@ -19,7 +19,7 @@ public partial class Render : IContext
     /// false = treat Template as inline content.
     /// null (default) = auto-detect via file existence check.
     /// </summary>
-    public partial data.@this<bool>? IsFile { get; init; }
+    public partial data.@this<global::app.type.@bool.@this>? IsFile { get; init; }
 
     [Code]
     public partial ITemplate Provider { get; }

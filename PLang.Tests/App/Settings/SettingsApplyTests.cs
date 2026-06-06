@@ -58,7 +58,7 @@ public class SettingsApplyTests
     public async Task Apply_IgnoresPropertiesNotInConfig()
     {
         // configure has a "Default" bool property that Config does not have
-        var source = new configure { Context = _ctx, TimeoutInSec = (global::app.type.number.@this)10, Default = true };
+        var source = new configure { Context = _ctx, TimeoutInSec = (global::app.type.number.@this)10, Default = (global::app.type.@bool.@this)true };
 
         _app.Config.Apply<Config>(source, _ctx);
 
@@ -102,7 +102,7 @@ public class SettingsApplyTests
     [Test]
     public async Task Apply_NullableValueType_WrittenWhenHasValue()
     {
-        var source = new configure { Context = _ctx, FollowRedirects = false };
+        var source = new configure { Context = _ctx, FollowRedirects = (global::app.type.@bool.@this)false };
 
         _app.Config.Apply<Config>(source, _ctx);
 

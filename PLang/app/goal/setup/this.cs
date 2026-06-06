@@ -113,7 +113,7 @@ public sealed class @this
         if (string.IsNullOrEmpty(step.Hash)) return false;
 
         var result = await app.SettingsStore.Exists(Table, step.Hash);
-        return result.Success && result.Value is true;
+        return result.Success && result.Value;
     }
 
     /// <summary>

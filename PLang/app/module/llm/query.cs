@@ -73,7 +73,7 @@ public partial class query : IContext, IBuildValidatable
 
     /// <summary>When true, prepends stored conversation history from previous queries.</summary>
     [Default(false)]
-    public partial data.@this<bool> ContinuePreviousConversation { get; init; }
+    public partial data.@this<global::app.type.@bool.@this> ContinuePreviousConversation { get; init; }
 
     /// <summary>Sampling temperature. 0.0 = deterministic.</summary>
     [Default(0.0)]
@@ -96,7 +96,7 @@ public partial class query : IContext, IBuildValidatable
 
     /// <summary>Whether to cache the response. Skipped when Tools is non-null.</summary>
     [Default(true)]
-    public partial data.@this<bool> Cache { get; init; }
+    public partial data.@this<global::app.type.@bool.@this> Cache { get; init; }
 
     [Code]
     public partial ILlm Llm { get; }

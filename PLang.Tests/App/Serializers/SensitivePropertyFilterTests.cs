@@ -199,7 +199,7 @@ public class SensitivePropertyFilterTests
     public async Task Sensitive_IdentityData_PrivateKeyExcluded()
     {
         // End-to-end: create real identity, serialize, verify PrivateKey absent
-        var create = new Create { Context = _app.System.Context, Name = "e2e", SetAsDefault = true };
+        var create = new Create { Context = _app.System.Context, Name = "e2e", SetAsDefault = (global::app.type.@bool.@this)true };
         var result = await create.Run();
         var identity = result.Value as Identity;
 

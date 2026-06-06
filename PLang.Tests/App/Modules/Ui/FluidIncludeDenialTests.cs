@@ -61,7 +61,7 @@ public class FluidIncludeDenialTests
             Context = app.User.Context,
             Template = new global::app.data.@this<string>("Template",
                 "{% include '" + outOfRoot + "/secret.liquid' %}"),
-            IsFile = new global::app.data.@this<bool>("IsFile", false)
+            IsFile = new global::app.data.@this<global::app.type.@bool.@this>("IsFile", false)
         };
         var result = await fluid.Render(action);
         // The output MUST NOT contain the secret file's content. Either the
@@ -92,7 +92,7 @@ public class FluidIncludeDenialTests
         {
             Context = app.User.Context,
             Template = new global::app.data.@this<string>("Template", "{% include 'partials/footer.liquid' %}"),
-            IsFile = new global::app.data.@this<bool>("IsFile", false)
+            IsFile = new global::app.data.@this<global::app.type.@bool.@this>("IsFile", false)
         };
         var result = await fluid.Render(action);
         await result.IsSuccess();

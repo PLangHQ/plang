@@ -12,13 +12,13 @@ public partial class Start : IContext, IStatic
     [Default("goal")]
     public partial data.@this<string> Scope { get; init; }
 
-    public Task<data.@this<bool>> Run()
+    public Task<data.@this<global::app.type.@bool.@this>> Run()
     {
         var key = Name?.Value ?? "default";
         var entry = new TimerEntry(DateTimeOffset.UtcNow, Scope.Value!);
         Static[key] = entry;
         Static["__last__"] = key;
-        return Task.FromResult(global::app.data.@this<bool>.Ok(true));
+        return Task.FromResult(global::app.data.@this<global::app.type.@bool.@this>.Ok(true));
     }
 }
 

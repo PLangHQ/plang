@@ -19,7 +19,7 @@ public partial class Read : IContext
     public partial data.@this<path> Path { get; init; }
 
     [Default(false)]
-    public partial data.@this<bool> ResolveVariables { get; init; }
+    public partial data.@this<global::app.type.@bool.@this> ResolveVariables { get; init; }
 
     // Opens a file channel and reads through the one boundary — `channel.read`
     // stamps {type, kind} from the file's Mime and returns LAZY Data. Nothing is

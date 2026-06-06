@@ -26,7 +26,7 @@ public partial class On : IContext
     public partial data.@this<string>? ActionPattern { get; init; }
     /// <summary>When true, patterns are treated as regular expressions instead of glob patterns.</summary>
     [Default(false)]
-    public partial data.@this<bool> IsRegex { get; init; }
+    public partial data.@this<global::app.type.@bool.@this> IsRegex { get; init; }
     /// <summary>Execution priority — higher values run first. Default is 0.</summary>
     [Default(0)]
     public partial data.@this<global::app.type.number.@this> Priority { get; init; }

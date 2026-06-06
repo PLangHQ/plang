@@ -49,6 +49,6 @@ public class SignedDataSurvivesVariableSetListTests
         await Assert.That(element!.Signature).IsNotNull().Because("signature survived the variable.set bind");
 
         var ok = await Verify(element!);
-        await Assert.That(ok.Value).IsEqualTo(true);
+        await Assert.That(ok.GetValue<bool>()).IsTrue();
     }
 }

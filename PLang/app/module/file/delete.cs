@@ -9,10 +9,10 @@ public partial class Delete : IContext
     public partial data.@this<path> Path { get; init; }
 
     [Default(false)]
-    public partial data.@this<bool> IgnoreIfNotFound { get; init; }
+    public partial data.@this<global::app.type.@bool.@this> IgnoreIfNotFound { get; init; }
 
     [Default(false)]
-    public partial data.@this<bool> Recursive { get; init; }
+    public partial data.@this<global::app.type.@bool.@this> Recursive { get; init; }
 
     public async Task<data.@this<path>> Run()
     {

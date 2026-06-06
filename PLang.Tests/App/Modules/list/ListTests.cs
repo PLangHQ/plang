@@ -244,7 +244,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "c", "a", "b" });
 
-        var action = new Sort { Context = context, ListName = new app.variable.@this("myList"), Descending = false };
+        var action = new Sort { Context = context, ListName = new app.variable.@this("myList"), Descending = (global::app.type.@bool.@this)false };
         var result = await action.Run();
 
         await result.IsSuccess();

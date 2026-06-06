@@ -60,7 +60,7 @@ public class QueryConversationTests
                 new LlmMessage { Role = "system", Content = "You are helpful" },
                 new LlmMessage { Role = "user", Content = "What is 2+2?" }
             },
-            Cache = false
+            Cache = (global::app.type.@bool.@this)false
         };
         await action1.Run();
 
@@ -72,8 +72,8 @@ public class QueryConversationTests
             {
                 new LlmMessage { Role = "user", Content = "And 3+3?" }
             },
-            ContinuePreviousConversation = true,
-            Cache = false
+            ContinuePreviousConversation = (global::app.type.@bool.@this)true,
+            Cache = (global::app.type.@bool.@this)false
         };
         await action2.Run();
 
@@ -94,10 +94,10 @@ public class QueryConversationTests
 
         // First query — stores conversation
         var action1 = LlmTestHelper.MakeQuery(Ctx, userText: "first question");
-        action1 = new query { Context = Ctx, Messages = action1.Messages, Cache = false };
+        action1 = new query { Context = Ctx, Messages = action1.Messages, Cache = (global::app.type.@bool.@this)false };
         await action1.Run();
 
-        // Second query with ContinuePreviousConversation=false — should clear
+        // Second query with ContinuePreviousConversation = (global::app.type.@bool.@this)false — should clear
         var action2 = new query
         {
             Context = Ctx,
@@ -105,8 +105,8 @@ public class QueryConversationTests
             {
                 new LlmMessage { Role = "user", Content = "fresh start" }
             },
-            ContinuePreviousConversation = false,
-            Cache = false
+            ContinuePreviousConversation = (global::app.type.@bool.@this)false,
+            Cache = (global::app.type.@bool.@this)false
         };
         await action2.Run();
 
@@ -131,7 +131,7 @@ public class QueryConversationTests
                 new LlmMessage { Role = "user", Content = "test" }
             },
             Schema = "{ok: bool}",
-            Cache = false
+            Cache = (global::app.type.@bool.@this)false
         };
         await action1.Run();
 
@@ -144,8 +144,8 @@ public class QueryConversationTests
                 new LlmMessage { Role = "user", Content = "again" }
             },
             Schema = "{ok: bool}",
-            ContinuePreviousConversation = true,
-            Cache = false
+            ContinuePreviousConversation = (global::app.type.@bool.@this)true,
+            Cache = (global::app.type.@bool.@this)false
         };
         await action2.Run();
 
@@ -172,7 +172,7 @@ public class QueryConversationTests
                 new LlmMessage { Role = "user", Content = "test" }
             },
             Schema = "{result: string}",
-            Cache = false
+            Cache = (global::app.type.@bool.@this)false
         };
         await action1.Run();
 
@@ -184,8 +184,8 @@ public class QueryConversationTests
             {
                 new LlmMessage { Role = "user", Content = "again" }
             },
-            ContinuePreviousConversation = true,
-            Cache = false
+            ContinuePreviousConversation = (global::app.type.@bool.@this)true,
+            Cache = (global::app.type.@bool.@this)false
         };
         await action2.Run();
 
@@ -208,7 +208,7 @@ public class QueryConversationTests
                 new LlmMessage { Role = "user", Content = "test" }
             },
             Schema = "{oldSchema: string}",
-            Cache = false
+            Cache = (global::app.type.@bool.@this)false
         };
         await action1.Run();
 
@@ -221,8 +221,8 @@ public class QueryConversationTests
                 new LlmMessage { Role = "user", Content = "test2" }
             },
             Schema = "{newSchema: int}",
-            ContinuePreviousConversation = true,
-            Cache = false
+            ContinuePreviousConversation = (global::app.type.@bool.@this)true,
+            Cache = (global::app.type.@bool.@this)false
         };
         await action2.Run();
 

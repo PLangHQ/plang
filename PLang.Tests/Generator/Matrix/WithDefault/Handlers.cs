@@ -30,6 +30,6 @@ public partial class EnumWithDefault : global::app.module.IContext
 public partial class BoolWithDefault : global::app.module.IContext
 {
     [global::app.module.Default(false)]
-    public partial global::app.data.@this<bool> Flag { get; init; }
+    public partial global::app.data.@this<global::app.type.@bool.@this> Flag { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Flag);
 }

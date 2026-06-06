@@ -42,7 +42,7 @@ public partial class request : IContext
 
     /// <summary>When true, skips request signing. Default: false (requests are signed).</summary>
     [Default(false)]
-    public partial data.@this<bool> Unsigned { get; init; }
+    public partial data.@this<global::app.type.@bool.@this> Unsigned { get; init; }
 
     /// <summary>Custom signing options. Overrides default signing behavior (contracts, headers, expiry).</summary>
     public partial data.@this<sign>? SignOptions { get; init; }

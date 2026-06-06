@@ -51,7 +51,7 @@ public class Cut3_SignThenWireThenVerify
         var back = RoundTrip(signed);                 // through the wire
         var ok = await Verify(back);                   // recanonicalise + check
         await ok.IsSuccess();
-        await Assert.That(ok.Value).IsEqualTo(true);
+        await Assert.That(ok.GetValue<bool>()).IsTrue();
     }
 
     // The case the lean envelope-recognition covers: a signed Data nested in a
@@ -69,7 +69,7 @@ public class Cut3_SignThenWireThenVerify
         await Assert.That(innerBack!.Signature).IsNotNull().Because("nested signature survived the wire");
         var ok = await Verify(innerBack!);
         await ok.IsSuccess();
-        await Assert.That(ok.Value).IsEqualTo(true);
+        await Assert.That(ok.GetValue<bool>()).IsTrue();
     }
 
     // Negative — a tampered value fails verification.

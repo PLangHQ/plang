@@ -227,6 +227,6 @@ public class HashActionTests
 
         public string? Source { get; set; }
         public global::app.data.@this<global::app.module.crypto.type.hash.@this> Hash(Hash action) => global::app.data.@this<global::app.module.crypto.type.hash.@this>.FromError(new ActionError("Provider failure", "ProviderError", 500));
-        public global::app.data.@this<bool> Verify(Verify action) => global::app.data.@this<bool>.FromError(new ActionError("Provider failure", "ProviderError", 500));
+        public global::app.data.@this<global::app.type.@bool.@this> Verify(Verify action) => global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Provider failure", "ProviderError", 500));
     }
 }

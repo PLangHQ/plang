@@ -80,13 +80,16 @@ public class ComplexTypeDiscoveryTests
     [Test]
     public async Task PrimitiveTypes_NotInSchemas()
     {
-        // Primitive types (string, int, etc.) should not appear in complex schemas
-        var schemas = TypeMapping.BuildTypeEntries(_app.Module)
+        // Primitive types must never appear as COMPLEX (record-with-Fields) schemas.
+        // Born-native scalars (number/text/bool/…) DO appear as scalar entries
+        // (Shape only, no Fields) — that is their catalog form, same as number/text.
+        var complex = TypeMapping.BuildTypeEntries(_app.Module)
+            .Where(e => e.Fields != null && e.Fields.Count > 0)
             .ToDictionary(e => e.Name, e => RenderEntry(e));
 
-        await Assert.That(schemas.ContainsKey("string")).IsFalse();
-        await Assert.That(schemas.ContainsKey("int")).IsFalse();
-        await Assert.That(schemas.ContainsKey("bool")).IsFalse();
+        await Assert.That(complex.ContainsKey("string")).IsFalse();
+        await Assert.That(complex.ContainsKey("int")).IsFalse();
+        await Assert.That(complex.ContainsKey("bool")).IsFalse();
     }
 
     [Test]

@@ -38,7 +38,7 @@ public partial class discover : IContext
 
     /// <summary>Walk subdirectories. Default true.</summary>
     [Default(true)]
-    public partial data.@this<bool> Recursive { get; init; }
+    public partial data.@this<global::app.type.@bool.@this> Recursive { get; init; }
 
     public async Task<data.@this<List<global::app.tester.test.@this>>> Run()
     {

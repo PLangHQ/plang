@@ -72,7 +72,7 @@ public class DownloadActionTests
         {
             Context = Ctx,
             Url = "https://example.com/file.txt",
-            Unsigned = true
+            Unsigned = (global::app.type.@bool.@this)true
         };
 
         var result = await action.Run();
@@ -95,7 +95,7 @@ public class DownloadActionTests
         {
             Context = Ctx,
             Url = "https://example.com/missing.txt",
-            Unsigned = true
+            Unsigned = (global::app.type.@bool.@this)true
         };
 
         var result = await action.Run();

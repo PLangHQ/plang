@@ -90,7 +90,7 @@ public class QueryCacheTests
             {
                 new LlmMessage { Role = "user", Content = "same question" }
             },
-            Cache = false
+            Cache = (global::app.type.@bool.@this)false
         };
 
         await action.Run();
@@ -112,7 +112,7 @@ public class QueryCacheTests
             {
                 new LlmMessage { Role = "user", Content = "use tools" }
             },
-            Cache = true,
+            Cache = (global::app.type.@bool.@this)true,
             Tools = new List<GoalCall>
             {
                 new GoalCall { Name = "TestTool" }

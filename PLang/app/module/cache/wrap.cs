@@ -14,7 +14,7 @@ public partial class CacheWrap : IContext, IModifier
     [IsNotNull]
     public partial global::app.data.@this<global::app.type.number.@this> DurationMs { get; init; }
     [Default(false)]
-    public partial global::app.data.@this<bool> Sliding { get; init; }
+    public partial global::app.data.@this<global::app.type.@bool.@this> Sliding { get; init; }
     public partial global::app.data.@this<string>? Key { get; init; }
 
     public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());

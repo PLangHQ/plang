@@ -44,7 +44,7 @@ public class DefaultHttpProviderTests
         var action = new configure
         {
             Context = Ctx,
-            FollowRedirects = true,
+            FollowRedirects = (global::app.type.@bool.@this)true,
             MaxRedirects = (global::app.type.number.@this)5
         };
 

@@ -12,7 +12,7 @@ public partial class List : IContext
     public partial data.@this<string> Pattern { get; init; }
 
     [Default(false)]
-    public partial data.@this<bool> Recursive { get; init; }
+    public partial data.@this<global::app.type.@bool.@this> Recursive { get; init; }
 
     public async Task<data.@this<List<path>>> Run()
     {

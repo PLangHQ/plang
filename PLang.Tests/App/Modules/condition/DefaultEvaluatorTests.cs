@@ -10,14 +10,14 @@ public class DefaultEvaluatorTests
 
     private static Data D(object? value) => value == null ? new Data("") : Data.Ok(value);
 
-    private Task<global::app.data.@this<bool>> Eval(object? left, string op, object? right)
+    private Task<global::app.data.@this<global::app.type.@bool.@this>> Eval(object? left, string op, object? right)
         => _eval.Evaluate(new Compare { Left = D(left), Operator = new Operator(op), Right = D(right) });
 
-    private Task<global::app.data.@this<bool>> EvalIf(object? left, string op = "==", object? right = null)
+    private Task<global::app.data.@this<global::app.type.@bool.@this>> EvalIf(object? left, string op = "==", object? right = null)
         => _eval.Evaluate(new If { Left = D(left), Operator = new Operator(op), Right = D(right) });
 
-    private bool IsTrue(global::app.data.@this<bool> result) => result.Success && result.Value;
-    private bool IsFalse(global::app.data.@this<bool> result) => result.Success && !result.Value;
+    private bool IsTrue(global::app.data.@this<global::app.type.@bool.@this> result) => result.Success && result.Value;
+    private bool IsFalse(global::app.data.@this<global::app.type.@bool.@this> result) => result.Success && !result.Value;
 
     // --- Evaluate() — All Operators ---
 

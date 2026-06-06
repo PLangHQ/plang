@@ -44,7 +44,7 @@ public class FileSystemPermissionFlowTests
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
     }
 
-    // Typed verbs (Data<bool>, Data<byte[]>, Data<path>, …) widen to base Data
+    // Typed verbs (Data<global::app.type.@bool.@this>, Data<byte[]>, Data<path>, …) widen to base Data
     // through an explicit await/cast so the test can stay shape-agnostic.
     private static async Task<global::app.data.@this> Dispatch(string method, Path path) => method switch
     {

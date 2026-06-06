@@ -71,18 +71,18 @@ public class Stage2_MechanicalTypings_Part2Tests
         await Assert.That(typeof(global::app.builder.type.@this).Namespace).IsEqualTo("app.builder.type");
     }
 
-    // test.tag is bare Task<Data> or Task<Data<bool>>; the meaningful negative
+    // test.tag is bare Task<Data> or Task<Data<global::app.type.@bool.@this>>; the meaningful negative
     // guard is that it never degrades to Task<Data<object>>.
     [Test]
     public async Task TestTag_Run_ReturnsTaskDataOfBool_OrStaysVoidLike()
     {
         var ret = RunReturnType<global::app.module.test.Tag>();
         var bareData = typeof(Task<Data>);
-        var dataOfBool = typeof(Task<global::app.data.@this<bool>>);
+        var dataOfBool = typeof(Task<global::app.data.@this<global::app.type.@bool.@this>>);
         var dataOfObject = typeof(Task<global::app.data.@this<object>>);
 
         await Assert.That(ret == bareData || ret == dataOfBool).IsTrue()
-            .Because("test.tag must be bare Task<Data> or Task<Data<bool>>, never Task<Data<object>>.");
+            .Because("test.tag must be bare Task<Data> or Task<Data<global::app.type.@bool.@this>>, never Task<Data<object>>.");
         await Assert.That(ret).IsNotEqualTo(dataOfObject);
     }
 

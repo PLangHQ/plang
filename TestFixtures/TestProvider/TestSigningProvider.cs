@@ -21,12 +21,12 @@ public class TestSigningProvider : ISigning
     public app.data.@this<byte[]> Sign(byte[] data, string privateKey)
         => app.data.@this<byte[]>.Ok(new byte[64]);
 
-    public app.data.@this<bool> Verify(byte[] data, byte[] signature, string publicKey)
-        => app.data.@this<bool>.Ok(true);
+    public app.data.@this<global::app.type.@bool.@this> Verify(byte[] data, byte[] signature, string publicKey)
+        => app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
     public Task<app.data.@this<object>> SignAsync(sign action)
         => Task.FromResult(new app.data.@this<object>());
 
-    public Task<app.data.@this<bool>> VerifyAsync(verify action)
-        => Task.FromResult(app.data.@this<bool>.Ok(true));
+    public Task<app.data.@this<global::app.type.@bool.@this>> VerifyAsync(verify action)
+        => Task.FromResult(app.data.@this<global::app.type.@bool.@this>.Ok(true));
 }

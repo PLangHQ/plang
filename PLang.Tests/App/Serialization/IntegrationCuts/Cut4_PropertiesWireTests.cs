@@ -78,7 +78,7 @@ public class Cut4_PropertiesWireTests
                 new global::app.module.signing.verify
                 {
                     Data = back,
-                    SkipFreshnessCheck = new global::app.data.@this<bool>("", true)
+                    SkipFreshnessCheck = new global::app.data.@this<global::app.type.@bool.@this>("", true)
                 }, app.User.Context);
             await verify.IsFailure();
         }

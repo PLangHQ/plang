@@ -93,7 +93,7 @@ public class CanonicalizationTests
         roundTripped!.Context = app.User.Context;
 
         var verifyResult = await app.RunAction<global::app.module.signing.verify>(
-            new global::app.module.signing.verify { Data = roundTripped, SkipFreshnessCheck = new global::app.data.@this<bool>("", true) },
+            new global::app.module.signing.verify { Data = roundTripped, SkipFreshnessCheck = new global::app.data.@this<global::app.type.@bool.@this>("", true) },
             app.User.Context);
 
         await Assert.That(verifyResult.Success).IsFalse()

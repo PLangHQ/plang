@@ -124,7 +124,7 @@ public class FileHandlerTests : IDisposable
         {
             Context = _app.User.Context,
             Path = MakePath("template.txt"),
-            ResolveVariables = new global::app.data.@this<bool>("ResolveVariables", true)
+            ResolveVariables = new global::app.data.@this<global::app.type.@bool.@this>("ResolveVariables", true)
         };
         var result = await action.Run();
 
@@ -144,7 +144,7 @@ public class FileHandlerTests : IDisposable
         {
             Context = _app.User.Context,
             Path = MakePath("literal.txt"),
-            ResolveVariables = new global::app.data.@this<bool>("ResolveVariables", false)
+            ResolveVariables = new global::app.data.@this<global::app.type.@bool.@this>("ResolveVariables", false)
         };
         var result = await action.Run();
 
@@ -156,7 +156,7 @@ public class FileHandlerTests : IDisposable
     public async Task Read_ResolveVariablesTrue_BlocksInfrastructureVariables()
     {
         // skipInfrastructure: file content is untrusted — %!app%, %!fileSystem%
-        // etc. must not resolve even when ResolveVariables=true. Without this
+        // etc. must not resolve even when ResolveVariables = (global::app.type.@bool.@this)true. Without this
         // guard, a malicious file could leak runtime internals through %!app.Id%.
         System.IO.File.WriteAllText(TempPath("untrusted.txt"), "id is %!app.Id%");
 
@@ -164,7 +164,7 @@ public class FileHandlerTests : IDisposable
         {
             Context = _app.User.Context,
             Path = MakePath("untrusted.txt"),
-            ResolveVariables = new global::app.data.@this<bool>("ResolveVariables", true)
+            ResolveVariables = new global::app.data.@this<global::app.type.@bool.@this>("ResolveVariables", true)
         };
         var result = await action.Run();
 
@@ -282,7 +282,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Delete_NonexistentFile_IgnoreIfNotFound_ReturnsSuccess()
     {
-        var action = new Delete { Context = _app.User.Context, Path = MakePath("nope.txt"), IgnoreIfNotFound = true };
+        var action = new Delete { Context = _app.User.Context, Path = MakePath("nope.txt"), IgnoreIfNotFound = (global::app.type.@bool.@this)true };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -295,7 +295,7 @@ public class FileHandlerTests : IDisposable
         System.IO.Directory.CreateDirectory(dir);
         System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "child.txt"), "data");
 
-        var action = new Delete { Context = _app.User.Context, Path = MakeAbsPath(dir), Recursive = true };
+        var action = new Delete { Context = _app.User.Context, Path = MakeAbsPath(dir), Recursive = (global::app.type.@bool.@this)true };
         var result = await action.Run();
 
         await result.IsSuccess();
@@ -376,7 +376,7 @@ public class FileHandlerTests : IDisposable
         System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "top.txt"), "top");
         System.IO.File.WriteAllText(System.IO.Path.Combine(nested, "deep.txt"), "deep");
 
-        var action = new List { Context = _app.User.Context, Path = MakeAbsPath(subDir), Recursive = true };
+        var action = new List { Context = _app.User.Context, Path = MakeAbsPath(subDir), Recursive = (global::app.type.@bool.@this)true };
         var result = await action.Run();
 
         await result.IsSuccess();

@@ -27,17 +27,17 @@ public partial class configure : IContext, IConfigure<Config>
     public partial data.@this<string>? Encoding { get; init; }
 
     /// <summary>When true, disables request signing by default.</summary>
-    public partial data.@this<bool>? Unsigned { get; init; }
+    public partial data.@this<global::app.type.@bool.@this>? Unsigned { get; init; }
 
     /// <summary>Whether to follow HTTP redirects. Default: true.</summary>
-    public partial data.@this<bool>? FollowRedirects { get; init; }
+    public partial data.@this<global::app.type.@bool.@this>? FollowRedirects { get; init; }
 
     /// <summary>Maximum number of redirects to follow. Default: 10.</summary>
     public partial data.@this<global::app.type.number.@this>? MaxRedirects { get; init; }
 
     /// <summary>When true, writes config to app-wide default scope instead of current scope.</summary>
     [Default(false)]
-    public partial data.@this<bool> Default { get; init; }
+    public partial data.@this<global::app.type.@bool.@this> Default { get; init; }
 
     [Code]
     public partial IHttp Http { get; }

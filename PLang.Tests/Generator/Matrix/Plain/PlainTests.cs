@@ -92,8 +92,8 @@ public class BoolPlainTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<BoolPlain>(app,
             parameters: new[] { ("flag", (object?)"true") });
-        var typed = result.Data as global::app.data.@this<bool>;
-        await Assert.That(typed!.Value).IsTrue();
+        var typed = result.Data as global::app.data.@this<global::app.type.@bool.@this>;
+        await Assert.That((bool)typed!.Value).IsTrue();
     }
 
     [Test]
@@ -102,8 +102,8 @@ public class BoolPlainTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<BoolPlain>(app,
             parameters: new[] { ("flag", (object?)true) });
-        var typed = result.Data as global::app.data.@this<bool>;
-        await Assert.That(typed!.Value).IsTrue();
+        var typed = result.Data as global::app.data.@this<global::app.type.@bool.@this>;
+        await Assert.That((bool)typed!.Value).IsTrue();
     }
 }
 

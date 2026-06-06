@@ -14,7 +14,7 @@ public partial class Create : IContext
     public partial data.@this<string> Name { get; init; }
 
     [Default(false)]
-    public partial data.@this<bool> SetAsDefault { get; init; }
+    public partial data.@this<global::app.type.@bool.@this> SetAsDefault { get; init; }
 
     /// <summary>Optional provider name override. Uses default IKey if not specified.</summary>
     public partial data.@this<string>? Provider { get; init; }
