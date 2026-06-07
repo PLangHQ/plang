@@ -8,4 +8,4 @@ TestFileReadMissingLiteralEmitsBuildWarning
 - builder.goals from 'probes/missing/', write to %goals%
 - goal.getTypes %goals[0]%, write to %snapshot%
 - set %annot% = %snapshot[1].x%
-- assert.equals expected='txt', actual=%annot%
+- assert.equals expected='text', actual=%annot%

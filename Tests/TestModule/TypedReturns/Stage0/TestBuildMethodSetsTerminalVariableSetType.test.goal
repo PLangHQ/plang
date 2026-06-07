@@ -6,4 +6,4 @@ TestBuildMethodSetsTerminalVariableSetType
 / sees %x%(csv), which only happens if the Type stamp reached the .pr.
 - builder.goals from 'stage0_fixture/', write to %goals%
 - goal.getTypes %goals[0]%, write to %snapshot%
-- assert %snapshot[1].x% equals 'csv', "downstream snapshot must show %x%(csv) from file.read.Build()"
+- assert %snapshot[1].x% equals 'table', "downstream snapshot must show %x%(csv) from file.read.Build()"

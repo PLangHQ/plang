@@ -15,9 +15,12 @@
           "action": "goals",
           "parameters": [
             {
-              "name": "Path",
-              "value": "probes/llm/",
-              "type": "path"
+              "@schema": "data",
+              "name": "path",
+              "type": {
+                "name": "path"
+              },
+              "value": "probes/llm/"
             }
           ],
           "defaults": null,
@@ -28,33 +31,37 @@
           "action": "set",
           "parameters": [
             {
+              "@schema": "data",
               "name": "Name",
-              "value": "%goals%",
-              "type": "variable"
+              "type": {
+                "name": "variable"
+              },
+              "value": "%goals%"
             },
             {
+              "@schema": "data",
               "name": "Value",
-              "value": "%!data%",
-              "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": "list",
-              "type": "string"
+              "type": {
+                "name": "object"
+              },
+              "value": "%!data%"
             }
           ],
           "defaults": [
             {
+              "@schema": "data",
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": {
+                "name": "bool"
+              },
+              "value": false
             }
           ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "formal": "builder.goals(Path=\u0022probes/llm/\u0022), variable.set(Name=%goals%, Value=%!data%, Type=list)",
+      "formal": "builder.goals(path=\u0027probes/llm/\u0027) | variable.set(Name=%goals%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -70,9 +77,12 @@
           "action": "getTypes",
           "parameters": [
             {
+              "@schema": "data",
               "name": "Goal",
-              "value": "%goals[0]%",
-              "type": "goal"
+              "type": {
+                "name": "goal"
+              },
+              "value": "%goals[0]%"
             }
           ],
           "defaults": null,
@@ -83,28 +93,37 @@
           "action": "set",
           "parameters": [
             {
+              "@schema": "data",
               "name": "Name",
-              "value": "%snapshot%",
-              "type": "variable"
+              "type": {
+                "name": "variable"
+              },
+              "value": "%snapshot%"
             },
             {
+              "@schema": "data",
               "name": "Value",
-              "value": "%!data%",
-              "type": "list"
+              "type": {
+                "name": "object"
+              },
+              "value": "%!data%"
             }
           ],
           "defaults": [
             {
+              "@schema": "data",
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": {
+                "name": "bool"
+              },
+              "value": false
             }
           ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "formal": "goal.getTypes(Goal=%goals[0]%), variable.set(Name=%snapshot%, Value=%!data%, type=object)",
+      "formal": "goal.getTypes(Goal=%goals[0]%) | variable.set(Name=%snapshot%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -120,34 +139,43 @@
           "action": "set",
           "parameters": [
             {
+              "@schema": "data",
               "name": "Name",
-              "value": "%annot%",
-              "type": "variable"
+              "type": {
+                "name": "variable"
+              },
+              "value": "%annot%"
             },
             {
+              "@schema": "data",
               "name": "Value",
-              "value": "%snapshot[1].y%",
-              "type": "object"
+              "type": {
+                "name": "object"
+              },
+              "value": "%snapshot[1].y%"
             }
           ],
           "defaults": [
             {
+              "@schema": "data",
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": {
+                "name": "bool"
+              },
+              "value": false
             }
           ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%annot%, Value=%snapshot[1].y%, Type=object)",
+      "formal": "variable.set(Name=%annot%, Value=%snapshot[1].y%)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 3,
-      "text": "assert.equals expected=\u0027json\u0027, actual=%annot%",
+      "text": "assert.equals expected=\u0027item\u0027, actual=%annot%",
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
@@ -157,14 +185,20 @@
           "action": "equals",
           "parameters": [
             {
+              "@schema": "data",
               "name": "Expected",
-              "value": "json",
-              "type": "string"
+              "type": {
+                "name": "text"
+              },
+              "value": "item"
             },
             {
+              "@schema": "data",
               "name": "Actual",
-              "value": "%annot%",
-              "type": "object"
+              "type": {
+                "name": "object"
+              },
+              "value": "%annot%"
             }
           ],
           "defaults": null,
@@ -172,7 +206,7 @@
         }
       ],
       "intent": null,
-      "formal": "assert.equals(Expected=\u0022json\u0022, Actual=%annot%)",
+      "formal": "assert.equals(Expected=\u0022item\u0022, Actual=%annot%)",
       "source": null,
       "waitForExecution": true
     }
@@ -181,7 +215,7 @@
   "visibility": 1,
   "path": "/TestModule/TypedReturns/Stage4/TestLlmQueryWithSchemaAnnotatesDownstreamAsJson.test.goal",
   "prPath": "/TestModule/TypedReturns/Stage4/.build/testllmquerywithschemaannotatesdownstreamasjson.test.pr",
-  "hash": "841d3adea68710d1d2c40ef9984d7f5af7aa0670477f48aa73ca8fa45e7cf712",
+  "hash": "87dfcaaaacf4645472cdf9ece877ef15ff9f6239172ca783368b22a72e0d6c42",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

@@ -5,4 +5,4 @@ TestFileReadCsvLiteralAnnotatesDownstreamAsCsv
 - builder.goals from 'probes/csv/', write to %goals%
 - goal.getTypes %goals[0]%, write to %snapshot%
 - set %annot% = %snapshot[1].x%
-- assert.equals expected='csv', actual=%annot%
+- assert.equals expected='table', actual=%annot%

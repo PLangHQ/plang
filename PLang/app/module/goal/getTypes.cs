@@ -54,7 +54,7 @@ public partial class getTypes : IContext
 
             foreach (var action in goal.Steps[i].Actions ?? new())
             {
-                ProcessAction(action, working, snapshot, ref chainReturnType, modules);
+                ProcessAction(action, working, snapshot, ref chainReturnType, modules, Context.App!);
             }
         }
 
@@ -76,7 +76,8 @@ public partial class getTypes : IContext
         Dictionary<string, string> working,
         Dictionary<string, string> currentStepSnapshot,
         ref string? chainReturnType,
-        global::app.module.@this modules)
+        global::app.module.@this modules,
+        global::app.@this app)
     {
         if (string.Equals(action.Module, "variable", StringComparison.OrdinalIgnoreCase)
          && string.Equals(action.ActionName, "set", StringComparison.OrdinalIgnoreCase))
@@ -87,11 +88,13 @@ public partial class getTypes : IContext
             if (nameParam?.Value is string rawName && !string.IsNullOrEmpty(rawName))
             {
                 string type;
-                if (typeParam?.Value is string explicitType && !string.IsNullOrEmpty(explicitType))
+                // The Type slot wins — Build()'s stamp (file.read.Build() → {table,csv}) and the
+                // user (type) hint (`write to %x%(json)`). Born-native serializes the entity, so
+                // read its name from a type.@this / wire dict / bare string.
+                string? hinted = TypeNameOf(typeParam?.Value);
+                if (!string.IsNullOrEmpty(hinted))
                 {
-                    // Type slot wins — covers both Build()'s stamp (file.read.Build()
-                    // → "csv") and the user (type) hint (set %x% = {...}, type=json).
-                    type = explicitType;
+                    type = hinted!;
                 }
                 else if (valueParam?.Value is string sval && string.Equals(sval, "%!data%", StringComparison.OrdinalIgnoreCase))
                 {
@@ -99,9 +102,12 @@ public partial class getTypes : IContext
                 }
                 else
                 {
-                    type = (valueParam?.Type?.Name as string) ?? "object";
+                    type = TypeNameOf(valueParam?.Type) ?? "object";
                 }
-                working[Normalise(rawName)] = type;
+                // Strongly typed if determinable, else `item`: route a content-format name
+                // through the one format→type mapping (json→item, csv→table, txt→text), and
+                // fold the legacy universal `object` to `item`.
+                working[Normalise(rawName)] = ToValueType(type, app);
             }
             chainReturnType = null;  // variable.set consumed %!data%
             return;
@@ -147,6 +153,30 @@ public partial class getTypes : IContext
 
     private static string Normalise(string raw)
         => raw.TrimStart('%').TrimEnd('%').ToLowerInvariant();
+
+    // The PLang type NAME a Type/Value param carries. Born-native serializes the type entity,
+    // so the name lives on a type.@this, a `{name, …}` wire dict, or (legacy/hint) a bare string.
+    private static string? TypeNameOf(object? typeValue) => typeValue switch
+    {
+        null => null,
+        global::app.type.@this te => te.IsNull ? null : te.Name,
+        global::app.type.dict.@this nd => nd.Get("name")?.Value?.ToString(),
+        System.Collections.Generic.IDictionary<string, object?> d
+            => d.TryGetValue("name", out var n) ? n?.ToString() : null,
+        string s => string.IsNullOrEmpty(s) ? null : s,
+        _ => typeValue.ToString(),
+    };
+
+    // "Strongly typed if determinable, else item." A content-format name (json/csv/txt/md)
+    // resolves through the one format→type mapping to its value type (json→item, csv→table,
+    // txt→text); a value-type name passes through; the legacy universal `object` folds to `item`.
+    private static string ToValueType(string typeName, global::app.@this app)
+    {
+        if (string.IsNullOrEmpty(typeName)) return "item";
+        var mapped = app.Format.TypeFromExtension(typeName);
+        var name = mapped.IsNull ? typeName : mapped.Name;
+        return string.Equals(name, "object", StringComparison.OrdinalIgnoreCase) ? "item" : name;
+    }
 
     private static string ElementOf(string collectionType)
     {

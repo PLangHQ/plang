@@ -6,4 +6,4 @@ TestUserTypeHintWinsOverBuildInference
 - builder.goals from 'probes/hint/', write to %goals%
 - goal.getTypes %goals[0]%, write to %snapshot%
 - set %annot% = %snapshot[1].x%
-- assert.equals expected='json', actual=%annot%
+- assert.equals expected='item', actual=%annot%

@@ -15,9 +15,12 @@
           "action": "goals",
           "parameters": [
             {
-              "name": "Path",
-              "value": "stage0_fixture/",
-              "type": "path"
+              "@schema": "data",
+              "name": "path",
+              "type": {
+                "name": "path"
+              },
+              "value": "stage0_fixture/"
             }
           ],
           "defaults": null,
@@ -28,28 +31,37 @@
           "action": "set",
           "parameters": [
             {
+              "@schema": "data",
               "name": "Name",
-              "value": "%goals%",
-              "type": "variable"
+              "type": {
+                "name": "variable"
+              },
+              "value": "%goals%"
             },
             {
+              "@schema": "data",
               "name": "Value",
-              "value": "%!data%",
-              "type": "list"
+              "type": {
+                "name": "object"
+              },
+              "value": "%!data%"
             }
           ],
           "defaults": [
             {
+              "@schema": "data",
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": {
+                "name": "bool"
+              },
+              "value": false
             }
           ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "formal": "builder.goals(Path=\u0027stage0_fixture/\u0027, ...) | variable.set(Name=%goals%, Value=%!data%)",
+      "formal": "builder.goals(path=\u0027stage0_fixture/\u0027) | variable.set(Name=%goals%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -65,9 +77,12 @@
           "action": "getTypes",
           "parameters": [
             {
+              "@schema": "data",
               "name": "Goal",
-              "value": "%goals[0]%",
-              "type": "goal"
+              "type": {
+                "name": "goal"
+              },
+              "value": "%goals[0]%"
             }
           ],
           "defaults": null,
@@ -78,34 +93,43 @@
           "action": "set",
           "parameters": [
             {
+              "@schema": "data",
               "name": "Name",
-              "value": "%snapshot%",
-              "type": "variable"
+              "type": {
+                "name": "variable"
+              },
+              "value": "%snapshot%"
             },
             {
+              "@schema": "data",
               "name": "Value",
-              "value": "%!data%",
-              "type": "list"
+              "type": {
+                "name": "object"
+              },
+              "value": "%!data%"
             }
           ],
           "defaults": [
             {
+              "@schema": "data",
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": {
+                "name": "bool"
+              },
+              "value": false
             }
           ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "formal": "goal.getTypes(Goal=%goals[0]%), variable.set(Name=%snapshot%, Value=%!data%, type=object)",
+      "formal": "goal.getTypes(Goal=%goals[0]%) | variable.set(Name=%snapshot%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "assert %snapshot[1].x% equals \u0027csv\u0027, \u0022downstream snapshot must show %x%(csv) from file.read.Build()\u0022",
+      "text": "assert %snapshot[1].x% equals \u0027table\u0027, \u0022downstream snapshot must show %x%(csv) from file.read.Build()\u0022",
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
@@ -115,19 +139,20 @@
           "action": "equals",
           "parameters": [
             {
+              "@schema": "data",
               "name": "Expected",
-              "value": "csv",
-              "type": "object"
+              "type": {
+                "name": "text"
+              },
+              "value": "table"
             },
             {
+              "@schema": "data",
               "name": "Actual",
-              "value": "%snapshot[1].x%",
-              "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": "downstream snapshot must show %x%(csv) from file.read.Build()",
-              "type": "string"
+              "type": {
+                "name": "object"
+              },
+              "value": "%snapshot[1].x%"
             }
           ],
           "defaults": null,
@@ -135,7 +160,7 @@
         }
       ],
       "intent": null,
-      "formal": "assert.equals(Expected=\u0022csv\u0022, Actual=%snapshot[1].x%, Message=\u0022downstream snapshot must show %x%(csv) from file.read.Build()\u0022)",
+      "formal": "assert.equals(Expected=\u0022table\u0022, Actual=%snapshot[1].x%)",
       "source": null,
       "waitForExecution": true
     }
@@ -144,7 +169,7 @@
   "visibility": 1,
   "path": "/TestModule/TypedReturns/Stage0/TestBuildMethodSetsTerminalVariableSetType.test.goal",
   "prPath": "/TestModule/TypedReturns/Stage0/.build/testbuildmethodsetsterminalvariablesettype.test.pr",
-  "hash": "cd85a52f2ef410097250aa29949043d9bd1a5ab1e9eccc1dcd3634694defa2c6",
+  "hash": "7ad0a3ad546b95fbda7756c4d5335620f70498da003735c39330dae8e94802b9",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
