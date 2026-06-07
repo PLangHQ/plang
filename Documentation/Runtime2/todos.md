@@ -1113,3 +1113,29 @@ items + a perimeter fallback.
 
 **Decision:** land the `where T : item` constraint first (branch goal), then do
 Write+Normalize-on-item as one pass. Folds into [the IWriter-centralization todo above].
+
+## `variable.set` — redundant type when force matches judged value type
+
+**Date:** 2026-06-07 on branch `scalars-as-native`. Ingi, noticing the set.examples
+mapping `variable.set Name([variable] %iso%), Value([duration] PT5M), Type([type]
+{"name":"duration"})`.
+
+The type appears twice: once as the **Value wrapper's own type** (`[duration]` on
+`PT5M`) and once as the **separate `Type` force parameter** (`{name:duration}`). When a
+force (`as duration` / `(duration)`) coerces the value to exactly the type it would be
+judged anyway, the two are identical — redundant. Now that literals are judged by form +
+intent (see the literal-judgement change), a force *usually* lands the value at the same
+type its wrapper already carries, so the `Type` param duplicates the Value's type more
+often than not.
+
+**Investigate:** does the separate `Type` parameter still earn its place? It is only
+meaningfully distinct when the force DISAGREES with the value's natural type — e.g.
+`"2026-01-01" as text` (force text over a date judgement) or `"42" as image/jpg` (a kind
+that isn't derivable from the value). For the agreeing case, the Value wrapper's type is
+the single source and `Type` is noise. Options to weigh: (a) emit `Type` only when it
+differs from the Value wrapper's judged type; (b) drop `Type` entirely and let the force
+flow through the Value wrapper's type (the `as`/`(kind)` just sets the wrapper's type);
+(c) keep both but document the redundancy as deliberate. Touches `variable.set`'s
+`TypeFromWire`/`FromName` reconstruction and the compile teaching.
+
+**Decision:** logged for a dedicated investigation; not changing now.
