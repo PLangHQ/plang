@@ -1,11 +1,7 @@
 Start
-/ Stage 5 negative — navigation into a type-unknown value errors with a
-/ message that names the fix. Independent #18 pins the exact substring
-/ "add" + "as <type>" in the C# layer; here we just pin that an error
-/ rises (the no-guessing rule).
+/ Navigation into a type-unknown value yields `item`, NOT an error — we don't know the
+/ shape at build time, so %x.port% is typed `item` (no guessing). At runtime the value
+/ resolves through to its item (here 8080); the point is that navigation does not raise.
 - set %x% = "{\"port\":8080}"
-- set %p% = %x.port%, on error call CaughtIt
-- assert %caught% equals true
-
-CaughtIt
-- set %caught% = true
+- set %p% = %x.port%
+- assert %p% equals 8080

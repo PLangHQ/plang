@@ -6,39 +6,41 @@
     {
       "index": 0,
       "text": "set %x% = \u0022{\\\u0022port\\\u0022:8080}\u0022",
-      "lineNumber": 6,
+      "lineNumber": 5,
       "indent": 0,
-      "comment": "Stage 5 negative \u2014 navigation into a type-unknown value errors with a\nmessage that names the fix. Independent #18 pins the exact substring\n\u0022add\u0022 \u002B \u0022as \u003Ctype\u003E\u0022 in the C# layer; here we just pin that an error\nrises (the no-guessing rule).",
+      "comment": "Navigation into a type-unknown value yields \u0060item\u0060, NOT an error \u2014 we don\u0027t know the\nshape at build time, so %x.port% is typed \u0060item\u0060 (no guessing). At runtime the value\nresolves through to its item (here 8080); the point is that navigation does not raise.",
       "actions": [
         {
           "module": "variable",
           "action": "set",
           "parameters": [
             {
+              "@schema": "data",
               "name": "Name",
-              "value": "%x%",
-              "scalarValue": "%x%",
               "type": {
                 "name": "variable"
-              }
+              },
+              "value": "%x%"
             },
             {
+              "@schema": "data",
               "name": "Value",
-              "value": "{\u0022port\u0022:8080}",
-              "scalarValue": "{\u0022port\u0022:8080}",
               "type": {
                 "name": "object"
+              },
+              "value": {
+                "port": 8080
               }
             }
           ],
           "defaults": [
             {
+              "@schema": "data",
               "name": "asdefault",
-              "value": false,
-              "scalarValue": false,
               "type": {
                 "name": "bool"
-              }
+              },
+              "value": false
             }
           ],
           "modifiers": []
@@ -51,8 +53,8 @@
     },
     {
       "index": 1,
-      "text": "set %p% = %x.port%, on error call CaughtIt",
-      "lineNumber": 7,
+      "text": "set %p% = %x.port%",
+      "lineNumber": 6,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -61,91 +63,44 @@
           "action": "set",
           "parameters": [
             {
+              "@schema": "data",
               "name": "Name",
-              "value": "%p%",
-              "scalarValue": "%p%",
               "type": {
                 "name": "variable"
-              }
+              },
+              "value": "%p%"
             },
             {
+              "@schema": "data",
               "name": "Value",
-              "value": "%x.port%",
-              "scalarValue": "%x.port%",
               "type": {
                 "name": "object"
-              }
+              },
+              "value": "%x.port%"
             }
           ],
           "defaults": [
             {
+              "@schema": "data",
               "name": "asdefault",
-              "value": false,
-              "scalarValue": false,
               "type": {
                 "name": "bool"
-              }
+              },
+              "value": false
             }
           ],
-          "modifiers": [
-            {
-              "module": "error",
-              "action": "handle",
-              "parameters": [
-                {
-                  "name": "Actions",
-                  "value": [
-                    {
-                      "module": "goal",
-                      "action": "call",
-                      "parameters": [
-                        {
-                          "name": "GoalName",
-                          "value": {
-                            "name": "CaughtIt",
-                            "parameters": []
-                          },
-                          "type": "goal.call"
-                        }
-                      ]
-                    }
-                  ],
-                  "scalarValue": [
-                    {
-                      "module": "goal",
-                      "action": "call",
-                      "parameters": [
-                        {
-                          "name": "GoalName",
-                          "value": {
-                            "name": "CaughtIt",
-                            "parameters": []
-                          },
-                          "type": "goal.call"
-                        }
-                      ]
-                    }
-                  ],
-                  "type": {
-                    "name": "list\u003Caction\u003E"
-                  }
-                }
-              ],
-              "defaults": null,
-              "modifiers": []
-            }
-          ]
+          "modifiers": []
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%p%, Value=%x.port%) | error.handle(Actions=[goal.call(GoalName={name:\u0022CaughtIt\u0022})])",
+      "formal": "variable.set(Name=%p%, Value=%x.port%)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "assert %caught% equals true",
-      "lineNumber": 8,
+      "text": "assert %p% equals 8080",
+      "lineNumber": 7,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -154,20 +109,21 @@
           "action": "equals",
           "parameters": [
             {
+              "@schema": "data",
               "name": "Expected",
-              "value": "%caught%",
-              "scalarValue": "%caught%",
               "type": {
-                "name": "object"
-              }
+                "name": "number",
+                "kind": "int"
+              },
+              "value": 8080
             },
             {
+              "@schema": "data",
               "name": "Actual",
-              "value": true,
-              "scalarValue": true,
               "type": {
-                "name": "bool"
-              }
+                "name": "object"
+              },
+              "value": "%p%"
             }
           ],
           "defaults": null,
@@ -175,81 +131,16 @@
         }
       ],
       "intent": null,
-      "formal": "assert.equals(Expected=%caught%, Actual=true)",
+      "formal": "assert.equals(Expected=8080, Actual=%p%)",
       "source": null,
       "waitForExecution": true
     }
   ],
-  "goals": [
-    {
-      "name": "CaughtIt",
-      "description": null,
-      "comment": null,
-      "steps": [
-        {
-          "index": 0,
-          "text": "set %caught% = true",
-          "lineNumber": 11,
-          "indent": 0,
-          "comment": null,
-          "actions": [
-            {
-              "module": "variable",
-              "action": "set",
-              "parameters": [
-                {
-                  "name": "Name",
-                  "value": "%caught%",
-                  "scalarValue": "%caught%",
-                  "type": {
-                    "name": "variable"
-                  }
-                },
-                {
-                  "name": "Value",
-                  "value": true,
-                  "scalarValue": true,
-                  "type": {
-                    "name": "bool"
-                  }
-                }
-              ],
-              "defaults": [
-                {
-                  "name": "asdefault",
-                  "value": false,
-                  "scalarValue": false,
-                  "type": {
-                    "name": "bool"
-                  }
-                }
-              ],
-              "modifiers": []
-            }
-          ],
-          "intent": null,
-          "formal": "variable.set(Name=%caught%, Value=true)",
-          "source": null,
-          "waitForExecution": true
-        }
-      ],
-      "goals": [],
-      "visibility": 0,
-      "path": "/LazyDeserialize/NavigationOnTypeUnknown_AsksForAsType.test.goal",
-      "prPath": "/LazyDeserialize/.build/navigationontypeunknown_asksforastype.test.pr",
-      "hash": "4c4d2724b5430e226d0a47c4032f7128337458f25260cb293b4d6b44f3df9e61",
-      "builderVersion": null,
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": false,
-      "isTest": true,
-      "inputParameters": null
-    }
-  ],
+  "goals": [],
   "visibility": 1,
   "path": "/LazyDeserialize/NavigationOnTypeUnknown_AsksForAsType.test.goal",
   "prPath": "/LazyDeserialize/.build/navigationontypeunknown_asksforastype.test.pr",
-  "hash": "03c26a60bd2688c12ebae5c38fe5864b60d07554e9e2c7c4ffd21fd2d49e66a3",
+  "hash": "f4b0559dbb9df68cf4681e2035818d80bcb838d8029ae9e1cf40755bdddab3b4",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
