@@ -761,7 +761,7 @@ public partial class @this
     // its value's type/signature stays intact) or a raw string-keyed dict, WITHOUT
     // decomposing the whole container. Only the value/type slots are ever touched,
     // so unrelated nested values keep their native Data-keying.
-    private static object? WireSlot(object? raw, string key) => raw switch
+    internal static object? WireSlot(object? raw, string key) => raw switch
     {
         app.type.dict.@this nd => nd.Get(key)?.Value,
         IDictionary<string, object?> d => d.TryGetValue(key, out var v) ? v : null,

@@ -1,7 +1,10 @@
 DictIsItemKeepsNoOrder
 / A dict is `: item` AND still rejects ordering — `item` carries no IOrderableValue
-/ to leak in. sort over a list-of-dict throws (the equality-only-dict policy
-/ collections-are-data settled, regressed nowhere).
+/ to leak in. sort over a list-of-dict is unorderable; PLang returns that as an error
+/ (not a thrown exception), so the on-error handler catches it.
 - set %people% = [{"name":"b"}, {"name":"a"}]
-- sort %people%, on error set %caught% = true
+- sort %people%, on error call Caught
 - assert %caught% is true
+
+Caught
+- set %caught% = true
