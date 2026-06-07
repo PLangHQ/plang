@@ -135,10 +135,18 @@ public partial class Set : IContext, IBuildValidatable
         //   3. the IStrictKindEnforcer load seam below — byte-backed values, at MATERIALIZATION.
         if (Type?.Value != null)
         {
-            // Type entity rides in a bare Data. Production serializes the whole type.@this;
-            // a raw type NAME (a string/text value, e.g. from a hand-built action) resolves
-            // through the registry via FromName.
+            // Type entity rides in a bare Data — `type` is not `: item`, so it can't be a
+            // Data<T> that auto-converts. Reconstruct it from whatever the .pr served:
+            //   - already a type.@this → use it;
+            //   - the `{name, kind?, strict?}` wire dict → TypeFromWire rebuilds name+kind+strict;
+            //   - a bare type-name (raw string or text wrapper) → FromName of its text.
+            // Only the dict goes through TypeFromWire — its string arm binds context onto the
+            // entity, which would resolve a kindless name's ClrType to the wrapper (number) rather
+            // than the raw CLR mate (Int32) the no-context FromName yields.
             var typeEntity = Type.Value as global::app.type.@this
+                ?? (Type.Value is global::app.type.dict.@this or System.Collections.Generic.IDictionary<string, object?>
+                        ? global::app.data.@this.TypeFromWire(Type.Value, Context)
+                        : null)
                 ?? global::app.type.@this.FromName(Type.Value.ToString()!);
             // Canonicalise kind through the format registry — `markdown` → `md`,
             // `jpeg` → `jpg`. The factory does this when a context is passed;

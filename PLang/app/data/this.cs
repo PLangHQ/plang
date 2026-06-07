@@ -790,7 +790,7 @@ public partial class @this
 
     // Build a type entity from its wire form — a bare name string ("text") or the
     // structured {name, kind?, strict?} object (a native dict, navigated in place).
-    private static type? TypeFromWire(object? t, actor.context.@this? context)
+    internal static type? TypeFromWire(object? t, actor.context.@this? context)
     {
         switch (t)
         {
