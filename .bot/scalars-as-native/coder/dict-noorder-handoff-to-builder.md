@@ -51,3 +51,20 @@ should stay `step.actions`, not become a native list). Two fix directions:
 - `PLang/app/goal/steps/step/actions/this.cs` — `step.actions.@this : item, IList<action.@this>` (no Convert hook).
 - `PLang/app/goal/steps/step/actions/action/this.cs` — `action.@this : item, module.IDataWrappable`.
 - `PLang/app/type/catalog/Conversion.cs` — list-target arm (~L303, `value is IList`; native `list.@this` reaches it via the `item.ToRaw` branch ~L163).
+
+---
+
+## RESOLVED (coder, commit a8cefb5a2)
+
+Root went one level deeper than the conversion: the chain reconstructed but each action's
+**nested params came back null** (goal.call NRE'd on a null GoalName). The born-native wire
+marks records with `@schema:data`; `As<step.actions>`'s `ToRaw→JSON` round-trip strips that
+marker, and the Data re-read needs it → params lost.
+
+Fix: a per-type **`step.actions.Convert` hook** (OBP — the catalog stays arm-free; no
+`GetListElementType`/`MakeListSink` central type-switch, per Ingi). It rebuilds each action
+field-by-field via `FromWireShape` (reads `{name,value,type}` slots directly, no marker
+needed) and passes through already-built actions (the C#-constructed chains). Combined with
+sort returning the error instead of throwing, the handler now catches it.
+
+Both suites green: C# 4165/4165, PLang **272/272**.
