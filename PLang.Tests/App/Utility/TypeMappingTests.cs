@@ -690,7 +690,7 @@ public class TypeMappingTests
     [Test]
     public async Task GetTypeName_DataOfListString_ReturnsListString()
     {
-        var name = TypeMapping.GetTypeName(typeof(global::app.data.@this<List<string>>));
+        var name = TypeMapping.GetTypeName(typeof(global::app.data.@this<global::app.type.list.@this<global::app.type.text.@this>>));
 
         await Assert.That(name).IsEqualTo("list<text>");
     }

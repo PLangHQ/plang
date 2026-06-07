@@ -25,7 +25,7 @@ public partial class upload : IContext
     public partial data.@this<global::app.type.choice.@this<HttpMethod>> Method { get; init; }
 
     /// <summary>Per-request headers. Merged with Config.DefaultHeaders.</summary>
-    public partial data.@this<Dictionary<string, object>>? Headers { get; init; }
+    public partial data.@this<global::app.type.dict.@this>? Headers { get; init; }
 
     /// <summary>Character encoding. Default: "utf-8".</summary>
     [Default("utf-8")]
@@ -43,7 +43,7 @@ public partial class upload : IContext
     public partial data.@this<sign>? SignOptions { get; init; }
 
     /// <summary>Explicit content format hint. Null = auto-detect from Content type.</summary>
-    public partial data.@this<ContentAs>? As { get; init; }
+    public partial data.@this<global::app.type.choice.@this<ContentAs>>? As { get; init; }
 
     /// <summary>Goal to call with TransferProgress updates during upload.</summary>
     [GoalCallback("progress")]

@@ -86,11 +86,11 @@ public class ISerializerInputContractTests
         }
         public Task<global::app.data.@this> DeserializeAsync(Stream s, CancellationToken ct = default)
             => Task.FromResult(global::app.data.@this.Ok());
-        public Task<global::app.data.@this<T>> DeserializeAsync<T>(Stream s, CancellationToken ct = default)
+        public Task<global::app.data.@this<T>> DeserializeAsync<T>(Stream s, CancellationToken ct = default) where T : global::app.type.item.@this
             => Task.FromResult(global::app.data.@this<T>.Ok(default!));
         public global::app.data.@this<global::app.type.text.@this> Serialize(global::app.data.@this data) => global::app.data.@this<global::app.type.text.@this>.Ok("");
         public global::app.data.@this Deserialize(string s) => global::app.data.@this.Ok();
-        public global::app.data.@this<T> Deserialize<T>(string s) => global::app.data.@this<T>.Ok(default!);
+        public global::app.data.@this<T> Deserialize<T>(string s) where T : global::app.type.item.@this => global::app.data.@this<T>.Ok(default!);
     }
 
     // SerializeOptions.Type-old: the previous ContentType property is gone.

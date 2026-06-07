@@ -18,7 +18,7 @@ public class DataGenericTests
     [Test]
     public async Task Ok_WithType_SetsType()
     {
-        var data = global::app.data.@this<int>.Ok(42, Type.Int);
+        var data = global::app.data.@this<global::app.type.number.@this>.Ok(42, Type.Int);
 
         await Assert.That(data.Value).IsEqualTo(42);
         await Assert.That(data.Type).IsNotNull();
@@ -38,8 +38,8 @@ public class DataGenericTests
     [Test]
     public async Task Value_WrongType_ReturnsDefault()
     {
-        // Create a global::app.data.@this<int> then set base value to a string via base class
-        var data = new global::app.data.@this<int>("test", 42);
+        // Create a global::app.data.@this<global::app.type.number.@this> then set base value to a string via base class
+        var data = new global::app.data.@this<global::app.type.number.@this>("test", 42);
         ((Data)data).Value = "not an int";
 
         await Assert.That(data.Value).IsEqualTo(default(int));
@@ -69,7 +69,7 @@ public class DataGenericTests
     [Test]
     public async Task TaskOfData_WorksWithGeneric()
     {
-        Task<Data> task = Task.FromResult<Data>(global::app.data.@this<int>.Ok(99));
+        Task<Data> task = Task.FromResult<Data>(global::app.data.@this<global::app.type.number.@this>.Ok(99));
         var result = await task;
 
         await result.IsSuccess();

@@ -165,7 +165,7 @@ public sealed class @this : ISerializer
         }
     }
 
-    public async Task<global::app.data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default)
+    public async Task<global::app.data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default) where T : global::app.type.item.@this
     {
         try
         {
@@ -240,16 +240,18 @@ public sealed class @this : ISerializer
     /// knows the wrapped type (e.g. <c>Load&lt;Identity&gt;</c> from the
     /// identity table). [Store]-only properties hydrate on the inbound side.
     /// </summary>
-    public global::app.data.@this<T> Load<T>(string s)
+    // Store load: the persisted value IS a Data, so the result is that Data (T : data),
+    // not Data<T> (which would force a Data<Data> the constraint forbids). Tuple result.
+    public (T? Value, error.IError? Error) Load<T>(string s) where T : global::app.data.@this
     {
         try
         {
-            if (string.IsNullOrEmpty(s) || s == "null") return global::app.data.@this<T>.Ok(default!);
-            return global::app.data.@this<T>.Ok(JsonSerializer.Deserialize<T>(s, _store)!);
+            if (string.IsNullOrEmpty(s) || s == "null") return (default, null);
+            return (JsonSerializer.Deserialize<T>(s, _store)!, null);
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {
-            return global::app.data.@this<T>.FromError(new error.ServiceError(
+            return (default, new error.ServiceError(
                 $"Plang Load failed: {ex.Message}", "PlangDeserializeError", 400) { Exception = ex });
         }
     }
@@ -268,7 +270,7 @@ public sealed class @this : ISerializer
         }
     }
 
-    public global::app.data.@this<T> Deserialize<T>(string s)
+    public global::app.data.@this<T> Deserialize<T>(string s) where T : global::app.type.item.@this
     {
         try
         {

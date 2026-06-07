@@ -29,7 +29,7 @@ public class NamePropagationTests
     public async Task Name_FullVarMatch_PropagatesLiveVariableName()
     {
         var context = _app.User.Context;
-        context.Variable.Set(new global::app.data.@this<List<object?>>("products", new List<object?> { "a" }) { Context = context });
+        context.Variable.Set(new global::app.data.@this<global::app.type.list.@this<object?>>("products", new List<object?> { "a" }) { Context = context });
 
         var paramData = new Data("List", "%products%") { Context = context };
         var result = paramData.As<System.Collections.IEnumerable>();
@@ -45,7 +45,7 @@ public class NamePropagationTests
     {
         var context = _app.User.Context;
         var paramData = new Data("Variable", "user") { Context = context };
-        var result = paramData.As<string>();
+        var result = paramData.As<global::app.type.text.@this>();
         await Assert.That(result.Name).IsEqualTo("Variable");
     }
 
@@ -58,7 +58,7 @@ public class NamePropagationTests
         context.Variable.Set(new global::app.data.@this<global::app.type.text.@this>("name", "world") { Context = context });
 
         var paramData = new Data("Greeting", "hello %name%!") { Context = context };
-        var result = paramData.As<string>();
+        var result = paramData.As<global::app.type.text.@this>();
         await Assert.That(result.Name).IsEqualTo("Greeting");
         await Assert.That(result.Value).IsEqualTo("hello world!");
     }
@@ -70,7 +70,7 @@ public class NamePropagationTests
     {
         var context = _app.User.Context;
         var paramData = new Data("X", "%missing%") { Context = context };
-        var result = paramData.As<string>();
+        var result = paramData.As<global::app.type.text.@this>();
         await Assert.That(result.Name).IsEqualTo("missing");
         await Assert.That(result.IsInitialized).IsFalse();
     }
@@ -97,11 +97,11 @@ public class NamePropagationTests
     public async Task Name_FullMatch_StoredVarRef_PropagatesImmediateName_NoChain()
     {
         var context = _app.User.Context;
-        context.Variable.Set(new global::app.data.@this<int>("b", 42) { Context = context });
+        context.Variable.Set(new global::app.data.@this<global::app.type.number.@this>("b", 42) { Context = context });
         context.Variable.Set(new global::app.data.@this<global::app.type.text.@this>("a", "%b%") { Context = context });
 
         var paramData = new Data("Slot", "%a%") { Context = context };
-        var result = paramData.As<string>();
+        var result = paramData.As<global::app.type.text.@this>();
         await Assert.That(result.Name).IsEqualTo("a");
         await Assert.That(result.Value).IsEqualTo("%b%");
     }

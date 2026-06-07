@@ -74,7 +74,7 @@ public partial class Set : IContext, IBuildValidatable
     /// registry and stamps the entire entity (kind included) onto the minted
     /// variable.
     /// </summary>
-    public partial data.@this<global::app.type.@this>? Type { get; init; }
+    public partial data.@this? Type { get; init; }
     [Default(false)]
     public partial data.@this<global::app.type.@bool.@this> AsDefault { get; init; }
 
@@ -135,7 +135,8 @@ public partial class Set : IContext, IBuildValidatable
         //   3. the IStrictKindEnforcer load seam below — byte-backed values, at MATERIALIZATION.
         if (Type?.Value != null)
         {
-            var typeEntity = Type.Value;
+            // Type entity rides in a bare Data (.Value is the type.@this).
+            var typeEntity = (global::app.type.@this)Type.Value;
             // Canonicalise kind through the format registry — `markdown` → `md`,
             // `jpeg` → `jpg`. The factory does this when a context is passed;
             // the .pr round-trip loses the context, so we run it again here.

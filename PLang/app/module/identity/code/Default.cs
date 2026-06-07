@@ -290,11 +290,11 @@ public sealed class Default : IIdentity
     private data.@this<Identity> GenerateIdentity(IContext action, string name, bool isDefault, string? providerName = null)
     {
         var app = action.Context.App;
-        var keyResult = app.Code.Get<IKey>(providerName);
-        if (!keyResult.Success)
-            return data.@this<Identity>.FromError(keyResult.Error!);
+        var __keyR = app.Code.Get<IKey>(providerName);
+        if (!__keyR.Success)
+            return data.@this<Identity>.FromError(__keyR.Error!);
 
-        var (keys, keyErr) = keyResult.Value!.GenerateKeyPair();
+        var (keys, keyErr) = ((IKey)__keyR.Value!).GenerateKeyPair();
         if (keyErr != null)
             return data.@this<Identity>.FromError(keyErr);
 

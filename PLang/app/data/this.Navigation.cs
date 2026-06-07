@@ -174,7 +174,7 @@ public partial class @this
         if (app != null)
         {
             var result = app.Code.Get<app.data.code.IGrep>();
-            if (result?.Value is app.data.code.IGrep provider) return provider;
+            if (result.Value is app.data.code.IGrep g) return g;
         }
         return new app.data.code.Default();
     }

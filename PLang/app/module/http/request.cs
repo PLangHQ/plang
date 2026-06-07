@@ -26,7 +26,7 @@ public partial class request : IContext
     public partial data.@this? Body { get; init; }
 
     /// <summary>Per-request headers. Merged with Config.DefaultHeaders (step-level wins on conflict).</summary>
-    public partial data.@this<Dictionary<string, object>>? Headers { get; init; }
+    public partial data.@this<global::app.type.dict.@this>? Headers { get; init; }
 
     /// <summary>Content-Type for the request body. Default: "application/json".</summary>
     [Default("application/json")]

@@ -472,6 +472,7 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public async Task<data.@this<TResult>> RunAction<TAction, TResult>(TAction handler, actor.context.@this context)
         where TAction : module.ICodeGenerated
+        where TResult : global::app.type.item.@this
     {
         var result = await RunAction(handler, context);
         if (!result.Success) return data.@this<TResult>.FromError(result.Error!);

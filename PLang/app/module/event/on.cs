@@ -15,7 +15,7 @@ public partial class On : IContext
 {
     /// <summary>Lifecycle moment the callback binds to (a <c>trigger</c> enum value, e.g. BeforeGoal, OnAsk).</summary>
     [IsNotNull]
-    public partial data.@this<Trigger> Trigger { get; init; }
+    public partial data.@this<global::app.type.choice.@this<Trigger>> Trigger { get; init; }
     /// <summary>Goal to execute when the event fires.</summary>
     public partial data.@this<GoalCall> GoalToCall { get; init; }
     /// <summary>Glob or regex pattern to match goal names. Null matches all goals.</summary>

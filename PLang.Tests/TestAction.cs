@@ -20,7 +20,7 @@ public static class TestAction
     }
 
     /// <summary>Wraps a typed value in data.@this&lt;T&gt; for direct action construction in tests.</summary>
-    public static global::app.data.@this<T> D<T>(T value) => new("", value);
+    public static global::app.data.@this<T> D<T>(T value) where T : global::app.type.item.@this => new("", value);
 
     /// <summary>Wraps an untyped value in data.@this for direct action construction in tests.</summary>
     public static global::app.data.@this D(object? value) => new("", value);

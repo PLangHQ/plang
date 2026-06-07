@@ -14,7 +14,7 @@ public partial class StringWithDefault : global::app.module.IContext
 public partial class IntWithDefault : global::app.module.IContext
 {
     [global::app.module.Default(42)]
-    public partial global::app.data.@this<int> Count { get; init; }
+    public partial global::app.data.@this<global::app.type.number.@this> Count { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Count);
 }
 
@@ -22,7 +22,7 @@ public partial class IntWithDefault : global::app.module.IContext
 public partial class EnumWithDefault : global::app.module.IContext
 {
     [global::app.module.Default(MatrixEnum.A)]
-    public partial global::app.data.@this<MatrixEnum> Choice { get; init; }
+    public partial global::app.data.@this<global::app.type.choice.@this<MatrixEnum>> Choice { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Choice);
 }
 

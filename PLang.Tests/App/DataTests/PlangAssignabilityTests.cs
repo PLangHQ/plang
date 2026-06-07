@@ -62,12 +62,12 @@ public class PlangAssignabilityTests
         await Assert.That(items[0]!.ToString()).IsEqualTo("hello");
     }
 
-    // Same shape for any non-iterable scalar — Data<int>(42).As<IEnumerable>()
+    // Same shape for any non-iterable scalar — Data<global::app.type.number.@this>(42).As<IEnumerable>()
     // wraps as a single-element sequence yielding 42.
     [Test]
     public async Task AsT_IntToIEnumerable_WrapsAsSingleElementList()
     {
-        var source = new global::app.data.@this<int>("n", 42) { Context = _app.User.Context };
+        var source = new global::app.data.@this<global::app.type.number.@this>("n", 42) { Context = _app.User.Context };
         var wrapped = source.As<IEnumerable>();
         var items = new List<object?>();
         foreach (var item in wrapped.Value!) items.Add(item);

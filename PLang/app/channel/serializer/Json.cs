@@ -112,7 +112,7 @@ public sealed class Json : ISerializer
         }
     }
 
-    public async Task<data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default)
+    public async Task<data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default) where T : global::app.type.item.@this
     {
         try
         {
@@ -156,7 +156,7 @@ public sealed class Json : ISerializer
         }
     }
 
-    public data.@this<T> Deserialize<T>(string s)
+    public data.@this<T> Deserialize<T>(string s) where T : global::app.type.item.@this
     {
         try
         {

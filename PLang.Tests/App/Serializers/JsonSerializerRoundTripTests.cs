@@ -28,7 +28,7 @@ public class JsonSerializerRoundTripTests
         var app = new global::app.@this("/test");
         var json = app.User.Channel.Serializers.GetByMimeType("application/json");
         var raw = "\"hello\"";
-        var s = json.Deserialize<string>(raw).Value!;
+        var s = json.Deserialize<global::app.type.text.@this>(raw).Value!;
         await Assert.That(s).IsEqualTo("hello");
     }
 

@@ -12,7 +12,7 @@ namespace app.module.assert;
 /// </summary>
 internal static class AssertSnapshot
 {
-    public static data.@this<T> WithVariables<T>(data.@this<T> result, actor.context.@this context)
+    public static data.@this<T> WithVariables<T>(data.@this<T> result, actor.context.@this context) where T : global::app.type.item.@this
     {
         if (result.Success) return result;
         if (result.Error is AssertionError err && err.Variables == null)

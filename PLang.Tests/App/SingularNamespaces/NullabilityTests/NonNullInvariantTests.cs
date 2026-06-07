@@ -26,7 +26,7 @@ public class NonNullInvariantTests
         // — it does NOT go through Promote().  For a non-primitive name with no Context,
         // the chain falls off the end and returns null.  This pins the ClrType behaviour
         // alone; the fail-loud Promote() contract is pinned by the next two tests.
-        var d = new global::app.data.@this<int>("", 0,
+        var d = new global::app.data.@this<global::app.type.number.@this>("", 0,
             new global::app.type.@this("not-a-primitive-domain-name"));
         await Assert.That(d.Type.ClrType).IsNull();
     }

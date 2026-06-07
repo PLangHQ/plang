@@ -108,7 +108,7 @@ public class DeepResolutionListTests
             parameters: new[] { ("messages", (object?)raw) },
             variables: new Dictionary<string, object?> { ["prompt"] = "You are a compiler" });
 
-        var typed = result.Data as global::app.data.@this<List<global::app.module.llm.LlmMessage>>;
+        var typed = result.Data as global::app.data.@this<global::app.type.list.@this<global::app.module.llm.LlmMessage>>;
         await Assert.That(typed!.Value).IsNotNull();
         await Assert.That(typed.Value![0].Content).IsEqualTo("You are a compiler");
     }
@@ -135,7 +135,7 @@ public class DeepResolutionListTests
             parameters: new[] { ("messages", (object?)raw) },
             variables: new Dictionary<string, object?> { ["a"] = "alpha", ["b"] = "beta" });
 
-        var typed = result.Data as global::app.data.@this<List<global::app.module.llm.LlmMessage>>;
+        var typed = result.Data as global::app.data.@this<global::app.type.list.@this<global::app.module.llm.LlmMessage>>;
         await Assert.That(typed!.Value![0].Content).IsEqualTo("alpha");
         await Assert.That(typed.Value![1].Content).IsEqualTo("beta");
     }
@@ -157,7 +157,7 @@ public class DeepResolutionDictTests
             parameters: new[] { ("dict", (object?)raw) },
             variables: new Dictionary<string, object?> { ["x"] = "substituted" });
 
-        var typed = result.Data as global::app.data.@this<Dictionary<string, object?>>;
+        var typed = result.Data as global::app.data.@this<global::app.type.dict.@this>;
         await Assert.That(typed!.Value!["inner"]).IsEqualTo("substituted");
         await Assert.That(typed.Value["other"]).IsEqualTo("literal");
     }
@@ -175,7 +175,7 @@ public class DeepResolutionDictTests
             parameters: new[] { ("dict", (object?)raw) },
             variables: new Dictionary<string, object?> { ["a"] = "alpha", ["b"] = "beta" });
 
-        var typed = result.Data as global::app.data.@this<Dictionary<string, object?>>;
+        var typed = result.Data as global::app.data.@this<global::app.type.dict.@this>;
         var inner = typed!.Value!["items"] as List<object?>;
         await Assert.That(inner![0]).IsEqualTo("alpha");
         await Assert.That(inner[1]).IsEqualTo("beta");
@@ -293,7 +293,7 @@ public class ConcurrentHandlersTests
         var data = new Data("v", "%x%") { Context = app.User.Context };
 
         var tasks = Enumerable.Range(0, 50).Select(_ => Task.Run(() =>
-            data.As<string>(app.User.Context))).ToArray();
+            data.As<global::app.type.text.@this>(app.User.Context))).ToArray();
         var results = await Task.WhenAll(tasks);
 
         // Each should be independent and successful with the same resolved value.

@@ -377,11 +377,18 @@ public sealed class @this
             // PathJsonConverter baked in — Path fields land wired.
             if (trimmed.StartsWith('['))
             {
-                var listResult = app.System.Channel.Serializers.Deserialize<List<goal.@this>>(
-                    new DeserializeOptions { Value = content, Extension = ext });
-                if (!listResult.Success)
-                    return data.@this.FromError(listResult.Error!);
-                goals = listResult.Value;
+                // A JSON array of goals — deserialize each element via Deserialize<goal>
+                // (goal is :item); a List<goal> isn't an item so can't ride Data<List<goal>>.
+                goals = new List<goal.@this>();
+                using var doc = System.Text.Json.JsonDocument.Parse(content);
+                foreach (var el in doc.RootElement.EnumerateArray())
+                {
+                    var elResult = app.System.Channel.Serializers.Deserialize<goal.@this>(
+                        new DeserializeOptions { Value = el.GetRawText(), Extension = ext });
+                    if (!elResult.Success)
+                        return data.@this.FromError(elResult.Error!);
+                    if (elResult.Value != null) goals.Add(elResult.Value);
+                }
             }
             else
             {

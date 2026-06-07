@@ -59,7 +59,7 @@ public class Plng001PostMigrationTests
             namespace app.Test {
                 [app.module.Action]
                 public partial class GoodHandler {
-                    public partial app.data.@this<int> Count { get; init; }
+                    public partial app.data.@this<global::app.type.number.@this> Count { get; init; }
                 }
             }
             """;

@@ -102,7 +102,7 @@ public class TextStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Text();
 
-        var result = serializer.Deserialize<string>("hello").Value!;
+        var result = serializer.Deserialize<global::app.type.text.@this>("hello").Value!;
 
         await Assert.That(result).IsEqualTo("hello");
     }
@@ -112,7 +112,7 @@ public class TextStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Text();
 
-        var result = serializer.Deserialize<int>("42").Value!;
+        var result = serializer.Deserialize<global::app.type.number.@this>("42").Value!;
 
         await Assert.That(result).IsEqualTo(42);
     }
@@ -132,7 +132,7 @@ public class TextStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Text();
 
-        var result = serializer.Deserialize<long>("9999999999").Value!;
+        var result = serializer.Deserialize<global::app.type.number.@this>("9999999999").Value!;
 
         await Assert.That(result).IsEqualTo(9999999999L);
     }
@@ -143,7 +143,7 @@ public class TextStreamSerializerTests
         var serializer = new global::app.channel.serializer.Text();
         // Use culture-appropriate decimal separator
         var separator = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
-        var result = serializer.Deserialize<double>($"3{separator}14").Value!;
+        var result = serializer.Deserialize<global::app.type.number.@this>($"3{separator}14").Value!;
 
         await Assert.That(result).IsEqualTo(3.14);
     }
@@ -154,7 +154,7 @@ public class TextStreamSerializerTests
         var serializer = new global::app.channel.serializer.Text();
         // Use culture-appropriate decimal separator
         var separator = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
-        var result = serializer.Deserialize<decimal>($"123{separator}45").Value!;
+        var result = serializer.Deserialize<global::app.type.number.@this>($"123{separator}45").Value!;
 
         await Assert.That(result).IsEqualTo(123.45m);
     }
@@ -164,9 +164,9 @@ public class TextStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Text();
 
-        var trueResult = serializer.Deserialize<bool>("true").Value!;
-        var falseResult = serializer.Deserialize<bool>("false").Value!;
-        var trueResultCaps = serializer.Deserialize<bool>("True").Value!;
+        var trueResult = serializer.Deserialize<global::app.type.@bool.@this>("true").Value!;
+        var falseResult = serializer.Deserialize<global::app.type.@bool.@this>("false").Value!;
+        var trueResultCaps = serializer.Deserialize<global::app.type.@bool.@this>("True").Value!;
 
         await Assert.That(trueResult).IsTrue();
         await Assert.That(falseResult).IsFalse();
@@ -223,7 +223,7 @@ public class TextStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Text();
 
-        var result = serializer.Deserialize<int>("").Value!;
+        var result = serializer.Deserialize<global::app.type.number.@this>("").Value!;
 
         await Assert.That(result).IsEqualTo(0);
     }
@@ -233,7 +233,7 @@ public class TextStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Text();
 
-        var result = serializer.Deserialize<string>("").Value!;
+        var result = serializer.Deserialize<global::app.type.text.@this>("").Value!;
 
         await Assert.That(result).IsNull();
     }
@@ -243,7 +243,7 @@ public class TextStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Text();
 
-        var result = serializer.Deserialize<int>("42").Value!;
+        var result = serializer.Deserialize<global::app.type.number.@this>("42").Value!;
 
         await Assert.That(result).IsEqualTo(42);
     }
@@ -324,7 +324,7 @@ public class TextStreamSerializerTests
         var original = "hello world";
 
         var text = serializer.Serialize(Data.Ok(original)).Value!;
-        var result = serializer.Deserialize<string>(text).Value!;
+        var result = serializer.Deserialize<global::app.type.text.@this>(text).Value!;
 
         await Assert.That(result).IsEqualTo(original);
     }

@@ -84,11 +84,11 @@ public class ModulesDescribeReturnTypeTests
         await Assert.That(row.ReturnTypeName).IsEqualTo("path");
     }
 
-    // Data<List<path>> — generic collection rendering.
+    // Data<global::app.type.list.@this<path>> — generic collection rendering.
     [Test]
     public async Task ReturnTypeName_DataOfListOfPath_IsListOfPath()
     {
-        // file.list → Task<Data<List<path>>>.
+        // file.list → Task<Data<global::app.type.list.@this<path>>>.
         var row = await Find("file", "list");
         await Assert.That(row.ReturnTypeName).IsEqualTo("list<path>");
     }
@@ -102,7 +102,7 @@ public class ModulesDescribeReturnTypeTests
         await Assert.That(row.ReturnTypeName).IsEqualTo("identity");
     }
 
-    // Data<List<Identity>> — list of domain type.
+    // Data<global::app.type.list.@this<Identity>> — list of domain type.
     [Test]
     public async Task ReturnTypeName_DataOfListOfIdentity_IsListOfIdentity()
     {

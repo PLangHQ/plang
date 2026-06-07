@@ -141,7 +141,7 @@ public class GeneratorValidationTests
             "app.module.matrix.plain.IntPlain.Action.g.cs"));
 
         await Assert.That(stringPlainSrc).Contains("__ResolveData(\"path\").As<global::app.type.text.@this>(Context)");
-        await Assert.That(intPlainSrc).Contains("__ResolveData(\"count\").As<int>(Context)");
+        await Assert.That(intPlainSrc).Contains("__ResolveData(\"count\").As<global::app.type.number.@this>(Context)");
     }
 
     [Test]

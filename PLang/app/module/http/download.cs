@@ -19,7 +19,7 @@ public partial class download : IContext
     public partial data.@this<global::app.type.text.@this> Url { get; init; }
 
     /// <summary>Per-request headers. Merged with Config.DefaultHeaders.</summary>
-    public partial data.@this<Dictionary<string, object>>? Headers { get; init; }
+    public partial data.@this<global::app.type.dict.@this>? Headers { get; init; }
 
     /// <summary>Download timeout in seconds. Default: 30.</summary>
     [Default(30)]

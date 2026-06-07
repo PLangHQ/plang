@@ -138,9 +138,8 @@ public sealed class Sqlite : IStore
             if (result == null || result == DBNull.Value)
                 return Task.FromResult(app.data.@this.Ok(null));
 
-            var deserResult = _serializer.Load<T>(result.ToString()!);
-            if (!deserResult.Success) return Task.FromResult(app.data.@this.FromError(deserResult.Error!));
-            var typed = deserResult.Value;
+            var (typed, derr) = _serializer.Load<T>(result.ToString()!);
+            if (derr != null) return Task.FromResult(app.data.@this.FromError(derr));
             if (typed != null) RehydrateValue(typed);
             return Task.FromResult((data.@this?)typed ?? app.data.@this.Ok(null));
         }
@@ -198,11 +197,11 @@ public sealed class Sqlite : IStore
                 var raw = reader.IsDBNull(1) ? null : reader.GetString(1);
                 if (raw != null)
                 {
-                    var deserResult = _serializer.Load<T>(raw);
-                    if (deserResult.Success && deserResult.Value != null)
+                    var (loaded, _) = _serializer.Load<T>(raw);
+                    if (loaded != null)
                     {
-                        RehydrateValue(deserResult.Value);
-                        list.Add(deserResult.Value);
+                        RehydrateValue(loaded);
+                        list.Add(loaded);
                     }
                 }
             }

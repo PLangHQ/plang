@@ -124,9 +124,9 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
         // Data.DynamicData re-evaluates on each access, so changes via setDefault/rename are reflected.
         Context.Variable.Set("MyIdentity", new data.DynamicData("MyIdentity", () =>
         {
-            var provider = app.Code.Get<IIdentity>();
-            if (!provider.Success) return null;
-            var result = provider.Value!.GetOrCreateDefaultAsync(new global::app.module.identity.Get { Context = app.System.Context }).GetAwaiter().GetResult();
+            var __idR = app.Code.Get<IIdentity>();
+            if (!__idR.Success) return null;
+            var result = ((IIdentity)__idR.Value!).GetOrCreateDefaultAsync(new global::app.module.identity.Get { Context = app.System.Context }).GetAwaiter().GetResult();
             return result.Success ? result.Value as Identity : null;
         }));
     }

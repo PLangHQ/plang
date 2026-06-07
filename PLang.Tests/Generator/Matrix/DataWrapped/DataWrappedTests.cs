@@ -51,7 +51,7 @@ public class DataWrappedListTests
         var result = await MatrixRunner.RunAsync<DataWrappedList>(app,
             parameters: new[] { ("messages", (object?)raw) },
             variables: new Dictionary<string, object?> { ["comment"] = "you are a compiler" });
-        var typed = result.Data as global::app.data.@this<List<global::app.module.llm.LlmMessage>>;
+        var typed = result.Data as global::app.data.@this<global::app.type.list.@this<global::app.module.llm.LlmMessage>>;
         await Assert.That(typed!.Value).IsNotNull();
         await Assert.That(typed.Value![0].Content).IsEqualTo("you are a compiler");
     }
@@ -62,7 +62,7 @@ public class DataWrappedListTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<DataWrappedList>(app,
             parameters: new[] { ("messages", (object?)new List<object?>()) });
-        var typed = result.Data as global::app.data.@this<List<global::app.module.llm.LlmMessage>>;
+        var typed = result.Data as global::app.data.@this<global::app.type.list.@this<global::app.module.llm.LlmMessage>>;
         await Assert.That(typed!.Value!.Count).IsEqualTo(0);
     }
 }
@@ -77,7 +77,7 @@ public class DataWrappedDictTests
         var result = await MatrixRunner.RunAsync<DataWrappedDict>(app,
             parameters: new[] { ("headers", (object?)raw) },
             variables: new Dictionary<string, object?> { ["x"] = "substituted" });
-        var typed = result.Data as global::app.data.@this<Dictionary<string, object?>>;
+        var typed = result.Data as global::app.data.@this<global::app.type.dict.@this>;
         await Assert.That(typed!.Value!["inner"]).IsEqualTo("substituted");
         await Assert.That(typed.Value["other"]).IsEqualTo("literal");
     }
@@ -102,7 +102,7 @@ public class DataWrappedActionListTests
             parameters: new[] { ("actions", (object?)raw) },
             variables: new Dictionary<string, object?> { ["comment"] = "should-not-resolve" });
 
-        var typed = result.Data as global::app.data.@this<List<PrAction>>;
+        var typed = result.Data as global::app.data.@this<global::app.type.list.@this<PrAction>>;
         await Assert.That(typed!.Value).IsNotNull();
         // The sub-action's parameter Value is still raw "%comment%" — not resolved.
         var subParam = typed.Value![0].Parameters?.FirstOrDefault(p => p.Name == "v");
@@ -127,7 +127,7 @@ public class DataWrappedActionListTests
             parameters: new[] { ("actions", (object?)raw) },
             variables: new Dictionary<string, object?> { ["x"] = "premature-resolution-would-be-bad" });
 
-        var typed = result.Data as global::app.data.@this<List<PrAction>>;
+        var typed = result.Data as global::app.data.@this<global::app.type.list.@this<PrAction>>;
         var subParam = typed!.Value![0].Parameters?.FirstOrDefault(p => p.Name == "a");
         await Assert.That(subParam!.Value).IsEqualTo("%x%");
     }
@@ -183,7 +183,7 @@ public class DataWrappedStringUsesCycleTests
             variables: new Dictionary<string, object?> { ["greeting"] = "hello" });
 
         await result.Data.IsSuccess();
-        // Run() returns Data.Ok(int) — base Data with boxed int, not Data<int>.
+        // Run() returns Data.Ok(int) — base Data with boxed int, not Data<global::app.type.number.@this>.
         await Assert.That(result.Data.Value).IsEqualTo(5);
     }
 }

@@ -18,7 +18,7 @@ public partial class configure : IContext, IConfigure<Config>
     public partial data.@this<global::app.type.text.@this>? BaseUrl { get; init; }
 
     /// <summary>Default headers merged into every request.</summary>
-    public partial data.@this<Dictionary<string, object>>? DefaultHeaders { get; init; }
+    public partial data.@this<global::app.type.dict.@this>? DefaultHeaders { get; init; }
 
     /// <summary>Default Content-Type for request bodies.</summary>
     public partial data.@this<global::app.type.text.@this>? ContentType { get; init; }
