@@ -1,14 +1,14 @@
 {
-  "name": "DictIsItemKeepsNoOrder",
+  "name": "DictStillThrowsOnSort",
   "description": null,
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "set %people% = [{\u0022name\u0022:\u0022b\u0022}, {\u0022name\u0022:\u0022a\u0022}]",
-      "lineNumber": 5,
+      "text": "set %scores% = [{\u0022score\u0022:10}, {\u0022score\u0022:20}]",
+      "lineNumber": 6,
       "indent": 0,
-      "comment": "A dict is \u0060: item\u0060 AND still rejects ordering \u2014 \u0060item\u0060 carries no IOrderableValue\nto leak in. sort over a list-of-dict is unorderable; PLang returns that as an error\n(not a thrown exception), so the on-error handler catches it.",
+      "comment": "Regression anchor: with the \u0060where T : item\u0060 constraint locked and every value \u0060: item\u0060,\nsorting a list of dicts is still rejected \u2014 \u0060item\u0060 carries no ordering for dict to leak,\nregardless of the kind of the dict\u0027s values. PLang surfaces it as an error (not a thrown\nexception), so the on-error handler catches it.",
       "actions": [
         {
           "module": "variable",
@@ -20,7 +20,7 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%people%"
+              "value": "%scores%"
             },
             {
               "@schema": "data",
@@ -30,10 +30,10 @@
               },
               "value": [
                 {
-                  "name": "b"
+                  "score": 10
                 },
                 {
-                  "name": "a"
+                  "score": 20
                 }
               ]
             }
@@ -52,14 +52,14 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%people%, Value=[{\u0022name\u0022:\u0022b\u0022}, {\u0022name\u0022:\u0022a\u0022}])",
+      "formal": "variable.set(Name=%scores%, Value=[{\u0022score\u0022:10}, {\u0022score\u0022:20}])",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "sort %people%, on error call Caught",
-      "lineNumber": 6,
+      "text": "sort %scores%, on error call Caught",
+      "lineNumber": 7,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -73,7 +73,7 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%people%"
+              "value": "%scores%"
             }
           ],
           "defaults": [
@@ -124,14 +124,14 @@
         }
       ],
       "intent": null,
-      "formal": "list.sort(ListName=%people%) | error.handle(Actions=[goal.call(GoalName={name:\u0022Caught\u0022,parameters:[]})])",
+      "formal": "list.sort(ListName=%scores%) | error.handle(Actions=[goal.call(GoalName={name:\u0022Caught\u0022,parameters:[]})])",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
       "text": "assert %caught% is true",
-      "lineNumber": 7,
+      "lineNumber": 8,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -167,7 +167,7 @@
         {
           "index": 0,
           "text": "set %caught% = true",
-          "lineNumber": 10,
+          "lineNumber": 11,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -213,8 +213,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/ScalarsAsNative/Stage1/DictIsItemKeepsNoOrder.test.goal",
-      "prPath": "/ScalarsAsNative/Stage1/.build/dictisitemkeepsnoorder.test.pr",
+      "path": "/ScalarsAsNative/Stage7/DictStillThrowsOnSort.test.goal",
+      "prPath": "/ScalarsAsNative/Stage7/.build/dictstillthrowsonsort.test.pr",
       "hash": "feaa1a3e31f62db3295c3a2eba9a06ac5564ed014d0c9e001b9a52cb0b3c2122",
       "builderVersion": null,
       "isSetup": false,
@@ -225,9 +225,9 @@
     }
   ],
   "visibility": 1,
-  "path": "/ScalarsAsNative/Stage1/DictIsItemKeepsNoOrder.test.goal",
-  "prPath": "/ScalarsAsNative/Stage1/.build/dictisitemkeepsnoorder.test.pr",
-  "hash": "ee4b78cf6360ae636d382968852877f256c9c71601b65b69c681b8b5c4cf8e28",
+  "path": "/ScalarsAsNative/Stage7/DictStillThrowsOnSort.test.goal",
+  "prPath": "/ScalarsAsNative/Stage7/.build/dictstillthrowsonsort.test.pr",
+  "hash": "5ba301b9571c838b6c5a9d90cd60528006288423a84bbc20aead3876c8aa3024",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

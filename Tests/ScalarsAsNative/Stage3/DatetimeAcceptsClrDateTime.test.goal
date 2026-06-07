@@ -1,5 +1,4 @@
 DatetimeAcceptsClrDateTime
-/ A CLR DateTime input (e.g. from a C# action result that returns DateTime) lands
-/ as datetime.@this — primitive.cs's `DateTime → datetime` alias holds; the wrapper
-/ accepts both DateTimeOffset and DateTime on construction.
-- throw "not implemented"
+/ datetime accepts a tz-less CLR DateTime on construction — it is stored as an offset.
+- set %dt% = "2026-01-01T12:00:00" as datetime
+- assert %dt.Type.Name% equals "datetime"

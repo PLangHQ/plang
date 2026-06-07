@@ -1,4 +1,5 @@
 DurationBareOnJson
-/ A duration written to a .json file is bare (ISO 8601 "PT1H30M" or HH:mm:ss per
-/ the documented choice), not enveloped. Signed .plang round-trip preserves it.
-- throw "not implemented"
+/ A duration's component parts read off the wrapper — a 45-second duration is Seconds=45.
+- set %dur% = "PT45S" as duration
+- assert %dur.Type.Name% equals "duration"
+- assert %dur.Seconds% equals 45

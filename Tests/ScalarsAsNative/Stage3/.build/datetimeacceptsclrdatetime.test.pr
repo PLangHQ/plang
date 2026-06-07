@@ -1,0 +1,111 @@
+{
+  "name": "DatetimeAcceptsClrDateTime",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %dt% = \u00222026-01-01T12:00:00\u0022 as datetime",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "datetime accepts a tz-less CLR DateTime on construction \u2014 it is stored as an offset.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%dt%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "2026-01-01T12:00:00"
+            },
+            {
+              "@schema": "data",
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "datetime"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%dt%, Value=\u00222026-01-01T12:00:00\u0022, Type={name:datetime})",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %dt.Type.Name% equals \u0022datetime\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "datetime"
+            },
+            {
+              "@schema": "data",
+              "name": "Actual",
+              "type": {
+                "name": "object"
+              },
+              "value": "%dt.Type.Name%"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022datetime\u0022, Actual=%dt.Type.Name%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/ScalarsAsNative/Stage3/DatetimeAcceptsClrDateTime.test.goal",
+  "prPath": "/ScalarsAsNative/Stage3/.build/datetimeacceptsclrdatetime.test.pr",
+  "hash": "7ac53a0ee1572cfad576aebdf8afc89f5cbed018463b7c2a24d1ba1d3408a612",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

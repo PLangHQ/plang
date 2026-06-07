@@ -1,5 +1,11 @@
 DictStillThrowsOnSort
-/ Regression anchor for the whole branch: even with the constraint locked and
-/ every value `: item`, sorting a list of dicts still throws — `item` never
-/ leaked an order to dict.
-- throw "not implemented"
+/ Regression anchor: with the `where T : item` constraint locked and every value `: item`,
+/ sorting a list of dicts is still rejected — `item` carries no ordering for dict to leak,
+/ regardless of the kind of the dict's values. PLang surfaces it as an error (not a thrown
+/ exception), so the on-error handler catches it.
+- set %scores% = [{"score":10}, {"score":20}]
+- sort %scores%, on error call Caught
+- assert %caught% is true
+
+Caught
+- set %caught% = true

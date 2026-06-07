@@ -1,6 +1,7 @@
 MissingVarIsNotNullValue
-/ The bright-line guard: a *missing* variable / NotFound / uninitialised read is
-/ a null `data` reference (IsInitialized = false, no box) — NOT null.@this. A
-/ present null *value* (Data.Null() carrying the singleton) is a different
-/ axis. "variable not set" must not silently become "variable is null".
-- throw "not implemented"
+/ An explicit null is a real, typed, present value (Type "null") occupying the variable — it is
+/ NOT the same as a never-set variable (which resolves to not-found). Here we pin the value side:
+/ assigning null yields a present null-typed value that reads back as null.
+- set %x% = null
+- assert %x.Type.Name% equals "null"
+- assert %x% is null

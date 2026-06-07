@@ -1,5 +1,8 @@
 NullsSortLast
-/ Sorting a mixed list places nulls last — Compare.Order policy survives null
-/ becoming a wrapper. null.@this does NOT implement IOrderableValue; the sort-
-/ last policy lives on Compare, not on the wrapper.
-- throw "not implemented"
+/ Sorting a list that contains a null keeps every element (no drop, no throw) and orders the
+/ null to the end — the last item of the sorted list is the null value.
+- set %xs% = [3, null, 1]
+- sort %xs%, write to %sorted%
+- assert %sorted.Count% equals 3
+- get last item from %sorted%, write to %last%
+- assert %last% is null

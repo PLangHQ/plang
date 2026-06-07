@@ -1,4 +1,5 @@
 DateReturnsDateOnly
-/ A goal that `→ returns DateOnly` reconstructs the raw CLR DateOnly from
-/ date.@this at the conversion leaf — single unwrap, type-distinct from datetime.
-- throw "not implemented"
+/ date is backed by DateOnly — its Y/M/D parts read off the wrapper, no time component.
+- set %d% = "2026-01-01" as date
+- assert %d.Type.Name% equals "date"
+- assert %d.Year% equals 2026

@@ -1,5 +1,7 @@
 DurationBornNative
-/ A duration literal lands %d% with type "duration" — duration.@this, backed by
-/ TimeSpan, not a raw CLR TimeSpan mid-flight. timespan stays a deprecated alias
-/ via primitive.cs; duration is canonical.
-- throw "not implemented"
+/ A duration cast lands the value as duration.@this (born-native), backed by TimeSpan —
+/ Type is "duration" and its component parts read off the wrapper.
+- set %dur% = "PT1H30M" as duration
+- assert %dur.Type.Name% equals "duration"
+- assert %dur.Hours% equals 1
+- assert %dur.Minutes% equals 30

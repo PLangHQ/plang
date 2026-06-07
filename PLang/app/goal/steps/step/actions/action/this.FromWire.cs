@@ -31,6 +31,19 @@ public sealed partial class @this
                 act.Parameters.Add(global::app.data.@this.FromWireShape(pRaw, name, context));
             }
         }
+        // A modifier (error.handle, cache.wrap, timeout.after) rides the wire nested under its
+        // target as an action-shaped record — rebuild each recursively. Without this the modifier
+        // (and the whole `on error …` clause) is silently dropped, both at build-time deserialize
+        // of the compile response and at runtime recovery-chain reconstruction.
+        if (global::app.data.@this.WireSlot(value, "modifiers") is { } modsRaw
+            && Sequence(modsRaw) is { } modSeq)
+        {
+            foreach (var m in modSeq)
+            {
+                var mRaw = m is global::app.data.@this md ? md.Value : m;
+                if (FromWire(mRaw, context) is { } mod) act.Modifiers.Add(mod);
+            }
+        }
         return act;
     }
 

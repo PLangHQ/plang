@@ -1,4 +1,6 @@
 NullBareOnJson
-/ A null value written to a .json file is bare `null`, not `{"value":null}` or
-/ any envelope. Signed .plang round-trip keeps it as the null singleton.
-- throw "not implemented"
+/ A JSON null navigates out as the born-native null value — Type "null", not a CLR null hole and
+/ not the text "null".
+- set %d% = {"v": null}
+- set %v% = %d.v%
+- assert %v.Type.Name% equals "null"

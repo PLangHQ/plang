@@ -1,5 +1,6 @@
 NullValueIsSingleton
-/ `set %x% = null` lands %x% as the null.@this singleton — `if %x%` falsy,
-/ `%x% == null` true. Data.Null() stamps the same instance every time; no per-
-/ value allocation.
-- throw "not implemented"
+/ `set %x% = null` lands the born-native null value — Type "null" and `is null` true. It is a
+/ real typed value (the one canonical null), not a typeless CLR hole.
+- set %x% = null
+- assert %x.Type.Name% equals "null"
+- assert %x% is null

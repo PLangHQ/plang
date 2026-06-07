@@ -1,4 +1,6 @@
 DatetimeBornNative
-/ `set %dt% = 2026-01-01T12:00:00Z` lands %dt% with type "datetime" — the value
-/ is datetime.@this, backed by DateTimeOffset, not a raw CLR DateTime mid-flight.
-- throw "not implemented"
+/ A datetime cast lands the value as datetime.@this (born-native), backed by DateTimeOffset —
+/ not a Data-wrapping-a-Data. Type is "datetime" and its parts read off the wrapper.
+- set %dt% = "2026-01-01T12:00:00Z" as datetime
+- assert %dt.Type.Name% equals "datetime"
+- assert %dt.Year% equals 2026

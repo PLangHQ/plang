@@ -1,5 +1,9 @@
 FiveEqualsFiveStillCoerces
-/ The mediator survives the wrapper sweep — "5" == 5 still resolves to true via
-/ Operator.NormalizeTypes, now inspecting text vs number wrappers (not raw
-/ string vs int CLR). The one blessed type-discrimination site keeps working.
-- throw "not implemented"
+/ Regression anchor: a number 5 still equals the text "5" — cross-kind equality coercion was
+/ not lost when scalars became born-native. The comparison coerces and the branch runs.
+- set %a% = 5
+- set %b% = "5"
+- set %matched% = false
+- if %a% equals %b%
+    - set %matched% = true
+- assert %matched% is true

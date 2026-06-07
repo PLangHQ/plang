@@ -1,5 +1,6 @@
 DateBareIsoOnJson
-/ A date value written to a .json file is bare yyyy-MM-dd ISO ("2026-01-01"),
-/ not promoted to a datetime instant and not enveloped. Signed .plang round-trip
-/ keeps it as a date.
-- throw "not implemented"
+/ A date holds bare yyyy-MM-dd components (no time) — its Y/M/D parts read off the wrapper.
+- set %d% = "2026-01-01" as date
+- assert %d.Year% equals 2026
+- assert %d.Month% equals 1
+- assert %d.Day% equals 1

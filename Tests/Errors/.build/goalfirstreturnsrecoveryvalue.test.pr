@@ -15,29 +15,36 @@
           "action": "throw",
           "parameters": [
             {
+              "@schema": "data",
               "name": "Message",
-              "value": "boom",
-              "type": "string"
-            },
-            {
-              "name": "StatusCode",
-              "value": 500,
-              "type": "int"
+              "type": {
+                "name": "text"
+              },
+              "value": "boom"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "statuscode",
+              "type": {
+                "name": "number",
+                "kind": "int"
+              },
+              "value": 500
+            }
+          ],
           "modifiers": [
             {
               "module": "error",
               "action": "handle",
               "parameters": [
                 {
-                  "name": "Order",
-                  "value": "GoalFirst",
-                  "type": "errororder"
-                },
-                {
+                  "@schema": "data",
                   "name": "Actions",
+                  "type": {
+                    "name": "list"
+                  },
                   "value": [
                     {
                       "module": "variable",
@@ -46,38 +53,38 @@
                         {
                           "name": "Name",
                           "value": "%content%",
-                          "type": "string"
+                          "type": {
+                            "name": "object"
+                          }
                         },
                         {
                           "name": "Value",
                           "value": "from-recovery",
-                          "type": "string"
+                          "type": {
+                            "name": "text"
+                          }
                         }
-                      ],
-                      "defaults": null,
-                      "modifiers": []
+                      ]
                     }
-                  ],
-                  "type": "list\u00601"
-                }
-              ],
-              "defaults": [
+                  ]
+                },
                 {
-                  "name": "ignoreerror",
-                  "value": false,
-                  "type": "bool"
+                  "@schema": "data",
+                  "name": "Order",
+                  "type": {
+                    "name": "errororder"
+                  },
+                  "value": "GoalFirst"
                 }
               ],
+              "defaults": null,
               "modifiers": []
             }
           ]
         }
       ],
       "intent": null,
-      "guidance": "Throw the error \u0027boom\u0027 in the step. Then apply on-error recovery: set %content% to \u0027from-recovery\u0027 with error.handle using GoalFirst order so the recovery actions run before any other error-first behavior.",
-      "level": "high",
-      "confidence": 78,
-      "formal": null,
+      "formal": "error.throw(Message={\u0022name\u0022:\u0022text\u0022,\u0022value\u0022:\u0022boom\u0022,\u0022type\u0022:{\u0022name\u0022:\u0022text\u0022}}) | error.handle(Actions=[variable.set(Name=%content%, Value=\u0022from-recovery\u0022)], Order=GoalFirst)",
       "source": null,
       "waitForExecution": true
     },
@@ -93,19 +100,20 @@
           "action": "equals",
           "parameters": [
             {
+              "@schema": "data",
               "name": "Expected",
-              "value": "from-recovery",
-              "type": "string"
+              "type": {
+                "name": "text"
+              },
+              "value": "from-recovery"
             },
             {
+              "@schema": "data",
               "name": "Actual",
-              "value": "%content%",
-              "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": "recovery\u0027s variable.set must have executed in GoalFirst path",
-              "type": "string"
+              "type": {
+                "name": "object"
+              },
+              "value": "%content%"
             }
           ],
           "defaults": null,
@@ -113,10 +121,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that %content% equals the recovery value.",
-      "level": "high",
-      "confidence": 95,
-      "formal": null,
+      "formal": "assert.equals(Expected=\u0022from-recovery\u0022, Actual=%content%)",
       "source": null,
       "waitForExecution": true
     },
@@ -132,14 +137,12 @@
           "action": "isNull",
           "parameters": [
             {
+              "@schema": "data",
               "name": "Value",
-              "value": "%!error%",
-              "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": "Handled flag suppresses the error \u2014 proves the recoveryResult-return branch was taken",
-              "type": "string"
+              "type": {
+                "name": "object"
+              },
+              "value": "%!error%"
             }
           ],
           "defaults": null,
@@ -147,10 +150,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that %!error% is null, proving the handled flag suppressed the error after recovery.",
-      "level": "high",
-      "confidence": 85,
-      "formal": null,
+      "formal": "assert.isNull(Value=%!error%)",
       "source": null,
       "waitForExecution": true
     }
@@ -160,7 +160,7 @@
   "path": "/Errors/GoalFirstReturnsRecoveryValue.test.goal",
   "prPath": "/Errors/.build/goalfirstreturnsrecoveryvalue.test.pr",
   "hash": "240cd22f97f1575ce685151f51ce87c1658954fbadba36a2b0ab821f864b63b2",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

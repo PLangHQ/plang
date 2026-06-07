@@ -1,0 +1,334 @@
+{
+  "name": "DurationPartsAndCompare",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %long% = \u0022PT90S\u0022 as duration",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "Durations expose component parts and are orderable by total length \u2014 a 90s duration is\nMinutes=1 Seconds=30 and is longer than a 30s duration.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%long%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "duration"
+              },
+              "value": "00:01:30"
+            },
+            {
+              "@schema": "data",
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "duration"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%long%, Value=\u0022PT90S\u0022, Type={name:duration})",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %short% = \u0022PT30S\u0022 as duration",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%short%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "PT30S"
+            },
+            {
+              "@schema": "data",
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "duration"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%short%, Value=\u0022PT30S\u0022, Type={name:duration})",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %long.Minutes% equals 1",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Expected",
+              "type": {
+                "name": "object"
+              },
+              "value": "%long.Minutes%"
+            },
+            {
+              "@schema": "data",
+              "name": "Actual",
+              "type": {
+                "name": "number",
+                "kind": "int"
+              },
+              "value": 1
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=%long.Minutes%, Actual=1)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %long.Seconds% equals 30",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Expected",
+              "type": {
+                "name": "object"
+              },
+              "value": "%long.Seconds%"
+            },
+            {
+              "@schema": "data",
+              "name": "Actual",
+              "type": {
+                "name": "number"
+              },
+              "value": 30
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=%long.Seconds%, Actual=30)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "if %long.TotalSeconds% is bigger than %short.TotalSeconds%",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Left",
+              "type": {
+                "name": "object"
+              },
+              "value": "%long.TotalSeconds%"
+            },
+            {
+              "@schema": "data",
+              "name": "Operator",
+              "type": {
+                "name": "operator"
+              },
+              "value": "\u003E"
+            },
+            {
+              "@schema": "data",
+              "name": "Right",
+              "type": {
+                "name": "object"
+              },
+              "value": "%short.TotalSeconds%"
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "negate",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "condition.if(Left=%long.TotalSeconds%, Operator=\u0022\u003E\u0022, Right=%short.TotalSeconds%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "set %longerWins% = true",
+      "lineNumber": 9,
+      "indent": 1,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%longerWins%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%longerWins%, Value=true)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "assert %longerWins% is true",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "object"
+              },
+              "value": "%longerwins%"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.isTrue(Value=%longerwins%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/ScalarsAsNative/Stage4/DurationPartsAndCompare.test.goal",
+  "prPath": "/ScalarsAsNative/Stage4/.build/durationpartsandcompare.test.pr",
+  "hash": "7195a874d13a8231ba9a3288af1cb20bb323581c639af17c39d85886f17427e6",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

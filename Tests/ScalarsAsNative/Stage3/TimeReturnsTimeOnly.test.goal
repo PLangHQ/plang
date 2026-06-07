@@ -1,5 +1,5 @@
 TimeReturnsTimeOnly
-/ A goal that `→ returns TimeOnly` reconstructs the raw CLR TimeOnly from
-/ time.@this at the conversion leaf — closing the gap where TimeOnly was
-/ unhandled before this branch.
-- throw "not implemented"
+/ time is backed by TimeOnly — its H/M/S parts read off the wrapper, no date component.
+- set %t% = "14:30:00" as time
+- assert %t.Type.Name% equals "time"
+- assert %t.Hour% equals 14

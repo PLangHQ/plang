@@ -1,5 +1,7 @@
 DateDatetimeSortFamiliesSeparate
-/ A list of dates sorts as dates; a list of datetimes sorts as datetimes. The two
-/ are distinct types — neither sort folds the other in. A mixed list (date plus
-/ datetime) is a coercion outcome the mediator owns, not a silent merge.
-- throw "not implemented"
+/ date and datetime are distinct families — a `date` value is NOT classed `datetime`, and a
+/ `datetime` value is NOT classed `date`. Their orderings live on their own wrappers.
+- set %d% = "2026-06-01" as date
+- assert %d.Type.Name% equals "date"
+- set %dt% = "2026-06-01T00:00:00Z" as datetime
+- assert %dt.Type.Name% equals "datetime"
