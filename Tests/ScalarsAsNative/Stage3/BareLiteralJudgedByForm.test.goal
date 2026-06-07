@@ -1,0 +1,15 @@
+BareLiteralJudgedByForm
+/ PLang is an intent language: a literal is typed by its form + the variable's intent, no `as`
+/ needed. "2026-01-01" births a date, "PT30S" a duration, "42" a number; a written date
+/ normalizes to ISO; a version-like label under %version% stays text. `as` is only a force.
+- set %birthday% = "2026-01-01"
+- assert %birthday.Type.Name% equals "date"
+- set %written% = "1st jan 2026"
+- assert %written.Type.Name% equals "date"
+- assert %written.Year% equals 2026
+- set %timeout% = "PT30S"
+- assert %timeout.Type.Name% equals "duration"
+- set %count% = "42"
+- assert %count.Type.Name% equals "number"
+- set %version% = "2.0"
+- assert %version.Type.Name% equals "text"

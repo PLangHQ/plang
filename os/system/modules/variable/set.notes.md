@@ -1,4 +1,4 @@
-`set %x% = …` is ONE `variable.set`. Emit the `Type` parameter only when the step gives an explicit `as <name>[/<kind>] [strict]` or `(<kind>)` annotation (see the Type reference block); otherwise omit and let the runtime infer.
+`set %x% = …` is ONE `variable.set`. Judge the Value's type from its form + the variable's intent (see the Type reference block — `"2026-01-01"` → date, `"PT30S"` → duration, `"42"` → number; written dates normalized to ISO; labels / identifiers / relative-dates stay text). Emit the separate `Type` parameter ONLY for an explicit `as <name>[/<kind>] [strict]` or `(<kind>)` annotation — that is a FORCE/override; without it, the value's own judged type rides the Value wrapper. A `(<kind>)` token on the target (`set %iso%(duration) = …`) is STRIPPED from the `Name` (PLang ignores `(...)` in a `%var%` name) and becomes the `Type` — the Name is `%iso%`, never `%iso%(duration)`.
 
 `set %x% = … as default` / "default to" / "only if unset" → plain `variable.set` with `{"name":"AsDefault","value":true,"type":"bool"}`. NEVER `code.setDefault` (that picks a signing/crypto provider — unrelated to assigning a `%variable%`).
 

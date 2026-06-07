@@ -1,14 +1,14 @@
 {
-  "name": "ProbeFixes",
+  "name": "BareLiteralJudgedByForm",
   "description": null,
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "set %d% = {\u0022v\u0022: null}",
-      "lineNumber": 2,
+      "text": "set %birthday% = \u00222026-01-01\u0022",
+      "lineNumber": 5,
       "indent": 0,
-      "comment": null,
+      "comment": "PLang is an intent language: a literal is typed by its form \u002B the variable\u0027s intent, no \u0060as\u0060\nneeded. \u00222026-01-01\u0022 births a date, \u0022PT30S\u0022 a duration, \u002242\u0022 a number; a written date\nnormalizes to ISO; a version-like label under %version% stays text. \u0060as\u0060 is only a force.",
       "actions": [
         {
           "module": "variable",
@@ -20,16 +20,21 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%d%"
+              "value": "%birthday%"
             },
             {
               "@schema": "data",
               "name": "Value",
               "type": {
-                "name": "object"
+                "name": "date"
               },
               "value": {
-                "v": null
+                "year": 2026,
+                "month": 1,
+                "day": 1,
+                "dayofweek": "Thursday",
+                "dayofyear": 1,
+                "daynumber": 739616
               }
             }
           ],
@@ -47,144 +52,13 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%d%, Value={\u0022v\u0022: null})",
+      "formal": "variable.set(Name=%birthday%, Value=\u00222026-01-01\u0022)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "set %j% = %d.v%",
-      "lineNumber": 3,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "@schema": "data",
-              "name": "Name",
-              "type": {
-                "name": "variable"
-              },
-              "value": "%j%"
-            },
-            {
-              "@schema": "data",
-              "name": "Value",
-              "type": {
-                "name": "object"
-              },
-              "value": "%d.v%"
-            }
-          ],
-          "defaults": [
-            {
-              "@schema": "data",
-              "name": "asdefault",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ],
-          "modifiers": []
-        }
-      ],
-      "intent": null,
-      "formal": "variable.set(Name=%j%, Value=%d.v%)",
-      "source": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 2,
-      "text": "assert %j% is null",
-      "lineNumber": 4,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "isNull",
-          "parameters": [
-            {
-              "@schema": "data",
-              "name": "Value",
-              "type": {
-                "name": "object"
-              },
-              "value": "%j%"
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
-        }
-      ],
-      "intent": null,
-      "formal": "assert.isNull(Value=%j%)",
-      "source": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 3,
-      "text": "set %day% = \u00222026-01-01\u0022 as date",
-      "lineNumber": 5,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "@schema": "data",
-              "name": "Name",
-              "type": {
-                "name": "variable"
-              },
-              "value": "%day%"
-            },
-            {
-              "@schema": "data",
-              "name": "Value",
-              "type": {
-                "name": "text"
-              },
-              "value": "2026-01-01"
-            },
-            {
-              "@schema": "data",
-              "name": "Type",
-              "type": {
-                "name": "type"
-              },
-              "value": {
-                "name": "date"
-              }
-            }
-          ],
-          "defaults": [
-            {
-              "@schema": "data",
-              "name": "asdefault",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ],
-          "modifiers": []
-        }
-      ],
-      "intent": null,
-      "formal": "variable.set(Name=%day%, Value=\u00222026-01-01\u0022, Type={name:date})",
-      "source": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 4,
-      "text": "assert %day% equals \u00222026-01-01\u0022",
+      "text": "assert %birthday.Type.Name% equals \u0022date\u0022",
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
@@ -199,7 +73,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "2026-01-01"
+              "value": "date"
             },
             {
               "@schema": "data",
@@ -207,7 +81,7 @@
               "type": {
                 "name": "object"
               },
-              "value": "%day%"
+              "value": "%birthday.Type.Name%"
             }
           ],
           "defaults": null,
@@ -215,13 +89,13 @@
         }
       ],
       "intent": null,
-      "formal": "assert.equals(Expected=\u00222026-01-01\u0022, Actual=%day%)",
+      "formal": "assert.equals(Expected=\u0022date\u0022, Actual=%birthday.Type.Name%)",
       "source": null,
       "waitForExecution": true
     },
     {
-      "index": 5,
-      "text": "set %t% = \u002214:30:00\u0022 as time",
+      "index": 2,
+      "text": "set %written% = \u00221st jan 2026\u0022",
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
@@ -236,24 +110,21 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%t%"
+              "value": "%written%"
             },
             {
               "@schema": "data",
               "name": "Value",
               "type": {
-                "name": "text"
-              },
-              "value": "14:30:00"
-            },
-            {
-              "@schema": "data",
-              "name": "Type",
-              "type": {
-                "name": "type"
+                "name": "date"
               },
               "value": {
-                "name": "time"
+                "year": 2026,
+                "month": 1,
+                "day": 1,
+                "dayofweek": "Thursday",
+                "dayofyear": 1,
+                "daynumber": 739616
               }
             }
           ],
@@ -271,13 +142,13 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%t%, Value=\u002214:30:00\u0022, Type={name:\u0022time\u0022})",
+      "formal": "variable.set(Name=%written%, Value=\u00222026-01-01\u0022)",
       "source": null,
       "waitForExecution": true
     },
     {
-      "index": 6,
-      "text": "assert %t% equals \u002214:30:00\u0022",
+      "index": 3,
+      "text": "assert %written.Type.Name% equals \u0022date\u0022",
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
@@ -290,17 +161,17 @@
               "@schema": "data",
               "name": "Expected",
               "type": {
-                "name": "text"
+                "name": "object"
               },
-              "value": "14:30:00"
+              "value": "%written.Type.Name%"
             },
             {
               "@schema": "data",
               "name": "Actual",
               "type": {
-                "name": "object"
+                "name": "text"
               },
-              "value": "%t%"
+              "value": "date"
             }
           ],
           "defaults": null,
@@ -308,14 +179,52 @@
         }
       ],
       "intent": null,
-      "formal": "assert.equals(Expected=\u002214:30:00\u0022, Actual=%t%)",
+      "formal": "assert.equals(Expected=%written.Type.Name%, Actual=\u0022date\u0022)",
       "source": null,
       "waitForExecution": true
     },
     {
-      "index": 7,
-      "text": "set %dur% = \u0022PT30S\u0022 as duration",
+      "index": 4,
+      "text": "assert %written.Year% equals 2026",
       "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Expected",
+              "type": {
+                "name": "number",
+                "kind": "int"
+              },
+              "value": 2026
+            },
+            {
+              "@schema": "data",
+              "name": "Actual",
+              "type": {
+                "name": "object"
+              },
+              "value": "%written.Year%"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=2026, Actual=%written.Year%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "set %timeout% = \u0022PT30S\u0022",
+      "lineNumber": 10,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -329,25 +238,15 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%dur%"
+              "value": "%timeout%"
             },
             {
               "@schema": "data",
               "name": "Value",
               "type": {
-                "name": "text"
-              },
-              "value": "PT30S"
-            },
-            {
-              "@schema": "data",
-              "name": "Type",
-              "type": {
-                "name": "type"
-              },
-              "value": {
                 "name": "duration"
-              }
+              },
+              "value": "00:00:30"
             }
           ],
           "defaults": [
@@ -364,14 +263,98 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%dur%, Value=\u0022PT30S\u0022, Type={name:duration})",
+      "formal": "variable.set(Name=%timeout%, Value=\u0022PT30S\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "assert %timeout.Type.Name% equals \u0022duration\u0022",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Expected",
+              "type": {
+                "name": "object"
+              },
+              "value": "%timeout.Type.Name%"
+            },
+            {
+              "@schema": "data",
+              "name": "Actual",
+              "type": {
+                "name": "text"
+              },
+              "value": "duration"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=%timeout.Type.Name%, Actual=\u0022duration\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "set %count% = \u002242\u0022",
+      "lineNumber": 12,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%count%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "number",
+                "kind": "int"
+              },
+              "value": 42
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%count%, Value=42)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 8,
-      "text": "assert %dur% equals \u0022PT30S\u0022",
-      "lineNumber": 10,
+      "text": "assert %count.Type.Name% equals \u0022number\u0022",
+      "lineNumber": 13,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -385,7 +368,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "PT30S"
+              "value": "number"
             },
             {
               "@schema": "data",
@@ -393,7 +376,7 @@
               "type": {
                 "name": "object"
               },
-              "value": "%dur%"
+              "value": "%count.Type.Name%"
             }
           ],
           "defaults": null,
@@ -401,16 +384,99 @@
         }
       ],
       "intent": null,
-      "formal": "assert.equals(Expected=\u0022PT30S\u0022, Actual=%dur%)",
+      "formal": "assert.equals(Expected=\u0022number\u0022, Actual=%count.Type.Name%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 9,
+      "text": "set %version% = \u00222.0\u0022",
+      "lineNumber": 14,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%version%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "2.0"
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%version%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 10,
+      "text": "assert %version.Type.Name% equals \u0022text\u0022",
+      "lineNumber": 15,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "%version.Type.Name%"
+            },
+            {
+              "@schema": "data",
+              "name": "Actual",
+              "type": {
+                "name": "text"
+              },
+              "value": "text"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=%version.Type.Name%, Actual=\u0022text\u0022)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/ScalarsAsNative/probe.test.goal",
-  "prPath": "/ScalarsAsNative/.build/probe.test.pr",
-  "hash": "32fe21326ba71ff2f77fea0ddf020bc80ea42791c1b5ff7084656836a8e8d807",
+  "path": "/ScalarsAsNative/Stage3/BareLiteralJudgedByForm.test.goal",
+  "prPath": "/ScalarsAsNative/Stage3/.build/bareliteraljudgedbyform.test.pr",
+  "hash": "4cc6d347fede6160ceed0ec97eb492b5c8877dc948d0925750f5b07acca9854b",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

@@ -27,15 +27,42 @@ Examples of complete wrappers:
 - raw value `5` → `{"name":"X","value":5,"type":{"name":"number","kind":"int"}}`
 - raw value `3.14` → `{"name":"X","value":3.14,"type":{"name":"number","kind":"decimal"}}`
 - raw value `"hi"` → `{"name":"X","value":"hi","type":{"name":"text"}}`
-- raw value `"readme.md"` (a string literal — its value IS the 9 characters "readme.md", which is text, NOT a markdown document) → `{"name":"X","value":"readme.md","type":{"name":"text"}}`
+- raw value `"Start"` (a goal name / label — nothing stronger fits) → `{"name":"X","value":"Start","type":{"name":"text"}}`
+- raw value `"2026-01-01"` (an ISO date) → `{"name":"X","value":"2026-01-01","type":{"name":"date"}}`
+- raw value `"1st jan 2026"` (a *written* date — normalize to ISO) → `{"name":"X","value":"2026-01-01","type":{"name":"date"}}`
+- raw value `"PT30S"` (an ISO-8601 duration) → `{"name":"X","value":"PT30S","type":{"name":"duration"}}`
 - raw value `true` → `{"name":"X","value":true,"type":{"name":"bool"}}`
 - raw value `{a:1, b:2}` → `{"name":"X","value":{"a":1,"b":2},"type":{"name":"object"}}`
 
-A bare string literal is `text` with **no kind** — never promote it by its spelling. A file extension in a literal (`.md`, `.jpg`, `.csv`) does NOT make the value that kind: the value is the path string, not the content it points at. A `kind` on a literal comes from exactly two places, never the spelling:
-- an explicit `as <name>/<kind>` the developer wrote, or
-- a producing action that read the real content/path (e.g. `read file.md` → `{text, md}` — there the value IS the markdown).
+**Judge a literal's type from its form AND the variable's intent — PLang is an intent language.**
+A quoted string is NOT automatically `text`: read what the value plainly *is* and type it that way.
+`text` is the fallback only when nothing stronger fits, or the value is a name / label / identifier /
+free string. The variable name disambiguates (`%price% = "2.0"` → number; `%version% = "2.0"` → text).
 
-A reference fundamental (`image`, `video`, `audio`, `path`) is never tagged onto a raw literal — there is no image literal, only a path. The LLM emits `{name: image}` only when the developer wrote `as image`; the runtime parses the kind from the path.
+Promote by form + intent:
+- `"2026-01-01"`, `"1st jan 2026"`, `"January 1, 2026"` → `date`
+- `"14:30:00"`, `"9am"` → `time`
+- `"2026-01-01T12:00:00Z"`, `"jan 1 2026 2pm"` → `datetime`
+- `"PT30S"`, `"PT1H30M"`, `"00:05:00"` → `duration`
+- `"42"` → `number` (kind `int`); `"3.14"` → `number` (kind `decimal`)
+- `"true"` / `"false"` → `bool`
+- `"photo.jpg"` → `image` (kind `jpg`); `"/var/log/app.txt"` → `path`; `"clip.mp4"` → `video`
+- a JSON-shaped string `"{\"a\":1}"` → `json`; a CSV-shaped string → `text` (kind `csv`)
+
+**Normalize a written temporal value to its canonical ISO form when you promote it.** You understood
+`"1st jan 2026"` means that date, so emit `{"value":"2026-01-01","type":{"name":"date"}}` — NOT the
+written words. Times → `HH:mm:ss`, datetimes → ISO-8601, durations → ISO-8601 (`PT…`). Already-ISO
+values pass through unchanged. The runtime parser is strict ISO; you are the natural-language reader.
+
+**Stays `text`** (do not promote):
+- names, labels, identifiers, free prose (`"Start"`, `"N/A"`, `"hello world"`),
+- version / semver-like labels (`"v1.2.3"`, `"2.0"` under a `%version%`),
+- numeric-looking codes where digits are positional or leading zeros matter (`"0012"`, a `%zip%` `"90210"`),
+- **relative / clock-dependent dates** (`"next friday"`, `"tomorrow"`, `"in 5 minutes"`) — no build-time
+  mechanism resolves these yet, so leave them `text`.
+
+`as <name>` is now a FORCE / override — it pins the type when you would otherwise judge differently
+(`"2026-01-01" as text` keeps it text; `"42" as number` forces a number from a string you'd have left text).
 
 A parameter whose DECLARED schema type is `type` (e.g. `variable.set.Type`) carries a type entity AS ITS VALUE. The wrapper is:
 
@@ -54,7 +81,7 @@ A parameter whose DECLARED schema type is `type` (e.g. `variable.set.Type`) carr
 
 Rules:
 - `string` is NOT a name — use `text`. `int`/`long`/`decimal`/`double` are NOT names — use `number` with the precision as the kind.
-- Step-text `as <name>` → `{"name":"<name>"}`. For a reference fundamental (`image`/`video`/`audio`/`path`) the runtime parses the kind from the value's path; for `text` no kind is derived from a literal's spelling.
+- Step-text `as <name>` → `{"name":"<name>"}` (an explicit force/override). For a reference fundamental (`image`/`video`/`audio`/`path`) the runtime parses the kind from the value's path. WITHOUT `as`, you still judge the type from the literal's form + intent per the rules above.
 - Step-text `as <name>/<kind>` → `{"name":"<name>","kind":"<kind>"}`.
 - Step-text `as <name>/<kind> strict` → adds `"strict":true`. Strict on a name with no kind is allowed (no-op).
 - Step-text `(<kind>)` after a write target → match the kind to its name in the table above. `(json)`/`(csv)`/`(xml)` → `text`; `(int)`/`(long)` → `number`; `(gif)`/`(jpg)` → `image`. Unknown free strings pass through as `{"name":"<that>"}`.
