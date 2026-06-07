@@ -86,16 +86,20 @@ public class Stage5_ListDictOpsTests
     }
 
     [Test]
-    public async Task SortOnListOfDict_Throws()
+    public async Task SortOnListOfDict_ReturnsError()
     {
-        // dict is equality-only — sorting a list of dicts (no field) throws via Compare.Order.
+        // dict is equality-only — sorting a list of dicts (no field) is unorderable. In PLang
+        // that's an EXPECTED data condition, so sort RETURNS a Data error (it does not throw —
+        // a thrown exception would escape the `on error` handler pipeline).
         var (ctx, vars) = Ctx();
         var dicts = new ListV();
         dicts.Add(new Data("", Person("city", "Reyk")));
         dicts.Add(new Data("", Person("city", "Oslo")));
         vars.Set("dicts", dicts);
         var action = new Sort { Context = ctx, ListName = new app.variable.@this("dicts") };
-        await Assert.That(async () => await action.Run()).Throws<global::app.data.Compare.NotOrderableException>();
+        var result = await action.Run();
+        await result.IsFailure();
+        await Assert.That(result.Error!.Message).Contains("order");
     }
 
     [Test]

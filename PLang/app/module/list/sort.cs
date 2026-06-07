@@ -22,11 +22,22 @@ public partial class Sort : IContext
         Context.Variable.Set(ListName.Value, nl);
 
         // Thin dispatch — the list value type owns ordering, routed through the
-        // one typed-compare path. `by "field"` keys each element.
-        if (!string.IsNullOrEmpty(By?.Value))
-            nl.SortByField(By.Value!, Descending.Value);
-        else
-            nl.SortByValue(Descending.Value);
+        // one typed-compare path. `by "field"` keys each element. An unorderable
+        // element (a dict, a mixed-type list) is an EXPECTED data condition — in PLang
+        // we return it as an error so `on error …` can catch it, never throw (a thrown
+        // exception is for the unexpected, and escapes the error-handler pipeline).
+        try
+        {
+            if (!string.IsNullOrEmpty(By?.Value))
+                nl.SortByField(By.Value!, Descending.Value);
+            else
+                nl.SortByValue(Descending.Value);
+        }
+        catch (global::app.data.Compare.NotOrderableException ex)
+        {
+            return Task.FromResult(global::app.data.@this<type.list>.FromError(
+                new app.error.ValidationError(ex.Message)));
+        }
         return Task.FromResult(global::app.data.@this<type.list>.Ok(new type.list { count = nl.Count, value = nl }, app.type.@this.FromName("list")));
     }
 }
