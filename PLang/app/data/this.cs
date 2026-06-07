@@ -792,6 +792,14 @@ public partial class @this
     // structured {name, kind?, strict?} object (a native dict, navigated in place).
     internal static type? TypeFromWire(object? t, actor.context.@this? context)
     {
+        // `strict` rides the wire as a raw bool OR a born-native @bool.@this wrapper — unwrap
+        // both, else a wrapped `true` would read as false and drop the strict flag.
+        static bool AsBool(object? v) => v switch
+        {
+            bool b => b,
+            global::app.type.@bool.@this bw => bw.Value,
+            _ => v != null && bool.TryParse(v.ToString(), out var p) && p,
+        };
         switch (t)
         {
             case string s when !string.IsNullOrWhiteSpace(s):
@@ -799,10 +807,10 @@ public partial class @this
             case app.type.dict.@this nd when nd.Get("name")?.Value is { } nativeName:
                 return type.Create(nativeName.ToString()!,
                     nd.Get("kind")?.Value?.ToString(),
-                    nd.Get("strict")?.Value is bool nb && nb, context);
+                    AsBool(nd.Get("strict")?.Value), context);
             case IDictionary<string, object?> td when td.TryGetValue("name", out var nm) && nm != null:
                 string? kind = td.TryGetValue("kind", out var k) ? k?.ToString() : null;
-                bool strict = td.TryGetValue("strict", out var st) && st is bool b && b;
+                bool strict = td.TryGetValue("strict", out var st) && AsBool(st);
                 return type.Create(nm.ToString()!, kind, strict, context);
             default:
                 return null;
