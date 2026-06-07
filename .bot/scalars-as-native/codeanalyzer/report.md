@@ -1,6 +1,6 @@
 # Code Analyzer — `scalars-as-native` v1 — NEEDS WORK (FAIL)
 
-**Verdict: FAIL (not mergeable).** Next bot: **tester**.
+**Verdict: FAIL (not mergeable).** Next bot: **coder**.
 
 The *production code* is sound — clean OBP, correct architecture, and genuinely
 proven at the C# unit level (70 dedicated wrapper tests, all green). I found no
@@ -45,11 +45,12 @@ stubs that throw. There IS incidental end-to-end coverage from other green PLang
 (`TypeKindStrict/SetIntLiteralIsNumberInt`, `SetAsTextUppercase`, the `LazyDeserialize`
 navigation/csv tests), but the branch's *own* acceptance gate is empty.
 
-**Required before merge (tester):** implement the 30 stubs, build all 6 real tests,
+**Required before merge (coder):** implement the 30 stubs, build all 6 real tests,
 commit their `.pr`, and the runner must show them green (≈307/307, not 272/309 with 35
-stale). The "both suites green" claim must be restated honestly. This is the tester's job
-— the production code is sound, so I'm not bouncing to coder — but the branch must not
-merge with a hollow acceptance suite presented as green.
+stale). The "both suites green" claim must be restated honestly. The coder authors the
+PLang tests on this project — so this bounces to coder, not tester. The production code
+itself is sound; the branch simply must not merge with a hollow acceptance suite presented
+as green.
 
 ## What I verified in the production code (all sound)
 - **`item.@this` apex** (`type/item/this.cs`): storage-free, carries only truthiness +
