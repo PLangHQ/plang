@@ -30,7 +30,7 @@ public class ChannelReadBoundaryTests
         await using var app = NewApp();
         var ch = Input(app, "application/json", Encoding.UTF8.GetBytes("{\"port\":8080}"));
         var d = await ch.Read();
-        await Assert.That(d.Type.Name).IsEqualTo("object");
+        await Assert.That(d.Type.Name).IsEqualTo("item");
         await Assert.That(d.Type.Kind).IsEqualTo("json");
     }
 
@@ -78,7 +78,7 @@ public class ChannelReadBoundaryTests
         const string json = "{\"port\":8080}";
         var ch = Input(app, "application/json", Encoding.UTF8.GetBytes(json));
         var d = await ch.Read();
-        await Assert.That(d.Type.Name).IsEqualTo("object");
+        await Assert.That(d.Type.Name).IsEqualTo("item");
         await Assert.That(d.Type.Kind).IsEqualTo("json");
         await Assert.That(d.MaterializeCount).IsEqualTo(0);
         await Assert.That(d.Raw).IsEqualTo((object)json);
@@ -120,6 +120,6 @@ public class ChannelReadBoundaryTests
         var ch = Input(app, "application/json", Encoding.UTF8.GetBytes("{\"a\":1}"));
         var d = await ch.Read();
         await Assert.That(d.HasRaw).IsTrue();
-        await Assert.That(d.Type.Name).IsEqualTo("object");
+        await Assert.That(d.Type.Name).IsEqualTo("item");
     }
 }

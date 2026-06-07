@@ -55,7 +55,7 @@ public class FileChannelTests
         var ch = new filechannel(p);
         var d = await ch.Read();
         await Assert.That(d.MaterializeCount).IsEqualTo(0); // nothing parsed at read time
-        await Assert.That(d.Type.Name).IsEqualTo("object");
+        await Assert.That(d.Type.Name).IsEqualTo("item");
         await Assert.That(d.Type.Kind).IsEqualTo("json");
     }
 }

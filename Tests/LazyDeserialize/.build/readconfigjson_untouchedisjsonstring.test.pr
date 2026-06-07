@@ -6,34 +6,32 @@
     {
       "index": 0,
       "text": "read file \u0027config.json\u0027, write to %cfg%",
-      "lineNumber": 8,
+      "lineNumber": 7,
       "indent": 0,
-      "comment": "A read of config.json lands the file as {object, json} (architect\u0027s\nshape-based typing \u2014 keeps today\u0027s json\u2192object). The critical lazy\ninvariant: stamping \u0060type=object\u0060 does NOT parse \u2014 \u0060%cfg%\u0060 untouched is\nstill the raw json *string*. Materialisation only fires on navigation\n(see ReadConfigJson_NavigateMaterialisesField). Requires the config.json\nfixture committed alongside.",
+      "comment": "A read of config.json lands the file as {item, json} (born-native: a json payload of\nunknown shape is \u0060item\u0060). The critical lazy invariant: stamping \u0060type=item\u0060 does NOT\nparse \u2014 \u0060%cfg%\u0060 untouched is still the raw json *string*. Materialisation only fires on\nnavigation (see ReadConfigJson_NavigateMaterialisesField). Requires the config.json\nfixture committed alongside.",
       "actions": [
         {
           "module": "file",
           "action": "read",
           "parameters": [
             {
+              "@schema": "data",
               "name": "path",
-              "value": "config.json",
-              "scalarValue": "config.json",
               "type": {
-                "name": "path",
-                "kind": "file"
-              }
-            }
-          ],
-          "defaults": [
+                "name": "path"
+              },
+              "value": "config.json"
+            },
             {
-              "name": "resolvevariables",
-              "value": false,
-              "scalarValue": false,
+              "@schema": "data",
+              "name": "ResolveVariables",
               "type": {
                 "name": "bool"
-              }
+              },
+              "value": false
             }
           ],
+          "defaults": null,
           "modifiers": []
         },
         {
@@ -41,57 +39,100 @@
           "action": "set",
           "parameters": [
             {
+              "@schema": "data",
               "name": "Name",
-              "value": "%cfg%",
-              "scalarValue": "%cfg%",
               "type": {
                 "name": "variable"
-              }
+              },
+              "value": "%cfg%"
             },
             {
+              "@schema": "data",
               "name": "Value",
-              "value": "%!data%",
-              "scalarValue": "%!data%",
               "type": {
                 "name": "object"
-              }
+              },
+              "value": "%!data%"
             },
             {
+              "@schema": "data",
               "name": "Type",
-              "value": {
-                "name": "object",
-                "kind": "json"
-              },
-              "scalarValue": {
-                "name": "object",
-                "kind": "json"
-              },
               "type": {
                 "name": "type"
+              },
+              "value": {
+                "name": "item",
+                "kind": "json",
+                "strict": false,
+                "fields": null,
+                "values": null,
+                "properties": null,
+                "shape": "string",
+                "constructorsignature": null,
+                "example": null,
+                "description": null,
+                "kinds": null
               }
             }
           ],
           "defaults": [
             {
+              "@schema": "data",
               "name": "asdefault",
-              "value": false,
-              "scalarValue": false,
               "type": {
                 "name": "bool"
-              }
+              },
+              "value": false
             }
           ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "formal": "file.read(Path=\u0027config.json\u0027) | variable.set(Name=%cfg%, Value=%!data%)",
+      "formal": "file.read(Path=\u0027config.json\u0027, ResolveVariables=false) | variable.set(Name=%cfg%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "assert %cfg.Type.Name% equals \u0022object\u0022",
+      "text": "assert %cfg.Type.Name% equals \u0022item\u0022",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "item"
+            },
+            {
+              "@schema": "data",
+              "name": "Actual",
+              "type": {
+                "name": "object"
+              },
+              "value": "%cfg.Type.Name%"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022item\u0022, Actual=%cfg.Type.Name%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %cfg.Type.Kind% equals \u0022json\u0022",
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
@@ -101,57 +142,20 @@
           "action": "equals",
           "parameters": [
             {
+              "@schema": "data",
               "name": "Expected",
-              "value": "object",
-              "scalarValue": "object",
               "type": {
                 "name": "text"
-              }
+              },
+              "value": "json"
             },
             {
+              "@schema": "data",
               "name": "Actual",
-              "value": "%cfg.Type.Name%",
-              "scalarValue": "%cfg.Type.Name%",
               "type": {
                 "name": "object"
-              }
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
-        }
-      ],
-      "intent": null,
-      "formal": "assert.equals(Expected=\u0022object\u0022, Actual=%cfg.Type.Name%)",
-      "source": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 2,
-      "text": "assert %cfg.Type.Kind% equals \u0022json\u0022",
-      "lineNumber": 10,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "assert",
-          "action": "equals",
-          "parameters": [
-            {
-              "name": "Expected",
-              "value": "json",
-              "scalarValue": "json",
-              "type": {
-                "name": "text"
-              }
-            },
-            {
-              "name": "Actual",
-              "value": "%cfg.Type.Kind%",
-              "scalarValue": "%cfg.Type.Kind%",
-              "type": {
-                "name": "object"
-              }
+              },
+              "value": "%cfg.Type.Kind%"
             }
           ],
           "defaults": null,
@@ -166,7 +170,7 @@
     {
       "index": 3,
       "text": "assert %cfg% equals \u0022{\\\u0022port\\\u0022:8080}\u0022",
-      "lineNumber": 11,
+      "lineNumber": 10,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -175,20 +179,20 @@
           "action": "equals",
           "parameters": [
             {
+              "@schema": "data",
               "name": "Expected",
-              "value": "{\u0022port\u0022:8080}",
-              "scalarValue": "{\u0022port\u0022:8080}",
               "type": {
                 "name": "object"
-              }
+              },
+              "value": "{\u0022port\u0022:8080}"
             },
             {
+              "@schema": "data",
               "name": "Actual",
-              "value": "%cfg%",
-              "scalarValue": "%cfg%",
               "type": {
                 "name": "object"
-              }
+              },
+              "value": "%cfg%"
             }
           ],
           "defaults": null,
@@ -205,7 +209,7 @@
   "visibility": 1,
   "path": "/LazyDeserialize/ReadConfigJson_UntouchedIsJsonString.test.goal",
   "prPath": "/LazyDeserialize/.build/readconfigjson_untouchedisjsonstring.test.pr",
-  "hash": "245c8bea4f958db2b0a5d54113bc87f9f8cbeaa9c64deadbf094af947ef98b86",
+  "hash": "121056cfea9cd38982ca2ce0a89dc00a9505fc9a1df143a179d7ea5ee4d3b7fb",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

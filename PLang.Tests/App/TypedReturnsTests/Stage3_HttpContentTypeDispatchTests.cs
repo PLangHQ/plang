@@ -66,7 +66,7 @@ public class Stage3_HttpContentTypeDispatchTests
     public async Task Body_ApplicationJson_StampsObjectJson_LazyThenNavigates()
     {
         var resp = await Get("https://x/y", r => r.Content = new StringContent("{\"a\":1}", Encoding.UTF8, "application/json"));
-        await Assert.That(resp.Type.Name).IsEqualTo("object");
+        await Assert.That(resp.Type.Name).IsEqualTo("item");
         await Assert.That(resp.ScalarValue).IsEqualTo((object)"{\"a\":1}"); // untouched = raw
         await Assert.That(resp.GetChild("a").Value?.ToString()).IsEqualTo("1"); // navigate materializes
     }

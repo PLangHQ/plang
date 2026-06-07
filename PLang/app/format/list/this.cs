@@ -455,6 +455,10 @@ public sealed class @this
             ? (global::app.type.catalog.@this.GetPrimitiveName(clr)
                ?? global::app.type.catalog.@this.GetTypeNameStatic(clr))
             : "object";
+        // Born-native: aim for a strong value type, else `item`. A json (CLR object) payload
+        // is a value of unknown shape — that IS `item`, not the legacy CLR `object`. So a
+        // read of `.json` stamps {item, json}, not {object, json}.
+        if (string.Equals(name, "object", System.StringComparison.OrdinalIgnoreCase)) name = "item";
         return new global::app.type.@this(name, kind);
     }
 

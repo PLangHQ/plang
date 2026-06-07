@@ -339,7 +339,7 @@ public class Wire : JsonConverter<@this>
     // "object"), which LiftDataIfShaped must rehydrate — not a raw payload to
     // defer. Scalars/domain/dict<…> values also stay eager. Narrow, additive.
     private static bool IsDeferrableShape(type t)
-        => t.Name is "object" or "table" && !string.IsNullOrEmpty(t.Kind);
+        => t.Name is "object" or "item" or "table" && !string.IsNullOrEmpty(t.Kind);
 
     // Emits an untouched raw-backed value verbatim into the value slot, keeping
     // the slot valid json. Raw json (object/json) and number literals are already
@@ -352,7 +352,7 @@ public class Wire : JsonConverter<@this>
         if (raw is string s)
         {
             var t = data.Type;
-            bool isJson = (t.Name == "object" && string.Equals(t.Kind, "json", System.StringComparison.OrdinalIgnoreCase))
+            bool isJson = (t.Name is "object" or "item" && string.Equals(t.Kind, "json", System.StringComparison.OrdinalIgnoreCase))
                           || t.Name == "number";
             if (isJson) writer.WriteRawValue(s);
             else writer.WriteStringValue(s);

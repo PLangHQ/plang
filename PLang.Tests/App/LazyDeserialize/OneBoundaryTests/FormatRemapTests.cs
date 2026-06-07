@@ -12,26 +12,27 @@ namespace PLang.Tests.App.LazyDeserialize.OneBoundaryTests;
 // what lets a renderer draw a grid by dispatching on `type=table` alone.
 public class FormatRemapTests
 {
-    // json keeps today's mapping — `{object, json}`, not `{text, json}`.
-    [Test] public async Task TypeFromMime_ApplicationJson_ReturnsObjectJson()
+    // Born-native: a json payload of unknown shape is `{item, json}` (strong if determinable,
+    // else item) — not the legacy `{object, json}`.
+    [Test] public async Task TypeFromMime_ApplicationJson_ReturnsItemJson()
     {
         var t = new format().TypeFromMime("application/json");
-        await Assert.That(t.Name).IsEqualTo("object");
+        await Assert.That(t.Name).IsEqualTo("item");
         await Assert.That(t.Kind).IsEqualTo("json");
     }
 
-    // xml/yaml are also `object`-shaped (tree, navigated by key).
-    [Test] public async Task TypeFromMime_ApplicationXml_ReturnsObjectXml()
+    // xml/yaml are also unknown-shape values → `item` (tree, navigated by key).
+    [Test] public async Task TypeFromMime_ApplicationXml_ReturnsItemXml()
     {
         var t = new format().TypeFromMime("application/xml");
-        await Assert.That(t.Name).IsEqualTo("object");
+        await Assert.That(t.Name).IsEqualTo("item");
         await Assert.That(t.Kind).IsEqualTo("xml");
     }
 
-    [Test] public async Task TypeFromExtension_DotJson_ReturnsObjectJson()
+    [Test] public async Task TypeFromExtension_DotJson_ReturnsItemJson()
     {
         var t = new format().TypeFromExtension(".json");
-        await Assert.That(t.Name).IsEqualTo("object");
+        await Assert.That(t.Name).IsEqualTo("item");
         await Assert.That(t.Kind).IsEqualTo("json");
     }
 

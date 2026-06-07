@@ -63,7 +63,7 @@ public class Stage4_BuildMethodImplsTests
     {
         var result = await Build("file", "read", ("Path", "data.json"));
         await result.IsSuccess();
-        await Assert.That(AsType(result).Name).IsEqualTo("object");
+        await Assert.That(AsType(result).Name).IsEqualTo("item");
         await Assert.That(AsType(result).Kind).IsEqualTo("json");
     }
 
@@ -145,7 +145,7 @@ public class Stage4_BuildMethodImplsTests
     {
         var result = await Build("http", "request", ("Url", "https://api/x.json"));
         await result.IsSuccess();
-        await Assert.That(AsType(result).Name).IsEqualTo("object");
+        await Assert.That(AsType(result).Name).IsEqualTo("item");
         await Assert.That(AsType(result).Kind).IsEqualTo("json");
     }
 
@@ -158,7 +158,7 @@ public class Stage4_BuildMethodImplsTests
         // derivation produces for the same Content-Type (no build/runtime drift).
         var result = await Build("http", "request", ("Url", "https://x/report.pdf"));
         await result.IsSuccess();
-        await Assert.That(AsType(result).Name).IsEqualTo("object");
+        await Assert.That(AsType(result).Name).IsEqualTo("item");
         await Assert.That(AsType(result).Kind).IsEqualTo("pdf");
     }
 
