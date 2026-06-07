@@ -199,6 +199,15 @@ public sealed class Operator
         if (left is Enum le && IsTextLike(right, out var res)) return (le.ToString(), res);
         if (right is Enum re && IsTextLike(left, out var les)) return (les, re.ToString());
 
+        // typed-scalar <-> text: a value that can be born from text (date/time/datetime/
+        // duration) parses the text operand into its own type, so `%date% == "2026-01-01"`
+        // coerces its ISO form the way "5" == 5 does. The type owns the parse (ITextCoercible);
+        // the mediator only delegates. A null parse leaves the pair unreconciled (compare false).
+        if (left is global::app.data.ITextCoercible lc && IsTextLike(right, out var rcs)
+            && lc.CoerceText(rcs) is { } lcoerced) return (left, lcoerced);
+        if (right is global::app.data.ITextCoercible rc && IsTextLike(left, out var lcs)
+            && rc.CoerceText(lcs) is { } rcoerced) return (rcoerced, right);
+
         return (left, right);
     }
 

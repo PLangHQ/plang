@@ -1,6 +1,7 @@
 NullBareOnJson
-/ A JSON null navigates out as the born-native null value — Type "null", not a CLR null hole and
-/ not the text "null".
+/ A JSON null navigates out as the born-native null value — Type "null", and it satisfies
+/ `is null` exactly as a literal `set %x% = null` does (one null value, two sources).
 - set %d% = {"v": null}
 - set %v% = %d.v%
 - assert %v.Type.Name% equals "null"
+- assert %v% is null

@@ -8,7 +8,7 @@
       "text": "set %d% = {\u0022v\u0022: null}",
       "lineNumber": 4,
       "indent": 0,
-      "comment": "A JSON null navigates out as the born-native null value \u2014 Type \u0022null\u0022, not a CLR null hole and\nnot the text \u0022null\u0022.",
+      "comment": "A JSON null navigates out as the born-native null value \u2014 Type \u0022null\u0022, and it satisfies\n\u0060is null\u0060 exactly as a literal \u0060set %x% = null\u0060 does (one null value, two sources).",
       "actions": [
         {
           "module": "variable",
@@ -133,13 +133,42 @@
       "formal": "assert.equals(Expected=\u0022null\u0022, Actual=%v.Type.Name%)",
       "source": null,
       "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %v% is null",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNull",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "object"
+              },
+              "value": "%v%"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.isNull(Value=%v%)",
+      "source": null,
+      "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
   "path": "/ScalarsAsNative/Stage6/NullBareOnJson.test.goal",
   "prPath": "/ScalarsAsNative/Stage6/.build/nullbareonjson.test.pr",
-  "hash": "0504ae780cee9d45eed9ba6d35f8fce1415b8624591545ed10d9b45b1b30111e",
+  "hash": "953a6ba8090c5c7cf2c5ef7815ec85c822c74d28a1923cce3a4698329cb42102",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

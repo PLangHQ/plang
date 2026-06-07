@@ -56,7 +56,7 @@ public class Default : IAssert
 
     public data.@this<global::app.type.@bool.@this> IsNull(IsNull action)
     {
-        if (action.Value?.Value == null)
+        if (global::app.type.@null.@this.IsNullValue(action.Value?.Value))
             return app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
         return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(null, action.Value?.Value,
@@ -65,7 +65,7 @@ public class Default : IAssert
 
     public data.@this<global::app.type.@bool.@this> IsNotNull(IsNotNull action)
     {
-        if (action.Value?.Value != null)
+        if (!global::app.type.@null.@this.IsNullValue(action.Value?.Value))
             return app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
         return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError("(not null)", null,

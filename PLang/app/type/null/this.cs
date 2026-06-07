@@ -30,6 +30,14 @@ public sealed partial class @this : global::app.type.item.@this,
 
     private @this() { }
 
+    /// <summary>
+    /// Is this raw value "null" in PLang's sense — a C# null reference OR the born-native
+    /// null singleton? A literal <c>set %x% = null</c> stores a C# null in Data.Value while a
+    /// json/navigated null stores this singleton; both are the same null value. Null-ness
+    /// dissolves onto the type, so callers ask here instead of writing <c>== null || is @this</c>.
+    /// </summary>
+    public static bool IsNullValue(object? value) => value is null or @this;
+
     /// <summary>Null is always falsy.</summary>
     public override bool IsTruthy() => false;
     public override bool IsLeaf => true;

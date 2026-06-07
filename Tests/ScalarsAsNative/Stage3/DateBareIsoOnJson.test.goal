@@ -1,6 +1,10 @@
 DateBareIsoOnJson
-/ A date holds bare yyyy-MM-dd components (no time) — its Y/M/D parts read off the wrapper.
+/ A date coerces against its ISO string in the language `==` path — `if %d% equals "2026-01-01"`
+/ holds, the same cross-type coercion that makes `5 == "5"` true, extended to temporal types.
+/ (Parts confirm the value; the equals shows coercion.)
 - set %d% = "2026-01-01" as date
+- set %coerced% = false
+- if %d% equals "2026-01-01"
+    - set %coerced% = true
+- assert %coerced% is true
 - assert %d.Year% equals 2026
-- assert %d.Month% equals 1
-- assert %d.Day% equals 1
