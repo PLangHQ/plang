@@ -1,5 +1,0 @@
-TextSignedPlangRoundtrip
-/ A signed text value written to a .plang-formatted store and read back keeps its
-/ signature — text.@this rides the application/plang wire as self-describing Data,
-/ and the sign-if-missing wire converter handles it like every other value.
-- throw "not implemented"

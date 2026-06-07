@@ -1,0 +1,168 @@
+{
+  "name": "AssertIsTrueOnBoolResult",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %b% = true",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "assert.isTrue accepts a bool.@this result directly \u2014 the truthiness reads off the\nwrapper, not a raw CLR bool.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%b%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%b%, Value=true)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %b% is true",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": "%b%"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.isTrue(Value=%b%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %c% = false",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%c%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%c%, Value=false)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %c% is false",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isFalse",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "object"
+              },
+              "value": "%c%"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.isFalse(Value=%c%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/ScalarsAsNative/Stage5/AssertIsTrueOnBoolResult.test.goal",
+  "prPath": "/ScalarsAsNative/Stage5/.build/assertistrueonboolresult.test.pr",
+  "hash": "b66610a36ea039d874156b7115b66a387e8991c2c562a6f1a127cf2264bc6093",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

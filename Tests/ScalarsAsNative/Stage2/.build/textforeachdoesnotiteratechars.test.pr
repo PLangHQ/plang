@@ -1,0 +1,294 @@
+{
+  "name": "TextForEachDoesNotIterateChars",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %count% = 0",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "text is atomic \u2014 a list of two texts iterates as TWO items, not the 5 characters of\n\u0022abc\u0022\u002B\u0022de\u0022. text.@this is not IEnumerable; a text is never char-decomposed.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%count%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "number",
+                "kind": "int"
+              },
+              "value": 0
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%count%, Value=0)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %words% = [\u0022abc\u0022, \u0022de\u0022]",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%words%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": [
+                "abc",
+                "de"
+              ]
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%words%, Value=[\u0022abc\u0022, \u0022de\u0022])",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "foreach %words%, call CountWord item=%word%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "loop",
+          "action": "foreach",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Collection",
+              "type": {
+                "name": "list"
+              },
+              "value": "%words%"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "GoalName",
+              "type": {
+                "name": "goal.call"
+              },
+              "value": {
+                "name": "CountWord",
+                "parallel": false,
+                "parameters": null,
+                "prpath": {
+                  "scheme": "file",
+                  "relative": "/ScalarsAsNative/Stage2/.build/textforeachdoesnotiteratechars.test.pr"
+                }
+              }
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "loop.foreach(Collection=%words%) | goal.call(GoalName=CountWord, GoalName.value.parameters=[{name:item,value:%word%,type:{name:text}}])",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %count% equals 2",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Expected",
+              "type": {
+                "name": "number",
+                "kind": "int"
+              },
+              "value": 2
+            },
+            {
+              "@schema": "data",
+              "name": "Actual",
+              "type": {
+                "name": "object"
+              },
+              "value": "%count%"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=2, Actual=%count%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "CountWord",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "math.add A=%count% B=1, write to %count%",
+          "lineNumber": 10,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "math",
+              "action": "add",
+              "parameters": [
+                {
+                  "@schema": "data",
+                  "name": "A",
+                  "type": {
+                    "name": "object"
+                  },
+                  "value": "%count%"
+                },
+                {
+                  "@schema": "data",
+                  "name": "B",
+                  "type": {
+                    "name": "object"
+                  },
+                  "value": 1
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            },
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "@schema": "data",
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%count%"
+                },
+                {
+                  "@schema": "data",
+                  "name": "Value",
+                  "type": {
+                    "name": "object"
+                  },
+                  "value": "%!data%"
+                }
+              ],
+              "defaults": [
+                {
+                  "@schema": "data",
+                  "name": "asdefault",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "formal": "math.add(A=%count%, B=1) | variable.set(Name=%count%, Value=%!data%)",
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/ScalarsAsNative/Stage2/TextForEachDoesNotIterateChars.test.goal",
+      "prPath": "/ScalarsAsNative/Stage2/.build/textforeachdoesnotiteratechars.test.pr",
+      "hash": "1ec328764ea9f4e717c675666a3e2853acdb3b663fce3f5ec671fed507431b30",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/ScalarsAsNative/Stage2/TextForEachDoesNotIterateChars.test.goal",
+  "prPath": "/ScalarsAsNative/Stage2/.build/textforeachdoesnotiteratechars.test.pr",
+  "hash": "91ffe0dde920cf8932bf7a6ab2de04d51e89fc60ee48cf06fa4579f6b7c1aae4",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

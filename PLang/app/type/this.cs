@@ -151,6 +151,12 @@ public sealed class @this
         Context ??= context;
         if (value is null) return global::app.data.@this.Ok(value);
 
+        // A born-native scalar source (`set %d% = "2026-01-01" as date` makes the literal a
+        // text.@this first) — unwrap the leaf wrapper to its raw form so the target family's
+        // Convert hook, which speaks raw, can parse it. Mirrors the catalog's item.ToRaw step;
+        // containers (dict/list) are NOT leaves and convert as wholes.
+        if (value is global::app.type.item.@this { IsLeaf: true } leaf) value = leaf.ToRaw();
+
         // OBP: the concrete type owns its own construction. Resolve the family
         // class (text.@this, number.@this, …) and ask IT to make the value from
         // ours, passing our Kind. This entity only routes — it holds no per-type

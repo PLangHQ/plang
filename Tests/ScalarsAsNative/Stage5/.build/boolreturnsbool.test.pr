@@ -1,14 +1,14 @@
 {
-  "name": "Start",
+  "name": "BoolReturnsBool",
   "description": null,
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "set %items% = [\u0022apple\u0022, \u0022banana\u0022, \u0022cherry\u0022]",
-      "lineNumber": 2,
+      "text": "set %d% = {\u0022flag\u0022: false}",
+      "lineNumber": 4,
       "indent": 0,
-      "comment": null,
+      "comment": "A bool read back from a json payload is a bool.@this (type \u0022bool\u0022), proving the\nwrapper crosses the value boundary, not a raw CLR bool.",
       "actions": [
         {
           "module": "variable",
@@ -20,19 +20,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%items%"
+              "value": "%d%"
             },
             {
               "@schema": "data",
               "name": "Value",
               "type": {
-                "name": "list"
+                "name": "object"
               },
-              "value": [
-                "apple",
-                "banana",
-                "cherry"
-              ]
+              "value": {
+                "flag": false
+              }
             }
           ],
           "defaults": [
@@ -49,14 +47,14 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%items%, Value=[\u0022apple\u0022, \u0022banana\u0022, \u0022cherry\u0022])",
+      "formal": "variable.set(Name=%d%, Value={\u0022flag\u0022: false})",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "set %count% = 0",
-      "lineNumber": 3,
+      "text": "set %r% = %d.flag%",
+      "lineNumber": 5,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -70,16 +68,15 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%count%"
+              "value": "%r%"
             },
             {
               "@schema": "data",
               "name": "Value",
               "type": {
-                "name": "number",
-                "kind": "int"
+                "name": "object"
               },
-              "value": 0
+              "value": "%d.flag%"
             }
           ],
           "defaults": [
@@ -96,67 +93,14 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%count%, Value=0)",
+      "formal": "variable.set(Name=%r%, Value=%d.flag%)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "foreach %items%, call CountItem item=%item%",
-      "lineNumber": 4,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "loop",
-          "action": "foreach",
-          "parameters": [
-            {
-              "@schema": "data",
-              "name": "Collection",
-              "type": {
-                "name": "object"
-              },
-              "value": "%items%"
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
-        },
-        {
-          "module": "goal",
-          "action": "call",
-          "parameters": [
-            {
-              "@schema": "data",
-              "name": "GoalName",
-              "type": {
-                "name": "goal.call"
-              },
-              "value": {
-                "name": "CountItem",
-                "parallel": false,
-                "parameters": null,
-                "prpath": {
-                  "scheme": "file",
-                  "relative": "/Modules/Loop/.build/countitem.pr"
-                }
-              }
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
-        }
-      ],
-      "intent": null,
-      "formal": "loop.foreach(Collection=%items%) | goal.call(GoalName=CountItem, item=%item%)",
-      "source": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 3,
-      "text": "assert %count% equals 3, \u0022foreach should iterate 3 times\u0022",
-      "lineNumber": 5,
+      "text": "assert %r% equals false",
+      "lineNumber": 6,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -168,10 +112,9 @@
               "@schema": "data",
               "name": "Expected",
               "type": {
-                "name": "number",
-                "kind": "int"
+                "name": "bool"
               },
-              "value": 3
+              "value": false
             },
             {
               "@schema": "data",
@@ -179,7 +122,7 @@
               "type": {
                 "name": "object"
               },
-              "value": "%count%"
+              "value": "%r%"
             }
           ],
           "defaults": null,
@@ -187,16 +130,53 @@
         }
       ],
       "intent": null,
-      "formal": "assert.equals(Expected=3, Actual=%count%)",
+      "formal": "assert.equals(Expected=false, Actual=%r%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %r.Type.Name% equals \u0022bool\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "bool"
+            },
+            {
+              "@schema": "data",
+              "name": "Actual",
+              "type": {
+                "name": "object"
+              },
+              "value": "%r.Type.Name%"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022bool\u0022, Actual=%r.Type.Name%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Modules/Loop/Loop.test.goal",
-  "prPath": "/Modules/Loop/.build/loop.test.pr",
-  "hash": "35f7fcc5b47fdb1e00c1f822dca60c16144d944fb172c65ec24bc411662875f3",
+  "path": "/ScalarsAsNative/Stage5/BoolReturnsBool.test.goal",
+  "prPath": "/ScalarsAsNative/Stage5/.build/boolreturnsbool.test.pr",
+  "hash": "ac8966ef19951bc9ddee6305cec6fd53e79d89910e0fd8ad859452dc25886ec8",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

@@ -12,17 +12,21 @@ public sealed partial class @this
     public static global::app.data.@this Convert(object? value, string? kind,
         global::app.actor.context.@this context)
     {
+        // kind named ⇒ a raw-TimeOnly target wants the CLR struct; no kind ⇒ the target is
+        // `time` the type, so return the born-native wrapper. B(...) packs whichever was asked.
+        bool returnWrapper = string.IsNullOrEmpty(kind);
+        global::app.data.@this B(System.TimeOnly v) => global::app.data.@this.Ok(returnWrapper ? (object?)new @this(v) : v);
         switch (value)
         {
             case null: return global::app.data.@this.Ok(value);
-            case System.TimeOnly: return global::app.data.@this.Ok(value);
-            case @this self: return global::app.data.@this.Ok(self.Value);
-            case System.DateTime dt: return global::app.data.@this.Ok(System.TimeOnly.FromDateTime(dt));
-            case System.DateTimeOffset dto: return global::app.data.@this.Ok(System.TimeOnly.FromDateTime(dto.DateTime));
+            case System.TimeOnly t0: return B(t0);
+            case @this self: return B(self.Value);
+            case System.DateTime dt: return B(System.TimeOnly.FromDateTime(dt));
+            case System.DateTimeOffset dto: return B(System.TimeOnly.FromDateTime(dto.DateTime));
             case string s when System.TimeOnly.TryParse(s,
                 System.Globalization.CultureInfo.InvariantCulture,
                 System.Globalization.DateTimeStyles.None, out var t):
-                return global::app.data.@this.Ok(t);
+                return B(t);
             case string s:
                 return global::app.data.@this.FromError(new global::app.error.Error(
                     $"Cannot parse '{s}' as time — expected ISO HH:mm:ss.", "TimeParseFailed", 400));

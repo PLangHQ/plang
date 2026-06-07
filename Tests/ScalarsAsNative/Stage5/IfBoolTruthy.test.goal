@@ -1,4 +1,13 @@
 IfBoolTruthy
 / `if %b%` with %b% = true is truthy; `if !%b%` is falsy. bool.@this implements
-/ IBooleanResolvable; this is the load-bearing runtime path for conditions.
-- throw "not implemented"
+/ IBooleanResolvable; this is the load-bearing runtime path for conditions. The
+/ truthy branch runs, the negated (falsy) branch does not.
+- set %truthyRan% = "no"
+- set %negatedRan% = "no"
+- set %b% = true
+- if %b%
+    - set %truthyRan% = "yes"
+- if !%b%
+    - set %negatedRan% = "yes"
+- assert %truthyRan% equals "yes"
+- assert %negatedRan% equals "no"

@@ -84,8 +84,20 @@ public sealed class GoalCall : global::app.type.item.@this, module.IEvent
                 // its ToString is the literal "null", so guard against it — otherwise
                 // path.Resolve("null") builds a bogus "/null".
                 var prRaw = dict.TryGetValue("prPath", out var pr) && pr is not app.type.@null.@this ? pr : null;
-                var prPathStr = prRaw?.ToString();
-                var prPath = !string.IsNullOrEmpty(prPathStr) ? path.Resolve(prPathStr, context) : null;
+                // Born-native serializes a path as the structured {scheme, relative} object, not a
+                // bare string — `prRaw.ToString()` on that yields "Dictionary`2…", which path.Resolve
+                // then turns into a bogus "/Dictionary`2…" (the foreach/goal.call "File not found"
+                // regression). Take the already-built path, or its "relative" slot, before falling
+                // back to a string.
+                var prPath = prRaw switch
+                {
+                    null => null,
+                    path builtPath => builtPath,
+                    global::app.type.dict.@this nd => ResolveRelative(nd.Get("relative")?.Value?.ToString(), context),
+                    IDictionary<string, object?> d2 => ResolveRelative(
+                        d2.TryGetValue("relative", out var rel) ? rel?.ToString() : null, context),
+                    _ => ResolveRelative(prRaw.ToString(), context),
+                };
                 List<data.@this>? parameters = null;
                 if (dict.TryGetValue("parameters", out var p))
                 {
@@ -100,6 +112,11 @@ public sealed class GoalCall : global::app.type.item.@this, module.IEvent
                     $"Cannot convert {value.GetType().Name} to a goal call.", "GoalCallConversionFailed", 400));
         }
     }
+
+    // The prPath slot's relative form → a resolved path, or null when absent. (`relative` is
+    // the path's own relative member; born-native serializes it inside the {scheme, relative} object.)
+    private static path? ResolveRelative(string? relative, actor.context.@this context)
+        => string.IsNullOrEmpty(relative) ? null : path.Resolve(relative, context);
 
     /// <summary>
     /// Normalises the <c>parameters</c> slot to a flat (name, value) sequence,

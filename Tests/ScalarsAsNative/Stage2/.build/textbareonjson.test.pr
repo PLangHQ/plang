@@ -1,14 +1,14 @@
 {
-  "name": "Start",
+  "name": "TextBareOnJson",
   "description": null,
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "set %items% = [\u0022apple\u0022, \u0022banana\u0022, \u0022cherry\u0022]",
-      "lineNumber": 2,
+      "text": "set %d% = {\u0022v\u0022: \u0022hi\u0022}",
+      "lineNumber": 4,
       "indent": 0,
-      "comment": null,
+      "comment": "A text rides the json wire bare \u2014 \u0060{\u0022v\u0022: \u0022hi\u0022}\u0060 parses so %d.v% navigates to the\ntext.@this \u0022hi\u0022, no envelope around the scalar.",
       "actions": [
         {
           "module": "variable",
@@ -20,19 +20,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%items%"
+              "value": "%d%"
             },
             {
               "@schema": "data",
               "name": "Value",
               "type": {
-                "name": "list"
+                "name": "object"
               },
-              "value": [
-                "apple",
-                "banana",
-                "cherry"
-              ]
+              "value": {
+                "v": "hi"
+              }
             }
           ],
           "defaults": [
@@ -49,14 +47,14 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%items%, Value=[\u0022apple\u0022, \u0022banana\u0022, \u0022cherry\u0022])",
+      "formal": "variable.set(Name=%d%, Value={\u0022v\u0022:\u0022hi\u0022})",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "set %count% = 0",
-      "lineNumber": 3,
+      "text": "set %v% = %d.v%",
+      "lineNumber": 5,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -70,16 +68,15 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%count%"
+              "value": "%v%"
             },
             {
               "@schema": "data",
               "name": "Value",
               "type": {
-                "name": "number",
-                "kind": "int"
+                "name": "object"
               },
-              "value": 0
+              "value": "%d.v%"
             }
           ],
           "defaults": [
@@ -96,67 +93,14 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%count%, Value=0)",
+      "formal": "variable.set(Name=%v%, Value=%d.v%)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "foreach %items%, call CountItem item=%item%",
-      "lineNumber": 4,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "loop",
-          "action": "foreach",
-          "parameters": [
-            {
-              "@schema": "data",
-              "name": "Collection",
-              "type": {
-                "name": "object"
-              },
-              "value": "%items%"
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
-        },
-        {
-          "module": "goal",
-          "action": "call",
-          "parameters": [
-            {
-              "@schema": "data",
-              "name": "GoalName",
-              "type": {
-                "name": "goal.call"
-              },
-              "value": {
-                "name": "CountItem",
-                "parallel": false,
-                "parameters": null,
-                "prpath": {
-                  "scheme": "file",
-                  "relative": "/Modules/Loop/.build/countitem.pr"
-                }
-              }
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
-        }
-      ],
-      "intent": null,
-      "formal": "loop.foreach(Collection=%items%) | goal.call(GoalName=CountItem, item=%item%)",
-      "source": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 3,
-      "text": "assert %count% equals 3, \u0022foreach should iterate 3 times\u0022",
-      "lineNumber": 5,
+      "text": "assert %v% equals \u0022hi\u0022",
+      "lineNumber": 6,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -168,10 +112,9 @@
               "@schema": "data",
               "name": "Expected",
               "type": {
-                "name": "number",
-                "kind": "int"
+                "name": "text"
               },
-              "value": 3
+              "value": "hi"
             },
             {
               "@schema": "data",
@@ -179,7 +122,7 @@
               "type": {
                 "name": "object"
               },
-              "value": "%count%"
+              "value": "%v%"
             }
           ],
           "defaults": null,
@@ -187,16 +130,53 @@
         }
       ],
       "intent": null,
-      "formal": "assert.equals(Expected=3, Actual=%count%)",
+      "formal": "assert.equals(Expected=\u0022hi\u0022, Actual=%v%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %v.Type.Name% equals \u0022text\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "text"
+            },
+            {
+              "@schema": "data",
+              "name": "Actual",
+              "type": {
+                "name": "object"
+              },
+              "value": "%v.Type.Name%"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022text\u0022, Actual=%v.Type.Name%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Modules/Loop/Loop.test.goal",
-  "prPath": "/Modules/Loop/.build/loop.test.pr",
-  "hash": "35f7fcc5b47fdb1e00c1f822dca60c16144d944fb172c65ec24bc411662875f3",
+  "path": "/ScalarsAsNative/Stage2/TextBareOnJson.test.goal",
+  "prPath": "/ScalarsAsNative/Stage2/.build/textbareonjson.test.pr",
+  "hash": "79dbcbe83296e93c7e89ff051b5b6b4d77e6dbbf7692845cfce20e416b762f2c",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

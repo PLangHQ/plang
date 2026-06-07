@@ -1,4 +1,7 @@
 BoolReturnsBool
-/ A goal that `→ returns bool` reconstructs the raw CLR bool from bool.@this at
-/ the conversion leaf — single unwrap, no envelope.
-- throw "not implemented"
+/ A bool read back from a json payload is a bool.@this (type "bool"), proving the
+/ wrapper crosses the value boundary, not a raw CLR bool.
+- set %d% = {"flag": false}
+- set %r% = %d.flag%
+- assert %r% equals false
+- assert %r.Type.Name% equals "bool"

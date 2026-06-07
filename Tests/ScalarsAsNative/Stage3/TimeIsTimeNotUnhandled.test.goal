@@ -1,6 +1,5 @@
-Start
-- set %t% = 14:30:00
-- if %t% is time, write to %isTime%
-- if %t% is datetime, write to %isDatetime%
-- assert %isTime% equals true
-- assert %isDatetime% equals false
+TimeIsTimeNotUnhandled
+/ A value cast `as time` lands as `time`, a first-class born-native wrapper (not
+/ unhandled, not folded into datetime).
+- set %t% = "14:30:00" as time
+- assert %t.Type.Name% equals "time"

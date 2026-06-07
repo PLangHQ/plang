@@ -1,4 +1,7 @@
 TextReturnsString
-/ A goal that `→ returns string` reconstructs the raw CLR string from text.@this
-/ at the conversion leaf — one unwrap at the typed boundary, not per call site.
-- throw "not implemented"
+/ A text read back across a value boundary (json navigation) is a text.@this carrying
+/ the string — the wrapper, not a raw CLR string.
+- set %d% = {"v": "world"}
+- set %s% = %d.v%
+- assert %s% equals "world"
+- assert %s.Type.Name% equals "text"

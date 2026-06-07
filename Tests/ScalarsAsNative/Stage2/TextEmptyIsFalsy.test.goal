@@ -1,4 +1,7 @@
 TextEmptyIsFalsy
-/ `if %s%` with %s% empty is falsy; non-empty is truthy. text.@this implements
-/ IBooleanResolvable via item; the hot path stays sync (no async hop for the if).
-- throw "not implemented"
+/ An empty text is falsy — assert.isFalse reads the wrapper's truthiness (an empty text
+/ is falsy, matching empty dict/list/null); a non-empty text is truthy.
+- set %s% = ""
+- assert %s% is false
+- set %t% = "x"
+- assert %t% is true

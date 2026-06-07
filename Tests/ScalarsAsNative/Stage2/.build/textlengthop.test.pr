@@ -1,14 +1,14 @@
 {
-  "name": "Start",
+  "name": "TextLengthOp",
   "description": null,
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "set %items% = [\u0022apple\u0022, \u0022banana\u0022, \u0022cherry\u0022]",
-      "lineNumber": 2,
+      "text": "set %s% = \u0022Hello\u0022",
+      "lineNumber": 4,
       "indent": 0,
-      "comment": null,
+      "comment": "%s.length% works through text.@this\u0027s own length member \u2014 the behavioral sweep moved\n\u0060is string s =\u003E s.Length\u0060 onto the wrapper.",
       "actions": [
         {
           "module": "variable",
@@ -20,19 +20,15 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%items%"
+              "value": "%s%"
             },
             {
               "@schema": "data",
               "name": "Value",
               "type": {
-                "name": "list"
+                "name": "text"
               },
-              "value": [
-                "apple",
-                "banana",
-                "cherry"
-              ]
+              "value": "Hello"
             }
           ],
           "defaults": [
@@ -49,14 +45,14 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%items%, Value=[\u0022apple\u0022, \u0022banana\u0022, \u0022cherry\u0022])",
+      "formal": "variable.set(Name=%s%, Value=\u0022Hello\u0022)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "set %count% = 0",
-      "lineNumber": 3,
+      "text": "set %n% = %s.length%",
+      "lineNumber": 5,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -70,16 +66,15 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%count%"
+              "value": "%n%"
             },
             {
               "@schema": "data",
               "name": "Value",
               "type": {
-                "name": "number",
-                "kind": "int"
+                "name": "object"
               },
-              "value": 0
+              "value": "%s.length%"
             }
           ],
           "defaults": [
@@ -96,67 +91,14 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%count%, Value=0)",
+      "formal": "variable.set(Name=%n%, Value=%s.length%)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "foreach %items%, call CountItem item=%item%",
-      "lineNumber": 4,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "loop",
-          "action": "foreach",
-          "parameters": [
-            {
-              "@schema": "data",
-              "name": "Collection",
-              "type": {
-                "name": "object"
-              },
-              "value": "%items%"
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
-        },
-        {
-          "module": "goal",
-          "action": "call",
-          "parameters": [
-            {
-              "@schema": "data",
-              "name": "GoalName",
-              "type": {
-                "name": "goal.call"
-              },
-              "value": {
-                "name": "CountItem",
-                "parallel": false,
-                "parameters": null,
-                "prpath": {
-                  "scheme": "file",
-                  "relative": "/Modules/Loop/.build/countitem.pr"
-                }
-              }
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
-        }
-      ],
-      "intent": null,
-      "formal": "loop.foreach(Collection=%items%) | goal.call(GoalName=CountItem, item=%item%)",
-      "source": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 3,
-      "text": "assert %count% equals 3, \u0022foreach should iterate 3 times\u0022",
-      "lineNumber": 5,
+      "text": "assert %n% equals 5",
+      "lineNumber": 6,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -168,10 +110,9 @@
               "@schema": "data",
               "name": "Expected",
               "type": {
-                "name": "number",
-                "kind": "int"
+                "name": "object"
               },
-              "value": 3
+              "value": "%n%"
             },
             {
               "@schema": "data",
@@ -179,7 +120,7 @@
               "type": {
                 "name": "object"
               },
-              "value": "%count%"
+              "value": 5
             }
           ],
           "defaults": null,
@@ -187,16 +128,16 @@
         }
       ],
       "intent": null,
-      "formal": "assert.equals(Expected=3, Actual=%count%)",
+      "formal": "assert.equals(Expected=%n%, Actual=5)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Modules/Loop/Loop.test.goal",
-  "prPath": "/Modules/Loop/.build/loop.test.pr",
-  "hash": "35f7fcc5b47fdb1e00c1f822dca60c16144d944fb172c65ec24bc411662875f3",
+  "path": "/ScalarsAsNative/Stage2/TextLengthOp.test.goal",
+  "prPath": "/ScalarsAsNative/Stage2/.build/textlengthop.test.pr",
+  "hash": "7c75862efd778e558f1b908c27db94a0e3ab831d748892e88ec0176f0b8b6548",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

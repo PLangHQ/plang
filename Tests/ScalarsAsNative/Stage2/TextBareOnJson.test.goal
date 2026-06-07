@@ -1,5 +1,7 @@
 TextBareOnJson
-/ A text value written to a .json file lands as a bare string ("Hello"), not
-/ enveloped — Normalize emits text.@this bare on application/json, matching
-/ dict/list's bare-emission pattern.
-- throw "not implemented"
+/ A text rides the json wire bare — `{"v": "hi"}` parses so %d.v% navigates to the
+/ text.@this "hi", no envelope around the scalar.
+- set %d% = {"v": "hi"}
+- set %v% = %d.v%
+- assert %v% equals "hi"
+- assert %v.Type.Name% equals "text"

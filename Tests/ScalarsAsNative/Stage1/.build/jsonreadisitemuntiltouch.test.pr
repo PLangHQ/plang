@@ -1,14 +1,14 @@
 {
-  "name": "Start",
+  "name": "JsonReadIsItemUntilTouch",
   "description": null,
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "set %items% = [\u0022apple\u0022, \u0022banana\u0022, \u0022cherry\u0022]",
-      "lineNumber": 2,
+      "text": "set %x% = {\u0022field\u0022: 42}",
+      "lineNumber": 6,
       "indent": 0,
-      "comment": null,
+      "comment": "\u0060(object,json)\u0060 \u2192 \u0060(item,json)\u0060: a json value narrows to dict so \u0060%x.field%\u0060\nnavigates it at runtime. There is no enduring PLang \u0060object\u0060 type \u2014 item is both\nthe apex and the un-narrowed type. (The \u0060is item\u0060/\u0060is dict\u0060 apex contract is\npinned in C# ItemApexTests; this goal proves the end-to-end narrow \u002B navigation.)",
       "actions": [
         {
           "module": "variable",
@@ -20,19 +20,17 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%items%"
+              "value": "%x%"
             },
             {
               "@schema": "data",
               "name": "Value",
               "type": {
-                "name": "list"
+                "name": "object"
               },
-              "value": [
-                "apple",
-                "banana",
-                "cherry"
-              ]
+              "value": {
+                "field": 42
+              }
             }
           ],
           "defaults": [
@@ -49,14 +47,14 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%items%, Value=[\u0022apple\u0022, \u0022banana\u0022, \u0022cherry\u0022])",
+      "formal": "variable.set(Name=%x%, Value={\u0022field\u0022: 42})",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "set %count% = 0",
-      "lineNumber": 3,
+      "text": "set %field% = %x.field%",
+      "lineNumber": 7,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -70,16 +68,15 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%count%"
+              "value": "%field%"
             },
             {
               "@schema": "data",
               "name": "Value",
               "type": {
-                "name": "number",
-                "kind": "int"
+                "name": "object"
               },
-              "value": 0
+              "value": "%x.field%"
             }
           ],
           "defaults": [
@@ -96,67 +93,14 @@
         }
       ],
       "intent": null,
-      "formal": "variable.set(Name=%count%, Value=0)",
+      "formal": "variable.set(Name=%field%, Value=%x.field%)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "foreach %items%, call CountItem item=%item%",
-      "lineNumber": 4,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "loop",
-          "action": "foreach",
-          "parameters": [
-            {
-              "@schema": "data",
-              "name": "Collection",
-              "type": {
-                "name": "object"
-              },
-              "value": "%items%"
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
-        },
-        {
-          "module": "goal",
-          "action": "call",
-          "parameters": [
-            {
-              "@schema": "data",
-              "name": "GoalName",
-              "type": {
-                "name": "goal.call"
-              },
-              "value": {
-                "name": "CountItem",
-                "parallel": false,
-                "parameters": null,
-                "prpath": {
-                  "scheme": "file",
-                  "relative": "/Modules/Loop/.build/countitem.pr"
-                }
-              }
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
-        }
-      ],
-      "intent": null,
-      "formal": "loop.foreach(Collection=%items%) | goal.call(GoalName=CountItem, item=%item%)",
-      "source": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 3,
-      "text": "assert %count% equals 3, \u0022foreach should iterate 3 times\u0022",
-      "lineNumber": 5,
+      "text": "assert %field% equals 42",
+      "lineNumber": 8,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -168,10 +112,9 @@
               "@schema": "data",
               "name": "Expected",
               "type": {
-                "name": "number",
-                "kind": "int"
+                "name": "object"
               },
-              "value": 3
+              "value": "%field%"
             },
             {
               "@schema": "data",
@@ -179,7 +122,7 @@
               "type": {
                 "name": "object"
               },
-              "value": "%count%"
+              "value": 42
             }
           ],
           "defaults": null,
@@ -187,16 +130,16 @@
         }
       ],
       "intent": null,
-      "formal": "assert.equals(Expected=3, Actual=%count%)",
+      "formal": "assert.equals(Expected=%field%, Actual=42)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Modules/Loop/Loop.test.goal",
-  "prPath": "/Modules/Loop/.build/loop.test.pr",
-  "hash": "35f7fcc5b47fdb1e00c1f822dca60c16144d944fb172c65ec24bc411662875f3",
+  "path": "/ScalarsAsNative/Stage1/JsonReadIsItemUntilTouch.test.goal",
+  "prPath": "/ScalarsAsNative/Stage1/.build/jsonreadisitemuntiltouch.test.pr",
+  "hash": "4ca36de5201d1a3077ecab968b90e9758314003c3e5578b85d2374ecdc17f034",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

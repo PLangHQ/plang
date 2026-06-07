@@ -1,4 +1,6 @@
 TextLengthOp
-/ %s.length% works through text.@this's length op (not via raw `string` fallback).
-/ The behavioral sweep moved `is string s => s.Length` onto the wrapper.
-- throw "not implemented"
+/ %s.length% works through text.@this's own length member — the behavioral sweep moved
+/ `is string s => s.Length` onto the wrapper.
+- set %s% = "Hello"
+- set %n% = %s.length%
+- assert %n% equals 5

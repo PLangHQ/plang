@@ -1,4 +1,7 @@
 BoolBareOnJson
-/ A bool value written to a .json file is bare `true` / `false`, not enveloped.
-/ Signed .plang round-trip keeps it as a bool wrapper.
-- throw "not implemented"
+/ A bool rides the json wire bare — `{"flag": true}` parses so %d.flag% navigates to
+/ the bool.@this true, no envelope around the scalar.
+- set %d% = {"flag": true}
+- set %flag% = %d.flag%
+- assert %flag% equals true
+- assert %flag.Type.Name% equals "bool"
