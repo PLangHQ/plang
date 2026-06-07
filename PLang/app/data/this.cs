@@ -383,7 +383,12 @@ public partial class @this
             // already skips emission for Null so the on-wire shape is
             // unchanged.  Consumers no longer carry a `Type?` null guard.
             if (_value == null) return type.Null;
-            var clr = _value.GetType();
+            // Born-native scalars are wrappers (number/text/bool/…). ClrType is the raw CLR
+            // mate (Int32, string, …) — the System.Type the registry maps to and consumers
+            // convert against — so unwrap a leaf wrapper to its raw value's type. A container
+            // or domain value reports its own type.
+            var clr = (_value is global::app.type.item.@this { IsLeaf: true } leaf && leaf.ToRaw() is { } rawLeaf)
+                ? rawLeaf.GetType() : _value.GetType();
             var typeName = _context?.App.Type.Name(clr)
                            ?? AppTypes.GetPrimitiveName(clr)
                            ?? clr.Name.ToLowerInvariant();

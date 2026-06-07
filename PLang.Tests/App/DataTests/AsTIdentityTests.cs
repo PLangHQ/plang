@@ -51,22 +51,19 @@ public class AsTIdentityTests
         await Assert.That(result.Properties["meta"]).IsEqualTo("abc");
     }
 
-    // Rule 2 — variance fast path. Data<global::app.type.list.@this<global::app.type.number.@this>>.As<IEnumerable>() produces
-    // a new global::app.data.@this<IEnumerable> instance (Type changes), but .Value is the SAME
-    // List<int> reference — cast-only, no copy. Mutating the underlying list
-    // through wrapped.Value is visible through source.Value.
+    // Rule 2 — variance fast path. Data<number>.As<item>() (to the base item type) produces
+    // a new Data<item> instance (Type changes), but .Value is the SAME number.@this reference
+    // — cast-only, no copy. (A native list/dict value is a walkable container, so As<T> walks
+    // it for nested-var resolution and returns a fresh list — the cast-only ref-share applies
+    // to leaf values, which are the ones that never need walking.)
     [Test]
-    public async Task AsT_Variance_ListToIEnumerable_ValueRefShared()
+    public async Task AsT_Variance_ScalarToItem_ValueRefShared()
     {
-        var list = new List<int> { 1, 2, 3 };
-        var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", list) { Context = _app.User.Context };
-        var wrapped = source.As<System.Collections.IEnumerable>();
-        await Assert.That(ReferenceEquals(wrapped.Value, list)).IsTrue();
-        // Mutate via the underlying list — wrapped sees the change.
-        list.Add(4);
-        var copied = new List<int>();
-        foreach (int n in wrapped.Value!) copied.Add(n);
-        await Assert.That(copied).IsEquivalentTo(new[] { 1, 2, 3, 4 });
+        var inner = (global::app.type.number.@this)42;
+        var source = new global::app.data.@this<global::app.type.number.@this>("n", inner) { Context = _app.User.Context };
+        var wrapped = source.As<global::app.type.item.@this>();
+        await Assert.That(ReferenceEquals(source, wrapped)).IsFalse();
+        await Assert.That(ReferenceEquals(wrapped.Value, inner)).IsTrue();
     }
 
     // Variance fast path aliases Properties from source onto the wrapped Data.
@@ -75,9 +72,9 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_Variance_PropertiesAliased()
     {
-        var list = new List<int> { 1, 2 };
-        var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", list) { Context = _app.User.Context };
-        var wrapped = source.As<System.Collections.IEnumerable>();
+        var inner = global::app.type.list.@this<global::app.type.number.@this>.Of(new List<int> { 1, 2 });
+        var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", inner) { Context = _app.User.Context };
+        var wrapped = source.As<global::app.type.list.@this>();
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();
         source.Properties.Set("annot", "via-source");
         await Assert.That(wrapped.Properties["annot"]).IsEqualTo("via-source");
@@ -88,13 +85,13 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_Variance_OnChangeAliased_FireOnSourceVisibleThroughWrapped()
     {
-        var list = new List<int> { 1 };
-        var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", list) { Context = _app.User.Context };
-        var wrapped = source.As<System.Collections.IEnumerable>();
+        var inner = global::app.type.list.@this<global::app.type.number.@this>.Of(new List<int> { 1 });
+        var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", inner) { Context = _app.User.Context };
+        var wrapped = source.As<global::app.type.list.@this>();
         await Assert.That(ReferenceEquals(source.OnChange, wrapped.OnChange)).IsTrue();
         var seen = 0;
         wrapped.OnChange.Add((_, _) => seen++);
-        source.FireOnChange(new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", new List<int>()));
+        source.FireOnChange(new global::app.data.@this("nums", new global::app.type.list.@this()));
         await Assert.That(seen).IsEqualTo(1);
     }
 
@@ -105,9 +102,9 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_Variance_PostWrapSubscribe_VisibleThroughBothRefs()
     {
-        var list = new List<int> { 1 };
-        var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", list) { Context = _app.User.Context };
-        var wrapped = source.As<System.Collections.IEnumerable>();
+        var inner = global::app.type.list.@this<global::app.type.number.@this>.Of(new List<int> { 1 });
+        var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", inner) { Context = _app.User.Context };
+        var wrapped = source.As<global::app.type.list.@this>();
         Action<Data, Data> handler = (_, _) => { };
         wrapped.OnChange.Add(handler);
         await Assert.That(source.OnChange).Contains(handler);
@@ -162,7 +159,7 @@ public class AsTIdentityTests
     public async Task AsT_PlainDataTarget_VarReference_ReturnsLiveVariableData()
     {
         var context = _app.User.Context;
-        var live = new global::app.data.@this<global::app.type.list.@this<object?>>("products", new List<object?> { "a", "b" }) { Context = context };
+        var live = new global::app.data.@this("products", global::app.type.list.@this.FromRaw(new List<object?> { "a", "b" }, context)) { Context = context };
         context.Variable.Set(live);
 
         var paramData = new Data("Slot", "%products%") { Context = context };
@@ -170,8 +167,8 @@ public class AsTIdentityTests
 
         await Assert.That(ReferenceEquals(canonical, live)).IsTrue();
         // Mutation propagates: appending via live's value is visible through Variables.Get.
-        ((List<object?>)canonical.Value!).Add("c");
-        var stored = (List<object?>)context.Variable.Get("products").Value!;
+        ((global::app.type.list.@this)canonical.Value!).Add(new global::app.data.@this("", "c"));
+        var stored = (global::app.type.list.@this)context.Variable.Get("products").Value!;
         await Assert.That(stored.Count).IsEqualTo(3);
     }
 

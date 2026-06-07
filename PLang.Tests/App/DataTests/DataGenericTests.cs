@@ -42,7 +42,9 @@ public class DataGenericTests
         var data = new global::app.data.@this<global::app.type.number.@this>("test", 42);
         ((Data)data).Value = "not an int";
 
-        await Assert.That(data.Value).IsEqualTo(default(int));
+        // Born-native: number is a reference wrapper, so a failed conversion yields its
+        // default — null — not the value-type 0.
+        await Assert.That(data.Value).IsNull();
     }
 
     [Test]

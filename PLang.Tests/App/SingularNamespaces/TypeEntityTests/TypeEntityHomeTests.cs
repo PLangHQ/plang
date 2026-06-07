@@ -32,7 +32,9 @@ public class TypeEntityHomeTests
         // depending on the door used). guid has no wrapper, so the registry door
         // and the value door agree.
         await using var app = new PLangEngine("/test");
-        var d = new global::app.data.@this<System.Guid>("", System.Guid.NewGuid()) { Context = app.User.Context };
+        // guid has no `: item` wrapper, so it cannot ride a Data<T> — carry it on a bare Data;
+        // the Type is still inferred 1:1 from the CLR value, which is what this test compares.
+        var d = new global::app.data.@this("", System.Guid.NewGuid()) { Context = app.User.Context };
         var fromRegistry = app.Type[d.Type!.Name];
         fromRegistry.Context = app.User.Context;
         await Assert.That(d.Type.ClrType).IsEqualTo(fromRegistry.ClrType);

@@ -135,8 +135,11 @@ public partial class Set : IContext, IBuildValidatable
         //   3. the IStrictKindEnforcer load seam below — byte-backed values, at MATERIALIZATION.
         if (Type?.Value != null)
         {
-            // Type entity rides in a bare Data (.Value is the type.@this).
-            var typeEntity = (global::app.type.@this)Type.Value;
+            // Type entity rides in a bare Data. Production serializes the whole type.@this;
+            // a raw type NAME (a string/text value, e.g. from a hand-built action) resolves
+            // through the registry via FromName.
+            var typeEntity = Type.Value as global::app.type.@this
+                ?? global::app.type.@this.FromName(Type.Value.ToString()!);
             // Canonicalise kind through the format registry — `markdown` → `md`,
             // `jpeg` → `jpg`. The factory does this when a context is passed;
             // the .pr round-trip loses the context, so we run it again here.
@@ -334,6 +337,23 @@ public partial class Set : IContext, IBuildValidatable
 
     private static data.@this ConstructDataOfT(string name, System.Type t, object? value, actor.context.@this context)
     {
+        // Data<T> requires T : item. A raw CLR mint type (string/int/byte[]/…) maps to the
+        // item wrapper that owns it (text/number/binary/…) via the conversion registry — the
+        // Data<wrapper> holds the raw value and projects it lazily on read. A type with no
+        // item wrapper falls back to a bare Data (the caller stamps the type entity either way).
+        if (!typeof(global::app.type.item.@this).IsAssignableFrom(t))
+        {
+            var (family, _) = global::app.type.convert.@this.OwnerOf(t);
+            if (family != null && typeof(global::app.type.item.@this).IsAssignableFrom(family))
+            {
+                // Wrap the raw value into its item form so the Data<wrapper> ctor (which takes
+                // a T? = the wrapper) binds — a raw string/int/byte[] won't match Data<text/number/binary>.
+                value = global::app.type.catalog.@this.ConvertTo(value, family, context) ?? value;
+                t = family;
+            }
+            else
+                return new data.@this(name, value) { Context = context };
+        }
         var generic = typeof(data.@this<>).MakeGenericType(t);
         var instance = (data.@this)Activator.CreateInstance(generic, name, value, null, null)!;
         instance.Context = context;

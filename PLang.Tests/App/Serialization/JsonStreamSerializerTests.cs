@@ -137,8 +137,8 @@ public class JsonStreamSerializerTests
         var resultTrue = serializer.Deserialize<global::app.type.@bool.@this>("true").Value!;
         var resultFalse = serializer.Deserialize<global::app.type.@bool.@this>("false").Value!;
 
-        await Assert.That(resultTrue).IsTrue();
-        await Assert.That(resultFalse).IsFalse();
+        await Assert.That((bool)resultTrue).IsTrue();
+        await Assert.That((bool)resultFalse).IsFalse();
     }
 
     [Test]

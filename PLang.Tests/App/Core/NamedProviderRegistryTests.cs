@@ -51,7 +51,7 @@ public class NamedProviderRegistryTests
         var result = _app.Code.Get<ISigning>("custom");
         await result.IsSuccess();
         await Assert.That(result.Value).IsSameReferenceAs(provider);
-        await Assert.That(result.Value!.Name).IsEqualTo("custom");
+        await Assert.That(((global::app.module.code.ICode)result.Value!).Name).IsEqualTo("custom");
     }
 
     [Test]
@@ -87,7 +87,7 @@ public class NamedProviderRegistryTests
         _app.Code.Register<ISigning>(second);
 
         var builtIn = _app.Code.Get<ISigning>("ed25519");
-        await Assert.That(builtIn.Value!.IsDefault).IsTrue();
+        await Assert.That(((global::app.module.code.ICode)builtIn.Value!).IsDefault).IsTrue();
         await Assert.That(second.IsDefault).IsFalse();
     }
 
@@ -112,8 +112,9 @@ public class NamedProviderRegistryTests
 
         var result = _app.Code.Get<ISigning>();
         await result.IsSuccess();
-        await Assert.That(result.Value!.IsDefault).IsTrue();
-        await Assert.That(result.Value.Name).IsEqualTo("ed25519");
+        var entry = (global::app.module.code.ICode)result.Value!;
+        await Assert.That(entry.IsDefault).IsTrue();
+        await Assert.That(entry.Name).IsEqualTo("ed25519");
     }
 
     [Test]
@@ -184,7 +185,7 @@ public class NamedProviderRegistryTests
         await Assert.That(second.IsDefault).IsTrue();
 
         var builtIn = _app.Code.Get<ISigning>("ed25519");
-        await Assert.That(builtIn.Value!.IsDefault).IsFalse();
+        await Assert.That(((global::app.module.code.ICode)builtIn.Value!).IsDefault).IsFalse();
     }
 
     [Test]

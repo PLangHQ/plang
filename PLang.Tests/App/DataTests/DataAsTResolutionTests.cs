@@ -82,8 +82,9 @@ public class DataAsTResolutionTests
         var result = data.As<global::app.type.list.@this<global::app.type.text.@this>>(_app.User.Context);
 
         await Assert.That(result.Value).IsNotNull();
-        await Assert.That(result.Value![0]).IsEqualTo("hello");
-        await Assert.That(result.Value[1]).IsEqualTo("world");
+        var items = result.GetValue<List<string>>()!;
+        await Assert.That(items[0]).IsEqualTo("hello");
+        await Assert.That(items[1]).IsEqualTo("world");
     }
 
     // Value is Dictionary<string, object?> with %var% in values → walks, substitutes, converts.
@@ -94,10 +95,11 @@ public class DataAsTResolutionTests
         var raw = new Dictionary<string, object?> { ["role"] = "system", ["content"] = "%prompt%" };
         var data = new Data("dict", raw) { Context = _app.User.Context };
 
-        var result = data.As<Dictionary<string, object?>>(_app.User.Context);
+        var result = data.As<global::app.type.dict.@this>(_app.User.Context);
 
         await Assert.That(result.Value).IsNotNull();
-        await Assert.That(result.Value!["content"]).IsEqualTo("You are a compiler");
+        var dict = result.GetValue<Dictionary<string, object?>>()!;
+        await Assert.That(dict["content"]).IsEqualTo("You are a compiler");
     }
 
     // T has static Resolve(string, Context) (e.g., FileSystem.path) → As<T> dispatches to it for string Values.
@@ -182,7 +184,7 @@ public class DataAsTResolutionTests
         await result.IsSuccess();
         await Assert.That(result.Value).IsNotNull();
         // The substituted value should NOT have appeared inside the Action template — the raw %comment% remains.
-        var firstAction = result.Value![0];
+        var firstAction = result.GetValue<List<PrAction>>()![0];
         var commentParam = firstAction.Parameters?.FirstOrDefault(p => p.Name == "comment");
         await Assert.That(commentParam).IsNotNull();
         await Assert.That(commentParam!.Value).IsEqualTo("%comment%");
@@ -198,8 +200,9 @@ public class DataAsTResolutionTests
         var raw = new System.Collections.ArrayList { "%x%", "literal" };
         var data = new Data("list", raw) { Context = _app.User.Context };
 
-        // Asks for object back so the conversion doesn't try to coerce ArrayList to anything.
-        var result = data.As<object>(_app.User.Context);
+        // AsCanonical resolves vars without typing — a non-generic ArrayList isn't a walked
+        // shape, so it passes through untouched.
+        var result = data.AsCanonical();
 
         await Assert.That(result.Value).IsEqualTo(raw);
         // Raw element [0] is still "%x%" — no walk happened.
@@ -214,7 +217,7 @@ public class DataAsTResolutionTests
         var raw = new System.Collections.Hashtable { ["key"] = "%x%" };
         var data = new Data("dict", raw) { Context = _app.User.Context };
 
-        var result = data.As<object>(_app.User.Context);
+        var result = data.AsCanonical();
 
         await Assert.That(((System.Collections.Hashtable)result.Value!)["key"]).IsEqualTo("%x%");
     }
@@ -345,13 +348,13 @@ public class DataAsTResolutionTests
                 ["Content"] = "literal text with %x% and %y% inside"
             }
         };
-        context.Variable.Set(new global::app.data.@this<global::app.type.list.@this<object?>>("messages", stored) { Context = context });
+        context.Variable.Set(new global::app.data.@this<global::app.type.list.@this<global::app.type.item.@this>>("messages", global::app.type.list.@this<global::app.type.item.@this>.Of(stored)) { Context = context });
 
         var paramData = new Data("Messages", "%messages%") { Context = context };
-        var result = paramData.As<global::app.type.list.@this<Dictionary<string, object?>>>(context);
+        var result = paramData.As<global::app.type.list.@this<global::app.type.dict.@this>>(context);
 
         await result.IsSuccess();
-        var content = (string)result.Value![0]["Content"]!;
+        var content = (string)result.GetValue<List<Dictionary<string, object?>>>()![0]["Content"]!;
         await Assert.That(content).IsEqualTo("literal text with %x% and %y% inside");
         // Negative assertion — the bug substituted these:
         await Assert.That(content).DoesNotContain("BUILDER-X");
@@ -380,14 +383,14 @@ public class DataAsTResolutionTests
                 ["Content"] = "literal text with %goal.Name% and %buildStart% inside"
             }
         };
-        context.Variable.Set(new global::app.data.@this<global::app.type.list.@this<object?>>("fixerMessages", stored) { Context = context });
+        context.Variable.Set(new global::app.data.@this<global::app.type.list.@this<global::app.type.item.@this>>("fixerMessages", global::app.type.list.@this<global::app.type.item.@this>.Of(stored)) { Context = context });
 
         // Mirrors how llm.query reads %fixerMessages% — typed slot is List<LlmMessage>.
         var paramData = new Data("Messages", "%fixerMessages%") { Context = context };
         var result = paramData.As<global::app.type.list.@this<global::app.module.llm.LlmMessage>>(context);
 
         await result.IsSuccess();
-        var content = result.Value![0].Content!;
+        var content = result.GetValue<List<global::app.module.llm.LlmMessage>>()![0].Content!;
         await Assert.That(content).IsEqualTo("literal text with %goal.Name% and %buildStart% inside");
         // Negative assertion — the bug substituted these:
         await Assert.That(content).DoesNotContain("BuildGoal");

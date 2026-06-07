@@ -122,7 +122,7 @@ public class TextStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Text();
 
-        var result = serializer.Deserialize<int?>("42").Value!;
+        var result = serializer.Deserialize<global::app.type.number.@this>("42").GetValue<int>();
 
         await Assert.That(result).IsEqualTo(42);
     }
@@ -168,9 +168,9 @@ public class TextStreamSerializerTests
         var falseResult = serializer.Deserialize<global::app.type.@bool.@this>("false").Value!;
         var trueResultCaps = serializer.Deserialize<global::app.type.@bool.@this>("True").Value!;
 
-        await Assert.That(trueResult).IsTrue();
-        await Assert.That(falseResult).IsFalse();
-        await Assert.That(trueResultCaps).IsTrue();
+        await Assert.That((bool)trueResult).IsTrue();
+        await Assert.That((bool)falseResult).IsFalse();
+        await Assert.That((bool)trueResultCaps).IsTrue();
     }
 
     [Test]
@@ -178,11 +178,12 @@ public class TextStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Text();
 
-        var result = serializer.Deserialize<DateTime>("2024-01-15").Value!;
+        // Born-native datetime is tz-aware end to end — parse requires an ISO-8601 offset.
+        var result = serializer.Deserialize<global::app.type.datetime.@this>("2024-01-15T00:00:00+00:00").Value!;
 
-        await Assert.That(result.Year).IsEqualTo(2024);
-        await Assert.That(result.Month).IsEqualTo(1);
-        await Assert.That(result.Day).IsEqualTo(15);
+        await Assert.That(result.Value.Year).IsEqualTo(2024);
+        await Assert.That(result.Value.Month).IsEqualTo(1);
+        await Assert.That(result.Value.Day).IsEqualTo(15);
     }
 
     [Test]
@@ -191,21 +192,24 @@ public class TextStreamSerializerTests
         var serializer = new global::app.channel.serializer.Text();
         var guidStr = "12345678-1234-1234-1234-123456789012";
 
-        var result = serializer.Deserialize<Guid>(guidStr).Value!;
+        // Born-native: there is no `guid` value type — a guid rides the text channel as text.
+        var result = serializer.Deserialize<global::app.type.text.@this>(guidStr).Value!;
 
-        await Assert.That(result).IsEqualTo(Guid.Parse(guidStr));
+        await Assert.That(Guid.Parse(result.ToString())).IsEqualTo(Guid.Parse(guidStr));
     }
 
     [Test]
-    public async Task Deserialize_ByteArray_ReturnsUtf8Bytes()
+    public async Task Deserialize_ByteArray_DecodesBase64()
     {
         var serializer = new global::app.channel.serializer.Text();
 
-        var result = serializer.Deserialize<byte[]>("hello").Value!;
+        // Born-native: byte payloads are the `binary` value type, whose text form is base64.
         var expected = Encoding.UTF8.GetBytes("hello");
+        var base64 = System.Convert.ToBase64String(expected);
+        var result = serializer.Deserialize<global::app.type.binary.@this>(base64).Value!;
 
         await Assert.That(result).IsNotNull();
-        await Assert.That(result!.SequenceEqual(expected)).IsTrue();
+        await Assert.That(result.Value.SequenceEqual(expected)).IsTrue();
     }
 
     [Test]
@@ -213,7 +217,7 @@ public class TextStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Text();
 
-        var result = serializer.Deserialize<int?>("not a number").Value!;
+        var result = serializer.Deserialize<global::app.type.number.@this>("not a number").Value;
 
         await Assert.That(result).IsNull();
     }
@@ -223,9 +227,10 @@ public class TextStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Text();
 
-        var result = serializer.Deserialize<global::app.type.number.@this>("").Value!;
+        // Born-native: number is a reference wrapper — an empty payload yields its default (null).
+        var result = serializer.Deserialize<global::app.type.number.@this>("").Value;
 
-        await Assert.That(result).IsEqualTo(0);
+        await Assert.That(result).IsNull();
     }
 
     [Test]
@@ -290,7 +295,7 @@ public class TextStreamSerializerTests
         var serializer = new global::app.channel.serializer.Text();
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("hello"));
 
-        var result = (await serializer.DeserializeAsync<string>(stream)).Value!;
+        var result = (await serializer.DeserializeAsync<global::app.type.text.@this>(stream)).GetValue<string>();
 
         await Assert.That(result).IsEqualTo("hello");
     }
@@ -301,7 +306,7 @@ public class TextStreamSerializerTests
         var serializer = new global::app.channel.serializer.Text();
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("42"));
 
-        var result = (await serializer.DeserializeAsync<int>(stream)).Value!;
+        var result = (await serializer.DeserializeAsync<global::app.type.number.@this>(stream)).GetValue<int>();
 
         await Assert.That(result).IsEqualTo(42);
     }
@@ -312,7 +317,7 @@ public class TextStreamSerializerTests
         var serializer = new global::app.channel.serializer.Text();
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("hello"));
 
-        var result = (await serializer.DeserializeAsync<int>(stream)).Value!;
+        var result = (await serializer.DeserializeAsync<global::app.type.number.@this>(stream)).GetValue<int>();
 
         await Assert.That(result).IsEqualTo(0);
     }
@@ -338,7 +343,7 @@ public class TextStreamSerializerTests
 
         await serializer.SerializeAsync(stream, Data.Ok(original));
         stream.Position = 0;
-        var result = (await serializer.DeserializeAsync<string>(stream)).Value!;
+        var result = (await serializer.DeserializeAsync<global::app.type.text.@this>(stream)).GetValue<string>();
 
         await Assert.That(result).IsEqualTo(original + Environment.NewLine);
     }
@@ -362,7 +367,7 @@ public class TextStreamSerializerTests
         var serializer = new global::app.channel.serializer.Text();
         using var stream = new ThrowingStream(canRead: true);
 
-        var result = await serializer.DeserializeAsync<string>(stream);
+        var result = await serializer.DeserializeAsync<global::app.type.text.@this>(stream);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("TextDeserializeError");

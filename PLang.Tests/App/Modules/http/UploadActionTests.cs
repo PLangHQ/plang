@@ -72,7 +72,7 @@ public class UploadActionTests
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", "Hello upload"),
-            As = ContentAs.Text,
+            As = (global::app.type.choice.@this<global::app.module.http.ContentAs>)ContentAs.Text,
             Unsigned = (global::app.type.@bool.@this)true
         };
 
@@ -95,7 +95,7 @@ public class UploadActionTests
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", "upload.txt"),
-            As = ContentAs.File,
+            As = (global::app.type.choice.@this<global::app.module.http.ContentAs>)ContentAs.File,
             Unsigned = (global::app.type.@bool.@this)true
         };
 
@@ -117,7 +117,7 @@ public class UploadActionTests
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", b64),
-            As = ContentAs.Base64,
+            As = (global::app.type.choice.@this<global::app.module.http.ContentAs>)ContentAs.Base64,
             Unsigned = (global::app.type.@bool.@this)true
         };
 
@@ -177,7 +177,7 @@ public class UploadActionTests
             Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", "data"),
             Method = (global::app.type.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.PUT,
-            As = ContentAs.Text,
+            As = (global::app.type.choice.@this<global::app.module.http.ContentAs>)ContentAs.Text,
             Unsigned = (global::app.type.@bool.@this)true
         };
 
@@ -200,7 +200,7 @@ public class UploadActionTests
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", "data"),
-            As = ContentAs.Text,
+            As = (global::app.type.choice.@this<global::app.module.http.ContentAs>)ContentAs.Text,
             Unsigned = (global::app.type.@bool.@this)true
         };
 
@@ -247,7 +247,7 @@ public class UploadActionTests
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", new Dictionary<string, object> { ["field1"] = "value1" }),
-            As = ContentAs.Form,
+            As = (global::app.type.choice.@this<global::app.module.http.ContentAs>)ContentAs.Form,
             Unsigned = (global::app.type.@bool.@this)true
         };
 
@@ -274,7 +274,7 @@ public class UploadActionTests
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/upload",
             Content = new global::app.data.@this("", new Dictionary<string, object> { ["title"] = "My Doc", ["file"] = "@document.pdf" }),
-            As = ContentAs.Form,
+            As = (global::app.type.choice.@this<global::app.module.http.ContentAs>)ContentAs.Form,
             Unsigned = (global::app.type.@bool.@this)true
         };
 

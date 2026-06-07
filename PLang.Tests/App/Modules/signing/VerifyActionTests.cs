@@ -50,7 +50,7 @@ public class VerifyActionTests
             Data = new Data("", data),
             Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(contracts, Ctx)),
             Expires = expires.HasValue ? (global::app.type.duration.@this)expires.Value : null,
-            Headers = headers
+            Headers = headers?.ToDictData()
         };
         return await _app.RunAction<sign>(action, Ctx);
     }
@@ -63,7 +63,7 @@ public class VerifyActionTests
             Context = Ctx,
             Data = signedData,
             Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(contracts, Ctx)),
-            Headers = headers,
+            Headers = headers?.ToDictData(),
             TimeoutMs = timeoutMs.HasValue ? (global::app.type.number.@this)timeoutMs.Value : null
         };
         return await _app.RunAction<verify>(action, Ctx);

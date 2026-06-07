@@ -349,7 +349,7 @@ public class ListTests
             Context = context,
             ListName = new app.variable.@this("items"),
             Key = (global::app.type.text.@this)"level",
-            Operator = new global::app.module.condition.Operator("=="),
+            Operator = (global::app.type.choice.@this<global::app.module.condition.Operator>)new global::app.module.condition.Operator("=="),
             Value = new global::app.data.@this("", "high")
         };
         var result = await action.Run();
@@ -373,7 +373,7 @@ public class ListTests
             Context = context,
             ListName = new app.variable.@this("items"),
             Key = (global::app.type.text.@this)"level",
-            Operator = new global::app.module.condition.Operator("=="),
+            Operator = (global::app.type.choice.@this<global::app.module.condition.Operator>)new global::app.module.condition.Operator("=="),
             Value = new global::app.data.@this("", "high")
         };
         var result = await action.Run();
@@ -393,7 +393,7 @@ public class ListTests
             Context = context,
             ListName = new app.variable.@this("items"),
             Key = (global::app.type.text.@this)"level",
-            Operator = new global::app.module.condition.Operator("=="),
+            Operator = (global::app.type.choice.@this<global::app.module.condition.Operator>)new global::app.module.condition.Operator("=="),
             Value = new global::app.data.@this("", "high")
         };
         var result = await action.Run();
@@ -417,7 +417,7 @@ public class ListTests
             Context = context,
             ListName = new app.variable.@this("items"),
             Key = (global::app.type.text.@this)"status",
-            Operator = new global::app.module.condition.Operator("!="),
+            Operator = (global::app.type.choice.@this<global::app.module.condition.Operator>)new global::app.module.condition.Operator("!="),
             Value = new global::app.data.@this("", "active")
         };
         var result = await action.Run();

@@ -98,7 +98,7 @@ public class RuntimeDoubleWrapTests
             .GetTypes()
             .Where(t => t.IsClass && !t.IsAbstract && t.Namespace?.StartsWith("app.module") == true)
             .Select(t => (Type: t, Run: t.GetMethod("Run", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes)))
-            .Where(x => x.Run != null && x.Run.ReturnType == typeof(Task<global::app.data.@this<object>>))
+            .Where(x => x.Run != null && IsTaskDataOfObject(x.Run.ReturnType))
             .Select(x => x.Type.FullName!)
             .OrderBy(n => n)
             .ToList();
@@ -115,6 +115,19 @@ public class RuntimeDoubleWrapTests
                 "New Data<object> Run() handler? Either narrow T to a concrete type, " +
                 "or add a runtime double-wrap invocation test in this file. " +
                 "Forwarders that polymorphically return a Data produced elsewhere should be Task<Data>, not Task<Data<object>>.");
+    }
+
+    // Structural probe for `Task<Data<object>>`. The closed type can no longer be named in
+    // source (`where T : item` rejects `object`), so we inspect already-compiled return types
+    // through the open generics instead of comparing against a `typeof(...)`.
+    private static bool IsTaskDataOfObject(System.Type returnType)
+    {
+        if (!returnType.IsGenericType || returnType.GetGenericTypeDefinition() != typeof(Task<>))
+            return false;
+        var inner = returnType.GetGenericArguments()[0];
+        return inner.IsGenericType
+            && inner.GetGenericTypeDefinition() == typeof(global::app.data.@this<>)
+            && inner.GetGenericArguments()[0] == typeof(object);
     }
 
     [Test]

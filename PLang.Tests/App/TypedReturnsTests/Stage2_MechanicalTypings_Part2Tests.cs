@@ -79,11 +79,12 @@ public class Stage2_MechanicalTypings_Part2Tests
         var ret = RunReturnType<global::app.module.test.Tag>();
         var bareData = typeof(Task<Data>);
         var dataOfBool = typeof(Task<global::app.data.@this<global::app.type.@bool.@this>>);
-        var dataOfObject = typeof(Task<global::app.data.@this<object>>);
 
+        // `Data<object>` is no longer expressible — `where T : item` rejects `object`, so a
+        // handler can never degrade to Task<Data<object>>. The bare-or-bool check is the
+        // surviving observable guarantee.
         await Assert.That(ret == bareData || ret == dataOfBool).IsTrue()
-            .Because("test.tag must be bare Task<Data> or Task<Data<global::app.type.@bool.@this>>, never Task<Data<object>>.");
-        await Assert.That(ret).IsNotEqualTo(dataOfObject);
+            .Because("test.tag must be bare Task<Data> or Task<Data<global::app.type.@bool.@this>>.");
     }
 
     [Test]

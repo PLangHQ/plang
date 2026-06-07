@@ -27,9 +27,10 @@ public class ErrorBuryingReproTest
         await resolved.IsFailure();
         // The primary error is the original IError, not the conversion wrapper.
         await Assert.That(resolved.Error!.Key).IsEqualTo("NullReferenceException");
-        // The conversion failure rides on the chain — visible but demoted.
+        // The conversion failure rides on the chain — visible but demoted. (Born-native: text
+        // is a wrapper type, not a CLR primitive, so the failure surfaces as TypeMismatch.)
         await Assert.That(resolved.Error.ErrorChain.Count).IsEqualTo(1);
-        await Assert.That(resolved.Error.ErrorChain[0].Key).IsEqualTo("PrimitiveConversionFailed");
+        await Assert.That(resolved.Error.ErrorChain[0].Key).IsEqualTo("TypeMismatch");
 
         // Format() puts the NullReferenceException header at the very top,
         // before any "Error during error handling" footer. If this ever
@@ -37,7 +38,7 @@ public class ErrorBuryingReproTest
         // the apparent bug.
         var format = resolved.Error.Format();
         var nreHeaderAt = format.IndexOf("NullReferenceException(500)", System.StringComparison.Ordinal);
-        var convHeaderAt = format.IndexOf("PrimitiveConversionFailed(400)", System.StringComparison.Ordinal);
+        var convHeaderAt = format.IndexOf("TypeMismatch(400)", System.StringComparison.Ordinal);
         await Assert.That(nreHeaderAt).IsGreaterThanOrEqualTo(0);
         await Assert.That(convHeaderAt).IsGreaterThan(nreHeaderAt);
     }

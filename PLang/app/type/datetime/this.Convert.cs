@@ -11,15 +11,19 @@ public sealed partial class @this
     public static global::app.data.@this Convert(object? value, string? kind,
         global::app.actor.context.@this context)
     {
+        // kind named ⇒ a raw-DateTimeOffset target wants the CLR struct; no kind ⇒ the target is
+        // `datetime` the type, so return the born-native wrapper. B(...) packs whichever was asked.
+        bool returnWrapper = string.IsNullOrEmpty(kind);
+        global::app.data.@this B(System.DateTimeOffset v) => global::app.data.@this.Ok(returnWrapper ? (object?)new @this(v) : v);
         switch (value)
         {
             case null: return global::app.data.@this.Ok(value);
-            case System.DateTimeOffset: return global::app.data.@this.Ok(value);
-            case System.DateTime dt: return global::app.data.@this.Ok(new System.DateTimeOffset(dt));
-            case @this self: return global::app.data.@this.Ok(self.Value);
+            case System.DateTimeOffset dto: return B(dto);
+            case System.DateTime dt: return B(new System.DateTimeOffset(dt));
+            case @this self: return B(self.Value);
             case string s:
                 var parsed = Resolve(s, context);
-                if (parsed != null) return global::app.data.@this.Ok(parsed.Value);
+                if (parsed != null) return B(parsed.Value);
                 return global::app.data.@this.FromError(new global::app.error.Error(
                     $"Cannot parse '{s}' as datetime — expected ISO-8601 (e.g. 2024-03-15T10:30:00+00:00).",
                     "DateTimeParseFailed", 400));

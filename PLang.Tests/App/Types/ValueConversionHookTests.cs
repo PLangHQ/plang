@@ -72,9 +72,9 @@ public class ValueConversionHookTests
     public async Task DatetimeHook_ParsesIso()
     {
         var (_, ctx) = MakeApp();
-        var v = Datetime.Convert("2024-03-15T10:30:00+00:00", null, ctx).Value;
-        await Assert.That(v).IsTypeOf<System.DateTimeOffset>();
-        await Assert.That(((System.DateTimeOffset)v!).Year).IsEqualTo(2024);
+        // kind null ⇒ the born-native wrapper (mirrors DurationHook); GetValue projects to raw.
+        var v = Datetime.Convert("2024-03-15T10:30:00+00:00", null, ctx).GetValue<System.DateTimeOffset>();
+        await Assert.That(v.Year).IsEqualTo(2024);
     }
 
     [Test]

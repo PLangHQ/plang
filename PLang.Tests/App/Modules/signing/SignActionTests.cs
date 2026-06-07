@@ -50,7 +50,7 @@ public class SignActionTests
             Data = new Data("", data),
             Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.list.@this>("", global::app.type.list.@this.FromRaw(contracts, Ctx)),
             Expires = expires.HasValue ? (global::app.type.duration.@this)expires.Value : null,
-            Headers = headers
+            Headers = headers?.ToDictData()
         };
         return await _app.RunAction<sign>(action, Ctx);
     }

@@ -114,7 +114,7 @@ public class SettingsApplyTests
     public async Task Apply_DictionaryProperty_Written()
     {
         var headers = new Dictionary<string, object> { ["Authorization"] = "Bearer tok" };
-        var source = new configure { Context = _ctx, DefaultHeaders = headers };
+        var source = new configure { Context = _ctx, DefaultHeaders = headers.ToDictData() };
 
         _app.Config.Apply<Config>(source, _ctx);
 

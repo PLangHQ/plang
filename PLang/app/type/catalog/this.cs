@@ -115,6 +115,9 @@ public sealed partial class @this
             var generic = type.GetGenericTypeDefinition();
             if (generic == typeof(data.@this<>))
                 return GetTypeNameStatic(type.GetGenericArguments()[0]);
+            // choice<T> surfaces under T's name — it IS T's closed named-set.
+            if (generic == typeof(app.type.choice.@this<>))
+                return GetTypeNameStatic(type.GetGenericArguments()[0]);
             // Native typed list — list<T> carries its element type intrinsically.
             if (generic == typeof(app.type.list.@this<>))
                 return $"list<{GetTypeNameStatic(type.GetGenericArguments()[0])}>";
@@ -343,6 +346,10 @@ public sealed partial class @this
             var generic = type.GetGenericTypeDefinition();
             if (generic == typeof(data.@this<>))
                 return GetTypeName(type.GetGenericArguments()[0]);
+            // choice<T> surfaces under T's name — it IS T's closed named-set (the enum/[Choices]
+            // vocabulary), so the catalog renders "operator", "httpmethod", … not "choice".
+            if (generic == typeof(app.type.choice.@this<>))
+                return GetTypeName(type.GetGenericArguments()[0]);
             // Native typed list — list<T> carries its element type intrinsically.
             if (generic == typeof(app.type.list.@this<>))
                 return $"list<{GetTypeName(type.GetGenericArguments()[0])}>";
@@ -565,6 +572,11 @@ public sealed partial class @this
                         if (unwrapped is { IsGenericType: true } u
                             && u.GetGenericTypeDefinition() == typeof(app.type.list.@this<>))
                             Enqueue(u.GetGenericArguments()[0]);
+                        // choice<T> carries its closed named-set on T (enum / [Choices]); walk it
+                        // so the option vocabulary surfaces under T's name (operator, httpmethod, …).
+                        if (unwrapped is { IsGenericType: true } c
+                            && c.GetGenericTypeDefinition() == typeof(app.type.choice.@this<>))
+                            Enqueue(c.GetGenericArguments()[0]);
                     }
                 }
             }

@@ -124,14 +124,13 @@ public sealed partial class @this : global::app.type.item.@this, module.IContext
 
     private static object? Unwrap(object? value) => value switch
     {
-        @this nested => nested.ToRaw(),
-        // A nested native list decomposes through its own ToRaw (symmetric with
-        // list.ToRaw's nested-dict arm) — list.@this is not IEnumerable, so without
-        // this arm it would survive un-decomposed in the supposedly-raw dictionary.
-        app.type.list.@this nestedList => nestedList.ToRaw(),
+        string or byte[] => value,
+        // Any item leaf — a scalar wrapper (text/number/bool/…) OR a nested dict/list —
+        // decomposes through its own ToRaw, so a `dict` projects to a fully-raw CLR
+        // Dictionary (born-native scalars are wrappers, not raw, until unwrapped here).
+        global::app.type.item.@this leaf => leaf.ToRaw(),
         // A raw CLR list may still hold dict/list elements; unwrap each so a nested
         // object reads out raw too — otherwise STJ would reflect its C# surface.
-        string or byte[] => value,
         System.Collections.IEnumerable seq => seq.Cast<object?>().Select(Unwrap).ToList(),
         _ => value,
     };

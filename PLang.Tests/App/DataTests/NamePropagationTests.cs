@@ -29,10 +29,10 @@ public class NamePropagationTests
     public async Task Name_FullVarMatch_PropagatesLiveVariableName()
     {
         var context = _app.User.Context;
-        context.Variable.Set(new global::app.data.@this<global::app.type.list.@this<object?>>("products", new List<object?> { "a" }) { Context = context });
+        context.Variable.Set(new global::app.data.@this("products", global::app.type.list.@this.FromRaw(new List<object?> { "a" }, context)) { Context = context });
 
         var paramData = new Data("List", "%products%") { Context = context };
-        var result = paramData.As<System.Collections.IEnumerable>();
+        var result = paramData.As<global::app.type.list.@this>();
 
         await Assert.That(result.Name).IsEqualTo("products");
     }
@@ -85,7 +85,7 @@ public class NamePropagationTests
         context.Variable.Set(new global::app.data.@this<global::app.type.text.@this>("b", "expanded") { Context = context });
 
         var paramData = new Data("Items", new List<object?> { "a", "%b%", "c" }) { Context = context };
-        var result = paramData.As<System.Collections.IEnumerable>();
+        var result = paramData.As<global::app.type.list.@this>();
         await Assert.That(result.Name).IsEqualTo("Items");
     }
 

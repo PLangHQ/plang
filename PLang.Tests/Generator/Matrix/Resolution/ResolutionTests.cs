@@ -110,7 +110,8 @@ public class DeepResolutionListTests
 
         var typed = result.Data as global::app.data.@this<global::app.type.list.@this<global::app.module.llm.LlmMessage>>;
         await Assert.That(typed!.Value).IsNotNull();
-        await Assert.That(typed.Value![0].Content).IsEqualTo("You are a compiler");
+        var items = typed.GetValue<List<global::app.module.llm.LlmMessage>>()!;
+        await Assert.That(items[0].Content).IsEqualTo("You are a compiler");
     }
 
     // List items that are themselves nested lists/dicts → recurses correctly to all leaves.
@@ -136,8 +137,9 @@ public class DeepResolutionListTests
             variables: new Dictionary<string, object?> { ["a"] = "alpha", ["b"] = "beta" });
 
         var typed = result.Data as global::app.data.@this<global::app.type.list.@this<global::app.module.llm.LlmMessage>>;
-        await Assert.That(typed!.Value![0].Content).IsEqualTo("alpha");
-        await Assert.That(typed.Value![1].Content).IsEqualTo("beta");
+        var items = typed!.GetValue<List<global::app.module.llm.LlmMessage>>()!;
+        await Assert.That(items[0].Content).IsEqualTo("alpha");
+        await Assert.That(items[1].Content).IsEqualTo("beta");
     }
 }
 
@@ -158,8 +160,9 @@ public class DeepResolutionDictTests
             variables: new Dictionary<string, object?> { ["x"] = "substituted" });
 
         var typed = result.Data as global::app.data.@this<global::app.type.dict.@this>;
-        await Assert.That(typed!.Value!["inner"]).IsEqualTo("substituted");
-        await Assert.That(typed.Value["other"]).IsEqualTo("literal");
+        var d = typed!.GetValue<Dictionary<string, object?>>()!;
+        await Assert.That(d["inner"]).IsEqualTo("substituted");
+        await Assert.That(d["other"]).IsEqualTo("literal");
     }
 
     // Dictionary value is itself a list → walks both layers.
@@ -176,7 +179,8 @@ public class DeepResolutionDictTests
             variables: new Dictionary<string, object?> { ["a"] = "alpha", ["b"] = "beta" });
 
         var typed = result.Data as global::app.data.@this<global::app.type.dict.@this>;
-        var inner = typed!.Value!["items"] as List<object?>;
+        var d = typed!.GetValue<Dictionary<string, object?>>()!;
+        var inner = d["items"] as List<object?>;
         await Assert.That(inner![0]).IsEqualTo("alpha");
         await Assert.That(inner[1]).IsEqualTo("beta");
         await Assert.That(inner[2]).IsEqualTo("literal");

@@ -55,9 +55,8 @@ public class PlangAssignabilityTests
     public async Task AsT_StringToIEnumerable_WrapsAsSingleElementList()
     {
         var source = new global::app.data.@this<global::app.type.text.@this>("text", "hello") { Context = _app.User.Context };
-        var wrapped = source.As<IEnumerable>();
         var items = new List<object?>();
-        foreach (var item in wrapped.Value!) items.Add(item);
+        foreach (var item in source.AsEnumerable()) items.Add(item);
         await Assert.That(items.Count).IsEqualTo(1);
         await Assert.That(items[0]!.ToString()).IsEqualTo("hello");
     }
@@ -68,9 +67,8 @@ public class PlangAssignabilityTests
     public async Task AsT_IntToIEnumerable_WrapsAsSingleElementList()
     {
         var source = new global::app.data.@this<global::app.type.number.@this>("n", 42) { Context = _app.User.Context };
-        var wrapped = source.As<IEnumerable>();
         var items = new List<object?>();
-        foreach (var item in wrapped.Value!) items.Add(item);
+        foreach (var item in source.AsEnumerable()) items.Add(item);
         await Assert.That(items.Count).IsEqualTo(1);
         await Assert.That(items[0]).IsEqualTo(42);
     }

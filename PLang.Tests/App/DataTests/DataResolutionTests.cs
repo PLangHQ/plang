@@ -41,7 +41,7 @@ public class DataResolutionTests
         var data = new Data("list", raw) { Context = _app.User.Context };
 
         var resolved = data.As<global::app.type.list.@this<global::app.type.text.@this>>(_app.User.Context);
-        await Assert.That(resolved.Value![0]).IsEqualTo("world");
+        await Assert.That(resolved.GetValue<List<string>>()![0]).IsEqualTo("world");
 
         // Original raw is unchanged.
         await Assert.That(((List<object?>)data.Value!)[0]).IsEqualTo("%name%");
@@ -108,11 +108,11 @@ public class DataResolutionTests
 
         _app.User.Context.Variable.Set("comment", "value1");
         var first = data.As<global::app.type.list.@this<global::app.module.llm.LlmMessage>>(_app.User.Context);
-        await Assert.That(first.Value![0].Content).IsEqualTo("value1");
+        await Assert.That(first.GetValue<List<global::app.module.llm.LlmMessage>>()![0].Content).IsEqualTo("value1");
 
         _app.User.Context.Variable.Set("comment", "value2");
         var second = data.As<global::app.type.list.@this<global::app.module.llm.LlmMessage>>(_app.User.Context);
-        await Assert.That(second.Value![0].Content).IsEqualTo("value2");
+        await Assert.That(second.GetValue<List<global::app.module.llm.LlmMessage>>()![0].Content).IsEqualTo("value2");
     }
 
     // Concurrent As<T> calls on the same parameter Data → no race, two valid (independent) results.

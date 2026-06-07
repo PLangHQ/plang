@@ -12,16 +12,18 @@ public class VariableSetTypeParamTests
         var t = typeof(global::app.module.variable.Set);
         var prop = t.GetProperty("Type", BindingFlags.Public | BindingFlags.Instance)!;
         await Assert.That(prop).IsNotNull();
-        // data.@this<app.type.@this>?
-        var inner = prop.PropertyType.GetGenericArguments()[0];
-        await Assert.That(inner).IsEqualTo(typeof(global::app.type.@this));
+        // Born-native: `type` is not `: item`, so it can't ride a Data<T> — the Type slot is a
+        // bare Data and the type entity rides in .Value (handler reads Type.Value as type.@this).
+        // It is NOT a raw string slot.
+        await Assert.That(prop.PropertyType).IsEqualTo(typeof(global::app.data.@this));
     }
 
     [Test] public async Task SetType_IsNullable()
     {
         var t = typeof(global::app.module.variable.Set);
         var prop = t.GetProperty("Type", BindingFlags.Public | BindingFlags.Instance)!;
-        // It's a reference type, nullable annotation via context.
-        await Assert.That(prop.PropertyType.IsGenericType).IsTrue();
+        // The `as` clause is optional — the slot is nullable-annotated (`data.@this?`).
+        var nullability = new NullabilityInfoContext().Create(prop);
+        await Assert.That(nullability.WriteState).IsEqualTo(NullabilityState.Nullable);
     }
 }

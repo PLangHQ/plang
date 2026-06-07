@@ -301,8 +301,10 @@ public partial class @this : global::app.type.item.@this, module.IContext,
 
     private static object? Unwrap(object? value) => value switch
     {
-        @this nestedList => nestedList.ToRaw(),
-        app.type.dict.@this nestedDict => nestedDict.ToRaw(),
+        string or byte[] => value,
+        // Any item leaf — a scalar wrapper (text/number/bool/…) OR a nested dict/list —
+        // decomposes through its own ToRaw, so the list projects to fully-raw CLR.
+        global::app.type.item.@this leaf => leaf.ToRaw(),
         _ => value,
     };
 

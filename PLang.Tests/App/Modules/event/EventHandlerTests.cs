@@ -22,7 +22,7 @@ public class EventHandlerTests
         => new()
         {
             Context = context,
-            Trigger = type,
+            Trigger = (global::app.type.choice.@this<global::app.@event.Trigger>)type,
             GoalToCall = new GoalCall { Name = (global::app.type.text.@this)goalName },
             GoalPattern = (global::app.type.text.@this)goalPattern,
             StepPattern = (global::app.type.text.@this)stepPattern,
@@ -218,7 +218,7 @@ public class EventHandlerTests
         var onAction = new On
         {
             Context = context,
-            Trigger = global::app.@event.Trigger.AfterGoal,
+            Trigger = (global::app.type.choice.@this<global::app.@event.Trigger>)global::app.@event.Trigger.AfterGoal,
             GoalToCall = goalToCall,
             GoalPattern = (global::app.type.text.@this)"MainGoal"
         };

@@ -220,12 +220,20 @@ public sealed partial class @this
         // error surfaces (enriched with the slot name). A null result means the family
         // declined this value shape (e.g. image for raw bytes) — fall through to the
         // residual leaf + plumbing below.
-        if (context != null)
         {
             var (family, kind) = global::app.type.convert.@this.OwnerOf(targetType);
-            if (family != null)
+            // An error value isn't a convertible payload — let it fall through to the residual
+            // leaf, which keeps the original error primary and demotes the conversion failure
+            // onto its chain (ErrorAsStringSlot). The family hook would otherwise surface its own
+            // "cannot convert" error as primary, burying the real cause.
+            if (family != null && value is not global::app.error.Error)
             {
-                var owned = context.App.Type.Conversions.Of(family, value, kind, context);
+                // With an App in scope use the instance dispatch; context-free (the Text
+                // serializer's string deserialize) the scalar families' static Convert hook
+                // still parses into the born-native wrapper.
+                var owned = context != null
+                    ? context.App.Type.Conversions.Of(family, value, kind, context)
+                    : global::app.type.convert.@this.OfStatic(family, value, kind, null);
                 if (owned != null)
                 {
                     if (owned.Success) return (owned.Value, null);
@@ -512,10 +520,19 @@ public sealed partial class @this
         // Last resort: type mismatch
         if (!targetType.IsAssignableFrom(sourceType))
         {
-            return (null, new error.Error(
+            var convErr = new error.Error(
                 FormatTypeMismatch(value, sourceType, targetType, targetName),
                 "TypeMismatch", 400)
-                { FixSuggestion = TypeMismatchHint(value, sourceType, targetType) });
+                { FixSuggestion = TypeMismatchHint(value, sourceType, targetType) };
+            // An error value isn't convertible — keep the original error primary and demote the
+            // conversion failure onto its chain (mirrors the primitive path above), so a failed
+            // `%!error% as text` doesn't bury the real cause behind conversion scaffolding.
+            if (value is error.Error sourceErr)
+            {
+                sourceErr.ErrorChain.Add(convErr);
+                return (null, sourceErr);
+            }
+            return (null, convErr);
         }
 
         return (value, null);

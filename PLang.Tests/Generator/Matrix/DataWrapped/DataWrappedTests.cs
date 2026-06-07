@@ -53,7 +53,8 @@ public class DataWrappedListTests
             variables: new Dictionary<string, object?> { ["comment"] = "you are a compiler" });
         var typed = result.Data as global::app.data.@this<global::app.type.list.@this<global::app.module.llm.LlmMessage>>;
         await Assert.That(typed!.Value).IsNotNull();
-        await Assert.That(typed.Value![0].Content).IsEqualTo("you are a compiler");
+        var items = typed.GetValue<List<global::app.module.llm.LlmMessage>>()!;
+        await Assert.That(items[0].Content).IsEqualTo("you are a compiler");
     }
 
     [Test]
@@ -78,8 +79,9 @@ public class DataWrappedDictTests
             parameters: new[] { ("headers", (object?)raw) },
             variables: new Dictionary<string, object?> { ["x"] = "substituted" });
         var typed = result.Data as global::app.data.@this<global::app.type.dict.@this>;
-        await Assert.That(typed!.Value!["inner"]).IsEqualTo("substituted");
-        await Assert.That(typed.Value["other"]).IsEqualTo("literal");
+        var d = typed!.GetValue<Dictionary<string, object?>>()!;
+        await Assert.That(d["inner"]).IsEqualTo("substituted");
+        await Assert.That(d["other"]).IsEqualTo("literal");
     }
 }
 
@@ -105,7 +107,7 @@ public class DataWrappedActionListTests
         var typed = result.Data as global::app.data.@this<global::app.type.list.@this<PrAction>>;
         await Assert.That(typed!.Value).IsNotNull();
         // The sub-action's parameter Value is still raw "%comment%" — not resolved.
-        var subParam = typed.Value![0].Parameters?.FirstOrDefault(p => p.Name == "v");
+        var subParam = typed.GetValue<List<PrAction>>()![0].Parameters?.FirstOrDefault(p => p.Name == "v");
         await Assert.That(subParam!.Value).IsEqualTo("%comment%");
     }
 
@@ -128,7 +130,7 @@ public class DataWrappedActionListTests
             variables: new Dictionary<string, object?> { ["x"] = "premature-resolution-would-be-bad" });
 
         var typed = result.Data as global::app.data.@this<global::app.type.list.@this<PrAction>>;
-        var subParam = typed!.Value![0].Parameters?.FirstOrDefault(p => p.Name == "a");
+        var subParam = typed!.GetValue<List<PrAction>>()![0].Parameters?.FirstOrDefault(p => p.Name == "a");
         await Assert.That(subParam!.Value).IsEqualTo("%x%");
     }
 }

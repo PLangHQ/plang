@@ -165,7 +165,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/data",
-            Headers = new Dictionary<string, object> { ["X-Custom"] = "test-value" },
+            Headers = new Dictionary<string, object> { ["X-Custom"] = "test-value" }.ToDictData(),
             Unsigned = (global::app.type.@bool.@this)true
         };
         var result = await action.Run();
@@ -756,7 +756,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/merged",
-            Headers = new Dictionary<string, object> { ["X-Custom"] = "step-value", ["X-Shared"] = "overridden" },
+            Headers = new Dictionary<string, object> { ["X-Custom"] = "step-value", ["X-Shared"] = "overridden" }.ToDictData(),
             Unsigned = (global::app.type.@bool.@this)true
         };
         var result = await action.Run();
@@ -779,7 +779,7 @@ public class RequestActionTests
             Url = (global::app.type.text.@this)"https://api.example.com/content",
             Method = (global::app.type.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.POST,
             Body = new global::app.data.@this("", "test body"),
-            Headers = new Dictionary<string, object> { ["Content-Encoding"] = "gzip", ["X-Custom"] = "req-header" },
+            Headers = new Dictionary<string, object> { ["Content-Encoding"] = "gzip", ["X-Custom"] = "req-header" }.ToDictData(),
             Unsigned = (global::app.type.@bool.@this)true
         };
         var result = await action.Run();

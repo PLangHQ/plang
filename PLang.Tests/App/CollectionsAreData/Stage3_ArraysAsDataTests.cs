@@ -115,7 +115,7 @@ public class Stage3_ArraysAsDataTests
         var d = new Data("nums", list) { Context = ctx };
         var res = d.As<global::app.type.list.@this<global::app.type.number.@this>>(ctx);
         await res.IsSuccess();
-        await Assert.That(res.Value!).IsEquivalentTo(new List<long> { 1, 2, 3 });
+        await Assert.That(res.GetValue<List<long>>()!).IsEquivalentTo(new List<long> { 1, 2, 3 });
     }
 
     [Test]
