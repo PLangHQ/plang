@@ -16,20 +16,31 @@
 
 ## Design
 
-**Part A — the async value source (do this first; it is the bulk, and it is net-new).** The door's `await _source.ReadAndParse()` below reads as a wiring change but isn't: there is no `_source` and no Data-level async read today. What exists is three *separate* load mechanisms, all sync or per-type:
-- `_valueFactory` — a **sync** `Func<object?>` (`this.cs:28`; used by `SetValue`, clone, `RawUntouched`).
-- `_raw` + a **sync** `Materialize()` (`this.cs:218`; `MaterializeCount` probe at `:294`).
-- `ILoadable.LoadAsync()` — a **per-type** async load for reference fundamentals (image/audio/video), tied to the serializer's STJ wall, idempotent (`ILoadable.cs`). Not a Data-level source.
+**Part A — the lazy value source (do this first; it is the bulk, and it is net-new).** The door's `await _source.ReadAndParse()` below reads as a wiring change but isn't: there is no `_source` and no Data-level async read today. Build **one** source — every way a value loads becomes a case of it. There is no longer a "fold `ILoadable` in or keep it separate" decision; it folds in.
 
-Part A is to design the one source these collapse into — a value the door awaits: `ValueTask<object?>`, **sync-complete** for everything that's already in memory or pure CPU, **async only** when it must read. Most of it is sync; the async is narrow. The current mechanisms become source *shapes*:
-- **recompute-each-read (sync)** — `DynamicData` (`!app`, `MyIdentity`): re-runs its `Func<object?>` every read, never caches (`Value => _valueFactory()`, `this.cs:1566`). Sync, no I/O. The door must support a "don't cache, recompute" source — this is the live reason the override seam below exists. **Note: `DynamicData` has no async and never will** — it's purely the recompute case.
-- **parse-once-and-cache (sync)** — `_raw` + `Materialize()`: parses the in-memory source form via the reader registry on first read, caches. Sync (CPU), no I/O.
-- **load-once-async (async)** — a file/http value, and the reference fundamentals behind `ILoadable.LoadAsync()` (image bytes): reads on first touch, then caches. This is the only shape that awaits real I/O.
-- an authored value (`set %x% = 5`) has **no source** — born present.
+**The one chain.** A non-authored value is produced by walking, at most, two steps — each skippable when already done:
 
-**The 2↔3 convergence (your point).** Today `_raw`+`Materialize` (read-eager-at-the-channel, parse-lazy, sync) and `ILoadable` (read-lazy, async) are two paths because the channel reads eagerly. Under the lazy door the channel stops pre-reading and holds the source, so both collapse into **one chain**: `reference → read (async, lazy) → raw → parse (sync) → value`. `_raw`+parse is that chain minus the read (had it eagerly); `ILoadable` is that chain minus the parse (bytes need none). So Part A is literally "make both walk the whole chain."
+```
+reference (path / http handle)  ──read (ASYNC, I/O)──►  raw (bytes / text in memory)  ──parse (SYNC, CPU)──►  value
+```
 
-**Decide how `ILoadable` folds:** the natural home is that a reference fundamental's source delegates to its `LoadAsync()` (the per-type load logic stays on the type; the source just drives it), and `Data.Load()` (the serialize-time walk) drives the door across the graph instead of calling `LoadAsync()` directly. Settle that here — it is the one real fork in Part A. This is the largest chunk of work on the branch; treat it as such (you may commit it as "2a" — the green gate is the 2→4 boundary regardless).
+- **read** — turn a reference into raw bytes/text. The only async step; the only one that does I/O. Skipped when the raw is already in memory.
+- **parse** — turn raw into the structured value via the reader registry (`App.Type.Readers.Of(Name, Kind)`). Sync. Skipped when there is nothing to parse (bytes *are* the content).
+- the result is cached (so the second read is free), unless the source is a recompute source (below).
+
+**Every existing mechanism is a position on that one chain:**
+- `_raw` + `Materialize()` (today: `this.cs:218`) is the chain **minus the read** — the channel already read the bytes eagerly, so it starts at *raw* and only parses. → becomes the parse step.
+- `ILoadable.LoadAsync()` (today: per-type, image/audio/video, `image/this.cs:139` → `BytesAsync()`) is the chain **minus the parse** — it reads bytes that need no parse. → becomes the read step (a reference fundamental's source drives its own `LoadAsync()`).
+- an authored value (`set %x% = 5`) skips **both** — born present, no source.
+- `DynamicData` (`!app`, `MyIdentity`, `this.cs:1566`) is the degenerate case: a **recompute** source — sync, no read, no parse, and it does **not** cache (re-runs every read). It has no async and never will; it's only here because the door must support "don't cache, recompute." This is why the override seam exists (below).
+
+So flows 2 and 3 are one mechanism, not two: a source whose `Load()` is `read?-then-parse?`, with each `?` a no-op when that step isn't needed. The async is narrow — it lives only in the read step.
+
+**The serialize walk drives this door.** Sync serialization can't `await`, so `Data.Load()` (`this.Load.cs`) stays as the pre-serialization gateway — but it now drives `await Value()` across the value graph (instead of calling `LoadAsync()` directly), so everything is materialised before the sync write.
+
+*(How a Data is born holding a source — the channel/wire `FromRaw` birth point — is the next thing to settle; this stage takes "it has a source" as given.)*
+
+This source is the largest chunk of work on the branch; treat it as such (you may commit it as "2a" — the green gate is the 2→4 boundary regardless).
 
 **The override seam moves to the source.** `Value` is `virtual` today with at least one override (`this.cs:1566`, `public override object? Value => _valueFactory()`). Turning the property into a method removes that polymorphic seam — so the new variation point is the **source** (a subclass that recomputes or loads specially supplies its own source, or overrides a protected `Load()`/`LoadCore()` hook), not an overridden `Value()`. `DynamicData` is the live case: its seam is "recompute every read, never cache" — sync, not async. Name that hook in Part A so the subclass that overrides `Value` today has somewhere to go.
 
