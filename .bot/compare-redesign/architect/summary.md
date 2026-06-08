@@ -1,5 +1,15 @@
 # Architect — compare-redesign
 
+## 2026-06-08 — Pivot: the type holds the value (raw-CLR model abandoned)
+
+Ingi reconsidered the foundational choice and committed to the **typed** model: the value slot holds the PLang typed value (`text`/`number`/`binary`/`dict`/…), `data.Value()` returns it, and **raw CLR is the leaf exception** (`ToRaw()` at typed-conversion returns / interop / the writer). This reverses the abandoned draft's rules 1–2 ("value is raw CLR, type is a view") and re-aligns with where `scalars-as-native` was already heading. It's also *less* work: no "value-as-raw flip," no view construction in compare — the value already owns its behaviour (the existing `item.Write`, `AreEqual`/`Order` are the foundation). The decisive signals: `item.@this.Write(IWriter)` (value owns its wire shape) and the compare mediator's `is IOrderableValue` dispatch both assume a typed stored value; raw was fighting the grain.
+
+Rung model settled (Ingi's file-read question): the value is **one representation at a time, refine-and-replace** — `path → binary/text → dict`. `_raw` dissolves into the `binary`/`text` rung (no special byte slot). Drop the prior on refine (no double storage). **Verbatim passthrough = the never-parsed path** (read → write-out without navigating stays binary/text → original bytes); **display is passthrough, not a parse** (refine to dict only on `%x.field%` navigation). Rare inspect-then-forward-original is explicit (keep the bytes separately).
+
+Actions: deleted the six raw-model stage files and the two raw-model test docs; rewrote `plan.md` as the typed-model spine. Carried over unchanged: the `Comparison` enum + boundary mapping, rank-on-the-type + caller-order ordering, two-phase sort (no `GetAwaiter().GetResult()`), membership-never-errors, the `Peek`/`Diff` renames. Stages + test docs to be re-carved once Ingi approves the new spine.
+
+Open before re-carving: confirm raw-CLR access is bounded to leaves (sample a few handlers); `number` boxing acceptable; the unified `IComparableValue` shape + where rank is stored.
+
 ## 2026-06-08 — Coder v1 review responses (folded into plan + stages)
 
 The coder reviewed the plan + six stages + test docs against the real code (`.bot/compare-redesign/coder/v1/comments.md`) — verdict "build it," with grounded gaps. All addressed:
