@@ -5,7 +5,7 @@
       "id": "51397d45-0389-44fb-a30d-d5decff9e4fb",
       "bot": "architect",
       "timestamp_start": "2026-06-08T09:10:15Z",
-      "timestamp_end": "2026-06-08T12:10:00Z",
+      "timestamp_end": "2026-06-08T13:30:00Z",
       "intent": "Pressure-test the comparison redesign against the real branch code and write the settled architect plan.",
       "before": {
         "assumptions": "The coder's plan (.bot/compare-redesign/coder/compare-redesign-plan.md) framed compare as owned-per-type, async, no Type.Name switch. Read the real code to test the framing.",
@@ -105,12 +105,22 @@
           "category": "doc",
           "confidence": "high",
           "context": "PIVOT to the typed value model (type holds the value; data.Value() returns the typed value; raw CLR is the leaf exception via ToRaw). This reverses the abandoned draft rules 1-2 (raw CLR + views) and re-aligns with scalars-as-native, and is less work (no value-as-raw flip, no view construction; the value already owns compare/write). Deleted the six raw-model stage files and two raw-model test docs and rewrote plan.md as the typed-model spine. Rung model settled: one representation at a time (path -> binary/text -> dict), refine-and-replace, _raw dissolves into the binary/text rung, drop-on-refine (no double storage), verbatim passthrough = never-parsed path, display != parse. Carried over: Comparison enum + boundary, rank-on-type + caller-order, two-phase sort no-GetResult, membership-never-errors, Peek/Diff renames. Stages + test docs to be re-carved after Ingi approves the new spine."
+        },
+        {
+          "paths": [
+            ".bot/compare-redesign/architect/plan.md",
+            ".bot/compare-redesign/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Scope grew to the full typed value model (comparison is the first consumer). Settled: file + directory are new types in a reference-fundamental hierarchy (path -> file/directory -> image/audio/video); read X -> a file; write out %file% writes content (intent-based, file wire form = content, image precedent); text stays pure content (no .Path); no generic ToRaw (raw private, leaves only via the type Write/As<item>/gated per-type interop like path.Absolute, enforced by a build gate); As<T:item>; Pile 3 (full public-surface typing: path.Absolute->path, text.Length->number, every CLR-returning public member -> PLang type) is IN this branch as the final stage behind the gate. Rewrote plan.md as the typed-value-model spine with a 7-stage index (1-6 value model + comparison, 7 surface-typing last). Branch stays compare-redesign (rename deferred post-crash). Container crashed; restored from origin 6b1775c3c, nothing lost."
         }
       ],
       "after": {
-        "status": "PIVOTED to typed value model; raw-model stages/test-docs deleted; plan.md rewritten as the typed spine. Awaiting Ingi approval before re-carving stages.",
-        "health": "Foundational model resettled (type holds value); design is smaller than the raw draft.",
-        "notes": "plan.md is the typed-model spine. Open: raw-access-bounded-to-leaves check, number boxing, IComparableValue shape + rank storage. Carried-over decisions (enum/rank/caller-order/two-phase-sort/membership/renames) unchanged."
+        "status": "Spine rewritten for the full typed value model; 7-stage index set (surface-typing last). Stages + test docs to be carved into files next.",
+        "health": "Model settled across a long design session; scope is large but staged.",
+        "notes": "Branch = typed value model (named compare-redesign). New: file/directory types, write-out=content, no generic ToRaw, As<T:item>, Pile 3 surface-typing in-branch-last behind a build gate. Carried-over comparison decisions unchanged."
       }
     },
     {

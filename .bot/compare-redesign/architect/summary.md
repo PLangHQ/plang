@@ -1,5 +1,19 @@
 # Architect — compare-redesign
 
+## 2026-06-08 — Scope grew to the typed value model (whole thing on this branch)
+
+Settled the remaining model decisions and the branch's true scope: this is no longer "redesign comparison," it's **the typed value model**, with comparison as the first consumer. Decisions:
+- **`file` + `directory` are new types**, in a reference-fundamental hierarchy `path → file (path+content+metadata) / directory (path+entries) → image/audio/video (file specialisations)`. `read X` → a `file` (or recognised specialisation; unknown → generic `file`). `image` becomes a `file` specialisation.
+- **`write out %file%` writes the file's content** (intent-based — "write the file," not its properties); the file's wire form / `Write` is its content (the `image` precedent). Metadata is navigable (`%file.size%`, `%file.path%`). `text` stays pure content — no `.Path`.
+- **No generic `ToRaw`** — raw CLR is private; it leaves a type only via the type's own `Write(IWriter)`, `As<T:item>` conversion, and gated per-type interop accessors (`path.Absolute`-style, enforced like the `System.IO` gate). `text.Value` (public raw string) goes private too.
+- **`As<T>` constrained `T : item`** (type→type, never CLR).
+- **Pile 3 — full public-surface typing** (`path.Absolute → path`, `text.Length → number`, every CLR-returning public member → PLang type) is **in this branch, as the final stage**, ridden behind a build gate so it converges.
+- The async/lazy `ValueTask` door, one-representation-at-a-time (no `_raw`), and all carried-over comparison decisions (enum/rank/caller-order/two-phase-sort/membership/renames) stand.
+
+Branch stays `compare-redesign` (rename to `typed-value-model` deferred — would move all `.bot/` output + re-push right after a crash, no real gain). Rewrote `plan.md` as the typed-value-model spine with a 7-stage index (1–6 = value model + comparison; 7 = the surface-typing bulk, last). Stages + test docs to be carved into files next.
+
+Container crashed mid-session; nothing lost — last push (`6b1775c3c`, the typed-model pivot) was intact on the remote; restored the branch from origin.
+
 ## 2026-06-08 — Pivot: the type holds the value (raw-CLR model abandoned)
 
 Ingi reconsidered the foundational choice and committed to the **typed** model: the value slot holds the PLang typed value (`text`/`number`/`binary`/`dict`/…), `data.Value()` returns it, and **raw CLR is the leaf exception** (`ToRaw()` at typed-conversion returns / interop / the writer). This reverses the abandoned draft's rules 1–2 ("value is raw CLR, type is a view") and re-aligns with where `scalars-as-native` was already heading. It's also *less* work: no "value-as-raw flip," no view construction in compare — the value already owns its behaviour (the existing `item.Write`, `AreEqual`/`Order` are the foundation). The decisive signals: `item.@this.Write(IWriter)` (value owns its wire shape) and the compare mediator's `is IOrderableValue` dispatch both assume a typed stored value; raw was fighting the grain.
