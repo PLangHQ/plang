@@ -5,7 +5,7 @@
       "id": "51397d45-0389-44fb-a30d-d5decff9e4fb",
       "bot": "architect",
       "timestamp_start": "2026-06-08T09:10:15Z",
-      "timestamp_end": "2026-06-08T15:30:00Z",
+      "timestamp_end": "2026-06-08T16:40:00Z",
       "intent": "Pressure-test the comparison redesign against the real branch code and write the settled architect plan.",
       "before": {
         "assumptions": "The coder's plan (.bot/compare-redesign/coder/compare-redesign-plan.md) framed compare as owned-per-type, async, no Type.Name switch. Read the real code to test the framing.",
@@ -135,12 +135,30 @@
           "category": "doc",
           "confidence": "high",
           "context": "Settled three open points into the spine. (1) References are stable and hold content (never replaced); the ! plane has two layers \u2014 own location props (!path/!scheme/!host, no materialise, intrinsic via path inheritance) and content props (!size, forward+materialise); no !source. (2) No bool-marker carve-out in the gate \u2014 IsTruthy returns @bool, engine-internal plumbing (IsLeaf) goes internal (out of the public-only gate) rather than exempted; only the gated interop accessor (path.Absolute) is exempt. (3) rank is a static per type for now. Open points trimmed to per-type carve details + two architect verifications (raw-CLR-bounded sampling, number boxing)."
+        },
+        {
+          "paths": [
+            ".bot/compare-redesign/architect/stage-1-comparison-enum.md",
+            ".bot/compare-redesign/architect/stage-2-value-door.md",
+            ".bot/compare-redesign/architect/stage-3-reference-types.md",
+            ".bot/compare-redesign/architect/stage-4-per-type-compare.md",
+            ".bot/compare-redesign/architect/stage-5-data-compare.md",
+            ".bot/compare-redesign/architect/stage-6-consumers-and-demolition.md",
+            ".bot/compare-redesign/architect/stage-7-surface-typing.md",
+            ".bot/compare-redesign/architect/plan/test-strategy.md",
+            ".bot/compare-redesign/architect/plan/test-coverage.md",
+            ".bot/compare-redesign/architect/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Carved 7 stage files + 2 test docs to the typed-value-model spine (for coder review). S1 enum, S2 typed value door + ./! resolver, S3 file/directory/url reference types (stable, two-layer !, dir.list:list<path>, type-owned serialization), S4 per-type Compare (static rank + coerce + enum), S5 data.Compare entry (async caller-order), S6 consumers + Pile-2 conversions + demolition (delete old mediator, Compare->Diff), S7 full surface typing + the gate. test-strategy = 5 integration cuts; test-coverage = per-stage matrix + failure matrix + new-surfaces inventory. Spine stage index links the files. Stages 2-6 are one green unit; S7 behind the gate."
         }
       ],
       "after": {
-        "status": "Model settled end to end; spine reflects all decisions. Remaining: 2 verifications + per-type carve details. Ready to carve stages + test docs on go.",
-        "health": "Settled.",
-        "notes": "plan.md is the typed-value-model spine. Next: carve 7 stages + 2 test docs."
+        "status": "Stages + test docs carved and pushed for coder review.",
+        "health": "Complete handoff package on the typed-value-model spine.",
+        "notes": "7 stages + 2 test docs + linked spine. Awaiting coder read-over for gaps."
       }
     },
     {

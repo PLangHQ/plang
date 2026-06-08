@@ -45,17 +45,17 @@ The single principle the rest hangs on: **each type owns its own behaviour — i
 
 ## Stages (value model + comparison first; surface-typing last)
 
-To be carved into files from this spine once approved. Each stage describes the *mechanism*; per-type behaviour is the type's own (the meta-rule), shown by example.
+Carved into files. Each stage describes the *mechanism*; per-type behaviour is the type's own (the meta-rule), shown by example. **Stages 2–6 are one green unit** (the value model + comparison land together; the old mediator is deleted at the end of 6); Stage 7 (surface typing) rides behind a gate and converges after.
 
-1. **`Comparison` enum** — the sign-free result type + boundary mapping (incl. the membership column).
-2. **The typed value door + the `.`/`!` resolver** — async/lazy `ValueTask Value()`; remove public sync `.Value`; private backing; `_raw` → `binary`/`text` rung for bare values; `Peek()`; no generic `ToRaw`. The navigation resolver: `.` → the value's data plane, `!` → the type's property plane (the type answers both).
-3. **`file` + `directory` + `url` reference types** — the `path → file/directory/url → image` hierarchy; `read` → `file`/`url`; content-kind inference; references are stable with a lazy content facet; `write out` = type-owned serialization (each type's `Write`); metadata on the `!` plane; `text` loses any path notion.
-4. **Per-type `Compare`** — rank + coerce-into-own-kind + the enum, unifying `AreEqual`/`Order`. Prove `text`/`number`/cross-pair, then replicate.
-5. **`data.Compare` entry** — async, caller-order, via the existing name→family routing; no `Type.Name` switch.
-6. **Consumers + the Pile-2 conversions** — condition operators, `assert`, two-phase `sort`, list ops + boundary mapping; convert the decompose sites (`is string` → `is text`, call the typed method, growing type surfaces where missing — no `ToRaw` escape).
-7. **Pile 3 — full public-surface typing (FINAL, large).** Every public property/method that returns CLR → returns the PLang equivalent (the `!` plane: `path!absolute` → `path`, `text!length` → `number`, `dict!keys` → `list<text>`, `file!size` → `number`). Raw CLR survives only at the gated per-type interop inch. Stand up the build gate (PLNG-style, scoped to **public members of `item.@this` subtypes** — internal/private C# is untouched; warning during migration, error once clean). **No carve-out for bool markers** — `IsTruthy` etc. return `@bool`, and truly engine-internal plumbing (`IsLeaf`, normalize dispatch) is made `internal` (out of the public-only scope) rather than exempted; the only standing exemption is the gated interop accessor (`path.Absolute`). This is the bulk of the diff and rides behind the gate so it converges.
+1. [Stage 1 — `Comparison` enum](stage-1-comparison-enum.md): the sign-free result type + boundary mapping (incl. the membership column).
+2. [Stage 2 — typed value door + `.`/`!` resolver](stage-2-value-door.md): async/lazy `ValueTask Value()`; no public sync `.Value`; private backing; `_raw` → `binary`/`text` rung; `Peek()`; no generic `ToRaw`; `.` = data plane / `!` = property plane (the type answers both).
+3. [Stage 3 — `file`/`directory`/`url` reference types](stage-3-reference-types.md): the `path → file/directory/url → image` hierarchy; `read` → content; stable references + two-layer `!`; `dir.list : list<path>`; type-owned serialization; `text` loses its path.
+4. [Stage 4 — per-type `Compare`](stage-4-per-type-compare.md): static rank + coerce-into-own-kind + the enum, unifying `AreEqual`/`Order`. Prove `text`/`number`/cross-pair, then replicate.
+5. [Stage 5 — `data.Compare` entry](stage-5-data-compare.md): async, caller-order, via the existing name→family routing; no `Type.Name` switch.
+6. [Stage 6 — consumers + demolition](stage-6-consumers-and-demolition.md): operators/`assert`/two-phase `sort`/list ops + boundary mapping; Pile-2 decompose conversions (no `ToRaw` escape); delete the old mediator/interfaces; `Compare` → `Diff`.
+7. [Stage 7 — full public-surface typing](stage-7-surface-typing.md): every public CLR-returning member → its PLang type (the `!` plane); the build gate (public `item`-subtype members, `IsTruthy → @bool`, engine plumbing `internal`, gated interop the only exemption). The bulk of the diff, last, behind the gate.
 
-Test docs (`plan/test-strategy.md`, `plan/test-coverage.md`) rewritten alongside the stages.
+Test docs: [test-strategy.md](plan/test-strategy.md) (narrative + five integration cuts) and [test-coverage.md](plan/test-coverage.md) (coverage matrix, failure matrix, new-surfaces inventory).
 
 ## Open points
 

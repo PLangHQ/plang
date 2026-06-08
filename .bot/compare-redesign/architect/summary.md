@@ -1,5 +1,21 @@
 # Architect — compare-redesign
 
+## 2026-06-08 — Stages + test docs carved (for coder review)
+
+Carved the seven stage files and the two test docs to the typed-value-model spine, for the coder to read over and flag gaps:
+
+| Stage | File | Status |
+|-------|------|--------|
+| 1 | [Comparison enum](stage-1-comparison-enum.md) | pending |
+| 2 | [Typed value door + `.`/`!` resolver](stage-2-value-door.md) | pending |
+| 3 | [`file`/`directory`/`url` reference types](stage-3-reference-types.md) | pending |
+| 4 | [Per-type `Compare`](stage-4-per-type-compare.md) | pending |
+| 5 | [`data.Compare` entry](stage-5-data-compare.md) | pending |
+| 6 | [Consumers + demolition](stage-6-consumers-and-demolition.md) | pending |
+| 7 | [Full public-surface typing (Pile 3)](stage-7-surface-typing.md) | pending |
+
+Plus `plan/test-strategy.md` (five integration cuts: cross-type antisymmetry, lazy-read + the two planes, `write out %dir%` = listing not content-dump, sort-by-IO-key, enum boundary + membership) and `plan/test-coverage.md` (per-stage matrix, failure matrix, new-surfaces inventory). Spine stage index now links the files. Stages 2–6 are one green unit; Stage 7 (surface typing) rides behind the gate. Two architect verifications (raw-CLR-bounded sampling, `number` boxing) folded into Stage 7's prologue.
+
 ## 2026-06-08 — Settled three open points (spine updated)
 
 - **References are stable; the `!` plane has two layers.** A `file`/`url`/`image` inherits `path` and *holds* content (never replaced by it). `!path`/`!scheme`/`!host` are its own, intrinsic via the inheritance, **no materialise**; `!size`/data forward to — and materialise — the content. So `%url!path%` ≠ fetch, `%url!size%` fetches. No `!source` (path is inherited). Confirmed rule 7's stable model.
