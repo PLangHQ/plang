@@ -1,7 +1,7 @@
 # Stage 3: Per-type rank, coercion, and the sync ordering core
 
 **Goal:** Give each type ownership of its own comparison — its rank, how it coerces another value into its kind, and how it orders two of its own — with the ordering math kept synchronous.
-**Scope:** Per-type rank (`this.Type.Rank(other) → winner`), per-type coerce-loser-into-own-kind, per-type sync `Order`. Prove `text`, `number`, and the `text`↔`number` cross-pair end to end first, then replicate across `bool`, `null`, the date-family, `duration`, `binary`, `dict`, `list`. Excludes the `Data.Compare` entry point (Stage 4) and consumer wiring (Stage 5).
+**Scope:** Per-type rank (`this.Type.Rank(other) → winner`), per-type coerce-loser-into-own-kind, per-type sync `Order`. Prove `text`, `number`, and the `text`↔`number` cross-pair end to end first, then replicate across `bool`, `null`, the date-family, `duration`, `binary`, `dict`, `list`. Excludes the `data.Compare` entry point (Stage 4) and consumer wiring (Stage 5).
 **Deliverables:**
 - A rank on each type (a number/static the type owns), and `Rank(Data other) → driving type` on the type entity (the higher-ranked of `this.Type` and `other.Type`). **Lives on the type, never on `Data`.**
 - Per type: coerce-another-into-my-kind (the driver makes one-of-itself from the non-native side) and a sync `Order(a, b) → Comparison` that compares left-vs-right in caller order.

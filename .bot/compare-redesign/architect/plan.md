@@ -126,7 +126,7 @@ Six stages at the architect root. Stage 0 is the precondition (be green from cle
 1. [Stage 1 — the `Comparison` enum](stage-1-comparison-enum.md): add the sign-free result type and its boundary mapping (note the membership column — `contains`/`unique` never error). No deps.
 2. [Stage 2 — the value door and the value-as-raw flip](stage-2-value-door.md): **the net-new async value source (the largest piece — Part A)**, then `ValueTask Value()` (lazy), `Peek()`, raw CLR in the value slot, per-type classes become views, per-type framework-method tripwires, `ToString` degrade, migrate the **`Data`-receiver** `.Value` reads (not a blind 990-site sweep). The foundation; one green unit with 3–4.
 3. [Stage 3 — per-type rank, coercion, sync ordering core](stage-3-per-type-compare.md): `this.Type.Rank(other)→driving type`, coerce-into-my-kind, sync `Order`. Prove `text`/`number`/cross-pair, then replicate. Deps: 1, 2.
-4. [Stage 4 — `Data.Compare(other)`](stage-4-data-compare.md): the async entry, caller-order ordering, no sign flip, via the existing routing. Deps: 3.
+4. [Stage 4 — `data.Compare(other)`](stage-4-data-compare.md): the async entry, caller-order ordering, no sign flip, via the existing routing. Deps: 3.
 5. [Stage 5 — move the consumers](stage-5-consumers.md): conditions, `assert`, two-phase `sort`, list ops; implement the boundary mapping. Deps: 4.
 6. [Stage 6 — demolish the old machinery, rename golden-diff](stage-6-demolition.md): delete the mediator/`ScalarComparer`/`NormalizeTypes`/the two interfaces/old per-type `AreEqual`/`Order`; `Compare`→`Diff`. Deps: 5.
 

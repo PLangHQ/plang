@@ -2,7 +2,7 @@
 
 ## Scope (the floor/ceiling)
 
-The integration cuts below are the **contract for end-to-end behaviour** — they prove the developer-visible promises hold through the whole pipeline (builder → runtime → `Data.Compare` → type → boundary → result). Everything beneath them — per-type round-trips, the value-door internals, the negative paths, the tripwire throws — lives in `test-coverage.md` and is written one test per matrix row.
+The integration cuts below are the **contract for end-to-end behaviour** — they prove the developer-visible promises hold through the whole pipeline (builder → runtime → `data.Compare` → type → boundary → result). Everything beneath them — per-type round-trips, the value-door internals, the negative paths, the tripwire throws — lives in `test-coverage.md` and is written one test per matrix row.
 
 ## Test layer mapping
 

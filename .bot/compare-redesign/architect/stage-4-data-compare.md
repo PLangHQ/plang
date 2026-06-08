@@ -1,4 +1,4 @@
-# Stage 4: `Data.Compare(other)` — the entry point
+# Stage 4: `data.Compare(other)` — the entry point
 
 **Goal:** Wire the one public comparison entry on `Data` that picks the winner by rank, awaits both values through the door, and runs the winner's sync ordering core — through the routing that already exists, with no `Type.Name` switch.
 **Scope:** The `Compare` method on `Data` and its dispatch. Excludes the consumers that call it (Stage 5) and deleting the old path (Stage 6).

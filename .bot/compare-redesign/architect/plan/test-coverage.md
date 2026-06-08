@@ -45,7 +45,7 @@ Organised by stage. Layer: **C#** (TUnit), **goal** (`.goal` under `Tests/`), **
 | `nulls last` in ordering | C# | green |
 | `Order(a,b)` is sync (no I/O) given materialised values | C# | green |
 
-### Stage 4 — `Data.Compare`
+### Stage 4 — `data.Compare`
 | Behavior | Layer | Sense |
 |---|---|---|
 | `a.Compare(b)` returns the result in **caller order** — `Less` means `a < b` regardless of which type drives | C# | green |
@@ -122,5 +122,5 @@ Impossible-by-design (do **not** write tests asserting these fail): `text`/`numb
 - `PLang/app/module/list/sort.cs`, `contains.cs`, `indexof.cs`, `unique.cs`.
 - `PLang/app/data/Compare.cs`, `ScalarComparer.cs` — deleted (Stage 6).
 - The ~990 `.Value` read sites across `PLang/` — migrated to `await Value()` (Stage 2).
-- `Data.MaterializeCount` (existing internal probe) — used by the lazy-read test (cut 2).
+- `data.MaterializeCount` (existing internal probe) — used by the lazy-read test (cut 2).
 - `PLang.Tests/App/DataTests/DataCompareTests.cs` — ~14 `.Compare(` sites updated to `.Diff(`.

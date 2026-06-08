@@ -8,7 +8,7 @@
 - Delete `Operator.NormalizeTypes` (and its helpers `IsTextLike`/`IsNumberLike`) from `PLang/app/module/condition/Operator.cs`.
 - Delete `PLang/app/data/IEquatableValue.cs` and `PLang/app/data/IOrderableValue.cs`, and remove those interfaces from the 12 type classes that implement them, plus their `AreEqual`/`Order` methods. (If you kept these alive through Stages 2–5 so the old mediator stayed green — see Stage 2's coexistence note — this is where they come out.)
 - Decide `ITextCoercible`'s fate: its coercion role is now owned per-type inside `Order` (Stage 3). If nothing else uses it, delete it too; if something does, leave it and note why.
-- Rename the golden-diff `Data.Compare` → `Diff`: rename the method in `PLang/app/data/this.Compare.cs`, rename the file to `this.Diff.cs`, and update the ~14 call sites (all in `PLang.Tests/App/DataTests/DataCompareTests.cs`; no production callers).
+- Rename the golden-diff `data.Compare` → `Diff`: rename the method in `PLang/app/data/this.Compare.cs`, rename the file to `this.Diff.cs`, and update the ~14 call sites (all in `PLang.Tests/App/DataTests/DataCompareTests.cs`; no production callers).
 **Dependencies:** Stage 5 (all consumers off the old path).
 
 ## Design
