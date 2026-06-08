@@ -5,7 +5,7 @@
       "id": "51397d45-0389-44fb-a30d-d5decff9e4fb",
       "bot": "architect",
       "timestamp_start": "2026-06-08T09:10:15Z",
-      "timestamp_end": "2026-06-08T13:30:00Z",
+      "timestamp_end": "2026-06-08T14:30:00Z",
       "intent": "Pressure-test the comparison redesign against the real branch code and write the settled architect plan.",
       "before": {
         "assumptions": "The coder's plan (.bot/compare-redesign/coder/compare-redesign-plan.md) framed compare as owned-per-type, async, no Type.Name switch. Read the real code to test the framing.",
@@ -115,12 +115,22 @@
           "category": "doc",
           "confidence": "high",
           "context": "Scope grew to the full typed value model (comparison is the first consumer). Settled: file + directory are new types in a reference-fundamental hierarchy (path -> file/directory -> image/audio/video); read X -> a file; write out %file% writes content (intent-based, file wire form = content, image precedent); text stays pure content (no .Path); no generic ToRaw (raw private, leaves only via the type Write/As<item>/gated per-type interop like path.Absolute, enforced by a build gate); As<T:item>; Pile 3 (full public-surface typing: path.Absolute->path, text.Length->number, every CLR-returning public member -> PLang type) is IN this branch as the final stage behind the gate. Rewrote plan.md as the typed-value-model spine with a 7-stage index (1-6 value model + comparison, 7 surface-typing last). Branch stays compare-redesign (rename deferred post-crash). Container crashed; restored from origin 6b1775c3c, nothing lost."
+        },
+        {
+          "paths": [
+            ".bot/compare-redesign/architect/plan.md",
+            ".bot/compare-redesign/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated the spine (plan.md only, per Ingi) with the navigation/serialization model settled this session: the meta-rule (the type decides \u2014 no central case taxonomy); the two access planes . (data) and ! (typed property surface = Pile 3), leading-! = implicit root, ! already in grammar; kinds are not values (json/csv are kinds+deserializers producing items; %x.type% field vs %x!type% PLang type); a reference (file/url/image) is stable with a lazy content facet (refine-and-replace describes only bare values) \u2014 corrects old rule 5; write out %x% is type-owned serialization (the type Write decides wire shape; directory serializes Entries recursively; no universal forward-to-!content); directory has Entries not content. No stages/test docs touched (Ingi: plan only)."
         }
       ],
       "after": {
-        "status": "Spine rewritten for the full typed value model; 7-stage index set (surface-typing last). Stages + test docs to be carved into files next.",
-        "health": "Model settled across a long design session; scope is large but staged.",
-        "notes": "Branch = typed value model (named compare-redesign). New: file/directory types, write-out=content, no generic ToRaw, As<T:item>, Pile 3 surface-typing in-branch-last behind a build gate. Carried-over comparison decisions unchanged."
+        "status": "Spine updated with the navigation planes + meta-rule + type-owned serialization. plan.md only; stages/test docs not yet carved.",
+        "health": "Model fully settled across the session; coherent end to end.",
+        "notes": "plan.md is the typed-value-model spine. Meta-rule: the type decides. . = data plane, ! = typed property plane (= Pile 3). Awaiting go-ahead to carve stages + test docs."
       }
     },
     {

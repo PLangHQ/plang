@@ -1,5 +1,15 @@
 # Architect — compare-redesign
 
+## 2026-06-08 — Navigation planes + the meta-rule (spine updated)
+
+Long design session settled the navigation/serialization model and a governing principle. Folded into `plan.md`:
+- **The meta-rule: the type decides.** No central taxonomy of value cases — each type owns its navigation, property surface, serialization, compare. Concrete types are examples, not a frozen case-table (the existing OBP "behaviour on the element" line). The plan now states *mechanisms* and shows types as examples.
+- **Two access planes — `.` and `!`.** `.` = data plane (navigate content/fields/keys/elements); `!` = the value's typed property plane (`%list!count%`, `%text!length%`, `%x!type%`, `%file!size%`) — and `!` **is the Pile-3 surface**. Leading `!` = the property plane against the implicit root (`%!app%` ≡ `%this!app%`). `!` already exists in the grammar (not new syntax); no clash with `if !%x%` (LLM → `module.condition` at build). The sigil picks the plane, so a content key `size` (`.size`) never shadows the property (`!size`).
+- **Kinds are not values.** json/csv/xml are *kinds* + deserializers that produce an `item` (dict/list); we never work with "json," only items. So `%x.type%` is a content field, `%x!type%` is the value's PLang type — different planes, no special-casing.
+- **A reference is stable; only its content facet refines.** `file`/`url`/`image` are stable (path + metadata + lazy content facet) — `%file!size%` always works; the content facet materialises within. "Refine-and-replace (`bytes → item`)" describes a *bare* value, not a reference. Corrects the earlier rule-5.
+- **`write out %x%` is type-owned serialization** (OBP rule 9) — the type's `Write` decides its wire shape; `file` → content, `directory` → its `Entries` (each entry self-serializing, recursive), scalar → itself. No universal "forward to `!content`" (that's just `file`'s choice).
+- **`directory`** has `Entries` (its listing), not "content" (content is the wrong word for a dir).
+
 ## 2026-06-08 — Scope grew to the typed value model (whole thing on this branch)
 
 Settled the remaining model decisions and the branch's true scope: this is no longer "redesign comparison," it's **the typed value model**, with comparison as the first consumer. Decisions:
