@@ -16,7 +16,7 @@ The value lives once, in `Data`, as the raw CLR object. The type is behavior —
 4. **Lazy is the principle.** Nothing is read until `Value()` is first awaited. A read/fetch holds only the path (or source handle) until then. This holds for files, http, and any I/O-backed value.
 5. **`_raw` stays; `ScalarValue` is renamed to `Peek()`.** Three rungs: source (path, unread) → `_raw` (read bytes / json text, in memory) → value (parsed). The source→`_raw` step is I/O (async, inside `Value()`); the `_raw`→value step is a sync parse. `_raw` earns its place in the uses that stop before parsing — verbatim write-back (no lossy round-trip), byte length, binary, upload, http pre-dispatch. **`Peek()`** (was `ScalarValue` — "scalar" pointed at the wrong axis: it's about unparsed-vs-parsed, not single-vs-collection) is the sync read that hands back what is already present without forcing a parse: a json string stays the string, never built into a `dict`. It is the cheap "look at what's here" against `await Value()`'s "load and parse." Caveat: `Peek()` on a *pending* value has nothing to show (`_raw` is empty until first load), so a passthrough like `write out %file%` still loads (async) before there is anything to peek at — `Peek()` is the sync, no-load read, not a way to dodge the file read.
 6. **Comparison is owned by the type and compares only its own kind.** A type never compares a foreign kind. Cross-type is resolved first by coercion: the higher-ranked of the two operands' types wins, coerces the loser into its own kind, then compares two of its own.
-7. **Cross-type direction is decided by a per-type rank — this is load-bearing.** Each type declares a rank (specificity): `number > text`, the date family `> text`, with `text` as the floor. The dispatcher reads both ranks and lets the higher-ranked type drive, regardless of operand order. This is what guarantees antisymmetry: `text"10"` vs `number 9` lets `number` drive in both directions, so both compare numerically and agree. Distributing coercion as "the left operand's type coerces the right" breaks this — the two directions disagree and `sort` corrupts. The rank makes explicit what `NormalizeTypes` bakes in today ("always coerce text→number").
+7. **Cross-type direction is decided by a per-type rank, and the rank lives on the type — this is load-bearing.** Each type owns its rank (specificity): `number > text`, the date family `> text`, with `text` as the floor. Data does not compare ranks — it asks `this.Type.Rank(other)`, passing the whole other operand (never `other.Type`), and the type returns the winner. The higher-ranked type drives regardless of operand order, which guarantees antisymmetry: `text"10"` vs `number 9` lets `number` drive in both directions, so both compare numerically and agree. Distributing coercion as "the left operand's type coerces the right" breaks this — the two directions disagree and `sort` corrupts. The rank makes explicit what `NormalizeTypes` bakes in today ("always coerce text→number").
 8. **Reading is async; the ordering math is sync.** `await data.Compare(other)` awaits both operands through the one door, then runs the sync ordering core on the two materialised values + their types. Conditions call it from their already-async evaluator.
 9. **Sort (and any I/O-bearing key) is async, two-phase, no sync-over-async.** See *Sort and the async boundary* below.
 10. **`Comparison` enum** — see *The Comparison enum* below.
@@ -70,17 +70,20 @@ The one `ValueTask` rule to teach: **await it once.** Don't store it and await t
 // inside Data
 public async ValueTask<Comparison> Compare(Data other)
 {
-    var winner = Rank(this.Type) >= Rank(other.Type) ? this : other;
+    // Rank lives on the type, not on Data. Ask this.Type, passing the WHOLE other Data
+    // (never other.Type) — the type owns the rank comparison and returns the winning operand.
+    var winner = this.Type.Rank(other);
     var loser  = ReferenceEquals(winner, this) ? other : this;
 
     var wv = await winner.Value();   // one door; loads lazily if pending; sync if present
     var lv = await loser.Value();
 
-    return winner.Type.Order(wv, winner.Type, lv, loser.Type);  // sync ordering core, fed awaited values
+    // The winner's type coerces the loser into its own kind and orders two of its own.
+    return winner.Type.Order(wv, lv);
 }
 ```
 
-The winner is always one of the two operands' existing types — no new type is minted in a compare (minting only happens in `set %x% = "5" as number`, which is conversion, not comparison). `winner.Type.Order(...)` routes through the existing name→family path to the winner's compare, which coerces the loser into its own kind and compares two of its own. Signatures are the shape, not the final names — you own those.
+`this.Type.Rank(other)` is the only place the winner is decided — Data never compares ranks and never reaches into `other.Type`. The type owns its rank and, given the whole other operand, returns the winner (always one of the two operands; no new type is minted in a compare — minting only happens in `set %x% = "5" as number`, which is conversion). `winner.Type.Order(...)` then routes through the existing name→family path to the winner's compare, which coerces the loser into its own kind and compares two of its own. Signatures are the shape, not the final names — you own those.
 
 ## The Comparison enum
 
@@ -131,4 +134,4 @@ A rough order, not stage files. Re-read this plan before each step; push after e
 
 ## You own this
 
-The code shapes, signatures, and names here are suggestions to make the design concrete — not a spec to copy. You own the final shape: method names, where the rank lives (a static on each family class, read through the type entity, is the natural fit), how the sync ordering core is factored, how the view is constructed, the exact wording of the tripwire throws. The parts that are **not** yours to change without coming back: the value lives once in Data (raw, one async door, lazy); cross-type direction is decided by rank so antisymmetry holds; the ordering math is sync and all I/O is hoisted so nothing does `GetAwaiter().GetResult()`; the value door is `ValueTask` (no public sync `.Value` property); the sync framework methods throw rather than read; no `Type.Name` switch and no second compare registry. If implementing forces one of those to bend, stop and flag it.
+The code shapes, signatures, and names here are suggestions to make the design concrete — not a spec to copy. You own the final shape: method names, how rank is represented on each type (a number/static the type owns is the natural fit — the *call shape* `this.Type.Rank(other)→winner` is the fixed part, not the storage), how the sync ordering core is factored, how the view is constructed, the exact wording of the tripwire throws. The parts that are **not** yours to change without coming back: the value lives once in Data (raw, one async door, lazy); cross-type direction is decided by rank **owned by the type** — Data never compares ranks, it asks `this.Type.Rank(other)` (whole other operand, never `other.Type`) — so antisymmetry holds; the ordering math is sync and all I/O is hoisted so nothing does `GetAwaiter().GetResult()`; the value door is `ValueTask` (no public sync `.Value` property); the sync framework methods throw rather than read; no `Type.Name` switch and no second compare registry. If implementing forces one of those to bend, stop and flag it.

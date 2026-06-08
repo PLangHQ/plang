@@ -1,0 +1,15 @@
+{
+  "plan.md": [
+    {
+      "id": "5dd5618d25",
+      "line": 69,
+      "text": "Rank is in the wrong location, it's not the responsiblity of Data to know type rank, it the responsiblity of a type to know its rank, so this should be this.Type.Rank(other) <-- do not decompose to other.Type. that can return the winner.",
+      "anchor": "```",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-06-08T09:56:57",
+      "drifted": false
+    }
+  ]
+}

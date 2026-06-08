@@ -44,10 +44,18 @@
           "context": "Locked the value-door details Ingi confirmed: public Value() returns ValueTask<object?> (sync-complete zero-alloc when present, async load only when pending) since it's the ~990-site hottest accessor; no public sync .Value property, just the private _value field; lazy I/O is the principle (path held until first touch). The sync framework methods split by consequence: GetHashCode/Equals/operators throw with guidance (wrong answer corrupts a dict; collections key on the raw materialised value not the wrapper), ToString degrades to '<text pending>' without I/O (debugger/logs render via ToString). Serialization materialises before the sync write boundary (already the codebase pattern). No #if DEBUG / GetAwaiter().GetResult() anywhere."
         }
       ],
+        {
+          "paths": [".bot/compare-redesign/architect/plan.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Addressed Ingi's review comment (5dd5618d25): rank was placed on Data (Data computed Rank(a)>=Rank(b) and reached into other.Type) — an OBP violation. Moved it onto the type: Data asks this.Type.Rank(other), passing the whole other Data (never other.Type), and the type returns the winner. Updated the dispatch code block, rule 7, the prose, and the You-own-this invariants. Marked the comment resolved via the review-server API."
+        }
+      ],
       "after": {
-        "status": "Plan written and refined to the locked model; Ingi happy. No stage/test files per request.",
+        "status": "Plan written, refined to the locked model, and review comment addressed. No stage/test files per request.",
         "health": "Design settled.",
-        "notes": "Plan supersedes the coder plan's rules 1-2, 4, 8. Locked surface: public ValueTask Value() lazy door (no public sync .Value), GetHashCode/Equals/operators throw + ToString degrades, rank-based cross-type coercion, sync ordering core fed awaited values, sort two-phase, dispatch reuses existing name->family routing, no Type.Name switch."
+        "notes": "Plan supersedes the coder plan's rules 1-2, 4, 8. Locked surface: public ValueTask Value() lazy door (no public sync .Value), GetHashCode/Equals/operators throw + ToString degrades, rank OWNED BY THE TYPE (this.Type.Rank(other)->winner, Data never compares ranks), sync ordering core fed awaited values, sort two-phase, dispatch reuses existing name->family routing, no Type.Name switch."
       }
     }
   ]
