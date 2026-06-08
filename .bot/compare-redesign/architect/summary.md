@@ -1,5 +1,9 @@
 # Architect — compare-redesign
 
+## 2026-06-08 — `dir.list : list<path>` resolves directory serialization (spine updated)
+
+Traced `write out %dir%` and hit a real problem: "each item serializes itself" + "a `file` serializes as its content" would make a directory dump every file's *content* instead of a listing. Resolution (Ingi's): a directory's listing is **`list` : `list<path>`** (renamed from `Entries`) — a list of *locations*, not content-bearing files. A `path` has **one serialization** (its location string), so `write out %dir%` → serialize `list<path>` → location strings → a clean (flat) listing; a content-bearing `file` only exists when you explicitly `read` a path. Invariant: **listings/structures hold `path` (locations); content comes only from `read`.** This makes the traced "subject vs nested" context-bit **unnecessary** (a `path` has a single face). Corrected rule 8 accordingly. Also addressed review comment 75c54f319f: marked `%!actor%` (root traversal via `!`) as a conceptual/future example, **not** for the coder to implement on this branch (the existing `%!app%`/`%!data%` stand).
+
 ## 2026-06-08 — Navigation planes + the meta-rule (spine updated)
 
 Long design session settled the navigation/serialization model and a governing principle. Folded into `plan.md`:
