@@ -1,5 +1,17 @@
 # Architect — compare-redesign
 
+## 2026-06-08 — Coder v2 review — working through it WITH Ingi (verify facts, collaborate on recommendations)
+
+Coder reviewed the typed-model plan + 7 stages (`.bot/compare-redesign/coder/v2/comments.md`) — verdict "build it," seven grounded findings. Process correction (Ingi): the coder reads the *current* code; we may be aiming for a new structure it can't see — so verify its facts (done; all hold) but settle recommendations *with Ingi*, don't auto-fold. Going finding by finding.
+
+**Settled (folded into `plan.md` + Stage 2):**
+1. **Async source / Materialize.** `Materialize()` is sync (parses in-memory `_raw`); only `image`'s `ILoadable.LoadAsync()` is async. Resolution (Ingi's, *not* the coder's "keep parse sync"): the door is the **one async path** — the async **read** seam is net-new (`ILoadable` folds in), the **parse folds into the door**, the sync `Materialize()` **disappears**, and **navigation goes async**. The only sync is reading an already-materialised backing (verified: no sync framework-contract method navigates; `list/this.cs:250` becomes the two-phase sort).
+2. **`!` plane.** Verified `!` today = Data-infra (`GetInfrastructureValue`); `%text!length%` doesn't resolve. Settled (Ingi): **`.` = the content** (a reference forwards `.` into its content — `%config.size%` = the content's field), **`!` = the value's own properties + the envelope**, serialised into the `properties` bag (`%config!size%` = the file's size). Reserved core `@schema`/`type`/`error`/`success` (protected); **`name` removed** (binding label, not the value's); `%x!cost%` kept (`!` → reserved core → value props / bag). The "everything in one `.` bag" idea was tried and rejected (it conjured a phantom `.content` and made `%config.size%` ambiguous).
+
+**Still to discuss (3–7 — edits drafted but uncommitted, will settle each with Ingi):** 3 `path.Content`/`Source` demolition; 4 `read`-returns-content inversion + bare-scalar contract; 5 `item.ToRaw()` is load-bearing in `Data.Type`; 6 Stage 7's ~51 interior `path` string-math sites; 7 the door's "always typed" promise (var-refs/containers normalise at the door).
+
+Confirmed: `Peek`/`Diff` renames; the **11** replicate types + `item` must not implement the unified interface; the 2→6 green gate.
+
 ## 2026-06-08 — Stages + test docs carved (for coder review)
 
 Carved the seven stage files and the two test docs to the typed-value-model spine, for the coder to read over and flag gaps:
