@@ -5,7 +5,7 @@
       "id": "51397d45-0389-44fb-a30d-d5decff9e4fb",
       "bot": "architect",
       "timestamp_start": "2026-06-08T09:10:15Z",
-      "timestamp_end": "2026-06-08T14:30:00Z",
+      "timestamp_end": "2026-06-08T15:30:00Z",
       "intent": "Pressure-test the comparison redesign against the real branch code and write the settled architect plan.",
       "before": {
         "assumptions": "The coder's plan (.bot/compare-redesign/coder/compare-redesign-plan.md) framed compare as owned-per-type, async, no Type.Name switch. Read the real code to test the framing.",
@@ -125,12 +125,22 @@
           "category": "doc",
           "confidence": "high",
           "context": "Updated the spine (plan.md only, per Ingi) with the navigation/serialization model settled this session: the meta-rule (the type decides \u2014 no central case taxonomy); the two access planes . (data) and ! (typed property surface = Pile 3), leading-! = implicit root, ! already in grammar; kinds are not values (json/csv are kinds+deserializers producing items; %x.type% field vs %x!type% PLang type); a reference (file/url/image) is stable with a lazy content facet (refine-and-replace describes only bare values) \u2014 corrects old rule 5; write out %x% is type-owned serialization (the type Write decides wire shape; directory serializes Entries recursively; no universal forward-to-!content); directory has Entries not content. No stages/test docs touched (Ingi: plan only)."
+        },
+        {
+          "paths": [
+            ".bot/compare-redesign/architect/plan.md",
+            ".bot/compare-redesign/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Settled three open points into the spine. (1) References are stable and hold content (never replaced); the ! plane has two layers \u2014 own location props (!path/!scheme/!host, no materialise, intrinsic via path inheritance) and content props (!size, forward+materialise); no !source. (2) No bool-marker carve-out in the gate \u2014 IsTruthy returns @bool, engine-internal plumbing (IsLeaf) goes internal (out of the public-only gate) rather than exempted; only the gated interop accessor (path.Absolute) is exempt. (3) rank is a static per type for now. Open points trimmed to per-type carve details + two architect verifications (raw-CLR-bounded sampling, number boxing)."
         }
       ],
       "after": {
-        "status": "Spine updated with the navigation planes + meta-rule + type-owned serialization. plan.md only; stages/test docs not yet carved.",
-        "health": "Model fully settled across the session; coherent end to end.",
-        "notes": "plan.md is the typed-value-model spine. Meta-rule: the type decides. . = data plane, ! = typed property plane (= Pile 3). Awaiting go-ahead to carve stages + test docs."
+        "status": "Model settled end to end; spine reflects all decisions. Remaining: 2 verifications + per-type carve details. Ready to carve stages + test docs on go.",
+        "health": "Settled.",
+        "notes": "plan.md is the typed-value-model spine. Next: carve 7 stages + 2 test docs."
       }
     },
     {

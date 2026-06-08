@@ -1,5 +1,13 @@
 # Architect — compare-redesign
 
+## 2026-06-08 — Settled three open points (spine updated)
+
+- **References are stable; the `!` plane has two layers.** A `file`/`url`/`image` inherits `path` and *holds* content (never replaced by it). `!path`/`!scheme`/`!host` are its own, intrinsic via the inheritance, **no materialise**; `!size`/data forward to — and materialise — the content. So `%url!path%` ≠ fetch, `%url!size%` fetches. No `!source` (path is inherited). Confirmed rule 7's stable model.
+- **No bool-marker carve-out in the gate.** `IsTruthy` → `@bool` (the rule applies to predicates too); truly engine-internal plumbing (`IsLeaf`, normalize dispatch) goes `internal` (out of the public-only gate) rather than being exempted. The gate's only standing exemption is the gated interop accessor (`path.Absolute`).
+- **Rank is a static per type** (for now; may change).
+
+Remaining before/while carving: two architect verifications (raw-CLR-bounded sampling; `number` boxing) and per-type `.`/`!`/serialization specifics (settled at carve-time per the meta-rule). Model is otherwise settled end to end.
+
 ## 2026-06-08 — `dir.list : list<path>` resolves directory serialization (spine updated)
 
 Traced `write out %dir%` and hit a real problem: "each item serializes itself" + "a `file` serializes as its content" would make a directory dump every file's *content* instead of a listing. Resolution (Ingi's): a directory's listing is **`list` : `list<path>`** (renamed from `Entries`) — a list of *locations*, not content-bearing files. A `path` has **one serialization** (its location string), so `write out %dir%` → serialize `list<path>` → location strings → a clean (flat) listing; a content-bearing `file` only exists when you explicitly `read` a path. Invariant: **listings/structures hold `path` (locations); content comes only from `read`.** This makes the traced "subject vs nested" context-bit **unnecessary** (a `path` has a single face). Corrected rule 8 accordingly. Also addressed review comment 75c54f319f: marked `%!actor%` (root traversal via `!`) as a conceptual/future example, **not** for the coder to implement on this branch (the existing `%!app%`/`%!data%` stand).
