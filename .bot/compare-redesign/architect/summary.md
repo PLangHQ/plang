@@ -3,7 +3,7 @@
 ## 2026-06-08 — Scope grew to the typed value model (whole thing on this branch)
 
 Settled the remaining model decisions and the branch's true scope: this is no longer "redesign comparison," it's **the typed value model**, with comparison as the first consumer. Decisions:
-- **`file` + `directory` are new types**, in a reference-fundamental hierarchy `path → file (path+content+metadata) / directory (path+entries) → image/audio/video (file specialisations)`. `read X` → a `file` (or recognised specialisation; unknown → generic `file`). `image` becomes a `file` specialisation.
+- **`file` + `directory` + `url` are new types**, in a reference-fundamental hierarchy `path → file (path+content+metadata) / directory (path+entries) / url (remote http/s3/ftp + fetched content + metadata) → image/audio/video (file specialisations)`. `read X` → a `file` (local) or `url` (remote); unknown local → generic `file`. `url` over `uri` (it locates a fetchable resource); reuses the existing `path.scheme` registry (today's `HttpPath` ≈ `url`). `image` becomes a `file` specialisation. (Review comment 114f86ef78.)
 - **`write out %file%` writes the file's content** (intent-based — "write the file," not its properties); the file's wire form / `Write` is its content (the `image` precedent). Metadata is navigable (`%file.size%`, `%file.path%`). `text` stays pure content — no `.Path`.
 - **No generic `ToRaw`** — raw CLR is private; it leaves a type only via the type's own `Write(IWriter)`, `As<T:item>` conversion, and gated per-type interop accessors (`path.Absolute`-style, enforced like the `System.IO` gate). `text.Value` (public raw string) goes private too.
 - **`As<T>` constrained `T : item`** (type→type, never CLR).
