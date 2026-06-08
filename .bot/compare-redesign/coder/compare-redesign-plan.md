@@ -29,8 +29,13 @@ the source of truth for the build; follow it step by step. **Re-read it before e
 6. **Coerce through the type system, not raw `ToString`.** Render the other via its Type
    (`other.As("text")` → `bool`→`"true"`, `date`→ISO). A raw CLR `ToString` is wrong (raw
    `bool`→`"True"`, raw `DateOnly`→a culture string).
-7. **No `ScalarValue`.** One value, materialized on need. Delete `ScalarValue` (22 production
-   sites + C# test fixtures).
+7. **`ScalarValue` STAYS; compare uses `Value`.** Inside Data: `_raw` is the unprocessed source
+   (json string, bytes); `_value` is the materialized/authored value. `Value` = materialize (parse
+   `_raw` on need). `ScalarValue` = "don't force the parse" (return `_raw` while still lazy) — the
+   read interpolation / http-pre-dispatch / bytes use to stay lazy and not blow up on a broken or
+   binary payload. **Comparison needs the value, so it uses `Value`** (materialize on need); it
+   never touches `ScalarValue`. (There is NO ScalarValue-removal step — `_raw` is the unprocessed
+   thing and `ScalarValue` already exposes it.)
 8. **Materialize is async (file read is I/O) ⇒ `Compare` is async.** `Task<Comparison>`. Everything
    in PLang is async — **including sort** (no `List<T>.Sort` sync comparator; materialize keys,
    async order).
@@ -52,45 +57,42 @@ switch as the final shape.
 
 ## Execution steps
 
-- **0. Reset to green.** Be on the green base (this branch, cut from `scalars-as-native`, 307/307).
-  Confirm C# + PLang green from clean.
-- **1. Foundation.** Delete `ScalarValue`; route all sites to `Value`. (Async value-resolve is
-  deferred to step 3-4, where Compare goes async — a no-op stub until async file-read
-  materialization lands.)
-- **2. `Comparison` enum** (add; per rule 9).
-- **3. Per-type async `Compare(data other)` over Data references.** Each type references its Data,
+- **0. Green base.** Be on the green base (this branch, cut from `scalars-as-native`, 307/307).
+  Confirm C# + PLang green from clean. (`ScalarValue` stays — no removal step.)
+- **1. `Comparison` enum** (add; per rule 9).
+- **2. Per-type async `Compare(data other)` over Data references.** Each type references its Data,
   coerces the other via the type system, compares at the leaf, returns `Comparison`. Order:
   `text` → `number` → `bool` → `null` → `date` → `time` → `datetime` → `duration` → `binary` →
   `dict` → `list`. Prove `text` end-to-end before replicating.
-- **4. `Data.Compare(other)` async, polymorphic** (resolve the dispatch design point above). No
-  `Type.Name == "..."` anywhere.
-- **5. Consumers → async.** Condition operators (already async — wire `Cmp`/`OrderOf` to async
+- **3. `Data.Compare(other)` async, polymorphic** (resolve the dispatch design point above). No
+  `Type.Name == "..."` anywhere. Compare reads operands via `Value` (materialize on need).
+- **4. Consumers → async.** Condition operators (already async — wire `Cmp`/`OrderOf` to async
   `Compare`), `assert` (Equals/NotEquals/Greater/Less/Contains async), `sort` (async — materialize
   keys, async order; no `List.Sort`), list ops (`contains`/`indexof`/`unique`/`in`).
-- **6. Delete the old mediator.** `app.data.Compare` static, `ScalarComparer`, `NormalizeTypes`,
+- **5. Delete the old mediator.** `app.data.Compare` static, `ScalarComparer`, `NormalizeTypes`,
   `IEquatableValue`, `IOrderableValue`, and every old per-type `AreEqual`/`Order`.
-- **7. Green both suites.** C# + PLang. Triage residual; the original-7 semantic reds
+- **6. Green both suites.** C# + PLang. Triage residual; the original-7 semantic reds
   (type-entity↔name, callback wrapping, afterCount-is-a-dict, hash value-equality) get resolved or
   flagged as real bugs.
 
 ## Done
 
-Both suites green on fresh build; no `ScalarValue`; no CLR-guess wrapping; no `Type.Name` switch
-in the compare path; no static compare mediator; every scalar type references its Data.
+Both suites green on fresh build; `Compare` async, owned per-type over Data; no CLR-guess wrapping;
+no `Type.Name` switch in the compare path; no static compare mediator; every scalar type references
+its Data. (`ScalarValue` stays for the lazy non-compare reads.)
 
 ## Decision log
 
-- **Step 1, ScalarValue removal → option (a):** output materializes too. All reads use `Value`
-  (materialize on need); lazy still holds for the never-touched case (perf), verified by the type
-  stamp staying `item/json` / `table/csv` (a parse would re-stamp `dict` / expose rows), not by
-  output/compare staying raw. The two `LazyDeserialize` goal tests that asserted "untouched stays
-  the raw string" via compare are rewritten to assert laziness via that type stamp.
+- **`ScalarValue` is KEPT** (reversed an earlier "remove it" misread). `_raw` is the unprocessed
+  source; `ScalarValue` exposes it without forcing materialization, for the lazy non-compare reads
+  (interpolation, http-pre-dispatch, bytes). Compare uses `Value` (materialize on need).
 
 ## Pitfalls from the prior (lost-to-crash) attempt — avoid
 
 - Do NOT reintroduce `Lift` (wrapping a raw scalar into a type instance by guessing from its CLR
   type — ignores the `Type` tag; the `"5"`-typed-text would be wrongly compared as number).
-- Do NOT pass `other.ScalarValue` / a decomposed value INTO `Compare`/`Parse` — pass the Data.
+- Do NOT pass `other.ScalarValue` / a decomposed value INTO `Compare`/`Parse` — pass the Data; the
+  type decomposes at its own leaf.
 - Do NOT leave a `Type.Name == "text"` dispatch scaffold as the final shape.
 - The golden-diff method on `Data` (`this.Compare.cs`) must be renamed to `Diff` (single clean
   word) so the new value-`Compare` can own the `Compare` name without clashing.
