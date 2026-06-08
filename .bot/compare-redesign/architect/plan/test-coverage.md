@@ -26,13 +26,17 @@ Three sections: the coverage matrix (one test per row), the failure matrix (nega
 |---|---|---|
 | `read file.txt` → a `file`; `read http://…` → a `url`; unknown local → generic `file` | goal | green |
 | content-kind inference: `.json` content narrows to `dict`, `.csv` → table/list, unknown → `binary` | goal | green |
-| `%file!path%` works without materialising; `%file!size%`/`%file.field%` materialise the content | C# / int(2) | green |
-| a reference **stays its type** (holds content, not replaced) — `!path` works before and after content use | C# | green |
+| `%x!file!path%` resolves without reading; `%x.field%` reads + parses + **narrows** the value | C# / int(2) | green |
+| a reference **accumulates** its content type on examination — `is file` AND `is dict` both true after navigation | C# | green |
+| `%x!type%` = headline (`dict` post-narrow); `%x!type.list%` = the chain `[dict, file, item]`, newest at index 0 | C# | green |
+| `%config!file%` resolves on **both** the narrowed and un-narrowed branch (chain-wide `!`, not headline-only) — no flow-dependent crash | goal | green |
 | `directory.list : list<path>`; `read` a child path → its content | goal | green |
 | `write out %dir%` → a listing of paths/names, **not** file contents | int(3) | green |
-| `write out %file%` → content; `write out %path%` → its location string | goal | green |
+| `write out %file%` (un-narrowed) → raw content bytes; after a narrow → reserialised; `write out %path%` → the as-typed `_location` | goal | green |
 | `text` has no `.Path` | C# | neg |
-| `read %url%` fetches over http; `%url!host%` without fetch | C# | green |
+| `read %url%` fetches over http; `%url!file!host%` without fetch | C# | green |
+| `set %c% = read file.txt` then `write out %c%` / scalar use still yields **content**, not `"file.txt"` | goal / int(6) | green |
+| `path` no longer carries `Content`/`Source`; `path.Write` emits the private `_location` (as-typed); `path.ToString` location-only | C# | green |
 
 ### Stage 4 — per-type `Compare`
 | Behavior | Layer | Sense |
@@ -95,7 +99,7 @@ Impossible-by-design (do **not** assert these fail): `text`/`number` cross-type 
 - `Data`: `public ValueTask<object?> Value()` (the door, **new**); `Peek()` (**renamed** from `ScalarValue`); `public ValueTask<Comparison> Compare(Data other)` (**new**); a private backing read; **removed** public `.Value` property; **removed** generic `item.ToRaw()`; golden-diff `Compare` → **`Diff`**.
 - type entity: `Rank(Data other)` → driving type (**new**, static rank per type); routes to the family `Compare` via the existing name→family path.
 - per-type: unified `Compare` → `Comparison` (replaces `AreEqual`/`Order`); `text.Value` public-raw → **private**.
-- the `.`/`!` navigation resolver (data plane vs property plane); references' two-layer `!` (own vs content-forwarded).
+- the `.`/`!` navigation resolver (data plane vs property plane, `!` resolved **chain-wide**); references narrow on examination (identity accumulates `item|file|dict`, same `Data` instance); `!type` (headline) / `!type.list` (the chain).
 
 ### The gate (Stage 7)
 - PLNG-style build gate: a **public** member of an `item.@this` subtype returning raw CLR → error (warning during migration). Internal/private untouched; `IsTruthy : @bool`; engine plumbing `internal`; only exemption = gated per-type interop accessor (`path.Absolute` after `Authorize`).
