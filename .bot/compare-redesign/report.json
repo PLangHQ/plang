@@ -212,6 +212,35 @@
         "health": "Design sound; two stage-sized gaps flagged (async source, migration scope).",
         "notes": "Read-only review session. Verdict: build it; the spine is right. The two implementation-changing concerns are the net-new async source (#1) and the migration being non-mechanical / stages 2-4 not independently green (#2/#3)."
       }
+    },
+    {
+      "id": "f6c16c21-b535-4a6c-bdd5-bb62fcddf7ee",
+      "bot": "coder",
+      "timestamp_start": "2026-06-08T15:00:00Z",
+      "timestamp_end": "2026-06-08T15:30:00Z",
+      "intent": "Review the architect re-carved typed-value-model plan + 7 stages against the real code; flag what is under-scoped or will not work.",
+      "before": {
+        "assumptions": "Spine pivoted to typed-value model since coder v1 (raw-CLR) review; stages re-carved.",
+        "risk": "Re-carve may have dropped v1-won scoping (async source as its own stage)."
+      },
+      "plan": ".bot/compare-redesign/coder/v2/comments.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/compare-redesign/coder/v2/comments.md",
+            ".bot/compare-redesign/coder/summary.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Grounded the re-carved typed-value-model plan against real code; 7 flags, 4 to fix pre-impl (async source de-staged, ! plane collision, path Content demolition, ToRaw in Data.Type)."
+        }
+      ],
+      "after": {
+        "status": "review delivered",
+        "health": "plan is buildable; 4 stage-scoping fixes recommended before code",
+        "notes": "No code written. Architect to fold flags."
+      }
     }
   ]
 }
