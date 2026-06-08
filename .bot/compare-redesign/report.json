@@ -1,0 +1,47 @@
+{
+  "branch": "compare-redesign",
+  "sessions": [
+    {
+      "id": "51397d45-0389-44fb-a30d-d5decff9e4fb",
+      "bot": "architect",
+      "timestamp_start": "2026-06-08T09:10:15Z",
+      "timestamp_end": "2026-06-08T09:25:00Z",
+      "intent": "Pressure-test the comparison redesign against the real branch code and write the settled architect plan.",
+      "before": {
+        "assumptions": "The coder's plan (.bot/compare-redesign/coder/compare-redesign-plan.md) framed compare as owned-per-type, async, no Type.Name switch. Read the real code to test the framing.",
+        "risk": "Plan rules 1-2 (Value-is-raw, type-references-Data) and rule 8 (async because materialize is I/O) appeared to contradict the on-disk item.@this model; rule 4 (each type owns coercion) risked breaking antisymmetry."
+      },
+      "plan": ".bot/compare-redesign/architect/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/data/Compare.cs",
+            "PLang/app/data/this.cs",
+            "PLang/app/type/text/this.cs",
+            "PLang/app/type/item/this.cs",
+            "PLang/app/type/number/this.cs",
+            "PLang/app/type/this.cs",
+            "PLang/app/type/reader/this.cs",
+            "PLang/app/module/condition/Operator.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified the real comparison machinery on compare-redesign (two scout agents had read the recycled prevars-in-pr state by mistake). Confirmed: NormalizeTypes is symmetric; per-type values currently hold their backing (text holds string) and Data.Value mixes raw scalars and wrappers; the type entity already routes name->family behavior via Convert/Conversions; materialize is sync today."
+        },
+        {
+          "paths": [".bot/compare-redesign/architect/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote the settled design after the whiteboard session with Ingi. Key corrections vs the coder plan: coercion by per-type rank (winner coerces loser) to preserve antisymmetry; one async value door await data.Value() with sync .Value removed; sync ordering core with sort two-phased to avoid sync-over-async; enum Incomparable is ordering-only with a null carve-out for equality; dispatch reuses the existing name->family routing rather than a new registry."
+        }
+      ],
+      "after": {
+        "status": "Plan written; awaiting Ingi's comments. No stage/test files per request.",
+        "health": "Design settled across the conversation.",
+        "notes": "Plan supersedes the coder plan's rules 1-2, 4, 8 and adds the single async value door + sync ordering core split."
+      }
+    }
+  ]
+}
