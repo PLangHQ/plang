@@ -21,14 +21,18 @@ The split between `NotEqual` and `Incomparable` is the load-bearing distinction:
 
 Boundary mapping (Stage 5 implements this; the value never throws, the boundary turns the result into an operator value or a PLang error):
 
-| result | `==` | `!=` | `<` `>` `<=` `>=` | sort |
-|---|---|---|---|---|
-| `Less` / `Greater` | false | true | ordered | ordered |
-| `Equal` | true | false | by op (`<`→false, `<=`→true) | ordered |
-| `NotEqual` | false | true | **error** (no order) | **error** |
-| `Incomparable` | **error** | **error** | **error** | **error** |
+| result | `==` | `!=` | `<` `>` `<=` `>=` | sort | membership (`contains`/`in`/`indexof`/`unique`) |
+|---|---|---|---|---|---|
+| `Less` / `Greater` | false | true | ordered | ordered | no match |
+| `Equal` | true | false | by op (`<`→false, `<=`→true) | ordered | match |
+| `NotEqual` | false | true | **error** (no order) | **error** | no match |
+| `Incomparable` | **error** | **error** | **error** | **error** | **no match** (never error) |
 
-So `Incomparable` errors on every operator (can't compare at all); `NotEqual` only errors on the ordering operators (it answered equality fine, it just has no order). Stage 3 decides which result a given pair produces.
+Two things to read off this table:
+- `Incomparable` errors on every *comparison/ordering* operator (`==`/`!=`/`<`/`>`/sort) — you can't compare those at all. `NotEqual` only errors on the *ordering* operators (it answered equality fine, it just has no order).
+- **Membership is the exception: it never errors.** `contains`/`in`/`indexof`/`unique` only match on `Equal`; a `NotEqual` *or* `Incomparable` element is simply "not this one" — a list of dicts asked whether it `contains` a number answers **false**, it does not throw, and `unique` over a mixed-type list keeps the elements distinct rather than erroring. Membership scans for a match; a type-mismatched element is a non-match, not a bug.
+
+Stage 3 decides which result a given pair produces; Stage 5 implements this mapping (note the membership column differs from `==`).
 
 This stage only defines the vocabulary. The rules that decide *which* member comes back (rank, coercion, the null carve-out, when `Incomparable` vs `NotEqual`) live in Stage 3, and the boundary mapping above is implemented in Stage 5. Keeping the enum standalone means Stages 3–5 compile against a fixed contract.
 

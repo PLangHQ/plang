@@ -15,6 +15,9 @@ Organised by stage. Layer: **C#** (TUnit), **goal** (`.goal` under `Tests/`), **
 | Behavior | Layer | Sense |
 |---|---|---|
 | `await data.Value()` returns the parsed value for an authored scalar (`set %x% = 5` → `5`) | C# | green |
+| authored value / sync-factory / `_raw`-parse sources complete **synchronously** through `Value()`; a file/http/`ILoadable` source loads **async** on first touch | C# | green |
+| a subclass that loads specially participates via the source / protected `Load()` hook (the `virtual Value` override seam moved here) | C# | green |
+| view `.Value` returns the **present** value synchronously (no await, no I/O); throws if read on a pending value | C# | green / neg |
 | `Value()` completes **synchronously** when the value is present (`IsCompleted` true, no async hop) | C# | green |
 | `Value()` on a pending (lazy file) Data loads on first await; `MaterializeCount` goes 0→1; second await stays 1 | C# / int (cut 2) | green |
 | nothing is read before the first `Value()` await (path held) | int (cut 2) | green |
@@ -57,6 +60,7 @@ Organised by stage. Layer: **C#** (TUnit), **goal** (`.goal` under `Tests/`), **
 | `sort %list%` (default key) orders correctly | goal | green |
 | `sort %files% by size` — async key materialise + sync order, correct result, no hang | int (cut 3) | green |
 | `list.contains` / `indexof` find by `Equal`; `unique` dedupes by `Equal` | goal | green |
+| membership on a type-mismatched element returns **no match** (false / distinct), **never errors** — `[%dict%] contains %number%` → false; `unique` over a mixed list keeps all | goal | neg |
 
 ### Stage 6 — demolition
 | Behavior | Layer | Sense |
@@ -79,7 +83,7 @@ Each row is a way the system should fail — hard, typed, at the right layer.
 | `Peek()` on a pending value | returns nothing — **not** an error (by design) | no throw, empty/null | C# |
 | `%x% == null` for any type | must **not** error | `Equal`/`NotEqual` | goal |
 
-Impossible-by-design (do **not** write tests asserting these fail): `text`/`number` cross-type comparison (it coerces, never errors); same-type equality of any type (always `Equal`/`NotEqual`); a default type compare doing I/O (default compares are sync by construction — if one isn't, that's a Stage-5 design break to fix, not a test to write).
+Impossible-by-design (do **not** write tests asserting these fail): `text`/`number` cross-type comparison (it coerces, never errors); same-type equality of any type (always `Equal`/`NotEqual`); a default type compare doing I/O (default compares are sync by construction — if one isn't, that's a Stage-5 design break to fix, not a test to write); **membership (`contains`/`in`/`indexof`/`unique`) erroring on a type-mismatched element** — it returns no-match, never errors (the green/neg row in the matrix is the correct assertion, not a failure-path test).
 
 ## 3. New surfaces this branch introduces
 
@@ -88,14 +92,18 @@ Impossible-by-design (do **not** write tests asserting these fail): `text`/`numb
 - **Deleted:** `app.data.IEquatableValue`, `app.data.IOrderableValue` (Stage 6). Possibly `app.data.ITextCoercible` (its role folds into per-type `Order`).
 
 ### New / changed methods on existing types
+- **The async value source (net-new — Stage 2 Part A):** a source abstraction the door awaits, into which `_valueFactory` (sync), `_raw`+`Materialize()` (sync), and per-type `ILoadable.LoadAsync()` collapse. Plus a protected `Load()`/`LoadCore()` hook as the new override seam (replacing the `virtual Value` override at `this.cs:1566`). Shape is the coder's to settle; this is the largest single piece.
 - `Data` (`PLang/app/data/this.cs`):
   - `public ValueTask<object?> Value()` — **new**, the single public value door (lazy, sync-complete when present).
   - `Peek()` — **renamed** from `ScalarValue` (sync, no-parse read).
   - `public ValueTask<Comparison> Compare(Data other)` — **new**, the comparison entry.
   - `internal PresentValue()` (or equivalent) — **new**, sync read of an already-present value, throws if pending.
-  - **Removed:** the public `.Value` property.
+  - **Removed:** the public `.Value` property. (Migration touches only the **`Data`-receiver** `.Value` reads — *not* the ~990 raw grep; the view `.Value` and `Lazy`/`KeyValuePair`/`Nullable`/`JsonElement` hits stay.)
   - `Diff` — **renamed** from the golden-diff `Compare` (`this.Compare.cs` → `this.Diff.cs`).
-  - `GetHashCode`/`Equals`/operators on the per-type views — **changed to throw**; `ToString` — **changed to degrade** to `<text pending>`.
+- per-type views (`text`/`number`/etc.):
+  - **keep** a sync `.Value` (the present-value read; views run post-materialisation) — this is *not* removed.
+  - `GetHashCode`/`Equals`/operators — **changed to throw**, shipped per type together with that type's raw-flip (live keying: `TString.cs:104,109`, `choice/this.cs`).
+  - `ToString` — **changed to degrade** to `<text pending>`.
 - type entity (`PLang/app/type/this.cs`):
   - `Rank(Data other)` → driving type — **new** (rank lives here, never on Data).
   - `Order(a, b)` → `Comparison` — **new**, routes to the family compare through the existing name→family path.

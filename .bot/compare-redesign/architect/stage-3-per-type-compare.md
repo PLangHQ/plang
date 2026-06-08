@@ -6,7 +6,7 @@
 - A rank on each type (a number/static the type owns), and `Rank(Data other) → driving type` on the type entity (the higher-ranked of `this.Type` and `other.Type`). **Lives on the type, never on `Data`.**
 - Per type: coerce-another-into-my-kind (the driver makes one-of-itself from the non-native side) and a sync `Order(a, b) → Comparison` that compares left-vs-right in caller order.
 - Full type coverage in the replicate order above, each proven against the matrix in `plan/test-coverage.md`.
-**Dependencies:** Stage 1 (the `Comparison` enum), Stage 2 (the per-type views).
+**Dependencies:** Stage 1 (the `Comparison` enum), Stage 2 (the per-type views). **Not independently green** — Stages 2–4 are one green unit (green at the 2→4 boundary); this stage's per-type compare can interleave with Stage 2's per-type raw-flip.
 
 ## Design
 

@@ -5,7 +5,7 @@
 **Deliverables:**
 - `public async ValueTask<Comparison> Compare(Data other)` on `Data`, returning the Stage-1 enum.
 - Dispatch that uses `this.Type.Rank(other)` (Stage 3) to pick the **driving type**, then orders in caller operand order, via the existing name→family routing.
-**Dependencies:** Stage 3 (per-type rank + ordering core).
+**Dependencies:** Stage 3 (per-type rank + ordering core). **Closes the one green unit** — Stages 2–4 are green together at this stage's exit, not before.
 
 ## Design
 

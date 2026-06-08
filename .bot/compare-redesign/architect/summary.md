@@ -1,5 +1,18 @@
 # Architect — compare-redesign
 
+## 2026-06-08 — Coder v1 review responses (folded into plan + stages)
+
+The coder reviewed the plan + six stages + test docs against the real code (`.bot/compare-redesign/coder/v1/comments.md`) — verdict "build it," with grounded gaps. All addressed:
+
+1. **Async source is net-new, not wiring (biggest).** `_source`/`await ReadAndParse()` doesn't exist; today there's sync `_valueFactory`, sync `_raw`+`Materialize`, and per-type `ILoadable.LoadAsync()`. → Added **Stage 2 Part A** "the async value source" (the bulk): names the shape (`ValueTask` source the door awaits), what collapses into it, and the `ILoadable` fold as the one fork. Plan index + test-coverage surfaces updated.
+2. **~990 overcounts; migration isn't mechanical.** ~74 are `Lazy`/`KeyValuePair`/`Nullable`/`JsonElement`, and the views own `.Value` too. → Re-scoped to **`Data`-receiver `.Value` only**; **views keep a sync `.Value`** (the present-value read); stopping rule is by receiver type, not a find-replace.
+3. **Stages 2–4 aren't independently green.** → Stated outright: **2–4 are one green unit, green at the 2→4 boundary**; plan index gate amended; stage 2/3/4 deps note it.
+4. **Throw-on-`GetHashCode`/`Equals` collides with live keying.** → Added per-type sequencing: the throw and the raw-flip ship **together per type** (distinct axis from the mediator coexistence).
+5. **`contains` on `Incomparable` element — error or not-found?** → Pinned: **membership (`contains`/`in`/`indexof`/`unique`) treats `NotEqual`/`Incomparable` as no-match, never errors** — only the comparison operators + sort error. Added a membership column to Stage 1's boundary table; updated Stage 5 + test-coverage.
+6. **`Value` virtual override seam lost.** → The override seam moves to the **source / protected `Load()` hook**, not an overridden property; named in Stage 2 Part A.
+
+Smaller: `Peek`/`Diff` renames confirmed clean; `path` default-compare-stays-sync made explicit (vs its truthiness going async); `ValueTask` await-once backed by an analyzer/grep gate, not just prose.
+
 ## 2026-06-08 — Pressure-test the comparison redesign and write the settled plan
 
 Read the coder's plan (`.bot/compare-redesign/coder/compare-redesign-plan.md`), then pressure-tested it against the real code on this branch. Two scout passes had read the recycled `prevars-in-pr` state by mistake (the container reset mid-session, wiping fetched refs and flipping the branch); re-verified every load-bearing fact directly on `compare-redesign`.

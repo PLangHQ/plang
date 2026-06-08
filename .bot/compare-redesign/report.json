@@ -5,7 +5,7 @@
       "id": "51397d45-0389-44fb-a30d-d5decff9e4fb",
       "bot": "architect",
       "timestamp_start": "2026-06-08T09:10:15Z",
-      "timestamp_end": "2026-06-08T09:25:00Z",
+      "timestamp_end": "2026-06-08T10:40:00Z",
       "intent": "Pressure-test the comparison redesign against the real branch code and write the settled architect plan.",
       "before": {
         "assumptions": "The coder's plan (.bot/compare-redesign/coder/compare-redesign-plan.md) framed compare as owned-per-type, async, no Type.Name switch. Read the real code to test the framing.",
@@ -30,25 +30,32 @@
           "context": "Verified the real comparison machinery on compare-redesign (two scout agents had read the recycled prevars-in-pr state by mistake). Confirmed: NormalizeTypes is symmetric; per-type values currently hold their backing (text holds string) and Data.Value mixes raw scalars and wrappers; the type entity already routes name->family behavior via Convert/Conversions; materialize is sync today."
         },
         {
-          "paths": [".bot/compare-redesign/architect/plan.md"],
+          "paths": [
+            ".bot/compare-redesign/architect/plan.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
           "context": "Wrote the settled design after the whiteboard session with Ingi. Key corrections vs the coder plan: coercion by per-type rank (winner coerces loser) to preserve antisymmetry; one async value door await data.Value() with sync .Value removed; sync ordering core with sort two-phased to avoid sync-over-async; enum Incomparable is ordering-only with a null carve-out for equality; dispatch reuses the existing name->family routing rather than a new registry."
         },
         {
-          "paths": [".bot/compare-redesign/architect/plan.md", ".bot/compare-redesign/architect/summary.md"],
+          "paths": [
+            ".bot/compare-redesign/architect/plan.md",
+            ".bot/compare-redesign/architect/summary.md"
+          ],
           "type": "modify",
           "category": "doc",
           "confidence": "high",
           "context": "Locked the value-door details Ingi confirmed: public Value() returns ValueTask<object?> (sync-complete zero-alloc when present, async load only when pending) since it's the ~990-site hottest accessor; no public sync .Value property, just the private _value field; lazy I/O is the principle (path held until first touch). The sync framework methods split by consequence: GetHashCode/Equals/operators throw with guidance (wrong answer corrupts a dict; collections key on the raw materialised value not the wrapper), ToString degrades to '<text pending>' without I/O (debugger/logs render via ToString). Serialization materialises before the sync write boundary (already the codebase pattern). No #if DEBUG / GetAwaiter().GetResult() anywhere."
         },
         {
-          "paths": [".bot/compare-redesign/architect/plan.md"],
+          "paths": [
+            ".bot/compare-redesign/architect/plan.md"
+          ],
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Addressed Ingi's review comment (5dd5618d25): rank was placed on Data (Data computed Rank(a)>=Rank(b) and reached into other.Type) — an OBP violation. Moved it onto the type: Data asks this.Type.Rank(other), passing the whole other Data (never other.Type), and the type returns the winner. Updated the dispatch code block, rule 7, the prose, and the You-own-this invariants. Marked the comment resolved via the review-server API."
+          "context": "Addressed Ingi's review comment (5dd5618d25): rank was placed on Data (Data computed Rank(a)>=Rank(b) and reached into other.Type) \u2014 an OBP violation. Moved it onto the type: Data asks this.Type.Rank(other), passing the whole other Data (never other.Type), and the type returns the winner. Updated the dispatch code block, rule 7, the prose, and the You-own-this invariants. Marked the comment resolved via the review-server API."
         },
         {
           "paths": [
@@ -64,13 +71,29 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Carved the plan into six stages plus the two test docs test-designer needs. Stage 1 enum, Stage 2 value door + value-as-raw flip (the big foundation, ~990 .Value reads), Stage 3 per-type rank/coerce/sync-order, Stage 4 Data.Compare, Stage 5 consumers + boundary mapping + two-phase sort, Stage 6 demolition + Diff rename. test-strategy.md narrates four integration cuts (cross-type antisymmetry, lazy read, sort-by-IO-key, enum boundary); test-coverage.md has the per-stage coverage matrix, the failure matrix, and the new-surfaces inventory. Two precision fixes made while writing and propagated back into plan.md: (1) enum NotEqual (reconciled-unequal-unordered, ordering errors) vs Incomparable (unreconcilable, all ops error) — the earlier 'Incomparable is ordering-only' was wrong given dict==number must error; (2) this.Type.Rank(other) returns the DRIVING TYPE and Order(a,b) compares in caller order, so no sign flip (ordering winner-vs-loser then flipping would be a latent bug)."
+          "context": "Carved the plan into six stages plus the two test docs test-designer needs. Stage 1 enum, Stage 2 value door + value-as-raw flip (the big foundation, ~990 .Value reads), Stage 3 per-type rank/coerce/sync-order, Stage 4 Data.Compare, Stage 5 consumers + boundary mapping + two-phase sort, Stage 6 demolition + Diff rename. test-strategy.md narrates four integration cuts (cross-type antisymmetry, lazy read, sort-by-IO-key, enum boundary); test-coverage.md has the per-stage coverage matrix, the failure matrix, and the new-surfaces inventory. Two precision fixes made while writing and propagated back into plan.md: (1) enum NotEqual (reconciled-unequal-unordered, ordering errors) vs Incomparable (unreconcilable, all ops error) \u2014 the earlier 'Incomparable is ordering-only' was wrong given dict==number must error; (2) this.Type.Rank(other) returns the DRIVING TYPE and Order(a,b) compares in caller order, so no sign flip (ordering winner-vs-loser then flipping would be a latent bug)."
+        },
+        {
+          "paths": [
+            ".bot/compare-redesign/architect/stage-1-comparison-enum.md",
+            ".bot/compare-redesign/architect/stage-2-value-door.md",
+            ".bot/compare-redesign/architect/stage-3-per-type-compare.md",
+            ".bot/compare-redesign/architect/stage-4-data-compare.md",
+            ".bot/compare-redesign/architect/stage-5-consumers.md",
+            ".bot/compare-redesign/architect/plan.md",
+            ".bot/compare-redesign/architect/plan/test-coverage.md",
+            ".bot/compare-redesign/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Folded in coder v1 review (.bot/compare-redesign/coder/v1/comments.md), all six concerns verified against the branch and addressed: (1) async value source is net-new -> added Stage 2 Part A naming the shape + ILoadable fold; (2) ~990 overcounts and migration is per-receiver, not mechanical -> scoped to Data-receiver .Value only, views keep a sync .Value; (3) stages 2-4 are one green unit -> stated in plan index + stage deps; (4) GetHashCode/Equals throw must ship per-type with the raw-flip -> per-type sequencing note; (5) membership (contains/in/indexof/unique) treats Incomparable/NotEqual as no-match, never errors -> added membership column to Stage 1 boundary table + Stage 5 + test-coverage; (6) virtual Value override seam moves to the source/protected Load hook. Smaller: path default-compare-stays-sync explicit, ValueTask await-once wants an analyzer/grep gate."
         }
       ],
       "after": {
-        "status": "Plan + six stage files + two test docs written. Ready for test-designer / coder. Two precision fixes flagged to Ingi.",
-        "health": "Design settled and staged.",
-        "notes": "Spine: plan.md. Stages 1-6 at architect root. Test docs in plan/. Locked surface unchanged from prior session; sharpened: enum NotEqual vs Incomparable split (all-ops-error vs ordering-errors), rank returns driving type with caller-order ordering (no sign flip)."
+        "status": "Plan + stages + test docs written; coder v1 review folded in. Ready for coder to pick up Stage 1.",
+        "health": "Design settled and staged; gaps the coder grounded are addressed.",
+        "notes": "Biggest change from review: Stage 2 Part A (the net-new async value source) is the largest piece; stages 2-4 are one green unit; membership never errors on type-mismatch."
       }
     },
     {
@@ -80,7 +103,7 @@
       "timestamp_end": "2026-06-08T11:35:00Z",
       "intent": "Review the architect's comparison-redesign plan and stages, ground every load-bearing claim against the real branch code, and write peer comments for the architect.",
       "before": {
-        "assumptions": "The plan describes one lazy ValueTask door, value-as-raw, rank-on-type, sync ordering core, and ~990 .Value reads to migrate. Read-only review — no implementation this session.",
+        "assumptions": "The plan describes one lazy ValueTask door, value-as-raw, rank-on-type, sync ordering core, and ~990 .Value reads to migrate. Read-only review \u2014 no implementation this session.",
         "risk": "Plan presents the lazy async source as existing infrastructure; the ~990 figure is a raw grep; stages 2-4 may not be independently green-able."
       },
       "plan": ".bot/compare-redesign/coder/v1/comments.md",
@@ -98,17 +121,21 @@
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "Verified plan claims against code. Confirmed: Compare.Order returns raw int + throws NotOrderableException (the sign-bearing shape the enum replaces); NormalizeTypes symmetric; .Value count is exactly 990 but ~74 are non-Data (Lazy/KeyValuePair/Nullable) plus the type-wrapper views own a .Value accessor, so the grep conflates receivers. Found: no async _source exists — lazy is sync _valueFactory + _raw + sync Materialize, and ILoadable.LoadAsync is per-type (image/binary), not Data-level. Value is a virtual property with overrides (this.cs:1566). GetHashCode/Equals on views (TString, choice) are live keying surfaces."
+          "context": "Verified plan claims against code. Confirmed: Compare.Order returns raw int + throws NotOrderableException (the sign-bearing shape the enum replaces); NormalizeTypes symmetric; .Value count is exactly 990 but ~74 are non-Data (Lazy/KeyValuePair/Nullable) plus the type-wrapper views own a .Value accessor, so the grep conflates receivers. Found: no async _source exists \u2014 lazy is sync _valueFactory + _raw + sync Materialize, and ILoadable.LoadAsync is per-type (image/binary), not Data-level. Value is a virtual property with overrides (this.cs:1566). GetHashCode/Equals on views (TString, choice) are live keying surfaces."
         },
         {
-          "paths": [".bot/compare-redesign/coder/v1/comments.md"],
+          "paths": [
+            ".bot/compare-redesign/coder/v1/comments.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Wrote six ranked concerns for the architect: (1) the lazy async I/O source is net-new and stage-sized, presented as one bullet — recommend splitting out; (2) the ~990 figure overcounts and mechanical migration is unsafe because views own .Value too — decide whether views keep a sync .Value; (3) stages 2-4 are not independently green-able, say so as a hard statement; (4) the GetHashCode/Equals throw must ship per-type with the raw flip or dict keying breaks mid-migration; (5) contains/in on an Incomparable element pair errors per the boundary table rather than returning not-found — pin the intended semantics; (6) Value is virtual with overrides, the method door loses that seam. Plus smaller notes (Peek/Diff renames clean, path default-compare-sync vs async drift, ValueTask await-once analyzer)."
+          "context": "Wrote six ranked concerns for the architect: (1) the lazy async I/O source is net-new and stage-sized, presented as one bullet \u2014 recommend splitting out; (2) the ~990 figure overcounts and mechanical migration is unsafe because views own .Value too \u2014 decide whether views keep a sync .Value; (3) stages 2-4 are not independently green-able, say so as a hard statement; (4) the GetHashCode/Equals throw must ship per-type with the raw flip or dict keying breaks mid-migration; (5) contains/in on an Incomparable element pair errors per the boundary table rather than returning not-found \u2014 pin the intended semantics; (6) Value is virtual with overrides, the method door loses that seam. Plus smaller notes (Peek/Diff renames clean, path default-compare-sync vs async drift, ValueTask await-once analyzer)."
         },
         {
-          "paths": [".bot/compare-redesign/report.json"],
+          "paths": [
+            ".bot/compare-redesign/report.json"
+          ],
           "type": "modify",
           "category": "config",
           "confidence": "high",
