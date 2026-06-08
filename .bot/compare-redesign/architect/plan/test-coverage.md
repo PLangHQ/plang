@@ -72,6 +72,7 @@ Three sections: the coverage matrix (one test per row), the failure matrix (nega
 | public members return PLang types (`path!absolute`→`path`, `text!length`→`number`, `list!count`→`number`) | C#/goal | green |
 | the gate fails a public `item`-subtype member returning raw CLR | C# | neg |
 | `IsTruthy : @bool` passes the gate; an `internal` plumbing member is untouched; gated interop accessor exempt | C# | green |
+| `path` interior math moved onto the type — `path.IsUnder(root)`, `path.Kind`; raw `.Relative`/`.Extension` `internal`, `.Absolute` Authorize-gated | C# | green |
 
 ## 2. Failure matrix
 
