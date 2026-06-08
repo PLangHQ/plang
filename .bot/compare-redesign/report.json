@@ -241,6 +241,34 @@
         "health": "plan is buildable; 4 stage-scoping fixes recommended before code",
         "notes": "No code written. Architect to fold flags."
       }
+    },
+    {
+      "id": "b5b297ff-4eb8-46c2-b950-10124a953c15",
+      "bot": "coder",
+      "timestamp_start": "2026-06-08T16:00:00Z",
+      "timestamp_end": "2026-06-08T16:25:00Z",
+      "intent": "Review architect answers to coder v2 findings; verify the async-navigation safety claim against the code.",
+      "before": {
+        "assumptions": "All 7 v2 findings settled in stages.",
+        "risk": "Async-navigation safety claim may have missed sync resolver/param-getter surfaces."
+      },
+      "plan": ".bot/compare-redesign/coder/v3/comments.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/compare-redesign/coder/v3/comments.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Verified 6/7 answers solid. Found 1 substantive gap: async door collides with sync source-generated lazy param getters (cannot await) + sync Variable.Get/Resolve dotted navigation; read boundary must land off the sync surfaces. 2 secondary notes (in-place Type mutation aliasing; name-removal wire round-trip)."
+        }
+      ],
+      "after": {
+        "status": "follow-up review delivered",
+        "health": "plan near-ready; one async-boundary question to pin before Stage 2",
+        "notes": "No code. Build it once the read boundary is named."
+      }
     }
   ]
 }
