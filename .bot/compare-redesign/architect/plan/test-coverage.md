@@ -20,6 +20,7 @@ Three sections: the coverage matrix (one test per row), the failure matrix (nega
 | `.` resolves the data plane, `!` the property plane; the **type** answers both | C# | green |
 | `%x.size%` (data key) and `%x!size%` (property) are distinct, no shadowing | goal | green |
 | no generic `ToRaw`; `text` raw string is private | C# | neg |
+| a `%var%` ref and a raw JSON container both ride as typed PLang values (`text`/`dict`/`list`), never a bare C# `string`/`Dictionary` | C# | green |
 
 ### Stage 3 — reference types (`file`/`directory`/`url`)
 | Behavior | Layer | Sense |
