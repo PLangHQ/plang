@@ -11,9 +11,20 @@ Findings that moved the design, settled with Ingi:
 - **The sync framework methods that can't be async, split by consequence.** `GetHashCode`/`Equals`/operators → throw with guidance (a wrong answer corrupts a dict; under this model collections key on the raw materialised value, not the wrapper). `ToString` → never throws, never does I/O: shows the present value or `<text pending>` (the debugger/logs render via `ToString`, and display tolerates not-loaded). No `#if DEBUG`, no `GetAwaiter().GetResult()`. Serialization materialises before the sync write boundary (already the codebase pattern), so the wire path never trips a throw.
 - **Sync ordering core, async only at the edges.** `await data.Compare(other)` awaits both values then runs a sync ordering core. `sort` is two-phase — await keys (phase 1, all I/O here), order in-hand keys sync (phase 2). No `GetAwaiter().GetResult()` anywhere; a type's default compare must stay sync, I/O-bearing compares are expressed as `sort by <key>`.
 - **Value lives once, raw, in Data; the type is a view over the Data** (`text(data)`, holds a pointer not a copy). The wrapper-stored-in-`Data.Value` shape goes away. This reverses the stored-wrapper half of scalars-as-native — the per-type classes become behavior views.
-- **Enum semantics pinned.** `Incomparable` is ordering-only; equality across non-coercible non-null types errors; null is always comparable for equality (`== null` never errors).
+- **Enum semantics pinned (sharpened while writing stages).** `NotEqual` = reconciled-but-unequal-and-unordered (equality ops use it, ordering ops error). `Incomparable` = couldn't-reconcile-at-all (every op errors). That split is what makes `dict == number` error while `dict == dict` works and `%x% == null` works. (Corrected the earlier "Incomparable is ordering-only" wording — it can't be literally true if `dict == number` must error.)
 - **Dispatch reuses the existing name→family routing** (`type.Convert` via `Conversions`); no new compare registry, no `Type.Name` switch.
+- **Rank returns the driving type; ordering is in caller order (no sign flip).** `this.Type.Rank(other)` returns the driving type (higher-ranked), and `driver.Order(a, b)` compares `this`-vs-`other` in caller order — so `Less` always means `this < other`. (Caught while writing the dispatch: ordering winner-vs-loser and flipping afterwards is a latent sign bug; avoided by ordering in caller order.)
 
-Output: `plan.md` (the settled design, supersedes the coder plan's rules 1-2, 4, 8). No stage/test files yet — per Ingi, he reads and comments first.
+Output: `plan.md` (the spine, supersedes the coder plan's rules 1-2, 4, 8), six stage files at root, and `plan/test-strategy.md` + `plan/test-coverage.md`.
 
-Status: plan written, awaiting Ingi's comments.
+Stage status:
+| Stage | File | Status |
+|-------|------|--------|
+| 1 | [Comparison enum](stage-1-comparison-enum.md) | pending |
+| 2 | [Value door + value-as-raw flip](stage-2-value-door.md) | pending |
+| 3 | [Per-type rank, coercion, sync ordering core](stage-3-per-type-compare.md) | pending |
+| 4 | [Data.Compare entry](stage-4-data-compare.md) | pending |
+| 5 | [Move consumers](stage-5-consumers.md) | pending |
+| 6 | [Demolition + Diff rename](stage-6-demolition.md) | pending |
+
+Status: plan + stages + test docs written. Two precision fixes made while carving stages (enum NotEqual/Incomparable split; rank returns driving type / no sign flip) — flagged to Ingi.

@@ -70,30 +70,30 @@ The one `ValueTask` rule to teach: **await it once.** Don't store it and await t
 // inside Data
 public async ValueTask<Comparison> Compare(Data other)
 {
-    // Rank lives on the type, not on Data. Ask this.Type, passing the WHOLE other Data
-    // (never other.Type) — the type owns the rank comparison and returns the winning operand.
-    var winner = this.Type.Rank(other);
-    var loser  = ReferenceEquals(winner, this) ? other : this;
+    // Rank lives on the type, not on Data. Pass the WHOLE other Data (never other.Type);
+    // this.Type returns the driving type — the higher-ranked of the two (this.Type or other.Type).
+    var driver = this.Type.Rank(other);
 
-    var wv = await winner.Value();   // one door; loads lazily if pending; sync if present
-    var lv = await loser.Value();
+    var a = await this.Value();    // caller order preserved: this is left, other is right
+    var b = await other.Value();
 
-    // The winner's type coerces the loser into its own kind and orders two of its own.
-    return winner.Type.Order(wv, lv);
+    // The driver coerces whichever side isn't its kind, and orders left-vs-right (this vs other) — no flip.
+    return driver.Order(a, b);
 }
 ```
 
-`this.Type.Rank(other)` is the only place the winner is decided — Data never compares ranks and never reaches into `other.Type`. The type owns its rank and, given the whole other operand, returns the winner (always one of the two operands; no new type is minted in a compare — minting only happens in `set %x% = "5" as number`, which is conversion). `winner.Type.Order(...)` then routes through the existing name→family path to the winner's compare, which coerces the loser into its own kind and compares two of its own. Signatures are the shape, not the final names — you own those.
+`this.Type.Rank(other)` is the only place the driving type is decided — Data never compares ranks and never reaches into `other.Type`. The type owns its rank and, given the whole other operand, returns the driving type (the higher-ranked of the two; no new type is minted in a compare — minting only happens in `set %x% = "5" as number`, which is conversion). `driver.Order(a, b)` then routes through the existing name→family path to that type's compare, which coerces whichever side isn't its kind and orders left-vs-right. Ordering in caller order means no sign flip; ordering winner-vs-loser and flipping afterwards would be a latent bug. Signatures are the shape, not the final names — you own those.
 
 ## The Comparison enum
 
-`{ Less, Equal, Greater, NotEqual, Incomparable }` — no sign-bearing numbers (a magic `-2` would satisfy `< 0` and corrupt sort). `==` is `Equal`; `<`/`>` read `Less`/`Greater`.
+`{ Less, Equal, Greater, NotEqual, Incomparable }` — no sign-bearing numbers (a magic `-2` would satisfy `< 0` and corrupt sort). The subtle part is `NotEqual` vs `Incomparable`:
 
-- **`Incomparable` is ordering-only.** `<`/`>` across types that can't be ordered → a PLang error at the boundary.
-- **Equality across types:** a coercible pair (`%count% == "5"`) coerces then compares; a non-coercible **non-null** pair (`dict == number`) → error (the developer is comparing things that can't be compared).
-- **null is always comparable for equality** — `%x% == null` / `%x% != null` never errors, for any type.
+- **`NotEqual`** — the pair was **reconciled and found unequal, but has no order** (equality-only types like `dict`/`bool`, or any unequal pair whose type doesn't order). `==`→false, `!=`→true; the **ordering** operators (`<`/`>`/`<=`/`>=`) and `sort` **error** on it.
+- **`Incomparable`** — the pair **could not be reconciled at all** (a non-coercible cross-type pair, `dict` vs `number`). **Every** operator errors on it. This is how `dict == number` errors while `dict == dict` (→ `NotEqual`/`Equal`) does not.
+- **Equality that coerces:** a coercible cross-pair (`%count% == "5"`) coerces then compares — `Equal`/`NotEqual`, not `Incomparable`.
+- **null is always comparable for equality** — `%x% == null` / `%x% != null` yields `Equal`/`NotEqual`, never `Incomparable`, never errors, for any type.
 - **`nulls last`** in ordering.
-- The value never throws; the errors surface at the operator/sort/assert boundary.
+- The value never throws; the boundary turns each result into an operator value or a PLang error (full table in `stage-1-comparison-enum.md`).
 
 ## Sort and the async boundary
 
@@ -119,19 +119,19 @@ Sort is async, two-phase, and never does sync-over-async:
 - **list ops** (`contains`, `indexof`, `unique`) — await `Compare` per element.
 - **the ~990 `.Value` reads** become `await data.Value()`. Most are inside async `Run` bodies and convert mechanically; the genuinely-stuck ones are the framework-contract methods above, which throw (or, for `ToString`, degrade). The throws make every remaining site loud.
 
-## Execution order
+## Stages
 
-A rough order, not stage files. Re-read this plan before each step; push after every step.
+Six stages at the architect root. Stage 0 is the precondition (be green from clean: C# + PLang); green-both-suites is the exit gate on every stage. Re-read this plan before each; push after each.
 
-0. Confirm green from clean (C# + PLang) on this branch.
-1. Add the `Comparison` enum.
-2. The value door: `ValueTask<object?> Value()` (sync-complete when present, async load when pending); remove the public sync `.Value`; keep `_raw` and the parse step; rename `ScalarValue` → `Peek()`. Make the value slot hold the raw CLR value; turn the per-type classes into views over the Data. Make `GetHashCode`/`Equals`/operators throw with guidance; make `ToString` degrade to `<text pending>`.
-3. Per-type rank + each type's coerce-and-compare-own-kind, with the sync ordering core. Prove `text`, `number`, and the `text`↔`number` cross-pair end to end before replicating across `bool` / `null` / date-family / `duration` / `binary` / `dict` / `list`.
-4. `data.Compare(other)` wiring the rank + the door + the sync core, through the existing name→family routing.
-5. Move the consumers (conditions, assert, sort, list ops, and the `.Value` reads) to the async door / `Compare`.
-6. Delete the old mediator, `ScalarComparer`, `NormalizeTypes`, the two interfaces, the old per-type `AreEqual`/`Order`. Rename golden-diff `Compare` → `Diff`.
-7. Green both suites from clean. Triage residual; flag any real semantic bug rather than papering over it.
+1. [Stage 1 — the `Comparison` enum](stage-1-comparison-enum.md): add the sign-free result type and its boundary mapping. No deps.
+2. [Stage 2 — the value door and the value-as-raw flip](stage-2-value-door.md): `ValueTask Value()` (lazy), `Peek()`, raw CLR in the value slot, per-type classes become views, framework-method tripwires, `ToString` degrade, migrate the ~990 `.Value` reads. The foundation; coupled with 3–4.
+3. [Stage 3 — per-type rank, coercion, sync ordering core](stage-3-per-type-compare.md): `this.Type.Rank(other)→driving type`, coerce-into-my-kind, sync `Order`. Prove `text`/`number`/cross-pair, then replicate. Deps: 1, 2.
+4. [Stage 4 — `Data.Compare(other)`](stage-4-data-compare.md): the async entry, caller-order ordering, no sign flip, via the existing routing. Deps: 3.
+5. [Stage 5 — move the consumers](stage-5-consumers.md): conditions, `assert`, two-phase `sort`, list ops; implement the boundary mapping. Deps: 4.
+6. [Stage 6 — demolish the old machinery, rename golden-diff](stage-6-demolition.md): delete the mediator/`ScalarComparer`/`NormalizeTypes`/the two interfaces/old per-type `AreEqual`/`Order`; `Compare`→`Diff`. Deps: 5.
+
+Test docs (for test-designer and the per-stage tests): [test-strategy.md](plan/test-strategy.md) (narrative + the four integration cuts) and [test-coverage.md](plan/test-coverage.md) (coverage matrix, failure matrix, new-surfaces inventory).
 
 ## You own this
 
-The code shapes, signatures, and names here are suggestions to make the design concrete — not a spec to copy. You own the final shape: method names, how rank is represented on each type (a number/static the type owns is the natural fit — the *call shape* `this.Type.Rank(other)→winner` is the fixed part, not the storage), how the sync ordering core is factored, how the view is constructed, the exact wording of the tripwire throws. The parts that are **not** yours to change without coming back: the value lives once in Data (raw, one async door, lazy); cross-type direction is decided by rank **owned by the type** — Data never compares ranks, it asks `this.Type.Rank(other)` (whole other operand, never `other.Type`) — so antisymmetry holds; the ordering math is sync and all I/O is hoisted so nothing does `GetAwaiter().GetResult()`; the value door is `ValueTask` (no public sync `.Value` property); the sync framework methods throw rather than read; no `Type.Name` switch and no second compare registry. If implementing forces one of those to bend, stop and flag it.
+The code shapes, signatures, and names here are suggestions to make the design concrete — not a spec to copy. You own the final shape: method names, how rank is represented on each type (a number/static the type owns is the natural fit — the *call shape* `this.Type.Rank(other)→driving type` is the fixed part, not the storage), how the sync ordering core is factored, how the view is constructed, the exact wording of the tripwire throws. The parts that are **not** yours to change without coming back: the value lives once in Data (raw, one async door, lazy); cross-type direction is decided by rank **owned by the type** — Data never compares ranks, it asks `this.Type.Rank(other)` (whole other operand, never `other.Type`) — so antisymmetry holds; the ordering math is sync and all I/O is hoisted so nothing does `GetAwaiter().GetResult()`; the value door is `ValueTask` (no public sync `.Value` property); the sync framework methods throw rather than read; no `Type.Name` switch and no second compare registry. If implementing forces one of those to bend, stop and flag it.

@@ -52,10 +52,27 @@
           "context": "Addressed Ingi's review comment (5dd5618d25): rank was placed on Data (Data computed Rank(a)>=Rank(b) and reached into other.Type) — an OBP violation. Moved it onto the type: Data asks this.Type.Rank(other), passing the whole other Data (never other.Type), and the type returns the winner. Updated the dispatch code block, rule 7, the prose, and the You-own-this invariants. Marked the comment resolved via the review-server API."
         }
       ],
+        {
+          "paths": [
+            ".bot/compare-redesign/architect/stage-1-comparison-enum.md",
+            ".bot/compare-redesign/architect/stage-2-value-door.md",
+            ".bot/compare-redesign/architect/stage-3-per-type-compare.md",
+            ".bot/compare-redesign/architect/stage-4-data-compare.md",
+            ".bot/compare-redesign/architect/stage-5-consumers.md",
+            ".bot/compare-redesign/architect/stage-6-demolition.md",
+            ".bot/compare-redesign/architect/plan/test-strategy.md",
+            ".bot/compare-redesign/architect/plan/test-coverage.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Carved the plan into six stages plus the two test docs test-designer needs. Stage 1 enum, Stage 2 value door + value-as-raw flip (the big foundation, ~990 .Value reads), Stage 3 per-type rank/coerce/sync-order, Stage 4 Data.Compare, Stage 5 consumers + boundary mapping + two-phase sort, Stage 6 demolition + Diff rename. test-strategy.md narrates four integration cuts (cross-type antisymmetry, lazy read, sort-by-IO-key, enum boundary); test-coverage.md has the per-stage coverage matrix, the failure matrix, and the new-surfaces inventory. Two precision fixes made while writing and propagated back into plan.md: (1) enum NotEqual (reconciled-unequal-unordered, ordering errors) vs Incomparable (unreconcilable, all ops error) — the earlier 'Incomparable is ordering-only' was wrong given dict==number must error; (2) this.Type.Rank(other) returns the DRIVING TYPE and Order(a,b) compares in caller order, so no sign flip (ordering winner-vs-loser then flipping would be a latent bug)."
+        }
+      ],
       "after": {
-        "status": "Plan written, refined to the locked model, and review comment addressed. No stage/test files per request.",
-        "health": "Design settled.",
-        "notes": "Plan supersedes the coder plan's rules 1-2, 4, 8. Locked surface: public ValueTask Value() lazy door (no public sync .Value), GetHashCode/Equals/operators throw + ToString degrades, rank OWNED BY THE TYPE (this.Type.Rank(other)->winner, Data never compares ranks), sync ordering core fed awaited values, sort two-phase, dispatch reuses existing name->family routing, no Type.Name switch."
+        "status": "Plan + six stage files + two test docs written. Ready for test-designer / coder. Two precision fixes flagged to Ingi.",
+        "health": "Design settled and staged.",
+        "notes": "Spine: plan.md. Stages 1-6 at architect root. Test docs in plan/. Locked surface unchanged from prior session; sharpened: enum NotEqual vs Incomparable split (all-ops-error vs ordering-errors), rank returns driving type with caller-order ordering (no sign flip)."
       }
     }
   ]
