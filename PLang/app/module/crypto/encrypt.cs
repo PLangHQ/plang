@@ -13,6 +13,6 @@ public partial class encrypt : IContext
     [IsNotNull]
     public partial data.@this<global::app.type.binary.@this> Input { get; init; }
 
-    public Task<data.@this<global::app.type.binary.@this>> Run() =>
-        Task.FromResult(global::app.data.@this<global::app.type.binary.@this>.Ok(Input.Materialize() as global::app.type.binary.@this));
+    public async Task<data.@this<global::app.type.binary.@this>> Run() =>
+        global::app.data.@this<global::app.type.binary.@this>.Ok((await Input.Value()) as global::app.type.binary.@this);
 }

@@ -15,15 +15,16 @@ public partial class Throw : IContext
     public partial data.@this<global::app.type.number.@this> StatusCode { get; init; }
     public partial data.@this<global::app.type.text.@this>? Key { get; init; }
 
-    public Task<data.@this> Run()
+    public async Task<data.@this> Run()
     {
         // Re-throw an existing error as-is — `- throw %!error%` preserves Key,
         // Message, StatusCode, and the error chain rather than stringifying it.
         // A first-class, intended pattern.
-        if (Message.Materialize() is global::app.error.IError existing)
-            return Task.FromResult(Error(existing));
+        var msg = await Message.Value();
+        if (msg is global::app.error.IError existing)
+            return Error(existing);
 
-        return Task.FromResult(Error(
-            new ServiceError(Message.Materialize()?.ToString() ?? "", Key?.Materialize()?.ToString() ?? "UserError", StatusCode.GetValue<int>())));
+        return Error(
+            new ServiceError(msg?.ToString() ?? "", (Key == null ? null : await Key.Value())?.ToString() ?? "UserError", StatusCode.GetValue<int>()));
     }
 }

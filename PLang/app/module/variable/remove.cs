@@ -7,9 +7,9 @@ public partial class Remove : IContext
 {
     public partial data.@this<app.variable.@this> Name { get; init; }
 
-    public Task<data.@this> Run()
+    public async Task<data.@this> Run()
     {
-        Context.Variable.Remove(Name.Materialize() as app.variable.@this);
-        return Task.FromResult(Data());
+        Context.Variable.Remove(await Name.Value());
+        return Data();
     }
 }
