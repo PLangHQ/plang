@@ -9,16 +9,19 @@ namespace app.variable.navigator;
 public sealed class List : INavigator
 {
     public bool CanNavigate(global::app.data.@this data)
-        => data.Value is app.type.list.@this || data.Value is IList || IsGenericList(data.Value);
+    {
+        var v = data.Materialize();
+        return v is app.type.list.@this || v is IList || IsGenericList(v);
+    }
 
     public global::app.data.@this Navigate(global::app.data.@this data, string key)
     {
+        var value = data.Materialize();
         // The native `list` value type owns index/accessor navigation — its elements
         // are already Data, so they return directly (no WrapItem). Symmetric to dict.
-        if (data.Value is app.type.list.@this nativeList)
+        if (value is app.type.list.@this nativeList)
             return NavigateNative(nativeList, key, data);
 
-        var value = data.Value;
         var list = value as IList ?? WrapGenericList(value);
         if (list == null || list.Count == 0)
             return global::app.data.@this.NotFound(key);

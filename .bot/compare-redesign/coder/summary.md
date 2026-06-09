@@ -25,12 +25,12 @@ cutting code; Ingi corrected that — coder cuts code.)
 - **Source generator** (`PLang.Generators/Emission/{Property/Data,Property/Code,Action}/this.cs`):
   emits `Peek()` for param-slot diagnostics + presence guards, `Materialize()` for `[Code]` service
   injection. **This collapsed all 956 generated errors to 0.**
-- **6 handler files migrated** as the proven reference set: `variable/set.cs`, `file/read.cs`,
-  `list/{contains,any,group,join}.cs`.
+- **8 files migrated** as the proven reference set: `variable/set.cs`, `file/read.cs`,
+  `list/{contains,any,group,join}.cs`, `variable/navigator/{List,Dictionary}.cs` (navigation reads `Materialize()` — INavigator stays sync this pass).
 
 ### Error burn-down
-`2130 → 1084` (all 956 generated gone; ~90 hand-written done). The compiler error list IS the
-remaining worklist: `dotnet build PLang 2>&1 | grep "error CS"` — ~1084 sites across ~93 handler
+`2130 → 1068` (all 956 generated gone; ~90 hand-written done). The compiler error list IS the
+remaining worklist: `dotnet build PLang 2>&1 | grep "error CS"` — ~1068 sites across ~91 handler
 files, every one a Data-receiver `.Value` (views keep their sync `.Value`, so they never error).
 
 ### THE RECIPE for the remaining ~93 files (mechanical, proven)

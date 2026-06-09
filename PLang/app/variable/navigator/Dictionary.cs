@@ -19,7 +19,7 @@ public sealed class Dictionary : INavigator
 {
     public bool CanNavigate(global::app.data.@this data)
     {
-        var v = data.Value;
+        var v = data.Materialize();
         if (v is null) return false;
         if (v is dict) return true;
         if (v is IDictionary<string, object?>) return true;
@@ -29,7 +29,7 @@ public sealed class Dictionary : INavigator
 
     public global::app.data.@this Navigate(global::app.data.@this data, string key)
     {
-        var value = data.Value;
+        var value = data.Materialize();
         if (value == null) return global::app.data.@this.NotFound(key);
 
         // The native `dict` value type owns key-lookup — one shape, no per-arm
