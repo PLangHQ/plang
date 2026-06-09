@@ -20,7 +20,7 @@ public class DefaultCryptoProviderTests
     [Test]
     public async Task Hash_Keccak256_ProducesCorrectHash()
     {
-        var result = _provider.Hash(HashAction(new byte[] { 116, 101, 115, 116 })); // "test" as raw bytes
+        var result = await _provider.Hash(HashAction(new byte[] { 116, 101, 115, 116 })); // "test" as raw bytes
         var hex = Convert.ToHexString(((hash)(await result.Value())!).Bytes).ToLowerInvariant();
 
         await result.IsSuccess();
@@ -87,7 +87,7 @@ public class DefaultCryptoProviderTests
     [Test]
     public async Task Verify_Keccak256_RoundTrip_ReturnsTrue()
     {
-        var hashResult = _provider.Hash(HashAction(new byte[] { 104, 101, 108, 108, 111 })); // "hello"
+        var hashResult = await _provider.Hash(HashAction(new byte[] { 104, 101, 108, 108, 111 })); // "hello"
         var base64 = ((hash)(await hashResult.Value())!).ToBase64();
         var result = await _provider.Verify(VerifyAction(new byte[] { 104, 101, 108, 108, 111 }, base64));
 
@@ -100,7 +100,7 @@ public class DefaultCryptoProviderTests
     {
         var hashResult = await _provider.Hash(HashAction(new byte[] { 104, 101, 108, 108, 111 }));
         var base64 = ((hash)(await hashResult.Value())!).ToBase64();
-        var result = _provider.Verify(VerifyAction(new byte[] { 119, 114, 111, 110, 103 }, base64)); // "wrong"
+        var result = await _provider.Verify(VerifyAction(new byte[] { 119, 114, 111, 110, 103 }, base64)); // "wrong"
 
         await result.IsSuccess();
         await Assert.That((bool)(await result.Value())!).IsFalse();

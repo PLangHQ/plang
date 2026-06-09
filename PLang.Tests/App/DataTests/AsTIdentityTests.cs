@@ -147,7 +147,7 @@ public class AsTIdentityTests
     public async Task AsT_PlainDataTarget_LiteralParameter_ReturnsParameterDataAsIs()
     {
         var paramData = new Data("Slot", "literal value") { Context = _app.User.Context };
-        var canonical = paramData.AsCanonical();
+        var canonical = await paramData.AsCanonical();
         await Assert.That(ReferenceEquals(paramData, canonical)).IsTrue();
     }
 
@@ -163,7 +163,7 @@ public class AsTIdentityTests
         context.Variable.Set(live);
 
         var paramData = new Data("Slot", "%products%") { Context = context };
-        var canonical = paramData.AsCanonical();
+        var canonical = await paramData.AsCanonical();
 
         await Assert.That(ReferenceEquals(canonical, live)).IsTrue();
         // Mutation propagates: appending via live's value is visible through Variables.Get.
@@ -183,7 +183,7 @@ public class AsTIdentityTests
         var raw = new List<object?> { "%greeting%", "literal" };
         var paramData = new Data("Slot", raw) { Context = context };
 
-        var canonical = paramData.AsCanonical();
+        var canonical = await paramData.AsCanonical();
 
         await Assert.That(ReferenceEquals(canonical, paramData)).IsFalse();
         var resolved = (List<object?>)(await canonical.Value())!;
@@ -202,7 +202,7 @@ public class AsTIdentityTests
         var raw = new Dictionary<string, object?> { ["role"] = "system", ["content"] = "%prompt%" };
         var paramData = new Data("Slot", raw) { Context = context };
 
-        var canonical = paramData.AsCanonical();
+        var canonical = await paramData.AsCanonical();
 
         await Assert.That(ReferenceEquals(canonical, paramData)).IsFalse();
         var resolved = (Dictionary<string, object?>)(await canonical.Value())!;
@@ -226,7 +226,7 @@ public class AsTIdentityTests
         };
         var paramData = new Data("messages", raw) { Context = context };
 
-        var canonical = paramData.AsCanonical();
+        var canonical = await paramData.AsCanonical();
 
         var resolved = (List<object?>)(await canonical.Value())!;
         var first = (Dictionary<string, object?>)resolved[0]!;
@@ -246,7 +246,7 @@ public class AsTIdentityTests
         var raw = new List<object?> { "a", "b", "c" };
         var paramData = new Data("items", raw) { Context = context };
 
-        var canonical = paramData.AsCanonical();
+        var canonical = await paramData.AsCanonical();
 
         var resolved = (List<object?>)(await canonical.Value())!;
         await Assert.That(resolved.Count).IsEqualTo(3);
@@ -271,7 +271,7 @@ public class AsTIdentityTests
         var raw = new Dictionary<string, object?> { ["message"] = "%!error%" };
         var paramData = new Data("trace.buildError", raw) { Context = context };
 
-        var canonical = paramData.AsCanonical();
+        var canonical = await paramData.AsCanonical();
 
         var resolved = (Dictionary<string, object?>)(await canonical.Value())!;
         await Assert.That(resolved["message"]).IsEqualTo("boom");

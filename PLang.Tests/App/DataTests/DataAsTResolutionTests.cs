@@ -202,7 +202,7 @@ public class DataAsTResolutionTests
 
         // AsCanonical resolves vars without typing — a non-generic ArrayList isn't a walked
         // shape, so it passes through untouched.
-        var result = data.AsCanonical();
+        var result = await data.AsCanonical();
 
         await Assert.That((await result.Value())).IsEqualTo(raw);
         // Raw element [0] is still "%x%" — no walk happened.
@@ -217,7 +217,7 @@ public class DataAsTResolutionTests
         var raw = new System.Collections.Hashtable { ["key"] = "%x%" };
         var data = new Data("dict", raw) { Context = _app.User.Context };
 
-        var result = data.AsCanonical();
+        var result = await data.AsCanonical();
 
         await Assert.That(((System.Collections.Hashtable)(await result.Value())!)["key"]).IsEqualTo("%x%");
     }

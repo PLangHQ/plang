@@ -73,7 +73,7 @@ public class HashTypeTests
         // the produced hash value directly — no manual base64, no manual type
         // stamp. The algorithm rides on the hash value (sha256), so verify must
         // succeed with NO explicit Algorithm (which defaults to keccak256).
-        var digest = crypto.Hash(new global::app.module.crypto.Hash
+        var digest = await crypto.Hash(new global::app.module.crypto.Hash
         {
             Context = ctx,
             Data = global::app.data.@this.Ok("hello"),
