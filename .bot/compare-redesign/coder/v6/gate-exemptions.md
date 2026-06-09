@@ -35,6 +35,17 @@ variables — so they can never reach a lazy `file`/`url` reference and can't by
 - `list/sort.cs` (4), `type/list/this.cs` — the **two-phase sort** is Stage 6's mechanism.
 - `condition/Operator.cs` (sites), `data/Compare.cs` — the **old comparison mediator**, deleted in Stage 6.
 
+## Remaining scattered sync-helper/predicate/service sites (review per-site: flip-cascade vs exempt)
+- `error/handle.cs` — `MatchesError` (sync predicate reading `Key`/`Message`/`StatusCode` error-filter
+  params; build-set config, no-I/O).
+- `http/code/Default.cs` — `Configure` (IHttp method, reads `Default` bool config; flipping cascades IHttp).
+- `identity/code/Default.cs` — `((IKey)__keyR.Materialize())` ([Code] service resolution, in-memory).
+- `code/this.cs`, `code/this.Snapshot.cs` — service/assembly resolution (in-memory).
+- `cache/wrap.cs` — `Sliding` bool config in the modifier-setup `Wrap` (returns a Func).
+- `llm/code/OpenAi.cs` (dataUri/cached reads), `llm/query.cs` (messages validation), `mock/intercept.cs`
+  (`ResolveParamValue` in a matcher lambda) — sync helpers; some read content that *could* be a reference
+  → flip the helper async + caller, OR confirm no-I/O. Left for the per-site judgment.
+
 ## Recommendation
 Gate as: `grep -rn "\.Materialize()" PLang/app/module PLang/app/variable/navigator` excluding
 `Signature.cs`, `Fluid.cs` (the IFileInfo block), `debug/this.cs`, and the Stage-6-owned `sort.cs`/`Operator.cs`.

@@ -1,101 +1,55 @@
 # Coder — compare-redesign
 
-## Version: v5 — Stage 2 async-door cutover (sprint mode). **FULL SOLUTION COMPILES (0/0/0).**
+## Version: v6 — implementing Stage 2.1 (make the door actually async). Production stays GREEN.
 
-`PLang` + `PlangConsole` + `PLang.Tests` all build clean. Production: 2130→0 errors **and 0 CS8974**
-(no silent method-group `.Value` left in production). Tests: 1736→0 errors. The all-or-nothing Stage 2
-cutover **compiles end to end**.
+Architect's `stage-2.1` (3 parts: A handler reads / B nav→ValueTask / C getter rewrite+null model).
+My audit caught the 3-way gap; architect folded it in, then folded Stage 8 into Part C.
 
-### ⚠️ KNOWN GAP — 130 silent `.Value` sites in TESTS (CS8974), causing runtime failures
-The `.Value` property→method change has a trap: `.Value` (now a method group) passed to a non-Assert
-position — `ReferenceEquals(d.Value, x)`, `Convert.ToInt64(result.Value)`, `object? v = d.Value;`,
-ternaries — converts **method-group → object** silently. It is **not** a compile error and **not** an
-Assert.That/TUnit-analyzer error, so neither my compile-error worklist nor the TUnit pass caught them.
-They assert on/use the *method*, not the value → **runtime test failures** (~10/95 in DataTests; more
-across the suite). **They do NOT break compilation.**
-- **Worklist:** `dotnet build PLang.Tests 2>&1 | grep "warning CS8974"` — 130 sites, each a Data-receiver
-  `.Value` to wrap as `await X.Value()` (async ctx) or `X.Materialize()` (sync).
-- **Production is clean** of these (verified 0 CS8974 in PLang). Only tests have them.
-- My regex passes misfire on the sync/async split here (the same line can be method-group in either
-  context). Do this pass **per-file with the enclosing-method async check**, not one global regex;
-  build `--no-incremental` between (incremental counts are unreliable — they bit me repeatedly).
-- Smoke test (DataTests) after the door: **85/95 pass** — the door is behavior-preserving for in-memory
-  values; the 10 failures are these CS8974 sites (e.g. `ReferenceEquals(ov.Value, null.Instance)`).
+### Part A — handler reads → `await Value()` — substantially DONE, build green
+`app/module/` `.Materialize()`: **272 → 112**, all increments committed/pushed, build 0 errors throughout.
+- **Routing handlers flipped:** math/* , list/* (sync→async), crypto (ICrypto interface cascade),
+  builder/validateResponse (contained cascade), variable/{get,exists,remove}, event/remove, error/throw,
+  test/run lambda, + the async-method swaps on the big files (builder/llm/assert/http/debug/Fluid/identity).
+- **The 112 left split cleanly:**
+  - **54 optional `?.Materialize()` → DEFER to Part C.** The verbose `(X==null?null:await X.Value()) ?? d`
+    is the exact intermediate C's null model eliminates; doing them now = churn. (Of these, ~33 I already
+    did verbose in earlier increments — C retrofits those too.)
+  - **~44 gate exemptions** (documented in `v6/gate-exemptions.md`): serializer `JsonConverter.Write`
+    (signing), `IFileInfo`/`IFluidIndexable` (Fluid), diagnostic/display (debug, like ToString), build-meta
+    handlers (builder/code/Default — process LLM build output, never runtime refs). The architect should
+    formalize these as gate exemptions (like `System.IO`'s `app.type.path.**`).
+  - **~4 Stage-6-owned** (list/sort, condition/Operator — two-phase sort / old mediator).
+  - **~10 scattered sync helper/predicate/service-resolution** sites — per-site flip-vs-exempt (noted).
 
+### Part C — KEY FINDING: `.Value(fallback)` cannot land additively
+I added the `.Value(fallback)` overloads (base + `Data<T>`) expecting them additive — they produced
+**208 errors**. A second `Value` overload makes `data.Value` (method group) **ambiguous**, breaking every
+remaining silent `data.Value` method-group site in production (the CS8974-equivalents — passed to
+`object?`/delegate, compiled before via single-overload method-group conversion). So the overload — and
+thus Part C — must land **with** the consumer migration of those method-group sites, not before. Reverted;
+production green.
 
-Ingi's call: **full sprint, build red mid-flight; go through everything, don't stop, commit/push
-between.** This session drove the entire Stage 2 door cutover.
+### B+C are one all-at-once interlocked change — NOT attempted AFK
+- **B forces C:** `GetChild`/`Variable.Get` → `ValueTask` ⟹ `Data.As<T>` async (As<T> calls `Variable.Get`)
+  ⟹ a sync source-gen getter can't call async `As<T>` ⟹ the lazy getter (C). And C's `.Value(fallback)`
+  overload surfaces ~200 method-group sites (above). All one change.
+- **Scope:** `GetChild`/`GetChildValue` (`app/data/this.Navigation.cs`), `Variable.Get`/`Resolve`
+  (`app/variable/list/this.cs`, ~29 `Get` callers + 6 `Resolve`), the 3 navigators, `As<T>` async, the
+  source-gen getter rewrite (`Emission/Property/Data/this.cs:40,44,54,58`) for lazy + non-null `Data.Uninitialized`
+  + `[NotNull]` stamp + `[Default]`-on-null, the `.Value(fallback)` overload, AND the ~200 method-group
+  consumer sites + the 54+33 optional-param retrofits.
+- **Design fork to settle (architect):** design-1 = `ValueTask GetChild` (architect's; forces the
+  Variable.Get ripple + As<T> async + C). design-2 = a **lazy-child `GetChild`** that stays sync and defers
+  the read to `child.Value()` (the existing async door) — avoids the Variable.Get/As<T> ripple and the
+  forced coupling, but changes nav-error timing to touch-time and is a bigger GetChild restructure. I lean
+  design-2 (smaller blast radius) but it diverges from the plan — flag for the architect.
 
-### MILESTONE (committed, pushed)
-- **`PLang` + `PlangConsole` compile clean — 2130 → 0 `error CS`.** The all-or-nothing part of the
-  sprint (the async `Value()` door + every Data-receiver `.Value` migration across ~120 production
-  files) is structurally complete.
-
-### The door (PLang/app/data/this.cs)
-- `public virtual ValueTask<object?> Value()` — the single public async read door. No public sync
-  `.Value` property.
-- `internal virtual object? Materialize()` — the sync in-memory core (factory + parse-rung). Sync
-  surfaces that can't `await` read through it. `DynamicData` overrides it. `ParseRaw()` = inner parse.
-- `public virtual void SetValue(object?)` — the write side (was the setter).
-- `Data<T>.Value()` typed async; `Peek()` = current rung, no parse (distinct from Materialize: see below).
-- **OBP (Ingi caught this):** the sync read is the **verb** `Materialize()` (internal plumbing), NOT
-  a `CurrentValue`/`Materialized` noun-twin of `Value` (smell #4 / verb+noun).
-- **Three levels:** `Peek()` = current rung, no parse; `Materialize()` = parse (sync, no I/O);
-  `await Value()` = async I/O read (Stage 3) + parse. They coincide once materialised.
-
-### Source generator (PLang.Generators/Emission/{Property/Data,Property/Code,Action})
-Emits `Peek()` for param-slot diagnostics + presence guards, `Materialize()` for `[Code]` injection.
-Collapsed all 956 generated errors.
-
-### The recipe used across ~120 files
-1. Async method: `await X.Value()` (typed door returns T; clean for typed params).
-2. Sync surface (serializer, predicate, lambda-in-sync-delegate, build-time, `INavigator`): `X.Materialize()`.
-3. Guard-reorder where a param is guarded: `var v = await X.Value(); if (!X.Success) return X;`.
-4. Write `X.Value = v` → `X.SetValue(v)`.
-5. `data.Value is/as T` → `Materialize() is/as T` (sync) or `await Value() is/as T` (async).
-6. `Data<bool>` truthiness: `(await X.Value())?.Value == true` / `(X.Materialize() as @bool.@this)?.Value`.
-7. Typed `.Value.Member` in sync: `(X.Materialize() as ConcreteType)!.Member`.
-Watch: `await` cannot go inside a sync lambda (`items.Find(i => …)`) — hoist the value to a local first.
-
-### NOT done — the rest of the sprint
-- **`PLang.Tests` — 1736 `error CS` across 169 test files.** Same `.Value` migration in test code
-  (most `[Test]` are `async Task`, so `await X.Value()`). Mechanical, follows the recipe. The
-  compiler error list is the worklist: `dotnet build PLang.Tests 2>&1 | grep "error CS"`.
-- **Stages 3–6** (reference types `file`/`directory`/`url`, narrow-on-examination, per-type `Compare`
-  → `Comparison` enum, the `data.Compare` async entry, consumers + demolition of the old mediator).
-  The door is async-*shaped* but `Value()` still sync-completes everything — real async I/O reads,
-  narrowing, and the typed compare are Stages 3–6. The ~140 CompareRedesign test stubs stay red
-  until those land.
-- Navigation chain is still **sync** (reads via `Materialize()`); making `GetChild`→`Variable.Get`
-  →`Resolve` a `ValueTask` chain is the deferred nav-async sub-step.
-
-### PLang.Tests migration — the approach (learned this session; do it in ONE pass)
-1736 sites across 169 files, almost all `.Value` on a Data in an `async [Test]` method. A
-**receiver-aware regex, applied ONCE**, clears ~1700 of them. The regex that works (validated to
-1736 → ~26 before I hit corruption from *re-running* it):
-
-```python
-valpat = re.compile(r'([A-Za-z_][\w.]*(?:\([^()]*\)[\w.]*)*)(!?)(\??)\.Value(!?)(?!\w|\()')
-# async method  -> (await <recv><!?>.Value())<!?>
-# sync method   -> (<recv><!?>.Materialize())<!?>
-```
-Receiver must allow dotted chains AND single-level method calls (`a.At(0)!`, `d.Get("k")!`) AND a
-trailing `!` (`typed!.Value`). Detect async by the nearest enclosing `public/private…(` decl line
-containing `async`.
-
-**Pitfalls that bit me (why I reverted rather than ship corruption):**
-- **Run the pass exactly once.** Re-running over already-wrapped lines, or layering "fix-up" regexes
-  (dangling-dot, `@this`, `global::`), compounds into double-`await`s and split tokens. One pass, then
-  hand-fix the residual.
-- **Sync lambdas inside async methods** (`items.Find(i => … .Value)`, `if (payload.Value is string)`
-  in a predicate) — the method is async but the lambda isn't → `await` there is CS4034. ~30 sites;
-  the residual after the one pass. Fix by hand to `Materialize()`.
-- **Nested casts** (`((Dict)(await d.Value())!).Get("port")!.Value`) — a handful; hand-wrap.
-- **`global::`/`@this` prefixes** the regex won't span — hand-fix the ~2.
-So: ONE receiver-aware pass, then ~30 sync-lambda + ~5 nested-cast lines by hand. The clean state is
-preserved — tests are at their original 1736, not a half-migrated mess.
+This is the change that must land all-at-once or the build is deeply red. Doing it half-way while AFK risks
+an unrecoverable break with no course-correction. So: Part A landed safely + documented; B+C is the next
+focused session's work (with the design-fork decision).
 
 ### Next
-1. Migrate `PLang.Tests` (1736 sites) via the one-pass receiver-aware regex above + ~35 hand-fixes.
-2. Stages 3–6 (per architect stage files) → land green at the 2→6 boundary; CompareRedesign stubs pass.
-3. Run both suites.
+1. Architect: pick the B+C design fork (1 vs 2) + formalize the gate exemptions.
+2. Coder (focused session): B+C as one unit — nav chain async, getter rewrite + null model, `.Value(fallback)`,
+   then migrate the ~200 method-group sites + optional-param retrofits in the same pass; land green.
+3. Then Stages 3–6.

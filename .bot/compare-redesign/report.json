@@ -533,7 +533,7 @@
       "id": "bbe6c589-ad39-439c-8f42-a6dd32a81887",
       "bot": "coder",
       "timestamp_start": "2026-06-09T12:01:09.360301Z",
-      "timestamp_end": null,
+      "timestamp_end": "2026-06-09T12:29:59.941861Z",
       "intent": "Implement Stage 2.1 \u2014 route handler reads/navigation/param-getter through the async Value() door (Part A first).",
       "before": {
         "assumptions": "Door is async signature only (Value()=>new(Materialize())); 272 Materialize in app/module; nav sync; getter eager. Production compiles 0 errors.",
@@ -541,7 +541,11 @@
       },
       "plan": ".bot/compare-redesign/coder/v6/plan.md",
       "actions": [],
-      "after": null
+      "after": {
+        "status": "Stage 2.1 Part A substantially done (app/module .Materialize 272->112, build green throughout). Remaining: 54 optional->C, ~44 gate exemptions (documented), ~4 Stage-6, ~10 scattered. Part B+C (nav async + getter rewrite + null model) NOT started \u2014 one all-at-once interlocked change with a design fork, unsafe to half-do AFK.",
+        "health": "production GREEN (PLang+PlangConsole 0 errors)",
+        "notes": "Key finding: .Value(fallback) overload breaks ~200 method-group data.Value sites (ambiguity) \u2014 must land with C migration. B forces C forces the method-group migration. Design fork (ValueTask GetChild vs lazy-child) flagged for architect. Exemptions + B+C plan in v6/."
+      }
     }
   ]
 }
