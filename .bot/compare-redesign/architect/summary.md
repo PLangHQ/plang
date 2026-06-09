@@ -1,5 +1,17 @@
 # Architect — compare-redesign
 
+## 2026-06-09 — Coder v3 follow-up (one substantive finding + two notes)
+
+Coder pulled the seven v2 resolutions (`coder/v3/comments.md`) — six clean, one substantive new finding (A) + two one-liners (B, C). Worked A through with Ingi.
+
+**A — async navigation collides with sync param getters + sync interpolation (revises finding 1).** Verified: the source-gen lazy param getter is a sync C# `get` calling `As<T>` (which reads the sync `.Value`); `Variable.Get`→`GetChild` and dotted `Variable.Resolve` are sync navigators; a property `get` can't `await`. So "navigation goes async" needed a real answer. Settled (Ingi — *keep lazy read, don't give up the magic*): the chain `GetChild`→`Get`→`Resolve`→`Value` goes async as **`ValueTask`** (sync-completing in memory, awaits only the first content read; await-once gate). **No I/O at `read X`** — the read lands on first navigation, always behind an `await`. The three genuinely-sync surfaces each handled: **(1)** param getters → `Action.GetParameter<T>(name)` returns a **lazy `Data<T>`** (no navigate); handler does `await Param.Value()`. This also collapses `__ResolveData(name).As<T>(Context)` into one typed call — OBP: kills the fetch-raw-then-convert smell **and** the redundant `__ResolveData` wrapper (`GetParameter` already returns `NotFound`, already takes+ignores `Context`); `AsT_Impl` moves into the async `.Value()`. **(2)** `ToString`/`Equals`/`GetHashCode` → materialised-backing only, never navigate. **(3)** Fluid render → already async (`RenderAsync`), materialises up-front at `SetValue`. (Briefly considered eager-read-at-`read X`; Ingi rejected — keep it lazy.) `ValueTask` confirmed for the hot chain. Folded into Stage 2 (deliverables + design).
+
+**B — in-place `.Type` narrow is read-causes-write.** Named the aliasing/clone/concurrency semantics (live-variable narrow is meant to be visible; clone narrows its own copy; parse idempotent so a race is wasteful-not-corrupting). Stage 3.
+
+**C — `name` dropped from the wire.** Grep-and-verify the read side (`FromWireShape`/`TypeFromWire`, nested-Data recognizer, `ResolveParameter`) before deleting — a nested Data takes its name from the dict key. A verification, not a code change. Noted in Stage 2.
+
+All v3 points addressed; model intact — lazy read kept, navigation async via `ValueTask`, sync surfaces named.
+
 ## 2026-06-08 — Coder v2 review — working through it WITH Ingi (verify facts, collaborate on recommendations)
 
 Coder reviewed the typed-model plan + 7 stages (`.bot/compare-redesign/coder/v2/comments.md`) — verdict "build it," seven grounded findings. Process correction (Ingi): the coder reads the *current* code; we may be aiming for a new structure it can't see — so verify its facts (done; all hold) but settle recommendations *with Ingi*, don't auto-fold. Going finding by finding.
