@@ -20,7 +20,7 @@ public partial class load : IContext
 
     public async Task<data.@this> Run()
     {
-        var dllPath = Path?.Value;
+        var dllPath = Path == null ? null : await Path.Value();
         if (dllPath == null)
             return Error(new ActionError("Provider path is required", "ValidationError", 400));
 
@@ -31,7 +31,7 @@ public partial class load : IContext
         var loadResult = await dllPath.LoadAssemblyAsync();
         if (!loadResult.Success)
             return Error(new ActionError(loadResult.Error?.Message ?? "Load failed", "LoadError", 500));
-        var assembly = (System.Reflection.Assembly)loadResult.Value!;
+        var assembly = (System.Reflection.Assembly)(await loadResult.Value())!;
 
         // plang-types Stage 7: scan the same assembly for [PlangType] classes
         // and ITypeRenderer implementations. The type-system additions outrank

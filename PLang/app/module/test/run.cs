@@ -38,8 +38,8 @@ public partial class run : IContext
     {
         var tests = Tests.GetValue<List<global::app.tester.test.@this>>() ?? new List<global::app.tester.test.@this>();
         var parentApp = Context.App!;
-        int parallel = Parallel?.Value != null ? Parallel.GetValue<int>() : parentApp.Tester.Parallel;
-        double timeoutSeconds = Timeout?.Value != null ? Timeout.GetValue<double>() : parentApp.Tester.TimeoutSeconds;
+        int parallel = Parallel?.Materialize() != null ? Parallel.GetValue<int>() : parentApp.Tester.Parallel;
+        double timeoutSeconds = Timeout?.Materialize() != null ? Timeout.GetValue<double>() : parentApp.Tester.TimeoutSeconds;
         var timeout = TimeSpan.FromSeconds(timeoutSeconds);
 
         if (tests.Count == 0)
@@ -140,8 +140,8 @@ public partial class run : IContext
                 // adds one on flush, so this matches "what stdout sees". A
                 // payload that already ends in \n just gets a blank line, which
                 // is still readable in the UI.
-                if (written?.Value != null)
-                    outputBuf.Append(written.Value).Append('\n');
+                if (written?.Materialize() != null)
+                    outputBuf.Append(written.Materialize()).Append('\n');
                 return Task.FromResult(app.data.@this.Ok());
             },
             channelName: app.channel.list.@this.Output,

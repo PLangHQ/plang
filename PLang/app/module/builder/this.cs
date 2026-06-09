@@ -112,7 +112,7 @@ public sealed partial class @this
         // No app marker on disk → confirm creation (or error when headless).
         // Was inverted (fired when the marker DID exist) — that forced every
         // build of an existing app to need --app={"create":true}.
-        if ((!appPrExists.Success || appPrExists.Value != true) && !_app.Create)
+        if ((!appPrExists.Success || (await appPrExists.Value())?.Value != true) && !_app.Create)
         {
             if (Console.IsInputRedirected)
                 return data.@this.FromError(new global::app.error.ServiceError(

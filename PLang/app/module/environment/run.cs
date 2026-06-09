@@ -18,14 +18,17 @@ public partial class run : IContext
     public async Task<data.@this> Run()
     {
         // Polymorphic: forwarded result type depends on the dispatched target.
-        if (GoalName?.Value != null)
-            return await Context.App!.RunGoalAsync(GoalName.Value, Context);
+        var goalName = GoalName == null ? null : await GoalName.Value();
+        if (goalName != null)
+            return await Context.App!.RunGoalAsync(goalName, Context);
 
-        if (Step?.Value != null)
-            return await Step.Value.RunAsync(Context);
+        var step = Step == null ? null : await Step.Value();
+        if (step != null)
+            return await step.RunAsync(Context);
 
-        if (Action?.Value != null)
-            return await Action.Value.RunAsync(Context);
+        var action = Action == null ? null : await Action.Value();
+        if (action != null)
+            return await action.RunAsync(Context);
 
         return data.@this.FromError(new ActionError(
             "run requires a GoalCall, Step, or Action", "MissingInput", 400));

@@ -26,9 +26,9 @@ public partial class report : IContext
 
     public async Task<data.@this> Run()
     {
-        var results = Results?.Value ?? Context.App!.Tester.Results;
+        var results = (Results == null ? null : await Results.Value()) ?? Context.App!.Tester.Results;
         var testing = Context.App!.Tester;
-        var format = Format?.Value ?? testing.Format;
+        var format = (Format == null ? null : await Format.Value()) ?? testing.Format;
 
         // Suppress the console summary when we're nested inside another test
         // (CurrentTest is set by test.run when it spins up the per-test child
