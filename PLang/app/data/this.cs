@@ -1007,10 +1007,12 @@ public partial class @this
                     if (!resolved.Success)
                         return @this<T>.FromError(resolved.Error!);
                     // Stored values are values, not expressions. Type-convert only — never
-                    // re-scan the resolved value's text for further %var% references. Calling
+                    // re-scan the resolved value's text for further %var% references: read the
+                    // stored var's in-memory value raw (Materialize), NOT through its door
+                    // (Value() would fire the var's own reference resolution and chain). Calling
                     // on `resolved` (the live variable) preserves identity: WrapAs sees `resolved`
                     // as `this` and propagates Name + Properties + event lists.
-                    return resolved.AsT_Convert<T>(await resolved.Value(), context);
+                    return resolved.AsT_Convert<T>(resolved.Materialize(), context);
                 }
                 // Partial match — interpolate once. The result is the final value; embedded
                 // %var% inside the substituted text is opaque payload (matches mainstream
