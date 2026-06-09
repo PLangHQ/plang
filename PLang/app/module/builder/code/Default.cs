@@ -303,7 +303,7 @@ public class Default : IBuilder
 
     public data.@this ValidateStepActions(validateStepActions action)
     {
-        var step = action.Step.Materialize() as global::app.goal.steps.step.@this;
+        var step = action.Step.Peek() as global::app.goal.steps.step.@this;
         if (step == null)
         {
             // Dump what the planner actually returned so the user can see the
@@ -313,7 +313,7 @@ public class Default : IBuilder
             string planDetail = "(no plan was produced)";
             try
             {
-                var planValue = action.Context.Variable.Get("plan")?.Materialize();
+                var planValue = action.Context.Variable.Get("plan")?.Peek();
                 if (planValue != null)
                 {
                     // Round-trip whatever shape the planner produced
@@ -668,14 +668,14 @@ public class Default : IBuilder
         // Diagnostic — gated by app.Debug.IsEnabled, drops on the floor in production.
         // The merge handoff was the spot a Boolean-vs-Step type mismatch surfaced during
         // the builder rebuild; leaving the line in earns its keep next time it drifts.
-        var step = action.Step.Materialize() as global::app.goal.steps.step.@this;
-        var from = action.StepFromLlm.Materialize() as global::app.goal.steps.step.@this;
+        var step = action.Step.Peek() as global::app.goal.steps.step.@this;
+        var from = action.StepFromLlm.Peek() as global::app.goal.steps.step.@this;
         _ = action.Context.App.Debug.Write(
             $"builder.merge: step.Index={step?.Index} step.Actions={step?.Actions.Count} " +
             $"from.Index={from?.Index} from.Keep={from?.Keep} from.Actions={from?.Actions.Count}");
 
-        (action.Step.Materialize() as global::app.goal.steps.step.@this)!.Merge((action.StepFromLlm.Materialize() as global::app.goal.steps.step.@this)!);
-        return data.@this.Ok(action.Step.Materialize());
+        (action.Step.Peek() as global::app.goal.steps.step.@this)!.Merge((action.StepFromLlm.Peek() as global::app.goal.steps.step.@this)!);
+        return data.@this.Ok(action.Step.Peek());
     }
 
     // --- Enrich Response ---
@@ -683,8 +683,8 @@ public class Default : IBuilder
     public data.@this EnrichResponse(enrichResponse action)
     {
 
-        var response = action.StepResults.Materialize() as BuildResponse;
-        var goal = action.Goal.Materialize() as Goal;
+        var response = action.StepResults.Peek() as BuildResponse;
+        var goal = action.Goal.Peek() as Goal;
         if (response == null || goal == null)
             return data.@this.Ok(response);
 
@@ -745,7 +745,7 @@ public class Default : IBuilder
                 var p = a.Parameters[i];
                 sb.Append(p.Name).Append('(');
                 if (p.Type != null) sb.Append('[').Append(p.Type.Name).Append("] ");
-                sb.Append(FormatValue(p.Materialize()));
+                sb.Append(FormatValue(p.Peek()));
                 sb.Append(')');
             }
         }
@@ -854,7 +854,7 @@ public class Default : IBuilder
         if (steps is List<object?> nullableList) return nullableList.Where(s => s != null).Select(s => s!).ToList();
         // The steps value is the native list type now — read each element's value.
         if (steps is app.type.list.@this nativeList)
-            return nativeList.Items.Select(d => d.Materialize()).Where(v => v != null).Select(v => v!).ToList();
+            return nativeList.Items.Select(d => d.Peek()).Where(v => v != null).Select(v => v!).ToList();
         if (steps is System.Collections.IList rawList)
         {
             var result = new List<object>();
@@ -926,13 +926,13 @@ public class Default : IBuilder
                     // type carries a static Build(value) hook. Separate field
                     // on the .pr — never "type:kind". Skip variable refs
                     // (%var% values resolve at runtime).
-                    if (p.Materialize() is not null && !(p.Materialize() is string sv && sv.StartsWith('%') && sv.EndsWith('%')))
+                    if (p.Peek() is not null && !(p.Peek() is string sv && sv.StartsWith('%') && sv.EndsWith('%')))
                     {
                         var declared = schemaProp.PropertyType;
                         var underlying = System.Nullable.GetUnderlyingType(declared) ?? declared;
                         if (underlying.IsGenericType && underlying.GetGenericTypeDefinition() == typeof(global::app.data.@this<>))
                             underlying = underlying.GetGenericArguments()[0];
-                        var kind = context.App.Type.KindHooks.Of(underlying, p.Materialize());
+                        var kind = context.App.Type.KindHooks.Of(underlying, p.Peek());
                         if (kind != null) p.Kind = kind;
                     }
                 }
@@ -940,8 +940,8 @@ public class Default : IBuilder
 
             foreach (var p in a.Parameters)
             {
-                if (p.Materialize() is null) continue;
-                if (p.Materialize() is string sv && sv.StartsWith('%') && sv.EndsWith('%')) continue; // variable reference
+                if (p.Peek() is null) continue;
+                if (p.Peek() is string sv && sv.StartsWith('%') && sv.EndsWith('%')) continue; // variable reference
                 if (p.Type == null) continue;
 
                 // LLM-emitted "" for an unset nullable slot — same shape as
@@ -950,7 +950,7 @@ public class Default : IBuilder
                 // of failing in TryConvert below. For non-nullable slots leave the
                 // empty string in place so the conversion error surfaces and
                 // LlmFixer retries.
-                if (p.Materialize() is string empty && empty.Length == 0
+                if (p.Peek() is string empty && empty.Length == 0
                     && global::app.module.builder.ValidateResponseHelpers.IsNullableSchemaProp(actionType, p.Name))
                 {
                     p.SetValue(null);
@@ -961,7 +961,7 @@ public class Default : IBuilder
                 // metadata produced by Modules.Describe(), not values to normalize. They
                 // surface when the catalog is fed back through validate (BuilderValidateValid
                 // smoke test). Skip — coercing a description string to its declared type fails.
-                if (p.Materialize() is string desc && IsCatalogDescription(desc, p.Type.Name)) continue;
+                if (p.Peek() is string desc && IsCatalogDescription(desc, p.Type.Name)) continue;
 
                 var targetType = context.App.Type.Get(p.Type.Name);
                 if (targetType == null) continue;
@@ -982,14 +982,14 @@ public class Default : IBuilder
                 if (context.App.Type.Choices.Has(targetType)) continue;
 
                 // Already correctly typed? Skip (e.g. value is bool, target is bool).
-                if (targetType.IsInstanceOfType(p.Materialize())) continue;
+                if (targetType.IsInstanceOfType(p.Peek())) continue;
 
                 // Convert in either direction: string → bool/int/double/etc., or
                 // numeric/bool → string when the parameter is declared string. The LLM
                 // emitting `Key=404 (int)` for a string-declared Key gets normalized here.
-                var conv = context.App.Type.Convert(p.Materialize(), targetType, context);
+                var conv = context.App.Type.Convert(p.Peek(), targetType, context);
                 if (conv.Value != null)
-                    p.SetValue(conv.Materialize());
+                    p.SetValue(conv.Peek());
                 else if (conv.Error != null)
                     errors.Add($"{a.Module}.{a.ActionName}.{p.Name}: {conv.Error.Message}");
             }
@@ -1146,6 +1146,6 @@ public class Default : IBuilder
         // GoalCall owns its own assembly (string / JsonElement / dict → goal.call);
         // reach it through the infra door, which needs context for name-leak guards
         // and prPath resolution.
-        return context.App.Type.Convert(value, typeof(GoalCall), context).Materialize() as GoalCall;
+        return context.App.Type.Convert(value, typeof(GoalCall), context).Peek() as GoalCall;
     }
 }

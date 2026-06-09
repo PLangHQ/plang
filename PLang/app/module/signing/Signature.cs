@@ -71,15 +71,15 @@ public class Signature
             writer.WriteStartObject();
             // The hash carries its own algorithm; fall back to the stamped kind
             // (or the keccak256 signing default) for a legacy bare-bytes hash.
-            var algorithm = value.Materialize() is app.module.crypto.type.hash.@this hash
+            var algorithm = value.Peek() is app.module.crypto.type.hash.@this hash
                 ? hash.Algorithm
                 : value.Type?.Kind ?? "keccak256";
             writer.WriteString("type", algorithm);
-            var base64 = value.Materialize() switch
+            var base64 = value.Peek() switch
             {
                 app.module.crypto.type.hash.@this h => h.ToBase64(),
                 byte[] bytes => Convert.ToBase64String(bytes),
-                _ => value.Materialize()?.ToString() ?? ""
+                _ => value.Peek()?.ToString() ?? ""
             };
             writer.WriteString("value", base64);
             writer.WriteEndObject();

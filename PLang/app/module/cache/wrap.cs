@@ -21,10 +21,10 @@ public partial class CacheWrap : IContext, IModifier
 
     public Func<Task<global::app.data.@this>> Wrap(Func<Task<global::app.data.@this>> next, actor.context.@this context)
     {
-        var keyVal = Key?.Materialize() as global::app.type.text.@this;
+        var keyVal = Key?.Peek() as global::app.type.text.@this;
         string cacheKey = !string.IsNullOrEmpty(keyVal?.ToString()) ? (string)keyVal! : DefaultKey(context);
         long durationMs = DurationMs.GetValue<long>();
-        var sliding = (Sliding.Materialize() as global::app.type.@bool.@this)?.Value ?? false;
+        var sliding = (Sliding.Peek() as global::app.type.@bool.@this)?.Value ?? false;
 
         return async () =>
         {

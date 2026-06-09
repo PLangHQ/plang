@@ -114,7 +114,7 @@ public sealed class Sqlite : IStore
 
             var deserResult = _serializer.Load(result.ToString()!);
             if (!deserResult.Success) return Task.FromResult(app.data.@this.FromError(deserResult.Error!));
-            return Task.FromResult((data.@this?)deserResult.Materialize() ?? app.data.@this.Ok(null));
+            return Task.FromResult((data.@this?)deserResult.Peek() ?? app.data.@this.Ok(null));
         }
         catch (Exception ex)
         {
@@ -168,7 +168,7 @@ public sealed class Sqlite : IStore
                 if (raw != null)
                 {
                     var deserResult = _serializer.Load(raw);
-                    if (deserResult.Success && deserResult.Materialize() != null) items.Add((data.@this)deserResult.Materialize()!);
+                    if (deserResult.Success && deserResult.Peek() != null) items.Add((data.@this)deserResult.Peek()!);
                 }
             }
             return Task.FromResult(app.data.@this.Ok((object)items));
@@ -232,7 +232,7 @@ public sealed class Sqlite : IStore
             if (!serialized.Success) return Task.FromResult(app.data.@this.FromError(serialized.Error!));
             // SQLite is a take-over API — it binds raw CLR values, not born-native
             // wrappers. Collapse an item leaf (text→string) to its raw backing.
-            object? dataValue = serialized.Materialize() is global::app.type.item.@this leaf ? leaf.ToRaw() : serialized.Materialize();
+            object? dataValue = serialized.Peek() is global::app.type.item.@this leaf ? leaf.ToRaw() : serialized.Peek();
             cmd.Parameters.AddWithValue("@data", dataValue);
             cmd.ExecuteNonQuery();
 
@@ -323,7 +323,7 @@ public sealed class Sqlite : IStore
         // callers read directly; the entity owns the registry/primitive
         // fallback chain in one place.
         var clrType = data.Type.ClrType;
-        if (clrType == null || clrType.IsAssignableFrom(data.Materialize()!.GetType())) return;
+        if (clrType == null || clrType.IsAssignableFrom(data.Peek()!.GetType())) return;
 
         var converted = AppTypes.ConvertTo(data.Value, clrType);
         if (converted != null) data.SetValue(converted);

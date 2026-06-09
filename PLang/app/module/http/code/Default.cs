@@ -231,7 +231,7 @@ public sealed class Default : IHttp
                 "Cannot change FollowRedirects/MaxRedirects after first HTTP request",
                 "ConfigLocked", 409));
 
-        action.Context.App.Config.Apply<Config>(action, action.Context, (action.Default.Materialize() as global::app.type.@bool.@this)?.Value ?? false);
+        action.Context.App.Config.Apply<Config>(action, action.Context, (action.Default.Peek() as global::app.type.@bool.@this)?.Value ?? false);
         return global::app.data.@this.Ok();
     }
 

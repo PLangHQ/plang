@@ -183,14 +183,14 @@ public partial class Handle : IContext, IModifier
     private bool MatchesError(IError? error)
     {
         // MatchesError is a sync predicate — read the materialised backing, not the async door.
-        if (StatusCode?.Materialize() == null && Key?.Materialize() == null && Message?.Materialize() == null) return true;
+        if (StatusCode?.Peek() == null && Key?.Materialize() == null && Message?.Materialize() == null) return true;
         if (error == null) return false;
 
-        if (StatusCode?.Materialize() != null && error.StatusCode != StatusCode.GetValue<int>()) return false;
+        if (StatusCode?.Peek() != null && error.StatusCode != StatusCode.GetValue<int>()) return false;
         if (!string.IsNullOrEmpty(Key?.Materialize()?.ToString())
-            && !string.Equals(error.Key, Key.Materialize()?.ToString(), StringComparison.OrdinalIgnoreCase)) return false;
+            && !string.Equals(error.Key, Key.Peek()?.ToString(), StringComparison.OrdinalIgnoreCase)) return false;
         if (!string.IsNullOrEmpty(Message?.Materialize()?.ToString())
-            && !error.Message.Contains(Message.Materialize()!.ToString()!, StringComparison.OrdinalIgnoreCase)) return false;
+            && !error.Message.Contains(Message.Peek()!.ToString()!, StringComparison.OrdinalIgnoreCase)) return false;
 
         return true;
     }

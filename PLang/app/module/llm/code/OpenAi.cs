@@ -742,14 +742,14 @@ public sealed class OpenAi : ILlm
         {
             var imgPath = global::app.type.path.@this.Resolve(image, context);
             var dataUri = imgPath.ReadAsDataUri().GetAwaiter().GetResult();
-            if (dataUri.Success && !string.IsNullOrEmpty(dataUri.Materialize()?.ToString()))
+            if (dataUri.Success && !string.IsNullOrEmpty(dataUri.Peek()?.ToString()))
             {
                 return new Dictionary<string, object>
                 {
                     ["type"] = "image_url",
                     ["image_url"] = new Dictionary<string, string>
                     {
-                        ["url"] = dataUri.Materialize()?.ToString()
+                        ["url"] = dataUri.Peek()?.ToString()
                     }
                 };
             }
@@ -999,9 +999,9 @@ public sealed class OpenAi : ILlm
         // The cached value is a dictionary with Value + metadata. A json cache
         // entry now materializes to the native dict value type — unwrap it to raw
         // so the Dictionary branch below reads Value + the metadata props.
-        var cachedValue = cached.Materialize() is app.type.dict.@this nativeDict
+        var cachedValue = cached.Peek() is app.type.dict.@this nativeDict
             ? nativeDict.ToRaw()
-            : cached.Materialize();
+            : cached.Peek();
         object? resultValue = null;
         var props = new Dictionary<string, object?>();
 

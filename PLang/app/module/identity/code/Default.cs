@@ -297,7 +297,7 @@ public sealed class Default : IIdentity
         if (!__keyR.Success)
             return data.@this<Identity>.FromError(__keyR.Error!);
 
-        var (keys, keyErr) = ((IKey)__keyR.Materialize()!).GenerateKeyPair();
+        var (keys, keyErr) = ((IKey)__keyR.Peek()!).GenerateKeyPair();
         if (keyErr != null)
             return data.@this<Identity>.FromError(keyErr);
 

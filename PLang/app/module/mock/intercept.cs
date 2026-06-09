@@ -119,10 +119,10 @@ public partial class intercept : IContext
 
     private static object? ResolveParamValue(data.@this param, global::app.variable.list.@this variables)
     {
-        if (param.Materialize() is string s && s.Contains('%'))
+        if (param.Peek() is string s && s.Contains('%'))
             return variables.Resolve(s);
 
-        return param.Materialize();
+        return param.Peek();
     }
 
     /// <summary>

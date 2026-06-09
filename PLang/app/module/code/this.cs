@@ -83,7 +83,7 @@ public sealed partial class @this : IAsyncDisposable
     public T GetOrDefault<T>(T defaultProvider) where T : class, ICode
     {
         var r = Get<T>();
-        return r.Materialize() as T ?? defaultProvider;
+        return r.Peek() as T ?? defaultProvider;
     }
 
     /// <summary>
