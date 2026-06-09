@@ -98,7 +98,7 @@ public class SecurityFixTests
         // Resolve with skipInfrastructure — %name% resolves, %!app% does not
         var result = vars.Resolve("Hello %name%, app=%!app.AbsolutePath%", skipInfrastructure: true);
 
-        await Assert.That(result).IsEqualTo("Hello Alice, app=%!app.AbsolutePath%");
+        await Assert.That(await result).IsEqualTo("Hello Alice, app=%!app.AbsolutePath%");
     }
 
     [Test]
@@ -114,7 +114,7 @@ public class SecurityFixTests
 
         // %!nonexistent% doesn't exist → left as-is (same as skip behavior for missing vars)
         // But verify skipInfrastructure=false is the default
-        await Assert.That(result).IsEqualTo(input);
+        await Assert.That(await result).IsEqualTo(input);
     }
 
     #endregion
