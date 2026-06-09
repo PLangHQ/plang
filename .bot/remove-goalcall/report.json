@@ -1,0 +1,38 @@
+{
+  "branch": "remove-goalcall",
+  "sessions": [
+    {
+      "id": "374fb997-da85-4a22-8a38-354f5b9a3270",
+      "bot": "architect",
+      "timestamp_start": "2026-06-09T18:25:33Z",
+      "timestamp_end": "2026-06-09T18:27:00Z",
+      "intent": "Design the removal of the GoalCall C# type so goal invocation flows through a single goal.call path.",
+      "before": {
+        "assumptions": "GoalCall overlaps Goal on identity and carries unrelated concerns (event context, Parallel tool flag, the four-tier resolution). Arguments were thought to need a place on the reference.",
+        "risk": "Naive merge onto Goal would break the shared/stateless definition. ~30 production call sites reference GoalCall; events and llm-tools have hitchhiking concerns."
+      },
+      "plan": ".bot/remove-goalcall/architect/plan.md",
+      "actions": [
+        {
+          "paths": ["PLang/app/goal/GoalCall.cs", "PLang/app/goal/this.cs", "PLang/app/module/goal/call.cs", "PLang/app/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read the incumbent GoalCall, Goal, the goal.call handler, RunGoalAsync, and the event plumbing (Events.cs, IEvent.cs, event/on.cs, binding) to ground the design."
+        },
+        {
+          "paths": [".bot/remove-goalcall/architect/plan.md", ".bot/remove-goalcall/architect/plan/call-sites.md", ".bot/remove-goalcall/architect/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote the spine (Why, settled design, actor/CurrentActor correction, data flow, stage index) and the full leaf-trace of ~30 production call sites bucketed by disposition (delete / rename-move / retype / reroute / events / catalog). Decisions: goal.call carries Parameters; app.Goal.Load owns resolution; app.Run runs; Event/IEvent deleted with %!event% moved to the firing path; Start delegates through goal.call(Actor:User); no escape hatch."
+        }
+      ],
+      "after": {
+        "status": "Design settled and written. Stage files not yet carved — awaiting Ingi's read-over and his answer on stage granularity.",
+        "health": "green",
+        "notes": "Branch created from origin/runtime2. Plan references verified against runtime2 (lazy params use .Value property on this branch). Coordinate with tools-as-actions branch on where Parallel lands."
+      }
+    }
+  ]
+}
