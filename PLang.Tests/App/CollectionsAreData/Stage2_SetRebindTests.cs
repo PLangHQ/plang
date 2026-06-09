@@ -28,8 +28,8 @@ public class Stage2_SetRebindTests
         var dataB = vars.Get("x");
 
         await Assert.That(ReferenceEquals(dataA, dataB)).IsFalse();
-        await Assert.That((string?)dataA.ScalarValue).IsEqualTo("a"); // old binding untouched
-        await Assert.That((string?)dataB.ScalarValue).IsEqualTo("b");
+        await Assert.That((string?)dataA.Peek()).IsEqualTo("a"); // old binding untouched
+        await Assert.That((string?)dataB.Peek()).IsEqualTo("b");
     }
 
     [Test]
@@ -47,8 +47,8 @@ public class Stage2_SetRebindTests
         var dataB = vars.Get("x");
 
         await Assert.That(ReferenceEquals(dataA, dataB)).IsFalse();
-        await Assert.That((string?)dataA.ScalarValue).IsEqualTo("a"); // old binding untouched
-        await Assert.That((string?)dataB.ScalarValue).IsEqualTo("b");
+        await Assert.That((string?)dataA.Peek()).IsEqualTo("a"); // old binding untouched
+        await Assert.That((string?)dataB.Peek()).IsEqualTo("b");
     }
 
     [Test]
@@ -94,6 +94,6 @@ public class Stage2_SetRebindTests
         // OnChange fired with the new (rebound) Data, which is the current binding.
         await Assert.That(firedWith).IsNotNull();
         await Assert.That(ReferenceEquals(firedWith, dataB)).IsTrue();
-        await Assert.That((string?)firedWith!.ScalarValue).IsEqualTo("b");
+        await Assert.That((string?)firedWith!.Peek()).IsEqualTo("b");
     }
 }

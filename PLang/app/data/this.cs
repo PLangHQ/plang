@@ -235,25 +235,22 @@ public partial class @this
     }
 
     /// <summary>
-    /// Scalar / output read — the access-driven rule for <c>%x%</c> and
-    /// <c>write out %x%</c>. Returns the value's raw source form WITHOUT a
-    /// structured parse: a text raw is the string; a byte raw decodes utf-8 when
-    /// the bytes are valid utf-8, otherwise stays <c>byte[]</c> (silently
+    /// Look at the current rung without forcing the next — the access-driven rule
+    /// for <c>%x%</c> and <c>write out %x%</c>. Returns the value's raw source form
+    /// WITHOUT a structured parse: a text raw is the string; a byte raw decodes
+    /// utf-8 when the bytes are valid utf-8, otherwise stays <c>byte[]</c> (silently
     /// mojibake-ing binary is worse than handing back bytes). An authored value
-    /// (or one already materialized) returns as-is. Scalar access never
-    /// materializes a structured type — only navigation (<c>%x.field%</c>) and
-    /// <c>As&lt;T&gt;</c> / <c>as &lt;type&gt;</c> do.
+    /// (or one already materialized) returns as-is. Peeking never materializes a
+    /// structured type — only navigation (<c>%x.field%</c>) and <c>As&lt;T&gt;</c>
+    /// / <c>as &lt;type&gt;</c> do.
     /// </summary>
-    public object? ScalarValue
+    public object? Peek()
     {
-        get
-        {
-            if (_valueFactory != null) { _value = _valueFactory(); _valueFactory = null; }
-            if (_value != null) return _value;
-            if (_raw is string s) return s;
-            if (_raw is byte[] b) return DecodeUtf8OrBytes(b);
-            return _value;
-        }
+        if (_valueFactory != null) { _value = _valueFactory(); _valueFactory = null; }
+        if (_value != null) return _value;
+        if (_raw is string s) return s;
+        if (_raw is byte[] b) return DecodeUtf8OrBytes(b);
+        return _value;
     }
 
     // Strict utf-8 decode: returns the string when the bytes are valid utf-8,
@@ -664,7 +661,7 @@ public partial class @this
             var reader = context.App.Type.Readers.Of(typeName, kind);
             if (reader != null)
             {
-                var raw = ScalarValue;
+                var raw = Peek();
                 var materialized = raw == null ? null
                     : reader(raw, kind, new global::app.type.reader.ReadContext(context));
                 return new @this(Name, materialized, type.Create(typeName, kind, context: context), Parent) { Context = context };

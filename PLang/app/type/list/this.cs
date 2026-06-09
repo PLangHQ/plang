@@ -355,5 +355,5 @@ public partial class @this : global::app.type.item.@this, module.IContext,
         return mine.Count.CompareTo(theirs.Count);
     }
 
-    public override string ToString() => $"[{string.Join(", ", Items.Select(e => e.ScalarValue))}]";
+    public override string ToString() => $"[{string.Join(", ", Items.Select(e => e.Peek()))}]";
 }

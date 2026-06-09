@@ -15,11 +15,11 @@ public class Default : IAssert
     // Compares the SCALAR form (access-driven resolution): `assert %x% equals …`
     // is scalar access, so a raw-backed value compares as its raw source form
     // (e.g. config.json untouched is the raw json string), not its materialized
-    // shape. For authored/navigated values ScalarValue == Value, so this is a
+    // shape. For authored/navigated values Peek() == Value, so this is a
     // no-op for everything except untouched raw-backed reads.
     public data.@this<global::app.type.@bool.@this> Equals(Equals action)
     {
-        if (AreEqual(action.Expected?.ScalarValue, action.Actual?.ScalarValue))
+        if (AreEqual(action.Expected?.Peek(), action.Actual?.Peek()))
             return app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
         // Error display keeps .Value (the masked/rendered path); only the
@@ -29,7 +29,7 @@ public class Default : IAssert
 
     public data.@this<global::app.type.@bool.@this> NotEquals(NotEquals action)
     {
-        if (!AreEqual(action.Expected?.ScalarValue, action.Actual?.ScalarValue))
+        if (!AreEqual(action.Expected?.Peek(), action.Actual?.Peek()))
             return app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
         return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(action.Expected?.Value, action.Actual?.Value,

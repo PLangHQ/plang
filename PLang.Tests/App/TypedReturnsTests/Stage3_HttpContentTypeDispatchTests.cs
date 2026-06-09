@@ -67,7 +67,7 @@ public class Stage3_HttpContentTypeDispatchTests
     {
         var resp = await Get("https://x/y", r => r.Content = new StringContent("{\"a\":1}", Encoding.UTF8, "application/json"));
         await Assert.That(resp.Type.Name).IsEqualTo("item");
-        await Assert.That(resp.ScalarValue).IsEqualTo((object)"{\"a\":1}"); // untouched = raw
+        await Assert.That(resp.Peek()).IsEqualTo((object)"{\"a\":1}"); // untouched = raw
         await Assert.That(resp.GetChild("a").Value?.ToString()).IsEqualTo("1"); // navigate materializes
     }
 
@@ -75,7 +75,7 @@ public class Stage3_HttpContentTypeDispatchTests
     public async Task Body_TextHtml_ScalarIsString()
     {
         var resp = await Get("https://x/p", r => r.Content = new StringContent("<p>hi</p>", Encoding.UTF8, "text/html"));
-        await Assert.That(resp.ScalarValue).IsEqualTo((object)"<p>hi</p>");
+        await Assert.That(resp.Peek()).IsEqualTo((object)"<p>hi</p>");
     }
 
     [Test]
@@ -87,7 +87,7 @@ public class Stage3_HttpContentTypeDispatchTests
             r.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/png");
         });
         await Assert.That(resp.Type.Name).IsEqualTo("image");
-        await Assert.That(resp.ScalarValue).IsTypeOf<byte[]>();
+        await Assert.That(resp.Peek()).IsTypeOf<byte[]>();
     }
 
     [Test]
@@ -110,7 +110,7 @@ public class Stage3_HttpContentTypeDispatchTests
     {
         var resp = await Get("https://x/data", r => r.Content = new StringContent("a,b\n1,2", Encoding.UTF8, "text/csv"));
         await Assert.That(resp.Type.Name).IsEqualTo("table");
-        await Assert.That(resp.ScalarValue).IsEqualTo((object)"a,b\n1,2"); // untouched = raw csv
+        await Assert.That(resp.Peek()).IsEqualTo((object)"a,b\n1,2"); // untouched = raw csv
     }
 
     // Malformed json no longer falls back at read time — it stays the raw string
@@ -121,7 +121,7 @@ public class Stage3_HttpContentTypeDispatchTests
         const string malformed = "{not json";
         var resp = await Get("https://x/broken", r =>
             r.Content = new StringContent(malformed, Encoding.UTF8, "application/json"));
-        await Assert.That(resp.ScalarValue).IsEqualTo((object)malformed);
+        await Assert.That(resp.Peek()).IsEqualTo((object)malformed);
     }
 
     // status/headers are Properties — read with `!`, never touching the body.

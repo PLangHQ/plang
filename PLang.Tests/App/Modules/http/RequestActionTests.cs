@@ -187,7 +187,7 @@ public class RequestActionTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.ScalarValue?.ToString()).Contains("<root>");
+        await Assert.That(result.Peek()?.ToString()).Contains("<root>");
     }
 
     [Test]
@@ -202,7 +202,7 @@ public class RequestActionTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.ScalarValue?.ToString()).IsEqualTo("Hello World");
+        await Assert.That(result.Peek()?.ToString()).IsEqualTo("Hello World");
     }
 
     [Test]
@@ -410,7 +410,7 @@ public class RequestActionTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.ScalarValue?.ToString()).IsEqualTo("not json at all");
+        await Assert.That(result.Peek()?.ToString()).IsEqualTo("not json at all");
     }
 
     [Test]
@@ -429,8 +429,8 @@ public class RequestActionTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.ScalarValue).IsTypeOf<byte[]>();
-        await Assert.That((byte[])result.ScalarValue!).IsEquivalentTo(bytes);
+        await Assert.That(result.Peek()).IsTypeOf<byte[]>();
+        await Assert.That((byte[])result.Peek()!).IsEquivalentTo(bytes);
     }
 
     #endregion

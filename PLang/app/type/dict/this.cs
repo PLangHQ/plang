@@ -159,5 +159,5 @@ public sealed partial class @this : global::app.type.item.@this, module.IContext
         return true;
     }
 
-    public override string ToString() => $"{{{string.Join(", ", _entries.Select(e => $"{e.Name}: {e.ScalarValue}"))}}}";
+    public override string ToString() => $"{{{string.Join(", ", _entries.Select(e => $"{e.Name}: {e.Peek()}"))}}}";
 }

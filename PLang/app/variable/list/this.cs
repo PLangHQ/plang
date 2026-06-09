@@ -146,17 +146,17 @@ public partial class @this
                         dv.OnCreate = prevFrame.OnCreate;
                         dv.OnChange = prevFrame.OnChange;
                         dv.OnDelete = prevFrame.OnDelete;
-                        var prevValue = prevFrame.ScalarValue;
+                        var prevValue = prevFrame.Peek();
                         prevFrame.FireOnChange(dv);
                         frame.Set(name, dv);
-                        OnSet?.Invoke(name, prevValue, dv.ScalarValue);
+                        OnSet?.Invoke(name, prevValue, dv.Peek());
                         return dv;
                     }
                     else if (!hadPrev)
                     {
                         dv.FireOnCreate();
                         frame.Set(name, dv);
-                        OnCreate?.Invoke(name, dv.ScalarValue);
+                        OnCreate?.Invoke(name, dv.Peek());
                         return dv;
                     }
                     frame.Set(name, dv);
@@ -172,17 +172,17 @@ public partial class @this
                     dv.OnCreate = prev.OnCreate;
                     dv.OnChange = prev.OnChange;
                     dv.OnDelete = prev.OnDelete;
-                    var prevValue = prev.ScalarValue;
+                    var prevValue = prev.Peek();
                     prev.FireOnChange(dv);
                     _variables[name] = dv;
-                    OnSet?.Invoke(name, prevValue, dv.ScalarValue);
+                    OnSet?.Invoke(name, prevValue, dv.Peek());
                     return dv;
                 }
                 else if (prev == null)
                 {
                     dv.FireOnCreate();
                     _variables[name] = dv;
-                    OnCreate?.Invoke(name, dv.ScalarValue);
+                    OnCreate?.Invoke(name, dv.Peek());
                     return dv;
                 }
 
@@ -204,10 +204,10 @@ public partial class @this
                     rebound.OnCreate = existingFrame.OnCreate;
                     rebound.OnChange = existingFrame.OnChange;
                     rebound.OnDelete = existingFrame.OnDelete;
-                    var prevValue = existingFrame.ScalarValue;
+                    var prevValue = existingFrame.Peek();
                     existingFrame.FireOnChange(rebound);
                     frame.Set(name, rebound);
-                    OnSet?.Invoke(name, prevValue, rebound.ScalarValue);
+                    OnSet?.Invoke(name, prevValue, rebound.Peek());
                     return rebound;
                 }
 
@@ -241,10 +241,10 @@ public partial class @this
                 rebound.OnCreate = existing.OnCreate;
                 rebound.OnChange = existing.OnChange;
                 rebound.OnDelete = existing.OnDelete;
-                var prevValue = existing.ScalarValue;
+                var prevValue = existing.Peek();
                 existing.FireOnChange(rebound);
                 _variables[name] = rebound;
-                OnSet?.Invoke(name, prevValue, rebound.ScalarValue);
+                OnSet?.Invoke(name, prevValue, rebound.Peek());
                 return rebound;
             }
             else
@@ -658,11 +658,11 @@ public partial class @this
                 return match.Value; // Leave %!var% unresolved for untrusted input
             // Scalar/output access (access-driven resolution): a bare `%x%` renders
             // the value's raw source form, not a structured parse — `%cfg%` of a
-            // lazily-read config.json is the raw json string. ScalarValue equals
+            // lazily-read config.json is the raw json string. Peek() equals
             // the materialized value for authored/navigated Data, so this only
             // changes raw-backed full matches (dotted paths navigate via Get and
             // come back already materialized).
-            return Get(varName)?.ScalarValue?.ToString() ?? match.Value;
+            return Get(varName)?.Peek()?.ToString() ?? match.Value;
         });
     }
 

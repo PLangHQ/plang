@@ -230,7 +230,7 @@ public partial class discover : IContext
                 // The Tags param is the native list value type — read each element's value.
                 foreach (var item in nativeList.Items)
                 {
-                    var s = item.ScalarValue?.ToString();
+                    var s = item.Peek()?.ToString();
                     if (!string.IsNullOrWhiteSpace(s)) tags.Add(s);
                 }
             }
@@ -291,7 +291,7 @@ public partial class discover : IContext
             System.Text.Json.JsonElement je when je.ValueKind == System.Text.Json.JsonValueKind.Object
                 && je.TryGetProperty("Name", out var np) => np.GetString(),
             // A goal.call param read back from the .pr is the native dict value type.
-            app.type.dict.@this nd when nd.Get("Name") is { } nameData => nameData.ScalarValue?.ToString(),
+            app.type.dict.@this nd when nd.Get("Name") is { } nameData => nameData.Peek()?.ToString(),
             System.Collections.Generic.IDictionary<string, object?> dict when dict.TryGetValue("Name", out var nm) => nm?.ToString(),
             _ => null
         };
