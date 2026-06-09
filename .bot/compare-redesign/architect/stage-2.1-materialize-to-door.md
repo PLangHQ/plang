@@ -2,10 +2,14 @@
 
 > **Context.** Stage 2 shipped the async **signature** (`Value()` returns `ValueTask`) but sync **substance**: `Value() => new(Materialize())`, navigation stayed sync `@this`, and the source-gen param getter still resolves eagerly. Three async conversions Stage 2 specified were deferred — this stage builds all three, because **all three gate Stage 3** (the actual async I/O read). The coder's audit (`coder/v5/stage-2.1-audit.md`) caught that the first draft of this stage covered only one of the three; it's now corrected. Found in conversation with Ingi (the verbose-read thread) — expected work, not a surprise. **The former Stage 8** (optional-param `[Default]`/`[NotNull]`/non-null `Data`) is folded into **Part C**, at Ingi's call: it's the same getter emission and the same handler sites as 2.1c, so doing it here is one rewrite and one migration instead of two.
 
-**Goal:** The async value door is real end-to-end. Every read that can reach content — a handler value-read, a `%x.field%` navigation, a param getter — routes through `await Value()` / the `ValueTask` nav chain, so when Stage 3 slots the async I/O read inside `Value()`, **nothing bypasses it**. `Materialize()` reverts to the internal sync core (Data→Data plumbing + the genuinely-sync surfaces ToString/Equals/serialize).
+> **Two decisions settled with Ingi** (the coder's `coder/v6/stage-2.1-bc-report.md` asked):
+> 1. **Navigation goes async via Design-1** — `ValueTask GetChild`, async climbs the chain (`Variable.Get`/`Resolve`/`As<T>` go async). The lazy-child Design-2 was considered and rejected: it makes `GetChild` *look* sync while secretly deferring the read, and carries a write-back-identity trap — hidden complexity that bites later. Async should be visible all the way up.
+> 2. **No gate exemptions.** There is no allowlist of "genuinely-sync" sites. In-memory reads use `Peek()`; `Materialize()` goes `internal` to `Data` so handlers *can't* call it. A gate with carve-outs rots — we're building a language.
+
+**Goal:** The async value door is real end-to-end. Every read that can reach content — a handler value-read, a `%x.field%` navigation, a param getter — routes through `await Value()` / the `ValueTask` nav chain, so when Stage 3 slots the async I/O read inside `Value()`, **nothing bypasses it**. Two public read verbs only: `Value()` (load if needed) and `Peek()` (what's in memory now, force nothing). `Materialize()` (sync force-load) becomes `internal` to `Data` — the compiler keeps it off the public surface.
 **Scope:** Three parts (below): **A** handler value-reads, **B** the navigation chain → `ValueTask`, **C** the getter rewrite — lazy param resolution **+ the optional-param null model** (`[Default]`/`[NotNull]`/non-null `Data`, folded in from the former Stage 8). Excluded — Stage 3's actual async read path (this stage only makes the call sites door-routed so Stage 3 lands as a one-file change); the comparison work (Stages 4–6); the two-phase `sort` (Stage 6 owns it).
 **Why now (the latent bug):** today `Value()` ≡ `Materialize()`, navigation is sync, params resolve eagerly — so nothing is broken *yet*. But the moment Stage 3 puts the async read inside `Value()`, every sync `.Materialize()`, every sync `GetChild`, and every eager param getter **skips it**. `read dir/` → `list<path>` → `count`/`where` over those paths would never load content. Routing all three through the door now means Stage 3 is the promised one-file change.
-**Dependencies:** Stage 2. **A and C are coupled** — A tells handlers to `await Param.Value()`, but until C makes the getter lazy, that await returns an already-resolved value, so the laziness isn't real for params; land C with or before A. B (navigation) is the separable axis.
+**Dependencies:** Stage 2. **Under Design-1, B and C are one interlocked unit** (the coder proved it): B makes `Variable.Get` → `ValueTask`, which forces `As<T>` async, which a sync C# property getter can't call → forces C's lazy getter. And C's `.Value(fallback)` overload can't land additively — a second `Value` overload makes the `data.Value` method group ambiguous, breaking the ~200 silent method-group sites — so the overload + those ~200 sites land in the same pass. Net: B (nav async) + C (lazy getter + null model + `.Value(fallback)`) + the ~200 method-group migration + the optional-param retrofit are **one green-or-red unit** — the door-cutover shape again. A (handler reads) is largely landed already.
 
 ---
 
@@ -16,7 +20,7 @@ The ~272 direct `.Materialize()` calls across 60 `app/module/` files become `awa
 **The per-site rule:**
 1. **Value read (content that could become a `file`/`url` reference → I/O)** → `await x.Value()`; flip a sync method to `async`.
 2. **Name slot (`Data<Variable>` / `IRawNameResolvable` — resolving *which* variable, never content)** → `await x.Value()` too. The generic door returns the typed value, so `var v = await ListName.Value();` gives the `Variable` directly (no `as` cast). I/O-free and sync-completing, but routed through the door for one rule.
-3. **Data-internal plumbing + genuinely-sync framework surfaces (ToString/Equals/GetHashCode, serializer `Write`)** → leave as `Materialize()` (the internal sync core).
+3. **In-memory / raw read (diagnostics, `ToString`/`Equals`/`GetHashCode`, verbatim serializer `Write`, build-time literals)** → `Peek()` (the current rung, forces no load) — **not** `Materialize()`, and **not** an exemption. `Peek()` can't bypass Stage 3's read because it does no I/O; misusing it on an unloaded reference returns the reference form (visibly wrong, caught in tests), never a silent sync load.
 
 **Optional-param sites go straight to the clean shape** (the null model lands here too — Part C): `Mime = await Mime.Value()` with `[Default("text/plain")]`, or `Actor = await Actor.Value(Context.Actor)` — never the verbose `(X == null ? null : await X.Value()) ?? default` intermediate. Because Part C ships in the same stage, migrate optional params once, clean.
 
@@ -31,13 +35,15 @@ The ~272 direct `.Materialize()` calls across 60 `app/module/` files become `awa
 
 ## Part B — navigation chain → `ValueTask`
 
-This is the v3 finding-A resolution: designed in Stage 2, never built. Navigation is currently sync `@this` (`GetChild` is `public virtual @this GetChild(...)`, `app/data/this.Navigation.cs`), so `%x.field%` reads content synchronously and bypasses the door regardless of Part A. Convert the chain to `ValueTask`:
+This is the v3 finding-A resolution: designed in Stage 2, never built — and **Design-1** is the chosen mechanism (lazy-child Design-2 rejected, see the decisions note up top). Navigation is currently sync `@this` (`GetChild` is `public virtual @this GetChild(...)`, `app/data/this.Navigation.cs`), so `%x.field%` reads content synchronously and bypasses the door regardless of Part A. `GetChild` awaits the parent's value to navigate, so async climbs the chain — convert it to `ValueTask`:
 
 - `GetChild` / `GetChildValue` (`app/data/this.Navigation.cs`) → `ValueTask`-shaped; sync-completing in memory, awaits only the first content read.
 - `Variable.Get` / `Variable.Resolve` (`app/variable/list/this.cs`) — the chain `GetChild → Variable.Get → Variable.Resolve → Value()`.
 - The three navigators `app/variable/navigator/{List,Dictionary,Snapshot}.cs` — they read `data.Materialize()` today; route through the awaited door.
+- **`As<T>` goes async** (it calls `Variable.Get` to resolve `%var%`), and every `As<T>` caller awaits. This is the wide part of the ripple — and the reason B forces C (a sync property getter can't call async `As<T>`).
+- **The ripple must terminate — no `GetAwaiter().GetResult()`.** Async climbing the chain must reach an `await` at every caller. The one known sync wall is the source-gen property getter, handled by C's lazy getter. If the ripple hits *another* sync wall (a sync interface member, a framework override that can't be async), **surface it** — that wall is exactly where Design-2's laziness would have hidden, and under Design-1 we want it explicit, never papered over by blocking on async.
 - **The await-once gate** — stand up the analyzer/grep gate Stage 2 called for (`ValueTask` awaited once per call site, no store-and-await-twice).
-- **The sync surfaces that genuinely can't `await`** (the three Stage 2 named): `ToString`/`Equals`/`GetHashCode` read the already-materialised backing only (never navigate/parse); template render (Fluid) materialises param values up-front at `SetValue`, then renders over in-memory views.
+- **The sync framework surfaces use `Peek()`, not an exemption:** `ToString`/`Equals`/`GetHashCode` `Peek()` the in-memory value (never navigate/parse); template render (Fluid) materialises params up-front (async, at `SetValue`) then `Peek()`s over in-memory views.
 
 `count.cs:13` (`data.GetChild("Count")` — sync, no await, then `countData.Materialize()`) is the combined A+B fix in one handler: the navigation becomes awaited and the value read becomes `await Value()`.
 
@@ -67,16 +73,17 @@ One rewrite of the source-gen Data-property getter (`Emission/Property/Data/this
 
 ---
 
-## The gate (widened)
+## The gate — no exemptions, enforced by the type system
 
-The Stage-2-draft gate ("zero `.Materialize()` in `app/module/`") was too narrow — it misses the navigators in `app/variable`, the exact `%x.field%` bypass sites. The full invariant after 2.1:
+The gate isn't a grep with an allowlist (those rot). It's the access modifier: **`Materialize()` is `internal` to `Data`.** Then `app/module`, `app/variable`, and every other consumer literally *cannot* call it — the compiler is the gate, there's no carve-out to grant and no regression to catch. The public read vocabulary is exactly two verbs:
 
-- `.Materialize()` callers are **only** the Data-internal sync core (`app/data` plumbing) and ToString/Equals/serializer surfaces.
-- **Zero `.Materialize()`** in `app/module/`, `app/variable/navigator/`, and the nav chain (`Variable.Get`/`Resolve`).
-- Navigation and param getters route through the awaited door.
+- **`await Value()`** — give me the value, load it if needed.
+- **`Peek()`** — what's in memory now / the raw rung; forces nothing, does no I/O.
 
-Grep gate (mirrors the System.IO PLNG discipline): `grep -rn "\.Materialize()" PLang/app/module PLang/app/variable/navigator` returns zero.
+Every former "exempt" site resolves to one of these — content → `await Value()`, in-memory → `Peek()` — never a third path. Concretely: serializer `Write` / `GetHashCode` / `Equals` / Fluid / `--debug` diagnostics → `Peek()`; build-meta (`builder/code/Default`, literal LLM build output) → `Peek()` (no `IBuilder` async cascade needed); any `--debug` site currently using `GetAwaiter().GetResult()` to force a load → make that method async (it's the sync-over-async smell, not a diagnostic exemption). Content reads that could reach a `file`/`url` reference (`llm` content, `mock` param values) → `await Value()`.
+
+`Peek()` stays a rare, intentional verb ("I want the in-memory rung, not a load"), but it needs no hard gate of its own: it does no I/O, so it cannot cause the Stage-3-bypass bug — a misuse returns the unloaded reference form (visibly wrong), never a silent sync load.
 
 ## You own this (coder)
 
-You audited this — trust your read of each site over the bucket it landed in. Non-negotiable outcome: the door is async in substance, not just signature — handler value-reads, `%x.field%` navigation, and param getters all route through `await Value()`/the `ValueTask` chain; `Materialize()` is the internal sync core only; the gate above passes. Sequence A+C together (the laziness coupling) and B as its own pass. If a site genuinely must read synchronously and provably never touches I/O, flag it rather than quietly keeping `Materialize()` — that's the one judgment to bring back, not decide silently. Where this overlaps Stage 6 (two-phase sort) or Stage 8 (getter emission), do the shared piece once.
+You audited this — trust your read of each site. Non-negotiable outcome: the door is async in *substance*, not just signature — handler value-reads, `%x.field%` navigation (Design-1: `ValueTask GetChild`), and param getters all route through `await Value()`/the `ValueTask` chain; `Materialize()` is `internal` to `Data` (the compiler is the gate); in-memory reads use `Peek()`; **no `GetAwaiter().GetResult()` introduced anywhere** — if the async ripple hits a sync wall, surface it. B + C + the ~200 method-group migration land as one unit (the door-cutover shape). Where this overlaps Stage 6 (two-phase sort), do the shared piece once.

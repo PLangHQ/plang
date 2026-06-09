@@ -1,5 +1,15 @@
 # Architect — compare-redesign
 
+## 2026-06-09 — Stage 2.1 B+C decisions settled (Design-1 nav, no gate exemptions)
+
+Coder's `coder/v6/stage-2.1-bc-report.md`: Part A green (272→112 `.Materialize()`); B+C blocked on two decisions. Resolved both with Ingi.
+
+**Decision 1 — navigation async: Design-1** (`ValueTask GetChild`, async climbs `Variable.Get`/`Resolve`/`As<T>` + ~35 callers). I'd recommended the coder's Design-2 (sync `GetChild` returning a lazy child, async only at `Value()`) for its smaller blast radius. Showed Ingi both in code. He picked **Design-1** — Design-2 hides the async behind a sync-looking `GetChild` and carries a write-back-identity trap; same instinct as his no-exemptions call (don't hide the reckoning). Added the architect flag: the async ripple must terminate — **no `GetAwaiter().GetResult()`**; if it hits a sync wall, surface it (that wall is where Design-2's laziness would've hidden). Under D1, B + C + the ~200 method-group-`.Value` migration are one green-or-red unit (door-cutover shape).
+
+**Decision 2 — gate: no exemptions** (Ingi: "we're building a proper language, we don't want exceptions, it'll bite us"). Dropped the allowlist entirely. The fix for the "genuinely-sync" sites isn't an exemption — they were using the wrong verb. Three-verb vocabulary: `await Value()` (load), `Peek()` (in-memory, no I/O), `Materialize()` (sync force-load) → **`internal` to `Data`** so the compiler is the gate, not grep. Serializer `Write`/`GetHashCode`/`Equals`/Fluid/`--debug`/build-meta → `Peek()`; content reads → `await Value()`; kill any `GetAwaiter().GetResult()` in debug. Better outcome than my exempt-list — credit Ingi's push.
+
+Rewrote stage-2.1 (Context decisions note, Goal, Dependencies, per-site rule 3, Part B Design-1 + ripple-terminate, the gate section, You-own-this) to match.
+
 ## 2026-06-09 — Stage 8 folded into Stage 2.1 Part C
 
 Ingi: Stage 8 (the optional-param null model) is the same getter-emission rewrite as 2.1c and touches the same handler sites, so done separately it means rewriting the getter twice and migrating optional-param sites twice (verbose → clean). Folded Stage 8 into **2.1c**: the getter rewrite now does lazy resolution **and** non-null `Data.Uninitialized` + `[NotNull]` stamp + `[Default]`-on-null + the `.Value(fallback)` door overload in one pass; Part A migrates optional-param sites straight to the clean shape. Considered Stage 3 (Ingi's first thought) but Stage 3 doesn't touch the getter emission, so it wouldn't consolidate — the magnet is 2.1c. Also told the coder to **retrofit the v5-already-migrated handler files** (`variable/set`, `file/read`, `list/{contains,any,group,join}`, etc.) to the clean shape — they predate the null model and look "done," so they're the ones most likely missed. `stage-8-optional-params.md` is now a pointer stub; plan index marks Stage 8 folded. The `[NotNull]`-on-partial-property assumption is the verify-first check at the top of 2.1c.
