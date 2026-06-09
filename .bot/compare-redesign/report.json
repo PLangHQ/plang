@@ -372,7 +372,7 @@
       "id": "a0df5268-5276-41fe-981b-84146cd9ac77",
       "bot": "coder",
       "timestamp_start": "2026-06-09T08:46:59.578043Z",
-      "timestamp_end": "2026-06-09T09:19:34.411974Z",
+      "timestamp_end": "2026-06-09T10:43:01.615651Z",
       "intent": "Implement the typed value model \u2014 Stage 1 enum first, then drive Stages 2-6 as one green unit.",
       "before": {
         "assumptions": "v1-v4 were reviews; no production code yet. Architect plan settled, test-designer stubbed ~140 tests. Baseline build clean.",
@@ -426,9 +426,9 @@
         }
       ],
       "after": {
-        "status": "partial/sprint \u2014 Stage 1+Peek green; async door + generator landed (architectural core DONE); 6/~99 handler files migrated. Build RED: 1084 error CS remain across ~93 files, all mechanical per the proven recipe in summary.md.",
-        "health": "red mid-flight per Ingi sprint mode; 2130->1084 errors, all generated gone",
-        "notes": "Compiler error list = worklist. Recipe + worked examples in coder/v5 summary.md. Navigation still sync (next sub-step). Do not touch to-be-deleted mediator beyond compiling."
+        "status": "MILESTONE: PLang + PlangConsole compile clean (2130 production errors -> 0). Async door cutover structurally done across ~120 files. PLang.Tests (1736) + Stages 3-6 remain.",
+        "health": "production green/compiling; tests at clean baseline 1736 (one-pass regex approach documented); build of solution still red on tests",
+        "notes": "Door=async ValueTask Value(); Materialize() sync core (verb, not noun-twin); generator emits Peek()/Materialize(). Sprint mode per Ingi."
       }
     }
   ]

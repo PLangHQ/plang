@@ -48,7 +48,33 @@ Watch: `await` cannot go inside a sync lambda (`items.Find(i => …)`) — hoist
 - Navigation chain is still **sync** (reads via `Materialize()`); making `GetChild`→`Variable.Get`
   →`Resolve` a `ValueTask` chain is the deferred nav-async sub-step.
 
+### PLang.Tests migration — the approach (learned this session; do it in ONE pass)
+1736 sites across 169 files, almost all `.Value` on a Data in an `async [Test]` method. A
+**receiver-aware regex, applied ONCE**, clears ~1700 of them. The regex that works (validated to
+1736 → ~26 before I hit corruption from *re-running* it):
+
+```python
+valpat = re.compile(r'([A-Za-z_][\w.]*(?:\([^()]*\)[\w.]*)*)(!?)(\??)\.Value(!?)(?!\w|\()')
+# async method  -> (await <recv><!?>.Value())<!?>
+# sync method   -> (<recv><!?>.Materialize())<!?>
+```
+Receiver must allow dotted chains AND single-level method calls (`a.At(0)!`, `d.Get("k")!`) AND a
+trailing `!` (`typed!.Value`). Detect async by the nearest enclosing `public/private…(` decl line
+containing `async`.
+
+**Pitfalls that bit me (why I reverted rather than ship corruption):**
+- **Run the pass exactly once.** Re-running over already-wrapped lines, or layering "fix-up" regexes
+  (dangling-dot, `@this`, `global::`), compounds into double-`await`s and split tokens. One pass, then
+  hand-fix the residual.
+- **Sync lambdas inside async methods** (`items.Find(i => … .Value)`, `if (payload.Value is string)`
+  in a predicate) — the method is async but the lambda isn't → `await` there is CS4034. ~30 sites;
+  the residual after the one pass. Fix by hand to `Materialize()`.
+- **Nested casts** (`((Dict)(await d.Value())!).Get("port")!.Value`) — a handful; hand-wrap.
+- **`global::`/`@this` prefixes** the regex won't span — hand-fix the ~2.
+So: ONE receiver-aware pass, then ~30 sync-lambda + ~5 nested-cast lines by hand. The clean state is
+preserved — tests are at their original 1736, not a half-migrated mess.
+
 ### Next
-1. Migrate `PLang.Tests` (1736 sites) with the recipe → both projects compile.
+1. Migrate `PLang.Tests` (1736 sites) via the one-pass receiver-aware regex above + ~35 hand-fixes.
 2. Stages 3–6 (per architect stage files) → land green at the 2→6 boundary; CompareRedesign stubs pass.
 3. Run both suites.
