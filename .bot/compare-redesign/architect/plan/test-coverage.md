@@ -21,6 +21,10 @@ Three sections: the coverage matrix (one test per row), the failure matrix (nega
 | `%x.size%` (data key) and `%x!size%` (property) are distinct, no shadowing | goal | green |
 | no generic `ToRaw`; `text` raw string is private | C# | neg |
 | a `%var%` ref and a raw JSON container both ride as typed PLang values (`text`/`dict`/`list`), never a bare C# `string`/`Dictionary` | C# | green |
+| `Action.GetParameter<T>(name)` returns a **lazy** typed `Data<T>`; getter access doesn't read — `await Param.Value()` triggers resolution + the content read | C# / int(2) | green |
+| the param resolution-error guard fires **after** `await Param.Value()` — a bad-scheme / unset-`%var%` param yields a typed error from the resolved Data, not an NRE on `.Value!` | C# | neg |
+| `ToString`/`Equals`/`GetHashCode` read the already-materialised backing only — never navigate or trigger a read | C# | green/neg |
+| navigation (`GetChild`/`Variable.Get`/`Variable.Resolve`) is `ValueTask`, sync-completing in memory, awaits only the first content read; awaited once (no store-and-await-twice / `.Result`) | C# | green |
 
 ### Stage 3 — reference types (`file`/`directory`/`url`)
 | Behavior | Layer | Sense |
@@ -103,6 +107,8 @@ Impossible-by-design (do **not** assert these fail): `text`/`number` cross-type 
 - type entity: `Rank(Data other)` → driving type (**new**, static rank per type); routes to the family `Compare` via the existing name→family path.
 - per-type: unified `Compare` → `Comparison` (replaces `AreEqual`/`Order`); `text.Value` public-raw → **private**.
 - the `.`/`!` navigation resolver (data plane vs property plane, `!` resolved **chain-wide**); references narrow on examination (identity accumulates `item|file|dict`, same `Data` instance); `!type` (headline) / `!type.list` (the chain).
+- `Action.GetParameter<T>(name) → Data<T>` (**new**, generic, **lazy** — collapses the getter's `__ResolveData(name).As<T>(Context)`; the generated `__ResolveData` wrapper is removed). The incumbent is the non-generic `GetParameter(name, context)` (`action/this.cs:220`).
+- navigation chain → **`ValueTask`-async**: `Data.GetChild` (`this.Navigation.cs`), `Variable.Get`/`Variable.Resolve` (`variable/list/this.cs`) were sync — now `ValueTask` (sync-completing in memory; await only the first content read). `Data.Value()` is the async door.
 
 ### The gate (Stage 7)
 - PLNG-style build gate: a **public** member of an `item.@this` subtype returning raw CLR → error (warning during migration). Internal/private untouched; `IsTruthy : @bool`; engine plumbing `internal`; only exemption = gated per-type interop accessor (`path.Absolute` after `Authorize`).
@@ -111,5 +117,6 @@ Impossible-by-design (do **not** assert these fail): `text`/`number` cross-type 
 - `PLang/app/module/condition/Operator.cs` (registry → `Compare`; `NormalizeTypes` deleted), `assert/code/Default.cs`, `list/sort.cs`/`contains.cs`/`indexof.cs`/`unique.cs`.
 - `PLang/app/data/Compare.cs`, `ScalarComparer.cs` — deleted.
 - `Data.MaterializeCount` (existing probe) — used by the lazy-read cut.
-- The `Data`-receiver `.Value` reads across `PLang/` — migrated to `await Value()` (per-receiver, not the full 990).
+- The `Data`-receiver `.Value` reads across `PLang/` — migrated to `await Value()` (per-receiver, not the full 990). The ~42 handler `param.Value!` sites migrate **await → guard → use** (`var p = await X.Value(); if (!X.Success) return X; … p`), not just the `.Value` → `await .Value()` swap.
+- `PLang.Generators` (Emission/Property/Data, Emission/Action) — the lazy param getter + `GetParameter<T>`; the `__ResolveData` wrapper emission removed.
 - `PLang.Tests/App/DataTests/DataCompareTests.cs` — `.Compare(` → `.Diff(` (~14 sites).
