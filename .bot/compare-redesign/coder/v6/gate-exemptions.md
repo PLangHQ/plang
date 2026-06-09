@@ -21,6 +21,16 @@ stay `Materialize()` (genuinely-sync, provably no-I/O, can't reach a lazy refere
 - `builder/validateResponse.cs` — validates the LLM's emitted params at build; never lazy references.
   Routed through the door anyway (harmless, sync-completing) rather than carve an exemption — DONE.
 
+## Build-time meta-handlers (process the LLM's build output, never runtime references)
+These read **build params/steps** (the LLM's emitted JSON being validated/normalised), not runtime
+variables — so they can never reach a lazy `file`/`url` reference and can't bypass Stage 3.
+- **`builder/code/Default.cs`** (~19 sites) — `Merge`/`EnrichResponse` (`IBuilder` methods → flipping
+  cascades the interface for no benefit), `NormalizeParameterTypes`/`ToStepList`/`ToGoalCall`/
+  `RenderActionFormal` (sync statics) reading `p.Materialize()` / `action.Step.Materialize()`.
+- `builder/validateResponse.cs` — **same category but I flipped it** (contained: Run + 2 statics, no
+  interface). Either is defensible; flagging the principle so the architect picks one rule:
+  build-meta = exempt, OR flip-where-contained. (I flipped the contained one, exempt the cascading one.)
+
 ## Deferred to other stages (do NOT flip in 2.1a)
 - `list/sort.cs` (4), `type/list/this.cs` — the **two-phase sort** is Stage 6's mechanism.
 - `condition/Operator.cs` (sites), `data/Compare.cs` — the **old comparison mediator**, deleted in Stage 6.

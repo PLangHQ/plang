@@ -10,8 +10,8 @@ public partial class Get : IContext
 {
     public partial data.@this<app.variable.@this> Name { get; init; }
 
-    public Task<data.@this> Run()
+    public async Task<data.@this> Run()
     {
-        return Task.FromResult(Context.Variable.Get(Name.Materialize() as app.variable.@this));
+        return Context.Variable.Get(await Name.Value());
     }
 }

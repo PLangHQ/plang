@@ -7,8 +7,8 @@ public partial class Exists : IContext
 {
     public partial data.@this<app.variable.@this> Name { get; init; }
 
-    public Task<data.@this<global::app.type.@bool.@this>> Run()
+    public async Task<data.@this<global::app.type.@bool.@this>> Run()
     {
-        return Task.FromResult(global::app.data.@this<global::app.type.@bool.@this>.Ok(Context.Variable.Contains(Name.Materialize() as app.variable.@this)));
+        return global::app.data.@this<global::app.type.@bool.@this>.Ok(Context.Variable.Contains(await Name.Value()));
     }
 }
