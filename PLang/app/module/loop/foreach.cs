@@ -34,7 +34,9 @@ public partial class Foreach : IContext, IStep
                 return global::app.data.@this.Ok(new type.loop { itemCount = count, completed = false });
 
             await Context.Variable.Set(variableName, item);
-            if (KeyName != null)
+            // Optional param: absent slots are non-null Uninitialized (null model), so
+            // "was keyname supplied?" is IsInitialized, not a C# null check.
+            if (KeyName is { IsInitialized: true })
                 await Context.Variable.Set(await KeyName.Value(), key);
 
             foreach (var action in bodyActions)

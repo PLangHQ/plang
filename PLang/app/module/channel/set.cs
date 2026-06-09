@@ -52,8 +52,8 @@ public partial class Set : IContext
 
         var ch = new app.channel.type.goal.@this(name, goalEntry, actor, direction)
         {
-            Buffer = Buffer != null ? Buffer.GetValue<long>() : 4096L,
-            Timeout = Timeout != null ? (await Timeout.Value())! : TimeSpan.FromSeconds(30),
+            Buffer = (await Buffer.Value()) != null ? Buffer.GetValue<long>() : 4096L,
+            Timeout = (await Timeout.Value()) is { } __to ? (TimeSpan)__to : TimeSpan.FromSeconds(30),
             Mime = (Mime == null ? null : await Mime.Value()) ?? "text/plain",
             Encoding = (Encoding == null ? null : await Encoding.Value()) ?? "utf-8",
             Encryption = (Encryption == null ? null : await Encryption.Value())?.Name,
