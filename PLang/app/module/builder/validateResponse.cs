@@ -22,10 +22,10 @@ public partial class validateResponse : IContext
     [IsNotNull]
     public partial data.@this<Goal> Goal { get; init; }
 
-    public Task<app.data.@this> Run()
+    public async Task<app.data.@this> Run()
     {
-        var response = StepResults.Materialize() as BuildResponse;
-        var goal = Goal.Materialize() as Goal;
+        var response = (await StepResults.Value()) as BuildResponse;
+        var goal = (await Goal.Value()) as Goal;
 
         // Identify which parameter is null and dump enough state for LlmFixer +
         // logs to see *why*. "StepResults or Goal is null" was actively misleading —
@@ -54,17 +54,17 @@ public partial class validateResponse : IContext
                             ? $"Goal.Value is null but Data was initialized. Raw value type: {g.RawValue?.GetType().Name ?? "null"}"
                             : "Goal parameter is uninitialized (%goal% not in scope when builder.validateResponse ran)");
             }
-            return Task.FromResult(app.data.@this.FromError(
-                new global::app.error.ActionError(string.Join("; ", problems), "ValidationError", 400)));
+            return app.data.@this.FromError(
+                new global::app.error.ActionError(string.Join("; ", problems), "ValidationError", 400));
         }
-        return Task.FromResult(Validate(response!, goal!, Context.App));
+        return await Validate(response!, goal!, Context.App);
     }
 
     /// <summary>
     /// Public so SaveGoal can re-run validation as a safety net before persisting.
     /// Builds a fresh BuildResponse from the goal's current Steps and validates.
     /// </summary>
-    public static app.data.@this ValidateGoalState(Goal goal)
+    public static async Task<app.data.@this> ValidateGoalState(Goal goal)
     {
         var response = new BuildResponse
         {
@@ -75,7 +75,7 @@ public partial class validateResponse : IContext
                 Keep = false,  // post-build state: every step must stand on its own
             }.With(target => CopyActionsIfAny(s, target))).ToList()
         };
-        return Validate(response, goal, goal.App);
+        return await Validate(response, goal, goal.App);
     }
 
     private static Step CopyActionsIfAny(Step from, Step to)
@@ -87,7 +87,7 @@ public partial class validateResponse : IContext
     }
 
 
-    private static app.data.@this Validate(BuildResponse response, Goal goal, global::app.@this? app)
+    private static async Task<app.data.@this> Validate(BuildResponse response, Goal goal, global::app.@this? app)
     {
         // Auto-fill missing indexes with keep:true placeholders when prior has actions.
         // The LLM sometimes drops a step entirely (omits its index) when it intends
@@ -157,13 +157,13 @@ public partial class validateResponse : IContext
                 if (a.Parameters == null) continue;
                 foreach (var p in a.Parameters)
                 {
-                    if (p.Type?.Name == null || p.Materialize() == null) continue;
+                    if (p.Type?.Name == null || (await p.Value()) == null) continue;
 
                     var targetType = (goal.App ?? app)?.Type.Get(p.Type.Name);
                     if (targetType == null) continue;
                     if (!global::app.type.catalog.@this.IsScalarPlangType(targetType)) continue;
 
-                    if (p.Materialize() is not string)
+                    if ((await p.Value()) is not string)
                         errors.Add(
                             $"Step[{step.Index}] {a.Module}.{a.ActionName}: parameter '{p.Name}' has type '{p.Type.Name}' but value is not a plain string. " +
                             $"Scalar types (e.g. tstring, path) must be emitted as bare string values, not records like {{value, key}}.");
@@ -194,9 +194,9 @@ public partial class validateResponse : IContext
 
                 foreach (var p in a.Parameters)
                 {
-                    if (p.Type?.Name == null || p.Materialize() == null) continue;
-                    if (p.Materialize() is string sv && sv.StartsWith('%') && sv.EndsWith('%')) continue;
-                    if (ValidateResponseHelpers.IsActionRecord(p.Materialize())) continue;
+                    if (p.Type?.Name == null || (await p.Value()) == null) continue;
+                    if ((await p.Value()) is string sv && sv.StartsWith('%') && sv.EndsWith('%')) continue;
+                    if (ValidateResponseHelpers.IsActionRecord((await p.Value()))) continue;
 
                     // LLMs emit "" for unset nullable slots even when the prompt says
                     // omit them. Map "" → null when the schema prop is nullable, so the
@@ -205,7 +205,7 @@ public partial class validateResponse : IContext
                     // ValidValues, can't parse to int, etc.). For non-nullable slots we
                     // *want* the convertibility error to surface — leave it for the
                     // TryConvert path below.
-                    if (p.Materialize() is string emptyCheck && emptyCheck.Length == 0)
+                    if ((await p.Value()) is string emptyCheck && emptyCheck.Length == 0)
                     {
                         if (ValidateResponseHelpers.IsNullableSchemaProp(actionType, p.Name))
                         {
@@ -230,15 +230,15 @@ public partial class validateResponse : IContext
                     var choices = (goal.App ?? app)?.Type.Choices.Get(targetType);
                     if (choices != null)
                     {
-                        var sval = p.Materialize() as string;
+                        var sval = (await p.Value()) as string;
                         if (sval != null && choices.Any(c => string.Equals(c, sval, StringComparison.OrdinalIgnoreCase)))
                             continue;
                         errors.Add(
-                            $"Step[{step.Index}] {a.Module}.{a.ActionName}: parameter '{p.Name}' = {ValidateResponseHelpers.FormatValueForError(p.Materialize())} is not a valid {p.Type.Name}. Valid values: {string.Join(", ", choices)}.");
+                            $"Step[{step.Index}] {a.Module}.{a.ActionName}: parameter '{p.Name}' = {ValidateResponseHelpers.FormatValueForError((await p.Value()))} is not a valid {p.Type.Name}. Valid values: {string.Join(", ", choices)}.");
                         continue;
                     }
 
-                    var (_, error) = global::app.type.catalog.@this.TryConvert(p.Materialize(), targetType);
+                    var (_, error) = global::app.type.catalog.@this.TryConvert((await p.Value()), targetType);
                     if (error == null) continue;
 
                     var validValues = (goal.App ?? app)?.Type.GetValidValues(targetType);
@@ -246,7 +246,7 @@ public partial class validateResponse : IContext
                         ? $" Valid values: {string.Join(", ", validValues)}."
                         : "";
                     errors.Add(
-                        $"Step[{step.Index}] {a.Module}.{a.ActionName}: parameter '{p.Name}' = {ValidateResponseHelpers.FormatValueForError(p.Materialize())} cannot be converted to type '{p.Type.Name}'.{hint} If the parameter is optional and you don't have a value, omit it from the parameters list — never emit \"\" as a placeholder.");
+                        $"Step[{step.Index}] {a.Module}.{a.ActionName}: parameter '{p.Name}' = {ValidateResponseHelpers.FormatValueForError((await p.Value()))} cannot be converted to type '{p.Type.Name}'.{hint} If the parameter is optional and you don't have a value, omit it from the parameters list — never emit \"\" as a placeholder.");
                 }
             }
         }

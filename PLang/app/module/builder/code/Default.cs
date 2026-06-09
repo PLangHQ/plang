@@ -278,7 +278,7 @@ public class Default : IBuilder
         // non-keep steps) that slipped past the in-pipeline validateResponse and
         // ApplyStep stages. Refusing to write the .pr is preferable to saving a half-
         // built artifact that the runtime can't execute.
-        var validation = validateResponse.ValidateGoalState(goal);
+        var validation = await validateResponse.ValidateGoalState(goal);
         if (!validation.Success) return validation;
 
         var json = JsonSerializer.Serialize(goal, global::app.module.builder.@this.PrWrite);
