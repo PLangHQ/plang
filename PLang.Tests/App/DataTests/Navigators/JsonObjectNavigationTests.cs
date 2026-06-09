@@ -97,11 +97,11 @@ public class JsonObjectNavigationTests
         var canonical = new Dictionary<string, object?> { ["k"] = "v" };
         var d1 = new Data("");
         d1.SetValue(canonical);
-        await Assert.That(nav.Navigate(d1, "k").Value).IsEqualTo("v");
+        await Assert.That((await nav.Navigate(d1, "k").Value())).IsEqualTo("v");
 
         var legacy = new System.Collections.Hashtable { ["k"] = "v" };
         var d2 = new Data("");
         d2.SetValue(legacy);
-        await Assert.That(nav.Navigate(d2, "k").Value).IsEqualTo("v");
+        await Assert.That((await nav.Navigate(d2, "k").Value())).IsEqualTo("v");
     }
 }

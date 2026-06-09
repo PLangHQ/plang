@@ -39,7 +39,7 @@ public class Stage3_ArraysAsDataTests
         // The Data ctor on a json-array source narrows to the list value type, not raw CLR.
         using var doc = JsonDocument.Parse("[1,2]");
         var d = new Data("x", doc.RootElement.Clone());
-        await Assert.That(d.Value).IsTypeOf<ListV>();
+        await Assert.That((await d.Value())).IsTypeOf<ListV>();
     }
 
     [Test]
@@ -50,7 +50,7 @@ public class Stage3_ArraysAsDataTests
         var ctx = app.User.Context;
         var d = global::app.data.@this.FromRaw("[1,2,3]", type.Create("object", "json", context: ctx), ctx, "nums");
         d.ForceMaterialize();
-        await Assert.That(d.Value).IsTypeOf<ListV>();
+        await Assert.That((await d.Value())).IsTypeOf<ListV>();
         await Assert.That(((ListV)(await d.Value())!).Count).IsEqualTo(3);
     }
 

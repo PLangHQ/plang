@@ -33,7 +33,7 @@ public class ProviderRegistryTests
 
         var result = _providers.Get<ICrypto>();
         await result.IsSuccess();
-        await Assert.That(result.Value).IsSameReferenceAs(provider);
+        await Assert.That((await result.Value())).IsSameReferenceAs(provider);
     }
 
     [Test]

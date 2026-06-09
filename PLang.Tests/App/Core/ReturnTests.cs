@@ -11,7 +11,7 @@ public class DataResultTests
         var result = Data.Ok();
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsNull();
+        await Assert.That((await result.Value())).IsNull();
         await Assert.That(result.Error).IsNull();
     }
 
@@ -23,7 +23,7 @@ public class DataResultTests
         var result = Data.Ok(value);
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo(value);
+        await Assert.That((await result.Value())).IsEqualTo(value);
         await Assert.That(result.Error).IsNull();
     }
 
@@ -33,7 +33,7 @@ public class DataResultTests
         var result = Data.Ok(null);
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsNull();
+        await Assert.That((await result.Value())).IsNull();
     }
 
     [Test]
@@ -44,7 +44,7 @@ public class DataResultTests
         var result = Data.FromError(error);
 
         await result.IsFailure();
-        await Assert.That(result.Value).IsNull();
+        await Assert.That((await result.Value())).IsNull();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Message).IsEqualTo("Test error");
     }
@@ -205,7 +205,7 @@ public class DataResultTests
         var result = Data.Ok("initial");
         result.SetValue("changed");
 
-        await Assert.That(result.Value).IsEqualTo("changed");
+        await Assert.That((await result.Value())).IsEqualTo("changed");
     }
 
     [Test]

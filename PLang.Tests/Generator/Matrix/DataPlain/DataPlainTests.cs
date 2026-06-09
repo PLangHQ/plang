@@ -11,7 +11,7 @@ public class DataPlainTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<global::app.module.matrix.dataplain.DataPlain>(app,
             parameters: new[] { ("payload", (object?)"hello") });
-        await Assert.That(result.Data.Value).IsEqualTo("hello");
+        await Assert.That((await result.Data.Value())).IsEqualTo("hello");
     }
 
     [Test]
@@ -30,7 +30,7 @@ public class DataPlainTests
         var raw = new List<object?> { 1, 2, 3 };
         var result = await MatrixRunner.RunAsync<global::app.module.matrix.dataplain.DataPlain>(app,
             parameters: new[] { ("payload", (object?)raw) });
-        await Assert.That(result.Data.Value).IsTypeOf<List<object?>>();
+        await Assert.That((await result.Data.Value())).IsTypeOf<List<object?>>();
         var list = (await result.Data.Value()) as List<object?>;
         await Assert.That(list).IsNotNull();
         await Assert.That(list!.Count).IsEqualTo(3);
@@ -43,7 +43,7 @@ public class DataPlainTests
         var raw = new Dictionary<string, object?> { ["a"] = 1, ["b"] = 2 };
         var result = await MatrixRunner.RunAsync<global::app.module.matrix.dataplain.DataPlain>(app,
             parameters: new[] { ("payload", (object?)raw) });
-        await Assert.That(result.Data.Value).IsTypeOf<Dictionary<string, object?>>();
+        await Assert.That((await result.Data.Value())).IsTypeOf<Dictionary<string, object?>>();
     }
 
     [Test]
@@ -53,6 +53,6 @@ public class DataPlainTests
         var result = await MatrixRunner.RunAsync<global::app.module.matrix.dataplain.DataPlain>(app,
             parameters: new[] { ("payload", (object?)"%name%") },
             variables: new Dictionary<string, object?> { ["name"] = "world" });
-        await Assert.That(result.Data.Value).IsEqualTo("world");
+        await Assert.That((await result.Data.Value())).IsEqualTo("world");
     }
 }

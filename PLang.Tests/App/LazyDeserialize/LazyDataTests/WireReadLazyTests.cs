@@ -72,7 +72,7 @@ public class WireReadLazyTests
         var outer = data.Ok(inner);
         outer.Name = "outer";
         var back = RoundTrip(outer);
-        await Assert.That(back.Value).IsTypeOf<data>();
+        await Assert.That((await back.Value())).IsTypeOf<data>();
         await Assert.That((await ((data)(await back.Value())!).Value())?.ToString()).IsEqualTo("hello");
     }
 
@@ -87,6 +87,6 @@ public class WireReadLazyTests
         var outer = data.Ok(inner);
         outer.Name = "outer";
         var back = RoundTrip(outer);
-        await Assert.That(back.Value).IsTypeOf<data>();
+        await Assert.That((await back.Value())).IsTypeOf<data>();
     }
 }

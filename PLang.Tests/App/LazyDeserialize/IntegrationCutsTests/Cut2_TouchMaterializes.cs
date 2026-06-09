@@ -59,7 +59,7 @@ public class Cut2_TouchMaterializes
         var ctx = app.User.Context;
         const string big = "9999999999999999999999";
         var d = data.FromRaw(big, type.Create("number", "biginteger", context: ctx), ctx, "n");
-        await Assert.That(d.Value).IsTypeOf<BigInteger>();
+        await Assert.That((await d.Value())).IsTypeOf<BigInteger>();
         await Assert.That((BigInteger)(await d.Value())!).IsEqualTo(BigInteger.Parse(big)); // lossless
     }
 
@@ -75,7 +75,7 @@ public class Cut2_TouchMaterializes
         await Assert.That(d.Peek() is byte[]).IsTrue();   // scalar = raw bytes, no decode
         await Assert.That(d.MaterializeCount).IsEqualTo(0);
 
-        await Assert.That(d.Value).IsTypeOf<global::app.type.image.@this>(); // touch materializes
+        await Assert.That((await d.Value())).IsTypeOf<global::app.type.image.@this>(); // touch materializes
         await Assert.That(d.MaterializeCount).IsEqualTo(1);
     }
 }

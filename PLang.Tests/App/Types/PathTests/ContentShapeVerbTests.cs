@@ -43,7 +43,7 @@ public class ContentShapeVerbTests
         var p = new FilePath(file, app.User.Context);
         var result = await p.ReadAsBase64();
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo(System.Convert.ToBase64String(bytes));
+        await Assert.That((await result.Value())).IsEqualTo(System.Convert.ToBase64String(bytes));
     }
 
     [Test] public async Task ReadAsBase64_OutOfRoot_DeniedAnswer_DoesNotReadFile()

@@ -50,12 +50,12 @@ public class Stage5_ListDictOpsTests
         vars.Set("user", Person("age", 25L));
         var kept = await WhereAction(ctx, "user", "age", ">", 20L).Run();
         await kept.IsSuccess();
-        await Assert.That(kept.Value).IsTypeOf<DictV>();
+        await Assert.That((await kept.Value())).IsTypeOf<DictV>();
 
         vars.Set("user2", Person("age", 10L));
         var dropped = await WhereAction(ctx, "user2", "age", ">", 20L).Run();
         await dropped.IsSuccess();
-        await Assert.That(dropped.Value).IsNull();
+        await Assert.That((await dropped.Value())).IsNull();
     }
 
     [Test]

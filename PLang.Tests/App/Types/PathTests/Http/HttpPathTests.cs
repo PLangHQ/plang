@@ -39,7 +39,7 @@ public class HttpPathTests
 
         var result = await new HttpPath(url, context).ReadText();
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo("the body");
+        await Assert.That((await result.Value())).IsEqualTo("the body");
     }
 
     [Test] public async Task Get_404_ReturnsFail_WithNotFoundStatus()
@@ -66,7 +66,7 @@ public class HttpPathTests
         await write.IsSuccess();
 
         var read = await new HttpPath(url, context).ReadText();
-        await Assert.That(read.Value).IsEqualTo("posted body");
+        await Assert.That((await read.Value())).IsEqualTo("posted body");
     }
 
     [Test] public async Task Post_405_ReturnsFail_405_MethodNotAllowed()

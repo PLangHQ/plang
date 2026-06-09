@@ -82,7 +82,7 @@ public class HttpPathRedirectTests
         var result = await new HttpPath(origin, context).ReadText();
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo("target-body");
+        await Assert.That((await result.Value())).IsEqualTo("target-body");
     }
 
     [Test]
@@ -150,7 +150,7 @@ public class HttpPathRedirectTests
         // Round-trip: the target should now hold the body that 307 carried.
         var readResult = await new HttpPath(target, context).ReadText();
         await readResult.IsSuccess();
-        await Assert.That(readResult.Value).IsEqualTo("preserved-body");
+        await Assert.That((await readResult.Value())).IsEqualTo("preserved-body");
     }
 
     [Test]

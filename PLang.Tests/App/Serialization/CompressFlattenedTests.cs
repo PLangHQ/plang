@@ -24,7 +24,7 @@ public class CompressFlattenedTests
         var d = NewCompressibleData(app, "the quick brown fox jumps over the lazy dog");
         var archived = d.Compress();
         await Assert.That(archived.Type?.Name).IsEqualTo("archived");
-        await Assert.That(archived.Value).IsTypeOf<byte[]>();
+        await Assert.That((await archived.Value())).IsTypeOf<byte[]>();
     }
 
     [Test] public async Task Compress_OnSimpleData_ValueIsRawByteArray_NotWrappedInData()

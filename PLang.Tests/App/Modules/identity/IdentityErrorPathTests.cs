@@ -116,7 +116,7 @@ public class IdentityErrorPathTests
         // Access %MyIdentity% — DynamicData lambda calls provider, which fails, returns null
         var data = _app.User.Context.Variable.Get("MyIdentity");
         await Assert.That(data).IsNotNull();
-        await Assert.That(data!.Value).IsNull();
+        await Assert.That((await data!.Value())).IsNull();
     }
 
     // --- Handler save/remove failure paths ---

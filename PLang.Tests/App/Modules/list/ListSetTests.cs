@@ -23,7 +23,7 @@ public class ListSetTests
 
         await result.IsSuccess();
         var list = memory.GetValue("myList") as global::app.type.list.@this;
-        await Assert.That(list!.At(1)!.Value).IsEqualTo("replaced");
+        await Assert.That((await list!.At(1)!.Value())).IsEqualTo("replaced");
     }
 
     [Test]
@@ -37,8 +37,8 @@ public class ListSetTests
 
         await result.IsSuccess();
         var list = memory.GetValue("myList") as global::app.type.list.@this;
-        await Assert.That(list!.At(0)!.Value).IsEqualTo("new");
-        await Assert.That(list.At(1)!.Value).IsEqualTo("keep");
+        await Assert.That((await list!.At(0)!.Value())).IsEqualTo("new");
+        await Assert.That((await list.At(1)!.Value())).IsEqualTo("keep");
     }
 
     [Test]
@@ -102,6 +102,6 @@ public class ListSetTests
 
         await result.IsSuccess();
         var list = memory.GetValue("myList") as global::app.type.list.@this;
-        await Assert.That(list!.At(0)!.Value).IsNull();
+        await Assert.That((await list!.At(0)!.Value())).IsNull();
     }
 }

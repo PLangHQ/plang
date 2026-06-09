@@ -34,7 +34,7 @@ public class ListTests
         var list = memory.GetValue("myList") as global::app.type.list.@this;
         await Assert.That(list).IsNotNull();
         await Assert.That(list!.Count).IsEqualTo(1);
-        await Assert.That(list.At(0)!.Value).IsEqualTo("first");
+        await Assert.That((await list.At(0)!.Value())).IsEqualTo("first");
     }
 
     [Test]
@@ -49,7 +49,7 @@ public class ListTests
         await result.IsSuccess();
         var list = memory.GetValue("myList") as global::app.type.list.@this;
         await Assert.That(list!.Count).IsEqualTo(3);
-        await Assert.That(list.At(2)!.Value).IsEqualTo("c");
+        await Assert.That((await list.At(2)!.Value())).IsEqualTo("c");
     }
 
     [Test]
@@ -63,7 +63,7 @@ public class ListTests
 
         await result.IsSuccess();
         var list = memory.GetValue("myList") as global::app.type.list.@this;
-        await Assert.That(list!.At(1)!.Value).IsEqualTo("b");
+        await Assert.That((await list!.At(1)!.Value())).IsEqualTo("b");
     }
 
     [Test]
@@ -122,7 +122,7 @@ public class ListTests
 
         await result.IsSuccess();
         var list = memory.GetValue("myList") as global::app.type.list.@this;
-        await Assert.That(list!.At(0)!.Value).IsEqualTo("b");
+        await Assert.That((await list!.At(0)!.Value())).IsEqualTo("b");
     }
 
     // --- Get ---
@@ -137,7 +137,7 @@ public class ListTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo("b");
+        await Assert.That((await result.Value())).IsEqualTo("b");
     }
 
     [Test]
@@ -207,7 +207,7 @@ public class ListTests
         var action = new First { Context = context, ListName = new app.variable.@this("myList") };
         var result = await action.Run();
 
-        await Assert.That(result.Value).IsEqualTo("x");
+        await Assert.That((await result.Value())).IsEqualTo("x");
     }
 
     [Test]
@@ -219,7 +219,7 @@ public class ListTests
         var action = new Last { Context = context, ListName = new app.variable.@this("myList") };
         var result = await action.Run();
 
-        await Assert.That(result.Value).IsEqualTo("z");
+        await Assert.That((await result.Value())).IsEqualTo("z");
     }
 
     // --- IndexOf ---
@@ -249,8 +249,8 @@ public class ListTests
 
         await result.IsSuccess();
         var list = memory.GetValue("myList") as global::app.type.list.@this;
-        await Assert.That(list!.At(0)!.Value).IsEqualTo("a");
-        await Assert.That(list.At(2)!.Value).IsEqualTo("c");
+        await Assert.That((await list!.At(0)!.Value())).IsEqualTo("a");
+        await Assert.That((await list.At(2)!.Value())).IsEqualTo("c");
     }
 
     // --- Join ---
@@ -264,7 +264,7 @@ public class ListTests
         var action = new Join { Context = context, ListName = new app.variable.@this("myList"), Separator = (global::app.type.text.@this)"-" };
         var result = await action.Run();
 
-        await Assert.That(result.Value).IsEqualTo("a-b-c");
+        await Assert.That((await result.Value())).IsEqualTo("a-b-c");
     }
 
     // --- Split ---

@@ -31,7 +31,7 @@ public class SetTypeInferenceTests
         var result = await action.RunAsync(context);
         await result.IsSuccess();
         var stored = context.Variable.Get("s");
-        await Assert.That(stored.Value).IsEqualTo("hello");
+        await Assert.That((await stored.Value())).IsEqualTo("hello");
         await Assert.That(stored.Type.Name).IsEqualTo("text");
     }
 
@@ -106,7 +106,7 @@ public class SetTypeInferenceTests
         var result = await action.RunAsync(context);
         await result.IsSuccess();
         var stored = context.Variable.Get("list");
-        await Assert.That(stored.Value).IsTypeOf<List<object?>>();
+        await Assert.That((await stored.Value())).IsTypeOf<List<object?>>();
         // The param-resolution walk copies the container — stored.Value is a distinct list.
         await Assert.That(ReferenceEquals(stored.Value, src)).IsFalse();
     }
@@ -120,7 +120,7 @@ public class SetTypeInferenceTests
         var result = await action.RunAsync(context);
         await result.IsSuccess();
         var stored = context.Variable.Get("d");
-        await Assert.That(stored.Value).IsTypeOf<Dictionary<string, object?>>();
+        await Assert.That((await stored.Value())).IsTypeOf<Dictionary<string, object?>>();
         await Assert.That(ReferenceEquals(stored.Value, src)).IsFalse();
     }
 

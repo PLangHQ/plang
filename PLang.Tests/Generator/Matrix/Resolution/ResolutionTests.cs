@@ -20,7 +20,7 @@ public class FullVarMatchTests
 
         await result.Data.IsSuccess();
         var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
-        await Assert.That(typed!.Value).IsEqualTo("/tmp/x.txt");
+        await Assert.That((await typed!.Value())).IsEqualTo("/tmp/x.txt");
     }
 
     // Variable's Value is itself a Data<T> → As<T> unwraps and returns typed.
@@ -36,7 +36,7 @@ public class FullVarMatchTests
         await result.Data.IsSuccess();
         // FullVarMatch's Path is Data<global::app.type.text.@this>; "42" should be the converted string form.
         var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
-        await Assert.That(typed!.Value).IsEqualTo("42");
+        await Assert.That((await typed!.Value())).IsEqualTo("42");
     }
 
     // Referenced variable does not exist → As<T> returns Data with null Value (or FromError, per contract).
@@ -48,7 +48,7 @@ public class FullVarMatchTests
             parameters: new[] { ("path", (object?)"%does_not_exist%") });
 
         var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
-        await Assert.That(typed!.Value).IsNull();
+        await Assert.That((await typed!.Value())).IsNull();
     }
 }
 
@@ -64,7 +64,7 @@ public class InterpolationTests
             variables: new Dictionary<string, object?> { ["name"] = "world" });
 
         var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
-        await Assert.That(typed!.Value).IsEqualTo("Hello world");
+        await Assert.That((await typed!.Value())).IsEqualTo("Hello world");
     }
 
     // Multiple %var% in one string → all substituted; order preserved.
@@ -77,7 +77,7 @@ public class InterpolationTests
             variables: new Dictionary<string, object?> { ["a"] = "first", ["b"] = "second" });
 
         var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
-        await Assert.That(typed!.Value).IsEqualTo("first then second then first");
+        await Assert.That((await typed!.Value())).IsEqualTo("first then second then first");
     }
 
     // No %var% in string → returned as-is.
@@ -89,7 +89,7 @@ public class InterpolationTests
             parameters: new[] { ("greeting", (object?)"plain string") });
 
         var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
-        await Assert.That(typed!.Value).IsEqualTo("plain string");
+        await Assert.That((await typed!.Value())).IsEqualTo("plain string");
     }
 }
 
@@ -199,13 +199,13 @@ public class ReResolveAcrossCallsTests
         var first = await MatrixRunner.RunAsync<ReResolveAcrossCalls>(app,
             parameters: new[] { ("value", (object?)"%x%") });
         var firstTyped = first.Data as global::app.data.@this<global::app.type.text.@this>;
-        await Assert.That(firstTyped!.Value).IsEqualTo("first");
+        await Assert.That((await firstTyped!.Value())).IsEqualTo("first");
 
         app.User.Context.Variable.Set("x", "second");
         var second = await MatrixRunner.RunAsync<ReResolveAcrossCalls>(app,
             parameters: new[] { ("value", (object?)"%x%") });
         var secondTyped = second.Data as global::app.data.@this<global::app.type.text.@this>;
-        await Assert.That(secondTyped!.Value).IsEqualTo("second");
+        await Assert.That((await secondTyped!.Value())).IsEqualTo("second");
     }
 
     // Shared Parameter Data — raw .Value never changes across calls.
@@ -226,7 +226,7 @@ public class ReResolveAcrossCallsTests
         await action1.RunAsync(app.User.Context);
 
         // Raw .Value is still "%x%" — no in-place mutation
-        await Assert.That(sharedData.Value).IsEqualTo("%x%");
+        await Assert.That((await sharedData.Value())).IsEqualTo("%x%");
 
         app.User.Context.Variable.Set("x", "v2");
         var action2 = new PrAction
@@ -237,7 +237,7 @@ public class ReResolveAcrossCallsTests
         };
         await action2.RunAsync(app.User.Context);
 
-        await Assert.That(sharedData.Value).IsEqualTo("%x%");
+        await Assert.That((await sharedData.Value())).IsEqualTo("%x%");
     }
 
     // Loop scenario: same action runs N times with %i% changing each iteration → each read fresh.

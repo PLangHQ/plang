@@ -20,7 +20,7 @@ public class DataTests
     {
         var ov = new Data("test", "hello");
 
-        await Assert.That(ov.Value).IsEqualTo("hello");
+        await Assert.That((await ov.Value())).IsEqualTo("hello");
         await Assert.That(ov.IsInitialized).IsTrue();
     }
 
@@ -29,7 +29,7 @@ public class DataTests
     {
         var ov = new Data("test", null);
 
-        await Assert.That(ov.Value).IsNull();
+        await Assert.That((await ov.Value())).IsNull();
         await Assert.That(ov.IsInitialized).IsTrue();
     }
 
@@ -123,7 +123,7 @@ public class DataTests
 
         ov.SetValue("new value");
 
-        await Assert.That(ov.Value).IsEqualTo("new value");
+        await Assert.That((await ov.Value())).IsEqualTo("new value");
         await Assert.That(ov.IsInitialized).IsTrue();
     }
 
@@ -232,7 +232,7 @@ public class DataTests
         var child = ov.GetChild("user.name");
 
         await Assert.That(child).IsNotNull();
-        await Assert.That(child!.Value).IsEqualTo("John");
+        await Assert.That((await child!.Value())).IsEqualTo("John");
     }
 
     [Test]
@@ -244,7 +244,7 @@ public class DataTests
         var child = ov.GetChild("[1]");
 
         await Assert.That(child).IsNotNull();
-        await Assert.That(child!.Value).IsEqualTo("second");
+        await Assert.That((await child!.Value())).IsEqualTo("second");
     }
 
     [Test]
@@ -264,7 +264,7 @@ public class DataTests
         var child = ov.GetChild("users[1].name");
 
         await Assert.That(child).IsNotNull();
-        await Assert.That(child!.Value).IsEqualTo("Bob");
+        await Assert.That((await child!.Value())).IsEqualTo("Bob");
     }
 
     [Test]
@@ -309,7 +309,7 @@ public class DataTests
         var nameChild = ov.GetChild("Name");
         var valueChild = ov.GetChild("Value");
 
-        await Assert.That(nameChild!.Value).IsEqualTo("Test");
+        await Assert.That((await nameChild!.Value())).IsEqualTo("Test");
         await Assert.That((await valueChild!.Value())).IsEqualTo(42);
     }
 
@@ -322,7 +322,7 @@ public class DataTests
         var child = ov.GetChild("name");
 
         await Assert.That(child).IsNotNull();
-        await Assert.That(child!.Value).IsEqualTo("Test");
+        await Assert.That((await child!.Value())).IsEqualTo("Test");
     }
 
     [Test]
@@ -385,7 +385,7 @@ public class DataTests
         var ov = Data.NotFound("missing");
 
         await Assert.That(ov.Name).IsEqualTo("missing");
-        await Assert.That(ov.Value).IsNull();
+        await Assert.That((await ov.Value())).IsNull();
         await Assert.That(ov.IsInitialized).IsFalse();
     }
 
@@ -666,7 +666,7 @@ public class DataTests
 
         await Assert.That(wrapped).IsNotEqualTo(data);
         await Assert.That(wrapped.Type!.Name).IsEqualTo("image");
-        await Assert.That(wrapped.Value).IsTypeOf<Data>();
+        await Assert.That((await wrapped.Value())).IsTypeOf<Data>();
         await Assert.That(wrapped.Context).IsEqualTo(context);
         var inner = (Data)(await wrapped.Value())!;
         await Assert.That(inner.Type!.Name).IsEqualTo("image/jpeg");
@@ -706,7 +706,7 @@ public class DataTests
         var unwrapped = envelope.Unwrap();
 
         await Assert.That(unwrapped.Type!.Name).IsEqualTo("text/plain");
-        await Assert.That(unwrapped.Value).IsEqualTo("Hello");
+        await Assert.That((await unwrapped.Value())).IsEqualTo("Hello");
     }
 
     [Test]
@@ -750,7 +750,7 @@ public class DataTests
 
         // Stage 3: flat shape — archived.Value is byte[] directly, no nested gzip Data.
         await Assert.That(compressed.Type!.Name).IsEqualTo("archived");
-        await Assert.That(compressed.Value).IsTypeOf<byte[]>();
+        await Assert.That((await compressed.Value())).IsTypeOf<byte[]>();
     }
 
     [Test]
@@ -797,7 +797,7 @@ public class DataTests
 
         await decompressed.IsSuccess();
         await Assert.That(decompressed.Type!.Name).IsEqualTo("text");
-        await Assert.That(decompressed.Value).IsTypeOf<Data>();
+        await Assert.That((await decompressed.Value())).IsTypeOf<Data>();
         var decompressedInner = (Data)(await decompressed.Value())!;
         await Assert.That((await decompressedInner.Value())?.ToString()).IsEqualTo("Hello world");
     }
@@ -995,11 +995,11 @@ public class DataTests
 
         await decompressed.IsSuccess();
         await Assert.That(decompressed.Type!.Name).IsEqualTo("document");
-        await Assert.That(decompressed.Value).IsTypeOf<Data>();
+        await Assert.That((await decompressed.Value())).IsTypeOf<Data>();
 
         var midResult = (Data)(await decompressed.Value())!;
         await Assert.That(midResult.Type!.Name).IsEqualTo("text");
-        await Assert.That(midResult.Value).IsTypeOf<Data>();
+        await Assert.That((await midResult.Value())).IsTypeOf<Data>();
 
         var leafResult = (Data)(await midResult.Value())!;
         await Assert.That((await leafResult.Value())?.ToString()).IsEqualTo("deep content");

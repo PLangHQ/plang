@@ -89,7 +89,7 @@ public class OutputAskRoutingTests
             Question = new global::app.data.@this<global::app.type.text.@this>("", "Allow X?")
         };
         var result = await ch.Ask(action);
-        await Assert.That(result.Value).IsTypeOf<global::app.module.output.Ask>();
+        await Assert.That((await result.Value())).IsTypeOf<global::app.module.output.Ask>();
         await Assert.That(((global::app.module.output.Ask)(await result.Value())!).Answer).IsNull();
         await Assert.That(result.Type?.Name).IsEqualTo("ask");
     }

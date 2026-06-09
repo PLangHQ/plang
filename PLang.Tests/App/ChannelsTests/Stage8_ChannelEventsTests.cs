@@ -51,7 +51,7 @@ public class Stage8_ChannelEventsTests
 
         await ch.WriteAsync(Data.Ok("hello"));
         await Assert.That(captured).IsNotNull();
-        await Assert.That(captured!.Value).IsEqualTo("hello");
+        await Assert.That((await captured!.Value())).IsEqualTo("hello");
     }
 
     [Test]

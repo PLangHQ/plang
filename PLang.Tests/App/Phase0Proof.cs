@@ -39,7 +39,7 @@ public class Phase0Proof
         // OUTPUT: Data has value, is successful
         await result.IsSuccess();
         await Assert.That(result.Error).IsNull();
-        await Assert.That(result.Value).IsEqualTo("hello world");
+        await Assert.That((await result.Value())).IsEqualTo("hello world");
     }
 
     [Test]

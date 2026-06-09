@@ -72,7 +72,7 @@ public class Stage4_BuildMethodImplsTests
     {
         var result = await Build("file", "read", ("Path", "foo.zzz"));
         await result.IsSuccess();
-        await Assert.That(result.Value).IsNull();
+        await Assert.That((await result.Value())).IsNull();
     }
 
     [Test]
@@ -80,7 +80,7 @@ public class Stage4_BuildMethodImplsTests
     {
         var result = await Build("file", "read", ("Path", "%p%"));
         await result.IsSuccess();
-        await Assert.That(result.Value).IsNull();
+        await Assert.That((await result.Value())).IsNull();
     }
 
     [Test]
@@ -117,7 +117,7 @@ public class Stage4_BuildMethodImplsTests
         var result = await Build("llm", "query",
             ("System", "you are a bot"), ("User", "hi"), ("Schema", "{\"type\":\"object\"}"));
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo("json");
+        await Assert.That((await result.Value())).IsEqualTo("json");
     }
 
     [Test]
@@ -126,7 +126,7 @@ public class Stage4_BuildMethodImplsTests
         var result = await Build("llm", "query",
             ("System", "you are a bot"), ("User", "hi"), ("Format", "md"));
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo("md");
+        await Assert.That((await result.Value())).IsEqualTo("md");
     }
 
     [Test]
@@ -135,7 +135,7 @@ public class Stage4_BuildMethodImplsTests
         var result = await Build("llm", "query",
             ("System", "you are a bot"), ("User", "hi"));
         await result.IsSuccess();
-        await Assert.That(result.Value).IsNull();
+        await Assert.That((await result.Value())).IsNull();
     }
 
     // --- http.request / http.upload .Build() ---
@@ -169,6 +169,6 @@ public class Stage4_BuildMethodImplsTests
             ("Url", "%endpoint%"),
             ("FilePath", "/tmp/dummy.txt"));
         await result.IsSuccess();
-        await Assert.That(result.Value).IsNull();
+        await Assert.That((await result.Value())).IsNull();
     }
 }

@@ -68,7 +68,7 @@ public class Stage0_BuildMethodTests
         var handler = (IClass)new NoopBuild();
         var result = await handler.Build();
         await result.IsSuccess();
-        await Assert.That(result.Value).IsNull();
+        await Assert.That((await result.Value())).IsNull();
     }
 
     // RunBuildPass walks actions left-to-right; the per-action log records call order.

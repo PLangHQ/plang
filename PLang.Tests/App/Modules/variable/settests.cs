@@ -47,7 +47,7 @@ public class SetTests
         await Assert.That(context.Variable.GetValue("testVar")).IsEqualTo("testValue");
         // F3-1: handler must return the stored value, not an empty Data.Ok().
         // Powers %!data% capture in goal.call → ReturnMapping / GoalCallReturn PLang tests.
-        await Assert.That(result.Value).IsEqualTo("testValue");
+        await Assert.That((await result.Value())).IsEqualTo("testValue");
     }
 
     [Test]
@@ -78,7 +78,7 @@ public class SetTests
         await Assert.That(context.Variable.GetValue("x")).IsEqualTo("original");
         // F3-1: when AsDefault hits an existing var, handler returns the existing Data,
         // not an empty Data.Ok(). Reverting that branch would surface here.
-        await Assert.That(result.Value).IsEqualTo("original");
+        await Assert.That((await result.Value())).IsEqualTo("original");
     }
 
     [Test]

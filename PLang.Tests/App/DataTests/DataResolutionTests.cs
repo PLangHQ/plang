@@ -28,8 +28,8 @@ public class DataResolutionTests
         _app.User.Context.Variable.Set("x", "second");
         var second = data.As<global::app.type.text.@this>(_app.User.Context);
 
-        await Assert.That(first.Value).IsEqualTo("first");
-        await Assert.That(second.Value).IsEqualTo("second");
+        await Assert.That((await first.Value())).IsEqualTo("first");
+        await Assert.That((await second.Value())).IsEqualTo("second");
     }
 
     // After As<T>, original Data._value is byte-for-byte the same as before — no in-place mutation.
@@ -79,10 +79,10 @@ public class DataResolutionTests
         subApp.User.Context.Variable.Set("scope", "sub");
         var subView = data.As<global::app.type.text.@this>(subApp.User.Context);
 
-        await Assert.That(parentView.Value).IsEqualTo("parent");
-        await Assert.That(subView.Value).IsEqualTo("sub");
+        await Assert.That((await parentView.Value())).IsEqualTo("parent");
+        await Assert.That((await subView.Value())).IsEqualTo("sub");
         // Raw is untouched.
-        await Assert.That(data.Value).IsEqualTo("%scope%");
+        await Assert.That((await data.Value())).IsEqualTo("%scope%");
     }
 
     // Variables.Get returns existing Data → As<T> on a parameter referencing that variable returns its Value cleanly.

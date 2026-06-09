@@ -158,7 +158,7 @@ public class SettingsDataTests
 
         // Verify removed
         var getResult = await _app.SettingsStore.Get("settings", "ToRemove");
-        await Assert.That(getResult.Value).IsNull();
+        await Assert.That((await getResult.Value())).IsNull();
     }
 
     [Test]

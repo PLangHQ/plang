@@ -207,6 +207,6 @@ public class ContextVariableTests
         var data = vars.Get("!app.Name");
 
         await Assert.That(data).IsNotNull();
-        await Assert.That(data!.Value).IsEqualTo("test");
+        await Assert.That((await data!.Value())).IsEqualTo("test");
     }
 }

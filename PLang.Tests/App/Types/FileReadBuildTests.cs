@@ -57,7 +57,7 @@ public class FileReadBuildTests
             };
             var result = await action.Run();
             await result.IsSuccess();
-            await Assert.That(result.Value).IsTypeOf<image>();
+            await Assert.That((await result.Value())).IsTypeOf<image>();
             await Assert.That(result.Type?.Name).IsEqualTo("image");
         }
         finally { try { System.IO.File.Delete(abs); } catch { } }
@@ -80,7 +80,7 @@ public class FileReadBuildTests
             };
             var result = await action.Run();
             await result.IsSuccess();
-            await Assert.That(result.Value).IsEqualTo("hello");
+            await Assert.That((await result.Value())).IsEqualTo("hello");
         }
         finally { try { System.IO.File.Delete(abs); } catch { } }
     }

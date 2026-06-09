@@ -25,7 +25,7 @@ public class ReadFailureTests
         var ctx = app.User.Context;
         var d = data.FromRaw("{not valid json", type.Create("object", "json", context: ctx), ctx, "bad");
         // Touch must NOT throw — the failure is cached as Data.Error.
-        var v = d.Value;
+        var v = await d.Value();
         await Assert.That(v).IsNull();
         await Assert.That(d.Error).IsNotNull();
         await Assert.That(d.Error!.Message).Contains("bad"); // names the source
@@ -59,7 +59,7 @@ public class ReadFailureTests
         await Assert.That(relayed.MaterializeCount).IsEqualTo(0); // courier never materialized
 
         // Only the leaf touch materializes — and it surfaces an error, never throws.
-        await Assert.That(relayed.Value).IsNull();
+        await Assert.That((await relayed.Value())).IsNull();
         await Assert.That(relayed.Error).IsNotNull();
     }
 }

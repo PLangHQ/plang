@@ -21,7 +21,7 @@ public class StringNullableTests
         var result = await MatrixRunner.RunAsync<StringNullable>(app,
             parameters: new[] { ("tag", (object?)"hello") });
         var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
-        await Assert.That(typed!.Value).IsEqualTo("hello");
+        await Assert.That((await typed!.Value())).IsEqualTo("hello");
     }
 
     [Test]

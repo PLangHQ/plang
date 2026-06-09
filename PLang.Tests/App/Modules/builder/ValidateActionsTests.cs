@@ -243,7 +243,7 @@ public class ValidateActionsTests
         await result.IsSuccess();
         // %flag% should NOT be converted — it's a variable reference
         var leftParam = actions[0].Parameters.First(p => p.Name == "Left");
-        await Assert.That(leftParam.Value).IsEqualTo("%flag%");
+        await Assert.That((await leftParam.Value())).IsEqualTo("%flag%");
     }
 
     [Test]

@@ -13,7 +13,7 @@ public class ProviderPropTests
 
         var result = await MatrixRunner.RunAsync<ProviderProp>(app);
         await result.Data.IsSuccess();
-        await Assert.That(result.Data.Value).IsEqualTo("echo:hi");
+        await Assert.That((await result.Data.Value())).IsEqualTo("echo:hi");
     }
 
     [Test]
@@ -25,11 +25,11 @@ public class ProviderPropTests
 
         // Run handler — reads Provider once, returns echoed value
         var first = await MatrixRunner.RunAsync<ProviderProp>(app);
-        await Assert.That(first.Data.Value).IsEqualTo("echo:hi");
+        await Assert.That((await first.Data.Value())).IsEqualTo("echo:hi");
 
         // Run again — same provider injected, same echoed value
         var second = await MatrixRunner.RunAsync<ProviderProp>(app);
-        await Assert.That(second.Data.Value).IsEqualTo("echo:hi");
+        await Assert.That((await second.Data.Value())).IsEqualTo("echo:hi");
     }
 }
 

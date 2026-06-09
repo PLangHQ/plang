@@ -89,7 +89,7 @@ public class ValueConversionHookTests
     public async Task PathHook_ResolvesScheme()
     {
         var (_, ctx) = MakeApp();
-        var v = PLangPath.Convert("greeting.txt", null, ctx).Value;
+        var v = await PLangPath.Convert("greeting.txt", null, ctx).Value();
         await Assert.That(v).IsAssignableTo<PLangPath>();
     }
 
@@ -125,10 +125,10 @@ public class ValueConversionHookTests
         await Assert.That((await app.Type.Convert("3.14", typeof(decimal), ctx).Value())).IsEqualTo(3.14m);
         await Assert.That((await app.Type.Convert("PT30S", typeof(System.TimeSpan), ctx).Value()))
             .IsEqualTo(System.TimeSpan.FromSeconds(30));
-        await Assert.That(app.Type.Convert("2024-03-15T10:30:00+00:00", typeof(System.DateTimeOffset), ctx).Value)
+        await Assert.That((await app.Type.Convert("2024-03-15T10:30:00+00:00", typeof(System.DateTimeOffset), ctx).Value()))
             .IsTypeOf<System.DateTimeOffset>();
-        await Assert.That(app.Type.Convert("photo.png", typeof(Image), ctx).Value).IsTypeOf<Image>();
-        await Assert.That(app.Type.Convert("MyGoal", typeof(GoalCall), ctx).Value).IsTypeOf<GoalCall>();
+        await Assert.That((await app.Type.Convert("photo.png", typeof(Image), ctx).Value())).IsTypeOf<Image>();
+        await Assert.That((await app.Type.Convert("MyGoal", typeof(GoalCall), ctx).Value())).IsTypeOf<GoalCall>();
     }
 
     [Test]

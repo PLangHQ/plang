@@ -19,7 +19,7 @@ public class CallsTests
 
         var got = vars.Get("greeting");
         await Assert.That(got).IsNotNull();
-        await Assert.That(got!.Value).IsEqualTo("hello");
+        await Assert.That((await got!.Value())).IsEqualTo("hello");
     }
 
     [Test]
@@ -27,7 +27,7 @@ public class CallsTests
     {
         var vars = new AppVars();
         var scope = vars.Calls.Push(new[] { new Data("ephemeral", "v1") });
-        await Assert.That(vars.Get("ephemeral").Value).IsEqualTo("v1");
+        await Assert.That((await vars.Get("ephemeral").Value())).IsEqualTo("v1");
         await scope.DisposeAsync();
 
         var got = vars.Get("ephemeral");
@@ -41,7 +41,7 @@ public class CallsTests
         vars.Set("x", "underlying");
         await using var _ = vars.Calls.Push(new[] { new Data("x", "framed") });
 
-        await Assert.That(vars.Get("x").Value).IsEqualTo("framed");
+        await Assert.That((await vars.Get("x").Value())).IsEqualTo("framed");
     }
 
     [Test]
@@ -51,7 +51,7 @@ public class CallsTests
         await using var outer = vars.Calls.Push(new[] { new Data("k", "outer") });
         await using var inner = vars.Calls.Push(new[] { new Data("k", "inner") });
 
-        await Assert.That(vars.Get("k").Value).IsEqualTo("inner");
+        await Assert.That((await vars.Get("k").Value())).IsEqualTo("inner");
     }
 
     [Test]
@@ -60,10 +60,10 @@ public class CallsTests
         var vars = new AppVars();
         await using var outer = vars.Calls.Push(new[] { new Data("k", "outer") });
         var inner = vars.Calls.Push(new[] { new Data("k", "inner") });
-        await Assert.That(vars.Get("k").Value).IsEqualTo("inner");
+        await Assert.That((await vars.Get("k").Value())).IsEqualTo("inner");
         await inner.DisposeAsync();
 
-        await Assert.That(vars.Get("k").Value).IsEqualTo("outer");
+        await Assert.That((await vars.Get("k").Value())).IsEqualTo("outer");
     }
 
     [Test]
@@ -147,10 +147,10 @@ public class CallsTests
         vars.Set("k", "underlying");
         var scope = vars.Calls.Push(null);
         vars.Set("k", "scoped");
-        await Assert.That(vars.Get("k").Value).IsEqualTo("scoped");
+        await Assert.That((await vars.Get("k").Value())).IsEqualTo("scoped");
 
         await scope.DisposeAsync();
-        await Assert.That(vars.Get("k").Value).IsEqualTo("underlying");
+        await Assert.That((await vars.Get("k").Value())).IsEqualTo("underlying");
     }
 
     [Test]
@@ -208,7 +208,7 @@ public class CallsTests
         vars.Set("x", "underlying");
         await using var _ = vars.Calls.Push(null);
 
-        await Assert.That(vars.Get("x").Value).IsEqualTo("underlying");
+        await Assert.That((await vars.Get("x").Value())).IsEqualTo("underlying");
     }
 
     [Test]

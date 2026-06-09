@@ -39,7 +39,7 @@ public class Stage0_DataMaterializationTests
         var materialized = src.As("json");
 
         await materialized.IsSuccess();
-        await Assert.That(materialized.Value).IsTypeOf<app.type.dict.@this>();
+        await Assert.That((await materialized.Value())).IsTypeOf<app.type.dict.@this>();
     }
 
     // Reading a property off a typed string-Value triggers ConvertValue() on the
@@ -87,7 +87,7 @@ public class Stage0_DataMaterializationTests
         const string raw = "a,b,c\n1,2,3";
         var src = new Data("x", raw) { Type = new global::app.type.@this("csv") };
 
-        await Assert.That(src.Value).IsEqualTo(raw)
+        await Assert.That((await src.Value())).IsEqualTo(raw)
             .Because("Setting a typed Data must not invoke the materializer.");
     }
 
@@ -98,7 +98,7 @@ public class Stage0_DataMaterializationTests
     {
         var src = new Data("x", "anything") { Type = new global::app.type.@this("bogus") };
 
-        await Assert.That(src.Value).IsEqualTo("anything")
+        await Assert.That((await src.Value())).IsEqualTo("anything")
             .Because("Setting with an unknown declared type stays cleanly stored.");
 
         var result = src.As("bogus", _app.User.Context);
@@ -121,7 +121,7 @@ public class Stage0_DataMaterializationTests
         var asJson = src.As("json");
 
         await asJson.IsSuccess();
-        await Assert.That(asJson.Value).IsTypeOf<app.type.dict.@this>()
+        await Assert.That((await asJson.Value())).IsTypeOf<app.type.dict.@this>()
             .Because("As('json') must dispatch on the argument, not src.Type.");
     }
 }

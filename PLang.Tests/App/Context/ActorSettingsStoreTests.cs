@@ -62,7 +62,7 @@ public class ActorSettingsStoreTests
         {
             engine2.Tester.IsEnabled = true;
             var result = await engine2.SettingsStore.Get("LlmCache", "testkey");
-            await Assert.That(result.Value).IsNull();
+            await Assert.That((await result.Value())).IsNull();
         }
     }
 }

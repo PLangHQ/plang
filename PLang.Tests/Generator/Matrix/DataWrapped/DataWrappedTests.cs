@@ -13,7 +13,7 @@ public class DataWrappedStringTests
             parameters: new[] { ("body", (object?)"%greeting%") },
             variables: new Dictionary<string, object?> { ["greeting"] = "hello" });
         var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
-        await Assert.That(typed!.Value).IsEqualTo("hello");
+        await Assert.That((await typed!.Value())).IsEqualTo("hello");
     }
 
     [Test]
@@ -24,7 +24,7 @@ public class DataWrappedStringTests
             parameters: new[] { ("body", (object?)"Hello %name%!") },
             variables: new Dictionary<string, object?> { ["name"] = "world" });
         var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
-        await Assert.That(typed!.Value).IsEqualTo("Hello world!");
+        await Assert.That((await typed!.Value())).IsEqualTo("Hello world!");
     }
 
     [Test]
@@ -108,7 +108,7 @@ public class DataWrappedActionListTests
         await Assert.That((await typed!.Value())).IsNotNull();
         // The sub-action's parameter Value is still raw "%comment%" — not resolved.
         var subParam = typed.GetValue<List<PrAction>>()![0].Parameters?.FirstOrDefault(p => p.Name == "v");
-        await Assert.That(subParam!.Value).IsEqualTo("%comment%");
+        await Assert.That((await subParam!.Value())).IsEqualTo("%comment%");
     }
 
     [Test]
@@ -131,7 +131,7 @@ public class DataWrappedActionListTests
 
         var typed = result.Data as global::app.data.@this<global::app.type.list.@this<PrAction>>;
         var subParam = typed!.GetValue<List<PrAction>>()![0].Parameters?.FirstOrDefault(p => p.Name == "a");
-        await Assert.That(subParam!.Value).IsEqualTo("%x%");
+        await Assert.That((await subParam!.Value())).IsEqualTo("%x%");
     }
 }
 

@@ -57,7 +57,7 @@ public class RuntimeDoubleWrapTests
 
         await result.IsSuccess();
         await AssertNotDoubleWrapped(result, "list.get");
-        await Assert.That(result.Value).IsEqualTo("b");
+        await Assert.That((await result.Value())).IsEqualTo("b");
     }
 
     [Test]
@@ -152,7 +152,7 @@ public class RuntimeDoubleWrapTests
         };
         var result = await action.Run();
         await result.IsSuccess();
-        await Assert.That(result.Value).IsTypeOf<global::app.type.list.@this>();
+        await Assert.That((await result.Value())).IsTypeOf<global::app.type.list.@this>();
         await Assert.That(((global::app.type.list.@this)(await result.Value())!).Count).IsEqualTo(1);
         await app.DisposeAsync();
     }

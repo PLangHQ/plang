@@ -328,7 +328,7 @@ public class Error : IError
                 sb.AppendLine($"{indent}📋 Variables in scope ({ctxSource}, id={ctxId}):");
                 foreach (var kvp in allVars)
                 {
-                    var val = FormatVerboseValue(kvp.Value.Value);
+                    var val = FormatVerboseValue(kvp.Value.Materialize());
                     sb.AppendLine($"{indent}    %{kvp.Key}% = {val} ({kvp.Value.Type?.Name ?? "?"})");
                 }
             }

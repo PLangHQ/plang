@@ -94,7 +94,7 @@ public class TypedValueNodeNormalizeTests
         var bag = ((global::app.type.dict.@this)result!).Entries;
         var innerChild = bag.FirstOrDefault(d => d.Name == "inner");
         await Assert.That(innerChild).IsNotNull();
-        await Assert.That(innerChild!.Value).IsTypeOf<global::app.data.TypedValueNode>();
+        await Assert.That((await innerChild!.Value())).IsTypeOf<global::app.data.TypedValueNode>();
     }
 
     [Test]

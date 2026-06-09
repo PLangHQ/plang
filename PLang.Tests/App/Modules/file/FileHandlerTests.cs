@@ -70,7 +70,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo("content here");
+        await Assert.That((await result.Value())).IsEqualTo("content here");
     }
 
     [Test]
@@ -100,7 +100,7 @@ public class FileHandlerTests : IDisposable
         var action = new Read { Context = _app.User.Context, Path = MakePath("lazy.txt") };
         var result = await action.Run();
 
-        await Assert.That(result.Value).IsEqualTo("lazy content");
+        await Assert.That((await result.Value())).IsEqualTo("lazy content");
     }
 
     [Test]
@@ -129,7 +129,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo("Hello Ingi, welcome");
+        await Assert.That((await result.Value())).IsEqualTo("Hello Ingi, welcome");
     }
 
     [Test]
@@ -149,7 +149,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo("Hello %name%, welcome");
+        await Assert.That((await result.Value())).IsEqualTo("Hello %name%, welcome");
     }
 
     [Test]
@@ -170,7 +170,7 @@ public class FileHandlerTests : IDisposable
 
         await result.IsSuccess();
         // The literal stays — infrastructure variable was not resolved.
-        await Assert.That(result.Value).IsEqualTo("id is %!app.Id%");
+        await Assert.That((await result.Value())).IsEqualTo("id is %!app.Id%");
     }
 
     // --- Copy ---

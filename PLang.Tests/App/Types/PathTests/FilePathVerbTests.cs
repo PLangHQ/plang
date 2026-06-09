@@ -29,7 +29,7 @@ public class FilePathVerbTests
         await w.IsSuccess();
         var r = await p.ReadText();
         await r.IsSuccess();
-        await Assert.That(r.Value).IsEqualTo("round-trip");
+        await Assert.That((await r.Value())).IsEqualTo("round-trip");
     }
 
     [Test] public async Task WriteBytes_ThenReadBytes_RoundTrips()
@@ -84,7 +84,7 @@ public class FilePathVerbTests
         await p.WriteText("abc");
         await p.Append("def");
         var r = await p.ReadText();
-        await Assert.That(r.Value).IsEqualTo("abcdef");
+        await Assert.That((await r.Value())).IsEqualTo("abcdef");
     }
 
     [Test] public async Task Stat_ReportsLength_MatchingWrittenBytes()
@@ -129,7 +129,7 @@ public class FilePathVerbTests
         var w = await p.WriteText("nested");
         await w.IsSuccess();
         var r = await p.ReadText();
-        await Assert.That(r.Value).IsEqualTo("nested");
+        await Assert.That((await r.Value())).IsEqualTo("nested");
     }
 
     [Test] public async Task ReadText_NonexistentFile_ReturnsFail_DoesNotThrow()

@@ -258,7 +258,7 @@ public class TextStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Text();
 
-        var result = serializer.Deserialize("hello").Value!;
+        var result = (await serializer.Deserialize("hello").Value())!;
 
         await Assert.That(result).IsEqualTo("hello");
     }

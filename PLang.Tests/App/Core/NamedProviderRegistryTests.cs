@@ -50,7 +50,7 @@ public class NamedProviderRegistryTests
 
         var result = _app.Code.Get<ISigning>("custom");
         await result.IsSuccess();
-        await Assert.That(result.Value).IsSameReferenceAs(provider);
+        await Assert.That((await result.Value())).IsSameReferenceAs(provider);
         await Assert.That(((global::app.module.code.ICode)(await result.Value())!).Name).IsEqualTo("custom");
     }
 
@@ -75,8 +75,8 @@ public class NamedProviderRegistryTests
 
         var edResult = _app.Code.Get<ISigning>("mock-ed");
         var ecResult = _app.Code.Get<ISigning>("mock-ec");
-        await Assert.That(edResult.Value).IsSameReferenceAs(ed);
-        await Assert.That(ecResult.Value).IsSameReferenceAs(ec);
+        await Assert.That((await edResult.Value())).IsSameReferenceAs(ed);
+        await Assert.That((await ecResult.Value())).IsSameReferenceAs(ec);
     }
 
     [Test]

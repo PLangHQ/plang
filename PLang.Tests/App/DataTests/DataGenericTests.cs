@@ -11,7 +11,7 @@ public class DataGenericTests
     {
         var data = global::app.data.@this<global::app.type.text.@this>.Ok("hello");
 
-        await Assert.That(data.Value).IsEqualTo("hello");
+        await Assert.That((await data.Value())).IsEqualTo("hello");
         await data.IsSuccess();
     }
 
@@ -44,7 +44,7 @@ public class DataGenericTests
 
         // Born-native: number is a reference wrapper, so a failed conversion yields its
         // default — null — not the value-type 0.
-        await Assert.That(data.Value).IsNull();
+        await Assert.That((await data.Value())).IsNull();
     }
 
     [Test]

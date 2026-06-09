@@ -24,9 +24,9 @@ public class VariablesTests
         var nowObj = stack.Get("Now") as DynamicData;
         await Assert.That(nowObj).IsNotNull();
 
-        var value1 = nowObj!.Value;
+        var value1 = await nowObj!.Value();
         await Task.Delay(10);
-        var value2 = nowObj.Value;
+        var value2 = await nowObj.Value();
 
         await Assert.That(value1).IsTypeOf<DateTimeOffset>();
         await Assert.That(value2).IsTypeOf<DateTimeOffset>();
@@ -70,7 +70,7 @@ public class VariablesTests
 
         var ov = stack.Get("name");
         await Assert.That(ov).IsNotNull();
-        await Assert.That(ov!.Value).IsEqualTo("John");
+        await Assert.That((await ov!.Value())).IsEqualTo("John");
     }
 
     [Test]
@@ -94,7 +94,7 @@ public class VariablesTests
         stack.Set("name", "Jane");
 
         var ov = stack.Get("name");
-        await Assert.That(ov!.Value).IsEqualTo("Jane");
+        await Assert.That((await ov!.Value())).IsEqualTo("Jane");
     }
 
     [Test]
@@ -149,7 +149,7 @@ public class VariablesTests
         await Assert.That(person.Name).IsEqualTo("Jane");
         // Verify Get also sees the change
         var result = stack.Get("person.Name");
-        await Assert.That(result!.Value).IsEqualTo("Jane");
+        await Assert.That((await result!.Value())).IsEqualTo("Jane");
     }
 
     [Test]
@@ -168,7 +168,7 @@ public class VariablesTests
 
         await Assert.That(person.Address.City).IsEqualTo("Shelbyville");
         var result = stack.Get("person.Address.City");
-        await Assert.That(result!.Value).IsEqualTo("Shelbyville");
+        await Assert.That((await result!.Value())).IsEqualTo("Shelbyville");
     }
 
     [Test]
@@ -194,7 +194,7 @@ public class VariablesTests
 
         await Assert.That(data["name"]).IsEqualTo("Jane");
         var result = stack.Get("user.name");
-        await Assert.That(result!.Value).IsEqualTo("Jane");
+        await Assert.That((await result!.Value())).IsEqualTo("Jane");
     }
 
     [Test]
@@ -207,10 +207,10 @@ public class VariablesTests
 
         var root = stack.Get("nonexistent");
         await Assert.That(root).IsNotNull();
-        await Assert.That(root!.Value).IsTypeOf<Dictionary<string, object?>>();
+        await Assert.That((await root!.Value())).IsTypeOf<Dictionary<string, object?>>();
 
         var prop = stack.Get("nonexistent.prop");
-        await Assert.That(prop!.Value).IsEqualTo("value");
+        await Assert.That((await prop!.Value())).IsEqualTo("value");
     }
 
     [Test]
@@ -224,12 +224,12 @@ public class VariablesTests
         stack.Set("person.Name", "Jane");
 
         var result = stack.Get("person.Name");
-        await Assert.That(result!.Value).IsEqualTo("Jane");
+        await Assert.That((await result!.Value())).IsEqualTo("Jane");
         // Original CLR object is unchanged
         await Assert.That(person.Name).IsEqualTo("John");
         // Underlying value is now a dictionary
         var root = stack.Get("person");
-        await Assert.That(root!.Value).IsTypeOf<Dictionary<string, object?>>();
+        await Assert.That((await root!.Value())).IsTypeOf<Dictionary<string, object?>>();
     }
 
     [Test]
@@ -243,10 +243,10 @@ public class VariablesTests
         stack.Set("person.Street", "Main 123");
 
         var result = stack.Get("person.Street");
-        await Assert.That(result!.Value).IsEqualTo("Main 123");
+        await Assert.That((await result!.Value())).IsEqualTo("Main 123");
         // Original properties still accessible
         var name = stack.Get("person.Name");
-        await Assert.That(name!.Value).IsEqualTo("John");
+        await Assert.That((await name!.Value())).IsEqualTo("John");
     }
 
     [Test]
@@ -260,7 +260,7 @@ public class VariablesTests
         stack.Set("person.street", "Main 123");
 
         var result = stack.Get("person.street");
-        await Assert.That(result!.Value).IsEqualTo("Main 123");
+        await Assert.That((await result!.Value())).IsEqualTo("Main 123");
     }
 
     [Test]
@@ -328,7 +328,7 @@ public class VariablesTests
 
         await Assert.That(ov).IsNotNull();
         await Assert.That(ov!.Name).IsEqualTo("test");
-        await Assert.That(ov!.Value).IsEqualTo("value");
+        await Assert.That((await ov!.Value())).IsEqualTo("value");
     }
 
     [Test]
@@ -337,9 +337,9 @@ public class VariablesTests
         var stack = new Variables();
         stack.Set("Name", "John");
 
-        await Assert.That(stack.Get("name")!.Value).IsEqualTo("John");
-        await Assert.That(stack.Get("NAME")!.Value).IsEqualTo("John");
-        await Assert.That(stack.Get("Name")!.Value).IsEqualTo("John");
+        await Assert.That((await stack.Get("name")!.Value())).IsEqualTo("John");
+        await Assert.That((await stack.Get("NAME")!.Value())).IsEqualTo("John");
+        await Assert.That((await stack.Get("Name")!.Value())).IsEqualTo("John");
     }
 
     [Test]
@@ -371,7 +371,7 @@ public class VariablesTests
         var name = stack.Get("user.name");
         var age = stack.Get("user.age");
 
-        await Assert.That(name!.Value).IsEqualTo("John");
+        await Assert.That((await name!.Value())).IsEqualTo("John");
         await Assert.That((await age!.Value())).IsEqualTo(30);
     }
 
@@ -386,7 +386,7 @@ public class VariablesTests
         // Verify the list itself is stored and accessible
         var itemsObj = stack.Get("items");
         await Assert.That(itemsObj).IsNotNull();
-        await Assert.That(itemsObj!.Value).IsTypeOf<List<object>>();
+        await Assert.That((await itemsObj!.Value())).IsTypeOf<List<object>>();
 
         // Access the list directly
         var list = (List<object>)(await itemsObj.Value())!;
@@ -431,7 +431,7 @@ public class VariablesTests
         var result = stack.Get("list[0].items[0].val");
 
         await Assert.That(result).IsNotNull();
-        await Assert.That(result!.Value).IsEqualTo("deep");
+        await Assert.That((await result!.Value())).IsEqualTo("deep");
     }
 
     [Test]
@@ -445,7 +445,7 @@ public class VariablesTests
         var result = stack.Get("items[idx]");
 
         await Assert.That(result).IsNotNull();
-        await Assert.That(result!.Value).IsEqualTo("one");
+        await Assert.That((await result!.Value())).IsEqualTo("one");
     }
 
     [Test]
@@ -458,7 +458,7 @@ public class VariablesTests
         var result = stack.Get("items[1]");
 
         await Assert.That(result).IsNotNull();
-        await Assert.That(result!.Value).IsEqualTo("second");
+        await Assert.That((await result!.Value())).IsEqualTo("second");
     }
 
     [Test]
@@ -478,7 +478,7 @@ public class VariablesTests
 
         var name = stack.Get("data.users[1].name");
 
-        await Assert.That(name!.Value).IsEqualTo("Bob");
+        await Assert.That((await name!.Value())).IsEqualTo("Bob");
     }
 
     [Test]
@@ -674,7 +674,7 @@ public class VariablesTests
 
         var clone = stack.Clone();
 
-        await Assert.That(clone.Get("name")!.Value).IsEqualTo("John");
+        await Assert.That((await clone.Get("name")!.Value())).IsEqualTo("John");
         await Assert.That((await clone.Get("count")!.Value())).IsEqualTo(42);
     }
 
@@ -687,8 +687,8 @@ public class VariablesTests
         var clone = stack.Clone();
         clone.Set("name", "Jane");
 
-        await Assert.That(stack.Get("name")!.Value).IsEqualTo("John");
-        await Assert.That(clone.Get("name")!.Value).IsEqualTo("Jane");
+        await Assert.That((await stack.Get("name")!.Value())).IsEqualTo("John");
+        await Assert.That((await clone.Get("name")!.Value())).IsEqualTo("Jane");
     }
 
     [Test]
@@ -838,7 +838,7 @@ public class VariablesCycleDetectionTests
 
         // Verify normal resolution works: data.items[idx] → data.items[1] → "one"
         var normalResult = stack.Get("data.items[idx]");
-        await Assert.That(normalResult!.Value).IsEqualTo("one");
+        await Assert.That((await normalResult!.Value())).IsEqualTo("one");
 
         // Pre-seed the async-local visited set via reflection to simulate
         // a circular reference already in progress (idx is "being resolved")
@@ -876,12 +876,12 @@ public class VariablesCycleDetectionTests
 
         // Verify the thread-static set is properly cleaned up after normal resolution
         var result1 = stack.Get("data.items[idx]");
-        await Assert.That(result1!.Value).IsEqualTo("first");
+        await Assert.That((await result1!.Value())).IsEqualTo("first");
 
         // Second call should work identically (no leftover state)
         stack.Set("idx", 1);
         var result2 = stack.Get("data.items[idx]");
-        await Assert.That(result2!.Value).IsEqualTo("second");
+        await Assert.That((await result2!.Value())).IsEqualTo("second");
     }
 }
 
@@ -966,9 +966,9 @@ public class VariablesAccessorTests
         var name2 = stack.Get("goal.Goals[2].Name");
 
         await Assert.That(name0.IsInitialized).IsTrue();
-        await Assert.That(name0.Value).IsEqualTo("ProcessGroup");
-        await Assert.That(name1.Value).IsEqualTo("LlmFixer");
-        await Assert.That(name2.Value).IsEqualTo("HandleFailure");
+        await Assert.That((await name0.Value())).IsEqualTo("ProcessGroup");
+        await Assert.That((await name1.Value())).IsEqualTo("LlmFixer");
+        await Assert.That((await name2.Value())).IsEqualTo("HandleFailure");
     }
 
     [Test]
@@ -981,7 +981,7 @@ public class VariablesAccessorTests
         var name = stack.Get("goal.Name");
 
         await Assert.That(name.IsInitialized).IsTrue();
-        await Assert.That(name.Value).IsEqualTo("BuildGoal");
+        await Assert.That((await name.Value())).IsEqualTo("BuildGoal");
     }
 
     [Test]
@@ -1015,16 +1015,16 @@ public class VariablesAccessorTests
 
         // Goal should still be a Goal, not a dictionary
         var retrieved = stack.Get("goal");
-        await Assert.That(retrieved.Value).IsTypeOf<global::app.goal.@this>();
+        await Assert.That((await retrieved.Value())).IsTypeOf<global::app.goal.@this>();
 
         // Sub-goal names should survive
         var subName = stack.Get("goal.Goals[0].Name");
         await Assert.That(subName.IsInitialized).IsTrue();
-        await Assert.That(subName.Value).IsEqualTo("SubGoal");
+        await Assert.That((await subName.Value())).IsEqualTo("SubGoal");
 
         // Step should be updated
         var stepText = stack.Get("goal.Steps[0].Text");
-        await Assert.That(stepText.Value).IsEqualTo("updated");
+        await Assert.That((await stepText.Value())).IsEqualTo("updated");
     }
 
     [Test]
