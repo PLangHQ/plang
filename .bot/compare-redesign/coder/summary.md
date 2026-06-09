@@ -1,6 +1,12 @@
 # Coder — compare-redesign
 
-## Version: v5 — Stage 2 async-door cutover (sprint mode). **Production code COMPILES.**
+## Version: v5 — Stage 2 async-door cutover (sprint mode). **FULL SOLUTION COMPILES (0/0/0).**
+
+`PLang` + `PlangConsole` + `PLang.Tests` all build clean. Production: 2130→0. Tests: 1736→0
+(one-pass receiver-aware regex got ~1700; the long tail — nested-paren receivers, object-initializer
+writes, expression-body sync lambdas, bool-view conversions, serializer string args — hand-fixed,
+documented below). The all-or-nothing Stage 2 cutover is **done end to end**.
+
 
 Ingi's call: **full sprint, build red mid-flight; go through everything, don't stop, commit/push
 between.** This session drove the entire Stage 2 door cutover.
