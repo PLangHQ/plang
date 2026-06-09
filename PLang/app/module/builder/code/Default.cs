@@ -75,7 +75,7 @@ public class Default : IBuilder
                 if (!wantedActions.Contains($"{a.Module}.{a.ActionName}")) continue;
                 foreach (var p in a.Parameters ?? new())
                 {
-                    var desc = p.Value as string ?? string.Empty;
+                    var desc = p.Materialize() as string ?? string.Empty;
                     foreach (System.Text.RegularExpressions.Match m in tokenRx.Matches(desc))
                         if (allTypeNames.Contains(m.Value)) refs.Add(m.Value);
                 }
@@ -130,13 +130,13 @@ public class Default : IBuilder
 
         var app = action.Context.App;
         var context = action.Context;
-        var searchPathValue = action.Path.Value?.ToString();
+        var searchPathValue = action.Path.Materialize()?.ToString();
         var searchPath = string.IsNullOrWhiteSpace(searchPathValue) ? "." : searchPathValue!;
 
         // builder.goals.Path is project-root-relative ("the directory the user is
         // building"), not goal-relative. The runtime auto-seeds %path% to the
         // app root before Build.goal runs, so by the time we get here
-        // action.Path.Value is typically already the absolute cwd. For the literal
+        // action.Path.Materialize() is typically already the absolute cwd. For the literal
         // "/" / "." / empty cases (no auto-seed), fall back to app.AbsolutePath.
         // For any other input that doesn't start with the root or with
         // "/", treat as a sibling-relative subpath under the root.
@@ -227,7 +227,7 @@ public class Default : IBuilder
                 continue;
             }
 
-            var text = readResult.Value?.ToString();
+            var text = readResult.Materialize()?.ToString();
             if (string.IsNullOrWhiteSpace(text)) continue;
 
             var goal = Goal.Parse(text, file);
@@ -252,11 +252,11 @@ public class Default : IBuilder
 
         var app = action.Context.App;
         var context = action.Context;
-        var goal = action.Goal.Value!;
+        var goal = (await action.Goal.Value())!;
 
         // Apply LLM-generated description if available in Variables
         var stepResults = context.Variable.Get("stepResults");
-        if (stepResults.Value is IDictionary<string, object?> resultsDict
+        if (stepResults.Materialize() is IDictionary<string, object?> resultsDict
             && resultsDict.TryGetValue("description", out var desc)
             && desc is string description
             && !string.IsNullOrEmpty(description))
@@ -303,7 +303,7 @@ public class Default : IBuilder
 
     public data.@this ValidateStepActions(validateStepActions action)
     {
-        var step = action.Step.Value;
+        var step = action.Step.Materialize() as global::app.goal.steps.step.@this;
         if (step == null)
         {
             // Dump what the planner actually returned so the user can see the
@@ -313,7 +313,7 @@ public class Default : IBuilder
             string planDetail = "(no plan was produced)";
             try
             {
-                var planValue = action.Context.Variable.Get("plan")?.Value;
+                var planValue = action.Context.Variable.Get("plan")?.Materialize();
                 if (planValue != null)
                 {
                     // Round-trip whatever shape the planner produced
@@ -395,10 +395,10 @@ public class Default : IBuilder
         var context = action.Context;
         var modules = app.Module;
 
-        if (action.Actions?.Value == null)
+        if (action.Actions?.Materialize() == null)
             return data.@this.Ok(true);
 
-        var actions = action.Actions!.Value!;
+        var actions = (await action.Actions.Value())!;
         var notFound = new List<string>();
         foreach (var a in actions)
         {
@@ -485,8 +485,8 @@ public class Default : IBuilder
                     // NormalizeParameterTypes; without it, ToGoalCall parses "goal.call" as a
                     // dotted name and the type-name guard below false-positives on every
                     // goal.call slot in the catalog.
-                    if (p.Value is string desc && IsCatalogDescription(desc, p.Type!.Name)) continue;
-                    var goalCall = ToGoalCall(p.Value, context);
+                    if (p.Materialize() is string desc && IsCatalogDescription(desc, p.Type!.Name)) continue;
+                    var goalCall = ToGoalCall(p.Materialize(), context);
                     if (goalCall == null || string.IsNullOrEmpty(goalCall.Name)) continue;
                     if (goalCall.Name.Contains('%')) continue;  // %var% resolves at runtime
                     // Hard reject CLR type names — these are the known leak vector
@@ -514,12 +514,12 @@ public class Default : IBuilder
                                 Message = $"goal.call.Name '{goalCall.Name}' carried the formal goal.call notation; repaired to '{m.Groups[1].Value}'."
                             });
                             // Name is init-only; rebuild with the repaired name, carry the rest.
-                            p.Value = new GoalCall {
+                            p.SetValue(new GoalCall {
                                 Name = m.Groups[1].Value,
                                 Parallel = goalCall.Parallel,
                                 Parameters = goalCall.Parameters,
                                 PrPath = goalCall.PrPath,
-                            };
+                            });
                         }
                         else
                             validationErrors.Add($"{a.Module}.{a.ActionName}: goal.call.Name '{goalCall.Name}' looks like a type name. Goal names are simple identifiers (e.g. 'BuildGoalCore', 'HandleValidationError'). Use the actual goal name from the @known mapping or the step text.");
@@ -625,9 +625,9 @@ public class Default : IBuilder
             // post-Stage-6) or a bare type-name string (llm.query → "json",
             // legacy handlers). Normalize a string to the structured form so
             // the terminal variable.set always gets a {name, kind?} Type.
-            if (buildResult.Value is global::app.type.@this typeEntity)
+            if (buildResult.Materialize() is global::app.type.@this typeEntity)
                 StampOnTerminalVariableSet(actions, typeEntity);
-            else if (buildResult.Value is string typeName && !string.IsNullOrEmpty(typeName))
+            else if (buildResult.Materialize() is string typeName && !string.IsNullOrEmpty(typeName))
                 StampOnTerminalVariableSet(actions, app.type.@this.Create(typeName, context: context));
         }
         return errors;
@@ -668,14 +668,14 @@ public class Default : IBuilder
         // Diagnostic — gated by app.Debug.IsEnabled, drops on the floor in production.
         // The merge handoff was the spot a Boolean-vs-Step type mismatch surfaced during
         // the builder rebuild; leaving the line in earns its keep next time it drifts.
-        var step = action.Step.Value;
-        var from = action.StepFromLlm.Value;
+        var step = action.Step.Materialize() as global::app.goal.steps.step.@this;
+        var from = action.StepFromLlm.Materialize() as global::app.goal.steps.step.@this;
         _ = action.Context.App.Debug.Write(
             $"builder.merge: step.Index={step?.Index} step.Actions={step?.Actions.Count} " +
             $"from.Index={from?.Index} from.Keep={from?.Keep} from.Actions={from?.Actions.Count}");
 
-        action.Step.Value!.Merge(action.StepFromLlm.Value!);
-        return data.@this.Ok(action.Step.Value);
+        (action.Step.Materialize() as global::app.goal.steps.step.@this)!.Merge((action.StepFromLlm.Materialize() as global::app.goal.steps.step.@this)!);
+        return data.@this.Ok(action.Step.Materialize());
     }
 
     // --- Enrich Response ---
@@ -683,8 +683,8 @@ public class Default : IBuilder
     public data.@this EnrichResponse(enrichResponse action)
     {
 
-        var response = action.StepResults.Value;
-        var goal = action.Goal.Value;
+        var response = action.StepResults.Materialize() as BuildResponse;
+        var goal = action.Goal.Materialize() as Goal;
         if (response == null || goal == null)
             return data.@this.Ok(response);
 
@@ -745,7 +745,7 @@ public class Default : IBuilder
                 var p = a.Parameters[i];
                 sb.Append(p.Name).Append('(');
                 if (p.Type != null) sb.Append('[').Append(p.Type.Name).Append("] ");
-                sb.Append(FormatValue(p.Value));
+                sb.Append(FormatValue(p.Materialize()));
                 sb.Append(')');
             }
         }
@@ -786,9 +786,9 @@ public class Default : IBuilder
     public async Task<data.@this> PromoteGroups(promoteGroups action)
     {
 
-        var steps = ToStepList(action.Steps.Value);
+        var steps = ToStepList(action.Steps.Materialize());
         if (steps == null || steps.Count == 0)
-            return data.@this.Ok(action.Steps.Value);
+            return data.@this.Ok(action.Steps.Materialize());
 
         // Collect groups and find the lowest level in each
         var groupLevels = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -834,7 +834,7 @@ public class Default : IBuilder
             await action.Context.App.CurrentActor.Channel.WriteTextAsync(global::app.channel.list.@this.Output,
                 $"  Group promotion: {promoted} step(s) promoted to detail pass{Environment.NewLine}");
 
-        return data.@this.Ok(action.Steps.Value);
+        return data.@this.Ok(action.Steps.Materialize());
     }
 
     private static string LowestLevel(string a, string b)
@@ -854,7 +854,7 @@ public class Default : IBuilder
         if (steps is List<object?> nullableList) return nullableList.Where(s => s != null).Select(s => s!).ToList();
         // The steps value is the native list type now — read each element's value.
         if (steps is app.type.list.@this nativeList)
-            return nativeList.Items.Select(d => d.Value).Where(v => v != null).Select(v => v!).ToList();
+            return nativeList.Items.Select(d => d.Materialize()).Where(v => v != null).Select(v => v!).ToList();
         if (steps is System.Collections.IList rawList)
         {
             var result = new List<object>();
@@ -926,13 +926,13 @@ public class Default : IBuilder
                     // type carries a static Build(value) hook. Separate field
                     // on the .pr — never "type:kind". Skip variable refs
                     // (%var% values resolve at runtime).
-                    if (p.Value is not null && !(p.Value is string sv && sv.StartsWith('%') && sv.EndsWith('%')))
+                    if (p.Materialize() is not null && !(p.Materialize() is string sv && sv.StartsWith('%') && sv.EndsWith('%')))
                     {
                         var declared = schemaProp.PropertyType;
                         var underlying = System.Nullable.GetUnderlyingType(declared) ?? declared;
                         if (underlying.IsGenericType && underlying.GetGenericTypeDefinition() == typeof(global::app.data.@this<>))
                             underlying = underlying.GetGenericArguments()[0];
-                        var kind = context.App.Type.KindHooks.Of(underlying, p.Value);
+                        var kind = context.App.Type.KindHooks.Of(underlying, p.Materialize());
                         if (kind != null) p.Kind = kind;
                     }
                 }
@@ -940,8 +940,8 @@ public class Default : IBuilder
 
             foreach (var p in a.Parameters)
             {
-                if (p.Value is null) continue;
-                if (p.Value is string sv && sv.StartsWith('%') && sv.EndsWith('%')) continue; // variable reference
+                if (p.Materialize() is null) continue;
+                if (p.Materialize() is string sv && sv.StartsWith('%') && sv.EndsWith('%')) continue; // variable reference
                 if (p.Type == null) continue;
 
                 // LLM-emitted "" for an unset nullable slot — same shape as
@@ -950,10 +950,10 @@ public class Default : IBuilder
                 // of failing in TryConvert below. For non-nullable slots leave the
                 // empty string in place so the conversion error surfaces and
                 // LlmFixer retries.
-                if (p.Value is string empty && empty.Length == 0
+                if (p.Materialize() is string empty && empty.Length == 0
                     && global::app.module.builder.ValidateResponseHelpers.IsNullableSchemaProp(actionType, p.Name))
                 {
-                    p.Value = null;
+                    p.SetValue(null);
                     continue;
                 }
 
@@ -961,7 +961,7 @@ public class Default : IBuilder
                 // metadata produced by Modules.Describe(), not values to normalize. They
                 // surface when the catalog is fed back through validate (BuilderValidateValid
                 // smoke test). Skip — coercing a description string to its declared type fails.
-                if (p.Value is string desc && IsCatalogDescription(desc, p.Type.Name)) continue;
+                if (p.Materialize() is string desc && IsCatalogDescription(desc, p.Type.Name)) continue;
 
                 var targetType = context.App.Type.Get(p.Type.Name);
                 if (targetType == null) continue;
@@ -982,14 +982,14 @@ public class Default : IBuilder
                 if (context.App.Type.Choices.Has(targetType)) continue;
 
                 // Already correctly typed? Skip (e.g. value is bool, target is bool).
-                if (targetType.IsInstanceOfType(p.Value)) continue;
+                if (targetType.IsInstanceOfType(p.Materialize())) continue;
 
                 // Convert in either direction: string → bool/int/double/etc., or
                 // numeric/bool → string when the parameter is declared string. The LLM
                 // emitting `Key=404 (int)` for a string-declared Key gets normalized here.
-                var conv = context.App.Type.Convert(p.Value, targetType, context);
+                var conv = context.App.Type.Convert(p.Materialize(), targetType, context);
                 if (conv.Value != null)
-                    p.Value = conv.Value;
+                    p.SetValue(conv.Materialize());
                 else if (conv.Error != null)
                     errors.Add($"{a.Module}.{a.ActionName}.{p.Name}: {conv.Error.Message}");
             }
@@ -1066,7 +1066,7 @@ public class Default : IBuilder
         if (!readResult.Success) return errors;
 
         // File provider auto-deserializes .pr files into a single Goal
-        if (readResult.Value is not Goal prGoal)
+        if (readResult.Materialize() is not Goal prGoal)
         {
             errors.Add(new Info
             {
@@ -1110,13 +1110,13 @@ public class Default : IBuilder
             if (!string.Equals(param.Type?.Name, "goal.call", StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            var goalCall = ToGoalCall(param.Value, context);
+            var goalCall = ToGoalCall(param.Materialize(), context);
             if (goalCall == null || string.IsNullOrEmpty(goalCall.Name))
                 continue;
 
             if (goalCall.Name.Contains('%'))
             {
-                param.Value = goalCall;
+                param.SetValue(goalCall);
                 continue;
             }
 
@@ -1128,7 +1128,7 @@ public class Default : IBuilder
             // downstream checks (or runtime) will surface a NotFound for it.
             goalCall.Action ??= action;
             var resolved = await goalCall.GetGoalAsync(app, context);
-            if (resolved.Success && resolved.Value is Goal g && g.PrPath != null)
+            if (resolved.Success && resolved.Materialize() is Goal g && g.PrPath != null)
             {
                 // Pre-resolve the .pr path. A slash-qualified Name keeps its
                 // folder prefix in the saved .pr — LoadFromFile leaf-matches it
@@ -1136,7 +1136,7 @@ public class Default : IBuilder
                 goalCall.PrPath = g.PrPath;
             }
 
-            param.Value = goalCall;
+            param.SetValue(goalCall);
         }
     }
 
@@ -1146,6 +1146,6 @@ public class Default : IBuilder
         // GoalCall owns its own assembly (string / JsonElement / dict → goal.call);
         // reach it through the infra door, which needs context for name-leak guards
         // and prPath resolution.
-        return context.App.Type.Convert(value, typeof(GoalCall), context).Value as GoalCall;
+        return context.App.Type.Convert(value, typeof(GoalCall), context).Materialize() as GoalCall;
     }
 }
