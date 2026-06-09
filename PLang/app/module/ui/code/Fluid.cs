@@ -28,8 +28,8 @@ public class Fluid : ITemplate
 
     public async Task<data.@this<global::app.type.text.@this>> Render(Render action)
     {
-        var templateContent = action.Template.Value!;
-        var isFile = action.IsFile?.Value;
+        var templateContent = ((await action.Template.Value())?.ToString()) ?? "";
+        var isFile = action.IsFile == null ? null : (await action.IsFile.Value())?.Value;
         string? sourceFile = null;
 
         // Resolve template content: file or inline
@@ -45,7 +45,7 @@ public class Fluid : ITemplate
             if (!readResult.Success)
                 return app.data.@this<global::app.type.text.@this>.FromError(readResult.Error
                     ?? new ServiceError("Template read failed", "IOError", 500));
-            templateContent = readResult.Value?.ToString() ?? "";
+            templateContent = (await readResult.Value())?.ToString() ?? "";
         }
 
         // Parse
@@ -112,9 +112,9 @@ public class Fluid : ITemplate
         }
 
         // Override with explicit parameters
-        if (action.Parameters?.Value != null)
+        if ((action.Parameters == null ? null : await action.Parameters.Value()) != null)
         {
-            foreach (var param in action.Parameters.Value.Items)
+            foreach (var param in (await action.Parameters.Value())!.Items)
             {
                 fluidContext.SetValue(param.Name, FluidValue.Create(param.Value, options));
             }
@@ -193,7 +193,7 @@ public class Fluid : ITemplate
     {
         public object? this[string key]
         {
-            get => d.Get(key)?.Value;
+            get => d.Get(key)?.Materialize();
             set => throw new NotSupportedException("template view is read-only");
         }
         public ICollection<string> Keys => d.Keys.ToList();
@@ -204,7 +204,7 @@ public class Fluid : ITemplate
         public bool TryGetValue(string key, out object? value)
         {
             var entry = d.Get(key);
-            value = entry?.Value;
+            value = entry?.Materialize();
             return entry != null;
         }
         public IEnumerator<KeyValuePair<string, object?>> GetEnumerator()
@@ -236,7 +236,7 @@ public class Fluid : ITemplate
     {
         public object? this[int index]
         {
-            get => l.At(index)?.Value;
+            get => l.At(index)?.Materialize();
             set => throw new NotSupportedException("template view is read-only");
         }
         public int Count => l.Count;
@@ -247,7 +247,7 @@ public class Fluid : ITemplate
                 yield return item.Value;
         }
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
-        public int IndexOf(object? item) { for (int i = 0; i < l.Count; i++) if (Equals(l.At(i)?.Value, item)) return i; return -1; }
+        public int IndexOf(object? item) { for (int i = 0; i < l.Count; i++) if (Equals(l.At(i)?.Materialize(), item)) return i; return -1; }
         public bool Contains(object? item) => IndexOf(item) >= 0;
         public void CopyTo(object?[] array, int arrayIndex) { foreach (var v in this) array[arrayIndex++] = v; }
         public void Add(object? item) => throw new NotSupportedException("template view is read-only");
@@ -343,7 +343,7 @@ public class Fluid : ITemplate
 
             if (result.Success)
             {
-                var output = result.Value?.ToString() ?? "";
+                var output = (await result.Value())?.ToString() ?? "";
                 await writer.WriteAsync(output);
             }
             else
@@ -389,7 +389,7 @@ public class Fluid : ITemplate
                 // includes (`{% include '../../etc/passwd' %}`) surface as
                 // permission prompts or denials — not silent file reads.
                 var exists = resolved.ExistsAsync().GetAwaiter().GetResult();
-                if (exists.Success && exists.Value == true)
+                if (exists.Success && (exists.Materialize() as global::app.type.@bool.@this)?.Value == true)
                     return new PlangFileInfo(resolved, candidate);
             }
             return new NotFoundFileInfo(subpath);
@@ -438,7 +438,7 @@ public class Fluid : ITemplate
             get
             {
                 var stat = _path.Stat().GetAwaiter().GetResult();
-                return stat.Success && stat.Value?.Length is long n ? n : 0;
+                return stat.Success && (stat.Materialize() as global::app.type.path.@this.StatInfo)?.Length is long n ? n : 0;
             }
         }
         public string? PhysicalPath => _path.Absolute;
@@ -454,10 +454,10 @@ public class Fluid : ITemplate
             // raw bytes; UTF-8 decode them. String-valued reads pass through.
             var read = _path.ReadText().GetAwaiter().GetResult();
             string content;
-            if (read.Value is byte[] bytes)
+            if (read.Materialize() is byte[] bytes)
                 content = System.Text.Encoding.UTF8.GetString(bytes);
             else
-                content = read.Value?.ToString() ?? "";
+                content = read.Materialize()?.ToString() ?? "";
             return new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
         }
     }
