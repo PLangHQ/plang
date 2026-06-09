@@ -36,14 +36,14 @@ public partial class Divide : IContext
 
     // Divide leaves the integer track — 7/2 → 3.5. Truncating integer division
     // is the explicit math.intdiv action.
-    public Task<data.@this<number>> Run()
+    public async Task<data.@this<number>> Run()
     {
-        var policy = MathPolicy.Resolve(Context, (Overflow?.Materialize() as global::app.type.choice.@this<POverflow>)?.Value, (Precision?.Materialize() as global::app.type.choice.@this<PPrecision>)?.Value);
-        var an = number.FromObject(A.Materialize());
-        var bn = number.FromObject(B.Materialize());
+        var policy = MathPolicy.Resolve(Context, (Overflow == null ? null : await Overflow.Value())?.Value, (Precision == null ? null : await Precision.Value())?.Value);
+        var an = number.FromObject(await A.Value());
+        var bn = number.FromObject(await B.Value());
         if (an == null || bn == null)
-            return Task.FromResult(data.@this<number>.FromError(
-                new global::app.error.ValidationError("math.divide requires two numbers", "InvalidInput")));
-        return Task.FromResult(number.Divide(an, bn, policy));
+            return data.@this<number>.FromError(
+                new global::app.error.ValidationError("math.divide requires two numbers", "InvalidInput"));
+        return number.Divide(an, bn, policy);
     }
 }

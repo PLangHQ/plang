@@ -514,6 +514,20 @@
         "health": "Stage 2 is async-signature-only; 2.1 (all 3 parts) is the real prereq for Stage 3. Stage 8 overlaps 2.1c (shared getter rewrite). Stage 8 still awaiting coder read-over.",
         "notes": "Coder's audit was correct on all three verified facts. Stage 2.1 now states the honest picture (signature vs substance). B-part sync surfaces (ToString/Equals/Fluid) and the await-once gate are the v3 finding-A resolution, designed never built. Two-phase sort stays Stage 6; getter emission shared with Stage 8."
       }
+    },
+    {
+      "id": "bbe6c589-ad39-439c-8f42-a6dd32a81887",
+      "bot": "coder",
+      "timestamp_start": "2026-06-09T12:01:09.360301Z",
+      "timestamp_end": null,
+      "intent": "Implement Stage 2.1 \u2014 route handler reads/navigation/param-getter through the async Value() door (Part A first).",
+      "before": {
+        "assumptions": "Door is async signature only (Value()=>new(Materialize())); 272 Materialize in app/module; nav sync; getter eager. Production compiles 0 errors.",
+        "risk": "B forces C via Variable.Get->As<T>; A separable. Keep production green."
+      },
+      "plan": ".bot/compare-redesign/coder/v6/plan.md",
+      "actions": [],
+      "after": null
     }
   ]
 }
