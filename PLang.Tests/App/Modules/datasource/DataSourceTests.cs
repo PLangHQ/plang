@@ -154,7 +154,7 @@ public class DataSourceTests
         var result = await ds.Get("settings", "Count");
         await result.IsSuccess();
         // JSON deserialization may box as long
-        var value = Convert.ToInt64(result.Value);
+        var value = Convert.ToInt64((await result.Value()));
         await Assert.That(value).IsEqualTo(42L);
     }
 

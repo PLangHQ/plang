@@ -1039,7 +1039,7 @@ public class VariablesAccessorTests
         await Assert.That(retrieved).IsNotNull();
 
         // The retrieved Data's Value should BE the Goal (same object)
-        await Assert.That(object.ReferenceEquals(retrieved!.Value, goal)).IsTrue();
+        await Assert.That(object.ReferenceEquals((retrieved!.Materialize()), goal)).IsTrue();
     }
 
     // ResolveDeep was deleted in v4 (resolution lives in data.As<T>(context) per call).

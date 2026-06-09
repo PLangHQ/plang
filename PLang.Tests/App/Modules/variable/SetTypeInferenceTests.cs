@@ -44,7 +44,7 @@ public class SetTypeInferenceTests
         await result.IsSuccess();
         var stored = context.Variable.Get("n");
         // The .pr/JSON pipeline normalizes integers to long; .Type derives "number".
-        await Assert.That(System.Convert.ToInt64(stored.Value)).IsEqualTo(42L);
+        await Assert.That(System.Convert.ToInt64((await stored.Value()))).IsEqualTo(42L);
         await Assert.That(stored.Type.Name).IsEqualTo("number");
     }
 
@@ -108,7 +108,7 @@ public class SetTypeInferenceTests
         var stored = context.Variable.Get("list");
         await Assert.That((await stored.Value())).IsTypeOf<List<object?>>();
         // The param-resolution walk copies the container — stored.Value is a distinct list.
-        await Assert.That(ReferenceEquals(stored.Value, src)).IsFalse();
+        await Assert.That(ReferenceEquals((stored.Materialize()), src)).IsFalse();
     }
 
     [Test]
@@ -121,7 +121,7 @@ public class SetTypeInferenceTests
         await result.IsSuccess();
         var stored = context.Variable.Get("d");
         await Assert.That((await stored.Value())).IsTypeOf<Dictionary<string, object?>>();
-        await Assert.That(ReferenceEquals(stored.Value, src)).IsFalse();
+        await Assert.That(ReferenceEquals((stored.Materialize()), src)).IsFalse();
     }
 
     [Test]

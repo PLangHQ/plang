@@ -64,7 +64,7 @@ public class NullWrapperTests
         // ABSENCE of a value — IsInitialized = false. Two different axes.
         var presentNull = Data.Null();
         await Assert.That(presentNull.IsInitialized).IsTrue();
-        await Assert.That(ReferenceEquals(presentNull.Value, NullV.Instance)).IsTrue();
+        await Assert.That(ReferenceEquals((presentNull.Materialize()), NullV.Instance)).IsTrue();
 
         var missing = Data.NotFound("x");
         await Assert.That(missing.IsInitialized).IsFalse();

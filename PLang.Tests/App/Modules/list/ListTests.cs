@@ -20,7 +20,7 @@ public class ListTests
     // so each element keeps its name/type/context. Readers (global::app.variable.navigator.List,
     // EnumerateItems) unwrap on access; low-level tests look at the Data wrapper.
     private static object? Unwrap(object? slot) =>
-        slot is global::app.data.@this d ? d.Value : slot;
+        slot is global::app.data.@this d ? (d.Materialize()) : slot;
 
     [Test]
     public async Task Add_CreatesNewList()

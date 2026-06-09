@@ -45,7 +45,7 @@ public class DataResolutionTests
 
         // Original raw is unchanged.
         await Assert.That(((List<object?>)(await data.Value())!)[0]).IsEqualTo("%name%");
-        await Assert.That(ReferenceEquals(data.Value, raw)).IsTrue();
+        await Assert.That(ReferenceEquals((data.Materialize()), raw)).IsTrue();
     }
 
     // Loop iteration scenario: action runs N times, %i% changes each iteration → property reads N distinct values.

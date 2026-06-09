@@ -44,7 +44,7 @@ public class MaterialiseErrorPathTests
     {
         await using var app = NewApp();
         var d = MalformedJson(app.User.Context, "cfg");
-        object? v = d.Value; // must not throw
+        object? v = (await d.Value()); // must not throw
         await Assert.That(v).IsNull();
         await Assert.That(d.Error).IsNotNull();
     }

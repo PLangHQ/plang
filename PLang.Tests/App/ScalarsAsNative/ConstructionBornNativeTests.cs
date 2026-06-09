@@ -20,7 +20,7 @@ public class ConstructionBornNativeTests
     {
         using var doc = JsonDocument.Parse(json);
         // A Data built from a JsonElement runs it through UnwrapJsonElement.
-        return new Data("x", doc.RootElement.Clone()).Value;
+        return new Data("x", doc.RootElement.Clone()).Materialize();
     }
 
     [Test]
@@ -70,7 +70,7 @@ public class ConstructionBornNativeTests
         var dict = (global::app.type.dict.@this)leaf!;
         var z = dict.Get("z");
         await Assert.That(z).IsNotNull();
-        await Assert.That(ReferenceEquals(z!.Value, NullV.Instance)).IsTrue();
+        await Assert.That(ReferenceEquals((z!.Materialize()), NullV.Instance)).IsTrue();
     }
 
     [Test]
@@ -82,12 +82,12 @@ public class ConstructionBornNativeTests
         var dict = (global::app.type.dict.@this)root!;
         foreach (var key in new[] { "s", "n", "f", "b", "z" })
         {
-            object? leaf = dict.Get(key)!.Value;
+            object? leaf = (await dict.Get(key)!.Value());
             await Assert.That(IsRawScalar(leaf)).IsFalse();
         }
         var arr = (global::app.type.list.@this)(await dict.Get("arr")!.Value())!;
         foreach (var el in arr.Items)
-            await Assert.That(IsRawScalar(el.Value)).IsFalse();
+            await Assert.That(IsRawScalar((await el.Value()))).IsFalse();
     }
 
     private static bool IsRawScalar(object? v) =>

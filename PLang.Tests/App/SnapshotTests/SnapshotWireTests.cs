@@ -274,9 +274,9 @@ public class SnapshotWireTests
         await Assert.That((await conv.Value()) is global::app.snapshot.@this)
             .IsTrue(); // ← if false, the as-snapshot conversion is the bug
 
-        context.Variable.Set("snap", conv.Value);
+        context.Variable.Set("snap", (await conv.Value()));
         context.Variable.Set("snap.variables.x", 2L);
-        await Assert.That(System.Convert.ToInt64(context.Variable.Get("snap.variables.x").Value)).IsEqualTo(2L);
+        await Assert.That(System.Convert.ToInt64((await context.Variable.Get("snap.variables.x").Value()))).IsEqualTo(2L);
 
         var snap = (await context.Variable.Get("snap").Value()) as global::app.snapshot.@this;
         await Assert.That(snap).IsNotNull();
@@ -342,7 +342,7 @@ public class SnapshotWireTests
 
         context.Variable.Set("snap", snap);
         context.Variable.Set("snap.variables.x", 2L);
-        await Assert.That(System.Convert.ToInt64(context.Variable.Get("snap.variables.x").Value)).IsEqualTo(2L);
+        await Assert.That(System.Convert.ToInt64((await context.Variable.Get("snap.variables.x").Value()))).IsEqualTo(2L);
 
         var result = await snap!.Resume(context);
         await result.IsSuccess();
@@ -414,11 +414,11 @@ public class SnapshotWireTests
         context.Variable.Set("snap", snap);
 
         // Navigate + read: %snap.variables.x% is 1.
-        await Assert.That(System.Convert.ToInt64(context.Variable.Get("snap.variables.x").Value)).IsEqualTo(1L);
+        await Assert.That(System.Convert.ToInt64((await context.Variable.Get("snap.variables.x").Value()))).IsEqualTo(1L);
 
         // Edit: set %snap.variables.x% = 2 — routes to the snapshot's SetVariable.
         context.Variable.Set("snap.variables.x", 2L);
-        await Assert.That(System.Convert.ToInt64(context.Variable.Get("snap.variables.x").Value)).IsEqualTo(2L);
+        await Assert.That(System.Convert.ToInt64((await context.Variable.Get("snap.variables.x").Value()))).IsEqualTo(2L);
 
         // Resume the edited snapshot — step1 reads the patched %x%.
         var result = await snap.Resume(context);

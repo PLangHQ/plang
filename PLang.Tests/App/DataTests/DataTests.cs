@@ -375,7 +375,7 @@ public class DataTests
         await Assert.That(ov.Name).IsEqualTo("test");
         // Born-native: a present null value carries the null.@this singleton
         // (not a C# null _value). IsInitialized stays true — value, not absence.
-        await Assert.That(ReferenceEquals(ov.Value, app.type.@null.@this.Instance)).IsTrue();
+        await Assert.That(ReferenceEquals((ov.Materialize()), app.type.@null.@this.Instance)).IsTrue();
         await Assert.That(ov.IsInitialized).IsTrue();
     }
 
@@ -395,7 +395,7 @@ public class DataTests
         var ov = Data.Null();
 
         await Assert.That(ov.Name).IsEqualTo("");
-        await Assert.That(ReferenceEquals(ov.Value, app.type.@null.@this.Instance)).IsTrue();
+        await Assert.That(ReferenceEquals((ov.Materialize()), app.type.@null.@this.Instance)).IsTrue();
     }
 
     [Test]
