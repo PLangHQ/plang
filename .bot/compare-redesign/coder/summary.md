@@ -1,67 +1,54 @@
 # Coder — compare-redesign
 
-## Version: v5 (FIRST IMPLEMENTATION — v1–v4 were reviews). Sprint mode: build RED across 2→6.
+## Version: v5 — Stage 2 async-door cutover (sprint mode). **Production code COMPILES.**
 
-Ingi's call this session: **full sprint, build red mid-flight** — cut the door, hold the build red,
-checkpoint each session until 2→6 lands green. (I started by writing a hand-off doc instead of
-cutting code; Ingi corrected that — coder cuts code.)
+Ingi's call: **full sprint, build red mid-flight; go through everything, don't stop, commit/push
+between.** This session drove the entire Stage 2 door cutover.
 
-### Landed & GREEN (committed)
-- **Stage 1** — `Comparison` enum (`PLang/app/data/Comparison.cs`); test green.
-- **Stage 2 `Peek()`** — `ScalarValue` → `Peek()` method; ~20 sites.
+### MILESTONE (committed, pushed)
+- **`PLang` + `PlangConsole` compile clean — 2130 → 0 `error CS`.** The all-or-nothing part of the
+  sprint (the async `Value()` door + every Data-receiver `.Value` migration across ~120 production
+  files) is structurally complete.
 
-### Landed, build RED (committed) — the architectural core is DONE
-- **The async door** (`PLang/app/data/this.cs`):
-  - `public virtual ValueTask<object?> Value()` — the single public read door (sync-completing in
-    memory; async read lands in Stage 3 for references). **No public sync `.Value` property.**
-  - `internal virtual object? Materialize()` — the sync in-memory core (factory + parse-rung +
-    cache). The sync surfaces that genuinely can't `await` (serialization, `ToString`, build-time)
-    read through here. `DynamicData` overrides it (recompute). `ParseRaw()` = inner registry parse.
-  - `public virtual void SetValue(object?)` — the write side (was the `Value` setter).
-  - `Data<T>.Value()` typed async (`new`); `Peek()` unchanged.
-  - **OBP note (Ingi caught this):** do NOT name the sync read `CurrentValue()`/`Materialized()` —
-    that's verb+noun / a noun-twin of `Value` (smell #4). The sync read is the materialization
-    **verb** `Materialize()` (internal plumbing); the one public door is `Value()`.
-- **Source generator** (`PLang.Generators/Emission/{Property/Data,Property/Code,Action}/this.cs`):
-  emits `Peek()` for param-slot diagnostics + presence guards, `Materialize()` for `[Code]` service
-  injection. **This collapsed all 956 generated errors to 0.**
-- **8 files migrated** as the proven reference set: `variable/set.cs`, `file/read.cs`,
-  `list/{contains,any,group,join}.cs`, `variable/navigator/{List,Dictionary}.cs` (navigation reads `Materialize()` — INavigator stays sync this pass).
+### The door (PLang/app/data/this.cs)
+- `public virtual ValueTask<object?> Value()` — the single public async read door. No public sync
+  `.Value` property.
+- `internal virtual object? Materialize()` — the sync in-memory core (factory + parse-rung). Sync
+  surfaces that can't `await` read through it. `DynamicData` overrides it. `ParseRaw()` = inner parse.
+- `public virtual void SetValue(object?)` — the write side (was the setter).
+- `Data<T>.Value()` typed async; `Peek()` = current rung, no parse (distinct from Materialize: see below).
+- **OBP (Ingi caught this):** the sync read is the **verb** `Materialize()` (internal plumbing), NOT
+  a `CurrentValue`/`Materialized` noun-twin of `Value` (smell #4 / verb+noun).
+- **Three levels:** `Peek()` = current rung, no parse; `Materialize()` = parse (sync, no I/O);
+  `await Value()` = async I/O read (Stage 3) + parse. They coincide once materialised.
 
-### Error burn-down
-`2130 → 1068` (all 956 generated gone; ~90 hand-written done). The compiler error list IS the
-remaining worklist: `dotnet build PLang 2>&1 | grep "error CS"` — ~1068 sites across ~91 handler
-files, every one a Data-receiver `.Value` (views keep their sync `.Value`, so they never error).
+### Source generator (PLang.Generators/Emission/{Property/Data,Property/Code,Action})
+Emits `Peek()` for param-slot diagnostics + presence guards, `Materialize()` for `[Code]` injection.
+Collapsed all 956 generated errors.
 
-### THE RECIPE for the remaining ~93 files (mechanical, proven)
-Per handler:
-1. `Run()`/method → `async`. Resolve each param door **once** at the top: `var x = await Param.Value();`
-   (await-once; don't read `Param.Value()` twice).
-2. **Guard-reorder** (only where a param is guarded): the `if (!Param.Success) return Param;` moves
-   **after** `await Param.Value()` — pre-await it inspects an unresolved Data and stops catching
-   bad-scheme/unset-`%var%`/convert errors. Pattern: `var p = await Path.Value(); if (!Path.Success) return Path; …use p…`. (`file/read.cs` is the worked example.)
-3. `return Task.FromResult(X)` → `return X` (method is now async).
-4. `Data.Value is/as T` → `Data.Materialize() is/as T` (sync surfaces); per-item in a `foreach` →
-   `await item.Value()`.
-5. Build-time / static-sync methods (e.g. `ValidateBuild`) can't `await` → `Materialize()`.
-6. A `Data<bool.@this>` truthiness read: `(await X.Value())?.Value == true`.
-NOTE: `GetChild`/navigation is still **sync** in this pass — leaving navigation-async (`ValueTask`
-nav chain) as the next sub-step once the call sites compile. Do NOT touch the to-be-deleted mediator
-(`Compare.cs`/`ScalarComparer`/`Operator.NormalizeTypes`) beyond making it compile — it dies in Stage 6.
+### The recipe used across ~120 files
+1. Async method: `await X.Value()` (typed door returns T; clean for typed params).
+2. Sync surface (serializer, predicate, lambda-in-sync-delegate, build-time, `INavigator`): `X.Materialize()`.
+3. Guard-reorder where a param is guarded: `var v = await X.Value(); if (!X.Success) return X;`.
+4. Write `X.Value = v` → `X.SetValue(v)`.
+5. `data.Value is/as T` → `Materialize() is/as T` (sync) or `await Value() is/as T` (async).
+6. `Data<bool>` truthiness: `(await X.Value())?.Value == true` / `(X.Materialize() as @bool.@this)?.Value`.
+7. Typed `.Value.Member` in sync: `(X.Materialize() as ConcreteType)!.Member`.
+Watch: `await` cannot go inside a sync lambda (`items.Find(i => …)`) — hoist the value to a local first.
 
-### Code example — the recipe (file/read.cs)
-```csharp
-public async Task<data.@this> Run()
-{
-    var path = await Path.Value();
-    if (!Path.Success) return Path;          // guard AFTER the await
-    var channel = new …file.@this(path!);
-    …
-    if ((await ResolveVariables.Value())?.Value == true && await read.Value() is string content) …
-}
-```
+### NOT done — the rest of the sprint
+- **`PLang.Tests` — 1736 `error CS` across 169 test files.** Same `.Value` migration in test code
+  (most `[Test]` are `async Task`, so `await X.Value()`). Mechanical, follows the recipe. The
+  compiler error list is the worklist: `dotnet build PLang.Tests 2>&1 | grep "error CS"`.
+- **Stages 3–6** (reference types `file`/`directory`/`url`, narrow-on-examination, per-type `Compare`
+  → `Comparison` enum, the `data.Compare` async entry, consumers + demolition of the old mediator).
+  The door is async-*shaped* but `Value()` still sync-completes everything — real async I/O reads,
+  narrowing, and the typed compare are Stages 3–6. The ~140 CompareRedesign test stubs stay red
+  until those land.
+- Navigation chain is still **sync** (reads via `Materialize()`); making `GetChild`→`Variable.Get`
+  →`Resolve` a `ValueTask` chain is the deferred nav-async sub-step.
 
 ### Next
-Continue the grind: `dotnet build PLang`, work the `error CS` list file-by-file with the recipe,
-commit periodically (red is fine). When PLang compiles, do navigation-async, then Stages 3–6, then
-land green at the 2→6 boundary. Both C# and `.goal` tests are the deliverable once green.
+1. Migrate `PLang.Tests` (1736 sites) with the recipe → both projects compile.
+2. Stages 3–6 (per architect stage files) → land green at the 2→6 boundary; CompareRedesign stubs pass.
+3. Run both suites.
