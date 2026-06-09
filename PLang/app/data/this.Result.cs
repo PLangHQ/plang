@@ -63,8 +63,8 @@ public partial class @this
     {
         if (other.Value == null) return this;
 
-        var myData = Value as List<@this> ?? new();
-        var otherData = other.Value as List<@this> ?? new();
+        var myData = Materialize() as List<@this> ?? new();
+        var otherData = other.Materialize() as List<@this> ?? new();
 
         foreach (var data in otherData)
         {
@@ -75,6 +75,6 @@ public partial class @this
                 myData.Add(data);
         }
 
-        return new @this("") { Value = myData };
+        return new @this("", myData);
     }
 }

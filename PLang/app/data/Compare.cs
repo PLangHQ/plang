@@ -33,8 +33,8 @@ public static class Compare
     /// </summary>
     public static int Order(@this? left, @this? right)
     {
-        object? lv = left?.Value;
-        object? rv = right?.Value;
+        object? lv = left?.Materialize();
+        object? rv = right?.Materialize();
 
         // A present null value rides as the null.@this singleton; the sort-last
         // policy lives here on Compare (the wrapper deliberately implements no
@@ -65,7 +65,7 @@ public static class Compare
     /// <c>==</c>, group, unique). Collections own structural equality; scalars
     /// compare by value (with the if-path coercions).
     /// </summary>
-    public static bool AreEqual(@this? left, @this? right) => AreEqualValues(left?.Value, right?.Value);
+    public static bool AreEqual(@this? left, @this? right) => AreEqualValues(left?.Materialize(), right?.Materialize());
 
     /// <summary>
     /// Structural equality on two raw values — the same path <see cref="AreEqual"/>

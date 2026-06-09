@@ -782,7 +782,7 @@ public partial class @this
     // so unrelated nested values keep their native Data-keying.
     internal static object? WireSlot(object? raw, string key) => raw switch
     {
-        app.type.dict.@this nd => nd.Get(key)?.Value,
+        app.type.dict.@this nd => nd.Get(key)?.Materialize(),
         IDictionary<string, object?> d => d.TryGetValue(key, out var v) ? v : null,
         _ => null,
     };

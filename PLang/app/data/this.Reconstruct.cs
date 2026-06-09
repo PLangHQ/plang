@@ -271,7 +271,7 @@ public partial class @this
                         "NormalizeContextRequired");
 
                 string? relative = null;
-                if (data.Value is string raw)
+                if (data.Materialize() is string raw)
                 {
                     // Bridge: incoming as a bare string (pre-Stage-2-wiring shape).
                     relative = raw;
@@ -282,7 +282,7 @@ public partial class @this
                     {
                         if (child.Name.Equals("relative", StringComparison.OrdinalIgnoreCase))
                         {
-                            relative = child.Value?.ToString();
+                            relative = child.Materialize()?.ToString();
                             break;
                         }
                     }

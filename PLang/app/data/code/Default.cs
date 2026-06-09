@@ -16,7 +16,7 @@ public class Default : IGrep
 
     public @this Grep(@this data, string pattern, int contextLines = 0)
     {
-        var text = data.Value?.ToString();
+        var text = data.Materialize()?.ToString();
         if (text == null || string.IsNullOrEmpty(pattern))
             return new @this(data.Name, "");
 
@@ -43,7 +43,7 @@ public class Default : IGrep
 
     public @this GrepCount(@this data, string pattern)
     {
-        var text = data.Value?.ToString();
+        var text = data.Materialize()?.ToString();
         if (text == null || string.IsNullOrEmpty(pattern))
             return new @this(data.Name, 0);
 

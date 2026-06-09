@@ -193,7 +193,7 @@ public partial class @this
                     "Deserialization failed after decompression: " + (deser.Error?.Message ?? "unknown"),
                     "DecompressError", 500));
 
-            var result = deser.Value as @this;
+            var result = deser.Materialize() as @this;
             if (result == null)
                 return FromError(new ServiceError("Decompressed payload did not parse to a Data document", "DecompressError", 500));
 
@@ -231,7 +231,7 @@ public partial class @this
     /// </summary>
     public @this Unwrap()
     {
-        if (Value is @this inner)
+        if (Materialize() is @this inner)
         {
             inner.Context = _context;
             return inner;

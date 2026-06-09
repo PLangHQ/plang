@@ -77,7 +77,7 @@ public partial class @this
         if (!child.IsInitialized) return child;
 
         // Inject context on IContext values during traversal
-        if (child.Value is app.module.IContext contextual)
+        if (child.Materialize() is app.module.IContext contextual)
             contextual.Context = _context;
 
         if (string.IsNullOrEmpty(remaining))
@@ -140,7 +140,7 @@ public partial class @this
     /// </summary>
     protected virtual @this InvokeMethod(string method, string args)
     {
-        var str = Value?.ToString();
+        var str = Materialize()?.ToString();
 
         return method.ToLowerInvariant() switch
         {
@@ -174,7 +174,7 @@ public partial class @this
         if (app != null)
         {
             var result = app.Code.Get<app.data.code.IGrep>();
-            if (result.Value is app.data.code.IGrep g) return g;
+            if (result.Materialize() is app.data.code.IGrep g) return g;
         }
         return new app.data.code.Default();
     }
@@ -245,7 +245,7 @@ public partial class @this
         if (RawUntouched && key.Equals("Type", StringComparison.OrdinalIgnoreCase))
             return new @this(key, Type, parent: this);
 
-        var val = Value;
+        var val = Materialize();
 
         // Materialization failed at touch-time — the actionable parse error is
         // stamped on `this.Error`, but `val` came back null. Surface that error
@@ -275,7 +275,7 @@ public partial class @this
         if (val is string && _type != null)
         {
             ForceMaterialize();
-            val = Value;
+            val = Materialize();
             if (val == null && Error?.Key == "MaterializeFailed")
                 return FromError(Error);
         }
