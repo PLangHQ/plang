@@ -75,9 +75,9 @@ public class MaterialiseErrorPathTests
 
         var result = ctx.Variable.Set("cfg.host", "value");
 
-        await Assert.That(result.Error).IsNotNull();
-        await Assert.That(result.Error!.Key).IsEqualTo("MaterializeFailed");
-        await Assert.That(result.Error!.Message.Contains("cfg")).IsTrue();
+        await Assert.That((await result).Error).IsNotNull();
+        await Assert.That((await result).Error!.Key).IsEqualTo("MaterializeFailed");
+        await Assert.That((await result).Error!.Message.Contains("cfg")).IsTrue();
     }
 
     // The deeper set-path — `set %cfg.a.host% = ...` reaches the parent through an
@@ -91,8 +91,8 @@ public class MaterialiseErrorPathTests
 
         var result = ctx.Variable.Set("cfg.a.host", "value");
 
-        await Assert.That(result.Error).IsNotNull();
-        await Assert.That(result.Error!.Key).IsEqualTo("MaterializeFailed");
-        await Assert.That(result.Error!.Message.Contains("cfg")).IsTrue();
+        await Assert.That((await result).Error).IsNotNull();
+        await Assert.That((await result).Error!.Key).IsEqualTo("MaterializeFailed");
+        await Assert.That((await result).Error!.Message.Contains("cfg")).IsTrue();
     }
 }

@@ -54,7 +54,7 @@ public class IdentityErrorPathTests
 
         var result = new global::app.module.identity.Get { Context = Ctx, Name = null }.Run();
         await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("IOError");
+        await Assert.That((await result).Error!.Key).IsEqualTo("IOError");
     }
 
     [Test]
@@ -71,7 +71,7 @@ public class IdentityErrorPathTests
 
         var result = new global::app.module.identity.Get { Context = Ctx, Name = null }.Run();
         await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("IOError");
+        await Assert.That((await result).Error!.Key).IsEqualTo("IOError");
     }
 
     // --- Handler catch blocks for save failures ---
