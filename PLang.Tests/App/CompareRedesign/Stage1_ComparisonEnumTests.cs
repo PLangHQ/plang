@@ -1,3 +1,5 @@
+using Comparison = global::app.data.Comparison;
+
 namespace PLang.Tests.App.CompareRedesign;
 
 // Stage 1 — the sign-free result type. The enum body is the only thing this stage
@@ -10,8 +12,13 @@ public class Stage1_ComparisonEnumTests
     [Test]
     public async Task ComparisonEnum_HasExactlyFiveMembers_NoSignNumbers()
     {
-        // enum is exactly { Less, Equal, Greater, NotEqual, Incomparable }; no int-cast contract
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // enum is exactly { Less, Equal, Greater, NotEqual, Incomparable }
+        string[] names = System.Enum.GetNames(typeof(Comparison));
+        await Assert.That(names).IsEquivalentTo(
+            new[] { "Less", "Equal", "Greater", "NotEqual", "Incomparable" });
+
+        // Incomparable is distinct from NotEqual — the split that makes
+        // `dict == dict` work while `dict == number` errors.
+        await Assert.That(Comparison.NotEqual).IsNotEqualTo(Comparison.Incomparable);
     }
 }

@@ -367,6 +367,20 @@
         "notes": "125 C# tests + 15 .goal tests. dotnet build PLang.Tests = 0 errors. Coverage maps to architect/plan/test-coverage.md. Next: coder."
       },
       "timestamp_end": "2026-06-09T08:39:16.975497Z"
+    },
+    {
+      "id": "a0df5268-5276-41fe-981b-84146cd9ac77",
+      "bot": "coder",
+      "timestamp_start": "2026-06-09T08:46:59.578043Z",
+      "timestamp_end": null,
+      "intent": "Implement the typed value model \u2014 Stage 1 enum first, then drive Stages 2-6 as one green unit.",
+      "before": {
+        "assumptions": "v1-v4 were reviews; no production code yet. Architect plan settled, test-designer stubbed ~140 tests. Baseline build clean.",
+        "risk": "Stages 2-6 are one all-or-nothing green unit (async door rewrite + ~42 handler sites + source-gen); build stays red mid-flight."
+      },
+      "plan": ".bot/compare-redesign/coder/v5/plan.md",
+      "actions": [],
+      "after": null
     }
   ]
 }
