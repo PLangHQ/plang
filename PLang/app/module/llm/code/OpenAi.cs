@@ -66,7 +66,7 @@ public sealed class OpenAi : ILlm
         var endpoint = await ResolveConfigAsync(settings, "llm.endpoint", "OPENAI_API_ENDPOINT",
             "https://api.openai.com/v1/chat/completions");
         var apiKey = await ResolveConfigAsync(settings, "llm.apiKey", "OPENAI_API_KEY", null);
-        var model = string.IsNullOrWhiteSpace(action.Model?.Value) ? null : action.Model.Value;
+        var model = (action.Model?.Materialize()?.ToString()) is { Length: >0 } __m ? __m : null;
         model ??= await ResolveConfigAsync(settings, "llm.model", null, "gpt-5.4-nano");
 
         // --- Validate ---
@@ -102,17 +102,17 @@ public sealed class OpenAi : ILlm
             };
         }
 
-        if (action.ContinuePreviousConversation.Value)
+        if ((action.ContinuePreviousConversation.Materialize() as global::app.type.@bool.@this)?.Value == true)
         {
             var prev = context.Get<List<LlmMessage>>(ConversationKey);
             if (prev != null)
                 messages.InsertRange(0, prev);
 
-            schema = SerializeSchema(action.Schema?.Value) ?? context.Get<string>(SchemaKey);
+            schema = SerializeSchema(action.Schema?.Materialize()) ?? context.Get<string>(SchemaKey);
         }
         else
         {
-            schema = SerializeSchema(action.Schema?.Value);
+            schema = SerializeSchema(action.Schema?.Materialize());
             context.Set<List<LlmMessage>>(ConversationKey, null!);
             context.Set<string>(SchemaKey, null!);
         }
@@ -121,7 +121,7 @@ public sealed class OpenAi : ILlm
         var originalMessages = CloneMessages(messages);
 
         // Append format/schema instruction
-        var formatInstruction = BuildFormatInstruction(action.Format?.Value, schema);
+        var formatInstruction = BuildFormatInstruction(action.Format?.Materialize()?.ToString(), schema);
         if (formatInstruction != null)
         {
             var systemMsg = messages.Find(m => m.Role == "system");
@@ -142,9 +142,9 @@ public sealed class OpenAi : ILlm
         // so cache:false is a full bypass: no read, no stale entry left behind.
         var buildCacheOff = app.Builder.IsEnabled && !app.Builder.Cache;
         string? cacheKey = null;
-        if (action.Cache.Value && action.Tools?.GetValue<List<GoalCall>>() == null && !buildCacheOff)
+        if ((action.Cache.Materialize() as global::app.type.@bool.@this)?.Value == true && action.Tools?.GetValue<List<GoalCall>>() == null && !buildCacheOff)
         {
-            cacheKey = ComputeCacheKey(messages, model, action.Temperature.GetValue<double>(), schema, action.Format?.Value);
+            cacheKey = ComputeCacheKey(messages, model, action.Temperature.GetValue<double>(), schema, action.Format?.Materialize()?.ToString());
             var cached = await settings.Get(CacheTable, cacheKey);
             if (cached.Success && cached.Value != null)
             {
@@ -188,11 +188,11 @@ public sealed class OpenAi : ILlm
                 ["temperature"] = action.Temperature.GetValue<double>(),
                 ["max_completion_tokens"] = action.MaxTokens.GetValue<long>()
             };
-            if (action.TopP?.Value != null)
+            if (action.TopP?.Materialize() != null)
                 body["top_p"] = action.TopP.GetValue<double>();
             if (apiTools != null)
                 body["tools"] = apiTools;
-            if (action.OnStream?.Value != null)
+            if (action.OnStream?.Materialize() != null)
                 body["stream"] = true;
 
             // Remove null entries
@@ -213,11 +213,11 @@ public sealed class OpenAi : ILlm
                 Unsigned = new data.@this<global::app.type.@bool.@this>("", true),
                 TimeoutInSec = new data.@this<global::app.type.number.@this>("", 120),
                 OnStream = action.OnStream,
-                StreamAs = action.OnStream?.Value != null ? new data.@this<global::app.type.choice.@this<StreamFormat>>("", StreamFormat.SSE) : default
+                StreamAs = action.OnStream?.Materialize() != null ? new data.@this<global::app.type.choice.@this<StreamFormat>>("", StreamFormat.SSE) : default
             };
 
             data.@this httpResult = await app.RunAction(httpAction, context);
-            if (action.OnStream?.Value != null)
+            if (action.OnStream?.Materialize() != null)
             {
                 // TODO: streaming tool call accumulation needs work
                 // For now, streaming returns the accumulated result via the callback
@@ -316,7 +316,7 @@ public sealed class OpenAi : ILlm
                         ["Model"] = model,
                         ["PromptTokens"] = totalPromptTokens,
                         ["CompletionTokens"] = totalCompletionTokens,
-                        ["MaxTokens"] = action.MaxTokens?.Value
+                        ["MaxTokens"] = action.MaxTokens?.Materialize()
                     }
                 });
             }
@@ -382,7 +382,7 @@ public sealed class OpenAi : ILlm
             var rawResponse = content ?? "";
 
             // --- Format extraction ---
-            var effectiveFormat = action.Format?.Value ?? (schema != null ? "json" : null);
+            var effectiveFormat = action.Format?.Materialize()?.ToString() ?? (schema != null ? "json" : null);
             var extracted = ExtractResponse(rawResponse, effectiveFormat);
 
             // --- JSON validation ---
@@ -413,12 +413,12 @@ public sealed class OpenAi : ILlm
             }
 
             // --- Custom validation ---
-            if (action.OnValidateResponse?.Value != null)
+            if (action.OnValidateResponse?.Materialize() != null)
             {
                 var validationCall = new GoalCall
                 {
-                    Name = action.OnValidateResponse.Value.Name,
-                    PrPath = action.OnValidateResponse.Value.PrPath,
+                    Name = (action.OnValidateResponse.Materialize() as global::app.goal.GoalCall)!.Name,
+                    PrPath = (action.OnValidateResponse.Materialize() as global::app.goal.GoalCall)!.PrPath,
                     Parameters = new List<data.@this> { new data.@this("response", extracted) }
                 };
                 var validationResult = await app.RunGoalAsync(validationCall, context);
@@ -530,12 +530,12 @@ public sealed class OpenAi : ILlm
         var context = action.Context;
 
         // OnToolCall — starting
-        if (action.OnToolCall?.Value != null)
+        if (action.OnToolCall?.Materialize() != null)
         {
             var startCall = new GoalCall
             {
-                Name = action.OnToolCall.Value.Name,
-                PrPath = action.OnToolCall.Value.PrPath,
+                Name = (action.OnToolCall.Materialize() as global::app.goal.GoalCall)!.Name,
+                PrPath = (action.OnToolCall.Materialize() as global::app.goal.GoalCall)!.PrPath,
                 Parameters = new List<data.@this>
                 {
                     new data.@this("name", toolCall.Name),
@@ -579,12 +579,12 @@ public sealed class OpenAi : ILlm
         }
 
         // OnToolCall — completed
-        if (action.OnToolCall?.Value != null)
+        if (action.OnToolCall?.Materialize() != null)
         {
             var endCall = new GoalCall
             {
-                Name = action.OnToolCall.Value.Name,
-                PrPath = action.OnToolCall.Value.PrPath,
+                Name = (action.OnToolCall.Materialize() as global::app.goal.GoalCall)!.Name,
+                PrPath = (action.OnToolCall.Materialize() as global::app.goal.GoalCall)!.PrPath,
                 Parameters = new List<data.@this>
                 {
                     new data.@this("name", toolCall.Name),
@@ -742,14 +742,14 @@ public sealed class OpenAi : ILlm
         {
             var imgPath = global::app.type.path.@this.Resolve(image, context);
             var dataUri = imgPath.ReadAsDataUri().GetAwaiter().GetResult();
-            if (dataUri.Success && !string.IsNullOrEmpty(dataUri.Value))
+            if (dataUri.Success && !string.IsNullOrEmpty(dataUri.Materialize()?.ToString()))
             {
                 return new Dictionary<string, object>
                 {
                     ["type"] = "image_url",
                     ["image_url"] = new Dictionary<string, string>
                     {
-                        ["url"] = dataUri.Value
+                        ["url"] = dataUri.Materialize()?.ToString()
                     }
                 };
             }
@@ -938,7 +938,7 @@ public sealed class OpenAi : ILlm
         var result = await settings.Get("LlmConfig", settingKey);
         if (result.Success && result.Value != null)
         {
-            var val = result.Value is data.@this d ? d.Value?.ToString() : result.Value.ToString();
+            var val = result.Materialize() is data.@this d ? d.Materialize()?.ToString() : result.Materialize()?.ToString();
             if (!string.IsNullOrEmpty(val)) return val;
         }
 
@@ -999,9 +999,9 @@ public sealed class OpenAi : ILlm
         // The cached value is a dictionary with Value + metadata. A json cache
         // entry now materializes to the native dict value type — unwrap it to raw
         // so the Dictionary branch below reads Value + the metadata props.
-        var cachedValue = cached.Value is app.type.dict.@this nativeDict
+        var cachedValue = cached.Materialize() is app.type.dict.@this nativeDict
             ? nativeDict.ToRaw()
-            : cached.Value;
+            : cached.Materialize();
         object? resultValue = null;
         var props = new Dictionary<string, object?>();
 
