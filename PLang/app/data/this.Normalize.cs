@@ -33,7 +33,7 @@ public partial class @this
     public object? Normalize(View mode = View.Out)
     {
         var visited = new HashSet<object>(System.Collections.Generic.ReferenceEqualityComparer.Instance);
-        return NormalizeValue(Peek(), mode, visited, depth: 0, types: _context?.App?.Type);
+        return NormalizeValue(Materialize(), mode, visited, depth: 0, types: _context?.App?.Type);
     }
 
     /// <summary>

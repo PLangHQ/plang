@@ -40,7 +40,7 @@ public partial class @this
         // Data) re-walk to themselves in Normalize. Domain objects and raw
         // collections still need Normalize to decompose into the property-bag
         // shape Walk consumes.
-        var raw = Peek();
+        var raw = Materialize();   // decode leaf — a raw-backed value (sqlite row, file load) parses here
         var tree = IsLeafShape(raw) ? raw : Normalize();
         var result = Walk(tree, typeof(T), context);
         if (result is null) return default;

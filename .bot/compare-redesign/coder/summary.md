@@ -78,3 +78,32 @@ exact continuation worklist.
 2. Coder (focused session): B+C as one unit — nav chain async, getter rewrite + null model, `.Value(fallback)`,
    then migrate the ~200 method-group sites + optional-param retrofits in the same pass; land green.
 3. Then Stages 3–6.
+
+
+## v6 continued — dispatch-resolution model landed; suite green except stage stubs
+
+**Final model (Ingi's design, settled after the Param/Seal/HoldsReference smells):**
+%var% decode happens ONCE per execution at the dispatch boundary — the generated
+`__ResolveParameters()` (awaited by `ExecuteAsync`/`SetAction` before Run/Build) resolves
+each .pr parameter into the handler's backing field. The handler instance is the
+per-execution home: no per-execution Data copies, no caching on the shared .pr param,
+no store sealing. The async value door (`await Value()`) remains for CONTENT — a
+path/file value loads on its own first read (Stage 3); an unused param costs one cheap
+decode, never I/O. Getters are plain backing reads (sync Uninitialized/[Default]
+fallback for direct C# composition). Deleted: Param factories, Seal(), HoldsReference(),
+the _resolved latch, decode-at-Set, dead ResolveParameter. `data/` has no GoalCall
+calls left (one IsSelfResolvingParams walk-skip remains; deletes with born-native-at-load).
+
+**Suite: 4165/4290.** The 125 failing = 124 CompareRedesign stage stubs
+(`Assert.Fail("Not implemented")` bodies, Stages 2-7) + 1 known port-collision flake
+(HttpTestServer). All real regressions fixed, including: null-model consumer gates
+(foreach/Ed25519/channel.set), literal typed-conversion, boxed-ValueTask sites,
+SubstitutePrimitive door-read (DynamicData factories), Authorize EOF=deny (infinite
+reprompt hang), Fluid null guard, Reconstruct/Normalize materialize (sqlite rows).
+
+### Next
+1. Fill the 34 Stage-2 stub bodies (they test the door/dispatch model just built).
+2. Born-native composite reconstruction at load (FromWireShape reconstructs GoalCall
+   from its type tag) -> delete GoalCall.Convert + the IsSelfResolvingParams carve-out.
+3. Stages 3-7 (reference narrowing, per-type Compare, data.Compare entry, demolition).
+4. plang --test (clean rebuild first - stale-binary trap; read the docs per CLAUDE.md).
