@@ -1,5 +1,9 @@
 # Architect — compare-redesign
 
+## 2026-06-09 — Coder v4 follow-up (one note: param resolution-error guard reorder)
+
+Coder pulled the v3 resolutions (`coder/v4/comments.md`) — A/B/C "resolved well," A "the right way." One mechanical consequence to name (explicitly *not* a design change): the lazy `GetParameter<T>` moves the param **resolution-error guard**. Verified: `GetParameter<T>` is net-new; handlers guard eagerly today (`if (!Path.Success) return Path;` *before* the first `await`, e.g. `file/read.cs:31`) because the getter resolved on access. Under the lazy `Data<T>`, resolution + `.Success`/`.Error` only fire at `await Param.Value()` — so a pre-`await` guard silently inspects the *unresolved* Data and stops catching bad-scheme/unset-`%var%`/convert failures (they resurface as an NRE on `.Value!`). Resolution: the ~42 `param.Value!` sites migrate as **await → guard → use** (`var p = await Path.Value(); if (!Path.Success) return Path; … p …`) — the guard-reorder is part of each site, not just the `.Value` → `await .Value()` swap. Folded into Stage 2; failure-matrix row added. Coder verdict: **build it**, plan ready.
+
 ## 2026-06-09 — Coder v3 follow-up (one substantive finding + two notes)
 
 Coder pulled the seven v2 resolutions (`coder/v3/comments.md`) — six clean, one substantive new finding (A) + two one-liners (B, C). Worked A through with Ingi.

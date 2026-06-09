@@ -87,6 +87,7 @@ Three sections: the coverage matrix (one test per row), the failure matrix (nega
 | reading a value's raw via a sync public `.Value` | there is none — compile error | compile error | C# |
 | `%x == null` for any type | must **not** error | `Equal`/`NotEqual` | goal |
 | `[%dict%] contains %number%` (type-mismatch element) | membership returns no-match | **false, no error** | goal |
+| param resolution failure (bad scheme / unset `%var%` / convert) — guard *after* `await Param.Value()` | handler returns the typed Data error | typed error, **not** an NRE on `.Value!` | C#/goal |
 
 Impossible-by-design (do **not** assert these fail): `text`/`number` cross-type (coerces, never errors); same-type equality of any type; a default compare doing I/O (sync by construction); membership erroring on a type-mismatch (it returns no-match — the green/neg row is the correct assertion).
 
