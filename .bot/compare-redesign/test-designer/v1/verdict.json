@@ -1,0 +1,9 @@
+{
+  "pass": true,
+  "summary": "125 C# TUnit tests across 14 files + 15 PLang .goal tests, all stubbed (Assert.Fail / throw \"not implemented\"). dotnet build PLang.Tests succeeds with 0 errors. Coverage maps cleanly to architect/plan/test-coverage.md (all matrix rows + failure rows + 6 integration cuts).",
+  "files": {
+    "csharp": "PLang.Tests/App/CompareRedesign/ (14 files)",
+    "goal": "Tests/CompareRedesign/ (15 .test.goal files)"
+  },
+  "next": "coder"
+}

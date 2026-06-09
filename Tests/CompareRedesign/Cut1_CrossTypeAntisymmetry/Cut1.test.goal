@@ -1,0 +1,5 @@
+Start
+/ Cut 1 — cross-type antisymmetry. %a%="10" (text), %b%=9 (number).
+/ if %a% > %b% AND if %b% < %a% must both fire (numeric, not lexical). "5" == 5 → true.
+/ Proves rank + coercion + dispatch + boundary; catches the antisymmetry bug rank exists to prevent.
+- throw "not implemented"

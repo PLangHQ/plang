@@ -1,0 +1,6 @@
+Start
+/ Cut 5 — enum boundary + membership. %d% a dict, %n% = 5.
+/ if %d% > %n% → error; if %d% == %n% → error; if %x% == null → works;
+/ if %d% == %d2% → works; [%d%] contains %n% → false, no error.
+/ Proves Incomparable/NotEqual boundary, null carve-out, membership-never-errors.
+- throw "not implemented"

@@ -1,0 +1,3 @@
+Start
+/ Failure — sort %mixed-incomparable% (list containing non-coercible cross-type pair) → sort surfaces Incomparable/NotEqual as PLang error.
+- throw "not implemented"

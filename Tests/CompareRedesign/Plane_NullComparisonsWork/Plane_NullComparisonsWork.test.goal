@@ -1,0 +1,3 @@
+Start
+/ Plane — every %x% == null works regardless of x's type (null is never Incomparable; equality carve-out).
+- throw "not implemented"

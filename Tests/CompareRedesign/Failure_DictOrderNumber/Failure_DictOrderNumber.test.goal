@@ -1,0 +1,3 @@
+Start
+/ Failure — if %dict% > %number% (order, non-coercible cross-type) → boundary maps Incomparable → PLang error.
+- throw "not implemented"

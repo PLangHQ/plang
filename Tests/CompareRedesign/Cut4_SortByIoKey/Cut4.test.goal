@@ -1,0 +1,4 @@
+Start
+/ Cut 4 — sort by an I/O key. sort %files% by size — keys materialise async (stat reads in phase 1),
+/ order runs sync, result correct, no hang. Proves two-phase sort with no sync-over-async.
+- throw "not implemented"

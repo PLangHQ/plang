@@ -1,0 +1,3 @@
+Start
+/ Failure — if %dict% == %number% (equality, non-coercible cross-type) → Incomparable → PLang error.
+- throw "not implemented"

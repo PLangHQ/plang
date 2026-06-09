@@ -1,0 +1,4 @@
+Start
+/ Plane — %x.size% (the content key) and %x!size% (the typed property) are distinct, no shadowing.
+/ Sigil picks the plane: . = data, ! = property + envelope.
+- throw "not implemented"

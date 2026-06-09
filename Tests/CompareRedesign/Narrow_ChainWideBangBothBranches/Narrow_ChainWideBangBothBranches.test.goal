@@ -1,0 +1,4 @@
+Start
+/ Narrow — %config!file!path% resolves whether config narrowed to dict or not. Chain-wide !,
+/ never headline-only — no flow-dependent crash on the un-examined branch.
+- throw "not implemented"

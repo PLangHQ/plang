@@ -1,0 +1,3 @@
+Start
+/ Failure — if %dict% < %dict% (ordering on equality-only type) → boundary maps NotEqual → PLang error.
+- throw "not implemented"

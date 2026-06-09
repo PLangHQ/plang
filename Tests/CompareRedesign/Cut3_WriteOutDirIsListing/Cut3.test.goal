@@ -1,0 +1,5 @@
+Start
+/ Cut 3 — write out %dir% is a listing, not a content dump.
+/ A directory with files/sub-dirs. write out %dir% emits paths/names, NOT the files' contents.
+/ Proves dir.list : list<path> + type-owned serialization (each-entry-self-serialising would have dumped contents).
+- throw "not implemented"

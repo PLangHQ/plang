@@ -1,0 +1,4 @@
+Start
+/ Plane — membership never errors. [%dict%] contains %number% → false (Incomparable element = no-match).
+/ Applies to contains / in / indexof / unique — only comparison operators + sort error.
+- throw "not implemented"

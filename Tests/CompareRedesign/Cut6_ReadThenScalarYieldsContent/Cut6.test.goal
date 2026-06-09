@@ -1,0 +1,6 @@
+Start
+/ Cut 6 — read-then-scalar yields content (the inversion guard).
+/ read now returns a file (was lazy content). set %c% = read file.txt; write out %c% or %c% interpolated
+/ must still emit the file's CONTENT, not the location "file.txt".
+/ Guards the .-scalar → content forward across the `read X → file` inversion.
+- throw "not implemented"

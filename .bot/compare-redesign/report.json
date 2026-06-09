@@ -297,6 +297,76 @@
         "health": "plan ready to implement once the guard-reorder note lands",
         "notes": "No code. Build it."
       }
+    },
+    {
+      "id": "499518d7-efe8-44d3-88e9-be2013661580",
+      "bot": "test-designer",
+      "timestamp_start": "2026-06-09T08:27:54.035200Z",
+      "intent": "Author the test contract (C# TUnit + PLang .goal) for the typed-value-model branch \u2014 Stages 1-7 + the 5 integration cuts.",
+      "before": {
+        "assumptions": "Architect plan + coder v4 approval are settled (build it). The 2-6 unit lands as one green; Stage 7 rides behind a warning-then-error gate. Test docs at architect/plan/test-strategy.md + test-coverage.md are the contract source.",
+        "risk": "Cross-axis tests (lazy door + narrow + chain-wide ! + param resolution-after-await) interact \u2014 picking the wrong layer per row gives weak coverage. Mitigation: follow the coverage matrix layer column strictly."
+      },
+      "actions": [
+        {
+          "paths": [
+            ".bot/compare-redesign/test-designer/v1/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Test plan with 7 batches, layer-mapping, folder layout."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/CompareRedesign/Stage1_ComparisonEnumTests.cs",
+            "PLang.Tests/App/CompareRedesign/Stage2_ValueDoorTests.cs",
+            "PLang.Tests/App/CompareRedesign/Stage2_PlaneResolverTests.cs",
+            "PLang.Tests/App/CompareRedesign/Stage2_GetParameterLazyTests.cs",
+            "PLang.Tests/App/CompareRedesign/Stage2_NavigationAsyncTests.cs",
+            "PLang.Tests/App/CompareRedesign/Stage3_ReferenceNarrowTests.cs",
+            "PLang.Tests/App/CompareRedesign/Stage3_PathDemolitionTests.cs",
+            "PLang.Tests/App/CompareRedesign/Stage4_RankTests.cs",
+            "PLang.Tests/App/CompareRedesign/Stage4_PerTypeCompareTests.cs",
+            "PLang.Tests/App/CompareRedesign/Stage5_DataCompareEntryTests.cs",
+            "PLang.Tests/App/CompareRedesign/Stage6_ConsumersTests.cs",
+            "PLang.Tests/App/CompareRedesign/Stage6_DiffRenameTests.cs",
+            "PLang.Tests/App/CompareRedesign/Stage7_SurfaceGateTests.cs",
+            "PLang.Tests/App/CompareRedesign/Stage7_PathGrowthTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "125 C# TUnit stubs across 14 files, one per coverage-matrix row group. All Assert.Fail(Not implemented). Build clean."
+        },
+        {
+          "paths": [
+            "Tests/CompareRedesign/"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "15 PLang .test.goal stubs: 6 integration cuts + 5 failure-matrix + 4 plane/narrow surface."
+        },
+        {
+          "paths": [
+            ".bot/compare-redesign/test-designer/v1/test-plan.md",
+            ".bot/compare-redesign/test-designer/v1/verdict.json",
+            ".bot/compare-redesign/test-designer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Final test plan, verdict (pass=true), summary."
+        }
+      ],
+      "plan": ".bot/compare-redesign/test-designer/v1/plan.md",
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "125 C# tests + 15 .goal tests. dotnet build PLang.Tests = 0 errors. Coverage maps to architect/plan/test-coverage.md. Next: coder."
+      },
+      "timestamp_end": "2026-06-09T08:39:16.975497Z"
     }
   ]
 }
