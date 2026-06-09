@@ -38,7 +38,7 @@ public partial class @this
 
     private static string SerializeForComparison(@this data)
     {
-        return JsonSerializer.Serialize(data.Value, _camelCaseIndented);
+        return JsonSerializer.Serialize(data.Peek(), _camelCaseIndented);
     }
 
     private static Dictionary<string, object?> CompareElements(

@@ -154,7 +154,7 @@ public sealed class Writer : IWriter
                 return;
             case app.data.@this nested:
                 BeginRecord(nested);
-                Value(nested.Value);
+                Value(nested.Peek());
                 EndRecord(nested);
                 return;
             case app.type.dict.@this dict:
@@ -169,7 +169,7 @@ public sealed class Writer : IWriter
                 foreach (var entry in dict.Entries)
                 {
                     _writer.WritePropertyName(entry.Name);
-                    Value(entry.Value);
+                    Value(entry.Peek());
                 }
                 _writer.WriteEndObject();
                 return;

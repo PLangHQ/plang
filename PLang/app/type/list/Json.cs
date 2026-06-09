@@ -23,7 +23,7 @@ public sealed class Json : JsonConverter<@this>
     {
         writer.WriteStartArray();
         foreach (var item in value.Items)
-            JsonSerializer.Serialize(writer, item.Value, options);
+            JsonSerializer.Serialize(writer, item.Peek(), options);
         writer.WriteEndArray();
     }
 

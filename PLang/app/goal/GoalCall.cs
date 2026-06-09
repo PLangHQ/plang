@@ -70,10 +70,9 @@ public sealed class GoalCall : global::app.type.item.@this, module.IEvent
                 }
             case IDictionary<string, object?> dict:
                 var name = dict.TryGetValue("name", out var n) ? n?.ToString() ?? "" : "";
-                // The name slot may be a dynamic %var% (e.g. `call %goalName%`). GoalCall
-                // owns its own resolution now (skipped the generic container walk so signed
-                // params survive), so resolve the name here.
-                if (name.Contains('%')) name = context.Variable.Resolve(name)?.ToString() ?? name;
+                // The name slot may be a dynamic %var% (e.g. `call %goalName%`). It stays raw
+                // here — GetGoalAsync resolves it at dispatch, in the caller's context. The
+                // CLR-type-name guard below still catches a literal leak (a %var% never matches).
                 if (context.App.Type.IsClrTypeName(name))
                     return data.@this.FromError(new global::app.error.Error(
                         $"GoalCall.Name was set to a CLR type name '{name}'.",
@@ -101,8 +100,11 @@ public sealed class GoalCall : global::app.type.item.@this, module.IEvent
                 List<data.@this>? parameters = null;
                 if (dict.TryGetValue("parameters", out var p))
                 {
+                    // Params ride raw into the call — each is a Data still holding its
+                    // %var%/literal/container form. Goal-call shares the caller's scope, so the
+                    // step that reads %name% resolves it through the door then; no eager pass.
                     var entries = ParamEntries(p)
-                        .Select(e => data.@this.ResolveParameter(e.name, e.value, context))
+                        .Select(e => new data.@this(e.name, e.value) { Context = context })
                         .ToList();
                     if (entries.Count > 0) parameters = entries;
                 }
@@ -145,7 +147,7 @@ public sealed class GoalCall : global::app.type.item.@this, module.IEvent
         foreach (var element in Elements())
         {
             // A native list element is a Data wrapping the entry dict; unwrap it.
-            var entry = element is data.@this d ? d.Value : element;
+            var entry = element is data.@this d ? d.Peek() : element;
             switch (entry)
             {
                 case app.type.dict.@this nd:
@@ -171,26 +173,33 @@ public sealed class GoalCall : global::app.type.item.@this, module.IEvent
         if (PrPath != null)
             return await LoadFromFile(PrPath.ToString(), app, context);
 
+        // A `%var%` goal name (`call %goalName%`) resolves here, at dispatch, in the caller's
+        // context — not at conversion. A typed object leaking into the name slot is caught now.
+        var resolvedName = Name.Contains('%') ? (await context.Variable.Resolve(Name)) ?? Name : Name;
+        if (context.App.Type.IsClrTypeName(resolvedName))
+            return data.@this.FromError(new global::app.error.Error(
+                $"GoalCall.Name resolved to a CLR type name '{resolvedName}'.", "ClrTypeNameInGoalSlot", 500));
+
         // 1. Check via the action's step's goal chain (action → step → goal → walk up)
         var currentGoal = Action?.Step?.Goal;
         while (currentGoal != null)
         {
-            if (string.Equals(currentGoal.Name, Name, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(currentGoal.Name, resolvedName, StringComparison.OrdinalIgnoreCase))
                 return data.@this.Ok(currentGoal);
 
             var subGoal = currentGoal.Goals.FirstOrDefault(g =>
-                string.Equals(g.Name, Name, StringComparison.OrdinalIgnoreCase));
+                string.Equals(g.Name, resolvedName, StringComparison.OrdinalIgnoreCase));
             if (subGoal != null) return data.@this.Ok(subGoal);
 
             currentGoal = currentGoal.Parent;
         }
 
         // 2. Check app's loaded goals
-        var loaded = app.Goal.Get(Name);
+        var loaded = app.Goal.Get(resolvedName);
         if (loaded != null) return data.@this.Ok(loaded);
 
         // 3. Derive the .pr path from Name and file.read.
-        var name = Name.Replace('\\', '/');
+        var name = resolvedName.Replace('\\', '/');
 
         // Caller's folder — the anchor for relative resolution. Compute as a
         // string here because the rest of this method does free-form name math

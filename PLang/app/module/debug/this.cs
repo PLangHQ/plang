@@ -433,23 +433,23 @@ public sealed class @this
 
         var traceId = context.Trace.Id;
 
-        var goalData = context.Variable.Get("goal");
+        var goalData = context.Variable.Peek("goal");
         var goalName = "unknown";
         if (goalData != null && goalData.Peek() != null)
         {
             var nameProp = goalData.Peek()!.GetType().GetProperty("Name");
             if (nameProp != null)
-                goalName = nameProp.GetValue(goalData.Value)?.ToString() ?? "unknown";
+                goalName = nameProp.GetValue(goalData.Peek())?.ToString() ?? "unknown";
         }
 
-        var stepData = context.Variable.Get("step");
+        var stepData = context.Variable.Peek("step");
         var stepKey = "goal";
         if (stepData != null && stepData.IsInitialized && stepData.Peek() != null)
         {
             var idxProp = stepData.Peek()!.GetType().GetProperty("Index");
             if (idxProp != null)
             {
-                var idx = idxProp.GetValue(stepData.Value);
+                var idx = idxProp.GetValue(stepData.Peek());
                 if (idx != null) stepKey = idx.ToString() ?? "goal";
             }
         }
@@ -596,14 +596,14 @@ public sealed class @this
         sb.AppendLine($"  Variables ({varNames.Count}):");
         foreach (var name in varNames)
         {
-            var data = context.Variable.Get(name);
+            var data = context.Variable.Peek(name);
             if (data == null || !data.IsInitialized)
             {
                 sb.AppendLine($"    %{name}% = (undefined)");
                 continue;
             }
 
-            sb.AppendLine($"    %{name}% = {FormatValue(data.Value, context)} ({data.Type?.Name ?? "?"})");
+            sb.AppendLine($"    %{name}% = {FormatValue(data.Peek(), context)} ({data.Type?.Name ?? "?"})");
 
             if (data.Properties.Count > 0)
             {

@@ -40,7 +40,7 @@ public partial class @this
         // Data) re-walk to themselves in Normalize. Domain objects and raw
         // collections still need Normalize to decompose into the property-bag
         // shape Walk consumes.
-        var raw = Value;
+        var raw = Peek();
         var tree = IsLeafShape(raw) ? raw : Normalize();
         var result = Walk(tree, typeof(T), context);
         if (result is null) return default;
@@ -101,7 +101,7 @@ public partial class @this
             {
                 foreach (var item in seq)
                 {
-                    var elementValue = item is @this child ? child.Value : item;
+                    var elementValue = item is @this child ? child.Peek() : item;
                     listInstance.Add(Walk(elementValue, elementType, context));
                 }
             }
@@ -124,7 +124,7 @@ public partial class @this
                             $"Reconstruct can't convert dictionary key '{child.Name}' to {keyType.Name}.",
                             "NormalizeReconstructFailed");
                     }
-                    var v = Walk(child.Value, valueType, context);
+                    var v = Walk(child.Peek(), valueType, context);
                     dictInstance[k] = v;
                 }
             }
@@ -163,7 +163,7 @@ public partial class @this
             {
                 var pname = pars[i].Name ?? "";
                 if (byName.TryGetValue(pname.ToLowerInvariant(), out var c))
-                    args[i] = Walk(c.Value, pars[i].ParameterType, context);
+                    args[i] = Walk(c.Peek(), pars[i].ParameterType, context);
                 else if (pars[i].HasDefaultValue)
                     args[i] = pars[i].DefaultValue;
                 else
@@ -216,7 +216,7 @@ public partial class @this
             if (!byName.TryGetValue(prop.Name.ToLowerInvariant(), out var child)) continue;
             try
             {
-                var v = Walk(child.Value, prop.PropertyType, context);
+                var v = Walk(child.Peek(), prop.PropertyType, context);
                 prop.SetValue(instance, v);
             }
             catch (NormalizeException) { throw; }
@@ -278,7 +278,7 @@ public partial class @this
                 }
                 else
                 {
-                    foreach (var child in NamedChildren(data.Value))
+                    foreach (var child in NamedChildren(data.Peek()))
                     {
                         if (child.Name.Equals("relative", StringComparison.OrdinalIgnoreCase))
                         {

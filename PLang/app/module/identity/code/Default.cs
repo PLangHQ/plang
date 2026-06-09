@@ -49,7 +49,7 @@ public sealed class Default : IIdentity
         if (items.Exists(i => string.Equals(i.Name, __an, StringComparison.OrdinalIgnoreCase)))
             return data.@this<Identity>.FromError(new ActionError($"Identity '{await action.Name.Value()}' already exists", "DuplicateName", 409));
 
-        var genResult = GenerateIdentity(action, (await action.Name.Value())!, (await action.SetAsDefault.Value())!, (action.Provider == null ? null : await action.Provider.Value()));
+        var genResult = await GenerateIdentity(action, (await action.Name.Value())!, (await action.SetAsDefault.Value())!, (action.Provider == null ? null : await action.Provider.Value()));
         if (!genResult.Success) return genResult;
         var identity = (await genResult.Value())!;
 
@@ -210,10 +210,10 @@ public sealed class Default : IIdentity
         if (!result.Success)
             return data.@this<Identity>.From(result);
 
-        if (result.Value == null)
+        if (result.Peek() == null)
             return data.@this<Identity>.FromError(new ActionError($"Identity '{name}' not found", "NotFound", 404));
 
-        var identity = ConvertToIdentity(result.Value);
+        var identity = ConvertToIdentity(result.Peek());
         if (identity == null)
             return data.@this<Identity>.FromError(new ActionError($"Failed to deserialize identity '{name}'", "DeserializationError", 500));
 
@@ -232,7 +232,7 @@ public sealed class Default : IIdentity
         {
             foreach (var item in dataList)
             {
-                var identity = ConvertToIdentity(item.Value);
+                var identity = ConvertToIdentity(item.Peek());
                 if (identity != null)
                     identities.Add(identity);
             }
@@ -262,7 +262,7 @@ public sealed class Default : IIdentity
         }
 
         // No identities at all — auto-create
-        var genResult = GenerateIdentity(action, "default", true);
+        var genResult = await GenerateIdentity(action, "default", true);
         if (!genResult.Success) return genResult;
         var identity = (await genResult.Value())!;
         var result = await SaveAsync(action, identity);
@@ -290,7 +290,7 @@ public sealed class Default : IIdentity
     /// Generates a new identity with keys from the configured key provider.
     /// Owns the full sequence: resolve provider -> generate keys -> build Identity.
     /// </summary>
-    private data.@this<Identity> GenerateIdentity(IContext action, string name, bool isDefault, string? providerName = null)
+    private async System.Threading.Tasks.Task<data.@this<Identity>> GenerateIdentity(IContext action, string name, bool isDefault, string? providerName = null)
     {
         var app = action.Context.App;
         var __keyR = app.Code.Get<IKey>(providerName);
@@ -301,7 +301,7 @@ public sealed class Default : IIdentity
         if (keyErr != null)
             return data.@this<Identity>.FromError(keyErr);
 
-        var now = (DateTimeOffset)action.Context.Variable.GetValue("NowUtc")!;
+        var now = (DateTimeOffset)(await action.Context.Variable.GetValue("NowUtc"))!;
 
         var identity = new Identity(name)
         {

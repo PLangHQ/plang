@@ -26,7 +26,7 @@ public partial class Any : IContext
 
         foreach (var (_, item) in data.EnumerateItems())
         {
-            var left = item.GetChild(key);
+            var left = await item.GetChild(key);
             if (await op.Evaluate(left, right))
                 return global::app.data.@this<global::app.type.@bool.@this>.Ok(true, app.type.@this.FromName("bool"));
         }

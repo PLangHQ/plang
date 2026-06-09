@@ -128,7 +128,7 @@ public sealed class Operator
     private static bool ContainsValue(app.type.list.@this list, object? target)
     {
         foreach (var item in list.Items)
-            if (global::app.data.Compare.AreEqualValues(item.Value, target)) return true;
+            if (global::app.data.Compare.AreEqualValues(item.Peek(), target)) return true;
         return false;
     }
 

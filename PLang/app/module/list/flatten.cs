@@ -9,7 +9,7 @@ public partial class Flatten : IContext
 
     public async Task<data.@this<type.list>> Run()
     {
-        var nl = app.type.list.@this.FromRaw((await Context.Variable.Get((await ListName.Value())).Value()), Context);
+        var nl = app.type.list.@this.FromRaw((await (await Context.Variable.Get((await ListName.Value()))).Value()), Context);
         if (nl == null)
             return global::app.data.@this<type.list>.FromError(
                 new app.error.ValidationError($"Variable '{(await ListName.Value())}' is not a list"));

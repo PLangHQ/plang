@@ -57,5 +57,5 @@ public partial class Where : IContext
     }
 
     private async Task<bool> Keep(data.@this subject, string field, Operator op)
-        => await op.Evaluate(subject.GetChild(field), Value);
+        => await op.Evaluate(await subject.GetChild(field), Value);
 }

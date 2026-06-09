@@ -60,7 +60,7 @@ public class Default : ICrypto
         };
 
         if (hashBytes == null)
-            return global::app.data.@this<global::app.module.crypto.type.hash.@this>.FromError(new ActionError($"Algorithm '{action.Algorithm.Value}' is not supported", "UnsupportedAlgorithm", 400));
+            return global::app.data.@this<global::app.module.crypto.type.hash.@this>.FromError(new ActionError($"Algorithm '{action.Algorithm.Peek()}' is not supported", "UnsupportedAlgorithm", 400));
 
         // The value IS a hash (a digest that knows its algorithm), not bare
         // bytes — so the builder annotates the write-to variable as `%x% (hash)`

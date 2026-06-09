@@ -202,8 +202,8 @@ public sealed partial class @this
             {
                 foreach (var row in baseList.Items)
                 {
-                    var (convEl, _) = TryConvert(row.Value, elemType, context);
-                    typed.Add(new data.@this("", convEl ?? row.Value));
+                    var (convEl, _) = TryConvert(row.Peek(), elemType, context);
+                    typed.Add(new data.@this("", convEl ?? row.Peek()));
                 }
             }
             return (typed, null);
@@ -236,7 +236,7 @@ public sealed partial class @this
                     : global::app.type.convert.@this.OfStatic(family, value, kind, null);
                 if (owned != null)
                 {
-                    if (owned.Success) return (owned.Value, null);
+                    if (owned.Success) return (owned.Peek(), null);
                     var hookErr = owned.Error as error.Error
                         ?? new error.Error(owned.Error!.Message, "TypeConversionFailed", 400);
                     return (null, WithSlot(hookErr, targetName));

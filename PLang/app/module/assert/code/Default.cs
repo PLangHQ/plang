@@ -185,7 +185,7 @@ public class Default : IAssert
         if (container is app.type.list.@this nl)
         {
             foreach (var item in nl.Items)
-                if (AreEqual(item.Value, value)) return true;
+                if (AreEqual(item.Peek(), value)) return true;
             return false;
         }
 

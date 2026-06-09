@@ -61,7 +61,7 @@ public partial class @this
     /// </summary>
     public @this Merge(@this other)
     {
-        if (other.Value == null) return this;
+        if (other.Peek() == null) return this;
 
         var myData = Materialize() as List<@this> ?? new();
         var otherData = other.Materialize() as List<@this> ?? new();

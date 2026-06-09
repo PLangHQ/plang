@@ -22,7 +22,7 @@ public sealed class @this
     /// segment from the store and navigate the result via Data.GetChild.
     /// Returns AskError when the value is unset.
     /// </summary>
-    public data.@this Get(string path, actor.context.@this context)
+    public async System.Threading.Tasks.ValueTask<data.@this> Get(string path, actor.context.@this context)
     {
         if (string.IsNullOrEmpty(path)) return data.@this.NotFound("Settings");
 
@@ -30,12 +30,10 @@ public sealed class @this
         var key = dotIndex >= 0 ? path[..dotIndex] : path;
         var remaining = dotIndex >= 0 ? path[(dotIndex + 1)..] : null;
 
-        // .GetAwaiter().GetResult() is safe here because Microsoft.Data.Sqlite
-        // is synchronous under the hood — SQLite has no async I/O.
-        var result = _app.SettingsStore.Get(SettingsTable, key).GetAwaiter().GetResult();
+        var result = await _app.SettingsStore.Get(SettingsTable, key);
         if (!result.Success) return result;
 
-        if (result.Value == null)
+        if (await result.Value() == null)
             return data.@this.FromError(new AskError(
                 $"Settings value '{key}' is not set. Please provide a value.",
                 SettingsTable, key));
@@ -44,7 +42,7 @@ public sealed class @this
 
         return string.IsNullOrEmpty(remaining)
             ? result
-            : result.GetChild(remaining);
+            : await result.GetChild(remaining);
     }
 
     /// <summary>Stores a Data value under the given key in the settings table.</summary>

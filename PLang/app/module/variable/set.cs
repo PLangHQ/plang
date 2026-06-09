@@ -260,7 +260,7 @@ public partial class Set : IContext, IBuildValidatable
                 var convResult = typeEntity.Convert(converted, Context);
                 if (convResult.Success)
                 {
-                    converted = convResult.Value;
+                    converted = convResult.Peek();
                     mintType = converted?.GetType() ?? targetType;
                 }
                 else if (typeof(global::app.data.IKindValidatable).IsAssignableFrom(targetType))

@@ -74,7 +74,7 @@ public sealed partial class @this
                 var snapshotClr = global::app.type.catalog.@this.ClrFromMime(mime);
                 if (snapshotClr != null && snapshotClr != typeof(string))
                 {
-                    var converted = Context!.App.Type.Convert(snapshot, snapshotClr, Context).Value;
+                    var converted = Context!.App.Type.Convert(snapshot, snapshotClr, Context).Peek();
                     if (converted != null)
                         return new data.@this(Raw, converted, snapshotType);
                 }

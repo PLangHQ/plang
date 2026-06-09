@@ -80,7 +80,7 @@ public sealed class Json : ISerializer
             // STJ converter wall — the sync renderers below cannot await.
             var loadError = await data.Load();
             if (loadError != null) return loadError;
-            var value = data.Value;
+            var value = data.Peek();
             if (value == null)
             {
                 await stream.WriteAsync("null"u8.ToArray(), cancellationToken);
@@ -131,7 +131,7 @@ public sealed class Json : ISerializer
     {
         try
         {
-            var value = data.Value;
+            var value = data.Peek();
             if (value == null) return global::app.data.@this<global::app.type.text.@this>.Ok("null");
             return global::app.data.@this<global::app.type.text.@this>.Ok(JsonSerializer.Serialize(value, value.GetType(), _options));
         }

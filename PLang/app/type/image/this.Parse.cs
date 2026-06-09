@@ -60,7 +60,7 @@ public sealed partial class @this
                 var exists = await p.ExistsAsync();
                 if (!exists.Success || (await exists.Value())?.Value == false) return null;
                 var read = await p.ReadBytes();
-                if (!read.Success || read.Value == null) return null;
+                if (!read.Success || read.Peek() == null) return null;
                 var ext = p is global::app.type.path.file.@this fp ? fp.Extension : "";
                 { var __rb = (byte[])(await read.Value())!; return new @this(__rb, SniffMime(__rb) ?? MimeFromExtension(ext), p); }
             }

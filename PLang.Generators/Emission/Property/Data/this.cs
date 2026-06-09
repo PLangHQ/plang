@@ -25,23 +25,26 @@ public sealed record @this(
         sb.AppendLine($"    private {TypeName}? {Backing};");
         sb.AppendLine($"    private bool {SetFlag};");
         var nullable = IsNullable ? "?" : "";
+        // Optional (`?`) params keep their nullable TYPE but are never actually null —
+        // the getter binds Data.Uninitialized for an absent slot. [NotNull] tells flow
+        // analysis the truth so `await Mime.Value()` doesn't trip CS8602.
+        if (IsNullable)
+            sb.AppendLine("    [System.Diagnostics.CodeAnalysis.NotNull]");
         sb.AppendLine($"    public partial {TypeName}{nullable} {Name}");
         sb.AppendLine("    {");
 
-        // After resolution, capture FromError-Data (cycle / depth-trip / type-conversion failure)
-        // into __resolutionError so the post-Run check in ExecuteAsync can surface it. Without
-        // this the FromError-Data lives silently on the backing field with Value=default(T).
+        // The getter binds a fresh working-copy of the .pr parameter (carrying its raw
+        // %var%/literal/container form + context); that copy's own Value() resolves it on
+        // first read and caches — the getter never resolves (resolution is async, a sync
+        // property can't await). Fresh per call (actions are shared) so the cache lives on
+        // this execution's copy, not the shared .pr parameter.
         if (IsPlainData)
         {
-            // Plain Data slot — return the CANONICAL Data, not a wrapped Data<object>. For full-match
-            // %var%, that's the live variable Data; for literal values, the parameter Data itself.
-            // Pattern A handlers (list.add/remove/sort/...) read .Value as the live ref so mutation
-            // is visible to the variable. Architect Phase 2 Rule 4.
-            sb.AppendLine($"        get {{ if (!{SetFlag}) {{ {Backing} = __ResolveData(\"{ParamName}\").AsCanonical(Context); if (!{Backing}.Success) __resolutionError = {Backing}; {SetFlag} = true; }} return {Backing}!; }}");
+            sb.AppendLine($"        get {{ if (!{SetFlag}) {{ {Backing} = global::app.data.@this.Param(__ResolveData(\"{ParamName}\"), Context); {SetFlag} = true; }} return {Backing}!; }}");
         }
         else if (IsNullable)
         {
-            sb.AppendLine($"        get {{ if ({Backing} == null && !{SetFlag}) {{ var __d = __ResolveData(\"{ParamName}\"); {Backing} = __d.IsEmpty ? null : __d.As<{InnerType}>(Context); if ({Backing} != null && !{Backing}.Success) __resolutionError = {Backing}; {SetFlag} = true; }} return {Backing}; }}");
+            sb.AppendLine($"        get {{ if (!{SetFlag}) {{ var __d = __ResolveData(\"{ParamName}\"); {Backing} = __d.IsEmpty ? global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\") : global::app.data.@this<{InnerType}>.Param(__d, Context); {SetFlag} = true; }} return {Backing}!; }}");
         }
         else if (DefaultValue != null)
         {
@@ -51,11 +54,13 @@ public sealed record @this(
             string defaultExpr = (InnerType != null && InnerType.StartsWith(ChoicePrefix, System.StringComparison.Ordinal))
                 ? $"({InnerType})({InnerType.Substring(ChoicePrefix.Length, InnerType.Length - ChoicePrefix.Length - 1)})({DefaultValue})"
                 : $"({InnerType})({DefaultValue})";
-            sb.AppendLine($"        get {{ if ({Backing} == null) {{ var __d = __ResolveData(\"{ParamName}\"); {Backing} = __d.IsEmpty ? new global::app.data.@this<{InnerType}>(\"{ParamName}\", {defaultExpr}) : __d.As<{InnerType}>(Context); if (!{Backing}.Success) __resolutionError = {Backing}; {SetFlag} = true; }} return {Backing}!; }}");
+            // [Default] fires on an absent slot (bind the literal) AND on a null-resolving
+            // value (the fallback rides into the working-copy so `mime: %unsetVar%` lands on it).
+            sb.AppendLine($"        get {{ if (!{SetFlag}) {{ var __d = __ResolveData(\"{ParamName}\"); {Backing} = __d.IsEmpty ? new global::app.data.@this<{InnerType}>(\"{ParamName}\", {defaultExpr}) : global::app.data.@this<{InnerType}>.Param(__d, Context, {defaultExpr}, true); {SetFlag} = true; }} return {Backing}!; }}");
         }
         else
         {
-            sb.AppendLine($"        get {{ if ({Backing} == null) {{ {Backing} = __ResolveData(\"{ParamName}\").As<{InnerType}>(Context); if (!{Backing}.Success) __resolutionError = {Backing}; {SetFlag} = true; }} return {Backing}!; }}");
+            sb.AppendLine($"        get {{ if (!{SetFlag}) {{ {Backing} = global::app.data.@this<{InnerType}>.Param(__ResolveData(\"{ParamName}\"), Context); {SetFlag} = true; }} return {Backing}!; }}");
         }
 
         sb.AppendLine($"        init {{ {Backing} = value; {SetFlag} = true; }}");

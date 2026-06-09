@@ -24,8 +24,13 @@ using type = global::app.type.@this;
 [System.Text.Json.Serialization.JsonConverter(typeof(WireLocal))]
 public partial class @this
 {
-    private object? _value;
+    private protected object? _value;
     private Func<object?>? _valueFactory;
+
+    // Reference-resolution latch: a value holding a `%var%`/container reference resolves
+    // through the variable store on first read (the door's decode step) and caches into
+    // `_value`. Set true once resolved; cleared by SetValue so a re-Set reference re-resolves.
+    private protected bool _resolved;
 
     // Lazy (Way-3) backing: the undecoded source form — `string` for a text
     // source, `byte[]` for a binary one. When set with `_value` null, `.Value`
@@ -38,8 +43,8 @@ public partial class @this
     // surfaces it on the Data (best-effort `.Value` returns null). Touch-time,
     // not read-time — the point of laziness.
     private int _materializeCount;
-    private type? _type;
-    private actor.context.@this _context = null!;
+    private protected type? _type;
+    private protected actor.context.@this _context = null!;
 
     /// <summary>
     /// Wire marker. Every Data written to the application/plang wire carries
@@ -134,7 +139,7 @@ public partial class @this
     public @this? Parent { get; }
 
     [JsonIgnore]
-    public bool IsInitialized { get; private set; }
+    public bool IsInitialized { get; protected set; }
 
     /// <summary>
     /// True when the raw _value is a %variable% reference (starts and ends with %).
@@ -203,7 +208,46 @@ public partial class @this
     /// a read that may navigate or load must be reached through an <c>await</c>.
     /// <para><b>Await once</b> per call site — no store-and-await-twice.</para>
     /// </summary>
-    public virtual ValueTask<object?> Value() => new(Materialize());
+    public virtual ValueTask<object?> Value() => Read();
+
+    /// <summary>
+    /// The door's polymorphic core — "give me the value, loading if needed." A concrete
+    /// value just materializes (sync, zero-alloc). A value that is still a <c>%var%</c> /
+    /// container reference resolves through the variable store on first read and caches
+    /// into <c>_value</c> — exactly as <see cref="Materialize"/> caches a parsed raw form.
+    /// <see cref="SetValue"/> clears the latch, so a re-Set reference re-resolves next read.
+    /// </summary>
+    protected virtual ValueTask<object?> Read()
+        => _resolved || !HoldsReference() ? new(Materialize()) : ReadReference();
+
+    // A stored value that is not yet its final form: a `%var%` string (full or interpolated)
+    // or a container that may hold nested `%var%`. Concrete values answer false and skip
+    // resolution entirely — the hot path stays the sync materialize.
+    private protected bool HoldsReference()
+        => _context?.Variable != null
+           && ((_value is string s && s.Contains('%'))
+               || (_value is app.type.text.@this txt && txt.Value.Contains('%'))
+               || IsWalkableContainer(_value));
+
+    private async ValueTask<object?> ReadReference()
+    {
+        _resolved = true;
+        var r = await AsCanonical(_context);
+        if (!r.Success) Error = r.Error;
+        _value = r.Materialize();              // cache the resolved value, like _value = ParseRaw()
+        IsInitialized = r.IsInitialized;       // an unset %var% stays not-initialized
+        if (r.Type is { } t) _type = t;
+        return _value;
+    }
+
+    /// <summary>
+    /// Value door with a fallback for when the resolved value is null — absent slot
+    /// or present-null. Lets a handler express a runtime/computed default a static
+    /// <c>[Default(...)]</c> can't (<c>await Actor.Value(Context.Actor)</c>). Sync-
+    /// completing when the value is already in memory.
+    /// </summary>
+    public async ValueTask<object?> Value(object? fallback)
+        => await Value() ?? fallback;
 
     /// <summary>
     /// Brings the value fully into memory and returns it — resolves the lazy
@@ -245,6 +289,7 @@ public partial class @this
         _value = UnwrapJsonElement(value);
         _valueFactory = null;
         _raw = null;            // mutation — raw is no longer authoritative
+        _resolved = false;      // a re-Set reference (`%x%`) re-resolves on next read
         Updated = System.DateTime.UtcNow;
         IsInitialized = true;
         _type = null;
@@ -604,6 +649,22 @@ public partial class @this
     public static @this NotFound(string name = "") => new(name, null) { IsInitialized = false };
     public static @this Uninitialized(string name) => new(name, null) { IsInitialized = false };
 
+    /// <summary>
+    /// A fresh Data carrying a parameter's raw <c>%var%</c>/literal/container form plus the
+    /// resolution context — its own <see cref="Value()"/> resolves it (the door's decode step).
+    /// Fresh per access so the resolution caches on this copy, never on the shared .pr parameter.
+    /// The plain-Data form; <see cref="@this{T}.Param"/> is the typed form.
+    /// </summary>
+    internal static @this Param(@this param, actor.context.@this? context)
+        => new(param.Name, param.Materialize(), param.Type, param.Parent)
+        {
+            Context    = context,
+            Properties = param.Properties,
+            OnCreate   = param.OnCreate,
+            OnChange   = param.OnChange,
+            OnDelete   = param.OnDelete,
+        };
+
     private static readonly System.Text.RegularExpressions.Regex FullVarMatchRegex =
         new(@"^%([^%]+)%$", System.Text.RegularExpressions.RegexOptions.Compiled);
 
@@ -636,11 +697,11 @@ public partial class @this
     /// the target PLang type at runtime, no generic at the call site).
     /// </para>
     /// </summary>
-    internal @this<T> As<T>(actor.context.@this? context = null) where T : global::app.type.item.@this
+    internal async System.Threading.Tasks.ValueTask<@this<T>> As<T>(actor.context.@this? context = null) where T : global::app.type.item.@this
     {
         context = context ?? _context;
         var raw = Materialize(); // factory-resolved if any; never %var% substituted
-        return AsT_Impl<T>(raw, context);
+        return await AsT_Impl<T>(raw, context);
     }
 
     /// <summary>
@@ -710,7 +771,7 @@ public partial class @this
     ///    and `this`'s Name (slot name preserved; Properties and event lists aliased).
     ///  - For unset `%var%`: a not-initialized Data with the variable's name.
     /// </summary>
-    public @this AsCanonical(actor.context.@this? context = null)
+    public async System.Threading.Tasks.ValueTask<@this> AsCanonical(actor.context.@this? context = null)
     {
         context = context ?? _context;
 
@@ -726,7 +787,7 @@ public partial class @this
         {
             if (TryFullVarMatch(strVal, out var varName))
             {
-                var resolved = context.Variable.Get(varName);
+                var resolved = await context.Variable.Get(varName);
                 if (resolved == null || !resolved.IsInitialized)
                 {
                     var notFound = new @this(varName, null, null, Parent) { Context = context };
@@ -736,7 +797,7 @@ public partial class @this
                 return resolved;
             }
             // Partial — interpolate into a fresh value but keep slot Name + alias state from `this`.
-            var interpolated = context.Variable.Resolve(strVal);
+            var interpolated = await context.Variable.Resolve(strVal);
             var transient = new @this(Name, interpolated, _type, Parent) { Context = context };
             transient.Properties = Properties;
             transient.OnCreate   = OnCreate;
@@ -751,7 +812,7 @@ public partial class @this
         // inside lists/dicts loaded from the .pr.
         if (context != null && IsWalkableContainer(raw))
         {
-            var walked = WalkContainerVars(raw, context);
+            var walked = await WalkContainerVars(raw, context);
             // A wire-shaped dict IS a serialized Data — reconstruct it (value + type as a
             // whole) rather than wrapping the dict as a Data value, which would mislabel
             // the type as `object` and lose the inner value's real type.
@@ -841,12 +902,12 @@ public partial class @this
     // allocate). Strings are NOT handled here — full-match vs. partial-interpolation
     // semantics differ between AsCanonical (returns live var Data) and AsT_Impl (recurses
     // typed), so each owns its own string path.
-    private static object? WalkContainerVars(object? raw, actor.context.@this context)
+    private static async System.Threading.Tasks.ValueTask<object?> WalkContainerVars(object? raw, actor.context.@this context)
     {
-        if (raw is IList<object?> list) return WalkList(list, context);
-        if (raw is app.type.list.@this nativeList) return WalkNativeList(nativeList, context);
-        if (raw is app.type.dict.@this nativeDict) return WalkNativeDict(nativeDict, context);
-        if (raw is IDictionary<string, object?> dict) return WalkDict(dict, context);
+        if (raw is IList<object?> list) return await WalkList(list, context);
+        if (raw is app.type.list.@this nativeList) return await WalkNativeList(nativeList, context);
+        if (raw is app.type.dict.@this nativeDict) return await WalkNativeDict(nativeDict, context);
+        if (raw is IDictionary<string, object?> dict) return await WalkDict(dict, context);
         return raw;
     }
 
@@ -867,7 +928,7 @@ public partial class @this
     private const int ResolveDepthLimit = 32;
     private static readonly AsyncLocal<HashSet<string>?> _resolvingValues = new();
 
-    private @this<T> AsT_Impl<T>(object? raw, actor.context.@this? context) where T : global::app.type.item.@this
+    private protected async System.Threading.Tasks.ValueTask<@this<T>> AsT_Impl<T>(object? raw, actor.context.@this? context) where T : global::app.type.item.@this
     {
         // Action-destination carve-out: when T is or contains Action.@this, sub-actions
         // hold raw %var% for deferred resolution at their own dispatch time. Skip the walk
@@ -933,7 +994,7 @@ public partial class @this
 
                 if (TryFullVarMatch(strVal, out var varName))
                 {
-                    var resolved = context.Variable.Get(varName);
+                    var resolved = await context.Variable.Get(varName);
                     if (resolved == null || !resolved.IsInitialized)
                     {
                         // Unset var — propagate the variable's name so handler diagnostics see it.
@@ -949,12 +1010,12 @@ public partial class @this
                     // re-scan the resolved value's text for further %var% references. Calling
                     // on `resolved` (the live variable) preserves identity: WrapAs sees `resolved`
                     // as `this` and propagates Name + Properties + event lists.
-                    return resolved.AsT_Convert<T>(resolved.Value, context);
+                    return resolved.AsT_Convert<T>(await resolved.Value(), context);
                 }
                 // Partial match — interpolate once. The result is the final value; embedded
                 // %var% inside the substituted text is opaque payload (matches mainstream
                 // language semantics: assignment evaluates once, stored value is opaque).
-                var interpolated = context.Variable.Resolve(strVal);
+                var interpolated = await context.Variable.Resolve(strVal);
                 return AsT_Convert<T>(interpolated, context);
             }
             finally
@@ -977,7 +1038,7 @@ public partial class @this
         // SubstitutePrimitive only fires for already-typed Data, not for the dict
         // representation that comes off the LLM response.
         if (context != null && IsWalkableContainer(raw) && !IsActionDestination(typeof(T)) && !IsSelfResolvingParams(typeof(T)))
-            return WrapAs<T>(WalkContainerVars(raw, context), context);
+            return WrapAs<T>(await WalkContainerVars(raw, context), context);
 
         // T has static Resolve(string, Context.@this) — Path-style domain types. Done before
         // the variance/wrap path because Resolve produces a fresh T from a string, not a
@@ -1124,40 +1185,40 @@ public partial class @this
         return wrapped;
     }
 
-    private static List<object?> WalkList(IList<object?> list, actor.context.@this context)
+    private static async System.Threading.Tasks.ValueTask<List<object?>> WalkList(IList<object?> list, actor.context.@this context)
     {
         var result = new List<object?>(list.Count);
         foreach (var item in list)
-            result.Add(SubstitutePrimitive(item, context));
+            result.Add(await SubstitutePrimitive(item, context));
         return result;
     }
 
-    private static Dictionary<string, object?> WalkDict(IDictionary<string, object?> dict, actor.context.@this context)
+    private static async System.Threading.Tasks.ValueTask<Dictionary<string, object?>> WalkDict(IDictionary<string, object?> dict, actor.context.@this context)
     {
         var result = new Dictionary<string, object?>(dict.Count, StringComparer.OrdinalIgnoreCase);
         foreach (var kvp in dict)
-            result[kvp.Key] = SubstitutePrimitive(kvp.Value, context);
+            result[kvp.Key] = await SubstitutePrimitive(kvp.Value, context);
         return result;
     }
 
     // Walk a native dict's entry values for nested %var%, preserving dict-ness so
     // downstream navigation still hits the value type. A fresh dict is built — the
     // source is never mutated (mirrors WalkDict's fresh-container contract).
-    private static app.type.dict.@this WalkNativeDict(app.type.dict.@this dict, actor.context.@this context)
+    private static async System.Threading.Tasks.ValueTask<app.type.dict.@this> WalkNativeDict(app.type.dict.@this dict, actor.context.@this context)
     {
         var result = new app.type.dict.@this { Context = context };
         foreach (var entry in dict.Entries)
-            result.Set(new @this(entry.Name, SubstitutePrimitive(entry.Value, context)));
+            result.Set(new @this(entry.Name, await SubstitutePrimitive(entry.Peek(), context)));
         return result;
     }
 
     // Walk a native list's element values for nested %var%, preserving list-ness and
     // each element's name. Fresh list — the source is never mutated.
-    private static app.type.list.@this WalkNativeList(app.type.list.@this list, actor.context.@this context)
+    private static async System.Threading.Tasks.ValueTask<app.type.list.@this> WalkNativeList(app.type.list.@this list, actor.context.@this context)
     {
         var result = new app.type.list.@this { Context = context };
         foreach (var item in list.Items)
-            result.Add(new @this(item.Name, SubstitutePrimitive(item.Value, context)));
+            result.Add(new @this(item.Name, await SubstitutePrimitive(item.Peek(), context)));
         return result;
     }
 
@@ -1166,7 +1227,7 @@ public partial class @this
     // or IDictionary (Hashtable) passes through to the fall-through and is returned as-is —
     // no %var% substitution. JSON ingestion is normalized to the typed forms via
     // UnwrapJsonElement / UnwrapNewtonsoftToken upstream, so this is safe in practice.
-    private static object? SubstitutePrimitive(object? value, actor.context.@this context)
+    private static async System.Threading.Tasks.ValueTask<object?> SubstitutePrimitive(object? value, actor.context.@this context)
     {
         if (value == null) return null;
 
@@ -1189,18 +1250,18 @@ public partial class @this
                 // %var% read returns null and the parameter slots get nulled out).
                 // String.Resolve below already does this fallback for partial matches;
                 // this brings full-match parity.
-                var resolved = context.Variable.Get(varName);
-                return resolved?.IsInitialized == true && resolved.Value != null
-                    ? resolved.Value
+                var resolved = await context.Variable.Get(varName);
+                return resolved?.IsInitialized == true && resolved.Peek() != null
+                    ? resolved.Peek()
                     : (object?)s;
             }
-            return context.Variable.Resolve(s);
+            return await context.Variable.Resolve(s);
         }
 
-        if (value is IList<object?> innerList) return WalkList(innerList, context);
-        if (value is app.type.list.@this innerNativeList) return WalkNativeList(innerNativeList, context);
-        if (value is app.type.dict.@this innerNativeDict) return WalkNativeDict(innerNativeDict, context);
-        if (value is IDictionary<string, object?> innerDict) return WalkDict(innerDict, context);
+        if (value is IList<object?> innerList) return await WalkList(innerList, context);
+        if (value is app.type.list.@this innerNativeList) return await WalkNativeList(innerNativeList, context);
+        if (value is app.type.dict.@this innerNativeDict) return await WalkNativeDict(innerNativeDict, context);
+        if (value is IDictionary<string, object?> innerDict) return await WalkDict(innerDict, context);
 
         // Non-recursion guards: don't walk into Data, Action templates, or typed Action lists.
         // Action templates retain raw %var% for deferred resolution at their own dispatch.
@@ -1218,21 +1279,22 @@ public partial class @this
     /// values survive the call intact. Anything else (literal, partial interpolation,
     /// container) resolves through the normal substitution and wraps as a fresh Data.
     /// </summary>
-    public static @this ResolveParameter(string name, object? rawValue, actor.context.@this context)
+    public static async System.Threading.Tasks.ValueTask<@this> ResolveParameter(string name, object? rawValue, actor.context.@this context)
     {
         if (rawValue is app.type.text.@this txt) rawValue = txt.Value;
         if (rawValue is string s && TryFullVarMatch(s, out var varName))
         {
-            var live = context.Variable.Get(varName);
+            var live = await context.Variable.Get(varName);
             if (live != null && live.IsInitialized)
                 return live.ShallowClone(name);
         }
-        return new @this(name, SubstitutePrimitive(rawValue, context));
+        return new @this(name, await SubstitutePrimitive(rawValue, context));
     }
 
-    // GoalCall resolves its own parameters (GoalCall.Convert → ResolveParameter) so a
-    // full-match %var% param clones the live Data — signature/type preserved — instead of
-    // being flattened to a bare value by the generic container walk.
+    // A goal.call carries its params raw across the call boundary — the generic container
+    // walk is skipped so a `%var%` param stays a reference (a Data) for the callee to resolve
+    // through the door, rather than being flattened to a bare value here. Goal name + params
+    // resolve at dispatch (GoalCall.GetGoalAsync) and at read, in the caller's shared scope.
     private static bool IsSelfResolvingParams(System.Type t) =>
         t == typeof(global::app.goal.GoalCall);
 
@@ -1515,11 +1577,64 @@ public class @this<T> : @this
         return v is T typed ? typed : GetValue<T>();
     }
 
+    /// <summary>
+    /// Typed reference resolution — the door's decode step for a <c>Data&lt;T&gt;</c> still
+    /// holding a <c>%var%</c>/container reference. Runs the type-directed resolution (raw-name
+    /// types, conversion to T, container walk) once and caches; concrete values skip it. The
+    /// base does the untyped canonical resolution; here T directs it.
+    /// </summary>
+    protected override async ValueTask<object?> Read()
+    {
+        if (!_resolved && HoldsReference())
+        {
+            _resolved = true;
+            var r = await AsT_Impl<T>(_value, _context);
+            var rv = r.Materialize();
+            if (!r.Success)                    { Error = r.Error; _value = rv; }
+            else if (rv == null && _hasFallback) { _value = _fallback; IsInitialized = true; }
+            else                               { _value = rv; IsInitialized = r.IsInitialized; }
+            if (r.Type is { } t) _type = t;
+        }
+        return Materialize();
+    }
+
     public @this(string name = "", T? value = default, type? type = null, @this? parent = null)
         : base(name, value, type, parent) { }
 
     public static @this<T> Ok(T value, type? type = null) => new("", value, type);
     public new static @this<T> FromError(IError error) => new() { Error = error };
+
+    /// <summary>Typed absent slot — non-null Data, <c>IsInitialized == false</c>. The
+    /// optional-param null model: the reference is never null, only the value is.</summary>
+    public new static @this<T> Uninitialized(string name) => new(name) { IsInitialized = false };
+
+    /// <summary>Typed <see cref="@this.Param"/> — a fresh <c>Data&lt;T&gt;</c> carrying the
+    /// parameter's raw reference + context; its own <see cref="Read"/> resolves it (typed).</summary>
+    internal static @this<T> Param(@this param, actor.context.@this? context, T? fallback = default, bool hasFallback = false)
+        => new(param.Name, default, param.Type, param.Parent)
+        {
+            _value      = param.Materialize(),
+            Context     = context,
+            Properties  = param.Properties,
+            OnCreate    = param.OnCreate,
+            OnChange    = param.OnChange,
+            OnDelete    = param.OnDelete,
+            _fallback   = hasFallback ? fallback : default,
+            _hasFallback = hasFallback,
+        };
+
+    // A static [Default] applied when the reference resolves to null (an absent slot is
+    // handled by the getter binding the literal directly). One field, set at construction.
+    private T? _fallback;
+    private bool _hasFallback;
+
+    /// <summary>Typed <see cref="@this.Value(object?)"/> — resolved value, or
+    /// <paramref name="fallback"/> when null (absent or present-null).</summary>
+    public async ValueTask<T?> Value(T fallback)
+    {
+        var v = await Value();
+        return v ?? fallback;
+    }
 
     /// <summary>
     /// Explicit pass-through: retype a base <see cref="@this"/> as

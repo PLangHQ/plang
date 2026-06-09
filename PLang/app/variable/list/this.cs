@@ -20,7 +20,7 @@ public partial class @this
     };
 
     private readonly ConcurrentDictionary<string, data.@this> _variables = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Dictionary<string, Func<string, data.@this>> _navigables
+    private readonly Dictionary<string, Func<string, System.Threading.Tasks.ValueTask<data.@this>>> _navigables
         = new(StringComparer.OrdinalIgnoreCase);
     private actor.context.@this? _context;
 
@@ -33,7 +33,7 @@ public partial class @this
     /// <c>app.Settings.Get(path, this.Context)</c>. Generalises to any future
     /// non-Data navigable mount.
     /// </summary>
-    public void RegisterNavigable(string name, Func<string, data.@this> resolver)
+    public void RegisterNavigable(string name, Func<string, System.Threading.Tasks.ValueTask<data.@this>> resolver)
         => _navigables[name] = resolver;
 
     /// <summary>
@@ -219,7 +219,7 @@ public partial class @this
                 data.Context = _context;
                 if (frame.TryGet(name, out var inherited))
                 {
-                    OnSet?.Invoke(name, inherited.Value, value);
+                    OnSet?.Invoke(name, inherited.Peek(), value);
                 }
                 else
                 {
@@ -289,7 +289,7 @@ public partial class @this
             propertyName = remaining;
         }
 
-        if (!parent.IsInitialized && parent.Value == null)
+        if (!parent.IsInitialized && parent.Peek() == null)
         {
             // A parse failure on a raw-backed parent stamps MaterializeFailed —
             // surface it rather than masking the real cause with NotFound.
@@ -308,8 +308,8 @@ public partial class @this
         // of the source's live container — a later `set %source.x% = ...` cannot reach
         // it. The old SnapshotClone deep-copy was a redundant defense (and only ever
         // fired for raw IDictionary/IList, never the native dict).
-        var rawValue = value is data.@this dv2 ? dv2.Value : value;
-        var target = parent.Value;
+        var rawValue = value is data.@this dv2 ? dv2.Peek() : value;
+        var target = parent.Peek();
         if (target == null)
         {
             if (parent.Error?.Key == "MaterializeFailed")
@@ -525,6 +525,21 @@ public partial class @this
     /// <summary>Index by name. Returns the Data (NotFound shape when absent — Get is the canonical method).</summary>
     // indexer removed — Get is async (ValueTask); use `await Get(name)`.
 
+    /// <summary>
+    /// Diagnostic sync lookup — the in-memory Data for a root name, no async navigation,
+    /// no GetChild, no navigable resolution. For `--debug` displays that must run on a
+    /// sync surface (event handlers, formatters). Returns null when absent. Content reads
+    /// still go through the async <see cref="Get"/> door; this is the in-memory rung only.
+    /// </summary>
+    public data.@this? Peek(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return null;
+        name = CleanName(name);
+        var rootName = GetRootName(name);
+        if (Calls.Current is { } frame && frame.TryGet(rootName, out var framed)) return framed;
+        return _variables.TryGetValue(rootName, out var v) ? v : null;
+    }
+
     public async System.Threading.Tasks.ValueTask<data.@this> Get(string name)
     {
         if (string.IsNullOrEmpty(name))
@@ -561,7 +576,7 @@ public partial class @this
         else if (!_variables.TryGetValue(rootName, out root))
         {
             if (_navigables.TryGetValue(rootName, out var resolver))
-                return resolver(remaining ?? "");
+                return await resolver(remaining ?? "");
             return data.@this.NotFound(name);
         }
 
@@ -575,9 +590,9 @@ public partial class @this
     /// <summary>
     /// Gets a typed value by name.
     /// </summary>
-    public T? Get<T>(string name)
+    public async System.Threading.Tasks.ValueTask<T?> Get<T>(string name)
     {
-        var ov = Get(name);
+        var ov = await Get(name);
         return ov != null ? ov.GetValue<T>() : default;
     }
 
@@ -589,9 +604,9 @@ public partial class @this
     /// `(DateTimeOffset)…`). Collections stay native (dict/list keep their type);
     /// callers that want the wrapper use <c>Get(name).Value</c>.
     /// </summary>
-    public object? GetValue(string name)
+    public async System.Threading.Tasks.ValueTask<object?> GetValue(string name)
     {
-        var ov = Get(name);
+        var ov = await Get(name);
         var v = ov?.Materialize();
         if (v is app.type.dict.@this or app.type.list.@this) return v;
         return v is app.type.item.@this iv ? iv.ToRaw() : v;
@@ -764,7 +779,7 @@ public partial class @this
         {
             if (!includeSystem && kvp.Key.StartsWith("!"))
                 continue;
-            dict[kvp.Key] = kvp.Value.Value;
+            dict[kvp.Key] = kvp.Value.Peek();
         }
         return dict;
     }
@@ -786,7 +801,7 @@ public partial class @this
         {
             if (kvp.Key.StartsWith("!")) continue;
             if (kvp.Value is data.DynamicData) continue;
-            dict[kvp.Key] = kvp.Value.Value;
+            dict[kvp.Key] = kvp.Value.Peek();
         }
         return dict;
     }

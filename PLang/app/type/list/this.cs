@@ -209,7 +209,7 @@ public partial class @this : global::app.type.item.@this, module.IContext,
         // the O(n²) of At(i) per iteration.
         var flat = Items;
         for (int i = 0; i < flat.Count; i++)
-            if (global::app.data.Compare.AreEqualValues(flat[i].Value, value)) { RemoveAt(i); return true; }
+            if (global::app.data.Compare.AreEqualValues(flat[i].Peek(), value)) { RemoveAt(i); return true; }
         return false;
     }
 
@@ -242,12 +242,17 @@ public partial class @this : global::app.type.item.@this, module.IContext,
     /// Sorts by an element field (`sort %people% by "age"`) — each element's
     /// <paramref name="field"/> is compared through the one typed-compare path.
     /// </summary>
-    public void SortByField(string field, bool descending)
+    public async System.Threading.Tasks.Task SortByField(string field, bool descending)
     {
         var flat = new List<Data>(Items);
+        // Two-phase: GetChild is async (navigation reads through the value door), but a
+        // List.Sort comparator must stay sync — so resolve each element's field child up
+        // front and sort on the pre-resolved keys (keyed by element identity).
+        var keys = new Dictionary<Data, Data>(ReferenceEqualityComparer.Instance);
+        foreach (var d in flat) keys[d] = await d.GetChild(field);
         SortGuarded(flat, (a, b) =>
         {
-            int c = global::app.data.Compare.Order(a.GetChild(field), b.GetChild(field));
+            int c = global::app.data.Compare.Order(keys[a], keys[b]);
             return descending ? -c : c;
         });
         ResetTo(flat);
@@ -295,7 +300,7 @@ public partial class @this : global::app.type.item.@this, module.IContext,
         var flat = Items;
         var raw = new List<object?>(flat.Count);
         foreach (var item in flat)
-            raw.Add(Unwrap(item.Value));
+            raw.Add(Unwrap(item.Peek()));
         return raw;
     }
 
@@ -328,7 +333,7 @@ public partial class @this : global::app.type.item.@this, module.IContext,
         var theirs = ol.Items;
         if (mine.Count != theirs.Count) return false;
         for (int i = 0; i < mine.Count; i++)
-            if (!global::app.data.Compare.AreEqualValues(mine[i].Value, theirs[i].Value)) return false;
+            if (!global::app.data.Compare.AreEqualValues(mine[i].Peek(), theirs[i].Peek())) return false;
         return true;
     }
 

@@ -108,7 +108,7 @@ public class Fluid : ITemplate
         // the Fluid variable name — Data.Name is advisory and may differ.
         foreach (var kvp in action.Context.Variable.GetAll())
         {
-            fluidContext.SetValue(kvp.Key, FluidValue.Create(kvp.Value.Value, options));
+            fluidContext.SetValue(kvp.Key, FluidValue.Create(await kvp.Value.Value(), options));
         }
 
         // Override with explicit parameters
@@ -116,7 +116,7 @@ public class Fluid : ITemplate
         {
             foreach (var param in (await action.Parameters.Value())!.Items)
             {
-                fluidContext.SetValue(param.Name, FluidValue.Create(param.Value, options));
+                fluidContext.SetValue(param.Name, FluidValue.Create(await param.Value(), options));
             }
         }
 
@@ -197,7 +197,7 @@ public class Fluid : ITemplate
             set => throw new NotSupportedException("template view is read-only");
         }
         public ICollection<string> Keys => d.Keys.ToList();
-        public ICollection<object?> Values => d.Entries.Select(e => (object?)e.Value).ToList();
+        public ICollection<object?> Values => d.Entries.Select(e => (object?)e.Peek()).ToList();
         public int Count => d.Count;
         public bool IsReadOnly => true;
         public bool ContainsKey(string key) => d.Has(key);
@@ -210,7 +210,7 @@ public class Fluid : ITemplate
         public IEnumerator<KeyValuePair<string, object?>> GetEnumerator()
         {
             foreach (var e in d.Entries)
-                yield return new KeyValuePair<string, object?>(e.Name, e.Value);
+                yield return new KeyValuePair<string, object?>(e.Name, e.Peek());
         }
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
         public void Add(string key, object? value) => throw new NotSupportedException("template view is read-only");
@@ -244,7 +244,7 @@ public class Fluid : ITemplate
         public IEnumerator<object?> GetEnumerator()
         {
             foreach (var item in l.Items)
-                yield return item.Value;
+                yield return item.Peek();
         }
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
         public int IndexOf(object? item) { for (int i = 0; i < l.Count; i++) if (Equals(l.At(i)?.Peek(), item)) return i; return -1; }

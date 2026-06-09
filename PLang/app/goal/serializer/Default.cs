@@ -21,6 +21,6 @@ public static class Default
     {
         if (raw is not string text) return raw;
         if (string.IsNullOrEmpty(text) || ctx.Context == null) return null;
-        return ctx.Context.App.Type.Convert(text, typeof(global::app.goal.@this), ctx.Context).Value;
+        return ctx.Context.App.Type.Convert(text, typeof(global::app.goal.@this), ctx.Context).Peek();
     }
 }

@@ -33,7 +33,7 @@ public partial class @this
     public object? Normalize(View mode = View.Out)
     {
         var visited = new HashSet<object>(System.Collections.Generic.ReferenceEqualityComparer.Instance);
-        return NormalizeValue(Value, mode, visited, depth: 0, types: _context?.App?.Type);
+        return NormalizeValue(Peek(), mode, visited, depth: 0, types: _context?.App?.Type);
     }
 
     /// <summary>
@@ -95,8 +95,8 @@ public partial class @this
                 throw CycleError(nested);
             try
             {
-                var innerNormalized = NormalizeValue(nested.Value, mode, visited, depth + 1, types);
-                if (ReferenceEquals(innerNormalized, nested.Value)) return nested;
+                var innerNormalized = NormalizeValue(nested.Peek(), mode, visited, depth + 1, types);
+                if (ReferenceEquals(innerNormalized, nested.Peek())) return nested;
                 var copy = new @this(nested.Name, innerNormalized, nested.Type);
                 copy.Properties = nested.Properties;
                 copy.Signature = nested.Signature;
@@ -116,7 +116,7 @@ public partial class @this
             {
                 var copy = new app.type.dict.@this();
                 foreach (var entry in nativeDict.Entries)
-                    copy.Set(new @this(entry.Name, NormalizeValue(entry.Value, mode, visited, depth + 1, types)));
+                    copy.Set(new @this(entry.Name, NormalizeValue(entry.Peek(), mode, visited, depth + 1, types)));
                 return copy;
             }
             finally { visited.Remove(nativeDict); }

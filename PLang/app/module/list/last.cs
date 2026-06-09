@@ -10,11 +10,11 @@ public partial class Last : IContext
     public async Task<data.@this> Run()
     {
         var data = await Context.Variable.Get((await ListName.Value()));
-        var countData = data.GetChild("Count");
+        var countData = await data.GetChild("Count");
 
         if (countData.IsInitialized && (await countData.Value()) is int count && count > 0)
         {
-            var last = data.GetChild($"[{count - 1}]");
+            var last = await data.GetChild($"[{count - 1}]");
             if (last.IsInitialized) return global::app.data.@this.Ok((await last.Value()));
         }
 

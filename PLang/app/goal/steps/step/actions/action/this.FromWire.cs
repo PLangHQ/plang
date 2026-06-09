@@ -26,7 +26,7 @@ public sealed partial class @this
         {
             foreach (var p in paramSeq)
             {
-                var pRaw = p is global::app.data.@this pd ? pd.Value : p;
+                var pRaw = p is global::app.data.@this pd ? pd.Peek() : p;
                 var name = global::app.data.@this.WireSlot(pRaw, "name")?.ToString() ?? "";
                 act.Parameters.Add(global::app.data.@this.FromWireShape(pRaw, name, context));
             }
@@ -40,7 +40,7 @@ public sealed partial class @this
         {
             foreach (var m in modSeq)
             {
-                var mRaw = m is global::app.data.@this md ? md.Value : m;
+                var mRaw = m is global::app.data.@this md ? md.Peek() : m;
                 if (FromWire(mRaw, context) is { } mod) act.Modifiers.Add(mod);
             }
         }

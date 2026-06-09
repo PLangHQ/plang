@@ -10,7 +10,7 @@ public partial class Count : IContext
     public async Task<data.@this<global::app.type.number.@this>> Run()
     {
         var data = await Context.Variable.Get((await ListName.Value()));
-        var countData = data.GetChild("Count");
+        var countData = await data.GetChild("Count");
 
         if (countData.IsInitialized && (await countData.Value()) is int c)
             return global::app.data.@this<global::app.type.number.@this>.Ok(c);

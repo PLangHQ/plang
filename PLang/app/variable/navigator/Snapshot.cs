@@ -25,7 +25,7 @@ public sealed class Snapshot : INavigator
 
         var v = snap.GetVariable(key);
         return v != null
-            ? new global::app.data.@this(key, v.Value, parent: data)
+            ? new global::app.data.@this(key, v.Peek(), parent: data)
             : global::app.data.@this.NotFound(key);
     }
 }

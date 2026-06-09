@@ -146,7 +146,7 @@ public sealed class OpenAi : ILlm
         {
             cacheKey = ComputeCacheKey(messages, model, action.Temperature.GetValue<double>(), schema, (action.Format == null ? null : await action.Format.Value())?.ToString());
             var cached = await settings.Get(CacheTable, cacheKey);
-            if (cached.Success && cached.Value != null)
+            if (cached.Success && cached.Peek() != null)
             {
                 return RestoreFromCache(cached);
             }
@@ -231,7 +231,7 @@ public sealed class OpenAi : ILlm
             // http.request returns plain Data with the body as its lazy value
             // (http.response dissolved). Touching .Value materializes the body
             // (json → object) through the reader.
-            var responseBody = httpResult.Value;
+            var responseBody = httpResult.Peek();
             var (responseJson, parseEx) = ParseApiResponse(responseBody);
             if (responseJson == null)
             {
@@ -438,7 +438,7 @@ public sealed class OpenAi : ILlm
 
                     validationRetries++;
                     await app.CurrentActor.Channel.WriteTextAsync(global::app.channel.list.@this.Output,
-                        $"  Validation failed (retry {validationRetries}/{action.MaxValidationRetries.Value}): {validationError}{Environment.NewLine}");
+                        $"  Validation failed (retry {validationRetries}/{(await action.MaxValidationRetries.Value())}): {validationError}{Environment.NewLine}");
                     messages.Add(new LlmMessage
                     {
                         Role = "user",
@@ -473,7 +473,7 @@ public sealed class OpenAi : ILlm
                     // losing all content, so every cached JSON response would restore
                     // empty. Data.Ok already materialized resultValue into a native
                     // dict/list (or scalar) that serializes round-trip.
-                    ["Value"] = result.Value,
+                    ["Value"] = result.Peek(),
                     ["RawResponse"] = rawResponse,
                     ["Model"] = model,
                     ["PromptTokens"] = totalPromptTokens,
@@ -493,8 +493,8 @@ public sealed class OpenAi : ILlm
             SetProp(result, "RawResponse", rawResponse);
             SetProp(result, "Model", model);
             SetProp(result, "Messages", messages);
-            SetProp(result, "Temperature", action.Temperature.Value);
-            SetProp(result, "MaxTokens", action.MaxTokens.Value);
+            SetProp(result, "Temperature", (await action.Temperature.Value()));
+            SetProp(result, "MaxTokens", (await action.MaxTokens.Value()));
             SetProp(result, "Cached", false);
             SetProp(result, "PromptTokens", totalPromptTokens);
             SetProp(result, "CompletionTokens", totalCompletionTokens);
@@ -572,7 +572,7 @@ public sealed class OpenAi : ILlm
                 var goalResult = await app.RunGoalAsync(execCall, context);
 
                 if (goalResult.Success)
-                    result = goalResult.Value != null ? JsonSerializer.Serialize(goalResult.Value) : "";
+                    result = goalResult.Peek() != null ? JsonSerializer.Serialize(goalResult.Peek()) : "";
                 else
                     result = "Error: " + (goalResult.Error?.Message ?? "Unknown error");
             }
@@ -641,8 +641,8 @@ public sealed class OpenAi : ILlm
         {
             foreach (var def in parameterDefs)
             {
-                if (!result.Any(r => r.Name == def.Name) && def.Value != null)
-                    result.Add(new data.@this(def.Name, def.Value));
+                if (!result.Any(r => r.Name == def.Name) && def.Peek() != null)
+                    result.Add(new data.@this(def.Name, def.Peek()));
             }
         }
 
@@ -869,7 +869,7 @@ public sealed class OpenAi : ILlm
             {
                 ["type"] = MapPlangTypeToJsonSchema(param.Type?.Name, param.Type?.Kind)
             };
-            if (param.Value == null)
+            if (param.Peek() == null)
                 required.Add(param.Name);
         }
 
@@ -936,7 +936,7 @@ public sealed class OpenAi : ILlm
     {
         // Try settings store
         var result = await settings.Get("LlmConfig", settingKey);
-        if (result.Success && result.Value != null)
+        if (result.Success && result.Peek() != null)
         {
             var val = (await result.Value()) is data.@this d ? (await d.Value())?.ToString() : (await result.Value())?.ToString();
             if (!string.IsNullOrEmpty(val)) return val;

@@ -118,7 +118,7 @@ public sealed partial class @this : global::app.type.item.@this, module.IContext
     {
         var raw = new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase);
         foreach (var entry in _entries)
-            raw[entry.Name] = Unwrap(entry.Value);
+            raw[entry.Name] = Unwrap(entry.Peek());
         return raw;
     }
 
@@ -153,7 +153,7 @@ public sealed partial class @this : global::app.type.item.@this, module.IContext
         foreach (var entry in _entries)
         {
             var match = od.Get(entry.Name);
-            if (match == null || !global::app.data.Compare.AreEqualValues(entry.Value, match.Value))
+            if (match == null || !global::app.data.Compare.AreEqualValues(entry.Peek(), match.Peek()))
                 return false;
         }
         return true;

@@ -313,7 +313,7 @@ public class Default : IBuilder
             string planDetail = "(no plan was produced)";
             try
             {
-                var planValue = action.Context.Variable.Get("plan")?.Peek();
+                var planValue = action.Context.Variable.Peek("plan")?.Peek();
                 if (planValue != null)
                 {
                     // Round-trip whatever shape the planner produced
@@ -988,7 +988,7 @@ public class Default : IBuilder
                 // numeric/bool → string when the parameter is declared string. The LLM
                 // emitting `Key=404 (int)` for a string-declared Key gets normalized here.
                 var conv = context.App.Type.Convert(p.Peek(), targetType, context);
-                if (conv.Value != null)
+                if (conv.Peek() != null)
                     p.SetValue(conv.Peek());
                 else if (conv.Error != null)
                     errors.Add($"{a.Module}.{a.ActionName}.{p.Name}: {conv.Error.Message}");

@@ -182,7 +182,7 @@ public class Wire : JsonConverter<@this>
         {
             if (inner.Signature == null && inner.Context?.Actor != null)
                 inner.EnsureSigned();
-            EnsureInnerSigned(inner.Value);
+            EnsureInnerSigned(inner.Peek());
             return;
         }
         // Native dict: its entries ARE Data — recurse into each so a signed value
@@ -482,7 +482,7 @@ public class Wire : JsonConverter<@this>
         // gets sealed before any byte leaves. Skip an untouched raw-backed Data:
         // its value is raw text/bytes (no nested Data to seal), and reading
         // .Value would materialize it and break verbatim passthrough.
-        if (Sign && !data.RawUntouched) EnsureInnerSigned(data.Value);
+        if (Sign && !data.RawUntouched) EnsureInnerSigned(data.Peek());
 
         writer.WriteStartObject();
         // @schema:data — the marker that says this JSON object IS a Data. First key,

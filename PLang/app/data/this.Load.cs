@@ -38,7 +38,7 @@ public partial class @this
         var visited = new HashSet<object>(System.Collections.Generic.ReferenceEqualityComparer.Instance);
         try
         {
-            await LoadValue(Value, visited, depth: 0);
+            await LoadValue(Peek(), visited, depth: 0);
             return null;
         }
         catch (StrictKindMismatchException ex)
@@ -71,7 +71,7 @@ public partial class @this
         if (value is @this nested)
         {
             if (!visited.Add(nested)) return;
-            try { await LoadValue(nested.Value, visited, depth + 1); }
+            try { await LoadValue(nested.Peek(), visited, depth + 1); }
             finally { visited.Remove(nested); }
             return;
         }

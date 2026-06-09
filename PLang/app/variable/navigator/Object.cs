@@ -11,7 +11,7 @@ public sealed class Object : INavigator
 
     public async System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(global::app.data.@this data, string key)
     {
-        var value = data.Value;
+        var value = await data.Value();
         if (value == null) return global::app.data.@this.NotFound(key);
 
         // Walk the inheritance chain bottom-up so properties shadowed in a

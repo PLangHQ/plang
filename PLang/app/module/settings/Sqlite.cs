@@ -317,7 +317,7 @@ public sealed class Sqlite : IStore
     /// </summary>
     private static void RehydrateValue(data.@this data)
     {
-        if (data.Value == null || data.Type.IsNull) return;
+        if (data.Peek() == null || data.Type.IsNull) return;
 
         // ClrType is non-public on `type.@this` but `internal` — same-assembly
         // callers read directly; the entity owns the registry/primitive
@@ -325,7 +325,7 @@ public sealed class Sqlite : IStore
         var clrType = data.Type.ClrType;
         if (clrType == null || clrType.IsAssignableFrom(data.Peek()!.GetType())) return;
 
-        var converted = AppTypes.ConvertTo(data.Value, clrType);
+        var converted = AppTypes.ConvertTo(data.Peek(), clrType);
         if (converted != null) data.SetValue(converted);
     }
 

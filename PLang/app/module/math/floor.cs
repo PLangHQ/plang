@@ -8,12 +8,12 @@ public partial class Floor : IContext
 {
     public partial data.@this Value { get; init; }
 
-    public Task<data.@this<number>> Run()
+    public async Task<data.@this<number>> Run()
     {
-        var n = number.FromObject(Value.Value);
+        var n = number.FromObject(await Value.Value());
         if (n == null)
-            return Task.FromResult(data.@this<number>.FromError(
-                new global::app.error.ValidationError("math.floor requires a number", "InvalidInput")));
-        return Task.FromResult(number.Floor(n));
+            return data.@this<number>.FromError(
+                new global::app.error.ValidationError("math.floor requires a number", "InvalidInput"));
+        return number.Floor(n);
     }
 }

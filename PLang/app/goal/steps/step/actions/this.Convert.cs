@@ -17,7 +17,7 @@ public sealed partial class @this
         var actions = new @this();
         foreach (var element in seq)
         {
-            var raw = element is global::app.data.@this d ? d.Value : element;
+            var raw = element is global::app.data.@this d ? d.Peek() : element;
             if (action.@this.FromWire(raw, context) is { } act) actions.Add(act);
         }
         return global::app.data.@this.Ok(actions);
