@@ -45,8 +45,8 @@ public class StartGoalTests
         await result.IsSuccess();
 
         // Check variables
-        await Assert.That(context.Variable.GetValue("name")).IsEqualTo("Plang");
-        await Assert.That(context.Variable.GetValue("newVarName")).IsEqualTo("Plang");
+        await Assert.That((await context.Variable.GetValue("name"))).IsEqualTo("Plang");
+        await Assert.That((await context.Variable.GetValue("newVarName"))).IsEqualTo("Plang");
 
         // Check output
         await Assert.That(capture.Lines).Contains("Plang");
@@ -82,7 +82,7 @@ public class StartGoalTests
         var result = await engine.RunGoalAsync(goal, context);
 
         await result.IsSuccess();
-        await Assert.That(context.Variable.GetValue("result")).IsEqualTo("Hello");
+        await Assert.That((await context.Variable.GetValue("result"))).IsEqualTo("Hello");
     }
 
     [Test]
@@ -194,7 +194,7 @@ public class StartGoalTests
         var result = await engine.RunGoalAsync(goal, context);
 
         await result.IsSuccess();
-        await Assert.That(context.Variable.GetValue("result")).IsNull();
+        await Assert.That((await context.Variable.GetValue("result"))).IsNull();
     }
 
     #endregion
@@ -226,7 +226,7 @@ public class StartGoalTests
         var result = await engine.RunGoalAsync(goal, context);
 
         await result.IsSuccess();
-        await Assert.That(context.Variable.GetValue("greeting")).IsEqualTo("hello");
+        await Assert.That((await context.Variable.GetValue("greeting"))).IsEqualTo("hello");
 
         // Type should be "string" — resolved from defaults, not null
         var data = await context.Variable.Get("greeting");

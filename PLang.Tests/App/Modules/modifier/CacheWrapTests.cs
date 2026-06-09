@@ -50,7 +50,7 @@ public class CacheWrapTests
         var result = await action.RunAsync(Ctx);
 
         await result.IsSuccess();
-        await Assert.That(Ctx.Variable.GetValue("x")).IsEqualTo("first");
+        await Assert.That((await Ctx.Variable.GetValue("x"))).IsEqualTo("first");
 
         // Cache was populated on miss
         var cached = await Ctx.App!.Cache.GetAsync("miss-key");

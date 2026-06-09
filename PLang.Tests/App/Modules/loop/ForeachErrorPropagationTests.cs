@@ -54,7 +54,7 @@ public class ForeachErrorPropagationTests
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
         // Loop must stop on first failure — item stays on first element, not last.
-        await Assert.That(context.Variable.GetValue("item")).IsEqualTo("a");
+        await Assert.That((await context.Variable.GetValue("item"))).IsEqualTo("a");
     }
 
     /// <summary>
@@ -129,7 +129,7 @@ public class ForeachErrorPropagationTests
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
         // First iteration failed → item variable stays on first element.
-        await Assert.That(context.Variable.GetValue("item")).IsEqualTo("a");
+        await Assert.That((await context.Variable.GetValue("item"))).IsEqualTo("a");
     }
 
     /// <summary>
@@ -167,6 +167,6 @@ public class ForeachErrorPropagationTests
         var result = await step.RunAsync(context);
 
         await result.IsSuccess();
-        await Assert.That(context.Variable.GetValue("item")).IsEqualTo("c");
+        await Assert.That((await context.Variable.GetValue("item"))).IsEqualTo("c");
     }
 }

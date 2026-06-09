@@ -22,7 +22,7 @@ public class ActionRunAsyncTests
         var action = TestAction.Create("variable", "set", ("name", "%v%"), ("value", "ok"));
         var result = await action.RunAsync(context);
         await result.IsSuccess();
-        await Assert.That(context.Variable.GetValue("v")).IsEqualTo("ok");
+        await Assert.That((await context.Variable.GetValue("v"))).IsEqualTo("ok");
     }
 
     [Test] public async Task AppRun_SymbolAbsent_FromProductionSource()

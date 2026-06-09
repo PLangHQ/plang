@@ -32,9 +32,9 @@ public class PrPipelineTests
         await result.IsSuccess();
 
         // Variables set correctly
-        await Assert.That(context.Variable.GetValue("greeting")).IsEqualTo("Hello");
-        await Assert.That(context.Variable.GetValue("user")).IsEqualTo("World");
-        await Assert.That(context.Variable.GetValue("message")).IsEqualTo("Hello, World!");
+        await Assert.That((await context.Variable.GetValue("greeting"))).IsEqualTo("Hello");
+        await Assert.That((await context.Variable.GetValue("user"))).IsEqualTo("World");
+        await Assert.That((await context.Variable.GetValue("message"))).IsEqualTo("Hello, World!");
 
         // Output captured (variable interpolation in output.write)
         await Assert.That(capture.Lines).Contains("Hello, World!");
@@ -90,16 +90,16 @@ public class PrPipelineTests
         await result.IsSuccess();
 
         // #1: testdata.txt — relative, same folder
-        await Assert.That(context.Variable.GetValue("relative")!.ToString()).IsEqualTo("Hello from test file");
+        await Assert.That((await context.Variable.GetValue("relative"))!.ToString()).IsEqualTo("Hello from test file");
 
         // #2: /testdata.txt — absolute from root
-        await Assert.That(context.Variable.GetValue("absolute")!.ToString()).IsEqualTo("Hello from test file");
+        await Assert.That((await context.Variable.GetValue("absolute"))!.ToString()).IsEqualTo("Hello from test file");
 
         // #4: sub/subdata.txt — subfolder relative
-        await Assert.That(context.Variable.GetValue("subfolder")!.ToString()).IsEqualTo("Hello from subfolder");
+        await Assert.That((await context.Variable.GetValue("subfolder"))!.ToString()).IsEqualTo("Hello from subfolder");
 
         // #7: ./testdata.txt — explicit current dir
-        await Assert.That(context.Variable.GetValue("dotslash")!.ToString()).IsEqualTo("Hello from test file");
+        await Assert.That((await context.Variable.GetValue("dotslash"))!.ToString()).IsEqualTo("Hello from test file");
     }
 
     [Test]
@@ -118,7 +118,7 @@ public class PrPipelineTests
         // Step 1 (subdata.txt) fails — relative paths resolve against engine root, not goal folder
         //   so "subdata.txt" → {root}/subdata.txt (not found), NOT {root}/sub/subdata.txt
         // The goal fails on step 1, but step 0 already set %rootAbsolute%
-        await Assert.That(context.Variable.GetValue("rootAbsolute")!.ToString()).IsEqualTo("Hello from test file");
+        await Assert.That((await context.Variable.GetValue("rootAbsolute"))!.ToString()).IsEqualTo("Hello from test file");
     }
 
     [Test]

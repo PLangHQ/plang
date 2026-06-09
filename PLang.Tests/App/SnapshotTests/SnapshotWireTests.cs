@@ -137,7 +137,7 @@ public class SnapshotWireTests
 
         await result.IsSuccess();
         // Step 1 ran on resume; step 0 did NOT (we resumed mid-goal).
-        await Assert.That(context.Variable.GetValue("s1")).IsEqualTo("second");
+        await Assert.That((await context.Variable.GetValue("s1"))).IsEqualTo("second");
         await Assert.That((await context.Variable.Get("s0")).IsInitialized).IsFalse();
     }
 
@@ -172,7 +172,7 @@ public class SnapshotWireTests
 
         var result = await converted!.Resume(context);
         await result.IsSuccess();
-        await Assert.That(context.Variable.GetValue("s1")).IsEqualTo("second");
+        await Assert.That((await context.Variable.GetValue("s1"))).IsEqualTo("second");
     }
 
     private static Step SetStepRef(int index, string varName, string expr)
@@ -236,12 +236,12 @@ public class SnapshotWireTests
 
         await result.IsSuccess();
         // Sub re-entered at step 1 and continued — and saw the PATCHED %i%.
-        await Assert.That(context.Variable.GetValue("passedThrow")).IsEqualTo("ok");
-        await Assert.That(System.Convert.ToInt64(context.Variable.GetValue("seenI"))).IsEqualTo(2L);
+        await Assert.That((await context.Variable.GetValue("passedThrow"))).IsEqualTo("ok");
+        await Assert.That(System.Convert.ToInt64((await context.Variable.GetValue("seenI")))).IsEqualTo(2L);
         // The stack unwound to the entry goal's post-call step.
-        await Assert.That(context.Variable.GetValue("entryReached")).IsEqualTo("END");
+        await Assert.That((await context.Variable.GetValue("entryReached"))).IsEqualTo("END");
         // Survivor var intact across the whole round-trip.
-        await Assert.That(context.Variable.GetValue("keep")).IsEqualTo("alive");
+        await Assert.That((await context.Variable.GetValue("keep"))).IsEqualTo("alive");
     }
 
     [Test]
@@ -282,7 +282,7 @@ public class SnapshotWireTests
         await Assert.That(snap).IsNotNull();
         var result = await snap!.Resume(context);
         await result.IsSuccess();
-        await Assert.That(System.Convert.ToInt64(context.Variable.GetValue("seen"))).IsEqualTo(2L);
+        await Assert.That(System.Convert.ToInt64((await context.Variable.GetValue("seen")))).IsEqualTo(2L);
     }
 
     [Test]
@@ -346,7 +346,7 @@ public class SnapshotWireTests
 
         var result = await snap!.Resume(context);
         await result.IsSuccess();
-        await Assert.That(System.Convert.ToInt64(context.Variable.GetValue("seen"))).IsEqualTo(2L);
+        await Assert.That(System.Convert.ToInt64((await context.Variable.GetValue("seen")))).IsEqualTo(2L);
     }
 
     [Test]
@@ -381,7 +381,7 @@ public class SnapshotWireTests
         var snap = (await (await context.Variable.Get("snap")).As<global::app.snapshot.@this>(context).Value());
         var result = await snap!.Resume(context);
         await result.IsSuccess();
-        long seen = await System.Convert.ToInt64(context.Variable.GetValue("seen"));
+        long seen = await System.Convert.ToInt64((await context.Variable.GetValue("seen")));
         await Assert.That(seen).IsEqualTo(2L);  // edit persists IFF navigation materializes+caches
     }
 
@@ -423,7 +423,7 @@ public class SnapshotWireTests
         // Resume the edited snapshot — step1 reads the patched %x%.
         var result = await snap.Resume(context);
         await result.IsSuccess();
-        await Assert.That(System.Convert.ToInt64(context.Variable.GetValue("seen"))).IsEqualTo(2L);
+        await Assert.That(System.Convert.ToInt64((await context.Variable.GetValue("seen")))).IsEqualTo(2L);
     }
 
     [Test]

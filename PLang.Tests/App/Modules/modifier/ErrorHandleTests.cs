@@ -72,7 +72,7 @@ public class ErrorHandleTests
         var result = await action.RunAsync(Ctx);
 
         await result.IsSuccess();
-        await Assert.That(Ctx.Variable.GetValue("ok")).IsEqualTo("v");
+        await Assert.That((await Ctx.Variable.GetValue("ok"))).IsEqualTo("v");
     }
 
     [Test]

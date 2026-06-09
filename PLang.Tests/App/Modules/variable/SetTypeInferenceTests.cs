@@ -166,6 +166,6 @@ public class SetTypeInferenceTests
         await TestAction.Create("variable", "set", ("name", "%x%"), ("value", "first")).RunAsync(context);
         var result = await TestAction.Create("variable", "set", ("name", "%x%"), ("value", "second"), ("asdefault", true)).RunAsync(context);
         await result.IsSuccess();
-        await Assert.That(context.Variable.GetValue("x")).IsEqualTo("first");
+        await Assert.That((await context.Variable.GetValue("x"))).IsEqualTo("first");
     }
 }

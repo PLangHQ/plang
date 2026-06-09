@@ -79,7 +79,7 @@ public class ForeachStringNotIterableTests
 
         await step.RunAsync(context);
 
-        await Assert.That(context.Variable.GetValue("item")).IsEqualTo("hello");
+        await Assert.That((await context.Variable.GetValue("item"))).IsEqualTo("hello");
     }
 
     // Same single-iteration shape for non-iterable scalars in general.
@@ -110,6 +110,6 @@ public class ForeachStringNotIterableTests
         await result.IsSuccess();
         var loopResult = (await result.Value()) as LoopResult;
         await Assert.That(loopResult!.itemCount).IsEqualTo(1);
-        await Assert.That(context.Variable.GetValue("item")).IsEqualTo(42);
+        await Assert.That((await context.Variable.GetValue("item"))).IsEqualTo(42);
     }
 }

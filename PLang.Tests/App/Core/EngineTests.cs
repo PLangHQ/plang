@@ -100,8 +100,8 @@ public class EngineTests
         engine.User.Context.Variable.Set("key", "user-value");
         engine.System.Context.Variable.Set("key", "system-value");
 
-        await Assert.That(engine.User.Context.Variable.GetValue("key")).IsEqualTo("user-value");
-        await Assert.That(engine.System.Context.Variable.GetValue("key")).IsEqualTo("system-value");
+        await Assert.That((await engine.User.Context.Variable.GetValue("key"))).IsEqualTo("user-value");
+        await Assert.That((await engine.System.Context.Variable.GetValue("key"))).IsEqualTo("system-value");
     }
 
     [Test]
@@ -337,7 +337,7 @@ public class EngineTests
         var result = await engine.RunGoalAsync(goal, context);
 
         await result.IsSuccess();
-        await Assert.That(context.Variable.GetValue("test")).IsEqualTo("hello");
+        await Assert.That((await context.Variable.GetValue("test"))).IsEqualTo("hello");
     }
 
     [Test]
@@ -388,7 +388,7 @@ public class EngineTests
         var steps = new GoalSteps { step };
         await steps.RunAsync(context);
 
-        await Assert.That(context.Variable.GetValue("source")).IsEqualTo("hello");
+        await Assert.That((await context.Variable.GetValue("source"))).IsEqualTo("hello");
     }
 
     [Test]
@@ -518,9 +518,9 @@ public class EngineTests
         var result = await engine.RunGoalAsync(goal, engine.System.Context);
 
         await result.IsSuccess();
-        await Assert.That(engine.System.Context.Variable.GetValue("test")).IsEqualTo("hello");
+        await Assert.That((await engine.System.Context.Variable.GetValue("test"))).IsEqualTo("hello");
         // User context should NOT have the variable
-        await Assert.That(engine.User.Context.Variable.GetValue("test")).IsNull();
+        await Assert.That((await engine.User.Context.Variable.GetValue("test"))).IsNull();
     }
 
     [Test]
@@ -544,7 +544,7 @@ public class EngineTests
         var result = await engine.RunGoalAsync(new GoalCall { Name = "TestGoal" }, engine.System.Context);
 
         await result.IsSuccess();
-        await Assert.That(engine.System.Context.Variable.GetValue("test")).IsEqualTo("system-value");
+        await Assert.That((await engine.System.Context.Variable.GetValue("test"))).IsEqualTo("system-value");
     }
 
     // Handler that does NOT implement ICodeGenerated - used to test engine rejects it

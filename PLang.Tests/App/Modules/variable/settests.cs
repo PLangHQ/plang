@@ -22,7 +22,7 @@ public class SetTests
         var result = await action.RunAsync(context);
 
         await result.IsSuccess();
-        await Assert.That(context.Variable.GetValue("testVar")).IsEqualTo("testValue");
+        await Assert.That((await context.Variable.GetValue("testVar"))).IsEqualTo("testValue");
     }
 
     [Test]
@@ -44,7 +44,7 @@ public class SetTests
         var result = await action.RunAsync(context);
 
         await result.IsSuccess();
-        await Assert.That(context.Variable.GetValue("testVar")).IsEqualTo("testValue");
+        await Assert.That((await context.Variable.GetValue("testVar"))).IsEqualTo("testValue");
         // F3-1: handler must return the stored value, not an empty Data.Ok().
         // Powers %!data% capture in goal.call → ReturnMapping / GoalCallReturn PLang tests.
         await Assert.That((await result.Value())).IsEqualTo("testValue");
@@ -75,7 +75,7 @@ public class SetTests
         var result = await defaultAction.RunAsync(context);
 
         await result.IsSuccess();
-        await Assert.That(context.Variable.GetValue("x")).IsEqualTo("original");
+        await Assert.That((await context.Variable.GetValue("x"))).IsEqualTo("original");
         // F3-1: when AsDefault hits an existing var, handler returns the existing Data,
         // not an empty Data.Ok(). Reverting that branch would surface here.
         await Assert.That((await result.Value())).IsEqualTo("original");
@@ -89,7 +89,7 @@ public class SetTests
         var result = await action.RunAsync(context);
 
         await result.IsSuccess();
-        await Assert.That(context.Variable.GetValue("y")).IsEqualTo("default");
+        await Assert.That((await context.Variable.GetValue("y"))).IsEqualTo("default");
     }
 
     [Test]

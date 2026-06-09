@@ -214,7 +214,7 @@ public class PLangContextTests
 
         using var child = parent.CreateChild();
 
-        await Assert.That(child.Variable.GetValue("test")).IsEqualTo("value");
+        await Assert.That((await child.Variable.GetValue("test"))).IsEqualTo("value");
         await Assert.That(child.Variable).IsNotEqualTo(parent.Variable);
     }
 

@@ -76,7 +76,7 @@ public class SnapshotResumeTests
             var result = await snap.Resume(context);
             await result.IsSuccess();
             // Step 1 ran on resume; step 0 should NOT have run (we resumed mid-goal).
-            await Assert.That(context.Variable.GetValue("s1")).IsEqualTo("second");
+            await Assert.That((await context.Variable.GetValue("s1"))).IsEqualTo("second");
             await Assert.That((await context.Variable.Get("s0")).IsInitialized).IsFalse();
         }
     }

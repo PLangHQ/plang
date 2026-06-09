@@ -156,11 +156,11 @@ public class ContextVariableTests
         vars.Clear();
 
         // Regular var is gone
-        await Assert.That(vars.GetValue("regularVar")).IsNull();
+        await Assert.That((await vars.GetValue("regularVar"))).IsNull();
 
         // Context vars survive
-        await Assert.That(vars.GetValue("!app")).IsNotNull();
-        await Assert.That(vars.GetValue("!context")).IsNotNull();
+        await Assert.That((await vars.GetValue("!app"))).IsNotNull();
+        await Assert.That((await vars.GetValue("!context"))).IsNotNull();
     }
 
     [Test]
@@ -172,7 +172,7 @@ public class ContextVariableTests
         var clone = vars.Clone();
 
         // Regular var is cloned
-        await Assert.That(clone.GetValue("regularVar")).IsEqualTo("hello");
+        await Assert.That((await clone.GetValue("regularVar"))).IsEqualTo("hello");
 
         // Context vars are NOT cloned (they'd break as plain Data objects)
         await Assert.That(clone.Contains("!app")).IsFalse();

@@ -44,7 +44,7 @@ public class TimeoutAfterTests
         var result = await action.RunAsync(Ctx);
 
         await result.IsSuccess();
-        await Assert.That(Ctx.Variable.GetValue("fast")).IsEqualTo("done");
+        await Assert.That((await Ctx.Variable.GetValue("fast"))).IsEqualTo("done");
     }
 
     [Test]

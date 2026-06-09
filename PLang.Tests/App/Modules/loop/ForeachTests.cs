@@ -47,7 +47,7 @@ public class ForeachTests
         var result = await step.RunAsync(context);
 
         await result.IsSuccess();
-        await Assert.That(context.Variable.GetValue("item")).IsEqualTo("c");
+        await Assert.That((await context.Variable.GetValue("item"))).IsEqualTo("c");
     }
 
     [Test]
@@ -92,7 +92,7 @@ public class ForeachTests
         var result = await step.RunAsync(context);
 
         await result.IsSuccess();
-        await Assert.That(context.Variable.GetValue("myItem")).IsEqualTo("hello");
+        await Assert.That((await context.Variable.GetValue("myItem"))).IsEqualTo("hello");
     }
 
     [Test]
