@@ -2,10 +2,25 @@
 
 ## Version: v5 — Stage 2 async-door cutover (sprint mode). **FULL SOLUTION COMPILES (0/0/0).**
 
-`PLang` + `PlangConsole` + `PLang.Tests` all build clean. Production: 2130→0. Tests: 1736→0
-(one-pass receiver-aware regex got ~1700; the long tail — nested-paren receivers, object-initializer
-writes, expression-body sync lambdas, bool-view conversions, serializer string args — hand-fixed,
-documented below). The all-or-nothing Stage 2 cutover is **done end to end**.
+`PLang` + `PlangConsole` + `PLang.Tests` all build clean. Production: 2130→0 errors **and 0 CS8974**
+(no silent method-group `.Value` left in production). Tests: 1736→0 errors. The all-or-nothing Stage 2
+cutover **compiles end to end**.
+
+### ⚠️ KNOWN GAP — 130 silent `.Value` sites in TESTS (CS8974), causing runtime failures
+The `.Value` property→method change has a trap: `.Value` (now a method group) passed to a non-Assert
+position — `ReferenceEquals(d.Value, x)`, `Convert.ToInt64(result.Value)`, `object? v = d.Value;`,
+ternaries — converts **method-group → object** silently. It is **not** a compile error and **not** an
+Assert.That/TUnit-analyzer error, so neither my compile-error worklist nor the TUnit pass caught them.
+They assert on/use the *method*, not the value → **runtime test failures** (~10/95 in DataTests; more
+across the suite). **They do NOT break compilation.**
+- **Worklist:** `dotnet build PLang.Tests 2>&1 | grep "warning CS8974"` — 130 sites, each a Data-receiver
+  `.Value` to wrap as `await X.Value()` (async ctx) or `X.Materialize()` (sync).
+- **Production is clean** of these (verified 0 CS8974 in PLang). Only tests have them.
+- My regex passes misfire on the sync/async split here (the same line can be method-group in either
+  context). Do this pass **per-file with the enclosing-method async check**, not one global regex;
+  build `--no-incremental` between (incremental counts are unreliable — they bit me repeatedly).
+- Smoke test (DataTests) after the door: **85/95 pass** — the door is behavior-preserving for in-memory
+  values; the 10 failures are these CS8974 sites (e.g. `ReferenceEquals(ov.Value, null.Instance)`).
 
 
 Ingi's call: **full sprint, build red mid-flight; go through everything, don't stop, commit/push
