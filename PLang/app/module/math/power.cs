@@ -36,9 +36,9 @@ public partial class Power : IContext
 
     public Task<data.@this<number>> Run()
     {
-        var policy = MathPolicy.Resolve(Context, Overflow?.Value?.Value, Precision?.Value?.Value);
-        var an = number.FromObject(Base.Value);
-        var bn = number.FromObject(Exponent.Value);
+        var policy = MathPolicy.Resolve(Context, (Overflow?.Materialize() as global::app.type.choice.@this<POverflow>)?.Value, (Precision?.Materialize() as global::app.type.choice.@this<PPrecision>)?.Value);
+        var an = number.FromObject(Base.Materialize());
+        var bn = number.FromObject(Exponent.Materialize());
         if (an == null || bn == null)
             return Task.FromResult(data.@this<number>.FromError(
                 new global::app.error.ValidationError("math.power requires base and exponent", "InvalidInput")));

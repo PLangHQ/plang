@@ -16,9 +16,9 @@ public partial class Max : IContext
 
     public Task<data.@this<number>> Run()
     {
-        var policy = MathPolicy.Resolve(Context, Overflow?.Value?.Value, Precision?.Value?.Value);
-        var an = number.FromObject(A.Value);
-        var bn = number.FromObject(B.Value);
+        var policy = MathPolicy.Resolve(Context, (Overflow?.Materialize() as global::app.type.choice.@this<POverflow>)?.Value, (Precision?.Materialize() as global::app.type.choice.@this<PPrecision>)?.Value);
+        var an = number.FromObject(A.Materialize());
+        var bn = number.FromObject(B.Materialize());
         if (an == null || bn == null)
             return Task.FromResult(data.@this<number>.FromError(
                 new global::app.error.ValidationError("math.max requires two numbers", "InvalidInput")));
