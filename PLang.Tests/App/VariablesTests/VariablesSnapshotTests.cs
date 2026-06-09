@@ -14,11 +14,11 @@ public class VariablesSnapshotTests
         var dst = new global::app.@this("/dst");
         dst.Restore(snap, dst.User.Context);
 
-        var x = dst.User.Context.Variable.Get("x");
+        var x = await dst.User.Context.Variable.Get("x");
         await Assert.That(x).IsNotNull();
         await Assert.That((await x!.Value())).IsEqualTo(1);
 
-        var obj = dst.User.Context.Variable.Get("obj");
+        var obj = await dst.User.Context.Variable.Get("obj");
         await Assert.That(obj).IsNotNull();
         var dict = (await obj!.Value()) as IDictionary<string, object?>;
         await Assert.That(dict).IsNotNull();

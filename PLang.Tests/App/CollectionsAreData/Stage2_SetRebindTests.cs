@@ -23,9 +23,9 @@ public class Stage2_SetRebindTests
         await using var frame = vars.Calls.Push(null);
 
         vars.Set("x", "a");
-        var dataA = vars.Get("x");
+        var dataA = await vars.Get("x");
         vars.Set("x", "b");
-        var dataB = vars.Get("x");
+        var dataB = await vars.Get("x");
 
         await Assert.That(ReferenceEquals(dataA, dataB)).IsFalse();
         await Assert.That((string?)dataA.Peek()).IsEqualTo("a"); // old binding untouched
@@ -42,9 +42,9 @@ public class Stage2_SetRebindTests
         var vars = app.User.Context.Variable;
 
         vars.Set("x", "a");
-        var dataA = vars.Get("x");
+        var dataA = await vars.Get("x");
         vars.Set("x", "b");
-        var dataB = vars.Get("x");
+        var dataB = await vars.Get("x");
 
         await Assert.That(ReferenceEquals(dataA, dataB)).IsFalse();
         await Assert.That((string?)dataA.Peek()).IsEqualTo("a"); // old binding untouched
@@ -61,12 +61,12 @@ public class Stage2_SetRebindTests
         var vars = app.User.Context.Variable;
 
         vars.Set("x", "a");
-        var dataA = vars.Get("x");
+        var dataA = await vars.Get("x");
         dataA.OnChange.Add((_, _) => { });
         dataA.OnDelete.Add(_ => { });
 
         vars.Set("x", "b");
-        var dataB = vars.Get("x");
+        var dataB = await vars.Get("x");
 
         // The subscriber lists follow the name onto the new binding (carried by reference).
         await Assert.That(ReferenceEquals(dataA.OnChange, dataB.OnChange)).IsTrue();
@@ -84,12 +84,12 @@ public class Stage2_SetRebindTests
         var vars = app.User.Context.Variable;
 
         vars.Set("x", "a");
-        var dataA = vars.Get("x");
+        var dataA = await vars.Get("x");
         Data? firedWith = null;
         dataA.OnChange.Add((_, replacement) => firedWith = replacement);
 
         vars.Set("x", "b");
-        var dataB = vars.Get("x");
+        var dataB = await vars.Get("x");
 
         // OnChange fired with the new (rebound) Data, which is the current binding.
         await Assert.That(firedWith).IsNotNull();

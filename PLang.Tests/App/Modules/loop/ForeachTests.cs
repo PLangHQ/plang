@@ -153,10 +153,10 @@ public class ForeachTests
 
         await result.IsSuccess();
         // %key% should be the dictionary key (string "greeting"), not numeric index (0)
-        var key = context.Variable.GetValue("key");
+        var key = await context.Variable.GetValue("key");
         await Assert.That(key).IsEqualTo("greeting");
         // %val% should be the value ("hello"), not a KeyValuePair struct
-        var val = context.Variable.GetValue("val");
+        var val = await context.Variable.GetValue("val");
         await Assert.That(val).IsEqualTo("hello");
     }
 

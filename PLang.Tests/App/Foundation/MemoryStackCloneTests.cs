@@ -19,11 +19,11 @@ public class VariablesCloneTests
         var clone = vars.Clone();
 
         // Mutate via the clone
-        var cloneList = clone.Get<List<string>>("items");
+        var cloneList = await clone.Get<List<string>>("items");
         cloneList!.Add("c");
 
         // Original should NOT be affected
-        var originalList = vars.Get<List<string>>("items");
+        var originalList = await vars.Get<List<string>>("items");
         await Assert.That(originalList!.Count).IsEqualTo(2);
     }
 
@@ -37,11 +37,11 @@ public class VariablesCloneTests
         var clone = vars.Clone();
 
         // Mutate via the clone
-        var cloneDict = clone.Get<Dictionary<string, object?>>("config");
+        var cloneDict = await clone.Get<Dictionary<string, object?>>("config");
         cloneDict!["key2"] = "val2";
 
         // Original should NOT be affected
-        var originalDict = vars.Get<Dictionary<string, object?>>("config");
+        var originalDict = await vars.Get<Dictionary<string, object?>>("config");
         await Assert.That(originalDict!.ContainsKey("key2")).IsFalse();
     }
 
@@ -58,12 +58,12 @@ public class VariablesCloneTests
         var clone = vars.Clone();
 
         // Navigate into the clone and mutate the nested list
-        var cloneData = clone.Get<Dictionary<string, object?>>("record");
+        var cloneData = await clone.Get<Dictionary<string, object?>>("record");
         var cloneTags = (List<string>)cloneData!["tags"]!;
         cloneTags.Add("gamma");
 
         // Original's nested list should NOT be affected
-        var originalData = vars.Get<Dictionary<string, object?>>("record");
+        var originalData = await vars.Get<Dictionary<string, object?>>("record");
         var originalTags = (List<string>)originalData!["tags"]!;
         await Assert.That(originalTags.Count).IsEqualTo(2);
     }
@@ -80,8 +80,8 @@ public class VariablesCloneTests
         clone.Set("count", 99);
         clone.Set("name", "modified");
 
-        var originalCount = vars.Get<long>("count");
-        var originalName = vars.Get<string>("name");
+        var originalCount = await vars.Get<long>("count");
+        var originalName = await vars.Get<string>("name");
         await Assert.That(originalCount).IsEqualTo(42);
         await Assert.That(originalName).IsEqualTo("original");
     }

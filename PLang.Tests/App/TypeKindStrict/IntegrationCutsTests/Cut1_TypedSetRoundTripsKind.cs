@@ -24,7 +24,7 @@ public class Cut1_TypedSetRoundTripsKind
         var result = await action.RunAsync(context);
         await result.IsSuccess();
 
-        var stored = context.Variable.Get("doc");
+        var stored = await context.Variable.Get("doc");
         await Assert.That(stored!.Type!.Name).IsEqualTo("text");
         await Assert.That(stored.Type.Kind).IsEqualTo("md");
         await Assert.That(stored.Kind).IsEqualTo("md");
@@ -40,8 +40,8 @@ public class Cut1_TypedSetRoundTripsKind
         await action.RunAsync(context);
 
         // Navigation via the same engine path used by `%doc.Type.Name%` in goal text.
-        var name = context.Variable.Get("doc")!.GetChild("Type.Name");
-        var kind = context.Variable.Get("doc")!.GetChild("Type.Kind");
+        var name = await (await context.Variable.Get("doc"))!.GetChild("Type.Name");
+        var kind = await (await context.Variable.Get("doc"))!.GetChild("Type.Kind");
         await Assert.That((await name.Value())).IsEqualTo("text");
         await Assert.That((await kind.Value())).IsEqualTo("md");
     }

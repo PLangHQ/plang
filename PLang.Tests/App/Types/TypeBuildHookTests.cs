@@ -2,7 +2,7 @@ namespace PLang.Tests.App.Types;
 
 // plang-types — Stage 1
 // Type's static Build(value) → kind is the build-time sibling of Resolve.
-// Discovered by reflection. Distinct from the action handler's IClass.Build().
+// Discovered by reflection. Distinct from the action handler's (await IClass.Build()).
 // number.Build(3.5)→"decimal", image.Build("a.jpg")→"jpg", path.Build("https://…")→"http".
 
 public class TypeBuildHookTests

@@ -205,7 +205,7 @@ public class DataTests
     {
         var ov = new Data("test", "value");
 
-        var child = ov.GetChild("");
+        var child = await ov.GetChild("");
 
         await Assert.That(child).IsEqualTo(ov);
     }
@@ -215,7 +215,7 @@ public class DataTests
     {
         var ov = new Data("test", "value");
 
-        var child = ov.GetChild(null!);
+        var child = await ov.GetChild(null!);
 
         await Assert.That(child).IsEqualTo(ov);
     }
@@ -229,7 +229,7 @@ public class DataTests
         };
         var ov = new Data("data", data);
 
-        var child = ov.GetChild("user.name");
+        var child = await ov.GetChild("user.name");
 
         await Assert.That(child).IsNotNull();
         await Assert.That((await child!.Value())).IsEqualTo("John");
@@ -241,7 +241,7 @@ public class DataTests
         var data = new List<object> { "first", "second", "third" };
         var ov = new Data("items", data);
 
-        var child = ov.GetChild("[1]");
+        var child = await ov.GetChild("[1]");
 
         await Assert.That(child).IsNotNull();
         await Assert.That((await child!.Value())).IsEqualTo("second");
@@ -261,7 +261,7 @@ public class DataTests
         };
         var ov = new Data("data", data);
 
-        var child = ov.GetChild("users[1].name");
+        var child = await ov.GetChild("users[1].name");
 
         await Assert.That(child).IsNotNull();
         await Assert.That((await child!.Value())).IsEqualTo("Bob");
@@ -273,7 +273,7 @@ public class DataTests
         var data = new Dictionary<string, object?> { { "name", "test" } };
         var ov = new Data("data", data);
 
-        var child = ov.GetChild("nonexistent");
+        var child = await ov.GetChild("nonexistent");
 
         await Assert.That(child.IsInitialized).IsFalse();
     }
@@ -284,7 +284,7 @@ public class DataTests
         var data = new List<int> { 1, 2, 3 };
         var ov = new Data("items", data);
 
-        var child = ov.GetChild("[10]");
+        var child = await ov.GetChild("[10]");
 
         await Assert.That(child.IsInitialized).IsFalse();
     }
@@ -295,7 +295,7 @@ public class DataTests
         var data = new List<int> { 1, 2, 3 };
         var ov = new Data("items", data);
 
-        var child = ov.GetChild("[-1]");
+        var child = await ov.GetChild("[-1]");
 
         await Assert.That(child.IsInitialized).IsFalse();
     }
@@ -306,8 +306,8 @@ public class DataTests
         var data = new { Name = "Test", Value = 42 };
         var ov = new Data("obj", data);
 
-        var nameChild = ov.GetChild("Name");
-        var valueChild = ov.GetChild("Value");
+        var nameChild = await ov.GetChild("Name");
+        var valueChild = await ov.GetChild("Value");
 
         await Assert.That((await nameChild!.Value())).IsEqualTo("Test");
         await Assert.That((await valueChild!.Value())).IsEqualTo(42);
@@ -319,7 +319,7 @@ public class DataTests
         var data = new { Name = "Test" };
         var ov = new Data("obj", data);
 
-        var child = ov.GetChild("name");
+        var child = await ov.GetChild("name");
 
         await Assert.That(child).IsNotNull();
         await Assert.That((await child!.Value())).IsEqualTo("Test");
@@ -330,7 +330,7 @@ public class DataTests
     {
         var ov = new Data("test");
 
-        var child = ov.GetChild("anything");
+        var child = await ov.GetChild("anything");
 
         await Assert.That(child.IsInitialized).IsFalse();
     }
@@ -585,7 +585,7 @@ public class DataTests
         var ov = new Data("data", data);
         ov.Context = context;
 
-        var child = ov.GetChild("name");
+        var child = await ov.GetChild("name");
 
         await Assert.That(child.IsInitialized).IsTrue();
         await Assert.That(child.Context).IsEqualTo(context);
@@ -1058,7 +1058,7 @@ public class DataTests
         await Assert.That(result).IsNotNull();
         // Born-native: a JSON number is a number.@this wrapper; its backing
         // (via ToRaw) is double for a bare decimal-point literal.
-        var price = await result!.Get("price")!.Value();
+        var price = await (await result!.Get("price"))!.Value();
         await Assert.That(price).IsTypeOf<app.type.number.@this>();
         await Assert.That(((app.type.number.@this)price!).ToRaw()).IsEqualTo(19.99d);
     }
@@ -1072,7 +1072,7 @@ public class DataTests
 
         await Assert.That(result).IsNotNull();
         // Born-native: a whole JSON number is a number.@this wrapper backed by long.
-        var count = await result!.Get("count")!.Value();
+        var count = await (await result!.Get("count"))!.Value();
         await Assert.That(count).IsTypeOf<app.type.number.@this>();
         await Assert.That(((app.type.number.@this)count!).ToRaw()).IsEqualTo(42L);
     }
@@ -1094,7 +1094,7 @@ public class DataTests
         var data = new Data("root", dict);
         var path = string.Join(".", Enumerable.Repeat("a", 151));
 
-        var result = data.GetChild(path);
+        var result = await data.GetChild(path);
 
         await Assert.That(result).IsNotNull();
         await result!.IsFailure();

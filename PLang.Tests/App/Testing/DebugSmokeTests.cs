@@ -23,7 +23,7 @@ public class DebugSmokeTests
         _app.System.Channel.Register(global::app.channel.type.stream.@this.Memory(
             global::app.channel.list.@this.Error));
         _capture = (global::app.channel.type.stream.@this)
-            _app.System.Channel.Get(global::app.channel.list.@this.Error)!;
+            (_app.System.Channel.Get(global::app.channel.list.@this.Error))!;
     }
 
     [After(Test)]

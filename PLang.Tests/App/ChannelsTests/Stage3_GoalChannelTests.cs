@@ -23,7 +23,7 @@ public class Stage3_GoalChannelTests
         var result = await ch.Write(dataIn);
         await result.IsSuccess();
 
-        var captured = app.User.Context.Variable.Get("!data");
+        var captured = await app.User.Context.Variable.Get("!data");
         await Assert.That(captured).IsNotNull();
     }
 

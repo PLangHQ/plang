@@ -81,8 +81,8 @@ public class Stage3_ArraysAsDataTests
         var nav = new global::app.variable.navigator.List();
         await Assert.That(nav.CanNavigate(data)).IsTrue();
         await Assert.That(ReferenceEquals(nav.Navigate(data, "0"), element)).IsTrue();
-        await Assert.That((string?)(await nav.Navigate(data, "last").Value())).IsEqualTo("second");
-        await Assert.That((int)(await nav.Navigate(data, "count").Value())!).IsEqualTo(2);
+        await Assert.That((string?)(await (await nav.Navigate(data, "last")).Value())).IsEqualTo("second");
+        await Assert.That((int)(await (await nav.Navigate(data, "count")).Value())!).IsEqualTo(2);
 
         // Implicit-first through a list of dicts.
         var people = new ListV();
@@ -90,7 +90,7 @@ public class Stage3_ArraysAsDataTests
         p0.Set(new Data("name", "alice"));
         people.Add(new Data("", p0));
         var peopleData = new Data("people", people);
-        await Assert.That((string?)(await nav.Navigate(peopleData, "name").Value())).IsEqualTo("alice");
+        await Assert.That((string?)(await (await nav.Navigate(peopleData, "name")).Value())).IsEqualTo("alice");
     }
 
     [Test]
@@ -113,7 +113,7 @@ public class Stage3_ArraysAsDataTests
         list.Add(new Data("", 2L));
         list.Add(new Data("", 3L));
         var d = new Data("nums", list) { Context = ctx };
-        var res = d.As<global::app.type.list.@this<global::app.type.number.@this>>(ctx);
+        var res = await d.As<global::app.type.list.@this<global::app.type.number.@this>>(ctx);
         await res.IsSuccess();
         await Assert.That(res.GetValue<List<long>>()!).IsEquivalentTo(new List<long> { 1, 2, 3 });
     }
@@ -168,7 +168,7 @@ public class Stage3_ArraysAsDataTests
         await roundtrip.IsSuccess();
 
         var rebuilt = (Data)(await roundtrip.Value())!;
-        var element = rebuilt.GetChild("[0]");
+        var element = await rebuilt.GetChild("[0]");
         await Assert.That(element.IsInitialized).IsTrue();
         await Assert.That(element.Signature).IsNotNull()
             .Because("F1: a signed Data survives at rest inside a list across the .plang wire.");

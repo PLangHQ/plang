@@ -130,7 +130,7 @@ public class StepFromDictConversionTests
         var dictValue = stepData.Value; // UnwrapJsonElement runs in ctor
 
         // Then As<Step>() to mirror merge.cs: __ResolveData("stepfromllm").As<Step>()
-        var dataStep = stepData.As<Step>();
+        var dataStep = await stepData.As<Step>();
 
         await Assert.That(dataStep.Error).IsNull();
         await Assert.That((await dataStep.Value())).IsNotNull();

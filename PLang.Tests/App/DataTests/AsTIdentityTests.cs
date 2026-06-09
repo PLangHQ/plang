@@ -33,7 +33,7 @@ public class AsTIdentityTests
     public async Task AsT_SameType_ReturnsSourceInstance()
     {
         var source = new global::app.data.@this<global::app.type.number.@this>("count", 42) { Context = _app.User.Context };
-        var result = source.As<global::app.type.number.@this>();
+        var result = await source.As<global::app.type.number.@this>();
         await Assert.That(ReferenceEquals(source, result)).IsTrue();
     }
 
@@ -46,7 +46,7 @@ public class AsTIdentityTests
     {
         var source = new global::app.data.@this<global::app.type.number.@this>("count", 42) { Context = _app.User.Context };
         source.Properties.Set("meta", "abc");
-        var result = source.As<global::app.type.number.@this>();
+        var result = await source.As<global::app.type.number.@this>();
         await Assert.That(ReferenceEquals(source.Properties, result.Properties)).IsTrue();
         await Assert.That(result.Properties["meta"]).IsEqualTo("abc");
     }
@@ -61,7 +61,7 @@ public class AsTIdentityTests
     {
         var inner = (global::app.type.number.@this)42;
         var source = new global::app.data.@this<global::app.type.number.@this>("n", inner) { Context = _app.User.Context };
-        var wrapped = source.As<global::app.type.item.@this>();
+        var wrapped = await source.As<global::app.type.item.@this>();
         await Assert.That(ReferenceEquals(source, wrapped)).IsFalse();
         await Assert.That(ReferenceEquals((await wrapped.Value()), inner)).IsTrue();
     }
@@ -74,7 +74,7 @@ public class AsTIdentityTests
     {
         var inner = global::app.type.list.@this<global::app.type.number.@this>.Of(new List<int> { 1, 2 });
         var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", inner) { Context = _app.User.Context };
-        var wrapped = source.As<global::app.type.list.@this>();
+        var wrapped = await source.As<global::app.type.list.@this>();
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();
         source.Properties.Set("annot", "via-source");
         await Assert.That(wrapped.Properties["annot"]).IsEqualTo("via-source");
@@ -87,7 +87,7 @@ public class AsTIdentityTests
     {
         var inner = global::app.type.list.@this<global::app.type.number.@this>.Of(new List<int> { 1 });
         var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", inner) { Context = _app.User.Context };
-        var wrapped = source.As<global::app.type.list.@this>();
+        var wrapped = await source.As<global::app.type.list.@this>();
         await Assert.That(ReferenceEquals(source.OnChange, wrapped.OnChange)).IsTrue();
         var seen = 0;
         wrapped.OnChange.Add((_, _) => seen++);
@@ -104,7 +104,7 @@ public class AsTIdentityTests
     {
         var inner = global::app.type.list.@this<global::app.type.number.@this>.Of(new List<int> { 1 });
         var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", inner) { Context = _app.User.Context };
-        var wrapped = source.As<global::app.type.list.@this>();
+        var wrapped = await source.As<global::app.type.list.@this>();
         Action<Data, Data> handler = (_, _) => { };
         wrapped.OnChange.Add(handler);
         await Assert.That(source.OnChange).Contains(handler);
@@ -119,7 +119,7 @@ public class AsTIdentityTests
     {
         var source = new global::app.data.@this<global::app.type.number.@this>("count", 42) { Context = _app.User.Context };
         source.Properties.Set("note", "hello");
-        var wrapped = source.As<global::app.type.text.@this>();
+        var wrapped = await source.As<global::app.type.text.@this>();
         await Assert.That(ReferenceEquals(source, wrapped)).IsFalse();
         await Assert.That((await wrapped.Value())).IsEqualTo("42");
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();
@@ -135,7 +135,7 @@ public class AsTIdentityTests
     {
         var source = new global::app.data.@this<global::app.type.text.@this>("messy", "not-a-number") { Context = _app.User.Context };
         source.Properties.Set("extra", "leak-check");
-        var wrapped = source.As<global::app.type.number.@this>();
+        var wrapped = await source.As<global::app.type.number.@this>();
         await wrapped.IsFailure();
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsFalse();
         await Assert.That(ReferenceEquals(source.OnChange, wrapped.OnChange)).IsFalse();
@@ -153,7 +153,7 @@ public class AsTIdentityTests
 
     // Rule 4b — plain Data target with %var% reference. AsCanonical on a Data
     // whose Value is "%products%" returns the LIVE variable Data from
-    // Variables.Get("products"). Mutations via the returned Data are visible
+    // (await Variables.Get("products")). Mutations via the returned Data are visible
     // through Variables.Get.
     [Test]
     public async Task AsT_PlainDataTarget_VarReference_ReturnsLiveVariableData()
@@ -168,7 +168,7 @@ public class AsTIdentityTests
         await Assert.That(ReferenceEquals(canonical, live)).IsTrue();
         // Mutation propagates: appending via live's value is visible through Variables.Get.
         ((global::app.type.list.@this)(await canonical.Value())!).Add(new global::app.data.@this("", "c"));
-        var stored = (global::app.type.list.@this)(await context.Variable.Get("products").Value())!;
+        var stored = (global::app.type.list.@this)(await (await context.Variable.Get("products")).Value())!;
         await Assert.That(stored.Count).IsEqualTo(3);
     }
 

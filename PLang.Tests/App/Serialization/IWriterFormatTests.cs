@@ -4,7 +4,7 @@ namespace PLang.Tests.App.Serialization;
 
 // plang-types — Stage 2
 // IWriter grows a `string Format { get; }` property. Each writer returns its short token
-// ("json"/"plang"/"text"/…). The TypedValueNode case calls TypeSerializers.Get(typeName, Format).
+// ("json"/"plang"/"text"/…). The TypedValueNode case calls (await TypeSerializers.Get(typeName, Format)).
 
 public class IWriterFormatTests
 {

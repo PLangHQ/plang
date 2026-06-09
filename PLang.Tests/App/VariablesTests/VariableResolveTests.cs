@@ -59,7 +59,7 @@ public class VariableResolveTests
     {
         var slot = new Data("Name", "%x%") { Context = _app.User.Context };
 
-        var resolved = slot.As<@this>(_app.User.Context);
+        var resolved = await slot.As<@this>(_app.User.Context);
 
         await resolved.IsSuccess();
         await Assert.That((await resolved.Value())).IsNotNull();
@@ -79,7 +79,7 @@ public class VariableResolveTests
         _app.User.Context.Variable.Set("x", 5);
         var slot = new Data("Name", "%x%") { Context = _app.User.Context };
 
-        var resolved = slot.As<@this>(_app.User.Context);
+        var resolved = await slot.As<@this>(_app.User.Context);
 
         await resolved.IsSuccess();
         await Assert.That((await resolved.Value())!.Name).IsEqualTo("x");
@@ -93,7 +93,7 @@ public class VariableResolveTests
     {
         var slot = new Data("Name", "x") { Context = _app.User.Context };
 
-        var resolved = slot.As<@this>(_app.User.Context);
+        var resolved = await slot.As<@this>(_app.User.Context);
 
         await resolved.IsSuccess();
         await Assert.That((await resolved.Value())).IsNotNull();

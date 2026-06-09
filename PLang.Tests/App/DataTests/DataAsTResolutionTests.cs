@@ -19,7 +19,7 @@ public class DataAsTResolutionTests
     public async Task AsT_AlreadyTypedData_ReturnsSelf()
     {
         var typed = new global::app.data.@this<global::app.type.number.@this>("count", 42) { Context = _app.User.Context };
-        var result = typed.As<global::app.type.number.@this>(_app.User.Context);
+        var result = await typed.As<global::app.type.number.@this>(_app.User.Context);
         await Assert.That(ReferenceEquals(result, typed)).IsTrue();
     }
 
@@ -28,19 +28,19 @@ public class DataAsTResolutionTests
     public async Task AsT_ValueAlreadyT_FastPathWrap()
     {
         var data = new Data("count", 42) { Context = _app.User.Context };
-        var result = data.As<global::app.type.number.@this>(_app.User.Context);
+        var result = await data.As<global::app.type.number.@this>(_app.User.Context);
         await Assert.That(result).IsTypeOf<global::app.data.@this<global::app.type.number.@this>>();
         await Assert.That((await result.Value())).IsEqualTo(42);
     }
 
-    // Value is "%name%" (full match), Variables.Get("name").Value is T → returns Data<T> with that value.
+    // Value is "%name%" (full match), (await Variables.Get("name")).Value is T → returns Data<T> with that value.
     [Test]
     public async Task AsT_FullVarMatch_ReturnsVariableValue()
     {
         _app.User.Context.Variable.Set("path", "/tmp/x.txt");
         var data = new Data("p", "%path%") { Context = _app.User.Context };
 
-        var result = data.As<global::app.type.text.@this>(_app.User.Context);
+        var result = await data.As<global::app.type.text.@this>(_app.User.Context);
 
         await result.IsSuccess();
         await Assert.That((await result.Value())).IsEqualTo("/tmp/x.txt");
@@ -52,7 +52,7 @@ public class DataAsTResolutionTests
     {
         var data = new Data("p", "%missing%") { Context = _app.User.Context };
 
-        var result = data.As<global::app.type.text.@this>(_app.User.Context);
+        var result = await data.As<global::app.type.text.@this>(_app.User.Context);
 
         // Either Data.FromError (Success=false) or empty value — both are valid contract responses.
         await Assert.That(result).IsNotNull();
@@ -66,7 +66,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("name", "world");
         var data = new Data("greeting", "Hello %name%") { Context = _app.User.Context };
 
-        var result = data.As<global::app.type.text.@this>(_app.User.Context);
+        var result = await data.As<global::app.type.text.@this>(_app.User.Context);
 
         await Assert.That((await result.Value())).IsEqualTo("Hello world");
     }
@@ -79,7 +79,7 @@ public class DataAsTResolutionTests
         var raw = new List<object?> { "%greeting%", "world" };
         var data = new Data("list", raw) { Context = _app.User.Context };
 
-        var result = data.As<global::app.type.list.@this<global::app.type.text.@this>>(_app.User.Context);
+        var result = await data.As<global::app.type.list.@this<global::app.type.text.@this>>(_app.User.Context);
 
         await Assert.That((await result.Value())).IsNotNull();
         var items = result.GetValue<List<string>>()!;
@@ -95,7 +95,7 @@ public class DataAsTResolutionTests
         var raw = new Dictionary<string, object?> { ["role"] = "system", ["content"] = "%prompt%" };
         var data = new Data("dict", raw) { Context = _app.User.Context };
 
-        var result = data.As<global::app.type.dict.@this>(_app.User.Context);
+        var result = await data.As<global::app.type.dict.@this>(_app.User.Context);
 
         await Assert.That((await result.Value())).IsNotNull();
         var dict = result.GetValue<Dictionary<string, object?>>()!;
@@ -108,7 +108,7 @@ public class DataAsTResolutionTests
     {
         var data = new Data("file", "subdir/file.txt") { Context = _app.User.Context };
 
-        var result = data.As<global::app.type.path.@this>(_app.User.Context);
+        var result = await data.As<global::app.type.path.@this>(_app.User.Context);
 
         // FileSystem.path.Resolve returned a Path instance — Value should be one.
         await Assert.That((await result.Value())).IsNotNull();
@@ -121,7 +121,7 @@ public class DataAsTResolutionTests
     {
         var data = new Data("count", "not-a-number") { Context = _app.User.Context };
 
-        var result = data.As<global::app.type.number.@this>(_app.User.Context);
+        var result = await data.As<global::app.type.number.@this>(_app.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
@@ -134,11 +134,11 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("x", "first");
         var data = new Data("v", "%x%") { Context = _app.User.Context };
 
-        var first = data.As<global::app.type.text.@this>(_app.User.Context);
+        var first = await data.As<global::app.type.text.@this>(_app.User.Context);
         await Assert.That((await first.Value())).IsEqualTo("first");
 
         _app.User.Context.Variable.Set("x", "second");
-        var second = data.As<global::app.type.text.@this>(_app.User.Context);
+        var second = await data.As<global::app.type.text.@this>(_app.User.Context);
         await Assert.That((await second.Value())).IsEqualTo("second");
 
         // Two distinct instances — neither is a cache.
@@ -152,7 +152,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("x", "resolved");
         var data = new Data("v", "%x%") { Context = _app.User.Context };
 
-        var resolved = data.As<global::app.type.text.@this>(_app.User.Context);
+        var resolved = await data.As<global::app.type.text.@this>(_app.User.Context);
         await Assert.That((await resolved.Value())).IsEqualTo("resolved");
 
         // Original .Value is still raw.
@@ -179,7 +179,7 @@ public class DataAsTResolutionTests
         };
         var data = new Data("actions", raw) { Context = _app.User.Context };
 
-        var result = data.As<global::app.type.list.@this<PrAction>>(_app.User.Context);
+        var result = await data.As<global::app.type.list.@this<PrAction>>(_app.User.Context);
 
         await result.IsSuccess();
         await Assert.That((await result.Value())).IsNotNull();
@@ -233,7 +233,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("b", "%a%");
         var data = new Data("ref", "%a%") { Context = _app.User.Context };
 
-        var result = data.As<global::app.type.text.@this>(_app.User.Context);
+        var result = await data.As<global::app.type.text.@this>(_app.User.Context);
 
         await result.IsSuccess();
         await Assert.That((await result.Value())).IsEqualTo("%b%");
@@ -249,7 +249,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("x", "%x%");
         var data = new Data("ref", "%x%") { Context = _app.User.Context };
 
-        var result = data.As<global::app.type.text.@this>(_app.User.Context);
+        var result = await data.As<global::app.type.text.@this>(_app.User.Context);
 
         await result.IsSuccess();
         await Assert.That((await result.Value())).IsEqualTo("%x%");
@@ -265,7 +265,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("x", "%x%");
         var data = new Data("greeting", "hello %x%") { Context = _app.User.Context };
 
-        var result = data.As<global::app.type.text.@this>(_app.User.Context);
+        var result = await data.As<global::app.type.text.@this>(_app.User.Context);
 
         await result.IsSuccess();
         await Assert.That((await result.Value())).IsEqualTo("hello %x%");
@@ -283,7 +283,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("b", "Y-%a%");
         var data = new Data("ref", "%a%") { Context = _app.User.Context };
 
-        var result = data.As<global::app.type.text.@this>(_app.User.Context);
+        var result = await data.As<global::app.type.text.@this>(_app.User.Context);
 
         await result.IsSuccess();
         await Assert.That((await result.Value())).IsEqualTo("X-%b%");
@@ -303,7 +303,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("e", "leaf-value");
         var data = new Data("chain", "%a%") { Context = _app.User.Context };
 
-        var result = data.As<global::app.type.text.@this>(_app.User.Context);
+        var result = await data.As<global::app.type.text.@this>(_app.User.Context);
 
         await result.IsSuccess();
         await Assert.That((await result.Value())).IsEqualTo("%b%");
@@ -318,7 +318,7 @@ public class DataAsTResolutionTests
         await using var app2 = new global::app.@this("/app2");
         app2.User.Context.Variable.Set("x", "from-app2");
 
-        var result = data.As<global::app.type.text.@this>(app2.User.Context);
+        var result = await data.As<global::app.type.text.@this>(app2.User.Context);
         await Assert.That((await result.Value())).IsEqualTo("from-app2");
     }
 
@@ -351,7 +351,7 @@ public class DataAsTResolutionTests
         context.Variable.Set(new global::app.data.@this<global::app.type.list.@this<global::app.type.item.@this>>("messages", global::app.type.list.@this<global::app.type.item.@this>.Of(stored)) { Context = context });
 
         var paramData = new Data("Messages", "%messages%") { Context = context };
-        var result = paramData.As<global::app.type.list.@this<global::app.type.dict.@this>>(context);
+        var result = await paramData.As<global::app.type.list.@this<global::app.type.dict.@this>>(context);
 
         await result.IsSuccess();
         var content = (string)result.GetValue<List<Dictionary<string, object?>>>()![0]["Content"]!;
@@ -387,7 +387,7 @@ public class DataAsTResolutionTests
 
         // Mirrors how llm.query reads %fixerMessages% — typed slot is List<LlmMessage>.
         var paramData = new Data("Messages", "%fixerMessages%") { Context = context };
-        var result = paramData.As<global::app.type.list.@this<global::app.module.llm.LlmMessage>>(context);
+        var result = await paramData.As<global::app.type.list.@this<global::app.module.llm.LlmMessage>>(context);
 
         await result.IsSuccess();
         var content = result.GetValue<List<global::app.module.llm.LlmMessage>>()![0].Content!;

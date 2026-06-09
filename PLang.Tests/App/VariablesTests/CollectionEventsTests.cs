@@ -63,7 +63,7 @@ public class CollectionEventsTests
         var vars = new Variables();
         vars.Set("name", "first");
 
-        var data = vars.Get("name");
+        var data = await vars.Get("name");
         bool perVarFired = false;
         data.OnChange.Add((oldData, newData) => perVarFired = true);
 

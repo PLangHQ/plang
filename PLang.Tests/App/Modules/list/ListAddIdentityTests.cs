@@ -49,7 +49,7 @@ public class ListAddIdentityTests
 
         await result.IsSuccess();
         // Same list.@this reference — direct mutation, not a fresh object stored.
-        var live = (await vars.Get("products").Value()) as global::app.type.list.@this;
+        var live = (await (await vars.Get("products")).Value()) as global::app.type.list.@this;
         await Assert.That(live).IsNotNull();
         await Assert.That(ReferenceEquals(live, existing)).IsTrue();
         await Assert.That(live!.Count).IsEqualTo(3);
@@ -96,7 +96,7 @@ public class ListAddIdentityTests
         // C# direct-composition path bypasses the .pr resolver, so we wrap "hello"
         // explicitly the same way Data emit would after AsCanonical resolves %item%.
         vars.Set("item", "hello");
-        var liveItem = vars.Get("item");
+        var liveItem = await vars.Get("item");
 
         var action = new Add
 		{
@@ -107,7 +107,7 @@ public class ListAddIdentityTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        var live = (await vars.Get("products").Value()) as global::app.type.list.@this;
+        var live = (await (await vars.Get("products")).Value()) as global::app.type.list.@this;
         await Assert.That(live!.Count).IsEqualTo(1);
         // list.add stores the element Data by reference now (Stage 2 rebind makes it safe).
         await Assert.That((await live!.At(0)!.Value())).IsEqualTo("hello");

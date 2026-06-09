@@ -52,7 +52,7 @@ public class IdentityErrorPathTests
         SwapDataSource(_app, new FailingSaveDataSource(
             _app.SettingsStore));
 
-        var result = await new global::app.module.identity.Get { Context = Ctx, Name = null }.Run();
+        var result = new global::app.module.identity.Get { Context = Ctx, Name = null }.Run();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("IOError");
     }
@@ -69,7 +69,7 @@ public class IdentityErrorPathTests
         SwapDataSource(_app, new FailingSaveDataSource(
             _app.SettingsStore));
 
-        var result = await new global::app.module.identity.Get { Context = Ctx, Name = null }.Run();
+        var result = new global::app.module.identity.Get { Context = Ctx, Name = null }.Run();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("IOError");
     }
@@ -114,7 +114,7 @@ public class IdentityErrorPathTests
             _app.SettingsStore));
 
         // Access %MyIdentity% — DynamicData lambda calls provider, which fails, returns null
-        var data = _app.User.Context.Variable.Get("MyIdentity");
+        var data = await _app.User.Context.Variable.Get("MyIdentity");
         await Assert.That(data).IsNotNull();
         await Assert.That((await data!.Value())).IsNull();
     }
@@ -292,7 +292,7 @@ public class IdentityErrorPathTests
         var ds = _app.SettingsStore;
         await ds.Set("identity", "weird", new Data("weird", 42));
 
-        var result = await new global::app.module.identity.Get { Context = Ctx, Name = (global::app.type.text.@this)"weird" }.Run();
+        var result = new global::app.module.identity.Get { Context = Ctx, Name = (global::app.type.text.@this)"weird" }.Run();
         // Identity deserializes but has empty PublicKey — valid but useless
         await result.IsSuccess();
         var identity = (await result.Value()) as Identity;

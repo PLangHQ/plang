@@ -38,7 +38,7 @@ public class OutputAskRoutingTests
         var result = await handler.Run();
         await result.IsSuccess();
         await Assert.That((await result.Value())?.Answer).IsEqualTo("Alice");
-        await Assert.That(context.Variable.Get(ask.AnswerVariableName).IsInitialized).IsFalse();
+        await Assert.That((await context.Variable.Get(ask.AnswerVariableName)).IsInitialized).IsFalse();
     }
 
     [Test] public async Task OutputAsk_NoAnswerSentinel_DelegatesToChannelAsk()

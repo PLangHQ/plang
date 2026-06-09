@@ -63,7 +63,7 @@ public class GoalCallTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        var param = _app.User.Context.Variable.Get("myParam");
+        var param = await _app.User.Context.Variable.Get("myParam");
         await Assert.That(param).IsNotNull();
         await Assert.That(param!.ToString()).IsEqualTo("myValue");
     }
@@ -82,7 +82,7 @@ public class GoalCallTests
 
         await result.IsSuccess();
         // marker should still be visible on same context
-        var marker = _app.User.Context.Variable.Get("marker");
+        var marker = await _app.User.Context.Variable.Get("marker");
         await Assert.That(marker).IsNotNull();
     }
 }

@@ -55,7 +55,7 @@ public class ReadFailureTests
         // A courier (variable memory) holds and relays the Data without touching
         // its value — no parse, so no throw escapes the courier.
         ctx.Variable.Set("bad", d);
-        var relayed = ctx.Variable.Get("bad")!;
+        var relayed = (await ctx.Variable.Get("bad"))!;
         await Assert.That(relayed.MaterializeCount).IsEqualTo(0); // courier never materialized
 
         // Only the leaf touch materializes — and it surfaces an error, never throws.

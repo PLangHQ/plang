@@ -82,7 +82,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
             ("type", Type("image", "gif", true)));
         var result = await action.RunAsync(context);
         await result.IsSuccess();
-        var stored = context.Variable.Get("img");
+        var stored = await context.Variable.Get("img");
         await Assert.That(stored!.Type!.Name).IsEqualTo("image");
         await Assert.That(stored.Type.Kind).IsEqualTo("gif");
         await Assert.That(stored.Type.Strict).IsTrue();

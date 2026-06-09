@@ -457,8 +457,8 @@ public class ListTests
         foreach (var b in groups.Items)
         {
             var d = (global::app.type.dict.@this)(b.Materialize())!;
-            if ((d.Get("key").Materialize())?.ToString() == key)
-                return ((global::app.type.list.@this)(d.Get("items")!.Materialize())!).Count;
+            if (((d.Get("key")).Materialize())?.ToString() == key)
+                return ((global::app.type.list.@this)((d.Get("items"))!.Materialize())!).Count;
         }
         return -1;
     }

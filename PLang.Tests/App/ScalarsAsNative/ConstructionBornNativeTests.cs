@@ -82,10 +82,10 @@ public class ConstructionBornNativeTests
         var dict = (global::app.type.dict.@this)root!;
         foreach (var key in new[] { "s", "n", "f", "b", "z" })
         {
-            object? leaf = (await dict.Get(key)!.Value());
+            object? leaf = (await (dict.Get(key))!.Value());
             await Assert.That(IsRawScalar(leaf)).IsFalse();
         }
-        var arr = (global::app.type.list.@this)(await dict.Get("arr")!.Value())!;
+        var arr = (global::app.type.list.@this)(await (dict.Get("arr"))!.Value())!;
         foreach (var el in arr.Items)
             await Assert.That(IsRawScalar((await el.Value()))).IsFalse();
     }

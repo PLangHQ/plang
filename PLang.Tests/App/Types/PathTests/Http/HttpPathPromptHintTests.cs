@@ -82,7 +82,7 @@ public class HttpPathPromptHintTests
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8],
             "x.txt");
 
-        _ = await new global::app.type.path.file.@this(outOfRoot, context).ReadText();
+        _ = new global::app.type.path.file.@this(outOfRoot, context).ReadText();
 
         await Assert.That(ch.LastQuestion).DoesNotContain("query string");
     }

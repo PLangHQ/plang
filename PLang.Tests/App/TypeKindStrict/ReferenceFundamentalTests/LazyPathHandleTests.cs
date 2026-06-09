@@ -48,7 +48,7 @@ public class LazyPathHandleTests
         var result = await action.RunAsync(context);
         await result.IsSuccess();
 
-        var stored = context.Variable.Get("pic");
+        var stored = await context.Variable.Get("pic");
         await Assert.That((await stored!.Value()) is image).IsTrue();
         var img = (image)(await stored.Value())!;
         await Assert.That(img.Path).IsNotNull();

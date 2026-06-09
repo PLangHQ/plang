@@ -37,7 +37,7 @@ public class NumericInferenceTests
     {
         // Both paths converge on {number, int} for an int literal.
         var runtime = new global::app.data.@this("x", 5);
-        var buildKind = global::app.type.number.@this.Build("5");
+        var buildKind = await global::app.type.number.@this.Build("5");
         await Assert.That(runtime.Type.Name).IsEqualTo("number");
         await Assert.That(runtime.Type.Kind).IsEqualTo("int");
         await Assert.That(buildKind).IsEqualTo("int");

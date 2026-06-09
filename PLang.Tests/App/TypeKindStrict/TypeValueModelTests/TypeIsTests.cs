@@ -54,7 +54,7 @@ public class TypeIsTests
         var result = await action.RunAsync(ctx);
         await result.IsSuccess();
 
-        var stored = ctx.Variable.Get("p");
+        var stored = await ctx.Variable.Get("p");
         await Assert.That(stored!.Type!.Name).IsEqualTo("image");
         await Assert.That((await stored.Value()) is image).IsTrue();
     }

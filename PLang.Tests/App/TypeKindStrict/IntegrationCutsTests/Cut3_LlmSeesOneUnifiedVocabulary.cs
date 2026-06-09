@@ -12,7 +12,7 @@ public class Cut3_LlmSeesOneUnifiedVocabulary
     [Test] public async Task Schema_Kinds_CoversAdvertisedAndExtensionFamilies()
     {
         await using var app = new global::app.@this("/test");
-        var kinds = app.Module.Schema.Build().Kinds;
+        var kinds = (app.Module.Schema.Build()).Kinds;
         // Advertised (number): closed precision list.
         await Assert.That(kinds["number"]).Contains("int");
         await Assert.That(kinds["number"]).Contains("long");
@@ -37,7 +37,7 @@ public class Cut3_LlmSeesOneUnifiedVocabulary
     [Test] public async Task Schema_PrimitiveNames_CarriesCanonicalNamesOnly()
     {
         await using var app = new global::app.@this("/test");
-        var primitives = app.Module.Schema.Build().PrimitiveNames;
+        var primitives = (app.Module.Schema.Build()).PrimitiveNames;
         await Assert.That(primitives).Contains("text");
         await Assert.That(primitives).Contains("number");
         // `string` canonicalises to `text` — not a separate primitive name.

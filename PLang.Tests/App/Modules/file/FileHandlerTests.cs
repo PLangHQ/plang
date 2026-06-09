@@ -498,13 +498,13 @@ public class FileHandlerTests : IDisposable
 
         await goalResult.IsSuccess();
 
-        var fileData = context.Variable.Get("fileResult");
+        var fileData = await context.Variable.Get("fileResult");
         await Assert.That(fileData).IsNotNull();
         var fileObj = (await fileData!.Value()) as PLangPath;
         await Assert.That(fileObj).IsNotNull();
         await Assert.That(await fileObj!.AsBooleanAsync()).IsTrue();
 
-        var existsData = context.Variable.Get("fileResult.Exists");
+        var existsData = await context.Variable.Get("fileResult.Exists");
         await Assert.That(existsData).IsNotNull();
         await Assert.That((await existsData!.Value())).IsEqualTo(true);
 
@@ -574,7 +574,7 @@ public class FileHandlerTests : IDisposable
 
         await goalResult.IsSuccess();
 
-        var existsData = context.Variable.Get("fileResult.Exists");
+        var existsData = await context.Variable.Get("fileResult.Exists");
         await Assert.That(existsData).IsNotNull();
         await Assert.That((await existsData!.Value())).IsEqualTo(false);
 

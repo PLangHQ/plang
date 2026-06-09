@@ -31,7 +31,7 @@ public class JsonObjectNavigationTests
     {
         var nav = new global::app.variable.navigator.Dictionary();
         var jo = new JsonObject { ["id"] = "abc123" };
-        var result = nav.Navigate(MakeData(jo), "id");
+        var result = await nav.Navigate(MakeData(jo), "id");
         await Assert.That(result.IsInitialized).IsTrue();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("abc123");
     }
@@ -51,12 +51,12 @@ public class JsonObjectNavigationTests
         var data = MakeData(jo);
         // Simulate dot-path: Navigate to "goal" then to "name".
         var nav = new global::app.variable.navigator.Dictionary();
-        var goalResult = nav.Navigate(data, "goal");
+        var goalResult = await nav.Navigate(data, "goal");
         await Assert.That(goalResult.IsInitialized).IsTrue();
 
         var goalData = new Data("goal");
         goalData.SetValue((await goalResult.Value()));
-        var nameResult = nav.Navigate(goalData, "name");
+        var nameResult = await nav.Navigate(goalData, "name");
         await Assert.That((await nameResult.Value())?.ToString()).IsEqualTo("Hello");
     }
 
@@ -65,7 +65,7 @@ public class JsonObjectNavigationTests
     {
         var nav = new global::app.variable.navigator.Dictionary();
         var jo = new JsonObject { ["Name"] = "Hello" };
-        var result = nav.Navigate(MakeData(jo), "name");
+        var result = await nav.Navigate(MakeData(jo), "name");
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello");
     }
 
@@ -74,7 +74,7 @@ public class JsonObjectNavigationTests
     {
         var nav = new global::app.variable.navigator.Dictionary();
         var jo = new JsonObject { ["goal"] = "Hello" };
-        var result = nav.Navigate(MakeData(jo), "nonexistent");
+        var result = await nav.Navigate(MakeData(jo), "nonexistent");
         await Assert.That(result.IsInitialized).IsFalse();
     }
 
@@ -83,7 +83,7 @@ public class JsonObjectNavigationTests
     {
         var nav = new global::app.variable.navigator.Dictionary();
         var jo = new JsonObject { ["a"] = 1, ["b"] = 2, ["c"] = 3 };
-        var result = nav.Navigate(MakeData(jo), "Count");
+        var result = await nav.Navigate(MakeData(jo), "Count");
         await Assert.That((await result.Value())).IsEqualTo(3);
     }
 
@@ -97,11 +97,11 @@ public class JsonObjectNavigationTests
         var canonical = new Dictionary<string, object?> { ["k"] = "v" };
         var d1 = new Data("");
         d1.SetValue(canonical);
-        await Assert.That((await nav.Navigate(d1, "k").Value())).IsEqualTo("v");
+        await Assert.That((await (await nav.Navigate(d1, "k")).Value())).IsEqualTo("v");
 
         var legacy = new System.Collections.Hashtable { ["k"] = "v" };
         var d2 = new Data("");
         d2.SetValue(legacy);
-        await Assert.That((await nav.Navigate(d2, "k").Value())).IsEqualTo("v");
+        await Assert.That((await (await nav.Navigate(d2, "k")).Value())).IsEqualTo("v");
     }
 }

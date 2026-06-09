@@ -229,7 +229,7 @@ public class StartGoalTests
         await Assert.That(context.Variable.GetValue("greeting")).IsEqualTo("hello");
 
         // Type should be "string" — resolved from defaults, not null
-        var data = context.Variable.Get("greeting");
+        var data = await context.Variable.Get("greeting");
         await Assert.That(data?.Type?.Name).IsEqualTo("text");
     }
 
@@ -258,7 +258,7 @@ public class StartGoalTests
 
         await result.IsSuccess();
         // "long" from parameters, not "string" from defaults
-        var data = context.Variable.Get("count");
+        var data = await context.Variable.Get("count");
         await Assert.That(data?.Type?.Name).IsEqualTo("number");
     }
 
@@ -287,7 +287,7 @@ public class StartGoalTests
         await result.IsSuccess();
         // Type is derived from value ("y" is a string), not from defaults or [Default] attribute
         // This proves the fallback chain works: no defaults → no attribute → auto-derive
-        var data = context.Variable.Get("x");
+        var data = await context.Variable.Get("x");
         await Assert.That((await data.Value())).IsEqualTo("y");
     }
 
@@ -344,7 +344,7 @@ public class StartGoalTests
             {
                 var fullMatch = System.Text.RegularExpressions.Regex.Match(str, @"^%([^%]+)%$");
                 if (fullMatch.Success)
-                    content = context.Variable.GetValue(fullMatch.Groups[1].Value);
+                    content = await context.Variable.GetValue(fullMatch.Groups[1].Value);
                 else
                     content = System.Text.RegularExpressions.Regex.Replace(str, @"%([^%]+)%",
                         m => context.Variable.GetValue(m.Groups[1].Value)?.ToString() ?? "");

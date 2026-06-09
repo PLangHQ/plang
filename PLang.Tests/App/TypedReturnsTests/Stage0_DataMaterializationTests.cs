@@ -27,7 +27,7 @@ public class Stage0_DataMaterializationTests
             .Where(m => m.Name == "As" && m.IsGenericMethodDefinition)
             .ToList();
         await Assert.That(publicGenericAs).IsEmpty()
-            .Because("Data.As<T> must stay internal — callers materialize via As(string typeName).");
+            .Because("Data.As<T> must stay internal — callers materialize (await via As(string typeName)).");
     }
 
     // Data.As("json") on a raw-string Value looks up the json materializer and
@@ -53,7 +53,7 @@ public class Stage0_DataMaterializationTests
             Context = _app.User.Context
         };
 
-        var aValue = src.GetChild("a");
+        var aValue = await src.GetChild("a");
 
         await Assert.That(aValue.IsInitialized).IsTrue();
         await Assert.That((await aValue.Value())?.ToString()).IsEqualTo("1");
@@ -70,9 +70,9 @@ public class Stage0_DataMaterializationTests
             Context = _app.User.Context
         };
 
-        _ = src.GetChild("a");
+        _ = await src.GetChild("a");
         var firstMaterialized = src.Value;
-        _ = src.GetChild("a");
+        _ = await src.GetChild("a");
         var secondMaterialized = src.Value;
 
         await Assert.That(ReferenceEquals(firstMaterialized, secondMaterialized)).IsTrue()

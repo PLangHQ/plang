@@ -40,7 +40,7 @@ public class PrPipelineTests
         await Assert.That(capture.Lines).Contains("Hello, World!");
 
         // Defaults resolved — step 0 has defaults: [{ type: "string" }]
-        var greetingData = context.Variable.Get("greeting");
+        var greetingData = await context.Variable.Get("greeting");
         await Assert.That(greetingData?.Type?.Name).IsEqualTo("text");
     }
 
@@ -64,7 +64,7 @@ public class PrPipelineTests
         await result.IsSuccess();
 
         // Return mapping: file/read returns Data.Ok(file), return: [{ name: "content" }] maps it to %content%
-        var content = context.Variable.GetValue("content");
+        var content = await context.Variable.GetValue("content");
         await Assert.That(content).IsNotNull();
 
         // The mapped value is a file object — its ToString() returns the file content

@@ -33,7 +33,7 @@ public class SetTests
         var result = await action.RunAsync(context);
 
         await result.IsSuccess();
-        await Assert.That(context.Variable.Get("count")!.Type!.ClrType).IsEqualTo(typeof(int));
+        await Assert.That((await context.Variable.Get("count"))!.Type!.ClrType).IsEqualTo(typeof(int));
     }
 
     [Test]
@@ -58,7 +58,7 @@ public class SetTests
         var result = await action.RunAsync(context);
 
         await result.IsSuccess();
-        await Assert.That(context.Variable.Get("count")!.Type!.Name).IsEqualTo("number");
+        await Assert.That((await context.Variable.Get("count"))!.Type!.Name).IsEqualTo("number");
     }
 
     [Test]
@@ -111,8 +111,8 @@ public class SetTests
 
         await result.IsSuccess();
 
-        var dataVar = context.Variable.Get("!data");
-        var myVar = context.Variable.Get("myVar");
+        var dataVar = await context.Variable.Get("!data");
+        var myVar = await context.Variable.Get("myVar");
 
         // Aliasing: same Data reachable under both keys.
         await Assert.That(ReferenceEquals(dataVar, result)).IsTrue();

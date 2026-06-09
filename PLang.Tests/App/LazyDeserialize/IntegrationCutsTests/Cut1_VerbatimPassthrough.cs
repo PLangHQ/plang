@@ -50,12 +50,12 @@ public class Cut1_VerbatimPassthrough
         await using var app = NewApp();
         var ctx = app.User.Context;
         var d = data.FromRaw(ConfigJson, type.Create("object", "json", context: ctx), ctx, "cfg");
-        await Assert.That((await d.GetChild("port").Value())?.ToString()).IsEqualTo("8080"); // materializes
+        await Assert.That((await (await d.GetChild("port")).Value())?.ToString()).IsEqualTo("8080"); // materializes
         await Assert.That(d.MaterializeCount).IsEqualTo(1);
 
         var s = app.User.Channel.Serializers.GetByMimeType("application/plang");
         var back = (data)(await s.Deserialize((await s.Serialize(d).Value())!).Value())!;
-        await Assert.That((await back.GetChild("port").Value())?.ToString()).IsEqualTo("8080"); // semantic round-trip
+        await Assert.That((await (await back.GetChild("port")).Value())?.ToString()).IsEqualTo("8080"); // semantic round-trip
     }
 
     // The reader is never invoked on the untouched path (open item 4: the probe

@@ -24,7 +24,7 @@ public class SetMintCarriesKindTests
             ("value", "readme.md"));
         var result = await action.RunAsync(context);
         await result.IsSuccess();
-        var stored = context.Variable.Get("doc");
+        var stored = await context.Variable.Get("doc");
         await Assert.That(stored!.Type!.Name).IsEqualTo("text");
     }
 
@@ -33,7 +33,7 @@ public class SetMintCarriesKindTests
         // A literal's spelling is not its kind: `set %doc% = "readme.md"` is the
         // 9-char string "readme.md", not a markdown document. `text` never
         // derives a kind from a literal — kind comes only from an explicit
-        // `as text/<kind>` or a producing action's Build().
+        // `as text/<kind>` or a producing action'(await s Build()).
         var context = _app.User.Context;
         var action = TestAction.Create("variable", "set",
             ("name", "%doc%"),
@@ -41,7 +41,7 @@ public class SetMintCarriesKindTests
             ("type", new global::app.type.@this("text")));
         var result = await action.RunAsync(context);
         await result.IsSuccess();
-        var stored = context.Variable.Get("doc");
+        var stored = await context.Variable.Get("doc");
         await Assert.That(stored!.Type!.Name).IsEqualTo("text");
         await Assert.That(stored.Type.Kind).IsNull();
     }
@@ -57,7 +57,7 @@ public class SetMintCarriesKindTests
             ("type", new global::app.type.@this("image")));
         var result = await action.RunAsync(context);
         await result.IsSuccess();
-        var stored = context.Variable.Get("pic");
+        var stored = await context.Variable.Get("pic");
         await Assert.That(stored!.Type!.Name).IsEqualTo("image");
         await Assert.That(stored.Type.Kind).IsEqualTo("jpg");
     }
@@ -72,7 +72,7 @@ public class SetMintCarriesKindTests
             ("value", "file.jpg"));
         var result = await action.RunAsync(context);
         await result.IsSuccess();
-        var stored = context.Variable.Get("x");
+        var stored = await context.Variable.Get("x");
         await Assert.That(stored!.Type!.Name).IsEqualTo("text");
         await Assert.That(stored.Type.Kind).IsNull();
     }
@@ -86,7 +86,7 @@ public class SetMintCarriesKindTests
             ("type", new global::app.type.@this("image", "gif")));
         var result = await action.RunAsync(context);
         await result.IsSuccess();
-        var stored = context.Variable.Get("img");
+        var stored = await context.Variable.Get("img");
         await Assert.That(stored!.Type!.Name).IsEqualTo("image");
         await Assert.That(stored.Type.Kind).IsEqualTo("gif");
     }

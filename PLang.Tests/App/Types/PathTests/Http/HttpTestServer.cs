@@ -47,7 +47,7 @@ public sealed class HttpTestServer : IDisposable
         _listener = new HttpListener();
         _listener.Prefixes.Add(_baseAddress.ToString());
         _listener.Start();
-        _ = Task.Run(AcceptLoop);
+        _ = await Task.Run(AcceptLoop);
     }
 
     public Uri BaseAddress => _baseAddress;
@@ -125,7 +125,7 @@ public sealed class HttpTestServer : IDisposable
             HttpListenerContext context;
             try { context = await _listener.GetContextAsync(); }
             catch { return; }   // listener stopped
-            _ = Task.Run(() => Handle(context));
+            _ = await Task.Run(() => Handle(context));
         }
     }
 

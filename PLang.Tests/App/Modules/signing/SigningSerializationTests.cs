@@ -177,7 +177,7 @@ public class SigningSerializationTests
 
         // Call ToSigningBytes concurrently — should produce identical results
         // without corrupting Signature (the old bug: mutated Signature to null during serialization)
-        var tasks = Enumerable.Range(0, 100).Select(_ => Task.Run(() => sd.ToSigningBytes())).ToArray();
+        var tasks = await Enumerable.Range(0, 100).Select(_ => Task.Run(() => sd.ToSigningBytes())).ToArray();
         var results = await Task.WhenAll(tasks);
 
         // All results should be identical

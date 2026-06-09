@@ -64,7 +64,7 @@ public class GoalRunFromTests
 
         var result = await step.RunFrom(context, 1);
         await result.IsSuccess();
-        await Assert.That(context.Variable.Get("a").IsInitialized).IsFalse(); // skipped
+        await Assert.That((await context.Variable.Get("a")).IsInitialized).IsFalse(); // skipped
         await Assert.That(context.Variable.GetValue("b")).IsEqualTo("B");
     }
 
@@ -80,7 +80,7 @@ public class GoalRunFromTests
 
         var result = await goal.RunFrom(context, stepIdx: 1, actionIdx: 0);
         await result.IsSuccess();
-        await Assert.That(context.Variable.Get("s0").IsInitialized).IsFalse();
+        await Assert.That((await context.Variable.Get("s0")).IsInitialized).IsFalse();
         await Assert.That(context.Variable.GetValue("s1")).IsEqualTo("from-here");
         await Assert.That(context.Variable.GetValue("s2")).IsEqualTo("and-after");
     }
@@ -114,7 +114,7 @@ public class GoalRunFromTests
             SetStep(1, "second", "runs"));
 
         await goal.RunFrom(context, stepIdx: 1, actionIdx: 0);
-        await Assert.That(context.Variable.Get("first").IsInitialized).IsFalse();
+        await Assert.That((await context.Variable.Get("first")).IsInitialized).IsFalse();
         await Assert.That(context.Variable.GetValue("second")).IsEqualTo("runs");
     }
 }

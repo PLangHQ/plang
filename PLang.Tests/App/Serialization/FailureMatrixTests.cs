@@ -89,7 +89,7 @@ public class FailureMatrixTests
             Data = global::app.data.@this.Ok("x"),
             Algorithm = new global::app.data.@this<global::app.type.text.@this>("", "md5")
         };
-        var result = crypto.Hash(action);
+        var result = await crypto.Hash(action);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("UnsupportedAlgorithm");
     }

@@ -24,8 +24,8 @@ public class SnapshotWireTests
         var dst = new global::app.@this("/dst");
         dst.Restore(wired, dst.User.Context);
 
-        await Assert.That((await dst.User.Context.Variable.Get("count").Value())).IsEqualTo(42L);
-        await Assert.That((await dst.User.Context.Variable.Get("name").Value())?.ToString()).IsEqualTo("plang");
+        await Assert.That((await (await dst.User.Context.Variable.Get("count")).Value())).IsEqualTo(42L);
+        await Assert.That((await (await dst.User.Context.Variable.Get("name")).Value())?.ToString()).IsEqualTo("plang");
     }
 
     [Test]
@@ -138,7 +138,7 @@ public class SnapshotWireTests
         await result.IsSuccess();
         // Step 1 ran on resume; step 0 did NOT (we resumed mid-goal).
         await Assert.That(context.Variable.GetValue("s1")).IsEqualTo("second");
-        await Assert.That(context.Variable.Get("s0").IsInitialized).IsFalse();
+        await Assert.That((await context.Variable.Get("s0")).IsInitialized).IsFalse();
     }
 
     [Test]
@@ -276,9 +276,9 @@ public class SnapshotWireTests
 
         context.Variable.Set("snap", (await conv.Value()));
         context.Variable.Set("snap.variables.x", 2L);
-        await Assert.That(System.Convert.ToInt64((await context.Variable.Get("snap.variables.x").Value()))).IsEqualTo(2L);
+        await Assert.That(System.Convert.ToInt64((await (await context.Variable.Get("snap.variables.x")).Value()))).IsEqualTo(2L);
 
-        var snap = (await context.Variable.Get("snap").Value()) as global::app.snapshot.@this;
+        var snap = (await (await context.Variable.Get("snap")).Value()) as global::app.snapshot.@this;
         await Assert.That(snap).IsNotNull();
         var result = await snap!.Resume(context);
         await result.IsSuccess();
@@ -342,7 +342,7 @@ public class SnapshotWireTests
 
         context.Variable.Set("snap", snap);
         context.Variable.Set("snap.variables.x", 2L);
-        await Assert.That(System.Convert.ToInt64((await context.Variable.Get("snap.variables.x").Value()))).IsEqualTo(2L);
+        await Assert.That(System.Convert.ToInt64((await (await context.Variable.Get("snap.variables.x")).Value()))).IsEqualTo(2L);
 
         var result = await snap!.Resume(context);
         await result.IsSuccess();
@@ -378,10 +378,10 @@ public class SnapshotWireTests
 
         context.Variable.Set("snap.variables.x", 2L);
 
-        var snap = (await context.Variable.Get("snap").As<global::app.snapshot.@this>(context).Value());
+        var snap = (await (await context.Variable.Get("snap")).As<global::app.snapshot.@this>(context).Value());
         var result = await snap!.Resume(context);
         await result.IsSuccess();
-        long seen = System.Convert.ToInt64(context.Variable.GetValue("seen"));
+        long seen = await System.Convert.ToInt64(context.Variable.GetValue("seen"));
         await Assert.That(seen).IsEqualTo(2L);  // edit persists IFF navigation materializes+caches
     }
 
@@ -414,11 +414,11 @@ public class SnapshotWireTests
         context.Variable.Set("snap", snap);
 
         // Navigate + read: %snap.variables.x% is 1.
-        await Assert.That(System.Convert.ToInt64((await context.Variable.Get("snap.variables.x").Value()))).IsEqualTo(1L);
+        await Assert.That(System.Convert.ToInt64((await (await context.Variable.Get("snap.variables.x")).Value()))).IsEqualTo(1L);
 
         // Edit: set %snap.variables.x% = 2 — routes to the snapshot's SetVariable.
         context.Variable.Set("snap.variables.x", 2L);
-        await Assert.That(System.Convert.ToInt64((await context.Variable.Get("snap.variables.x").Value()))).IsEqualTo(2L);
+        await Assert.That(System.Convert.ToInt64((await (await context.Variable.Get("snap.variables.x")).Value()))).IsEqualTo(2L);
 
         // Resume the edited snapshot — step1 reads the patched %x%.
         var result = await snap.Resume(context);

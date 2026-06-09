@@ -18,7 +18,7 @@ public class ContextVariableTests
     public async Task ContextVar_Engine_ReturnsEngineInstance()
     {
         var vars = _app.User.Context.Variable;
-        var value = vars.GetValue("!app");
+        var value = await vars.GetValue("!app");
 
         await Assert.That(value).IsNotNull();
         await Assert.That(value).IsEqualTo(_app);
@@ -28,7 +28,7 @@ public class ContextVariableTests
     public async Task ContextVar_Variables_ReturnsVariables()
     {
         var vars = _app.User.Context.Variable;
-        var value = vars.GetValue("!variables");
+        var value = await vars.GetValue("!variables");
 
         await Assert.That(value).IsNotNull();
         await Assert.That(value).IsTypeOf<Variables>();
@@ -38,7 +38,7 @@ public class ContextVariableTests
     public async Task ContextVar_Context_ReturnsPLangContext()
     {
         var vars = _app.User.Context.Variable;
-        var value = vars.GetValue("!context");
+        var value = await vars.GetValue("!context");
 
         await Assert.That(value).IsNotNull();
         await Assert.That(value).IsTypeOf<global::app.actor.context.@this>();
@@ -49,7 +49,7 @@ public class ContextVariableTests
     public async Task ContextVar_CallStack_ReturnsCallStack()
     {
         var vars = _app.User.Context.Variable;
-        var value = vars.GetValue("!callStack");
+        var value = await vars.GetValue("!callStack");
 
         await Assert.That(value).IsNotNull();
         await Assert.That(value).IsTypeOf<global::app.callstack.@this>();
@@ -59,7 +59,7 @@ public class ContextVariableTests
     public async Task ContextVar_Channels_ReturnsChannels()
     {
         var vars = _app.User.Context.Variable;
-        var value = vars.GetValue("!channels");
+        var value = await vars.GetValue("!channels");
 
         await Assert.That(value).IsNotNull();
     }
@@ -68,7 +68,7 @@ public class ContextVariableTests
     public async Task ContextVar_Serializers_ReturnsSerializerRegistry()
     {
         var vars = _app.User.Context.Variable;
-        var value = vars.GetValue("!serializers");
+        var value = await vars.GetValue("!serializers");
 
         await Assert.That(value).IsNotNull();
     }
@@ -77,7 +77,7 @@ public class ContextVariableTests
     public async Task ContextVar_Goal_IsNullInitially()
     {
         var vars = _app.User.Context.Variable;
-        var value = vars.GetValue("!goal");
+        var value = await vars.GetValue("!goal");
 
         await Assert.That(value).IsNull();
     }
@@ -86,7 +86,7 @@ public class ContextVariableTests
     public async Task ContextVar_Step_IsNullInitially()
     {
         var vars = _app.User.Context.Variable;
-        var value = vars.GetValue("!step");
+        var value = await vars.GetValue("!step");
 
         await Assert.That(value).IsNull();
     }
@@ -99,7 +99,7 @@ public class ContextVariableTests
         context.Goal = goal;
 
         var vars = _app.User.Context.Variable;
-        var value = vars.GetValue("!goal");
+        var value = await vars.GetValue("!goal");
 
         await Assert.That(value).IsNotNull();
         await Assert.That(value).IsEqualTo(goal);
@@ -113,7 +113,7 @@ public class ContextVariableTests
         context.Step = step;
 
         var vars = _app.User.Context.Variable;
-        var value = vars.GetValue("!step");
+        var value = await vars.GetValue("!step");
 
         await Assert.That(value).IsNotNull();
         await Assert.That(value).IsEqualTo(step);
@@ -186,7 +186,7 @@ public class ContextVariableTests
         var vars = _app.User.Context.Variable;
 
         // Now is a DynamicData registered by Variables constructor
-        var nowValue = vars.GetValue("Now");
+        var nowValue = await vars.GetValue("Now");
         await Assert.That(nowValue).IsNotNull();
         await Assert.That(nowValue).IsTypeOf<DateTimeOffset>();
 
@@ -195,7 +195,7 @@ public class ContextVariableTests
         var goal = new Goal { Name = "DynamicTest" };
         context.Goal = goal;
 
-        var goalValue = vars.GetValue("!goal");
+        var goalValue = await vars.GetValue("!goal");
         await Assert.That(goalValue).IsNotNull();
         await Assert.That(goalValue).IsEqualTo(goal);
     }
@@ -204,7 +204,7 @@ public class ContextVariableTests
     public async Task ContextVar_AppProperty_AccessibleViaDotNotation()
     {
         var vars = _app.User.Context.Variable;
-        var data = vars.Get("!app.Name");
+        var data = await vars.Get("!app.Name");
 
         await Assert.That(data).IsNotNull();
         await Assert.That((await data!.Value())).IsEqualTo("test");

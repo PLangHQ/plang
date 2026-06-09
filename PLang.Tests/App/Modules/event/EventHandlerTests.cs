@@ -228,7 +228,7 @@ public class EventHandlerTests
         await _app.RunGoalAsync(new GoalCall { Name = (global::app.type.text.@this)"MainGoal" }, context);
 
         // Verify the callback ran — parameter was injected on targetActor.Context.Variable
-        var callbackRan = _app.User.Context.Variable.Get("callbackRan");
+        var callbackRan = await _app.User.Context.Variable.Get("callbackRan");
         await Assert.That(callbackRan).IsNotNull();
         await Assert.That((await callbackRan!.Value())).IsEqualTo(true);
     }

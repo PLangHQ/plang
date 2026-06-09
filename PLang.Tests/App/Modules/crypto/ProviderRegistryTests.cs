@@ -71,7 +71,7 @@ public class ProviderRegistryTests
 
         var removed = _providers.Remove<ICrypto>("second");
         await removed.IsSuccess();
-        await _providers.Get<ICrypto>("second").IsFailure();
+        await (_providers.Get<ICrypto>("second")).IsFailure();
     }
 
     [Test]

@@ -40,7 +40,7 @@ public class Stage5_ListDictOpsTests
         await result.IsSuccess();
         var filtered = (ListV)(await result.Value())!;
         await Assert.That(filtered.Count).IsEqualTo(2);
-        await Assert.That((long)(await filtered.At(0)!.GetChild("age").Value())!).IsEqualTo(25L);
+        await Assert.That((long)(await (await filtered.At(0)!.GetChild("age")).Value())!).IsEqualTo(25L);
     }
 
     [Test]
@@ -80,9 +80,9 @@ public class Stage5_ListDictOpsTests
 
         var action = new Sort { Context = ctx, ListName = new app.variable.@this("people"), By = new global::app.data.@this<global::app.type.text.@this>("", "age") };
         await (await action.Run()).IsSuccess();
-        var sorted = (ListV)(await vars.Get("people").Value())!;
-        await Assert.That((long)(await sorted.At(0)!.GetChild("age").Value())!).IsEqualTo(10L);
-        await Assert.That((long)(await sorted.At(2)!.GetChild("age").Value())!).IsEqualTo(30L);
+        var sorted = (ListV)(await (await vars.Get("people")).Value())!;
+        await Assert.That((long)(await (await sorted.At(0)!.GetChild("age")).Value())!).IsEqualTo(10L);
+        await Assert.That((long)(await (await sorted.At(2)!.GetChild("age")).Value())!).IsEqualTo(30L);
     }
 
     [Test]
@@ -133,7 +133,7 @@ public class Stage5_ListDictOpsTests
         var groups = (ListV)(await result.Value())!.value!;
         await Assert.That(groups.Count).IsEqualTo(2);
         var reyk = (DictV)(await groups.At(0)!.Value())!;
-        await Assert.That((string?)(await reyk.Get("key")!.Value())).IsEqualTo("Reyk");
-        await Assert.That(((ListV)(await reyk.Get("items")!.Value())!).Count).IsEqualTo(2); // navigable bucket
+        await Assert.That((string?)(await (reyk.Get("key"))!.Value())).IsEqualTo("Reyk");
+        await Assert.That(((ListV)(await (reyk.Get("items"))!.Value())!).Count).IsEqualTo(2); // navigable bucket
     }
 }

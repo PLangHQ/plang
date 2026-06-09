@@ -35,7 +35,7 @@ public class HashTypeTests
         // The prompt's kind table is scoped to fundamentals; a result type's
         // algorithms are noise the LLM never chooses from.
         await using var app = new PLangEngine("/test");
-        await Assert.That(app.Module.Schema.Build().Kinds.ContainsKey("hash")).IsFalse();
+        await Assert.That((app.Module.Schema.Build()).Kinds.ContainsKey("hash")).IsFalse();
     }
 
     [Test] public async Task HashType_OwnsBase64RoundTrip()

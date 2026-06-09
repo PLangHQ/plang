@@ -148,7 +148,7 @@ public class GeneratorValidationTests
     public async Task GeneratedPropertyBody_UsesGetParameterAndAsT()
     {
         var generated = ReadAnyGeneratedHandler();
-        // Either form is the v4 lookup-then-resolve idiom: __ResolveData(name) → As<T>(Context).
+        // Either form is the v4 lookup-then-resolve idiom: __ResolveData(name) →(await  As<T>(Context)).
         // __ResolveData itself delegates to Action.GetParameter under the hood.
         await Assert.That(generated).Contains("__ResolveData");
         await Assert.That(generated).Contains(".As<");

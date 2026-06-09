@@ -20,7 +20,7 @@ public class NavigationAccessTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         var d = data.FromRaw("{\"port\":8080}", type.Create("object", "json", context: ctx), ctx, "cfg");
-        await Assert.That((await d.GetChild("port").Value())?.ToString()).IsEqualTo("8080");
+        await Assert.That((await (await d.GetChild("port")).Value())?.ToString()).IsEqualTo("8080");
         await Assert.That(d.MaterializeCount).IsEqualTo(1); // navigation materialized via the reader
     }
 
@@ -31,7 +31,7 @@ public class NavigationAccessTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         var d = data.FromRaw("{\"host\":\"localhost\"}", type.Create("object", "json", context: ctx), ctx, "cfg");
-        await Assert.That((await d.GetChild("host").Value())?.ToString()).IsEqualTo("localhost");
+        await Assert.That((await (await d.GetChild("host")).Value())?.ToString()).IsEqualTo("localhost");
     }
 
     // `table` navigates by row/column — `%t.rows[0].name%` — not flat key lookup.
@@ -40,7 +40,7 @@ public class NavigationAccessTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         var d = data.FromRaw("name,age\nAda,36\n", type.Create("table", "csv", context: ctx), ctx, "t");
-        var cell = d.GetChild("rows").GetChild("0").GetChild("name");
+        var cell = (await d.GetChild("rows")).GetChild("0").GetChild("name");
         await Assert.That((await cell.Value())?.ToString()).IsEqualTo("Ada");
     }
 
@@ -48,7 +48,7 @@ public class NavigationAccessTests
     [Test] public async Task Navigation_TypeUnknown_ProducesAddAsTypeError()
     {
         var d = data.Ok("{\"port\":8080}"); // authored string, no type stamp
-        var r = d.GetChild("port");
+        var r = await d.GetChild("port");
         await Assert.That(r.Success).IsFalse();
         await Assert.That(r.Error).IsNotNull();
     }
@@ -58,7 +58,7 @@ public class NavigationAccessTests
     [Test] public async Task Navigation_TypeUnknownErrorMessage_ContainsLiteralAsType()
     {
         var d = data.Ok("{\"port\":8080}");
-        var r = d.GetChild("port");
+        var r = await d.GetChild("port");
         await Assert.That(r.Error!.Message).Contains("add ");
         await Assert.That(r.Error!.Message).Contains("as ");
     }
@@ -69,7 +69,7 @@ public class NavigationAccessTests
     {
         var dict = new System.Collections.Generic.Dictionary<string, object?> { ["port"] = 8080L };
         var d = data.Ok(dict);
-        await Assert.That((await d.GetChild("port").Value())?.ToString()).IsEqualTo("8080");
+        await Assert.That((await (await d.GetChild("port")).Value())?.ToString()).IsEqualTo("8080");
         await Assert.That(d.MaterializeCount).IsEqualTo(0);
     }
 }

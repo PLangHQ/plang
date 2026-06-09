@@ -2,7 +2,7 @@ namespace PLang.Tests.App.DataTests;
 
 // Contract tests for v4's central architectural sharpening:
 // Data.Value is RAW — read-only post-construction, no side effects, no resolution, no caching.
-// Data flows through the system unchanged at the .Value level; resolution lives in As<T>(context).
+// Data flows through the system unchanged at the .Value level; resolution lives (await in As<T>(context)).
 
 public class DataValueRawTests
 {

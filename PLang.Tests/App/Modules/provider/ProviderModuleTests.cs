@@ -210,7 +210,7 @@ public class ProviderModuleTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await _app.Code.Get<ISigning>("second").IsFailure();
+        await (_app.Code.Get<ISigning>("second")).IsFailure();
     }
 
     [Test]

@@ -286,7 +286,7 @@ public class GoalsTests
         goals.Add(goal2);
 
         await Assert.That(goals.Count).IsEqualTo(1);
-        await Assert.That(goals.Get("TestGoal")!.Description).IsEqualTo("Second");
+        await Assert.That((goals.Get("TestGoal"))!.Description).IsEqualTo("Second");
     }
 
     [Test]
@@ -484,7 +484,7 @@ public class GoalsTests
         goals.Add(goal2);
 
         await Assert.That(goals.Count).IsEqualTo(1);
-        await Assert.That(goals.Get("Start")!.Description).IsEqualTo("Second");
+        await Assert.That((goals.Get("Start"))!.Description).IsEqualTo("Second");
     }
 
     [Test]
