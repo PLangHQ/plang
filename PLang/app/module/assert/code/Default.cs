@@ -156,9 +156,9 @@ public class Default : IAssert
     private static async Task<bool> ResolveTruthy(data.@this? data)
     {
         if (data == null) return false;
-        if (data.Materialize() is app.data.IBooleanResolvable)
+        if ((await data.Value()) is app.data.IBooleanResolvable)
             return await data.ToBooleanAsync();
-        return IsTruthy(data.Materialize());
+        return IsTruthy((await data.Value()));
     }
 
     private static bool IsTruthy(object? value)

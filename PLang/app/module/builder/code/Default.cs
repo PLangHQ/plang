@@ -75,7 +75,7 @@ public class Default : IBuilder
                 if (!wantedActions.Contains($"{a.Module}.{a.ActionName}")) continue;
                 foreach (var p in a.Parameters ?? new())
                 {
-                    var desc = p.Materialize() as string ?? string.Empty;
+                    var desc = (await p.Value()) as string ?? string.Empty;
                     foreach (System.Text.RegularExpressions.Match m in tokenRx.Matches(desc))
                         if (allTypeNames.Contains(m.Value)) refs.Add(m.Value);
                 }
@@ -130,13 +130,13 @@ public class Default : IBuilder
 
         var app = action.Context.App;
         var context = action.Context;
-        var searchPathValue = action.Path.Materialize()?.ToString();
+        var searchPathValue = (await action.Path.Value())?.ToString();
         var searchPath = string.IsNullOrWhiteSpace(searchPathValue) ? "." : searchPathValue!;
 
         // builder.goals.Path is project-root-relative ("the directory the user is
         // building"), not goal-relative. The runtime auto-seeds %path% to the
         // app root before Build.goal runs, so by the time we get here
-        // action.Path.Materialize() is typically already the absolute cwd. For the literal
+        // (await action.Path.Value()) is typically already the absolute cwd. For the literal
         // "/" / "." / empty cases (no auto-seed), fall back to app.AbsolutePath.
         // For any other input that doesn't start with the root or with
         // "/", treat as a sibling-relative subpath under the root.
@@ -227,7 +227,7 @@ public class Default : IBuilder
                 continue;
             }
 
-            var text = readResult.Materialize()?.ToString();
+            var text = (await readResult.Value())?.ToString();
             if (string.IsNullOrWhiteSpace(text)) continue;
 
             var goal = Goal.Parse(text, file);
@@ -256,7 +256,7 @@ public class Default : IBuilder
 
         // Apply LLM-generated description if available in Variables
         var stepResults = context.Variable.Get("stepResults");
-        if (stepResults.Materialize() is IDictionary<string, object?> resultsDict
+        if ((await stepResults.Value()) is IDictionary<string, object?> resultsDict
             && resultsDict.TryGetValue("description", out var desc)
             && desc is string description
             && !string.IsNullOrEmpty(description))
@@ -485,8 +485,8 @@ public class Default : IBuilder
                     // NormalizeParameterTypes; without it, ToGoalCall parses "goal.call" as a
                     // dotted name and the type-name guard below false-positives on every
                     // goal.call slot in the catalog.
-                    if (p.Materialize() is string desc && IsCatalogDescription(desc, p.Type!.Name)) continue;
-                    var goalCall = ToGoalCall(p.Materialize(), context);
+                    if ((await p.Value()) is string desc && IsCatalogDescription(desc, p.Type!.Name)) continue;
+                    var goalCall = ToGoalCall((await p.Value()), context);
                     if (goalCall == null || string.IsNullOrEmpty(goalCall.Name)) continue;
                     if (goalCall.Name.Contains('%')) continue;  // %var% resolves at runtime
                     // Hard reject CLR type names — these are the known leak vector
@@ -625,9 +625,9 @@ public class Default : IBuilder
             // post-Stage-6) or a bare type-name string (llm.query → "json",
             // legacy handlers). Normalize a string to the structured form so
             // the terminal variable.set always gets a {name, kind?} Type.
-            if (buildResult.Materialize() is global::app.type.@this typeEntity)
+            if ((await buildResult.Value()) is global::app.type.@this typeEntity)
                 StampOnTerminalVariableSet(actions, typeEntity);
-            else if (buildResult.Materialize() is string typeName && !string.IsNullOrEmpty(typeName))
+            else if ((await buildResult.Value()) is string typeName && !string.IsNullOrEmpty(typeName))
                 StampOnTerminalVariableSet(actions, app.type.@this.Create(typeName, context: context));
         }
         return errors;
@@ -786,9 +786,9 @@ public class Default : IBuilder
     public async Task<data.@this> PromoteGroups(promoteGroups action)
     {
 
-        var steps = ToStepList(action.Steps.Materialize());
+        var steps = ToStepList((await action.Steps.Value()));
         if (steps == null || steps.Count == 0)
-            return data.@this.Ok(action.Steps.Materialize());
+            return data.@this.Ok((await action.Steps.Value()));
 
         // Collect groups and find the lowest level in each
         var groupLevels = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -834,7 +834,7 @@ public class Default : IBuilder
             await action.Context.App.CurrentActor.Channel.WriteTextAsync(global::app.channel.list.@this.Output,
                 $"  Group promotion: {promoted} step(s) promoted to detail pass{Environment.NewLine}");
 
-        return data.@this.Ok(action.Steps.Materialize());
+        return data.@this.Ok((await action.Steps.Value()));
     }
 
     private static string LowestLevel(string a, string b)
@@ -1066,7 +1066,7 @@ public class Default : IBuilder
         if (!readResult.Success) return errors;
 
         // File provider auto-deserializes .pr files into a single Goal
-        if (readResult.Materialize() is not Goal prGoal)
+        if ((await readResult.Value()) is not Goal prGoal)
         {
             errors.Add(new Info
             {
@@ -1110,7 +1110,7 @@ public class Default : IBuilder
             if (!string.Equals(param.Type?.Name, "goal.call", StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            var goalCall = ToGoalCall(param.Materialize(), context);
+            var goalCall = ToGoalCall((await param.Value()), context);
             if (goalCall == null || string.IsNullOrEmpty(goalCall.Name))
                 continue;
 
@@ -1128,7 +1128,7 @@ public class Default : IBuilder
             // downstream checks (or runtime) will surface a NotFound for it.
             goalCall.Action ??= action;
             var resolved = await goalCall.GetGoalAsync(app, context);
-            if (resolved.Success && resolved.Materialize() is Goal g && g.PrPath != null)
+            if (resolved.Success && (await resolved.Value()) is Goal g && g.PrPath != null)
             {
                 // Pre-resolve the .pr path. A slash-qualified Name keeps its
                 // folder prefix in the saved .pr — LoadFromFile leaf-matches it

@@ -134,15 +134,16 @@ public partial class run : IContext
         var outputBuf = new StringBuilder();
         var outputBinding = new EventBinding(
             app.@event.Trigger.BeforeWrite,
-            (context, _, written) =>
+            async (context, _, written) =>
             {
                 // Append newline per write — the stream-channel's text serializer
                 // adds one on flush, so this matches "what stdout sees". A
                 // payload that already ends in \n just gets a blank line, which
                 // is still readable in the UI.
-                if (written?.Materialize() != null)
-                    outputBuf.Append(written.Materialize()).Append('\n');
-                return Task.FromResult(app.data.@this.Ok());
+                var wv = written == null ? null : await written.Value();
+                if (wv != null)
+                    outputBuf.Append(wv).Append('\n');
+                return app.data.@this.Ok();
             },
             channelName: app.channel.list.@this.Output,
             priority: int.MaxValue,

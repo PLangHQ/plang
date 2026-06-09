@@ -28,7 +28,7 @@ public partial class Where : IContext
 
     public async Task<data.@this> Run()
     {
-        var subject = Context.Variable.Get(ListName.Materialize() as app.variable.@this);
+        var subject = Context.Variable.Get((await ListName.Value()) as app.variable.@this);
         var field = (await Field.Value())!;
         Operator op = (await Operator.Value())!;
         var subjectVal = await subject.Value();
@@ -52,7 +52,7 @@ public partial class Where : IContext
 
         // The apex has no fields to scope into — `5 where age > 20` is meaningless.
         return global::app.data.@this.FromError(new app.error.ValidationError(
-            $"'where {field} …' needs a list or dict to scope into — '{ListName.Materialize()}' is a {subject.Type.Name}, which has no fields.",
+            $"'where {field} …' needs a list or dict to scope into — '{(await ListName.Value())}' is a {subject.Type.Name}, which has no fields.",
             "WhereOnApex"));
     }
 

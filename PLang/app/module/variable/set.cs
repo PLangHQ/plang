@@ -283,7 +283,7 @@ public partial class Set : IContext, IBuildValidatable
             // image.BytesAsync throws on mismatch). Raw byte[] slots are handled
             // separately above via the IKindValidatable probe.
             if (typeEntity.Strict && typeEntity.Kind != null
-                && typedData.Materialize() is global::app.data.IStrictKindEnforcer enforcer)
+                && (await typedData.Value()) is global::app.data.IStrictKindEnforcer enforcer)
             {
                 enforcer.RequireStrictKind(typeEntity.Kind);
                 if (enforcer.CheckStrictKind() is { ok: false } mismatch)

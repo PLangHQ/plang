@@ -321,7 +321,7 @@ public sealed class @this
             sb.AppendLine($"  Action: {action.Module}.{action.ActionName}");
             foreach (var p in action.Parameters)
             {
-                sb.AppendLine($"    {p.Name} = {FormatValue(p.Materialize(), context)}");
+                sb.AppendLine($"    {p.Name} = {FormatValue((await p.Value()), context)}");
             }
 
         }

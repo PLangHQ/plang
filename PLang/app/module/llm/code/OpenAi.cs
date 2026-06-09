@@ -102,7 +102,7 @@ public sealed class OpenAi : ILlm
             };
         }
 
-        if ((action.ContinuePreviousConversation.Materialize() as global::app.type.@bool.@this)?.Value == true)
+        if (((await action.ContinuePreviousConversation.Value()) as global::app.type.@bool.@this)?.Value == true)
         {
             var prev = context.Get<List<LlmMessage>>(ConversationKey);
             if (prev != null)
@@ -142,7 +142,7 @@ public sealed class OpenAi : ILlm
         // so cache:false is a full bypass: no read, no stale entry left behind.
         var buildCacheOff = app.Builder.IsEnabled && !app.Builder.Cache;
         string? cacheKey = null;
-        if ((action.Cache.Materialize() as global::app.type.@bool.@this)?.Value == true && action.Tools?.GetValue<List<GoalCall>>() == null && !buildCacheOff)
+        if (((await action.Cache.Value()) as global::app.type.@bool.@this)?.Value == true && action.Tools?.GetValue<List<GoalCall>>() == null && !buildCacheOff)
         {
             cacheKey = ComputeCacheKey(messages, model, action.Temperature.GetValue<double>(), schema, action.Format?.Materialize()?.ToString());
             var cached = await settings.Get(CacheTable, cacheKey);
@@ -417,8 +417,8 @@ public sealed class OpenAi : ILlm
             {
                 var validationCall = new GoalCall
                 {
-                    Name = (action.OnValidateResponse.Materialize() as global::app.goal.GoalCall)!.Name,
-                    PrPath = (action.OnValidateResponse.Materialize() as global::app.goal.GoalCall)!.PrPath,
+                    Name = ((await action.OnValidateResponse.Value()) as global::app.goal.GoalCall)!.Name,
+                    PrPath = ((await action.OnValidateResponse.Value()) as global::app.goal.GoalCall)!.PrPath,
                     Parameters = new List<data.@this> { new data.@this("response", extracted) }
                 };
                 var validationResult = await app.RunGoalAsync(validationCall, context);
@@ -534,8 +534,8 @@ public sealed class OpenAi : ILlm
         {
             var startCall = new GoalCall
             {
-                Name = (action.OnToolCall.Materialize() as global::app.goal.GoalCall)!.Name,
-                PrPath = (action.OnToolCall.Materialize() as global::app.goal.GoalCall)!.PrPath,
+                Name = ((await action.OnToolCall.Value()) as global::app.goal.GoalCall)!.Name,
+                PrPath = ((await action.OnToolCall.Value()) as global::app.goal.GoalCall)!.PrPath,
                 Parameters = new List<data.@this>
                 {
                     new data.@this("name", toolCall.Name),
@@ -583,8 +583,8 @@ public sealed class OpenAi : ILlm
         {
             var endCall = new GoalCall
             {
-                Name = (action.OnToolCall.Materialize() as global::app.goal.GoalCall)!.Name,
-                PrPath = (action.OnToolCall.Materialize() as global::app.goal.GoalCall)!.PrPath,
+                Name = ((await action.OnToolCall.Value()) as global::app.goal.GoalCall)!.Name,
+                PrPath = ((await action.OnToolCall.Value()) as global::app.goal.GoalCall)!.PrPath,
                 Parameters = new List<data.@this>
                 {
                     new data.@this("name", toolCall.Name),
@@ -938,7 +938,7 @@ public sealed class OpenAi : ILlm
         var result = await settings.Get("LlmConfig", settingKey);
         if (result.Success && result.Value != null)
         {
-            var val = result.Materialize() is data.@this d ? d.Materialize()?.ToString() : result.Materialize()?.ToString();
+            var val = (await result.Value()) is data.@this d ? (await d.Value())?.ToString() : (await result.Value())?.ToString();
             if (!string.IsNullOrEmpty(val)) return val;
         }
 
