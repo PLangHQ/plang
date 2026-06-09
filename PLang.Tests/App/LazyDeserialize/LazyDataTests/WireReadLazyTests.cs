@@ -15,7 +15,7 @@ namespace PLang.Tests.App.LazyDeserialize.LazyDataTests;
 public class WireReadLazyTests
 {
     private static data RoundTrip(data d)
-        => (data)(plang.ContextLessFallback.Deserialize((plang.ContextLessFallback.Serialize(d).Materialize())!).Materialize())!;
+        => (data)(plang.ContextLessFallback.Deserialize(plang.ContextLessFallback.Serialize(d).Materialize()!.ToString()).Materialize())!;
 
     // Typed value-slot deferral: a shape-typed (object/table) value rides as raw
     // and materializes only on touch. Scoped to object/table so scalars/domain/
@@ -73,7 +73,7 @@ public class WireReadLazyTests
         outer.Name = "outer";
         var back = RoundTrip(outer);
         await Assert.That(back.Value).IsTypeOf<data>();
-        await Assert.That(((data)(await back.Value())!).Value?.ToString()).IsEqualTo("hello");
+        await Assert.That((await ((data)(await back.Value())!).Value())?.ToString()).IsEqualTo("hello");
     }
 
     // The case LiftDataIfShaped covers: a genuinely nested Data round-trips and

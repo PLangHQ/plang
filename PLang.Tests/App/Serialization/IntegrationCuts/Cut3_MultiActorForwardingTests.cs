@@ -36,13 +36,13 @@ public class Cut3_MultiActorForwardingTests
         var plangB = (global::app.channel.serializer.plang.@this)
             b.User.Channel.Serializers.GetByMimeType("application/plang");
         var outer = new global::app.data.@this("forwarded", inner) { Context = b.User.Context };
-        var outerWire = (plangB.Serialize(outer).Materialize())!;
+        var outerWire = plangB.Serialize(outer).Materialize()!.ToString();
 
         // C: receive bytes, reconstruct.
         var plangC = (global::app.channel.serializer.plang.@this)
             c.User.Channel.Serializers.GetByMimeType("application/plang");
         var deserResult = plangC.Deserialize(outerWire);
-        var roundTripped = (global::app.data.@this)deserResult.Value!;
+        var roundTripped = (global::app.data.@this)deserResult.Materialize()!;
 
         return new Chain(a, b, c, inner, outer, outerWire, roundTripped);
     }

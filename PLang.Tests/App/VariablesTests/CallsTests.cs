@@ -115,7 +115,7 @@ public class CallsTests
             {
                 await using var _ = vars.Calls.Push(new[] { new Data("seen", mine) });
                 await Task.Yield();
-                var observed = vars.Get("seen").Value;
+                var observed = vars.Get("seen").Materialize();
                 return observed is int v && v == mine;
             });
         }

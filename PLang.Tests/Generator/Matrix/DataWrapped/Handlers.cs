@@ -41,7 +41,7 @@ public partial class DataWrappedStringUses : global::app.module.IContext
     public partial global::app.data.@this<global::app.type.text.@this> Body { get; init; }
     public Task<global::app.data.@this> Run()
     {
-        var len = (Body.Materialize())?.Length ?? 0;
+        var len = (Body.Materialize()?.ToString())?.Length ?? 0;
         return Task.FromResult(global::app.data.@this.Ok(len));
     }
 }

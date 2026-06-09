@@ -35,8 +35,8 @@ public class NumberArithmeticTests
     [Test] public async Task Mul_DecimalDouble_PrecisionEqualsDouble_ReturnsDouble()
         // Way 3: decimal⊕double under the DEFAULT (Lenient) precision errors —
         // the developer must choose. The Double result needs the explicit override.
-        => await Assert.That(number.Multiply(number.From(2m), number.From(3.0),
-            new PPolicy { Overflow = POverflow.Promote, Precision = PPrecision.Double }).Value!.Kind).IsEqualTo(PKind.Double);
+        => await Assert.That((await number.Multiply(number.From(2m), number.From(3.0),
+            new PPolicy { Overflow = POverflow.Promote, Precision = PPrecision.Double }).Value())!.Kind).IsEqualTo(PKind.Double);
 
     [Test] public async Task Mul_DecimalDouble_PrecisionEqualsDecimal_ReturnsDecimal()
     {

@@ -70,7 +70,7 @@ public class ActorPermissionStorageTests
         // sends the two grants to different homes.
         var stored = await app.SettingsStore.GetAll<global::app.data.@this<PermissionRecord>>("permission");
         await stored.IsSuccess();
-        var paths = (await stored.Value())!.Items.Cast<global::app.data.@this<global::app.type.path.permission.@this>>().Where(d => (d.Materialize()) != null).Select(d => (await d.Value())!.Path).ToList();
+        var paths = (await stored.Value())!.Items.Cast<global::app.data.@this<global::app.type.path.permission.@this>>().Where(d => (d.Materialize()) != null).Select(d => (d.Materialize() as global::app.type.path.permission.@this)!.Path).ToList();
         await Assert.That(paths).Contains("/disk");
         await Assert.That(paths).DoesNotContain("/mem");
     }
@@ -194,7 +194,7 @@ public class ActorPermissionStorageTests
         // for `/p`, not two.
         var stored = await app.SettingsStore.GetAll<global::app.data.@this<PermissionRecord>>("permission");
         await stored.IsSuccess();
-        var rowsForP = (await stored.Value())!.Items.Cast<global::app.data.@this<global::app.type.path.permission.@this>>().Count(d => (d.Materialize())?.Path == "/p");
+        var rowsForP = (await stored.Value())!.Items.Cast<global::app.data.@this<global::app.type.path.permission.@this>>().Count(d => (d.Materialize() as global::app.type.path.permission.@this)?.Path == "/p");
         await Assert.That(rowsForP).IsEqualTo(1);
     }
 

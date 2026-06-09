@@ -1259,8 +1259,8 @@ public class DynamicDataTests
         var dov = new DynamicData("counter", () => ++counter);
 
         var value1 = await dov.Value();
-        var value2 = dov.Value;
-        var value3 = dov.Value;
+        var value2 = await dov.Value();
+        var value3 = await dov.Value();
 
         await Assert.That(value1).IsEqualTo(1);
         await Assert.That(value2).IsEqualTo(2);

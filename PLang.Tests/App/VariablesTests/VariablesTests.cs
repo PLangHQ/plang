@@ -41,8 +41,8 @@ public class VariablesTests
         var guidObj = stack.Get("GUID") as DynamicData;
         await Assert.That(guidObj).IsNotNull();
 
-        var guid1 = guidObj!.Value;
-        var guid2 = guidObj.Value;
+        var guid1 = await guidObj!.Value();
+        var guid2 = await guidObj.Value();
 
         await Assert.That(guid1).IsTypeOf<Guid>();
         await Assert.That(guid2).IsTypeOf<Guid>();
