@@ -36,7 +36,7 @@ public class Ed25519 : ISigning
         if (!hash.Success) return hash;
 
         var now = (DateTimeOffset)(await action.Context.Variable.GetValue("NowUtc"))!;
-        var nonce = action.Context.Variable.GetValue("GUID")!.ToString()!;
+        var nonce = (await action.Context.Variable.GetValue("GUID"))!.ToString()!;
 
         var signedData = new Signature
         {

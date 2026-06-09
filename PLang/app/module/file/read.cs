@@ -49,7 +49,7 @@ public partial class Read : IContext
         // it forces materialization and resolves %var% — the only non-lazy path.
         if ((await ResolveVariables.Value())?.Value == true && await read.Value() is string content)
         {
-            var resolved = Context.Variable.Resolve(content, skipInfrastructure: true);
+            var resolved = await Context.Variable.Resolve(content, skipInfrastructure: true);
             return new data.@this(read.Name, resolved, read.Type);
         }
         return read;

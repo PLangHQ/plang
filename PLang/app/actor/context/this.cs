@@ -177,7 +177,7 @@ public sealed class @this : IDisposable
         // active recovery scope; in nested handlers each scope sees its own caught error
         // (LIFO restore on dispose). AsyncLocal is parallelism-safe by construction.
         vars.Set(new data.DynamicData("!error", () => App.Error.Error));
-        vars.Set(new data.DynamicData("!data", () => App.System.Context.Variable.GetValue("data")));
+        vars.Set(new data.DynamicData("!data", () => App.System.Context.Variable.Peek("data")?.Peek()));
         vars.Set(new data.DynamicData("!event", () => Event ?? App.System?.Context?.Event));
         vars.Set(new data.DynamicData("!test", () => Test));
     }

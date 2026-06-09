@@ -231,7 +231,7 @@ public sealed class OpenAi : ILlm
             // http.request returns plain Data with the body as its lazy value
             // (http.response dissolved). Touching .Value materializes the body
             // (json → object) through the reader.
-            var responseBody = httpResult.Peek();
+            var responseBody = await httpResult.Value();
             var (responseJson, parseEx) = ParseApiResponse(responseBody);
             if (responseJson == null)
             {

@@ -1578,22 +1578,27 @@ public class @this<T> : @this
     }
 
     /// <summary>
-    /// Typed reference resolution — the door's decode step for a <c>Data&lt;T&gt;</c> still
-    /// holding a <c>%var%</c>/container reference. Runs the type-directed resolution (raw-name
-    /// types, conversion to T, container walk) once and caches; concrete values skip it. The
-    /// base does the untyped canonical resolution; here T directs it.
+    /// Typed resolution — the door's decode step for a <c>Data&lt;T&gt;</c> whose value is not
+    /// yet a <typeparamref name="T"/>: a <c>%var%</c>/container reference, OR a literal that
+    /// still needs the type-directed conversion (a path string → <c>path</c> via the static
+    /// Resolve hook, a raw scalar → its wrapper). Runs once and caches; a value already
+    /// of type T skips it. The base does the untyped canonical resolution; here T directs it.
     /// </summary>
     protected override async ValueTask<object?> Read()
     {
-        if (!_resolved && HoldsReference())
+        if (!_resolved)
         {
             _resolved = true;
-            var r = await AsT_Impl<T>(_value, _context);
-            var rv = r.Materialize();
-            if (!r.Success)                    { Error = r.Error; _value = rv; }
-            else if (rv == null && _hasFallback) { _value = _fallback; IsInitialized = true; }
-            else                               { _value = rv; IsInitialized = r.IsInitialized; }
-            if (r.Type is { } t) _type = t;
+            var current = Materialize();   // factory/raw parse first — typed conversion sees the in-memory form
+            if (current is not T && current != null)
+            {
+                var r = await AsT_Impl<T>(current, _context);
+                var rv = r.Materialize();
+                if (!r.Success)                    { Error = r.Error; _value = rv; }
+                else if (rv == null && _hasFallback) { _value = _fallback; IsInitialized = true; }
+                else                               { _value = rv; IsInitialized = r.IsInitialized; }
+                if (r.Type is { } t) _type = t;
+            }
         }
         return Materialize();
     }
