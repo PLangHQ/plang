@@ -25,7 +25,7 @@ public class Default : ICrypto
     {
         var data = action.Data;
         byte[] bytes;
-        if (data.Value is byte[] raw)
+        if (data.Materialize() is byte[] raw)
         {
             bytes = raw;
         }
@@ -51,7 +51,7 @@ public class Default : ICrypto
                 bytes = JsonSerializer.SerializeToUtf8Bytes(data, serializer.OutboundOptions);
             }
         }
-        string algorithm = ((string)action.Algorithm.Value!).ToLowerInvariant();
+        string algorithm = ((string)(action.Algorithm.Materialize() as global::app.type.text.@this)!).ToLowerInvariant();
         byte[]? hashBytes = algorithm switch
         {
             "keccak256" => new Sha3Keccack().CalculateHash(bytes),
@@ -80,7 +80,7 @@ public class Default : ICrypto
         // kind on the Type (if any) or the Algorithm parameter supplies it.
         global::app.module.crypto.type.hash.@this expected;
         string algorithm;
-        if (action.Hash.Value is global::app.module.crypto.type.hash.@this bound)
+        if (action.Hash.Materialize() is global::app.module.crypto.type.hash.@this bound)
         {
             expected = bound;
             algorithm = bound.Algorithm;
@@ -88,10 +88,10 @@ public class Default : ICrypto
         else
         {
             var hashKind = action.Hash.Type is { Name: "hash", Kind: { Length: > 0 } k } ? k : null;
-            algorithm = hashKind ?? action.Algorithm.Value!;
+            algorithm = hashKind ?? (action.Algorithm.Materialize() as global::app.type.text.@this)!;
             // The hash type owns base64↔byte parsing (OBP) — Verify doesn't
             // reach for Convert.FromBase64String / SequenceEqual itself.
-            try { expected = global::app.module.crypto.type.hash.@this.FromBase64(action.Hash.Value?.ToString() ?? "", algorithm); }
+            try { expected = global::app.module.crypto.type.hash.@this.FromBase64(action.Hash.Materialize()?.ToString() ?? "", algorithm); }
             catch (FormatException) { return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Hash string is not valid base64", "InvalidHash", 400)); }
         }
 
@@ -105,6 +105,6 @@ public class Default : ICrypto
         });
         if (!hashResult.Success) return global::app.data.@this<global::app.type.@bool.@this>.FromError(hashResult.Error!);
 
-        return global::app.data.@this<global::app.type.@bool.@this>.Ok(((global::app.module.crypto.type.hash.@this)hashResult.Value!).DigestEquals(expected));
+        return global::app.data.@this<global::app.type.@bool.@this>.Ok(((global::app.module.crypto.type.hash.@this)hashResult.Materialize()!).DigestEquals(expected));
     }
 }

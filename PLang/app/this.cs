@@ -375,10 +375,10 @@ public sealed partial class @this : IAsyncDisposable
     {
         var prPath = global::app.type.path.@this.Resolve("/.build/app.pr", System.Context!);
         var exists = await prPath.ExistsAsync();
-        if (!exists.Success || exists.Value != true) return;
+        if (!exists.Success || (await exists.Value())?.Value != true) return;
         var readResult = await prPath.ReadText();
         if (!readResult.Success) return;
-        var json = readResult.Value as string;
+        var json = await readResult.Value() as string;
         // .pr deserialized to Goal via FilePath.ReadText's MIME path — fall back
         // to the raw text by reading directly through ReadBytes when .pr's MIME
         // converted the JSON to a typed object. For app.pr we only need the
@@ -387,7 +387,7 @@ public sealed partial class @this : IAsyncDisposable
         {
             var bytes = await prPath.ReadBytes();
             if (!bytes.Success || bytes.Value == null) return;
-            json = global::System.Text.Encoding.UTF8.GetString(bytes.Value);
+            json = global::System.Text.Encoding.UTF8.GetString((byte[])(await bytes.Value())!);
         }
         if (string.IsNullOrWhiteSpace(json)) return;
         try
@@ -476,7 +476,7 @@ public sealed partial class @this : IAsyncDisposable
     {
         var result = await RunAction(handler, context);
         if (!result.Success) return data.@this<TResult>.FromError(result.Error!);
-        return data.@this<TResult>.Ok((TResult)result.Value!);
+        return data.@this<TResult>.Ok((TResult)(await result.Value())!);
     }
 
     private static string ResolveModuleName(System.Type handlerType)
@@ -524,7 +524,7 @@ public sealed partial class @this : IAsyncDisposable
         var goalResult = await goalCall.GetGoalAsync(this, context);
         if (!goalResult.Success) return goalResult;
 
-        var goal = (Goal)goalResult.Value!;
+        var goal = (Goal)(await goalResult.Value())!;
 
         // Switch to user actor for user code execution
         CurrentActor = User;
@@ -555,7 +555,7 @@ public sealed partial class @this : IAsyncDisposable
             foreach (var param in goalCall.Parameters)
                 context.Variable.Set(param.Name, param);
 
-        return await ((Goal)goalResult.Value!).RunAsync(context);
+        return await ((Goal)(await goalResult.Value())!).RunAsync(context);
     }
 
     /// <summary>
