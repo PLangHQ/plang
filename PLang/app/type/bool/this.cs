@@ -48,6 +48,28 @@ public sealed partial class @this : global::app.type.item.@this,
     /// <summary>Bare lowercase <c>true</c>/<c>false</c> — the serializer renders this.</summary>
     public override string ToString() => Value ? "true" : "false";
 
+    // ---- Comparison (the unified hook — see app.type.compare) ----
+
+    /// <summary>Outranks text — `"true"` coerces into the bool, not vice versa.</summary>
+    internal static int CompareRank => 20;
+
+    /// <summary>Equality-only: <c>Equal</c>/<c>NotEqual</c>, never an order — the
+    /// boundary errors on <c>&lt;</c>/<c>&gt;</c>. The other side coerces through this
+    /// family's own Convert hook ("true" → true). Non-coercible → Incomparable.</summary>
+    public static global::app.data.Comparison Compare(object? a, object? b)
+    {
+        var ca = CoerceOwn(a);
+        var cb = CoerceOwn(b);
+        if (ca == null || cb == null) return global::app.data.Comparison.Incomparable;
+        return ca.Value == cb.Value
+            ? global::app.data.Comparison.Equal
+            : global::app.data.Comparison.NotEqual;
+    }
+
+    private static @this? CoerceOwn(object? v) => v as @this
+        ?? convert.@this.OfStatic(typeof(@this),
+               v is global::app.type.item.@this { IsLeaf: true } l ? l.ToRaw() : v, null, null)?.Peek() as @this;
+
     public bool AreEqual(object? other) => other switch
     {
         @this b => Value == b.Value,

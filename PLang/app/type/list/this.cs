@@ -319,6 +319,34 @@ public partial class @this : global::app.type.item.@this, module.IContext,
     /// </summary>
     public override bool IsTruthy() => Count > 0;
 
+    // ---- Comparison (the unified hook — see app.type.compare) ----
+
+    /// <summary>Outranks everything — a list never coerces into a scalar or dict.</summary>
+    internal static int CompareRank => 75;
+
+    /// <summary>Lexicographic order between two lists in caller order (first differing
+    /// pair decides; a prefix sorts first); element pairs that can't be ordered make
+    /// the pair <c>Incomparable</c>. A non-list other side → <c>Incomparable</c>.</summary>
+    public static global::app.data.Comparison Compare(object? a, object? b)
+    {
+        if (a is not @this la || b is not @this lb) return global::app.data.Comparison.Incomparable;
+        try
+        {
+            var c = la.Order(lb);
+            return c < 0 ? global::app.data.Comparison.Less
+                 : c > 0 ? global::app.data.Comparison.Greater
+                 : global::app.data.Comparison.Equal;
+        }
+        catch (global::app.data.Compare.NotOrderableException)
+        {
+            // Reconciled lists, unorderable elements: fall back to structural equality
+            // so == / != still answer; ordering errors at the boundary.
+            return la.AreEqual(lb)
+                ? global::app.data.Comparison.Equal
+                : global::app.data.Comparison.NotEqual;
+        }
+    }
+
     /// <summary>
     /// IEquatableValue: structural, positional — same length and equal items in
     /// order. Each item routes back through the mediator so nested values widen /

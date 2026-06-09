@@ -141,6 +141,22 @@ public sealed partial class @this : global::app.type.item.@this, module.IContext
     /// </summary>
     public override bool IsTruthy() => _entries.Count > 0;
 
+    // ---- Comparison (the unified hook — see app.type.compare) ----
+
+    /// <summary>Outranks every scalar — a dict never coerces into one.</summary>
+    internal static int CompareRank => 70;
+
+    /// <summary>Equality-only: structural <c>Equal</c>/<c>NotEqual</c> between two
+    /// dicts, never an order (the boundary errors on <c>&lt;</c>/<c>&gt;</c>); a
+    /// non-dict other side → <c>Incomparable</c> (how <c>dict == number</c> errors).</summary>
+    public static global::app.data.Comparison Compare(object? a, object? b)
+    {
+        if (a is not @this da || b is not @this db) return global::app.data.Comparison.Incomparable;
+        return da.AreEqual(db)
+            ? global::app.data.Comparison.Equal
+            : global::app.data.Comparison.NotEqual;
+    }
+
     /// <summary>
     /// IEquatableValue: structural, key-based — two dicts are equal when they have
     /// the same keys mapping to equal values (order-insensitive). Each child routes

@@ -12,6 +12,28 @@ namespace app.type.number;
 /// </summary>
 public sealed partial class @this
 {
+    // ---- Comparison (the unified hook — see app.type.compare) ----
+
+    /// <summary>Outranks text — `text "10" > 9` compares numerically, not lexically.</summary>
+    internal static int CompareRank => 30;
+
+    /// <summary>
+    /// Numeric comparison across the tower, in caller order. The driver coerces the
+    /// non-numeric side via <see cref="FromObject"/> (text "10" → 10); a side that
+    /// can't become a number makes the pair <see cref="global::app.data.Comparison.Incomparable"/>.
+    /// </summary>
+    public static global::app.data.Comparison Compare(object? a, object? b)
+    {
+        @this? na, nb;
+        try { na = FromObject(a); nb = FromObject(b); }
+        catch (System.FormatException) { return global::app.data.Comparison.Incomparable; }
+        if (na == null || nb == null) return global::app.data.Comparison.Incomparable;
+        var c = na.CompareTo(nb);
+        return c < 0 ? global::app.data.Comparison.Less
+             : c > 0 ? global::app.data.Comparison.Greater
+             : global::app.data.Comparison.Equal;
+    }
+
     public bool Equals(@this? other)
     {
         if (other is null) return false;

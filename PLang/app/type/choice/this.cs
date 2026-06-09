@@ -57,6 +57,24 @@ public sealed class @this<T> : global::app.type.item.@this,
     public static @this<T> FromName(string name, global::app.actor.context.@this? context)
         => new((T)ChoiceMeta.FromName(typeof(T), name, context));
 
+    // ---- Comparison (the unified hook — see app.type.compare; statics on the
+    // generic exist per closed type, so discovery via the catalog's closed
+    // choice<T> finds them) ----
+
+    /// <summary>Outranks text — the name string coerces into the choice.</summary>
+    internal static int CompareRank => 15;
+
+    /// <summary>Equality-only: <c>Equal</c>/<c>NotEqual</c> by value or by name
+    /// (choice/text/string), never an order. Neither side a choice → Incomparable.</summary>
+    public static global::app.data.Comparison Compare(object? a, object? b)
+    {
+        if (a is @this<T> ca)
+            return ca.AreEqual(b) ? global::app.data.Comparison.Equal : global::app.data.Comparison.NotEqual;
+        if (b is @this<T> cb)
+            return cb.AreEqual(a) ? global::app.data.Comparison.Equal : global::app.data.Comparison.NotEqual;
+        return global::app.data.Comparison.Incomparable;
+    }
+
     // Equality by value, and by name against a choice/text/string (so
     // `where method equals 'GET'` reconciles).
     public bool AreEqual(object? other) => other switch

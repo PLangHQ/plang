@@ -19,11 +19,13 @@ public partial class @this
         Converters = { new global::app.channel.serializer.TimeSpanIso8601() }
     };
     /// <summary>
-    /// Compares this Data with another by serializing both to JSON and walking the tree.
+    /// Structural golden-file diff: serializes both Data to JSON and walks the trees.
     /// Returns a Data whose Value is a dictionary with match result, field-level diffs,
-    /// and lists of missing/extra fields.
+    /// and lists of missing/extra fields. Distinct from <see cref="Compare"/> — that is
+    /// the typed value comparison returning <see cref="Comparison"/>; this is the eval
+    /// runner's report shape.
     /// </summary>
-    public @this Compare(@this other)
+    public @this Diff(@this other)
     {
         var thisJson = SerializeForComparison(this);
         var otherJson = SerializeForComparison(other);

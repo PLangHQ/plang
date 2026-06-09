@@ -115,6 +115,27 @@ public sealed partial class @this : global::app.type.item.@this,
     /// <summary>Empty text is falsy; any non-empty text is truthy.</summary>
     public override bool IsTruthy() => Value.Length > 0;
 
+    // ---- Comparison (the unified hook — see app.type.compare) ----
+
+    /// <summary>Specificity floor — every other ranked type outranks text and drives.</summary>
+    internal static int CompareRank => 10;
+
+    /// <summary>
+    /// Ordinal, case-insensitive ordering in caller order. Text is the floor type,
+    /// so it only drives a pair the other side couldn't claim; coercion is the
+    /// plain string form of the leaf.
+    /// </summary>
+    public static global::app.data.Comparison Compare(object? a, object? b)
+    {
+        var sa = a is @this ta ? ta.Value : a as string;
+        var sb = b is @this tb ? tb.Value : b as string;
+        if (sa == null || sb == null) return global::app.data.Comparison.Incomparable;
+        var c = string.Compare(sa, sb, System.StringComparison.OrdinalIgnoreCase);
+        return c < 0 ? global::app.data.Comparison.Less
+             : c > 0 ? global::app.data.Comparison.Greater
+             : global::app.data.Comparison.Equal;
+    }
+
     // ---- Equality + order (ordinal, case-insensitive — see class doc) ----
 
     public bool AreEqual(object? other) => other switch

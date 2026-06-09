@@ -177,6 +177,38 @@ public sealed class @this
     }
 
     /// <summary>
+    /// The driving type for a comparison between a value of this type and
+    /// <paramref name="other"/> — the higher-ranked (more specific) of the two
+    /// (number outranks text, the date family outranks text, text is the floor).
+    /// Rank is decided from the types alone: this never reads a value, so a pending
+    /// source stays unread. Same driver regardless of operand order ⇒ antisymmetry.
+    /// </summary>
+    public @this Rank(global::app.data.@this other)
+    {
+        var otherType = other.Type;
+        var registry = Context?.App.Type ?? otherType.Context?.App.Type;
+        if (registry == null) return this;
+        var mine = registry.Compares.RankOf(registry[Name]?.ClrType);
+        var theirs = registry.Compares.RankOf(registry[otherType.Name]?.ClrType);
+        return theirs > mine ? otherType : this;
+    }
+
+    /// <summary>
+    /// Compares two already-materialised values as THIS type (the driver): the
+    /// family's hook coerces whichever side isn't of this kind into it, then
+    /// orders/equates in caller order — <c>a</c> is left, so <c>Less</c> means
+    /// <c>a &lt; b</c>, no sign flip. A family with no hook (or a failed coercion)
+    /// answers <see cref="global::app.data.Comparison.Incomparable"/>.
+    /// </summary>
+    public global::app.data.Comparison Compare(object? a, object? b)
+    {
+        var registry = Context?.App.Type;
+        if (registry == null) return global::app.data.Comparison.Incomparable;
+        return registry.Compares.Of(registry[Name]?.ClrType, a, b)
+            ?? global::app.data.Comparison.Incomparable;
+    }
+
+    /// <summary>
     /// The "null" type — the type of a Data whose Value is null and no explicit
     /// Type was set.  Replaces the historical <c>Data.Type == null</c> sentinel
     /// so the property can be non-null end-to-end.  Wire serialization skips it

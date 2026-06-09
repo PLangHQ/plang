@@ -1230,6 +1230,35 @@ public partial class @this
     }
 
     /// <summary>
+    /// THE comparison entry — compares this value to <paramref name="other"/> and
+    /// returns the sign-free <see cref="Comparison"/>. The driving type is decided
+    /// from the TYPES alone (<see cref="type.Rank"/> — ranking never forces a read),
+    /// then both values are awaited through the door (the only async hops) and the
+    /// driver's sync <c>Compare(a, b)</c> runs in caller order — <c>Less</c> means
+    /// <c>this &lt; other</c>, no sign flip.
+    ///
+    /// <para>Null policy lives here, above every driver: anything vs null is
+    /// equality-comparable (<c>Equal</c>/<c>NotEqual</c>, never
+    /// <c>Incomparable</c>) so <c>%x% == null</c> works for every type.</para>
+    /// </summary>
+    public async ValueTask<Comparison> Compare(@this other)
+    {
+        var driver = Type.Rank(other);
+        driver.Context ??= _context ?? other._context;
+
+        var a = await Value();
+        var b = await other.Value();
+
+        // A present null rides as the null.@this singleton — coalesce for the policy.
+        if (a is app.type.@null.@this) a = null;
+        if (b is app.type.@null.@this) b = null;
+        if (a == null || b == null)
+            return a == null && b == null ? Comparison.Equal : Comparison.NotEqual;
+
+        return driver.Compare(a, b);
+    }
+
+    /// <summary>
     /// Creates a deep clone of this Data. Value is deep-cloned, metadata is preserved.
     /// The natural boolean meaning of this Data.
     /// Follows common language conventions: null, false, 0, "" are falsy. Everything else is truthy.

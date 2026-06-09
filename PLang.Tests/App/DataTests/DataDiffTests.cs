@@ -1,6 +1,6 @@
 namespace PLang.Tests.App.DataTests;
 
-public class DataCompareTests
+public class DataDiffTests
 {
     [Test]
     public async Task Compare_IdenticalStrings_MatchTrue()
@@ -8,7 +8,7 @@ public class DataCompareTests
         var a = new Data("a", "hello");
         var b = new Data("b", "hello");
 
-        var result = a.Compare(b);
+        var result = a.Diff(b);
         var diff = (await result.Value()) as Dictionary<string, object?>;
 
         await Assert.That(diff).IsNotNull();
@@ -21,7 +21,7 @@ public class DataCompareTests
         var a = new Data("a", "hello");
         var b = new Data("b", "world");
 
-        var result = a.Compare(b);
+        var result = a.Diff(b);
         var diff = (await result.Value()) as Dictionary<string, object?>;
 
         await Assert.That(diff).IsNotNull();
@@ -36,7 +36,7 @@ public class DataCompareTests
         var a = new Data("a", 42);
         var b = new Data("b", 42);
 
-        var result = a.Compare(b);
+        var result = a.Diff(b);
         var diff = (await result.Value()) as Dictionary<string, object?>;
 
         await Assert.That(diff).IsNotNull();
@@ -50,7 +50,7 @@ public class DataCompareTests
         var a = new Data("a", (int)42);
         var b = new Data("b", (long)42);
 
-        var result = a.Compare(b);
+        var result = a.Diff(b);
         var diff = (await result.Value()) as Dictionary<string, object?>;
 
         await Assert.That(diff).IsNotNull();
@@ -70,7 +70,7 @@ public class DataCompareTests
         var a = new Data("a", obj);
         var b = new Data("b", new Dictionary<string, object?>(obj));
 
-        var result = a.Compare(b);
+        var result = a.Diff(b);
         var diff = (await result.Value()) as Dictionary<string, object?>;
 
         await Assert.That(diff).IsNotNull();
@@ -86,7 +86,7 @@ public class DataCompareTests
         var a = new Data("a", expected);
         var b = new Data("b", actual);
 
-        var result = a.Compare(b);
+        var result = a.Diff(b);
         var diff = (await result.Value()) as Dictionary<string, object?>;
 
         await Assert.That(diff).IsNotNull();
@@ -113,7 +113,7 @@ public class DataCompareTests
         var a = new Data("a", expected);
         var b = new Data("b", actual);
 
-        var result = a.Compare(b);
+        var result = a.Diff(b);
         var diff = (await result.Value()) as Dictionary<string, object?>;
 
         await Assert.That(diff).IsNotNull();
@@ -133,7 +133,7 @@ public class DataCompareTests
         var a = new Data("a", expected);
         var b = new Data("b", actual);
 
-        var result = a.Compare(b);
+        var result = a.Diff(b);
         var diff = (await result.Value()) as Dictionary<string, object?>;
 
         await Assert.That(diff).IsNotNull();
@@ -153,7 +153,7 @@ public class DataCompareTests
         var a = new Data("a", expected);
         var b = new Data("b", actual);
 
-        var result = a.Compare(b);
+        var result = a.Diff(b);
         var diff = (await result.Value()) as Dictionary<string, object?>;
 
         await Assert.That(diff).IsNotNull();
@@ -170,7 +170,7 @@ public class DataCompareTests
         var a = new Data("a", expected);
         var b = new Data("b", actual);
 
-        var result = a.Compare(b);
+        var result = a.Diff(b);
         var diff = (await result.Value()) as Dictionary<string, object?>;
 
         await Assert.That(diff).IsNotNull();
@@ -186,7 +186,7 @@ public class DataCompareTests
         var a = new Data("a", expected);
         var b = new Data("b", actual);
 
-        var result = a.Compare(b);
+        var result = a.Diff(b);
         var diff = (await result.Value()) as Dictionary<string, object?>;
 
         await Assert.That(diff).IsNotNull();
@@ -222,7 +222,7 @@ public class DataCompareTests
         var a = new Data("a", expected);
         var b = new Data("b", actual);
 
-        var result = a.Compare(b);
+        var result = a.Diff(b);
         var diff = (await result.Value()) as Dictionary<string, object?>;
 
         await Assert.That(diff).IsNotNull();
@@ -235,7 +235,7 @@ public class DataCompareTests
         var a = new Data("a", true);
         var b = new Data("b", true);
 
-        var result = a.Compare(b);
+        var result = a.Diff(b);
         var diff = (await result.Value()) as Dictionary<string, object?>;
 
         await Assert.That(diff).IsNotNull();
@@ -248,7 +248,7 @@ public class DataCompareTests
         var a = new Data("a", "test");
         var b = new Data("b", "test");
 
-        var result = a.Compare(b);
+        var result = a.Diff(b);
 
         await Assert.That(result).IsNotNull();
         await Assert.That(result.Name).IsEqualTo("comparison");

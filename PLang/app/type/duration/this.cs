@@ -57,6 +57,28 @@ public sealed partial class @this : global::app.type.item.@this,
     // ---- Truthiness (item): zero is falsy ----
     public override bool IsTruthy() => Value != System.TimeSpan.Zero;
 
+    // ---- Comparison (the unified hook — see app.type.compare) ----
+
+    /// <summary>Outranks text — ISO-8601 duration text coerces into the duration.</summary>
+    internal static int CompareRank => 40;
+
+    /// <summary>Span-length ordering in caller order; the other side coerces through this
+    /// family's own Convert hook (ISO text → duration). Non-coercible → Incomparable.</summary>
+    public static global::app.data.Comparison Compare(object? a, object? b)
+    {
+        var ca = CoerceOwn(a);
+        var cb = CoerceOwn(b);
+        if (ca == null || cb == null) return global::app.data.Comparison.Incomparable;
+        var c = ca.Value.CompareTo(cb.Value);
+        return c < 0 ? global::app.data.Comparison.Less
+             : c > 0 ? global::app.data.Comparison.Greater
+             : global::app.data.Comparison.Equal;
+    }
+
+    private static @this? CoerceOwn(object? v) => v as @this
+        ?? convert.@this.OfStatic(typeof(@this),
+               v is global::app.type.item.@this { IsLeaf: true } l ? l.ToRaw() : v, null, null)?.Peek() as @this;
+
     // ---- Equality + order (by span length) ----
     public bool AreEqual(object? other) => other switch
     {

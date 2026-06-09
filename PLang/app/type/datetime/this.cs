@@ -39,6 +39,28 @@ public sealed partial class @this : global::app.type.item.@this,
     public override string ToString() =>
         Value.ToString("o", System.Globalization.CultureInfo.InvariantCulture);
 
+    // ---- Comparison (the unified hook — see app.type.compare) ----
+
+    /// <summary>Date family outranks text — ISO text coerces into the datetime.</summary>
+    internal static int CompareRank => 55;
+
+    /// <summary>Instant ordering in caller order; the other side coerces through this
+    /// family's own Convert hook (ISO text → datetime). Non-coercible → Incomparable.</summary>
+    public static global::app.data.Comparison Compare(object? a, object? b)
+    {
+        var ca = CoerceOwn(a);
+        var cb = CoerceOwn(b);
+        if (ca == null || cb == null) return global::app.data.Comparison.Incomparable;
+        var c = ca.Value.ToUniversalTime().CompareTo(cb.Value.ToUniversalTime());
+        return c < 0 ? global::app.data.Comparison.Less
+             : c > 0 ? global::app.data.Comparison.Greater
+             : global::app.data.Comparison.Equal;
+    }
+
+    private static @this? CoerceOwn(object? v) => v as @this
+        ?? convert.@this.OfStatic(typeof(@this),
+               v is global::app.type.item.@this { IsLeaf: true } l ? l.ToRaw() : v, null, null)?.Peek() as @this;
+
     // ---- Equality + order (by instant) ----
     public bool AreEqual(object? other) => other switch
     {
