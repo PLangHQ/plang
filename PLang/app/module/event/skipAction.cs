@@ -13,9 +13,9 @@ public partial class SkipAction : IContext
     /// <summary>Value to return instead of the action's real result. Null returns empty success.</summary>
     public partial data.@this Value { get; init; }
 
-    public Task<data.@this> Run()
+    public async Task<data.@this> Run()
     {
         Context.EventOverride = Data(Value?.Materialize());
-        return Task.FromResult(Data(Value?.Materialize()));
+        return Data(Value?.Materialize());
     }
 }

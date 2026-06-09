@@ -14,12 +14,12 @@ public partial class intercept : IContext
     public partial data.@this<GoalCall>? Call { get; init; }
     public partial data.@this<global::app.type.dict.@this>? Parameters { get; init; }
 
-    public Task<data.@this<global::app.mock.@this>> Run()
+    public async Task<data.@this<global::app.mock.@this>> Run()
     {
         var handle = new global::app.mock.@this
         {
             Id = Guid.NewGuid().ToString("N")[..8],
-            Pattern = (Pattern.Materialize() as global::app.type.text.@this)!,
+            Pattern = ((await Pattern.Value()) as global::app.type.text.@this)!,
             IsSpy = Return?.Materialize() == null && Call?.Materialize() == null
         };
 
@@ -61,7 +61,7 @@ public partial class intercept : IContext
         var binding = new EventBinding(
             Trigger.BeforeAction,
             handler,
-            actionPattern: (Pattern.Materialize() as global::app.type.text.@this)!);
+            actionPattern: ((await Pattern.Value()) as global::app.type.text.@this)!);
 
         handle.EventBindingId = binding.Id;
 
@@ -70,7 +70,7 @@ public partial class intercept : IContext
 
         Context.Events.Register(binding);
 
-        return Task.FromResult(data.@this<global::app.mock.@this>.Ok(handle));
+        return data.@this<global::app.mock.@this>.Ok(handle);
     }
 
     private static app.goal.steps.step.actions.action.@this? FindCurrentAction(actor.context.@this context)

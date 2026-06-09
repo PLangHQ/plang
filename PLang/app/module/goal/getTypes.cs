@@ -33,9 +33,9 @@ public partial class getTypes : IContext
 {
     public partial data.@this<global::app.goal.@this> Goal { get; init; }
 
-    public Task<data.@this<global::app.type.list.@this<global::app.type.dict.@this>>> Run()
+    public async Task<data.@this<global::app.type.list.@this<global::app.type.dict.@this>>> Run()
     {
-        var goal = (Goal.Materialize() as global::app.goal.@this)!;
+        var goal = ((await Goal.Value()) as global::app.goal.@this)!;
         var modules = Context.App!.Module;
 
         var perStep = new List<Dictionary<string, string>>(goal.Steps.Count);
@@ -67,8 +67,8 @@ public partial class getTypes : IContext
             foreach (var kv in d) nd.Set(kv.Key, kv.Value);
             return nd;
         });
-        return Task.FromResult(data.@this<global::app.type.list.@this<global::app.type.dict.@this>>.Ok(
-            global::app.type.list.@this<global::app.type.dict.@this>.Of(rows)));
+        return data.@this<global::app.type.list.@this<global::app.type.dict.@this>>.Ok(
+            global::app.type.list.@this<global::app.type.dict.@this>.Of(rows));
     }
 
     private static void ProcessAction(
