@@ -1,29 +1,5 @@
 # Coder — compare-redesign
 
-## Version: v4 (follow-up — reviewed architect's resolution of v3 findings A/B/C)
-
-Pulled `d887baf88`. **A, B, C all resolved well** — and A the right way: keep lazy read, navigation
-async via `ValueTask` (sync-completing in memory, awaits only the first content read), the three sync
-surfaces each handled (param getters → `GetParameter<T>` returns a lazy `Data<T>`, handler does
-`await Param.Value()`; `ToString`/`Equals`/`GetHashCode` read materialised backing only; Fluid
-materialises up-front). The `__ResolveData(name).As<T>(Context)` collapse is a real OBP win.
-**Review only — no code.** Deliverable: `v4/comments.md`. (v3 summary archived.)
-
-**One mechanical consequence to name (not a design change):** the `GetParameter<T>`-lazy switch
-silently moves the param resolution-error guard. Verified: `GetParameter<T>` is net-new (only
-non-generic `GetParameter` exists, `action/this.cs:220`); **42 handlers read `param.Value!`/`.Success`
-synchronously, usually before the first `await`** — e.g. `file/read.cs:31` `if (!Path.Success) return
-Path;` then `Path.Value!`. Today the getter resolves eagerly, so `.Success`/`.Error` populate before
-the await. Under the lazy `Data<T>`, resolution fires only at `await Param.Value()` — so the pre-await
-`if (!Path.Success)` inspects the *unresolved* Data and **silently stops catching resolution failures**
-(bad scheme / unset `%var%` / convert error slips past, surfaces later as an NRE on `.Value!`). Ask:
-Stage 2 should state the guard moves **after** `await Param.Value()`; the 42 `param.Value!` sites are
-the migration list and the guard-reorder is part of each, not just the `.Value` → `await Value()` swap.
-
-Otherwise the plan is ready to implement. **Build it.**
-
----
-
 ## Version: v3 (follow-up — reviewed architect's answers to the 7 v2 findings)
 
 The architect settled all 7 v2 findings (commits `983b775ff`..`0a8f351b7`) and rewrote Stage 2 +
