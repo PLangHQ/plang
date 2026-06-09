@@ -1143,9 +1143,9 @@ public class Default : IBuilder
     private static GoalCall? ToGoalCall(object? value, actor.context.@this context)
     {
         if (value is GoalCall gc) return gc;
-        // GoalCall owns its own assembly (string / JsonElement / dict → goal.call) —
-        // the builder is a birth boundary, so it constructs explicitly. There is no
-        // conversion-registry hook: a dict reaching the runtime door is an error.
-        return GoalCall.FromWire(value, context).Peek() as GoalCall;
+        // GoalCall owns its own assembly (string / JsonElement / dict → goal.call);
+        // reach it through the infra door — the same registry-dispatched Convert
+        // hook every type uses (number, image, path).
+        return context.App.Type.Convert(value, typeof(GoalCall), context).Peek() as GoalCall;
     }
 }

@@ -545,19 +545,4 @@ public sealed partial class @this : global::app.type.item.@this, module.IDataWra
         return goals[0];
     }
 
-    /// <summary>
-    /// Born-native composites for every action parameter in this goal tree (steps,
-    /// modifiers, sub-goals) — see <c>action.BornNativeParameters</c>. Called by the
-    /// goal serializer right after the .pr deserializes, so typed wire values
-    /// (goal.call, …) exist before anything downstream reads them.
-    /// </summary>
-    internal void BornNativeParameters(global::app.actor.context.@this context)
-    {
-        foreach (var step in Steps)
-            foreach (var action in step.Actions)
-                action.BornNativeParameters(context);
-        foreach (var sub in Goals)
-            sub.BornNativeParameters(context);
-    }
-
 }

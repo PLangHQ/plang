@@ -50,9 +50,26 @@ public sealed class Converter : JsonConverterFactory
         public override global::app.type.path.@this? Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
         {
             if (reader.TokenType == JsonTokenType.Null) return null;
-            if (reader.TokenType != JsonTokenType.String)
-                throw new JsonException($"Expected string for path, got {reader.TokenType}");
-            var raw = reader.GetString();
+            string? raw;
+            if (reader.TokenType == JsonTokenType.StartObject)
+            {
+                // The Data wire writes a path as its property bag {scheme, relative}
+                // (domain types ride the wire as property bags); the CLR-graph writer
+                // below emits the bare string. Read accepts both — the relative slot
+                // is the location, resolved through the same reader as the string form.
+                using var doc = JsonDocument.ParseValue(ref reader);
+                raw = doc.RootElement.TryGetProperty("relative", out var rel) ? rel.GetString()
+                    : doc.RootElement.TryGetProperty("raw", out var rw) ? rw.GetString()
+                    : null;
+            }
+            else if (reader.TokenType == JsonTokenType.String)
+            {
+                raw = reader.GetString();
+            }
+            else
+            {
+                throw new JsonException($"Expected string or object for path, got {reader.TokenType}");
+            }
             if (string.IsNullOrEmpty(raw)) return null;
 
             if (_context != null)

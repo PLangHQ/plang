@@ -1,4 +1,8 @@
 Start
 / Plane — %x.size% (the content key) and %x!size% (the typed property) are distinct, no shadowing.
 / Sigil picks the plane: . = data, ! = property + envelope.
-- throw "not implemented"
+- set %x% = '{"size": 10, "name": "box"}', type=json
+- set %x!size% = 28
+- assert %x.size% equals 10
+- assert %x!size% equals 28
+- assert %x.name% equals "box"

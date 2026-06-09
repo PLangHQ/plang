@@ -308,7 +308,10 @@ public partial class @this
         // of the source's live container — a later `set %source.x% = ...` cannot reach
         // it. The old SnapshotClone deep-copy was a redundant defense (and only ever
         // fired for raw IDictionary/IList, never the native dict).
-        var rawValue = value is data.@this dv2 ? dv2.Peek() : value;
+        // A dotted write lands content on a C# object/dict slot — that IS a content
+        // use, so read through the door (materializes a lazy value); only the plain
+        // whole-binding Set stays lazy.
+        var rawValue = value is data.@this dv2 ? await dv2.Value() : value;
         var target = parent.Peek();
         if (target == null)
         {
@@ -328,7 +331,7 @@ public partial class @this
     /// Otherwise converts to a case-insensitive dictionary and sets there.
     /// Returns the (possibly replaced) target.
     /// </summary>
-    private static object SetValueOnObject(object target, string propertyName, object? value)
+    private object SetValueOnObject(object target, string propertyName, object? value)
     {
         // Snapshot — editing a captured variable routes to the snapshot's own
         // SetVariable (the owner), so `set %snap.variables.x% = 2` lands on the
@@ -399,7 +402,7 @@ public partial class @this
                             : typeof(object);
                         if (!elementType.IsAssignableFrom(value.GetType()))
                         {
-                            var (typedValue, _) = type.catalog.@this.TryConvert(value, elementType);
+                            var (typedValue, _) = type.catalog.@this.TryConvert(value, elementType, _context);
                             if (typedValue != null) value = typedValue;
                         }
                     }
@@ -418,7 +421,7 @@ public partial class @this
                         {
                             if (value != null && !indexer.PropertyType.IsAssignableFrom(value.GetType()))
                             {
-                                var (typedValue, _) = type.catalog.@this.TryConvert(value, indexer.PropertyType);
+                                var (typedValue, _) = type.catalog.@this.TryConvert(value, indexer.PropertyType, _context);
                                 if (typedValue != null) value = typedValue;
                             }
                             indexer.SetValue(collection, value, new object[] { gIdx });
@@ -436,7 +439,7 @@ public partial class @this
         {
             if (value != null && !clrProp.PropertyType.IsAssignableFrom(value.GetType()))
             {
-                var (typedValue, _) = type.catalog.@this.TryConvert(value, clrProp.PropertyType);
+                var (typedValue, _) = type.catalog.@this.TryConvert(value, clrProp.PropertyType, _context);
                 if (typedValue != null) value = typedValue;
             }
             clrProp.SetValue(target, value);

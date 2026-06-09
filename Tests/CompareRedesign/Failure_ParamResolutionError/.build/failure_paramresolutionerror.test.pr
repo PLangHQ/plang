@@ -1,0 +1,224 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "read file \u0027s3://bucket/key\u0027\non error call SchemeError\nwrite to %never%",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "Failure \u2014 param resolution failure (bad scheme / unset %var% / convert) returns a typed Data error,\nNOT an NRE. The await\u2192guard\u2192use pattern catches it at the post-await guard.",
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Path",
+              "type": {
+                "name": "path",
+                "kind": "s3"
+              },
+              "value": "s3://bucket/key"
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "resolvevariables",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "@schema": "data",
+                  "name": "Actions",
+                  "type": {
+                    "name": "list"
+                  },
+                  "value": [
+                    {
+                      "module": "goal",
+                      "action": "call",
+                      "parameters": [
+                        {
+                          "name": "GoalName",
+                          "value": {
+                            "name": "SchemeError",
+                            "parameters": []
+                          },
+                          "type": "goal"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%never%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "object"
+              },
+              "value": "%!data%"
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "file.read(Path=\u0027s3://bucket/key\u0027) | error.handle(Actions=[goal.call(GoalName={name:\u0027SchemeError\u0027,parameters:[]})]) , variable.set(Name=%never%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %schemeKey% equals \u0022SchemeNotRegistered\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Expected",
+              "type": {
+                "name": "object"
+              },
+              "value": "%schemeKey%"
+            },
+            {
+              "@schema": "data",
+              "name": "Actual",
+              "type": {
+                "name": "text"
+              },
+              "value": "SchemeNotRegistered"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=%schemeKey%, Actual=\u0022SchemeNotRegistered\u0022)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "SchemeError",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "set %schemeKey% = %!error.Key%",
+          "lineNumber": 10,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "@schema": "data",
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%schemeKey%"
+                },
+                {
+                  "@schema": "data",
+                  "name": "Value",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "%!error.Key%"
+                }
+              ],
+              "defaults": [
+                {
+                  "@schema": "data",
+                  "name": "asdefault",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "formal": "variable.set(Name=%schemeKey%, Value=%!error.Key%)",
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/CompareRedesign/Failure_ParamResolutionError/Failure_ParamResolutionError.test.goal",
+      "prPath": "/CompareRedesign/Failure_ParamResolutionError/.build/failure_paramresolutionerror.test.pr",
+      "hash": "a86b8762d6fcb1b105e6cfd8859bb33222dc1b7cb6edbbac27bec824832aef38",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/CompareRedesign/Failure_ParamResolutionError/Failure_ParamResolutionError.test.goal",
+  "prPath": "/CompareRedesign/Failure_ParamResolutionError/.build/failure_paramresolutionerror.test.pr",
+  "hash": "1115dd06e2f48ae6fae3cfe6029c97d3824d6ebc4a6d5de6373457d794cdc8f3",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

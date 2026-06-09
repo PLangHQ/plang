@@ -109,10 +109,8 @@ public class ValueConversionHookTests
     [Test]
     public async Task GoalCallHook_FromBareName()
     {
-        // GoalCall is born-native at the wire boundary: FromWire is the explicit
-        // birth-site constructor (loader/builder), deliberately NOT a conversion hook.
         var (_, ctx) = MakeApp();
-        var v = (await GoalCall.FromWire("MyGoal", ctx).Value()) as GoalCall;
+        var v = (await GoalCall.Convert("MyGoal", null, ctx).Value()) as GoalCall;
         await Assert.That(v).IsNotNull();
         await Assert.That(v!.Name).IsEqualTo("MyGoal");
     }
@@ -130,10 +128,7 @@ public class ValueConversionHookTests
         await Assert.That((await app.Type.Convert("2024-03-15T10:30:00+00:00", typeof(System.DateTimeOffset), ctx).Value()))
             .IsTypeOf<System.DateTimeOffset>();
         await Assert.That((await app.Type.Convert("photo.png", typeof(Image), ctx).Value())).IsTypeOf<Image>();
-        // goal.call is deliberately NOT reachable through the conversion door — a
-        // goal-call value is born at the wire boundary (GoalCall.FromWire); anything
-        // else arriving at a GoalCall slot is an error, not a conversion.
-        await Assert.That((await app.Type.Convert("MyGoal", typeof(GoalCall), ctx).Value()) is GoalCall).IsFalse();
+        await Assert.That((await app.Type.Convert("MyGoal", typeof(GoalCall), ctx).Value())).IsTypeOf<GoalCall>();
     }
 
     [Test]

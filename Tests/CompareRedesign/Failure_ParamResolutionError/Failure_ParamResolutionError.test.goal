@@ -1,4 +1,10 @@
 Start
 / Failure — param resolution failure (bad scheme / unset %var% / convert) returns a typed Data error,
 / NOT an NRE. The await→guard→use pattern catches it at the post-await guard.
-- throw "not implemented"
+- read file 's3://bucket/key'
+    on error call SchemeError
+    write to %never%
+- assert %schemeKey% equals "SchemeNotRegistered"
+
+SchemeError
+- set %schemeKey% = %!error.Key%
