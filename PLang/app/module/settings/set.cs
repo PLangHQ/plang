@@ -14,12 +14,14 @@ public partial class Set : IContext
 
     public async Task<data.@this<type.setting>> Run()
     {
+        var key = (await Key.Value())!;
+        var val = Value == null ? null : await Value.Value();
         var store = Context.App.SettingsStore;
-        var result = await store.Set("settings", Key.Value!, new data.@this(Key.Value!, Value?.Value));
+        var result = await store.Set("settings", key, new data.@this(key, val));
 
         if (!result.Success)
             return data.@this<type.setting>.From(result);
 
-        return data.@this<type.setting>.Ok(new type.setting { key = Key.Value!, value = Value?.Value });
+        return data.@this<type.setting>.Ok(new type.setting { key = key, value = val });
     }
 }

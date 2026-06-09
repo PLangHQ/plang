@@ -21,7 +21,7 @@ public partial class Elseif : IContext, IStep
         var evalResult = await Evaluator.Evaluate(this);
         if (!evalResult.Success) return evalResult;
         var b = evalResult.GetValue<bool>();
-        if (Negate.Value) b = !b;
+        if ((await Negate.Value())?.Value == true) b = !b;
         return Data(b);
     }
 }

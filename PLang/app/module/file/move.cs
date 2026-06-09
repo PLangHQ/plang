@@ -17,6 +17,6 @@ public partial class Move : IContext
         // typed scheme error, not an NRE on .Value.
         if (!Source.Success) return data.@this<path>.From(Source);
         if (!Destination.Success) return data.@this<path>.From(Destination);
-        return await Source.Value!.MoveTo(Destination.Value!, Overwrite.Value);
+        return await (await Source.Value())!.MoveTo((await Destination.Value())!, (await Overwrite.Value())!);
     }
 }

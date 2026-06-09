@@ -9,7 +9,7 @@ public partial class Remove : IContext
 
     public Task<data.@this> Run()
     {
-        Context.Variable.Remove(Name.Value);
+        Context.Variable.Remove(Name.Materialize() as app.variable.@this);
         return Task.FromResult(Data());
     }
 }

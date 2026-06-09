@@ -15,11 +15,11 @@ public partial class Remove : IContext
     public Task<data.@this> Run()
     {
         var app = Context.App!;
-        if (!app.Module.Contains(Name.Value!))
+        if (!app.Module.Contains(Name.Materialize() as global::app.type.text.@this))
             return Task.FromResult(Error(
-                new app.error.ServiceError($"Module '{Name.Value}' not found", "NotFound", 404)));
+                new app.error.ServiceError($"Module '{Name.Materialize()}' not found", "NotFound", 404)));
 
-        app.Module.Remove(Name.Value!);
+        app.Module.Remove(Name.Materialize() as global::app.type.text.@this);
         return Task.FromResult(Data());
     }
 }

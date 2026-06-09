@@ -14,8 +14,8 @@ public partial class Start : IContext, IStatic
 
     public Task<data.@this<global::app.type.@bool.@this>> Run()
     {
-        var key = Name?.Value ?? "default";
-        var entry = new TimerEntry(DateTimeOffset.UtcNow, Scope.Value!);
+        var key = (Name?.Materialize() as global::app.type.text.@this)?.ToString() ?? "default";
+        var entry = new TimerEntry(DateTimeOffset.UtcNow, (Scope.Materialize() as global::app.type.text.@this)!);
         Static[key] = entry;
         Static["__last__"] = key;
         return Task.FromResult(global::app.data.@this<global::app.type.@bool.@this>.Ok(true));

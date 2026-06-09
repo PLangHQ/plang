@@ -21,6 +21,6 @@ public partial class Copy : IContext
         // SchemeNotRegistered error instead of an NRE on .Value.
         if (!Source.Success) return data.@this<path>.From(Source);
         if (!Destination.Success) return data.@this<path>.From(Destination);
-        return await Source.Value!.CopyTo(Destination.Value!, Overwrite.Value, IncludeSubfolders.Value);
+        return await (await Source.Value())!.CopyTo((await Destination.Value())!, (await Overwrite.Value())!, (await IncludeSubfolders.Value())!);
     }
 }

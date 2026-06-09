@@ -12,12 +12,12 @@ public partial class Add : IContext
     public async Task<data.@this> Run()
     {
         var app = Context.App!;
-        var dllPath = Path.Value!;
+        var dllPath = (await Path.Value())!;
 
         // ExistsAsync runs first so the "Module not found" message stays the
         // canonical error for missing DLLs (matches the pre-Stage-5 shape).
         var exists = await dllPath.ExistsAsync();
-        if (!exists.Success || exists.Value != true)
+        if (!exists.Success || (await exists.Value())?.Value != true)
             return Error(new app.error.ServiceError($"Module not found: {dllPath}"));
 
         // LoadAssemblyAsync gates on Execute — distinct from Read so a Read
@@ -25,7 +25,8 @@ public partial class Add : IContext
         var loadResult = await dllPath.LoadAssemblyAsync();
         if (!loadResult.Success) return Error(loadResult.Error!);
 
-        var count = app.Module.Discover((System.Reflection.Assembly)loadResult.Value!, Namespace?.Value);
+        var ns = Namespace == null ? null : (await Namespace.Value())?.ToString();
+        var count = app.Module.Discover((System.Reflection.Assembly)(await loadResult.Value())!, ns);
         return Data(new type.module { name = dllPath.FileNameWithoutExtension, actions = count });
     }
 }

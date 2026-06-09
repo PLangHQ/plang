@@ -14,16 +14,17 @@ public partial class Get : IContext
 
     public async Task<data.@this> Run()
     {
+        var key = (await Key.Value())!;
         var store = Context.App.SettingsStore;
-        var result = await store.Get("settings", Key.Value!);
+        var result = await store.Get("settings", key);
 
         if (!result.Success)
             return result;
 
-        if (result.Value == null)
+        if (await result.Value() == null)
             return global::app.data.@this.FromError(new AskError(
-                $"Settings value '{Key.Value}' is not set. Please provide a value.",
-                "settings", Key.Value!));
+                $"Settings value '{key}' is not set. Please provide a value.",
+                "settings", key));
 
         return result;
     }

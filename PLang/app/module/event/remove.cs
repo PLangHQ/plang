@@ -10,7 +10,7 @@ public partial class Remove : IContext
 
     public Task<data.@this<global::app.type.@bool.@this>> Run()
     {
-        var removed = Context.Events.Unregister(EventId.Value!);
+        var removed = Context.Events.Unregister(EventId.Materialize() as global::app.type.text.@this);
         return Task.FromResult(global::app.data.@this<global::app.type.@bool.@this>.Ok(removed));
     }
 }
