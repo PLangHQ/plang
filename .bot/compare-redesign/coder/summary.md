@@ -136,3 +136,24 @@ removal (wire/registration).
 ### Next
 1. Stages 3-7 implementation (the 101 C# + 15 plang stage stubs are the spec).
 2. The 11 future-stage Stage-2 stubs land with their owning stages.
+
+## v6 addendum — GoalCall symmetry (Ingi), wire-read fixes, 2 plang stubs filled
+
+The born-native-GoalCall detour resolved into Ingi's symmetry rule: **GoalCall converts
+like number** — the conversion registry dispatches to the type's OWN Convert hook; the
+declared slot type (Data<GoalCall>) drives; the wire tag is advisory. Restored
+GoalCall.Convert (kept the native-dict arm); deleted every compensating special case
+(load walk, FromWire rename, [PlangType] STJ arm, contextual Wire registration).
+Independently-correct keeps: PathConverter reads both wire forms (string + property
+bag), SetValueOnObject converts context-bound (dotted writes door-read).
+plang stubs filled: Plane_DataKeyVsProperty, Failure_ParamResolutionError (both pass).
+
+Suites: plang 309/0 (13 stale = Stage 3-7 stubs), C# 4189/4290 (101 stubs, 0 real).
+
+### Session rules added (memory)
+- Production-code edits ONLY via visible Edit/Write tools; shell-batching for tests only.
+
+### Next (unchanged)
+Stages 3-7; the 101 C# + 13 plang stubs are the spec. Stage 4 (per-type Compare:
+prove text+number+cross-pair) is the natural entry — was starting it when the
+GoalCall work preempted.
