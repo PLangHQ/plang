@@ -7,17 +7,17 @@ public partial class Last : IContext
 {
     public partial data.@this<app.variable.@this> ListName { get; init; }
 
-    public Task<data.@this> Run()
+    public async Task<data.@this> Run()
     {
-        var data = Context.Variable.Get(ListName.Materialize() as app.variable.@this);
+        var data = Context.Variable.Get((await ListName.Value()));
         var countData = data.GetChild("Count");
 
-        if (countData.IsInitialized && countData.Materialize() is int count && count > 0)
+        if (countData.IsInitialized && (await countData.Value()) is int count && count > 0)
         {
             var last = data.GetChild($"[{count - 1}]");
-            if (last.IsInitialized) return Task.FromResult(global::app.data.@this.Ok(last.Materialize()));
+            if (last.IsInitialized) return global::app.data.@this.Ok((await last.Value()));
         }
 
-        return Task.FromResult(global::app.data.@this.Ok());
+        return global::app.data.@this.Ok();
     }
 }

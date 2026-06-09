@@ -7,11 +7,11 @@ public partial class First : IContext
 {
     public partial data.@this<app.variable.@this> ListName { get; init; }
 
-    public Task<data.@this> Run()
+    public async Task<data.@this> Run()
     {
-        var data = Context.Variable.Get(ListName.Materialize() as app.variable.@this);
+        var data = Context.Variable.Get((await ListName.Value()));
         var first = data.GetChild("[0]");
 
-        return Task.FromResult(first.IsInitialized ? global::app.data.@this.Ok(first.Materialize()) : global::app.data.@this.Ok());
+        return first.IsInitialized ? global::app.data.@this.Ok((await first.Value())) : global::app.data.@this.Ok();
     }
 }

@@ -10,11 +10,11 @@ public partial class Add : IContext
     [Default(-1)]
     public partial data.@this<global::app.type.number.@this> AtIndex { get; init; }
 
-    public Task<data.@this<type.list>> Run()
+    public async Task<data.@this<type.list>> Run()
     {
-        var listName = ListName.Materialize() as app.variable.@this;
+        var listName = (await ListName.Value());
         var data = Context.Variable.Get(listName);
-        var existing = data.Materialize();
+        var existing = (await data.Value());
         var list = existing as app.type.list.@this;
 
         if (list == null)
@@ -35,7 +35,7 @@ public partial class Add : IContext
         // independent (merge semantics, like extend). A scalar/dict element is stored by
         // reference: Stage 2's rebind means `set %x% = ...` mints a new Data rather than
         // mutating the one the list holds, so no defensive copy is needed there.
-        data.@this toAdd = Value.Materialize() is app.type.list.@this nl
+        data.@this toAdd = (await Value.Value()) is app.type.list.@this nl
             ? new data.@this(Value.Name, nl.CopyStructure(), Value.Type) { Context = Context }
             : Value;
 
@@ -44,6 +44,6 @@ public partial class Add : IContext
         else
             list.Add(toAdd);
 
-        return Task.FromResult(global::app.data.@this<type.list>.Ok(new type.list { count = list.Count, value = list }, app.type.@this.FromName("list")));
+        return global::app.data.@this<type.list>.Ok(new type.list { count = list.Count, value = list }, app.type.@this.FromName("list"));
     }
 }

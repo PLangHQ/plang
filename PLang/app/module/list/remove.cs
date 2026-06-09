@@ -10,18 +10,18 @@ public partial class Remove : IContext
     [Default(-1)]
     public partial data.@this<global::app.type.number.@this> AtIndex { get; init; }
 
-    public Task<data.@this<type.list>> Run()
+    public async Task<data.@this<type.list>> Run()
     {
-        var listName = ListName.Materialize() as app.variable.@this;
-        var nl = app.type.list.@this.FromRaw(Context.Variable.Get(listName).Materialize(), Context);
+        var listName = (await ListName.Value());
+        var nl = app.type.list.@this.FromRaw((await Context.Variable.Get(listName).Value()), Context);
         if (nl == null)
-            return Task.FromResult(global::app.data.@this<type.list>.FromError(
-                new app.error.ValidationError($"Variable '{listName}' is not a list")));
+            return global::app.data.@this<type.list>.FromError(
+                new app.error.ValidationError($"Variable '{listName}' is not a list"));
         // Promote to native (no-op when already native) so the in-place remove persists.
         Context.Variable.Set(listName, nl);
 
         if (AtIndex.GetValue<int>() >= 0) nl.RemoveAt(AtIndex.GetValue<int>());
-        else nl.Remove(Value.Materialize());
-        return Task.FromResult(global::app.data.@this<type.list>.Ok(new type.list { count = nl.Count, value = nl }, app.type.@this.FromName("list")));
+        else nl.Remove((await Value.Value()));
+        return global::app.data.@this<type.list>.Ok(new type.list { count = nl.Count, value = nl }, app.type.@this.FromName("list"));
     }
 }

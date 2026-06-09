@@ -8,15 +8,15 @@ public partial class Get : IContext
     public partial data.@this<app.variable.@this> ListName { get; init; }
     public partial data.@this<global::app.type.number.@this> Index { get; init; }
 
-    public Task<data.@this> Run()
+    public async Task<data.@this> Run()
     {
-        var data = Context.Variable.Get(ListName.Materialize() as app.variable.@this);
-        var item = data.GetChild($"[{Index.Materialize()}]");
+        var data = Context.Variable.Get((await ListName.Value()));
+        var item = data.GetChild($"[{(await Index.Value())}]");
 
         if (!item.IsInitialized)
-            return Task.FromResult(global::app.data.@this.FromError(
-                new app.error.ValidationError($"Index {Index.Materialize()} out of range for '{ListName.Materialize()}'")));
+            return global::app.data.@this.FromError(
+                new app.error.ValidationError($"Index {(await Index.Value())} out of range for '{(await ListName.Value())}'"));
 
-        return Task.FromResult(global::app.data.@this.Ok(item.Materialize()));
+        return global::app.data.@this.Ok((await item.Value()));
     }
 }
