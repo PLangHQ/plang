@@ -126,8 +126,8 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
         {
             var __idR = app.Code.Get<IIdentity>();
             if (!__idR.Success) return null;
-            var result = ((IIdentity)__idR.Value!).GetOrCreateDefaultAsync(new global::app.module.identity.Get { Context = app.System.Context }).GetAwaiter().GetResult();
-            return result.Success ? result.Value as Identity : null;
+            var result = ((IIdentity)__idR.Materialize()!).GetOrCreateDefaultAsync(new global::app.module.identity.Get { Context = app.System.Context }).GetAwaiter().GetResult();
+            return result.Success ? result.Materialize() as Identity : null;
         }));
     }
 

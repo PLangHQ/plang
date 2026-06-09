@@ -34,7 +34,7 @@ public sealed partial class @this
         }
         var existing = list.FirstOrDefault(v =>
             string.Equals(v.Name, name, StringComparison.OrdinalIgnoreCase));
-        if (existing != null) existing.Value = value;
+        if (existing != null) existing.SetValue(value);
         else list.Add(new data.@this(name, value));
     }
 }

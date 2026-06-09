@@ -12,11 +12,11 @@ namespace app.variable.navigator;
 public sealed class Snapshot : INavigator
 {
     public bool CanNavigate(global::app.data.@this data)
-        => data.Value is global::app.snapshot.@this;
+        => data.Materialize() is global::app.snapshot.@this;
 
     public global::app.data.@this Navigate(global::app.data.@this data, string key)
     {
-        if (data.Value is not global::app.snapshot.@this snap)
+        if (data.Materialize() is not global::app.snapshot.@this snap)
             return global::app.data.@this.NotFound(key);
 
         // `.variables` — the variable namespace; the next segment names the variable.

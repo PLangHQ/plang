@@ -223,7 +223,7 @@ public class Wire : JsonConverter<@this>
             new object?[] { System.Type.Missing, System.Type.Missing, System.Type.Missing, System.Type.Missing },
             null)!;
         typed.Name = body.Name;
-        typed.Value = body.Value;
+        typed.SetValue(body.Materialize());
         if (body.Type != null) typed.Type = body.Type;
         typed.Properties = body.Properties;
         if (body.Signature != null) typed.Signature = body.Signature;

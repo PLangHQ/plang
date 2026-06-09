@@ -51,7 +51,7 @@ public sealed partial class @this
     internal static System.Collections.IEnumerable? Sequence(object? value) => value switch
     {
         string => null,
-        app.type.list.@this nl => nl.Items.Select(i => i.Value),
+        app.type.list.@this nl => nl.Items.Select(i => i.Materialize()),
         System.Collections.IEnumerable e => e,
         _ => null,
     };

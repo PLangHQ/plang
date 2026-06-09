@@ -281,7 +281,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
             var read = await serializer.DeserializeAsync(ms, ct);
             // The container deserializer wraps the reconstructed Data in an Ok
             // envelope; unwrap to the Data the container described.
-            return read.Value as global::app.data.@this ?? read;
+            return read.Materialize() as global::app.data.@this ?? read;
         }
         return StampValue(raw);
     }

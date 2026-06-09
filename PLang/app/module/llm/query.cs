@@ -114,7 +114,7 @@ public partial class query : IContext, IBuildValidatable
     public Task<data.@this> Build()
     {
         var schema = __action?.Parameters?.FirstOrDefault(p =>
-            string.Equals(p.Name, "Schema", System.StringComparison.OrdinalIgnoreCase))?.Value;
+            string.Equals(p.Name, "Schema", System.StringComparison.OrdinalIgnoreCase))?.Materialize();
         if (schema != null && !(schema is string s && (string.IsNullOrEmpty(s) || s.Contains('%'))))
             return Task.FromResult(data.@this.Ok("json"));
 

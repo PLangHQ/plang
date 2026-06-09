@@ -317,7 +317,7 @@ public partial class @this
         }
         var result = SetValueOnObject(target, propertyName, rawValue);
         if (!ReferenceEquals(result, target))
-            parent.Value = result;
+            parent.SetValue(result);
         return root;
     }
 
@@ -591,7 +591,7 @@ public partial class @this
     public object? GetValue(string name)
     {
         var ov = Get(name);
-        var v = ov?.Value;
+        var v = ov?.Materialize();
         if (v is app.type.dict.@this or app.type.list.@this) return v;
         return v is app.type.item.@this iv ? iv.ToRaw() : v;
     }
@@ -634,7 +634,7 @@ public partial class @this
         {
             if (name.StartsWith("!")) continue; // skip system variables
             if (data.Updated > since)
-                result[name] = data.Value?.ToString() ?? "(null)";
+                result[name] = data.Materialize()?.ToString() ?? "(null)";
         }
         return result;
     }

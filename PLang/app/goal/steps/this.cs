@@ -158,7 +158,7 @@ public sealed class @this : IList<Step>, IContext
 
             // Sub-step control: false condition skips indented children
             if (i + 1 < _items.Count && _items[i + 1].Indent > step.Indent
-                && result.Value is bool conditionResult && !conditionResult
+                && result.Materialize() is bool conditionResult && !conditionResult
                 && step.Actions.Count > 0
                 && string.Equals(step.Actions[0].Module, "condition", StringComparison.OrdinalIgnoreCase))
             {

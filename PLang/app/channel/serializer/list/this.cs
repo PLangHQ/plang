@@ -175,7 +175,7 @@ public sealed class @this
     {
         if (!string.IsNullOrEmpty(type)) return GetOrDefault(type);
         if (!string.IsNullOrEmpty(extension) && GetByExtension(extension) is { } byExt) return byExt;
-        if (data.Value is string) return GetByType("text/plain") ?? _default;
+        if (data.Materialize() is string) return GetByType("text/plain") ?? _default;
         return GetByType("application/plang") ?? _default;
     }
 
