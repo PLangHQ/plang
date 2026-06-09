@@ -21,7 +21,7 @@ public class VariablesTests
         var stack = new Variables();
 
         // Cast to DynamicData to access the dynamic Value property
-        var nowObj = stack.Get("Now") as DynamicData;
+        var nowObj = (await stack.Get("Now")) as DynamicData;
         await Assert.That(nowObj).IsNotNull();
 
         var value1 = await nowObj!.Value();
@@ -38,7 +38,7 @@ public class VariablesTests
         var stack = new Variables();
 
         // Cast to DynamicData to access the dynamic Value property
-        var guidObj = stack.Get("GUID") as DynamicData;
+        var guidObj = (await stack.Get("GUID")) as DynamicData;
         await Assert.That(guidObj).IsNotNull();
 
         var guid1 = await guidObj!.Value();

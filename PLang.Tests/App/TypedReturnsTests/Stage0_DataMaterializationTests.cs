@@ -71,9 +71,9 @@ public class Stage0_DataMaterializationTests
         };
 
         _ = await src.GetChild("a");
-        var firstMaterialized = src.Value;
+        var firstMaterialized = await src.Value();
         _ = await src.GetChild("a");
-        var secondMaterialized = src.Value;
+        var secondMaterialized = await src.Value();
 
         await Assert.That(ReferenceEquals(firstMaterialized, secondMaterialized)).IsTrue()
             .Because("ConvertValue must replace _value in place — repeated access must not re-parse.");
