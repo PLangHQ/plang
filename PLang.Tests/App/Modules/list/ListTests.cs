@@ -78,7 +78,7 @@ public class ListTests
         memory.Set("a", aList);
         memory.Set("b", bList);
 
-        var action = new Add { Context = context, ListName = new app.variable.@this("a"), Value = memory.Get("b") };
+        var action = new Add { Context = context, ListName = new app.variable.@this("a"), Value = await memory.Get("b") };
         await (await action.Run()).IsSuccess();
 
         var a = (await memory.GetValue("a")) as global::app.type.list.@this;

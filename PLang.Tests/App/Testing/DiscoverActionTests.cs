@@ -46,7 +46,7 @@ public class DiscoverActionTests
         string? prBuilderVersion = null)
     {
         var normalized = actions.Select(a => (a.module, a.actionName,
-            a.parameters.Select(p => (p.Name, (object?)p.Value)).ToArray())).ToArray();
+            a.parameters.Select(p => (p.Name, (object?)p.Peek())).ToArray())).ToArray();
         return CreateTestFile(relativePath, goalName, stepTexts, normalized, prBuilderVersion,
             preConstructedParams: actions);
     }

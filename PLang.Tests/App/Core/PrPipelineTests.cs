@@ -347,7 +347,7 @@ public class PrPipelineTests
         public global::app.actor.context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
 
-        public Task<Data> ExecuteAsync(global::app.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
+        public async Task<Data> ExecuteAsync(global::app.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
         {
             App = context.App!;
             Context = context;
@@ -355,13 +355,13 @@ public class PrPipelineTests
             object? content = (contentData.Materialize());
             if (content is string str && str.Contains('%'))
             {
-                var resolved = context.Variable.Resolve(str);
+                var resolved = await context.Variable.Resolve(str);
                 if (resolved != str)
                     content = resolved;
             }
             if (content != null)
                 Lines.Add(content.ToString()!);
-            return Task.FromResult(Data.Ok());
+            return Data.Ok();
         }
     }
 }

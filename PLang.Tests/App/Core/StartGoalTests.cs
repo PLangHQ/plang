@@ -334,7 +334,7 @@ public class StartGoalTests
         public global::app.actor.context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
 
-        public Task<Data> ExecuteAsync(global::app.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
+        public async Task<Data> ExecuteAsync(global::app.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
         {
             App = context.App!;
             Context = context;
@@ -347,11 +347,11 @@ public class StartGoalTests
                     content = await context.Variable.GetValue(fullMatch.Groups[1].Value);
                 else
                     content = System.Text.RegularExpressions.Regex.Replace(str, @"%([^%]+)%",
-                        m => context.Variable.GetValue(m.Groups[1].Value)?.ToString() ?? "");
+                        m => context.Variable.Peek(m.Groups[1].Value)?.Peek()?.ToString() ?? "");
             }
             if (content != null)
                 Lines.Add(content.ToString()!);
-            return Task.FromResult(Data.Ok());
+            return Data.Ok();
         }
     }
 

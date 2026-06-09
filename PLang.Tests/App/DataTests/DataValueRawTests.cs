@@ -134,7 +134,7 @@ public class DataValueRawTests
         var raw = new List<object?> { 1, 2, 3 };
         var data = new Data("list", raw);
 
-        var tasks = Enumerable.Range(0, 100).Select(_ => Task.Run(() =>
+        var tasks = Enumerable.Range(0, 100).Select(_ => Task.Run(async () =>
         {
             for (int i = 0; i < 100; i++)
             {
