@@ -9,15 +9,15 @@ public partial class Join : IContext
     [Default(",")]
     public partial data.@this<global::app.type.text.@this> Separator { get; init; }
 
-    public Task<data.@this<global::app.type.text.@this>> Run()
+    public async Task<data.@this<global::app.type.text.@this>> Run()
     {
-        var data = Context.Variable.Get(ListName.Value);
+        var data = Context.Variable.Get(await ListName.Value());
         var strings = new List<string>();
 
         foreach (var (_, item) in data.EnumerateItems())
-            strings.Add(item.Value?.ToString() ?? "");
+            strings.Add((await item.Value())?.ToString() ?? "");
 
-        var result = string.Join(Separator.Value!, strings);
-        return Task.FromResult(global::app.data.@this<global::app.type.text.@this>.Ok(result, app.type.@this.String));
+        var result = string.Join((await Separator.Value())!, strings);
+        return global::app.data.@this<global::app.type.text.@this>.Ok(result, app.type.@this.String);
     }
 }

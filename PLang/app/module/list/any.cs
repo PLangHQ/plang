@@ -18,14 +18,16 @@ public partial class Any : IContext
 
     public async Task<data.@this<global::app.type.@bool.@this>> Run()
     {
-        var data = Context.Variable.Get(ListName.Value);
-        var key = Key.Value!;
-        var right = Value.Value != null ? new data.@this("", Value.Value) : null;
+        var data = Context.Variable.Get(await ListName.Value());
+        var key = (await Key.Value())!;
+        var rightVal = await Value.Value();
+        var right = rightVal != null ? new data.@this("", rightVal) : null;
+        var op = (global::app.module.condition.Operator)(await Operator.Value())!;
 
         foreach (var (_, item) in data.EnumerateItems())
         {
             var left = item.GetChild(key);
-            if (await ((global::app.module.condition.Operator)Operator.Value!).Evaluate(left, right))
+            if (await op.Evaluate(left, right))
                 return global::app.data.@this<global::app.type.@bool.@this>.Ok(true, app.type.@this.FromName("bool"));
         }
 

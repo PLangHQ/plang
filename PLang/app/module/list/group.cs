@@ -9,10 +9,10 @@ public partial class Group : IContext
     [IsNotNull]
     public partial data.@this<global::app.type.text.@this> Key { get; init; }
 
-    public Task<data.@this<type.list>> Run()
+    public async Task<data.@this<type.list>> Run()
     {
-        var data = Context.Variable.Get(ListName.Value);
-        var key = Key.Value!;
+        var data = Context.Variable.Get(await ListName.Value());
+        var key = (await Key.Value())!;
 
         // Buckets are native lists of the element Data — each bucket is itself
         // navigable (you can sort/where inside one). Insertion order preserved.
@@ -21,7 +21,7 @@ public partial class Group : IContext
         foreach (var (_, item) in data.EnumerateItems())
         {
             var keyData = item.GetChild(key);
-            var keyValue = keyData.IsInitialized ? keyData.Value?.ToString() ?? "" : "";
+            var keyValue = keyData.IsInitialized ? (await keyData.Value())?.ToString() ?? "" : "";
             if (!buckets.TryGetValue(keyValue, out var bucket))
             {
                 bucket = new app.type.list.@this { Context = Context };
@@ -40,7 +40,7 @@ public partial class Group : IContext
             result.Add(new global::app.data.@this("", bucketDict));
         }
 
-        return Task.FromResult(global::app.data.@this<type.list>.Ok(
-            new type.list { count = result.Count, value = result }, app.type.@this.FromName("list")));
+        return global::app.data.@this<type.list>.Ok(
+            new type.list { count = result.Count, value = result }, app.type.@this.FromName("list"));
     }
 }
