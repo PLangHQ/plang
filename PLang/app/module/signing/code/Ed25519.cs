@@ -106,10 +106,11 @@ public class Ed25519 : ISigning
         if (!ContractsMatch(signedData.Contracts, action.Contracts?.GetValue<List<string>>()))
             return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Contract mismatch", "ContractMismatch", 400));
 
-        // 6. Header matching — optional param: absent slots are non-null Uninitialized
+        // 6. Header matching — optional param: an absent slot binds non-null Uninitialized
         // (null model), so gate on the resolved value (which also resolves the lazy param
-        // for the sync GetValue below), not a C# null check.
-        if ((await action.Headers.Value()) != null)
+        // for the sync GetValue below). The C# null check stays for direct C# composition,
+        // where `init` can set the property to null outright.
+        if (action.Headers != null && (await action.Headers.Value()) != null)
         {
             if (signedData.Headers == null)
                 return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Signed data has no headers but verification expects headers", "HeaderMismatch", 400));
