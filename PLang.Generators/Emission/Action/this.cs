@@ -191,7 +191,7 @@ public static class @this
             sb.Append($$"""
                         var __{{prop.Name}}_result = app.Code.Get<{{prop.TypeName}}>();
                         if (!__{{prop.Name}}_result.Success) return __{{prop.Name}}_result;
-                        __{{prop.Name}}_backing = (__{{prop.Name}}_result.Value as {{prop.TypeName}})!;
+                        __{{prop.Name}}_backing = (__{{prop.Name}}_result.Materialize() as {{prop.TypeName}})!;
 
                 """);
         }
@@ -216,7 +216,7 @@ public static class @this
             {
                 var lower = name.ToLowerInvariant();
                 sb.Append($$"""
-                                if (__action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Value == null)
+                                if (__action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Peek() == null)
                                     return global::app.data.@this.FromError(new global::app.error.ServiceError(
                                         "'{{lower}}' must have a value", __step, __callFrames, "ValueRequired", 400));
 
@@ -244,7 +244,7 @@ public static class @this
                 // for the parameter-list match, which is how .pr emits parameter keys.
                 var lower = prop.Name.ToLowerInvariant();
                 sb.Append($$"""
-                                if (__action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Value == null)
+                                if (__action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Peek() == null)
                                     return global::app.data.@this.FromError(new global::app.error.ServiceError(
                                         "Required parameter '{{lower}}' is missing or null", __step, __callFrames, "MissingRequiredParameter", 400));
 

@@ -194,44 +194,65 @@ public partial class @this
             _context = parent._context;
     }
 
-    [JsonPropertyName("value")]
-    [Out, Store]
-    public virtual object? Value
+    /// <summary>
+    /// THE value door — the single public read accessor. <c>ValueTask</c>, not
+    /// <c>Task</c>: the common case (value already in memory) allocates nothing,
+    /// and this is the hottest accessor. Async only when it must <b>read</b> — a
+    /// file/url reference's first content touch (Stage 3); everything in memory
+    /// completes synchronously. There is no public sync <c>.Value</c> property:
+    /// a read that may navigate or load must be reached through an <c>await</c>.
+    /// <para><b>Await once</b> per call site — no store-and-await-twice.</para>
+    /// </summary>
+    public virtual ValueTask<object?> Value() => new(Materialize());
+
+    /// <summary>
+    /// Brings the value fully into memory and returns it — resolves the lazy
+    /// factory and parses a raw source form through the reader registry, caching
+    /// the result. The synchronous core of the <see cref="Value"/> door (Stage 3
+    /// puts the async <em>read</em> in front of this parse). Internal plumbing —
+    /// the public read surface is the async <see cref="Value"/> door; the sync
+    /// surfaces that genuinely cannot <c>await</c> (serialization, <c>ToString</c>)
+    /// reach the in-memory value through here.
+    /// </summary>
+    internal virtual object? Materialize()
     {
-        get
+        // The backing is the RAW stored value. No %var% substitution, no caching of
+        // resolution — As<T>(context) is the read transformation; the backing
+        // preserves the input form so each As<T> resolves freshly against the
+        // current variable store. The factory resolves once on first access —
+        // "lazy compute," distinct from variable resolution (DynamicData et al.).
+        if (_valueFactory != null)
         {
-            // v4 contract: .Value is the RAW stored value. No %var% substitution, no caching.
-            // Resolution is the read transformation in As<T>(context); .Value preserves the
-            // input form so each As<T> call resolves freshly against the current variable store.
-            // Factory still resolves once on first access — that's "lazy compute," distinct from
-            // variable resolution (used for DynamicData and similar lazy-init patterns).
-            if (_valueFactory != null)
-            {
-                _value = _valueFactory();
-                _valueFactory = null;
-            }
-            // Lazy materialize from the raw source form — only when nothing is
-            // cached yet AND a raw is set. Inline-authored values (`set %x% = 5`)
-            // populate `_value` and leave `_raw` null, so they never hit this
-            // path and the `%var%`-resolves-fresh-per-read contract is untouched.
-            if (_value == null && _raw != null)
-                _value = Materialize();
-            return _value;
-        }
-        set
-        {
-            _value = UnwrapJsonElement(value);
+            _value = _valueFactory();
             _valueFactory = null;
-            _raw = null;            // mutation — raw is no longer authoritative
-            Updated = System.DateTime.UtcNow;
-            IsInitialized = true;
-            _type = null;
-            if (_value is module.IContext contextual)
-                contextual.Context = _context;
-            // Data owns OnChange — fires whenever the wrapped value mutates.
-            // Constructors set _value directly and bypass this. SetValueDirect also bypasses.
-            FireOnChange(this);
         }
+        // Parse the raw source form — only when nothing is cached yet AND a raw is
+        // set. Inline-authored values (`set %x% = 5`) populate `_value` and leave
+        // `_raw` null, so they never hit this path and the `%var%`-resolves-fresh-
+        // per-read contract is untouched.
+        if (_value == null && _raw != null)
+            _value = ParseRaw();
+        return _value;
+    }
+
+    /// <summary>
+    /// Replaces the wrapped value — the write side of the door (was the
+    /// <c>Value</c> setter). Mutation: clears the raw backing and the explicit
+    /// type, fires <see cref="OnChange"/>.
+    /// </summary>
+    public virtual void SetValue(object? value)
+    {
+        _value = UnwrapJsonElement(value);
+        _valueFactory = null;
+        _raw = null;            // mutation — raw is no longer authoritative
+        Updated = System.DateTime.UtcNow;
+        IsInitialized = true;
+        _type = null;
+        if (_value is module.IContext contextual)
+            contextual.Context = _context;
+        // Data owns OnChange — fires whenever the wrapped value mutates.
+        // Constructors set _value directly and bypass this. SetValueDirect also bypasses.
+        FireOnChange(this);
     }
 
     /// <summary>
@@ -304,13 +325,14 @@ public partial class @this
     internal bool RawUntouched => _raw != null && _value == null && _valueFactory == null;
 
     /// <summary>
-    /// Read-through materialization: turn <c>_raw</c> into the value via the
-    /// reader registry for <c>(Type.Name, Type.Kind)</c>, falling back to the
-    /// type's own <c>Convert</c> for a string raw (subsumes the old
-    /// <c>ConvertValue</c>). Never clears <c>_raw</c>. A failure caches an Error
-    /// that names the source and returns null — touch-time, not a throw into a courier.
+    /// Read-through parse: turn <c>_raw</c> into the value via the reader registry
+    /// for <c>(Type.Name, Type.Kind)</c>, falling back to the type's own
+    /// <c>Convert</c> for a string raw (subsumes the old <c>ConvertValue</c>).
+    /// Never clears <c>_raw</c>. A failure caches an Error that names the source and
+    /// returns null — touch-time, not a throw into a courier. The inner step of
+    /// <see cref="Materialize"/>.
     /// </summary>
-    private object? Materialize()
+    private object? ParseRaw()
     {
         _materializeCount++;
         var t = _type;
@@ -351,7 +373,7 @@ public partial class @this
             _value = null;
         }
         if (_value == null && _raw != null)
-            _ = Value; // triggers Materialize(), caches into _value, keeps _raw
+            _ = Materialize(); // parses the rung, caches into _value, keeps _raw
     }
 
     /// <summary>
@@ -617,7 +639,7 @@ public partial class @this
     internal @this<T> As<T>(actor.context.@this? context = null) where T : global::app.type.item.@this
     {
         context = context ?? _context;
-        var raw = Value; // factory-resolved if any; never %var% substituted
+        var raw = Materialize(); // factory-resolved if any; never %var% substituted
         return AsT_Impl<T>(raw, context);
     }
 
@@ -673,7 +695,7 @@ public partial class @this
             return global::app.data.@this.FromError(new global::app.error.ServiceError(
                 $"No PLang type registered under name '{typeName}'.", "UnknownType", 400));
 
-        var converted = context.App.Type.Convert(Value, clr, context).Value;
+        var converted = context.App.Type.Convert(Materialize(), clr, context).Materialize();
         return new @this(Name, converted, new type(typeName), Parent) { Context = context };
     }
 
@@ -698,7 +720,7 @@ public partial class @this
         // result-binding, couriers, and parameter resolution.
         if (RawUntouched) return this;
 
-        var raw = Value;
+        var raw = Materialize();
 
         if (raw is string strVal && strVal.Contains('%') && context?.Variable != null)
         {
@@ -801,10 +823,10 @@ public partial class @this
         {
             case string s when !string.IsNullOrWhiteSpace(s):
                 return type.Create(s, context: context);
-            case app.type.dict.@this nd when nd.Get("name")?.Value is { } nativeName:
+            case app.type.dict.@this nd when nd.Get("name")?.Materialize() is { } nativeName:
                 return type.Create(nativeName.ToString()!,
-                    nd.Get("kind")?.Value?.ToString(),
-                    AsBool(nd.Get("strict")?.Value), context);
+                    nd.Get("kind")?.Materialize()?.ToString(),
+                    AsBool(nd.Get("strict")?.Materialize()), context);
             case IDictionary<string, object?> td when td.TryGetValue("name", out var nm) && nm != null:
                 string? kind = td.TryGetValue("kind", out var k) ? k?.ToString() : null;
                 bool strict = td.TryGetValue("strict", out var st) && AsBool(st);
@@ -1229,7 +1251,7 @@ public partial class @this
     public virtual bool ToBoolean()
     {
         if (!IsInitialized) return false;
-        var val = Value;
+        var val = Materialize();
         if (val == null) return false;
         // A value owns its own truthiness (empty text / zero number / empty dict /
         // null are falsy) — ask it before the raw-scalar fallbacks, which now only
@@ -1258,7 +1280,7 @@ public partial class @this
     /// </summary>
     public virtual async System.Threading.Tasks.Task<bool> ToBooleanAsync()
     {
-        if (IsInitialized && Value is IBooleanResolvable resolvable)
+        if (IsInitialized && await Value() is IBooleanResolvable resolvable)
             return await resolvable.AsBooleanAsync();
         return ToBoolean();
     }
@@ -1483,10 +1505,14 @@ public partial class @this
 public class @this<T> : @this
     where T : global::app.type.item.@this
 {
-    public new T? Value
+    /// <summary>
+    /// Typed value door — the <see cref="@this.Value"/> door, narrowed to <typeparamref name="T"/>.
+    /// Hides the base method so <c>await dataT.Value()</c> yields <c>T?</c> directly.
+    /// </summary>
+    public new async ValueTask<T?> Value()
     {
-        get => base.Value is T typed ? typed : GetValue<T>();
-        set => base.Value = value;
+        var v = await base.Value();
+        return v is T typed ? typed : GetValue<T>();
     }
 
     public @this(string name = "", T? value = default, type? type = null, @this? parent = null)
@@ -1522,7 +1548,7 @@ public class @this<T> : @this
     public static @this<T> From(@this source)
     {
         if (source is @this<T> already) return already;
-        var copy = new @this<T>(source.Name, source.Value is T t ? t : default, source.Type)
+        var copy = new @this<T>(source.Name, source.Materialize() is T t ? t : default, source.Type)
         {
             Error = source.Error,
             Handled = source.Handled,
@@ -1560,6 +1586,8 @@ public class DynamicData : @this
         _valueFactory = valueFactory;
     }
 
-    public override object? Value => _valueFactory();
+    // Recompute on every access (no caching) — the door and the sync surfaces both
+    // dispatch through Materialize, so the recompute lives here, once.
+    internal override object? Materialize() => _valueFactory();
 }
 

@@ -67,16 +67,18 @@ public sealed record @this(
     {
         // TypeName comes from the type system — no quote/backslash escapes needed.
         var declaredType = TypeName.Replace("global::", "");
+        // Diagnostic snapshot reads the param's current rung (Peek — no resolve, no
+        // await) since there is no public sync .Value door; the value door is async.
         var prValueExpr = IsSensitive
-            ? "__pr?.Value != null ? \"******\" : null"
-            : "__pr?.Value";
+            ? "__pr?.Peek() != null ? \"******\" : null"
+            : "__pr?.Peek()";
         // Sensitive masking matches PrValue's null-guard pattern: a property accessed but
         // resolved to a null inner value reports null FinalValue, not '******'. Distinguishes
         // 'accessed-and-null' from 'accessed-and-redacted' for post-mortem analysis. {Backing}
-        // is Data<T>? — the wrapper can exist with .Value=null after a null-resolving As<T>;
+        // is Data<T>? — the wrapper can exist with a null inner value after a null-resolving As<T>;
         // we mask only when there's an actual resolved value to redact.
         var finalValueExpr = IsSensitive
-            ? $"{SetFlag} ? ({Backing}?.Value != null ? (object?)\"******\" : null) : null"
+            ? $"{SetFlag} ? ({Backing}?.Peek() != null ? (object?)\"******\" : null) : null"
             : $"{SetFlag} ? (object?){Backing} : null";
         sb.AppendLine($"        {{");
         sb.AppendLine($"            var __pr = __action?.Parameters?.FirstOrDefault(p => string.Equals(p.Name, \"{Name}\", System.StringComparison.OrdinalIgnoreCase));");
