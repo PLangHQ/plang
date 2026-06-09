@@ -45,13 +45,13 @@ public partial class discover : IContext
         var app = Context.App!;
         var empty = data.@this<global::app.type.list.@this<global::app.tester.test.@this>>.Ok(new global::app.type.list.@this<global::app.tester.test.@this>());
 
-        var root = Path.Value;
+        var root = await Path.Value();
         if (root == null) return empty;
 
         // List routes through AuthGate(Read). Out-of-root: prompt or denial.
-        var listed = await root.List(Pattern.Value!, Recursive.Value);
+        var listed = await root.List((await Pattern.Value())!, (await Recursive.Value())!);
         if (!listed.Success) return data.@this<global::app.type.list.@this<global::app.tester.test.@this>>.FromError(listed.Error!);
-        if (listed.Value == null) return empty;
+        if (await listed.Value() == null) return empty;
 
         var include = Context.App.Tester.Include;
         var exclude = Context.App.Tester.Exclude;
@@ -87,8 +87,8 @@ public partial class discover : IContext
                 StatusReason = "goal read error: " + (goalRead.Error?.Message ?? "")
             };
         }
-        var sourceGoal = goalRead.Value as Goal
-            ?? Goal.Parse(goalRead.Value as string ?? "", goalFile)
+        var sourceGoal = (await goalRead.Value()) as Goal
+            ?? Goal.Parse((await goalRead.Value()) as string ?? "", goalFile)
             ?? new Goal { Path = goalFile };
 
         // A goal whose source has a `tag this test 'skip'` step is PARKED: it registers
@@ -118,7 +118,7 @@ public partial class discover : IContext
         }
 
         var prExists = await prFile.ExistsAsync();
-        if (!prExists.Success || prExists.Value != true)
+        if (!prExists.Success || (await prExists.Value())?.Value != true)
         {
             return new global::app.tester.test.@this
             {
@@ -140,7 +140,7 @@ public partial class discover : IContext
                 StatusReason = prRead.Error?.Message ?? "pr corrupt"
             };
         }
-        var prGoal = prRead.Value as Goal;
+        var prGoal = (await prRead.Value()) as Goal;
         if (prGoal == null)
         {
             return new global::app.tester.test.@this
@@ -225,7 +225,7 @@ public partial class discover : IContext
             if (!string.Equals(action.ActionName, "tag", StringComparison.OrdinalIgnoreCase)) return;
             var tagsParam = action.Parameters.FirstOrDefault(p =>
                 string.Equals(p.Name, "Tags", StringComparison.OrdinalIgnoreCase));
-            if (tagsParam?.Value is app.type.list.@this nativeList)
+            if (tagsParam?.Materialize() is app.type.list.@this nativeList)
             {
                 // The Tags param is the native list value type — read each element's value.
                 foreach (var item in nativeList.Items)
@@ -234,7 +234,7 @@ public partial class discover : IContext
                     if (!string.IsNullOrWhiteSpace(s)) tags.Add(s);
                 }
             }
-            else if (tagsParam?.Value is System.Collections.IEnumerable enumerable and not string)
+            else if (tagsParam?.Materialize() is System.Collections.IEnumerable enumerable and not string)
             {
                 foreach (var item in enumerable)
                 {
@@ -242,7 +242,7 @@ public partial class discover : IContext
                     if (!string.IsNullOrWhiteSpace(s)) tags.Add(s);
                 }
             }
-            else if (tagsParam?.Value is string single && !string.IsNullOrWhiteSpace(single))
+            else if (tagsParam?.Materialize() is string single && !string.IsNullOrWhiteSpace(single))
             {
                 tags.Add(single);
             }
@@ -283,7 +283,7 @@ public partial class discover : IContext
     {
         var nameParam = action.Parameters.FirstOrDefault(p =>
             string.Equals(p.Name, "GoalName", StringComparison.OrdinalIgnoreCase));
-        var value = nameParam?.Value;
+        var value = nameParam?.Materialize();
         var name = value switch
         {
             GoalCall gc => gc.Name,

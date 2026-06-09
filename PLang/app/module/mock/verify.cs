@@ -12,11 +12,13 @@ public partial class Verify : IContext
 
     public Task<data.@this<global::app.type.@bool.@this>> Run()
     {
-        if (Mock.Value!.CallCount != ExpectedCount.Value)
+        var mock = (Mock.Materialize() as global::app.mock.@this)!;
+        var expected = ExpectedCount.Materialize() as global::app.type.number.@this;
+        if (mock.CallCount != expected)
         {
             return Task.FromResult(global::app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(
-                ExpectedCount.Value, Mock.Value!.CallCount,
-                Message?.Value ?? $"Expected {Mock.Value!.Pattern} to be called {ExpectedCount.Value} time(s), but was called {Mock.Value!.CallCount} time(s)")));
+                expected!, mock.CallCount,
+                (Message?.Materialize() as global::app.type.text.@this) ?? $"Expected {mock.Pattern} to be called {expected} time(s), but was called {mock.CallCount} time(s)")));
         }
 
         return Task.FromResult(global::app.data.@this<global::app.type.@bool.@this>.Ok(true));

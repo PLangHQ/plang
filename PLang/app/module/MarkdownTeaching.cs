@@ -35,7 +35,7 @@ public static class MarkdownTeaching
         if (modulesRoot == null) return Empty;
         var folder = modulesRoot.Combine(moduleName);
         var folderExists = await folder.ExistsAsync();
-        if (!folderExists.Success || folderExists.Value != true) return Empty;
+        if (!folderExists.Success || (await folderExists.Value())?.Value != true) return Empty;
 
         var notes          = await ReadOrNull(folder.Combine($"{actionName}.notes.md"));
         var examples       = await ReadParagraphs(folder.Combine($"{actionName}.examples.md"));
@@ -75,13 +75,13 @@ public static class MarkdownTeaching
         if (modulesRoot == null) return orphans;
 
         var rootExists = await modulesRoot.ExistsAsync();
-        if (!rootExists.Success || rootExists.Value != true) return orphans;
+        if (!rootExists.Success || (await rootExists.Value())?.Value != true) return orphans;
 
         // Recursive list of every file under modulesRoot. Keep only files whose
         // direct parent (the module folder) sits one level below modulesRoot —
         // the original loader's non-recursive per-module scan.
         var listResult = await modulesRoot.List("*", recursive: true);
-        if (!listResult.Success || listResult.Value == null) return orphans;
+        if (!listResult.Success || await listResult.Value() == null) return orphans;
 
         var rootAbs = modulesRoot.Absolute;
         var actionsByModule = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
@@ -133,7 +133,7 @@ public static class MarkdownTeaching
     {
         var result = await file.ReadText();
         if (!result.Success) return null;
-        var text = result.Value?.ToString();
+        var text = (await result.Value())?.ToString();
         return string.IsNullOrWhiteSpace(text) ? null : text.Trim();
     }
 
@@ -146,7 +146,7 @@ public static class MarkdownTeaching
         var result = new List<string>();
         var read = await file.ReadText();
         if (!read.Success) return result;
-        var text = read.Value?.ToString();
+        var text = (await read.Value())?.ToString();
         if (string.IsNullOrWhiteSpace(text)) return result;
         // Split on blank line (\n\n, with possible \r and surrounding whitespace).
         var parts = System.Text.RegularExpressions.Regex.Split(text!, @"\r?\n\s*\r?\n");

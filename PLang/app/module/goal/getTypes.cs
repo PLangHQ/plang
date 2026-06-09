@@ -35,7 +35,7 @@ public partial class getTypes : IContext
 
     public Task<data.@this<global::app.type.list.@this<global::app.type.dict.@this>>> Run()
     {
-        var goal = Goal.Value!;
+        var goal = (Goal.Materialize() as global::app.goal.@this)!;
         var modules = Context.App!.Module;
 
         var perStep = new List<Dictionary<string, string>>(goal.Steps.Count);
@@ -85,18 +85,18 @@ public partial class getTypes : IContext
             var nameParam = ParamByName(action, "Name");
             var valueParam = ParamByName(action, "Value");
             var typeParam = ParamByName(action, "Type");
-            if (nameParam?.Value is string rawName && !string.IsNullOrEmpty(rawName))
+            if (nameParam?.Materialize() is string rawName && !string.IsNullOrEmpty(rawName))
             {
                 string type;
                 // The Type slot wins — Build()'s stamp (file.read.Build() → {table,csv}) and the
                 // user (type) hint (`write to %x%(json)`). Born-native serializes the entity, so
                 // read its name from a type.@this / wire dict / bare string.
-                string? hinted = TypeNameOf(typeParam?.Value);
+                string? hinted = TypeNameOf(typeParam?.Materialize());
                 if (!string.IsNullOrEmpty(hinted))
                 {
                     type = hinted!;
                 }
-                else if (valueParam?.Value is string sval && string.Equals(sval, "%!data%", StringComparison.OrdinalIgnoreCase))
+                else if (valueParam?.Materialize() is string sval && string.Equals(sval, "%!data%", StringComparison.OrdinalIgnoreCase))
                 {
                     type = chainReturnType ?? "object";
                 }
@@ -118,10 +118,10 @@ public partial class getTypes : IContext
         {
             var collectionParam = ParamByName(action, "Collection");
             var itemNameParam = ParamByName(action, "ItemName");
-            if (itemNameParam?.Value is string rawItemName && !string.IsNullOrEmpty(rawItemName))
+            if (itemNameParam?.Materialize() is string rawItemName && !string.IsNullOrEmpty(rawItemName))
             {
                 var collectionType = "object";
-                if (collectionParam?.Value is string collRef && collRef.StartsWith("%"))
+                if (collectionParam?.Materialize() is string collRef && collRef.StartsWith("%"))
                 {
                     if (working.TryGetValue(Normalise(collRef), out var collKnown))
                         collectionType = collKnown;
@@ -160,7 +160,7 @@ public partial class getTypes : IContext
     {
         null => null,
         global::app.type.@this te => te.IsNull ? null : te.Name,
-        global::app.type.dict.@this nd => nd.Get("name")?.Value?.ToString(),
+        global::app.type.dict.@this nd => nd.Get("name")?.Materialize()?.ToString(),
         System.Collections.Generic.IDictionary<string, object?> d
             => d.TryGetValue("name", out var n) ? n?.ToString() : null,
         string s => string.IsNullOrEmpty(s) ? null : s,

@@ -181,7 +181,7 @@ public sealed class @this
         if (Llm != null && (Llm.System || Llm.User || Llm.Response || Llm.Schema))
         {
             var __llmR = _engine.Code.Get<global::app.module.llm.code.ILlm>();
-            if (__llmR.Value is global::app.module.llm.code.OpenAi oai)
+            if (__llmR.Materialize() is global::app.module.llm.code.OpenAi oai)
             {
                 var context = _engine.User.Context;
                 var toFile = string.Equals(Llm.Output, "file", StringComparison.OrdinalIgnoreCase);
@@ -280,7 +280,7 @@ public sealed class @this
         sb.AppendLine($"=== WATCH [{name}] CHANGED ===");
         sb.AppendLine($"  Goal: {goalName}[{stepIndex}] {stepText ?? "?"}");
         sb.AppendLine($"  Raw: {oldData.RawValue?.GetType().Name ?? "null"} → {newData.RawValue?.GetType().Name ?? "null"}");
-        sb.AppendLine($"  Value: {oldData.Value?.GetType().Name ?? "null"} → {newData.Value?.GetType().Name ?? "null"}");
+        sb.AppendLine($"  Value: {oldData.Materialize()?.GetType().Name ?? "null"} → {newData.Materialize()?.GetType().Name ?? "null"}");
         sb.AppendLine($"  HasCtx: {newData.Context != null}");
         for (int i = 0; i < Math.Min(5, stack.FrameCount); i++)
         {
@@ -301,7 +301,7 @@ public sealed class @this
         var goalName = context?.Goal?.Name ?? "?";
         var stepIndex = context?.Step?.Index.ToString() ?? "?";
 
-        _ = Write($"=== WATCH [{name}] {eventType} in {goalName}[{stepIndex}] type={data.Value?.GetType().Name ?? "null"} ==={Environment.NewLine}");
+        _ = Write($"=== WATCH [{name}] {eventType} in {goalName}[{stepIndex}] type={data.Materialize()?.GetType().Name ?? "null"} ==={Environment.NewLine}");
     }
 
     private static async Task<data.@this> BeforeStepHandler(actor.context.@this context, int? stepFilter)
@@ -321,7 +321,7 @@ public sealed class @this
             sb.AppendLine($"  Action: {action.Module}.{action.ActionName}");
             foreach (var p in action.Parameters)
             {
-                sb.AppendLine($"    {p.Name} = {FormatValue(p.Value, context)}");
+                sb.AppendLine($"    {p.Name} = {FormatValue(p.Materialize(), context)}");
             }
 
         }
@@ -435,18 +435,18 @@ public sealed class @this
 
         var goalData = context.Variable.Get("goal");
         var goalName = "unknown";
-        if (goalData != null && goalData.Value != null)
+        if (goalData != null && goalData.Materialize() != null)
         {
-            var nameProp = goalData.Value.GetType().GetProperty("Name");
+            var nameProp = goalData.Materialize()!.GetType().GetProperty("Name");
             if (nameProp != null)
                 goalName = nameProp.GetValue(goalData.Value)?.ToString() ?? "unknown";
         }
 
         var stepData = context.Variable.Get("step");
         var stepKey = "goal";
-        if (stepData != null && stepData.IsInitialized && stepData.Value != null)
+        if (stepData != null && stepData.IsInitialized && stepData.Materialize() != null)
         {
-            var idxProp = stepData.Value.GetType().GetProperty("Index");
+            var idxProp = stepData.Materialize()!.GetType().GetProperty("Index");
             if (idxProp != null)
             {
                 var idx = idxProp.GetValue(stepData.Value);
@@ -463,12 +463,12 @@ public sealed class @this
 
         // First call to a given (goal, step) gets a clean name; subsequent retries get _N.
         var basePath = traceDir.Combine($"{safeGoal}_{stepKey}.txt");
-        if (basePath.ExistsAsync().GetAwaiter().GetResult() is { Success: true, Value.Value: false }) return basePath;
+        { var __e = basePath.ExistsAsync().GetAwaiter().GetResult(); if (__e.Success && (__e.Materialize() as global::app.type.@bool.@this)?.Value == false) return basePath; }
 
         for (int n = 2; n < 100; n++)
         {
             var candidate = traceDir.Combine($"{safeGoal}_{stepKey}_{n}.txt");
-            if (candidate.ExistsAsync().GetAwaiter().GetResult() is { Success: true, Value.Value: false }) return candidate;
+            { var __e = candidate.ExistsAsync().GetAwaiter().GetResult(); if (__e.Success && (__e.Materialize() as global::app.type.@bool.@this)?.Value == false) return candidate; }
         }
         // Fallback if 100 retries somehow aren't enough — counter guarantees uniqueness.
         return traceDir.Combine($"{safeGoal}_{stepKey}_call{_llmCallCounter}.txt");
@@ -577,7 +577,7 @@ public sealed class @this
         {
             foreach (var p in action.Parameters)
             {
-                if (p.Value is string s)
+                if (p.Materialize() is string s)
                 {
                     foreach (Match m in VarRefPattern.Matches(s))
                         varNames.Add(m.Groups[1].Value);

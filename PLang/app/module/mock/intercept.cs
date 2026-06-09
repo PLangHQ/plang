@@ -19,12 +19,12 @@ public partial class intercept : IContext
         var handle = new global::app.mock.@this
         {
             Id = Guid.NewGuid().ToString("N")[..8],
-            Pattern = Pattern.Value!,
-            IsSpy = Return?.Value == null && Call?.Value == null
+            Pattern = (Pattern.Materialize() as global::app.type.text.@this)!,
+            IsSpy = Return?.Materialize() == null && Call?.Materialize() == null
         };
 
-        var returnValue = Return?.Value;
-        var goalToCall = Call?.Value;
+        var returnValue = Return?.Materialize();
+        var goalToCall = Call?.Materialize() as global::app.goal.GoalCall;
         var paramMatchers = Parameters?.GetValue<Dictionary<string, object?>>();
 
         Func<actor.context.@this, app.goal.steps.step.actions.action.@this?, data.@this?, Task<data.@this>> handler = async (context, _, _) =>
@@ -61,7 +61,7 @@ public partial class intercept : IContext
         var binding = new EventBinding(
             Trigger.BeforeAction,
             handler,
-            actionPattern: Pattern.Value!);
+            actionPattern: (Pattern.Materialize() as global::app.type.text.@this)!);
 
         handle.EventBindingId = binding.Id;
 
@@ -119,10 +119,10 @@ public partial class intercept : IContext
 
     private static object? ResolveParamValue(data.@this param, global::app.variable.list.@this variables)
     {
-        if (param.Value is string s && s.Contains('%'))
+        if (param.Materialize() is string s && s.Contains('%'))
             return variables.Resolve(s);
 
-        return param.Value;
+        return param.Materialize();
     }
 
     /// <summary>
