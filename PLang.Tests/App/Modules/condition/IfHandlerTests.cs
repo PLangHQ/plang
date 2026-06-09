@@ -33,7 +33,7 @@ public class IfHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo(true);
+        await Assert.That((await result.Value())).IsEqualTo(true);
     }
 
     [Test]
@@ -43,7 +43,7 @@ public class IfHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo(false);
+        await Assert.That((await result.Value())).IsEqualTo(false);
     }
 
     [Test]
@@ -53,7 +53,7 @@ public class IfHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo(true);
+        await Assert.That((await result.Value())).IsEqualTo(true);
     }
 
     [Test]
@@ -249,7 +249,7 @@ public class IfHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo(true);
+        await Assert.That((await result.Value())).IsEqualTo(true);
     }
 
     [Test]
@@ -259,7 +259,7 @@ public class IfHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo(false);
+        await Assert.That((await result.Value())).IsEqualTo(false);
     }
 
     [Test]
@@ -269,8 +269,8 @@ public class IfHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value is bool).IsTrue();
-        await Assert.That((bool)result.Value!).IsTrue();
+        await Assert.That((await result.Value()) is bool).IsTrue();
+        await Assert.That((bool)(await result.Value())!).IsTrue();
     }
 
     [Test]
@@ -280,8 +280,8 @@ public class IfHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value is bool).IsTrue();
-        await Assert.That((bool)result.Value!).IsFalse();
+        await Assert.That((await result.Value()) is bool).IsTrue();
+        await Assert.That((bool)(await result.Value())!).IsFalse();
     }
 
     [Test]
@@ -291,7 +291,7 @@ public class IfHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo(false);
+        await Assert.That((await result.Value())).IsEqualTo(false);
     }
 
     [Test]
@@ -301,7 +301,7 @@ public class IfHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo(true);
+        await Assert.That((await result.Value())).IsEqualTo(true);
     }
 
     // --- Data.ToBoolean tests ---
@@ -328,7 +328,7 @@ public class IfHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo(true);
+        await Assert.That((await result.Value())).IsEqualTo(true);
     }
 
     [Test]
@@ -339,7 +339,7 @@ public class IfHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo(false);
+        await Assert.That((await result.Value())).IsEqualTo(false);
     }
 
     [Test]

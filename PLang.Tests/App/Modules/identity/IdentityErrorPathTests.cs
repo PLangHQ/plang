@@ -295,7 +295,7 @@ public class IdentityErrorPathTests
         var result = await new global::app.module.identity.Get { Context = Ctx, Name = (global::app.type.text.@this)"weird" }.Run();
         // Identity deserializes but has empty PublicKey — valid but useless
         await result.IsSuccess();
-        var identity = result.Value as Identity;
+        var identity = (await result.Value()) as Identity;
         await Assert.That(identity!.PublicKey).IsEqualTo("");
     }
 

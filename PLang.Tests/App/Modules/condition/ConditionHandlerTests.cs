@@ -35,7 +35,7 @@ public class ConditionHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo(true);
+        await Assert.That((await result.Value())).IsEqualTo(true);
     }
 
     [Test]
@@ -45,7 +45,7 @@ public class ConditionHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo(false);
+        await Assert.That((await result.Value())).IsEqualTo(false);
     }
 
     // --- Orchestration tests: condition + actions in same step ---

@@ -29,10 +29,10 @@ public class MockTests
 
         var result = await action.Run();
         await result.IsSuccess();
-        await Assert.That(result.Value).IsNotNull();
-        await Assert.That(result.Value is global::app.mock.@this).IsTrue();
+        await Assert.That((await result.Value())).IsNotNull();
+        await Assert.That((await result.Value()) is global::app.mock.@this).IsTrue();
 
-        var handle = (global::app.mock.@this)result.Value!;
+        var handle = (global::app.mock.@this)(await result.Value())!;
         await Assert.That(handle.Pattern).IsEqualTo("file.read");
         await Assert.That(handle.CallCount).IsEqualTo(0);
         await Assert.That(handle.IsSpy).IsFalse();
@@ -51,7 +51,7 @@ public class MockTests
         var result = await action.Run();
         await result.IsSuccess();
 
-        var handle = (global::app.mock.@this)result.Value!;
+        var handle = (global::app.mock.@this)(await result.Value())!;
         await Assert.That(handle.IsSpy).IsTrue();
     }
 
@@ -83,7 +83,7 @@ public class MockTests
             Return = new global::app.data.@this("", "mocked")        };
 
         var result = await action.Run();
-        var handle = (global::app.mock.@this)result.Value!;
+        var handle = (global::app.mock.@this)(await result.Value())!;
 
         await Assert.That(handle.EventBindingId).IsNotNull();
         await Assert.That(handle.EventBindingId.Length).IsGreaterThan(0);
@@ -176,7 +176,7 @@ public class MockTests
             Pattern = (global::app.type.text.@this)"file.read",
             Return = new global::app.data.@this("", "mocked")        };
         var mockResult = await mockAction.Run();
-        var handle = (global::app.mock.@this)mockResult.Value!;
+        var handle = (global::app.mock.@this)(await mockResult.Value())!;
 
         var countBefore = context.Events.Count;
 

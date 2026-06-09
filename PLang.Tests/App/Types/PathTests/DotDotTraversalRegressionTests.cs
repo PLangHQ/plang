@@ -109,7 +109,7 @@ public class DotDotTraversalRegressionTests
             // secret file's bytes.
             var result = await p.ReadText();
             await result.IsFailure();
-            await Assert.That(result.Value?.ToString() ?? "").IsNotEqualTo(secretContent);
+            await Assert.That((await result.Value())?.ToString() ?? "").IsNotEqualTo(secretContent);
         }
         finally
         {

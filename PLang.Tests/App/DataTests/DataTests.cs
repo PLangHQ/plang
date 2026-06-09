@@ -121,7 +121,7 @@ public class DataTests
     {
         var ov = new Data("test");
 
-        ov.Value = "new value";
+        ov.SetValue("new value");
 
         await Assert.That(ov.Value).IsEqualTo("new value");
         await Assert.That(ov.IsInitialized).IsTrue();
@@ -134,7 +134,7 @@ public class DataTests
         var initialUpdated = ov.Updated;
         await Task.Delay(1);
 
-        ov.Value = "new value";
+        ov.SetValue("new value");
 
         await Assert.That(ov.Updated).IsGreaterThan(initialUpdated);
     }
@@ -144,7 +144,7 @@ public class DataTests
     {
         var ov = new Data("test");
 
-        ov.Value = 42;
+        ov.SetValue(42);
 
         await Assert.That(ov.Type).IsNotNull();
         await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(int));
@@ -310,7 +310,7 @@ public class DataTests
         var valueChild = ov.GetChild("Value");
 
         await Assert.That(nameChild!.Value).IsEqualTo("Test");
-        await Assert.That(valueChild!.Value).IsEqualTo(42);
+        await Assert.That((await valueChild!.Value())).IsEqualTo(42);
     }
 
     [Test]
@@ -494,7 +494,7 @@ public class DataTests
 
         await Assert.That(ov.Type!.Name).IsEqualTo("text");
 
-        ov.Value = 42;
+        ov.SetValue(42);
 
         await Assert.That(ov.Type!.Name).IsEqualTo("number");
         await Assert.That(ov.Type!.ClrType).IsEqualTo(typeof(int));
@@ -668,7 +668,7 @@ public class DataTests
         await Assert.That(wrapped.Type!.Name).IsEqualTo("image");
         await Assert.That(wrapped.Value).IsTypeOf<Data>();
         await Assert.That(wrapped.Context).IsEqualTo(context);
-        var inner = (Data)wrapped.Value!;
+        var inner = (Data)(await wrapped.Value())!;
         await Assert.That(inner.Type!.Name).IsEqualTo("image/jpeg");
     }
 
@@ -798,8 +798,8 @@ public class DataTests
         await decompressed.IsSuccess();
         await Assert.That(decompressed.Type!.Name).IsEqualTo("text");
         await Assert.That(decompressed.Value).IsTypeOf<Data>();
-        var decompressedInner = (Data)decompressed.Value!;
-        await Assert.That(decompressedInner.Value?.ToString()).IsEqualTo("Hello world");
+        var decompressedInner = (Data)(await decompressed.Value())!;
+        await Assert.That((await decompressedInner.Value())?.ToString()).IsEqualTo("Hello world");
     }
 
     [Test]
@@ -832,7 +832,7 @@ public class DataTests
 
         // Unwrap to get back to the content
         var unwrapped = decompressed.Unwrap();
-        await Assert.That(unwrapped.Value?.ToString()).IsEqualTo("The quick brown fox jumps over the lazy dog");
+        await Assert.That((await unwrapped.Value())?.ToString()).IsEqualTo("The quick brown fox jumps over the lazy dog");
     }
 
     [Test]
@@ -899,7 +899,7 @@ public class DataTests
         var inbound = outbound.Decrypt().Decompress().Unwrap();
 
         await inbound.IsSuccess();
-        await Assert.That(inbound.Value?.ToString()).IsEqualTo("Report content here");
+        await Assert.That((await inbound.Value())?.ToString()).IsEqualTo("Report content here");
     }
 
     // --- Phase 4 fixes: error paths + edge cases ---
@@ -997,12 +997,12 @@ public class DataTests
         await Assert.That(decompressed.Type!.Name).IsEqualTo("document");
         await Assert.That(decompressed.Value).IsTypeOf<Data>();
 
-        var midResult = (Data)decompressed.Value!;
+        var midResult = (Data)(await decompressed.Value())!;
         await Assert.That(midResult.Type!.Name).IsEqualTo("text");
         await Assert.That(midResult.Value).IsTypeOf<Data>();
 
-        var leafResult = (Data)midResult.Value!;
-        await Assert.That(leafResult.Value?.ToString()).IsEqualTo("deep content");
+        var leafResult = (Data)(await midResult.Value())!;
+        await Assert.That((await leafResult.Value())?.ToString()).IsEqualTo("deep content");
     }
 
     [Test]
@@ -1058,7 +1058,7 @@ public class DataTests
         await Assert.That(result).IsNotNull();
         // Born-native: a JSON number is a number.@this wrapper; its backing
         // (via ToRaw) is double for a bare decimal-point literal.
-        var price = result!.Get("price")!.Value;
+        var price = await result!.Get("price")!.Value();
         await Assert.That(price).IsTypeOf<app.type.number.@this>();
         await Assert.That(((app.type.number.@this)price!).ToRaw()).IsEqualTo(19.99d);
     }
@@ -1072,7 +1072,7 @@ public class DataTests
 
         await Assert.That(result).IsNotNull();
         // Born-native: a whole JSON number is a number.@this wrapper backed by long.
-        var count = result!.Get("count")!.Value;
+        var count = await result!.Get("count")!.Value();
         await Assert.That(count).IsTypeOf<app.type.number.@this>();
         await Assert.That(((app.type.number.@this)count!).ToRaw()).IsEqualTo(42L);
     }
@@ -1200,24 +1200,24 @@ public class DataTests
         var list1 = new List<Data> { new Data("x", 1), new Data("y", 2) };
         var list2 = new List<Data> { new Data("y", 99), new Data("z", 3) };
 
-        var a = new Data("") { Value = list1 };
-        var b = new Data("") { Value = list2 };
+        var a = new Data("", list1);
+        var b = new Data("", list2);
 
         var result = a.Merge(b);
-        var merged = result.Value as List<Data>;
+        var merged = (await result.Value()) as List<Data>;
 
         await Assert.That(merged).IsNotNull();
         await Assert.That(merged!.Count).IsEqualTo(3); // x, y (replaced), z
-        await Assert.That(merged[0].Value).IsEqualTo(1); // x unchanged
-        await Assert.That(merged[1].Value).IsEqualTo(99); // y replaced
-        await Assert.That(merged[2].Value).IsEqualTo(3); // z appended
+        await Assert.That((await merged[0].Value())).IsEqualTo(1); // x unchanged
+        await Assert.That((await merged[1].Value())).IsEqualTo(99); // y replaced
+        await Assert.That((await merged[2].Value())).IsEqualTo(3); // z appended
     }
 
     [Test]
     public async Task Merge_NullOtherValue_ReturnsSelf()
     {
         var list = new List<Data> { new Data("x", 1) };
-        var a = new Data("") { Value = list };
+        var a = new Data("", list);
         var b = new Data("", null);
 
         var result = a.Merge(b);
@@ -1233,7 +1233,7 @@ public class DataTests
         var b = new Data("", "also not a list");
 
         var result = a.Merge(b);
-        var merged = result.Value as List<Data>;
+        var merged = (await result.Value()) as List<Data>;
 
         // Both cast as List<Data> produce empty lists — result is empty
         await Assert.That(merged).IsNotNull();
@@ -1258,7 +1258,7 @@ public class DynamicDataTests
         var counter = 0;
         var dov = new DynamicData("counter", () => ++counter);
 
-        var value1 = dov.Value;
+        var value1 = await dov.Value();
         var value2 = dov.Value;
         var value3 = dov.Value;
 
@@ -1283,7 +1283,7 @@ public class DynamicDataTests
         var now = DateTime.UtcNow;
         var dov = new DynamicData("now", () => now);
 
-        await Assert.That(dov.Value).IsEqualTo(now);
+        await Assert.That((await dov.Value())).IsEqualTo(now);
     }
 
     // --- IsVariable tests ---

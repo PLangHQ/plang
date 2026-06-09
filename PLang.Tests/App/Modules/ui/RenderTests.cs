@@ -47,7 +47,7 @@ public class RenderTests : IDisposable
         var result = await _provider.Render(action);
 
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello World");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello World");
     }
 
     [Test]
@@ -61,7 +61,7 @@ public class RenderTests : IDisposable
         var result = await _provider.Render(action);
 
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello PLang!");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello PLang!");
     }
 
     [Test]
@@ -100,7 +100,7 @@ public class RenderTests : IDisposable
         var result = await _provider.Render(action);
 
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("");
     }
 
     [Test]
@@ -128,7 +128,7 @@ public class RenderTests : IDisposable
         var result = await _provider.Render(action);
 
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello World");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello World");
     }
 
     [Test]
@@ -148,7 +148,7 @@ public class RenderTests : IDisposable
         var result = await _provider.Render(action);
 
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello ParamValue");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello ParamValue");
     }
 
     [Test]
@@ -167,7 +167,7 @@ public class RenderTests : IDisposable
         var result = await _provider.Render(action);
 
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("Title: My Page");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("Title: My Page");
     }
 
     [Test]
@@ -187,7 +187,7 @@ public class RenderTests : IDisposable
 
         await result.IsSuccess();
         // !hidden should not be accessible as "hidden" in the template
-        await Assert.That(result.Value?.ToString()).IsEqualTo("visible=yes hidden=");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("visible=yes hidden=");
     }
 
     // --- Batch 3: Custom Tags & Partials ---
@@ -222,7 +222,7 @@ public class RenderTests : IDisposable
         await result.IsSuccess();
         // The goal sets a variable — its last step result is Data.Ok with the set value
         // callGoal writes Data.Value?.ToString() to output
-        var output = result.Value?.ToString() ?? "";
+        var output = (await result.Value())?.ToString() ?? "";
         await Assert.That(output).DoesNotContain("[Error:");
     }
 
@@ -242,7 +242,7 @@ public class RenderTests : IDisposable
         // Goal not found: either inline error text or Data error
         if (result.Success)
         {
-            var output = result.Value?.ToString() ?? "";
+            var output = (await result.Value())?.ToString() ?? "";
             await Assert.That(output).Contains("[Error:");
         }
         else
@@ -266,7 +266,7 @@ public class RenderTests : IDisposable
         var result = await _provider.Render(action);
 
         await result.IsSuccess();
-        var output = result.Value?.ToString() ?? "";
+        var output = (await result.Value())?.ToString() ?? "";
         await Assert.That(output).Contains("I am a partial");
     }
 
@@ -286,7 +286,7 @@ public class RenderTests : IDisposable
         var result = await _provider.Render(action);
 
         await result.IsSuccess();
-        var output = result.Value?.ToString() ?? "";
+        var output = (await result.Value())?.ToString() ?? "";
         await Assert.That(output).Contains("Hello World");
     }
 
@@ -302,7 +302,7 @@ public class RenderTests : IDisposable
         var result = await customProvider.Render(action);
 
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("stub-rendered");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("stub-rendered");
     }
 
     [Test]
@@ -318,7 +318,7 @@ public class RenderTests : IDisposable
         var result = await _provider.Render(action);
 
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("Page content");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("Page content");
     }
 
     [Test]
@@ -331,7 +331,7 @@ public class RenderTests : IDisposable
         var result = await _provider.Render(action);
 
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("Absolute content");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("Absolute content");
     }
 
     // --- Batch 5: Complex Data Types in Templates ---
@@ -352,7 +352,7 @@ public class RenderTests : IDisposable
         var result = await _provider.Render(action);
 
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("Alice is 30");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("Alice is 30");
     }
 
     [Test]
@@ -370,7 +370,7 @@ public class RenderTests : IDisposable
         var result = await _provider.Render(action);
 
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("abc");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("abc");
     }
 
     [Test]
@@ -388,7 +388,7 @@ public class RenderTests : IDisposable
         var result = await _provider.Render(action);
 
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello !");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello !");
     }
 
     [Test]
@@ -405,7 +405,7 @@ public class RenderTests : IDisposable
         var result = await _provider.Render(action);
 
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello !");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello !");
     }
 
     [Test]
@@ -425,7 +425,7 @@ public class RenderTests : IDisposable
         var result = await _provider.Render(action);
 
         await result.IsSuccess();
-        var output = result.Value?.ToString() ?? "";
+        var output = (await result.Value())?.ToString() ?? "";
         // Should see inner object properties, not Data.Name/Data.Value/Data.Error etc.
         await Assert.That(output).IsEqualTo("Alice is 30");
     }
@@ -446,7 +446,7 @@ public class RenderTests : IDisposable
 
         // Should not throw — renders empty for null navigation
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello !");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello !");
     }
 
     // --- Batch 6: callGoal Edge Cases ---
@@ -469,7 +469,7 @@ public class RenderTests : IDisposable
         var result = await _provider.Render(action);
 
         await result.IsSuccess();
-        var output = result.Value?.ToString() ?? "";
+        var output = (await result.Value())?.ToString() ?? "";
         // Empty goal produces no output — "BeforeAfter"
         await Assert.That(output).DoesNotContain("[Error:");
     }
@@ -493,7 +493,7 @@ public class RenderTests : IDisposable
         var result = await _provider.Render(action);
 
         await result.IsSuccess();
-        var output = result.Value?.ToString() ?? "";
+        var output = (await result.Value())?.ToString() ?? "";
         await Assert.That(output).DoesNotContain("[Error:");
     }
 
@@ -528,7 +528,7 @@ public class RenderTests : IDisposable
         var result = await _provider.Render(action);
 
         await result.IsSuccess();
-        var output = result.Value?.ToString() ?? "";
+        var output = (await result.Value())?.ToString() ?? "";
         await Assert.That(output).DoesNotContain("[Error:");
         await Assert.That(output).Contains("42");
     }
@@ -570,7 +570,7 @@ public class RenderTests : IDisposable
         var result = await _provider.Render(action);
 
         await result.IsSuccess();
-        var output = result.Value?.ToString() ?? "";
+        var output = (await result.Value())?.ToString() ?? "";
         await Assert.That(output).Contains("A");
         await Assert.That(output).Contains("B");
     }
@@ -592,7 +592,7 @@ public class RenderTests : IDisposable
         var result = await _provider.Render(action);
 
         await result.IsSuccess();
-        var output = result.Value?.ToString() ?? "";
+        var output = (await result.Value())?.ToString() ?? "";
         // PLang templates output raw content — no HTML escaping
         await Assert.That(output).Contains("<script>");
     }
@@ -615,7 +615,7 @@ public class RenderTests : IDisposable
         var result = await _provider.Render(action);
 
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello World!");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello World!");
     }
 
     [Test]
@@ -635,7 +635,7 @@ public class RenderTests : IDisposable
         var result = await _provider.Render(action);
 
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("Auto-detected Hi");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("Auto-detected Hi");
     }
 
     [Test]
@@ -652,7 +652,7 @@ public class RenderTests : IDisposable
         var result = await _provider.Render(action);
 
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("just plain text with no extension");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("just plain text with no extension");
     }
 
     // --- Batch 10: Goal-relative include resolution (GetTemplateBaseDir coverage) ---
@@ -681,7 +681,7 @@ public class RenderTests : IDisposable
         var result = await _provider.Render(action);
 
         await result.IsSuccess();
-        var output = result.Value?.ToString() ?? "";
+        var output = (await result.Value())?.ToString() ?? "";
         await Assert.That(output).Contains("Footer content");
     }
 

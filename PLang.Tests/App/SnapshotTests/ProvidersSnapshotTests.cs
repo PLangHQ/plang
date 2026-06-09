@@ -73,7 +73,7 @@ public class ProvidersSnapshotTests
 
         var defaultGrep = dst.Code.Get<global::app.data.code.IGrep>();
         await defaultGrep.IsSuccess();
-        await Assert.That(((global::app.module.code.ICode)defaultGrep.Value!).Name).IsEqualTo("custom");
+        await Assert.That(((global::app.module.code.ICode)(await defaultGrep.Value())!).Name).IsEqualTo("custom");
     }
 
     [Test]

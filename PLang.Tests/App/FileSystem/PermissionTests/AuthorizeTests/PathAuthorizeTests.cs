@@ -138,9 +138,9 @@ public class PathAuthorizeTests
         await path.Authorize(verb);
         var grant = await app.User.Permission.Find(path, verb);
         await Assert.That(grant).IsNotNull();
-        await Assert.That(grant!.Value!.Actor).IsEqualTo(app.User.Name);
-        await Assert.That(grant.Value.Path).IsEqualTo("/apps/Email/file.txt");
-        await Assert.That(grant.Value.Match).IsEqualTo(MatchMode.Exact);
+        await Assert.That((await grant!.Value())!.Actor).IsEqualTo(app.User.Name);
+        await Assert.That((await grant.Value()).Path).IsEqualTo("/apps/Email/file.txt");
+        await Assert.That((await grant.Value()).Match).IsEqualTo(MatchMode.Exact);
     }
 
     [Test] public async Task PermissionDenied_Error_CarriesConstructedPermission()

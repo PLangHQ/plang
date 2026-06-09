@@ -59,8 +59,8 @@ public class HashTypeTests
         await Assert.That(result.Type!.Kind).IsEqualTo("sha256");
         // The value is a hash, not bare bytes — so the live serializer renders
         // it and the builder annotates the write-to variable as `(hash)`.
-        await Assert.That(result.Value is hash).IsTrue();
-        await Assert.That(((hash)result.Value!).Algorithm).IsEqualTo("sha256");
+        await Assert.That((await result.Value()) is hash).IsTrue();
+        await Assert.That(((hash)(await result.Value())!).Algorithm).IsEqualTo("sha256");
     }
 
     [Test] public async Task CryptoVerify_DefaultsAlgorithmFromHashValue()
@@ -80,8 +80,8 @@ public class HashTypeTests
             Algorithm = new global::app.data.@this<global::app.type.text.@this>("Algorithm", "sha256"),
         });
         await digest.IsSuccess();
-        await Assert.That(digest.Value is hash).IsTrue();
-        await Assert.That(((hash)digest.Value!).Algorithm).IsEqualTo("sha256");
+        await Assert.That((await digest.Value()) is hash).IsTrue();
+        await Assert.That(((hash)(await digest.Value())!).Algorithm).IsEqualTo("sha256");
 
         var verify = new global::app.module.crypto.Verify
         {
@@ -91,6 +91,6 @@ public class HashTypeTests
         };
         var result = await verify.Run();
         await result.IsSuccess();
-        await Assert.That((bool)result.Value!).IsTrue();
+        await Assert.That((bool)(await result.Value())!).IsTrue();
     }
 }

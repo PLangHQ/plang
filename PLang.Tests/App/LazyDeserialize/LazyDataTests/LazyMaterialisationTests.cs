@@ -21,14 +21,14 @@ public class LazyMaterialisationTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         var d = data.FromRaw("5", type.Create("number", "int", context: ctx), ctx, "n");
-        await Assert.That(d.Value).IsEqualTo((object)5);
+        await Assert.That((await d.Value())).IsEqualTo((object)5);
         await Assert.That(d.MaterializeCount).IsEqualTo(1);
     }
 
     [Test] public async Task Value_ReturnsValueDirectly_WhenValueSet_AndRawNull()
     {
         var d = data.Ok(5);
-        await Assert.That(d.Value).IsEqualTo((object)5);
+        await Assert.That((await d.Value())).IsEqualTo((object)5);
         await Assert.That(d.MaterializeCount).IsEqualTo(0);
     }
 
@@ -36,7 +36,7 @@ public class LazyMaterialisationTests
     [Test] public async Task Value_AuthoredPath_NeverInvokesReader()
     {
         var d = data.Ok("plain string");
-        _ = d.Value; _ = d.Value;
+        _ = (await d.Value()); _ = (await d.Value());
         await Assert.That(d.MaterializeCount).IsEqualTo(0);
     }
 
@@ -45,7 +45,7 @@ public class LazyMaterialisationTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         var d = data.FromRaw("5", type.Create("number", "int", context: ctx), ctx, "n");
-        _ = d.Value;               // materialize
+        _ = (await d.Value());               // materialize
         await Assert.That(d.HasRaw).IsTrue();   // _raw survives
         await Assert.That(d.Raw).IsEqualTo((object)"5");
     }
@@ -62,7 +62,7 @@ public class LazyMaterialisationTests
         var d = data.FromRaw("{\"port\":8080}", type.Create("object", "json", context: ctx), ctx, "cfg");
         d.ForceMaterialize();      // the navigation seam (was ConvertValue)
         await Assert.That(d.Value).IsTypeOf<app.type.dict.@this>();
-        var dict = (app.type.dict.@this)d.Value!;
+        var dict = (app.type.dict.@this)(await d.Value())!;
         await Assert.That(dict.Has("port")).IsTrue();
     }
 
@@ -70,8 +70,8 @@ public class LazyMaterialisationTests
     [Test] public async Task VarReference_InAuthoredValue_StillResolvesFreshPerRead()
     {
         var d = data.Ok("%x%");
-        await Assert.That(d.Value).IsEqualTo((object)"%x%");
-        await Assert.That(d.Value).IsEqualTo((object)"%x%");
+        await Assert.That((await d.Value())).IsEqualTo((object)"%x%");
+        await Assert.That((await d.Value())).IsEqualTo((object)"%x%");
         await Assert.That(d.MaterializeCount).IsEqualTo(0);
     }
 }

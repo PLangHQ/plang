@@ -56,7 +56,7 @@ public class Stage0_DataMaterializationTests
         var aValue = src.GetChild("a");
 
         await Assert.That(aValue.IsInitialized).IsTrue();
-        await Assert.That(aValue.Value?.ToString()).IsEqualTo("1");
+        await Assert.That((await aValue.Value())?.ToString()).IsEqualTo("1");
     }
 
     // ConvertValue rewrites _value once; second navigation reuses the already-

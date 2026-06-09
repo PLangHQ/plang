@@ -88,8 +88,8 @@ public class GoalCallResolutionTests
         var result = await call.GetGoalAsync(_app, _app.User.Context);
 
         await result.IsSuccess();
-        await Assert.That(result.Value is PLangGoal).IsTrue();
-        await Assert.That(((PLangGoal)result.Value!).Name).IsEqualTo("Start");
+        await Assert.That((await result.Value()) is PLangGoal).IsTrue();
+        await Assert.That(((PLangGoal)(await result.Value())!).Name).IsEqualTo("Start");
     }
 
     // --- slash name resolved via root-relative (no matching ancestor) -
@@ -107,8 +107,8 @@ public class GoalCallResolutionTests
         var result = await call.GetGoalAsync(_app, _app.User.Context);
 
         await result.IsSuccess();
-        await Assert.That(result.Value is PLangGoal).IsTrue();
-        await Assert.That(((PLangGoal)result.Value!).Name).IsEqualTo("Start");
+        await Assert.That((await result.Value()) is PLangGoal).IsTrue();
+        await Assert.That(((PLangGoal)(await result.Value())!).Name).IsEqualTo("Start");
     }
 
     // --- bare name unchanged from prior behaviour (regression guard) --
@@ -124,8 +124,8 @@ public class GoalCallResolutionTests
         var result = await call.GetGoalAsync(_app, _app.User.Context);
 
         await result.IsSuccess();
-        await Assert.That(result.Value is PLangGoal).IsTrue();
-        await Assert.That(((PLangGoal)result.Value!).Name).IsEqualTo("Other");
+        await Assert.That((await result.Value()) is PLangGoal).IsTrue();
+        await Assert.That(((PLangGoal)(await result.Value())!).Name).IsEqualTo("Other");
     }
 
     // --- LoadFromFile leaf-matches a slash-qualified Name -------------
@@ -150,7 +150,7 @@ public class GoalCallResolutionTests
         var result = await call.GetGoalAsync(_app, _app.User.Context);
 
         await result.IsSuccess();
-        await Assert.That(result.Value is PLangGoal).IsTrue();
-        await Assert.That(((PLangGoal)result.Value!).Name).IsEqualTo("Start");
+        await Assert.That((await result.Value()) is PLangGoal).IsTrue();
+        await Assert.That(((PLangGoal)(await result.Value())!).Name).IsEqualTo("Start");
     }
 }

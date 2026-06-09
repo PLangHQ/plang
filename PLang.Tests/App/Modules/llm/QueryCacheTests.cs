@@ -168,7 +168,7 @@ public class QueryCacheTests
 
         // Verify the cached result value matches original
         await result2.IsSuccess();
-        await Assert.That(result2.Value?.ToString()).IsEqualTo("preserved");
+        await Assert.That((await result2.Value())?.ToString()).IsEqualTo("preserved");
         // Verify metadata was restored from cache
         await Assert.That(result2.Properties["Cached"]).IsEqualTo(true);
         await Assert.That(result2.Properties["RawResponse"]?.ToString()).IsEqualTo("preserved");

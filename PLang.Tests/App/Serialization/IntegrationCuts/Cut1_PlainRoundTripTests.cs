@@ -22,9 +22,9 @@ public class Cut1_PlainRoundTripTests
             app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var data = new global::app.data.@this(name, value) { Context = app.User.Context };
-        var wire = plang.Serialize(data).Value!;
+        var wire = (await plang.Serialize(data).Value())!;
         var back = plang.Deserialize(wire);
-        return (wire, (global::app.data.@this)back.Value!, app);
+        return (wire, (global::app.data.@this)(await back.Value())!, app);
     }
 
     [Test] public async Task Cut1_WireJson_HasFourTopLevelFields_NameTypeValueSignature()
@@ -54,7 +54,7 @@ public class Cut1_PlainRoundTripTests
         await using (app)
         {
             await Assert.That(back.Name).IsEqualTo("greeting");
-            await Assert.That(back.Value?.ToString()).IsEqualTo("hello");
+            await Assert.That((await back.Value())?.ToString()).IsEqualTo("hello");
         }
     }
 

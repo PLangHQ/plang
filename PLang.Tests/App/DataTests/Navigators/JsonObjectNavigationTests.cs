@@ -14,7 +14,7 @@ public class JsonObjectNavigationTests
     private static Data MakeData(JsonObject value)
     {
         var d = new Data("trace");
-        d.Value = value;
+        d.SetValue(value);
         return d;
     }
 
@@ -33,7 +33,7 @@ public class JsonObjectNavigationTests
         var jo = new JsonObject { ["id"] = "abc123" };
         var result = nav.Navigate(MakeData(jo), "id");
         await Assert.That(result.IsInitialized).IsTrue();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("abc123");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("abc123");
     }
 
     [Test]
@@ -55,9 +55,9 @@ public class JsonObjectNavigationTests
         await Assert.That(goalResult.IsInitialized).IsTrue();
 
         var goalData = new Data("goal");
-        goalData.Value = goalResult.Value;
+        goalData.SetValue((await goalResult.Value()));
         var nameResult = nav.Navigate(goalData, "name");
-        await Assert.That(nameResult.Value?.ToString()).IsEqualTo("Hello");
+        await Assert.That((await nameResult.Value())?.ToString()).IsEqualTo("Hello");
     }
 
     [Test]
@@ -66,7 +66,7 @@ public class JsonObjectNavigationTests
         var nav = new global::app.variable.navigator.Dictionary();
         var jo = new JsonObject { ["Name"] = "Hello" };
         var result = nav.Navigate(MakeData(jo), "name");
-        await Assert.That(result.Value?.ToString()).IsEqualTo("Hello");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello");
     }
 
     [Test]
@@ -84,7 +84,7 @@ public class JsonObjectNavigationTests
         var nav = new global::app.variable.navigator.Dictionary();
         var jo = new JsonObject { ["a"] = 1, ["b"] = 2, ["c"] = 3 };
         var result = nav.Navigate(MakeData(jo), "Count");
-        await Assert.That(result.Value).IsEqualTo(3);
+        await Assert.That((await result.Value())).IsEqualTo(3);
     }
 
     [Test]
@@ -96,12 +96,12 @@ public class JsonObjectNavigationTests
 
         var canonical = new Dictionary<string, object?> { ["k"] = "v" };
         var d1 = new Data("");
-        d1.Value = canonical;
+        d1.SetValue(canonical);
         await Assert.That(nav.Navigate(d1, "k").Value).IsEqualTo("v");
 
         var legacy = new System.Collections.Hashtable { ["k"] = "v" };
         var d2 = new Data("");
-        d2.Value = legacy;
+        d2.SetValue(legacy);
         await Assert.That(nav.Navigate(d2, "k").Value).IsEqualTo("v");
     }
 }

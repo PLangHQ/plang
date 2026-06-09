@@ -41,8 +41,8 @@ public class ActorSettingsStoreTests
         {
             engine2.Builder.IsEnabled = true;
             var result = await engine2.SettingsStore.Get("LlmCache", "testkey");
-            await Assert.That(result.Value).IsNotNull();
-            await Assert.That(result.Value!.ToString()).IsEqualTo("cached_response");
+            await Assert.That((await result.Value())).IsNotNull();
+            await Assert.That((await result.Value())!.ToString()).IsEqualTo("cached_response");
         }
     }
 

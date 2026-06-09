@@ -56,7 +56,7 @@ public class SetTypeInferenceTests
         var result = await action.RunAsync(context);
         await result.IsSuccess();
         var stored = context.Variable.Get("n");
-        await Assert.That(stored.Value).IsEqualTo(42L);
+        await Assert.That((await stored.Value())).IsEqualTo(42L);
         await Assert.That(stored.Type.Name).IsEqualTo("number");
     }
 
@@ -68,7 +68,7 @@ public class SetTypeInferenceTests
         var result = await action.RunAsync(context);
         await result.IsSuccess();
         var stored = context.Variable.Get("d");
-        await Assert.That(stored.Value).IsEqualTo(3.14);
+        await Assert.That((await stored.Value())).IsEqualTo(3.14);
         await Assert.That(stored.Type.Name).IsEqualTo("number");
     }
 
@@ -80,7 +80,7 @@ public class SetTypeInferenceTests
         var result = await action.RunAsync(context);
         await result.IsSuccess();
         var stored = context.Variable.Get("b");
-        await Assert.That(stored.Value).IsEqualTo(true);
+        await Assert.That((await stored.Value())).IsEqualTo(true);
         await Assert.That(stored.Type.Name).IsEqualTo("bool");
     }
 
@@ -93,7 +93,7 @@ public class SetTypeInferenceTests
         var result = await action.RunAsync(context);
         await result.IsSuccess();
         var stored = context.Variable.Get("t");
-        await Assert.That(stored.Value).IsEqualTo(when);
+        await Assert.That((await stored.Value())).IsEqualTo(when);
         await Assert.That(stored.Type.Name).IsEqualTo("datetime");
     }
 
@@ -134,7 +134,7 @@ public class SetTypeInferenceTests
         await result.IsSuccess();
         var stored = context.Variable.Get("n");
         await Assert.That(stored).IsTypeOf<global::app.data.@this<global::app.type.text.@this>>();
-        await Assert.That(stored.Value!.ToString()).IsEqualTo("42");
+        await Assert.That((await stored.Value())!.ToString()).IsEqualTo("42");
     }
 
     [Test]

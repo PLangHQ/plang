@@ -49,7 +49,7 @@ public class ValidateActionsTests
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();
-        await Assert.That((bool)result.Value!).IsTrue();
+        await Assert.That((bool)(await result.Value())!).IsTrue();
     }
 
     [Test]
@@ -102,7 +102,7 @@ public class ValidateActionsTests
 
         await result.IsSuccess();
         // Verify PrPath was actually resolved
-        var resolvedCall = actions[0].Parameters[0].Value as global::app.goal.GoalCall;
+        var resolvedCall = (await actions[0].Parameters[0].Value()) as global::app.goal.GoalCall;
         await Assert.That(resolvedCall).IsNotNull();
         await Assert.That(resolvedCall!.PrPath?.ToString().Replace('\\', '/').TrimStart('/'))
             .IsEqualTo(".build/dosomething.pr");
@@ -182,8 +182,8 @@ public class ValidateActionsTests
 
         await result.IsSuccess();
         var rightParam = actions[0].Parameters.First(p => p.Name == "Right");
-        await Assert.That(rightParam.Value).IsEqualTo(false);
-        await Assert.That(rightParam.Value is bool).IsTrue();
+        await Assert.That((await rightParam.Value())).IsEqualTo(false);
+        await Assert.That((await rightParam.Value()) is bool).IsTrue();
     }
 
     [Test]
@@ -216,7 +216,7 @@ public class ValidateActionsTests
         // The kind="int" carries the precision intent; the value either gets
         // coerced to a number primitive at validate-time OR stays as a string
         // for the runtime to coerce. Either is acceptable post-Stage-2.
-        await Assert.That(rightParam.Value is int or long or string).IsTrue();
+        await Assert.That((await rightParam.Value()) is int or long or string).IsTrue();
     }
 
     [Test]

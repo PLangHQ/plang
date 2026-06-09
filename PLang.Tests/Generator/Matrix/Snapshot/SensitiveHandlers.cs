@@ -14,8 +14,8 @@ public partial class SensitiveSnapshot : global::app.module.IContext
     public Task<global::app.data.@this> Run()
     {
         // Touch both so backing fields are set — exercises the FinalValue branch.
-        var _ = ApiKey.Value;
-        var __ = Endpoint.Value;
+        var _ = (ApiKey.Materialize());
+        var __ = (Endpoint.Materialize());
         return Task.FromResult(global::app.data.@this.FromError(
             new global::app.error.ServiceError("forced failure", "TestError", 500)));
     }

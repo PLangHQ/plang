@@ -47,8 +47,8 @@ public class TextWrapperTests
         await Assert.That(new Text("hello").Substring(1, 3).Value).IsEqualTo("ell");
         var parts = new Text("a,b,c").Split(",");
         await Assert.That(parts.Count).IsEqualTo(3);
-        await Assert.That(((Text)parts.At(0)!.Value!).Value).IsEqualTo("a");
-        await Assert.That(((Text)parts.At(2)!.Value!).Value).IsEqualTo("c");
+        await Assert.That(((Text)(await parts.At(0)!.Value())!).Value).IsEqualTo("a");
+        await Assert.That(((Text)(await parts.At(2)!.Value())!).Value).IsEqualTo("c");
     }
 
     [Test]

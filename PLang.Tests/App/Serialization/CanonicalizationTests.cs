@@ -41,7 +41,7 @@ public class CanonicalizationTests
         await hashResult.IsSuccess();
         // The hash is 32 bytes; the wire-bytes are the input to the hash.
         var expectedHash = new Nethereum.Util.Sha3Keccack().CalculateHash(wireBytesWithoutOuterSig);
-        await Assert.That(((global::app.module.crypto.type.hash.@this)hashResult.Value!).Bytes.SequenceEqual(expectedHash)).IsTrue();
+        await Assert.That(((global::app.module.crypto.type.hash.@this)(await hashResult.Value())!).Bytes.SequenceEqual(expectedHash)).IsTrue();
     }
 
     [Test] public async Task CryptoHash_BytesMatch_WireSerializerBytesMinusOuterSignature()
@@ -75,7 +75,7 @@ public class CanonicalizationTests
         var inner = new global::app.data.@this("inner", "secret") { Context = app.User.Context };
         var outer = new global::app.data.@this("outer", inner) { Context = app.User.Context };
 
-        var json = plang.Serialize(outer).Value!;
+        var json = (await plang.Serialize(outer).Value())!;
         await Assert.That(inner.Signature).IsNotNull();
         await Assert.That(outer.Signature).IsNotNull();
 
@@ -88,7 +88,7 @@ public class CanonicalizationTests
 
         var back = plang.Deserialize(tampered);
         await back.IsSuccess();
-        var roundTripped = back.Value as global::app.data.@this;
+        var roundTripped = (await back.Value()) as global::app.data.@this;
         await Assert.That(roundTripped).IsNotNull();
         roundTripped!.Context = app.User.Context;
 
@@ -127,11 +127,11 @@ public class CanonicalizationTests
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
 
-        var outBytes = plang.Serialize(outer).Value!;
+        var outBytes = (await plang.Serialize(outer).Value())!;
         await Assert.That(outBytes).DoesNotContain("PRIV-must-persist")
             .Because("Out view excludes [Sensitive] — the secret never reaches the wire.");
 
-        var storeBytes = plang.Store(outer).Value!;
+        var storeBytes = (await plang.Store(outer).Value())!;
         await Assert.That(storeBytes).Contains("PRIV-must-persist")
             .Because("Store view includes [Sensitive] — the secret must persist locally so signing keeps working on re-read.");
     }
@@ -149,7 +149,7 @@ public class CanonicalizationTests
 
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var json = plang.Serialize(outer).Value!;
+        var json = (await plang.Serialize(outer).Value())!;
 
         await Assert.That(inner.Signature).IsNotNull()
             .Because("Wire.EnsureInnerSigned must reach Datas held as dict values, not just list elements.");

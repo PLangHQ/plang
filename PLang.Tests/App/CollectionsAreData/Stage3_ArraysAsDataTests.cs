@@ -29,8 +29,8 @@ public class Stage3_ArraysAsDataTests
         var list = (ListV)result!;
         await Assert.That(list.Count).IsEqualTo(2);
         // Born-native: elements are scalar wrappers; ToRaw yields the backing.
-        await Assert.That(((app.type.item.@this)list.At(0)!.Value!).ToRaw()).IsEqualTo((object)1L);
-        await Assert.That((string?)((app.type.item.@this)list.At(1)!.Value!).ToRaw()).IsEqualTo("two");
+        await Assert.That(((app.type.item.@this)(await list.At(0)!.Value())!).ToRaw()).IsEqualTo((object)1L);
+        await Assert.That((string?)((app.type.item.@this)(await list.At(1)!.Value())!).ToRaw()).IsEqualTo("two");
     }
 
     [Test]
@@ -51,7 +51,7 @@ public class Stage3_ArraysAsDataTests
         var d = global::app.data.@this.FromRaw("[1,2,3]", type.Create("object", "json", context: ctx), ctx, "nums");
         d.ForceMaterialize();
         await Assert.That(d.Value).IsTypeOf<ListV>();
-        await Assert.That(((ListV)d.Value!).Count).IsEqualTo(3);
+        await Assert.That(((ListV)(await d.Value())!).Count).IsEqualTo(3);
     }
 
     [Test]
@@ -63,7 +63,7 @@ public class Stage3_ArraysAsDataTests
         list.Add(new Data("", "x"));
         await Assert.That(list.Count).IsEqualTo(2);
         await Assert.That(list.At(0)).IsTypeOf<Data>();
-        await Assert.That(list.At(0)!.Value).IsEqualTo((object)1L);
+        await Assert.That((await list.At(0)!.Value())).IsEqualTo((object)1L);
     }
 
     [Test]
@@ -81,8 +81,8 @@ public class Stage3_ArraysAsDataTests
         var nav = new global::app.variable.navigator.List();
         await Assert.That(nav.CanNavigate(data)).IsTrue();
         await Assert.That(ReferenceEquals(nav.Navigate(data, "0"), element)).IsTrue();
-        await Assert.That((string?)nav.Navigate(data, "last").Value).IsEqualTo("second");
-        await Assert.That((int)nav.Navigate(data, "count").Value!).IsEqualTo(2);
+        await Assert.That((string?)(await nav.Navigate(data, "last").Value())).IsEqualTo("second");
+        await Assert.That((int)(await nav.Navigate(data, "count").Value())!).IsEqualTo(2);
 
         // Implicit-first through a list of dicts.
         var people = new ListV();
@@ -90,7 +90,7 @@ public class Stage3_ArraysAsDataTests
         p0.Set(new Data("name", "alice"));
         people.Add(new Data("", p0));
         var peopleData = new Data("people", people);
-        await Assert.That((string?)nav.Navigate(peopleData, "name").Value).IsEqualTo("alice");
+        await Assert.That((string?)(await nav.Navigate(peopleData, "name").Value())).IsEqualTo("alice");
     }
 
     [Test]
@@ -163,11 +163,11 @@ public class Stage3_ArraysAsDataTests
         list.Add(signed);
         var listData = new Data("list", list) { Context = ctx };
 
-        var json = plang.Serialize(listData).Value!;
+        var json = (await plang.Serialize(listData).Value())!;
         var roundtrip = plang.Deserialize(json);
         await roundtrip.IsSuccess();
 
-        var rebuilt = (Data)roundtrip.Value!;
+        var rebuilt = (Data)(await roundtrip.Value())!;
         var element = rebuilt.GetChild("[0]");
         await Assert.That(element.IsInitialized).IsTrue();
         await Assert.That(element.Signature).IsNotNull()

@@ -86,7 +86,7 @@ public class Ed25519ProviderTests
 
         var result = _provider.Sign(data, kp.PrivateKey);
         await result.IsSuccess();
-        var signature = (byte[])result.Value!;
+        var signature = (byte[])(await result.Value())!;
 
         await Assert.That(signature.Length).IsEqualTo(64);
         await Assert.That(signature.Any(b => b != 0)).IsTrue();
@@ -98,8 +98,8 @@ public class Ed25519ProviderTests
         var kp = _provider.GenerateKeyPair().keys!;
         var result1 = _provider.Sign(Encoding.UTF8.GetBytes("hello"), kp.PrivateKey);
         var result2 = _provider.Sign(Encoding.UTF8.GetBytes("world"), kp.PrivateKey);
-        var sig1 = (byte[])result1.Value!;
-        var sig2 = (byte[])result2.Value!;
+        var sig1 = (byte[])(await result1.Value())!;
+        var sig2 = (byte[])(await result2.Value())!;
 
         await Assert.That(sig1.SequenceEqual(sig2)).IsFalse();
     }
@@ -123,19 +123,19 @@ public class Ed25519ProviderTests
     {
         var kp = _provider.GenerateKeyPair().keys!;
         var data = Encoding.UTF8.GetBytes("test data");
-        var signature = (byte[])_provider.Sign(data, kp.PrivateKey).Value!;
+        var signature = (byte[])(await _provider.Sign(data, kp.PrivateKey).Value())!;
 
         var result = _provider.Verify(data, signature, kp.PublicKey);
 
         await result.IsSuccess();
-        await Assert.That((bool)result.Value!).IsTrue();
+        await Assert.That((bool)(await result.Value())!).IsTrue();
     }
 
     [Test]
     public async Task Verify_WrongData_ReturnsError()
     {
         var kp = _provider.GenerateKeyPair().keys!;
-        var signature = (byte[])_provider.Sign(Encoding.UTF8.GetBytes("hello"), kp.PrivateKey).Value!;
+        var signature = (byte[])(await _provider.Sign(Encoding.UTF8.GetBytes("hello"), kp.PrivateKey).Value())!;
 
         var result = _provider.Verify(Encoding.UTF8.GetBytes("different"), signature, kp.PublicKey);
 
@@ -149,7 +149,7 @@ public class Ed25519ProviderTests
         var kp1 = _provider.GenerateKeyPair().keys!;
         var kp2 = _provider.GenerateKeyPair().keys!;
         var data = Encoding.UTF8.GetBytes("test data");
-        var signature = (byte[])_provider.Sign(data, kp1.PrivateKey).Value!;
+        var signature = (byte[])(await _provider.Sign(data, kp1.PrivateKey).Value())!;
 
         var result = _provider.Verify(data, signature, kp2.PublicKey);
 
@@ -162,7 +162,7 @@ public class Ed25519ProviderTests
     {
         var kp = _provider.GenerateKeyPair().keys!;
         var data = Encoding.UTF8.GetBytes("test data");
-        var signature = (byte[])_provider.Sign(data, kp.PrivateKey).Value!;
+        var signature = (byte[])(await _provider.Sign(data, kp.PrivateKey).Value())!;
 
         // Flip the first byte
         signature[0] = (byte)(signature[0] ^ 0xFF);

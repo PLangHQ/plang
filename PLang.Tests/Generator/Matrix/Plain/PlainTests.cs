@@ -60,7 +60,7 @@ public class IntPlainTests
         var result = await MatrixRunner.RunAsync<IntPlain>(app,
             parameters: new[] { ("count", (object?)"42") });
         var typed = result.Data as global::app.data.@this<global::app.type.number.@this>;
-        await Assert.That(typed!.Value).IsEqualTo(42);
+        await Assert.That((await typed!.Value())).IsEqualTo(42);
     }
 
     [Test]
@@ -70,7 +70,7 @@ public class IntPlainTests
         var result = await MatrixRunner.RunAsync<IntPlain>(app,
             parameters: new[] { ("count", (object?)42) });
         var typed = result.Data as global::app.data.@this<global::app.type.number.@this>;
-        await Assert.That(typed!.Value).IsEqualTo(42);
+        await Assert.That((await typed!.Value())).IsEqualTo(42);
     }
 
     [Test]
@@ -93,7 +93,7 @@ public class BoolPlainTests
         var result = await MatrixRunner.RunAsync<BoolPlain>(app,
             parameters: new[] { ("flag", (object?)"true") });
         var typed = result.Data as global::app.data.@this<global::app.type.@bool.@this>;
-        await Assert.That((bool)typed!.Value).IsTrue();
+        await Assert.That((bool)(await typed!.Value())).IsTrue();
     }
 
     [Test]
@@ -103,7 +103,7 @@ public class BoolPlainTests
         var result = await MatrixRunner.RunAsync<BoolPlain>(app,
             parameters: new[] { ("flag", (object?)true) });
         var typed = result.Data as global::app.data.@this<global::app.type.@bool.@this>;
-        await Assert.That((bool)typed!.Value).IsTrue();
+        await Assert.That((bool)(await typed!.Value())).IsTrue();
     }
 }
 
@@ -116,8 +116,8 @@ public class PathPlainTests
         var result = await MatrixRunner.RunAsync<PathPlain>(app,
             parameters: new[] { ("file", (object?)"data/x.txt") });
         var typed = result.Data as global::app.data.@this<global::app.type.path.@this>;
-        await Assert.That(typed!.Value).IsNotNull();
-        await Assert.That(typed.Value is global::app.type.path.@this).IsTrue();
+        await Assert.That((await typed!.Value())).IsNotNull();
+        await Assert.That((await typed.Value()) is global::app.type.path.@this).IsTrue();
     }
 
     [Test]
@@ -128,6 +128,6 @@ public class PathPlainTests
         var result = await MatrixRunner.RunAsync<PathPlain>(app,
             parameters: new[] { ("file", (object?)path) });
         var typed = result.Data as global::app.data.@this<global::app.type.path.@this>;
-        await Assert.That(ReferenceEquals(typed!.Value, path)).IsTrue();
+        await Assert.That(ReferenceEquals((await typed!.Value()), path)).IsTrue();
     }
 }

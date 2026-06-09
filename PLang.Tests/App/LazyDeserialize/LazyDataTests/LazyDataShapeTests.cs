@@ -41,7 +41,7 @@ public class LazyDataShapeTests
     {
         var d = data.Ok("hello");
         d.Name = "greeting";
-        var json = global::app.channel.serializer.plang.@this.ContextLessFallback.Serialize(d).Value!;
+        var json = (await global::app.channel.serializer.plang.@this.ContextLessFallback.Serialize(d).Value())!;
         await Assert.That(json.Contains("\"raw\"")).IsFalse();
         await Assert.That(json.Contains("\"_raw\"")).IsFalse();
     }
@@ -53,8 +53,8 @@ public class LazyDataShapeTests
         var d = new data("f");
         int calls = 0;
         d.SetValue(() => { calls++; return 42; });
-        await Assert.That(d.Value).IsEqualTo((object)42);
-        await Assert.That(d.Value).IsEqualTo((object)42); // cached after first compute
+        await Assert.That((await d.Value())).IsEqualTo((object)42);
+        await Assert.That((await d.Value())).IsEqualTo((object)42); // cached after first compute
         await Assert.That(calls).IsEqualTo(1);
     }
 }

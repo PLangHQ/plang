@@ -158,7 +158,7 @@ public class PrPipelineTests
 
         // File found — relative resolves to {root}/sub/subdata.txt (goal folder)
         await result.IsSuccess();
-        await Assert.That(result.Value!.ToString()).IsEqualTo("Hello from subfolder");
+        await Assert.That((await result.Value())!.ToString()).IsEqualTo("Hello from subfolder");
     }
 
     [Test]
@@ -196,7 +196,7 @@ public class PrPipelineTests
         var result = await engine.RunGoalAsync(goal, context);
 
         await result.IsSuccess();
-        await Assert.That(result.Value!.ToString()).IsEqualTo("Hello from test file");
+        await Assert.That((await result.Value())!.ToString()).IsEqualTo("Hello from test file");
     }
 
     [Test]
@@ -234,7 +234,7 @@ public class PrPipelineTests
         var result = await engine.RunGoalAsync(goal, context);
 
         await result.IsSuccess();
-        await Assert.That(result.Value!.ToString()).IsEqualTo("Hello from subfolder");
+        await Assert.That((await result.Value())!.ToString()).IsEqualTo("Hello from subfolder");
     }
 
     [Test]
@@ -352,7 +352,7 @@ public class PrPipelineTests
             App = context.App!;
             Context = context;
             var contentData = action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "Data", StringComparison.OrdinalIgnoreCase));
-            object? content = contentData?.Value;
+            object? content = (contentData.Materialize());
             if (content is string str && str.Contains('%'))
             {
                 var resolved = context.Variable.Resolve(str);

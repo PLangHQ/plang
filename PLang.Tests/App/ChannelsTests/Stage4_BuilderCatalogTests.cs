@@ -43,7 +43,7 @@ public class Stage4_BuilderCatalogTests
         var actions = await app.Module.Describe();
         var write = actions.First(a => a.Module == "output" && a.ActionName == "write");
         var channelParam = write.Parameters.First(p => p.Name == "channel");
-        var desc = channelParam.Value as string ?? "";
+        var desc = (await channelParam.Value()) as string ?? "";
         await Assert.That(desc.Contains("to ")).IsFalse();
         await Assert.That(desc.Contains("pattern")).IsFalse();
     }

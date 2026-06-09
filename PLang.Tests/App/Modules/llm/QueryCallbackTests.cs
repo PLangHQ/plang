@@ -118,7 +118,7 @@ public class QueryCallbackTests
 
         var result = await action.Run();
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("got data");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("got data");
         // Verify tool execution happened: 2 HTTP calls (tool call + re-query with result)
         await Assert.That(_handler.CallCount).IsEqualTo(2);
         var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
@@ -143,7 +143,7 @@ public class QueryCallbackTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("valid response");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("valid response");
     }
 
     [Test]

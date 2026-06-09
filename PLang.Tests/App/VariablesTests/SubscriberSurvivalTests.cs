@@ -221,7 +221,7 @@ public class SubscriberSurvivalTests
         var calls = 0;
         dv.OnChange.Add((_, _) => calls++);
 
-        dv.Value = 42;
+        dv.SetValue(42);
         await Assert.That(calls).IsEqualTo(1);
     }
 }

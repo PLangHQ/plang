@@ -35,9 +35,9 @@ public class PropertiesWireShapeTests
         try
         {
             d.Properties["k"] = propValue;
-            var wire = plang.Serialize(d).Value!;
+            var wire = (await plang.Serialize(d).Value())!;
             var back = plang.Deserialize(wire);
-            return (global::app.data.@this)back.Value!;
+            return (global::app.data.@this)(await back.Value())!;
         }
         finally { dispose(); }
     }
@@ -115,7 +115,7 @@ public class PropertiesWireShapeTests
         try
         {
             d.Properties["cost"] = 100L;
-            var wire = plang.Serialize(d).Value!;
+            var wire = (await plang.Serialize(d).Value())!;
             using var doc = JsonDocument.Parse(wire);
             await Assert.That(doc.RootElement.TryGetProperty("properties", out var props)).IsTrue();
             await Assert.That(props.ValueKind).IsEqualTo(JsonValueKind.Object);
@@ -130,7 +130,7 @@ public class PropertiesWireShapeTests
         try
         {
             d.Properties["cost"] = 100L;
-            var wire = plang.Serialize(d).Value!;
+            var wire = (await plang.Serialize(d).Value())!;
             using var doc = JsonDocument.Parse(wire);
             await Assert.That(doc.RootElement.TryGetProperty("cost", out _)).IsFalse();
         }
@@ -142,7 +142,7 @@ public class PropertiesWireShapeTests
         var (plang, d, dispose) = SeedData();
         try
         {
-            var wire = plang.Serialize(d).Value!;
+            var wire = (await plang.Serialize(d).Value())!;
             using var doc = JsonDocument.Parse(wire);
             await Assert.That(doc.RootElement.TryGetProperty("properties", out _)).IsFalse();
         }
@@ -155,8 +155,8 @@ public class PropertiesWireShapeTests
         try
         {
             d.Properties["value"] = "stays-in-properties-scope";
-            var wire = plang.Serialize(d).Value!;
-            var back = (global::app.data.@this)plang.Deserialize(wire).Value!;
+            var wire = (await plang.Serialize(d).Value())!;
+            var back = (global::app.data.@this)(await plang.Deserialize(wire).Value())!;
             await Assert.That(back.Properties["value"]).IsEqualTo("stays-in-properties-scope");
         }
         finally { dispose(); }
@@ -168,8 +168,8 @@ public class PropertiesWireShapeTests
         try
         {
             d.Properties["signature"] = "not-the-outer-sig";
-            var wire = plang.Serialize(d).Value!;
-            var back = (global::app.data.@this)plang.Deserialize(wire).Value!;
+            var wire = (await plang.Serialize(d).Value())!;
+            var back = (global::app.data.@this)(await plang.Deserialize(wire).Value())!;
             await Assert.That(back.Properties["signature"]).IsEqualTo("not-the-outer-sig");
         }
         finally { dispose(); }
@@ -181,8 +181,8 @@ public class PropertiesWireShapeTests
         try
         {
             d.Properties["name"] = "metadata-name";
-            var wire = plang.Serialize(d).Value!;
-            var back = (global::app.data.@this)plang.Deserialize(wire).Value!;
+            var wire = (await plang.Serialize(d).Value())!;
+            var back = (global::app.data.@this)(await plang.Deserialize(wire).Value())!;
             await Assert.That(back.Properties["name"]).IsEqualTo("metadata-name");
         }
         finally { dispose(); }
@@ -204,11 +204,11 @@ public class PropertiesWireShapeTests
             // Use SeedData's app.User.Context which carries an actor.
             d.Properties["cost"] = 100L;
             d.EnsureSigned();
-            var wire = plang.Serialize(d).Value!;
+            var wire = (await plang.Serialize(d).Value())!;
             var tampered = wire.Replace("\"cost\":100", "\"cost\":999");
             await Assert.That(tampered).IsNotEqualTo(wire);
 
-            var back = (global::app.data.@this)plang.Deserialize(tampered).Value!;
+            var back = (global::app.data.@this)(await plang.Deserialize(tampered).Value())!;
             back.Context = d.Context;
             var app = d.Context!.App;
             var verify = await app.RunAction<global::app.module.signing.verify>(
@@ -229,7 +229,7 @@ public class PropertiesWireShapeTests
         {
             d.Properties["cost"] = 100L;
             d.Properties["model"] = "claude";
-            var wire = plang.Serialize(d).Value!;
+            var wire = (await plang.Serialize(d).Value())!;
             using var doc = JsonDocument.Parse(wire);
             var props = doc.RootElement.GetProperty("properties");
             // Each Property value is a primitive — no signature objects under properties.
@@ -248,10 +248,10 @@ public class PropertiesWireShapeTests
         try
         {
             d.Properties["k"] = "v";
-            var wire = plang.Serialize(d).Value!;
+            var wire = (await plang.Serialize(d).Value())!;
             // Inject a top-level field at the start of the object.
             var injected = wire.Replace("{\"name\":", "{\"traceId\":\"abc\",\"name\":");
-            var back = (global::app.data.@this)plang.Deserialize(injected).Value!;
+            var back = (global::app.data.@this)(await plang.Deserialize(injected).Value())!;
             // Properties dictionary doesn't capture the unknown field.
             await Assert.That(back.Properties.ContainsKey("traceId")).IsFalse();
         }

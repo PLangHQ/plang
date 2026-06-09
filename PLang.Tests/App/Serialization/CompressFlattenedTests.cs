@@ -33,8 +33,8 @@ public class CompressFlattenedTests
         var d = NewCompressibleData(app, "payload payload payload");
         var archived = d.Compress();
         // The smell this stage fixes — no nested Data around the gzip payload.
-        await Assert.That(archived.Value is global::app.data.@this).IsFalse();
-        await Assert.That(archived.Value is byte[]).IsTrue();
+        await Assert.That((await archived.Value()) is global::app.data.@this).IsFalse();
+        await Assert.That((await archived.Value()) is byte[]).IsTrue();
     }
 
     [Test] public async Task Decompress_AfterCompress_PreservesNameAndValue()
@@ -44,7 +44,7 @@ public class CompressFlattenedTests
         var archived = d.Compress();
         var restored = archived.Decompress();
         await Assert.That(restored.Name).IsEqualTo("payload");
-        await Assert.That(restored.Value?.ToString()).IsEqualTo("round-trip value");
+        await Assert.That((await restored.Value())?.ToString()).IsEqualTo("round-trip value");
     }
 
     [Test] public async Task Decompress_AfterCompress_PreservesProperties()
@@ -56,7 +56,7 @@ public class CompressFlattenedTests
         var d = NewCompressibleData(app, "with props");
         var archived = d.Compress();
         var restored = archived.Decompress();
-        await Assert.That(restored.Value?.ToString()).IsEqualTo("with props");
+        await Assert.That((await restored.Value())?.ToString()).IsEqualTo("with props");
     }
 
     [Test] public async Task CompressedBytes_OnceGunzipped_ParseToApplicationPlangDocWithSignature()
@@ -64,7 +64,7 @@ public class CompressFlattenedTests
         await using var app = NewApp();
         var d = NewCompressibleData(app, "needs a signature");
         var archived = d.Compress();
-        var bytes = (byte[])archived.Value!;
+        var bytes = (byte[])(await archived.Value())!;
 
         // Gunzip and parse — must be a valid application/plang doc with a signature.
         using var gz = new System.IO.Compression.GZipStream(new MemoryStream(bytes),
@@ -96,7 +96,7 @@ public class CompressFlattenedTests
         var archived = d.Compress();
         var restored = archived.Decompress();
         await restored.IsSuccess();
-        await Assert.That(restored.Value?.ToString()).IsEqualTo("via plang serializer");
+        await Assert.That((await restored.Value())?.ToString()).IsEqualTo("via plang serializer");
     }
 
     [Test] public async Task DataTransport_EnvelopeJsonOptionsField_NoLongerExists()

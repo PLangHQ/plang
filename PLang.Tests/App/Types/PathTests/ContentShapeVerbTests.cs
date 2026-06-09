@@ -29,7 +29,7 @@ public class ContentShapeVerbTests
         public override Task<global::app.data.@this> Read(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
         {
-            _prompts.Add(action.Question?.Value ?? "");
+            _prompts.Add((action.Question.Materialize()?.ToString()) ?? "");
             return Task.FromResult(global::app.data.@this.Ok(_answer));
         }
     }
@@ -85,7 +85,7 @@ public class ContentShapeVerbTests
         var p = new FilePath(file, app.User.Context);
         var result = await p.ReadAsDataUri();
         await result.IsSuccess();
-        await Assert.That(result.Value!).StartsWith("data:image/png;base64,");
+        await Assert.That((await result.Value())!).StartsWith("data:image/png;base64,");
     }
 
     [Test] public async Task ReadAsDataUri_OnUnknownExtension_FallsBackToOctetStream()
@@ -96,7 +96,7 @@ public class ContentShapeVerbTests
         var p = new FilePath(file, app.User.Context);
         var result = await p.ReadAsDataUri();
         await result.IsSuccess();
-        await Assert.That(result.Value!).StartsWith("data:application/octet-stream;base64,");
+        await Assert.That((await result.Value())!).StartsWith("data:application/octet-stream;base64,");
     }
 
     [Test] public async Task ReadAsDataUri_OutOfRoot_DeniedAnswer_ReturnsDataFail()

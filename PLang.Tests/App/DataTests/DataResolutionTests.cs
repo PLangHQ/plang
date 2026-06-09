@@ -44,7 +44,7 @@ public class DataResolutionTests
         await Assert.That(resolved.GetValue<List<string>>()![0]).IsEqualTo("world");
 
         // Original raw is unchanged.
-        await Assert.That(((List<object?>)data.Value!)[0]).IsEqualTo("%name%");
+        await Assert.That(((List<object?>)(await data.Value())!)[0]).IsEqualTo("%name%");
         await Assert.That(ReferenceEquals(data.Value, raw)).IsTrue();
     }
 
@@ -58,7 +58,7 @@ public class DataResolutionTests
         for (int i = 0; i < 3; i++)
         {
             _app.User.Context.Variable.Set("i", $"value-{i}");
-            seen.Add(data.As<global::app.type.text.@this>(_app.User.Context).Value);
+            seen.Add((await data.As<global::app.type.text.@this>(_app.User.Context).Value()));
         }
 
         await Assert.That(seen[0]).IsEqualTo("value-0");
@@ -93,7 +93,7 @@ public class DataResolutionTests
         var data = new Data("c", "%count%") { Context = _app.User.Context };
 
         var result = data.As<global::app.type.number.@this>(_app.User.Context);
-        await Assert.That(result.Value).IsEqualTo(42);
+        await Assert.That((await result.Value())).IsEqualTo(42);
     }
 
     // List<LlmMessage> with nested %comment% → first call resolves to "value1", set %comment%="value2", second call resolves to "value2".
@@ -127,7 +127,7 @@ public class DataResolutionTests
             for (int i = 0; i < 100; i++)
             {
                 var r = data.As<global::app.type.text.@this>(_app.User.Context);
-                if (r.Value != "value") return false;
+                if ((r.Materialize()) != "value") return false;
             }
             return true;
         })).ToArray();

@@ -133,7 +133,7 @@ public class StepFromDictConversionTests
         var dataStep = stepData.As<Step>();
 
         await Assert.That(dataStep.Error).IsNull();
-        await Assert.That(dataStep.Value).IsNotNull();
-        await Assert.That(dataStep.Value!.Actions.Count).IsEqualTo(2);
+        await Assert.That((await dataStep.Value())).IsNotNull();
+        await Assert.That((await dataStep.Value())!.Actions.Count).IsEqualTo(2);
     }
 }

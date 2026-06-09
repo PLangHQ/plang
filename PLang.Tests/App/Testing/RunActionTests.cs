@@ -92,7 +92,7 @@ public class RunActionTests
             Timeout = timeoutSec.HasValue ? new global::app.data.@this<global::app.type.number.@this>("Timeout", timeoutSec.Value) : null
         };
         var result = await action.Run();
-        return (Results)result.Value!;
+        return (Results)(await result.Value())!;
     }
 
     // Each global::app.tester.test.@this gets its own App.@this instance. Two tests cannot observe each

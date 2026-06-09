@@ -15,7 +15,7 @@ namespace PLang.Tests.App.LazyDeserialize.LazyDataTests;
 public class WireReadLazyTests
 {
     private static data RoundTrip(data d)
-        => (data)plang.ContextLessFallback.Deserialize(plang.ContextLessFallback.Serialize(d).Value!).Value!;
+        => (data)(plang.ContextLessFallback.Deserialize((plang.ContextLessFallback.Serialize(d).Materialize())!).Materialize())!;
 
     // Typed value-slot deferral: a shape-typed (object/table) value rides as raw
     // and materializes only on touch. Scoped to object/table so scalars/domain/
@@ -38,7 +38,7 @@ public class WireReadLazyTests
         // value is a valid json *string* token whose content is malformed json,
         // typed {object, json} — read defers it, no throw.
         const string wire = "{\"name\":\"x\",\"type\":{\"name\":\"object\",\"kind\":\"json\"},\"value\":\"{not json\"}";
-        var back = (data)plang.ContextLessFallback.Deserialize(wire).Value!;
+        var back = (data)(await plang.ContextLessFallback.Deserialize(wire).Value())!;
         await Assert.That(back.HasRaw).IsTrue();
         await Assert.That(back.MaterializeCount).IsEqualTo(0);
     }
@@ -73,7 +73,7 @@ public class WireReadLazyTests
         outer.Name = "outer";
         var back = RoundTrip(outer);
         await Assert.That(back.Value).IsTypeOf<data>();
-        await Assert.That(((data)back.Value!).Value?.ToString()).IsEqualTo("hello");
+        await Assert.That(((data)(await back.Value())!).Value?.ToString()).IsEqualTo("hello");
     }
 
     // The case LiftDataIfShaped covers: a genuinely nested Data round-trips and

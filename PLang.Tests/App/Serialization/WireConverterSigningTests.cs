@@ -19,7 +19,7 @@ public class WireConverterSigningTests
         var data = new global::app.data.@this("greeting", "hello") { Context = app.User.Context };
         await Assert.That(data.Signature).IsNull();
 
-        var json = plang.Serialize(data).Value!;
+        var json = (await plang.Serialize(data).Value())!;
 
         await Assert.That(data.Signature).IsNotNull().Because("Converter must EnsureSigned before emit");
         await Assert.That(json).Contains("\"signature\"");
@@ -69,7 +69,7 @@ public class WireConverterSigningTests
         var outer = new global::app.data.@this("list", new List<global::app.data.@this> { inner1, inner2 })
             { Context = app.User.Context };
 
-        var json = plang.Serialize(outer).Value!;
+        var json = (await plang.Serialize(outer).Value())!;
 
         await Assert.That(inner1.Signature).IsNotNull();
         await Assert.That(inner2.Signature).IsNotNull();
@@ -91,10 +91,10 @@ public class WireConverterSigningTests
         await using var app = NewSignedApp();
         var data = new global::app.data.@this("x", "before") { Context = app.User.Context };
         // Mutate BEFORE serialize — the converter signs the mutated value.
-        data.Value = "after";
+        data.SetValue("after");
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var json = plang.Serialize(data).Value!;
+        var json = (await plang.Serialize(data).Value())!;
         await Assert.That(json).Contains("after");
         await Assert.That(json).DoesNotContain("before");
         await Assert.That(data.Signature).IsNotNull();
@@ -107,11 +107,11 @@ public class WireConverterSigningTests
             app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var data = new global::app.data.@this("greeting", "hello") { Context = app.User.Context };
-        var json = plang.Serialize(data).Value!;
+        var json = (await plang.Serialize(data).Value())!;
 
         var back = plang.Deserialize(json);
         await back.IsSuccess();
-        var roundTripped = back.Value as global::app.data.@this;
+        var roundTripped = (await back.Value()) as global::app.data.@this;
         await Assert.That(roundTripped).IsNotNull();
         await Assert.That(roundTripped!.Signature).IsNotNull()
             .Because("Read reconstructs Signature into the Data, populated-but-unverified.");
@@ -125,7 +125,7 @@ public class WireConverterSigningTests
 
         var bytes = new byte[] { 1, 2, 3, 4 };
         var data = new global::app.data.@this("blob", bytes) { Context = app.User.Context };
-        var json = plang.Serialize(data).Value!;
+        var json = (await plang.Serialize(data).Value())!;
 
         // Byte[] serializes to base64 string in JSON — the value slot must NOT be a
         // nested {name, type, value} Data object.
@@ -142,7 +142,7 @@ public class WireConverterSigningTests
             app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var data = new global::app.data.@this("x", "y") { Context = app.User.Context };
-        var json = plang.Serialize(data).Value!;
+        var json = (await plang.Serialize(data).Value())!;
         // Properties is [JsonIgnore] and stays off the wire pre-Stage-4.
         await Assert.That(json).DoesNotContain("\"properties\"");
     }

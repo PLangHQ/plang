@@ -32,7 +32,7 @@ public class GoalReturnTests
 
         await result.IsSuccess();
         await Assert.That(result.Returned).IsTrue();
-        await Assert.That(result.Value!.ToString()).IsEqualTo("hello");
+        await Assert.That((await result.Value())!.ToString()).IsEqualTo("hello");
     }
 
     [Test]

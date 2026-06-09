@@ -60,7 +60,7 @@ public class SensitivePropertyFilterTests
         };
 
         var serializer = new global::app.channel.serializer.Json();
-        var json = serializer.Serialize(Data.Ok(identity)).Value!;
+        var json = (await serializer.Serialize(Data.Ok(identity)).Value())!;
 
         await Assert.That(json).Contains("pubkey123");
         await Assert.That(json).DoesNotContain("secret456");
@@ -92,7 +92,7 @@ public class SensitivePropertyFilterTests
         var obj = new { Name = (global::app.type.text.@this)"test", Value = 42 };
 
         var serializer = new global::app.channel.serializer.Json();
-        var json = serializer.Serialize(Data.Ok(obj)).Value!;
+        var json = (await serializer.Serialize(Data.Ok(obj)).Value())!;
 
         await Assert.That(json).Contains("test");
         await Assert.That(json).Contains("42");
@@ -112,7 +112,7 @@ public class SensitivePropertyFilterTests
         // ForView should also strip [Sensitive] in addition to view filtering
         var serializer = new global::app.channel.serializer.Json();
         var storeSerializer = serializer.ForView(View.Store);
-        var storeJson = storeSerializer.Serialize(Data.Ok(identity)).Value!;
+        var storeJson = (await storeSerializer.Serialize(Data.Ok(identity)).Value())!;
 
         // Identity doesn't use view attributes, so Store view serializes all non-sensitive
         await Assert.That(storeJson).DoesNotContain("secret456");
@@ -201,10 +201,10 @@ public class SensitivePropertyFilterTests
         // End-to-end: create real identity, serialize, verify PrivateKey absent
         var create = new Create { Context = _app.System.Context, Name = (global::app.type.text.@this)"e2e", SetAsDefault = (global::app.type.@bool.@this)true };
         var result = await create.Run();
-        var identity = result.Value as Identity;
+        var identity = (await result.Value()) as Identity;
 
         var serializer = new global::app.channel.serializer.Json();
-        var json = serializer.Serialize(Data.Ok(identity)).Value!;
+        var json = (await serializer.Serialize(Data.Ok(identity)).Value())!;
 
         // Deserialize back to check values — raw Contains() fails when base64 '+' is escaped to '\u002B'
         var deserialized = JsonSerializer.Deserialize<JsonElement>(json);

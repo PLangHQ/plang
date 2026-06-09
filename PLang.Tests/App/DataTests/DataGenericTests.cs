@@ -20,7 +20,7 @@ public class DataGenericTests
     {
         var data = global::app.data.@this<global::app.type.number.@this>.Ok(42, Type.Int);
 
-        await Assert.That(data.Value).IsEqualTo(42);
+        await Assert.That((await data.Value())).IsEqualTo(42);
         await Assert.That(data.Type).IsNotNull();
         await Assert.That(data.Type!.ClrType).IsEqualTo(typeof(int));
     }
@@ -30,7 +30,7 @@ public class DataGenericTests
     {
         var data = global::app.data.@this<global::app.type.text.@this>.Ok("world");
 
-        string? typed = data.Value;
+        string? typed = (await data.Value());
 
         await Assert.That(typed).IsEqualTo("world");
     }
@@ -40,7 +40,7 @@ public class DataGenericTests
     {
         // Create a global::app.data.@this<global::app.type.number.@this> then set base value to a string via base class
         var data = new global::app.data.@this<global::app.type.number.@this>("test", 42);
-        ((Data)data).Value = "not an int";
+        ((Data)data).SetValue("not an int");
 
         // Born-native: number is a reference wrapper, so a failed conversion yields its
         // default — null — not the value-type 0.
@@ -65,7 +65,7 @@ public class DataGenericTests
         Data untyped = typed;
 
         await untyped.IsSuccess();
-        await Assert.That(untyped.Value!.ToString()).IsEqualTo("test");
+        await Assert.That((await untyped.Value())!.ToString()).IsEqualTo("test");
     }
 
     [Test]
@@ -75,6 +75,6 @@ public class DataGenericTests
         var result = await task;
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo(99);
+        await Assert.That((await result.Value())).IsEqualTo(99);
     }
 }

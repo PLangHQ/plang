@@ -179,9 +179,9 @@ public class Stage8_ChannelEventsTests
             return Task.FromResult(Data.Ok());
         }));
         var result = await ch.AskAsync(new global::app.module.output.ask { Question = new global::app.data.@this<global::app.type.text.@this>("", "") });
-        await Assert.That(result.Value as string).IsEqualTo("answer");
+        await Assert.That((await result.Value()) as string).IsEqualTo("answer");
         await Assert.That(receivedData).IsNotNull();
-        await Assert.That(receivedData!.Value as string).IsEqualTo("answer");
+        await Assert.That((await receivedData!.Value()) as string).IsEqualTo("answer");
     }
 
     [Test]

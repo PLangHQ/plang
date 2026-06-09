@@ -20,7 +20,7 @@ public class DataPlainTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<global::app.module.matrix.dataplain.DataPlain>(app,
             parameters: new[] { ("payload", (object?)42) });
-        await Assert.That(result.Data.Value).IsEqualTo(42);
+        await Assert.That((await result.Data.Value())).IsEqualTo(42);
     }
 
     [Test]
@@ -31,7 +31,7 @@ public class DataPlainTests
         var result = await MatrixRunner.RunAsync<global::app.module.matrix.dataplain.DataPlain>(app,
             parameters: new[] { ("payload", (object?)raw) });
         await Assert.That(result.Data.Value).IsTypeOf<List<object?>>();
-        var list = result.Data.Value as List<object?>;
+        var list = (await result.Data.Value()) as List<object?>;
         await Assert.That(list).IsNotNull();
         await Assert.That(list!.Count).IsEqualTo(3);
     }

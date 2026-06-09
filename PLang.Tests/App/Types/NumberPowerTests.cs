@@ -16,8 +16,8 @@ public class NumberPowerTests
     {
         var r = number.Power(number.From(2), number.From(10), PPolicy.Lenient);
         await r.IsSuccess();
-        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Int);
-        await Assert.That((int)r.Value!).IsEqualTo(1024);
+        await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Int);
+        await Assert.That((int)(await r.Value())!).IsEqualTo(1024);
     }
 
     [Test] public async Task Power_TwoPowNegOne_ReturnsHalf_NotZero()
@@ -25,15 +25,15 @@ public class NumberPowerTests
         var r = number.Power(number.From(2), number.From(-1), PPolicy.Lenient);
         await r.IsSuccess();
         // Leaves integer track — returns 0.5 (as double under lenient).
-        await Assert.That(r.Value!.Kind == PKind.Double || r.Value!.Kind == PKind.Decimal).IsTrue();
-        await Assert.That((double)r.Value!).IsEqualTo(0.5);
+        await Assert.That((await r.Value())!.Kind == PKind.Double || (await r.Value())!.Kind == PKind.Decimal).IsTrue();
+        await Assert.That((double)(await r.Value())!).IsEqualTo(0.5);
     }
 
     [Test] public async Task Power_TwoPowHalf_PromotesToDouble()
     {
         var r = number.Power(number.From(2), number.From(0.5), PPolicy.Lenient);
         await r.IsSuccess();
-        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Double);
+        await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Double);
     }
 
     [Test] public async Task Power_LargeExponent_Overflow_PromoteMode_Widens()
@@ -42,7 +42,7 @@ public class NumberPowerTests
         var r = number.Power(number.From(2), number.From(40), PPolicy.Lenient);
         await r.IsSuccess();
         // long range or decimal — past int.
-        await Assert.That(r.Value!.Kind == PKind.Long || r.Value!.Kind == PKind.Decimal).IsTrue();
+        await Assert.That((await r.Value())!.Kind == PKind.Long || (await r.Value())!.Kind == PKind.Decimal).IsTrue();
     }
 
     [Test] public async Task Power_LargeExponent_Overflow_ThrowMode_DataFailMathOverflow()
@@ -91,7 +91,7 @@ public class NumberPowerTests
         var r = number.Power(number.From(2.0), number.From(1000),
             PPolicy.Lenient);
         await r.IsSuccess();
-        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Double);
+        await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Double);
     }
 
     [Test] public async Task Power_NegativeExponent_DoubleBase_SkipsCap()
@@ -109,6 +109,6 @@ public class NumberPowerTests
         var r = number.Power(number.From(2), number.From(100.5),
             PPolicy.Lenient);
         await r.IsSuccess();
-        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Double);
+        await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Double);
     }
 }

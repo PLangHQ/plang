@@ -27,11 +27,11 @@ public class RowModelTests
         a.Add(D(Of(50, 60)));                   // list row, weight 2 — merges on read
 
         await Assert.That(a.Count).IsEqualTo(6);            // flattened, not row count
-        await Assert.That(a.At(0)!.Value).IsEqualTo(10L);
-        await Assert.That(a.At(3)!.Value).IsEqualTo(40L);
-        await Assert.That(a.At(4)!.Value).IsEqualTo(50L);   // into the nested row
-        await Assert.That(a.At(5)!.Value).IsEqualTo(60L);
-        await Assert.That(a.Last!.Value).IsEqualTo(60L);
+        await Assert.That((await a.At(0)!.Value())).IsEqualTo(10L);
+        await Assert.That((await a.At(3)!.Value())).IsEqualTo(40L);
+        await Assert.That((await a.At(4)!.Value())).IsEqualTo(50L);   // into the nested row
+        await Assert.That((await a.At(5)!.Value())).IsEqualTo(60L);
+        await Assert.That((await a.Last!.Value())).IsEqualTo(60L);
     }
 
     [Test]
@@ -47,8 +47,8 @@ public class RowModelTests
 
         // write-through: set a leaf in a that came from b → b must be untouched.
         a.SetAt(2, D(99L));
-        await Assert.That(a.At(2)!.Value).IsEqualTo(99L);
-        await Assert.That(b.At(0)!.Value).IsEqualTo(50L);
+        await Assert.That((await a.At(2)!.Value())).IsEqualTo(99L);
+        await Assert.That((await b.At(0)!.Value())).IsEqualTo(50L);
 
         // read-view: mutate b → a must not track it.
         b.Add(D(70L));
@@ -64,7 +64,7 @@ public class RowModelTests
 
         a.RemoveAt(2);                          // removes 50 (inside the nested row)
         await Assert.That(a.Count).IsEqualTo(3);
-        await Assert.That(a.At(2)!.Value).IsEqualTo(60L);
+        await Assert.That((await a.At(2)!.Value())).IsEqualTo(60L);
     }
 
     [Test]
@@ -76,7 +76,7 @@ public class RowModelTests
         a.Add(D(d1)); a.Add(D(d2));             // [{x:1}, {x:2}]
 
         await Assert.That(a.Count).IsEqualTo(2);            // dicts are whole items
-        await Assert.That(a.At(0)!.Value is DictV).IsTrue();
+        await Assert.That((await a.At(0)!.Value()) is DictV).IsTrue();
     }
 
     [Test]
@@ -87,7 +87,7 @@ public class RowModelTests
         a.SortByValue(descending: false);       // → [5, 10, 20, 30]
 
         await Assert.That(a.Count).IsEqualTo(4);
-        await Assert.That(a.At(0)!.Value).IsEqualTo(5L);
-        await Assert.That(a.At(3)!.Value).IsEqualTo(30L);
+        await Assert.That((await a.At(0)!.Value())).IsEqualTo(5L);
+        await Assert.That((await a.At(3)!.Value())).IsEqualTo(30L);
     }
 }

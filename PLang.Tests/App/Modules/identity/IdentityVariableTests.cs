@@ -60,7 +60,7 @@ public class IdentityDataTests
         var data = new Data("test", identity);
         var child = data.GetChild("PublicKey");
         await Assert.That(child).IsNotNull();
-        await Assert.That(child!.Value?.ToString()).IsEqualTo("dGVzdHB1YmxpY2tleQ==");
+        await Assert.That((await child!.Value())?.ToString()).IsEqualTo("dGVzdHB1YmxpY2tleQ==");
     }
 
     [Test]
@@ -77,7 +77,7 @@ public class IdentityDataTests
         var data = new Data("test", identity);
         var child = data.GetChild("IsArchived");
         await Assert.That(child).IsNotNull();
-        await Assert.That(child!.Value).IsEqualTo(false);
+        await Assert.That((await child!.Value())).IsEqualTo(false);
     }
 
     [Test]
@@ -87,7 +87,7 @@ public class IdentityDataTests
         var data = new Data("test", identity);
         var child = data.GetChild("IsDefault");
         await Assert.That(child).IsNotNull();
-        await Assert.That(child!.Value).IsEqualTo(true);
+        await Assert.That((await child!.Value())).IsEqualTo(true);
     }
 
     [Test]
@@ -98,6 +98,6 @@ public class IdentityDataTests
         var data = new Data("test", identity);
         var child = data.GetChild("PrivateKey");
         await Assert.That(child).IsNotNull();
-        await Assert.That(child!.Value?.ToString()).IsEqualTo("dGVzdHByaXZhdGVrZXk=");
+        await Assert.That((await child!.Value())?.ToString()).IsEqualTo("dGVzdHByaXZhdGVrZXk=");
     }
 }

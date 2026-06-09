@@ -25,7 +25,7 @@ public class Cut1_VerbatimPassthrough
     {
         var d = data.FromRaw(ConfigJson, type.Create("object", "json"));
         d.Name = "cfg";
-        var wire = plang.ContextLessFallback.Serialize(d).Value!;
+        var wire = (await plang.ContextLessFallback.Serialize(d).Value())!;
         await Assert.That(wire).Contains("\"value\":" + ConfigJson); // raw verbatim, not re-encoded
         await Assert.That(d.MaterializeCount).IsEqualTo(0);
     }
@@ -36,9 +36,9 @@ public class Cut1_VerbatimPassthrough
     {
         var d = data.FromRaw(ConfigJson, type.Create("object", "json"));
         d.Name = "cfg";
-        var wire1 = plang.ContextLessFallback.Serialize(d).Value!;
-        var back = (data)plang.ContextLessFallback.Deserialize(wire1).Value!; // deferred (raw-backed)
-        var wire2 = plang.ContextLessFallback.Serialize(back).Value!;
+        var wire1 = (await plang.ContextLessFallback.Serialize(d).Value())!;
+        var back = (data)(await plang.ContextLessFallback.Deserialize(wire1).Value())!; // deferred (raw-backed)
+        var wire2 = (await plang.ContextLessFallback.Serialize(back).Value())!;
         await Assert.That(wire2).IsEqualTo(wire1);
         await Assert.That(back.MaterializeCount).IsEqualTo(0);
     }
@@ -50,12 +50,12 @@ public class Cut1_VerbatimPassthrough
         await using var app = NewApp();
         var ctx = app.User.Context;
         var d = data.FromRaw(ConfigJson, type.Create("object", "json", context: ctx), ctx, "cfg");
-        await Assert.That(d.GetChild("port").Value?.ToString()).IsEqualTo("8080"); // materializes
+        await Assert.That((await d.GetChild("port").Value())?.ToString()).IsEqualTo("8080"); // materializes
         await Assert.That(d.MaterializeCount).IsEqualTo(1);
 
         var s = app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var back = (data)s.Deserialize(s.Serialize(d).Value!).Value!;
-        await Assert.That(back.GetChild("port").Value?.ToString()).IsEqualTo("8080"); // semantic round-trip
+        var back = (data)(await s.Deserialize((await s.Serialize(d).Value())!).Value())!;
+        await Assert.That((await back.GetChild("port").Value())?.ToString()).IsEqualTo("8080"); // semantic round-trip
     }
 
     // The reader is never invoked on the untouched path (open item 4: the probe
@@ -64,7 +64,7 @@ public class Cut1_VerbatimPassthrough
     {
         var d = data.FromRaw(ConfigJson, type.Create("object", "json"));
         d.Name = "cfg";
-        _ = plang.ContextLessFallback.Serialize(d).Value!;
+        _ = (await plang.ContextLessFallback.Serialize(d).Value())!;
         await Assert.That(d.MaterializeCount).IsEqualTo(0);
     }
 }

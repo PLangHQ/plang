@@ -36,7 +36,7 @@ public class MutationInvalidatesRawTests
         var d = RawBacked(app.User.Context);
         await Assert.That(d.HasRaw).IsTrue();
         // The public mutation (assigning Value) is what a navigation-set lands on.
-        d.Value = 99;
+        d.SetValue(99);
         await Assert.That(d.HasRaw).IsFalse();
     }
 
@@ -47,9 +47,9 @@ public class MutationInvalidatesRawTests
     {
         var d = data.FromRaw("{\"port\":8080}", type.Create("object", "json"));
         d.Name = "cfg";
-        d.Value = "mutated";   // mutation clears _raw — raw is no longer authoritative
+        d.SetValue("mutated");   // mutation clears _raw — raw is no longer authoritative
 
-        var wire = global::app.channel.serializer.plang.@this.ContextLessFallback.Serialize(d).Value!;
+        var wire = (await global::app.channel.serializer.plang.@this.ContextLessFallback.Serialize(d).Value())!;
         await Assert.That(wire).Contains("\"value\":\"mutated\""); // renderer output
         await Assert.That(wire).DoesNotContain("8080");           // not the stale raw
     }

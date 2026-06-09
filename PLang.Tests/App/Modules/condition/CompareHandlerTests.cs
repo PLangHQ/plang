@@ -32,7 +32,7 @@ public class CompareHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo(true);
+        await Assert.That((await result.Value())).IsEqualTo(true);
     }
 
     [Test]
@@ -42,7 +42,7 @@ public class CompareHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo(false);
+        await Assert.That((await result.Value())).IsEqualTo(false);
     }
 
     [Test]
@@ -51,8 +51,8 @@ public class CompareHandlerTests : IDisposable
         var action = new Compare { Context = _app.User.Context, Left = Data.Ok(5), Operator = (global::app.type.choice.@this<Operator>)new Operator("=="), Right = Data.Ok(5) };
         var result = await action.Run();
 
-        await Assert.That(result.Value is global::app.type.@bool.@this).IsTrue();
-        await Assert.That((bool)(global::app.type.@bool.@this)result.Value!).IsTrue();
+        await Assert.That((await result.Value()) is global::app.type.@bool.@this).IsTrue();
+        await Assert.That((bool)(global::app.type.@bool.@this)(await result.Value())!).IsTrue();
     }
 
     [Test]

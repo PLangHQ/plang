@@ -80,8 +80,8 @@ public class NormalizeTreeShapeTests
         await Assert.That(result).IsTypeOf<app.type.dict.@this>();
         var list = result.Children();
         await Assert.That(list.Count).IsEqualTo(2);
-        await Assert.That(list.Any(c => c.Name == "a" && (int)c.Value! == 1)).IsTrue();
-        await Assert.That(list.Any(c => c.Name == "b" && (int)c.Value! == 2)).IsTrue();
+        await Assert.That(list.Any(c => c.Name == "a" && (int)(c.Materialize())! == 1)).IsTrue();
+        await Assert.That(list.Any(c => c.Name == "b" && (int)(c.Materialize())! == 2)).IsTrue();
     }
 
     [Test] public async Task Normalize_DomainObject_EmitsOneChildPerOutProperty_LowercasedName()
@@ -99,8 +99,8 @@ public class NormalizeTreeShapeTests
         var children = result.Children();
         // Only [Out] props ship: Name + PublicKey. PrivateKey [Sensitive], others local.
         await Assert.That(children.Count).IsEqualTo(2);
-        await Assert.That(children.Any(c => c.Name == "name" && (string?)c.Value == "alice")).IsTrue();
-        await Assert.That(children.Any(c => c.Name == "publickey" && (string?)c.Value == "pk")).IsTrue();
+        await Assert.That(children.Any(c => c.Name == "name" && c.Materialize()?.ToString() == "alice")).IsTrue();
+        await Assert.That(children.Any(c => c.Name == "publickey" && c.Materialize()?.ToString() == "pk")).IsTrue();
     }
 
     [Test] public async Task Normalize_RecordType_EmitsOneChildPerOutProperty()
@@ -110,9 +110,9 @@ public class NormalizeTreeShapeTests
         var result = d.Normalize();
         var children = result.Children();
         await Assert.That(children.Count).IsEqualTo(2);
-        await Assert.That(children.Any(c => c.Name == "key" && (string?)c.Value == "DATABASE_URL")).IsTrue();
+        await Assert.That(children.Any(c => c.Name == "key" && c.Materialize()?.ToString() == "DATABASE_URL")).IsTrue();
         // [Masked] — value is "****", real value never reached.
-        await Assert.That(children.Any(c => c.Name == "value" && (string?)c.Value == "****")).IsTrue();
+        await Assert.That(children.Any(c => c.Name == "value" && c.Materialize()?.ToString() == "****")).IsTrue();
     }
 
     [Test] public async Task Normalize_IsIdempotent_CallingTwiceProducesSameTree()

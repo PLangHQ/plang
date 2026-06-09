@@ -23,7 +23,7 @@ public class ExistsTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That((bool)result.Value!).IsTrue();
+        await Assert.That((bool)(await result.Value())!).IsTrue();
     }
 
     [Test]
@@ -35,6 +35,6 @@ public class ExistsTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That((bool)result.Value!).IsFalse();
+        await Assert.That((bool)(await result.Value())!).IsFalse();
     }
 }

@@ -18,12 +18,12 @@ public class DescribeTests
 
         var existsProp = action.ReturnType!.FirstOrDefault(d => d.Name == "Exists");
         await Assert.That(existsProp).IsNotNull();
-        await Assert.That(existsProp!.Value!.ToString()).IsEqualTo("bool");
+        await Assert.That((await existsProp!.Value())!.ToString()).IsEqualTo("bool");
 
         var sizeProp = action.ReturnType!.FirstOrDefault(d => d.Name == "Size");
         await Assert.That(sizeProp).IsNotNull();
         // long → number (post-Stage-2: numerics surface as kinds of number).
-        await Assert.That(sizeProp!.Value!.ToString()).IsEqualTo("number");
+        await Assert.That((await sizeProp!.Value())!.ToString()).IsEqualTo("number");
     }
 
     [Test]
@@ -49,7 +49,7 @@ public class DescribeTests
 
         var pathParam = action.Parameters!.FirstOrDefault(d => d.Name == "Path");
         await Assert.That(pathParam).IsNotNull();
-        await Assert.That(pathParam!.Value!.ToString()).Contains("path");
+        await Assert.That((await pathParam!.Value())!.ToString()).Contains("path");
     }
 }
 

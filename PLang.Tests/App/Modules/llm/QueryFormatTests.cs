@@ -115,8 +115,8 @@ public class QueryFormatTests
 
         await result.IsSuccess();
         // Value should be parsed JSON
-        await Assert.That(result.Value).IsNotNull();
-        var json = result.Value is JsonElement je ? je : JsonSerializer.SerializeToElement(result.Value is global::app.type.dict.@this _nd ? _nd.ToRaw() : result.Value);
+        await Assert.That((await result.Value())).IsNotNull();
+        var json = (await result.Value()) is JsonElement je ? je : JsonSerializer.SerializeToElement((await result.Value()) is global::app.type.dict.@this _nd ? _nd.ToRaw() : (await result.Value()));
         await Assert.That(json.GetProperty("sentiment").GetString()).IsEqualTo("positive");
     }
 
@@ -186,7 +186,7 @@ public class QueryFormatTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("print('hello')");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("print('hello')");
     }
 
     [Test]
@@ -208,7 +208,7 @@ public class QueryFormatTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("# Hello World");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("# Hello World");
     }
 
     [Test]
@@ -229,7 +229,7 @@ public class QueryFormatTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("Just plain text");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("Just plain text");
     }
 
     #endregion

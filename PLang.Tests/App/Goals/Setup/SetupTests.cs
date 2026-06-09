@@ -115,12 +115,12 @@ public class SetupTests
         // Verify step1 was skipped: marker value should still be there (not overwritten by Record)
         var step1Data = await _app.SettingsStore.Get("setup", "skip_hash1");
         await step1Data.IsSuccess();
-        await Assert.That(step1Data.Value?.ToString()).IsEqualTo("MARKER_NOT_RE_EXECUTED");
+        await Assert.That((await step1Data.Value())?.ToString()).IsEqualTo("MARKER_NOT_RE_EXECUTED");
 
         // Verify step2 was executed and recorded (has executedAt metadata, not our marker)
         var step2Data = await _app.SettingsStore.Get("setup", "skip_hash2");
         await step2Data.IsSuccess();
-        await Assert.That(step2Data.Value?.ToString()).IsNotEqualTo("MARKER_NOT_RE_EXECUTED");
+        await Assert.That((await step2Data.Value())?.ToString()).IsNotEqualTo("MARKER_NOT_RE_EXECUTED");
     }
 
     [Test]

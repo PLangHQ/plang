@@ -41,7 +41,7 @@ public class IdentityHandlerTests
         var result = await handler.Run();
         await result.IsSuccess();
 
-        var identity = result.Value as Identity;
+        var identity = (await result.Value()) as Identity;
         await Assert.That(identity).IsNotNull();
         await Assert.That(identity!.PublicKey).IsNotNull();
         await Assert.That(identity.PrivateKey).IsNotNull();
@@ -60,7 +60,7 @@ public class IdentityHandlerTests
         var result = await handler.Run();
         await result.IsSuccess();
 
-        var identity = result.Value as Identity;
+        var identity = (await result.Value()) as Identity;
         await Assert.That(identity!.IsDefault).IsFalse();
     }
 
@@ -71,7 +71,7 @@ public class IdentityHandlerTests
         var result = await handler.Run();
         await result.IsSuccess();
 
-        var identity = result.Value as Identity;
+        var identity = (await result.Value()) as Identity;
         await Assert.That(identity!.IsDefault).IsTrue();
     }
 
@@ -86,11 +86,11 @@ public class IdentityHandlerTests
 
         // First should no longer be default
         var firstResult = await new Get { Context = Ctx, Name = (global::app.type.text.@this)"first" }.Run();
-        var first = firstResult.Value as Identity;
+        var first = (await firstResult.Value()) as Identity;
         await Assert.That(first!.IsDefault).IsFalse();
 
         var secondResult = await new Get { Context = Ctx, Name = (global::app.type.text.@this)"second" }.Run();
-        var second = secondResult.Value as Identity;
+        var second = (await secondResult.Value()) as Identity;
         await Assert.That(second!.IsDefault).IsTrue();
     }
 
@@ -102,7 +102,7 @@ public class IdentityHandlerTests
 
         var loadResult = await new Get { Context = Ctx, Name = (global::app.type.text.@this)"stored" }.Run();
         await loadResult.IsSuccess();
-        var loaded = loadResult.Value as Identity;
+        var loaded = (await loadResult.Value()) as Identity;
         await Assert.That(loaded!.Name).IsEqualTo("stored");
     }
 
@@ -166,7 +166,7 @@ public class IdentityHandlerTests
         // Create two non-default identities
         var h1 = new Create { Context = Ctx, Name = (global::app.type.text.@this)"a", SetAsDefault = (global::app.type.@bool.@this)false };
         var r1 = await h1.Run();
-        var originalKey = (r1.Value as Identity)!.PublicKey;
+        var originalKey = ((await r1.Value()) as Identity)!.PublicKey;
         var h2 = new Create { Context = Ctx, Name = (global::app.type.text.@this)"b", SetAsDefault = (global::app.type.@bool.@this)false };
         await h2.Run();
 
@@ -175,7 +175,7 @@ public class IdentityHandlerTests
         var result = await handler.Run();
         await result.IsSuccess();
 
-        var identity = result.Value as Identity;
+        var identity = (await result.Value()) as Identity;
         await Assert.That(identity!.IsDefault).IsTrue();
         await Assert.That(identity.Name).IsEqualTo("a");
         await Assert.That(identity.PublicKey).IsEqualTo(originalKey);
@@ -191,7 +191,7 @@ public class IdentityHandlerTests
         var result = await handler.Run();
         await result.IsSuccess();
 
-        var identity = result.Value as Identity;
+        var identity = (await result.Value()) as Identity;
         await Assert.That(identity!.Name).IsEqualTo("alice");
     }
 
@@ -205,7 +205,7 @@ public class IdentityHandlerTests
         var result = await handler.Run();
         await result.IsSuccess();
 
-        var identity = result.Value as Identity;
+        var identity = (await result.Value()) as Identity;
         await Assert.That(identity!.Name).IsEqualTo("mydefault");
         await Assert.That(identity.IsDefault).IsTrue();
     }
@@ -217,7 +217,7 @@ public class IdentityHandlerTests
         var result = await handler.Run();
         await result.IsSuccess();
 
-        var identity = result.Value as Identity;
+        var identity = (await result.Value()) as Identity;
         await Assert.That(identity!.Name).IsEqualTo("default");
         await Assert.That(identity.IsDefault).IsTrue();
         await Assert.That(identity.PublicKey).IsNotNull();
@@ -231,7 +231,7 @@ public class IdentityHandlerTests
 
         var handler = new Get { Context = Ctx, Name = (global::app.type.text.@this)"full" };
         var result = await handler.Run();
-        var identity = result.Value as Identity;
+        var identity = (await result.Value()) as Identity;
 
         await Assert.That(identity!.Name).IsEqualTo("full");
         await Assert.That(identity.PublicKey).IsNotNull();
@@ -299,7 +299,7 @@ public class IdentityHandlerTests
         // If Get returns it, check IsArchived; if not, the archive succeeded (already asserted above)
         if (loadResult.Success)
         {
-            var loaded = loadResult.Value as Identity;
+            var loaded = (await loadResult.Value()) as Identity;
             await Assert.That(loaded!.IsArchived).IsTrue();
         }
     }
@@ -354,11 +354,11 @@ public class IdentityHandlerTests
         await result.IsSuccess();
 
         var oldResult = await new Get { Context = Ctx, Name = (global::app.type.text.@this)"old" }.Run();
-        var oldId = oldResult.Value as Identity;
+        var oldId = (await oldResult.Value()) as Identity;
         await Assert.That(oldId!.IsDefault).IsFalse();
 
         var newResult = await new Get { Context = Ctx, Name = (global::app.type.text.@this)"new" }.Run();
-        var newId = newResult.Value as Identity;
+        var newId = (await newResult.Value()) as Identity;
         await Assert.That(newId!.IsDefault).IsTrue();
     }
 
@@ -393,7 +393,7 @@ public class IdentityHandlerTests
         var result = await handler.Run();
         await result.IsSuccess();
 
-        var identity = result.Value as Identity;
+        var identity = (await result.Value()) as Identity;
         await Assert.That(identity!.IsDefault).IsTrue();
     }
 
@@ -414,7 +414,7 @@ public class IdentityHandlerTests
 
         var loadResult = await new Get { Context = Ctx, Name = (global::app.type.text.@this)"restore" }.Run();
         await loadResult.IsSuccess();
-        var loaded = loadResult.Value as Identity;
+        var loaded = (await loadResult.Value()) as Identity;
         await Assert.That(loaded!.IsArchived).IsFalse();
     }
 
@@ -437,7 +437,7 @@ public class IdentityHandlerTests
         var result = await handler.Run();
         await result.IsSuccess();
 
-        var identity = result.Value as Identity;
+        var identity = (await result.Value()) as Identity;
         await Assert.That(identity!.Name).IsEqualTo("active");
     }
 
@@ -448,13 +448,13 @@ public class IdentityHandlerTests
     {
         var create = new Create { Context = Ctx, Name = (global::app.type.text.@this)"oldname", SetAsDefault = (global::app.type.@bool.@this)false };
         var createResult = await create.Run();
-        var originalKey = (createResult.Value as Identity)!.PublicKey;
+        var originalKey = ((await createResult.Value()) as Identity)!.PublicKey;
 
         var handler = new Rename { Context = Ctx, Name = (global::app.type.text.@this)"oldname", NewName = (global::app.type.text.@this)"newname" };
         var result = await handler.Run();
         await result.IsSuccess();
 
-        var renamed = result.Value as Identity;
+        var renamed = (await result.Value()) as Identity;
         await Assert.That(renamed!.Name).IsEqualTo("newname");
         await Assert.That(renamed.PublicKey).IsEqualTo(originalKey);
 
@@ -528,12 +528,12 @@ public class IdentityHandlerTests
     {
         var create = new Create { Context = Ctx, Name = (global::app.type.text.@this)"exportme", SetAsDefault = (global::app.type.@bool.@this)true };
         var createResult = await create.Run();
-        var expectedKey = (createResult.Value as Identity)!.PrivateKey;
+        var expectedKey = ((await createResult.Value()) as Identity)!.PrivateKey;
 
         var handler = new Export { Context = Ctx, Name = (global::app.type.text.@this)"exportme" };
         var result = await handler.Run();
         await result.IsSuccess();
-        var identity = result.Value as Identity;
+        var identity = (await result.Value()) as Identity;
         await Assert.That(identity!.PrivateKey).IsEqualTo(expectedKey);
         await Assert.That(identity.PublicKey).IsNotNull();
     }
@@ -543,12 +543,12 @@ public class IdentityHandlerTests
     {
         var create = new Create { Context = Ctx, Name = (global::app.type.text.@this)"mydefault", SetAsDefault = (global::app.type.@bool.@this)true };
         var createResult = await create.Run();
-        var expectedKey = (createResult.Value as Identity)!.PrivateKey;
+        var expectedKey = ((await createResult.Value()) as Identity)!.PrivateKey;
 
         var handler = new Export { Context = Ctx, Name = null };
         var result = await handler.Run();
         await result.IsSuccess();
-        var identity = result.Value as Identity;
+        var identity = (await result.Value()) as Identity;
         await Assert.That(identity!.PrivateKey).IsEqualTo(expectedKey);
     }
 
@@ -579,14 +579,14 @@ public class IdentityHandlerTests
         // Create an identity named "default" but NOT as the default
         var create = new Create { Context = Ctx, Name = (global::app.type.text.@this)"default", SetAsDefault = (global::app.type.@bool.@this)false };
         var createResult = await create.Run();
-        var originalKey = (createResult.Value as Identity)!.PublicKey;
+        var originalKey = ((await createResult.Value()) as Identity)!.PublicKey;
 
         // Now trigger auto-create by getting default (none marked as default yet)
         var get = new Get { Context = Ctx, Name = null };
         var getResult = await get.Run();
         await getResult.IsSuccess();
 
-        var identity = getResult.Value as Identity;
+        var identity = (await getResult.Value()) as Identity;
         // Should have promoted the existing "default", not created a new one
         await Assert.That(identity!.Name).IsEqualTo("default");
         await Assert.That(identity.PublicKey).IsEqualTo(originalKey);
@@ -602,7 +602,7 @@ public class IdentityHandlerTests
         var handler = new Export { Context = Ctx, Name = null };
         var result = await handler.Run();
         await result.IsSuccess();
-        var identity = result.Value as Identity;
+        var identity = (await result.Value()) as Identity;
         await Assert.That(identity!.PrivateKey).IsNotNull();
     }
 }

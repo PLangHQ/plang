@@ -67,7 +67,7 @@ public class LlmIntegrationTests
         if (result == null) return; // skipped, no API key
 
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString() ?? "").Contains("42");
+        await Assert.That((await result.Value())?.ToString() ?? "").Contains("42");
         await Assert.That(result.Properties["TotalTokens"]).IsNotNull();
     }
 
@@ -95,8 +95,8 @@ public class LlmIntegrationTests
 
         await result.IsSuccess();
         // Value should be parsed JSON (JsonElement)
-        await Assert.That(result.Value).IsNotNull();
-        var json = result.Value is JsonElement je ? je : JsonSerializer.SerializeToElement(result.Value is global::app.type.dict.@this _nd ? _nd.ToRaw() : result.Value);
+        await Assert.That((await result.Value())).IsNotNull();
+        var json = (await result.Value()) is JsonElement je ? je : JsonSerializer.SerializeToElement((await result.Value()) is global::app.type.dict.@this _nd ? _nd.ToRaw() : (await result.Value()));
         await Assert.That(json.TryGetProperty("sentiment", out _)).IsTrue();
         await Assert.That(result.Properties["Format"]?.ToString()).IsEqualTo("json");
     }
@@ -124,7 +124,7 @@ public class LlmIntegrationTests
         if (result == null) return;
 
         await result.IsSuccess();
-        var code = result.Value?.ToString() ?? "";
+        var code = (await result.Value())?.ToString() ?? "";
         await Assert.That(code).Contains("def ");
         await Assert.That(code).Contains("return");
         // Should NOT contain the ```python wrapper — extracted
@@ -171,7 +171,7 @@ public class LlmIntegrationTests
         if (result2 == null) return;
 
         await result2.IsSuccess();
-        await Assert.That(result2.Value?.ToString() ?? "").Contains("Alice");
+        await Assert.That((await result2.Value())?.ToString() ?? "").Contains("Alice");
     }
 
     // --- Test 5: Tool calling ---
@@ -204,7 +204,7 @@ public class LlmIntegrationTests
         await result.IsSuccess();
         // The LLM should have attempted the tool, got an error (goal doesn't exist),
         // and then responded with something about not being able to get the weather
-        await Assert.That(result.Value?.ToString() ?? "").IsNotEmpty();
+        await Assert.That((await result.Value())?.ToString() ?? "").IsNotEmpty();
         var toolCallCount = result.Properties["ToolCallCount"];
         await Assert.That(toolCallCount).IsNotNull();
     }

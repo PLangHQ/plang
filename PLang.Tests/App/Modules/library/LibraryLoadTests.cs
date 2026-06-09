@@ -99,7 +99,7 @@ public class ModuleAddTests
             await result.IsSuccess();
 
             // The result value should report 0 actions discovered
-            await Assert.That(result.Value).IsNotNull();
+            await Assert.That((await result.Value())).IsNotNull();
         }
     }
 
@@ -119,7 +119,7 @@ public class ModuleAddTests
             var result = await add.Run();
 
             await result.IsSuccess();
-            await Assert.That(result.Value).IsNotNull();
+            await Assert.That((await result.Value())).IsNotNull();
         }
     }
 

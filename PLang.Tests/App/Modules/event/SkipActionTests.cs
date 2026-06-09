@@ -56,7 +56,7 @@ public class SkipActionTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo(42);
+        await Assert.That((await result.Value())).IsEqualTo(42);
     }
 
     [Test]
@@ -69,6 +69,6 @@ public class SkipActionTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(context.EventOverride!.Value).IsEqualTo(obj);
+        await Assert.That((await context.EventOverride!.Value())).IsEqualTo(obj);
     }
 }

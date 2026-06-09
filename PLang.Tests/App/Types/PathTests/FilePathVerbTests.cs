@@ -40,7 +40,7 @@ public class FilePathVerbTests
         await p.WriteBytes(bytes);
         var r = await p.ReadBytes();
         await r.IsSuccess();
-        await Assert.That((byte[])r.Value!).IsEquivalentTo(bytes);
+        await Assert.That((byte[])(await r.Value())!).IsEquivalentTo(bytes);
     }
 
     [Test] public async Task Exists_FalseBeforeWrite_TrueAfterWrite()
@@ -49,10 +49,10 @@ public class FilePathVerbTests
         var p = At(app, root, "ex.txt");
         var before = await p.ExistsAsync();
         await before.IsSuccess();
-        await Assert.That(before.Value).IsEqualTo(false);
+        await Assert.That((await before.Value())).IsEqualTo(false);
         await p.WriteText("now exists");
         var after = await p.ExistsAsync();
-        await Assert.That(after.Value).IsEqualTo(true);
+        await Assert.That((await after.Value())).IsEqualTo(true);
     }
 
     [Test] public async Task AsBooleanAsync_FalseBeforeWrite_TrueAfterWrite()
@@ -74,7 +74,7 @@ public class FilePathVerbTests
         var d = await p.Delete();
         await d.IsSuccess();
         var ex = await p.ExistsAsync();
-        await Assert.That(ex.Value).IsEqualTo(false);
+        await Assert.That((await ex.Value())).IsEqualTo(false);
     }
 
     [Test] public async Task Append_AddsToExistingContent()
@@ -94,7 +94,7 @@ public class FilePathVerbTests
         await p.WriteText("12345");
         var s = await p.Stat();
         await s.IsSuccess();
-        var info = (StatInfo)s.Value!;
+        var info = (StatInfo)(await s.Value())!;
         await Assert.That(info.Exists).IsTrue();
         await Assert.That(info.IsFile).IsEqualTo(true);
         await Assert.That(info.Length).IsEqualTo(5L);
@@ -106,7 +106,7 @@ public class FilePathVerbTests
         var p = At(app, root, "nope.txt");
         var s = await p.Stat();
         await s.IsSuccess();
-        var info = (StatInfo)s.Value!;
+        var info = (StatInfo)(await s.Value())!;
         await Assert.That(info.Exists).IsFalse();
     }
 
@@ -118,7 +118,7 @@ public class FilePathVerbTests
         var dir = new FilePath(root, app.User.Context);
         var list = await dir.List();
         await list.IsSuccess();
-        var entries = list.Value!;
+        var entries = (await list.Value())!;
         await Assert.That(entries.Count).IsGreaterThanOrEqualTo(2);
     }
 

@@ -15,8 +15,8 @@ public class NumberUnaryTests
     {
         var r = number.Abs(number.From(-5));
         await r.IsSuccess();
-        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Int);
-        await Assert.That((int)r.Value!).IsEqualTo(5);
+        await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Int);
+        await Assert.That((int)(await r.Value())!).IsEqualTo(5);
     }
 
     [Test] public async Task Abs_IntMinValue_PromotesToLong()
@@ -25,8 +25,8 @@ public class NumberUnaryTests
         // so the value is representable.
         var r = number.Abs(number.From(int.MinValue));
         await r.IsSuccess();
-        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Long);
-        await Assert.That((long)r.Value!).IsEqualTo(-(long)int.MinValue);
+        await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Long);
+        await Assert.That((long)(await r.Value())!).IsEqualTo(-(long)int.MinValue);
     }
 
     [Test] public async Task Abs_LongMinValue_WidensToInt128()
@@ -36,47 +36,47 @@ public class NumberUnaryTests
         // (Was MathOverflow pre-Way-3.)
         var r = number.Abs(number.From(long.MinValue));
         await r.IsSuccess();
-        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Int128);
+        await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Int128);
     }
 
     [Test] public async Task Abs_Decimal_PreservesDecimalKind()
     {
         var r = number.Abs(number.From(-3.14m));
         await r.IsSuccess();
-        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Decimal);
-        await Assert.That((decimal)r.Value!).IsEqualTo(3.14m);
+        await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Decimal);
+        await Assert.That((decimal)(await r.Value())!).IsEqualTo(3.14m);
     }
 
     [Test] public async Task Floor_Int_Unchanged()
     {
         var r = number.Floor(number.From(7));
         await r.IsSuccess();
-        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Int);
-        await Assert.That((int)r.Value!).IsEqualTo(7);
+        await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Int);
+        await Assert.That((int)(await r.Value())!).IsEqualTo(7);
     }
 
     [Test] public async Task Floor_Decimal_RoundsDown()
     {
         var r = number.Floor(number.From(3.9m));
         await r.IsSuccess();
-        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Decimal);
-        await Assert.That((decimal)r.Value!).IsEqualTo(3m);
+        await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Decimal);
+        await Assert.That((decimal)(await r.Value())!).IsEqualTo(3m);
     }
 
     [Test] public async Task Ceiling_Double_RoundsUp()
     {
         var r = number.Ceiling(number.From(3.1));
         await r.IsSuccess();
-        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Double);
-        await Assert.That((double)r.Value!).IsEqualTo(4.0);
+        await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Double);
+        await Assert.That((double)(await r.Value())!).IsEqualTo(4.0);
     }
 
     [Test] public async Task Sqrt_PositiveInt_ReturnsDouble()
     {
         var r = number.Sqrt(number.From(16));
         await r.IsSuccess();
-        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Double);
-        await Assert.That((double)r.Value!).IsEqualTo(4.0);
+        await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Double);
+        await Assert.That((double)(await r.Value())!).IsEqualTo(4.0);
     }
 
     [Test] public async Task Sqrt_NegativeNumber_SurfacesArithmeticError()
@@ -93,36 +93,36 @@ public class NumberUnaryTests
     {
         var r = number.Round(number.From(2.345m), 2);
         await r.IsSuccess();
-        await Assert.That((decimal)r.Value!).IsEqualTo(2.35m);
+        await Assert.That((decimal)(await r.Value())!).IsEqualTo(2.35m);
     }
 
     [Test] public async Task Round_Int_Unchanged()
     {
         var r = number.Round(number.From(7), 2);
         await r.IsSuccess();
-        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Int);
+        await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Int);
     }
 
     [Test] public async Task Min_TwoInts_ReturnsSmallerSameKind()
     {
         var r = number.Min(number.From(3), number.From(5), PPolicy.Lenient);
         await r.IsSuccess();
-        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Int);
-        await Assert.That((int)r.Value!).IsEqualTo(3);
+        await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Int);
+        await Assert.That((int)(await r.Value())!).IsEqualTo(3);
     }
 
     [Test] public async Task Max_IntAndDecimal_PromotesToDecimal()
     {
         var r = number.Max(number.From(2), number.From(3.5m), PPolicy.Lenient);
         await r.IsSuccess();
-        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Decimal);
-        await Assert.That((decimal)r.Value!).IsEqualTo(3.5m);
+        await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Decimal);
+        await Assert.That((decimal)(await r.Value())!).IsEqualTo(3.5m);
     }
 
     [Test] public async Task Max_NegativeAndPositive_ReturnsPositive()
     {
         var r = number.Max(number.From(-10), number.From(5), PPolicy.Lenient);
         await r.IsSuccess();
-        await Assert.That((int)r.Value!).IsEqualTo(5);
+        await Assert.That((int)(await r.Value())!).IsEqualTo(5);
     }
 }

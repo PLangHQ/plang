@@ -85,7 +85,7 @@ public class ConstructionBornNativeTests
             object? leaf = dict.Get(key)!.Value;
             await Assert.That(IsRawScalar(leaf)).IsFalse();
         }
-        var arr = (global::app.type.list.@this)dict.Get("arr")!.Value!;
+        var arr = (global::app.type.list.@this)(await dict.Get("arr")!.Value())!;
         foreach (var el in arr.Items)
             await Assert.That(IsRawScalar(el.Value)).IsFalse();
     }

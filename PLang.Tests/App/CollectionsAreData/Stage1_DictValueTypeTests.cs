@@ -18,7 +18,7 @@ public class Stage1_DictValueTypeTests
         d.Set(new Data("name", "a"));
         var entry = d.Get("name");
         await Assert.That(entry).IsNotNull();
-        await Assert.That((string?)entry!.Value).IsEqualTo("a");
+        await Assert.That((string?)(await entry!.Value())).IsEqualTo("a");
     }
 
     [Test]

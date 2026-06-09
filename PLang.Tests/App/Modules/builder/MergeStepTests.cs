@@ -53,7 +53,7 @@ public class MergeStepTests
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();
-        var merged = result.Value as Step;
+        var merged = (await result.Value()) as Step;
         await Assert.That(merged).IsNotNull();
         await Assert.That(merged!.Actions.Count).IsEqualTo(1);
         await Assert.That(merged.Actions[0].Module).IsEqualTo("output");

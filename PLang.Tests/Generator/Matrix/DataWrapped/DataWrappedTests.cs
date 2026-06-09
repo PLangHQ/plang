@@ -52,7 +52,7 @@ public class DataWrappedListTests
             parameters: new[] { ("messages", (object?)raw) },
             variables: new Dictionary<string, object?> { ["comment"] = "you are a compiler" });
         var typed = result.Data as global::app.data.@this<global::app.type.list.@this<global::app.module.llm.LlmMessage>>;
-        await Assert.That(typed!.Value).IsNotNull();
+        await Assert.That((await typed!.Value())).IsNotNull();
         var items = typed.GetValue<List<global::app.module.llm.LlmMessage>>()!;
         await Assert.That(items[0].Content).IsEqualTo("you are a compiler");
     }
@@ -64,7 +64,7 @@ public class DataWrappedListTests
         var result = await MatrixRunner.RunAsync<DataWrappedList>(app,
             parameters: new[] { ("messages", (object?)new List<object?>()) });
         var typed = result.Data as global::app.data.@this<global::app.type.list.@this<global::app.module.llm.LlmMessage>>;
-        await Assert.That(typed!.Value!.Count).IsEqualTo(0);
+        await Assert.That((await typed!.Value())!.Count).IsEqualTo(0);
     }
 }
 
@@ -105,7 +105,7 @@ public class DataWrappedActionListTests
             variables: new Dictionary<string, object?> { ["comment"] = "should-not-resolve" });
 
         var typed = result.Data as global::app.data.@this<global::app.type.list.@this<PrAction>>;
-        await Assert.That(typed!.Value).IsNotNull();
+        await Assert.That((await typed!.Value())).IsNotNull();
         // The sub-action's parameter Value is still raw "%comment%" — not resolved.
         var subParam = typed.GetValue<List<PrAction>>()![0].Parameters?.FirstOrDefault(p => p.Name == "v");
         await Assert.That(subParam!.Value).IsEqualTo("%comment%");
@@ -157,7 +157,7 @@ public class DataWrappedStringUsesCycleTests
 
         // %a% holds the literal bytes "%b%" (3 chars). No chain, no cycle.
         await result.Data.IsSuccess();
-        await Assert.That(result.Data.Value).IsEqualTo(3);
+        await Assert.That((await result.Data.Value())).IsEqualTo(3);
     }
 
     [Test]
@@ -172,7 +172,7 @@ public class DataWrappedStringUsesCycleTests
 
         // %a% holds the literal bytes "X-%b%" (5 chars). No re-resolution into surrounding text.
         await result.Data.IsSuccess();
-        await Assert.That(result.Data.Value).IsEqualTo(5);
+        await Assert.That((await result.Data.Value())).IsEqualTo(5);
     }
 
     [Test]
@@ -186,6 +186,6 @@ public class DataWrappedStringUsesCycleTests
 
         await result.Data.IsSuccess();
         // Run() returns Data.Ok(int) — base Data with boxed int, not Data<global::app.type.number.@this>.
-        await Assert.That(result.Data.Value).IsEqualTo(5);
+        await Assert.That((await result.Data.Value())).IsEqualTo(5);
     }
 }

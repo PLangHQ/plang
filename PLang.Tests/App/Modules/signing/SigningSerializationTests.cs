@@ -98,7 +98,7 @@ public class SigningSerializationTests
         var cryptoProvider = new global::app.module.crypto.code.Default();
         var hashResult = cryptoProvider.Hash(new global::app.module.crypto.Hash
             { Data = Data.Ok(System.Text.Encoding.UTF8.GetBytes("test data")), Algorithm = (global::app.type.text.@this)"sha256" });
-        var hashBytes = ((global::app.module.crypto.type.hash.@this)hashResult.Value!).Bytes;
+        var hashBytes = ((global::app.module.crypto.type.hash.@this)(await hashResult.Value())!).Bytes;
         var base64Hash = Convert.ToBase64String(hashBytes);
 
         // Should be valid base64
@@ -116,7 +116,7 @@ public class SigningSerializationTests
 
         var data = System.Text.Encoding.UTF8.GetBytes("test");
         var sigResult = provider.Sign(data, keys.PrivateKey);
-        var sig = (byte[])sigResult.Value!;
+        var sig = (byte[])(await sigResult.Value())!;
         var base64Sig = Convert.ToBase64String(sig);
 
         var decoded = Convert.FromBase64String(base64Sig);
@@ -150,7 +150,7 @@ public class SigningSerializationTests
         {
             var engine = new global::app.@this(tempDir);
             var signedData = Data.Ok("test");
-            signedData.Value = sd;
+            signedData.SetValue(sd);
 
             var action = new verify
             {

@@ -44,7 +44,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        var f = result.Value as PLangPath;
+        var f = (await result.Value()) as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Absolute).IsEqualTo(TempPath("test.txt"));
         await Assert.That(f.Relative).IsEqualTo("/test.txt");
@@ -184,7 +184,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        var f = result.Value as PLangPath;
+        var f = (await result.Value()) as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Source).IsNotNull();
         await Assert.That(f.Relative).IsEqualTo("/dst.txt");
@@ -224,7 +224,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        var f = result.Value as PLangPath;
+        var f = (await result.Value()) as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Source).IsNotNull();
         await Assert.That(f.Relative).IsEqualTo("/move_dst.txt");
@@ -265,7 +265,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        var f = result.Value as PLangPath;
+        var f = (await result.Value()) as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(await f!.AsBooleanAsync()).IsFalse();
     }
@@ -313,7 +313,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        var f = result.Value as PLangPath;
+        var f = (await result.Value()) as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(await f!.AsBooleanAsync()).IsTrue();
     }
@@ -325,7 +325,7 @@ public class FileHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        var f = result.Value as PLangPath;
+        var f = (await result.Value()) as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(await f!.AsBooleanAsync()).IsFalse();
     }
@@ -417,7 +417,7 @@ public class FileHandlerTests : IDisposable
 
         var action = new Read { Context = _app.User.Context, Path = MakePath("sized.txt") };
         var result = await action.Run();
-        var content = result.Value as string;
+        var content = (await result.Value()) as string;
 
         await Assert.That(content!.Length).IsEqualTo(5);
     }
@@ -430,7 +430,7 @@ public class FileHandlerTests : IDisposable
         var action = new Read { Context = _app.User.Context, Path = MakePath("tostring.txt") };
         var result = await action.Run();
 
-        await Assert.That(result.Value!.ToString()).IsEqualTo("file-content");
+        await Assert.That((await result.Value())!.ToString()).IsEqualTo("file-content");
     }
 
     // --- Integration: file.exists -> Variables -> output.write ---
@@ -500,13 +500,13 @@ public class FileHandlerTests : IDisposable
 
         var fileData = context.Variable.Get("fileResult");
         await Assert.That(fileData).IsNotNull();
-        var fileObj = fileData!.Value as PLangPath;
+        var fileObj = (await fileData!.Value()) as PLangPath;
         await Assert.That(fileObj).IsNotNull();
         await Assert.That(await fileObj!.AsBooleanAsync()).IsTrue();
 
         var existsData = context.Variable.Get("fileResult.Exists");
         await Assert.That(existsData).IsNotNull();
-        await Assert.That(existsData!.Value).IsEqualTo(true);
+        await Assert.That((await existsData!.Value())).IsEqualTo(true);
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
@@ -576,7 +576,7 @@ public class FileHandlerTests : IDisposable
 
         var existsData = context.Variable.Get("fileResult.Exists");
         await Assert.That(existsData).IsNotNull();
-        await Assert.That(existsData!.Value).IsEqualTo(false);
+        await Assert.That((await existsData!.Value())).IsEqualTo(false);
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();

@@ -146,7 +146,7 @@ public class QueryEdgeCaseTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("");
     }
 
     [Test]

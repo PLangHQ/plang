@@ -109,7 +109,7 @@ public class DeepResolutionListTests
             variables: new Dictionary<string, object?> { ["prompt"] = "You are a compiler" });
 
         var typed = result.Data as global::app.data.@this<global::app.type.list.@this<global::app.module.llm.LlmMessage>>;
-        await Assert.That(typed!.Value).IsNotNull();
+        await Assert.That((await typed!.Value())).IsNotNull();
         var items = typed.GetValue<List<global::app.module.llm.LlmMessage>>()!;
         await Assert.That(items[0].Content).IsEqualTo("You are a compiler");
     }
@@ -252,7 +252,7 @@ public class ReResolveAcrossCallsTests
             var r = await MatrixRunner.RunAsync<ReResolveAcrossCalls>(app,
                 parameters: new[] { ("value", (object?)"%i%") });
             var typed = r.Data as global::app.data.@this<global::app.type.text.@this>;
-            seen.Add(typed!.Value);
+            seen.Add((await typed!.Value()));
         }
         await Assert.That(seen[0]).IsEqualTo("value-0");
         await Assert.That(seen[1]).IsEqualTo("value-1");
@@ -282,7 +282,7 @@ public class ConcurrentHandlersTests
                 Parameters = new List<Data> { sharedData }
             };
             var data = await action.RunAsync(app.User.Context);
-            return data.Success && (data is global::app.data.@this<global::app.type.text.@this> typed) && typed.Value == "value";        })).ToArray();
+            return data.Success && (data is global::app.data.@this<global::app.type.text.@this> typed) && (await typed.Value()) == "value";        })).ToArray();
 
         var results = await Task.WhenAll(tasks);
         await Assert.That(results.All(b => b)).IsTrue();
@@ -301,7 +301,7 @@ public class ConcurrentHandlersTests
         var results = await Task.WhenAll(tasks);
 
         // Each should be independent and successful with the same resolved value.
-        await Assert.That(results.All(r => r.Value == "shared")).IsTrue();
+        await Assert.That(results.All(r => r.Materialize() == "shared")).IsTrue();
         // Distinct instances (no shared cache).
         var distinctCount = results.Select(r => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(r))
             .Distinct().Count();

@@ -24,10 +24,10 @@ public class MathTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsEqualTo(7);
+        await Assert.That((await result.Value())).IsEqualTo(7);
         // plang-types Stage 4: math.* returns Data<number>; the underlying kind
         // is Int (not the CLR `int`).
-        await Assert.That(result.Value!.Kind).IsEqualTo(global::app.type.number.NumberKind.Int);
+        await Assert.That((await result.Value())!.Kind).IsEqualTo(global::app.type.number.NumberKind.Int);
     }
 
     [Test]
@@ -38,8 +38,8 @@ public class MathTests
         var action = new Add { Context = context, A = new global::app.data.@this("", 3), B = new global::app.data.@this("", 4.5)};
         var result = await action.Run();
 
-        await Assert.That(result.Value).IsEqualTo(7.5);
-        await Assert.That(result.Value!.Kind).IsEqualTo(global::app.type.number.NumberKind.Double);
+        await Assert.That((await result.Value())).IsEqualTo(7.5);
+        await Assert.That((await result.Value())!.Kind).IsEqualTo(global::app.type.number.NumberKind.Double);
     }
 
     // --- Subtract ---
@@ -52,7 +52,7 @@ public class MathTests
         var action = new Subtract { Context = context, A = new global::app.data.@this("", 10), B = new global::app.data.@this("", 3)};
         var result = await action.Run();
 
-        await Assert.That(result.Value).IsEqualTo(7);
+        await Assert.That((await result.Value())).IsEqualTo(7);
     }
 
     // --- Multiply ---
@@ -65,7 +65,7 @@ public class MathTests
         var action = new Multiply { Context = context, A = new global::app.data.@this("", 6), B = new global::app.data.@this("", 7)};
         var result = await action.Run();
 
-        await Assert.That(result.Value).IsEqualTo(42);
+        await Assert.That((await result.Value())).IsEqualTo(42);
     }
 
     // --- Divide ---
@@ -79,7 +79,7 @@ public class MathTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        var value = Convert.ToDouble(result.Value);
+        var value = Convert.ToDouble((await result.Value()));
         await Assert.That(Math.Abs(value - 3.333333) < 0.001).IsTrue();
     }
 
@@ -104,7 +104,7 @@ public class MathTests
         var action = new Modulo { Context = context, A = new global::app.data.@this("", 10), B = new global::app.data.@this("", 3)};
         var result = await action.Run();
 
-        await Assert.That(result.Value).IsEqualTo(1);
+        await Assert.That((await result.Value())).IsEqualTo(1);
     }
 
     // --- Power ---
@@ -117,7 +117,7 @@ public class MathTests
         var action = new Power { Context = context, Base = new global::app.data.@this("", 2), Exponent = new global::app.data.@this("", 10)};
         var result = await action.Run();
 
-        await Assert.That(result.Value).IsEqualTo(1024);
+        await Assert.That((await result.Value())).IsEqualTo(1024);
     }
 
     // --- Sqrt ---
@@ -130,7 +130,7 @@ public class MathTests
         var action = new Sqrt { Context = context, Value = new global::app.data.@this("", 16)};
         var result = await action.Run();
 
-        await Assert.That(result.Value).IsEqualTo(4.0);
+        await Assert.That((await result.Value())).IsEqualTo(4.0);
     }
 
     [Test]
@@ -157,7 +157,7 @@ public class MathTests
         var action = new Abs { Context = context, Value = new global::app.data.@this("", -42)};
         var result = await action.Run();
 
-        await Assert.That(result.Value).IsEqualTo(42);
+        await Assert.That((await result.Value())).IsEqualTo(42);
     }
 
     // --- Round ---
@@ -170,7 +170,7 @@ public class MathTests
         var action = new Round { Context = context, Value = new global::app.data.@this("", 3.14159), Decimals = (global::app.type.number.@this)2 };
         var result = await action.Run();
 
-        await Assert.That(result.Value).IsEqualTo(3.14);
+        await Assert.That((await result.Value())).IsEqualTo(3.14);
     }
 
     // --- Floor / Ceiling ---
@@ -183,7 +183,7 @@ public class MathTests
         var action = new Floor { Context = context, Value = new global::app.data.@this("", 3.7)};
         var result = await action.Run();
 
-        await Assert.That(Convert.ToDouble(result.Value)).IsEqualTo(3.0);
+        await Assert.That(Convert.ToDouble((await result.Value()))).IsEqualTo(3.0);
     }
 
     [Test]
@@ -194,7 +194,7 @@ public class MathTests
         var action = new Ceiling { Context = context, Value = new global::app.data.@this("", 3.2)};
         var result = await action.Run();
 
-        await Assert.That(Convert.ToDouble(result.Value)).IsEqualTo(4.0);
+        await Assert.That(Convert.ToDouble((await result.Value()))).IsEqualTo(4.0);
     }
 
     // --- Min / Max ---
@@ -207,7 +207,7 @@ public class MathTests
         var action = new Min { Context = context, A = new global::app.data.@this("", 5), B = new global::app.data.@this("", 3)};
         var result = await action.Run();
 
-        await Assert.That(result.Value).IsEqualTo(3);
+        await Assert.That((await result.Value())).IsEqualTo(3);
     }
 
     [Test]
@@ -218,7 +218,7 @@ public class MathTests
         var action = new Max { Context = context, A = new global::app.data.@this("", 5), B = new global::app.data.@this("", 3)};
         var result = await action.Run();
 
-        await Assert.That(result.Value).IsEqualTo(5);
+        await Assert.That((await result.Value())).IsEqualTo(5);
     }
 
     // --- Random ---
@@ -232,7 +232,7 @@ public class MathTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        var value = Convert.ToInt32(result.Value);
+        var value = Convert.ToInt32((await result.Value()));
         await Assert.That(value >= 1 && value <= 10).IsTrue();
     }
 }

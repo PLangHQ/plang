@@ -95,7 +95,7 @@ public class RequestActionTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsNotNull();
+        await Assert.That((await result.Value())).IsNotNull();
         // The body is the lazy value; touching it materializes json → object.
         var json = JsonSerializer.Serialize(result.Value);
         await Assert.That(json).Contains("Alice");
@@ -579,7 +579,7 @@ public class RequestActionTests
         await Assert.That(lastData).IsNotNull();
         // Verify byte content was delivered (last chunk contains the input bytes)
         await Assert.That(lastData!.Value).IsTypeOf<byte[]>();
-        var chunk = (byte[])lastData.Value!;
+        var chunk = (byte[])(await lastData.Value())!;
         await Assert.That(chunk.Length).IsGreaterThan(0);
     }
 
@@ -1003,7 +1003,7 @@ public class RequestActionTests
         // The second (small) message should still be delivered
         var lastValue = Ctx.Variable.Get("chunk");
         await Assert.That(lastValue).IsNotNull();
-        await Assert.That(lastValue!.Value!.ToString()).IsEqualTo("ok");
+        await Assert.That((await lastValue!.Value())!.ToString()).IsEqualTo("ok");
     }
 
     #endregion

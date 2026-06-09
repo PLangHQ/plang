@@ -288,7 +288,7 @@ public class StartGoalTests
         // Type is derived from value ("y" is a string), not from defaults or [Default] attribute
         // This proves the fallback chain works: no defaults → no attribute → auto-derive
         var data = context.Variable.Get("x");
-        await Assert.That(data?.Value).IsEqualTo("y");
+        await Assert.That((await data.Value())).IsEqualTo("y");
     }
 
     #endregion
@@ -339,7 +339,7 @@ public class StartGoalTests
             App = context.App!;
             Context = context;
             var contentData = action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "Data", StringComparison.OrdinalIgnoreCase));
-            object? content = contentData?.Value;
+            object? content = (contentData.Materialize());
             if (content is string str && str.Contains('%'))
             {
                 var fullMatch = System.Text.RegularExpressions.Regex.Match(str, @"^%([^%]+)%$");

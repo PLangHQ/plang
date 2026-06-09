@@ -84,13 +84,13 @@ public class CallsTests
         {
             await using var _ = v.Calls.Push(new[] { new Data("who", "flow-A") });
             await Task.Yield();
-            return v.Get("who").Value!.ToString()!;
+            return (await v.Get("who").Value())!.ToString()!;
         }
         static async Task<string> TaskB(AppVars v)
         {
             await using var _ = v.Calls.Push(new[] { new Data("who", "flow-B") });
             await Task.Yield();
-            return v.Get("who").Value!.ToString()!;
+            return (await v.Get("who").Value())!.ToString()!;
         }
         static async Task<(string, string)> TaskWhenBoth(Task<string> a, Task<string> b)
         {
@@ -133,9 +133,9 @@ public class CallsTests
         var vars = new AppVars();
         await using var _ = vars.Calls.Push(new[] { new Data("x", 1) });
 
-        await Assert.That(vars.Get("x").Value).IsEqualTo(1);
+        await Assert.That((await vars.Get("x").Value())).IsEqualTo(1);
         vars.Set("x", 2);
-        await Assert.That(vars.Get("x").Value).IsEqualTo(2);
+        await Assert.That((await vars.Get("x").Value())).IsEqualTo(2);
     }
 
     [Test]
@@ -161,7 +161,7 @@ public class CallsTests
         var vars = new AppVars();
         var scope = vars.Calls.Push(null);
         vars.Set("fresh", 42);
-        await Assert.That(vars.Get("fresh").Value).IsEqualTo(42);
+        await Assert.That((await vars.Get("fresh").Value())).IsEqualTo(42);
 
         await scope.DisposeAsync();
         await Assert.That(vars.Get("fresh").IsInitialized).IsFalse();
@@ -185,13 +185,13 @@ public class CallsTests
             vars.Set("k", "writer-only");
             writerStarted.TrySetResult(true);
             await readerCanRead.Task;          // hold the overlay open
-            return vars.Get("k").Value!.ToString()!;
+            return (await vars.Get("k").Value())!.ToString()!;
         }
         async Task<string> Reader()
         {
             await writerStarted.Task;          // ensure writer's overlay is live
             await using var _ = vars.Calls.Push(null);
-            var seen = vars.Get("k").Value!.ToString()!;
+            var seen = (await vars.Get("k").Value())!.ToString()!;
             readerCanRead.TrySetResult(true);
             return seen;
         }

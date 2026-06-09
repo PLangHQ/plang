@@ -30,7 +30,7 @@ public class DataAsTResolutionTests
         var data = new Data("count", 42) { Context = _app.User.Context };
         var result = data.As<global::app.type.number.@this>(_app.User.Context);
         await Assert.That(result).IsTypeOf<global::app.data.@this<global::app.type.number.@this>>();
-        await Assert.That(result.Value).IsEqualTo(42);
+        await Assert.That((await result.Value())).IsEqualTo(42);
     }
 
     // Value is "%name%" (full match), Variables.Get("name").Value is T → returns Data<T> with that value.
@@ -81,7 +81,7 @@ public class DataAsTResolutionTests
 
         var result = data.As<global::app.type.list.@this<global::app.type.text.@this>>(_app.User.Context);
 
-        await Assert.That(result.Value).IsNotNull();
+        await Assert.That((await result.Value())).IsNotNull();
         var items = result.GetValue<List<string>>()!;
         await Assert.That(items[0]).IsEqualTo("hello");
         await Assert.That(items[1]).IsEqualTo("world");
@@ -97,7 +97,7 @@ public class DataAsTResolutionTests
 
         var result = data.As<global::app.type.dict.@this>(_app.User.Context);
 
-        await Assert.That(result.Value).IsNotNull();
+        await Assert.That((await result.Value())).IsNotNull();
         var dict = result.GetValue<Dictionary<string, object?>>()!;
         await Assert.That(dict["content"]).IsEqualTo("You are a compiler");
     }
@@ -111,8 +111,8 @@ public class DataAsTResolutionTests
         var result = data.As<global::app.type.path.@this>(_app.User.Context);
 
         // FileSystem.path.Resolve returned a Path instance — Value should be one.
-        await Assert.That(result.Value).IsNotNull();
-        await Assert.That(result.Value is global::app.type.path.@this).IsTrue();
+        await Assert.That((await result.Value())).IsNotNull();
+        await Assert.That((await result.Value()) is global::app.type.path.@this).IsTrue();
     }
 
     // TypeMapping conversion failure → Data.FromError with structured error.
@@ -182,7 +182,7 @@ public class DataAsTResolutionTests
         var result = data.As<global::app.type.list.@this<PrAction>>(_app.User.Context);
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsNotNull();
+        await Assert.That((await result.Value())).IsNotNull();
         // The substituted value should NOT have appeared inside the Action template — the raw %comment% remains.
         var firstAction = result.GetValue<List<PrAction>>()![0];
         var commentParam = firstAction.Parameters?.FirstOrDefault(p => p.Name == "comment");
@@ -204,9 +204,9 @@ public class DataAsTResolutionTests
         // shape, so it passes through untouched.
         var result = data.AsCanonical();
 
-        await Assert.That(result.Value).IsEqualTo(raw);
+        await Assert.That((await result.Value())).IsEqualTo(raw);
         // Raw element [0] is still "%x%" — no walk happened.
-        await Assert.That(((System.Collections.ArrayList)result.Value!)[0]).IsEqualTo("%x%");
+        await Assert.That(((System.Collections.ArrayList)(await result.Value())!)[0]).IsEqualTo("%x%");
     }
 
     // Non-generic IDictionary (Hashtable) — same shape contract as ArrayList above.
@@ -219,7 +219,7 @@ public class DataAsTResolutionTests
 
         var result = data.AsCanonical();
 
-        await Assert.That(((System.Collections.Hashtable)result.Value!)["key"]).IsEqualTo("%x%");
+        await Assert.That(((System.Collections.Hashtable)(await result.Value())!)["key"]).IsEqualTo("%x%");
     }
 
     // Stored values are values, not expressions. A stored string that happens to match

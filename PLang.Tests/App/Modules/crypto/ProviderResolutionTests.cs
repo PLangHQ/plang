@@ -45,7 +45,7 @@ public class ProviderResolutionTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        var hash = ((global::app.module.crypto.type.hash.@this)result.Value!).Bytes;
+        var hash = ((global::app.module.crypto.type.hash.@this)(await result.Value())!).Bytes;
         // Mock returns all-zero bytes
         await Assert.That(hash).IsEquivalentTo(new byte[32]);
     }
@@ -58,7 +58,7 @@ public class ProviderResolutionTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        var hash = ((global::app.module.crypto.type.hash.@this)result.Value!).Bytes;
+        var hash = ((global::app.module.crypto.type.hash.@this)(await result.Value())!).Bytes;
         // Should not be all zeros (global::app.module.crypto.code.Default produces real keccak256)
         await Assert.That(hash).IsNotEquivalentTo(new byte[32]);
         await Assert.That(hash.Length).IsEqualTo(32);
@@ -76,7 +76,7 @@ public class ProviderResolutionTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That((bool)result.Value!).IsTrue();
+        await Assert.That((bool)(await result.Value())!).IsTrue();
     }
 
     private class MockCryptoProvider : ICrypto

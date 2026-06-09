@@ -11,10 +11,10 @@ public class JsonSerializerRoundTripTests
         // text/html and application/json wire shape is data.Value only; data.Signature
         // backing field stays null after Write.
         var app = new global::app.@this("/test");
-        var data = new Data("v") { Value = "hello", Context = app.User.Context };
+        var data = new Data("v", "hello") { Context = app.User.Context };
 
         var json = app.User.Channel.Serializers.GetByMimeType("application/json");
-        var s = json.Serialize(data).Value!;
+        var s = (await json.Serialize(data).Value())!;
 
         await Assert.That(s.Contains("hello")).IsTrue();
         // Signature stays null — JsonSerializer doesn't access Signature property.
@@ -28,7 +28,7 @@ public class JsonSerializerRoundTripTests
         var app = new global::app.@this("/test");
         var json = app.User.Channel.Serializers.GetByMimeType("application/json");
         var raw = "\"hello\"";
-        var s = json.Deserialize<global::app.type.text.@this>(raw).Value!;
+        var s = (await json.Deserialize<global::app.type.text.@this>(raw).Value())!;
         await Assert.That(s).IsEqualTo("hello");
     }
 

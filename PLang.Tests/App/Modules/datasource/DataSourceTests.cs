@@ -46,7 +46,7 @@ public class DataSourceTests
 
         var getResult = await ds.Get("settings", "ApiKey");
         await getResult.IsSuccess();
-        await Assert.That(getResult.Value?.ToString()).IsEqualTo("sk-123");
+        await Assert.That((await getResult.Value())?.ToString()).IsEqualTo("sk-123");
     }
 
     [Test]
@@ -66,7 +66,7 @@ public class DataSourceTests
         await ds.Set("settings", "ApiKey", new Data("ApiKey", "new-value"));
 
         var result = await ds.Get("settings", "ApiKey");
-        await Assert.That(result.Value?.ToString()).IsEqualTo("new-value");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("new-value");
     }
 
     [Test]
@@ -96,7 +96,7 @@ public class DataSourceTests
         await ds.Set("settings", "ApiKey", new Data("ApiKey", "sk-123"));
         var result = await ds.Exists("settings", "ApiKey");
         await result.IsSuccess();
-        await Assert.That((bool)result.Value!).IsTrue();
+        await Assert.That((bool)(await result.Value())!).IsTrue();
     }
 
     [Test]
@@ -105,7 +105,7 @@ public class DataSourceTests
         using var ds = CreateDataSource();
         var result = await ds.Exists("settings", "NonExistent");
         await result.IsSuccess();
-        await Assert.That((bool)result.Value!).IsFalse();
+        await Assert.That((bool)(await result.Value())!).IsFalse();
     }
 
     [Test]
@@ -117,7 +117,7 @@ public class DataSourceTests
 
         var result = await ds.GetAll("settings");
         await result.IsSuccess();
-        var items = result.Value as List<Data>;
+        var items = (await result.Value()) as List<Data>;
         await Assert.That(items).IsNotNull();
         await Assert.That(items!.Count).IsEqualTo(2);
     }
@@ -168,8 +168,8 @@ public class DataSourceTests
         var settingsResult = await ds.Get("settings", "Key");
         var encryptionResult = await ds.Get("encryption", "Key");
 
-        await Assert.That(settingsResult.Value?.ToString()).IsEqualTo("SettingsValue");
-        await Assert.That(encryptionResult.Value?.ToString()).IsEqualTo("EncryptionValue");
+        await Assert.That((await settingsResult.Value())?.ToString()).IsEqualTo("SettingsValue");
+        await Assert.That((await encryptionResult.Value())?.ToString()).IsEqualTo("EncryptionValue");
     }
 
     [Test]
@@ -192,7 +192,7 @@ public class DataSourceTests
         // Should be retrievable using the same dirty name (sanitized identically)
         var getResult = await ds.Get("settings; DROP TABLE settings", "Key");
         await getResult.IsSuccess();
-        await Assert.That(getResult.Value?.ToString()).IsEqualTo("Value");
+        await Assert.That((await getResult.Value())?.ToString()).IsEqualTo("Value");
     }
 
     [Test]
@@ -203,7 +203,7 @@ public class DataSourceTests
         await result.IsSuccess();
 
         var getResult = await ds.Get("my_table", "Key");
-        await Assert.That(getResult.Value?.ToString()).IsEqualTo("Value");
+        await Assert.That((await getResult.Value())?.ToString()).IsEqualTo("Value");
     }
 
     [Test]
@@ -215,7 +215,7 @@ public class DataSourceTests
         await result.IsSuccess();
 
         var getResult = await ds.Get("!!!", "Key");
-        await Assert.That(getResult.Value?.ToString()).IsEqualTo("Value");
+        await Assert.That((await getResult.Value())?.ToString()).IsEqualTo("Value");
     }
 
     [Test]
@@ -226,7 +226,7 @@ public class DataSourceTests
 
         // Same name in different case should hit the same table
         var getResult = await ds.Get("settings", "Key");
-        await Assert.That(getResult.Value?.ToString()).IsEqualTo("Value1");
+        await Assert.That((await getResult.Value())?.ToString()).IsEqualTo("Value1");
     }
 
     // --- ClassifyException tests ---
@@ -286,16 +286,16 @@ public class DataSourceTests
         // Get
         var getResult = await ds.Get("items", "key1");
         await getResult.IsSuccess();
-        await Assert.That(getResult.Value?.ToString()).IsEqualTo("value1");
+        await Assert.That((await getResult.Value())?.ToString()).IsEqualTo("value1");
 
         // Exists
         var existsResult = await ds.Exists("items", "key1");
-        await Assert.That((bool)existsResult.Value!).IsTrue();
+        await Assert.That((bool)(await existsResult.Value())!).IsTrue();
 
         // GetAll
         await ds.Set("items", "key2", new Data("key2", "value2"));
         var allResult = await ds.GetAll("items");
-        var items = allResult.Value as List<Data>;
+        var items = (await allResult.Value()) as List<Data>;
         await Assert.That(items).IsNotNull();
         await Assert.That(items!.Count).IsEqualTo(2);
 
@@ -303,7 +303,7 @@ public class DataSourceTests
         var removeResult = await ds.Remove("items", "key1");
         await removeResult.IsSuccess();
         var afterRemove = await ds.Exists("items", "key1");
-        await Assert.That((bool)afterRemove.Value!).IsFalse();
+        await Assert.That((bool)(await afterRemove.Value())!).IsFalse();
     }
 
     [Test]
@@ -317,7 +317,7 @@ public class DataSourceTests
         // Second operation should see the same table (no re-creation needed)
         var result = await ds.Get("persistent", "key1");
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("value1");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("value1");
 
         // Tables() should list it
         var tablesResult = await ds.Tables();
@@ -338,8 +338,8 @@ public class DataSourceTests
         var result1 = await ds1.Get("shared", "key");
         var result2 = await ds2.Get("shared", "key");
 
-        await Assert.That(result1.Value?.ToString()).IsEqualTo("alpha_value");
-        await Assert.That(result2.Value?.ToString()).IsEqualTo("beta_value");
+        await Assert.That((await result1.Value())?.ToString()).IsEqualTo("alpha_value");
+        await Assert.That((await result2.Value())?.ToString()).IsEqualTo("beta_value");
     }
 
     [Test]
@@ -369,7 +369,7 @@ public class DataSourceTests
         await setResult.IsSuccess();
 
         var getResult = await ds.Get("test_table", "k");
-        await Assert.That(getResult.Value?.ToString()).IsEqualTo("v");
+        await Assert.That((await getResult.Value())?.ToString()).IsEqualTo("v");
 
         // Verify no .db directory was created on disk
         var dbDir = System.IO.Path.Combine(_tempDir, ".db");

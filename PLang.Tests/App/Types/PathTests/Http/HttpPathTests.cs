@@ -108,7 +108,7 @@ public class HttpPathTests
 
         var stat = await new HttpPath(url, context).Stat();
         await stat.IsSuccess();
-        var info = (global::app.type.path.@this.StatInfo)stat.Value!;
+        var info = (global::app.type.path.@this.StatInfo)(await stat.Value())!;
         await Assert.That(info.Exists).IsTrue();
         await Assert.That(info.Length).IsEqualTo(5L);
         await Assert.That(info.Modified).IsNotNull();
@@ -142,11 +142,11 @@ public class HttpPathTests
 
         var existsPresent = await new HttpPath(present, context).ExistsAsync();
         await existsPresent.IsSuccess();
-        await Assert.That(existsPresent.Value).IsEqualTo(true);
+        await Assert.That((await existsPresent.Value())).IsEqualTo(true);
 
         var existsAbsent = await new HttpPath(absent, context).ExistsAsync();
         await existsAbsent.IsSuccess();
-        await Assert.That(existsAbsent.Value).IsEqualTo(false);
+        await Assert.That((await existsAbsent.Value())).IsEqualTo(false);
     }
 
     [Test] public async Task Request_CarriesPlangSigningIdentityHeaders()

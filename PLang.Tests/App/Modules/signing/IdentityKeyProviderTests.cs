@@ -49,7 +49,7 @@ public class IdentityKeyProviderTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        var identity = result.Value as Identity;
+        var identity = (await result.Value()) as Identity;
         await Assert.That(identity).IsNotNull();
         await Assert.That(identity!.PublicKey).IsEqualTo("mock-pub-key");
         await Assert.That(identity.PrivateKey).IsEqualTo("mock-priv-key");
@@ -62,7 +62,7 @@ public class IdentityKeyProviderTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        var identity = result.Value as Identity;
+        var identity = (await result.Value()) as Identity;
         await Assert.That(identity).IsNotNull();
 
         // Ed25519 keys are 32 bytes each
@@ -100,7 +100,7 @@ public class IdentityKeyProviderTests
         // Load it back via Get action
         var getResult = await new Get { Context = Ctx, Name = (global::app.type.text.@this)"stored-test" }.Run();
         await getResult.IsSuccess();
-        var loaded = getResult.Value as Identity;
+        var loaded = (await getResult.Value()) as Identity;
         await Assert.That(loaded).IsNotNull();
         await Assert.That(loaded!.PublicKey).IsEqualTo("stored-pub");
         await Assert.That(loaded.PrivateKey).IsEqualTo("stored-priv");
@@ -117,7 +117,7 @@ public class IdentityKeyProviderTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        var identity = result.Value as Identity;
+        var identity = (await result.Value()) as Identity;
         await Assert.That(identity!.PublicKey).IsEqualTo("named-pub");
     }
 

@@ -38,7 +38,7 @@ public class EventHandlerTests
         var result = await MakeOn(context, global::app.@event.Trigger.BeforeGoal, "LogGoal", goalPattern: "TestGoal").Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value is global::app.type.text.@this).IsTrue(); // returns binding id
+        await Assert.That((await result.Value()) is global::app.type.text.@this).IsTrue(); // returns binding id
         await Assert.That(context.Events.Count).IsEqualTo(1);
     }
 
@@ -100,7 +100,7 @@ public class EventHandlerTests
     {
         var context = _app.User.Context;
         var registerResult = await MakeOn(context, global::app.@event.Trigger.BeforeGoal, "LogGoal", goalPattern: "*").Run();
-        var eventId = (string)registerResult.Value!;
+        var eventId = (string)(await registerResult.Value())!;
 
         await Assert.That(context.Events.Count).IsEqualTo(1);
 
@@ -230,7 +230,7 @@ public class EventHandlerTests
         // Verify the callback ran — parameter was injected on targetActor.Context.Variable
         var callbackRan = _app.User.Context.Variable.Get("callbackRan");
         await Assert.That(callbackRan).IsNotNull();
-        await Assert.That(callbackRan!.Value).IsEqualTo(true);
+        await Assert.That((await callbackRan!.Value())).IsEqualTo(true);
     }
 
     #endregion

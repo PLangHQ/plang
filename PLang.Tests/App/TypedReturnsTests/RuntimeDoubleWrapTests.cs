@@ -24,7 +24,7 @@ public class RuntimeDoubleWrapTests
     private static async Task AssertNotDoubleWrapped(Data result, string handlerName)
     {
         // The whole point: even when T = object, .Value must be the raw payload.
-        await Assert.That(result.Value is Data).IsFalse()
+        await Assert.That((await result.Value()) is Data).IsFalse()
             .Because(
                 $"{handlerName} double-wrapped: result.Value is itself a Data — " +
                 "the Data<object> implicit-operator footgun fired. " +
@@ -43,7 +43,7 @@ public class RuntimeDoubleWrapTests
         await result.IsSuccess();
         await AssertNotDoubleWrapped(result, "list.first");
         // Sanity — value is the raw 42L, not Data{42L}.
-        await Assert.That(result.Value).IsEqualTo(42L);
+        await Assert.That((await result.Value())).IsEqualTo(42L);
     }
 
     [Test]
@@ -71,7 +71,7 @@ public class RuntimeDoubleWrapTests
 
         await result.IsSuccess();
         await AssertNotDoubleWrapped(result, "list.last");
-        await Assert.That(result.Value).IsEqualTo(3L);
+        await Assert.That((await result.Value())).IsEqualTo(3L);
     }
 
     [Test]
@@ -83,7 +83,7 @@ public class RuntimeDoubleWrapTests
 
         await result.IsSuccess();
         await AssertNotDoubleWrapped(result, "math.add");
-        await Assert.That(result.Value).IsEqualTo(8L);
+        await Assert.That((await result.Value())).IsEqualTo(8L);
     }
 
     // Sweep across every action handler whose Run() returns Task<Data<object>>:
@@ -153,7 +153,7 @@ public class RuntimeDoubleWrapTests
         var result = await action.Run();
         await result.IsSuccess();
         await Assert.That(result.Value).IsTypeOf<global::app.type.list.@this>();
-        await Assert.That(((global::app.type.list.@this)result.Value!).Count).IsEqualTo(1);
+        await Assert.That(((global::app.type.list.@this)(await result.Value())!).Count).IsEqualTo(1);
         await app.DisposeAsync();
     }
 }

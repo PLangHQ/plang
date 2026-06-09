@@ -196,14 +196,14 @@ public class DataResultTests
         var result = Data.Ok(data);
 
         await result.IsSuccess();
-        await Assert.That(result.Value).IsNotNull();
+        await Assert.That((await result.Value())).IsNotNull();
     }
 
     [Test]
     public async Task Value_IsMutable()
     {
         var result = Data.Ok("initial");
-        result.Value = "changed";
+        result.SetValue("changed");
 
         await Assert.That(result.Value).IsEqualTo("changed");
     }

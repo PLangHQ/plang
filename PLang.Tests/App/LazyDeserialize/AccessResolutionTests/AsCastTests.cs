@@ -22,7 +22,7 @@ public class AsCastTests
         var d = data.Ok("{\"port\":8080}");
         var asObj = d.As("object/json", ctx); // explicit cast reads toward json via the reader
         await asObj.IsSuccess();
-        await Assert.That(asObj.GetChild("port").Value?.ToString()).IsEqualTo("8080");
+        await Assert.That((await asObj.GetChild("port").Value())?.ToString()).IsEqualTo("8080");
     }
 
     // Already-typed value: `as object` on a value that's already a tree
@@ -36,6 +36,6 @@ public class AsCastTests
         var d = data.Ok(dict);
         var r = d.As("object", ctx);
         await r.IsSuccess();
-        await Assert.That(r.GetChild("port").Value?.ToString()).IsEqualTo("8080");
+        await Assert.That((await r.GetChild("port").Value())?.ToString()).IsEqualTo("8080");
     }
 }

@@ -50,7 +50,7 @@ public class ForeachStringNotIterableTests
         var result = await step.RunAsync(context);
 
         await result.IsSuccess();
-        var loopResult = result.Value as LoopResult;
+        var loopResult = (await result.Value()) as LoopResult;
         await Assert.That(loopResult!.itemCount).IsEqualTo(1);
     }
 
@@ -108,7 +108,7 @@ public class ForeachStringNotIterableTests
         var result = await step.RunAsync(context);
 
         await result.IsSuccess();
-        var loopResult = result.Value as LoopResult;
+        var loopResult = (await result.Value()) as LoopResult;
         await Assert.That(loopResult!.itemCount).IsEqualTo(1);
         await Assert.That(context.Variable.GetValue("item")).IsEqualTo(42);
     }

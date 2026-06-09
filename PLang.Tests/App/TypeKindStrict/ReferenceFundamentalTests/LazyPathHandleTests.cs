@@ -49,8 +49,8 @@ public class LazyPathHandleTests
         await result.IsSuccess();
 
         var stored = context.Variable.Get("pic");
-        await Assert.That(stored!.Value is image).IsTrue();
-        var img = (image)stored.Value!;
+        await Assert.That((await stored!.Value()) is image).IsTrue();
+        var img = (image)(await stored.Value())!;
         await Assert.That(img.Path).IsNotNull();
         await Assert.That(img.Path!.FileName).IsEqualTo("ghost.jpg");
         // Nothing loaded — Bytes is empty until first async access.

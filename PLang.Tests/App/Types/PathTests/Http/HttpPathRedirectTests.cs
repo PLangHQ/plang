@@ -64,7 +64,7 @@ public class HttpPathRedirectTests
         // not from the origin (which was granted).
         await Assert.That(result.Error!.Key).IsEqualTo("PermissionDenied");
         // Bonus: the secret bytes never came back.
-        await Assert.That(result.Value as string).IsNotEqualTo("imds-secret");
+        await Assert.That((await result.Value()) as string).IsNotEqualTo("imds-secret");
     }
 
     [Test]

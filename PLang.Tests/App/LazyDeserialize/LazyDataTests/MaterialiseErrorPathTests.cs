@@ -25,7 +25,7 @@ public class MaterialiseErrorPathTests
         var d = MalformedJson(app.User.Context, "cfg");
         await Assert.That(d.Error).IsNull();
         // …the error fires at first touch of .Value.
-        _ = d.Value;
+        _ = (await d.Value());
         await Assert.That(d.Error).IsNotNull();
     }
 
@@ -34,7 +34,7 @@ public class MaterialiseErrorPathTests
     {
         await using var app = NewApp();
         var d = MalformedJson(app.User.Context, "cfg");
-        _ = d.Value;
+        _ = (await d.Value());
         await Assert.That(d.Error!.Message.Contains("cfg")).IsTrue();
     }
 

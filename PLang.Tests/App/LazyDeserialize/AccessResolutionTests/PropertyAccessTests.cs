@@ -16,14 +16,14 @@ public class PropertyAccessTests
         var d = data.FromRaw("{\"big\":\"body\"}", type.Create("object", "json"));
         d.Properties["status"] = 200;
         var status = d.GetChild("!status");
-        await Assert.That(status.Value).IsEqualTo((object)200);
+        await Assert.That((await status.Value())).IsEqualTo((object)200);
     }
 
     [Test] public async Task PropertyRead_NeverMaterialisesValue()
     {
         var d = data.FromRaw("{\"big\":\"body\"}", type.Create("object", "json"));
         d.Properties["status"] = 200;
-        _ = d.GetChild("!status").Value;       // read the property
+        _ = (await d.GetChild("!status").Value());       // read the property
         await Assert.That(d.MaterializeCount).IsEqualTo(0); // body untouched
     }
 }

@@ -38,9 +38,9 @@ public class Stage5_ListDictOpsTests
 
         var result = await WhereAction(ctx, "users", "age", ">", 20L).Run();
         await result.IsSuccess();
-        var filtered = (ListV)result.Value!;
+        var filtered = (ListV)(await result.Value())!;
         await Assert.That(filtered.Count).IsEqualTo(2);
-        await Assert.That((long)filtered.At(0)!.GetChild("age").Value!).IsEqualTo(25L);
+        await Assert.That((long)(await filtered.At(0)!.GetChild("age").Value())!).IsEqualTo(25L);
     }
 
     [Test]
@@ -80,9 +80,9 @@ public class Stage5_ListDictOpsTests
 
         var action = new Sort { Context = ctx, ListName = new app.variable.@this("people"), By = new global::app.data.@this<global::app.type.text.@this>("", "age") };
         await (await action.Run()).IsSuccess();
-        var sorted = (ListV)vars.Get("people").Value!;
-        await Assert.That((long)sorted.At(0)!.GetChild("age").Value!).IsEqualTo(10L);
-        await Assert.That((long)sorted.At(2)!.GetChild("age").Value!).IsEqualTo(30L);
+        var sorted = (ListV)(await vars.Get("people").Value())!;
+        await Assert.That((long)(await sorted.At(0)!.GetChild("age").Value())!).IsEqualTo(10L);
+        await Assert.That((long)(await sorted.At(2)!.GetChild("age").Value())!).IsEqualTo(30L);
     }
 
     [Test]
@@ -114,8 +114,8 @@ public class Stage5_ListDictOpsTests
         var action = new Unique { Context = ctx, ListName = new app.variable.@this("values") };
         var result = await action.Run();
         await result.IsSuccess();
-        await Assert.That(result.Value!.value as ListV).IsNotNull();
-        await Assert.That(((ListV)result.Value!.value!).Count).IsEqualTo(2);
+        await Assert.That((await result.Value())!.value as ListV).IsNotNull();
+        await Assert.That(((ListV)(await result.Value())!.value!).Count).IsEqualTo(2);
     }
 
     [Test]
@@ -130,10 +130,10 @@ public class Stage5_ListDictOpsTests
         var action = new Group { Context = ctx, ListName = new app.variable.@this("people"), Key = new global::app.data.@this<global::app.type.text.@this>("", "city") };
         var result = await action.Run();
         await result.IsSuccess();
-        var groups = (ListV)result.Value!.value!;
+        var groups = (ListV)(await result.Value())!.value!;
         await Assert.That(groups.Count).IsEqualTo(2);
-        var reyk = (DictV)groups.At(0)!.Value!;
-        await Assert.That((string?)reyk.Get("key")!.Value).IsEqualTo("Reyk");
-        await Assert.That(((ListV)reyk.Get("items")!.Value!).Count).IsEqualTo(2); // navigable bucket
+        var reyk = (DictV)(await groups.At(0)!.Value())!;
+        await Assert.That((string?)(await reyk.Get("key")!.Value())).IsEqualTo("Reyk");
+        await Assert.That(((ListV)(await reyk.Get("items")!.Value())!).Count).IsEqualTo(2); // navigable bucket
     }
 }

@@ -67,7 +67,7 @@ public class FluidIncludeDenialTests
         // The output MUST NOT contain the secret file's content. Either the
         // include silently no-ops to empty (Fluid's NotFoundFileInfo path) or
         // surfaces an error; either way, no leakage.
-        await Assert.That((result.Value ?? "").ToString()!).DoesNotContain("SECRET_TOKEN");
+        await Assert.That(((await result.Value()) ?? "").ToString()!).DoesNotContain("SECRET_TOKEN");
     }
 
     [Test] public async Task FluidInclude_InRootTemplate_RendersSilently()
@@ -96,7 +96,7 @@ public class FluidIncludeDenialTests
         };
         var result = await fluid.Render(action);
         await result.IsSuccess();
-        await Assert.That(result.Value!).Contains("Hello footer");
+        await Assert.That((await result.Value())!).Contains("Hello footer");
         await Assert.That(ch.AskCount).IsEqualTo(0);
     }
 }

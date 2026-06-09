@@ -63,7 +63,7 @@ public class AsTIdentityTests
         var source = new global::app.data.@this<global::app.type.number.@this>("n", inner) { Context = _app.User.Context };
         var wrapped = source.As<global::app.type.item.@this>();
         await Assert.That(ReferenceEquals(source, wrapped)).IsFalse();
-        await Assert.That(ReferenceEquals(wrapped.Value, inner)).IsTrue();
+        await Assert.That(ReferenceEquals((await wrapped.Value()), inner)).IsTrue();
     }
 
     // Variance fast path aliases Properties from source onto the wrapped Data.
@@ -167,8 +167,8 @@ public class AsTIdentityTests
 
         await Assert.That(ReferenceEquals(canonical, live)).IsTrue();
         // Mutation propagates: appending via live's value is visible through Variables.Get.
-        ((global::app.type.list.@this)canonical.Value!).Add(new global::app.data.@this("", "c"));
-        var stored = (global::app.type.list.@this)context.Variable.Get("products").Value!;
+        ((global::app.type.list.@this)(await canonical.Value())!).Add(new global::app.data.@this("", "c"));
+        var stored = (global::app.type.list.@this)(await context.Variable.Get("products").Value())!;
         await Assert.That(stored.Count).IsEqualTo(3);
     }
 
@@ -186,7 +186,7 @@ public class AsTIdentityTests
         var canonical = paramData.AsCanonical();
 
         await Assert.That(ReferenceEquals(canonical, paramData)).IsFalse();
-        var resolved = (List<object?>)canonical.Value!;
+        var resolved = (List<object?>)(await canonical.Value())!;
         await Assert.That(resolved[0]).IsEqualTo("hello");
         await Assert.That(resolved[1]).IsEqualTo("literal");
     }
@@ -205,7 +205,7 @@ public class AsTIdentityTests
         var canonical = paramData.AsCanonical();
 
         await Assert.That(ReferenceEquals(canonical, paramData)).IsFalse();
-        var resolved = (Dictionary<string, object?>)canonical.Value!;
+        var resolved = (Dictionary<string, object?>)(await canonical.Value())!;
         await Assert.That(resolved["role"]).IsEqualTo("system");
         await Assert.That(resolved["content"]).IsEqualTo("You are a compiler");
     }
@@ -228,7 +228,7 @@ public class AsTIdentityTests
 
         var canonical = paramData.AsCanonical();
 
-        var resolved = (List<object?>)canonical.Value!;
+        var resolved = (List<object?>)(await canonical.Value())!;
         var first = (Dictionary<string, object?>)resolved[0]!;
         var second = (Dictionary<string, object?>)resolved[1]!;
         await Assert.That(first["Content"]).IsEqualTo("You are a compiler");
@@ -248,7 +248,7 @@ public class AsTIdentityTests
 
         var canonical = paramData.AsCanonical();
 
-        var resolved = (List<object?>)canonical.Value!;
+        var resolved = (List<object?>)(await canonical.Value())!;
         await Assert.That(resolved.Count).IsEqualTo(3);
         await Assert.That(resolved[0]).IsEqualTo("a");
         await Assert.That(resolved[1]).IsEqualTo("b");
@@ -273,7 +273,7 @@ public class AsTIdentityTests
 
         var canonical = paramData.AsCanonical();
 
-        var resolved = (Dictionary<string, object?>)canonical.Value!;
+        var resolved = (Dictionary<string, object?>)(await canonical.Value())!;
         await Assert.That(resolved["message"]).IsEqualTo("boom");
     }
 }

@@ -36,10 +36,10 @@ public class FailureMatrixTests
             app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var d = new global::app.data.@this("x", "untampered") { Context = app.User.Context };
-        var wire = plang.Serialize(d).Value!;
+        var wire = (await plang.Serialize(d).Value())!;
         var tampered = wire.Replace("untampered", "TAMPERED!");
 
-        var back = (global::app.data.@this)plang.Deserialize(tampered).Value!;
+        var back = (global::app.data.@this)(await plang.Deserialize(tampered).Value())!;
         back.Context = app.User.Context;
         var verify = await app.RunAction<global::app.module.signing.verify>(
             new global::app.module.signing.verify
@@ -60,7 +60,7 @@ public class FailureMatrixTests
         // the resulting Data is observable as empty.
         var result = plang.Deserialize("{\"unknown\":42}");
         await result.IsSuccess();
-        var back = result.Value as global::app.data.@this;
+        var back = (await result.Value()) as global::app.data.@this;
         await Assert.That(back).IsNotNull();
         await Assert.That(back!.Properties.ContainsKey("unknown")).IsFalse();
     }

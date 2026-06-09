@@ -154,7 +154,7 @@ public class QueryToolTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("parallel done");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("parallel done");
     }
 
     [Test]

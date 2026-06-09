@@ -42,10 +42,10 @@ public class ValueConversionHookTests
                 System.Globalization.CultureInfo.GetCultureInfo("de-DE");
 
             var serializer = new global::app.channel.serializer.Text();
-            var dec = serializer.Deserialize<global::app.type.number.@this>("3.14").Value;
+            var dec = (await serializer.Deserialize<global::app.type.number.@this>("3.14").Value());
             await Assert.That(dec).IsEqualTo(3.14m);
 
-            var dbl = serializer.Deserialize<global::app.type.number.@this>("3.14").Value;
+            var dbl = (await serializer.Deserialize<global::app.type.number.@this>("3.14").Value());
             await Assert.That(dbl).IsEqualTo(3.14d);
         }
         finally
@@ -60,10 +60,10 @@ public class ValueConversionHookTests
     public async Task NumberHook_KindPicksPrecision_NullKindDerives()
     {
         var (_, ctx) = MakeApp();
-        await Assert.That(Number.Convert("3.14", "decimal", ctx).Value).IsEqualTo(3.14m);
-        await Assert.That(Number.Convert("42", "long", ctx).Value).IsEqualTo(42L);
+        await Assert.That((await Number.Convert("3.14", "decimal", ctx).Value())).IsEqualTo(3.14m);
+        await Assert.That((await Number.Convert("42", "long", ctx).Value())).IsEqualTo(42L);
         // null kind → derive from the literal shape (Build): integer → int.
-        await Assert.That(Number.Convert("42", null, ctx).Value).IsEqualTo(42);
+        await Assert.That((await Number.Convert("42", null, ctx).Value())).IsEqualTo(42);
         // non-numeric → error owned by number.
         await Assert.That(Number.Convert("abc", "int", ctx).Success).IsFalse();
     }
@@ -97,7 +97,7 @@ public class ValueConversionHookTests
     public async Task ImageHook_PathStringMintsLazyHandle_NoIo()
     {
         var (_, ctx) = MakeApp();
-        var v = Image.Convert("photo.png", null, ctx).Value as Image;
+        var v = (await Image.Convert("photo.png", null, ctx).Value()) as Image;
         await Assert.That(v).IsNotNull();
         await Assert.That(v!.Path).IsNotNull();
         // Lazy: no content read at construction.
@@ -110,7 +110,7 @@ public class ValueConversionHookTests
     public async Task GoalCallHook_FromBareName()
     {
         var (_, ctx) = MakeApp();
-        var v = GoalCall.Convert("MyGoal", null, ctx).Value as GoalCall;
+        var v = (await GoalCall.Convert("MyGoal", null, ctx).Value()) as GoalCall;
         await Assert.That(v).IsNotNull();
         await Assert.That(v!.Name).IsEqualTo("MyGoal");
     }
@@ -122,8 +122,8 @@ public class ValueConversionHookTests
     {
         var (app, ctx) = MakeApp();
 
-        await Assert.That(app.Type.Convert("3.14", typeof(decimal), ctx).Value).IsEqualTo(3.14m);
-        await Assert.That(app.Type.Convert("PT30S", typeof(System.TimeSpan), ctx).Value)
+        await Assert.That((await app.Type.Convert("3.14", typeof(decimal), ctx).Value())).IsEqualTo(3.14m);
+        await Assert.That((await app.Type.Convert("PT30S", typeof(System.TimeSpan), ctx).Value()))
             .IsEqualTo(System.TimeSpan.FromSeconds(30));
         await Assert.That(app.Type.Convert("2024-03-15T10:30:00+00:00", typeof(System.DateTimeOffset), ctx).Value)
             .IsTypeOf<System.DateTimeOffset>();
@@ -135,7 +135,7 @@ public class ValueConversionHookTests
     public async Task InfraDoor_JsonString_ShapesToRecord()
     {
         var (app, ctx) = MakeApp();
-        var v = app.Type.Convert("{\"x\":1,\"y\":2}", typeof(Point), ctx).Value as Point;
+        var v = (await app.Type.Convert("{\"x\":1,\"y\":2}", typeof(Point), ctx).Value()) as Point;
         await Assert.That(v).IsNotNull();
         await Assert.That(v!.X).IsEqualTo(1);
         await Assert.That(v.Y).IsEqualTo(2);
@@ -147,12 +147,12 @@ public class ValueConversionHookTests
     public async Task ResidualLeaf_BoolGuidEnum()
     {
         var (app, ctx) = MakeApp();
-        await Assert.That(app.Type.Convert("true", typeof(bool), ctx).Value).IsEqualTo(true);
+        await Assert.That((await app.Type.Convert("true", typeof(bool), ctx).Value())).IsEqualTo(true);
 
         var g = System.Guid.NewGuid();
-        await Assert.That(app.Type.Convert(g.ToString(), typeof(System.Guid), ctx).Value).IsEqualTo(g);
+        await Assert.That((await app.Type.Convert(g.ToString(), typeof(System.Guid), ctx).Value())).IsEqualTo(g);
 
-        await Assert.That(app.Type.Convert("Monday", typeof(System.DayOfWeek), ctx).Value)
+        await Assert.That((await app.Type.Convert("Monday", typeof(System.DayOfWeek), ctx).Value()))
             .IsEqualTo(System.DayOfWeek.Monday);
     }
 
@@ -164,7 +164,7 @@ public class ValueConversionHookTests
         var (app, ctx) = MakeApp();
         // Uri has no Convert hook and is not a primitive — the generic single-string
         // constructor reflection arm builds it.
-        var v = app.Type.Convert("http://example.com/", typeof(System.Uri), ctx).Value as System.Uri;
+        var v = (await app.Type.Convert("http://example.com/", typeof(System.Uri), ctx).Value()) as System.Uri;
         await Assert.That(v).IsNotNull();
         await Assert.That(v!.Host).IsEqualTo("example.com");
     }

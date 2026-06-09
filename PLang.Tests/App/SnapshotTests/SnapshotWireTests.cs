@@ -24,8 +24,8 @@ public class SnapshotWireTests
         var dst = new global::app.@this("/dst");
         dst.Restore(wired, dst.User.Context);
 
-        await Assert.That(dst.User.Context.Variable.Get("count")?.Value).IsEqualTo(42L);
-        await Assert.That(dst.User.Context.Variable.Get("name")?.Value?.ToString()).IsEqualTo("plang");
+        await Assert.That((await dst.User.Context.Variable.Get("count").Value())).IsEqualTo(42L);
+        await Assert.That((await dst.User.Context.Variable.Get("name").Value())?.ToString()).IsEqualTo("plang");
     }
 
     [Test]
@@ -166,7 +166,7 @@ public class SnapshotWireTests
         }
 
         // The string → snapshot conversion the runtime performs for a Data<snapshot> slot.
-        var converted = context.App.Type.Convert(json, typeof(global::app.snapshot.@this), context).Value
+        var converted = (await context.App.Type.Convert(json, typeof(global::app.snapshot.@this), context).Value())
             as global::app.snapshot.@this;
         await Assert.That(converted).IsNotNull();
 
@@ -230,7 +230,7 @@ public class SnapshotWireTests
         var snap = global::app.snapshot.@this.Deserialize(json, context);
         var vars = snap.Section("Variables").Read<List<global::app.data.@this>>("variables")!;
         var iVar = vars.First(v => v.Name == "i");
-        iVar.Value = 2L;
+        iVar.SetValue(2L);
 
         var result = await snap.Resume(context);
 
@@ -271,14 +271,14 @@ public class SnapshotWireTests
         // `as snapshot` path: typeEntity.Convert(envelopeString, context).
         var te = new global::app.type.@this("snapshot") { Context = context };
         var conv = te.Convert(json, context);
-        await Assert.That(conv.Value is global::app.snapshot.@this)
+        await Assert.That((await conv.Value()) is global::app.snapshot.@this)
             .IsTrue(); // ← if false, the as-snapshot conversion is the bug
 
         context.Variable.Set("snap", conv.Value);
         context.Variable.Set("snap.variables.x", 2L);
         await Assert.That(System.Convert.ToInt64(context.Variable.Get("snap.variables.x").Value)).IsEqualTo(2L);
 
-        var snap = context.Variable.Get("snap").Value as global::app.snapshot.@this;
+        var snap = (await context.Variable.Get("snap").Value()) as global::app.snapshot.@this;
         await Assert.That(snap).IsNotNull();
         var result = await snap!.Resume(context);
         await result.IsSuccess();
@@ -337,7 +337,7 @@ public class SnapshotWireTests
         }
 
         var te = new global::app.type.@this("snapshot") { Context = context };
-        var snap = te.Convert(json, context).Value as global::app.snapshot.@this;
+        var snap = (await te.Convert(json, context).Value()) as global::app.snapshot.@this;
         await Assert.That(snap).IsNotNull();
 
         context.Variable.Set("snap", snap);
@@ -378,7 +378,7 @@ public class SnapshotWireTests
 
         context.Variable.Set("snap.variables.x", 2L);
 
-        var snap = context.Variable.Get("snap").As<global::app.snapshot.@this>(context).Value;
+        var snap = (await context.Variable.Get("snap").As<global::app.snapshot.@this>(context).Value());
         var result = await snap!.Resume(context);
         await result.IsSuccess();
         long seen = System.Convert.ToInt64(context.Variable.GetValue("seen"));

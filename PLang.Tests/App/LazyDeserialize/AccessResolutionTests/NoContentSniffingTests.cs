@@ -17,28 +17,28 @@ public class NoContentSniffingTests
     [Test] public async Task Reader_DoesNotSniffJsonByLookingForLeadingBrace()
     {
         var d = data.Ok("{\"a\":1}");
-        await Assert.That(d.Value).IsEqualTo((object)"{\"a\":1}");
+        await Assert.That((await d.Value())).IsEqualTo((object)"{\"a\":1}");
         await Assert.That(d.MaterializeCount).IsEqualTo(0);
     }
 
     [Test] public async Task Reader_DoesNotSniffXmlByLookingForAngleBracket()
     {
         var d = data.Ok("<root><a>1</a></root>");
-        await Assert.That(d.Value).IsEqualTo((object)"<root><a>1</a></root>");
+        await Assert.That((await d.Value())).IsEqualTo((object)"<root><a>1</a></root>");
         await Assert.That(d.MaterializeCount).IsEqualTo(0);
     }
 
     [Test] public async Task Reader_DoesNotSniffCsvByLookingForCommas()
     {
         var d = data.Ok("a,b,c");
-        await Assert.That(d.Value).IsEqualTo((object)"a,b,c");
+        await Assert.That((await d.Value())).IsEqualTo((object)"a,b,c");
         await Assert.That(d.MaterializeCount).IsEqualTo(0);
     }
 
     [Test] public async Task Reader_DoesNotSniffYamlByLookingForColon()
     {
         var d = data.Ok("key: value");
-        await Assert.That(d.Value).IsEqualTo((object)"key: value");
+        await Assert.That((await d.Value())).IsEqualTo((object)"key: value");
         await Assert.That(d.MaterializeCount).IsEqualTo(0);
     }
 }

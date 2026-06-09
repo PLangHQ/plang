@@ -44,7 +44,7 @@ public class SignedDataSurvivesVariableSetListTests
 
         // %bundle[0]% — the element read returns the signed Data unchanged.
         var bound = Ctx.Variable.Get("bundle");
-        var element = (bound!.Value as System.Collections.IList)![0] as data;
+        var element = ((await bound!.Value()) as System.Collections.IList)![0] as data;
         await Assert.That(element).IsNotNull();
         await Assert.That(element!.Signature).IsNotNull().Because("signature survived the variable.set bind");
 

@@ -49,7 +49,7 @@ public class ListAddIdentityTests
 
         await result.IsSuccess();
         // Same list.@this reference — direct mutation, not a fresh object stored.
-        var live = vars.Get("products").Value as global::app.type.list.@this;
+        var live = (await vars.Get("products").Value()) as global::app.type.list.@this;
         await Assert.That(live).IsNotNull();
         await Assert.That(ReferenceEquals(live, existing)).IsTrue();
         await Assert.That(live!.Count).IsEqualTo(3);
@@ -77,10 +77,10 @@ public class ListAddIdentityTests
         var result = await action.Run();
 
         // The result Data has a types.list Value; .value of that record points at the LIVE list.
-        await Assert.That(result.Value).IsNotNull();
-        var resultListProp = result.Value!.GetType().GetProperty("value");
+        await Assert.That((await result.Value())).IsNotNull();
+        var resultListProp = (await result.Value())!.GetType().GetProperty("value");
         await Assert.That(resultListProp).IsNotNull();
-        var inner = resultListProp!.GetValue(result.Value);
+        var inner = resultListProp!.GetValue((await result.Value()));
         await Assert.That(ReferenceEquals(inner, live)).IsTrue();
     }
 
@@ -107,7 +107,7 @@ public class ListAddIdentityTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        var live = vars.Get("products").Value as global::app.type.list.@this;
+        var live = (await vars.Get("products").Value()) as global::app.type.list.@this;
         await Assert.That(live!.Count).IsEqualTo(1);
         // list.add stores the element Data by reference now (Stage 2 rebind makes it safe).
         await Assert.That(live!.At(0)!.Value).IsEqualTo("hello");

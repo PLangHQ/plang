@@ -56,6 +56,6 @@ public class TypeIsTests
 
         var stored = ctx.Variable.Get("p");
         await Assert.That(stored!.Type!.Name).IsEqualTo("image");
-        await Assert.That(stored.Value is image).IsTrue();
+        await Assert.That((await stored.Value()) is image).IsTrue();
     }
 }

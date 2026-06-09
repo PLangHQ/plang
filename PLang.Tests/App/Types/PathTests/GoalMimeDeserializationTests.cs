@@ -36,7 +36,7 @@ public class GoalMimeDeserializationTests
         var p = new FilePath(abs, app.User.Context);
         var read = await p.ReadText();
         await read.IsSuccess();
-        await Assert.That(read.Value as string).IsEqualTo(SimpleGoalText);
+        await Assert.That((await read.Value()) as string).IsEqualTo(SimpleGoalText);
     }
 
     [Test] public async Task ReadText_OnDotTestGoalFile_AlsoReturnsRawText()
@@ -47,7 +47,7 @@ public class GoalMimeDeserializationTests
         var p = new FilePath(abs, app.User.Context);
         var read = await p.ReadText();
         await read.IsSuccess();
-        await Assert.That(read.Value as string).IsEqualTo(SimpleGoalText);
+        await Assert.That((await read.Value()) as string).IsEqualTo(SimpleGoalText);
     }
 
     [Test] public async Task ReadText_OnDotPrFile_StillReturnsGoal_RegressionGuard()
@@ -59,7 +59,7 @@ public class GoalMimeDeserializationTests
         var p = new FilePath(prAbs, app.User.Context);
         var read = await p.ReadText();
         await read.IsSuccess();
-        await Assert.That(read.Value is Goal).IsTrue();
+        await Assert.That((await read.Value()) is Goal).IsTrue();
     }
 
     [Test] public async Task GoalParse_ProducesGoalFromText()
@@ -70,7 +70,7 @@ public class GoalMimeDeserializationTests
         await System.IO.File.WriteAllTextAsync(abs, SimpleGoalText);
         var p = new FilePath(abs, app.User.Context);
         var read = await p.ReadText();
-        var text = read.Value as string ?? "";
+        var text = (await read.Value()) as string ?? "";
         var goal = Goal.Parse(text, p);
         await Assert.That(goal).IsNotNull();
         await Assert.That(goal!.Name).IsEqualTo("Start");
@@ -83,7 +83,7 @@ public class GoalMimeDeserializationTests
         await System.IO.File.WriteAllTextAsync(abs, "");
         var p = new FilePath(abs, app.User.Context);
         var read = await p.ReadText();
-        var text = read.Value as string ?? "";
+        var text = (await read.Value()) as string ?? "";
         await Assert.That(Goal.Parse(text, p)).IsNull();
     }
 

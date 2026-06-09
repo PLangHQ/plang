@@ -43,7 +43,7 @@ public class GetActionsTests
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();
-        var actions = result.Value as StepActions;
+        var actions = (await result.Value()) as StepActions;
         await Assert.That(actions).IsNotNull();
         await Assert.That(actions!.Count).IsGreaterThan(0);
     }
@@ -53,7 +53,7 @@ public class GetActionsTests
     {
         var action = new GetActions { Context = _app.User.Context };
         var result = await _app.RunAction(action, _app.User.Context);
-        var actions = (StepActions)result.Value!;
+        var actions = (StepActions)(await result.Value())!;
 
         // Find an action with nullable parameters (e.g., file.read has optional properties)
         var fileRead = actions.FirstOrDefault(a => a.Module == "file" && a.ActionName == "read");
@@ -67,7 +67,7 @@ public class GetActionsTests
     {
         var action = new GetActions { Context = _app.User.Context };
         var result = await _app.RunAction(action, _app.User.Context);
-        var actions = (StepActions)result.Value!;
+        var actions = (StepActions)(await result.Value())!;
 
         // variable.set has a Name property with Data<Variable> — renders as exactly "%var%"
         // (no trailing type token; the marker alone tells the LLM this slot names a variable).
@@ -76,7 +76,7 @@ public class GetActionsTests
         var nameParam = varSet!.Parameters.FirstOrDefault(p =>
             p.Name.Equals("Name", StringComparison.OrdinalIgnoreCase));
         await Assert.That(nameParam).IsNotNull();
-        await Assert.That(nameParam!.Value!.ToString()).IsEqualTo("%var%");
+        await Assert.That((await nameParam!.Value())!.ToString()).IsEqualTo("%var%");
     }
 
     [Test]
@@ -84,7 +84,7 @@ public class GetActionsTests
     {
         var action = new GetActions { Context = _app.User.Context };
         var result = await _app.RunAction(action, _app.User.Context);
-        var actions = (StepActions)result.Value!;
+        var actions = (StepActions)(await result.Value())!;
 
         // file.list has Pattern with [Default("*")]
         var fileList = actions.FirstOrDefault(a => a.Module == "file" && a.ActionName == "list");
@@ -92,7 +92,7 @@ public class GetActionsTests
         var patternParam = fileList!.Parameters.FirstOrDefault(p =>
             p.Name.Equals("Pattern", StringComparison.OrdinalIgnoreCase));
         await Assert.That(patternParam).IsNotNull();
-        await Assert.That(patternParam!.Value!.ToString()).Contains("\"*\"");
+        await Assert.That((await patternParam!.Value())!.ToString()).Contains("\"*\"");
     }
 
     [Test]
@@ -100,7 +100,7 @@ public class GetActionsTests
     {
         var action = new GetActions { Context = _app.User.Context };
         var result = await _app.RunAction(action, _app.User.Context);
-        var actions = (StepActions)result.Value!;
+        var actions = (StepActions)(await result.Value())!;
 
         // file.save has [Action("save", Cacheable = false)]
         var fileSave = actions.FirstOrDefault(a => a.Module == "file" && a.ActionName == "save");
@@ -118,7 +118,7 @@ public class GetActionsTests
     {
         var action = new GetActions { Context = _app.User.Context };
         var result = await _app.RunAction(action, _app.User.Context);
-        var actions = (StepActions)result.Value!;
+        var actions = (StepActions)(await result.Value())!;
 
         // No action should expose [Code]-attributed interface properties
         // (e.g., IBuilder, IFile, ILlm)
@@ -126,8 +126,8 @@ public class GetActionsTests
         foreach (var a in actions)
         {
             var providerParam = a.Parameters.FirstOrDefault(p =>
-                p.Value?.ToString()?.StartsWith("i", StringComparison.OrdinalIgnoreCase) == true &&
-                p.Value.ToString()!.Contains("Provider"));
+                (await p.Value())?.ToString()?.StartsWith("i", StringComparison.OrdinalIgnoreCase) == true &&
+                (await p.Value()).ToString()!.Contains("Provider"));
             await Assert.That(providerParam)
                 .IsNull()
                 .Because($"{a.Module}.{a.ActionName} should not expose [Code] interface properties");
@@ -153,7 +153,7 @@ public class GetActionsTests
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();
-        var actions = result.Value as StepActions;
+        var actions = (await result.Value()) as StepActions;
         await Assert.That(actions).IsNotNull();
         await Assert.That(actions!.Count).IsEqualTo(2);
         await Assert.That(actions.Any(a => a.Module == "file" && a.ActionName == "read")).IsTrue();
@@ -168,7 +168,7 @@ public class GetActionsTests
         // "filter to nothing" would silently drop every action.
         var unfiltered = new GetActions { Context = _app.User.Context };
         var fullResult = await _app.RunAction(unfiltered, _app.User.Context);
-        var fullCount = ((StepActions)fullResult.Value!).Count;
+        var fullCount = ((StepActions)(await fullResult.Value())!).Count;
 
         var action = new GetActions
         {
@@ -178,7 +178,7 @@ public class GetActionsTests
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();
-        var actions = result.Value as StepActions;
+        var actions = (await result.Value()) as StepActions;
         await Assert.That(actions).IsNotNull();
         await Assert.That(actions!.Count).IsEqualTo(fullCount);
     }
@@ -194,7 +194,7 @@ public class GetActionsTests
         var result = await _app.RunAction(action, _app.User.Context);
 
         await result.IsSuccess();
-        var actions = result.Value as StepActions;
+        var actions = (await result.Value()) as StepActions;
         await Assert.That(actions).IsNotNull();
         await Assert.That(actions!.Count).IsEqualTo(0);
     }
@@ -209,7 +209,7 @@ public class GetActionsTests
         };
         var result = await _app.RunAction(action, _app.User.Context);
 
-        var actions = (StepActions)result.Value!;
+        var actions = (StepActions)(await result.Value())!;
         await Assert.That(actions.Count).IsEqualTo(2);
         await Assert.That(actions.Any(a => a.Module == "file" && a.ActionName == "read")).IsTrue();
         await Assert.That(actions.Any(a => a.Module == "file" && a.ActionName == "save")).IsTrue();

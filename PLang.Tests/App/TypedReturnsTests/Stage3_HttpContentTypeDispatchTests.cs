@@ -68,7 +68,7 @@ public class Stage3_HttpContentTypeDispatchTests
         var resp = await Get("https://x/y", r => r.Content = new StringContent("{\"a\":1}", Encoding.UTF8, "application/json"));
         await Assert.That(resp.Type.Name).IsEqualTo("item");
         await Assert.That(resp.Peek()).IsEqualTo((object)"{\"a\":1}"); // untouched = raw
-        await Assert.That(resp.GetChild("a").Value?.ToString()).IsEqualTo("1"); // navigate materializes
+        await Assert.That((await resp.GetChild("a").Value())?.ToString()).IsEqualTo("1"); // navigate materializes
     }
 
     [Test]
@@ -129,7 +129,7 @@ public class Stage3_HttpContentTypeDispatchTests
     public async Task Metadata_StatusIsProperty_NotBody()
     {
         var resp = await Get("https://x/j", r => r.Content = new StringContent("{\"k\":\"v\"}", Encoding.UTF8, "application/json"));
-        await Assert.That(resp.GetChild("!StatusCode").Value?.ToString()).IsEqualTo("200");
+        await Assert.That((await resp.GetChild("!StatusCode").Value())?.ToString()).IsEqualTo("200");
         await Assert.That(resp.MaterializeCount).IsEqualTo(0); // status read did not touch the body
     }
 

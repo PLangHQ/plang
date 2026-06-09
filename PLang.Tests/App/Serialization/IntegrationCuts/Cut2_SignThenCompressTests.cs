@@ -20,7 +20,7 @@ public class Cut2_SignThenCompressTests
         var d2 = d1.Compress();
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var wire = plang.Serialize(d2).Value!;
+        var wire = (await plang.Serialize(d2).Value())!;
 
         using var doc = JsonDocument.Parse(wire);
         // `type` is the structured entity {name, kind?, strict?} on the wire.
@@ -34,7 +34,7 @@ public class Cut2_SignThenCompressTests
         await using var app = NewApp();
         var d1 = MakeCompressible(app, "Ingi");
         var d2 = d1.Compress();
-        var inner = (byte[])d2.Value!;
+        var inner = (byte[])(await d2.Value())!;
 
         using var gz = new System.IO.Compression.GZipStream(new MemoryStream(inner),
             System.IO.Compression.CompressionMode.Decompress);
@@ -52,7 +52,7 @@ public class Cut2_SignThenCompressTests
         var d2 = d1.Compress();
         var restored = d2.Decompress();
         await Assert.That(restored.Name).IsEqualTo("user");
-        await Assert.That(restored.Value?.ToString()).IsEqualTo("Ingi");
+        await Assert.That((await restored.Value())?.ToString()).IsEqualTo("Ingi");
         await Assert.That(restored.Signature).IsNotNull()
             .Because("Inner signature was populated when Compress wrote bytes through the wire converter.");
     }
@@ -64,7 +64,7 @@ public class Cut2_SignThenCompressTests
         var d2 = d1.Compress();
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var wire = plang.Serialize(d2).Value!;
+        var wire = (await plang.Serialize(d2).Value())!;
 
         // Flip a byte in the base64-encoded value — read back, verify must fail.
         using var doc = JsonDocument.Parse(wire);
@@ -75,7 +75,7 @@ public class Cut2_SignThenCompressTests
 
         var back = plang.Deserialize(tampered);
         await back.IsSuccess();
-        var restored = (global::app.data.@this)back.Value!;
+        var restored = (global::app.data.@this)(await back.Value())!;
         restored.Context = app.User.Context;
 
         var verify = await app.RunAction<global::app.module.signing.verify>(

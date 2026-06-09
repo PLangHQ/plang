@@ -37,7 +37,7 @@ public class OutputAskRoutingTests
         var handler = new ask { Context = context, Question = new global::app.data.@this<global::app.type.text.@this>("", "name?") };
         var result = await handler.Run();
         await result.IsSuccess();
-        await Assert.That(result.Value?.Answer).IsEqualTo("Alice");
+        await Assert.That((await result.Value())?.Answer).IsEqualTo("Alice");
         await Assert.That(context.Variable.Get(ask.AnswerVariableName).IsInitialized).IsFalse();
     }
 
@@ -67,7 +67,7 @@ public class OutputAskRoutingTests
         var action = new ask { Context = app.User.Context, Question = new global::app.data.@this<global::app.type.text.@this>("", "") };
         var result = await ch.Ask(action);
         await result.IsSuccess();
-        await Assert.That(result.Value as string).IsEqualTo("Alice");
+        await Assert.That((await result.Value()) as string).IsEqualTo("Alice");
     }
 
     [Test] public async Task StreamChannelAsk_TimeoutBehaviorPreservedFromAskCoreRename()
@@ -90,7 +90,7 @@ public class OutputAskRoutingTests
         };
         var result = await ch.Ask(action);
         await Assert.That(result.Value).IsTypeOf<global::app.module.output.Ask>();
-        await Assert.That(((global::app.module.output.Ask)result.Value!).Answer).IsNull();
+        await Assert.That(((global::app.module.output.Ask)(await result.Value())!).Answer).IsNull();
         await Assert.That(result.Type?.Name).IsEqualTo("ask");
     }
 

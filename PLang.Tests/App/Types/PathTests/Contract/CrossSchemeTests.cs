@@ -61,6 +61,6 @@ public class CrossSchemeTests
         var read = await dst.ReadText();
         await Assert.That(read.Value).IsEqualTo("move cross");
         var srcGone = await src.ExistsAsync();
-        await Assert.That(srcGone.Value).IsEqualTo(false);
+        await Assert.That((await srcGone.Value())).IsEqualTo(false);
     }
 }

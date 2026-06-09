@@ -62,9 +62,9 @@ public class VariableResolveTests
         var resolved = slot.As<@this>(_app.User.Context);
 
         await resolved.IsSuccess();
-        await Assert.That(resolved.Value).IsNotNull();
-        await Assert.That(resolved.Value!.Name).IsEqualTo("x");
-        await Assert.That(resolved.Value!.WasPercentWrapped).IsTrue();
+        await Assert.That((await resolved.Value())).IsNotNull();
+        await Assert.That((await resolved.Value())!.Name).IsEqualTo("x");
+        await Assert.That((await resolved.Value())!.WasPercentWrapped).IsTrue();
     }
 
     // Pinning the symmetry contract from the architect's plan: "x" pre-existing
@@ -82,8 +82,8 @@ public class VariableResolveTests
         var resolved = slot.As<@this>(_app.User.Context);
 
         await resolved.IsSuccess();
-        await Assert.That(resolved.Value!.Name).IsEqualTo("x");
-        await Assert.That(resolved.Value!.WasPercentWrapped).IsTrue();
+        await Assert.That((await resolved.Value())!.Name).IsEqualTo("x");
+        await Assert.That((await resolved.Value())!.WasPercentWrapped).IsTrue();
     }
 
     // Slot Data carrying bare "x" — the LLM-emission case that broke the v1 branch.
@@ -96,8 +96,8 @@ public class VariableResolveTests
         var resolved = slot.As<@this>(_app.User.Context);
 
         await resolved.IsSuccess();
-        await Assert.That(resolved.Value).IsNotNull();
-        await Assert.That(resolved.Value!.Name).IsEqualTo("x");
+        await Assert.That((await resolved.Value())).IsNotNull();
+        await Assert.That((await resolved.Value())!.Name).IsEqualTo("x");
     }
 
     // Implicit Variable→string conversion fires at any string-expecting boundary

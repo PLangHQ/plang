@@ -36,7 +36,7 @@ public class Cut3_MultiActorForwardingTests
         var plangB = (global::app.channel.serializer.plang.@this)
             b.User.Channel.Serializers.GetByMimeType("application/plang");
         var outer = new global::app.data.@this("forwarded", inner) { Context = b.User.Context };
-        var outerWire = plangB.Serialize(outer).Value!;
+        var outerWire = (plangB.Serialize(outer).Materialize())!;
 
         // C: receive bytes, reconstruct.
         var plangC = (global::app.channel.serializer.plang.@this)
@@ -63,7 +63,7 @@ public class Cut3_MultiActorForwardingTests
         var chain = BuildChain();
         await using (chain.AppA) await using (chain.AppB) await using (chain.AppC)
         {
-            var innerAfter = chain.RoundTripped.Value as global::app.data.@this;
+            var innerAfter = (await chain.RoundTripped.Value()) as global::app.data.@this;
             await Assert.That(innerAfter).IsNotNull();
             await Assert.That(innerAfter!.Signature).IsNotNull();
             await Assert.That(innerAfter.Signature!.Identity).IsEqualTo(chain.Inner.Signature!.Identity);
@@ -84,7 +84,7 @@ public class Cut3_MultiActorForwardingTests
                 }, chain.AppB.User.Context);
             await outerVerify.IsSuccess();
 
-            var innerAfter = (global::app.data.@this)chain.RoundTripped.Value!;
+            var innerAfter = (global::app.data.@this)(await chain.RoundTripped.Value())!;
             innerAfter.Context = chain.AppA.User.Context;
             var innerVerify = await chain.AppA.RunAction<global::app.module.signing.verify>(
                 new global::app.module.signing.verify
@@ -109,7 +109,7 @@ public class Cut3_MultiActorForwardingTests
                 chain.AppB.User.Channel.Serializers.GetByMimeType("application/plang");
             var back = plangB.Deserialize(tampered);
             await back.IsSuccess();
-            var restored = (global::app.data.@this)back.Value!;
+            var restored = (global::app.data.@this)(await back.Value())!;
             restored.Context = chain.AppB.User.Context;
 
             var verify = await chain.AppB.RunAction<global::app.module.signing.verify>(

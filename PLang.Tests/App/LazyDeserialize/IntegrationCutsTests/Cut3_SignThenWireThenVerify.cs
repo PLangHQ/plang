@@ -39,7 +39,7 @@ public class Cut3_SignThenWireThenVerify
     private data RoundTrip(data d)
     {
         var s = _app.System.Channel.Serializers.GetByMimeType("application/plang");
-        return (data)s.Deserialize(s.Serialize(d).Value!).Value!;
+        return (data)(s.Deserialize((s.Serialize(d).Materialize())!).Materialize())!;
     }
 
     [Test] public async Task Cut3_SignedData_VerifiesAgainstRaw_WithoutMaterialising()
@@ -64,7 +64,7 @@ public class Cut3_SignThenWireThenVerify
         var outer = new data("outer", inner);          // value IS the signed inner Data
         var back = RoundTrip(outer);
 
-        var innerBack = back.Value as data;            // rehydrated nested Data
+        var innerBack = (await back.Value()) as data;            // rehydrated nested Data
         await Assert.That(innerBack).IsNotNull();
         await Assert.That(innerBack!.Signature).IsNotNull().Because("nested signature survived the wire");
         var ok = await Verify(innerBack!);
@@ -77,9 +77,9 @@ public class Cut3_SignThenWireThenVerify
     {
         var signed = await Sign(new data("msg", "hello"));
         var back = RoundTrip(signed);
-        back.Value = "tampered";                        // mutate after signing
+        back.SetValue("tampered");                        // mutate after signing
 
         var ok = await Verify(back);
-        await Assert.That(ok.Success && ok.Value is true).IsFalse();
+        await Assert.That(ok.Success && (await ok.Value()) is true).IsFalse();
     }
 }

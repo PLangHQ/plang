@@ -35,7 +35,7 @@ public class ActorPermissionStorageTests
 
         var found = await app.User.Permission.Find(new Path("/p", app.User.Context), new Verb { Read = new Read() });
         await Assert.That(found).IsNotNull();
-        await Assert.That(found!.Value!.Path).IsEqualTo("/p");
+        await Assert.That((await found!.Value())!.Path).IsEqualTo("/p");
     }
 
     [Test] public async Task PerActorIsolation_UserGrant_NotSurfacedTo_SystemFind()
@@ -70,7 +70,7 @@ public class ActorPermissionStorageTests
         // sends the two grants to different homes.
         var stored = await app.SettingsStore.GetAll<global::app.data.@this<PermissionRecord>>("permission");
         await stored.IsSuccess();
-        var paths = stored.Value!.Items.Cast<global::app.data.@this<global::app.type.path.permission.@this>>().Where(d => d.Value != null).Select(d => d.Value!.Path).ToList();
+        var paths = (await stored.Value())!.Items.Cast<global::app.data.@this<global::app.type.path.permission.@this>>().Where(d => (d.Materialize()) != null).Select(d => (await d.Value())!.Path).ToList();
         await Assert.That(paths).Contains("/disk");
         await Assert.That(paths).DoesNotContain("/mem");
     }
@@ -129,7 +129,7 @@ public class ActorPermissionStorageTests
         await app.User.Permission.Add(grant);
         await Assert.That(await app.User.Permission.Find(new Path("/p", app.User.Context), new Verb { Read = new Read() })).IsNotNull();
 
-        await app.User.Permission.Revoke(grant.Value!);
+        await app.User.Permission.Revoke((await grant.Value())!);
         await Assert.That(await app.User.Permission.Find(new Path("/p", app.User.Context), new Verb { Read = new Read() })).IsNull();
     }
 
@@ -141,7 +141,7 @@ public class ActorPermissionStorageTests
         await app.User.Permission.Add(grant);
         await Assert.That(await app.User.Permission.Find(new Path("/p", app.User.Context), new Verb { Read = new Read() })).IsNotNull();
 
-        await app.User.Permission.Revoke(grant.Value!);
+        await app.User.Permission.Revoke((await grant.Value())!);
         await Assert.That(await app.User.Permission.Find(new Path("/p", app.User.Context), new Verb { Read = new Read() })).IsNull();
     }
 
@@ -175,7 +175,7 @@ public class ActorPermissionStorageTests
         // Prove no-duplicate behaviorally: one Revoke should fully remove the
         // grant. If Add had stored a duplicate, the second copy would still
         // cover the request after Revoke.
-        await app.User.Permission.Revoke(first.Value!);
+        await app.User.Permission.Revoke((await first.Value())!);
         var afterRevoke = await app.User.Permission.Find(new Path("/p", app.User.Context), new Verb { Read = new Read() });
         await Assert.That(afterRevoke).IsNull();
     }
@@ -194,7 +194,7 @@ public class ActorPermissionStorageTests
         // for `/p`, not two.
         var stored = await app.SettingsStore.GetAll<global::app.data.@this<PermissionRecord>>("permission");
         await stored.IsSuccess();
-        var rowsForP = stored.Value!.Items.Cast<global::app.data.@this<global::app.type.path.permission.@this>>().Count(d => d.Value?.Path == "/p");
+        var rowsForP = (await stored.Value())!.Items.Cast<global::app.data.@this<global::app.type.path.permission.@this>>().Count(d => (d.Materialize())?.Path == "/p");
         await Assert.That(rowsForP).IsEqualTo(1);
     }
 

@@ -23,7 +23,7 @@ public class Stage1_DictNavigationAndWriterTests
         var d = Data.FromRaw("{\"port\":8080}", type.Create("object", "json", context: ctx), ctx, "cfg");
         d.ForceMaterialize();
         await Assert.That(d.Value).IsTypeOf<Dict>();
-        await Assert.That(((app.type.item.@this)((Dict)d.Value!).Get("port")!.Value!).ToRaw()).IsEqualTo(8080L);
+        await Assert.That(((app.type.item.@this)(await ((Dict)(await d.Value())!).Get("port")!.Value())!).ToRaw()).IsEqualTo(8080L);
     }
 
     [Test]
@@ -39,10 +39,10 @@ public class Stage1_DictNavigationAndWriterTests
 
         var nav = new global::app.variable.navigator.Dictionary();
         await Assert.That(nav.CanNavigate(data)).IsTrue();
-        await Assert.That((string?)nav.Navigate(data, "name").Value).IsEqualTo("a");
-        await Assert.That((long)nav.Navigate(data, "age").Value!).IsEqualTo(30L);
+        await Assert.That((string?)(await nav.Navigate(data, "name").Value())).IsEqualTo("a");
+        await Assert.That((long)(await nav.Navigate(data, "age").Value())!).IsEqualTo(30L);
         // A "count" intrinsic answers only when no real "count" key exists.
-        await Assert.That((int)nav.Navigate(data, "count").Value!).IsEqualTo(2);
+        await Assert.That((int)(await nav.Navigate(data, "count").Value())!).IsEqualTo(2);
     }
 
     [Test]
@@ -66,6 +66,6 @@ public class Stage1_DictNavigationAndWriterTests
         await Assert.That(normalized).IsTypeOf<Dict>();
         var d = (Dict)normalized!;
         await Assert.That(d.Has("name")).IsTrue();
-        await Assert.That((string?)d.Get("name")!.Value).IsEqualTo("alice");
+        await Assert.That((string?)(await d.Get("name")!.Value())).IsEqualTo("alice");
     }
 }

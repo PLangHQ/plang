@@ -372,7 +372,7 @@ public class VariablesTests
         var age = stack.Get("user.age");
 
         await Assert.That(name!.Value).IsEqualTo("John");
-        await Assert.That(age!.Value).IsEqualTo(30);
+        await Assert.That((await age!.Value())).IsEqualTo(30);
     }
 
     [Test]
@@ -389,7 +389,7 @@ public class VariablesTests
         await Assert.That(itemsObj!.Value).IsTypeOf<List<object>>();
 
         // Access the list directly
-        var list = (List<object>)itemsObj.Value!;
+        var list = (List<object>)(await itemsObj.Value())!;
         await Assert.That(list[0]).IsEqualTo("first");
         await Assert.That(list[1]).IsEqualTo("second");
     }
@@ -408,7 +408,7 @@ public class VariablesTests
         var result = stack.Get("arr[0].id");
 
         await Assert.That(result).IsNotNull();
-        await Assert.That(result!.Value).IsEqualTo(42);
+        await Assert.That((await result!.Value())).IsEqualTo(42);
     }
 
     [Test]
@@ -675,7 +675,7 @@ public class VariablesTests
         var clone = stack.Clone();
 
         await Assert.That(clone.Get("name")!.Value).IsEqualTo("John");
-        await Assert.That(clone.Get("count")!.Value).IsEqualTo(42);
+        await Assert.That((await clone.Get("count")!.Value())).IsEqualTo(42);
     }
 
     [Test]
@@ -996,7 +996,7 @@ public class VariablesAccessorTests
         var count = stack.Get("goal.Goals.Count");
 
         await Assert.That(count.IsInitialized).IsTrue();
-        await Assert.That(count.Value).IsEqualTo(2);
+        await Assert.That((await count.Value())).IsEqualTo(2);
     }
 
     [Test]

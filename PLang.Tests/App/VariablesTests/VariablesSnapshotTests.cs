@@ -16,11 +16,11 @@ public class VariablesSnapshotTests
 
         var x = dst.User.Context.Variable.Get("x");
         await Assert.That(x).IsNotNull();
-        await Assert.That(x!.Value).IsEqualTo(1);
+        await Assert.That((await x!.Value())).IsEqualTo(1);
 
         var obj = dst.User.Context.Variable.Get("obj");
         await Assert.That(obj).IsNotNull();
-        var dict = obj!.Value as IDictionary<string, object?>;
+        var dict = (await obj!.Value()) as IDictionary<string, object?>;
         await Assert.That(dict).IsNotNull();
         await Assert.That(dict!["a"]).IsEqualTo(1);
     }

@@ -89,7 +89,7 @@ public class SignActionTests
     {
         // Create identity first to capture public key
         var identityResult = await new Get { Context = Ctx, Name = null }.Run();
-        var publicKey = (identityResult.Value as Identity)!.PublicKey;
+        var publicKey = ((await identityResult.Value()) as Identity)!.PublicKey;
 
         var result = await SignData("test data");
 
@@ -187,8 +187,8 @@ public class SignActionTests
         await result.IsSuccess();
         var hash = result.Signature!.Hash;
         await Assert.That(hash).IsNotNull();
-        await Assert.That(hash.Value is global::app.module.crypto.type.hash.@this).IsTrue();
-        await Assert.That(((global::app.module.crypto.type.hash.@this)hash.Value!).Bytes.Length).IsGreaterThan(0);
+        await Assert.That((await hash.Value()) is global::app.module.crypto.type.hash.@this).IsTrue();
+        await Assert.That(((global::app.module.crypto.type.hash.@this)(await hash.Value())!).Bytes.Length).IsGreaterThan(0);
     }
 
     #endregion
@@ -208,7 +208,7 @@ public class SignActionTests
         var provider = new Ed25519();
         var verifyResult = provider.Verify(signingBytes, sigBytes, sd.Identity);
         await verifyResult.IsSuccess();
-        await Assert.That((bool)verifyResult.Value!).IsTrue();
+        await Assert.That((bool)(await verifyResult.Value())!).IsTrue();
     }
 
     #endregion

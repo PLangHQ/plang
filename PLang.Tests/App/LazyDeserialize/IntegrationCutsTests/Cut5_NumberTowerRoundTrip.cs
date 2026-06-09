@@ -21,7 +21,7 @@ public class Cut5_NumberTowerRoundTrip
     {
         var r = number.Convert(n.ToString(), n.KindLabel, null!);
         await r.IsSuccess();
-        await Assert.That(r.Value!.GetType()).IsEqualTo(expectedClr);
+        await Assert.That((await r.Value())!.GetType()).IsEqualTo(expectedClr);
     }
 
     [Test] public async Task Cut5_RoundTrip_PreservesExactKind_AcrossTower()
@@ -42,8 +42,8 @@ public class Cut5_NumberTowerRoundTrip
     {
         var r = number.Add(number.From(3000000000u), number.From(2000000000u), PPolicy.Lenient);
         await r.IsSuccess();
-        await Assert.That(r.Value!.Kind).IsEqualTo(PKind.Long);
-        await Assert.That(r.Value!.ToInt64()).IsEqualTo(5000000000L);
+        await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Long);
+        await Assert.That((await r.Value())!.ToInt64()).IsEqualTo(5000000000L);
     }
 
     // Negative — the explicit-cast wall. double⊕decimal raises rather than

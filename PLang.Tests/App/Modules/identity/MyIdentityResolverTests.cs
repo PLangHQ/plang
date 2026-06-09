@@ -37,7 +37,7 @@ public class MyIdentityResolverTests
         var data = _app.System.Context.Variable.Get("MyIdentity");
         await Assert.That(data).IsNotNull();
 
-        var identity = data!.Value as Identity;
+        var identity = (await data!.Value()) as Identity;
         await Assert.That(identity).IsNotNull();
         await Assert.That(identity!.Name).IsEqualTo("default");
         await Assert.That(identity.IsDefault).IsTrue();
@@ -50,7 +50,7 @@ public class MyIdentityResolverTests
         var data = _app.System.Context.Variable.Get("MyIdentity");
         await Assert.That(data).IsNotNull();
 
-        var identity = data!.Value as Identity;
+        var identity = (await data!.Value()) as Identity;
         await Assert.That(identity).IsNotNull();
         await Assert.That(identity!.Name).IsEqualTo("default");
     }
@@ -61,10 +61,10 @@ public class MyIdentityResolverTests
         var data = _app.System.Context.Variable.Get("MyIdentity");
         var child = data!.GetChild("PublicKey");
         await Assert.That(child).IsNotNull();
-        await Assert.That(child!.Value?.ToString()).IsNotNull();
+        await Assert.That((await child!.Value())?.ToString()).IsNotNull();
 
         // Should be base64
-        var bytes = Convert.FromBase64String(child.Value!.ToString()!);
+        var bytes = Convert.FromBase64String((await child.Value())!.ToString()!);
         await Assert.That(bytes.Length).IsEqualTo(32);
     }
 
@@ -72,7 +72,7 @@ public class MyIdentityResolverTests
     public async Task MyIdentity_StringContext_ReturnsPublicKey()
     {
         var data = _app.System.Context.Variable.Get("MyIdentity");
-        var identity = data!.Value as Identity;
+        var identity = (await data!.Value()) as Identity;
 
         // ToString() should return the public key
         await Assert.That(identity!.ToString()).IsEqualTo(identity.PublicKey);
@@ -91,7 +91,7 @@ public class MyIdentityResolverTests
 
         // Verify %MyIdentity% is "first" — DynamicData re-evaluates on each access
         var data1 = _app.System.Context.Variable.Get("MyIdentity");
-        var id1 = data1!.Value as Identity;
+        var id1 = (await data1!.Value()) as Identity;
         await Assert.That(id1!.Name).IsEqualTo("first");
 
         // Switch default
@@ -100,7 +100,7 @@ public class MyIdentityResolverTests
 
         // %MyIdentity% should now be "second" — DynamicData lambda calls provider again
         var data2 = _app.System.Context.Variable.Get("MyIdentity");
-        var id2 = data2!.Value as Identity;
+        var id2 = (await data2!.Value()) as Identity;
         await Assert.That(id2!.Name).IsEqualTo("second");
     }
 }

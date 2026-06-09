@@ -41,7 +41,7 @@ public class Cut4_HttpBodyLazyMetadataEager
         var (app, r) = await Get();
         await using (app)
         {
-            await Assert.That(r.GetChild("!StatusCode").Value?.ToString()).IsEqualTo("200");
+            await Assert.That((await r.GetChild("!StatusCode").Value())?.ToString()).IsEqualTo("200");
             await Assert.That(r.MaterializeCount).IsEqualTo(0); // body stayed raw
         }
     }
@@ -51,7 +51,7 @@ public class Cut4_HttpBodyLazyMetadataEager
         var (app, r) = await Get();
         await using (app)
         {
-            await Assert.That(r.GetChild("name").Value?.ToString()).IsEqualTo("Ada"); // navigate materializes
+            await Assert.That((await r.GetChild("name").Value())?.ToString()).IsEqualTo("Ada"); // navigate materializes
             await Assert.That(r.MaterializeCount).IsEqualTo(1);
         }
     }

@@ -41,7 +41,7 @@ public class SettingsDataTests
         var resolved = _app.User.Context.Variable.Get("Settings.ApiKey");
         await Assert.That(resolved).IsNotNull();
         await resolved!.IsSuccess();
-        await Assert.That(resolved.Value?.ToString()).IsEqualTo("sk-test-123");
+        await Assert.That((await resolved.Value())?.ToString()).IsEqualTo("sk-test-123");
     }
 
     [Test]
@@ -67,7 +67,7 @@ public class SettingsDataTests
         var result = _app.User.Context.Variable.Get("Settings.TestKey");
         await Assert.That(result).IsNotNull();
         await result!.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("TestValue");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("TestValue");
     }
 
     [Test]
@@ -85,11 +85,11 @@ public class SettingsDataTests
     {
         await _app.SettingsStore.Set("settings", "ApiKey", new global::app.data.@this("ApiKey", "old-value"));
         var first = _app.User.Context.Variable.Get("Settings.ApiKey");
-        await Assert.That(first!.Value?.ToString()).IsEqualTo("old-value");
+        await Assert.That((await first!.Value())?.ToString()).IsEqualTo("old-value");
 
         await _app.SettingsStore.Set("settings", "ApiKey", new global::app.data.@this("ApiKey", "new-value"));
         var second = _app.User.Context.Variable.Get("Settings.ApiKey");
-        await Assert.That(second!.Value?.ToString()).IsEqualTo("new-value");
+        await Assert.That((await second!.Value())?.ToString()).IsEqualTo("new-value");
     }
 
     [Test]
@@ -109,7 +109,7 @@ public class SettingsDataTests
         // Verify via User Variables (what PLang code uses)
         var setting = _app.User.Context.Variable.Get("Settings.HandlerKey");
         await Assert.That(setting).IsNotNull();
-        await Assert.That(setting!.Value?.ToString()).IsEqualTo("HandlerValue");
+        await Assert.That((await setting!.Value())?.ToString()).IsEqualTo("HandlerValue");
     }
 
     [Test]
@@ -125,7 +125,7 @@ public class SettingsDataTests
 
         var result = await handler.Run();
         await result.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("TestValue");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("TestValue");
     }
 
     [Test]
@@ -185,7 +185,7 @@ public class SettingsDataTests
         var result = _app.User.Context.Variable.Get("Settings.Config.SubKey");
         await Assert.That(result).IsNotNull();
         await result!.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("nested-value");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("nested-value");
     }
 
     // --- Variables.Clone preserves the Settings navigable mount ---
@@ -203,7 +203,7 @@ public class SettingsDataTests
         var result = cloned.Get("Settings.CloneKey");
         await Assert.That(result).IsNotNull();
         await result!.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("clone-value");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("clone-value");
     }
 
     [Test]
@@ -257,7 +257,7 @@ public class SettingsDataTests
         // Generated code checks: if (__resolved != null && !__resolved.Success) — should NOT trigger
         await Assert.That(resolved).IsNotNull();
         await resolved!.IsSuccess();
-        await Assert.That(resolved.Value?.ToString()).IsEqualTo("sk-real-key");
+        await Assert.That((await resolved.Value())?.ToString()).IsEqualTo("sk-real-key");
     }
 
     // --- Store-level error path ---
@@ -292,8 +292,8 @@ public class SettingsDataTests
         await _app.SettingsStore.Set("settings", "SharedKey", new global::app.data.@this("SharedKey", "shared-value"));
         var fromUser = _app.User.Context.Variable.Get("Settings.SharedKey");
         var fromSystem = _app.System.Context.Variable.Get("Settings.SharedKey");
-        await Assert.That(fromUser?.Value?.ToString()).IsEqualTo("shared-value");
-        await Assert.That(fromSystem?.Value?.ToString()).IsEqualTo("shared-value");
+        await Assert.That((await fromUser.Value())?.ToString()).IsEqualTo("shared-value");
+        await Assert.That((await fromSystem.Value())?.ToString()).IsEqualTo("shared-value");
     }
 
     [Test]
@@ -306,12 +306,12 @@ public class SettingsDataTests
         var result = _app.User.Context.Variable.Get("Settings.SharedKey");
         await Assert.That(result).IsNotNull();
         await result!.IsSuccess();
-        await Assert.That(result.Value?.ToString()).IsEqualTo("shared-value");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("shared-value");
 
         // Read from Service context (should also work)
         var serviceResult = _app.System.Context.Variable.Get("Settings.SharedKey");
         await Assert.That(serviceResult).IsNotNull();
         await serviceResult!.IsSuccess();
-        await Assert.That(serviceResult.Value?.ToString()).IsEqualTo("shared-value");
+        await Assert.That((await serviceResult.Value())?.ToString()).IsEqualTo("shared-value");
     }
 }

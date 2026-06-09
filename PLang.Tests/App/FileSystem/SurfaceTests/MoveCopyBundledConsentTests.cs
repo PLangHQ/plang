@@ -37,7 +37,7 @@ public class MoveCopyBundledConsentTests
             => Task.FromResult(global::app.data.@this.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
         {
-            LastQuestion = action.Question?.Value ?? "";
+            LastQuestion = (action.Question.Materialize()?.ToString()) ?? "";
             AskCount++;
             return Task.FromResult(global::app.data.@this.Ok(_answer));
         }

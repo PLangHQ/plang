@@ -104,11 +104,11 @@ public class ChannelReadBoundaryTests
     {
         await using var app = NewApp();
         var serializer = app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var wire = serializer.Serialize(data.Ok("hello")).Value!;
+        var wire = (await serializer.Serialize(data.Ok("hello")).Value())!;
 
         var ch = Input(app, "application/plang", Encoding.UTF8.GetBytes(wire));
         var d = await ch.Read();
-        await Assert.That(d.Value?.ToString()).IsEqualTo("hello");
+        await Assert.That((await d.Value())?.ToString()).IsEqualTo("hello");
     }
 
     // app/channel/stream/this.cs today returned bare text and ignored the
