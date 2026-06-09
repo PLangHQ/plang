@@ -6,6 +6,21 @@ namespace PLang.Tests.App.CompareRedesign;
 // — parse folds into the door. Read fires only behind an await on navigation.
 public class Stage2_ValueDoorTests
 {
+    private static global::app.@this NewApp(out string root)
+    {
+        root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-stage2-" + System.Guid.NewGuid().ToString("N")[..8]);
+        return new(root);
+    }
+
+    // A raw-backed Data (source form pending) straight off the file channel.
+    private static async Task<Data> RawBackedJson(global::app.@this app, string root)
+    {
+        var p = new global::app.type.path.file.@this(System.IO.Path.Combine(root, "cfg.json"), app.User.Context);
+        await (await p.WriteText("{\"port\":8080}")).IsSuccess();
+        return await new global::app.channel.type.file.@this(p).Read();
+    }
+
     [Test]
     public async Task Value_AuthoredScalar_ReturnsTypedNumberNotRawInt()
     {
@@ -18,8 +33,10 @@ public class Stage2_ValueDoorTests
     public async Task Value_PresentBacking_CompletesSynchronously_NoAsyncHop()
     {
         // ValueTask.IsCompletedSuccessfully true when _value already materialised; zero alloc
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var d = new Data("x", 42);
+        var vt = d.Value();
+        await Assert.That(vt.IsCompletedSuccessfully).IsTrue();
+        await Assert.That((await vt)).IsEqualTo(42);
     }
 
     [Test]
@@ -27,16 +44,25 @@ public class Stage2_ValueDoorTests
     {
         // pending file source: first Value() awaits read; second Value() returns cached
         // — MaterializeCount transitions 0 → 1 → 1
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        await using var app = NewApp(out var root);
+        var d = await RawBackedJson(app, root);
+        await Assert.That(d.MaterializeCount).IsEqualTo(0);
+        var first = await d.Value();
+        await Assert.That(d.MaterializeCount).IsEqualTo(1);
+        var second = await d.Value();
+        await Assert.That(d.MaterializeCount).IsEqualTo(1);   // parse fired exactly once, cached
+        await Assert.That(ReferenceEquals(first, second)).IsTrue();
     }
 
     [Test]
     public async Task Peek_OnUnmaterialisedReference_ReturnsCurrentRung_DoesNotForceParse()
     {
         // Peek() returns the binary/text rung without triggering the source read
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        await using var app = NewApp(out var root);
+        var d = await RawBackedJson(app, root);
+        var rung = d.Peek();
+        await Assert.That(rung).IsEqualTo("{\"port\":8080}");   // the text rung, unparsed
+        await Assert.That(d.MaterializeCount).IsEqualTo(0);       // Peek forced nothing
     }
 
     [Test]
@@ -52,8 +78,12 @@ public class Stage2_ValueDoorTests
     {
         // reflection: typeof(Data).GetProperty("Value") must not exist as a public sync accessor;
         // only `ValueTask<object?> Value()` method remains
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var prop = typeof(Data).GetProperty("Value",
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        await Assert.That(prop).IsNull();
+        var method = typeof(Data).GetMethod("Value", System.Type.EmptyTypes);
+        await Assert.That(method).IsNotNull();
+        await Assert.That(method!.ReturnType).IsEqualTo(typeof(System.Threading.Tasks.ValueTask<object?>));
     }
 
     [Test]
@@ -78,16 +108,21 @@ public class Stage2_ValueDoorTests
     {
         // MaterializeCount=0 before and after data.ToString(); ToString reads the
         // already-materialised backing only — sync framework method must not enter the async chain
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        await using var app = NewApp(out var root);
+        var d = await RawBackedJson(app, root);
+        _ = d.ToString();
+        await Assert.That(d.MaterializeCount).IsEqualTo(0);
     }
 
     [Test]
     public async Task EqualsAndGetHashCode_OnUnmaterialisedReference_DoNotRead()
     {
         // MaterializeCount=0 before/after data.Equals(other) and data.GetHashCode()
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        await using var app = NewApp(out var root);
+        var d = await RawBackedJson(app, root);
+        _ = d.Equals(new Data("y", 1));
+        _ = d.GetHashCode();
+        await Assert.That(d.MaterializeCount).IsEqualTo(0);
     }
 
     [Test]
@@ -102,8 +137,10 @@ public class Stage2_ValueDoorTests
     public async Task JsonContainer_RidesAsTypedDictOrList_NeverBareCSharpDictionary()
     {
         // JSON ingestion yields a native PLang dict/list — value slot is never a raw Dictionary<string,object>
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        await using var app = NewApp(out var root);
+        var d = await RawBackedJson(app, root);
+        var v = await d.Value();
+        await Assert.That(v is global::app.type.dict.@this).IsTrue();
     }
 
     [Test]

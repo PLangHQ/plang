@@ -7,12 +7,17 @@ namespace PLang.Tests.App.CompareRedesign;
 // `error`, `success`) is protected — a type may not shadow it.
 public class Stage2_PlaneResolverTests
 {
+    private static global::app.@this NewApp() => new(System.IO.Path.Combine(
+        System.IO.Path.GetTempPath(), "plang-stage2pl-" + System.Guid.NewGuid().ToString("N")[..8]));
+
     [Test]
     public async Task DotPlane_ResolvesDataContent_TypeAnswers()
     {
         // %dict.field% → dict's content via the type's own resolver; no central case-table
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        await using var app = NewApp();
+        var d = new Data("cfg", new Dictionary<string, object?> { ["field"] = "content" }) { Context = app.User.Context };
+        var child = await d.GetChild("field");
+        await Assert.That((await child.Value())?.ToString()).IsEqualTo("content");
     }
 
     [Test]
@@ -27,8 +32,11 @@ public class Stage2_PlaneResolverTests
     public async Task BangType_ReturnsHeadlineType()
     {
         // %x!type% → headline type name (post-narrow: `dict`)
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        await using var app = NewApp();
+        var d = new Data("x", new Dictionary<string, object?> { ["k"] = 1 },
+            global::app.type.@this.FromName("dict")) { Context = app.User.Context };
+        var t = await d.GetChild("!type");
+        await Assert.That(((await t.Value()) as global::app.type.@this)?.Name).IsEqualTo("dict");
     }
 
     [Test]
@@ -68,7 +76,12 @@ public class Stage2_PlaneResolverTests
     public async Task BangSize_AndDotSize_AreDistinct_NoShadowing()
     {
         // %dict.size% (content key=10) and %dict!size% (property bag=28) — sigil picks the plane
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        await using var app = NewApp();
+        var d = new Data("dict", new Dictionary<string, object?> { ["size"] = 10 }) { Context = app.User.Context };
+        d.Properties["size"] = 28;
+        var content = await d.GetChild("size");     // `.` — the data plane (content key)
+        var property = await d.GetChild("!size");   // `!` — the property plane (Properties bag)
+        await Assert.That((await content.Value())).IsEqualTo(10);
+        await Assert.That((await property.Value())).IsEqualTo(28);
     }
 }

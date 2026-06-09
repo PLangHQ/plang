@@ -1,71 +1,113 @@
+using PLang.Tests.App.Fixtures;
+
 namespace PLang.Tests.App.CompareRedesign;
 
-// Stage 2 — `Action.GetParameter<T>(name)` returns a lazy `Data<T>`. The getter
-// does NOT navigate or read — it wraps the param `%var%` and sets context.
-// Resolution + the content read fire only at `await Param.Value()`. The
-// resolution-error guard moves *after* the await: ~42 sites migrate as
-// `var p = await Param.Value(); if (!Param.Success) return Param; … p`.
-// A pre-await guard would silently inspect the unresolved Data and miss errors.
+// Stage 2 — parameter resolution at the DISPATCH boundary (the settled model;
+// supersedes the lazy-GetParameter draft this file originally pinned). The
+// generated `__ResolveParameters()` — awaited by ExecuteAsync/SetAction before
+// Run()/Build() — decodes each .pr parameter's %var%/literal form once per
+// execution into the handler's backing field: the handler instance is the
+// per-execution home, the shared .pr parameter is never written to, and the
+// property getter is a plain backing read. `await Param.Value()` stays the one
+// read surface; content (file/url) still loads through the value's own door.
 public class Stage2_GetParameterLazyTests
 {
-    [Test]
-    public async Task GetParameterT_Returns_LazyDataT_GetterDoesNotRead()
+    private static string RepoRoot
     {
-        // MaterializeCount=0 after `var p = action.GetParameter<text>("x")` — getter is sync, cheap
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        get
+        {
+            var dir = AppContext.BaseDirectory;
+            while (dir != null && !Directory.Exists(Path.Combine(dir, "PLang", "app")))
+                dir = Directory.GetParent(dir)?.FullName;
+            return dir ?? throw new InvalidOperationException("repo root not found");
+        }
+    }
+
+    private static string ReadGenerated(string handlerName)
+    {
+        var generatedDir = Path.Combine(RepoRoot, "PLang.Tests", "obj", "Debug", "net10.0",
+            "generated", "PLang.Generators", "PLang.Generators.this");
+        return File.ReadAllText(Path.Combine(generatedDir, handlerName));
     }
 
     [Test]
-    public async Task AwaitParamValue_TriggersResolutionAndRead()
+    public async Task DispatchResolution_HandlerSeesResolvedValue_SharedPrParamUntouched()
     {
-        // await p.Value() → MaterializeCount=1, returns the typed value (text/number/...)
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        await using var app = new global::app.@this("/app");
+        var result = await MatrixRunner.RunAsync<global::app.module.matrix.resolution.FullVarMatch>(app,
+            parameters: new[] { ("path", (object?)"%path%") },
+            variables: new Dictionary<string, object?> { ["path"] = "/tmp/x.txt" });
+
+        await result.Data.IsSuccess();
+        var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
+        await Assert.That((await typed!.Value())).IsEqualTo("/tmp/x.txt");
     }
 
     [Test]
-    public async Task ParamResolutionGuard_FiresAfterAwait_NotBefore()
+    public async Task GeneratedSource_EmitsResolveParameters_AwaitedBeforeRun()
     {
-        // pre-await `if (!p.Success)` inspects unresolved Data → false-negative;
-        // the canonical pattern is `var v = await p.Value(); if (!p.Success) return p; ... v`
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var src = ReadGenerated("app.module.matrix.plain.StringPlain.Action.g.cs");
+        // Dispatch resolution: ExecuteAsync awaits __ResolveParameters() before Run().
+        await Assert.That(src).Contains("await __ResolveParameters();");
+        var resolveIdx = src.IndexOf("await __ResolveParameters();", StringComparison.Ordinal);
+        var runIdx = src.IndexOf("await Run()", StringComparison.Ordinal);
+        await Assert.That(resolveIdx >= 0 && runIdx > resolveIdx).IsTrue();
+    }
+
+    [Test]
+    public async Task GeneratedGetter_IsPlainBackingRead_NoResolutionCall()
+    {
+        var src = ReadGenerated("app.module.matrix.plain.StringPlain.Action.g.cs");
+        // The getter never resolves — no As<T>/AsCanonical call inside the property body;
+        // resolution lives only in __ResolveParameters.
+        var getterLine = src.Split('\n').First(l => l.Contains("get {") && l.Contains("__Path_backing"));
+        await Assert.That(getterLine).DoesNotContain(".As<");
+        await Assert.That(getterLine).DoesNotContain("AsCanonical");
+    }
+
+    [Test]
+    public async Task ResolutionFailure_SurfacesAsTypedError_BeforeRunResult()
+    {
+        // An unconvertible literal for a typed slot surfaces as a typed FromError Data
+        // from the dispatch resolution — never an NRE inside Run().
+        await using var app = new global::app.@this("/app");
+        var result = await MatrixRunner.RunAsync<global::app.module.matrix.plain.IntPlain>(app,
+            parameters: new[] { ("count", (object?)"not-a-number") });
+        await result.Data.IsFailure();
     }
 
     [Test]
     public async Task BadScheme_ResolvedDataReturnsTypedError_NotNreOnValueBang()
     {
-        // a bad-scheme / unset %var% / convert failure surfaces as a typed Data error,
-        // never an NRE on `.Value!` post-await
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // file.read with an unregistered scheme: the path conversion fails as a typed
+        // error Data (SchemeNotRegistered), surfaced by the post-resolve guard — no NRE.
+        await using var app = new global::app.@this("/app");
+        var context = app.User.Context;
+        var failedPath = await new Data("path", "s3://bucket/key") { Context = context }
+            .As<global::app.type.path.@this>(context);
+        await failedPath.IsFailure();
+        await Assert.That(failedPath.Error!.Key).IsEqualTo("SchemeNotRegistered");
     }
 
     [Test]
-    public async Task ResolveDataWrapper_Removed_AsTImpl_FoldedIntoValueAsync()
+    public async Task SetAction_IsAsync_ResolvesParametersForBuild()
     {
-        // reflection on generator output: no `__ResolveData<T>` wrapper emitted —
-        // `AsT_Impl` resolution body moved into the async `.Value()`
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // IClass.SetAction returns ValueTask — it awaits __ResolveParameters so Build()
+        // reads resolved backing fields exactly like Run() does.
+        var m = typeof(global::app.module.IClass).GetMethod("SetAction");
+        await Assert.That(m).IsNotNull();
+        await Assert.That(m!.ReturnType).IsEqualTo(typeof(System.Threading.Tasks.ValueTask));
     }
 
     [Test]
-    public async Task GetParameterT_Generic_ReplacesNonGenericGetter()
+    public async Task RepresentativeHandler_AwaitGuardUse_Shape()
     {
-        // the non-generic `GetParameter(string, context)` (action/this.cs:220) is no longer the public path;
-        // `GetParameter<T>` collapses `GetParameter(name, ctx).As<T>(Context)` into one typed call
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
-    }
-
-    [Test]
-    public async Task FortyTwoSiteMigration_AwaitGuardUsePattern_Verified_OnRepresentativeHandler()
-    {
-        // pick one migrated handler (e.g. file/read) and verify the await→guard→use shape:
-        // 1) the param is read via `await Param.Value()` 2) the guard `if (!Param.Success)` lives AFTER 3) `p` is used after the guard
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // file/read.cs: value read via `await Path.Value()`, the resolution-error guard
+        // `if (!Path.Success)` AFTER the await, use after the guard.
+        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot, "PLang", "app", "module", "file", "read.cs"));
+        var awaitIdx = src.IndexOf("await Path.Value()", StringComparison.Ordinal);
+        var guardIdx = src.IndexOf("if (!Path.Success)", StringComparison.Ordinal);
+        await Assert.That(awaitIdx >= 0).IsTrue();
+        await Assert.That(guardIdx > awaitIdx).IsTrue();
     }
 }
