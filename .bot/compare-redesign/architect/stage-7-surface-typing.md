@@ -7,6 +7,7 @@
 - The **build gate** (PLNG-style, like the `System.IO` PLNG002 gate): a **public** member of an `item.@this` subtype that returns a raw CLR type is an error. Internal/private C# is untouched. **Warning during this stage, error once the surface is clean.**
 - Move truly engine-internal plumbing (`IsLeaf`, normalize dispatch) to `internal` — out of the public-only scope — rather than exempting it.
 - **Grow `path`'s typed surface where interior string-math lived** (OBP smell #5): a containment method (`path.IsUnder`/`Covers`/`Matches`, replacing `f.Relative.StartsWith(root)`) and `path.Kind` (extension→content-kind, replacing `Format.TypeFromExtension(p.Extension)`). The raw `.Relative`/`.Extension` become `internal`, feeding these + the `!relative`/`!extension` derived projections; `.Absolute` stays `internal` + Authorize-gated (the interop exemption).
+- **The conversion discipline (applies to every flagged site).** Change the *receiving* type to the PLang type, trace where that type flows, and lower to raw CLR **only where it's unavoidable — a .NET-library boundary** (sqlite, `Assembly.LoadFrom`, `HttpClient`, `Regex` — code we don't own). C# we wrote is **not** a leaf: our own registries/collections go typed (a `Dictionary<text,…>` keys fine — `text` already has ordinal-ignore-case `==`/`GetHashCode`). `.ToString()`, public raw getters, and casts are **forbidden** as value paths. See Design.
 **Dependencies:** Stages 2–6 (the typed value model + comparison must be in; the `!` plane resolver exists). Standalone after that — converts the surface under the gate.
 
 ## Design
@@ -16,6 +17,21 @@
 **No carve-out for bool markers.** `IsTruthy` returns `@bool` — the rule applies to predicates too. Truly engine-internal dispatch (`IsLeaf`, normalize) is made `internal` (so the public-only gate never sees it), not exempted. The **only standing exemption** is the gated per-type interop accessor.
 
 **The interop inch — where raw CLR legitimately survives.** A type bridging to a take-over C# API (sqlite, `Assembly.LoadFrom`, a regex lib) needs the raw `string`/`byte[]` at the call. That lives in *that type's own* gated accessor — `path.Absolute` after `Authorize`, exactly the existing `System.IO` discipline (the accessor is the type's, gated, enforced). It is not a generic `ToRaw`, and it is not on the public navigable surface; it's the type handing its own raw to the API at its own edge.
+
+**The conversion move — change the receiving type, trace the flow, raw only at the .NET leaf.** When the gate flags a member (or a removed implicit operator breaks a consumer), the fix is **never** to extract raw at the call to keep the old type alive. Forbidden shortcuts, one smell: `.ToString()`, a public raw getter, a cast. **`.ToString()` is forbidden as a value path** — Stage 2 pins it to "read the materialised backing" (diagnostics/equality only); routing a working value through it defeats the gate silently. The move:
+
+1. **Change the receiving type to the PLang type.** The field / parameter / local that wanted raw becomes the value type — `string Mime` → `text Mime`.
+2. **Trace where that type now flows.** Not local — follow every hop the value takes and carry the type change with it. Each hop stays typed.
+3. **Lower to raw CLR only where it's unavoidable.** "Unavoidable" means a **.NET-library boundary** — a take-over API we don't own (sqlite, `Assembly.LoadFrom`, `HttpClient` headers, a `Regex` pattern). **C# we wrote ourselves is not a leaf.** Our own registries, dictionaries, and infra hold the typed value — a `Dictionary<text,…>` keys fine (`text` already has ordinal-ignore-case `==`/`GetHashCode`). So never lower to raw to feed our own collection; lower only at the handoff to .NET, through the type's `internal`/gated accessor.
+
+Worked example — `channel.Mime`, the `?? "text/plain"` site:
+- `channel.Mime` is `string` (`channel/this.cs:38`), fed by `await Mime.Value()` (a `text`) via the removed `implicit operator string`. Do **not** patch it with `.ToString()`.
+- **Receiving type:** `channel.Mime` → `text`. Construction is `Mime = await Mime.Value("text/plain")` — `text` in, `text` stored, no crossing.
+- **Trace:** the field flows to `Format.TypeFromMime(string)` (`channel/this.cs:319`) → carry the change, `TypeFromMime(text mime)`.
+- **No .NET leaf here — it's our registry.** The lookup table is *our* `ConcurrentDictionary` (`format/list/this.cs:216,427`), not a take-over API, so it becomes **text-keyed**, not string-keyed-with-extraction. MIME is `text` end to end inside our code.
+- **The real leaf is the HTTP boundary.** MIME only becomes a raw `string` where it crosses .NET — the `Content-Type` header handed to `HttpClient` (`channel/type/http`), lowered there via the type's `internal`/gated accessor; inbound, the header string from .NET lifts to `text` immediately. That handoff is the only inch of raw.
+
+So the rule that keeps the gate honest: trace the value to a boundary you don't own, and lower there. If the boundary is *our* code, it isn't a boundary — make it typed.
 
 **`path`'s interior consumers — the taxonomy, not "each step is local."** Flipping a public `path` property isn't one-member-local. The real reads outside `app/type/path` are ~24 (the "51" inflated by `Uri.Absolute`, `serializer.Extension`, `options.Extension` — not `path`), and they split **four** ways — three already absorbed by other stages:
 - **Gated interop** (most `.Absolute`: `goal/list` file-load, `settings/Sqlite:52`, `code/load` `Assembly.LoadFrom`, `ui/Fluid:444` `PhysicalPath`, `actor/permission:45`) → the standing exemption. `.Absolute` stays **`internal` + `await Authorize(verb)`** (CLAUDE.md already mandates it before `.Absolute` outside `path`); the public surface is `!absolute` (the derived, gated `path` projection, finding 3). Not a gate violation.

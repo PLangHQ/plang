@@ -430,6 +430,68 @@
         "health": "production green/compiling; tests at clean baseline 1736 (one-pass regex approach documented); build of solution still red on tests",
         "notes": "Door=async ValueTask Value(); Materialize() sync core (verb, not noun-twin); generator emits Peek()/Materialize(). Sprint mode per Ingi."
       }
+    },
+    {
+      "id": "a7e2f4c1-9b3d-4e88-bc21-3f5a6d0e9c47",
+      "bot": "architect",
+      "timestamp_start": "2026-06-09T10:00:00Z",
+      "timestamp_end": "2026-06-09T11:30:00Z",
+      "intent": "Resolve the verbose optional-param shape the Stage-2 .Value() migration produces; add a Stage-7 conversion discipline and carve a new Stage 8.",
+      "before": {
+        "assumptions": "Coder has landed Stage 2 (the async .Value() door + lazy GetParameter<T>). The migration mechanically produced `(Mime == null ? null : await Mime.Value()) ?? \"text/plain\"` at ~42 sites. Ingi flagged the verbosity.",
+        "risk": "An optional param's nullable C# reference duplicates the absence Data already models via IsInitialized (OBP smell #6); under Nullable: enable a `?`-typed property dereference trips CS8602; the text->string crossing relies on an implicit operator Stage 7 removes."
+      },
+      "plan": ".bot/compare-redesign/architect/stage-8-optional-params.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/module/channel/set.cs",
+            "PLang/app/channel/this.cs",
+            "PLang/app/type/text/this.cs",
+            "PLang.Generators/Emission/Property/Data/this.cs",
+            "PLang/app/format/list/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified the live model: data.@this<T>.Value is a sync property (this.cs:1489); the generator's Data-property emitter has four cases and only the nullable case returns C# null on IsEmpty (the source of `Mime == null`); [Default] already constructs a non-null default-carrying Data; Data already models absent via Uninitialized/NotFound (IsInitialized=false) vs the present-null sentinel; no == operator overload on Data; Nullable is enable in both csproj; text has implicit string<->text operators (text/this.cs:60-61) and public string Value (:48); TypeFromMime(string) keys a string ConcurrentDictionary (format/list:216,427)."
+        },
+        {
+          "paths": [
+            ".bot/compare-redesign/architect/stage-7-surface-typing.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added the conversion discipline (deliverable + Design section): for any flagged site, change the receiving type to the PLang type, trace where it flows, and lower to raw CLR only where it's unavoidable - a .NET-library boundary (sqlite/Assembly.LoadFrom/HttpClient/Regex). Ingi's correction: our own C# is never a leaf - a string-keyed registry we wrote goes text-keyed (Dictionary<text,...> keys fine), not string-keyed-with-extraction. .ToString() forbidden as a value path. Worked example: channel.Mime string->text, traced into TypeFromMime(text) with the format registry itself going text-keyed; raw string only at the HTTP Content-Type handoff."
+        },
+        {
+          "paths": [
+            ".bot/compare-redesign/architect/stage-2-value-door.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Made then reverted a `text.Value -> internal` edit. Ingi: coder has already shipped Stage 2 - hands off. The text.Value visibility question moves to Stage 7 where the gate flags it. Net: stage-2 unchanged."
+        },
+        {
+          "paths": [
+            ".bot/compare-redesign/architect/stage-8-optional-params.md",
+            ".bot/compare-redesign/architect/plan.md",
+            ".bot/compare-redesign/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Carved Stage 8: an optional param resolves to a non-null Data (Data.Uninitialized, never a C# null) so handlers read await Param.Value() / Value(fallback) - no == null, no !, no trailing ?? default. ? stays the optional signal (no [Optional]: forgetting ? -> required -> loud); generator stamps [System.Diagnostics.CodeAnalysis.NotNull] on ? slots so the deref doesn't trip CS8602 under Nullable: enable; [Default] carries static defaults (extended to fire on null too); .Value(fallback) for runtime defaults. Independent follow-on to Stage 2, not part of the 2-6 green unit. Flagged in the file + index as not-yet-coder-audited (coder to flag conflicts before implementing). One verify-API assumption to test first: [NotNull] on a partial property's implementing part honored by Roslyn for read-site flow analysis. Wired into plan.md index + summary.md table."
+        }
+      ],
+      "after": {
+        "status": "Stage 7 discipline added, Stage 8 carved + wired + flagged unaudited; pushed.",
+        "health": "Design settled with Ingi; Stage 8 awaiting coder read-over.",
+        "notes": "Stage 8 explicitly hands the text->string typing of channel.Mime to Stage 7 so the stages don't overlap. Coder asked (via banner + index flag) to ask if anything in Stage 8 conflicts with built code."
+      }
     }
   ]
 }

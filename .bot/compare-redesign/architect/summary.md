@@ -1,5 +1,25 @@
 # Architect — compare-redesign
 
+## 2026-06-09 — Stage 7 conversion discipline + new Stage 8 (optional-param null model)
+
+Worked through the verbose `Mime = (Mime == null ? null : await Mime.Value()) ?? "text/plain"` shape the Stage-2 migration produces, with Ingi. Two outcomes.
+
+**Stage 7 — added the conversion discipline.** When the gate flags a member (or a removed implicit operator breaks a consumer), the fix is: change the *receiving* type to the PLang type, trace where that type flows, and lower to raw CLR **only where it's unavoidable — a .NET-library boundary** (sqlite/`Assembly.LoadFrom`/`HttpClient`/`Regex`). Ingi's key correction: **our own C# is never a leaf** — a string-keyed registry we wrote goes text-keyed (`Dictionary<text,…>` keys fine), not string-keyed-with-extraction; raw appears only at code we don't own. `.ToString()` is forbidden as a value path. Worked example: `channel.Mime` `string`→`text`, traced into `TypeFromMime(text)` with the format registry itself going text-keyed; raw `string` only at the HTTP `Content-Type` handoff. (Reverted an earlier stage-2 edit — coder has already shipped Stage 2; hands off.)
+
+**Stage 8 — new file `stage-8-optional-params.md`.** An optional param resolves to a non-null Data (`Data.Uninitialized`, never a C# null), so handlers read `await Param.Value()` / `Value(fallback)` — no `== null`, no `!`, no trailing `?? default`. `?` stays the optional signal (no `[Optional]` — forgetting `?` → required → loud); generator stamps `[System.Diagnostics.CodeAnalysis.NotNull]` on `?` slots so the deref doesn't trip CS8602 under `Nullable: enable`; `[Default]` carries static defaults (extended to fire on null too); `.Value(fallback)` for runtime defaults. Independent follow-on to Stage 2, not part of the 2–6 green unit. **Flagged in the file + index as not-yet-coder-audited** — coder asked to flag conflicts before implementing. One verify-API assumption to test first: `[NotNull]` on a partial property's implementing part honored by Roslyn for read-site flow analysis.
+
+Stage status:
+| Stage | File | Status |
+|-------|------|--------|
+| 1 | [Comparison enum](stage-1-comparison-enum.md) | pending |
+| 2 | [Typed value door + `.`/`!` resolver](stage-2-value-door.md) | done (coder) |
+| 3 | [`file`/`directory`/`url` reference types](stage-3-reference-types.md) | pending |
+| 4 | [Per-type `Compare`](stage-4-per-type-compare.md) | pending |
+| 5 | [`data.Compare` entry](stage-5-data-compare.md) | pending |
+| 6 | [Consumers + demolition](stage-6-consumers-and-demolition.md) | pending |
+| 7 | [Full public-surface typing](stage-7-surface-typing.md) | pending |
+| 8 | [Optional-param resolution (`[Default]`/`[NotNull]`)](stage-8-optional-params.md) | pending (not coder-audited) |
+
 ## 2026-06-09 — Coder v4 follow-up (one note: param resolution-error guard reorder)
 
 Coder pulled the v3 resolutions (`coder/v4/comments.md`) — A/B/C "resolved well," A "the right way." One mechanical consequence to name (explicitly *not* a design change): the lazy `GetParameter<T>` moves the param **resolution-error guard**. Verified: `GetParameter<T>` is net-new; handlers guard eagerly today (`if (!Path.Success) return Path;` *before* the first `await`, e.g. `file/read.cs:31`) because the getter resolved on access. Under the lazy `Data<T>`, resolution + `.Success`/`.Error` only fire at `await Param.Value()` — so a pre-`await` guard silently inspects the *unresolved* Data and stops catching bad-scheme/unset-`%var%`/convert failures (they resurface as an NRE on `.Value!`). Resolution: the ~42 `param.Value!` sites migrate as **await → guard → use** (`var p = await Path.Value(); if (!Path.Success) return Path; … p …`) — the guard-reorder is part of each site, not just the `.Value` → `await .Value()` swap. Folded into Stage 2; failure-matrix row added. Coder verdict: **build it**, plan ready.
@@ -53,6 +73,7 @@ Carved the seven stage files and the two test docs to the typed-value-model spin
 | 5 | [`data.Compare` entry](stage-5-data-compare.md) | pending |
 | 6 | [Consumers + demolition](stage-6-consumers-and-demolition.md) | pending |
 | 7 | [Full public-surface typing (Pile 3)](stage-7-surface-typing.md) | pending |
+| 8 | [Optional-param resolution (`[Default]`/`[NotNull]`)](stage-8-optional-params.md) | pending |
 
 Plus `plan/test-strategy.md` (five integration cuts: cross-type antisymmetry, lazy-read + the two planes, `write out %dir%` = listing not content-dump, sort-by-IO-key, enum boundary + membership) and `plan/test-coverage.md` (per-stage matrix, failure matrix, new-surfaces inventory). Spine stage index now links the files. Stages 2–6 are one green unit; Stage 7 (surface typing) rides behind the gate. Two architect verifications (raw-CLR-bounded sampling, `number` boxing) folded into Stage 7's prologue.
 
