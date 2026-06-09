@@ -21,6 +21,11 @@ public static class Default
     {
         if (raw is not string text) return raw;
         if (string.IsNullOrEmpty(text) || ctx.Context == null) return null;
-        return ctx.Context.App.Type.Convert(text, typeof(global::app.goal.@this), ctx.Context).Peek();
+        var goal = ctx.Context.App.Type.Convert(text, typeof(global::app.goal.@this), ctx.Context).Peek();
+        // The load is the deserialization boundary: tagged composite params
+        // (goal.call, ...) become their typed objects now, not lazily downstream.
+        if (goal is global::app.goal.@this g)
+            g.BornNativeParameters(ctx.Context);
+        return goal;
     }
 }

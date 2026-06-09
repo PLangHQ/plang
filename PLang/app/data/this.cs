@@ -986,7 +986,7 @@ public partial class @this
         // when %x% isn't set. The `if (value is @this) return value` guard inside
         // SubstitutePrimitive only fires for already-typed Data, not for the dict
         // representation that comes off the LLM response.
-        if (context != null && IsWalkableContainer(raw) && !IsActionDestination(typeof(T)) && !IsSelfResolvingParams(typeof(T)))
+        if (context != null && IsWalkableContainer(raw) && !IsActionDestination(typeof(T)))
             return WrapAs<T>(await WalkContainerVars(raw, context), context);
 
         // T has static Resolve(string, Context.@this) — Path-style domain types. Done before
@@ -1221,13 +1221,6 @@ public partial class @this
 
         return value;
     }
-
-    // A goal.call carries its params raw across the call boundary — the generic container
-    // walk is skipped so a `%var%` param stays a reference (a Data) for the callee to resolve
-    // through the door, rather than being flattened to a bare value here. Goal name + params
-    // resolve at dispatch (GoalCall.GetGoalAsync) and at read, in the caller's shared scope.
-    private static bool IsSelfResolvingParams(System.Type t) =>
-        t == typeof(global::app.goal.GoalCall);
 
     private static bool IsActionDestination(System.Type t)
     {

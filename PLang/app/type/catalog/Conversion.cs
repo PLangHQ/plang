@@ -452,7 +452,7 @@ public sealed partial class @this
                 "EnumConversionFailed", 400)); }
         }
 
-        // (string/JsonElement/dict → goal.call is owned by GoalCall.Convert, dispatched via the hook above.)
+        // (goal.call is born-native at the wire boundary — GoalCall.FromWire, called by the action/goal loaders and the builder; deliberately NOT a conversion hook.)
 
         // Primitives via Convert.ChangeType. InvariantCulture so JSON-shaped
         // numbers ("3.14", "1000") parse identically regardless of the user's locale.

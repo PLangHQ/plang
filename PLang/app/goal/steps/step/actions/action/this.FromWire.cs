@@ -30,6 +30,7 @@ public sealed partial class @this
                 var name = global::app.data.@this.WireSlot(pRaw, "name")?.ToString() ?? "";
                 act.Parameters.Add(global::app.data.@this.FromWireShape(pRaw, name, context));
             }
+            act.BornNativeParameters(context);
         }
         // A modifier (error.handle, cache.wrap, timeout.after) rides the wire nested under its
         // target as an action-shaped record — rebuild each recursively. Without this the modifier
@@ -45,6 +46,43 @@ public sealed partial class @this
             }
         }
         return act;
+    }
+
+
+    /// <summary>
+    /// Born-native composites: a parameter whose tagged type maps to a CLR class exposing
+    /// <c>static data.@this FromWire(object?, context)</c> (e.g. <c>goal.call</c> →
+    /// <see cref="GoalCall.FromWire"/>) constructs its typed object HERE, at the wire
+    /// boundary — the load is the deserialization boundary, so no dict shape flows
+    /// downstream and the dispatch door only ever sees the real type. A dict reaching
+    /// a typed slot at runtime is a conversion error, never silently converted.
+    /// </summary>
+    internal void BornNativeParameters(global::app.actor.context.@this context)
+    {
+        BornNative(Parameters, context);
+        if (Defaults != null) BornNative(Defaults, context);
+        foreach (var m in Modifiers) m.BornNativeParameters(context);
+    }
+
+    private static void BornNative(System.Collections.Generic.List<global::app.data.@this> slots, global::app.actor.context.@this context)
+    {
+        for (int i = 0; i < slots.Count; i++)
+        {
+            var p = slots[i];
+            var typeName = p.Type?.Name;
+            if (string.IsNullOrEmpty(typeName) || context.App == null) continue;
+            var clr = context.App.Type.Clr(typeName!);
+            if (clr == null || clr.IsPrimitive) continue;
+            var hook = clr.GetMethod("FromWire",
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
+                null, new[] { typeof(object), typeof(global::app.actor.context.@this) }, null);
+            if (hook == null || hook.ReturnType != typeof(global::app.data.@this)) continue;
+            var raw = p.Peek();
+            if (raw == null || clr.IsInstanceOfType(raw)) continue;
+            if (hook.Invoke(null, new object?[] { raw, context }) is global::app.data.@this r
+                && r.Success && r.Peek() is { } typed && clr.IsInstanceOfType(typed))
+                slots[i] = new global::app.data.@this(p.Name, typed, p.Type);
+        }
     }
 
     // A native list / CLR sequence of records, or null when the value isn't iterable.

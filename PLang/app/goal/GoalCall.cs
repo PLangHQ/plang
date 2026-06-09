@@ -36,12 +36,15 @@ public sealed class GoalCall : global::app.type.item.@this, module.IEvent
     public steps.step.actions.action.@this? Action { get; set; }
 
     /// <summary>
-    /// OBP: <c>GoalCall</c> owns how a goal-call value is assembled from raw input —
-    /// a bare goal name (string), a JSON object (JsonElement), or the dict shape
-    /// <c>UnwrapJsonElement</c> produces. A CLR type name leaking into the name slot
-    /// is rejected loudly (a build-pipeline ToString() leak, not a goal name).
+    /// OBP: <c>GoalCall</c> owns how a goal-call value is assembled at the WIRE/BUILD
+    /// boundary — a bare goal name (string), a JSON object (JsonElement, build ingest),
+    /// or the dict shape the .pr loader produces. Called explicitly at the two birth
+    /// sites (the action wire loader and the builder); deliberately NOT a conversion-
+    /// registry hook — a dict reaching the runtime door is an error, not a conversion.
+    /// A CLR type name leaking into the name slot is rejected loudly (a build-pipeline
+    /// ToString() leak, not a goal name).
     /// </summary>
-    public static data.@this Convert(object? value, string? kind, actor.context.@this context)
+    public static data.@this FromWire(object? value, actor.context.@this context)
     {
         switch (value)
         {
