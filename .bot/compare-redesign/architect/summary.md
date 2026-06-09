@@ -1,5 +1,9 @@
 # Architect — compare-redesign
 
+## 2026-06-09 — Stage 2.1 expanded to 3 parts after coder audit
+
+Coder audited Stage 2.1 (`coder/v5/stage-2.1-audit.md`) and caught that it covered only one of three deferred async conversions. Verified all three of their claims against the branch: (1) `GetChild` is sync `public virtual @this`, not `ValueTask` — my bucket-E "review-and-swap" premise was factually wrong, navigation-async is unbuilt; (2) `GetParameter<T>` doesn't exist and the source-gen getter still emits eager `As<T>(Context)` (`Emission/Property/Data/this.cs:40,44,54,58`) — params resolve before any await; (3) the navigators (`app/variable/navigator/{List,Dictionary,Snapshot}.cs`) read sync `Materialize()` and live in `app/variable`, which my gate missed. Honest picture: **Stage 2 shipped the async signature but sync substance** — `Value() => new(Materialize())`. Rewrote `stage-2.1` into three parts, all gating Stage 3: **A** handler value-reads → `await Value()` (the original scope); **B** navigation chain → `ValueTask` (GetChild/navigators/Variable.Get + await-once gate + sync-surface handling = the v3 finding-A, designed never built); **C** `GetParameter<T>` lazy getter + source-gen emission. Named the A↔C coupling (await Param.Value() isn't lazy until C lands) and the Stage-8 overlap (both rewrite the same getter emission — do once). Fixed bucket E and widened the gate to `app/variable/navigator`. Stage 2 status corrected below to "async signature only."
+
 ## 2026-06-09 — Stage 2.1 carved (Materialize sprawl → async door)
 
 Ingi pulled the coder's finished Stage 2 and noticed `Materialize()` used heavily — in sync methods that should be async. Confirmed: the plan (Stage 2) said `Materialize()` disappears and the door is the single async accessor, but the coder kept it as a sync core (`Value() => new(Materialize())`, async read deferred to Stage 3) and calls `.Materialize()` directly at ~300 handler sites. Audit: 60 handler files (44 sync — the smell; 16 already async), 87 name-slot reads, 227 value reads; plus 35 `app/data` internal sites. `count.cs` is the textbook case — sync `Run()` (`Task.FromResult`) reaching `.Materialize()` for both a name slot and a real value read. The risk is latent: today `Value()`==`Materialize()`, but once Stage 3 puts the async I/O read inside `Value()`, every direct `.Materialize()` bypasses it (a `count`/`where` over `file`/`url` content never loads). Carved **`stage-2.1-materialize-to-door.md`**: rule (value reads → `await Value()`, flip sync `Run()` → `async`; name slots → door too; Data-internal/ToString/serialize → leave as the internal sync core), a categorized worklist (A flip / B name-only / C swap / D leave / E review-separately = navigation chain, two-phase sort, GoalCall), and a grep gate (`app/module` has zero `.Materialize()`). Prerequisite for Stage 3. Coder was waiting on this.
@@ -8,8 +12,8 @@ Stage status:
 | Stage | File | Status |
 |-------|------|--------|
 | 1 | [Comparison enum](stage-1-comparison-enum.md) | done (coder) |
-| 2 | [Typed value door + `.`/`!` resolver](stage-2-value-door.md) | done (coder) |
-| 2.1 | [Route handler reads through the door](stage-2.1-materialize-to-door.md) | pending |
+| 2 | [Typed value door + `.`/`!` resolver](stage-2-value-door.md) | async signature only (substance → 2.1) |
+| 2.1 | [Make the door actually async (A handler reads / B nav / C param getter)](stage-2.1-materialize-to-door.md) | pending |
 | 3 | [`file`/`directory`/`url` reference types](stage-3-reference-types.md) | pending |
 | 4 | [Per-type `Compare`](stage-4-per-type-compare.md) | pending |
 | 5 | [`data.Compare` entry](stage-5-data-compare.md) | pending |

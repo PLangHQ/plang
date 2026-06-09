@@ -496,12 +496,23 @@
           "category": "doc",
           "confidence": "high",
           "context": "Ingi noticed the coder's finished Stage 2 uses Materialize() heavily, including sync methods that should be async. Confirmed the plan said Materialize() disappears (door is the single async accessor) but the coder kept it as a sync core (Value() => new(Materialize()), async read deferred to Stage 3) and calls .Materialize() directly at ~300 handler sites. Audited: 60 handler files (44 sync/the smell, 16 async), 87 name-slot reads, 227 value reads, 35 app/data internal. Risk is latent - today Value()==Materialize(), but Stage 3 puts async I/O read inside Value() so every direct .Materialize() bypasses it (count/where over file/url content never loads). Carved stage-2.1-materialize-to-door.md: rule (value reads -> await Value() + flip sync Run() async; name slots -> door; Data-internal/ToString/serialize -> leave as internal sync core), categorized worklist (A flip / B name-only / C swap / D leave / E review = navigation chain + two-phase sort + GoalCall), grep gate (app/module zero .Materialize()). Prerequisite for Stage 3. Wired into plan index + summary table."
+        },
+        {
+          "paths": [
+            ".bot/compare-redesign/architect/stage-2.1-materialize-to-door.md",
+            ".bot/compare-redesign/architect/plan.md",
+            ".bot/compare-redesign/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Coder audited Stage 2.1 (coder/v5/stage-2.1-audit.md) - caught that it covered only one of three deferred async conversions. Verified all three claims against the branch: (1) GetChild is sync 'public virtual @this', NOT ValueTask - my bucket-E review-and-swap premise was factually wrong, nav-async is unbuilt; (2) GetParameter<T> doesn't exist + source-gen getter still emits eager As<T>(Context) (Emission/Property/Data/this.cs:40,44,54,58) - params resolve before any await; (3) navigators (app/variable/navigator/{List,Dictionary,Snapshot}.cs) read sync Materialize() and live in app/variable, which my gate missed. Honest picture: Stage 2 shipped async signature but sync substance. Rewrote stage-2.1 into 3 parts, all gating Stage 3: A handler value-reads -> await Value() (original scope); B navigation chain -> ValueTask (GetChild/navigators/Variable.Get + await-once gate + sync surfaces = v3 finding-A); C GetParameter<T> lazy getter + source-gen. Named A<->C coupling (await Param.Value() not lazy until C) and the Stage-8 overlap (both rewrite the same getter emission - do once). Fixed bucket E, widened gate to app/variable/navigator. Corrected Stage 2 status to 'async signature only' in summary table. Decision delegated by Ingi: one file with parts a/b/c, not three files."
         }
       ],
       "after": {
-        "status": "Stage 7 discipline + Stage 8 + Stage 2.1 carved and wired; pushed. Coder unblocked on 2.1.",
-        "health": "Design settled with Ingi; Stage 2.1 is the coder's next unit (prereq for Stage 3); Stage 8 still awaiting coder read-over.",
-        "notes": "Stage 2.1 closes the Materialize sprawl from Stage 2 - handlers must read through await Value() so Stage 3's async read isn't bypassed. E-bucket sites (navigation chain, two-phase sort, GoalCall) flagged review-don't-blind-swap. Stage 8 hands the text->string typing of channel.Mime to Stage 7."
+        "status": "Stage 2.1 expanded to 3 parts (A handler reads / B nav async / C param getter) after coder audit; pushed. Coder unblocked.",
+        "health": "Stage 2 is async-signature-only; 2.1 (all 3 parts) is the real prereq for Stage 3. Stage 8 overlaps 2.1c (shared getter rewrite). Stage 8 still awaiting coder read-over.",
+        "notes": "Coder's audit was correct on all three verified facts. Stage 2.1 now states the honest picture (signature vs substance). B-part sync surfaces (ToString/Equals/Fluid) and the await-once gate are the v3 finding-A resolution, designed never built. Two-phase sort stays Stage 6; getter emission shared with Stage 8."
       }
     }
   ]
