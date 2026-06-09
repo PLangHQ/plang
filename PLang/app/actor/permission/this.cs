@@ -60,7 +60,7 @@ public sealed class @this
         try
         {
             var stored = await _actor.App.SettingsStore.GetAll<global::app.data.@this<PermissionRecord>>(PermissionTable);
-            if (stored.Success && stored.Value is { } list)
+            if (stored.Success && await stored.Value() is { } list)
             {
                 foreach (var grantData in list.Items.Cast<global::app.data.@this<PermissionRecord>>())
                 {
@@ -69,8 +69,8 @@ public sealed class @this
                     // type-resolution paths require it.  Per the architecture: every
                     // producer stamps Context; SettingsStore is a producer.
                     grantData.Context = _actor.Context;
-                    if (grantData.Value is null) continue;
-                    if (!string.Equals(grantData.Value.Actor, _actor.Name, StringComparison.Ordinal)) continue;
+                    if (await grantData.Value() is null) continue;
+                    if (!string.Equals((await grantData.Value())!.Actor, _actor.Name, StringComparison.Ordinal)) continue;
                     if (await TryCover(grantData, request)) return grantData;
                 }
             }
@@ -91,8 +91,8 @@ public sealed class @this
     /// </summary>
     public async Task Add(global::app.data.@this<PermissionRecord> signed)
     {
-        if (signed.Value == null) return;
-        var key = signed.Value.Path;
+        var __rec = await signed.Value(); if (__rec == null) return;
+        var key = __rec.Path;
 
         // Heuristic for "persisted": signature present. In-memory grants come
         // in unsigned ("y" branch in Path.Authorize doesn't call EnsureSigned).
@@ -106,7 +106,7 @@ public sealed class @this
         {
             // Overwrite same-path entry if any.
             var idx = _inMemory.FindIndex(d =>
-                d.Value != null && string.Equals(d.Value.Path, key, StringComparison.Ordinal));
+                d.Materialize() is PermissionRecord __dv && string.Equals(__dv.Path, key, StringComparison.Ordinal));
             if (idx >= 0) _inMemory[idx] = signed;
             else _inMemory.Add(signed);
         }
@@ -122,9 +122,9 @@ public sealed class @this
         lock (_lock)
         {
             var idx = _inMemory.FindIndex(d =>
-                d.Value != null
-                && d.Value.Actor == match.Actor
-                && d.Value.Path == match.Path);
+                d.Materialize() is PermissionRecord __dv2
+                && __dv2.Actor == match.Actor
+                && __dv2.Path == match.Path);
             if (idx >= 0) { _inMemory.RemoveAt(idx); removed = true; }
         }
 
@@ -135,7 +135,7 @@ public sealed class @this
 
     private async Task<bool> TryCover(global::app.data.@this<PermissionRecord> grantData, PermissionRecord request)
     {
-        var grant = grantData.Value;
+        var grant = await grantData.Value();
         if (grant == null) return false;
         if (!string.Equals(grant.Actor, request.Actor, StringComparison.Ordinal)) return false;
         if (!grant.Covers(request)) return false;

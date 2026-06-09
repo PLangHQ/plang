@@ -29,7 +29,7 @@ public class Ed25519 : ISigning
         // Get identity
         var identityResult = await app.RunAction<identity.Get>(new identity.Get(), action.Context);
         if (!identityResult.Success) return identityResult;
-        var identity = (Identity)identityResult.Value!;
+        var identity = (Identity)(await identityResult.Value())!;
 
         // Hash the data
         var hash = await app.RunAction<Hash>(new Hash { Data = action.Data, Algorithm = new data.@this<global::app.type.text.@this>("", "keccak256") }, action.Context);
@@ -44,7 +44,7 @@ public class Ed25519 : ISigning
             Algorithm = Name,
             Nonce = nonce,
             Created = now,
-            Expires = action.Expires?.Value is { } expiry ? now.Add(expiry) : null,
+            Expires = (action.Expires == null ? null : await action.Expires.Value()) is { } expiry ? now.Add(expiry) : null,
             Contracts = action.Contracts?.GetValue<List<string>>(),
             Headers = action.Headers?.GetValue<Dictionary<string, object>>(),
             Hash = hash
@@ -54,7 +54,7 @@ public class Ed25519 : ISigning
         var signingBytes = signedData.ToSigningBytes();
         var signResult = Sign(signingBytes, identity.PrivateKey);
         if (!signResult.Success) return signResult;
-        signedData.Value = Convert.ToBase64String((byte[])signResult.Value!);
+        signedData.Value = Convert.ToBase64String((byte[])(await signResult.Value())!);
 
         action.Data!.Signature = signedData;
         return action.Data;
@@ -69,8 +69,8 @@ public class Ed25519 : ISigning
         var app = action.Context.App;
         var now = (DateTimeOffset)action.Context.Variable.GetValue("NowUtc")!;
         var signingSettings = app.Config.For<Config>(action.Context);
-        long effectiveTimeout = action.TimeoutMs?.Value != null ? action.TimeoutMs.GetValue<long>() : signingSettings.Resolve<long>("TimeoutMs", 300_000);
-        var skipFreshness = action.SkipFreshnessCheck?.Value ?? false;
+        long effectiveTimeout = action.TimeoutMs?.Materialize() != null ? action.TimeoutMs.GetValue<long>() : signingSettings.Resolve<long>("TimeoutMs", 300_000);
+        var skipFreshness = (action.SkipFreshnessCheck == null ? null : (await action.SkipFreshnessCheck.Value())?.Value) ?? false;
 
         // 1. Type check
         if (signedData.Type != "signature")
@@ -127,15 +127,15 @@ public class Ed25519 : ISigning
 
         // 7. Data hash verification — the stored digest is a hash value that
         // carries its own algorithm.
-        if (signedData.Hash?.Value is not global::app.module.crypto.type.hash.@this storedHash || storedHash.Bytes.Length == 0)
+        if (signedData.Hash?.Materialize() is not global::app.module.crypto.type.hash.@this storedHash || storedHash.Bytes.Length == 0)
             return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Missing data hash", "DataHashMismatch", 400));
 
-        if (action.Data?.Value != null)
+        if ((action.Data == null ? null : await action.Data.Value()) != null)
         {
             var rehash = await app.RunAction<Hash>(
                 new Hash { Data = action.Data, Algorithm = new data.@this<global::app.type.text.@this>("", storedHash.Algorithm) }, action.Context);
             if (!rehash.Success) return global::app.data.@this<global::app.type.@bool.@this>.From(rehash);
-            if (rehash.Value is not global::app.module.crypto.type.hash.@this rehashValue || !rehashValue.DigestEquals(storedHash))
+            if (await rehash.Value() is not global::app.module.crypto.type.hash.@this rehashValue || !rehashValue.DigestEquals(storedHash))
                 return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
         }
 
