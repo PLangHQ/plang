@@ -1,115 +1,63 @@
 # Coder — compare-redesign
 
-## Version: v4 (follow-up — reviewed architect's resolution of v3 findings A/B/C)
-
-Pulled `d887baf88`. **A, B, C all resolved well** — and A the right way: keep lazy read, navigation
-async via `ValueTask` (sync-completing in memory, awaits only the first content read), the three sync
-surfaces each handled (param getters → `GetParameter<T>` returns a lazy `Data<T>`, handler does
-`await Param.Value()`; `ToString`/`Equals`/`GetHashCode` read materialised backing only; Fluid
-materialises up-front). The `__ResolveData(name).As<T>(Context)` collapse is a real OBP win.
-**Review only — no code.** Deliverable: `v4/comments.md`. (v3 summary archived.)
-
-**One mechanical consequence to name (not a design change):** the `GetParameter<T>`-lazy switch
-silently moves the param resolution-error guard. Verified: `GetParameter<T>` is net-new (only
-non-generic `GetParameter` exists, `action/this.cs:220`); **42 handlers read `param.Value!`/`.Success`
-synchronously, usually before the first `await`** — e.g. `file/read.cs:31` `if (!Path.Success) return
-Path;` then `Path.Value!`. Today the getter resolves eagerly, so `.Success`/`.Error` populate before
-the await. Under the lazy `Data<T>`, resolution fires only at `await Param.Value()` — so the pre-await
-`if (!Path.Success)` inspects the *unresolved* Data and **silently stops catching resolution failures**
-(bad scheme / unset `%var%` / convert error slips past, surfaces later as an NRE on `.Value!`). Ask:
-Stage 2 should state the guard moves **after** `await Param.Value()`; the 42 `param.Value!` sites are
-the migration list and the guard-reorder is part of each, not just the `.Value` → `await Value()` swap.
-
-Otherwise the plan is ready to implement. **Build it.**
-
----
-
-## Version: v3 (follow-up — reviewed architect's answers to the 7 v2 findings)
-
-The architect settled all 7 v2 findings (commits `983b775ff`..`0a8f351b7`) and rewrote Stage 2 +
-Stage 3. Ingi asked coder to read the answers and flag anything remaining. **Review only — no code.**
-Deliverable: `v3/comments.md`. (v2 summary archived at `v2/summary_v2_archived.md`.)
-
-**Verdict: 6 of 7 settled cleanly.** The `.`/`!` wire-split (2), the `path` demolition to private
-`_location` (3), the narrow-on-examination identity chain (4), `data.Type → return _type` (5), the
-path-math taxonomy (6), and typed-at-creation (7) are all well-grounded — several sharper than my
-flags asked for.
-
-**One substantive new finding (A):** finding 1's async-navigation safety check was under-verified.
-It enumerated the list-module handlers + the `list:250` sort site, but missed two sync navigation
-surfaces that reach `GetChild`:
-1. **The source-generated lazy parameter getters are sync `get` accessors** (`PLang.Generators/
-   Emission/Property/Data/this.cs:44,54,58`) that resolve `%a.b%` via `As<T>` → `Variable.Get` →
-   `GetChild`. A C# property `get` *cannot* `await`. So a lazy param `Path = "%config.database%"`
-   (config = a `read` reference) would read file I/O inside a sync getter — the `GetAwaiter().
-   GetResult()` the plan forbids.
-2. **`Variable.Get(string)` dotted-path (`variable/list/this.cs:570`, sync) + `Variable.Resolve`
-   interpolation (`:649`, sync)** navigate the same way.
-   The crux: narrow-on-examination defers the content read to *first touch*, but first touch is often
-   a sync surface. The plan must name **where the async read boundary lands** so sync getters/resolver
-   never trip into I/O — either eager read at `read`-time (parse stays lazy+sync), or an async
-   pre-resolve pass before any sync getter sees the reference.
-
-**Two secondary "add-a-sentence" notes:** (B) in-place `.Type` mutation on examination is a
-read-causes-write — name the aliasing/clone/race semantics; (C) `name`-removal from the wire — grep
-the read side (`FromWireShape`/nested-Data keying) before deleting.
-
-Still **build it** — A is the last sharp edge on the async conversion, cheap to pin now.
-
----
-
-## Version: v2 (review of architect's re-carved typed-value-model plan)
+## Version: v5 (FIRST IMPLEMENTATION version — v1–v4 were reviews)
 
 ### What this is
 
-The branch began as "redesign comparison" and grew (architect's pivot) into **the typed value
-model**, with comparison as its first consumer. The architect re-carved the spine + 7 stages + 2
-test docs after abandoning the earlier raw-CLR draft. Ingi asked coder to read the new plan/stages
-and flag anything that doesn't make sense or won't work, in a file the architect can read.
+The typed value model. Architect settled a 7-stage plan; test-designer stubbed ~140 tests
+(125 C# + 15 `.goal`). This is the first version that writes production code. Ingi's sequencing
+decision (asked this session): **full sprint, build red mid-flight** — drive Stages 2→6 (one
+all-or-nothing green unit) straight through in dependency order, checkpointing each session until
+it lands green. Not "seek additive increments," not "Stage 2 only."
 
-This version is **review only — no code written.** Deliverable: `v2/comments.md`.
-(v1 summary archived at `v1/summary_v1_archived.md` — it reviewed the abandoned raw-CLR draft.)
+### What was done (v5)
 
-### What was done
+Landed the two pieces of the sprint that are **green standalone**, verified and committed:
 
-Read `plan.md`, all 7 stage files, `plan/test-strategy.md`, `plan/test-coverage.md`, and grounded
-every load-bearing claim against the real code on `compare-redesign`. Verdict: **build it** — the
-spine is sound and works with the grain (the foundations it leans on already exist:
-`item.Write(IWriter)`, the lazy `_raw`/`Materialize`/`FromRaw` rung, the `IOrderableValue` dispatch
-the redesign replaces). The typed-model pivot also dissolved my v1 hazard (throw-on-GetHashCode
-keying collision) — the value slot already holds the wrapper, no per-type raw-flip to sequence.
+1. **Stage 1 — `Comparison` enum** (`PLang/app/data/Comparison.cs`). Sign-free
+   `{ Less, Equal, Greater, NotEqual, Incomparable }`; nothing reads it yet (architect's design).
+   Test `Stage1_ComparisonEnumTests` rewritten from stub → green (reflection asserts exactly the
+   five members; `NotEqual != Incomparable`).
+2. **Stage 2 `Peek()`** — `ScalarValue` (property) → `Peek()` (method) at `PLang/app/data/this.cs:247`.
+   ~20 call sites migrated across PLang/ and PLang.Tests/. Build clean (0 errors); the
+   `ScalarAccessTests`/`Cut2_TouchMaterializes` tests that exercise it stay green. This is Stage 2's
+   "Peek()" deliverable, landed independently because it doesn't touch the door.
 
-Flagged 7 concerns, grounded with file:line. The four to fix before implementation:
+### What is NOT done — the door (Stage 2 core), and Stages 3–6
 
-1. **Async value source regressed from a named sub-stage to one bullet** (a v1 win lost in the
-   re-carve). Today `Materialize()` is *sync* (`this.cs:316`); the only async content load is
-   per-type `ILoadable.LoadAsync()` (one impl, `image`). The door conflates async **read** (net-new)
-   with sync **parse** (exists, navigation depends on it). Re-stage + draw the read/parse line.
-2. **`!` plane redefinition collides with the existing `!` = Data-infrastructure meaning.** Today
-   `GetInfrastructureValue` (`this.Navigation.cs:356`) resolves `!` against Data (Name/Error/Success/
-   Properties); the plan repoints `!` to the *value's* type surface (`text!length`). `%text!length%`
-   doesn't resolve today. Coexistence of Error/Success/Properties with value props is unspecified.
-3. **`path` already holds `Content`/`Source` and serializes content-first** (`path/this.cs:169,177`).
-   The "path = location, file = content" split is *demolition* on `path`, not addition. Stage 3
-   reads additively.
-5. **`item.ToRaw()` is load-bearing in `Data.Type`** (`this.cs:390`, CLR-mate derivation of a leaf),
-   not just Pile-2 decompose sugar. Stage 6 deletes "generic ToRaw" — must name this core consumer.
+The heart of Stage 2 is cutting `Data.Value` from a property to an async `ValueTask Value()` method.
+That is the single all-or-nothing change: it breaks every Data-receiver `.Value` read site (the
+migrating subset of 977 total `.Value` reads in PLang/), the `Data<T>`/`DynamicData` overrides, and
+the `Wire` serializer's sync value-read (`Wire.cs:485,528,545`). There is NO faithful shortcut —
+the design's whole point is to force the async read at every site. It cannot be half-landed in a
+navigable state, so it is the next focused session's work.
 
-Plus 3 "add a sentence" flags: (4) `read` returns lazy *content* today, not a `file` — note the bare
-scalar contract; (6) Stage 7's "each step local" undersells 51 interior `.Relative/.Extension/
-.Absolute` path-math sites; (7) the "door always returns a typed item" invariant isn't true today
-(`_value` holds raw `string` for var-refs, raw `List`/`Dict` for containers).
+**The runway is written: `v5/door-implementation.md`** — the concrete C# shape the architect's prose
+leaves to the coder: the `Value()`/`Load()`/`SetValue` shape + `_present` field; the override-seam
+decisions for `Data<T>.Value` and `DynamicData` (recommend dropping `Data<T>.Value`, overriding
+`Load()`); the serializer touchpoint (add internal sync `Materialized()` that throws if not present,
+keep `Peek()` for the `RawUntouched` verbatim path); navigation→`ValueTask`; `GetParameter<T>` lazy +
+the source-gen edit; the ~42 `param.Value!` `await→guard→use` migration; `data.Type → return _type`;
+`.`/`!` resolver; no-`ToRaw`. **The compiler error list after the door edit IS the migration
+worklist** (views keep their sync `.Value`, so only Data receivers error).
 
-### Scope counts gathered (for sizing)
+### Code example — the door shape (from door-implementation.md)
 
-- 23 `.ToRaw()` call sites (incl. the core `Data.Type` one).
-- 51 `.Relative/.Extension/.Absolute` reads doing string math → Stage 7 gate ripple.
-- 9 `path.Content` consumers → Stage 3 demolition surface.
-- 11 types implement `IEquatableValue`/`IOrderableValue` → Stage 4/6 replicate list.
-- 1 `ILoadable` impl (`image`) → confirms async-read path is net-new.
+```csharp
+public ValueTask<object?> Value()
+{
+    if (_valueFactory != null) { _value = _valueFactory(); _valueFactory = null; _present = true; }
+    if (_present) return new ValueTask<object?>(_value);   // in memory: sync, zero alloc
+    return Load();                                          // pending: async read+parse
+}
+protected virtual async ValueTask<object?> Load() => _value = await ReadAndParse();
+```
 
 ### Next
 
-Architect reads `v2/comments.md` and decides which flags to fold into the stages. No code until the
-async-source sub-stage and the `!`-plane coexistence are pinned.
-</content>
+`run.ps1 coder typed-value-model "Land the Stage 2 async Value() door per
+.bot/compare-redesign/coder/v5/door-implementation.md, then continue 3-6" -b compare-redesign`
+
+Do the door cutover as one focused pass: edit the door, build PLang, work the compiler error list
+file-by-file (Navigation → Variable → handlers via `await→guard→use`), then Stages 3–6. Build stays
+red across the unit (Ingi's accepted sprint mode); land green at the 2→6 boundary.
