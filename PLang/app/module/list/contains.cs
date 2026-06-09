@@ -10,7 +10,7 @@ public partial class Contains : IContext
 
     public async Task<data.@this<global::app.type.@bool.@this>> Run()
     {
-        var data = Context.Variable.Get(await ListName.Value());
+        var data = await Context.Variable.Get(await ListName.Value());
         var target = await Value.Value();
 
         foreach (var (_, item) in data.EnumerateItems())

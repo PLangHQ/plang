@@ -33,9 +33,9 @@ public partial class Foreach : IContext, IStep
             if (Context.CancellationToken.IsCancellationRequested)
                 return global::app.data.@this.Ok(new type.loop { itemCount = count, completed = false });
 
-            Context.Variable.Set(variableName, item);
+            await Context.Variable.Set(variableName, item);
             if (KeyName != null)
-                Context.Variable.Set(await KeyName.Value(), key);
+                await Context.Variable.Set(await KeyName.Value(), key);
 
             foreach (var action in bodyActions)
             {

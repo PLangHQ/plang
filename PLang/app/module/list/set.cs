@@ -16,7 +16,7 @@ public partial class Set : IContext
             return global::app.data.@this<type.list>.FromError(
                 new app.error.ValidationError($"Variable '{(await ListName.Value())}' is not a list"));
         // Promote to native (no-op when already native) so the in-place set persists.
-        Context.Variable.Set((await ListName.Value()), nl);
+        await Context.Variable.Set((await ListName.Value()), nl);
 
         if (Index.GetValue<int>() < 0 || Index.GetValue<int>() >= nl.Count)
             return global::app.data.@this<type.list>.FromError(

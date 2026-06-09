@@ -13,7 +13,7 @@ public partial class Add : IContext
     public async Task<data.@this<type.list>> Run()
     {
         var listName = (await ListName.Value());
-        var data = Context.Variable.Get(listName);
+        var data = await Context.Variable.Get(listName);
         var existing = (await data.Value());
         var list = existing as app.type.list.@this;
 
@@ -27,7 +27,7 @@ public partial class Add : IContext
                     list.Add(item as data.@this ?? new data.@this("", item));
             else if (existing != null)
                 list.Add(existing as data.@this ?? new data.@this("", existing));
-            Context.Variable.Set(listName, list);
+            await Context.Variable.Set(listName, list);
         }
 
         // A list value is structure-copied so the target doesn't alias the source

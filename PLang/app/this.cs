@@ -553,7 +553,7 @@ public sealed partial class @this : IAsyncDisposable
         // isolated by whatever forked them.
         if (goalCall.Parameters != null)
             foreach (var param in goalCall.Parameters)
-                context.Variable.Set(param.Name, param);
+                await context.Variable.Set(param.Name, param);
 
         return await ((Goal)(await goalResult.Value())!).RunAsync(context);
     }

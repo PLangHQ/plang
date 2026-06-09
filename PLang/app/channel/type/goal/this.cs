@@ -67,7 +67,7 @@ public class @this : global::app.channel.type.session.@this
         // and AsyncLocal carries it down to here. Variables.Set("!data", ...)
         // lands in that overlay if there is one, in the actor-shared dict
         // otherwise — and either way subsequent goal-body sets behave the same.
-        context.Variable.Set("!data", new data.@this("!data", data.Value, data.Type));
+        await context.Variable.Set("!data", new data.@this("!data", data.Value, data.Type));
 
         var prev = _executing.Value;
         _executing.Value = true;

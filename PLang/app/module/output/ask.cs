@@ -68,7 +68,7 @@ public partial class ask : IContext
     public async Task<data.@this<Ask>> Run()
     {
         // Resume path: channel pre-bound the answer under !ask.answer.
-        var answer = Context.Variable.Get(AnswerVariableName);
+        var answer = await Context.Variable.Get(AnswerVariableName);
         if (answer != null && answer.IsInitialized)
         {
             // The sentinel rides as the "answer" property of the infra root

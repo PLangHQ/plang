@@ -264,7 +264,7 @@ public sealed partial class @this : global::app.type.item.@this, module.IDataWra
             // whatever name the producing handler owns (e.g., variable.set's stored entry).
             // Override path (beforeResult.Handled) flows through the same write so
             // mocks and event.skipAction feed the next action like any real result.
-            context.Variable.Set("!data", result);
+            await context.Variable.Set("!data", result);
         }
 
         var afterResult = await lifecycle.After.Run(context, app.@event.Trigger.AfterAction, this, result);

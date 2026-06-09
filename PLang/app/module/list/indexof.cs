@@ -10,7 +10,7 @@ public partial class IndexOf : IContext
 
     public async Task<data.@this<global::app.type.number.@this>> Run()
     {
-        var data = Context.Variable.Get((await ListName.Value()));
+        var data = await Context.Variable.Get((await ListName.Value()));
         var target = (await Value.Value());
 
         foreach (var (key, item) in data.EnumerateItems())

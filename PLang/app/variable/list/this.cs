@@ -85,17 +85,18 @@ public partial class @this
 
     public @this()
     {
-        // Register system variables
-        Set("Now", new data.DynamicData("Now", () => DateTimeOffset.Now, app.type.@this.DateTime));
-        Set("NowUtc", new data.DynamicData("NowUtc", () => DateTimeOffset.UtcNow, app.type.@this.DateTime));
-        Set("GUID", new data.DynamicData("GUID", () => Guid.NewGuid(), app.type.@this.FromName("guid")));
+        // System variables seeded directly (Set is async now; simple names, no navigation,
+        // no subscribers at construction — Context is wired later).
+        _variables["Now"] = new data.DynamicData("Now", () => DateTimeOffset.Now, app.type.@this.DateTime);
+        _variables["NowUtc"] = new data.DynamicData("NowUtc", () => DateTimeOffset.UtcNow, app.type.@this.DateTime);
+        _variables["GUID"] = new data.DynamicData("GUID", () => Guid.NewGuid(), app.type.@this.FromName("guid"));
     }
 
     /// <summary>
     /// Stores a Data under its own Data.Name.
     /// Convenience wrapper — the name comes from value.Name.
     /// </summary>
-    public data.@this Set(data.@this value) => Set(value.Name, value);
+    public System.Threading.Tasks.ValueTask<data.@this> Set(data.@this value) => Set(value.Name, value);
 
     /// <summary>
     /// Stores a value under the given name and returns the stored Data.
@@ -108,7 +109,7 @@ public partial class @this
     /// For dot/bracket paths (e.g. "user.name"), the root Data is returned.
     /// Returns NotFound when the dot-path parent is absent or null.
     /// </summary>
-    public data.@this Set(string name, object? value, app.type.@this? type = null)
+    public async System.Threading.Tasks.ValueTask<data.@this> Set(string name, object? value, app.type.@this? type = null)
     {
         name = CleanName(name);
 
@@ -279,7 +280,7 @@ public partial class @this
 
         if (lastDot >= 0)
         {
-            parent = root.GetChild(remaining[..lastDot]);
+            parent = await root.GetChild(remaining[..lastDot]);
             propertyName = remaining[(lastDot + 1)..];
         }
         else
@@ -522,9 +523,9 @@ public partial class @this
     // --- Stage 3 accessor surface ---
 
     /// <summary>Index by name. Returns the Data (NotFound shape when absent — Get is the canonical method).</summary>
-    public data.@this this[string name] => Get(name);
+    // indexer removed — Get is async (ValueTask); use `await Get(name)`.
 
-    public data.@this Get(string name)
+    public async System.Threading.Tasks.ValueTask<data.@this> Get(string name)
     {
         if (string.IsNullOrEmpty(name))
             return data.@this.NotFound(name ?? "");
@@ -567,7 +568,7 @@ public partial class @this
         if (string.IsNullOrEmpty(remaining))
             return root;
 
-        var child = root.GetChild(remaining);
+        var child = await root.GetChild(remaining);
         return child;
     }
 
@@ -646,23 +647,34 @@ public partial class @this
     /// variables like %!app%, %!callStack%) are left unresolved. Use this for untrusted input
     /// (e.g., file content, HTTP responses) to prevent information disclosure.
     /// </summary>
-    public string Resolve(string input, bool skipInfrastructure = false)
+    public async System.Threading.Tasks.ValueTask<string> Resolve(string input, bool skipInfrastructure = false)
     {
         if (string.IsNullOrEmpty(input) || !input.Contains('%'))
             return input;
+
+        // The async door can't be awaited inside Regex.Replace's sync MatchEvaluator
+        // (the sync wall — no GetAwaiter().GetResult()). So pre-resolve every distinct
+        // %var% through the door first, then the sync replace just looks up.
+        // Scalar/output access (access-driven resolution): a bare `%x%` renders the
+        // value's raw source form via Peek(), not a structured parse — `%cfg%` of a
+        // lazily-read config.json is the raw json string. Dotted paths navigate via
+        // Get and come back already materialized.
+        var resolved = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (Match m in Regex.Matches(input, @"%([^%]+)%"))
+        {
+            var varName = m.Groups[1].Value;
+            if (skipInfrastructure && varName.StartsWith('!')) continue;
+            if (resolved.ContainsKey(varName)) continue;
+            var s = (await Get(varName))?.Peek()?.ToString();
+            if (s != null) resolved[varName] = s;
+        }
 
         return Regex.Replace(input, @"%([^%]+)%", match =>
         {
             var varName = match.Groups[1].Value;
             if (skipInfrastructure && varName.StartsWith('!'))
                 return match.Value; // Leave %!var% unresolved for untrusted input
-            // Scalar/output access (access-driven resolution): a bare `%x%` renders
-            // the value's raw source form, not a structured parse — `%cfg%` of a
-            // lazily-read config.json is the raw json string. Peek() equals
-            // the materialized value for authored/navigated Data, so this only
-            // changes raw-backed full matches (dotted paths navigate via Get and
-            // come back already materialized).
-            return Get(varName)?.Peek()?.ToString() ?? match.Value;
+            return resolved.TryGetValue(varName, out var v) ? v : match.Value;
         });
     }
 

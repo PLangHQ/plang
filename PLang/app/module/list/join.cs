@@ -11,7 +11,7 @@ public partial class Join : IContext
 
     public async Task<data.@this<global::app.type.text.@this>> Run()
     {
-        var data = Context.Variable.Get(await ListName.Value());
+        var data = await Context.Variable.Get(await ListName.Value());
         var strings = new List<string>();
 
         foreach (var (_, item) in data.EnumerateItems())

@@ -588,7 +588,7 @@ public sealed class Default : IHttp
             return verifyResult;
         }
 
-        context.Variable.Set("!ServiceIdentity", data.Signature?.Identity);
+        await context.Variable.Set("!ServiceIdentity", data.Signature?.Identity);
 
         BuildProperties(data, request, response);
         return data;
@@ -611,7 +611,7 @@ public sealed class Default : IHttp
             var verifyAction = new signing.verify { Context = context, Data = data };
             var verifyResult = await app.RunAction<signing.verify>(verifyAction, context);
             if (verifyResult.Success)
-                context.Variable.Set("!ServiceIdentity", data.Signature.Identity);
+                await context.Variable.Set("!ServiceIdentity", data.Signature.Identity);
             return;
         }
 
@@ -630,7 +630,7 @@ public sealed class Default : IHttp
         var legacyVerify = new signing.verify { Context = context, Data = legacyData };
         var legacyResult = await app.RunAction<signing.verify>(legacyVerify, context);
         if (legacyResult.Success)
-            context.Variable.Set("!ServiceIdentity", signedData.Identity);
+            await context.Variable.Set("!ServiceIdentity", signedData.Identity);
     }
 
     /// <summary>
@@ -910,7 +910,7 @@ public sealed class Default : IHttp
                 continue;
             }
 
-            context.Variable.Set("!ServiceIdentity", data.Signature?.Identity);
+            await context.Variable.Set("!ServiceIdentity", data.Signature?.Identity);
             await RunCallbackAsync(onStream, data, null, "chunk", app, context, ct);
         }
     }

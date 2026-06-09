@@ -48,8 +48,33 @@ This is the change that must land all-at-once or the build is deeply red. Doing 
 an unrecoverable break with no course-correction. So: Part A landed safely + documented; B+C is the next
 focused session's work (with the design-fork decision).
 
+### B+C grind STARTED (Design-1) — build RED at the As<T>→C boundary (door-cutover mode)
+Decisions settled: Design-1 nav async; **no exemptions** (three verbs — `await Value()`/`Peek()`/internal
+`Materialize()`); Stage 8 folded into C. Part A finished accordingly (in-memory reads → `Peek()`, not Materialize).
+
+**B done (committed red):** `INavigator.Navigate` + the 4 navigators → `ValueTask` (CanNavigate stays sync via
+`Peek()`); `GetChild`/`GetChildValue` (`app/data/this.Navigation.cs`) → `ValueTask`; `Variable.Get` → `ValueTask`
+(dotted branch awaits GetChild); `Variable.Resolve` → `ValueTask` (rewritten: pre-resolve all `%var%` through the
+door, then the sync `Regex.Replace` lambda just looks up — the sync-wall fix, **no `GetAwaiter().GetResult()`**);
+`Variable.Set` → `ValueTask` (ctor seeds system vars directly); the indexer removed; **39 Get/Set caller sites
+await-wrapped**. Build 170→108.
+
+**Remaining = C (the hard source-gen part), the 108 red errors are the worklist — all in `data/this.cs`:**
+- `As<T>` / `AsCanonical` / `AsT_Impl` / `AsT_Convert` / `WrapAs` / `SubstitutePrimitive` / `WalkContainerVars` /
+  `WalkDict`/`WalkList` / `ResolveParameter` → **async** (they call the now-async `Variable.Get`/`Resolve` at
+  `this.cs:729,739,936,957,1192,1197,1226`). This is the chain that forces the getter.
+- **Source-gen getter rewrite** (`Emission/Property/Data/this.cs:40,44,54,58`): lazy `GetParameter<T>` (no eager
+  `As<T>`; resolution moves into `await Param.Value()`) **+** the null model (optional `?` → non-null
+  `Data.Uninitialized`, `[NotNull]` stamp, `[Default]`-on-null) **+** `.Value(fallback)` overloads.
+- **`.Value(fallback)` + the ~200 method-group `data.Value` migration land together** (the overload makes
+  `data.Value` ambiguous — proven, 208 errors — so the 200 sites migrate in the same pass).
+- Then the 47 optional-param retrofits to the clean shape (`await Mime.Value()` + `[Default]`).
+
+This is one green-or-red unit; it's red mid-flight as designed. The 108-error list + the getter emission are the
+exact continuation worklist.
+
 ### Next
-1. Architect: pick the B+C design fork (1 vs 2) + formalize the gate exemptions.
+1. (settled) Design-1 + no exemptions — done.
 2. Coder (focused session): B+C as one unit — nav chain async, getter rewrite + null model, `.Value(fallback)`,
    then migrate the ~200 method-group sites + optional-param retrofits in the same pass; land green.
 3. Then Stages 3–6.

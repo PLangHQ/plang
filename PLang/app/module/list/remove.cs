@@ -18,7 +18,7 @@ public partial class Remove : IContext
             return global::app.data.@this<type.list>.FromError(
                 new app.error.ValidationError($"Variable '{listName}' is not a list"));
         // Promote to native (no-op when already native) so the in-place remove persists.
-        Context.Variable.Set(listName, nl);
+        await Context.Variable.Set(listName, nl);
 
         if (AtIndex.GetValue<int>() >= 0) nl.RemoveAt(AtIndex.GetValue<int>());
         else nl.Remove((await Value.Value()));

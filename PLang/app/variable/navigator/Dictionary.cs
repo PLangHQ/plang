@@ -19,7 +19,7 @@ public sealed class Dictionary : INavigator
 {
     public bool CanNavigate(global::app.data.@this data)
     {
-        var v = data.Materialize();
+        var v = data.Peek();
         if (v is null) return false;
         if (v is dict) return true;
         if (v is IDictionary<string, object?>) return true;
@@ -27,9 +27,9 @@ public sealed class Dictionary : INavigator
         return GetStringKeyedDictType(v) != null;
     }
 
-    public global::app.data.@this Navigate(global::app.data.@this data, string key)
+    public async System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(global::app.data.@this data, string key)
     {
-        var value = data.Materialize();
+        var value = await data.Value();
         if (value == null) return global::app.data.@this.NotFound(key);
 
         // The native `dict` value type owns key-lookup — one shape, no per-arm

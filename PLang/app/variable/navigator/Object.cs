@@ -7,9 +7,9 @@ namespace app.variable.navigator;
 /// </summary>
 public sealed class Object : INavigator
 {
-    public bool CanNavigate(global::app.data.@this data) => data.Value != null;
+    public bool CanNavigate(global::app.data.@this data) => data.Peek() != null;
 
-    public global::app.data.@this Navigate(global::app.data.@this data, string key)
+    public async System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(global::app.data.@this data, string key)
     {
         var value = data.Value;
         if (value == null) return global::app.data.@this.NotFound(key);

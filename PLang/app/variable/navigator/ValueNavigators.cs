@@ -21,12 +21,12 @@ internal static class ValueNavigators
         new global::app.variable.navigator.Object(),
     ];
 
-    public static global::app.data.@this Navigate(global::app.data.@this data, string key)
+    public static async System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(global::app.data.@this data, string key)
     {
         foreach (var nav in _navigators)
         {
             if (nav.CanNavigate(data))
-                return nav.Navigate(data, key);
+                return await nav.Navigate(data, key);
         }
         return global::app.data.@this.NotFound(key);
     }

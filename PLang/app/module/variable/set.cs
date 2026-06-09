@@ -105,7 +105,7 @@ public partial class Set : IContext, IBuildValidatable
         var property = name.Property;
         if (!string.IsNullOrEmpty(property))
         {
-            var target = Context.Variable.Get(name.Name);
+            var target = await Context.Variable.Get(name.Name);
             if (target == null || !target.IsInitialized)
                 return global::app.data.@this.FromError(
                     new global::app.error.ServiceError($"Variable '{name.Name}' is not set",
@@ -124,7 +124,7 @@ public partial class Set : IContext, IBuildValidatable
 
         if ((await AsDefault.Value())?.Value == true)
         {
-            var existing = Context.Variable.Get(name);
+            var existing = await Context.Variable.Get(name);
             if (existing.IsInitialized)
                 return existing;
         }
@@ -226,7 +226,7 @@ public partial class Set : IContext, IBuildValidatable
                 && string.Equals(vt.Kind ?? "", typeEntity.Kind ?? "", StringComparison.OrdinalIgnoreCase))
             {
                 Value.Name = name!;
-                return Context.Variable.Set(Value);
+                return await Context.Variable.Set(Value);
             }
 
             object? converted = sourceValue;
@@ -295,7 +295,7 @@ public partial class Set : IContext, IBuildValidatable
             }
 
             CopyProperties(Value, typedData);
-            return Context.Variable.Set(typedData);
+            return await Context.Variable.Set(typedData);
         }
 
         // No forced type — shallow bind. A new Data under the target name shares the
@@ -306,7 +306,7 @@ public partial class Set : IContext, IBuildValidatable
         // binding (Variables.Set never mutates an aliased Data in place), so reassignment
         // never bleeds.
         data.@this minted = Value.ShallowClone(name);
-        return Context.Variable.Set(minted);
+        return await Context.Variable.Set(minted);
     }
 
     /// <summary>

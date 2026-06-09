@@ -16,7 +16,7 @@ public partial class @this
     /// Gets a child value by path (dot notation, index, or method call).
     /// Never returns null — returns Data.NotFound(key) when the path doesn't resolve.
     /// </summary>
-    public virtual @this GetChild(string path, int depth = 0)
+    public virtual async System.Threading.Tasks.ValueTask<@this> GetChild(string path, int depth = 0)
     {
         if (string.IsNullOrEmpty(path))
             return this;
@@ -61,7 +61,7 @@ public partial class @this
 
                 if (string.IsNullOrEmpty(remaining))
                     return result;
-                return result.GetChild(remaining, depth + 1);
+                return await result.GetChild(remaining, depth + 1);
             }
         }
 
@@ -73,17 +73,17 @@ public partial class @this
 
         var child = isInfrastructure
             ? GetInfrastructureValue(segment)
-            : GetChildValue(segment);
+            : await GetChildValue(segment);
         if (!child.IsInitialized) return child;
 
         // Inject context on IContext values during traversal
-        if (child.Materialize() is app.module.IContext contextual)
+        if (await child.Value() is app.module.IContext contextual)
             contextual.Context = _context;
 
         if (string.IsNullOrEmpty(remaining))
             return child;
 
-        return child.GetChild(remaining, depth + 1);
+        return await child.GetChild(remaining, depth + 1);
     }
 
     /// <summary>
@@ -235,7 +235,7 @@ public partial class @this
     /// Navigates into the Data's value by key. Checks Properties, subclass properties,
     /// navigators, and whitelisted base properties. Returns Data — never null.
     /// </summary>
-    private @this GetChildValue(string key)
+    private async System.Threading.Tasks.ValueTask<@this> GetChildValue(string key)
     {
         // A raw-backed, untouched value answers Type metadata from its stamp
         // WITHOUT materializing — reading the {type, kind} stamp must never
@@ -245,7 +245,7 @@ public partial class @this
         if (RawUntouched && key.Equals("Type", StringComparison.OrdinalIgnoreCase))
             return new @this(key, Type, parent: this);
 
-        var val = Materialize();
+        var val = await Value();
 
         // Materialization failed at touch-time — the actionable parse error is
         // stamped on `this.Error`, but `val` came back null. Surface that error
@@ -258,7 +258,7 @@ public partial class @this
         // navigate into the VALUE first — it's the real object
         if (val is @this dataVal)
         {
-            var dataChild = dataVal.GetChildValue(key);
+            var dataChild = await dataVal.GetChildValue(key);
             if (dataChild.IsInitialized) return dataChild;
         }
 
@@ -275,7 +275,7 @@ public partial class @this
         if (val is string && _type != null)
         {
             ForceMaterialize();
-            val = Materialize();
+            val = await Value();
             if (val == null && Error?.Key == "MaterializeFailed")
                 return FromError(Error);
         }
@@ -290,12 +290,12 @@ public partial class @this
             var navigator = _context?.App?.Navigator?.Get(val.GetType());
             if (navigator != null)
             {
-                var navResult = navigator.Navigate(this, key);
+                var navResult = await navigator.Navigate(this, key);
                 if (navResult.IsInitialized) return navResult;
             }
 
             // Fallback when no app context (e.g., during deserialization)
-            var fallbackResult = global::app.variable.navigator.ValueNavigators.Navigate(this, key);
+            var fallbackResult = await global::app.variable.navigator.ValueNavigators.Navigate(this, key);
             if (fallbackResult.IsInitialized) return fallbackResult;
         }
 

@@ -10,17 +10,17 @@ public sealed class List : INavigator
 {
     public bool CanNavigate(global::app.data.@this data)
     {
-        var v = data.Materialize();
+        var v = data.Peek();
         return v is app.type.list.@this || v is IList || IsGenericList(v);
     }
 
-    public global::app.data.@this Navigate(global::app.data.@this data, string key)
+    public async System.Threading.Tasks.ValueTask<global::app.data.@this> Navigate(global::app.data.@this data, string key)
     {
-        var value = data.Materialize();
+        var value = await data.Value();
         // The native `list` value type owns index/accessor navigation — its elements
         // are already Data, so they return directly (no WrapItem). Symmetric to dict.
         if (value is app.type.list.@this nativeList)
-            return NavigateNative(nativeList, key, data);
+            return await NavigateNative(nativeList, key, data);
 
         var list = value as IList ?? WrapGenericList(value);
         if (list == null || list.Count == 0)
@@ -51,7 +51,7 @@ public sealed class List : INavigator
         // Implicit first: delegate to first element's navigator
         // e.g. %addresses.street% → addresses[0].street
         var firstElement = Element(list[0], "0", data);
-        return ValueNavigators.Navigate(firstElement, key);
+        return await ValueNavigators.Navigate(firstElement, key);
     }
 
     /// <summary>
@@ -60,7 +60,7 @@ public sealed class List : INavigator
     /// (`%addresses.street%` → `addresses[0].street`). Every element IS a Data already,
     /// so it returns directly — no raw-vs-Data recognition, no WrapItem.
     /// </summary>
-    private static global::app.data.@this NavigateNative(app.type.list.@this list, string key, global::app.data.@this parent)
+    private static async System.Threading.Tasks.ValueTask<global::app.data.@this> NavigateNative(app.type.list.@this list, string key, global::app.data.@this parent)
     {
         if (string.Equals(key, "count", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(key, "length", StringComparison.OrdinalIgnoreCase))
@@ -79,7 +79,7 @@ public sealed class List : INavigator
             return list.At(index) ?? global::app.data.@this.NotFound(key);
 
         // Implicit first: delegate to the first element's navigator.
-        return ValueNavigators.Navigate(list.First!, key);
+        return await ValueNavigators.Navigate(list.First!, key);
     }
 
     /// <summary>

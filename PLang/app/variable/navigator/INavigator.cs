@@ -14,6 +14,7 @@ public interface INavigator
 
     /// <summary>
     /// Navigate into the data's content by key. Returns Data.Null(key) if the key doesn't exist.
+    /// Async: navigating reads the value through the door (a lazy reference loads here).
     /// </summary>
-    data.@this Navigate(data.@this data, string key);
+    System.Threading.Tasks.ValueTask<data.@this> Navigate(data.@this data, string key);
 }

@@ -9,7 +9,7 @@ public partial class Count : IContext
 
     public async Task<data.@this<global::app.type.number.@this>> Run()
     {
-        var data = Context.Variable.Get((await ListName.Value()));
+        var data = await Context.Variable.Get((await ListName.Value()));
         var countData = data.GetChild("Count");
 
         if (countData.IsInitialized && (await countData.Value()) is int c)

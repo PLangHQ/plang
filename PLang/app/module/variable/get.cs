@@ -12,6 +12,6 @@ public partial class Get : IContext
 
     public async Task<data.@this> Run()
     {
-        return Context.Variable.Get(await Name.Value());
+        return await Context.Variable.Get(await Name.Value());
     }
 }
