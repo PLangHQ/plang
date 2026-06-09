@@ -485,12 +485,23 @@
           "category": "doc",
           "confidence": "high",
           "context": "Carved Stage 8: an optional param resolves to a non-null Data (Data.Uninitialized, never a C# null) so handlers read await Param.Value() / Value(fallback) - no == null, no !, no trailing ?? default. ? stays the optional signal (no [Optional]: forgetting ? -> required -> loud); generator stamps [System.Diagnostics.CodeAnalysis.NotNull] on ? slots so the deref doesn't trip CS8602 under Nullable: enable; [Default] carries static defaults (extended to fire on null too); .Value(fallback) for runtime defaults. Independent follow-on to Stage 2, not part of the 2-6 green unit. Flagged in the file + index as not-yet-coder-audited (coder to flag conflicts before implementing). One verify-API assumption to test first: [NotNull] on a partial property's implementing part honored by Roslyn for read-site flow analysis. Wired into plan.md index + summary.md table."
+        },
+        {
+          "paths": [
+            ".bot/compare-redesign/architect/stage-2.1-materialize-to-door.md",
+            ".bot/compare-redesign/architect/plan.md",
+            ".bot/compare-redesign/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Ingi noticed the coder's finished Stage 2 uses Materialize() heavily, including sync methods that should be async. Confirmed the plan said Materialize() disappears (door is the single async accessor) but the coder kept it as a sync core (Value() => new(Materialize()), async read deferred to Stage 3) and calls .Materialize() directly at ~300 handler sites. Audited: 60 handler files (44 sync/the smell, 16 async), 87 name-slot reads, 227 value reads, 35 app/data internal. Risk is latent - today Value()==Materialize(), but Stage 3 puts async I/O read inside Value() so every direct .Materialize() bypasses it (count/where over file/url content never loads). Carved stage-2.1-materialize-to-door.md: rule (value reads -> await Value() + flip sync Run() async; name slots -> door; Data-internal/ToString/serialize -> leave as internal sync core), categorized worklist (A flip / B name-only / C swap / D leave / E review = navigation chain + two-phase sort + GoalCall), grep gate (app/module zero .Materialize()). Prerequisite for Stage 3. Wired into plan index + summary table."
         }
       ],
       "after": {
-        "status": "Stage 7 discipline added, Stage 8 carved + wired + flagged unaudited; pushed.",
-        "health": "Design settled with Ingi; Stage 8 awaiting coder read-over.",
-        "notes": "Stage 8 explicitly hands the text->string typing of channel.Mime to Stage 7 so the stages don't overlap. Coder asked (via banner + index flag) to ask if anything in Stage 8 conflicts with built code."
+        "status": "Stage 7 discipline + Stage 8 + Stage 2.1 carved and wired; pushed. Coder unblocked on 2.1.",
+        "health": "Design settled with Ingi; Stage 2.1 is the coder's next unit (prereq for Stage 3); Stage 8 still awaiting coder read-over.",
+        "notes": "Stage 2.1 closes the Materialize sprawl from Stage 2 - handlers must read through await Value() so Stage 3's async read isn't bypassed. E-bucket sites (navigation chain, two-phase sort, GoalCall) flagged review-don't-blind-swap. Stage 8 hands the text->string typing of channel.Mime to Stage 7."
       }
     }
   ]

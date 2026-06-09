@@ -1,5 +1,22 @@
 # Architect — compare-redesign
 
+## 2026-06-09 — Stage 2.1 carved (Materialize sprawl → async door)
+
+Ingi pulled the coder's finished Stage 2 and noticed `Materialize()` used heavily — in sync methods that should be async. Confirmed: the plan (Stage 2) said `Materialize()` disappears and the door is the single async accessor, but the coder kept it as a sync core (`Value() => new(Materialize())`, async read deferred to Stage 3) and calls `.Materialize()` directly at ~300 handler sites. Audit: 60 handler files (44 sync — the smell; 16 already async), 87 name-slot reads, 227 value reads; plus 35 `app/data` internal sites. `count.cs` is the textbook case — sync `Run()` (`Task.FromResult`) reaching `.Materialize()` for both a name slot and a real value read. The risk is latent: today `Value()`==`Materialize()`, but once Stage 3 puts the async I/O read inside `Value()`, every direct `.Materialize()` bypasses it (a `count`/`where` over `file`/`url` content never loads). Carved **`stage-2.1-materialize-to-door.md`**: rule (value reads → `await Value()`, flip sync `Run()` → `async`; name slots → door too; Data-internal/ToString/serialize → leave as the internal sync core), a categorized worklist (A flip / B name-only / C swap / D leave / E review-separately = navigation chain, two-phase sort, GoalCall), and a grep gate (`app/module` has zero `.Materialize()`). Prerequisite for Stage 3. Coder was waiting on this.
+
+Stage status:
+| Stage | File | Status |
+|-------|------|--------|
+| 1 | [Comparison enum](stage-1-comparison-enum.md) | done (coder) |
+| 2 | [Typed value door + `.`/`!` resolver](stage-2-value-door.md) | done (coder) |
+| 2.1 | [Route handler reads through the door](stage-2.1-materialize-to-door.md) | pending |
+| 3 | [`file`/`directory`/`url` reference types](stage-3-reference-types.md) | pending |
+| 4 | [Per-type `Compare`](stage-4-per-type-compare.md) | pending |
+| 5 | [`data.Compare` entry](stage-5-data-compare.md) | pending |
+| 6 | [Consumers + demolition](stage-6-consumers-and-demolition.md) | pending |
+| 7 | [Full public-surface typing](stage-7-surface-typing.md) | pending |
+| 8 | [Optional-param resolution (`[Default]`/`[NotNull]`)](stage-8-optional-params.md) | pending (not coder-audited) |
+
 ## 2026-06-09 — Stage 7 conversion discipline + new Stage 8 (optional-param null model)
 
 Worked through the verbose `Mime = (Mime == null ? null : await Mime.Value()) ?? "text/plain"` shape the Stage-2 migration produces, with Ingi. Two outcomes.
