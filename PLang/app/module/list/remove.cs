@@ -12,15 +12,16 @@ public partial class Remove : IContext
 
     public Task<data.@this<type.list>> Run()
     {
-        var nl = app.type.list.@this.FromRaw(Context.Variable.Get(ListName.Value).Value, Context);
+        var listName = ListName.Materialize() as app.variable.@this;
+        var nl = app.type.list.@this.FromRaw(Context.Variable.Get(listName).Materialize(), Context);
         if (nl == null)
             return Task.FromResult(global::app.data.@this<type.list>.FromError(
-                new app.error.ValidationError($"Variable '{ListName.Value}' is not a list")));
+                new app.error.ValidationError($"Variable '{listName}' is not a list")));
         // Promote to native (no-op when already native) so the in-place remove persists.
-        Context.Variable.Set(ListName.Value, nl);
+        Context.Variable.Set(listName, nl);
 
         if (AtIndex.GetValue<int>() >= 0) nl.RemoveAt(AtIndex.GetValue<int>());
-        else nl.Remove(Value.Value);
+        else nl.Remove(Value.Materialize());
         return Task.FromResult(global::app.data.@this<type.list>.Ok(new type.list { count = nl.Count, value = nl }, app.type.@this.FromName("list")));
     }
 }

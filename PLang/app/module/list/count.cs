@@ -9,10 +9,10 @@ public partial class Count : IContext
 
     public Task<data.@this<global::app.type.number.@this>> Run()
     {
-        var data = Context.Variable.Get(ListName.Value);
+        var data = Context.Variable.Get(ListName.Materialize() as app.variable.@this);
         var countData = data.GetChild("Count");
 
-        if (countData.IsInitialized && countData.Value is int c)
+        if (countData.IsInitialized && countData.Materialize() is int c)
             return Task.FromResult(global::app.data.@this<global::app.type.number.@this>.Ok(c));
 
         // Fallback: enumerate

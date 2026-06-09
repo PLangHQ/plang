@@ -10,13 +10,13 @@ public partial class Get : IContext
 
     public Task<data.@this> Run()
     {
-        var data = Context.Variable.Get(ListName.Value);
-        var item = data.GetChild($"[{Index.Value}]");
+        var data = Context.Variable.Get(ListName.Materialize() as app.variable.@this);
+        var item = data.GetChild($"[{Index.Materialize()}]");
 
         if (!item.IsInitialized)
             return Task.FromResult(global::app.data.@this.FromError(
-                new app.error.ValidationError($"Index {Index.Value} out of range for '{ListName.Value}'")));
+                new app.error.ValidationError($"Index {Index.Materialize()} out of range for '{ListName.Materialize()}'")));
 
-        return Task.FromResult(global::app.data.@this.Ok(item.Value));
+        return Task.FromResult(global::app.data.@this.Ok(item.Materialize()));
     }
 }

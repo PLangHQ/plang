@@ -9,10 +9,10 @@ public partial class Flatten : IContext
 
     public Task<data.@this<type.list>> Run()
     {
-        var nl = app.type.list.@this.FromRaw(Context.Variable.Get(ListName.Value).Value, Context);
+        var nl = app.type.list.@this.FromRaw(Context.Variable.Get(ListName.Materialize() as app.variable.@this).Materialize(), Context);
         if (nl == null)
             return Task.FromResult(global::app.data.@this<type.list>.FromError(
-                new app.error.ValidationError($"Variable '{ListName.Value}' is not a list")));
+                new app.error.ValidationError($"Variable '{ListName.Materialize()}' is not a list")));
 
         var flat = new app.type.list.@this { Context = Context };
         FlattenNative(nl, flat);
@@ -26,7 +26,7 @@ public partial class Flatten : IContext
     {
         foreach (var item in source.Items)
         {
-            if (item.Value is app.type.list.@this nested)
+            if (item.Materialize() is app.type.list.@this nested)
                 FlattenNative(nested, target);
             else
                 target.Add(item);

@@ -10,13 +10,13 @@ public partial class IndexOf : IContext
 
     public Task<data.@this<global::app.type.number.@this>> Run()
     {
-        var data = Context.Variable.Get(ListName.Value);
-        var target = Value.Value;
+        var data = Context.Variable.Get(ListName.Materialize() as app.variable.@this);
+        var target = Value.Materialize();
 
         foreach (var (key, item) in data.EnumerateItems())
         {
-            if (global::app.data.Compare.AreEqualValues(item.Value, target))
-                return Task.FromResult(global::app.data.@this<global::app.type.number.@this>.Ok(Convert.ToInt32(key.Value)));
+            if (global::app.data.Compare.AreEqualValues(item.Materialize(), target))
+                return Task.FromResult(global::app.data.@this<global::app.type.number.@this>.Ok(Convert.ToInt32(key.Materialize())));
         }
 
         return Task.FromResult(global::app.data.@this<global::app.type.number.@this>.Ok(-1));

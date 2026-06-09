@@ -11,18 +11,18 @@ public partial class Split : IContext
     [Default(false)]
     public partial data.@this<global::app.type.@bool.@this> RemoveEmpty { get; init; }
 
-    public Task<data.@this<type.list>> Run()
+    public async Task<data.@this<type.list>> Run()
     {
-        var options = RemoveEmpty.Value
+        var options = (await RemoveEmpty.Value())?.Value == true
             ? StringSplitOptions.RemoveEmptyEntries
             : StringSplitOptions.None;
 
-        var parts = ((string)Value.Value!).Split(new[] { (string)Separator.Value! }, options);
+        var parts = ((string)(await Value.Value())!).Split(new[] { (string)(await Separator.Value())! }, options);
         var list = new app.type.list.@this { Context = Context };
         foreach (var part in parts)
             list.Add(new global::app.data.@this("", part));
 
-        return Task.FromResult(global::app.data.@this<type.list>.Ok(
-            new type.list { count = list.Count, value = list }, app.type.@this.FromName("list")));
+        return global::app.data.@this<type.list>.Ok(
+            new type.list { count = list.Count, value = list }, app.type.@this.FromName("list"));
     }
 }

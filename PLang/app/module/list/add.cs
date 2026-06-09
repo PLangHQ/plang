@@ -12,8 +12,9 @@ public partial class Add : IContext
 
     public Task<data.@this<type.list>> Run()
     {
-        var data = Context.Variable.Get(ListName.Value);
-        var existing = data.Value;
+        var listName = ListName.Materialize() as app.variable.@this;
+        var data = Context.Variable.Get(listName);
+        var existing = data.Materialize();
         var list = existing as app.type.list.@this;
 
         if (list == null)
@@ -26,7 +27,7 @@ public partial class Add : IContext
                     list.Add(item as data.@this ?? new data.@this("", item));
             else if (existing != null)
                 list.Add(existing as data.@this ?? new data.@this("", existing));
-            Context.Variable.Set(ListName.Value, list);
+            Context.Variable.Set(listName, list);
         }
 
         // A list value is structure-copied so the target doesn't alias the source
@@ -34,7 +35,7 @@ public partial class Add : IContext
         // independent (merge semantics, like extend). A scalar/dict element is stored by
         // reference: Stage 2's rebind means `set %x% = ...` mints a new Data rather than
         // mutating the one the list holds, so no defensive copy is needed there.
-        data.@this toAdd = Value.Value is app.type.list.@this nl
+        data.@this toAdd = Value.Materialize() is app.type.list.@this nl
             ? new data.@this(Value.Name, nl.CopyStructure(), Value.Type) { Context = Context }
             : Value;
 

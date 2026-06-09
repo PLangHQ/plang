@@ -11,19 +11,19 @@ public partial class Set : IContext
 
     public Task<data.@this<type.list>> Run()
     {
-        var nl = app.type.list.@this.FromRaw(Context.Variable.Get(ListName.Value).Value, Context);
+        var nl = app.type.list.@this.FromRaw(Context.Variable.Get(ListName.Materialize() as app.variable.@this).Materialize(), Context);
         if (nl == null)
             return Task.FromResult(global::app.data.@this<type.list>.FromError(
-                new app.error.ValidationError($"Variable '{ListName.Value}' is not a list")));
+                new app.error.ValidationError($"Variable '{ListName.Materialize()}' is not a list")));
         // Promote to native (no-op when already native) so the in-place set persists.
-        Context.Variable.Set(ListName.Value, nl);
+        Context.Variable.Set(ListName.Materialize() as app.variable.@this, nl);
 
         if (Index.GetValue<int>() < 0 || Index.GetValue<int>() >= nl.Count)
             return Task.FromResult(global::app.data.@this<type.list>.FromError(
-                new app.error.ValidationError($"Index {Index.Value} out of range (0..{nl.Count - 1})")));
+                new app.error.ValidationError($"Index {Index.Materialize()} out of range (0..{nl.Count - 1})")));
         // A list value is structure-copied so the slot doesn't alias the source variable
         // (same reason as list.add); scalars/dicts are stored by reference (rebind-safe).
-        global::app.data.@this item = Value?.Value is app.type.list.@this nlv
+        global::app.data.@this item = Value?.Materialize() is app.type.list.@this nlv
             ? new global::app.data.@this(Value.Name, nlv.CopyStructure(), Value.Type) { Context = Context }
             : Value ?? new global::app.data.@this("", null);
         nl.SetAt(Index.GetValue<int>(), item);

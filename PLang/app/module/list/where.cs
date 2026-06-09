@@ -28,11 +28,12 @@ public partial class Where : IContext
 
     public async Task<data.@this> Run()
     {
-        var subject = Context.Variable.Get(ListName.Value);
-        var field = Field.Value!;
-        Operator op = Operator.Value;
+        var subject = Context.Variable.Get(ListName.Materialize() as app.variable.@this);
+        var field = (await Field.Value())!;
+        Operator op = (await Operator.Value())!;
+        var subjectVal = await subject.Value();
 
-        if (subject.Value is app.type.list.@this list)
+        if (subjectVal is app.type.list.@this list)
         {
             // list.where delegates to dict.where per element — subject is each element.
             var kept = new app.type.list.@this { Context = Context };
@@ -41,17 +42,17 @@ public partial class Where : IContext
             return global::app.data.@this.Ok(kept, app.type.@this.FromName("list"));
         }
 
-        if (subject.Value is app.type.dict.@this)
+        if (subjectVal is app.type.dict.@this)
         {
             // dict.where is the leaf — subject is the dict itself, kept or dropped.
             bool keep = await Keep(subject, field, op);
-            return global::app.data.@this.Ok(keep ? subject.Value : null,
+            return global::app.data.@this.Ok(keep ? subjectVal : null,
                 app.type.@this.FromName("dict"));
         }
 
         // The apex has no fields to scope into — `5 where age > 20` is meaningless.
         return global::app.data.@this.FromError(new app.error.ValidationError(
-            $"'where {field} …' needs a list or dict to scope into — '{ListName.Value}' is a {subject.Type.Name}, which has no fields.",
+            $"'where {field} …' needs a list or dict to scope into — '{ListName.Materialize()}' is a {subject.Type.Name}, which has no fields.",
             "WhereOnApex"));
     }
 

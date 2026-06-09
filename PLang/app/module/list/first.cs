@@ -9,9 +9,9 @@ public partial class First : IContext
 
     public Task<data.@this> Run()
     {
-        var data = Context.Variable.Get(ListName.Value);
+        var data = Context.Variable.Get(ListName.Materialize() as app.variable.@this);
         var first = data.GetChild("[0]");
 
-        return Task.FromResult(first.IsInitialized ? global::app.data.@this.Ok(first.Value) : global::app.data.@this.Ok());
+        return Task.FromResult(first.IsInitialized ? global::app.data.@this.Ok(first.Materialize()) : global::app.data.@this.Ok());
     }
 }
