@@ -62,7 +62,7 @@ public class NumberParseTests
                                           | System.Reflection.BindingFlags.NonPublic);
         foreach (var f in fields)
         {
-            var v = await f.GetValue(n);
+            var v = f.GetValue(n);
             // No field's runtime type is actor.context.@this (or any IContext-shaped ref).
             if (v != null)
                 await Assert.That(v.GetType().Name).IsNotEqualTo("this"); // context's @this

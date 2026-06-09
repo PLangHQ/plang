@@ -29,7 +29,7 @@ public class TextTypeShapeTests
         var prop = typeof(TextType).GetProperty(
             "Description", BindingFlags.Public | BindingFlags.Static);
         await Assert.That(prop).IsNotNull();
-        var desc = await (string?)prop!.GetValue(null);
+        var desc = (string?)prop!.GetValue(null);
         await Assert.That(desc).IsNotNull();
         await Assert.That(desc!.Contains("extension", System.StringComparison.OrdinalIgnoreCase)).IsTrue();
     }

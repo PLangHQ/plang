@@ -1058,7 +1058,7 @@ public class DataTests
         await Assert.That(result).IsNotNull();
         // Born-native: a JSON number is a number.@this wrapper; its backing
         // (via ToRaw) is double for a bare decimal-point literal.
-        var price = await (await result!.Get("price"))!.Value();
+        var price = await result!.Get("price")!.Value();
         await Assert.That(price).IsTypeOf<app.type.number.@this>();
         await Assert.That(((app.type.number.@this)price!).ToRaw()).IsEqualTo(19.99d);
     }
@@ -1072,7 +1072,7 @@ public class DataTests
 
         await Assert.That(result).IsNotNull();
         // Born-native: a whole JSON number is a number.@this wrapper backed by long.
-        var count = await (await result!.Get("count"))!.Value();
+        var count = await result!.Get("count")!.Value();
         await Assert.That(count).IsTypeOf<app.type.number.@this>();
         await Assert.That(((app.type.number.@this)count!).ToRaw()).IsEqualTo(42L);
     }

@@ -381,7 +381,7 @@ public class SnapshotWireTests
         var snap = (await (await context.Variable.Get("snap")).As<global::app.snapshot.@this>(context).Value());
         var result = await snap!.Resume(context);
         await result.IsSuccess();
-        long seen = await System.Convert.ToInt64((await context.Variable.GetValue("seen")));
+        long seen = System.Convert.ToInt64((await context.Variable.GetValue("seen")));
         await Assert.That(seen).IsEqualTo(2L);  // edit persists IFF navigation materializes+caches
     }
 
