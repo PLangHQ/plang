@@ -80,7 +80,7 @@ public class Stage3_ArraysAsDataTests
 
         var nav = new global::app.variable.navigator.List();
         await Assert.That(nav.CanNavigate(data)).IsTrue();
-        await Assert.That(ReferenceEquals(nav.Navigate(data, "0"), element)).IsTrue();
+        await Assert.That(ReferenceEquals(await nav.Navigate(data, "0"), element)).IsTrue();
         await Assert.That((string?)(await (await nav.Navigate(data, "last")).Value())).IsEqualTo("second");
         await Assert.That((int)(await (await nav.Navigate(data, "count")).Value())!).IsEqualTo(2);
 

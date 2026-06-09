@@ -46,12 +46,12 @@ public class OtherAccessorsTests
 
     [Test] public async Task ContextVariable_Set_RemainsAVerb_NotIndexerAssignment()
     {
-        // Variables.Set is a mutation verb; the registry's indexer is read-only — mutation
-        // routes through Set so events/lifecycle fire correctly.
+        // Variables.Set is a mutation verb. The registry has NO indexer at all —
+        // reads are async (Get returns ValueTask), so an indexer can't exist, and
+        // mutation routes through Set so events/lifecycle fire correctly.
         var t = typeof(global::app.variable.list.@this);
         var indexer = t.GetProperty("Item", new[] { typeof(string) });
-        await Assert.That(indexer).IsNotNull();
-        await Assert.That(indexer!.SetMethod).IsNull();
+        await Assert.That(indexer).IsNull();
     }
 
     [Test] public async Task AppError_PushAndCount_RoundTripsThroughTheRegistry()

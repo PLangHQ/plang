@@ -127,7 +127,7 @@ public class DataResolutionTests
             for (int i = 0; i < 100; i++)
             {
                 var r = await data.As<global::app.type.text.@this>(_app.User.Context);
-                if ((r.Materialize()) != "value") return false;
+                if (r.Materialize()?.ToString() != "value") return false;
             }
             return true;
         })).ToArray();

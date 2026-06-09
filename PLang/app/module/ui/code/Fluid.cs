@@ -28,7 +28,12 @@ public class Fluid : ITemplate
 
     public async Task<data.@this<global::app.type.text.@this>> Render(Render action)
     {
-        var templateContent = ((await action.Template.Value())?.ToString()) ?? "";
+        // Null-safe: [IsNotNull] guards the .pr path, but direct C# composition can
+        // init Template to null — fail gracefully rather than throw.
+        if (action.Template == null || (await action.Template.Value()) is not { } templateVal)
+            return app.data.@this<global::app.type.text.@this>.FromError(new global::app.error.ValidationError(
+                "ui.render requires a template", "MissingTemplate"));
+        var templateContent = templateVal.ToString() ?? "";
         var isFile = action.IsFile == null ? null : (await action.IsFile.Value())?.Value;
         string? sourceFile = null;
 

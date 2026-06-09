@@ -72,7 +72,9 @@ public partial class @this
             {
                 case "a": return await SignAndStore(actor, verb, persist: true);
                 case "y": return await SignAndStore(actor, verb, persist: false);
-                case "n": return data.@this.FromError(
+                // No answer (closed/EOF input channel) = no consent — deny rather than
+                // reprompt, or a channel that can never answer loops this forever.
+                case "n" or null or "": return data.@this.FromError(
                     new global::app.error.PermissionDenied(BuildRequest(actor, verb)));
                 default:
                     prefix = $"Invalid answer '{answer}'. ";

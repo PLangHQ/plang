@@ -101,7 +101,9 @@ public class OutAttributeInventoryTests
     [Test] public async Task Data_Value_Success_Error_Type_HaveOut()
     {
         var t = typeof(global::app.data.@this);
-        await Assert.That(HasOut(t, "Value")).IsTrue();
+        // Value is the async door (a method), not a property — the wire writes the
+        // value slot by hand (Wire.Write), so no [Out] property exists for it.
+        await Assert.That(t.GetProperty("Value")).IsNull();
         await Assert.That(HasOut(t, "Success")).IsTrue();
         await Assert.That(HasOut(t, "Error")).IsTrue();
         await Assert.That(HasOut(t, "Type")).IsTrue();

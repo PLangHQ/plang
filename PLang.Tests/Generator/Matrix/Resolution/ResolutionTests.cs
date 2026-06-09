@@ -301,7 +301,7 @@ public class ConcurrentHandlersTests
         var results = await Task.WhenAll(tasks);
 
         // Each should be independent and successful with the same resolved value.
-        await Assert.That(results.All(r => r.Materialize() == "shared")).IsTrue();
+        await Assert.That(results.All(r => r.Materialize()?.ToString() == "shared")).IsTrue();
         // Distinct instances (no shared cache).
         var distinctCount = results.Select(r => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(r))
             .Distinct().Count();

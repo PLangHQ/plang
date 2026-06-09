@@ -47,7 +47,7 @@ public class SnapshotParamsTests
     public async Task SnapshotEntry_PrValue_FromGetParameterValue()
     {
         var snapshotSrc = ReadGenerated("app.module.matrix.snapshot.SnapshotOnError.Action.g.cs");
-        await Assert.That(snapshotSrc).Contains("PrValue = __pr?.Value");
+        await Assert.That(snapshotSrc).Contains("PrValue = __pr?.Peek()");
     }
 
     [Test]
@@ -66,9 +66,12 @@ public class SnapshotParamsTests
 
         var second = result.Snapshot!.FirstOrDefault(p => p.Name == "Second");
         await Assert.That(second).IsNotNull();
-        await Assert.That(second!.WasAccessed).IsFalse();
+        // Dispatch resolution binds every parameter before Run() — WasAccessed means
+        // "bound at dispatch" and FinalValue carries the resolved Data even when the
+        // handler body never touched the property.
+        await Assert.That(second!.WasAccessed).IsTrue();
         await Assert.That(second.PrValue).IsEqualTo(42);
-        await Assert.That(second.FinalValue).IsNull();
+        await Assert.That(second.FinalValue).IsNotNull();
     }
 
     [Test]

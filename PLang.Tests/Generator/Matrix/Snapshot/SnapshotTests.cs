@@ -37,11 +37,12 @@ public class SnapshotOnErrorTests
         var result = await MatrixRunner.RunAsync<SnapshotOnError>(app,
             parameters: new[] { ("first", (object?)"hello"), ("second", (object?)42) });
 
-        // Second is never read by Run() — snapshot has PrValue but FinalValue=null.
+        // Dispatch resolution binds every parameter before Run() — even one the
+        // handler body never reads. WasAccessed means "bound at dispatch".
         var secondEntry = result.Snapshot!.FirstOrDefault(p => p.Name == "Second");
         await Assert.That(secondEntry).IsNotNull();
-        await Assert.That(secondEntry!.WasAccessed).IsFalse();
-        await Assert.That(secondEntry.FinalValue).IsNull();
+        await Assert.That(secondEntry!.WasAccessed).IsTrue();
+        await Assert.That(secondEntry.FinalValue).IsNotNull();
     }
 
     [Test]

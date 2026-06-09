@@ -1200,9 +1200,10 @@ public partial class @this
                 // String.Resolve below already does this fallback for partial matches;
                 // this brings full-match parity.
                 var resolved = await context.Variable.Get(varName);
-                return resolved?.IsInitialized == true && resolved.Peek() != null
-                    ? resolved.Peek()
-                    : (object?)s;
+                // Read through the door — substitution IS the decode, and the referenced
+                // variable may be dynamic (a DynamicData factory Peek would never fire).
+                var rv = resolved?.IsInitialized == true ? await resolved.Value() : null;
+                return rv ?? (object?)s;
             }
             return await context.Variable.Resolve(s);
         }
