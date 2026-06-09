@@ -38,8 +38,8 @@ public partial class run : IContext
     {
         var tests = Tests.GetValue<List<global::app.tester.test.@this>>() ?? new List<global::app.tester.test.@this>();
         var parentApp = Context.App!;
-        int parallel = Parallel?.Materialize() != null ? Parallel.GetValue<int>() : parentApp.Tester.Parallel;
-        double timeoutSeconds = Timeout?.Materialize() != null ? Timeout.GetValue<double>() : parentApp.Tester.TimeoutSeconds;
+        int parallel = (Parallel == null ? null : await Parallel.Value()) != null ? Parallel.GetValue<int>() : parentApp.Tester.Parallel;
+        double timeoutSeconds = (Timeout == null ? null : await Timeout.Value()) != null ? Timeout.GetValue<double>() : parentApp.Tester.TimeoutSeconds;
         var timeout = TimeSpan.FromSeconds(timeoutSeconds);
 
         if (tests.Count == 0)

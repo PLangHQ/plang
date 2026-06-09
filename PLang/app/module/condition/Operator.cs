@@ -94,7 +94,7 @@ public sealed class Operator
     {
         // == true with non-bool left: delegates to Data.ToBooleanAsync(), so an
         // IBooleanResolvable left (a path) answers `if %path% exists` itself.
-        if (right?.Materialize() is bool rb && left?.Materialize() is not bool)
+        if ((right == null ? null : await right.Value()) is bool rb && (left == null ? null : await left.Value()) is not bool)
         {
             bool leftTruthy = left != null && await left.ToBooleanAsync();
             return rb ? leftTruthy : !leftTruthy;

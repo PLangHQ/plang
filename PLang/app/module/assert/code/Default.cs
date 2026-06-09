@@ -41,8 +41,8 @@ public class Default : IAssert
         if (await ResolveTruthy(action.Value))
             return app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
-        return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(true, action.Value?.Materialize(),
-            action.Message?.Materialize()?.ToString() ?? "Expected truthy value"));
+        return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(true, (action.Value == null ? null : await action.Value.Value()),
+            (action.Message == null ? null : await action.Message.Value())?.ToString() ?? "Expected truthy value"));
     }
 
     public async Task<data.@this<global::app.type.@bool.@this>> IsFalse(IsFalse action)
@@ -50,8 +50,8 @@ public class Default : IAssert
         if (!await ResolveTruthy(action.Value))
             return app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
-        return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(false, action.Value?.Materialize(),
-            action.Message?.Materialize()?.ToString() ?? "Expected falsy value"));
+        return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(false, (action.Value == null ? null : await action.Value.Value()),
+            (action.Message == null ? null : await action.Message.Value())?.ToString() ?? "Expected falsy value"));
     }
 
     public data.@this<global::app.type.@bool.@this> IsNull(IsNull action)

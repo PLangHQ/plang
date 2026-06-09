@@ -20,11 +20,11 @@ public partial class intercept : IContext
         {
             Id = Guid.NewGuid().ToString("N")[..8],
             Pattern = ((await Pattern.Value()) as global::app.type.text.@this)!,
-            IsSpy = Return?.Materialize() == null && Call?.Materialize() == null
+            IsSpy = (Return == null ? null : await Return.Value()) == null && (Call == null ? null : await Call.Value()) == null
         };
 
-        var returnValue = Return?.Materialize();
-        var goalToCall = Call?.Materialize() as global::app.goal.GoalCall;
+        var returnValue = (Return == null ? null : await Return.Value());
+        var goalToCall = (Call == null ? null : await Call.Value()) as global::app.goal.GoalCall;
         var paramMatchers = Parameters?.GetValue<Dictionary<string, object?>>();
 
         Func<actor.context.@this, app.goal.steps.step.actions.action.@this?, data.@this?, Task<data.@this>> handler = async (context, _, _) =>

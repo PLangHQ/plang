@@ -23,7 +23,7 @@ public partial class Set : IContext
                 new app.error.ValidationError($"Index {(await Index.Value())} out of range (0..{nl.Count - 1})"));
         // A list value is structure-copied so the slot doesn't alias the source variable
         // (same reason as list.add); scalars/dicts are stored by reference (rebind-safe).
-        global::app.data.@this item = Value?.Materialize() is app.type.list.@this nlv
+        global::app.data.@this item = (Value == null ? null : await Value.Value()) is app.type.list.@this nlv
             ? new global::app.data.@this(Value.Name, nlv.CopyStructure(), Value.Type) { Context = Context }
             : Value ?? new global::app.data.@this("", null);
         nl.SetAt(Index.GetValue<int>(), item);

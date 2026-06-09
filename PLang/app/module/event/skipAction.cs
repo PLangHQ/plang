@@ -15,7 +15,7 @@ public partial class SkipAction : IContext
 
     public async Task<data.@this> Run()
     {
-        Context.EventOverride = Data(Value?.Materialize());
-        return Data(Value?.Materialize());
+        Context.EventOverride = Data((Value == null ? null : await Value.Value()));
+        return Data((Value == null ? null : await Value.Value()));
     }
 }

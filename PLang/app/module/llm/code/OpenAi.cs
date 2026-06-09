@@ -66,7 +66,7 @@ public sealed class OpenAi : ILlm
         var endpoint = await ResolveConfigAsync(settings, "llm.endpoint", "OPENAI_API_ENDPOINT",
             "https://api.openai.com/v1/chat/completions");
         var apiKey = await ResolveConfigAsync(settings, "llm.apiKey", "OPENAI_API_KEY", null);
-        var model = (action.Model?.Materialize()?.ToString()) is { Length: >0 } __m ? __m : null;
+        var model = ((action.Model == null ? null : await action.Model.Value())?.ToString()) is { Length: >0 } __m ? __m : null;
         model ??= await ResolveConfigAsync(settings, "llm.model", null, "gpt-5.4-nano");
 
         // --- Validate ---
@@ -108,11 +108,11 @@ public sealed class OpenAi : ILlm
             if (prev != null)
                 messages.InsertRange(0, prev);
 
-            schema = SerializeSchema(action.Schema?.Materialize()) ?? context.Get<string>(SchemaKey);
+            schema = SerializeSchema((action.Schema == null ? null : await action.Schema.Value())) ?? context.Get<string>(SchemaKey);
         }
         else
         {
-            schema = SerializeSchema(action.Schema?.Materialize());
+            schema = SerializeSchema((action.Schema == null ? null : await action.Schema.Value()));
             context.Set<List<LlmMessage>>(ConversationKey, null!);
             context.Set<string>(SchemaKey, null!);
         }
@@ -121,7 +121,7 @@ public sealed class OpenAi : ILlm
         var originalMessages = CloneMessages(messages);
 
         // Append format/schema instruction
-        var formatInstruction = BuildFormatInstruction(action.Format?.Materialize()?.ToString(), schema);
+        var formatInstruction = BuildFormatInstruction((action.Format == null ? null : await action.Format.Value())?.ToString(), schema);
         if (formatInstruction != null)
         {
             var systemMsg = messages.Find(m => m.Role == "system");
@@ -144,7 +144,7 @@ public sealed class OpenAi : ILlm
         string? cacheKey = null;
         if (((await action.Cache.Value()) as global::app.type.@bool.@this)?.Value == true && action.Tools?.GetValue<List<GoalCall>>() == null && !buildCacheOff)
         {
-            cacheKey = ComputeCacheKey(messages, model, action.Temperature.GetValue<double>(), schema, action.Format?.Materialize()?.ToString());
+            cacheKey = ComputeCacheKey(messages, model, action.Temperature.GetValue<double>(), schema, (action.Format == null ? null : await action.Format.Value())?.ToString());
             var cached = await settings.Get(CacheTable, cacheKey);
             if (cached.Success && cached.Value != null)
             {
@@ -188,11 +188,11 @@ public sealed class OpenAi : ILlm
                 ["temperature"] = action.Temperature.GetValue<double>(),
                 ["max_completion_tokens"] = action.MaxTokens.GetValue<long>()
             };
-            if (action.TopP?.Materialize() != null)
+            if ((action.TopP == null ? null : await action.TopP.Value()) != null)
                 body["top_p"] = action.TopP.GetValue<double>();
             if (apiTools != null)
                 body["tools"] = apiTools;
-            if (action.OnStream?.Materialize() != null)
+            if ((action.OnStream == null ? null : await action.OnStream.Value()) != null)
                 body["stream"] = true;
 
             // Remove null entries
@@ -213,11 +213,11 @@ public sealed class OpenAi : ILlm
                 Unsigned = new data.@this<global::app.type.@bool.@this>("", true),
                 TimeoutInSec = new data.@this<global::app.type.number.@this>("", 120),
                 OnStream = action.OnStream,
-                StreamAs = action.OnStream?.Materialize() != null ? new data.@this<global::app.type.choice.@this<StreamFormat>>("", StreamFormat.SSE) : default
+                StreamAs = (action.OnStream == null ? null : await action.OnStream.Value()) != null ? new data.@this<global::app.type.choice.@this<StreamFormat>>("", StreamFormat.SSE) : default
             };
 
             data.@this httpResult = await app.RunAction(httpAction, context);
-            if (action.OnStream?.Materialize() != null)
+            if ((action.OnStream == null ? null : await action.OnStream.Value()) != null)
             {
                 // TODO: streaming tool call accumulation needs work
                 // For now, streaming returns the accumulated result via the callback
@@ -316,7 +316,7 @@ public sealed class OpenAi : ILlm
                         ["Model"] = model,
                         ["PromptTokens"] = totalPromptTokens,
                         ["CompletionTokens"] = totalCompletionTokens,
-                        ["MaxTokens"] = action.MaxTokens?.Materialize()
+                        ["MaxTokens"] = (action.MaxTokens == null ? null : await action.MaxTokens.Value())
                     }
                 });
             }
@@ -382,7 +382,7 @@ public sealed class OpenAi : ILlm
             var rawResponse = content ?? "";
 
             // --- Format extraction ---
-            var effectiveFormat = action.Format?.Materialize()?.ToString() ?? (schema != null ? "json" : null);
+            var effectiveFormat = (action.Format == null ? null : await action.Format.Value())?.ToString() ?? (schema != null ? "json" : null);
             var extracted = ExtractResponse(rawResponse, effectiveFormat);
 
             // --- JSON validation ---
@@ -413,7 +413,7 @@ public sealed class OpenAi : ILlm
             }
 
             // --- Custom validation ---
-            if (action.OnValidateResponse?.Materialize() != null)
+            if ((action.OnValidateResponse == null ? null : await action.OnValidateResponse.Value()) != null)
             {
                 var validationCall = new GoalCall
                 {
@@ -530,7 +530,7 @@ public sealed class OpenAi : ILlm
         var context = action.Context;
 
         // OnToolCall — starting
-        if (action.OnToolCall?.Materialize() != null)
+        if ((action.OnToolCall == null ? null : await action.OnToolCall.Value()) != null)
         {
             var startCall = new GoalCall
             {
@@ -579,7 +579,7 @@ public sealed class OpenAi : ILlm
         }
 
         // OnToolCall — completed
-        if (action.OnToolCall?.Materialize() != null)
+        if ((action.OnToolCall == null ? null : await action.OnToolCall.Value()) != null)
         {
             var endCall = new GoalCall
             {

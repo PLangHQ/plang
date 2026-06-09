@@ -395,7 +395,7 @@ public class Default : IBuilder
         var context = action.Context;
         var modules = app.Module;
 
-        if (action.Actions?.Materialize() == null)
+        if ((action.Actions == null ? null : await action.Actions.Value()) == null)
             return data.@this.Ok(true);
 
         var actions = (await action.Actions.Value())!;

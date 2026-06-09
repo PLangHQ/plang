@@ -200,7 +200,7 @@ public partial class Handle : IContext, IModifier
         int? count = RetryCount?.GetValue<int>();
         if (count == null || count <= 0) return null;
 
-        int delayMs = RetryOverMs?.Materialize() != null && count > 0
+        int delayMs = (RetryOverMs == null ? null : await RetryOverMs.Value()) != null && count > 0
             ? RetryOverMs.GetValue<int>() / count.Value : 0;
 
         for (int attempt = 0; attempt < count; attempt++)

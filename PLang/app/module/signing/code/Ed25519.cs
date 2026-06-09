@@ -69,7 +69,7 @@ public class Ed25519 : ISigning
         var app = action.Context.App;
         var now = (DateTimeOffset)action.Context.Variable.GetValue("NowUtc")!;
         var signingSettings = app.Config.For<Config>(action.Context);
-        long effectiveTimeout = action.TimeoutMs?.Materialize() != null ? action.TimeoutMs.GetValue<long>() : signingSettings.Resolve<long>("TimeoutMs", 300_000);
+        long effectiveTimeout = (action.TimeoutMs == null ? null : await action.TimeoutMs.Value()) != null ? action.TimeoutMs.GetValue<long>() : signingSettings.Resolve<long>("TimeoutMs", 300_000);
         var skipFreshness = (action.SkipFreshnessCheck == null ? null : (await action.SkipFreshnessCheck.Value())?.Value) ?? false;
 
         // 1. Type check
@@ -127,7 +127,7 @@ public class Ed25519 : ISigning
 
         // 7. Data hash verification — the stored digest is a hash value that
         // carries its own algorithm.
-        if (signedData.Hash?.Materialize() is not global::app.module.crypto.type.hash.@this storedHash || storedHash.Bytes.Length == 0)
+        if ((signedData.Hash == null ? null : await signedData.Hash.Value()) is not global::app.module.crypto.type.hash.@this storedHash || storedHash.Bytes.Length == 0)
             return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Missing data hash", "DataHashMismatch", 400));
 
         if ((action.Data == null ? null : await action.Data.Value()) != null)
