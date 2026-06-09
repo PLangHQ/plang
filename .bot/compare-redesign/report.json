@@ -372,7 +372,7 @@
       "id": "a0df5268-5276-41fe-981b-84146cd9ac77",
       "bot": "coder",
       "timestamp_start": "2026-06-09T08:46:59.578043Z",
-      "timestamp_end": "2026-06-09T08:55:37.707141Z",
+      "timestamp_end": "2026-06-09T09:19:34.411974Z",
       "intent": "Implement the typed value model \u2014 Stage 1 enum first, then drive Stages 2-6 as one green unit.",
       "before": {
         "assumptions": "v1-v4 were reviews; no production code yet. Architect plan settled, test-designer stubbed ~140 tests. Baseline build clean.",
@@ -388,37 +388,47 @@
           "type": "create",
           "category": "code",
           "confidence": "high",
-          "context": "Stage 1: sign-free Comparison enum {Less,Equal,Greater,NotEqual,Incomparable}. Standalone green; nothing reads it yet (architect design). Test rewritten stub->green."
+          "context": "Stage 1 enum; green standalone."
         },
         {
           "paths": [
-            "PLang/app/data/this.cs",
-            "PLang/app/type/list/this.cs",
-            "PLang/app/type/dict/this.cs",
-            "PLang/app/module/assert/code/Default.cs",
-            "PLang/app/module/test/discover.cs",
-            "PLang/app/variable/list/this.cs"
+            "PLang/app/data/this.cs"
           ],
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Stage 2 Peek(): ScalarValue property -> Peek() method, ~20 call sites incl. tests. Build clean, behavior unchanged (ScalarAccessTests/Cut2 green)."
+          "context": "Async door: ScalarValue->Peek(); Value property->ValueTask Value() method; Materialize() sync core (internal virtual; DynamicData override); ParseRaw() inner; SetValue() write; Data<T>.Value() typed async. OBP: sync read is the Materialize verb, NOT a CurrentValue/Materialized noun-twin (Ingi caught the verb+noun smell)."
         },
         {
           "paths": [
-            ".bot/compare-redesign/coder/v5/door-implementation.md",
-            ".bot/compare-redesign/coder/v5/plan.md"
+            "PLang.Generators/Emission/Property/Data/this.cs",
+            "PLang.Generators/Emission/Property/Code/this.cs",
+            "PLang.Generators/Emission/Action/this.cs"
           ],
-          "type": "create",
-          "category": "doc",
+          "type": "modify",
+          "category": "code",
           "confidence": "high",
-          "context": "Code-level door cutover runway: Value()/Load()/SetValue+_present shape, Data<T>/DynamicData override seams, Wire serializer touchpoint (Materialized() sync), nav->ValueTask, GetParameter<T> lazy, 42-site await->guard->use, data.Type->return _type. Compiler error list = migration worklist."
+          "context": "Generator emits Peek() for param diagnostics/presence guards, Materialize() for [Code] injection. 956 generated errors -> 0."
+        },
+        {
+          "paths": [
+            "PLang/app/module/variable/set.cs",
+            "PLang/app/module/file/read.cs",
+            "PLang/app/module/list/contains.cs",
+            "PLang/app/module/list/any.cs",
+            "PLang/app/module/list/group.cs",
+            "PLang/app/module/list/join.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "6 handler files migrated to async door: Run() async, params via await Param.Value(), guard-reorder (read.cs), Task.FromResult unwound, Materialize() for sync/build surfaces. Reference set for the recipe."
         }
       ],
       "after": {
-        "status": "partial \u2014 Stage 1 + Stage 2 Peek() green & committed; door (Stage 2 core) + Stages 3-6 are next focused session per Ingi full-sprint mode",
-        "health": "green for landed increments; door cutover will hold build red across 2->6 as designed",
-        "notes": "Ingi decision: full sprint, build red mid-flight. Runway in v5/door-implementation.md."
+        "status": "partial/sprint \u2014 Stage 1+Peek green; async door + generator landed (architectural core DONE); 6/~99 handler files migrated. Build RED: 1084 error CS remain across ~93 files, all mechanical per the proven recipe in summary.md.",
+        "health": "red mid-flight per Ingi sprint mode; 2130->1084 errors, all generated gone",
+        "notes": "Compiler error list = worklist. Recipe + worked examples in coder/v5 summary.md. Navigation still sync (next sub-step). Do not touch to-be-deleted mediator beyond compiling."
       }
     }
   ]
