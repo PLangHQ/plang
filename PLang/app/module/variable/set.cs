@@ -20,7 +20,10 @@ public partial class Set : IContext, IBuildValidatable
     {
         var value = parameters.FirstOrDefault(p =>
             string.Equals(p.Name, "Value", StringComparison.OrdinalIgnoreCase));
-        if (value?.Value is string s && s == "this")
+        // Build-time is a sync surface — read the materialised backing, never the
+        // async door. The literal value (no %var%) is in hand at build.
+        var valueBacking = value?.Materialize();
+        if (valueBacking is string s && s == "this")
             return "Parameter 'Value' is the literal string \"this\" — this is wrong. For \"write to %var%\" patterns, use \"%!data%\" to capture the previous action's result. \"this\" is a type annotation, not a value.";
 
         // Strict kind enforcement at build for literals. Pulls the user-named
@@ -28,16 +31,16 @@ public partial class Set : IContext, IBuildValidatable
         // string). Mismatches return a build error; %var% values defer to Run.
         var typeParam = parameters.FirstOrDefault(p =>
             string.Equals(p.Name, "Type", StringComparison.OrdinalIgnoreCase));
-        if (typeParam?.Value is global::app.type.@this t && t.Strict && t.Kind != null
-            && value?.Value != null && !value.HasVariableReference)
+        if (typeParam?.Materialize() is global::app.type.@this t && t.Strict && t.Kind != null
+            && valueBacking != null && !value!.HasVariableReference)
         {
             var clr = t.ClrType;
             if (clr != null && typeof(global::app.data.IKindValidatable).IsAssignableFrom(clr))
             {
-                var probe = TryInstantiateValidator(clr, value.Value);
+                var probe = TryInstantiateValidator(clr, valueBacking);
                 if (probe is global::app.data.IKindValidatable v)
                 {
-                    var (ok, actual) = v.ValidateKind(value.Value, t.Kind);
+                    var (ok, actual) = v.ValidateKind(valueBacking, t.Kind);
                     if (!ok)
                         return $"Strict kind mismatch: declared {t.Name}/{t.Kind}"
                             + (actual != null ? $" but content is {actual}." : ".");
@@ -45,7 +48,7 @@ public partial class Set : IContext, IBuildValidatable
             }
         }
 
-        if (value?.Type?.Name != null && value.Value != null)
+        if (value?.Type?.Name != null && valueBacking != null)
         {
             // Skip validation when value contains %variable% references — they resolve at runtime
             if (value.HasVariableReference) return null;
@@ -55,9 +58,9 @@ public partial class Set : IContext, IBuildValidatable
             // assembly, so the read is direct; no external GetPrimitiveOrMime
             // fallback to maintain at the call site.
             var targetType = value.Type.ClrType;
-            if (targetType != null && !targetType.IsInstanceOfType(value.Value))
+            if (targetType != null && !targetType.IsInstanceOfType(valueBacking))
             {
-                var (_, error) = global::app.type.catalog.@this.TryConvert(value.Value, targetType);
+                var (_, error) = global::app.type.catalog.@this.TryConvert(valueBacking, targetType);
                 if (error != null)
                     return $"Parameter 'Value' has type={value.Type.Name} but value cannot be converted: {error.Message}";
             }
@@ -78,47 +81,52 @@ public partial class Set : IContext, IBuildValidatable
     [Default(false)]
     public partial data.@this<global::app.type.@bool.@this> AsDefault { get; init; }
 
-    public Task<data.@this> Run()
+    public async Task<data.@this> Run()
     {
+        // Resolve the param doors once, up front (await-once) — the value reads
+        // navigate; the guards that follow read the resolved values.
+        var name = await Name.Value();
+        var sourceValue = await Value.Value();
+
         // Variable.Resolve flagged the slot as syntactically malformed
         // (`%x!!cost%`, `%x!a!b%`, etc.) — fail with a typed error rather
         // than silently writing to Properties[""] or replacing the binding
         // with a junk Name.
-        if (Name.Value!.IsMalformed)
-            return Task.FromResult(global::app.data.@this.FromError(
+        if (name!.IsMalformed)
+            return global::app.data.@this.FromError(
                 new global::app.error.ServiceError(
-                    $"Variable reference '{Name.Value.RawValue}' is not a valid name — only a single '!' separates a variable from its Property key, and the suffix may not appear after '.' or '['.",
-                    "InvalidVariableReference", 400)));
+                    $"Variable reference '{name.RawValue}' is not a valid name — only a single '!' separates a variable from its Property key, and the suffix may not appear after '.' or '['.",
+                    "InvalidVariableReference", 400));
 
         // %x!cost% target — mutate the named variable's Properties[key]
         // instead of replacing the binding. Same action, two stores:
         // bare-name slots hit Value, !-suffixed slots hit Properties.
         // Goes through Variable.Resolve's parsing — see Variable.Property.
-        var property = Name.Value.Property;
+        var property = name.Property;
         if (!string.IsNullOrEmpty(property))
         {
-            var target = Context.Variable.Get(Name.Value.Name);
+            var target = Context.Variable.Get(name.Name);
             if (target == null || !target.IsInitialized)
-                return Task.FromResult(global::app.data.@this.FromError(
-                    new global::app.error.ServiceError($"Variable '{Name.Value.Name}' is not set",
-                        "VariableNotFound", 400)));
+                return global::app.data.@this.FromError(
+                    new global::app.error.ServiceError($"Variable '{name.Name}' is not set",
+                        "VariableNotFound", 400));
             try
             {
-                target.Properties[property] = Value.Value;
+                target.Properties[property] = sourceValue;
             }
             catch (ArgumentException ex)
             {
-                return Task.FromResult(global::app.data.@this.FromError(
-                    new global::app.error.ServiceError(ex.Message, "InvalidPropertyValue", 400)));
+                return global::app.data.@this.FromError(
+                    new global::app.error.ServiceError(ex.Message, "InvalidPropertyValue", 400));
             }
-            return Task.FromResult(target);
+            return target;
         }
 
-        if (AsDefault.Value)
+        if ((await AsDefault.Value())?.Value == true)
         {
-            var existing = Context.Variable.Get(Name.Value);
+            var existing = Context.Variable.Get(name);
             if (existing.IsInitialized)
-                return Task.FromResult(existing);
+                return existing;
         }
 
         // Forced type via [Type]: convert via TryConvert and mint Data<T>. Conversion failure
@@ -133,7 +141,8 @@ public partial class Set : IContext, IBuildValidatable
         //   1. ValidateBuild (above) — a literal value, at BUILD time.
         //   2. the IKindValidatable probe below — a %var% value resolved at RUN time.
         //   3. the IStrictKindEnforcer load seam below — byte-backed values, at MATERIALIZATION.
-        if (Type?.Value != null)
+        var typeValue = Type == null ? null : await Type.Value();
+        if (typeValue != null)
         {
             // Type entity rides in a bare Data — `type` is not `: item`, so it can't be a
             // Data<T> that auto-converts. Reconstruct it from whatever the .pr served:
@@ -143,11 +152,11 @@ public partial class Set : IContext, IBuildValidatable
             // Only the dict goes through TypeFromWire — its string arm binds context onto the
             // entity, which would resolve a kindless name's ClrType to the wrapper (number) rather
             // than the raw CLR mate (Int32) the no-context FromName yields.
-            var typeEntity = Type.Value as global::app.type.@this
-                ?? (Type.Value is global::app.type.dict.@this or System.Collections.Generic.IDictionary<string, object?>
-                        ? global::app.data.@this.TypeFromWire(Type.Value, Context)
+            var typeEntity = typeValue as global::app.type.@this
+                ?? (typeValue is global::app.type.dict.@this or System.Collections.Generic.IDictionary<string, object?>
+                        ? global::app.data.@this.TypeFromWire(typeValue, Context)
                         : null)
-                ?? global::app.type.@this.FromName(Type.Value.ToString()!);
+                ?? global::app.type.@this.FromName(typeValue.ToString()!);
             // Canonicalise kind through the format registry — `markdown` → `md`,
             // `jpeg` → `jpg`. The factory does this when a context is passed;
             // the .pr round-trip loses the context, so we run it again here.
@@ -172,16 +181,16 @@ public partial class Set : IContext, IBuildValidatable
             // kind), so a text literal naturally derives nothing here.
             if (typeEntity.Kind == null && targetType != null)
             {
-                var derivedKind = Context.App.Type.KindHooks.Of(targetType, Value.Value)
+                var derivedKind = Context.App.Type.KindHooks.Of(targetType, sourceValue)
                                   ?? (Context.App.Type[typeName] is { ClrType: { } familyClr }
-                                      ? Context.App.Type.KindHooks.Of(familyClr, Value.Value)
+                                      ? Context.App.Type.KindHooks.Of(familyClr, sourceValue)
                                       : null);
                 if (derivedKind != null) typeEntity.Kind = derivedKind;
             }
             if (targetType == null)
             {
-                return Task.FromResult(global::app.data.@this.FromError(
-                    new global::app.error.ServiceError($"Unknown type '{typeName}'", "UnknownType", 400)));
+                return global::app.data.@this.FromError(
+                    new global::app.error.ServiceError($"Unknown type '{typeName}'", "UnknownType", 400));
             }
 
             // Strict kind enforcement at runtime — for `%var%` paths
@@ -193,16 +202,16 @@ public partial class Set : IContext, IBuildValidatable
             if (typeEntity.Strict && typeEntity.Kind != null
                 && typeof(global::app.data.IKindValidatable).IsAssignableFrom(targetType))
             {
-                var probe = TryInstantiateValidator(targetType, Value.Value);
+                var probe = TryInstantiateValidator(targetType, sourceValue);
                 if (probe is global::app.data.IKindValidatable v)
                 {
-                    var (ok, actual) = v.ValidateKind(Value.Value!, typeEntity.Kind);
+                    var (ok, actual) = v.ValidateKind(sourceValue!, typeEntity.Kind);
                     if (!ok)
-                        return Task.FromResult(global::app.data.@this.FromError(
+                        return global::app.data.@this.FromError(
                             new global::app.error.ServiceError(
                                 $"Strict kind mismatch: declared {typeName}/{typeEntity.Kind}"
                                 + (actual != null ? $" but content is {actual}." : "."),
-                                "StrictKindMismatch", 400)));
+                                "StrictKindMismatch", 400));
                 }
             }
 
@@ -216,11 +225,11 @@ public partial class Set : IContext, IBuildValidatable
                 && string.Equals(vt.Name, typeEntity.Name, StringComparison.OrdinalIgnoreCase)
                 && string.Equals(vt.Kind ?? "", typeEntity.Kind ?? "", StringComparison.OrdinalIgnoreCase))
             {
-                Value.Name = Name.Value!;
-                return Task.FromResult(Context.Variable.Set(Value));
+                Value.Name = name!;
+                return Context.Variable.Set(Value);
             }
 
-            object? converted = Value.Value;
+            object? converted = sourceValue;
             System.Type? mintType = targetType;
 
             // The incoming value composes the declared type as a facet under a
@@ -259,9 +268,9 @@ public partial class Set : IContext, IBuildValidatable
                     // (with its kind/strict) carries the user-declared meaning.
                     mintType = converted.GetType();
                 else
-                    return Task.FromResult(convResult);
+                    return convResult;
             }
-            var typedData = ConstructDataOfT(Name.Value, mintType, converted, Context);
+            var typedData = ConstructDataOfT(name, mintType, converted, Context);
             // Pin the type: the value's own when kept as-is (image wins over a
             // `path` hint), else the user-named declared entity — kind and strict
             // survive the binding-mint.
@@ -274,19 +283,19 @@ public partial class Set : IContext, IBuildValidatable
             // image.BytesAsync throws on mismatch). Raw byte[] slots are handled
             // separately above via the IKindValidatable probe.
             if (typeEntity.Strict && typeEntity.Kind != null
-                && typedData.Value is global::app.data.IStrictKindEnforcer enforcer)
+                && typedData.Materialize() is global::app.data.IStrictKindEnforcer enforcer)
             {
                 enforcer.RequireStrictKind(typeEntity.Kind);
                 if (enforcer.CheckStrictKind() is { ok: false } mismatch)
-                    return Task.FromResult(global::app.data.@this.FromError(
+                    return global::app.data.@this.FromError(
                         new global::app.error.ServiceError(
                             $"Strict kind mismatch: declared {typeName}/{typeEntity.Kind}"
                             + (mismatch.actualKind != null ? $" but content is {mismatch.actualKind}." : "."),
-                            "StrictKindMismatch", 400)));
+                            "StrictKindMismatch", 400));
             }
 
             CopyProperties(Value, typedData);
-            return Task.FromResult(Context.Variable.Set(typedData));
+            return Context.Variable.Set(typedData);
         }
 
         // No forced type — shallow bind. A new Data under the target name shares the
@@ -296,8 +305,8 @@ public partial class Set : IContext, IBuildValidatable
         // as `a = x` shares in mainstream languages. `set %x% = ...` itself replaces the
         // binding (Variables.Set never mutates an aliased Data in place), so reassignment
         // never bleeds.
-        data.@this minted = Value.ShallowClone(Name.Value);
-        return Task.FromResult(Context.Variable.Set(minted));
+        data.@this minted = Value.ShallowClone(name);
+        return Context.Variable.Set(minted);
     }
 
     /// <summary>
