@@ -20,10 +20,10 @@ public partial class Throw : IContext
         // Re-throw an existing error as-is — `- throw %!error%` preserves Key,
         // Message, StatusCode, and the error chain rather than stringifying it.
         // A first-class, intended pattern.
-        if (Message.Value is global::app.error.IError existing)
+        if (Message.Materialize() is global::app.error.IError existing)
             return Task.FromResult(Error(existing));
 
         return Task.FromResult(Error(
-            new ServiceError(Message.Value?.ToString() ?? "", Key?.Value ?? "UserError", StatusCode.GetValue<int>())));
+            new ServiceError(Message.Materialize()?.ToString() ?? "", Key?.Materialize()?.ToString() ?? "UserError", StatusCode.GetValue<int>())));
     }
 }

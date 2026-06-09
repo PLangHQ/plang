@@ -14,12 +14,13 @@ public partial class list : IContext
 
     public async Task<data.@this> Run()
     {
-        if (string.IsNullOrEmpty(Type?.Value))
+        var typeName = Type == null ? null : await Type.Value();
+        if (string.IsNullOrEmpty(typeName))
             return Data(Context.App.Code.List());
 
-        var providerType = Context.App.Code.ResolveType(Type.Value!);
+        var providerType = Context.App.Code.ResolveType(typeName);
         if (providerType == null)
-            return Error(new global::app.error.ActionError($"Unknown provider type '{Type.Value}'", "UnknownType", 400));
+            return Error(new global::app.error.ActionError($"Unknown provider type '{typeName}'", "UnknownType", 400));
 
         return Context.App.Code.List(providerType);
     }

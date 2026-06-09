@@ -22,7 +22,7 @@ public partial class resume : IContext
 
     public async Task<data.@this> Run()
     {
-        var snap = Snapshot.Value;
+        var snap = await Snapshot.Value();
         if (snap == null)
             return global::app.data.@this.FromError(new ServiceError(
                 "resume could not rebuild a snapshot from the value", "NoSnapshot", 400));

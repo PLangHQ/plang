@@ -20,14 +20,14 @@ public partial class Call : IContext
 
     public async Task<data.@this> Run()
     {
-        var goalCall = GoalName.Value!;
+        var goalCall = (await GoalName.Value())!;
         // Stamp THIS action as the anchor so GetGoalAsync can navigate step → goal → sub-goals.
         // Using __action (source-generator self-reference) instead of the step's first action
         // means nested goal.call instances — e.g. inside error.handle's Actions chain —
         // navigate from themselves, not from the outer action that owns the step.
         if (goalCall.Action == null)
             goalCall.Action = __action;
-        var execContext = Actor?.Value?.Context ?? Context;
+        var execContext = (Actor == null ? null : await Actor.Value())?.Context ?? Context;
         return await Context.App!.RunGoalAsync(goalCall, execContext);
     }
 }
