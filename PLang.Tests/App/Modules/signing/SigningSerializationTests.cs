@@ -96,7 +96,7 @@ public class SigningSerializationTests
     {
         // Hash some data using the crypto provider directly
         var cryptoProvider = new global::app.module.crypto.code.Default();
-        var hashResult = cryptoProvider.Hash(new global::app.module.crypto.Hash
+        var hashResult = await cryptoProvider.Hash(new global::app.module.crypto.Hash
             { Data = Data.Ok(System.Text.Encoding.UTF8.GetBytes("test data")), Algorithm = (global::app.type.text.@this)"sha256" });
         var hashBytes = ((global::app.module.crypto.type.hash.@this)(await hashResult.Value())!).Bytes;
         var base64Hash = Convert.ToBase64String(hashBytes);

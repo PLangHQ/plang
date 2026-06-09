@@ -378,7 +378,7 @@ public class SnapshotWireTests
 
         context.Variable.Set("snap.variables.x", 2L);
 
-        var snap = (await (await context.Variable.Get("snap")).As<global::app.snapshot.@this>(context).Value());
+        var snap = (await (await (await context.Variable.Get("snap")).As<global::app.snapshot.@this>(context)).Value());
         var result = await snap!.Resume(context);
         await result.IsSuccess();
         long seen = System.Convert.ToInt64((await context.Variable.GetValue("seen")));

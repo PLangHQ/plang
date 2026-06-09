@@ -23,6 +23,6 @@ public static class DataAssertions
     public static async Task IsFailure(this global::app.data.@this data)
     {
         await Assert.That(data.Success).IsFalse()
-            .Because($"Expected failure but Data succeeded with value: {data.Value}");
+            .Because($"Expected failure but Data succeeded with value: {data.Peek()}");
     }
 }

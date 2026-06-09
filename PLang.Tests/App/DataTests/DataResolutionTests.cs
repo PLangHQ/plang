@@ -122,7 +122,7 @@ public class DataResolutionTests
         _app.User.Context.Variable.Set("x", "value");
         var data = new Data("v", "%x%") { Context = _app.User.Context };
 
-        var tasks = Enumerable.Range(0, 50).Select(_ => Task.Run(() =>
+        var tasks = Enumerable.Range(0, 50).Select(_ => Task.Run(async () =>
         {
             for (int i = 0; i < 100; i++)
             {

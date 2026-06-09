@@ -134,7 +134,7 @@ public class ExecutorTests
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
         var vars = engine!.User.Context.Variable;
-        await Assert.That(vars.Get<long>("count")).IsEqualTo(42L);
+        await Assert.That(await vars.Get<long>("count")).IsEqualTo(42L);
         await Assert.That(vars.Get<string>("label")).IsEqualTo("hello");
         await using var _ = engine;
     }

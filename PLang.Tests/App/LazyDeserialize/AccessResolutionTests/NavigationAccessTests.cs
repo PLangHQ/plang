@@ -40,7 +40,7 @@ public class NavigationAccessTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         var d = data.FromRaw("name,age\nAda,36\n", type.Create("table", "csv", context: ctx), ctx, "t");
-        var cell = (await d.GetChild("rows")).GetChild("0").GetChild("name");
+        var cell = (await (await (await d.GetChild("rows")).GetChild("0")).GetChild("name"));
         await Assert.That((await cell.Value())?.ToString()).IsEqualTo("Ada");
     }
 
