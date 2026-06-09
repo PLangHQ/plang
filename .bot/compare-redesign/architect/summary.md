@@ -1,5 +1,9 @@
 # Architect — compare-redesign
 
+## 2026-06-09 — Stage 8 folded into Stage 2.1 Part C
+
+Ingi: Stage 8 (the optional-param null model) is the same getter-emission rewrite as 2.1c and touches the same handler sites, so done separately it means rewriting the getter twice and migrating optional-param sites twice (verbose → clean). Folded Stage 8 into **2.1c**: the getter rewrite now does lazy resolution **and** non-null `Data.Uninitialized` + `[NotNull]` stamp + `[Default]`-on-null + the `.Value(fallback)` door overload in one pass; Part A migrates optional-param sites straight to the clean shape. Considered Stage 3 (Ingi's first thought) but Stage 3 doesn't touch the getter emission, so it wouldn't consolidate — the magnet is 2.1c. Also told the coder to **retrofit the v5-already-migrated handler files** (`variable/set`, `file/read`, `list/{contains,any,group,join}`, etc.) to the clean shape — they predate the null model and look "done," so they're the ones most likely missed. `stage-8-optional-params.md` is now a pointer stub; plan index marks Stage 8 folded. The `[NotNull]`-on-partial-property assumption is the verify-first check at the top of 2.1c.
+
 ## 2026-06-09 — Stage 2.1 expanded to 3 parts after coder audit
 
 Coder audited Stage 2.1 (`coder/v5/stage-2.1-audit.md`) and caught that it covered only one of three deferred async conversions. Verified all three of their claims against the branch: (1) `GetChild` is sync `public virtual @this`, not `ValueTask` — my bucket-E "review-and-swap" premise was factually wrong, navigation-async is unbuilt; (2) `GetParameter<T>` doesn't exist and the source-gen getter still emits eager `As<T>(Context)` (`Emission/Property/Data/this.cs:40,44,54,58`) — params resolve before any await; (3) the navigators (`app/variable/navigator/{List,Dictionary,Snapshot}.cs`) read sync `Materialize()` and live in `app/variable`, which my gate missed. Honest picture: **Stage 2 shipped the async signature but sync substance** — `Value() => new(Materialize())`. Rewrote `stage-2.1` into three parts, all gating Stage 3: **A** handler value-reads → `await Value()` (the original scope); **B** navigation chain → `ValueTask` (GetChild/navigators/Variable.Get + await-once gate + sync-surface handling = the v3 finding-A, designed never built); **C** `GetParameter<T>` lazy getter + source-gen emission. Named the A↔C coupling (await Param.Value() isn't lazy until C lands) and the Stage-8 overlap (both rewrite the same getter emission — do once). Fixed bucket E and widened the gate to `app/variable/navigator`. Stage 2 status corrected below to "async signature only."
@@ -19,7 +23,7 @@ Stage status:
 | 5 | [`data.Compare` entry](stage-5-data-compare.md) | pending |
 | 6 | [Consumers + demolition](stage-6-consumers-and-demolition.md) | pending |
 | 7 | [Full public-surface typing](stage-7-surface-typing.md) | pending |
-| 8 | [Optional-param resolution (`[Default]`/`[NotNull]`)](stage-8-optional-params.md) | pending (not coder-audited) |
+| 8 | ~~Optional-param resolution~~ → folded into [2.1 Part C](stage-2.1-materialize-to-door.md) | folded |
 
 ## 2026-06-09 — Stage 7 conversion discipline + new Stage 8 (optional-param null model)
 
@@ -39,7 +43,7 @@ Stage status:
 | 5 | [`data.Compare` entry](stage-5-data-compare.md) | pending |
 | 6 | [Consumers + demolition](stage-6-consumers-and-demolition.md) | pending |
 | 7 | [Full public-surface typing](stage-7-surface-typing.md) | pending |
-| 8 | [Optional-param resolution (`[Default]`/`[NotNull]`)](stage-8-optional-params.md) | pending (not coder-audited) |
+| 8 | ~~Optional-param resolution~~ → folded into [2.1 Part C](stage-2.1-materialize-to-door.md) | folded |
 
 ## 2026-06-09 — Coder v4 follow-up (one note: param resolution-error guard reorder)
 

@@ -513,7 +513,21 @@
         "status": "Stage 2.1 expanded to 3 parts (A handler reads / B nav async / C param getter) after coder audit; pushed. Coder unblocked.",
         "health": "Stage 2 is async-signature-only; 2.1 (all 3 parts) is the real prereq for Stage 3. Stage 8 overlaps 2.1c (shared getter rewrite). Stage 8 still awaiting coder read-over.",
         "notes": "Coder's audit was correct on all three verified facts. Stage 2.1 now states the honest picture (signature vs substance). B-part sync surfaces (ToString/Equals/Fluid) and the await-once gate are the v3 finding-A resolution, designed never built. Two-phase sort stays Stage 6; getter emission shared with Stage 8."
-      }
+      },
+      "actions_followup": [
+        {
+          "paths": [
+            ".bot/compare-redesign/architect/stage-2.1-materialize-to-door.md",
+            ".bot/compare-redesign/architect/stage-8-optional-params.md",
+            ".bot/compare-redesign/architect/plan.md",
+            ".bot/compare-redesign/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Ingi: fold Stage 8 (optional-param null model) into Stage 2.1 Part C - same getter emission + same handler sites as 2.1c, so separate = rewrite getter twice + migrate optional-param sites twice (verbose then clean). Pushed back on his first thought (Stage 3): Stage 3 doesn't touch the getter emission, so the magnet is 2.1c, not 3. Expanded 2.1c to do lazy resolution + non-null Data.Uninitialized + [NotNull] stamp + [Default]-on-null + .Value(fallback) door overload in one rewrite; Part A migrates optional params straight to clean shape. Per Ingi, also told the coder to retrofit the v5-already-migrated handler files (variable/set, file/read, list/{contains,any,group,join}) to the clean shape - they predate the null model and look done. stage-8 file -> pointer stub; plan index marks it folded; summary table marks stage 8 folded. [NotNull]-on-partial-property is the verify-first check at the top of 2.1c."
+        }
+      ]
     },
     {
       "id": "bbe6c589-ad39-439c-8f42-a6dd32a81887",
