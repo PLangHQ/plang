@@ -31,21 +31,21 @@ public partial class Set : IContext
 
     public async Task<data.@this> Run()
     {
-        var name = Name.Value;
+        var name = await Name.Value();
         if (string.IsNullOrEmpty(name))
             return app.data.@this.FromError(new ServiceError("Channel name is required", "ValueRequired", 400));
 
-        var actor = Actor?.Value ?? Context.Actor;
+        var actor = (Actor == null ? null : await Actor.Value()) ?? Context.Actor;
 
-        var goalCall = Goal.Value;
+        var goalCall = await Goal.Value();
         if (goalCall == null || string.IsNullOrEmpty(goalCall.Name) && goalCall.PrPath == null)
             return app.data.@this.FromError(new ServiceError("Goal is required", "ValueRequired", 400));
 
         var goalResult = await goalCall.GetGoalAsync(Context.App, Context);
         if (!goalResult.Success) return goalResult;
-        var goalEntry = (app.goal.@this)goalResult.Value!;
+        var goalEntry = (app.goal.@this)(await goalResult.Value())!;
 
-        var direction = ResolveDirection(name, Direction?.Value);
+        var direction = ResolveDirection(name, Direction == null ? null : await Direction.Value());
 
         // Upsert: dispose any existing channel under this name before re-registering.
         await actor.Channel.RemoveAsync(name);
@@ -53,11 +53,11 @@ public partial class Set : IContext
         var ch = new app.channel.type.goal.@this(name, goalEntry, actor, direction)
         {
             Buffer = Buffer != null ? Buffer.GetValue<long>() : 4096L,
-            Timeout = Timeout != null ? Timeout.Value : TimeSpan.FromSeconds(30),
-            Mime = Mime?.Value ?? "text/plain",
-            Encoding = Encoding?.Value ?? "utf-8",
-            Encryption = Encryption?.Value?.Name,
-            Signing = Signing?.Value?.Name ?? "auto"
+            Timeout = Timeout != null ? (await Timeout.Value())! : TimeSpan.FromSeconds(30),
+            Mime = (Mime == null ? null : await Mime.Value()) ?? "text/plain",
+            Encoding = (Encoding == null ? null : await Encoding.Value()) ?? "utf-8",
+            Encryption = (Encryption == null ? null : await Encryption.Value())?.Name,
+            Signing = (Signing == null ? null : await Signing.Value())?.Name ?? "auto"
         };
         actor.Channel.Register(ch);
         return app.data.@this.Ok(ch);

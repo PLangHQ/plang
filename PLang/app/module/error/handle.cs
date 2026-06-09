@@ -96,8 +96,8 @@ public partial class Handle : IContext, IModifier
                 ? errWithFrames.CallFrames[0]
                 : null;
 
-            var order = Order?.Value ?? ErrorOrder.RetryFirst;
-            var actions = Actions?.Value;
+            var order = (Order == null ? null : await Order.Value()) ?? ErrorOrder.RetryFirst;
+            var actions = Actions == null ? null : await Actions.Value();
             bool hasRecovery = actions != null && actions.Count > 0;
 
             if (order == ErrorOrder.GoalFirst)
@@ -132,7 +132,7 @@ public partial class Handle : IContext, IModifier
             }
 
             // IgnoreError is the final fallback — after retry and recovery are exhausted
-            if (IgnoreError.Value) return global::app.data.@this.Ok();
+            if ((await IgnoreError.Value())?.Value == true) return global::app.data.@this.Ok();
 
             return result;
         };
@@ -182,14 +182,15 @@ public partial class Handle : IContext, IModifier
     /// </summary>
     private bool MatchesError(IError? error)
     {
-        if (StatusCode?.Value == null && Key?.Value == null && Message?.Value == null) return true;
+        // MatchesError is a sync predicate — read the materialised backing, not the async door.
+        if (StatusCode?.Materialize() == null && Key?.Materialize() == null && Message?.Materialize() == null) return true;
         if (error == null) return false;
 
-        if (StatusCode?.Value != null && error.StatusCode != StatusCode.GetValue<int>()) return false;
-        if (!string.IsNullOrEmpty(Key?.Value)
-            && !string.Equals(error.Key, Key.Value, StringComparison.OrdinalIgnoreCase)) return false;
-        if (!string.IsNullOrEmpty(Message?.Value)
-            && !error.Message.Contains(Message.Value!, StringComparison.OrdinalIgnoreCase)) return false;
+        if (StatusCode?.Materialize() != null && error.StatusCode != StatusCode.GetValue<int>()) return false;
+        if (!string.IsNullOrEmpty(Key?.Materialize()?.ToString())
+            && !string.Equals(error.Key, Key.Materialize()?.ToString(), StringComparison.OrdinalIgnoreCase)) return false;
+        if (!string.IsNullOrEmpty(Message?.Materialize()?.ToString())
+            && !error.Message.Contains(Message.Materialize()!.ToString()!, StringComparison.OrdinalIgnoreCase)) return false;
 
         return true;
     }
@@ -199,7 +200,7 @@ public partial class Handle : IContext, IModifier
         int? count = RetryCount?.GetValue<int>();
         if (count == null || count <= 0) return null;
 
-        int delayMs = RetryOverMs?.Value != null && count > 0
+        int delayMs = RetryOverMs?.Materialize() != null && count > 0
             ? RetryOverMs.GetValue<int>() / count.Value : 0;
 
         for (int attempt = 0; attempt < count; attempt++)

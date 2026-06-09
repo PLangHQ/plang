@@ -17,7 +17,7 @@ public partial class Remove : IContext
 
     public async Task<data.@this> Run()
     {
-        var name = Name.Value;
+        var name = await Name.Value();
         if (string.IsNullOrEmpty(name))
             return global::app.data.@this.FromError(new ServiceError("Channel name is required", "ValueRequired", 400));
 
@@ -26,7 +26,7 @@ public partial class Remove : IContext
                 $"Channel '{name}' is a default channel and cannot be removed (use channel.set to replace its backing).",
                 "ChannelInvariantViolation", 400));
 
-        var actor = Actor?.Value ?? Context.Actor;
+        var actor = (Actor == null ? null : await Actor.Value()) ?? Context.Actor;
         var removed = await actor.Channel.RemoveAsync(name);
         if (!removed)
             return global::app.data.@this.FromError(new ServiceError($"Channel '{name}' not found", "ChannelNotFound", 404));
