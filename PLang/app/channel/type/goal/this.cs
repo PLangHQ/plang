@@ -49,7 +49,7 @@ public class @this : global::app.channel.type.session.@this
 
     public override async Task<global::app.data.@this> Ask(module.output.ask action, CancellationToken ct = default)
     {
-        var prompt = global::app.data.@this.Ok(action.Question?.Value);
+        var prompt = global::app.data.@this.Ok(action.Question == null ? null : await action.Question.Value());
         return await InvokeGoal(prompt, ct);
     }
 

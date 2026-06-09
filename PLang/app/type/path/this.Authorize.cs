@@ -66,7 +66,7 @@ public partial class @this
             if (!askResult.Success) return askResult;
 
             // output.ask returns Data<Ask>; the user's reply rides on Ask.Answer.
-            var ask = askResult.Value as module.output.Ask;
+            var ask = await askResult.Value() as module.output.Ask;
             var answer = ask?.Answer?.Trim();
             switch (answer)
             {

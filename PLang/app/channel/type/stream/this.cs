@@ -94,7 +94,7 @@ public sealed class @this : global::app.channel.type.session.@this
         // "output" channel (the input channel is typically stdin and is
         // input-only). Falls back to writing via self only when self is
         // bidirectional and no output channel is registered (test fixtures).
-        var question = action.Question?.Value;
+        var question = action.Question == null ? null : await action.Question.Value();
         if (!string.IsNullOrEmpty(question))
         {
             var output = action.Context?.Actor?.Channel.Resolve(global::app.channel.list.@this.Output);

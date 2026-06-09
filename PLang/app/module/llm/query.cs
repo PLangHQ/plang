@@ -21,7 +21,7 @@ public partial class query : IContext, IBuildValidatable
         if (messages == null)
             return "Missing required parameter 'Messages'. Must be a list of {Role: string, Content: string} objects. Map system= to {Role: \"system\", Content: \"...\"} and user= to {Role: \"user\", Content: \"...\"}";
 
-        var value = messages.Value;
+        var value = messages.Materialize();
 
         if (value == null || (value is string s && string.IsNullOrWhiteSpace(s)))
             return "Parameter 'Messages' is empty. Must be a list of {Role: string, Content: string} objects. Map system= to {\"Role\": \"system\", \"Content\": \"...\"} and user= to {\"Role\": \"user\", \"Content\": \"...\"}";

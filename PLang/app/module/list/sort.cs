@@ -13,13 +13,13 @@ public partial class Sort : IContext
 
     public Task<data.@this<type.list>> Run()
     {
-        var nl = app.type.list.@this.FromRaw(Context.Variable.Get(ListName.Value).Value, Context);
+        var nl = app.type.list.@this.FromRaw(Context.Variable.Get(ListName.Materialize() as app.variable.@this).Materialize(), Context);
         if (nl == null)
             return Task.FromResult(global::app.data.@this<type.list>.FromError(
                 new app.error.ValidationError($"Variable '{ListName.Value}' is not a list")));
         // Promote the variable to the native list (no-op when already native) so the
         // in-place sort persists — mirrors list.add's raw→native promotion.
-        Context.Variable.Set(ListName.Value, nl);
+        Context.Variable.Set(ListName.Materialize() as app.variable.@this, nl);
 
         // Thin dispatch — the list value type owns ordering, routed through the
         // one typed-compare path. `by "field"` keys each element. An unorderable
@@ -28,10 +28,10 @@ public partial class Sort : IContext
         // exception is for the unexpected, and escapes the error-handler pipeline).
         try
         {
-            if (!string.IsNullOrEmpty(By?.Value))
-                nl.SortByField(By.Value!, Descending.Value);
+            if (!string.IsNullOrEmpty(By?.Materialize()?.ToString()))
+                nl.SortByField((By.Materialize() as global::app.type.text.@this)!, (Descending.Materialize() as global::app.type.@bool.@this)?.Value ?? false);
             else
-                nl.SortByValue(Descending.Value);
+                nl.SortByValue((Descending.Materialize() as global::app.type.@bool.@this)?.Value ?? false);
         }
         catch (global::app.data.Compare.NotOrderableException ex)
         {

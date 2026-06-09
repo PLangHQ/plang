@@ -228,7 +228,7 @@ public sealed partial class @this : global::app.type.path.@this
     public override async Task<bool> AsBooleanAsync()
     {
         var existsResult = await ExistsAsync();
-        return existsResult.Success && existsResult.Value;
+        return existsResult.Success && (await existsResult.Value())?.Value == true;
     }
 
     public override async Task<data.@this<global::app.type.path.@this.StatInfo>> Stat()
@@ -303,7 +303,7 @@ public sealed partial class @this : global::app.type.path.@this
     /// </summary>
     public override async Task<data.@this<global::app.type.path.@this>> Save(data.@this? value)
     {
-        var raw = value?.Value;
+        var raw = value == null ? null : await value.Value();
         if (raw is byte[] bytes) return await WriteBytes(bytes);
         return await WriteText(raw?.ToString() ?? "");
     }

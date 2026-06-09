@@ -44,7 +44,7 @@ public sealed class @this : global::app.channel.@this
         // as an error Data (it owns the System.IO), so the channel stays clean.
         var bytes = await _path.ReadBytes();
         if (!bytes.Success) return bytes;
-        return await StampReadAsync(bytes.Value!, ct);
+        return await StampReadAsync((await bytes.Value())!, ct);
     }
 
     public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)

@@ -113,7 +113,7 @@ public sealed partial class @this
                     // Pass Context so the per-call options bag uses a Context-
                     // bound PathJsonConverter — Path fields inside the result
                     // (Goal.Path, GoalCall.PrPath, ...) land fully wired.
-                    var converted = Context!.App.Type.Convert(text, materialized, Context).Value;
+                    var converted = Context!.App.Type.Convert(text, materialized, Context).Materialize();
                     content = converted ?? text;
                 }
                 else
@@ -161,7 +161,7 @@ public sealed partial class @this
     public override async Task<bool> AsBooleanAsync()
     {
         var existsResult = await ExistsAsync();
-        return existsResult.Success && existsResult.Value;
+        return existsResult.Success && (await existsResult.Value())?.Value == true;
     }
 
     /// <summary>
@@ -227,7 +227,7 @@ public sealed partial class @this
         try
         {
             EnsureParentDir();
-            var raw = value?.Value;
+            var raw = value == null ? null : await value.Value();
             // A born-native text/binary value rides as its wrapper. Persisted file
             // content IS the value's bare form, so unwrap to the backing here —
             // otherwise it falls to the channel serializer, whose text path appends a
@@ -403,7 +403,7 @@ public sealed partial class @this
             if (askResult.ShouldExit()) return data.@this<global::app.type.path.@this>.From(askResult);
             if (!askResult.Success) return data.@this<global::app.type.path.@this>.From(askResult);
 
-            var ask = askResult.Value as global::app.module.output.Ask;
+            var ask = await askResult.Value() as global::app.module.output.Ask;
             var answer = ask?.Answer?.Trim();
             switch (answer)
             {

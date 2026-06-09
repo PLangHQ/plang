@@ -58,11 +58,11 @@ public sealed partial class @this
             {
                 var p = global::app.type.path.@this.Resolve(raw, context);
                 var exists = await p.ExistsAsync();
-                if (!exists.Success || exists.Value == false) return null;
+                if (!exists.Success || (await exists.Value())?.Value == false) return null;
                 var read = await p.ReadBytes();
                 if (!read.Success || read.Value == null) return null;
                 var ext = p is global::app.type.path.file.@this fp ? fp.Extension : "";
-                return new @this(read.Value, SniffMime(read.Value) ?? MimeFromExtension(ext), p);
+                { var __rb = (byte[])(await read.Value())!; return new @this(__rb, SniffMime(__rb) ?? MimeFromExtension(ext), p); }
             }
             catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
             { return null; }
