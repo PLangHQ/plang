@@ -97,7 +97,7 @@ public class RequestActionTests
         await result.IsSuccess();
         await Assert.That((await result.Value())).IsNotNull();
         // The body is the lazy value; touching it materializes json → object.
-        var json = JsonSerializer.Serialize(result.Value);
+        var json = JsonSerializer.Serialize(await result.Value());
         await Assert.That(json).Contains("Alice");
     }
 

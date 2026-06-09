@@ -24,7 +24,7 @@ public class BuildAndRunGoalTests
 
         // And the engine handed-off Variables registry resolves through the new types.
         app.User.Context.Variable.Set("greeting", "hello");
-        await Assert.That((await app.User.Context.Variable["greeting"].Value())).IsEqualTo("hello");
+        await Assert.That((await (await app.User.Context.Variable.Get("greeting")).Value())).IsEqualTo("hello");
     }
 
     // Stage 3 follow-up: same goal, but the C# scaffold reaches into app.module under the new shape to confirm

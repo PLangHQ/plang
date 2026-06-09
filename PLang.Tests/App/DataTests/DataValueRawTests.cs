@@ -138,7 +138,7 @@ public class DataValueRawTests
         {
             for (int i = 0; i < 100; i++)
             {
-                var _v = data.Value;
+                var _v = await data.Value();
             }
             return ReferenceEquals((data.Materialize()), raw);
         })).ToArray();
