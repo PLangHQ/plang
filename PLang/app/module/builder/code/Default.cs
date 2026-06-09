@@ -614,7 +614,7 @@ public class Default : IBuilder
         {
             var (handler, _) = modules.GetCodeGenerated(a);
             if (handler is not global::app.module.IClass classified) continue;
-            classified.SetAction(a, context);
+            await classified.SetAction(a, context);
             var buildResult = await classified.Build();
             if (!buildResult.Success)
             {

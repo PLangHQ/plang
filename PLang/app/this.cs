@@ -553,7 +553,14 @@ public sealed partial class @this : IAsyncDisposable
         // isolated by whatever forked them.
         if (goalCall.Parameters != null)
             foreach (var param in goalCall.Parameters)
-                await context.Variable.Set(param.Name, param);
+            {
+                // Call-by-value at the boundary: the param rides raw (`%user%`) from the
+                // .pr; this Set IS the assignment, and assignment evaluates once — decode
+                // in the caller's scope (full-match `%var%` yields the live variable Data,
+                // type intact; literals pass through), then store under the param name.
+                param.Context = context;
+                await context.Variable.Set(param.Name, await param.AsCanonical(context));
+            }
 
         return await ((Goal)(await goalResult.Value())!).RunAsync(context);
     }

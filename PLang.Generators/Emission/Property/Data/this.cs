@@ -33,39 +33,74 @@ public sealed record @this(
         sb.AppendLine($"    public partial {TypeName}{nullable} {Name}");
         sb.AppendLine("    {");
 
-        // The getter binds a fresh working-copy of the .pr parameter (carrying its raw
-        // %var%/literal/container form + context); that copy's own Value() resolves it on
-        // first read and caches — the getter never resolves (resolution is async, a sync
-        // property can't await). Fresh per call (actions are shared) so the cache lives on
-        // this execution's copy, not the shared .pr parameter.
-        if (IsPlainData)
-        {
-            sb.AppendLine($"        get {{ if (!{SetFlag}) {{ {Backing} = global::app.data.@this.Param(__ResolveData(\"{ParamName}\"), Context); {SetFlag} = true; }} return {Backing}!; }}");
-        }
-        else if (IsNullable)
-        {
-            sb.AppendLine($"        get {{ if (!{SetFlag}) {{ var __d = __ResolveData(\"{ParamName}\"); {Backing} = __d.IsEmpty ? global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\") : global::app.data.@this<{InnerType}>.Param(__d, Context); {SetFlag} = true; }} return {Backing}!; }}");
-        }
-        else if (DefaultValue != null)
-        {
-            // For choice<X>, a [Default(X.Member)] arrives as X's underlying value (an int
-            // for an enum). Cast through X so int → X → choice<X> chains: (choice<X>)(X)(0).
-            const string ChoicePrefix = "global::app.type.choice.@this<";
-            string defaultExpr = (InnerType != null && InnerType.StartsWith(ChoicePrefix, System.StringComparison.Ordinal))
-                ? $"({InnerType})({InnerType.Substring(ChoicePrefix.Length, InnerType.Length - ChoicePrefix.Length - 1)})({DefaultValue})"
-                : $"({InnerType})({DefaultValue})";
-            // [Default] fires on an absent slot (bind the literal) AND on a null-resolving
-            // value (the fallback rides into the working-copy so `mime: %unsetVar%` lands on it).
-            sb.AppendLine($"        get {{ if (!{SetFlag}) {{ var __d = __ResolveData(\"{ParamName}\"); {Backing} = __d.IsEmpty ? new global::app.data.@this<{InnerType}>(\"{ParamName}\", {defaultExpr}) : global::app.data.@this<{InnerType}>.Param(__d, Context, {defaultExpr}, true); {SetFlag} = true; }} return {Backing}!; }}");
-        }
-        else
-        {
-            sb.AppendLine($"        get {{ if (!{SetFlag}) {{ {Backing} = global::app.data.@this<{InnerType}>.Param(__ResolveData(\"{ParamName}\"), Context); {SetFlag} = true; }} return {Backing}!; }}");
-        }
-
+        // The getter is a plain backing read — resolution happens at DISPATCH
+        // (__ResolveParameters, awaited by ExecuteAsync/SetAction before Run/Build),
+        // landing the resolved Data in the backing field: the handler instance is the
+        // per-execution home, so the shared .pr parameter is never written to. The
+        // sync fallback below only fires for direct C# composition (no action ran):
+        // absent optional -> non-null Uninitialized (null model), [Default] -> literal.
+        string fallback = IsPlainData
+            ? $"global::app.data.@this.Uninitialized(\"{ParamName}\")"
+            : DefaultValue != null
+                ? $"new global::app.data.@this<{InnerType}>(\"{ParamName}\", {DefaultExpr})"
+                : $"global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\")";
+        sb.AppendLine($"        get {{ if (!{SetFlag}) {{ {Backing} = {fallback}; {SetFlag} = true; }} return {Backing}!; }}");
         sb.AppendLine($"        init {{ {Backing} = value; {SetFlag} = true; }}");
         sb.AppendLine("    }");
         sb.AppendLine();
+    }
+
+    // For choice<X>, a [Default(X.Member)] arrives as X's underlying value (an int
+    // for an enum). Cast through X so int -> X -> choice<X> chains: (choice<X>)(X)(0).
+    private string DefaultExpr
+    {
+        get
+        {
+            const string ChoicePrefix = "global::app.type.choice.@this<";
+            return (InnerType != null && InnerType.StartsWith(ChoicePrefix, System.StringComparison.Ordinal))
+                ? $"({InnerType})({InnerType.Substring(ChoicePrefix.Length, InnerType.Length - ChoicePrefix.Length - 1)})({DefaultValue})"
+                : $"({InnerType})({DefaultValue})";
+        }
+    }
+
+    public override void EmitDispatchResolve(StringBuilder sb)
+    {
+        // Dispatch-time resolution: decode the .pr parameter's %var%/literal form once
+        // per execution, in this execution's context, into the backing field. The
+        // `!set` guard respects init-supplied values (direct C# composition).
+        // Resolution failures land on the resolved Data's Error; ExecuteAsync's
+        // __resolutionError guard surfaces them before Run().
+        sb.AppendLine($"        if (!{SetFlag})");
+        sb.AppendLine("        {");
+        if (IsPlainData)
+        {
+            // Plain Data slot — the CANONICAL Data: live variable for full-match %var%,
+            // the parameter itself for a literal.
+            sb.AppendLine($"            {Backing} = await __ResolveData(\"{ParamName}\").AsCanonical(Context);");
+            sb.AppendLine($"            if (!{Backing}.Success) __resolutionError = {Backing};");
+        }
+        else if (IsNullable)
+        {
+            sb.AppendLine($"            var __d = __ResolveData(\"{ParamName}\");");
+            sb.AppendLine($"            {Backing} = __d.IsEmpty ? global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\") : await __d.As<{InnerType}>(Context);");
+            sb.AppendLine($"            if (!{Backing}.Success) __resolutionError = {Backing};");
+        }
+        else if (DefaultValue != null)
+        {
+            // [Default] fires on an absent slot AND on a null-resolving value
+            // (`mime: %unsetVar%` lands on the default too).
+            sb.AppendLine($"            var __d = __ResolveData(\"{ParamName}\");");
+            sb.AppendLine($"            {Backing} = __d.IsEmpty ? new global::app.data.@this<{InnerType}>(\"{ParamName}\", {DefaultExpr}) : await __d.As<{InnerType}>(Context);");
+            sb.AppendLine($"            if (!{Backing}.Success) __resolutionError = {Backing};");
+            sb.AppendLine($"            else if ({Backing}.Peek() == null) {Backing} = new global::app.data.@this<{InnerType}>(\"{ParamName}\", {DefaultExpr});");
+        }
+        else
+        {
+            sb.AppendLine($"            {Backing} = await __ResolveData(\"{ParamName}\").As<{InnerType}>(Context);");
+            sb.AppendLine($"            if (!{Backing}.Success) __resolutionError = {Backing};");
+        }
+        sb.AppendLine($"            {SetFlag} = true;");
+        sb.AppendLine("        }");
     }
 
     public override void EmitSnapshotEntry(StringBuilder sb)

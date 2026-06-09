@@ -27,11 +27,6 @@ public partial class @this
     private protected object? _value;
     private Func<object?>? _valueFactory;
 
-    // Reference-resolution latch: a value holding a `%var%`/container reference resolves
-    // through the variable store on first read (the door's decode step) and caches into
-    // `_value`. Set true once resolved; cleared by SetValue so a re-Set reference re-resolves.
-    private protected bool _resolved;
-
     // Lazy (Way-3) backing: the undecoded source form — `string` for a text
     // source, `byte[]` for a binary one. When set with `_value` null, `.Value`
     // materializes through the reader registry on first touch and caches into
@@ -208,37 +203,7 @@ public partial class @this
     /// a read that may navigate or load must be reached through an <c>await</c>.
     /// <para><b>Await once</b> per call site — no store-and-await-twice.</para>
     /// </summary>
-    public virtual ValueTask<object?> Value() => Read();
-
-    /// <summary>
-    /// The door's polymorphic core — "give me the value, loading if needed." A concrete
-    /// value just materializes (sync, zero-alloc). A value that is still a <c>%var%</c> /
-    /// container reference resolves through the variable store on first read and caches
-    /// into <c>_value</c> — exactly as <see cref="Materialize"/> caches a parsed raw form.
-    /// <see cref="SetValue"/> clears the latch, so a re-Set reference re-resolves next read.
-    /// </summary>
-    protected virtual ValueTask<object?> Read()
-        => _resolved || !HoldsReference() ? new(Materialize()) : ReadReference();
-
-    // A stored value that is not yet its final form: a `%var%` string (full or interpolated)
-    // or a container that may hold nested `%var%`. Concrete values answer false and skip
-    // resolution entirely — the hot path stays the sync materialize.
-    private protected bool HoldsReference()
-        => _context?.Variable != null
-           && ((_value is string s && s.Contains('%'))
-               || (_value is app.type.text.@this txt && txt.Value.Contains('%'))
-               || IsWalkableContainer(_value));
-
-    private async ValueTask<object?> ReadReference()
-    {
-        _resolved = true;
-        var r = await AsCanonical(_context);
-        if (!r.Success) Error = r.Error;
-        _value = r.Materialize();              // cache the resolved value, like _value = ParseRaw()
-        IsInitialized = r.IsInitialized;       // an unset %var% stays not-initialized
-        if (r.Type is { } t) _type = t;
-        return _value;
-    }
+    public virtual ValueTask<object?> Value() => new(Materialize());
 
     /// <summary>
     /// Value door with a fallback for when the resolved value is null — absent slot
@@ -289,7 +254,6 @@ public partial class @this
         _value = UnwrapJsonElement(value);
         _valueFactory = null;
         _raw = null;            // mutation — raw is no longer authoritative
-        _resolved = false;      // a re-Set reference (`%x%`) re-resolves on next read
         Updated = System.DateTime.UtcNow;
         IsInitialized = true;
         _type = null;
@@ -649,22 +613,6 @@ public partial class @this
     public static @this NotFound(string name = "") => new(name, null) { IsInitialized = false };
     public static @this Uninitialized(string name) => new(name, null) { IsInitialized = false };
 
-    /// <summary>
-    /// A fresh Data carrying a parameter's raw <c>%var%</c>/literal/container form plus the
-    /// resolution context — its own <see cref="Value()"/> resolves it (the door's decode step).
-    /// Fresh per access so the resolution caches on this copy, never on the shared .pr parameter.
-    /// The plain-Data form; <see cref="@this{T}.Param"/> is the typed form.
-    /// </summary>
-    internal static @this Param(@this param, actor.context.@this? context)
-        => new(param.Name, param.Materialize(), param.Type, param.Parent)
-        {
-            Context    = context,
-            Properties = param.Properties,
-            OnCreate   = param.OnCreate,
-            OnChange   = param.OnChange,
-            OnDelete   = param.OnDelete,
-        };
-
     private static readonly System.Text.RegularExpressions.Regex FullVarMatchRegex =
         new(@"^%([^%]+)%$", System.Text.RegularExpressions.RegexOptions.Compiled);
 
@@ -1006,13 +954,12 @@ public partial class @this
                     }
                     if (!resolved.Success)
                         return @this<T>.FromError(resolved.Error!);
-                    // Stored values are values, not expressions. Type-convert only — never
-                    // re-scan the resolved value's text for further %var% references: read the
-                    // stored var's in-memory value raw (Materialize), NOT through its door
-                    // (Value() would fire the var's own reference resolution and chain). Calling
-                    // on `resolved` (the live variable) preserves identity: WrapAs sees `resolved`
-                    // as `this` and propagates Name + Properties + event lists.
-                    return resolved.AsT_Convert<T>(resolved.Materialize(), context);
+                    // Stored values are values, not expressions — the door loads content
+                    // (file/url) but never decodes %var% text inside a stored value (only
+                    // .pr-born parameter forms decode, at dispatch). Type-convert only.
+                    // Calling on `resolved` (the live variable) preserves identity: WrapAs
+                    // sees `resolved` as `this` and propagates Name + Properties + event lists.
+                    return resolved.AsT_Convert<T>(await resolved.Value(), context);
                 }
                 // Partial match — interpolate once. The result is the final value; embedded
                 // %var% inside the substituted text is opaque payload (matches mainstream
@@ -1272,25 +1219,6 @@ public partial class @this
         if (value is global::System.Collections.Generic.IEnumerable<global::app.goal.steps.step.actions.action.@this>) return value;
 
         return value;
-    }
-
-    /// <summary>
-    /// Builds a named goal-call parameter from a raw param value. A full-match
-    /// <c>%var%</c> clones the live variable's Data under the parameter name — value,
-    /// type and signature shared by reference, no JSON round-trip — so signed/typed
-    /// values survive the call intact. Anything else (literal, partial interpolation,
-    /// container) resolves through the normal substitution and wraps as a fresh Data.
-    /// </summary>
-    public static async System.Threading.Tasks.ValueTask<@this> ResolveParameter(string name, object? rawValue, actor.context.@this context)
-    {
-        if (rawValue is app.type.text.@this txt) rawValue = txt.Value;
-        if (rawValue is string s && TryFullVarMatch(s, out var varName))
-        {
-            var live = await context.Variable.Get(varName);
-            if (live != null && live.IsInitialized)
-                return live.ShallowClone(name);
-        }
-        return new @this(name, await SubstitutePrimitive(rawValue, context));
     }
 
     // A goal.call carries its params raw across the call boundary — the generic container
@@ -1579,32 +1507,6 @@ public class @this<T> : @this
         return v is T typed ? typed : GetValue<T>();
     }
 
-    /// <summary>
-    /// Typed resolution — the door's decode step for a <c>Data&lt;T&gt;</c> whose value is not
-    /// yet a <typeparamref name="T"/>: a <c>%var%</c>/container reference, OR a literal that
-    /// still needs the type-directed conversion (a path string → <c>path</c> via the static
-    /// Resolve hook, a raw scalar → its wrapper). Runs once and caches; a value already
-    /// of type T skips it. The base does the untyped canonical resolution; here T directs it.
-    /// </summary>
-    protected override async ValueTask<object?> Read()
-    {
-        if (!_resolved)
-        {
-            _resolved = true;
-            var current = Materialize();   // factory/raw parse first — typed conversion sees the in-memory form
-            if (current is not T && current != null)
-            {
-                var r = await AsT_Impl<T>(current, _context);
-                var rv = r.Materialize();
-                if (!r.Success)                    { Error = r.Error; _value = rv; }
-                else if (rv == null && _hasFallback) { _value = _fallback; IsInitialized = true; }
-                else                               { _value = rv; IsInitialized = r.IsInitialized; }
-                if (r.Type is { } t) _type = t;
-            }
-        }
-        return Materialize();
-    }
-
     public @this(string name = "", T? value = default, type? type = null, @this? parent = null)
         : base(name, value, type, parent) { }
 
@@ -1614,26 +1516,6 @@ public class @this<T> : @this
     /// <summary>Typed absent slot — non-null Data, <c>IsInitialized == false</c>. The
     /// optional-param null model: the reference is never null, only the value is.</summary>
     public new static @this<T> Uninitialized(string name) => new(name) { IsInitialized = false };
-
-    /// <summary>Typed <see cref="@this.Param"/> — a fresh <c>Data&lt;T&gt;</c> carrying the
-    /// parameter's raw reference + context; its own <see cref="Read"/> resolves it (typed).</summary>
-    internal static @this<T> Param(@this param, actor.context.@this? context, T? fallback = default, bool hasFallback = false)
-        => new(param.Name, default, param.Type, param.Parent)
-        {
-            _value      = param.Materialize(),
-            Context     = context,
-            Properties  = param.Properties,
-            OnCreate    = param.OnCreate,
-            OnChange    = param.OnChange,
-            OnDelete    = param.OnDelete,
-            _fallback   = hasFallback ? fallback : default,
-            _hasFallback = hasFallback,
-        };
-
-    // A static [Default] applied when the reference resolves to null (an absent slot is
-    // handled by the getter binding the literal directly). One field, set at construction.
-    private T? _fallback;
-    private bool _hasFallback;
 
     /// <summary>Typed <see cref="@this.Value(object?)"/> — resolved value, or
     /// <paramref name="fallback"/> when null (absent or present-null).</summary>

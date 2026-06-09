@@ -19,6 +19,14 @@ public abstract record @this(string Name, string TypeName)
     /// <summary>Emits one block for __SnapshotParams covering this property's snapshot entry.</summary>
     public abstract void EmitSnapshotEntry(StringBuilder sb);
 
+    /// <summary>
+    /// Emits this property's block inside the generated <c>__ResolveParameters()</c> —
+    /// dispatch-time resolution: the .pr parameter's <c>%var%</c>/literal form resolves
+    /// (async) into the backing field before <c>Run()</c>, so the property getter is a
+    /// plain backing read. Default: nothing ([Code] resolves in ExecuteAsync's own block).
+    /// </summary>
+    public virtual void EmitDispatchResolve(StringBuilder sb) { }
+
     /// <summary>Lowercased parameter name used in .pr lookups.</summary>
     protected string ParamName => Name.ToLowerInvariant();
     /// <summary>Internal backing field name.</summary>

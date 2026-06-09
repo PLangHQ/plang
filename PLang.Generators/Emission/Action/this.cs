@@ -254,6 +254,7 @@ public static class @this
         }
 
         sb.Append("""
+                    await __ResolveParameters();
                     if (__resolutionError != null) return __PrefixActionContext(__resolutionError);
 
                     global::app.data.@this __runResult;
@@ -272,10 +273,6 @@ public static class @this
                             __step!, __callFrames, ex.GetType().Name, 500)
                         { Exception = ex });
                     }
-                    // Data<T> getters fire DURING Run() — they capture cycle/depth-trip into
-                    // __resolutionError as the property is touched. Surface it now so a Run()
-                    // that read .Value of a FromError-Data and produced a default-shaped result
-                    // doesn't bury the resolution failure.
                     if (__resolutionError != null) return __PrefixActionContext(__resolutionError);
                     return __runResult;
                 }
@@ -293,6 +290,33 @@ public static class @this
                 }
 
             """);
+
+        EmitResolveParameters(sb, info);
+    }
+
+    /// <summary>
+    /// Dispatch-time parameter resolution: each Data parameter's %var%/literal form
+    /// decodes (async, in this execution's context) into its backing field before
+    /// Run()/Build() touches the property — the handler instance is the per-execution
+    /// home, so the shared .pr parameter is never written to. Getters become plain
+    /// backing reads; an unused param costs one cheap decode, never a content load
+    /// (content I/O lives in the value's own door).
+    /// </summary>
+    private static void EmitResolveParameters(StringBuilder sb, ActionClassInfo info)
+    {
+        sb.Append("""
+                private async System.Threading.Tasks.ValueTask __ResolveParameters()
+                {
+
+            """);
+        foreach (var prop in info.Properties)
+            prop.EmitDispatchResolve(sb);
+        // No Data params: keep the await contract trivially satisfied.
+        sb.Append("""
+                    await System.Threading.Tasks.Task.CompletedTask;
+                }
+
+            """);
     }
 
     /// <summary>
@@ -306,7 +330,7 @@ public static class @this
     private static void EmitSetAction(StringBuilder sb, ActionClassInfo info)
     {
         sb.Append("""
-                public void SetAction(
+                public async System.Threading.Tasks.ValueTask SetAction(
                     global::app.goal.steps.step.actions.action.@this action,
                     global::app.actor.context.@this context)
                 {
@@ -338,6 +362,7 @@ public static class @this
         if (info.ImplementsIStep) sb.AppendLine("        Step = action?.Step!;");
 
         sb.Append("""
+                    await __ResolveParameters();
                 }
 
             """);
