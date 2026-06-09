@@ -28,8 +28,12 @@ public partial class Read : IContext
     // config.json` untouched stays the raw json string; navigating it parses.
     public async Task<data.@this> Run()
     {
+        // Resolve the path door first; the guard reads .Success AFTER the await —
+        // resolution errors (bad scheme, unset %var%) only surface once the door
+        // has run, so a pre-await guard would inspect an unresolved Data.
+        var path = await Path.Value();
         if (!Path.Success) return Path;   // typed scheme error, not an NRE
-        var channel = new global::app.channel.type.file.@this(Path.Value!);
+        var channel = new global::app.channel.type.file.@this(path!);
         var read = await channel.Read();
         if (!read.Success || read.Type?.ClrType.Exit() == true) return read;
 
@@ -39,11 +43,11 @@ public partial class Read : IContext
         // here from the raw bytes (no decode); every other type stays lazy.
         if (read.Type?.Name == "image" && read.Raw is byte[] imageBytes)
             return new data.@this(read.Name,
-                new global::app.type.image.@this(imageBytes, Path.Value!), read.Type);
+                new global::app.type.image.@this(imageBytes, path!), read.Type);
 
         // ResolveVariables is an explicit opt-in that needs the text in hand, so
         // it forces materialization and resolves %var% — the only non-lazy path.
-        if (ResolveVariables.Value && read.Value is string content)
+        if ((await ResolveVariables.Value())?.Value == true && await read.Value() is string content)
         {
             var resolved = Context.Variable.Resolve(content, skipInfrastructure: true);
             return new data.@this(read.Name, resolved, read.Type);
@@ -67,7 +71,7 @@ public partial class Read : IContext
             string.Equals(p.Name, "Path", System.StringComparison.OrdinalIgnoreCase))?.GetValue<string>();
         if (string.IsNullOrEmpty(raw) || raw.Contains('%')) return data.@this.Ok();
 
-        var p = Path.Value;
+        var p = await Path.Value();
         if (p == null || string.IsNullOrEmpty(p.Extension)) return data.@this.Ok();
         if (p.MimeType == "application/octet-stream") return data.@this.Ok();
 
@@ -85,7 +89,7 @@ public partial class Read : IContext
         try
         {
             var exists = await p.ExistsAsync();
-            if (exists.Success && exists.Value == false)
+            if (exists.Success && (await exists.Value())?.Value == false)
             {
                 var warning = new global::app.module.builder.warning.@this(
                     this, $"file.read: literal path '{raw}' does not exist on disk");
