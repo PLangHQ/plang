@@ -29,7 +29,6 @@ namespace app.type.text;
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : global::app.type.item.@this,
-    global::app.data.IEquatableValue, global::app.data.IOrderableValue,
     System.IEquatable<@this>
 {
     public static string Example => "readme.md";
@@ -127,8 +126,18 @@ public sealed partial class @this : global::app.type.item.@this,
     /// </summary>
     public static global::app.data.Comparison Compare(object? a, object? b)
     {
-        var sa = a is @this ta ? ta.Value : a as string;
-        var sb = b is @this tb ? tb.Value : b as string;
+        // Text coerces the other side into its kind: the wrapper's content, a raw
+        // string, or an enum's NAME (`where Status equals 'Timeout'` — a raw enum's
+        // text form is its name).
+        static string? Coerce(object? v) => v switch
+        {
+            @this t => t.Value,
+            string s => s,
+            System.Enum e => e.ToString(),
+            _ => null,
+        };
+        var sa = Coerce(a);
+        var sb = Coerce(b);
         if (sa == null || sb == null) return global::app.data.Comparison.Incomparable;
         var c = string.Compare(sa, sb, System.StringComparison.OrdinalIgnoreCase);
         return c < 0 ? global::app.data.Comparison.Less
@@ -143,14 +152,6 @@ public sealed partial class @this : global::app.type.item.@this,
         @this t => string.Equals(Value, t.Value, System.StringComparison.OrdinalIgnoreCase),
         string s => string.Equals(Value, s, System.StringComparison.OrdinalIgnoreCase),
         _ => false,
-    };
-
-    public int Order(object? other) => other switch
-    {
-        @this t => string.Compare(Value, t.Value, System.StringComparison.OrdinalIgnoreCase),
-        string s => string.Compare(Value, s, System.StringComparison.OrdinalIgnoreCase),
-        _ => throw new global::app.data.Compare.NotOrderableException(
-            $"cannot order text against {other?.GetType().Name ?? "null"}"),
     };
 
     public bool Equals(@this? other) =>

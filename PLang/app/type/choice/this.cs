@@ -30,7 +30,7 @@ public interface IChoice
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(JsonFactory))]
 public sealed class @this<T> : global::app.type.item.@this,
-    global::app.data.IEquatableValue, IChoice
+    IChoice
     where T : notnull
 {
     public T Value { get; }

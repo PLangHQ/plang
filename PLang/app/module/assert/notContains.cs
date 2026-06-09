@@ -13,6 +13,6 @@ public partial class NotContains : IContext
     [Code]
     public partial IAssert Assert { get; }
 
-    public Task<data.@this<global::app.type.@bool.@this>> Run() =>
-        Task.FromResult(AssertSnapshot.WithVariables(Assert.NotContains(this), Context));
+    public async Task<data.@this<global::app.type.@bool.@this>> Run() =>
+        AssertSnapshot.WithVariables(await Assert.NotContains(this), Context);
 }

@@ -18,21 +18,20 @@ public sealed class Operator
     private static readonly Dictionary<string, Func<data.@this?, data.@this?, Task<bool>>> Registry =
         new(StringComparer.OrdinalIgnoreCase)
         {
+            // Equality + ordering route through THE comparison entry (data.Compare —
+            // rank picks the driver, the driver's typed hook compares) and this boundary
+            // maps the sign-free Comparison per operator. The value never throws; the
+            // boundary turns NotEqual-on-ordering and Incomparable into EvaluationError.
             ["=="] = Equal,
             ["!="] = async (l, r) => !await Equal(l, r),
-            // Ordering routes through the one typed-compare path (app.data.Compare) so
-            // `if a > b` and `sort by …` can never drift. It throws for equality-only
-            // types and genuinely-different value types — surfaced as the step error.
-            // A null operand is incomparable on the if-path (returns false), distinct
-            // from sort's nulls-last — sort calls Order directly.
-            [">"] = (l, r) => Task.FromResult(BothPresent(l, r) && global::app.data.Compare.Order(l, r) > 0),
-            ["<"] = (l, r) => Task.FromResult(BothPresent(l, r) && global::app.data.Compare.Order(l, r) < 0),
-            [">="] = (l, r) => Task.FromResult(BothPresent(l, r) && global::app.data.Compare.Order(l, r) >= 0),
-            ["<="] = (l, r) => Task.FromResult(BothPresent(l, r) && global::app.data.Compare.Order(l, r) <= 0),
-            ["contains"] = (l, r) => Task.FromResult(Contains(Val(l), Val(r))),
+            [">"] = (l, r) => Ordered(l, r, ">", c => c == global::app.data.Comparison.Greater),
+            ["<"] = (l, r) => Ordered(l, r, "<", c => c == global::app.data.Comparison.Less),
+            [">="] = (l, r) => Ordered(l, r, ">=", c => c is global::app.data.Comparison.Greater or global::app.data.Comparison.Equal),
+            ["<="] = (l, r) => Ordered(l, r, "<=", c => c is global::app.data.Comparison.Less or global::app.data.Comparison.Equal),
+            ["contains"] = Contains,
             ["startswith"] = (l, r) => Task.FromResult(StringOp(Val(l), Val(r), (s, v) => s.StartsWith(v, StringComparison.OrdinalIgnoreCase))),
             ["endswith"] = (l, r) => Task.FromResult(StringOp(Val(l), Val(r), (s, v) => s.EndsWith(v, StringComparison.OrdinalIgnoreCase))),
-            ["in"] = (l, r) => Task.FromResult(In(Val(l), Val(r))),
+            ["in"] = (l, r) => Contains(r, l),
             ["isempty"] = (l, _) => Task.FromResult(IsEmpty(Val(l))),
             // `%x% is dict` / `is number` / `is item` — IS-A query against the
             // value-type lattice. The right operand is the PLang type name. `item`
@@ -41,6 +40,20 @@ public sealed class Operator
             ["and"] = async (l, r) => await IsTruthy(l) && await IsTruthy(r),
             ["or"] = async (l, r) => await IsTruthy(l) || await IsTruthy(r),
         };
+
+    // Ordering boundary: Less/Equal/Greater answer by operator; NotEqual and
+    // Incomparable have no honest order — error, never a silent false.
+    private static async Task<bool> Ordered(data.@this? l, data.@this? r, string op,
+        Func<global::app.data.Comparison, bool> map)
+    {
+        if (l == null || r == null)
+            throw new global::app.data.IncomparableException($"cannot order a missing operand with '{op}'");
+        var c = await l.Compare(r);
+        if (c is global::app.data.Comparison.NotEqual or global::app.data.Comparison.Incomparable)
+            throw new global::app.data.IncomparableException(
+                $"cannot order '{l.Type.Name}' and '{r.Type.Name}' values with '{op}'");
+        return map(c);
+    }
 
     [app.Attributes.Choices]
     public static string[] Choices(actor.context.@this? context) => [.. Registry.Keys];
@@ -100,42 +113,47 @@ public sealed class Operator
             return rb ? leftTruthy : !leftTruthy;
         }
 
-        // == true/false with bool left: structural equality via the one compare path
-        // (so equivalent dicts/lists compare equal, matching group/unique).
-        return global::app.data.Compare.AreEqual(left, right);
+        if (left == null || right == null) return left == null && right == null;
+
+        // THE comparison entry; the equality boundary: Equal → true, Less/Greater/
+        // NotEqual → false, Incomparable → error (dict == number has no honest answer).
+        var c = await left.Compare(right);
+        if (c == global::app.data.Comparison.Incomparable)
+            throw new global::app.data.IncomparableException(
+                $"'{left.Type.Name}' and '{right.Type.Name}' values cannot be compared with '=='");
+        return c == global::app.data.Comparison.Equal;
     }
 
     // --- Collection/String operators ---
 
-    private static bool Contains(object? left, object? right)
+    // Membership: a substring test for text-in-text, element membership otherwise.
+    // Matches ONLY on Equal and never errors — NotEqual/Incomparable mean "not this
+    // one" (the table's membership column), so a mixed list never blows a `contains`.
+    private static async Task<bool> Contains(data.@this? left, data.@this? right)
     {
-        // Born-native: a text value rides as text.@this — unwrap to string so the
-        // substring arm fires (the wrapper isn't a CLR string).
-        if (left is global::app.type.text.@this lt) left = lt.Value;
-        if (right is global::app.type.text.@this rt) right = rt.Value;
-        return left switch
+        var lv = left?.Materialize();
+        var rv = right?.Materialize();
+        if (lv is global::app.type.text.@this lt && rv is global::app.type.text.@this rt)
+            return lt.Value.Contains(rt.Value, StringComparison.OrdinalIgnoreCase);
+        if (lv is string ls && rv is string rs)
+            return ls.Contains(rs, StringComparison.OrdinalIgnoreCase);
+        if (left == null || right == null) return false;
+
+        if (lv is app.type.list.@this list)
         {
-            string s when right is string sub => s.Contains(sub, StringComparison.OrdinalIgnoreCase),
-            app.type.list.@this list => ContainsValue(list, right),
-            IEnumerable coll when left is not string => ContainsElement(coll, right),
-            _ => false
-        };
-    }
-
-    // Membership routes through the one compare path (Compare.AreEqualValues) so
-    // `%list% contains %x%` agrees with `%elem% == %x%` — structural for dict/list,
-    // case-insensitive for text. A native list holds Data; raw IEnumerable holds values.
-    private static bool ContainsValue(app.type.list.@this list, object? target)
-    {
-        foreach (var item in list.Items)
-            if (global::app.data.Compare.AreEqualValues(item.Peek(), target)) return true;
-        return false;
-    }
-
-    private static bool ContainsElement(IEnumerable coll, object? target)
-    {
-        foreach (var item in coll)
-            if (global::app.data.Compare.AreEqualValues(item, target)) return true;
+            foreach (var item in list.Items)
+                if (await item.Compare(right) == global::app.data.Comparison.Equal) return true;
+            return false;
+        }
+        if (lv is IEnumerable coll and not string)
+        {
+            foreach (var item in coll)
+            {
+                var element = item as data.@this ?? new data.@this("", item);
+                if (await element.Compare(right) == global::app.data.Comparison.Equal) return true;
+            }
+            return false;
+        }
         return false;
     }
 
@@ -145,15 +163,6 @@ public sealed class Operator
         var rs = right?.ToString();
         if (ls == null || rs == null) return false;
         return op(ls, rs);
-    }
-
-    private static bool In(object? left, object? right)
-    {
-        if (right is app.type.list.@this list)
-            return ContainsValue(list, left);
-        if (right is IEnumerable enumerable and not string)
-            return ContainsElement(enumerable, left);
-        return false;
     }
 
     private static bool IsEmpty(object? value)
@@ -168,71 +177,4 @@ public sealed class Operator
         return false;
     }
 
-    // --- Type normalization ---
-
-    // The one binary-coercion mediator. Post-born-native it inspects WRAPPER types
-    // (text/number, and raw Enum which is not a value wrapper) — the one blessed
-    // cross-type reconciliation site. Numeric widening (5L == 5.0 == 5m) is NOT here:
-    // both sides are number.@this and number's own tower (CompareTo) widens. This only
-    // bridges the genuinely-different types: text↔number ("5" == 5) and enum↔text.
-    public static (object? left, object? right) NormalizeTypes(object? left, object? right)
-    {
-        if (left == null || right == null) return (left, right);
-
-        // text <-> number: parse the text so "5" == 5 and "5" < 6 coerce through the
-        // number tower. Inspects the value's PLang shape (text/number) but tolerates a
-        // raw string/CLR-numeric that slips through a perimeter.
-        if (IsTextLike(left, out var lts) && IsNumberLike(right))
-        {
-            var n = TryNumber(lts);
-            if (n != null) return (n, right);
-        }
-        if (IsTextLike(right, out var rts) && IsNumberLike(left))
-        {
-            var n = TryNumber(rts);
-            if (n != null) return (left, n);
-        }
-
-        // enum <-> text: an enum field compares by its name against a text literal
-        // (`where Status equals 'Timeout'`). Enums aren't value wrappers (they arrive
-        // raw); coerce both sides to their string form.
-        if (left is Enum le && IsTextLike(right, out var res)) return (le.ToString(), res);
-        if (right is Enum re && IsTextLike(left, out var les)) return (les, re.ToString());
-
-        // typed-scalar <-> text: a value that can be born from text (date/time/datetime/
-        // duration) parses the text operand into its own type, so `%date% == "2026-01-01"`
-        // coerces its ISO form the way "5" == 5 does. The type owns the parse (ITextCoercible);
-        // the mediator only delegates. A null parse leaves the pair unreconciled (compare false).
-        if (left is global::app.data.ITextCoercible lc && IsTextLike(right, out var rcs)
-            && lc.CoerceText(rcs) is { } lcoerced) return (left, lcoerced);
-        if (right is global::app.data.ITextCoercible rc && IsTextLike(left, out var lcs)
-            && rc.CoerceText(lcs) is { } rcoerced) return (rcoerced, right);
-
-        return (left, right);
-    }
-
-    // A value that carries text content — the text wrapper or (perimeter) a raw string.
-    private static bool IsTextLike(object? v, out string s)
-    {
-        switch (v)
-        {
-            case global::app.type.text.@this t: s = t.Value; return true;
-            case string str: s = str; return true;
-            default: s = ""; return false;
-        }
-    }
-
-    // A value that carries a number — the number wrapper or (perimeter) a raw CLR numeric.
-    private static bool IsNumberLike(object? v) =>
-        v is global::app.type.number.@this
-        || v is int or long or short or byte or float or double or decimal;
-
-    private static global::app.type.number.@this? TryNumber(string s)
-    {
-        if (long.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var l))
-            return global::app.type.number.@this.From(l);
-        if (double.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var d))
-            return global::app.type.number.@this.From(d);
-        return null;
-    }
 }

@@ -34,9 +34,9 @@ public partial class Sort : IContext
             if (!string.IsNullOrEmpty(by))
                 await nl.SortByField(by, descending);
             else
-                nl.SortByValue(descending);
+                await nl.SortByValue(descending);
         }
-        catch (global::app.data.Compare.NotOrderableException ex)
+        catch (global::app.data.IncomparableException ex)
         {
             return global::app.data.@this<type.list>.FromError(
                 new app.error.ValidationError(ex.Message));

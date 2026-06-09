@@ -22,8 +22,7 @@ namespace app.type.dict;
 // json.Writer's dict arm (an object `{}`), never STJ — so the "domain types ride
 // the wire as property bags" rule is intact; this is the value's JSON view.
 [System.Text.Json.Serialization.JsonConverter(typeof(Json))]
-public sealed partial class @this : global::app.type.item.@this, module.IContext,
-    global::app.data.IEquatableValue
+public sealed partial class @this : global::app.type.item.@this, module.IContext
 {
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
     public static string Example => "{\"name\":\"a\"}";
@@ -158,10 +157,10 @@ public sealed partial class @this : global::app.type.item.@this, module.IContext
     }
 
     /// <summary>
-    /// IEquatableValue: structural, key-based — two dicts are equal when they have
-    /// the same keys mapping to equal values (order-insensitive). Each child routes
-    /// back through the mediator so a nested number widens / nested text is
-    /// case-insensitive. Dict is equality-only — it does not implement IOrderableValue.
+    /// Structural, key-based equality — two dicts are equal when they have the same
+    /// keys mapping to equal values (order-insensitive). Each child routes through
+    /// its own comparison (the recursion contract), so a nested number widens and
+    /// nested text compares case-insensitive. Dict is equality-only — no order.
     /// </summary>
     public bool AreEqual(object? other)
     {
@@ -169,7 +168,8 @@ public sealed partial class @this : global::app.type.item.@this, module.IContext
         foreach (var entry in _entries)
         {
             var match = od.Get(entry.Name);
-            if (match == null || !global::app.data.Compare.AreEqualValues(entry.Peek(), match.Peek()))
+            if (match == null || entry.CompareValues(match, entry.Peek(), match.Peek())
+                != global::app.data.Comparison.Equal)
                 return false;
         }
         return true;

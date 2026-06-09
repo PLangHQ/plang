@@ -8,7 +8,6 @@ namespace app.type.time;
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : global::app.type.item.@this,
-    global::app.data.IEquatableValue, global::app.data.IOrderableValue,
     System.IEquatable<@this>
 {
     public static string Example => "10:30:00";
@@ -56,14 +55,6 @@ public sealed partial class @this : global::app.type.item.@this,
         @this t => Value == t.Value,
         System.TimeOnly t => Value == t,
         _ => false,
-    };
-
-    public int Order(object? other) => other switch
-    {
-        @this t => Value.CompareTo(t.Value),
-        System.TimeOnly t => Value.CompareTo(t),
-        _ => throw new global::app.data.Compare.NotOrderableException(
-            $"cannot order time against {other?.GetType().Name ?? "null"}"),
     };
 
     public bool Equals(@this? other) => other is not null && Value == other.Value;

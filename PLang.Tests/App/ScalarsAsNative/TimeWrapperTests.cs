@@ -1,6 +1,8 @@
 using TimeT = global::app.type.time.@this;
 using DateTimeT = global::app.type.datetime.@this;
 
+using PLang.Tests.App.Fixtures;
+
 namespace PLang.Tests.App.ScalarsAsNative;
 
 // time.@this is its own type, backed by TimeOnly. Today ScalarComparer has no
@@ -27,9 +29,9 @@ public class TimeWrapperTests
         var morning = new TimeT(new System.TimeOnly(9, 0));
         var afternoon = new TimeT(new System.TimeOnly(14, 30));
         var night = new TimeT(new System.TimeOnly(23, 59));
-        await Assert.That(morning.Order(afternoon)).IsLessThan(0);
-        await Assert.That(afternoon.Order(night)).IsLessThan(0);
-        await Assert.That(morning.Order(new TimeT(new System.TimeOnly(9, 0)))).IsEqualTo(0);
+        await Assert.That(CompareTestOps.Ord(morning, afternoon)).IsLessThan(0);
+        await Assert.That(CompareTestOps.Ord(afternoon, night)).IsLessThan(0);
+        await Assert.That(CompareTestOps.Ord(morning, new TimeT(new System.TimeOnly(9, 0)))).IsEqualTo(0);
     }
 
     [Test]

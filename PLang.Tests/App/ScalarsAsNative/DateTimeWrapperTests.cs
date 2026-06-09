@@ -1,6 +1,8 @@
 using DateTimeT = global::app.type.datetime.@this;
 using Item = global::app.type.item.@this;
 
+using PLang.Tests.App.Fixtures;
+
 namespace PLang.Tests.App.ScalarsAsNative;
 
 // datetime.@this is backed by DateTimeOffset, also accepts CLR DateTime on construction.
@@ -21,8 +23,8 @@ public class DateTimeWrapperTests
     {
         var earlier = new DateTimeT(System.DateTimeOffset.Parse("2024-01-01T00:00:00Z"));
         var later = new DateTimeT(System.DateTimeOffset.Parse("2024-06-01T00:00:00Z"));
-        await Assert.That(global::app.data.Compare.Order(new Data("", earlier), new Data("", later))).IsLessThan(0);
-        await Assert.That(earlier.Order(later)).IsLessThan(0);
+        await Assert.That(CompareTestOps.OrdD(new Data("", earlier), new Data("", later))).IsLessThan(0);
+        await Assert.That(CompareTestOps.Ord(earlier, later)).IsLessThan(0);
     }
 
     [Test]

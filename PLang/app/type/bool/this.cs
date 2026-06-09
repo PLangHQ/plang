@@ -13,7 +13,7 @@ namespace app.type.@bool;
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : global::app.type.item.@this,
-    global::app.data.IEquatableValue, System.IEquatable<@this>
+    System.IEquatable<@this>
 {
     public static string Example => "true";
     public static string Shape => "bool";

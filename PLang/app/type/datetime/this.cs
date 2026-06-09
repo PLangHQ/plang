@@ -12,7 +12,6 @@ namespace app.type.datetime;
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : global::app.type.item.@this,
-    global::app.data.IEquatableValue, global::app.data.IOrderableValue,
     System.IEquatable<@this>
 {
     public static string Example => "2024-03-15T10:30:00+00:00";
@@ -68,15 +67,6 @@ public sealed partial class @this : global::app.type.item.@this,
         System.DateTimeOffset dto => Value.ToUniversalTime() == dto.ToUniversalTime(),
         System.DateTime dt => Value.ToUniversalTime() == new System.DateTimeOffset(dt).ToUniversalTime(),
         _ => false,
-    };
-
-    public int Order(object? other) => other switch
-    {
-        @this d => Value.CompareTo(d.Value),
-        System.DateTimeOffset dto => Value.CompareTo(dto),
-        System.DateTime dt => Value.CompareTo(new System.DateTimeOffset(dt)),
-        _ => throw new global::app.data.Compare.NotOrderableException(
-            $"cannot order datetime against {other?.GetType().Name ?? "null"}"),
     };
 
     public bool Equals(@this? other) => other is not null && AreEqual(other);

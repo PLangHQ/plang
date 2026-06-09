@@ -12,28 +12,36 @@ public class Default : IAssert
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
-    // Compares the SCALAR form (access-driven resolution): `assert %x% equals …`
-    // is scalar access, so a raw-backed value compares as its raw source form
-    // (e.g. config.json untouched is the raw json string), not its materialized
-    // shape. For authored/navigated values Peek() == Value, so this is a
-    // no-op for everything except untouched raw-backed reads.
-    public data.@this<global::app.type.@bool.@this> Equals(Equals action)
+    public async Task<data.@this<global::app.type.@bool.@this>> Equals(Equals action)
     {
-        if (AreEqual(action.Expected?.Peek(), action.Actual?.Peek()))
+        if (await IsEqual(action.Expected, action.Actual))
             return app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
-        // Error display keeps .Value (the masked/rendered path); only the
-        // comparison uses the scalar form.
+        // Error display keeps the materialised form (the masked/rendered path);
+        // only the comparison uses the scalar form.
         return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(action.Expected?.Materialize(), action.Actual?.Materialize(), action.Message?.Materialize()?.ToString()));
     }
 
-    public data.@this<global::app.type.@bool.@this> NotEquals(NotEquals action)
+    public async Task<data.@this<global::app.type.@bool.@this>> NotEquals(NotEquals action)
     {
-        if (!AreEqual(action.Expected?.Peek(), action.Actual?.Peek()))
+        if (!await IsEqual(action.Expected, action.Actual))
             return app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
         return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(action.Expected?.Materialize(), action.Actual?.Materialize(),
             action.Message?.Materialize()?.ToString() ?? "Values should not be equal"));
+    }
+
+    // Equality through THE comparison entry (data.Compare). One carve-out: an
+    // untouched raw-backed operand compares as its SCALAR form (`assert %cfg% equals
+    // "{json}"` against the verbatim source text) — data.Compare would force the
+    // parse, so the raw rung compares textually instead, preserving lazy reads.
+    private static async Task<bool> IsEqual(data.@this? expected, data.@this? actual)
+    {
+        if (expected == null || actual == null)
+            return AreEqual(expected?.Peek(), actual?.Peek());
+        if (expected.RawUntouched || actual.RawUntouched)
+            return AreEqual(expected.Peek(), actual.Peek());
+        return await expected.Compare(actual) == global::app.data.Comparison.Equal;
     }
 
     public async Task<data.@this<global::app.type.@bool.@this>> IsTrue(IsTrue action)
@@ -72,7 +80,7 @@ public class Default : IAssert
             action.Message?.Materialize()?.ToString() ?? "Expected non-null value"));
     }
 
-    public data.@this<global::app.type.@bool.@this> Contains(Contains action)
+    public async Task<data.@this<global::app.type.@bool.@this>> Contains(Contains action)
     {
         var v = action.Value?.Materialize();
         var c = action.Container?.Materialize();
@@ -82,7 +90,7 @@ public class Default : IAssert
         // LLM sometimes flips them. Tolerate both orderings — pass if either
         // side contains the other. Both sides must be non-null to avoid
         // string.Contains("") trivially passing on every haystack.
-        if (v != null && c != null && (ContainsValue(v, c) || ContainsValue(c, v)))
+        if (v != null && c != null && (await ContainsValue(v, c) || await ContainsValue(c, v)))
             return app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
         return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(
@@ -90,7 +98,7 @@ public class Default : IAssert
             action.Message?.Materialize()?.ToString() ?? "Container does not contain value"));
     }
 
-    public data.@this<global::app.type.@bool.@this> NotContains(NotContains action)
+    public async Task<data.@this<global::app.type.@bool.@this>> NotContains(NotContains action)
     {
         var v = action.Value?.Materialize();
         var c = action.Container?.Materialize();
@@ -99,7 +107,7 @@ public class Default : IAssert
         // the other (otherwise the builder LLM's Value/Container flip would
         // make this assertion silently pass). If either side is null we
         // can't claim containment, so assertion passes vacuously.
-        if (v == null || c == null || (!ContainsValue(v, c) && !ContainsValue(c, v)))
+        if (v == null || c == null || (!await ContainsValue(v, c) && !await ContainsValue(c, v)))
             return app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
         return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(
@@ -107,9 +115,9 @@ public class Default : IAssert
             action.Message?.Materialize()?.ToString() ?? "Container contains value but should not"));
     }
 
-    public data.@this<global::app.type.@bool.@this> GreaterThan(GreaterThan action)
+    public async Task<data.@this<global::app.type.@bool.@this>> GreaterThan(GreaterThan action)
     {
-        if (Compare(action.A?.Materialize(), action.B?.Materialize()) > 0)
+        if (await Ordered(action.A, action.B) == global::app.data.Comparison.Greater)
             return app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
         return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(
@@ -117,14 +125,22 @@ public class Default : IAssert
             action.Message?.Materialize()?.ToString() ?? $"Expected {FormatValue(action.A?.Materialize())} > {FormatValue(action.B?.Materialize())}"));
     }
 
-    public data.@this<global::app.type.@bool.@this> LessThan(LessThan action)
+    public async Task<data.@this<global::app.type.@bool.@this>> LessThan(LessThan action)
     {
-        if (Compare(action.A?.Materialize(), action.B?.Materialize()) < 0)
+        if (await Ordered(action.A, action.B) == global::app.data.Comparison.Less)
             return app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
         return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(
             $"< {FormatValue(action.B?.Materialize())}", action.A?.Materialize(),
             action.Message?.Materialize()?.ToString() ?? $"Expected {FormatValue(action.A?.Materialize())} < {FormatValue(action.B?.Materialize())}"));
+    }
+
+    // Ordering through THE comparison entry. A missing operand never orders
+    // (NotEqual — the assert fails with its own message rather than throwing).
+    private static async Task<global::app.data.Comparison> Ordered(data.@this? a, data.@this? b)
+    {
+        if (a == null || b == null) return global::app.data.Comparison.NotEqual;
+        return await a.Compare(b);
     }
 
     // --- Comparison helpers ---
@@ -170,29 +186,36 @@ public class Default : IAssert
         return true;
     }
 
-    private static bool ContainsValue(object? container, object? value)
+    // Membership through THE comparison entry: matches only on Equal and never
+    // errors — NotEqual/Incomparable mean "not this one", so a mixed container
+    // can't blow an assert contains.
+    private static async Task<bool> ContainsValue(object? container, object? value)
     {
         if (container == null) return false;
         // Born-native: a text container/value rides as text.@this — unwrap so the
         // substring check fires (the wrapper isn't a CLR string). Native dict/list
         // stay as-is (handled by the IEnumerable arm / their own structure).
         if (container is global::app.type.text.@this ct) container = ct.Value;
-        if (value is global::app.type.text.@this vt) value = vt.Value;
+        var substringNeedle = value is global::app.type.text.@this vt ? vt.Value : value?.ToString();
 
         if (container is string str)
-            return str.Contains(value?.ToString() ?? "", StringComparison.OrdinalIgnoreCase);
+            return str.Contains(substringNeedle ?? "", StringComparison.OrdinalIgnoreCase);
 
+        var target = value as data.@this ?? new data.@this("", value);
         if (container is app.type.list.@this nl)
         {
             foreach (var item in nl.Items)
-                if (AreEqual(item.Peek(), value)) return true;
+                if (await item.Compare(target) == global::app.data.Comparison.Equal) return true;
             return false;
         }
 
         if (container is IEnumerable enumerable)
         {
             foreach (var item in enumerable)
-                if (AreEqual(item, value)) return true;
+            {
+                var element = item as data.@this ?? new data.@this("", item);
+                if (await element.Compare(target) == global::app.data.Comparison.Equal) return true;
+            }
             return false;
         }
 

@@ -186,10 +186,9 @@ public sealed class @this
     public @this Rank(global::app.data.@this other)
     {
         var otherType = other.Type;
-        var registry = Context?.App.Type ?? otherType.Context?.App.Type;
-        if (registry == null) return this;
-        var mine = registry.Compares.RankOf(registry[Name]?.ClrType);
-        var theirs = registry.Compares.RankOf(registry[otherType.Name]?.ClrType);
+        var compares = Context?.App.Type.Compares ?? otherType.Context?.App.Type.Compares ?? new compare.@this();
+        var mine = compares.RankOf(FamilyForCompare(this, other: null));
+        var theirs = compares.RankOf(FamilyForCompare(otherType, other));
         return theirs > mine ? otherType : this;
     }
 
@@ -202,10 +201,39 @@ public sealed class @this
     /// </summary>
     public global::app.data.Comparison Compare(object? a, object? b)
     {
-        var registry = Context?.App.Type;
-        if (registry == null) return global::app.data.Comparison.Incomparable;
-        return registry.Compares.Of(registry[Name]?.ClrType, a, b)
-            ?? global::app.data.Comparison.Incomparable;
+        var compares = Context?.App.Type.Compares ?? new compare.@this();
+        // Name-keyed family first; an unknown name (a choice surfaces under its
+        // enum's name, a perimeter raw scalar under a CLR-ish name) falls back to
+        // the VALUE's owner — the closed generic carrying the hooks, or the family
+        // that declares the raw CLR type (ushort → number) via convert's ownership.
+        var family = compare.@this.FamilyOf(Name)
+            ?? FamilyOfValue(a) ?? FamilyOfValue(b);
+        return compares.Of(family, a, b) ?? global::app.data.Comparison.Incomparable;
+
+        static System.Type? FamilyOfValue(object? v)
+        {
+            if (v == null) return null;
+            var t = v.GetType();
+            if (HasHook(t)) return t;
+            var (owner, _) = convert.@this.OwnerOf(t);
+            return owner != null && HasHook(owner) ? owner : null;
+        }
+
+        static bool HasHook(System.Type t) => t.GetMethod("Compare",
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
+            | System.Reflection.BindingFlags.FlattenHierarchy,
+            null, new[] { typeof(object), typeof(object) }, null) != null;
+    }
+
+    // The family class driving rank/compare for a type entity. Name-keyed via the
+    // static map; a name the map doesn't know (a choice surfaces under its enum's
+    // name) falls back to the in-memory value's own class — closed generics carry
+    // the static hooks, and Peek forces nothing.
+    private static System.Type? FamilyForCompare(@this entity, global::app.data.@this? other)
+    {
+        var family = compare.@this.FamilyOf(entity.Name);
+        if (family != null) return family;
+        return other?.Peek()?.GetType();
     }
 
     /// <summary>

@@ -1,5 +1,7 @@
 using NullV = global::app.type.@null.@this;
 
+using PLang.Tests.App.Fixtures;
+
 namespace PLang.Tests.App.ScalarsAsNative;
 
 // null.@this — singleton wrapper for the null *value* (not the absence of a Data).
@@ -51,9 +53,9 @@ public class NullWrapperTests
         // a C# null and sorts it last (the policy lives on Compare, not the wrapper).
         var present = new Data("", global::app.type.number.@this.From(5L));
         var nul = Data.Null();
-        await Assert.That(global::app.data.Compare.Order(present, nul)).IsLessThan(0);
-        await Assert.That(global::app.data.Compare.Order(nul, present)).IsGreaterThan(0);
-        await Assert.That(global::app.data.Compare.Order(nul, Data.Null())).IsEqualTo(0);
+        await Assert.That(CompareTestOps.OrdD(present, nul)).IsLessThan(0);
+        await Assert.That(CompareTestOps.OrdD(nul, present)).IsGreaterThan(0);
+        await Assert.That(CompareTestOps.OrdD(nul, Data.Null())).IsEqualTo(0);
     }
 
     [Test]

@@ -11,11 +11,12 @@ public partial class Contains : IContext
     public async Task<data.@this<global::app.type.@bool.@this>> Run()
     {
         var data = await Context.Variable.Get(await ListName.Value());
-        var target = await Value.Value();
 
+        // Membership through THE comparison entry: matches only on Equal, never
+        // errors — a mixed list treats NotEqual/Incomparable as "not this one".
         foreach (var (_, item) in data.EnumerateItems())
         {
-            if (global::app.data.Compare.AreEqualValues(await item.Value(), target))
+            if (await item.Compare(Value) == global::app.data.Comparison.Equal)
                 return global::app.data.@this<global::app.type.@bool.@this>.Ok(true);
         }
 

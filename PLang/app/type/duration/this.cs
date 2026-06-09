@@ -17,7 +17,6 @@ namespace app.type.duration;
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public sealed partial class @this : global::app.type.item.@this,
-    global::app.data.IEquatableValue, global::app.data.IOrderableValue,
     System.IEquatable<@this>
 {
     public static string Example => "PT5M";
@@ -85,14 +84,6 @@ public sealed partial class @this : global::app.type.item.@this,
         @this d => Value == d.Value,
         System.TimeSpan ts => Value == ts,
         _ => false,
-    };
-
-    public int Order(object? other) => other switch
-    {
-        @this d => Value.CompareTo(d.Value),
-        System.TimeSpan ts => Value.CompareTo(ts),
-        _ => throw new global::app.data.Compare.NotOrderableException(
-            $"cannot order duration against {other?.GetType().Name ?? "null"}"),
     };
 
     public bool Equals(@this? other) => other is not null && Value == other.Value;

@@ -23,6 +23,34 @@ public sealed class @this
     private static readonly ConcurrentDictionary<System.Type, MethodInfo?> _compareCache = new();
     private static readonly ConcurrentDictionary<System.Type, int> _rankCache = new();
 
+    /// <summary>
+    /// Static name → family-class map (app.type.&lt;name&gt;.@this), built once by
+    /// reflection over the type namespaces — the comparison hooks are static, so
+    /// dispatch needs no App in scope (mirrors convert's OwnerOf). `@`-escaped
+    /// folder names (`@bool`, `@null`) map under their bare names.
+    /// </summary>
+    public static System.Type? FamilyOf(string? name)
+    {
+        if (string.IsNullOrEmpty(name)) return null;
+        return _families.Value.TryGetValue(name!, out var t) ? t : null;
+    }
+
+    private static readonly System.Lazy<System.Collections.Generic.Dictionary<string, System.Type>> _families
+        = new(static () =>
+        {
+            var map = new System.Collections.Generic.Dictionary<string, System.Type>(System.StringComparer.OrdinalIgnoreCase);
+            foreach (var t in typeof(@this).Assembly.GetTypes())
+            {
+                if (!t.Name.Equals("this", System.StringComparison.Ordinal)) continue;
+                var ns = t.Namespace;
+                if (ns is null || !ns.StartsWith("app.type.", System.StringComparison.Ordinal)) continue;
+                var leaf = ns["app.type.".Length..];
+                if (leaf.Contains('.')) continue;        // only direct families, not sub-namespaces
+                map[leaf.TrimStart('@')] = t;
+            }
+            return map;
+        });
+
     /// <summary>The family's static specificity rank; the floor (0) when undeclared.</summary>
     public int RankOf(System.Type? familyClass)
     {

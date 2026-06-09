@@ -1,5 +1,7 @@
 using Bool = global::app.type.@bool.@this;
 
+using PLang.Tests.App.Fixtures;
+
 namespace PLang.Tests.App.ScalarsAsNative;
 
 // bool.@this — the truthiness primitive. Wraps a raw bool; this is where the
@@ -40,9 +42,10 @@ public class BoolWrapperTests
     [Test]
     public async Task Bool_NotOrderable_OrderThrows()
     {
-        // bool.@this does NOT implement IOrderableValue; Compare.Order throws.
-        await Assert.That(typeof(global::app.data.IOrderableValue).IsAssignableFrom(typeof(Bool))).IsFalse();
-        await Assert.That(() => global::app.data.Compare.Order(new Data("", new Bool(true)), new Data("", new Bool(false))))
-            .Throws<global::app.data.Compare.NotOrderableException>();
+        // bool is equality-only: unequal bools answer NotEqual (never an order),
+        // so the ordering boundary errors.
+        await Assert.That(Bool.Compare(new Bool(true), new Bool(false))).IsEqualTo(global::app.data.Comparison.NotEqual);
+        await Assert.That(() => CompareTestOps.OrdD(new Data("", new Bool(true)), new Data("", new Bool(false))))
+            .Throws<global::app.data.IncomparableException>();
     }
 }

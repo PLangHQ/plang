@@ -3,6 +3,8 @@ using Number = global::app.type.number.@this;
 using Dict = global::app.type.dict.@this;
 using PList = global::app.type.list.@this;
 
+using PLang.Tests.App.Fixtures;
+
 namespace PLang.Tests.App.ScalarsAsNative;
 
 // `item` is the apex of the value lattice AND the un-narrowed/lazy type
@@ -38,25 +40,27 @@ public class ItemApexTests
     [Test]
     public async Task Item_DoesNotImplementIOrderableValue_DictKeepsNoOrder()
     {
-        // The smoking-gun guard. If `item` implemented IOrderableValue, every
+        // The smoking-gun guard. If `item` declared comparison hooks, every
         // `dict : item` would inherit an order — regressing the contract
         // collections-are-data audited (dict is equality-only).
-        await Assert.That(typeof(global::app.data.IOrderableValue).IsAssignableFrom(typeof(Item))).IsFalse();
-        await Assert.That(typeof(global::app.data.IEquatableValue).IsAssignableFrom(typeof(Item))).IsFalse();
-        // dict does not gain the interface through inheritance either.
-        await Assert.That(typeof(global::app.data.IOrderableValue).IsAssignableFrom(typeof(Dict))).IsFalse();
+        await Assert.That(typeof(Item).GetMethod("Compare",
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.DeclaredOnly,
+            null, new[] { typeof(object), typeof(object) }, null)).IsNull();
+        // dict declares its OWN hook — equality-only (NotEqual for unequal, no order).
+        await Assert.That(Dict.Compare(new Dict(), new Dict())).IsEqualTo(global::app.data.Comparison.Equal);
     }
 
     [Test]
     public async Task Compare_DictUnderItem_StillThrowsNotOrderable()
     {
-        // Compare.Order(dict, dict) throws after dict : item — `item` leaks no order in.
-        var a = new Data("a", new Dict());
-        var b = new Data("b", new Dict());
-        await Assert.That(() => global::app.data.Compare.Order(a, b))
-            .Throws<global::app.data.Compare.NotOrderableException>();
+        // dict stays equality-only under `item` — equal dicts answer Equal (order 0),
+        // UNEQUAL dicts answer NotEqual, which has no order: the boundary errors.
+        var d1 = new Dict(); d1.Set("a", 1);
+        var d2 = new Dict(); d2.Set("a", 2);
+        await Assert.That(() => CompareTestOps.OrdD(new Data("a", d1), new Data("b", d2)))
+            .Throws<global::app.data.IncomparableException>();
         // list, which DOES implement IOrderableValue, still sorts (empty == empty).
-        await Assert.That(global::app.data.Compare.Order(new Data("", new PList()), new Data("", new PList()))).IsEqualTo(0);
+        await Assert.That(CompareTestOps.OrdD(new Data("", new PList()), new Data("", new PList()))).IsEqualTo(0);
     }
 
     [Test]

@@ -1,6 +1,8 @@
 using DateT = global::app.type.date.@this;
 using DateTimeT = global::app.type.datetime.@this;
 
+using PLang.Tests.App.Fixtures;
+
 namespace PLang.Tests.App.ScalarsAsNative;
 
 // date.@this is its own type, backed by DateOnly. Distinct from datetime — the
@@ -30,9 +32,9 @@ public class DateWrapperTests
     {
         var d1 = new DateT(new System.DateOnly(2024, 1, 1));
         var d2 = new DateT(new System.DateOnly(2024, 1, 2));
-        await Assert.That(d1.Order(d2)).IsLessThan(0);
-        await Assert.That(d2.Order(d1)).IsGreaterThan(0);
-        await Assert.That(d1.Order(new DateT(new System.DateOnly(2024, 1, 1)))).IsEqualTo(0);
+        await Assert.That(CompareTestOps.Ord(d1, d2)).IsLessThan(0);
+        await Assert.That(CompareTestOps.Ord(d2, d1)).IsGreaterThan(0);
+        await Assert.That(CompareTestOps.Ord(d1, new DateT(new System.DateOnly(2024, 1, 1)))).IsEqualTo(0);
     }
 
     [Test]

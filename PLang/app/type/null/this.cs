@@ -19,8 +19,7 @@ namespace app.type.@null;
 /// <c>null</c>.</para>
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Json))]
-public sealed partial class @this : global::app.type.item.@this,
-    global::app.data.IEquatableValue
+public sealed partial class @this : global::app.type.item.@this
 {
     public static string Example => "null";
     public static string Shape => "null";

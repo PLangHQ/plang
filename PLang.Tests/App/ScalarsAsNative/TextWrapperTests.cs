@@ -1,6 +1,8 @@
 using Text = global::app.type.text.@this;
 using Item = global::app.type.item.@this;
 
+using PLang.Tests.App.Fixtures;
+
 namespace PLang.Tests.App.ScalarsAsNative;
 
 // text.@this is the canonical wrapper for textual content; backs a CLR string.
@@ -54,10 +56,10 @@ public class TextWrapperTests
     [Test]
     public async Task Text_Order_OrdinalCompare()
     {
-        // text.@this implements IOrderableValue; "a" < "b" ordinally.
-        await Assert.That(new Text("a").Order(new Text("b"))).IsLessThan(0);
-        await Assert.That(new Text("b").Order(new Text("a"))).IsGreaterThan(0);
-        await Assert.That(new Text("a").Order(new Text("A"))).IsEqualTo(0); // case-insensitive
+        // text orders ordinally through its Compare hook; "a" < "b".
+        await Assert.That(CompareTestOps.Ord(new Text("a"), new Text("b"))).IsLessThan(0);
+        await Assert.That(CompareTestOps.Ord(new Text("b"), new Text("a"))).IsGreaterThan(0);
+        await Assert.That(CompareTestOps.Ord(new Text("a"), new Text("A"))).IsEqualTo(0); // case-insensitive
     }
 
     [Test]

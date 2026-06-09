@@ -1,5 +1,7 @@
 using Number = global::app.type.number.@this;
 
+using PLang.Tests.App.Fixtures;
+
 namespace PLang.Tests.App.ScalarsAsNative;
 
 // number.@this is the reference-shape wrapper (already complete pre-branch).
@@ -22,8 +24,8 @@ public class NumberRegressionTests
         // Order(1, 2) < 0, AreEqual(5, 5) true — IOrderableValue/IEquatableValue
         // dispatch still routes; `item` adds nothing to ordering.
         await Assert.That(Number.From(1).CompareTo(Number.From(2))).IsLessThan(0);
-        await Assert.That(global::app.data.Compare.AreEqualValues(Number.From(5), Number.From(5))).IsTrue();
-        await Assert.That(global::app.data.Compare.Order(new Data("", Number.From(1)), new Data("", Number.From(2)))).IsLessThan(0);
+        await Assert.That(CompareTestOps.Eq(Number.From(5), Number.From(5))).IsTrue();
+        await Assert.That(CompareTestOps.OrdD(new Data("", Number.From(1)), new Data("", Number.From(2)))).IsLessThan(0);
     }
 
     [Test]

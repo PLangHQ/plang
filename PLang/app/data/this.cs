@@ -1243,11 +1243,21 @@ public partial class @this
     /// </summary>
     public async ValueTask<Comparison> Compare(@this other)
     {
-        var driver = Type.Rank(other);
-        driver.Context ??= _context ?? other._context;
-
         var a = await Value();
         var b = await other.Value();
+        return CompareValues(other, a, b);
+    }
+
+    /// <summary>
+    /// The sync comparison core — rank, null policy, driver dispatch — over values
+    /// already in memory. <see cref="Compare"/> is the public door-awaiting entry;
+    /// sort's phase-2 comparator (sync by construction, no await inside
+    /// <c>List.Sort</c>) calls this directly on phase-1-materialised keys.
+    /// </summary>
+    internal Comparison CompareValues(@this other, object? a, object? b)
+    {
+        var driver = Type.Rank(other);
+        driver.Context ??= _context ?? other._context;
 
         // A present null rides as the null.@this singleton — coalesce for the policy.
         if (a is app.type.@null.@this) a = null;

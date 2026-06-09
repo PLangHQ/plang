@@ -115,7 +115,9 @@ public class DefaultEvaluatorTests
     [Test] public async Task Evaluate_StringVsInt() => await Assert.That(IsTrue(await Eval("5", "==", 5))).IsTrue();
     [Test] public async Task Evaluate_NullEqualsNull() => await Assert.That(IsTrue(await Eval(null, "==", null))).IsTrue();
     [Test] public async Task Evaluate_NullNotEqualsValue() => await Assert.That(IsTrue(await Eval(null, "!=", 5))).IsTrue();
-    [Test] public async Task Evaluate_NullGreaterThan() => await Assert.That(IsFalse(await Eval(null, ">", 5))).IsTrue();
+    // Ordering a null: the boundary errors (anything vs null is Equal/NotEqual —
+    // equality-comparable but never ordered), surfaced as an EvaluationError result.
+    [Test] public async Task Evaluate_NullGreaterThan() => await Assert.That((await Eval(null, ">", 5)).Success).IsFalse();
     [Test] public async Task Evaluate_StringEquality_CaseInsensitive() => await Assert.That(IsTrue(await Eval("Hello", "==", "hello"))).IsTrue();
 
     [Test]

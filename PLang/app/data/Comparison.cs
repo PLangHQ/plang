@@ -10,6 +10,15 @@ namespace app.data;
 /// load-bearing: it makes <c>dict == dict</c> work while <c>dict &lt; dict</c>
 /// errors, and <c>dict == number</c> error while <c>%x% == null</c> does not.</para>
 /// </summary>
+/// <summary>
+/// Raised by an operator boundary when a <see cref="Comparison"/> result has no
+/// honest answer for that operator — <see cref="Comparison.Incomparable"/> on any
+/// comparison, <see cref="Comparison.NotEqual"/> on an ordering. Derives from
+/// ArgumentException so the condition evaluator's catch surfaces it as a clean
+/// EvaluationError. The VALUE never throws; the boundary decides error-or-result.
+/// </summary>
+public sealed class IncomparableException(string message) : System.ArgumentException(message);
+
 public enum Comparison
 {
     /// <summary>A real ordering: <c>this &lt; other</c>.</summary>

@@ -19,7 +19,7 @@ namespace app.type.list;
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Json))]
 public partial class @this : global::app.type.item.@this, module.IContext,
-    global::app.data.IEquatableValue, global::app.data.IOrderableValue, global::app.data.IListLeaf
+    global::app.data.IListLeaf
 {
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
     public static string Example => "[1, 2, 3]";
@@ -206,10 +206,12 @@ public partial class @this : global::app.type.item.@this, module.IContext,
     public bool Remove(object? value)
     {
         // Scan the flattened view once to find the leaf, then a single RemoveAt — avoid
-        // the O(n²) of At(i) per iteration.
+        // the O(n²) of At(i) per iteration. Membership matches only on Equal.
         var flat = Items;
+        var target = value as Data ?? new Data("", value);
         for (int i = 0; i < flat.Count; i++)
-            if (global::app.data.Compare.AreEqualValues(flat[i].Peek(), value)) { RemoveAt(i); return true; }
+            if (flat[i].CompareValues(target, flat[i].Peek(), target.Peek())
+                == global::app.data.Comparison.Equal) { RemoveAt(i); return true; }
         return false;
     }
 
@@ -223,39 +225,67 @@ public partial class @this : global::app.type.item.@this, module.IContext,
     }
 
     /// <summary>
-    /// Sorts by element value through the one typed-compare path
-    /// (<c>app.data.Compare.Order</c>) — so `sort` and `if a &gt; b` agree, nulls
-    /// sort last, and a mixed-type list throws. Collapses the rows into one flat list.
+    /// Sorts by element value through THE comparison entry — so `sort` and
+    /// `if a &gt; b` agree, nulls sort last, and a mixed-type list errors.
+    /// Two-phase: phase 1 materialises every element through the door (async —
+    /// all I/O lands here); phase 2 orders sync on the in-memory values.
+    /// Collapses the rows into one flat list.
     /// </summary>
-    public void SortByValue(bool descending)
+    public async System.Threading.Tasks.Task SortByValue(bool descending)
     {
         var flat = new List<Data>(Items);
+        var values = new Dictionary<Data, object?>(ReferenceEqualityComparer.Instance);
+        foreach (var d in flat) values[d] = await d.Value();
         SortGuarded(flat, (a, b) =>
         {
-            int c = global::app.data.Compare.Order(a, b);
+            int c = OrderOf(a, b, values[a], values[b]);
             return descending ? -c : c;
         });
         ResetTo(flat);
     }
 
     /// <summary>
-    /// Sorts by an element field (`sort %people% by "age"`) — each element's
-    /// <paramref name="field"/> is compared through the one typed-compare path.
+    /// Sorts by an element field (`sort %people% by "age"`) — phase 1 resolves each
+    /// element's <paramref name="field"/> child and its value through the door
+    /// (async); phase 2 orders sync on the pre-resolved keys.
     /// </summary>
     public async System.Threading.Tasks.Task SortByField(string field, bool descending)
     {
         var flat = new List<Data>(Items);
-        // Two-phase: GetChild is async (navigation reads through the value door), but a
-        // List.Sort comparator must stay sync — so resolve each element's field child up
-        // front and sort on the pre-resolved keys (keyed by element identity).
-        var keys = new Dictionary<Data, Data>(ReferenceEqualityComparer.Instance);
-        foreach (var d in flat) keys[d] = await d.GetChild(field);
+        var keys = new Dictionary<Data, (Data key, object? value)>(ReferenceEqualityComparer.Instance);
+        foreach (var d in flat)
+        {
+            var key = await d.GetChild(field);
+            keys[d] = (key, await key.Value());
+        }
         SortGuarded(flat, (a, b) =>
         {
-            int c = global::app.data.Compare.Order(keys[a], keys[b]);
+            var (ka, va) = keys[a];
+            var (kb, vb) = keys[b];
+            int c = OrderOf(ka, kb, va, vb);
             return descending ? -c : c;
         });
         ResetTo(flat);
+    }
+
+    // The sort boundary: Comparison → sign. Nulls sort LAST (the null policy answers
+    // Equal/NotEqual, which carries no order — sort owns its null placement);
+    // NotEqual/Incomparable between present values is a mixed list → error.
+    private static int OrderOf(Data a, Data b, object? va, object? vb)
+    {
+        if (va is global::app.type.@null.@this) va = null;
+        if (vb is global::app.type.@null.@this) vb = null;
+        if (va == null && vb == null) return 0;
+        if (va == null) return 1;
+        if (vb == null) return -1;
+        return a.CompareValues(b, va, vb) switch
+        {
+            global::app.data.Comparison.Less => -1,
+            global::app.data.Comparison.Equal => 0,
+            global::app.data.Comparison.Greater => 1,
+            _ => throw new global::app.data.IncomparableException(
+                $"cannot order '{a.Type.Name}' against '{b.Type.Name}' — mixed or unordered values"),
+        };
     }
 
     // Replace the rows with a flat sequence (post sort/reverse). The result is all
@@ -273,7 +303,7 @@ public partial class @this : global::app.type.item.@this, module.IContext,
     {
         try { items.Sort(cmp); }
         catch (System.InvalidOperationException ex)
-            when (ex.InnerException is global::app.data.Compare.NotOrderableException inner)
+            when (ex.InnerException is global::app.data.IncomparableException inner)
         { throw inner; }
     }
 
@@ -324,68 +354,47 @@ public partial class @this : global::app.type.item.@this, module.IContext,
     /// <summary>Outranks everything — a list never coerces into a scalar or dict.</summary>
     internal static int CompareRank => 75;
 
-    /// <summary>Lexicographic order between two lists in caller order (first differing
-    /// pair decides; a prefix sorts first); element pairs that can't be ordered make
-    /// the pair <c>Incomparable</c>. A non-list other side → <c>Incomparable</c>.</summary>
+    /// <summary>Lexicographic order between two lists in caller order — element pairs
+    /// route through the element's own comparison (the recursion contract); the first
+    /// differing pair decides; a prefix sorts first (<c>[1,2] &lt; [1,2,3]</c>). An
+    /// element pair with no order makes the pair <c>NotEqual</c> (equality still
+    /// answers; ordering errors at the boundary). A non-list other side →
+    /// <c>Incomparable</c>.</summary>
     public static global::app.data.Comparison Compare(object? a, object? b)
     {
         if (a is not @this la || b is not @this lb) return global::app.data.Comparison.Incomparable;
-        try
+        // Materialize the flattened views once — At(i)/Count are O(rows) walks.
+        var mine = la.Items;
+        var theirs = lb.Items;
+        int shared = System.Math.Min(mine.Count, theirs.Count);
+        for (int i = 0; i < shared; i++)
         {
-            var c = la.Order(lb);
-            return c < 0 ? global::app.data.Comparison.Less
-                 : c > 0 ? global::app.data.Comparison.Greater
-                 : global::app.data.Comparison.Equal;
+            var c = mine[i].CompareValues(theirs[i], mine[i].Peek(), theirs[i].Peek());
+            if (c is global::app.data.Comparison.Less or global::app.data.Comparison.Greater) return c;
+            if (c is global::app.data.Comparison.NotEqual or global::app.data.Comparison.Incomparable)
+                return global::app.data.Comparison.NotEqual;
         }
-        catch (global::app.data.Compare.NotOrderableException)
-        {
-            // Reconciled lists, unorderable elements: fall back to structural equality
-            // so == / != still answer; ordering errors at the boundary.
-            return la.AreEqual(lb)
-                ? global::app.data.Comparison.Equal
-                : global::app.data.Comparison.NotEqual;
-        }
+        var len = mine.Count.CompareTo(theirs.Count);
+        return len < 0 ? global::app.data.Comparison.Less
+             : len > 0 ? global::app.data.Comparison.Greater
+             : global::app.data.Comparison.Equal;
     }
 
     /// <summary>
-    /// IEquatableValue: structural, positional — same length and equal items in
-    /// order. Each item routes back through the mediator so nested values widen /
-    /// compare case-insensitive.
+    /// Structural, positional equality — same length and equal items in order. Each
+    /// item routes through its own comparison (the recursion contract), so nested
+    /// numbers widen and nested text compares case-insensitive.
     /// </summary>
     public bool AreEqual(object? other)
     {
         if (other is not @this ol) return false;
-        // Materialize the flattened views once — At(i)/Count are O(rows) walks, so a
-        // per-iteration call would make this O(n²) on a large list.
         var mine = Items;
         var theirs = ol.Items;
         if (mine.Count != theirs.Count) return false;
         for (int i = 0; i < mine.Count; i++)
-            if (!global::app.data.Compare.AreEqualValues(mine[i].Peek(), theirs[i].Peek())) return false;
+            if (mine[i].CompareValues(theirs[i], mine[i].Peek(), theirs[i].Peek())
+                != global::app.data.Comparison.Equal) return false;
         return true;
-    }
-
-    /// <summary>
-    /// IOrderableValue: lexicographic — compare item i against item i through the
-    /// mediator, the first differing pair decides; a prefix sorts before the longer
-    /// list (<c>[1,2] &lt; [1,2,3]</c>). Comparing against a non-list, or two
-    /// non-comparable items, throws — same as a mixed-type list.
-    /// </summary>
-    public int Order(object? other)
-    {
-        if (other is not @this ol)
-            throw new global::app.data.Compare.NotOrderableException(
-                $"cannot order list against {other?.GetType().Name.ToLowerInvariant() ?? "null"}");
-        // Materialize once (see AreEqual) — avoid O(n²) from per-iteration At()/Count.
-        var mine = Items;
-        var theirs = ol.Items;
-        int shared = System.Math.Min(mine.Count, theirs.Count);
-        for (int i = 0; i < shared; i++)
-        {
-            int c = global::app.data.Compare.Order(mine[i], theirs[i]);
-            if (c != 0) return c;
-        }
-        return mine.Count.CompareTo(theirs.Count);
     }
 
     public override string ToString() => $"[{string.Join(", ", Items.Select(e => e.Peek()))}]";
