@@ -24,7 +24,7 @@ public class Default : IAssert
 
         // Error display keeps .Value (the masked/rendered path); only the
         // comparison uses the scalar form.
-        return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(action.Expected?.Value, action.Actual?.Value, action.Message?.Value));
+        return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(action.Expected?.Materialize(), action.Actual?.Materialize(), action.Message?.Materialize()?.ToString()));
     }
 
     public data.@this<global::app.type.@bool.@this> NotEquals(NotEquals action)
@@ -32,8 +32,8 @@ public class Default : IAssert
         if (!AreEqual(action.Expected?.Peek(), action.Actual?.Peek()))
             return app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
-        return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(action.Expected?.Value, action.Actual?.Value,
-            action.Message?.Value ?? "Values should not be equal"));
+        return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(action.Expected?.Materialize(), action.Actual?.Materialize(),
+            action.Message?.Materialize()?.ToString() ?? "Values should not be equal"));
     }
 
     public async Task<data.@this<global::app.type.@bool.@this>> IsTrue(IsTrue action)
@@ -41,8 +41,8 @@ public class Default : IAssert
         if (await ResolveTruthy(action.Value))
             return app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
-        return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(true, action.Value?.Value,
-            action.Message?.Value ?? "Expected truthy value"));
+        return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(true, action.Value?.Materialize(),
+            action.Message?.Materialize()?.ToString() ?? "Expected truthy value"));
     }
 
     public async Task<data.@this<global::app.type.@bool.@this>> IsFalse(IsFalse action)
@@ -50,32 +50,32 @@ public class Default : IAssert
         if (!await ResolveTruthy(action.Value))
             return app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
-        return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(false, action.Value?.Value,
-            action.Message?.Value ?? "Expected falsy value"));
+        return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(false, action.Value?.Materialize(),
+            action.Message?.Materialize()?.ToString() ?? "Expected falsy value"));
     }
 
     public data.@this<global::app.type.@bool.@this> IsNull(IsNull action)
     {
-        if (global::app.type.@null.@this.IsNullValue(action.Value?.Value))
+        if (global::app.type.@null.@this.IsNullValue(action.Value?.Materialize()))
             return app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
-        return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(null, action.Value?.Value,
-            action.Message?.Value ?? "Expected null"));
+        return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(null, action.Value?.Materialize(),
+            action.Message?.Materialize()?.ToString() ?? "Expected null"));
     }
 
     public data.@this<global::app.type.@bool.@this> IsNotNull(IsNotNull action)
     {
-        if (!global::app.type.@null.@this.IsNullValue(action.Value?.Value))
+        if (!global::app.type.@null.@this.IsNullValue(action.Value?.Materialize()))
             return app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
         return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError("(not null)", null,
-            action.Message?.Value ?? "Expected non-null value"));
+            action.Message?.Materialize()?.ToString() ?? "Expected non-null value"));
     }
 
     public data.@this<global::app.type.@bool.@this> Contains(Contains action)
     {
-        var v = action.Value?.Value;
-        var c = action.Container?.Value;
+        var v = action.Value?.Materialize();
+        var c = action.Container?.Materialize();
 
         // Symmetric containment: the Value/Container names don't match the
         // natural reading "X contains Y" (haystack/needle), so the builder
@@ -87,13 +87,13 @@ public class Default : IAssert
 
         return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(
             FormatValue(c), v,
-            action.Message?.Value ?? "Container does not contain value"));
+            action.Message?.Materialize()?.ToString() ?? "Container does not contain value"));
     }
 
     public data.@this<global::app.type.@bool.@this> NotContains(NotContains action)
     {
-        var v = action.Value?.Value;
-        var c = action.Container?.Value;
+        var v = action.Value?.Materialize();
+        var c = action.Container?.Materialize();
 
         // Same symmetric tolerance as Contains: fail if either side contains
         // the other (otherwise the builder LLM's Value/Container flip would
@@ -104,27 +104,27 @@ public class Default : IAssert
 
         return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(
             $"absent: {FormatValue(c)}", v,
-            action.Message?.Value ?? "Container contains value but should not"));
+            action.Message?.Materialize()?.ToString() ?? "Container contains value but should not"));
     }
 
     public data.@this<global::app.type.@bool.@this> GreaterThan(GreaterThan action)
     {
-        if (Compare(action.A?.Value, action.B?.Value) > 0)
+        if (Compare(action.A?.Materialize(), action.B?.Materialize()) > 0)
             return app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
         return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(
-            $"> {FormatValue(action.B?.Value)}", action.A?.Value,
-            action.Message?.Value ?? $"Expected {FormatValue(action.A?.Value)} > {FormatValue(action.B?.Value)}"));
+            $"> {FormatValue(action.B?.Materialize())}", action.A?.Materialize(),
+            action.Message?.Materialize()?.ToString() ?? $"Expected {FormatValue(action.A?.Materialize())} > {FormatValue(action.B?.Materialize())}"));
     }
 
     public data.@this<global::app.type.@bool.@this> LessThan(LessThan action)
     {
-        if (Compare(action.A?.Value, action.B?.Value) < 0)
+        if (Compare(action.A?.Materialize(), action.B?.Materialize()) < 0)
             return app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
         return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(
-            $"< {FormatValue(action.B?.Value)}", action.A?.Value,
-            action.Message?.Value ?? $"Expected {FormatValue(action.A?.Value)} < {FormatValue(action.B?.Value)}"));
+            $"< {FormatValue(action.B?.Materialize())}", action.A?.Materialize(),
+            action.Message?.Materialize()?.ToString() ?? $"Expected {FormatValue(action.A?.Materialize())} < {FormatValue(action.B?.Materialize())}"));
     }
 
     // --- Comparison helpers ---
@@ -156,9 +156,9 @@ public class Default : IAssert
     private static async Task<bool> ResolveTruthy(data.@this? data)
     {
         if (data == null) return false;
-        if (data.Value is app.data.IBooleanResolvable)
+        if (data.Materialize() is app.data.IBooleanResolvable)
             return await data.ToBooleanAsync();
-        return IsTruthy(data.Value);
+        return IsTruthy(data.Materialize());
     }
 
     private static bool IsTruthy(object? value)
