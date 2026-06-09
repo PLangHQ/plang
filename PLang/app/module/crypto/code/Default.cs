@@ -21,11 +21,11 @@ public class Default : ICrypto
     private static global::app.channel.serializer.plang.@this _fallbackPlang
         => global::app.channel.serializer.plang.@this.ContextLessFallback;
 
-    public data.@this<global::app.module.crypto.type.hash.@this> Hash(Hash action)
+    public async Task<data.@this<global::app.module.crypto.type.hash.@this>> Hash(Hash action)
     {
         var data = action.Data;
         byte[] bytes;
-        if (data.Materialize() is byte[] raw)
+        if (await data.Value() is byte[] raw)
         {
             bytes = raw;
         }
@@ -51,7 +51,7 @@ public class Default : ICrypto
                 bytes = JsonSerializer.SerializeToUtf8Bytes(data, serializer.OutboundOptions);
             }
         }
-        string algorithm = ((string)(action.Algorithm.Materialize() as global::app.type.text.@this)!).ToLowerInvariant();
+        string algorithm = ((string)(await action.Algorithm.Value())!).ToLowerInvariant();
         byte[]? hashBytes = algorithm switch
         {
             "keccak256" => new Sha3Keccack().CalculateHash(bytes),
@@ -71,7 +71,7 @@ public class Default : ICrypto
             global::app.type.@this.Create("hash", kind: algorithm));
     }
 
-    public data.@this<global::app.type.@bool.@this> Verify(Verify action)
+    public async Task<data.@this<global::app.type.@bool.@this>> Verify(Verify action)
     {
         // The expected hash and its algorithm. The digest's own kind is
         // authoritative — a sha256 hash can only be verified by recomputing
@@ -80,7 +80,7 @@ public class Default : ICrypto
         // kind on the Type (if any) or the Algorithm parameter supplies it.
         global::app.module.crypto.type.hash.@this expected;
         string algorithm;
-        if (action.Hash.Materialize() is global::app.module.crypto.type.hash.@this bound)
+        if (await action.Hash.Value() is global::app.module.crypto.type.hash.@this bound)
         {
             expected = bound;
             algorithm = bound.Algorithm;
@@ -88,16 +88,16 @@ public class Default : ICrypto
         else
         {
             var hashKind = action.Hash.Type is { Name: "hash", Kind: { Length: > 0 } k } ? k : null;
-            algorithm = hashKind ?? (action.Algorithm.Materialize() as global::app.type.text.@this)!;
+            algorithm = hashKind ?? (await action.Algorithm.Value())!;
             // The hash type owns base64↔byte parsing (OBP) — Verify doesn't
             // reach for Convert.FromBase64String / SequenceEqual itself.
-            try { expected = global::app.module.crypto.type.hash.@this.FromBase64(action.Hash.Materialize()?.ToString() ?? "", algorithm); }
+            try { expected = global::app.module.crypto.type.hash.@this.FromBase64((await action.Hash.Value())?.ToString() ?? "", algorithm); }
             catch (FormatException) { return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Hash string is not valid base64", "InvalidHash", 400)); }
         }
 
         // Recompute through crypto.hash so the algorithm switch stays in one
         // place (no forked digest logic here).
-        var hashResult = Hash(new Hash
+        var hashResult = await Hash(new Hash
         {
             Context = action.Context,
             Data = action.Data,
@@ -105,6 +105,6 @@ public class Default : ICrypto
         });
         if (!hashResult.Success) return global::app.data.@this<global::app.type.@bool.@this>.FromError(hashResult.Error!);
 
-        return global::app.data.@this<global::app.type.@bool.@this>.Ok(((global::app.module.crypto.type.hash.@this)hashResult.Materialize()!).DigestEquals(expected));
+        return global::app.data.@this<global::app.type.@bool.@this>.Ok(((global::app.module.crypto.type.hash.@this)(await hashResult.Value())!).DigestEquals(expected));
     }
 }
