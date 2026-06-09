@@ -15,7 +15,10 @@ public partial class Write : IContext, IChannel
     public async Task<data.@this> Run()
     {
         var outer = Data ?? app.data.@this.Ok();
-        if (await outer.Value() is string str && str.Contains('%'))
+        // %-resolution applies to in-memory strings only — Peek, don't open the door:
+        // forcing the parse here would break verbatim passthrough (an untouched
+        // file-read Data writes out its raw bytes, not a re-serialised object).
+        if (outer.Peek() is string str && str.Contains('%'))
         {
             var resolved = await Context.Variable.Resolve(str, skipInfrastructure: true);
             outer = app.data.@this.Ok(resolved);

@@ -71,6 +71,10 @@ public sealed class GoalCall : global::app.type.item.@this, module.IEvent
                         $"Failed to deserialize GoalCall from JSON: {ex.Message}",
                         "GoalCallDeserializationFailed", 400));
                 }
+            // Born-native collections hand the wire shape as a native dict — project to
+            // the raw CLR dictionary once and fall through to the one dict arm below.
+            case app.type.dict.@this nativeDict:
+                return FromWire(nativeDict.ToRaw(), context);
             case IDictionary<string, object?> dict:
                 var name = dict.TryGetValue("name", out var n) ? n?.ToString() ?? "" : "";
                 // The name slot may be a dynamic %var% (e.g. `call %goalName%`). It stays raw
@@ -172,16 +176,18 @@ public sealed class GoalCall : global::app.type.item.@this, module.IEvent
     /// </summary>
     public async Task<data.@this> GetGoalAsync(app.@this app, actor.context.@this context)
     {
-        // PrPath is authoritative — load from file, no name-based search
-        if (PrPath != null)
-            return await LoadFromFile(PrPath.ToString(), app, context);
-
-        // A `%var%` goal name (`call %goalName%`) resolves here, at dispatch, in the caller's
-        // context — not at conversion. A typed object leaking into the name slot is caught now.
+        // A `%var%` goal name (`call %goalName%`) resolves here, at dispatch, in the
+        // caller's context — before BOTH lookup paths (a PrPath load still matches the
+        // target goal inside the file by name). A typed object leaking into the name
+        // slot is caught now.
         var resolvedName = Name.Contains('%') ? (await context.Variable.Resolve(Name)) ?? Name : Name;
         if (context.App.Type.IsClrTypeName(resolvedName))
             return data.@this.FromError(new global::app.error.Error(
                 $"GoalCall.Name resolved to a CLR type name '{resolvedName}'.", "ClrTypeNameInGoalSlot", 500));
+
+        // PrPath is authoritative — load from file, no name-based search
+        if (PrPath != null)
+            return await LoadFromFile(PrPath.ToString(), resolvedName, app, context);
 
         // 1. Check via the action's step's goal chain (action → step → goal → walk up)
         var currentGoal = Action?.Step?.Goal;
@@ -232,18 +238,18 @@ public sealed class GoalCall : global::app.type.item.@this, module.IEvent
             // would prepend a second separator, and "//…" resolves to the HOST filesystem
             // root, tripping the permission gate for a file that's plainly under the app.
             if (name.StartsWith('/'))
-                return await LoadFromFile(subPath, app, context);
+                return await LoadFromFile(subPath, resolvedName, app, context);
 
             for (var dir = callerDir; !string.IsNullOrEmpty(dir);)
             {
-                var hit = await LoadFromFile($"{dir}/{subPath}", app, context);
+                var hit = await LoadFromFile($"{dir}/{subPath}", resolvedName, app, context);
                 if (hit.Success) return hit;
                 var up = dir.LastIndexOf('/');
                 dir = up > 0 ? dir[..up] : "";
             }
-            var slashRoot = await LoadFromFile("/" + subPath, app, context);
+            var slashRoot = await LoadFromFile("/" + subPath, resolvedName, app, context);
             if (slashRoot.Success) return slashRoot;
-            return await LoadFromFile(subPath, app, context);
+            return await LoadFromFile(subPath, resolvedName, app, context);
         }
 
         // Bare name — the .pr sits in the caller's own .build, else root/context.
@@ -252,19 +258,19 @@ public sealed class GoalCall : global::app.type.item.@this, module.IEvent
         // Try relative to the calling goal's folder first (e.g., test sub-goals)
         if (callerDir != null)
         {
-            var goalResult = await LoadFromFile($"{callerDir}/{prFile}", app, context);
+            var goalResult = await LoadFromFile($"{callerDir}/{prFile}", resolvedName, app, context);
             if (goalResult.Success) return goalResult;
         }
 
         // Try root-relative (for user goals calling other goals in same project)
-        var rootResult = await LoadFromFile("/" + prFile, app, context);
+        var rootResult = await LoadFromFile("/" + prFile, resolvedName, app, context);
         if (rootResult.Success) return rootResult;
 
         // Try context-relative
-        return await LoadFromFile(prFile, app, context);
+        return await LoadFromFile(prFile, resolvedName, app, context);
     }
 
-    private async Task<data.@this> LoadFromFile(string prPath, app.@this app, actor.context.@this context)
+    private async Task<data.@this> LoadFromFile(string prPath, string resolvedName, app.@this app, actor.context.@this context)
     {
         var readAction = new module.file.Read
         {
@@ -302,7 +308,7 @@ public sealed class GoalCall : global::app.type.item.@this, module.IEvent
         // Match by name — the loaded goal or one of its sub-goals. A slash-
         // qualified Name (BuildGoal/Start) carries a folder prefix that the
         // loaded goal's own Name never has, so match on the leaf segment.
-        var matchName = Name;
+        var matchName = resolvedName;
         var nameSlash = matchName.LastIndexOfAny(new[] { '/', '\\' });
         if (nameSlash >= 0) matchName = matchName[(nameSlash + 1)..];
 

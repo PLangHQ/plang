@@ -107,3 +107,32 @@ reprompt hang), Fluid null guard, Reconstruct/Normalize materialize (sqlite rows
    from its type tag) -> delete GoalCall.Convert + the IsSelfResolvingParams carve-out.
 3. Stages 3-7 (reference narrowing, per-type Compare, data.Compare entry, demolition).
 4. plang --test (clean rebuild first - stale-binary trap; read the docs per CLAUDE.md).
+
+
+## v6 final — BOTH suites green end-to-end (C# 4189/4290, plang 307/324 — only stage stubs left)
+
+**plang --test (clean rebuild): 307 pass, 0 fail, 15 stale (= the CompareRedesign
+.test.goal stage stubs for Stages 3-7), 2 skipped.** Fixes that got it there:
+- GoalCall.FromWire native-dict arm (born-native collections hand the wire shape as
+  dict.@this — project ToRaw once, one dict arm)
+- dynamic goal name (%goalName%) resolves BEFORE the PrPath branch in GetGoalAsync and
+  is the match name inside LoadFromFile
+- verbatim passthrough restored: output.write %-checks via Peek (not the door);
+  variable.set keeps the value door CLOSED on the plain-bind path (ShallowClone shares
+  the lazy raw) — kind-derivation/strict-probe read the in-memory value only, content
+  opens only past the RawUntouched fast-path where conversion needs it;
+  Normalize entry back to Peek (Reconstruct keeps Materialize — decode leaf)
+
+**Stage-2 stubs: 23 of 34 filled and green** (ValueDoor 7, NavigationAsync 6,
+GetParameterLazy 7 — rewritten to the dispatch contract, PlaneResolver 3). The 11 left
+pin later stages: typed-leaf value slot, _raw dissolution, ToRaw removal, text.Value
+privatisation, Type-getter cleanup (born-native leaf stages); value-property plane +
+!type.list chain (Stage 3 narrowing); reserved-core gate, @schema block, envelope-name
+removal (wire/registration).
+
+**Born-native GoalCall landed**: FromWire is the explicit birth-site constructor
+(loader walk + builder), NOT a registry hook; data/ has zero GoalCall references.
+
+### Next
+1. Stages 3-7 implementation (the 101 C# + 15 plang stage stubs are the spec).
+2. The 11 future-stage Stage-2 stubs land with their owning stages.

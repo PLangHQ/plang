@@ -83,10 +83,12 @@ public partial class Set : IContext, IBuildValidatable
 
     public async Task<data.@this> Run()
     {
-        // Resolve the param doors once, up front (await-once) — the value reads
-        // navigate; the guards that follow read the resolved values.
+        // Resolve the name door up front; the VALUE door stays closed on this path —
+        // a plain `set %x% = %y%` forwards the binding (ShallowClone shares the lazy
+        // raw), so opening the door here would parse a lazily-read file on store and
+        // defeat verbatim passthrough. Only the branches that genuinely need content
+        // (a Properties write, a forced-type conversion) open it below.
         var name = await Name.Value();
-        var sourceValue = await Value.Value();
 
         // Variable.Resolve flagged the slot as syntactically malformed
         // (`%x!!cost%`, `%x!a!b%`, etc.) — fail with a typed error rather
@@ -112,7 +114,7 @@ public partial class Set : IContext, IBuildValidatable
                         "VariableNotFound", 400));
             try
             {
-                target.Properties[property] = sourceValue;
+                target.Properties[property] = await Value.Value();
             }
             catch (ArgumentException ex)
             {
@@ -144,6 +146,12 @@ public partial class Set : IContext, IBuildValidatable
         var typeValue = Type == null ? null : await Type.Value();
         if (typeValue != null)
         {
+            // Kind-derivation and the strict probe read the IN-MEMORY value only: a
+            // raw-backed (unparsed) value contributes null — deriving a kind from
+            // content would force the parse the verbatim fast-path below exists to
+            // avoid. Content is read (door opened) only past that fast-path, where
+            // conversion genuinely needs it.
+            object? sourceValue = Value.RawUntouched ? null : await Value.Value();
             // Type entity rides in a bare Data — `type` is not `: item`, so it can't be a
             // Data<T> that auto-converts. Reconstruct it from whatever the .pr served:
             //   - already a type.@this → use it;
@@ -229,6 +237,7 @@ public partial class Set : IContext, IBuildValidatable
                 return await Context.Variable.Set(Value);
             }
 
+            if (Value.RawUntouched) sourceValue = await Value.Value();
             object? converted = sourceValue;
             System.Type? mintType = targetType;
 
