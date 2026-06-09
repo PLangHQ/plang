@@ -67,24 +67,25 @@ public sealed class Default : IHttp
         var app = action.Context.App;
         var config = app.Config.For<Config>(action.Context);
 
-        var unsigned = action.Unsigned.Value || config.Resolve("Unsigned", false);
+        var unsigned = ((await action.Unsigned.Value())?.Value ?? false) || config.Resolve("Unsigned", false);
         var timeout = action.TimeoutInSec.GetValue<double>() > 0 ? action.TimeoutInSec.GetValue<double>() : config.Resolve("TimeoutInSec", 30);
-        string contentType = action.ContentType?.Value is { } ctv ? (string)ctv : config.Resolve("ContentType", "application/json");
-        var encoding = action.Encoding.Value ?? config.Resolve("Encoding", "utf-8");
+        string contentType = (action.ContentType == null ? null : await action.ContentType.Value()) is { } ctv ? (string)ctv : config.Resolve("ContentType", "application/json");
+        var encoding = (await action.Encoding.Value()) ?? config.Resolve("Encoding", "utf-8");
 
-        var urlResult = ResolveUrl(action.Url.Value!, config);
+        var urlResult = ResolveUrl((await action.Url.Value())!, config);
         if (!urlResult.Success) return urlResult;
-        var resolvedUrl = urlResult.Value!;
+        var resolvedUrl = (await urlResult.Value())!;
 
         var headers = MergeHeaders(action.Headers?.GetValue<Dictionary<string, object>>(), config);
 
         // Build body
         HttpContent? httpContent = null;
         string? bodyString = null;
-        if (action.Body?.Value != null)
+        var bodyVal = action.Body == null ? null : await action.Body.Value();
+        if (bodyVal != null)
         {
             if (contentType.Equals("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase)
-                && action.Body.Value is Dictionary<string, object> formDict)
+                && bodyVal is Dictionary<string, object> formDict)
             {
                 var formValues = new Dictionary<string, string>();
                 foreach (var kvp in formDict)
@@ -93,24 +94,24 @@ public sealed class Default : IHttp
             }
             else
             {
-                bodyString = action.Body.Value is string s ? s : JsonSerializer.Serialize(action.Body.Value);
+                bodyString = bodyVal is string s ? s : JsonSerializer.Serialize(bodyVal);
                 var enc = Encoding.GetEncoding(encoding);
                 httpContent = new StringContent(bodyString, enc, contentType);
             }
         }
 
-        var httpMethod = ToSystemMethod(action.Method.Value);
+        var httpMethod = ToSystemMethod((await action.Method.Value()));
         var requestMessage = new HttpRequestMessage(httpMethod, resolvedUrl) { Content = httpContent };
         ApplyHeaders(requestMessage, headers);
 
-        var signResult = await SignRequestAsync(action.Context, unsigned, action.SignOptions?.Value, bodyString, resolvedUrl, httpMethod.Method);
+        var signResult = await SignRequestAsync(action.Context, unsigned, (action.SignOptions == null ? null : await action.SignOptions.Value()), bodyString, resolvedUrl, httpMethod.Method);
         if (signResult != null)
         {
             if (!signResult.Success) return signResult;
             ApplySignature(requestMessage, signResult);
         }
 
-        var completionOption = action.OnStream?.Value != null
+        var completionOption = (action.OnStream == null ? null : await action.OnStream.Value()) != null
             ? HttpCompletionOption.ResponseHeadersRead
             : HttpCompletionOption.ResponseContentRead;
 
@@ -119,11 +120,11 @@ public sealed class Default : IHttp
 
         var response = await SendHttpAsync(requestMessage, completionOption, config, cts.Token);
 
-        if (action.OnStream?.Value != null)
+        if ((action.OnStream == null ? null : await action.OnStream.Value()) != null)
         {
             var maxSSEBuffer = config.Resolve("MaxSSEBufferSize", 10L * 1024 * 1024);
             return await HandleStreamingAsync(
-                response, requestMessage, action.OnStream.Value, action.StreamAs?.Value?.Value,
+                response, requestMessage, (await action.OnStream.Value()), (action.StreamAs == null ? null : await action.StreamAs.Value())?.Value,
                 unsigned, app, action.Context, maxSSEBuffer, cts.Token);
         }
 
@@ -140,17 +141,17 @@ public sealed class Default : IHttp
         var app = action.Context.App;
         var config = app.Config.For<Config>(action.Context);
 
-        var unsigned = action.Unsigned.Value || config.Resolve("Unsigned", false);
+        var unsigned = ((await action.Unsigned.Value())?.Value ?? false) || config.Resolve("Unsigned", false);
         var timeout = action.TimeoutInSec.GetValue<double>() > 0 ? action.TimeoutInSec.GetValue<double>() : config.Resolve("TimeoutInSec", 30);
-        var urlResult = ResolveUrl(action.Url.Value!, config);
+        var urlResult = ResolveUrl((await action.Url.Value())!, config);
         if (!urlResult.Success) return urlResult;
-        var resolvedUrl = urlResult.Value!;
+        var resolvedUrl = (await urlResult.Value())!;
 
         var headers = MergeHeaders(action.Headers?.GetValue<Dictionary<string, object>>(), config);
         var requestMessage = new HttpRequestMessage(SysHttpMethod.Get, resolvedUrl);
         ApplyHeaders(requestMessage, headers);
 
-        var signResult = await SignRequestAsync(action.Context, unsigned, action.SignOptions?.Value, null, resolvedUrl, "GET");
+        var signResult = await SignRequestAsync(action.Context, unsigned, (action.SignOptions == null ? null : await action.SignOptions.Value()), null, resolvedUrl, "GET");
         if (signResult != null)
         {
             if (!signResult.Success) return signResult;
@@ -174,7 +175,7 @@ public sealed class Default : IHttp
         using var buffer = new MemoryStream();
 
         await StreamWithProgressAsync(
-            responseStream, buffer, totalBytes, maxDownloadSize, action.OnProgress?.Value, app, action.Context, cts.Token);
+            responseStream, buffer, totalBytes, maxDownloadSize, (action.OnProgress == null ? null : await action.OnProgress.Value()), app, action.Context, cts.Token);
 
         return global::app.data.@this.Ok(buffer.ToArray());
     });
@@ -185,20 +186,20 @@ public sealed class Default : IHttp
         var app = action.Context.App;
         var config = app.Config.For<Config>(action.Context);
 
-        var unsigned = action.Unsigned.Value || config.Resolve("Unsigned", false);
+        var unsigned = ((await action.Unsigned.Value())?.Value ?? false) || config.Resolve("Unsigned", false);
         var timeout = action.TimeoutInSec.GetValue<double>() > 0 ? action.TimeoutInSec.GetValue<double>() : config.Resolve("TimeoutInSec", 30);
-        var encoding = action.Encoding.Value ?? config.Resolve("Encoding", "utf-8");
+        var encoding = (await action.Encoding.Value()) ?? config.Resolve("Encoding", "utf-8");
 
-        var urlResult = ResolveUrl(action.Url.Value!, config);
+        var urlResult = ResolveUrl((await action.Url.Value())!, config);
         if (!urlResult.Success) return urlResult;
-        var resolvedUrl = urlResult.Value!;
+        var resolvedUrl = (await urlResult.Value())!;
 
         var headers = MergeHeaders(action.Headers?.GetValue<Dictionary<string, object>>(), config);
 
         var (httpContent, contentErr) = await ResolveUploadContentAsync(action, app, encoding);
         if (contentErr != null) return global::app.data.@this.FromError(contentErr);
 
-        var httpMethod = ToSystemMethod(action.Method.Value);
+        var httpMethod = ToSystemMethod((await action.Method.Value()));
         var requestMessage = new HttpRequestMessage(httpMethod, resolvedUrl) { Content = httpContent };
         ApplyHeaders(requestMessage, headers);
 
@@ -206,7 +207,7 @@ public sealed class Default : IHttp
         if (httpContent is StringContent sc)
             bodyString = await sc.ReadAsStringAsync();
 
-        var signResult = await SignRequestAsync(action.Context, unsigned, action.SignOptions?.Value, bodyString, resolvedUrl, httpMethod.Method);
+        var signResult = await SignRequestAsync(action.Context, unsigned, (action.SignOptions == null ? null : await action.SignOptions.Value()), bodyString, resolvedUrl, httpMethod.Method);
         if (signResult != null)
         {
             if (!signResult.Success) return signResult;
@@ -225,12 +226,12 @@ public sealed class Default : IHttp
     public data.@this Configure(configure action)
     {
         // Redirect config can't change after first request (SocketsHttpHandler is immutable)
-        if (_client != null && (action.FollowRedirects?.Value != null || action.MaxRedirects?.Value != null))
+        if (_client != null && (action.FollowRedirects?.Materialize() != null || action.MaxRedirects?.Materialize() != null))
             return global::app.data.@this.FromError(new ServiceError(
                 "Cannot change FollowRedirects/MaxRedirects after first HTTP request",
                 "ConfigLocked", 409));
 
-        action.Context.App.Config.Apply<Config>(action, action.Context, action.Default.Value);
+        action.Context.App.Config.Apply<Config>(action, action.Context, (action.Default.Materialize() as global::app.type.@bool.@this)?.Value ?? false);
         return global::app.data.@this.Ok();
     }
 
@@ -313,7 +314,7 @@ public sealed class Default : IHttp
     {
         var bytes = await ReadLimitedBytesAsync(content, maxBytes, ct);
         if (!bytes.Success) return data.@this<global::app.type.text.@this>.FromError(bytes.Error!);
-        return data.@this<global::app.type.text.@this>.Ok(Encoding.UTF8.GetString(bytes.Value!));
+        return data.@this<global::app.type.text.@this>.Ok(Encoding.UTF8.GetString((await bytes.Value())!));
     }
 
     // --- Internal HTTP transport ---
@@ -512,7 +513,7 @@ public sealed class Default : IHttp
             return bytesRead;
         }
 
-        var channel = new global::app.channel.type.http.@this(contentType, bytesRead.Value!, context);
+        var channel = new global::app.channel.type.http.@this(contentType, (await bytesRead.Value())!, context);
         var result = await channel.Read();
         // Metadata (status, headers, duration, url, ...) rides as Properties —
         // read with `!`. BuildProperties populates the protocol metadata; duration
@@ -548,7 +549,7 @@ public sealed class Default : IHttp
             BuildProperties(bodyRead, request, response);
             return bodyRead;
         }
-        var body = bodyRead.Value!;
+        var body = (await bodyRead.Value())!;
 
         data.@this? data;
         try
@@ -644,7 +645,7 @@ public sealed class Default : IHttp
         {
             var read = await ReadLimitedStringAsync(response.Content, MaxErrorBodySize, ct);
             // Best effort: ignore size-cap / slow-loris failures here, proceed with empty body.
-            if (read.Success) errorBody = read.Value!;
+            if (read.Success) errorBody = (await read.Value())!;
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { /* best effort — read failed (network/IO), proceed with empty */ }
         var err = global::app.data.@this.FromError(new ServiceError(
@@ -984,9 +985,9 @@ public sealed class Default : IHttp
     private static async Task<(HttpContent? Content, global::app.error.IError? Error)> ResolveUploadContentAsync(
         upload action, global::app.@this app, string encoding)
     {
-        var content = action.Content.Value;
+        var content = await action.Content.Value();
         var context = action.Context;
-        if (action.As?.Value is { } asChoice && asChoice is { } && (ContentAs?)asChoice is { } contentAs)
+        if ((action.As == null ? null : await action.As.Value()) is { } asChoice && asChoice is { } && (ContentAs?)asChoice is { } contentAs)
         {
             return contentAs switch
             {
@@ -1015,7 +1016,7 @@ public sealed class Default : IHttp
             // matches the prior "if not a file, send as string" shape.
             var p = global::app.type.path.@this.Resolve(str, context);
             var exists = await p.ExistsAsync();
-            if (exists.Success && exists.Value == true)
+            if (exists.Success && (await exists.Value())?.Value == true)
                 return await CreateFileContentAsync(app, context, str);
 
             return (new StringContent(str, Encoding.GetEncoding(encoding)), null);
@@ -1036,10 +1037,10 @@ public sealed class Default : IHttp
         // out-of-root paths the actor hasn't granted bubble up as Fail.
         var resolved = global::app.type.path.@this.Resolve(path, context);
         var read = await resolved.ReadBytes();
-        if (!read.Success || read.Value == null)
+        if (!read.Success || await read.Value() == null)
             return (null, read.Error
                 ?? new ServiceError($"Could not read file: {path}", "FileReadError", 500));
-        var content = new ByteArrayContent(read.Value);
+        var content = new ByteArrayContent((await read.Value())!);
         content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
         return (content, null);
     }
@@ -1078,10 +1079,10 @@ public sealed class Default : IHttp
                 // gate, not silently exfiltrated.
                 var fp = global::app.type.path.@this.Resolve(value[1..], context);
                 var read = await fp.ReadBytes();
-                if (!read.Success || read.Value == null)
+                if (!read.Success || await read.Value() == null)
                     return (null, read.Error
                         ?? new ServiceError($"Could not read form file: {value[1..]}", "FileReadError", 500));
-                var fileContent = new ByteArrayContent(read.Value);
+                var fileContent = new ByteArrayContent((await read.Value())!);
                 fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
                 form.Add(fileContent, kvp.Key, fp.FileName);
             }
