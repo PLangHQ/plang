@@ -40,7 +40,7 @@ public partial class Tag : IContext
             foreach (var (key, value) in pairs)
                 target.Tag(key, value);
         }
-        else if (Label?.Value is { } label && !string.IsNullOrEmpty(label))
+        else if ((Label?.Materialize() as global::app.type.text.@this) is { } label && !string.IsNullOrEmpty(label))
         {
             target.Tag(label, "true");
         }

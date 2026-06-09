@@ -18,10 +18,10 @@ public partial class Foreach : IContext, IStep
 
     public async Task<data.@this> Run()
     {
-        if (Collection.Value == null)
+        if (await Collection.Value() == null)
             return global::app.data.@this.Ok(new type.loop { itemCount = 0, completed = true });
 
-        var variableName = ItemName?.Value?.Name ?? "item";
+        var variableName = (ItemName == null ? null : (await ItemName.Value())?.Name) ?? "item";
         int count = 0;
 
         // Find remaining actions in this step (the loop body)
@@ -35,7 +35,7 @@ public partial class Foreach : IContext, IStep
 
             Context.Variable.Set(variableName, item);
             if (KeyName != null)
-                Context.Variable.Set(KeyName.Value, key);
+                Context.Variable.Set(await KeyName.Value(), key);
 
             foreach (var action in bodyActions)
             {

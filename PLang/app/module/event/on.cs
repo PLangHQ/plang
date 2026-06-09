@@ -37,29 +37,29 @@ public partial class On : IContext
     /// <summary>Channel-name filter for channel lifecycle events (BeforeWrite/AfterWrite/BeforeRead/AfterRead/OnAsk). Null = no filter.</summary>
     public partial data.@this<global::app.type.text.@this>? ChannelName { get; init; }
 
-    public Task<data.@this<global::app.type.text.@this>> Run()
+    public async Task<data.@this<global::app.type.text.@this>> Run()
     {
         // Resolve target actor — default to current context's actor
-        var targetActor = Actor?.Value ?? Context.Actor ?? Context.App!.User;
+        var targetActor = (Actor == null ? null : await Actor.Value()) ?? Context.Actor ?? Context.App!.User;
 
-        var goalToCall = GoalToCall.Value!;
+        var goalToCall = (await GoalToCall.Value())!;
         Func<actor.context.@this, global::app.goal.steps.step.actions.action.@this?, data.@this?, Task<data.@this>> handler =
             async (context, _, _) => await context.App!.RunGoalAsync(goalToCall, targetActor.Context, context.CancellationToken);
 
         var binding = new EventBinding(
-            Trigger.Value,
+            await Trigger.Value(),
             handler,
-            goalNamePattern: GoalPattern?.Value,
-            stepPattern: StepPattern?.Value,
-            actionPattern: ActionPattern?.Value,
+            goalNamePattern: GoalPattern == null ? null : await GoalPattern.Value(),
+            stepPattern: StepPattern == null ? null : await StepPattern.Value(),
+            actionPattern: ActionPattern == null ? null : await ActionPattern.Value(),
             priority: Priority.GetValue<int>(),
-            isRegex: IsRegex.Value,
+            isRegex: (await IsRegex.Value())!,
             goalToCall: goalToCall,
-            channelName: ChannelName?.Value);
+            channelName: ChannelName == null ? null : await ChannelName.Value());
 
         // Register on the target actor's event scope
         targetActor.Context.Events.Register(binding);
 
-        return Task.FromResult(global::app.data.@this<global::app.type.text.@this>.Ok(binding.Id));
+        return global::app.data.@this<global::app.type.text.@this>.Ok(binding.Id);
     }
 }

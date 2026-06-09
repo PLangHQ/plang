@@ -24,7 +24,7 @@ public partial class If : IContext, IStep
         if (!evalResult.Success) return evalResult;
 
         var conditionResult = evalResult.GetValue<bool>();
-        if (Negate.Value) conditionResult = !conditionResult;
+        if ((await Negate.Value())?.Value == true) conditionResult = !conditionResult;
 
         // Mark indented sub-steps: disabled when false, clean when true
         var userStep = Step;
@@ -101,7 +101,7 @@ public partial class If : IContext, IStep
                 // condition.elseif — dispatch the handler so its Evaluate + lifecycle fire
                 var elseIfResult = await condition.RunAsync(Context);
                 if (!elseIfResult.Success) return elseIfResult;
-                branchResult = elseIfResult.Value is true;
+                branchResult = await elseIfResult.Value() is true;
             }
             else
             {
