@@ -13,12 +13,12 @@ public sealed partial class @this
 		var templatePath = global::app.type.path.@this.Resolve(
 			"/system/builder/templates/goalFormatForLlm.template", context);
 		var exists = await templatePath.ExistsAsync();
-		if (!exists.Success || exists.Value != true)
+		if (!exists.Success || (await exists.Value())?.Value != true)
 			return FormatForLlmFallback();
 
 		var read = await templatePath.ReadText();
 		if (!read.Success) return FormatForLlmFallback();
-		var templateText = read.Value?.ToString() ?? "";
+		var templateText = (await read.Value())?.ToString() ?? "";
 		var scribanTemplate = Template.Parse(templateText);
 		if (scribanTemplate.HasErrors)
 			return FormatForLlmFallback();
@@ -50,7 +50,7 @@ public sealed partial class @this
 							{
 								module = a.Module,
 								action = a.ActionName,
-								parameters = a.Parameters.Select(p => new { name = p.Name, value = p.Value }),
+								parameters = a.Parameters.Select(p => new { name = p.Name, value = p.Materialize() }),
 							})
 						}, jsonOpts)
 					: null
@@ -85,7 +85,7 @@ public sealed partial class @this
 						{
 							module = a.Module,
 							action = a.ActionName,
-							parameters = a.Parameters.Select(p => new { name = p.Name, value = p.Value })
+							parameters = a.Parameters.Select(p => new { name = p.Name, value = p.Materialize() })
 						})
 					}, jsonOpts)
 				: "null";

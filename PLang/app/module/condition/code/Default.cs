@@ -28,26 +28,26 @@ public sealed class Default : IEvaluator
     private static async Task<data.@this<global::app.type.@bool.@this>> EvaluateOperator(
         data.@this<global::app.type.choice.@this<Operator>> operatorData, data.@this? left, data.@this? right)
     {
-        if (!operatorData.Success || operatorData.Value == null)
+        if (!operatorData.Success || await operatorData.Value() == null)
             return global::app.data.@this<global::app.type.@bool.@this>.From(operatorData);
         try
         {
-            Operator op = operatorData.Value; bool result = await op.Evaluate(left, right);
+            Operator op = (await operatorData.Value())!; bool result = await op.Evaluate(left, right);
             return global::app.data.@this<global::app.type.@bool.@this>.Ok(result);
         }
         catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)
         {
-            return EvaluationError(left, operatorData.Value, right, ex);
+            return EvaluationError(left, (await operatorData.Value())!, right, ex);
         }
     }
 
     private static data.@this<global::app.type.@bool.@this> EvaluationError(data.@this? left, Operator op, data.@this? right, Exception ex)
     {
-        var leftType = left?.Value?.GetType().Name ?? "null";
-        var rightType = right?.Value?.GetType().Name ?? "null";
+        var leftType = left?.Materialize()?.GetType().Name ?? "null";
+        var rightType = right?.Materialize()?.GetType().Name ?? "null";
 
         return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ValidationError(
-            $"Condition evaluation failed: '{left?.Value}' ({leftType}) {op.Value} '{right?.Value}' ({rightType}) — {ex.Message}",
+            $"Condition evaluation failed: '{left?.Materialize()}' ({leftType}) {op.Value} '{right?.Materialize()}' ({rightType}) — {ex.Message}",
             "EvaluationError")
         {
             Exception = ex,

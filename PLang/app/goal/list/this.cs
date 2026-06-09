@@ -177,12 +177,12 @@ public sealed class @this
         if (!string.IsNullOrEmpty(dir)) rootCandidate = rootCandidate.Combine(dir);
         rootCandidate = rootCandidate.Combine(".build").Combine(prFile);
         var rootExists = await rootCandidate.ExistsAsync();
-        if (rootExists.Success && rootExists.Value == true)
+        if (rootExists.Success && (await rootExists.Value())?.Value == true)
         {
             var result = await LoadFromFileAsync(App, rootCandidate.Absolute, cancellationToken: ct);
             if (result.Success)
             {
-                var goal = result.Value as goal.@this;
+                var goal = await result.Value() as goal.@this;
                 if (goal is { IsSetup: true }) return null;
                 // LoadFromFileAsync → Add() already indexed _byName[goal.Name].
                 // Writing _byName[name] again under a user-provided alias (e.g.
@@ -203,12 +203,12 @@ public sealed class @this
             var sysCandidate = global::app.type.path.@this.Resolve(
                 "/" + normalized + "/.build/" + prFile, context);
             var sysExists = await sysCandidate.ExistsAsync();
-            if (sysExists.Success && sysExists.Value == true)
+            if (sysExists.Success && (await sysExists.Value())?.Value == true)
             {
                 var result = await LoadFromFileAsync(App, sysCandidate.Absolute, cancellationToken: ct);
                 if (result.Success)
                 {
-                    var goal = result.Value as goal.@this;
+                    var goal = await result.Value() as goal.@this;
                     if (goal is { IsSetup: true }) return null;
                     // Same reason as above: Add() did the canonical _byName write.
                     return goal;
@@ -338,14 +338,14 @@ public sealed class @this
         if (App == null) return null;
         var resolved = global::app.type.path.@this.Resolve(prPath, App.System.Context!);
         var exists = await resolved.ExistsAsync();
-        if (!exists.Success || exists.Value != true)
+        if (!exists.Success || (await exists.Value())?.Value != true)
             return null;
 
         var loadResult = await LoadFromFileAsync(App, resolved.Absolute, cancellationToken: ct);
         if (!loadResult.Success)
             return null;
 
-        var loaded = loadResult.Value as goal.@this;
+        var loaded = await loadResult.Value() as goal.@this;
         if (loaded is { IsSetup: true }) return null;
         if (loaded != null)
             _byPath[key] = loaded;
@@ -368,7 +368,7 @@ public sealed class @this
             var readResult = await prPath.ReadBytes();
             if (!readResult.Success || readResult.Value == null)
                 return data.@this.FromError(readResult.Error ?? new Error($"Failed to read goal file: {prFilePath}"));
-            var content = System.Text.Encoding.UTF8.GetString(readResult.Value);
+            var content = System.Text.Encoding.UTF8.GetString((byte[])(await readResult.Value())!);
             var ext = prPath.Extension;
 
             List<goal.@this>? goals = null;
@@ -387,7 +387,7 @@ public sealed class @this
                         new DeserializeOptions { Value = el.GetRawText(), Extension = ext });
                     if (!elResult.Success)
                         return data.@this.FromError(elResult.Error!);
-                    if (elResult.Value != null) goals.Add(elResult.Value);
+                    { var __el = await elResult.Value() as goal.@this; if (__el != null) goals.Add(__el); }
                 }
             }
             else
@@ -397,7 +397,7 @@ public sealed class @this
                 if (!singleResult.Success)
                     return data.@this.FromError(singleResult.Error!);
                 if (singleResult.Value != null)
-                    goals = new List<goal.@this> { singleResult.Value };
+                    goals = new List<goal.@this> { (await singleResult.Value() as goal.@this)! };
             }
 
             if (goals == null || goals.Count == 0)

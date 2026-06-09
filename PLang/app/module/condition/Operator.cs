@@ -64,15 +64,15 @@ public sealed class Operator
     // --- Helpers ---
 
     /// <summary>Unwrap Data to raw value.</summary>
-    private static object? Val(data.@this? data) => data?.Value;
+    private static object? Val(data.@this? data) => data?.Materialize();
 
     /// <summary>Both operands have a non-null value — the ordering operators are false otherwise.</summary>
-    private static bool BothPresent(data.@this? left, data.@this? right) => left?.Value != null && right?.Value != null;
+    private static bool BothPresent(data.@this? left, data.@this? right) => left?.Materialize() != null && right?.Materialize() != null;
 
     /// <summary>IS-A: does the left value's type satisfy the named type (right operand)?</summary>
     private static bool IsType(data.@this? left, data.@this? right)
     {
-        var typeName = right?.Value?.ToString();
+        var typeName = right?.Materialize()?.ToString();
         if (left == null || string.IsNullOrWhiteSpace(typeName)) return false;
         return left.Type.Is(typeName);
     }
@@ -94,7 +94,7 @@ public sealed class Operator
     {
         // == true with non-bool left: delegates to Data.ToBooleanAsync(), so an
         // IBooleanResolvable left (a path) answers `if %path% exists` itself.
-        if (right?.Value is bool rb && left?.Value is not bool)
+        if (right?.Materialize() is bool rb && left?.Materialize() is not bool)
         {
             bool leftTruthy = left != null && await left.ToBooleanAsync();
             return rb ? leftTruthy : !leftTruthy;

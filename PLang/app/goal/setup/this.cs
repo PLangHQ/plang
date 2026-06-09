@@ -49,7 +49,7 @@ public sealed class @this
             // fast-pass via IsInRoot. Out-of-root would prompt, but setup paths
             // are derived from App.AbsolutePath so this is always in-root.
             var exists = await file.ExistsAsync();
-            if (!exists.Success || exists.Value != true) continue;
+            if (!exists.Success || (await exists.Value())?.Value != true) continue;
 
             try
             {
@@ -57,7 +57,7 @@ public sealed class @this
                 // FilePath.ReadText path. The per-Actor serializer carries a
                 // Context-bound PathJsonConverter so Path fields land wired.
                 var read = await file.ReadText();
-                if (!read.Success || read.Value is not goal.@this goal || !goal.IsSetup) continue;
+                if (!read.Success || await read.Value() is not goal.@this goal || !goal.IsSetup) continue;
 
                 foreach (var step in goal.Steps)
                 {
@@ -113,7 +113,7 @@ public sealed class @this
         if (string.IsNullOrEmpty(step.Hash)) return false;
 
         var result = await app.SettingsStore.Exists(Table, step.Hash);
-        return result.Success && result.Value;
+        return result.Success && (await result.Value())?.Value == true;
     }
 
     /// <summary>
