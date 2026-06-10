@@ -12,7 +12,11 @@ public partial class Count : IContext
         var data = await Context.Variable.Get((await ListName.Value()));
         var countData = await data.GetChild("Count");
 
-        if (countData.IsInitialized && (await countData.Value()) is int c)
+        // The typed surface answers in a `number` (raw int covers IList infra).
+        var counted = countData.IsInitialized ? await countData.Value() : null;
+        if (counted is global::app.type.number.@this n)
+            return global::app.data.@this<global::app.type.number.@this>.Ok(n);
+        if (counted is int c)
             return global::app.data.@this<global::app.type.number.@this>.Ok(c);
 
         // Fallback: enumerate

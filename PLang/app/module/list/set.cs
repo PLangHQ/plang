@@ -18,15 +18,15 @@ public partial class Set : IContext
         // Promote to native (no-op when already native) so the in-place set persists.
         await Context.Variable.Set((await ListName.Value()), nl);
 
-        if (Index.GetValue<int>() < 0 || Index.GetValue<int>() >= nl.Count)
+        if (Index.GetValue<int>() < 0 || Index.GetValue<int>() >= nl.CountRaw)
             return global::app.data.@this<type.list>.FromError(
-                new app.error.ValidationError($"Index {(await Index.Value())} out of range (0..{nl.Count - 1})"));
+                new app.error.ValidationError($"Index {(await Index.Value())} out of range (0..{nl.CountRaw - 1})"));
         // A list value is structure-copied so the slot doesn't alias the source variable
         // (same reason as list.add); scalars/dicts are stored by reference (rebind-safe).
         global::app.data.@this item = (Value == null ? null : await Value.Value()) is app.type.list.@this nlv
             ? new global::app.data.@this(Value.Name, nlv.CopyStructure(), Value.Type) { Context = Context }
             : Value ?? new global::app.data.@this("", null);
         nl.SetAt(Index.GetValue<int>(), item);
-        return global::app.data.@this<type.list>.Ok(new type.list { count = nl.Count, value = nl }, app.type.@this.FromName("list"));
+        return global::app.data.@this<type.list>.Ok(new type.list { count = nl.CountRaw, value = nl }, app.type.@this.FromName("list"));
     }
 }

@@ -23,4 +23,12 @@ public sealed partial class @this
     }
 
     public static bool operator !=(@this? a, @this? b) => !(a == b);
+
+    // Ordering — rides the numeric-tower CompareTo (IComparable<@this>); the
+    // implicit lifts from int/long/... make `count < limit` read naturally at
+    // C# call sites that hold a typed number.
+    public static bool operator <(@this a, @this b) => a.CompareTo(b) < 0;
+    public static bool operator >(@this a, @this b) => a.CompareTo(b) > 0;
+    public static bool operator <=(@this a, @this b) => a.CompareTo(b) <= 0;
+    public static bool operator >=(@this a, @this b) => a.CompareTo(b) >= 0;
 }

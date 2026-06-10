@@ -41,6 +41,6 @@ public partial class Group : IContext
         }
 
         return global::app.data.@this<type.list>.Ok(
-            new type.list { count = result.Count, value = result }, app.type.@this.FromName("list"));
+            new type.list { count = result.CountRaw, value = result }, app.type.@this.FromName("list"));
     }
 }

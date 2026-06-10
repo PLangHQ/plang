@@ -59,10 +59,14 @@ public partial class @this : global::app.type.item.@this, module.IContext,
     // (chunk) structure is never observable — `add` appends a row without reading the
     // existing ones, and reads walk the rows to present the flattened sequence.
 
-    /// <summary>Number of leaves — the flattened item count (a list row contributes its
-    /// own count; a scalar/dict row contributes 1). Walked on demand: a row may alias a
-    /// list mutated elsewhere, so a stored counter would stale.</summary>
-    public int Count
+    /// <summary>Number of leaves as the PLang <c>number</c> — the flattened item count
+    /// (a list row contributes its own count; a scalar/dict row contributes 1). Walked
+    /// on demand: a row may alias a list mutated elsewhere, so a stored counter would
+    /// stale.</summary>
+    public global::app.type.number.@this Count => CountRaw;
+
+    /// <summary>The interior raw count — index math and loop bounds.</summary>
+    internal int CountRaw
     {
         get
         {
@@ -96,7 +100,7 @@ public partial class @this : global::app.type.item.@this, module.IContext,
     // IListLeaf — a list dissolves into its container list: its leaves are this list's
     // flattened items. (The mutation-addressing helper Locate still resolves to the
     // concrete list, since editing a nested element needs the mutable surface.)
-    int global::app.data.IListLeaf.LeafCount => Count;
+    int global::app.data.IListLeaf.LeafCount => CountRaw;
     IReadOnlyList<Data> global::app.data.IListLeaf.Leaves => Items;
 
     /// <summary>The flattened element Data at <paramref name="index"/>, or C# null when out of range.</summary>
@@ -109,7 +113,7 @@ public partial class @this : global::app.type.item.@this, module.IContext,
     public Data? First => At(0);
 
     /// <summary>Last flattened element, or null when empty.</summary>
-    public Data? Last => At(Count - 1);
+    public Data? Last => At(CountRaw - 1);
 
     // Resolve a flattened index to the owning row + the offset within it. `inner` is the
     // row's list when the row is a list (offset indexes into it); null for a weight-1 row
@@ -122,7 +126,7 @@ public partial class @this : global::app.type.item.@this, module.IContext,
         {
             if (_items[r].Materialize() is @this list)
             {
-                int w = list.Count;
+                int w = list.CountRaw;
                 if (flatIndex < w) { rowIndex = r; offset = flatIndex; inner = list; return true; }
                 flatIndex -= w;
             }

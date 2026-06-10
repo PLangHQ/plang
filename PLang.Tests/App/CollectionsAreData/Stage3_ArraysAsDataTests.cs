@@ -82,7 +82,8 @@ public class Stage3_ArraysAsDataTests
         await Assert.That(nav.CanNavigate(data)).IsTrue();
         await Assert.That(ReferenceEquals(await nav.Navigate(data, "0"), element)).IsTrue();
         await Assert.That((string?)(await (await nav.Navigate(data, "last")).Value())).IsEqualTo("second");
-        await Assert.That((int)(await (await nav.Navigate(data, "count")).Value())!).IsEqualTo(2);
+        // the count intrinsic answers in the PLang `number`
+        await Assert.That(((global::app.type.number.@this)(await (await nav.Navigate(data, "count")).Value())!).ToInt32()).IsEqualTo(2);
 
         // Implicit-first through a list of dicts.
         var people = new ListV();

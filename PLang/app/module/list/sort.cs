@@ -41,6 +41,6 @@ public partial class Sort : IContext
             return global::app.data.@this<type.list>.FromError(
                 new app.error.ValidationError(ex.Message));
         }
-        return global::app.data.@this<type.list>.Ok(new type.list { count = nl.Count, value = nl }, app.type.@this.FromName("list"));
+        return global::app.data.@this<type.list>.Ok(new type.list { count = nl.CountRaw, value = nl }, app.type.@this.FromName("list"));
     }
 }

@@ -203,7 +203,7 @@ public class Fluid : ITemplate
         }
         public ICollection<string> Keys => d.KeyNames.ToList();
         public ICollection<object?> Values => d.Entries.Select(e => (object?)e.Peek()).ToList();
-        public int Count => d.Count;
+        public int Count => d.CountRaw;
         public bool IsReadOnly => true;
         public bool ContainsKey(string key) => d.Has(key);
         public bool TryGetValue(string key, out object? value)
@@ -244,7 +244,7 @@ public class Fluid : ITemplate
             get => l.At(index)?.Peek();
             set => throw new NotSupportedException("template view is read-only");
         }
-        public int Count => l.Count;
+        public int Count => l.CountRaw;
         public bool IsReadOnly => true;
         public IEnumerator<object?> GetEnumerator()
         {
@@ -252,7 +252,7 @@ public class Fluid : ITemplate
                 yield return item.Peek();
         }
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
-        public int IndexOf(object? item) { for (int i = 0; i < l.Count; i++) if (Equals(l.At(i)?.Peek(), item)) return i; return -1; }
+        public int IndexOf(object? item) { for (int i = 0; i < l.CountRaw; i++) if (Equals(l.At(i)?.Peek(), item)) return i; return -1; }
         public bool Contains(object? item) => IndexOf(item) >= 0;
         public void CopyTo(object?[] array, int arrayIndex) { foreach (var v in this) array[arrayIndex++] = v; }
         public void Add(object? item) => throw new NotSupportedException("template view is read-only");

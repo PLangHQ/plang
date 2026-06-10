@@ -28,6 +28,6 @@ public partial class Unique : IContext
         }
         var deduped = new app.type.list.@this(kept) { Context = Context };
         return global::app.data.@this<type.list>.Ok(
-            new type.list { count = deduped.Count, value = deduped }, app.type.@this.FromName("list"));
+            new type.list { count = deduped.CountRaw, value = deduped }, app.type.@this.FromName("list"));
     }
 }

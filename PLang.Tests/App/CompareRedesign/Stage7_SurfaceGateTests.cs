@@ -136,8 +136,14 @@ public class Stage7_SurfaceGateTests
     [Test]
     public async Task ListCount_ReturnsNumber_NotInt()
     {
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var l = new global::app.type.list.@this();
+        l.Add(new Data("", 1));
+        l.Add(new Data("", 2));
+        object count = l.Count;
+        await Assert.That(count).IsTypeOf<global::app.type.number.@this>();
+        await Assert.That(count.ToString()).IsEqualTo("2");
+        object dictCount = new global::app.type.dict.@this().Count;
+        await Assert.That(dictCount).IsTypeOf<global::app.type.number.@this>();
     }
 
     [Test]

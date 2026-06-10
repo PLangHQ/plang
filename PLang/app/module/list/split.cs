@@ -23,6 +23,6 @@ public partial class Split : IContext
             list.Add(new global::app.data.@this("", part));
 
         return global::app.data.@this<type.list>.Ok(
-            new type.list { count = list.Count, value = list }, app.type.@this.FromName("list"));
+            new type.list { count = list.CountRaw, value = list }, app.type.@this.FromName("list"));
     }
 }

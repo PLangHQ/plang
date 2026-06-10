@@ -178,7 +178,7 @@ public sealed class Writer : IWriter
                 // Value(item) routes an element Data through the record arm, so a
                 // signed element carries its envelope. Disambiguated by wrapper
                 // type from dict (`{}`); a bare IEnumerable still falls to `[]` below.
-                BeginArray(nativeList.Count);
+                BeginArray(nativeList.CountRaw);
                 foreach (var item in nativeList.Items) Value(item);
                 EndArray();
                 return;

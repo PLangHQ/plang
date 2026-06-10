@@ -16,7 +16,7 @@ public partial class Flatten : IContext
 
         var flat = new app.type.list.@this { Context = Context };
         await FlattenNative(nl, flat);
-        return global::app.data.@this<type.list>.Ok(new type.list { count = flat.Count, value = flat }, app.type.@this.FromName("list"));
+        return global::app.data.@this<type.list>.Ok(new type.list { count = flat.CountRaw, value = flat }, app.type.@this.FromName("list"));
     }
 
     // Flatten a native list: a nested-list element's elements are lifted; any other

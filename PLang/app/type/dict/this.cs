@@ -65,7 +65,12 @@ public sealed partial class @this : global::app.type.item.@this, module.IContext
     }
 
     /// <summary>Number of entries.</summary>
-    public int Count => _entries.Count;
+    /// <summary>Entry count as the PLang <c>number</c> (the public surface
+    /// answers in PLang values).</summary>
+    public global::app.type.number.@this Count => _entries.Count;
+
+    /// <summary>The interior raw count — loop bounds and emptiness checks.</summary>
+    internal int CountRaw => _entries.Count;
 
     /// <summary>Keys in insertion order, as a native <c>list&lt;text&gt;</c> —
     /// the public surface answers in PLang values (<c>%dict!keys%</c>).</summary>

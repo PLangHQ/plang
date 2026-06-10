@@ -44,6 +44,6 @@ public partial class Add : IContext
         else
             list.Add(toAdd);
 
-        return global::app.data.@this<type.list>.Ok(new type.list { count = list.Count, value = list }, app.type.@this.FromName("list"));
+        return global::app.data.@this<type.list>.Ok(new type.list { count = list.CountRaw, value = list }, app.type.@this.FromName("list"));
     }
 }

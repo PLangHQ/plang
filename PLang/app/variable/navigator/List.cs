@@ -73,7 +73,7 @@ public sealed class List : INavigator
         if (string.Equals(key, "last", StringComparison.OrdinalIgnoreCase))
             return list.Last!;
         if (string.Equals(key, "random", StringComparison.OrdinalIgnoreCase))
-            return list.At(Random.Shared.Next(list.Count))!;
+            return list.At(Random.Shared.Next(list.CountRaw))!;
 
         if (int.TryParse(key, out var index))
             return list.At(index) ?? global::app.data.@this.NotFound(key);
