@@ -81,16 +81,19 @@ class Data
 
 ## The two read methods
 
-Both live on the type (Data forwards). Both are async. The difference is
-exactly one thing: **parse or no parse**.
+Both live on the type (Data forwards). Peek is sync and free; Value is async
+and does the work.
 
 ```csharp
-// content in the cheapest form that still has content. NEVER parses.
-async Peek() { return value ?? _raw ?? await load(); }
+// what is in memory right now. Sync — no I/O, no parse, no resolve.
+Peek() { return value ?? _raw; }
 
 // content parsed and ready to use/navigate. May answer as a different type.
 async Value() { /* load if needed, parse if needed, return the typed instance */ }
 ```
+
+(Pass-through output is neither of these — it is `Write(IWriter)`'s job: the
+type streams itself, loading if needed, parsing never. See Serialization.)
 
 - Each type knows how to load itself (a file reads its disk through its auth
   gate; a url fetches). Nobody above the type knows or cares how.
@@ -196,8 +199,10 @@ forever.
   (`WithContent`/`Rebind` shapes are the coder's call — the contract is
   new-instance + rebind, never in-place.)
 
-- **`Peek()`** is for pass-through output: the channel writer writes content
-  as-is, no parse, however big the value.
+- **`Peek()`** is for looking at what is already in memory — sync, no I/O, no
+  parse, no resolve (ToString, debug, framework methods). It is NOT the
+  output door: pass-through output goes through `await Write(w)`, where the
+  type streams itself and loads if needed.
 
 ## Navigation — the type navigates itself
 
@@ -242,8 +247,8 @@ disk.
 
 ```plang
 - read config.json, write to %config%   / Data, Type = file. The file holds only its path. Nothing read.
-- write out %config%                    / channel writer calls Peek(): no value, no _raw → file loads
-                                        / its bytes (auth gate), bytes written out. NO parse.
+- write out %config%                    / channel calls await config.Write(w): no value, no _raw → file
+                                        / loads its bytes (auth gate), streams them out. NO parse.
 - write out %config.name%               / variable navigation calls await Value(): bytes parse → dict.
                                         / Same Data. Data.Type changed: file → dict (file kept in the
                                         / type chain). _raw emptied — single storage, always.
