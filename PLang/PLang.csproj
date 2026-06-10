@@ -41,7 +41,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="PLang.Tests" />
+    <InternalsVisibleTo Include="PLang.Tests.Shared" />
+    <InternalsVisibleTo Include="PLang.Tests.Modules" />
+    <InternalsVisibleTo Include="PLang.Tests.Types" />
+    <InternalsVisibleTo Include="PLang.Tests.Wire" />
+    <InternalsVisibleTo Include="PLang.Tests.Data" />
+    <InternalsVisibleTo Include="PLang.Tests.Generator" />
+    <InternalsVisibleTo Include="PLang.Tests.Runtime" />
   </ItemGroup>
 
   <ItemGroup>

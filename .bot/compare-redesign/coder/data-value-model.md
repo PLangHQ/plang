@@ -13,6 +13,88 @@ only ever ask for the value at the moment you actually use it.
 And the second sentence: **values never change; Data is the only thing that
 changes — it points at values.**
 
+## The flow, drawn
+
+```
+                              THE WORLD (CLR / external)
+      stdin / http        .pr literals        .NET API returns       disk
+           │                   │                    │                  │
+═══════════╪═══════════════════╪════════════════════╪══════════════════╪═══════
+           ▼                   ▼                    ▼                  ▼
+   ENTRY — a CLR value becomes the matching item, immediately, once.
+   The lowest level that reads bytes decides their first form (the channel
+   stamps from mime: text or binary). 5 → number (int is a KIND). json is
+   only a serialization format — deserialized it is dict/list, never "json".
+   The builder stamps `template` on authored values containing %refs%
+   (deterministic code, not the LLM).
+
+   Three rungs for any C# type:
+     own item type   — goal, dict, number, file… answers the questions ITS way
+     item | kind     — strongly-typed C# object passing through (generic answers)
+     never in Data   — engine plumbing plang can't hold (Assembly — take-over API)
+           │
+           ▼
+   ┌──────────────────────────────────────────────────┐
+   │  Data — the only thing that ever changes         │
+   │    name        — identity                        │
+   │    Type        — the item. IT IS THE VALUE.      │
+   │    properties  — sidecar (bag copied on share;   │
+   │    signature   — (moves to schema layer later)   │
+   │                                                  │
+   │    async Value() {                               │
+   │        type = await type.Value();  // may answer │
+   │        return type;     // AS A DIFFERENT TYPE — │
+   │    }                    // that assignment IS    │
+   │                         // the narrow file→dict  │
+   └──────────────────────────────────────────────────┘
+           │
+           ▼
+   FLOW — variables · goal.call · callstack · channels · wire
+   Couriers move Data whole and call NOTHING. Values are immutable, so
+   sharing is always safe: set %y% = %x% is a new Data pointing at the
+   same instance. list/dict are the deliberate exception — mutable
+   containers of immutable values (reference semantics, like C#).
+   data never wraps data — sealing layers (signature|encryption|compress)
+   are their own schema objects AROUND a data.
+           │
+           ├──────────── three doors, by what the caller needs: ────────────┐
+           ▼                              ▼                                 ▼
+   Peek()  — sync               await Value() — async             await Write(w) — async
+   what is in memory NOW        "I will USE this value"           pass-through output
+   value ?? _raw                load + parse if needed;           the type STREAMS itself,
+   no I/O, no parse,            answers ready — maybe as          loading if needed,
+   no resolve.                  a new type; Data rebinds.         parsing NEVER, resolving
+   (ToString, Equals,           Result cached iff it depends      its own %refs% while
+   debug views)                 only on the value itself          writing (template ⇒
+                                (parse yes, render no).           never cached).
+                                Navigation: the item              The serializer stays dumb;
+                                navigates ITSELF.                 it just calls Write.
+                                Failure → Data.Error.
+
+   Manipulation never mutates: new instance + Data.Rebind — same rule as set.
+
+   The lifecycle of %config%, single storage throughout:
+     read config.json      file — only a path, nothing read
+     write out %config%    Write(w): file loads bytes (auth gate), streams. no parse
+     %config.name%         Value(): bytes parse → dict. _raw emptied. Type: file→dict
+                           (file stays in the chain: is file ✓, !file!path ✓,
+                            a Data<file> slot still satisfied)
+     set %config.name%=…   new dict value, Data rebinds; disk unchanged until save
+═══════════╪═══════════════════════════════════════════════════════════════════
+           ▼
+   EXIT — only when talking to .NET / an external API, and the item lowers
+   ITSELF: number.ToInt64(), duration.Clr<TimeSpan>(). Checked, loud on loss.
+   plang→plang never decomposes.
+```
+
+The property the picture exists to show: **there is exactly one place with
+branches in it — the type's own implementation.** Data has zero, the flow
+layer has zero, entry and exit are single seams. Whenever something looks
+like it needs a mechanism (narrowing, loading, rendering, navigation,
+truthiness), it is a type answering for itself through one of the three
+doors. Any `is string`, mime word, or type-switch above the type is a hole in
+the wall — and every hole forces every consumer to handle two worlds.
+
 ## Immutability and sharing (settled)
 
 - **Every value instance is immutable.** plang cannot change an instance by

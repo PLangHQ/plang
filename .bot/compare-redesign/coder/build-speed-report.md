@@ -55,16 +55,21 @@ Typical inner-loop iteration (edit PLang + run affected test class):
    root-caused. Mitigation that works: `./dev.sh warm` run in the background
    at session start absorbs the stall before it costs anyone anything.
 
-## The last bottleneck: 31s to recompile the test project
+## The split (DONE — 2026-06-10, same day)
 
-PLang.Tests is one project with 4,270 tests. Any test edit (or PLang API
-change) recompiles all of it: ~25s of csc + 4s of TUnit metadata generation,
-even with analyzers off. The only real fix is structural: **split PLang.Tests
-into per-area projects** (App.Core, Serialization, Modules, Generator, …).
-Then a test edit recompiles one slice (estimate: 3–8s) and slices build in
-parallel. It's a bigger change (project files, GlobalUsings, InternalsVisibleTo
-per project) — worth it if the 31s bothers you in practice, but I didn't want
-to restructure the test tree without asking. Say the word.
+PLang.Tests is now a parent FOLDER (root stays clean) holding seven projects:
+`Shared` (helpers/fixtures), `Modules`, `Types`, `Wire`, `Data`, `Generator`,
+`Runtime`. Common properties/packages/usings live once in
+`PLang.Tests/Directory.Build.props`; `PLang.Tests/All.proj` builds all slices
+in one parallel MSBuild call. All 4,270 tests survived the move (counted), the
+2 remaining fails are the documented pre-existing ones on the disposable
+stage9 path.
+
+Measured after the split:
+- test edit → its slice rebuilds in **6.3s** (was 31s, ~5×)
+- `./dev.sh test Foo` greps the class to its slice and runs just that binary
+- PLang body edit: ~5s (ref assemblies keep slices from recompiling)
+- no-change all-seven + console: ~3.5s
 
 ## What you / the bots should do (the whole recipe)
 
@@ -85,7 +90,6 @@ iterating (use a filter; the full sweep is for checkpoints).
 
 - The after-idle stall is mitigated, not root-caused. If it ever bites
   through the warmup, capture it with `dotnet build -bl` and read the binlog.
-- Splitting PLang.Tests (31s → ~5s for test edits) — awaiting your call.
 - A recurring segfault at the END of full test runs (after results print —
   results are valid). Pre-existing, intermittent, unrelated to speed; on the
   watch list.

@@ -2,53 +2,76 @@
 # Fast inner-loop build/test for PLang development.
 #
 # Usage:
-#   ./dev.sh build              # incremental build of PLang.Tests + PlangConsole (analyzers off)
-#   ./dev.sh test [filter]      # build, then run C# tests; optional TUnit class filter, e.g. ./dev.sh test ReturnTests
+#   ./dev.sh build              # incremental build of all test projects + PlangConsole (analyzers off)
+#   ./dev.sh test [filter]      # build, then run C# tests; filter = test-class name (finds the right project), e.g. ./dev.sh test ReturnTests
 #   ./dev.sh ptest              # build console, then run plang tests (from Tests/)
-#   ./dev.sh full               # the pre-commit build: analyzers ON (PLNG001/PLNG002 gates, TUnit warnings) + both suites
+#   ./dev.sh full               # the pre-commit gate: analyzers ON (PLNG001/PLNG002, TUnit warnings) + ALL suites
 #   ./dev.sh warm               # background-friendly warmup; run once at session start (absorbs the after-idle stall)
 #
-# Why the flags matter (measured 2026-06-10, see .bot/compare-redesign/coder/build-speed-report.md):
-#   - dotnet run --project PLang.Tests  → 90s+ per call (restore + MSBuild eval + build + run). Never use it.
-#   - -p:RunAnalyzers=false             → test-project compile 47s → 31s; PLang-only edit 13s → 4.6s.
-#     MUST be used consistently: alternating the flag invalidates incremental state (full rebuild).
-#     Source generators still run (tests stay correct); only diagnostics are skipped — `full` restores them.
-#   - The compiled test binary is run directly; TUnit filter syntax: --treenode-filter "/*/*/<ClassName>/*"
+# The C# tests live in per-area projects under PLang.Tests/ (Modules, Types,
+# Wire, Data, Generator, Runtime + Shared helpers). An edit recompiles only its
+# slice; slices build in parallel via PLang.Tests/All.proj.
+#
+# Why the flags matter (measured 2026-06-10, .bot/compare-redesign/coder/build-speed-report.md):
+#   - dotnet run --project <tests>  → 90s+ per call (restore + eval + build + run). Never.
+#   - -p:RunAnalyzers=false         → saves ~17s per test-project compile. MUST be consistent:
+#     alternating the flag invalidates incremental state (full rebuild). Generators still run.
+#   - Test binaries run directly; TUnit filter: --treenode-filter "/*/*/*Name*/*"
 set -euo pipefail
 cd "$(dirname "$0")"
 export DOTNET_CLI_USE_MSBUILD_SERVER=1
 
-DEVFLAGS=(-c Debug --no-restore -p:RunAnalyzers=false -v q --nologo)
-TESTBIN=PLang.Tests/bin/Debug/net10.0/PLang.Tests
+DEVFLAGS=(-p:Configuration=Debug -p:RunAnalyzers=false -v:q -nologo)
+PROJECTS=(Modules Types Wire Data Generator Runtime)
+
+run_bin() { # $1 = project, rest = args
+  "PLang.Tests/$1/bin/Debug/net10.0/PLang.Tests.$1" "${@:2}"
+}
 
 case "${1:-build}" in
   build)
-    time dotnet build PLang.Tests "${DEVFLAGS[@]}"
-    time dotnet build PlangConsole "${DEVFLAGS[@]}"
+    time dotnet msbuild PLang.Tests/All.proj -t:Build "${DEVFLAGS[@]}"
+    time dotnet build PlangConsole -c Debug --no-restore -p:RunAnalyzers=false -v q --nologo
     ;;
   test)
-    dotnet build PLang.Tests "${DEVFLAGS[@]}"
+    dotnet msbuild PLang.Tests/All.proj -t:Build "${DEVFLAGS[@]}"
     if [ -n "${2:-}" ]; then
-      "$TESTBIN" --treenode-filter "/*/*/*${2}*/*"
+      # find the project whose sources mention the class; fall back to all
+      hits=$(grep -rl "class ${2}" PLang.Tests/*/ --include=*.cs 2>/dev/null | grep -v /obj/ | sed 's|PLang.Tests/||;s|/.*||' | sort -u)
+      [ -z "$hits" ] && hits="${PROJECTS[*]}"
+      for p in $hits; do
+        echo "=== $p ==="
+        run_bin "$p" --treenode-filter "/*/*/*${2}*/*" || true
+      done
     else
-      "$TESTBIN"
+      fail=0
+      for p in "${PROJECTS[@]}"; do
+        echo "=== $p ==="
+        run_bin "$p" || fail=1
+      done
+      exit $fail
     fi
     ;;
   ptest)
-    dotnet build PlangConsole "${DEVFLAGS[@]}"
+    dotnet build PlangConsole -c Debug --no-restore -p:RunAnalyzers=false -v q --nologo
     (cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test)
     ;;
   full)
-    # Pre-commit gate: analyzers ON. This build is slower AND invalidates the
-    # analyzers-off incremental state once — run it when handing off, not per edit.
-    dotnet build PLang.Tests -c Debug --no-restore -v q --nologo
+    # Pre-commit gate: analyzers ON. Slower, and invalidates the analyzers-off
+    # incremental state once — run when handing off, not per edit.
+    dotnet msbuild PLang.Tests/All.proj -t:Build -p:Configuration=Debug -v:q -nologo
     dotnet build PlangConsole -c Debug --no-restore -v q --nologo
-    "$TESTBIN"
-    (cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test)
+    fail=0
+    for p in "${PROJECTS[@]}"; do
+      echo "=== $p ==="
+      run_bin "$p" || fail=1
+    done
+    (cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test) || fail=1
+    exit $fail
     ;;
   warm)
-    dotnet build PLang.Tests "${DEVFLAGS[@]}" >/dev/null 2>&1 || true
-    dotnet build PlangConsole "${DEVFLAGS[@]}" >/dev/null 2>&1 || true
+    dotnet msbuild PLang.Tests/All.proj -t:Build "${DEVFLAGS[@]}" >/dev/null 2>&1 || true
+    dotnet build PlangConsole -c Debug --no-restore -p:RunAnalyzers=false -v q --nologo >/dev/null 2>&1 || true
     echo warm
     ;;
   *)
