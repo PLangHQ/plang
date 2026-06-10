@@ -908,3 +908,12 @@ name `signature` would substitute the wire body the signing model trusts).
 Investigate: is the list complete (should `path`/`permission`/`goalcall` be on
 it?), is name-sealing the right mechanism vs. sealing by assembly origin, and
 how it interacts with the new ReservedCore property-shadow check beside it.
+
+## 2026-06-10 — Rename TString
+
+**Context (Ingi):** `TString` is the translation carrier (user-facing strings go
+through translation — even ones with no %refs%, like "100% plang"). The name
+doesn't say that; during Stage 9 design it was nearly misappropriated as the
+%ref%-resolution template type precisely because the name is opaque. Rename to
+something that says translation (and keep it distinct from the authored-literal
+resolution type Stage 9 introduces).
