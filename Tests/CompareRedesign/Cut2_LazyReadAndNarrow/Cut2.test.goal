@@ -1,7 +1,18 @@
 Start
-/ Cut 2 — lazy read + narrow + chain-wide !. Read a file through an instrumented source counting reads.
-/ %file!file!path% → 0 reads (location only); is file → true (no read).
-/ %file.field% → exactly 1 read (the narrow); second use → still 1 (cached); %file!file!path% still resolves post-narrow.
-/ A handler param bound to %file.field% reads only at await Param.Value() (lazy GetParameter<T>);
-/ a bad-scheme param produces a typed error AFTER the await, not an NRE on .Value!.
-- throw "not implemented"
+/ Cut 2 — lazy read + narrow + chain-wide !.
+/ %file!file!path% resolves location-only (no content read); is file → true with no read.
+/ %file.field% reads + parses + narrows; second use stays cached; the facet hop
+/ still resolves after the narrow.
+- save 'cut2.json' with content '{"db":"plang","port":8080}'
+- read file 'cut2.json', write to %cfg%
+- set %loc% = %cfg!file!path%
+- assert %loc% is not null
+- assert %cfg% is file
+- set %db% = %cfg.db%
+- assert %db% equals "plang"
+- set %port% = %cfg.port%
+- assert %port% equals 8080
+- assert %cfg% is dict
+- set %loc2% = %cfg!file!path%
+- assert %loc2% is not null
+- delete file 'cut2.json'

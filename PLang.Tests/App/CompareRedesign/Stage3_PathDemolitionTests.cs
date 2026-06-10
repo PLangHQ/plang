@@ -1,6 +1,9 @@
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using PLang.Tests.App.Types.PathTests.Http;
+using HttpPath = global::app.type.path.http.@this;
+using PLangFilePath = global::app.type.path.file.@this;
 
 namespace PLang.Tests.App.CompareRedesign;
 
@@ -11,6 +14,48 @@ namespace PLang.Tests.App.CompareRedesign;
 // loses `.Path`. `directory.list : list<path>`. `read %url%` fetches over http.
 public class Stage3_PathDemolitionTests
 {
+    private static (global::app.@this app, global::app.actor.context.@this context, string dir) MakeApp()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "plang_st3pd_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        var app = new global::app.@this(dir);
+        return (app, app.User.Context, dir);
+    }
+
+    private static async Task Grant(global::app.actor.context.@this context, string url)
+    {
+        var perm = new global::app.type.path.permission.@this(
+            "User", new HttpPath(url, context).Absolute,
+            global::app.type.path.permission.verb.@this.AllowAll(),
+            global::app.type.path.permission.Match.Exact);
+        await context.Actor!.Permission.Add(new global::app.data.@this<global::app.type.path.permission.@this>("", perm) { Context = context });
+    }
+
+    private static async Task<Data> Read(global::app.actor.context.@this context, global::app.type.path.@this p)
+    {
+        var action = new global::app.module.file.Read
+        {
+            Context = context,
+            Path = new global::app.data.@this<global::app.type.path.@this>("", p),
+        };
+        var result = await action.Run();
+        await result.IsSuccess();
+        return result;
+    }
+
+    private static async Task<string> SerializePlang(global::app.@this app, Data data)
+    {
+        // The channel chokepoint runs the Load() pass (ILoadable pre-
+        // materialisation) before the sync STJ wall — mirror that here.
+        await data.Load();
+        var plang = (global::app.channel.serializer.plang.@this)
+            app.User.Channel.Serializers.GetByMimeType("application/plang");
+        var options = (JsonSerializerOptions)typeof(global::app.channel.serializer.plang.@this)
+            .GetField("_outbound", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .GetValue(plang)!;
+        return JsonSerializer.Serialize(data, options);
+    }
+
     [Test]
     public async Task Path_NoLongerCarriesContent_NoSourceField()
     {
@@ -58,17 +103,31 @@ public class Stage3_PathDemolitionTests
     [Test]
     public async Task PathBangAbsolute_DerivedProjection_GatedAndUnserialised()
     {
-        // %path!absolute% is gated (Authorize) and excluded from Write — it leaks the install root
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // the resolved absolute stays OFF the wire — it leaks the install root
+        var (app, context, dir) = MakeApp();
+        await using var _ = app;
+        var p = global::app.type.path.@this.Resolve("note.txt", context);
+        var data = new Data("p", p) { Context = context };
+        var json = await SerializePlang(app, data);
+        await Assert.That(json).DoesNotContain(dir);
+        // the projection itself is still derivable on the property plane
+        var abs = await data.GetChild("!absolute");
+        await Assert.That(abs.Peek()?.ToString()).Contains("note.txt");
     }
 
     [Test]
     public async Task PathBangExtension_Derived_Serialised()
     {
-        // %path!extension% is derived from _location and IS serialised
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // %path!extension% derives from the location; the wire form (the
+        // location string) carries it
+        var (app, context, _) = MakeApp();
+        await using var __ = app;
+        var p = global::app.type.path.@this.Resolve("docs/readme.md", context);
+        var data = new Data("p", p) { Context = context };
+        var ext = await data.GetChild("!extension");
+        await Assert.That(ext.Peek()?.ToString()).IsEqualTo("md");
+        var json = await SerializePlang(app, data);
+        await Assert.That(json).Contains(".md");
     }
 
     [Test]
@@ -83,49 +142,98 @@ public class Stage3_PathDemolitionTests
     [Test]
     public async Task Directory_List_IsListOfPath_NotFiles()
     {
-        // dir.@this.List is typed list<path> (locations of children), not list<file> (content-bearing)
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // dir.@this.List is typed list<path> (locations of children), not list<file>
+        var (app, context, dir) = MakeApp();
+        await using var _ = app;
+        Directory.CreateDirectory(Path.Combine(dir, "docs"));
+        File.WriteAllText(Path.Combine(dir, "docs", "a.txt"), "alpha");
+        File.WriteAllText(Path.Combine(dir, "docs", "b.txt"), "beta");
+
+        var result = await Read(context, new PLangFilePath(Path.Combine(dir, "docs")) { Context = context });
+        var directory = (global::app.type.directory.@this)result.Peek()!;
+        var listing = await directory.List();
+        await Assert.That(listing).IsTypeOf<global::app.type.list.@this<global::app.type.path.@this>>();
+        await Assert.That(listing.Count).IsEqualTo(2);
+        foreach (var entry in listing.Items)
+            await Assert.That(entry.Peek()).IsAssignableTo<global::app.type.path.@this>();
     }
 
     [Test]
     public async Task Directory_WriteOut_EmitsFlatListingOfLocations_NotContents()
     {
-        // directory.Write serialises the list<path> → flat listing of location strings; recursive tree is explicit
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var (app, context, dir) = MakeApp();
+        await using var _ = app;
+        Directory.CreateDirectory(Path.Combine(dir, "docs"));
+        File.WriteAllText(Path.Combine(dir, "docs", "a.txt"), "TOP-SECRET-CONTENT");
+
+        var result = await Read(context, new PLangFilePath(Path.Combine(dir, "docs")) { Context = context });
+        var json = await SerializePlang(app, result);
+        await Assert.That(json).Contains("a.txt");
+        await Assert.That(json).DoesNotContain("TOP-SECRET-CONTENT");
     }
 
     [Test]
     public async Task ReadUrl_Fetches_OverHttp()
     {
-        // url.@this materialises content via HttpPath read (the scheme owns the I/O)
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        using var server = new HttpTestServer();
+        var (app, context, _) = MakeApp();
+        await using var __ = app;
+        var url = server.NewResourceUrl();
+        await Grant(context, url);
+        await new HttpPath(url, context).WriteText("remote body");
+
+        var result = await Read(context, new HttpPath(url, context));
+        await Assert.That(result.Type!.Name).IsEqualTo("url");
+        // scalar use fetches through the HttpPath (the scheme owns the I/O);
+        // no extension on the resource → raw bytes
+        var content = await result.Value();
+        var text = content is byte[] b ? Encoding.UTF8.GetString(b) : content?.ToString();
+        await Assert.That(text).Contains("remote body");
     }
 
     [Test]
     public async Task UrlBangHost_AndBangPath_DoNotFetch_MaterializeCountZero()
     {
-        // %url!host% / %url!path% live on the location; never trigger fetch
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var (app, context, _) = MakeApp();
+        await using var __ = app;
+        var result = await Read(context, new HttpPath("http://example.com/data.json", context));
+        var reference = (global::app.type.url.@this)result.Peek()!;
+
+        var host = await result.GetChild("!host");
+        await Assert.That(host.Peek()?.ToString()).IsEqualTo("example.com");
+        var pathChild = await result.GetChild("!path");
+        await Assert.That(pathChild.Peek()).IsNotNull();
+        await Assert.That(reference.IsLoaded).IsFalse();
     }
 
     [Test]
     public async Task FileWriteOut_UnNarrowed_EmitsRawContentBytes()
     {
-        // bare-scalar contract — `write out %file%` pre-narrow emits the raw bytes (passthrough)
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // bare-scalar contract — write-out pre-narrow emits the raw content
+        var (app, context, dir) = MakeApp();
+        await using var _ = app;
+        File.WriteAllText(Path.Combine(dir, "note.txt"), "the raw note");
+
+        var result = await Read(context, new PLangFilePath(Path.Combine(dir, "note.txt")) { Context = context });
+        var json = await SerializePlang(app, result);
+        await Assert.That(json).Contains("the raw note");
+        // serialization loads but never narrows — still the file headline
+        await Assert.That(result.Type!.Name).IsEqualTo("file");
     }
 
     [Test]
     public async Task FileWriteOut_AfterNarrow_Reserialises_FromTypedContent()
     {
-        // post-narrow the raw is gone (single-storage); write-out reserialises the parsed item
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var (app, context, dir) = MakeApp();
+        await using var _ = app;
+        File.WriteAllText(Path.Combine(dir, "config.json"), "{\"port\":8080}");
+
+        var result = await Read(context, new PLangFilePath(Path.Combine(dir, "config.json")) { Context = context });
+        await result.GetChild("port");                  // examination → narrow
+        await Assert.That(result.Type!.Name).IsEqualTo("dict");
+        var json = await SerializePlang(app, result);
+        await Assert.That(json).Contains("8080");
+        await Assert.That(json).Contains("port");
     }
 
     [Test]
@@ -143,8 +251,22 @@ public class Stage3_PathDemolitionTests
     [Test]
     public async Task SetDotField_RebindsFreshDict_InvalidatesPassthrough()
     {
-        // `set %config.y% = 1` rebinds %config% to a fresh dict — the only thing that changes write-out across branches
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // `set %config.y% = 1` — the dotted write examines (narrows) and the
+        // mutated dict is what write-out reserialises afterwards
+        var (app, context, dir) = MakeApp();
+        await using var _ = app;
+        File.WriteAllText(Path.Combine(dir, "config.json"), "{\"port\":8080}");
+        var result = await Read(context, new PLangFilePath(Path.Combine(dir, "config.json")) { Context = context });
+        await context.Variable.Set("config", result);
+
+        await context.Variable.Set("config.y", 1);
+
+        var bound = await context.Variable.Get("config");
+        await Assert.That(bound!.Type!.Is("dict")).IsTrue();
+        var y = await bound.GetChild("y");
+        await Assert.That((await y.Value())?.ToString()).IsEqualTo("1");
+        var json = await SerializePlang(app, bound!);
+        await Assert.That(json).Contains("8080");
+        await Assert.That(json).Contains("\"y\"");
     }
 }

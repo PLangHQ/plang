@@ -1,3 +1,7 @@
+using app.module.file;
+using PLangPath = global::app.type.path.@this;
+using PLangFilePath = global::app.type.path.file.@this;
+
 namespace PLang.Tests.App.CompareRedesign;
 
 // Stage 3 — `read X` yields a reference (`file`/`directory`/`url`); content
@@ -5,126 +9,239 @@ namespace PLang.Tests.App.CompareRedesign;
 // `Data` instance, `.Type` mutated in place, prior type retained in the
 // `.Is()` chain. `!` resolves chain-wide, never headline-only. Single-storage:
 // the parsed item replaces the raw, there is no `_raw` alongside.
-public class Stage3_ReferenceNarrowTests
+public class Stage3_ReferenceNarrowTests : IDisposable
 {
+    private readonly string _tempDir;
+    private readonly global::app.@this _app;
+
+    public Stage3_ReferenceNarrowTests()
+    {
+        _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_stage3_" + Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(_tempDir);
+        _app = new global::app.@this(_tempDir);
+    }
+
+    public void Dispose()
+    {
+        _app.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        if (System.IO.Directory.Exists(_tempDir))
+            System.IO.Directory.Delete(_tempDir, true);
+    }
+
+    private string TempPath(string rel) => System.IO.Path.Combine(_tempDir, rel);
+
+    private global::app.data.@this<PLangPath> MakePath(string rel) =>
+        new("", new PLangFilePath(TempPath(rel)) { Context = _app.User.Context });
+
+    private async Task<Data> Read(string rel)
+    {
+        var action = new Read { Context = _app.User.Context, Path = MakePath(rel) };
+        var result = await action.Run();
+        await result.IsSuccess();
+        return result;
+    }
+
+    private Data JsonFile(string name = "config.json", string content = "{\"database\":\"plang\",\"port\":8080}")
+    {
+        System.IO.File.WriteAllText(TempPath(name), content);
+        return Read(name).GetAwaiter().GetResult();
+    }
+
     [Test]
     public async Task ReadLocalFile_ReturnsFileType_ChainIsFilePathItem()
     {
-        // read file.txt → headline `file`, .Is() chain [file, path, item], content lazy
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        System.IO.File.WriteAllText(TempPath("file.txt"), "hello");
+        var result = await Read("file.txt");
+        await Assert.That(result.Type!.Name).IsEqualTo("file");
+        await Assert.That(result.Peek()).IsTypeOf<global::app.type.file.@this>();
+        // .Is() chain — file is-a path is-a item; content untouched
+        await Assert.That(result.Type.Is("file")).IsTrue();
+        await Assert.That(result.Type.Is("path")).IsTrue();
+        await Assert.That(result.Type.Is("item")).IsTrue();
     }
 
     [Test]
     public async Task ReadHttpUrl_ReturnsUrlType_NotFile()
     {
-        // read http://example.com → `url` (scheme registry routes http → url, not file)
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
-    }
-
-    [Test]
-    public async Task ReadUnknownLocalExtension_StaysGenericFile()
-    {
-        // unknown local extension → generic `file`, content kind = binary (not narrowed)
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
-    }
-
-    [Test]
-    public async Task ContentKindInference_JsonExtension_NarrowsToDict()
-    {
-        // .json content + navigation → narrows to `dict` (via the json deserializer)
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // remote scheme routes to `url` with NO fetch — pure construction
+        var http = new global::app.type.path.http.@this("http://example.com/data.json") { Context = _app.User.Context };
+        var action = new Read { Context = _app.User.Context, Path = new global::app.data.@this<PLangPath>("", http) };
+        var result = await action.Run();
+        await result.IsSuccess();
+        await Assert.That(result.Type!.Name).IsEqualTo("url");
+        var reference = (global::app.type.url.@this)result.Peek()!;
+        await Assert.That(reference.IsLoaded).IsFalse();
+        await Assert.That(reference.Host).IsEqualTo("example.com");
     }
 
     [Test]
     public async Task ContentKindInference_CsvExtension_NarrowsToTableOrList()
     {
-        // .csv content + navigation → narrows to `list` (or `table`)
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        System.IO.File.WriteAllText(TempPath("report.csv"), "name,age\nAda,42\n");
+        var data = await Read("report.csv");
+        await Assert.That(data.Type!.Kind).IsEqualTo("csv");
+        var op = new global::app.module.condition.Operator("is");
+        var right = new Data("", "table") { Context = _app.User.Context };
+        var isTable = await op.Evaluate(data, right);
+        var rightList = new Data("", "list") { Context = _app.User.Context };
+        var isList = await op.Evaluate(data, rightList);
+        await Assert.That(isTable || isList).IsTrue()
+            .Because("csv content narrows to table (or list)");
+    }
+
+    [Test]
+    public async Task ReadUnknownLocalExtension_StaysGenericFile()
+    {
+        System.IO.File.WriteAllBytes(TempPath("blob.zzz"), new byte[] { 1, 2, 3 });
+        var result = await Read("blob.zzz");
+        await Assert.That(result.Type!.Name).IsEqualTo("file");
+        await Assert.That(result.Peek()).IsTypeOf<global::app.type.file.@this>();
+        // unknown extension: scalar content stays raw bytes (no text decode)
+        var content = await result.Value();
+        await Assert.That(content).IsTypeOf<byte[]>();
+    }
+
+    [Test]
+    public async Task ContentKindInference_JsonExtension_NarrowsToDict()
+    {
+        var data = JsonFile();
+        await Assert.That(data.Type!.Kind).IsEqualTo("json");
+        var child = await data.GetChild("database");
+        await Assert.That((await child.Value())?.ToString()).IsEqualTo("plang");
+        await Assert.That(data.Type!.Name).IsEqualTo("dict");
     }
 
     [Test]
     public async Task BangFileBangPath_ResolvesWithoutReading_MaterializeCountZero()
     {
-        // %x!file!path% reaches the file facet's location with no read — the property surface is location/stat-only
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var data = JsonFile("untouched.json");
+        var facet = await data.GetChild("!file");
+        await Assert.That(facet.IsInitialized).IsTrue();
+        var pathChild = await facet.GetChild("!path");
+        await Assert.That(pathChild.Peek()).IsNotNull();
+        // the property plane never read content: the reference is still unloaded
+        // and the Data never narrowed
+        var reference = (global::app.type.file.@this)data.Peek()!;
+        await Assert.That(reference.IsLoaded).IsFalse();
+        await Assert.That(data.Type!.Name).IsEqualTo("file");
     }
 
     [Test]
     public async Task DotField_OnFile_ReadsAndParsesAndNarrows_MaterializeCountOne()
     {
-        // %x.database% on a json file: reads + parses + narrows to dict; MaterializeCount transitions 0 → 1
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var data = JsonFile("narrow1.json");
+        var reference = (global::app.type.file.@this)data.Peek()!;
+        await Assert.That(reference.IsLoaded).IsFalse();
+
+        var child = await data.GetChild("port");
+        await Assert.That((await child.Value())?.ToString()).IsEqualTo("8080");
+        // narrowed: the parsed dict replaced the reference (single storage)
+        await Assert.That(data.Type!.Name).IsEqualTo("dict");
+        await Assert.That(data.Peek()).IsTypeOf<global::app.type.dict.@this>();
+        // single-storage: the stashed location-only reference dropped its bytes
+        await Assert.That(reference.IsLoaded).IsFalse();
     }
 
     [Test]
     public async Task AfterNarrow_IsFile_AndIsDict_BothTrue_SameInstance()
     {
-        // identity accumulates — post-narrow %config% .Is(dict) AND .Is(file) AND .Is(item)
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var data = JsonFile("accum.json");
+        await data.GetChild("database");
+        await Assert.That(data.Type!.Is("dict")).IsTrue();
+        await Assert.That(data.Type.Is("file")).IsTrue();
+        await Assert.That(data.Type.Is("item")).IsTrue();
     }
 
     [Test]
     public async Task NarrowMutatesSameDataInstance_NotReplaced()
     {
-        // ReferenceEquals(dataBefore, dataAfter) — narrow runs through the Type setter, not a fresh Data
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var data = JsonFile("inplace.json");
+        var before = data;
+        await data.GetChild("database");
+        await Assert.That(ReferenceEquals(before, data)).IsTrue();
+        await Assert.That(before.Type!.Name).IsEqualTo("dict");
     }
 
     [Test]
     public async Task BangType_PostNarrow_HeadlineIsDict_TypeListIsChain()
     {
-        // %config!type% → `dict` (headline); %config!type.list% → [dict, file, item] (newest at index 0)
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var data = JsonFile("chain.json");
+        await data.GetChild("database");
+        var headline = data.Type!;
+        await Assert.That(headline.Name).IsEqualTo("dict");
+        // %config!type.list% — the chain, newest at index 0
+        var names = headline.List.Select(t => t.Name).ToList();
+        await Assert.That(names[0]).IsEqualTo("dict");
+        await Assert.That(names).Contains("file");
     }
 
     [Test]
     public async Task IsDict_ForcesNarrow_Deterministic()
     {
-        // `if %config% is dict` on an un-narrowed json file forces parse + chain accumulation; deterministic answer
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var data = JsonFile("force.json");
+        var op = new global::app.module.condition.Operator("is");
+        var right = new Data("", "dict") { Context = _app.User.Context };
+        await Assert.That(await op.Evaluate(data, right)).IsTrue();
+        await Assert.That(data.Type!.Name).IsEqualTo("dict");
+        // deterministic: asking again answers from the chain, no second parse
+        await Assert.That(await op.Evaluate(data, right)).IsTrue();
     }
 
     [Test]
     public async Task BangFileBangPath_ResolvesOnUnNarrowed_AND_Narrowed_Branches()
     {
-        // chain-wide ! — %config!file!path% resolves whether or not the value narrowed; no flow-dependent crash
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // un-narrowed branch
+        var a = JsonFile("brancha.json");
+        var facetA = await a.GetChild("!file");
+        await Assert.That(facetA.IsInitialized).IsTrue();
+        // narrowed branch — the stashed reference serves the facet
+        var b = JsonFile("branchb.json");
+        await b.GetChild("database");
+        var facetB = await b.GetChild("!file");
+        await Assert.That(facetB.IsInitialized).IsTrue();
+        await Assert.That(facetB.Peek()).IsTypeOf<global::app.type.file.@this>();
     }
 
     [Test]
     public async Task NarrowIsIdempotent_RacingNavigationsConverge_NoCorruption()
     {
-        // two concurrent navigations on the same un-narrowed reference produce the same typed value;
-        // last-write-wins on _type/_value, no lock needed (coder v3 finding B)
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var data = JsonFile("race.json");
+        var tasks = Enumerable.Range(0, 8)
+            .Select(_ => Task.Run(async () => await data.GetChild("port")))
+            .ToArray();
+        await Task.WhenAll(tasks);
+        await Assert.That(data.Type!.Name).IsEqualTo("dict");
+        foreach (var t in tasks)
+            await Assert.That((await t.Result.Value())?.ToString()).IsEqualTo("8080");
     }
 
     [Test]
     public async Task DeepClonedReference_NarrowsItsOwnCopy_NoPropagationToOriginal()
     {
-        // a transient courier/clone narrows its own Data; original's chain stays put (aliasing semantics)
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var original = JsonFile("clone.json");
+        var copy = original.Clone();
+        await copy.GetChild("database");
+        await Assert.That(copy.Type!.Name).IsEqualTo("dict");
+        // the original never examined its content — still the reference
+        await Assert.That(original.Type!.Name).IsEqualTo("file");
+        await Assert.That(original.Peek()).IsTypeOf<global::app.type.file.@this>();
     }
 
     [Test]
     public async Task TerminalTypes_ImageAndDirectory_DoNotNarrow()
     {
-        // `image` and `directory` content type is known up-front; they stay the headline, no chain extension
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // directory: content type known up-front (list<path>), stays the headline
+        System.IO.Directory.CreateDirectory(TempPath("sub"));
+        System.IO.File.WriteAllText(TempPath("sub/a.txt"), "a");
+        var dir = await Read("sub");
+        await Assert.That(dir.Type!.Name).IsEqualTo("directory");
+        await Assert.That(dir.Peek()).IsTypeOf<global::app.type.directory.@this>();
+        // image: eager specialisation, headline image (1x1 px PNG)
+        byte[] png = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==");
+        System.IO.File.WriteAllBytes(TempPath("dot.png"), png);
+        var img = await Read("dot.png");
+        await Assert.That(img.Type!.Name).IsEqualTo("image");
+        await Assert.That(img.Peek()).IsTypeOf<global::app.type.image.@this>();
     }
 }

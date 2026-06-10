@@ -298,6 +298,12 @@ public partial class @this
             return data.@this.NotFound(name);
         }
 
+        // A dotted write is an EXAMINATION — an un-narrowed reference (file/url)
+        // parses + narrows first, so the write lands on the content dict, not on
+        // a reflection bag of the reference object.
+        if (parent.Peek() is global::app.type.file.@this or global::app.type.url.@this)
+            await parent.NarrowReference(parent.Peek()!);
+
         // Lazy materialize if parent is a typed string (e.g., json) — must happen before navigation
         parent.ForceMaterialize();
 
@@ -686,7 +692,16 @@ public partial class @this
             var varName = m.Groups[1].Value;
             if (skipInfrastructure && varName.StartsWith('!')) continue;
             if (resolved.ContainsKey(varName)) continue;
-            var s = (await Get(varName))?.Peek()?.ToString();
+            var dataVar = await Get(varName);
+            string? s;
+            if (dataVar?.Peek() is global::app.type.file.@this or global::app.type.url.@this)
+            {
+                // Interpolation is SCALAR use — a reference renders its content
+                // (the bare-scalar contract), never the location string.
+                var content = await dataVar.Value();
+                s = content is byte[] bytes ? System.Convert.ToBase64String(bytes) : content?.ToString();
+            }
+            else s = dataVar?.Peek()?.ToString();
             if (s != null) resolved[varName] = s;
         }
 

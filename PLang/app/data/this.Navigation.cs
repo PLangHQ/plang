@@ -76,8 +76,13 @@ public partial class @this
             : await GetChildValue(segment);
         if (!child.IsInitialized) return child;
 
-        // Inject context on IContext values during traversal
-        if (await child.Value() is app.module.IContext contextual)
+        // Inject context on IContext values during traversal. A reference
+        // (file/url) injects via Peek — opening the door here would read its
+        // content on a property-plane hop (`%x!file!path%` must stay read-free).
+        var injectTarget = child.Peek() is (global::app.type.file.@this or global::app.type.url.@this) and { } reference
+            ? reference
+            : await child.Value();
+        if (injectTarget is app.module.IContext contextual)
             contextual.Context = _context;
 
         if (string.IsNullOrEmpty(remaining))
@@ -128,6 +133,14 @@ public partial class @this
             if (c == '.' && depth == 0)
             {
                 return (path[..i], path[(i + 1)..]);
+            }
+
+            // Chain-wide `!`: a second bang starts the next property-plane hop —
+            // "!file!path" → ("!file", "!path"). The leading bang (i == 0) is the
+            // current segment's own prefix, never a split point.
+            if (c == '!' && depth == 0 && i > 0 && !inQuote)
+            {
+                return (path[..i], path[i..]);
             }
         }
 

@@ -1,5 +1,13 @@
 Start
 / Cut 3 — write out %dir% is a listing, not a content dump.
-/ A directory with files/sub-dirs. write out %dir% emits paths/names, NOT the files' contents.
-/ Proves dir.list : list<path> + type-owned serialization (each-entry-self-serialising would have dumped contents).
-- throw "not implemented"
+/ A directory with files. Serialising %dir% emits paths/names, NOT the files' contents.
+- save 'cut3dir/a.txt' with content 'CUT3-SECRET-ALPHA'
+- save 'cut3dir/b.txt' with content 'CUT3-SECRET-BETA'
+- read file 'cut3dir', write to %dir%
+- assert %dir% is directory
+- set %listing% = "%dir%"
+- assert %listing% contains "a.txt"
+- assert %listing% contains "b.txt"
+- assert %listing% not contains "CUT3-SECRET-ALPHA"
+- delete file 'cut3dir/a.txt'
+- delete file 'cut3dir/b.txt'

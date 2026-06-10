@@ -221,6 +221,20 @@ public class Default : IAssert
             return false;
         }
 
+        // A directory's membership is over its listing (the type owns it).
+        if (container is global::app.type.directory.@this dirVal)
+            return await dirVal.Contains(substringNeedle ?? "");
+
+        // A scalar with an honest text form (a path's location, a number)
+        // contains by substring — mirrors text's coercion rules. Containers
+        // were handled above; a dict has no honest text form.
+        if (container is not global::app.type.dict.@this and not data.@this and not System.Collections.IDictionary)
+        {
+            var text = container.ToString();
+            if (!string.IsNullOrEmpty(text) && !string.IsNullOrEmpty(substringNeedle))
+                return text.Contains(substringNeedle, StringComparison.OrdinalIgnoreCase);
+        }
+
         return false;
     }
 

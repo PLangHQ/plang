@@ -263,9 +263,14 @@ public partial class @this
             return null;
         }
         var content = await read.Value();
-        // Fresh headline entity — the stamped type may be a shared registry
+        // The headline is the CONTENT's own family (a parsed json object is a
+        // dict, not the channel's shape-agnostic `item` stamp); the stamped kind
+        // rides along. Fresh entity — the stamped type may be a shared registry
         // instance and the chain is per-value state.
-        var headline = type.Create(read.Type!.Name, read.Type.Kind, context: _context);
+        var headlineName = content != null
+            ? _context?.App.Type.Name(content.GetType()) ?? read.Type!.Name
+            : read.Type!.Name;
+        var headline = type.Create(headlineName, read.Type!.Kind, context: _context);
         if (_type != null)
         {
             headline.Accumulate(_type);

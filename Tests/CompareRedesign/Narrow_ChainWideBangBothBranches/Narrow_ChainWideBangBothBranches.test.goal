@@ -1,4 +1,18 @@
 Start
-/ Narrow — %config!file!path% resolves whether config narrowed to dict or not. Chain-wide !,
-/ never headline-only — no flow-dependent crash on the un-examined branch.
-- throw "not implemented"
+/ Narrow — %config!file!path% resolves whether config narrowed to dict or not.
+/ Chain-wide !, never headline-only — no flow-dependent crash on the un-examined branch.
+- save 'narrowchain.json' with content '{"db":"plang"}'
+/ un-examined branch: the file facet answers from the headline
+- read file 'narrowchain.json', write to %config%
+- set %loc1% = %config!file!path%
+- assert %loc1% is not null
+- assert %config% is file
+/ examine the content → narrows to dict, file retained in the chain
+- set %db% = %config.db%
+- assert %db% equals "plang"
+- assert %config% is dict
+- assert %config% is file
+/ post-narrow: the SAME facet hop still resolves
+- set %loc2% = %config!file!path%
+- assert %loc2% is not null
+- delete file 'narrowchain.json'

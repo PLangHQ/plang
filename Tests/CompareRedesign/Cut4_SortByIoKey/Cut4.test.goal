@@ -1,4 +1,15 @@
 Start
-/ Cut 4 — sort by an I/O key. sort %files% by size — keys materialise async (stat reads in phase 1),
-/ order runs sync, result correct, no hang. Proves two-phase sort with no sync-over-async.
-- throw "not implemented"
+/ Cut 4 — sort by an I/O key. sort %files% by size: keys materialise async
+/ (stat in phase 1), order runs sync (phase 2), result correct, no hang.
+- save 'cut4/small.txt' with content 'a'
+- save 'cut4/medium.txt' with content 'bbbbbbbbbb'
+- save 'cut4/large.txt' with content 'cccccccccccccccccccccccccccccc'
+- list files in 'cut4', write to %files%
+- sort %files% by size
+- set %first% = "%files[0]%"
+- set %last% = "%files[2]%"
+- assert %first% contains "small.txt"
+- assert %last% contains "large.txt"
+- delete file 'cut4/small.txt'
+- delete file 'cut4/medium.txt'
+- delete file 'cut4/large.txt'

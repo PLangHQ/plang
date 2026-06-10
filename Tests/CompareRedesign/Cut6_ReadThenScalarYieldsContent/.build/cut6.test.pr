@@ -1,0 +1,358 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "save \u0027cut6.txt\u0027 with content \u0027plain cut6 content\u0027",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Cut 6 \u2014 read-then-scalar yields content (the inversion guard).\nread now returns a file reference. Scalar use of %c% \u2014 assert, interpolation \u2014\nmust still emit the file\u0027s CONTENT, never the location \u0022cut6.txt\u0022.",
+      "actions": [
+        {
+          "module": "file",
+          "action": "save",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Path",
+              "type": {
+                "name": "path",
+                "kind": "file"
+              },
+              "value": "cut6.txt"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "text",
+                "kind": "txt"
+              },
+              "value": "plain cut6 content"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "file.save(Path=\u0022cut6.txt\u0022, Value=\u0022plain cut6 content\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "read file \u0027cut6.txt\u0027, write to %c%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Path",
+              "type": {
+                "name": "path",
+                "kind": "file"
+              },
+              "value": "cut6.txt"
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "resolvevariables",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%c%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "object"
+              },
+              "value": "%!data%"
+            },
+            {
+              "@schema": "data",
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "file",
+                "kind": "txt",
+                "strict": false,
+                "fields": null,
+                "values": null,
+                "properties": [
+                  {
+                    "name": "path",
+                    "typename": "path"
+                  }
+                ],
+                "shape": "string",
+                "constructorsignature": null,
+                "example": "/some/config.json",
+                "description": null,
+                "kinds": null
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "file.read(Path=\u0027cut6.txt\u0027) | variable.set(Name=%c%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %c% equals \u0022plain cut6 content\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "plain cut6 content"
+            },
+            {
+              "@schema": "data",
+              "name": "Actual",
+              "type": {
+                "name": "object"
+              },
+              "value": "%c%"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022plain cut6 content\u0022, Actual=%c%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set %msg% = \u0022got: %c%\u0022",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%msg%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "got: %c%"
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%msg%, Value=\u0022got: %c%\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %msg% contains \u0022plain cut6 content\u0022",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "contains",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Container",
+              "type": {
+                "name": "object"
+              },
+              "value": "%msg%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "plain cut6 content"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.contains(Container=%msg%, Value=\u0022plain cut6 content\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %msg% not contains \u0022cut6.txt\u0022",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "notContains",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Container",
+              "type": {
+                "name": "object"
+              },
+              "value": "%msg%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "cut6.txt"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.notContains(Container=%msg%, Value=\u0022cut6.txt\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "delete file \u0027cut6.txt\u0027",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "delete",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Path",
+              "type": {
+                "name": "path",
+                "kind": "file"
+              },
+              "value": "cut6.txt"
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "ignoreifnotfound",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            },
+            {
+              "@schema": "data",
+              "name": "recursive",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "file.delete(Path=\u0027cut6.txt\u0027)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/CompareRedesign/Cut6_ReadThenScalarYieldsContent/Cut6.test.goal",
+  "prPath": "/CompareRedesign/Cut6_ReadThenScalarYieldsContent/.build/cut6.test.pr",
+  "hash": "4a7558f298410dee8a580ddbc7c0e7d4a62304aad1e8cc9f61ce8a8f8b22cb6c",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}
