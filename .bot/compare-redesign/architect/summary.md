@@ -1,5 +1,9 @@
 # Architect — compare-redesign
 
+## 2026-06-10 — Stage 9 carved: born-typed values (the store seam)
+
+The coder's [`stage-proposal-born-typed.md`](../coder/stage-proposal-born-typed.md) is now **[Stage 9](stage-9-born-typed.md)** (plan index updated). Five rulings settled with Ingi and folded into both files: **(1)** date arms are a 1:1 CLR map (`DateOnly`→`date`, `TimeOnly`→`time`, `DateTime`/`DateTimeOffset`→`datetime`, `TimeSpan`→`duration`) — no value-sniffing at the seam; **(2)** bare `data.@this` at the seam THROWS — nested Data always rides inside an owning wrapper type (`encrypt` → `encryption.@this` whose backing holds the sealed inner Data, list's own pattern), no approve-list, kills the CLAUDE.md double-wrap footgun structurally; **(3)** CommandLineParser stays outside Data, no carve-out (todos.md updated — lifts at the perimeter when its cleanup todo lands); **(4)** wrapper immutability is a stated precondition for instance sharing/caching, locked by `WrapperImmutabilityTests` (coder landed it same day, 3 green); **(5)** stub split — the three seam-independent `PlaneResolver` stubs landed immediately (d85c70d25), the six `ValueDoorTests` stubs are pinned to Stage 9's slices.
+
 ## 2026-06-09 — Stage 2.1 B+C decisions settled (Design-1 nav, no gate exemptions)
 
 Coder's `coder/v6/stage-2.1-bc-report.md`: Part A green (272→112 `.Materialize()`); B+C blocked on two decisions. Resolved both with Ingi.

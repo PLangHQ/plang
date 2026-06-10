@@ -1,9 +1,6 @@
 # Stage proposal: Born-typed values (the store seam)
 
-**Status:** PROPOSED (coder, Ingi-approved direction, 2026-06-10). Not started —
-documented for the architect to fold into the stage plan as the next stage after
-Stage 7's gate worklist. Nine existing spec stubs are pinned to this scope (list
-at the bottom) and stay red-by-design until it lands.
+**Status:** ADOPTED as **[Stage 9](../architect/stage-9-born-typed.md)** (architect, 2026-06-10) — that file is the stage contract; this one keeps the origin framing. Six `Stage2_ValueDoorTests` stubs remain pinned to the stage (the three `PlaneResolver` stubs landed seam-independently, d85c70d25).
 
 **Architect rulings (2026-06-10, settled with Ingi) are folded in below** — the store table, slice 2, and the perf risk were amended in place; the reasoning is in the "Architect rulings" section.
 
