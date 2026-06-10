@@ -322,10 +322,18 @@ public sealed class Default : IIdentity
         if (value is Identity identity)
             return identity;
 
-        // A stored identity now reads back as the native dict value type — unwrap
-        // to raw so the json round-trip below reconstructs it.
+        // A stored identity reads back as the native dict — its JSON view (the
+        // dict's converter) is the stored shape; STJ rebuilds the Identity from
+        // it. Value→json is the serializer's job, json→domain is STJ's.
         if (value is app.type.dict.@this nativeDict)
-            value = nativeDict.ToRaw();
+        {
+            try
+            {
+                var json = JsonSerializer.Serialize(nativeDict);
+                return JsonSerializer.Deserialize<Identity>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            catch { return null; }
+        }
 
         if (value is Dictionary<string, object?> dict)
         {

@@ -214,7 +214,7 @@ public sealed class Sqlite : IStore
         }
     }
 
-    public Task<data.@this> Set(string table, string key, data.@this data)
+    public async Task<data.@this> Set(string table, string key, data.@this data)
     {
         try
         {
@@ -229,19 +229,19 @@ public sealed class Sqlite : IStore
             // Local persistence — Store view ships every [Store]-tagged
             // property (including [Sensitive] like Identity.PrivateKey).
             var serialized = _serializer.Store(data);
-            if (!serialized.Success) return Task.FromResult(app.data.@this.FromError(serialized.Error!));
-            // SQLite is a take-over API — it binds raw CLR values, not born-native
-            // wrappers. Collapse an item leaf (text→string) to its raw backing.
-            object? dataValue = serialized.Peek() is global::app.type.item.@this leaf ? leaf.ToRaw() : serialized.Peek();
-            cmd.Parameters.AddWithValue("@data", dataValue);
+            if (!serialized.Success) return app.data.@this.FromError(serialized.Error!);
+            // SQLite is a take-over API — it binds CLR values; the blob is the
+            // text value's backing string.
+            global::app.type.text.@this? blob = await serialized.Value();
+            cmd.Parameters.AddWithValue("@data", blob?.Value);
             cmd.ExecuteNonQuery();
 
-            return Task.FromResult(app.data.@this.Ok());
+            return app.data.@this.Ok();
         }
         catch (Exception ex)
         {
-            return Task.FromResult(app.data.@this.FromError(
-                SettingsError.FromException(ex, table, key)));
+            return app.data.@this.FromError(
+                SettingsError.FromException(ex, table, key));
         }
     }
 

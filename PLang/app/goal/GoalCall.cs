@@ -72,55 +72,67 @@ public sealed class GoalCall : global::app.type.item.@this, module.IEvent
                         $"Failed to deserialize GoalCall from JSON: {ex.Message}",
                         "GoalCallDeserializationFailed", 400));
                 }
-            // Born-native collections hand the wire shape as a native dict — project to
-            // the raw CLR dictionary once and fall through to the one dict arm below.
+            // Born-native collections hand the wire shape as a native dict — navigate
+            // its entries directly (no raw copy); the legacy CLR dictionary reads by key.
+            // Both collapse to the same slot accessor feeding the one assembly body.
             case app.type.dict.@this nativeDict:
-                return Convert(nativeDict.ToRaw(), kind, context);
+                return FromSlots(key => nativeDict.Get(key)?.Peek(), context);
             case IDictionary<string, object?> dict:
-                var name = dict.TryGetValue("name", out var n) ? n?.ToString() ?? "" : "";
-                // The name slot may be a dynamic %var% (e.g. `call %goalName%`). It stays raw
-                // here — GetGoalAsync resolves it at dispatch, in the caller's context. The
-                // CLR-type-name guard below still catches a literal leak (a %var% never matches).
-                if (context.App.Type.IsClrTypeName(name))
-                    return data.@this.FromError(new global::app.error.Error(
-                        $"GoalCall.Name was set to a CLR type name '{name}'.",
-                        "ClrTypeNameInGoalSlot", 500)
-                        { FixSuggestion = "Build pipeline leaked a typed object's ToString() into a goal-name slot " +
-                            "(likely a Fluid template rendering an object via ToString() instead of navigating to .Name)." });
-                // A null prPath rides as the null.@this singleton after born-native;
-                // its ToString is the literal "null", so guard against it — otherwise
-                // path.Resolve("null") builds a bogus "/null".
-                var prRaw = dict.TryGetValue("prPath", out var pr) && pr is not app.type.@null.@this ? pr : null;
-                // Born-native serializes a path as the structured {scheme, relative} object, not a
-                // bare string — `prRaw.ToString()` on that yields "Dictionary`2…", which path.Resolve
-                // then turns into a bogus "/Dictionary`2…" (the foreach/goal.call "File not found"
-                // regression). Take the already-built path, or its "relative" slot, before falling
-                // back to a string.
-                var prPath = prRaw switch
-                {
-                    null => null,
-                    path builtPath => builtPath,
-                    global::app.type.dict.@this nd => ResolveRelative(nd.Get("relative")?.Materialize()?.ToString(), context),
-                    IDictionary<string, object?> d2 => ResolveRelative(
-                        d2.TryGetValue("relative", out var rel) ? rel?.ToString() : null, context),
-                    _ => ResolveRelative(prRaw.ToString(), context),
-                };
-                List<data.@this>? parameters = null;
-                if (dict.TryGetValue("parameters", out var p))
-                {
-                    // Params ride raw into the call — each is a Data still holding its
-                    // %var%/literal/container form. Goal-call shares the caller's scope, so the
-                    // step that reads %name% resolves it through the door then; no eager pass.
-                    var entries = ParamEntries(p)
-                        .Select(e => new data.@this(e.name, e.value) { Context = context })
-                        .ToList();
-                    if (entries.Count > 0) parameters = entries;
-                }
-                return data.@this.Ok(new GoalCall { Name = name, PrPath = prPath, Parameters = parameters });
+                return FromSlots(key => dict.TryGetValue(key, out var v) ? v : null, context);
             default:
                 return data.@this.FromError(new global::app.error.Error(
                     $"Cannot convert {value.GetType().Name} to a goal call.", "GoalCallConversionFailed", 400));
         }
+    }
+
+    // Assembles a GoalCall from a keyed shape (native dict or CLR dictionary) through
+    // a slot accessor — the shape difference stays in Convert's match arms.
+    private static data.@this FromSlots(System.Func<string, object?> slot, actor.context.@this context)
+    {
+        var n = slot("name");
+        // An absent name rides as the null.@this singleton on the native shape —
+        // its ToString is the literal "null", so treat it as empty.
+        var name = n is null or app.type.@null.@this ? "" : n.ToString() ?? "";
+        // The name slot may be a dynamic %var% (e.g. `call %goalName%`). It stays raw
+        // here — GetGoalAsync resolves it at dispatch, in the caller's context. The
+        // CLR-type-name guard below still catches a literal leak (a %var% never matches).
+        if (context.App.Type.IsClrTypeName(name))
+            return data.@this.FromError(new global::app.error.Error(
+                $"GoalCall.Name was set to a CLR type name '{name}'.",
+                "ClrTypeNameInGoalSlot", 500)
+                { FixSuggestion = "Build pipeline leaked a typed object's ToString() into a goal-name slot " +
+                    "(likely a Fluid template rendering an object via ToString() instead of navigating to .Name)." });
+        // A null prPath rides as the null.@this singleton after born-native;
+        // its ToString is the literal "null", so guard against it — otherwise
+        // path.Resolve("null") builds a bogus "/null".
+        var pr = slot("prPath");
+        var prRaw = pr is not app.type.@null.@this ? pr : null;
+        // Born-native serializes a path as the structured {scheme, relative} object, not a
+        // bare string — `prRaw.ToString()` on that yields "Dictionary`2…", which path.Resolve
+        // then turns into a bogus "/Dictionary`2…" (the foreach/goal.call "File not found"
+        // regression). Take the already-built path, or its "relative" slot, before falling
+        // back to a string.
+        var prPath = prRaw switch
+        {
+            null => null,
+            path builtPath => builtPath,
+            global::app.type.dict.@this nd => ResolveRelative(nd.Get("relative")?.Materialize()?.ToString(), context),
+            IDictionary<string, object?> d2 => ResolveRelative(
+                d2.TryGetValue("relative", out var rel) ? rel?.ToString() : null, context),
+            _ => ResolveRelative(prRaw.ToString(), context),
+        };
+        List<data.@this>? parameters = null;
+        if (slot("parameters") is { } p)
+        {
+            // Params ride raw into the call — each is a Data still holding its
+            // %var%/literal/container form. Goal-call shares the caller's scope, so the
+            // step that reads %name% resolves it through the door then; no eager pass.
+            var entries = ParamEntries(p)
+                .Select(e => new data.@this(e.name, e.value) { Context = context })
+                .ToList();
+            if (entries.Count > 0) parameters = entries;
+        }
+        return data.@this.Ok(new GoalCall { Name = name, PrPath = prPath, Parameters = parameters });
     }
 
     // The prPath slot's relative form → a resolved path, or null when absent. (`relative` is

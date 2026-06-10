@@ -996,16 +996,22 @@ public sealed class OpenAi : ILlm
     /// </summary>
     private static data.@this RestoreFromCache(data.@this cached)
     {
-        // The cached value is a dictionary with Value + metadata. A json cache
-        // entry now materializes to the native dict value type — unwrap it to raw
-        // so the Dictionary branch below reads Value + the metadata props.
-        var cachedValue = cached.Peek() is app.type.dict.@this nativeDict
-            ? nativeDict.ToRaw()
-            : cached.Peek();
+        var cachedValue = cached.Peek();
         object? resultValue = null;
         var props = new Dictionary<string, object?>();
 
-        if (cachedValue is JsonElement je && je.ValueKind == JsonValueKind.Object)
+        // A json cache entry materializes to the native dict — navigate its
+        // entries directly (Value + the metadata props), no raw copy.
+        if (cachedValue is app.type.dict.@this nativeDict)
+        {
+            resultValue = nativeDict.Get("Value")?.Peek();
+            foreach (var entry in nativeDict.Entries)
+            {
+                if (entry.Name == "Value") continue;
+                props[entry.Name] = entry.Peek();
+            }
+        }
+        else if (cachedValue is JsonElement je && je.ValueKind == JsonValueKind.Object)
         {
             if (je.TryGetProperty("Value", out var valProp))
                 resultValue = valProp.ValueKind == JsonValueKind.Null ? null : valProp.Clone();
@@ -1043,10 +1049,18 @@ public sealed class OpenAi : ILlm
         // survives disk serialization losslessly, whereas a parsed JsonElement /
         // native value does not always round-trip its element shape — so trusting
         // the stored "Value" can yield a list/dict the consumer can't convert.
-        if (props.TryGetValue("RawResponse", out var rawObj) && rawObj is string rawResp
-            && !string.IsNullOrEmpty(rawResp))
+        // A dict-navigated prop rides as the native text value — read its backing
+        // string; a legacy raw prop is already a string.
+        static string? AsText(object? v) => v switch
         {
-            var fmt = props.TryGetValue("Format", out var fmtObj) ? fmtObj as string : null;
+            global::app.type.text.@this t => t.Value,
+            string s => s,
+            _ => null,
+        };
+        string? rawResp = AsText(props.GetValueOrDefault("RawResponse"));
+        if (!string.IsNullOrEmpty(rawResp))
+        {
+            string? fmt = AsText(props.GetValueOrDefault("Format"));
             resultValue = ParseResultValue(rawResp, fmt) ?? resultValue;
         }
 

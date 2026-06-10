@@ -158,33 +158,42 @@ public class Stage6_ConsumersTests
     [Test]
     public async Task Pile2_SqliteSettings_BindsSerializedBlob_NoToRaw()
     {
-        // settings/Sqlite.cs:235 — Store returns the json blob directly; no text-wrap, no ToRaw collapse line
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // settings/Sqlite.cs — Store returns Data<text>; the typed door yields the
+        // json blob, no generic item-leaf/ToRaw collapse at the bind site.
+        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "settings", "Sqlite.cs"));
+        await Assert.That(src).DoesNotContain("ToRaw");
+        await Assert.That(src).Contains("await serialized.Value()");
     }
 
     [Test]
     public async Task Pile2_OpenAiCache_NavigatesDict_NoDictionaryCopy()
     {
-        // llm/OpenAi.cs:1003 — keys read off the dict via navigation, not a Dictionary copy
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // llm/OpenAi.cs — cache restore reads keys off the native dict (Get/Entries
+        // navigation), not a raw Dictionary copy via ToRaw.
+        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "llm", "code", "OpenAi.cs"));
+        await Assert.That(src).DoesNotContain("ToRaw");
+        await Assert.That(src).Contains("nativeDict.Get(\"Value\")");
+        await Assert.That(src).Contains("nativeDict.Entries");
     }
 
     [Test]
     public async Task Pile2_Identity_RoundTripsJson_NoNativeDictIntermediary()
     {
-        // identity/Default.cs:325 — Identity↔json (STJ), no native-dict step
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // identity/Default.cs — a stored identity rebuilds dict→json (the dict's own
+        // converter)→Identity via STJ; no ToRaw raw-dictionary intermediary.
+        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "identity", "code", "Default.cs"));
+        await Assert.That(src).DoesNotContain("ToRaw");
+        await Assert.That(src).Contains("JsonSerializer.Serialize(nativeDict)");
     }
 
     [Test]
     public async Task Pile2_Fluid_RendersViaTextSerializer_NoToRaw()
     {
-        // ui/Fluid.cs:82 — value rendered through the text serializer; no ToRaw copy
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // ui/Fluid.cs — natives render through lazy read-through views (zero copy);
+        // no ToRaw deep-copy call. (The one mention is the comment stating that.)
+        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "ui", "code", "Fluid.cs"));
+        await Assert.That(src).DoesNotContain(".ToRaw()");
+        await Assert.That(src).Contains("NativeCollectionConverter");
     }
 
     // ---------- demolition (the things that must NOT exist) ----------
