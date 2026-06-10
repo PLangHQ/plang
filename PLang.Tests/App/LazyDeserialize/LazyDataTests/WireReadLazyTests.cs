@@ -15,7 +15,7 @@ namespace PLang.Tests.App.LazyDeserialize.LazyDataTests;
 public class WireReadLazyTests
 {
     private static data RoundTrip(data d)
-        => (data)(plang.ContextLessFallback.Deserialize(plang.ContextLessFallback.Serialize(d).Materialize()!.ToString()).Materialize())!;
+        => plang.ContextLessFallback.Deserialize(plang.ContextLessFallback.Serialize(d).Materialize()!.ToString()!);   // Deserialize returns the reconstruction itself
 
     // Typed value-slot deferral: a shape-typed (object/table) value rides as raw
     // and materializes only on touch. Scoped to object/table so scalars/domain/

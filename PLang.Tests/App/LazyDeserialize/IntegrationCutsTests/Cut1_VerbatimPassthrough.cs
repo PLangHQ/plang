@@ -54,7 +54,7 @@ public class Cut1_VerbatimPassthrough
         await Assert.That(d.MaterializeCount).IsEqualTo(1);
 
         var s = app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var back = (data)(await s.Deserialize((await s.Serialize(d).Value())!).Value())!;
+        var back = s.Deserialize((await s.Serialize(d).Value())!.ToString()!);   // Deserialize returns the reconstruction itself
         await Assert.That((await (await back.GetChild("port")).Value())?.ToString()).IsEqualTo("8080"); // semantic round-trip
     }
 

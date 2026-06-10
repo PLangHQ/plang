@@ -414,7 +414,7 @@ public class FileHandlerTests : IDisposable
 
         var action = new Read { Context = _app.User.Context, Path = MakePath("sized.txt") };
         var result = await action.Run();
-        var content = (await result.Value()) as string;
+        var content = (await result.Value())?.ToString();
 
         await Assert.That(content!.Length).IsEqualTo(5);
     }

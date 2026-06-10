@@ -73,7 +73,8 @@ public class CanonicalizationTests
             app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var inner = new global::app.data.@this("inner", "secret") { Context = app.User.Context };
-        var outer = new global::app.data.@this("outer", inner) { Context = app.User.Context };
+        var outer = new global::app.data.@this("outer") { Context = app.User.Context };
+        outer.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
 
         var json = (await plang.Serialize(outer).Value())!;
         await Assert.That(inner.Signature).IsNotNull();
@@ -122,7 +123,8 @@ public class CanonicalizationTests
                 PrivateKey = "PRIV-must-persist",   // [Sensitive] — Store keeps, Out excludes
             }
         };
-        var outer = new global::app.data.@this("outer", inner) { Context = app.User.Context };
+        var outer = new global::app.data.@this("outer") { Context = app.User.Context };
+        outer.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
 
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");

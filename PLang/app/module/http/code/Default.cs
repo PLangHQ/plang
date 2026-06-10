@@ -1003,7 +1003,7 @@ public sealed class Default : IHttp
                 ContentAs.Base64 => (CreateBase64Content(content!.ToString()!), (global::app.error.IError?)null),
                 ContentAs.Form => await CreateFormContentAsync(app, context, content!),
                 ContentAs.Text => (new StringContent(
-                    content is string s ? s : JsonSerializer.Serialize(content),
+                    content is string or global::app.type.text.@this ? content.ToString()! : JsonSerializer.Serialize(content),
                     Encoding.GetEncoding(encoding)), (global::app.error.IError?)null),
                 _ => (new StringContent(content!.ToString()!, Encoding.GetEncoding(encoding)), (global::app.error.IError?)null)
             };
@@ -1016,8 +1016,9 @@ public sealed class Default : IHttp
             return await CreateFormContentAsync(app, context, content);
         }
 
-        if (content is string str)
+        if (content is string or global::app.type.text.@this)
         {
+            var str = content.ToString()!;
             // Try as file path — gated through path.ExistsAsync (AuthGate(Read)).
             // Out-of-root probes prompt or deny; in-root fast-passes. Any failure
             // (including denial) falls through to "treat as a string body" —

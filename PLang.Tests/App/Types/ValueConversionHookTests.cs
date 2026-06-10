@@ -123,9 +123,11 @@ public class ValueConversionHookTests
         var (app, ctx) = MakeApp();
 
         await Assert.That((await app.Type.Convert("3.14", typeof(decimal), ctx).Value())?.ToString()).IsEqualTo("3.14");
-        await Assert.That((await app.Type.Convert("PT30S", typeof(System.TimeSpan), ctx).Value()))
+        // The Data face re-lifts to the born-typed wrapper; the asked-for CLR
+        // shape is reached through the wrapper's own Clr exit.
+        await Assert.That(((global::app.type.item.@this)(await app.Type.Convert("PT30S", typeof(System.TimeSpan), ctx).Value())!).Clr<System.TimeSpan>())
             .IsEqualTo(System.TimeSpan.FromSeconds(30));
-        await Assert.That((await app.Type.Convert("2024-03-15T10:30:00+00:00", typeof(System.DateTimeOffset), ctx).Value()))
+        await Assert.That(((global::app.type.item.@this)(await app.Type.Convert("2024-03-15T10:30:00+00:00", typeof(System.DateTimeOffset), ctx).Value())!).Clr<System.DateTimeOffset>())
             .IsTypeOf<System.DateTimeOffset>();
         await Assert.That((await app.Type.Convert("photo.png", typeof(Image), ctx).Value())).IsTypeOf<Image>();
         await Assert.That((await app.Type.Convert("MyGoal", typeof(GoalCall), ctx).Value())).IsTypeOf<GoalCall>();

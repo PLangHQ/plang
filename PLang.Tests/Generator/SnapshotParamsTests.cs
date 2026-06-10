@@ -70,7 +70,7 @@ public class SnapshotParamsTests
         // "bound at dispatch" and FinalValue carries the resolved Data even when the
         // handler body never touched the property.
         await Assert.That(second!.WasAccessed).IsTrue();
-        await Assert.That(second.PrValue).IsEqualTo(42);
+        await Assert.That(second.PrValue?.ToString()).IsEqualTo("42");
         await Assert.That(second.FinalValue).IsNotNull();
     }
 
@@ -86,7 +86,7 @@ public class SnapshotParamsTests
         await Assert.That(first).IsNotNull();
         await Assert.That(first!.WasAccessed).IsTrue();
         // PrValue is raw "hello %name%", FinalValue is the resolved Data<global::app.type.text.@this>
-        await Assert.That(first.PrValue).IsEqualTo("hello %name%");
+        await Assert.That(first.PrValue?.ToString()).IsEqualTo("hello %name%");
         await Assert.That(first.FinalValue).IsNotNull();
     }
 

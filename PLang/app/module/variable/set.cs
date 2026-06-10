@@ -26,6 +26,7 @@ public partial class Set : IContext, IBuildValidatable
         // strict probe and the "this" guard both reason over the source string).
         var valueBacking = value?.Materialize();
         if (valueBacking is global::app.type.text.@this tb) valueBacking = tb.Value;
+        else if (valueBacking is global::app.type.binary.@this bb) valueBacking = bb.Value;
         if (valueBacking is string s && s == "this")
             return "Parameter 'Value' is the literal string \"this\" — this is wrong. For \"write to %var%\" patterns, use \"%!data%\" to capture the previous action's result. \"this\" is a type annotation, not a value.";
 
@@ -159,6 +160,12 @@ public partial class Set : IContext, IBuildValidatable
             object? sourceValue = Value.RawUntouched ? null
                 : Value.Peek() is (global::app.type.file.@this or global::app.type.url.@this) and { } reference ? reference
                 : await Value.Value();
+            // The kind hooks and the strict probe below reason over the raw CLR
+            // face (ctor matching, magic-byte/extension sniffing) — a born-typed
+            // text/binary leaf presents its backing here. Minting re-lifts, so
+            // the stored value stays born-typed either way.
+            if (sourceValue is global::app.type.text.@this st) sourceValue = st.Value;
+            else if (sourceValue is global::app.type.binary.@this sb) sourceValue = sb.Value;
             // Type entity rides in a bare Data — `type` is not `: item`, so it can't be a
             // Data<T> that auto-converts. Reconstruct it from whatever the .pr served:
             //   - already a type.@this → use it;

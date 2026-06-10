@@ -917,8 +917,10 @@ public class Default : IBuilder
                     // plang-types: stamp kind alongside type when the declared
                     // type carries a static Build(value) hook. Separate field
                     // on the .pr — never "type:kind". Skip variable refs
-                    // (%var% values resolve at runtime).
-                    if (p.Peek() is not null && !(p.Peek() is string sv && sv.StartsWith('%') && sv.EndsWith('%')))
+                    // (%var% values resolve at runtime); an authored string
+                    // rides as text and presents its string face here.
+                    var sv = (p.Peek() as global::app.type.text.@this)?.Value ?? p.Peek() as string;
+                    if (p.Peek() is not null && !(sv != null && sv.StartsWith('%') && sv.EndsWith('%')))
                     {
                         var declared = schemaProp.PropertyType;
                         var underlying = System.Nullable.GetUnderlyingType(declared) ?? declared;
@@ -933,7 +935,10 @@ public class Default : IBuilder
             foreach (var p in a.Parameters)
             {
                 if (p.Peek() is null) continue;
-                if (p.Peek() is string sv && sv.StartsWith('%') && sv.EndsWith('%')) continue; // variable reference
+                // An authored string rides as text — its string face carries
+                // the %var%-reference / empty / catalog-description judgements.
+                var face = (p.Peek() as global::app.type.text.@this)?.Value ?? p.Peek() as string;
+                if (face != null && face.StartsWith('%') && face.EndsWith('%')) continue; // variable reference
                 if (p.Type == null) continue;
 
                 // LLM-emitted "" for an unset nullable slot — same shape as
@@ -942,7 +947,7 @@ public class Default : IBuilder
                 // of failing in TryConvert below. For non-nullable slots leave the
                 // empty string in place so the conversion error surfaces and
                 // LlmFixer retries.
-                if (p.Peek() is string empty && empty.Length == 0
+                if (face is { Length: 0 }
                     && global::app.module.builder.ValidateResponseHelpers.IsNullableSchemaProp(actionType, p.Name))
                 {
                     p.SetValue(null);
@@ -953,7 +958,7 @@ public class Default : IBuilder
                 // metadata produced by Modules.Describe(), not values to normalize. They
                 // surface when the catalog is fed back through validate (BuilderValidateValid
                 // smoke test). Skip — coercing a description string to its declared type fails.
-                if (p.Peek() is string desc && IsCatalogDescription(desc, p.Type.Name)) continue;
+                if (face is { } desc && IsCatalogDescription(desc, p.Type.Name)) continue;
 
                 var targetType = context.App.Type.Get(p.Type.Name);
                 if (targetType == null) continue;

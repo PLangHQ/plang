@@ -61,7 +61,8 @@ public class Cut3_SignThenWireThenVerify
         var inner = await Sign(new data("inner", "secret"));
         await Assert.That(inner.Signature).IsNotNull();
 
-        var outer = new data("outer", inner);          // value IS the signed inner Data
+        var outer = new data("outer");
+        outer.SetValueDirect(inner);   // value IS the signed inner Data — courier nesting, the documented no-lift bypass
         var back = RoundTrip(outer);
 
         var innerBack = (await back.Value()) as data;            // rehydrated nested Data

@@ -312,7 +312,7 @@ public class ListTests
         var list = ((await result.Value()) as global::app.module.list.type.list)?.value as global::app.type.list.@this;
         await Assert.That(list).IsNotNull();
         await Assert.That(list!.Count).IsEqualTo(3);
-        var values = list.Items.Select(d => (d.Materialize())).ToList();
+        var values = list.Items.Select(d => d.Materialize()?.ToString()).ToList();
         await Assert.That(values).Contains("a");
         await Assert.That(values).Contains("b");
         await Assert.That(values).Contains("c");

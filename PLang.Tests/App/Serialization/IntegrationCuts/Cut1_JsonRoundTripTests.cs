@@ -67,8 +67,10 @@ public class Cut1_JsonRoundTripTests
     [Test] public async Task Cut1_NestedDataTree_RoundTrips_DepthN()
     {
         var inner = new Data("inner", "leaf");
-        var middle = new Data("middle", inner);
-        var outer = new Data("outer", middle);
+        var middle = new Data("middle");
+        middle.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
+        var outer = new Data("outer");
+        outer.SetValueDirect(middle);
         var json = NormalizePipelineHelper.SerializeRecord(outer);
         // nesting depth survives via the record envelopes; the binding labels
         // are off the outbound wire at every depth

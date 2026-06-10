@@ -345,7 +345,7 @@ public partial class @this
         // actionable error pointing at the fix (`as object/json`) rather than a
         // silent null. A structured value (object/json) materialized above, so it
         // never reaches here.
-        if (val is string)
+        if (val is string or global::app.type.text.@this)
             return TypeUnknownError(key);
 
         return NotFound(key);

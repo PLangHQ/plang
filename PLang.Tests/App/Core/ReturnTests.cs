@@ -23,7 +23,7 @@ public class DataResultTests
         var result = Data.Ok(value);
 
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsEqualTo(value);
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo(value);
         await Assert.That(result.Error).IsNull();
     }
 

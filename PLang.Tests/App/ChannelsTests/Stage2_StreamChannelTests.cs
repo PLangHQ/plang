@@ -29,7 +29,7 @@ public class Stage2_StreamChannelTests
         { Mime = "text/plain" };
         var result = await ch.Read();
         await result.IsSuccess();
-        await Assert.That((await result.Value()) as string).IsEqualTo("hello");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("hello");
     }
 
     [Test]
@@ -96,7 +96,7 @@ public class Stage2_StreamChannelTests
         { Mime = "text/plain" };
         var result = await ch.Ask(new global::app.module.output.ask { Question = new global::app.data.@this<global::app.type.text.@this>("", "") });
         await result.IsSuccess();
-        await Assert.That((await result.Value()) as string).IsEqualTo("answer");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("answer");
     }
 
     [Test]
@@ -115,7 +115,7 @@ public class Stage2_StreamChannelTests
         };
         var result = await ch.Ask(new global::app.module.output.ask { Question = new global::app.data.@this<global::app.type.text.@this>("", "") });
         await result.IsSuccess();
-        await Assert.That((await result.Value()) as string).IsEqualTo("é");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("é");
     }
 
     [Test]

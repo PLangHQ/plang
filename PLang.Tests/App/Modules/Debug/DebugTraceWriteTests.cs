@@ -54,7 +54,7 @@ public class DebugTraceWriteTests
         // Read back via the same gated verb.
         var read = await app.Debug._currentLlmFilePath!.ReadText();
         await read.IsSuccess();
-        var content = (await read.Value()) as string ?? "";
+        var content = (await read.Value())?.ToString() ?? "";
         await Assert.That(content).Contains("LLM TEST");
         await Assert.That(content).Contains("line one");
         await Assert.That(content).Contains("line two");

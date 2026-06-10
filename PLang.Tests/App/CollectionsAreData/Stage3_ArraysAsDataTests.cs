@@ -165,10 +165,8 @@ public class Stage3_ArraysAsDataTests
         var listData = new Data("list", list) { Context = ctx };
 
         var json = (await plang.Serialize(listData).Value())!;
-        var roundtrip = plang.Deserialize(json);
-        await roundtrip.IsSuccess();
-
-        var rebuilt = (Data)(await roundtrip.Value())!;
+        var rebuilt = plang.Deserialize(json);   // Deserialize returns the reconstruction itself
+        await rebuilt.IsSuccess();
         var element = await rebuilt.GetChild("[0]");
         await Assert.That(element.IsInitialized).IsTrue();
         await Assert.That(element.Signature).IsNotNull()
@@ -189,6 +187,6 @@ public class Stage3_ArraysAsDataTests
         var result = method!.Invoke(null, new object?[] { list }) as List<object>;
         await Assert.That(result).IsNotNull();
         await Assert.That(result!.Count).IsEqualTo(2);
-        await Assert.That((string?)result[0]).IsEqualTo("variable.set");
+        await Assert.That(result[0]?.ToString()).IsEqualTo("variable.set");
     }
 }

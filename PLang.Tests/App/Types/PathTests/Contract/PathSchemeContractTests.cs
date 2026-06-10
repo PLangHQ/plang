@@ -45,7 +45,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
             await written.IsSuccess();
             var read = await p.ReadText();
             await read.IsSuccess();
-            await Assert.That((await read.Value())).IsEqualTo(content);
+            await Assert.That((await read.Value())?.ToString()).IsEqualTo(content);
         }
         finally { await Fixture.Cleanup(p); }
     }

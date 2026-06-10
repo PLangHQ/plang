@@ -243,7 +243,23 @@ public sealed partial class @this
                     : global::app.type.convert.@this.OfStatic(family, value, kind, null);
                 if (owned != null)
                 {
-                    if (owned.Success) return (owned.Peek(), null);
+                    if (owned.Success)
+                    {
+                        var built = owned.Peek();
+                        // The hook builds the PLang value; the door's postcondition is
+                        // assignability to the asked-for target. A CLR target (TimeSpan,
+                        // double, string) lowers through the wrapper's own Clr exit —
+                        // the value converts itself, erroring honestly on loss.
+                        if (built is global::app.type.item.@this wrapper && !targetType.IsInstanceOfType(built))
+                        {
+                            try { return (wrapper.Clr(targetType), null); }
+                            catch (System.Exception ex) when (ex is System.InvalidCastException or System.NotSupportedException or System.FormatException or System.OverflowException)
+                            {
+                                return (null, WithSlot(new error.Error(ex.Message, "TypeConversionFailed", 400) { Exception = ex }, targetName));
+                            }
+                        }
+                        return (built, null);
+                    }
                     var hookErr = owned.Error as error.Error
                         ?? new error.Error(owned.Error!.Message, "TypeConversionFailed", 400);
                     return (null, WithSlot(hookErr, targetName));

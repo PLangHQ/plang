@@ -54,7 +54,7 @@ public class SnapshotOnErrorTests
 
         var firstEntry = result.Snapshot!.FirstOrDefault(p => p.Name == "First");
         // PrValue is raw — exactly what we passed.
-        await Assert.That(firstEntry!.PrValue).IsEqualTo("hello-raw");
+        await Assert.That(firstEntry!.PrValue?.ToString()).IsEqualTo("hello-raw");
     }
 
     [Test]
@@ -87,7 +87,7 @@ public class SnapshotOnErrorTests
 
         var apiKey = result.Snapshot!.FirstOrDefault(p => p.Name == "ApiKey");
         await Assert.That(apiKey).IsNotNull();
-        await Assert.That(apiKey!.PrValue).IsEqualTo("******");
+        await Assert.That(apiKey!.PrValue?.ToString()).IsEqualTo("******");
         await Assert.That(apiKey.FinalValue).IsEqualTo("******");
         // The plaintext literal must NOT appear anywhere on the entry.
         await Assert.That(apiKey.PrValue?.ToString()).DoesNotContain("PLAINTEXT");
@@ -96,7 +96,7 @@ public class SnapshotOnErrorTests
         // Non-sensitive sibling stays unmasked.
         var endpoint = result.Snapshot.FirstOrDefault(p => p.Name == "Endpoint");
         await Assert.That(endpoint).IsNotNull();
-        await Assert.That(endpoint!.PrValue).IsEqualTo("https://api.example.com");
+        await Assert.That(endpoint!.PrValue?.ToString()).IsEqualTo("https://api.example.com");
     }
 
     // When a [Sensitive] property's .pr value is null, PrValue masks to null (no "******").

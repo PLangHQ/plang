@@ -25,9 +25,14 @@ public class Default : ICrypto
     {
         var data = action.Data;
         byte[] bytes;
-        if (await data.Value() is byte[] raw)
+        var value = await data.Value();
+        if (value is byte[] raw)
         {
             bytes = raw;
+        }
+        else if (value is global::app.type.binary.@this bin)
+        {
+            bytes = bin.Value;
         }
         else
         {
@@ -51,7 +56,7 @@ public class Default : ICrypto
                 bytes = JsonSerializer.SerializeToUtf8Bytes(data, serializer.OutboundOptions);
             }
         }
-        string algorithm = ((string)(await action.Algorithm.Value())!).ToLowerInvariant();
+        string algorithm = (await action.Algorithm.Value())!.ToString()!.ToLowerInvariant();
         byte[]? hashBytes = algorithm switch
         {
             "keccak256" => new Sha3Keccack().CalculateHash(bytes),

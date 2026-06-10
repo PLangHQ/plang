@@ -67,7 +67,7 @@ public class OutputAskRoutingTests
         var action = new ask { Context = app.User.Context, Question = new global::app.data.@this<global::app.type.text.@this>("", "") };
         var result = await ch.Ask(action);
         await result.IsSuccess();
-        await Assert.That((await result.Value()) as string).IsEqualTo("Alice");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("Alice");
     }
 
     [Test] public async Task StreamChannelAsk_TimeoutBehaviorPreservedFromAskCoreRename()
