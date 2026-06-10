@@ -36,7 +36,7 @@ public sealed class Operator
             // `%x% is dict` / `is number` / `is item` — IS-A query against the
             // value-type lattice. The right operand is the PLang type name. `item`
             // is the apex (true for any value).
-            ["is"] = (l, r) => Task.FromResult(IsType(l, r)),
+            ["is"] = IsType,
             ["and"] = async (l, r) => await IsTruthy(l) && await IsTruthy(r),
             ["or"] = async (l, r) => await IsTruthy(l) || await IsTruthy(r),
         };
@@ -82,12 +82,24 @@ public sealed class Operator
     /// <summary>Both operands have a non-null value — the ordering operators are false otherwise.</summary>
     private static bool BothPresent(data.@this? left, data.@this? right) => left?.Materialize() != null && right?.Materialize() != null;
 
-    /// <summary>IS-A: does the left value's type satisfy the named type (right operand)?</summary>
-    private static bool IsType(data.@this? left, data.@this? right)
+    /// <summary>
+    /// IS-A: does the left value's type satisfy the named type (right operand)?
+    /// On an un-narrowed reference (`file`/`url`) a miss forces the narrow —
+    /// `is dict` IS an examination of the content, so the answer is
+    /// deterministic on both branches. `is file` answers from the chain with
+    /// no read.
+    /// </summary>
+    private static async Task<bool> IsType(data.@this? left, data.@this? right)
     {
         var typeName = right?.Materialize()?.ToString();
         if (left == null || string.IsNullOrWhiteSpace(typeName)) return false;
-        return left.Type.Is(typeName);
+        if (left.Type.Is(typeName)) return true;
+        if (left.Peek() is (global::app.type.file.@this or global::app.type.url.@this) and { } reference)
+        {
+            await left.NarrowReference(reference);
+            return left.Type.Is(typeName);
+        }
+        return false;
     }
 
     /// <summary>

@@ -245,6 +245,12 @@ public partial class @this
         if (RawUntouched && key.Equals("Type", StringComparison.OrdinalIgnoreCase))
             return new @this(key, Type, parent: this);
 
+        // Navigation IS examination — an un-narrowed reference (file/url) parses
+        // its content and narrows this Data to the content's type first, so the
+        // navigators below see the dict/list/table, not the reference.
+        if (Peek() is global::app.type.file.@this or global::app.type.url.@this)
+            await NarrowReference(Peek()!);
+
         var val = await Value();
 
         // Materialization failed at touch-time — the actionable parse error is
@@ -373,6 +379,24 @@ public partial class @this
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
         if (prop != null)
             return new @this(key, prop.GetValue(this), parent: this);
+
+        // Chain-wide facet: `%x!file%` reaches the reference facet whether or not
+        // the value narrowed. Pre-narrow the value IS the facet (Peek — the
+        // property plane never triggers a read); post-narrow the narrow stashed
+        // the location-only reference in Properties, served above.
+        if (_type?.Facet(key) != null && Peek() is global::app.type.item.@this facetValue)
+            return new @this(key, facetValue, parent: this);
+
+        // Property plane on the value itself — `!path`/`!host`/`!size` reach the
+        // value's own metadata surface without materialising content (Peek).
+        var peeked = Peek();
+        if (peeked != null && peeked is not string)
+        {
+            var vp = peeked.GetType().GetProperty(key,
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+            if (vp != null)
+                return new @this(key, vp.GetValue(peeked), parent: this);
+        }
 
         return NotFound(key);
     }

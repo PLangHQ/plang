@@ -203,7 +203,89 @@ public partial class @this
     /// a read that may navigate or load must be reached through an <c>await</c>.
     /// <para><b>Await once</b> per call site — no store-and-await-twice.</para>
     /// </summary>
-    public virtual ValueTask<object?> Value() => new(Materialize());
+    public virtual ValueTask<object?> Value()
+    {
+        var v = Materialize();
+        // A reference (file/url) used AS A SCALAR yields its raw content —
+        // loaded through the auth gate, NOT narrowed (the bare-scalar
+        // contract: `write out %config%` / `%config% == "<text>"` see the
+        // bytes/text as read). Only EXAMINATION — navigation (`%x.field%`) or
+        // `is <type>` — parses and narrows.
+        if (v is global::app.type.file.@this or global::app.type.url.@this)
+            return ScalarContent(v);
+        return new(v);
+    }
+
+    // Raw content of an un-narrowed reference: string for a text-shaped mime,
+    // byte[] for binary — exactly the channel's source form. Bytes cache on the
+    // reference, so repeated scalar reads do one I/O total.
+    private static async ValueTask<object?> ScalarContent(object reference)
+    {
+        switch (reference)
+        {
+            case global::app.type.file.@this f:
+            {
+                var channel = new global::app.channel.type.file.@this(f.Path);
+                var read = await channel.Read();
+                return read.Success ? read.Raw ?? read.Materialize() : reference;
+            }
+            case global::app.type.url.@this u:
+            {
+                var channel = new global::app.channel.type.file.@this(u.Path);
+                var read = await channel.Read();
+                return read.Success ? read.Raw ?? read.Materialize() : reference;
+            }
+            default:
+                return reference;
+        }
+    }
+
+    /// <summary>
+    /// The narrow — the EXAMINATION seam (navigation and <c>is</c> call this):
+    /// read + parse the reference's content, then mutate THIS Data in place —
+    /// <c>_value</c> becomes the parsed content, the headline type becomes the
+    /// content's type with the reference type retained in the chain
+    /// (<see cref="type.Accumulate"/>). Idempotent — once narrowed the value is
+    /// no longer a reference, so racing navigations converge (last-write-wins,
+    /// same typed result).
+    /// </summary>
+    internal async ValueTask<object?> NarrowReference(object reference)
+    {
+        var refPath = reference switch
+        {
+            global::app.type.file.@this f => f.Path,
+            global::app.type.url.@this u => u.Path,
+            _ => null,
+        };
+        if (refPath == null) return reference;
+        var channel = new global::app.channel.type.file.@this(refPath);
+        var read = await channel.Read();
+        if (!read.Success)
+        {
+            Error = read.Error;
+            return null;
+        }
+        var content = await read.Value();
+        // Fresh headline entity — the stamped type may be a shared registry
+        // instance and the chain is per-value state.
+        var headline = type.Create(read.Type!.Name, read.Type.Kind, context: _context);
+        if (_type != null)
+        {
+            headline.Accumulate(_type);
+            // The location-only reference stays reachable on the property plane
+            // (`%x!file!path%` post-narrow). Single-storage: the reference holds
+            // no content — the parsed value above is the one copy.
+            switch (reference)
+            {
+                case global::app.type.file.@this f: f.Release(); Properties[_type.Name] = f; break;
+                case global::app.type.url.@this u: u.Release(); Properties[_type.Name] = u; break;
+            }
+        }
+        _type = headline;
+        _value = content;
+        _raw = null;
+        return content;
+    }
 
     /// <summary>
     /// Value door with a fallback for when the resolved value is null — absent slot

@@ -21,11 +21,12 @@ public partial class Read : IContext
     [Default(false)]
     public partial data.@this<global::app.type.@bool.@this> ResolveVariables { get; init; }
 
-    // Opens a file channel and reads through the one boundary — `channel.read`
-    // stamps {type, kind} from the file's Mime and returns LAZY Data. Nothing is
-    // converted at read time; the value (string / dict / image / table / bytes)
-    // materializes on first touch through the reader registry. So `read
-    // config.json` untouched stays the raw json string; navigating it parses.
+    // `read X` yields a REFERENCE — a `file` (local), `url` (remote), or
+    // `directory` — with NOTHING read: existence is verified by a stat (so a
+    // missing path still errors at the read step), but the content stays on
+    // disk until first examination, where the value door reads + parses +
+    // narrows the Data to the content's type. A recognised specialisation
+    // (image) stays eager — its content type is known up-front and terminal.
     public async Task<data.@this> Run()
     {
         // Resolve the path door first; the guard reads .Success AFTER the await —
@@ -33,26 +34,70 @@ public partial class Read : IContext
         // has run, so a pre-await guard would inspect an unresolved Data.
         var path = await Path.Value();
         if (!Path.Success) return Path;   // typed scheme error, not an NRE
-        var channel = new global::app.channel.type.file.@this(path!);
-        var read = await channel.Read();
-        if (!read.Success || read.Type?.ClrType.Exit() == true) return read;
+
+        // Remote scheme → a url reference. No fetch — consent and I/O land at
+        // first examination through the door.
+        if (path is global::app.type.path.http.@this)
+            return new data.@this("url", new global::app.type.url.@this(path!),
+                global::app.type.@this.Create("url", path!.Extension is { Length: > 0 } ue ? ue.TrimStart('.') : null, context: Context))
+                { Context = Context };
+
+        // Stat once: NotFound surfaces at the read step (not at first touch),
+        // and the stat tells file from directory.
+        var stat = await path!.Stat();
+        if (!stat.Success) return stat;
+        var info = await stat.Value();
+        if (info is not { Exists: true })
+            return data.@this.FromError(new global::app.error.ServiceError(
+                $"Not found: {path}", "NotFound", 404));
+
+        if (info.IsFile == false)
+            return new data.@this("directory", new global::app.type.directory.@this(path),
+                global::app.type.@this.Create("directory", null, context: Context)) { Context = Context };
+
+        // The plang container (.pr) IS structured Data — a Goal, not content to
+        // narrow. Deserialize eagerly through the channel as before.
+        if (path.MimeType.StartsWith("application/plang", StringComparison.OrdinalIgnoreCase))
+        {
+            var prChannel = new global::app.channel.type.file.@this(path);
+            return await prChannel.Read();
+        }
 
         // A file-backed image carries a source-path facet (image.Path → the
-        // file, so %img.Path.Exists% works) that only the read site knows — the
-        // generic byte→image reader can't recover it. Build the path-backed image
-        // here from the raw bytes (no decode); every other type stays lazy.
-        if (read.Type?.Name == "image" && read.Raw is byte[] imageBytes)
-            return new data.@this(read.Name,
-                new global::app.type.image.@this(imageBytes, path!), read.Type);
+        // file, so %img.Path.Exists% works) that only the read site knows. Build
+        // it eagerly — image is terminal, its content type is already known.
+        var mimeType = Context.App.Format?.TypeFromMime(path.MimeType);
+        if (mimeType?.Name == "image")
+        {
+            var channel = new global::app.channel.type.file.@this(path);
+            var read = await channel.Read();
+            if (!read.Success || read.Type?.ClrType.Exit() == true) return read;
+            if (read.Raw is byte[] imageBytes)
+                return new data.@this(read.Name,
+                    new global::app.type.image.@this(imageBytes, path), read.Type);
+            return read;
+        }
 
         // ResolveVariables is an explicit opt-in that needs the text in hand, so
         // it forces materialization and resolves %var% — the only non-lazy path.
-        if ((await ResolveVariables.Value())?.Value == true && await read.Value() is string content)
+        if ((await ResolveVariables.Value())?.Value == true)
         {
-            var resolved = await Context.Variable.Resolve(content, skipInfrastructure: true);
-            return new data.@this(read.Name, resolved, read.Type);
+            var channel = new global::app.channel.type.file.@this(path);
+            var read = await channel.Read();
+            if (!read.Success) return read;
+            if (await read.Value() is string content)
+            {
+                var resolved = await Context.Variable.Resolve(content, skipInfrastructure: true);
+                return new data.@this(read.Name, resolved, read.Type);
+            }
+            return read;
         }
-        return read;
+
+        // The reference: the extension rides as the kind (the content-kind
+        // inference input — `.json` narrows to dict, `.csv` to table/list).
+        var kind = path.Extension is { Length: > 0 } ext ? ext.TrimStart('.') : null;
+        return new data.@this(path.FileName, new global::app.type.file.@this(path),
+            global::app.type.@this.Create("file", kind, context: Context)) { Context = Context };
     }
 
     /// <summary>
