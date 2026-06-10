@@ -882,3 +882,19 @@ stub, rebuild. Consider pointing at a self-hosted httpbin or a local mock so the
 suite isn't hostage to an external service. Each `[RequiresCapability("network")]`
 on the http actions still auto-tags these as `network`, so `--test={"exclude":
 ["network"]}` remains available as a per-run alternative.
+
+## 2026-06-10 — PLNG003 gate scope: do domain entities convert, or only value types?
+
+**Context:** Stage 7 (compare-redesign) stood up the PLNG003 build gate — a public
+instance member of an `item.@this` subtype returning raw CLR is flagged. The value
+types (path, text, dict, list, file, number…) are converted and green. ~190 warnings
+remain, almost all on DOMAIN entities: `goal.Name`, `identity.PublicKey`,
+`step.Comment`, `StatInfo.Exists`, `LlmMessage.Content`, …
+
+**The open question (Ingi to decide):** are domain entities "values a developer
+navigates" — so their surface must also answer in PLang types (`text`/`@bool`/…) —
+or are they engine objects the gate should exempt by scope rule? Converting is a
+large mechanical diff; exempting is a one-line scope rule in
+`PLang.Generators/Diagnostics/Plng003.cs`. The gate stays at WARNING severity
+either way until the worklist is empty, so this doesn't block anything — but the
+line needs to be deliberate, not accidental.
