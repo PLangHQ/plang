@@ -64,8 +64,8 @@ public sealed partial class @this : global::app.type.path.@this
 
     private readonly Uri _uri;
 
-    public @this(string raw, actor.context.@this? context = null, object? content = null, string? source = null)
-        : base(raw, context, content, source)
+    public @this(string raw, actor.context.@this? context = null)
+        : base(raw, context)
     {
         if (!Uri.TryCreate(raw, UriKind.Absolute, out var uri))
             throw new ArgumentException($"Not a valid http(s) URL: '{raw}'", nameof(raw));

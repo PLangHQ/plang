@@ -469,12 +469,12 @@ public sealed partial class @this
                         System.IO.Directory.Delete(destination.Absolute, recursive: true);
                     System.IO.Directory.Move(Absolute, destination.Absolute);
                     return Task.FromResult(
-                        data.@this<global::app.type.path.@this>.Ok(new @this(destination.Absolute, Context, source: Absolute)));
+                        data.@this<global::app.type.path.@this>.Ok(new @this(destination.Absolute, Context)));
                 }
 
                 CopyDirectory(Absolute, destination.Absolute, overwrite, includeSubfolders);
                 return Task.FromResult(
-                    data.@this<global::app.type.path.@this>.Ok(new @this(destination.Absolute, Context, source: Absolute)));
+                    data.@this<global::app.type.path.@this>.Ok(new @this(destination.Absolute, Context)));
             }
 
             // File transfer -----------------------------------------------------
@@ -487,7 +487,7 @@ public sealed partial class @this
             else        System.IO.File.Copy(Absolute, destPath, overwrite);
 
             return Task.FromResult(
-                data.@this<global::app.type.path.@this>.Ok(new @this(destPath, Context, source: Absolute)));
+                data.@this<global::app.type.path.@this>.Ok(new @this(destPath, Context)));
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {

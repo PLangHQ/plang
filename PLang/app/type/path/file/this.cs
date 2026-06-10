@@ -19,14 +19,14 @@ public sealed partial class @this : global::app.type.path.@this
     /// scheme registry, implicit <c>string→path</c>) gets the canonical
     /// invariant for free.
     /// </summary>
-    public @this(string absolutePath, actor.context.@this? context = null, object? content = null, string? source = null)
-        : base(Canonicalize(absolutePath), context, content, source)
+    public @this(string absolutePath, actor.context.@this? context = null)
+        : base(Canonicalize(absolutePath), context)
     {
     }
 
-    // Invariant: _absolutePath always names the same OS file as the same
+    // Invariant: Absolute always names the same OS file as the same
     // string handed to System.IO would. The permission gate's prefix-match
-    // on _absolutePath is only sound when this holds — `..` and `.` segments
+    // on Absolute is only sound when this holds — `..` and `.` segments
     // must be resolved before the string is stored.
     private static string Canonicalize(string absolutePath)
     {

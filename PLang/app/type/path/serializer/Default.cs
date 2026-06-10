@@ -1,9 +1,9 @@
 namespace app.type.path.serializer;
 
 /// <summary>
-/// Wire renderer for <see cref="@this"/> — emits the path's portable
-/// <c>Relative</c> string (falling back to <c>Raw</c> / <c>Absolute</c> when
-/// Context isn't wired, mirroring the legacy <c>JsonConverter.Write</c>).
+/// Wire renderer for <see cref="@this"/> — delegates to the type's own
+/// <c>Write</c>, which emits the as-typed location (the resolved
+/// <c>Absolute</c> stays off the wire — it leaks the install root).
 ///
 /// <para>One file, one decision: every wire format renders a path the same
 /// way. The renderer dispatcher registers this class as <c>(path, "*")</c>,
@@ -17,18 +17,7 @@ public static class Default
     public static void Write(global::app.type.path.@this value, global::app.channel.serializer.IWriter writer)
     {
         if (value == null) { writer.Null(); return; }
-
-        string? wire = null;
-        if (value.Context != null)
-        {
-            try { wire = value.Relative; }
-            catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
-            {
-                wire = null;
-            }
-        }
-        wire ??= !string.IsNullOrEmpty(value.Raw) ? value.Raw : value.Absolute;
-        writer.String(wire);
+        value.Write(writer);
     }
 
     /// <summary>

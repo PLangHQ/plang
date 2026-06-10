@@ -1,3 +1,7 @@
+using System.Reflection;
+using System.Text;
+using System.Text.Json;
+
 namespace PLang.Tests.App.CompareRedesign;
 
 // Stage 3 — `path` demolition. Drop `Content`/`Source`; backing
@@ -10,33 +14,45 @@ public class Stage3_PathDemolitionTests
     [Test]
     public async Task Path_NoLongerCarriesContent_NoSourceField()
     {
-        // reflection: path.@this has no Content, no Source — content moved to file
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // path.@this has no Content, no Source — content moved to file
+        var t = typeof(global::app.type.path.@this);
+        await Assert.That(t.GetProperty("Content")).IsNull();
+        await Assert.That(t.GetProperty("Source")).IsNull();
     }
 
     [Test]
     public async Task PathWrite_EmitsPrivateLocation_AsTyped()
     {
-        // path.Write(IWriter) emits the as-typed location string verbatim: "//", "/", relative, "c:/", "http://"
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // path.Write(IWriter) emits the as-typed location string verbatim
+        foreach (var loc in new[] { "//file.txt", "/file.txt", "test/try.txt", "c:/my/path.txt" })
+        {
+            var p = new global::app.type.path.file.@this(loc) { Raw = loc };
+            using var ms = new MemoryStream();
+            using var jw = new Utf8JsonWriter(ms);
+            p.Write(new global::app.channel.serializer.json.Writer(jw));
+            jw.Flush();
+            await Assert.That(Encoding.UTF8.GetString(ms.ToArray())).IsEqualTo($"\"{loc}\"").Because(loc);
+        }
     }
 
     [Test]
     public async Task PathToString_LocationOnly_NeverContentFirst()
     {
-        // ToString returns the location string only; no fallback to Content?.ToString()
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // ToString returns the location string only; Content is gone entirely
+        var p = new global::app.type.path.file.@this("/some/file.json") { Raw = "/some/file.json" };
+        await Assert.That(p.ToString()).IsEqualTo("/some/file.json");
     }
 
     [Test]
     public async Task PathBacking_RenamedToLocation_Private()
     {
-        // reflection: protected/public `_absolutePath` no longer exists on path.@this; `_location` is private
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // `_absolutePath` no longer exists on path.@this; `_location` is private
+        var t = typeof(global::app.type.path.@this);
+        var all = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+        await Assert.That(t.GetField("_absolutePath", all)).IsNull();
+        var loc = t.GetField("_location", all);
+        await Assert.That(loc).IsNotNull();
+        await Assert.That(loc!.IsPrivate).IsTrue();
     }
 
     [Test]
@@ -58,9 +74,10 @@ public class Stage3_PathDemolitionTests
     [Test]
     public async Task TextType_HasNoPath_Property()
     {
-        // reflection: text.@this has no Path member — text stays pure content; path lives on file/url
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // text stays pure content — no Path member; path lives on file/url
+        var t = typeof(global::app.type.text.@this);
+        await Assert.That(t.GetProperty("Path")).IsNull();
+        await Assert.That(t.GetField("Path")).IsNull();
     }
 
     [Test]
@@ -114,9 +131,13 @@ public class Stage3_PathDemolitionTests
     [Test]
     public async Task PathWriteOut_LocationOnly_NotContent()
     {
-        // a `path` value has one face — `write out %path%` emits the as-typed location string
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // a `path` value has one face — the renderer entry emits the location string
+        var p = new global::app.type.path.file.@this("docs/readme.md") { Raw = "docs/readme.md" };
+        using var ms = new MemoryStream();
+        using var jw = new Utf8JsonWriter(ms);
+        global::app.type.path.serializer.Default.Write(p, new global::app.channel.serializer.json.Writer(jw));
+        jw.Flush();
+        await Assert.That(Encoding.UTF8.GetString(ms.ToArray())).IsEqualTo("\"docs/readme.md\"");
     }
 
     [Test]

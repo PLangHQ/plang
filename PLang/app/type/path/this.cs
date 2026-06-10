@@ -32,9 +32,19 @@ public abstract partial class @this : global::app.type.item.@this, module.IConte
             ? StringComparison.OrdinalIgnoreCase
             : StringComparison.Ordinal;
 
-    protected readonly string _absolutePath;
+    // The backing is the LOCATION — the string the user gave, verbatim:
+    // "//file.txt" (host-OS root), "/file.txt" (app root), "file.txt" /
+    // "test/try.txt" (relative), "c:/my/path.txt" (absolute), "http://…" (url).
+    // Everything else (absolute, relative, extension, …) is derived from it per
+    // the scheme's resolution rules and cached. Private — the wire form comes
+    // from Write reading it directly; no public raw accessor leaks it.
+    private string _location;
 
-    // Cached string-derived properties
+    // Cached string-derived properties. _absolute is primed at construction by
+    // schemes that resolve eagerly (file anchors relatives to the goal folder
+    // AT RESOLVE TIME — the anchor is call-stack state, so it cannot be derived
+    // later).
+    private string? _absolute;
     private string? _extension;
     private string? _fileName;
     private string? _fileNameWithoutExtension;
@@ -57,12 +67,14 @@ public abstract partial class @this : global::app.type.item.@this, module.IConte
     /// construct them; Context arrives via the IContext setter when the Path
     /// is wrapped in Data&lt;Path&gt; or set on a runtime object.
     /// </summary>
-    protected @this(string absolutePath, actor.context.@this? context = null, object? content = null, string? source = null)
+    protected @this(string path, actor.context.@this? context = null)
     {
-        _absolutePath = absolutePath;
+        // Producers that resolved the path hand the resolved form here and
+        // override the as-typed location via the Raw init; a verbatim
+        // construction is both at once.
+        _location = path;
+        _absolute = path;
         Context = context;
-        Content = content;
-        Source = source;
     }
 
     /// <summary>
@@ -89,8 +101,14 @@ public abstract partial class @this : global::app.type.item.@this, module.IConte
 
     // --- Path properties ---
 
-    public string Raw { get; init; } = "";
-    public virtual string Absolute => _absolutePath;
+    /// <summary>
+    /// The as-typed location. Init-setting it (the scheme factories do, with the
+    /// string the user wrote) makes the verbatim form the value's identity while
+    /// the resolved form stays a cached derivation.
+    /// </summary>
+    public string Raw { get => _location; init { if (!string.IsNullOrEmpty(value)) _location = value; } }
+
+    public virtual string Absolute => _absolute ??= _location;
 
     [Out, Store] public string Relative
     {
@@ -99,9 +117,9 @@ public abstract partial class @this : global::app.type.item.@this, module.IConte
             if (_relative != null) return _relative;
 
             // No Context (test fixtures, JSON deserialize without scope) — no root
-            // anchor, so the portable form is just Raw or absolute as-is.
+            // anchor, so the portable form is the as-typed location.
             if (Context?.App == null)
-                return _relative = !string.IsNullOrEmpty(Raw) ? Raw : _absolutePath;
+                return _relative = _location;
 
             var rootAbsolutePath = RootAbsolutePath;
             var rootWithSeparator = rootAbsolutePath;
@@ -113,22 +131,22 @@ public abstract partial class @this : global::app.type.item.@this, module.IConte
             // / GoalCall.PrPath stored in .pr files). Out-of-root paths
             // return their Absolute form unchanged — those aren't "relative
             // to root" in any meaningful sense.
-            if (_absolutePath.StartsWith(rootWithSeparator, RootComparison))
-                _relative = "/" + _absolutePath[rootWithSeparator.Length..].Replace('\\', '/');
-            else if (string.Equals(_absolutePath, rootAbsolutePath, RootComparison))
+            if (Absolute.StartsWith(rootWithSeparator, RootComparison))
+                _relative = "/" + Absolute[rootWithSeparator.Length..].Replace('\\', '/');
+            else if (string.Equals(Absolute, rootAbsolutePath, RootComparison))
                 _relative = "/";
             else
-                _relative = _absolutePath;
+                _relative = Absolute;
 
             return _relative;
         }
     }
 
-    [LlmBuilder] public string Extension => _extension ??= PathHelper.GetExtension(_absolutePath);
-    [LlmBuilder] public string FileName => _fileName ??= PathHelper.GetFileName(_absolutePath);
+    [LlmBuilder] public string Extension => _extension ??= PathHelper.GetExtension(_location);
+    [LlmBuilder] public string FileName => _fileName ??= PathHelper.GetFileName(_location);
     [LlmBuilder] public string FileNameWithoutExtension
-        => _fileNameWithoutExtension ??= PathHelper.GetFileNameWithoutExtension(_absolutePath);
-    [LlmBuilder] public string Directory => _directory ??= PathHelper.GetDirectoryName(_absolutePath) ?? _absolutePath;
+        => _fileNameWithoutExtension ??= PathHelper.GetFileNameWithoutExtension(_location);
+    [LlmBuilder] public string Directory => _directory ??= PathHelper.GetDirectoryName(Absolute) ?? Absolute;
     [LlmBuilder] public string MimeType => Context?.App?.Format?.Mime(Extension) ?? "application/octet-stream";
 
     [LlmBuilder] public bool IsFile => !string.IsNullOrEmpty(Extension);
@@ -164,25 +182,32 @@ public abstract partial class @this : global::app.type.item.@this, module.IConte
     // FilePath. The cross-scheme liveness query is the async `path.Stat()`;
     // truthiness ("does it exist") is `AsBooleanAsync()`.
 
-    // --- Content (file content when set by provider, e.g., after file.read) ---
+    // --- Display + wire ---
 
-    public object? Content { get; set; }
-
-    // --- Copy/move source tracking ---
-
-    public string? Source { get; }
-
-    // --- Display ---
-
-    public override string ToString()
+    // A path is a LOCATION value — it never carries content (content belongs
+    // to the file/url reference types), so its string form is location-only.
+    //
+    // Portable form: the as-typed location, verbatim. An internally derived
+    // path (Combine/Parent/move results) has no as-typed form — its location
+    // IS the resolved string — so it collapses to the root-relative form,
+    // keeping the install root out of display and off the wire.
+    private string Portable
     {
-        if (Content?.ToString() is { } c) return c;
-        // No Context means Relative would throw — fall back to the raw or
-        // absolute form so dictionary-keying / interpolation of stub Paths
-        // (test fixtures, JSON deserialize without scope) still works.
-        if (Context == null) return !string.IsNullOrEmpty(Raw) ? Raw : _absolutePath;
-        try { return Relative; } catch { return !string.IsNullOrEmpty(Raw) ? Raw : _absolutePath; }
+        get
+        {
+            if (!string.Equals(_location, _absolute, StringComparison.Ordinal)) return _location;
+            try { return Relative; } catch { return _location; }
+        }
     }
+
+    public override string ToString() => Portable;
+
+    /// <summary>
+    /// The type owns its wire shape and reads its own private fields — the
+    /// portable location. The resolved <see cref="Absolute"/> stays off the
+    /// wire (it leaks the install root and is gated behind Authorize).
+    /// </summary>
+    public override void Write(global::app.channel.serializer.IWriter w) => w.String(Portable);
 
     // Path equality follows RootComparison — the same case-sensitivity rule
     // Relative/IsUnder/ValidatePath use, so they can't drift apart. Hard-coding
@@ -190,13 +215,13 @@ public abstract partial class @this : global::app.type.item.@this, module.IConte
     // Linux — compare equal and hash-collide.
     public override bool Equals(object? obj) => obj switch
     {
-        @this other => string.Equals(_absolutePath, other._absolutePath, RootComparison),
-        string str => string.Equals(_absolutePath, str, RootComparison),
+        @this other => string.Equals(Absolute, other.Absolute, RootComparison),
+        string str => string.Equals(Absolute, str, RootComparison),
         _ => false
     };
 
     public override int GetHashCode() =>
-        StringComparer.FromComparison(RootComparison).GetHashCode(_absolutePath);
+        StringComparer.FromComparison(RootComparison).GetHashCode(Absolute);
 
     /// <summary>
     /// Convenience: <c>"some/file.goal"</c> automatically lifts to a file-scheme
