@@ -2,7 +2,7 @@
 
 ## Version: v6 (continuing the stage plan — no new review). Both suites GREEN.
 
-- **Suites:** plang 317 pass / 0 fail / 5 stale (Stage-3/7 stubs) / 2 skipped; C# 4217/4267 — **0 real failures** (the 50 are unfilled CompareRedesign Stage-3/7 spec stubs).
+- **Suites:** plang 322 pass / 0 fail / **0 stale** / 2 skipped; C# 4255/4267 — **0 real failures** (the 12 left are unfilled spec stubs, list below).
 
 ## What this is
 
@@ -28,12 +28,22 @@ Stage 3 inverts `read` (reference headline) per the approved architect spec; the
 - `Tests/LazyDeserialize/ReadCsv_LandsAsTable.test.goal` — `Type.Name` "table"→"file" (kind csv).
 - C#: `FileRead_Build_*` (table/item→file), `FileType_MimeType_FromExtension` (text→file), `BuilderValidate_BuildInferenceWinsOverDefaultObject` (table→file), `ConditionIfBranchIndexTests` fixture (`new object()`→dict, per its own comment).
 
+## Stage 3 + 7 progress (since the core landed)
+
+- **Stage 3 COMPLETE:** all 30 C# stubs (ReferenceNarrow ×15, PathDemolition ×15) + all 5 plang cuts green. Along the way: chain-wide `!` segment split in ParseNextSegment ("!file!path"); interpolation (`Variable.Resolve`), dotted writes, `GetValue`, operator `contains`/`startswith`/`endswith`/`isempty`, assert Contains/NotContains all route through the door (references render content — the scalar contract); `directory` got ILoadable + `Contains(needle)` (membership over the listing); narrow headline = the CONTENT's family (parsed dict, not the channel's `item` stamp); IContext injection in GetChild Peeks for references (no read on the property plane).
+- **Stage 7 underway:** PLNG003 gate live as WARNING (public instance member of an item.@this subtype returning raw CLR; ~200-finding worklist = the conversion backlog). `path` growth: `IsUnder`/`Matches`/`Kind` public typed members; `Absolute`/`Relative`/`Extension` now INTERNAL (interop inch; `!absolute`/`!relative`/`!extension` projections served by the NonPublic-aware `!` plane reflection); builder filter → `f.Matches(bf)`, read hint → `p.Kind`. Surface flips done: `text.Length`→number, `dict.Keys`→list<text> (+`KeyNames` internal raw twin), `FilePath.Size`/`file.Size`→number. Gate probe tests: 9/10 green.
+
+## Remaining stubs (12)
+
+- `ListCount_ReturnsNumber_NotInt` — deferred: `list.Count` has ~23 interior arithmetic consumers (`== 0`, `- 1`, int comparisons); needs number operator audit or an internal raw twin.
+- Stage-2 deep stubs (Stage2_PlaneResolverTests et al): AtSchemaBlocked_AsDictKey, BangPlane_ResolvesPropertyAndEnvelope, BangReservedCore_Protected, BangTypeList_ReturnsAccumulatedChain (chain exists — likely fillable now), DataType_Getter_NoCLRSniffing, GenericToRaw_DoesNotExist_OnItemBase (ToRaw still exists — full removal pending), NameField_RemovedFromEnvelope, RawSlot_Dissolved, TextRawValue_IsPrivate, Value_AuthoredScalar_ReturnsTypedNumber, VarReference_RidesAsTypedText.
+
 ## Next
 
-1. Fill `Stage3_ReferenceNarrowTests` (15 stubs) + remaining `Stage3_PathDemolitionTests` (9 of 15 left) — machinery now exists for most.
-2. Fill the 5 stale plang stubs: Cut2_LazyReadAndNarrow, Cut3_WriteOutDirIsListing, Cut4_SortByIoKey, Cut6_ReadThenScalarYieldsContent, Narrow_ChainWideBangBothBranches (+ SortBySize C# stub).
-3. Stage 7 (surface typing) per stage-7-surface-typing.md; Stage7_PathGrowth/SurfaceGate stubs.
-4. Known deferred: `%path!absolute%` Authorize gating (PathBangAbsolute stub), `!extension` serialisation question (wire is a single location string now), directory write-out needs a Load() pass that materialises the listing.
+1. Walk the PLNG003 worklist (the warning list IS the worklist) type by type; flip to error when clean.
+2. `list.Count` → number (audit number's int operators first).
+3. Stage-2 deep stubs above; `item.ToRaw()` removal (leaf collapse sites remain: config, assert raw fallbacks, tester, CommandLineParser-documented).
+4. Known deferred: `%path!absolute%` Authorize gating on the `!` plane; the `!` NonPublic reflection arm is broad (any internal property is navigable) — tighten if codeanalyzer flags it.
 
 ## Code example (the narrow seam)
 
