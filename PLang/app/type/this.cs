@@ -356,19 +356,25 @@ public sealed class @this : item.@this
     /// </summary>
     internal item.@this Judge(item.@this value)
     {
-        if (string.Equals(Name, value.Mint().Name, System.StringComparison.OrdinalIgnoreCase))
+        var minted = value.Mint();
+        if (string.Equals(Name, minted.Name, System.StringComparison.OrdinalIgnoreCase))
         {
-            if (Kind != null && value.Mint().Kind == null)
+            if (Kind != null && minted.Kind == null)
             {
-                if (value is text.@this t)
-                    return new text.@this(t.Value) { Kind = Kind };
-                if (value is binary.@this b)
-                    return new binary.@this(b.Value) { Kind = Kind };
+                if (value is text.@this t) value = new text.@this(t.Value) { Kind = Kind };
+                else if (value is binary.@this b) value = new binary.@this(b.Value) { Kind = Kind };
             }
-            // `strict` is part of the declared judgement and rides WITH the
-            // value to wherever its bytes validate — the carrier holds it.
-            if (Strict && value is not (item.clr or item.source) and { Cacheable: true } and not global::app.data.ILoadable)
-                return new item.clr(value, Name, Kind ?? value.Mint().Kind, true);
+            // A declared kind the instance can't carry itself, or a strict
+            // flag, rides the carrier label — the judgement stays with the
+            // value (the load-time enforcer reads through the carrier's Peek).
+            var labelNeeded = Strict || (Kind != null && value.Mint().Kind == null);
+            if (labelNeeded)
+                return value switch
+                {
+                    item.clr carrier => carrier.Labeled(Name, Kind ?? minted.Kind, Strict),
+                    _ when !OwnsDoor(value) => new item.clr(value, Name, Kind ?? minted.Kind, Strict),
+                    _ => value,
+                };
             return value;
         }
         if (value.Facet(Name) != null) return value;
@@ -391,13 +397,13 @@ public sealed class @this : item.@this
             // truth stays (the carrier is transparent — Peek answers the
             // instance) but the declaration survives as the label, so build
             // validation can still judge the claim and the wire/signed type
-            // slot stays what was declared. Only inert values wrap — a value
-            // with its own live door (computed answers fresh; a loadable
-            // reads itself) must stay reachable as the instance.
+            // slot stays what was declared. Only a value that does NOT own its
+            // own door wraps — file/url/source/computed must stay reachable as
+            // the instance (their Ready does the work).
             return value switch
             {
                 item.clr carrier => carrier.Labeled(Name, Kind, Strict),
-                { Cacheable: true } and not global::app.data.ILoadable => new item.clr(value, Name, Kind, Strict),
+                _ when !OwnsDoor(value) => new item.clr(value, Name, Kind, Strict),
                 _ => value,
             };
         if (backing is string str && str.Contains('%')
@@ -405,6 +411,8 @@ public sealed class @this : item.@this
             return value;
         return new item.source(backing, Name, Kind, Strict);
     }
+
+    private static bool OwnsDoor(item.@this value) => item.@this.OwnsDoor(value);
 
     /// <summary>
     /// Value equality — the entity is minted on ask now, so two asks yield two

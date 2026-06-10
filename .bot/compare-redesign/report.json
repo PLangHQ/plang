@@ -696,7 +696,7 @@
       "id": "bdd11b01-34c6-4daa-809e-32c05a8167d7",
       "bot": "coder",
       "timestamp_start": "2026-06-10T16:30:00Z",
-      "timestamp_end": null,
+      "timestamp_end": "2026-06-11T00:10:00Z",
       "intent": "Stage 9 born-typed rebuild on the settled data-value-model: core collapse, consumer tail, templates, collections, follow-ons",
       "before": {
         "assumptions": "Model doc settled (nothing open); in-flight retype reverted; baseline C# 2 pre-existing fails (disposable path) + 6 pinned skips; plang 322/324.",
@@ -780,9 +780,26 @@
           "category": "test",
           "confidence": "medium",
           "context": "Consumer-tail test migration: Materialize->Peek, As<T> -> Value<T>, MaterializeCount probe extension, courier constructions to labeled carrier, old-shape pins re-judged to model truth (single storage, computed never kept, raw slot dissolved). Two temp probe test files to delete before commit."
+        },
+        {
+          "paths": [
+            "PLang/app/type/this.cs",
+            "PLang/app/data/this.Navigation.cs",
+            "PLang/app/module/cache/wrap.cs",
+            ".bot/compare-redesign/coder/v7/result.md",
+            ".bot/compare-redesign/coder/summary.md"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Convergence tail: Judge strict/kind carrier gated by OwnsDoor (Ready-override check); .Type navigation answers the stamp without opening a door-owner; kind->CLR mirror scoped to numbers; polymorphic {object|item} stamps skip the fold; null literal stays the null singleton."
         }
       ],
-      "after": {}
+      "after": {
+        "status": "Slice 1 core collapse landed and pushed. C# suite 0 failures / 2 follow-on skips; plang 4 known fails remain (cache modifier x2, literal-date judgement, 2 blocked on a scalar-equality semantics decision for Ingi).",
+        "health": "Both suites runnable; pre-existing native teardown segfault can truncate full-run plang logs (use stdbuf / subset runs); dev.sh test does not rebuild PlangConsole (stale-binary trap).",
+        "notes": "Slices 2-5 pending. New working rule agreed with Ingi: filtered test runs per fix, full gates at slice boundaries only; transitional pins get skip-with-reason."
+      }
     }
   ]
 }

@@ -138,6 +138,18 @@ public abstract class @this : global::app.data.IBooleanResolvable
         return null;
     }
 
+    /// <summary>
+    /// True when <paramref name="value"/>'s type overrides <see cref="Ready"/> —
+    /// its own door does real work (file/url load, source parses, computed
+    /// answers fresh). Metadata reads must not open such a door, and a carrier
+    /// must never stand between the Data and it.
+    /// </summary>
+    internal static bool OwnsDoor(@this value)
+        => _doorOwners.GetOrAdd(value.GetType(), static t =>
+            t.GetMethod(nameof(Ready))!.DeclaringType != typeof(@this));
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, bool> _doorOwners = new();
+
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, string> _namespaceTails = new();
 
     private protected static string NamespaceTail(System.Type t)

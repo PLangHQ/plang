@@ -250,12 +250,14 @@ public partial class @this
     /// </summary>
     private async System.Threading.Tasks.ValueTask<@this> GetChildValue(string key)
     {
-        // A raw-backed, untouched value answers Type metadata from its stamp
-        // WITHOUT materializing — reading the {type, kind} stamp must never
-        // trigger a parse, so a later scalar read of %x% stays the raw form.
-        // Scoped to RawUntouched so authored values keep "value wins over Data
-        // infrastructure" (a value's own "type" field still wins for those).
-        if (RawUntouched && key.Equals("Type", StringComparison.OrdinalIgnoreCase))
+        // A value whose door does real work (file/url/source/computed) answers
+        // Type metadata from its stamp WITHOUT opening the door — reading the
+        // {type, kind} stamp is never an examination, so a later scalar use of
+        // %x% stays unparsed. Scoped to door-owners so in-memory values keep
+        // "value wins over Data infrastructure" (a dict's own "type" key still
+        // wins for those).
+        if (key.Equals("Type", StringComparison.OrdinalIgnoreCase)
+            && _instance != null && global::app.type.item.@this.OwnsDoor(_instance))
             return new @this(key, Type, parent: this);
 
         // Navigation IS examination — the value door parses an un-narrowed
