@@ -917,3 +917,13 @@ doesn't say that; during Stage 9 design it was nearly misappropriated as the
 %ref%-resolution template type precisely because the name is opaque. Rename to
 something that says translation (and keep it distinct from the authored-literal
 resolution type Stage 9 introduces).
+
+## 2026-06-10 — Audit number's IConvertible
+
+**Context (Ingi/Stage 9):** the slice-1 ruling is "no implicit central conversion —
+consumers read typed and the type's own explicit member lowers at the .NET
+boundary." `number` implements IConvertible from before the branch; it is woven
+into the numeric tower and the Convert.ChangeType arm. Audit whether it can be
+removed (replaced by explicit To* members at the remaining call sites) or must
+stay as the one standard-protocol exception; do not add IConvertible to any
+other wrapper meanwhile.
