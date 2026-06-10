@@ -34,7 +34,7 @@ public class Cut2_SignThenCompressTests
         await using var app = NewApp();
         var d1 = MakeCompressible(app, "Ingi");
         var d2 = d1.Compress();
-        var inner = (byte[])(await d2.Value())!;
+        var inner = ((global::app.type.binary.@this)(await d2.Value())!).Value;
 
         using var gz = new System.IO.Compression.GZipStream(new MemoryStream(inner),
             System.IO.Compression.CompressionMode.Decompress);

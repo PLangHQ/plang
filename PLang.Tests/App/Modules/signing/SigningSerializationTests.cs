@@ -116,7 +116,7 @@ public class SigningSerializationTests
 
         var data = System.Text.Encoding.UTF8.GetBytes("test");
         var sigResult = provider.Sign(data, keys.PrivateKey);
-        var sig = (byte[])(await sigResult.Value())!;
+        var sig = ((global::app.type.binary.@this)(await sigResult.Value())!).Value;
         var base64Sig = Convert.ToBase64String(sig);
 
         var decoded = Convert.FromBase64String(base64Sig);

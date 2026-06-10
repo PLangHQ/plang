@@ -40,7 +40,7 @@ public class FilePathVerbTests
         await p.WriteBytes(bytes);
         var r = await p.ReadBytes();
         await r.IsSuccess();
-        await Assert.That((byte[])(await r.Value())!).IsEquivalentTo(bytes);
+        await Assert.That(((global::app.type.binary.@this)(await r.Value())!).Value).IsEquivalentTo(bytes);
     }
 
     [Test] public async Task Exists_FalseBeforeWrite_TrueAfterWrite()

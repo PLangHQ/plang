@@ -66,7 +66,7 @@ public class CompressFlattenedTests
         await using var app = NewApp();
         var d = NewCompressibleData(app, "needs a signature");
         var archived = d.Compress();
-        var bytes = (byte[])(await archived.Value())!;
+        var bytes = ((global::app.type.binary.@this)(await archived.Value())!).Value;
 
         // Gunzip and parse — must be a valid application/plang doc with a signature.
         using var gz = new System.IO.Compression.GZipStream(new MemoryStream(bytes),

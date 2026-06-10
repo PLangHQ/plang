@@ -613,9 +613,13 @@ public class Default : IBuilder
             // post-Stage-6) or a bare type-name string (llm.query → "json",
             // legacy handlers). Normalize a string to the structured form so
             // the terminal variable.set always gets a {name, kind?} Type.
-            if ((await buildResult.Value()) is global::app.type.@this typeEntity)
+            var hint = await buildResult.Value();
+            if (hint is global::app.type.@this typeEntity)
                 StampOnTerminalVariableSet(actions, typeEntity);
-            else if ((await buildResult.Value()) is string typeName && !string.IsNullOrEmpty(typeName))
+            // A bare type-name (legacy handlers) rides as text — its string
+            // face normalizes to the structured form.
+            else if (hint is global::app.type.text.@this or string
+                     && hint.ToString() is { Length: > 0 } typeName)
                 StampOnTerminalVariableSet(actions, app.type.@this.Create(typeName, context: context));
         }
         return errors;

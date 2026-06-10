@@ -579,7 +579,7 @@ public class RequestActionTests
         await Assert.That(lastData).IsNotNull();
         // Verify byte content was delivered (last chunk contains the input bytes)
         await Assert.That((await lastData!.Value())).IsTypeOf<byte[]>();
-        var chunk = (byte[])(await lastData.Value())!;
+        var chunk = ((global::app.type.binary.@this)(await lastData.Value())!).Value;
         await Assert.That(chunk.Length).IsGreaterThan(0);
     }
 
