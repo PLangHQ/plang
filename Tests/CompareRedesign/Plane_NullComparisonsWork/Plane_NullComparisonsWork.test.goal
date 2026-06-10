@@ -1,3 +1,17 @@
 Start
 / Plane — every %x% == null works regardless of x's type (null is never Incomparable; equality carve-out).
-- throw "not implemented"
+- set %d% = '{"a": 1}', type=json
+- set %n% = 5
+- set %t% = "hello"
+- set %dictIsNull% = false
+- if %d% == null then
+    - set %dictIsNull% = true
+- assert %dictIsNull% is false
+- set %numIsNull% = false
+- if %n% == null then
+    - set %numIsNull% = true
+- assert %numIsNull% is false
+- set %textIsNull% = false
+- if %t% == null then
+    - set %textIsNull% = true
+- assert %textIsNull% is false

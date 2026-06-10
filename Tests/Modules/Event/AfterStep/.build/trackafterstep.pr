@@ -11,39 +11,66 @@
       "comment": null,
       "actions": [
         {
+          "module": "math",
+          "action": "add",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "A",
+              "type": {
+                "name": "number"
+              },
+              "value": "%afterCount%"
+            },
+            {
+              "@schema": "data",
+              "name": "B",
+              "type": {
+                "name": "number",
+                "kind": "int"
+              },
+              "value": 1
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
           "module": "variable",
           "action": "set",
           "parameters": [
             {
+              "@schema": "data",
               "name": "Name",
-              "value": "%afterCount%",
-              "type": "string"
+              "type": {
+                "name": "variable"
+              },
+              "value": "%afterCount%"
             },
             {
+              "@schema": "data",
               "name": "Value",
-              "value": {
-                "op": "\u002B",
-                "left": "%afterCount%",
-                "right": 1
+              "type": {
+                "name": "number"
               },
-              "type": "object"
+              "value": "%!data%"
             }
           ],
           "defaults": [
             {
+              "@schema": "data",
               "name": "asdefault",
-              "value": false,
-              "type": "bool"
+              "type": {
+                "name": "bool"
+              },
+              "value": false
             }
           ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
+      "formal": "math.add(A=%afterCount%, B=1) | variable.set(Name=%afterCount%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     }
@@ -53,7 +80,7 @@
   "path": "/Modules/Event/AfterStep/TrackAfterStep.goal",
   "prPath": "/Modules/Event/AfterStep/.build/trackafterstep.pr",
   "hash": "e61efc7ed7e84e12985a055cdc731de72239a5a4d6abb5a762d78256849ac1ee",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

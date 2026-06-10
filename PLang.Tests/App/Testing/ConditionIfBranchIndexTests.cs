@@ -206,9 +206,9 @@ public class ConditionIfBranchIndexTests
     [Test]
     public async Task Evaluation_ThrowsOrErrors_NoBranchIndexPublished()
     {
-        // Use an invalid comparison to force an eval error: compare two incompatible
-        // objects or use an operator that doesn't apply. Empty Right with GreaterThan
-        // on a string typically errors.
+        // Use an invalid comparison to force an eval error: ordering text against a
+        // dict — dict is equality-only, so `>` has no honest answer and the boundary
+        // raises an evaluation error.
         var action = new PrAction
         {
             Module = "condition",
@@ -217,7 +217,7 @@ public class ConditionIfBranchIndexTests
             {
                 new("Left", "hello"),
                 new("Operator", new Operator(">")),
-                new("Right", new object()) // non-comparable
+                new("Right", new app.type.dict.@this()) // not orderable
             }
         };
 

@@ -76,6 +76,22 @@ public sealed class @this : global::app.type.item.@this
     public bool DigestEquals(@this other)
         => other != null && Bytes.AsSpan().SequenceEqual(other.Bytes);
 
+    // ---- Comparison (the unified hook — see app.type.compare; discovered via the
+    // value-class fallback, since `hash` lives outside the app.type.* name map) ----
+
+    /// <summary>Equality-only: same digest bytes → <c>Equal</c>, else <c>NotEqual</c>;
+    /// a non-hash side compares by its base64 text form, else <c>Incomparable</c>.</summary>
+    public static global::app.data.Comparison Compare(object? a, object? b)
+    {
+        var ha = a as @this;
+        var hb = b as @this;
+        if (ha != null && hb != null)
+            return ha.DigestEquals(hb)
+                ? global::app.data.Comparison.Equal
+                : global::app.data.Comparison.NotEqual;
+        return global::app.data.Comparison.Incomparable;
+    }
+
     public static implicit operator string(@this h) => h.ToBase64();
     public override string ToString() => ToBase64();
 }

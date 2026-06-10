@@ -127,14 +127,20 @@ public sealed partial class @this : global::app.type.item.@this,
     public static global::app.data.Comparison Compare(object? a, object? b)
     {
         // Text coerces the other side into its kind: the wrapper's content, a raw
-        // string, or an enum's NAME (`where Status equals 'Timeout'` — a raw enum's
-        // text form is its name).
+        // string, an enum's NAME (`where Status equals 'Timeout'`), or a domain
+        // value's canonical text form (its ToString — e.g. an Ask renders its
+        // answer for exactly this comparison, a type entity its name). Containers
+        // (dict/list) have no honest text form — they stay non-coercible, so
+        // `%dict% == "text"` is Incomparable, not a serialization comparison.
         static string? Coerce(object? v) => v switch
         {
             @this t => t.Value,
             string s => s,
             System.Enum e => e.ToString(),
-            _ => null,
+            global::app.type.dict.@this or global::app.type.list.@this => null,
+            System.Collections.IDictionary or System.Collections.IList => null,
+            null => null,
+            _ => v.ToString(),
         };
         var sa = Coerce(a);
         var sb = Coerce(b);

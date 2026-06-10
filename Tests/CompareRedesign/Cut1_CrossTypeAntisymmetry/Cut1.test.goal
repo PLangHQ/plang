@@ -2,4 +2,19 @@ Start
 / Cut 1 — cross-type antisymmetry. %a%="10" (text), %b%=9 (number).
 / if %a% > %b% AND if %b% < %a% must both fire (numeric, not lexical). "5" == 5 → true.
 / Proves rank + coercion + dispatch + boundary; catches the antisymmetry bug rank exists to prevent.
-- throw "not implemented"
+- set %a% = "10" as text
+- set %b% = 9
+- set %gt% = false
+- set %lt% = false
+- if %a% > %b% then
+    - set %gt% = true
+- if %b% < %a% then
+    - set %lt% = true
+- assert %gt% is true
+- assert %lt% is true
+- set %s% = "5" as text
+- set %n% = 5
+- set %eq% = false
+- if %s% == %n% then
+    - set %eq% = true
+- assert %eq% is true

@@ -1,0 +1,695 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %d% = \u0027{\u0022a\u0022: 1}\u0027, type=json",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Plane \u2014 every %x% == null works regardless of x\u0027s type (null is never Incomparable; equality carve-out).",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%d%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "object"
+              },
+              "value": {
+                "a": 1
+              }
+            },
+            {
+              "@schema": "data",
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "json"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%d%, Value={\u0022a\u0022: 1}, Type={\u0022name\u0022:\u0022json\u0022})",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %n% = 5",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%n%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "number",
+                "kind": "int"
+              },
+              "value": 5
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%n%, Value=5)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %t% = \u0022hello\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%t%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello"
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%t%, Value=\u0022hello\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set %dictIsNull% = false",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%dictIsNull%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%dictIsNull%, Value=false)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "if %d% == null then",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Left",
+              "type": {
+                "name": "object"
+              },
+              "value": "%d%"
+            },
+            {
+              "@schema": "data",
+              "name": "Operator",
+              "type": {
+                "name": "operator"
+              },
+              "value": "=="
+            },
+            {
+              "@schema": "data",
+              "name": "Right",
+              "type": {
+                "name": "object"
+              },
+              "value": null
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "negate",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "condition.if(Left=%d%, Operator=\u0022==\u0022, Right=null)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "set %dictIsNull% = true",
+      "lineNumber": 8,
+      "indent": 1,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%dictIsNull%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%dictIsNull%, Value=true)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "assert %dictIsNull% is false",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isFalse",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": "%dictIsNull%"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.isFalse(Value=%dictIsNull%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "set %numIsNull% = false",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%numIsNull%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%numIsNull%, Value=false)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "if %n% == null then",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Left",
+              "type": {
+                "name": "number",
+                "kind": "int"
+              },
+              "value": "%n%"
+            },
+            {
+              "@schema": "data",
+              "name": "Operator",
+              "type": {
+                "name": "operator"
+              },
+              "value": "=="
+            },
+            {
+              "@schema": "data",
+              "name": "Right",
+              "type": {
+                "name": "object"
+              },
+              "value": null
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "negate",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "condition.if(Left=%n%, Operator=\u0022==\u0022, Right=null)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 9,
+      "text": "set %numIsNull% = true",
+      "lineNumber": 12,
+      "indent": 1,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%numIsNull%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%numIsNull%, Value=true)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 10,
+      "text": "assert %numIsNull% is false",
+      "lineNumber": 13,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isFalse",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": "%numIsNull%"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.isFalse(Value=%numIsNull%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 11,
+      "text": "set %textIsNull% = false",
+      "lineNumber": 14,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%textIsNull%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%textIsNull%, Value=false)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 12,
+      "text": "if %t% == null then",
+      "lineNumber": 15,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Left",
+              "type": {
+                "name": "text"
+              },
+              "value": "%t%"
+            },
+            {
+              "@schema": "data",
+              "name": "Operator",
+              "type": {
+                "name": "operator"
+              },
+              "value": "=="
+            },
+            {
+              "@schema": "data",
+              "name": "Right",
+              "type": {
+                "name": "object"
+              },
+              "value": null
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "negate",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "condition.if(Left=%t%, Operator=\u0022==\u0022, Right=null)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 13,
+      "text": "set %textIsNull% = true",
+      "lineNumber": 16,
+      "indent": 1,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%textIsNull%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%textIsNull%, Value=true)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 14,
+      "text": "assert %textIsNull% is false",
+      "lineNumber": 17,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isFalse",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": "%textIsNull%"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.isFalse(Value=%textIsNull%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/CompareRedesign/Plane_NullComparisonsWork/Plane_NullComparisonsWork.test.goal",
+  "prPath": "/CompareRedesign/Plane_NullComparisonsWork/.build/plane_nullcomparisonswork.test.pr",
+  "hash": "a83222f5e3a90057b05d9b14de0c7e002e6c4f389b70a0cafa89c4900b4005bb",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

@@ -1,4 +1,13 @@
 Start
 / Plane — membership never errors. [%dict%] contains %number% → false (Incomparable element = no-match).
 / Applies to contains / in / indexof / unique — only comparison operators + sort error.
-- throw "not implemented"
+- set %d% = '{"a": 1}', type=json
+- set %list% = []
+- add %d% to %list%
+- set %n% = 5
+- set %found% = false
+- if %list% contains %n% then
+    - set %found% = true
+- assert %found% is false
+- index of %n% in %list%, write to %idx%
+- assert %idx% equals -1

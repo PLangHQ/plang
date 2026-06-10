@@ -9,15 +9,27 @@ public class Stage6_DiffRenameTests
     public async Task GoldenDiff_RenamedFromCompareToDiff_FileAndMethod()
     {
         // this.Compare.cs → this.Diff.cs; reflection: Data.Diff(other) exists, Data.Compare(other) is the new Comparison-returning method
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // Data.Diff(other) is the golden-diff; Data.Compare(other) is the Comparison entry.
+        var diff = typeof(Data).GetMethod("Diff", new[] { typeof(Data) });
+        await Assert.That(diff).IsNotNull();
+        await Assert.That(diff!.ReturnType).IsEqualTo(typeof(Data));
+        var compare = typeof(Data).GetMethod("Compare", new[] { typeof(Data) });
+        await Assert.That(compare).IsNotNull();
+        await Assert.That(compare!.ReturnType).IsEqualTo(typeof(System.Threading.Tasks.ValueTask<global::app.data.Comparison>));
     }
 
     [Test]
     public async Task GoldenDiff_StillProducesSameDiffTrees_ForKnownCases()
     {
         // pick a representative case from the v1 DataCompareTests and assert Diff produces the same shape
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var a = new Data("a", "hello");
+        var b = new Data("b", "hello");
+        var result = a.Diff(b);
+        var tree = (await result.Value()) as Dictionary<string, object?>;
+        await Assert.That(tree).IsNotNull();
+        await Assert.That(tree!["match"]).IsEqualTo(true);
+        var c = new Data("c", "different");
+        var tree2 = (await a.Diff(c).Value()) as Dictionary<string, object?>;
+        await Assert.That(tree2!["match"]).IsEqualTo(false);
     }
 }

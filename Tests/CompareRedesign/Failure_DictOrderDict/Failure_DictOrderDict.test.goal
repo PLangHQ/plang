@@ -1,3 +1,12 @@
 Start
 / Failure — if %dict% < %dict% (ordering on equality-only type) → boundary maps NotEqual → PLang error.
-- throw "not implemented"
+- set %d1% = '{"a": 1}', type=json
+- set %d2% = '{"a": 2}', type=json
+- set %caught% = ""
+- if %d1% < %d2% then
+    on error call Caught
+    - set %never% = true
+- assert %caught% equals "EvaluationError"
+
+Caught
+- set %caught% = %!error.Key%

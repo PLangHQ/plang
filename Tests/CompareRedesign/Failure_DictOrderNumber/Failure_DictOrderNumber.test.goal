@@ -1,3 +1,12 @@
 Start
 / Failure — if %dict% > %number% (order, non-coercible cross-type) → boundary maps Incomparable → PLang error.
-- throw "not implemented"
+- set %d% = '{"a": 1}', type=json
+- set %n% = 5
+- set %caught% = ""
+- if %d% > %n% then
+    on error call Caught
+    - set %never% = true
+- assert %caught% equals "EvaluationError"
+
+Caught
+- set %caught% = %!error.Key%

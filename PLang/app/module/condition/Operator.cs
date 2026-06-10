@@ -107,10 +107,20 @@ public sealed class Operator
     {
         // == true with non-bool left: delegates to Data.ToBooleanAsync(), so an
         // IBooleanResolvable left (a path) answers `if %path% exists` itself.
-        if ((right == null ? null : await right.Value()) is bool rb && (left == null ? null : await left.Value()) is not bool)
+        // A bool rides born-native as bool.@this — unwrap both shapes.
+        var rv = right == null ? null : await right.Value();
+        bool? rb = rv switch
+        {
+            bool b => b,
+            global::app.type.@bool.@this bw => bw.Value,
+            _ => null,
+        };
+        var lv = left == null ? null : await left.Value();
+        bool leftIsBool = lv is bool or global::app.type.@bool.@this;
+        if (rb != null && !leftIsBool)
         {
             bool leftTruthy = left != null && await left.ToBooleanAsync();
-            return rb ? leftTruthy : !leftTruthy;
+            return rb.Value ? leftTruthy : !leftTruthy;
         }
 
         if (left == null || right == null) return left == null && right == null;

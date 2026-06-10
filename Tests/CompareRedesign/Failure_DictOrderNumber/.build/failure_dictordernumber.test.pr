@@ -1,0 +1,406 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %d% = \u0027{\u0022a\u0022: 1}\u0027, type=json",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Failure \u2014 if %dict% \u003E %number% (order, non-coercible cross-type) \u2192 boundary maps Incomparable \u2192 PLang error.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%d%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "object"
+              },
+              "value": {
+                "a": 1
+              }
+            },
+            {
+              "@schema": "data",
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "json"
+              }
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%d%, Value={\u0022a\u0022: 1}, Type={\u0022name\u0022:\u0022json\u0022})",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %n% = 5",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%n%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "number",
+                "kind": "int"
+              },
+              "value": 5
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%n%, Value=5)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %caught% = \u0022\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%caught%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": ""
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%caught%, Value=\u0022\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "if %d% \u003E %n% then\non error call Caught",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Left",
+              "type": {
+                "name": "text"
+              },
+              "value": "%d%"
+            },
+            {
+              "@schema": "data",
+              "name": "Operator",
+              "type": {
+                "name": "operator"
+              },
+              "value": "\u003E"
+            },
+            {
+              "@schema": "data",
+              "name": "Right",
+              "type": {
+                "name": "number",
+                "kind": "int"
+              },
+              "value": "%n%"
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "negate",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "@schema": "data",
+                  "name": "Actions",
+                  "type": {
+                    "name": "list"
+                  },
+                  "value": [
+                    {
+                      "module": "goal",
+                      "action": "call",
+                      "parameters": [
+                        {
+                          "name": "GoalName",
+                          "value": {
+                            "name": "Caught",
+                            "parameters": []
+                          },
+                          "type": {
+                            "name": "goal.call"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "formal": "condition.if(Left=%d%, Operator=\u0022\u003E\u0022, Right=%n%) | error.handle(Actions=[goal.call(GoalName={name:\u0022Caught\u0022})])",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "set %never% = true",
+      "lineNumber": 8,
+      "indent": 1,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%never%"
+            },
+            {
+              "@schema": "data",
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%never%, Value=true)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %caught% equals \u0022EvaluationError\u0022",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "@schema": "data",
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "EvaluationError"
+            },
+            {
+              "@schema": "data",
+              "name": "Actual",
+              "type": {
+                "name": "object"
+              },
+              "value": "%caught%"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022EvaluationError\u0022, Actual=%caught%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "Caught",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "set %caught% = %!error.Key%",
+          "lineNumber": 12,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "@schema": "data",
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%caught%"
+                },
+                {
+                  "@schema": "data",
+                  "name": "Value",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "%!error.Key%"
+                }
+              ],
+              "defaults": [
+                {
+                  "@schema": "data",
+                  "name": "asdefault",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "formal": "variable.set(Name=%caught%, Value=%!error.Key%)",
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/CompareRedesign/Failure_DictOrderNumber/Failure_DictOrderNumber.test.goal",
+      "prPath": "/CompareRedesign/Failure_DictOrderNumber/.build/failure_dictordernumber.test.pr",
+      "hash": "12654aaa96a0db15ed65006c8ea207553cd6575e197cc229961f9e6e98848428",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/CompareRedesign/Failure_DictOrderNumber/Failure_DictOrderNumber.test.goal",
+  "prPath": "/CompareRedesign/Failure_DictOrderNumber/.build/failure_dictordernumber.test.pr",
+  "hash": "8df82c45040a00623e3c322096904e6d535ce96f5dbf67e90373a0e4416ada2b",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

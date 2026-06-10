@@ -171,8 +171,16 @@ public class Stage4_PerTypeCompareTests
     public async Task NullsLast_InSortOrdering()
     {
         // sort places null entries last
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        await using var app = NewApp();
+        var ctx = app.User.Context;
+        var list = new global::app.type.list.@this { Context = ctx };
+        list.Add(new Data("", 3));
+        list.Add(new Data("", null));
+        list.Add(new Data("", 1));
+        await list.SortByValue(descending: false);
+        await Assert.That((await list.At(0)!.Value())).IsEqualTo(1);
+        await Assert.That((await list.At(1)!.Value())).IsEqualTo(3);
+        await Assert.That((await list.At(2)!.Value())).IsNull();   // nulls last
     }
 
     [Test]

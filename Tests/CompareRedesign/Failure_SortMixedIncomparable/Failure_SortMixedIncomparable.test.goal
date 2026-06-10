@@ -1,3 +1,11 @@
 Start
 / Failure — sort %mixed-incomparable% (list containing non-coercible cross-type pair) → sort surfaces Incomparable/NotEqual as PLang error.
-- throw "not implemented"
+- set %d% = '{"a": 1}', type=json
+- set %mixed% = [5]
+- add %d% to %mixed%
+- set %caught% = ""
+- sort %mixed%, on error call Caught, write to %sorted%
+- assert %caught% equals "ValidationError"
+
+Caught
+- set %caught% = %!error.Key%

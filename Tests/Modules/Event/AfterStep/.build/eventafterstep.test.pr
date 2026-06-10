@@ -15,25 +15,38 @@
           "action": "set",
           "parameters": [
             {
+              "@schema": "data",
               "name": "Name",
-              "value": "%afterCount%",
-              "type": "string"
+              "type": {
+                "name": "variable"
+              },
+              "value": "%afterCount%"
             },
             {
+              "@schema": "data",
               "name": "Value",
-              "value": 0,
-              "type": "int"
+              "type": {
+                "name": "number",
+                "kind": "int"
+              },
+              "value": 0
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%afterCount%, Value=0)",
       "source": null,
       "waitForExecution": true
     },
@@ -45,29 +58,55 @@
       "comment": null,
       "actions": [
         {
-          "module": "goal",
-          "action": "call",
+          "module": "event",
+          "action": "on",
           "parameters": [
             {
-              "name": "GoalName",
+              "@schema": "data",
+              "name": "Trigger",
+              "type": {
+                "name": "trigger"
+              },
+              "value": "AfterStep"
+            },
+            {
+              "@schema": "data",
+              "name": "GoalToCall",
+              "type": {
+                "name": "goal.call"
+              },
               "value": {
                 "name": "TrackAfterStep",
                 "parallel": false,
                 "parameters": null,
-                "prPath": "/Modules/Event/AfterStep/.build/trackafterstep.pr"
-              },
-              "type": "goal.call"
+                "prpath": null
+              }
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "isregex",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            },
+            {
+              "@schema": "data",
+              "name": "priority",
+              "type": {
+                "name": "number",
+                "kind": "int"
+              },
+              "value": 0
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": "after step call TrackAfterStep: register a goal call to TrackAfterStep as the after-step handler. The @known mapping indicates the exact prior action shape; emit it verbatim.",
-      "level": "high",
-      "confidence": 60,
-      "formal": null,
+      "formal": "event.on(Trigger=\u0022AfterStep\u0022, GoalToCall={name:\u0022TrackAfterStep\u0022})",
       "source": null,
       "waitForExecution": true
     },
@@ -83,25 +122,37 @@
           "action": "set",
           "parameters": [
             {
+              "@schema": "data",
               "name": "Name",
-              "value": "%value%",
-              "type": "string"
+              "type": {
+                "name": "variable"
+              },
+              "value": "%value%"
             },
             {
+              "@schema": "data",
               "name": "Value",
-              "value": "hello",
-              "type": "string"
+              "type": {
+                "name": "text"
+              },
+              "value": "hello"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%value%, Value=\u0022hello\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -117,25 +168,37 @@
           "action": "set",
           "parameters": [
             {
+              "@schema": "data",
               "name": "Name",
-              "value": "%value2%",
-              "type": "string"
+              "type": {
+                "name": "variable"
+              },
+              "value": "%value2%"
             },
             {
+              "@schema": "data",
               "name": "Value",
-              "value": "world",
-              "type": "string"
+              "type": {
+                "name": "text"
+              },
+              "value": "world"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "@schema": "data",
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%value2%, Value=\u0022world\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -151,14 +214,22 @@
           "action": "greaterThan",
           "parameters": [
             {
+              "@schema": "data",
               "name": "A",
-              "value": "%afterCount%",
-              "type": "object"
+              "type": {
+                "name": "number",
+                "kind": "int"
+              },
+              "value": "%afterCount%"
             },
             {
+              "@schema": "data",
               "name": "B",
-              "value": 0,
-              "type": "int"
+              "type": {
+                "name": "number",
+                "kind": "int"
+              },
+              "value": 0
             }
           ],
           "defaults": null,
@@ -166,10 +237,7 @@
         }
       ],
       "intent": null,
-      "guidance": "assert %afterCount% is greater than 0: post-condition invariant that must hold after previous steps. Map to assert.greaterThan with A=%afterCount% and B=0.",
-      "level": "high",
-      "confidence": 95,
-      "formal": null,
+      "formal": "assert.greaterThan(A=%afterCount%, B=0)",
       "source": null,
       "waitForExecution": true
     }
@@ -179,7 +247,7 @@
   "path": "/Modules/Event/AfterStep/EventAfterStep.test.goal",
   "prPath": "/Modules/Event/AfterStep/.build/eventafterstep.test.pr",
   "hash": "3539e45c2d574207fd135c411c007376e343d558d9548e18408da02f8fa1dc3b",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,
