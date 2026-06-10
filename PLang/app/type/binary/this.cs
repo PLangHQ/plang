@@ -21,6 +21,9 @@ public sealed partial class @this : global::app.type.item.@this
     public static implicit operator byte[]?(@this? b) => b?.Value;
     public static implicit operator @this(byte[] v) => new(v);
 
+    /// <summary>The CLR exit door — binary hands its own bytes.</summary>
+    internal override object? Clr(System.Type target) => ClrConvert(Value, target);
+
     public override object? ToRaw() => Value;
     public override bool IsLeaf => true;
     public override void Write(global::app.channel.serializer.IWriter w) => w.Bytes(Value);

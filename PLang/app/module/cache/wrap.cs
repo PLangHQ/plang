@@ -23,7 +23,7 @@ public partial class CacheWrap : IContext, IModifier
     {
         var keyVal = Key?.Peek() as global::app.type.text.@this;
         string cacheKey = !string.IsNullOrEmpty(keyVal?.ToString()) ? (string)keyVal! : DefaultKey(context);
-        long durationMs = DurationMs.GetValue<long>();
+        long durationMs = (DurationMs.Peek() as global::app.type.number.@this)?.ToInt64() ?? 0;
         var sliding = (Sliding.Peek() as global::app.type.@bool.@this)?.Value ?? false;
 
         return async () =>

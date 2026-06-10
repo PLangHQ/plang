@@ -12,7 +12,7 @@ public partial class Sleep : IContext
 
     public async Task<global::app.data.@this> Run()
     {
-        await Task.Delay(Ms.GetValue<int>(), Context.CancellationToken);
+        await Task.Delay(await Ms.Clr<int>(), Context.CancellationToken);
         return global::app.data.@this.Ok();
     }
 }

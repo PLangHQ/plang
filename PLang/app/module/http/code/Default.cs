@@ -68,7 +68,8 @@ public sealed class Default : IHttp
         var config = app.Config.For<Config>(action.Context);
 
         var unsigned = ((await action.Unsigned.Value())?.Value ?? false) || config.Resolve("Unsigned", false);
-        var timeout = action.TimeoutInSec.GetValue<double>() > 0 ? action.TimeoutInSec.GetValue<double>() : config.Resolve("TimeoutInSec", 30);
+        var timeout = action.TimeoutInSec == null ? config.Resolve("TimeoutInSec", 30) : await action.TimeoutInSec.Clr<double>(0);
+        if (timeout <= 0) timeout = config.Resolve("TimeoutInSec", 30);
         string contentType = (action.ContentType == null ? null : await action.ContentType.Value()) is { } ctv ? (string)ctv : config.Resolve("ContentType", "application/json");
         var encoding = (await action.Encoding.Value()) ?? config.Resolve("Encoding", "utf-8");
 
@@ -142,7 +143,8 @@ public sealed class Default : IHttp
         var config = app.Config.For<Config>(action.Context);
 
         var unsigned = ((await action.Unsigned.Value())?.Value ?? false) || config.Resolve("Unsigned", false);
-        var timeout = action.TimeoutInSec.GetValue<double>() > 0 ? action.TimeoutInSec.GetValue<double>() : config.Resolve("TimeoutInSec", 30);
+        var timeout = action.TimeoutInSec == null ? config.Resolve("TimeoutInSec", 30) : await action.TimeoutInSec.Clr<double>(0);
+        if (timeout <= 0) timeout = config.Resolve("TimeoutInSec", 30);
         var urlResult = ResolveUrl((await action.Url.Value())!, config);
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = (await urlResult.Value())!;
@@ -187,7 +189,8 @@ public sealed class Default : IHttp
         var config = app.Config.For<Config>(action.Context);
 
         var unsigned = ((await action.Unsigned.Value())?.Value ?? false) || config.Resolve("Unsigned", false);
-        var timeout = action.TimeoutInSec.GetValue<double>() > 0 ? action.TimeoutInSec.GetValue<double>() : config.Resolve("TimeoutInSec", 30);
+        var timeout = action.TimeoutInSec == null ? config.Resolve("TimeoutInSec", 30) : await action.TimeoutInSec.Clr<double>(0);
+        if (timeout <= 0) timeout = config.Resolve("TimeoutInSec", 30);
         var encoding = (await action.Encoding.Value()) ?? config.Resolve("Encoding", "utf-8");
 
         var urlResult = ResolveUrl((await action.Url.Value())!, config);

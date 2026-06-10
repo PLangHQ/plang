@@ -36,6 +36,56 @@ public abstract class @this : global::app.data.IBooleanResolvable
     public virtual bool IsTruthy() => true;
 
     /// <summary>
+    /// THE CLR EXIT DOOR — converts this value to the raw CLR
+    /// <paramref name="target"/>. The pattern is uniform across types: the
+    /// object hands ITS OWN backing to the shared mechanical converter
+    /// (<see cref="ClrConvert"/>) in a one-line override; the type's own loss
+    /// policy applies before the hand-over (number's tower). Lossy conversion
+    /// THROWS — never a silent default. The base THROWS too: a type that
+    /// declared no backing surfaces loudly the first time someone needs its
+    /// CLR form, instead of guessing through a string. Internal — engine
+    /// plumbing for the typed boundary (<c>Data.Clr&lt;T&gt;</c>, hydration);
+    /// the plang-facing surface stays fully typed.
+    /// </summary>
+    internal virtual object? Clr(System.Type target)
+        => throw new System.NotSupportedException(
+            $"'{GetType().FullName}' declares no CLR backing — override Clr(Type) with the type's own backing to convert to {target.Name}.");
+
+    /// <summary>Generic sugar over <see cref="Clr(System.Type)"/> — the
+    /// compile-time-known-target form.</summary>
+    internal T? Clr<T>() => (T?)Clr(typeof(T));
+
+    /// <summary>
+    /// The shared mechanics under every <see cref="Clr(System.Type)"/>: the
+    /// value the TYPE handed over (its own backing — ownership stays with the
+    /// type) converted via the engine's one converter. Identity short-circuits;
+    /// failure throws loudly with the converter's bind message.
+    /// </summary>
+    private protected static object? ClrConvert(object? backing, System.Type target)
+    {
+        if (backing == null) return null;
+        if (target.IsInstanceOfType(backing)) return backing;
+
+        // Primitive targets convert directly (invariant, throws on junk/overflow)
+        // — BEFORE the engine converter, whose family-hook arm would answer a
+        // numeric target with the born-native WRAPPER (its job is the opposite
+        // direction: CLR → plang).
+        if (backing is System.IConvertible && typeof(System.IConvertible).IsAssignableFrom(target)
+            && target != typeof(object) && !target.IsEnum)
+            return System.Convert.ChangeType(backing, target, System.Globalization.CultureInfo.InvariantCulture);
+
+        var (converted, error) = global::app.type.catalog.@this.TryConvert(backing, target);
+        if (error != null)
+            throw new System.InvalidCastException(error.Message);
+        // The converter answered with a born-native wrapper (its family-hook
+        // arm) — ask the WRAPPER for the raw target; its backing terminates the
+        // recursion at the identity arm.
+        if (converted is @this wrapper && !target.IsInstanceOfType(converted))
+            return wrapper.Clr(target);
+        return converted;
+    }
+
+    /// <summary>
     /// <see cref="global::app.data.IBooleanResolvable"/> — defaults to the sync
     /// <see cref="IsTruthy"/>. Only a value whose truthiness needs I/O
     /// (<c>path</c>) overrides this.

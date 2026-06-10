@@ -100,10 +100,11 @@ public partial class If : IContext, IStep
             }
             else if (condition != null)
             {
-                // condition.elseif — dispatch the handler so its Evaluate + lifecycle fire
+                // condition.elseif — dispatch the handler so its Evaluate + lifecycle fire.
+                // The verdict reads through the truthiness door (the value answers).
                 var elseIfResult = await condition.RunAsync(Context);
                 if (!elseIfResult.Success) return elseIfResult;
-                branchResult = await elseIfResult.Value() is true;
+                branchResult = await elseIfResult.ToBooleanAsync();
             }
             else
             {

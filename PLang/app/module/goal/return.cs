@@ -19,7 +19,10 @@ public partial class Return : IContext
     {
         var result = this.Data ?? global::app.data.@this.Ok();
         result.Returned = true;
-        result.ReturnDepth = Depth.GetValue<int>() > 0 ? Depth.GetValue<int>() : 1;
+        // Sync seam — Peek (the .pr literal is in memory); the number lowers
+        // itself at the engine's int return-depth slot.
+        int depth = (Depth.Peek() as global::app.type.number.@this)?.ToInt32() ?? 0;
+        result.ReturnDepth = depth > 0 ? depth : 1;
         return Task.FromResult(result);
     }
 }

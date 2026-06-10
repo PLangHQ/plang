@@ -38,8 +38,9 @@ public partial class run : IContext
     {
         var tests = Tests.GetValue<List<global::app.tester.test.@this>>() ?? new List<global::app.tester.test.@this>();
         var parentApp = Context.App!;
-        int parallel = (Parallel == null ? null : await Parallel.Value()) != null ? Parallel.GetValue<int>() : parentApp.Tester.Parallel;
-        double timeoutSeconds = (Timeout == null ? null : await Timeout.Value()) != null ? Timeout.GetValue<double>() : parentApp.Tester.TimeoutSeconds;
+        // The CLR exit door — absent → the stated default; unconvertible → loud.
+        int parallel = Parallel == null ? parentApp.Tester.Parallel : await Parallel.Clr(parentApp.Tester.Parallel);
+        double timeoutSeconds = Timeout == null ? parentApp.Tester.TimeoutSeconds : await Timeout.Clr(parentApp.Tester.TimeoutSeconds);
         var timeout = TimeSpan.FromSeconds(timeoutSeconds);
 
         if (tests.Count == 0)

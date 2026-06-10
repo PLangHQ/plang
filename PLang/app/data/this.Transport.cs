@@ -193,12 +193,10 @@ public partial class @this
                     "Deserialization failed after decompression: " + (deser.Error?.Message ?? "unknown"),
                     "DecompressError", 500));
 
-            var result = deser.Materialize() as @this;
-            if (result == null)
-                return FromError(new ServiceError("Decompressed payload did not parse to a Data document", "DecompressError", 500));
-
-            result.Context = _context;
-            return result;
+            // The container deserializer returns the reconstructed Data itself
+            // (no envelope around it — the store seam rejects bare nesting).
+            deser.Context = _context;
+            return deser;
         }
         catch (InvalidDataException ex)
         {

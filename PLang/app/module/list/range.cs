@@ -10,14 +10,17 @@ public partial class Range : IContext
     [Default(1)]
     public partial data.@this<global::app.type.number.@this> Step { get; init; }
 
-    public Task<data.@this<type.list>> Run()
+    public async Task<data.@this<type.list>> Run()
     {
-        if (Step.GetValue<int>() == 0)
-            return Task.FromResult(global::app.data.@this<type.list>.FromError(
-                new app.error.ValidationError("Step cannot be zero", "InvalidStep")));
+        // Typed reads; the numbers lower at the loop bounds — the handler's
+        // own int boundary.
+        var stepN = (await Step.Value())!;
+        if (stepN == 0)
+            return global::app.data.@this<type.list>.FromError(
+                new app.error.ValidationError("Step cannot be zero", "InvalidStep"));
 
         var list = new app.type.list.@this { Context = Context };
-        int start = Start.GetValue<int>(), end = End.GetValue<int>(), step = Step.GetValue<int>();
+        int start = (await Start.Value())!.ToInt32(), end = (await End.Value())!.ToInt32(), step = stepN.ToInt32();
         if (step > 0)
         {
             for (int i = start; i <= end; i += step)
@@ -29,6 +32,6 @@ public partial class Range : IContext
                 list.Add(new global::app.data.@this("", i));
         }
 
-        return Task.FromResult(global::app.data.@this<type.list>.Ok(new type.list { count = list.CountRaw, value = list }, app.type.@this.FromName("list")));
+        return global::app.data.@this<type.list>.Ok(new type.list { count = list.CountRaw, value = list }, app.type.@this.FromName("list"));
     }
 }

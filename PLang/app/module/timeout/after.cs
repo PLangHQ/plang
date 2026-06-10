@@ -17,7 +17,9 @@ public partial class After : IContext, IModifier
 
     public Func<Task<global::app.data.@this>> Wrap(Func<Task<global::app.data.@this>> next, actor.context.@this context)
     {
-        int ms = Ms.GetValue<int>();
+        // Sync wrap seam — Peek (the .pr literal is in memory); the number
+        // lowers itself at the CancelAfter .NET edge.
+        int ms = (Ms.Peek() as global::app.type.number.@this)?.ToInt32() ?? 0;
         return async () =>
         {
             // Capture parent token BEFORE pushing — after the push, context.CancellationToken

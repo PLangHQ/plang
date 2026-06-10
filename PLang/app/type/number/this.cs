@@ -124,6 +124,24 @@ public sealed partial class @this : global::app.type.item.@this, System.IEquatab
     public static implicit operator @this(float v) => From(v);
     public static implicit operator @this(double v) => From(v);
 
+    /// <summary>The CLR exit door — number hands its own boxed backing; the
+    /// tower's loss policy applies first: a fractional value narrowing to an
+    /// integral target is an ERROR (state intent with math.round/floor), never
+    /// a silent round/truncate.</summary>
+    internal override object? Clr(System.Type target)
+    {
+        if ((target == typeof(int) || target == typeof(long) || target == typeof(short)
+             || target == typeof(byte) || target == typeof(sbyte) || target == typeof(uint)
+             || target == typeof(ulong) || target == typeof(ushort) || target == typeof(BigInteger))
+            && Cat != Category.Integer && AsDecimalLossy() % 1m != 0m)
+            throw new System.InvalidCastException(
+                $"Number {ToString()} has a fractional part and cannot convert to {target.Name} — round it first (math.round / math.floor).");
+        return ClrConvert(_value, target);
+    }
+
+    // The widest lossy carrier for the fraction check only — never returned.
+    private decimal AsDecimalLossy() => Cat == Category.Decimal ? AsDecimal() : (decimal)AsDouble();
+
     // Explicit OUT — narrowing throws on failure, never silent corruption.
     public static explicit operator int(@this n) => n.ToInt32();
     public static explicit operator long(@this n) => n.ToInt64();

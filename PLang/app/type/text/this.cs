@@ -67,6 +67,10 @@ public sealed partial class @this : global::app.type.item.@this,
 
     public override string ToString() => Value;
 
+    /// <summary>The CLR exit door — text hands its own backing string; the
+    /// shared converter (strict, loud on junk) carries it to the target.</summary>
+    internal override object? Clr(System.Type target) => ClrConvert(Value, target);
+
     // ---- Ops (the behavioral targets of the `is string` sweep) ----
 
     /// <summary>Codepoint (Unicode scalar) count — surrogate pairs count once.

@@ -85,18 +85,21 @@ public partial class getTypes : IContext
             var nameParam = ParamByName(action, "Name");
             var valueParam = ParamByName(action, "Value");
             var typeParam = ParamByName(action, "Type");
-            if (nameParam?.Materialize() is string rawName && !string.IsNullOrEmpty(rawName))
+            // Authored source forms ride as text — Peek (no parse, build-meta
+            // never materializes content) + the value's own string face.
+            var rawName = nameParam?.Peek()?.ToString();
+            if (!string.IsNullOrEmpty(rawName))
             {
                 string type;
                 // The Type slot wins — Build()'s stamp (file.read.Build() → {table,csv}) and the
                 // user (type) hint (`write to %x%(json)`). Born-native serializes the entity, so
                 // read its name from a type.@this / wire dict / bare string.
-                string? hinted = TypeNameOf(typeParam?.Materialize());
+                string? hinted = TypeNameOf(typeParam?.Peek());
                 if (!string.IsNullOrEmpty(hinted))
                 {
                     type = hinted!;
                 }
-                else if (valueParam?.Materialize() is string sval && string.Equals(sval, "%!data%", StringComparison.OrdinalIgnoreCase))
+                else if (string.Equals(valueParam?.Peek()?.ToString(), "%!data%", StringComparison.OrdinalIgnoreCase))
                 {
                     type = chainReturnType ?? "object";
                 }
@@ -118,10 +121,12 @@ public partial class getTypes : IContext
         {
             var collectionParam = ParamByName(action, "Collection");
             var itemNameParam = ParamByName(action, "ItemName");
-            if (itemNameParam?.Materialize() is string rawItemName && !string.IsNullOrEmpty(rawItemName))
+            var rawItemName = itemNameParam?.Peek()?.ToString();
+            if (!string.IsNullOrEmpty(rawItemName))
             {
                 var collectionType = "object";
-                if (collectionParam?.Materialize() is string collRef && collRef.StartsWith("%"))
+                var collRef = collectionParam?.Peek()?.ToString();
+                if (collRef != null && collRef.StartsWith("%"))
                 {
                     if (working.TryGetValue(Normalise(collRef), out var collKnown))
                         collectionType = collKnown;

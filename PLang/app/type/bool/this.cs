@@ -40,6 +40,9 @@ public sealed partial class @this : global::app.type.item.@this,
     public static bool operator ==(bool a, @this? b) => b == a;
     public static bool operator !=(bool a, @this? b) => !(b == a);
 
+    /// <summary>The CLR exit door — bool hands its own backing.</summary>
+    internal override object? Clr(System.Type target) => ClrConvert(Value, target);
+
     /// <summary>The truthiness primitive bottoms out here — the raw bool it wraps.</summary>
     public override bool IsTruthy() => Value;
     public override bool IsLeaf => true;

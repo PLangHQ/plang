@@ -20,8 +20,9 @@ public partial class Elseif : IContext, IStep
     {
         var evalResult = await Evaluator.Evaluate(this);
         if (!evalResult.Success) return evalResult;
-        var b = evalResult.GetValue<bool>();
-        if ((await Negate.Value())?.Value == true) b = !b;
+        // Both reads via the truthiness door — the value answers for itself.
+        var b = await evalResult.ToBooleanAsync();
+        if (await Negate.ToBooleanAsync()) b = !b;
         return Data(b);
     }
 }
