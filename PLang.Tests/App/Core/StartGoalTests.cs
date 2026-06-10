@@ -288,7 +288,7 @@ public class StartGoalTests
         // Type is derived from value ("y" is a string), not from defaults or [Default] attribute
         // This proves the fallback chain works: no defaults → no attribute → auto-derive
         var data = await context.Variable.Get("x");
-        await Assert.That((await data.Value())).IsEqualTo("y");
+        await Assert.That((await data.Value())?.ToString()).IsEqualTo("y");
     }
 
     #endregion

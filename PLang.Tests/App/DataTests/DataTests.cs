@@ -20,7 +20,7 @@ public class DataTests
     {
         var ov = new Data("test", "hello");
 
-        await Assert.That((await ov.Value())).IsEqualTo("hello");
+        await Assert.That((await ov.Value())?.ToString()).IsEqualTo("hello");
         await Assert.That(ov.IsInitialized).IsTrue();
     }
 
@@ -123,7 +123,7 @@ public class DataTests
 
         ov.SetValue("new value");
 
-        await Assert.That((await ov.Value())).IsEqualTo("new value");
+        await Assert.That((await ov.Value())?.ToString()).IsEqualTo("new value");
         await Assert.That(ov.IsInitialized).IsTrue();
     }
 
@@ -232,7 +232,7 @@ public class DataTests
         var child = await ov.GetChild("user.name");
 
         await Assert.That(child).IsNotNull();
-        await Assert.That((await child!.Value())).IsEqualTo("John");
+        await Assert.That((await child!.Value())?.ToString()).IsEqualTo("John");
     }
 
     [Test]
@@ -244,7 +244,7 @@ public class DataTests
         var child = await ov.GetChild("[1]");
 
         await Assert.That(child).IsNotNull();
-        await Assert.That((await child!.Value())).IsEqualTo("second");
+        await Assert.That((await child!.Value())?.ToString()).IsEqualTo("second");
     }
 
     [Test]
@@ -264,7 +264,7 @@ public class DataTests
         var child = await ov.GetChild("users[1].name");
 
         await Assert.That(child).IsNotNull();
-        await Assert.That((await child!.Value())).IsEqualTo("Bob");
+        await Assert.That((await child!.Value())?.ToString()).IsEqualTo("Bob");
     }
 
     [Test]
@@ -309,8 +309,8 @@ public class DataTests
         var nameChild = await ov.GetChild("Name");
         var valueChild = await ov.GetChild("Value");
 
-        await Assert.That((await nameChild!.Value())).IsEqualTo("Test");
-        await Assert.That((await valueChild!.Value())).IsEqualTo(42);
+        await Assert.That((await nameChild!.Value())?.ToString()).IsEqualTo("Test");
+        await Assert.That((await valueChild!.Value())?.ToString()).IsEqualTo("42");
     }
 
     [Test]
@@ -322,7 +322,7 @@ public class DataTests
         var child = await ov.GetChild("name");
 
         await Assert.That(child).IsNotNull();
-        await Assert.That((await child!.Value())).IsEqualTo("Test");
+        await Assert.That((await child!.Value())?.ToString()).IsEqualTo("Test");
     }
 
     [Test]
@@ -706,7 +706,7 @@ public class DataTests
         var unwrapped = envelope.Unwrap();
 
         await Assert.That(unwrapped.Type!.Name).IsEqualTo("text/plain");
-        await Assert.That((await unwrapped.Value())).IsEqualTo("Hello");
+        await Assert.That((await unwrapped.Value())?.ToString()).IsEqualTo("Hello");
     }
 
     [Test]
@@ -1208,9 +1208,9 @@ public class DataTests
 
         await Assert.That(merged).IsNotNull();
         await Assert.That(merged!.Count).IsEqualTo(3); // x, y (replaced), z
-        await Assert.That((await merged[0].Value())).IsEqualTo(1); // x unchanged
-        await Assert.That((await merged[1].Value())).IsEqualTo(99); // y replaced
-        await Assert.That((await merged[2].Value())).IsEqualTo(3); // z appended
+        await Assert.That((await merged[0].Value())?.ToString()).IsEqualTo("1"); // x unchanged
+        await Assert.That((await merged[1].Value())?.ToString()).IsEqualTo("99"); // y replaced
+        await Assert.That((await merged[2].Value())?.ToString()).IsEqualTo("3"); // z appended
     }
 
     [Test]

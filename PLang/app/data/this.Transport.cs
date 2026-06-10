@@ -83,7 +83,13 @@ public partial class @this
         if (family == null)
             return this;
 
-        var outer = new @this("", this, type.FromName(family));
+        // The wrap outer is the compress courier — it deliberately carries this
+        // Data sealed inside. Per the born-typed ruling this nesting belongs in
+        // an owning wrapper type (an `archive`, like `encryption` seals its
+        // inner Data); until that type exists the construction uses the
+        // explicit no-lift bypass rather than the seam.
+        var outer = new @this("", null, type.FromName(family));
+        outer.SetValueDirect(this);
         outer.Context = _context;
         return outer;
     }

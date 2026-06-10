@@ -11,7 +11,7 @@ public class DataPlainTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<global::app.module.matrix.dataplain.DataPlain>(app,
             parameters: new[] { ("payload", (object?)"hello") });
-        await Assert.That((await result.Data.Value())).IsEqualTo("hello");
+        await Assert.That((await result.Data.Value())?.ToString()).IsEqualTo("hello");
     }
 
     [Test]
@@ -20,7 +20,7 @@ public class DataPlainTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<global::app.module.matrix.dataplain.DataPlain>(app,
             parameters: new[] { ("payload", (object?)42) });
-        await Assert.That((await result.Data.Value())).IsEqualTo(42);
+        await Assert.That((await result.Data.Value())?.ToString()).IsEqualTo("42");
     }
 
     [Test]
@@ -53,6 +53,6 @@ public class DataPlainTests
         var result = await MatrixRunner.RunAsync<global::app.module.matrix.dataplain.DataPlain>(app,
             parameters: new[] { ("payload", (object?)"%name%") },
             variables: new Dictionary<string, object?> { ["name"] = "world" });
-        await Assert.That((await result.Data.Value())).IsEqualTo("world");
+        await Assert.That((await result.Data.Value())?.ToString()).IsEqualTo("world");
     }
 }

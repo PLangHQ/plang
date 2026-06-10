@@ -774,11 +774,16 @@ public sealed class Default : IHttp
         AppType app, actor.context.@this context, CancellationToken ct)
     {
         var paramName = template.Parameters?.Count > 0 ? template.Parameters[0].Name : defaultName;
+        // A Data payload rides AS the parameter (parameters are Data boxes) —
+        // re-boxing would nest a bare Data, which the store seam rejects.
+        data.@this param;
+        if (value is data.@this dv) { dv.Name = paramName; param = dv; }
+        else param = new data.@this(paramName, value, type);
         var call = new GoalCall
         {
             Name = template.Name,
             PrPath = template.PrPath,
-            Parameters = new List<data.@this> { new data.@this(paramName, value, type) }
+            Parameters = new List<data.@this> { param }
         };
         var result = await app.RunGoalAsync(call, context, ct);
         if (!result.Success)

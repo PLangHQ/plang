@@ -24,7 +24,7 @@ public class SnapshotWireTests
         var dst = new global::app.@this("/dst");
         dst.Restore(wired, dst.User.Context);
 
-        await Assert.That((await (await dst.User.Context.Variable.Get("count")).Value())).IsEqualTo(42L);
+        await Assert.That((await (await dst.User.Context.Variable.Get("count")).Value())?.ToString()).IsEqualTo("42");
         await Assert.That((await (await dst.User.Context.Variable.Get("name")).Value())?.ToString()).IsEqualTo("plang");
     }
 

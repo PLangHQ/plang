@@ -61,7 +61,7 @@ public class GetParameterTests
         var found = action.GetParameter("b", _app.User.Context);
 
         await Assert.That(ReferenceEquals(found, defaultData)).IsTrue();
-        await Assert.That((await found.Value())).IsEqualTo("y");
+        await Assert.That((await found.Value())?.ToString()).IsEqualTo("y");
     }
 
     // Parameter absent from both → returns Data.NotFound (IsInitialized = false).

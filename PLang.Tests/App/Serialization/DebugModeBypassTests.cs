@@ -63,7 +63,7 @@ public class DebugModeBypassTests
     {
         var s = new global::app.module.settings.type.setting { key = "K", value = "secret" };
         var children = (new Data("", s).Normalize(global::app.View.Debug))!.Children();
-        await Assert.That((await children.First(c => c.Name == "value").Value())).IsEqualTo("****");
+        await Assert.That((await children.First(c => c.Name == "value").Value())?.ToString()).IsEqualTo("****");
     }
 
     // http.response dissolved (Decision 6) — duration is a Data Property, not a

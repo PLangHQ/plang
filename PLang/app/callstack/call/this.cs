@@ -319,6 +319,10 @@ public sealed partial class @this : IAsyncDisposable
     private static bool IsScalar(object value) =>
         value switch
         {
+            global::app.type.text.@this t => t.Value.Length <= 256,
+            // Scalar wrappers are deeply immutable (the wrapper-immutability
+            // gate) — holding the instance as Before is safe, no clone needed.
+            global::app.type.item.@this i => i.IsLeaf,
             string s => s.Length <= 256,
             bool or int or long or short or byte or sbyte or uint or ulong or ushort => true,
             float or double or decimal => true,

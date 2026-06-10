@@ -112,7 +112,7 @@ public class Stage4_TypeHintPrecedenceTests
 
         var typeParam = setAction.Parameters.First(p =>
             string.Equals(p.Name, "Type", System.StringComparison.OrdinalIgnoreCase));
-        await Assert.That((await typeParam.Value())).IsEqualTo("json");
+        await Assert.That((await typeParam.Value())?.ToString()).IsEqualTo("json");
     }
 
     [Test]
@@ -148,7 +148,7 @@ public class Stage4_TypeHintPrecedenceTests
 
         var typeParam = setAction.Parameters.First(p =>
             string.Equals(p.Name, "Type", System.StringComparison.OrdinalIgnoreCase));
-        await Assert.That((await typeParam.Value())).IsEqualTo("object");
+        await Assert.That((await typeParam.Value())?.ToString()).IsEqualTo("object");
     }
 
     [Test]

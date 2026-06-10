@@ -98,7 +98,7 @@ public class Stage0_DataMaterializationTests
     {
         var src = new Data("x", "anything") { Type = new global::app.type.@this("bogus") };
 
-        await Assert.That((await src.Value())).IsEqualTo("anything")
+        await Assert.That((await src.Value())?.ToString()).IsEqualTo("anything")
             .Because("Setting with an unknown declared type stays cleanly stored.");
 
         var result = src.As("bogus", _app.User.Context);

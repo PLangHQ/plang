@@ -134,7 +134,11 @@ public partial class @this
                 foreach (DictionaryEntry e in rawDict)
                 {
                     var name = e.Key?.ToString() ?? "";
-                    built.Set(new @this(name, NormalizeValue(e.Value, mode, visited, depth + 1, types)));
+                    // A Data entry rides AS the dict entry (entries are Data
+                    // boxes) — re-boxing would nest a bare Data.
+                    var normalized = NormalizeValue(e.Value, mode, visited, depth + 1, types);
+                    if (normalized is @this nd) { nd.Name = name; built.Set(nd); }
+                    else built.Set(new @this(name, normalized));
                 }
                 return built;
             }

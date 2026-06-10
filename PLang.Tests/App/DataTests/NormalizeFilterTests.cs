@@ -57,7 +57,7 @@ public class NormalizeFilterTests
         var t = new ThrowingGetter();
         var children = (new Data("", t).Normalize())!.Children();
         await Assert.That(t.Counter).IsEqualTo(0).Because("Masked getter must not be read");
-        await Assert.That((await children.First(c => c.Name == "bomb").Value())).IsEqualTo("****");
+        await Assert.That((await children.First(c => c.Name == "bomb").Value())?.ToString()).IsEqualTo("****");
     }
 
     [Test] public async Task Normalize_ChildNames_AreLowercased()
@@ -102,7 +102,7 @@ public class NormalizeFilterTests
     {
         var s = new global::app.module.settings.type.setting { key = "API_KEY", value = "secret-token" };
         var children = (new Data("", s).Normalize())!.Children();
-        await Assert.That((await children.First(c => c.Name == "key").Value())).IsEqualTo("API_KEY");
-        await Assert.That((await children.First(c => c.Name == "value").Value())).IsEqualTo("****");
+        await Assert.That((await children.First(c => c.Name == "key").Value())?.ToString()).IsEqualTo("API_KEY");
+        await Assert.That((await children.First(c => c.Name == "value").Value())?.ToString()).IsEqualTo("****");
     }
 }

@@ -69,7 +69,7 @@ public class NormalizeTreeShapeTests
         var outer = new Data("outer", inner);
         var result = outer.Normalize();
         await Assert.That(result).IsSameReferenceAs(inner);
-        await Assert.That((await inner.Value())).IsEqualTo("v");
+        await Assert.That((await inner.Value())?.ToString()).IsEqualTo("v");
     }
 
     [Test] public async Task Normalize_DictionaryStringX_BecomesListOfData_KeysAsNames()

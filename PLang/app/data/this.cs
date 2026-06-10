@@ -553,7 +553,7 @@ public partial class @this
     /// Used by RehydrateNestedData to replace a dictionary with a reconstructed Data object
     /// without losing the outer Type. A mutation — invalidates <c>_raw</c>.
     /// </summary>
-    private void SetValueDirect(object? value)
+    internal void SetValueDirect(object? value)
     {
         _value = value;
         _raw = null;
@@ -1645,7 +1645,13 @@ public partial class @this
     {
         var list = new app.type.list.@this();
         foreach (var item in element.EnumerateArray())
-            list.Add(new @this("", UnwrapJsonElement(item, depth + 1)));
+        {
+            // A marked element (@schema:data) reconstructs as a Data — the list
+            // ROW holds it directly (rows are the legitimate Data containers);
+            // re-wrapping would nest a bare Data, which the store seam rejects.
+            var unwrapped = UnwrapJsonElement(item, depth + 1);
+            list.Add(unwrapped as @this ?? new @this("", unwrapped));
+        }
         return list;
     }
 

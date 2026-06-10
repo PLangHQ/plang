@@ -35,7 +35,7 @@ public class SnapshotAtErrorTests
 
             var projection = vars.SnapshotAt(error);
             await Assert.That(projection).IsTypeOf<global::app.variable.list.@this>();
-            await Assert.That((await (await projection.Get("x")).Value())).IsEqualTo(1);
+            await Assert.That((await (await projection.Get("x")).Value())?.ToString()).IsEqualTo("1");
         }
     }
 
@@ -56,7 +56,7 @@ public class SnapshotAtErrorTests
             vars.Set("b", "added");
             var projection = vars.SnapshotAt(error);
             // Reverse-apply unwinds the post-throw mutations.
-            await Assert.That((await (await projection.Get("a")).Value())).IsEqualTo("before");
+            await Assert.That((await (await projection.Get("a")).Value())?.ToString()).IsEqualTo("before");
         }
     }
 
@@ -75,7 +75,7 @@ public class SnapshotAtErrorTests
         {
             vars.Set("x", 2); // handler mutation
             var projection = vars.SnapshotAt(error);
-            await Assert.That((await (await projection.Get("x")).Value())).IsEqualTo(1);
+            await Assert.That((await (await projection.Get("x")).Value())?.ToString()).IsEqualTo("1");
         }
     }
 
@@ -94,7 +94,7 @@ public class SnapshotAtErrorTests
         {
             // No post-throw mutations.
             var projection = vars.SnapshotAt(error);
-            await Assert.That((await (await projection.Get("x")).Value())).IsEqualTo("stable");
+            await Assert.That((await (await projection.Get("x")).Value())?.ToString()).IsEqualTo("stable");
         }
     }
 
@@ -115,7 +115,7 @@ public class SnapshotAtErrorTests
             var p1 = vars.SnapshotAt(error);
             var p2 = vars.SnapshotAt(error);
             await Assert.That((await (await p1.Get("v")).Value())).IsEqualTo((await (await p2.Get("v")).Value()));
-            await Assert.That((await (await p1.Get("v")).Value())).IsEqualTo(10);
+            await Assert.That((await (await p1.Get("v")).Value())?.ToString()).IsEqualTo("10");
         }
     }
 }

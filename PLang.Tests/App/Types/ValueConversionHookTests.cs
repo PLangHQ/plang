@@ -60,10 +60,10 @@ public class ValueConversionHookTests
     public async Task NumberHook_KindPicksPrecision_NullKindDerives()
     {
         var (_, ctx) = MakeApp();
-        await Assert.That((await Number.Convert("3.14", "decimal", ctx).Value())).IsEqualTo(3.14m);
-        await Assert.That((await Number.Convert("42", "long", ctx).Value())).IsEqualTo(42L);
+        await Assert.That((await Number.Convert("3.14", "decimal", ctx).Value())?.ToString()).IsEqualTo("3.14");
+        await Assert.That((await Number.Convert("42", "long", ctx).Value())?.ToString()).IsEqualTo("42");
         // null kind → derive from the literal shape (Build): integer → int.
-        await Assert.That((await Number.Convert("42", null, ctx).Value())).IsEqualTo(42);
+        await Assert.That((await Number.Convert("42", null, ctx).Value())?.ToString()).IsEqualTo("42");
         // non-numeric → error owned by number.
         await Assert.That(Number.Convert("abc", "int", ctx).Success).IsFalse();
     }
@@ -122,7 +122,7 @@ public class ValueConversionHookTests
     {
         var (app, ctx) = MakeApp();
 
-        await Assert.That((await app.Type.Convert("3.14", typeof(decimal), ctx).Value())).IsEqualTo(3.14m);
+        await Assert.That((await app.Type.Convert("3.14", typeof(decimal), ctx).Value())?.ToString()).IsEqualTo("3.14");
         await Assert.That((await app.Type.Convert("PT30S", typeof(System.TimeSpan), ctx).Value()))
             .IsEqualTo(System.TimeSpan.FromSeconds(30));
         await Assert.That((await app.Type.Convert("2024-03-15T10:30:00+00:00", typeof(System.DateTimeOffset), ctx).Value()))

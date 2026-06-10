@@ -240,6 +240,6 @@ public class MoveCopyBundledConsentTests
         var v2 = new Path(abs, app.User.Context);
         var v2Read = await v2.ReadText();
         await v2Read.IsSuccess();
-        await Assert.That((await v2Read.Value())).IsEqualTo("v1-still-here");
+        await Assert.That((await v2Read.Value())?.ToString()).IsEqualTo("v1-still-here");
     }
 }

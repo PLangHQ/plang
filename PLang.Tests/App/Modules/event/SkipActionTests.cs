@@ -31,7 +31,7 @@ public class SkipActionTests
 
         await result.IsSuccess();
         await Assert.That(context.EventOverride).IsNotNull();
-        await Assert.That((await context.EventOverride!.Value())).IsEqualTo("override-value");
+        await Assert.That((await context.EventOverride!.Value())?.ToString()).IsEqualTo("override-value");
     }
 
     [Test]
@@ -56,7 +56,7 @@ public class SkipActionTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsEqualTo(42);
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("42");
     }
 
     [Test]

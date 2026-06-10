@@ -84,7 +84,7 @@ public class JsonObjectNavigationTests
         var nav = new global::app.variable.navigator.Dictionary();
         var jo = new JsonObject { ["a"] = 1, ["b"] = 2, ["c"] = 3 };
         var result = await nav.Navigate(MakeData(jo), "Count");
-        await Assert.That((await result.Value())).IsEqualTo(3);
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("3");
     }
 
     [Test]
@@ -97,11 +97,11 @@ public class JsonObjectNavigationTests
         var canonical = new Dictionary<string, object?> { ["k"] = "v" };
         var d1 = new Data("");
         d1.SetValue(canonical);
-        await Assert.That((await (await nav.Navigate(d1, "k")).Value())).IsEqualTo("v");
+        await Assert.That((await (await nav.Navigate(d1, "k")).Value())?.ToString()).IsEqualTo("v");
 
         var legacy = new System.Collections.Hashtable { ["k"] = "v" };
         var d2 = new Data("");
         d2.SetValue(legacy);
-        await Assert.That((await (await nav.Navigate(d2, "k")).Value())).IsEqualTo("v");
+        await Assert.That((await (await nav.Navigate(d2, "k")).Value())?.ToString()).IsEqualTo("v");
     }
 }

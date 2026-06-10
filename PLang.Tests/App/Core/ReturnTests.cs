@@ -205,7 +205,7 @@ public class DataResultTests
         var result = Data.Ok("initial");
         result.SetValue("changed");
 
-        await Assert.That((await result.Value())).IsEqualTo("changed");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("changed");
     }
 
     [Test]

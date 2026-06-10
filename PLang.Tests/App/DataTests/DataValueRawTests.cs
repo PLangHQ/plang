@@ -19,7 +19,7 @@ public class DataValueRawTests
     public async Task Value_AfterConstruction_ReturnsRawAsSet()
     {
         var data = new Data("greeting", "hello world");
-        await Assert.That((await data.Value())).IsEqualTo("hello world");
+        await Assert.That((await data.Value())?.ToString()).IsEqualTo("hello world");
     }
 
     // Reading .Value 1000 times → no work performed; same reference returned every time.
@@ -42,7 +42,7 @@ public class DataValueRawTests
         _app.User.Context.Variable.Set("name", "world");
         var data = new Data("greeting", "Hello %name%") { Context = _app.User.Context };
 
-        await Assert.That((await data.Value())).IsEqualTo("Hello %name%");
+        await Assert.That((await data.Value())?.ToString()).IsEqualTo("Hello %name%");
     }
 
     // .Value on a List<object?> with nested %var% items → returns the original list reference, items unchanged.
@@ -78,7 +78,7 @@ public class DataValueRawTests
     {
         var data = new Data("greeting", "Hello %name%");
         // No context attached.
-        await Assert.That((await data.Value())).IsEqualTo("Hello %name%");
+        await Assert.That((await data.Value())?.ToString()).IsEqualTo("Hello %name%");
     }
 
     // After v4: Data has no _resolved field. Reflection check guards against re-introduction.
@@ -124,7 +124,7 @@ public class DataValueRawTests
         var found = action.GetParameter("greeting", _app.User.Context);
 
         await Assert.That(ReferenceEquals(found, stored)).IsTrue();
-        await Assert.That((await found.Value())).IsEqualTo("Hello %name%");
+        await Assert.That((await found.Value())?.ToString()).IsEqualTo("Hello %name%");
     }
 
     // Two parallel readers of the same Data → no race, no shared mutation, same .Value reference.

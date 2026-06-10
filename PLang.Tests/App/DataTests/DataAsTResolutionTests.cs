@@ -30,7 +30,7 @@ public class DataAsTResolutionTests
         var data = new Data("count", 42) { Context = _app.User.Context };
         var result = await data.As<global::app.type.number.@this>(_app.User.Context);
         await Assert.That(result).IsTypeOf<global::app.data.@this<global::app.type.number.@this>>();
-        await Assert.That((await result.Value())).IsEqualTo(42);
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("42");
     }
 
     // Value is "%name%" (full match), (await Variables.Get("name")).Value is T → returns Data<T> with that value.
@@ -43,7 +43,7 @@ public class DataAsTResolutionTests
         var result = await data.As<global::app.type.text.@this>(_app.User.Context);
 
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsEqualTo("/tmp/x.txt");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("/tmp/x.txt");
     }
 
     // Value is "%name%" but Variables doesn't have "name" → returns null/NotFound, not exception.
@@ -68,7 +68,7 @@ public class DataAsTResolutionTests
 
         var result = await data.As<global::app.type.text.@this>(_app.User.Context);
 
-        await Assert.That((await result.Value())).IsEqualTo("Hello world");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello world");
     }
 
     // Value is List<object?> with nested %var% strings → walks list, substitutes, converts to List<T>.
@@ -135,11 +135,11 @@ public class DataAsTResolutionTests
         var data = new Data("v", "%x%") { Context = _app.User.Context };
 
         var first = await data.As<global::app.type.text.@this>(_app.User.Context);
-        await Assert.That((await first.Value())).IsEqualTo("first");
+        await Assert.That((await first.Value())?.ToString()).IsEqualTo("first");
 
         _app.User.Context.Variable.Set("x", "second");
         var second = await data.As<global::app.type.text.@this>(_app.User.Context);
-        await Assert.That((await second.Value())).IsEqualTo("second");
+        await Assert.That((await second.Value())?.ToString()).IsEqualTo("second");
 
         // Two distinct instances — neither is a cache.
         await Assert.That(ReferenceEquals(first, second)).IsFalse();
@@ -153,10 +153,10 @@ public class DataAsTResolutionTests
         var data = new Data("v", "%x%") { Context = _app.User.Context };
 
         var resolved = await data.As<global::app.type.text.@this>(_app.User.Context);
-        await Assert.That((await resolved.Value())).IsEqualTo("resolved");
+        await Assert.That((await resolved.Value())?.ToString()).IsEqualTo("resolved");
 
         // Original .Value is still raw.
-        await Assert.That((await data.Value())).IsEqualTo("%x%");
+        await Assert.That((await data.Value())?.ToString()).IsEqualTo("%x%");
     }
 
     // List<Action.@this> elements pass through As<T> WITHOUT walking into Action templates.
@@ -187,7 +187,7 @@ public class DataAsTResolutionTests
         var firstAction = result.GetValue<List<PrAction>>()![0];
         var commentParam = firstAction.Parameters?.FirstOrDefault(p => p.Name == "comment");
         await Assert.That(commentParam).IsNotNull();
-        await Assert.That((await commentParam!.Value())).IsEqualTo("%comment%");
+        await Assert.That((await commentParam!.Value())?.ToString()).IsEqualTo("%comment%");
     }
 
     // Non-generic IList (ArrayList) doesn't match the typed shape — passes through without
@@ -236,7 +236,7 @@ public class DataAsTResolutionTests
         var result = await data.As<global::app.type.text.@this>(_app.User.Context);
 
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsEqualTo("%b%");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("%b%");
     }
 
     // Self-referencing stored value — same rule. %x% holds the bytes "%x%"; reading
@@ -252,7 +252,7 @@ public class DataAsTResolutionTests
         var result = await data.As<global::app.type.text.@this>(_app.User.Context);
 
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsEqualTo("%x%");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("%x%");
     }
 
     // Partial-match interpolation fires once over the slot's literal text, then stops.
@@ -268,7 +268,7 @@ public class DataAsTResolutionTests
         var result = await data.As<global::app.type.text.@this>(_app.User.Context);
 
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsEqualTo("hello %x%");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("hello %x%");
     }
 
     // Stored value is "X-%b%" — a string with embedded %var% text. The read returns it
@@ -286,7 +286,7 @@ public class DataAsTResolutionTests
         var result = await data.As<global::app.type.text.@this>(_app.User.Context);
 
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsEqualTo("X-%b%");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("X-%b%");
     }
 
     // Chains of stored %var% references do NOT transitively resolve. Reading %a% returns
@@ -306,7 +306,7 @@ public class DataAsTResolutionTests
         var result = await data.As<global::app.type.text.@this>(_app.User.Context);
 
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsEqualTo("%b%");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("%b%");
     }
 
     // Fresh context with different variable values → As<T> picks up the new values, no stale cache.
@@ -319,7 +319,7 @@ public class DataAsTResolutionTests
         app2.User.Context.Variable.Set("x", "from-app2");
 
         var result = await data.As<global::app.type.text.@this>(app2.User.Context);
-        await Assert.That((await result.Value())).IsEqualTo("from-app2");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("from-app2");
     }
 
     // Reproduces the LlmFixer 280k-prompt explosion. A typed slot reading a stored container

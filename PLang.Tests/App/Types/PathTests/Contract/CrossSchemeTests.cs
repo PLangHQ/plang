@@ -27,7 +27,7 @@ public class CrossSchemeTests
         var copied = await src.CopyTo(dst, overwrite: true, includeSubfolders: true);
         await copied.IsSuccess();
         var read = await dst.ReadText();
-        await Assert.That((await read.Value())).IsEqualTo("cross hello");
+        await Assert.That((await read.Value())?.ToString()).IsEqualTo("cross hello");
     }
 
     [Test] public async Task CopyTo_HttpPath_To_FilePath_UsesBaseDefault_RoundTrips()
@@ -43,7 +43,7 @@ public class CrossSchemeTests
         var copied = await src.CopyTo(dst, overwrite: true, includeSubfolders: true);
         await copied.IsSuccess();
         var read = await dst.ReadText();
-        await Assert.That((await read.Value())).IsEqualTo("reverse hello");
+        await Assert.That((await read.Value())?.ToString()).IsEqualTo("reverse hello");
     }
 
     [Test] public async Task MoveTo_FilePath_To_HttpPath_CopiesThenDeletesSource()
@@ -59,7 +59,7 @@ public class CrossSchemeTests
         var moved = await src.MoveTo(dst, overwrite: true);
         await moved.IsSuccess();
         var read = await dst.ReadText();
-        await Assert.That((await read.Value())).IsEqualTo("move cross");
+        await Assert.That((await read.Value())?.ToString()).IsEqualTo("move cross");
         var srcGone = await src.ExistsAsync();
         await Assert.That((await srcGone.Value())).IsEqualTo(false);
     }

@@ -119,7 +119,7 @@ public class Stage4_BuildMethodImplsTests
         var result = await Build("llm", "query",
             ("System", "you are a bot"), ("User", "hi"), ("Schema", "{\"type\":\"object\"}"));
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsEqualTo("json");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("json");
     }
 
     [Test]
@@ -128,7 +128,7 @@ public class Stage4_BuildMethodImplsTests
         var result = await Build("llm", "query",
             ("System", "you are a bot"), ("User", "hi"), ("Format", "md"));
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsEqualTo("md");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("md");
     }
 
     [Test]

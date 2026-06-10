@@ -41,7 +41,7 @@ public class OtherAccessorsTests
     {
         await using var app = new PLangEngine("/test");
         app.User.Context.Variable.Set("x", "hello");
-        await Assert.That((await (await app.User.Context.Variable.Get("x")).Value())).IsEqualTo("hello");
+        await Assert.That((await (await app.User.Context.Variable.Get("x")).Value())?.ToString()).IsEqualTo("hello");
     }
 
     [Test] public async Task ContextVariable_Set_RemainsAVerb_NotIndexerAssignment()

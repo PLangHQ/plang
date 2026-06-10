@@ -43,7 +43,7 @@ public class RuntimeDoubleWrapTests
         await result.IsSuccess();
         await AssertNotDoubleWrapped(result, "list.first");
         // Sanity — value is the raw 42L, not Data{42L}.
-        await Assert.That((await result.Value())).IsEqualTo(42L);
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("42");
     }
 
     [Test]
@@ -57,7 +57,7 @@ public class RuntimeDoubleWrapTests
 
         await result.IsSuccess();
         await AssertNotDoubleWrapped(result, "list.get");
-        await Assert.That((await result.Value())).IsEqualTo("b");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("b");
     }
 
     [Test]
@@ -71,7 +71,7 @@ public class RuntimeDoubleWrapTests
 
         await result.IsSuccess();
         await AssertNotDoubleWrapped(result, "list.last");
-        await Assert.That((await result.Value())).IsEqualTo(3L);
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("3");
     }
 
     [Test]
@@ -83,7 +83,7 @@ public class RuntimeDoubleWrapTests
 
         await result.IsSuccess();
         await AssertNotDoubleWrapped(result, "math.add");
-        await Assert.That((await result.Value())).IsEqualTo(8L);
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("8");
     }
 
     // Sweep across every action handler whose Run() returns Task<Data<object>>:

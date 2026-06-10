@@ -265,7 +265,9 @@ public sealed class @this : ISerializer
         try
         {
             if (string.IsNullOrEmpty(s) || s == "null") return global::app.data.@this.Ok();
-            return global::app.data.@this.Ok(JsonSerializer.Deserialize<global::app.data.@this>(s, _inbound));
+            // The wire IS a Data — return the reconstruction itself, never an
+            // Ok envelope around it (the bare-Data nesting the seam rejects).
+            return JsonSerializer.Deserialize<global::app.data.@this>(s, _inbound) ?? global::app.data.@this.Ok();
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {

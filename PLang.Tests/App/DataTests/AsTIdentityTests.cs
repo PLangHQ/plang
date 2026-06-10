@@ -121,7 +121,7 @@ public class AsTIdentityTests
         source.Properties.Set("note", "hello");
         var wrapped = await source.As<global::app.type.text.@this>();
         await Assert.That(ReferenceEquals(source, wrapped)).IsFalse();
-        await Assert.That((await wrapped.Value())).IsEqualTo("42");
+        await Assert.That((await wrapped.Value())?.ToString()).IsEqualTo("42");
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();
         await Assert.That(wrapped.Properties["note"]).IsEqualTo("hello");
     }

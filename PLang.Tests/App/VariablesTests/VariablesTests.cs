@@ -70,7 +70,7 @@ public class VariablesTests
 
         var ov = await stack.Get("name");
         await Assert.That(ov).IsNotNull();
-        await Assert.That((await ov!.Value())).IsEqualTo("John");
+        await Assert.That((await ov!.Value())?.ToString()).IsEqualTo("John");
     }
 
     [Test]
@@ -94,7 +94,7 @@ public class VariablesTests
         stack.Set("name", "Jane");
 
         var ov = await stack.Get("name");
-        await Assert.That((await ov!.Value())).IsEqualTo("Jane");
+        await Assert.That((await ov!.Value())?.ToString()).IsEqualTo("Jane");
     }
 
     [Test]
@@ -149,7 +149,7 @@ public class VariablesTests
         await Assert.That(person.Name).IsEqualTo("Jane");
         // Verify Get also sees the change
         var result = await stack.Get("person.Name");
-        await Assert.That((await result!.Value())).IsEqualTo("Jane");
+        await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Jane");
     }
 
     [Test]
@@ -168,7 +168,7 @@ public class VariablesTests
 
         await Assert.That(person.Address.City).IsEqualTo("Shelbyville");
         var result = await stack.Get("person.Address.City");
-        await Assert.That((await result!.Value())).IsEqualTo("Shelbyville");
+        await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Shelbyville");
     }
 
     [Test]
@@ -194,7 +194,7 @@ public class VariablesTests
 
         await Assert.That(data["name"]).IsEqualTo("Jane");
         var result = await stack.Get("user.name");
-        await Assert.That((await result!.Value())).IsEqualTo("Jane");
+        await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Jane");
     }
 
     [Test]
@@ -210,7 +210,7 @@ public class VariablesTests
         await Assert.That((await root!.Value())).IsTypeOf<Dictionary<string, object?>>();
 
         var prop = await stack.Get("nonexistent.prop");
-        await Assert.That((await prop!.Value())).IsEqualTo("value");
+        await Assert.That((await prop!.Value())?.ToString()).IsEqualTo("value");
     }
 
     [Test]
@@ -224,7 +224,7 @@ public class VariablesTests
         stack.Set("person.Name", "Jane");
 
         var result = await stack.Get("person.Name");
-        await Assert.That((await result!.Value())).IsEqualTo("Jane");
+        await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Jane");
         // Original CLR object is unchanged
         await Assert.That(person.Name).IsEqualTo("John");
         // Underlying value is now a dictionary
@@ -243,10 +243,10 @@ public class VariablesTests
         stack.Set("person.Street", "Main 123");
 
         var result = await stack.Get("person.Street");
-        await Assert.That((await result!.Value())).IsEqualTo("Main 123");
+        await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Main 123");
         // Original properties still accessible
         var name = await stack.Get("person.Name");
-        await Assert.That((await name!.Value())).IsEqualTo("John");
+        await Assert.That((await name!.Value())?.ToString()).IsEqualTo("John");
     }
 
     [Test]
@@ -260,7 +260,7 @@ public class VariablesTests
         stack.Set("person.street", "Main 123");
 
         var result = await stack.Get("person.street");
-        await Assert.That((await result!.Value())).IsEqualTo("Main 123");
+        await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Main 123");
     }
 
     [Test]
@@ -328,7 +328,7 @@ public class VariablesTests
 
         await Assert.That(ov).IsNotNull();
         await Assert.That(ov!.Name).IsEqualTo("test");
-        await Assert.That((await ov!.Value())).IsEqualTo("value");
+        await Assert.That((await ov!.Value())?.ToString()).IsEqualTo("value");
     }
 
     [Test]
@@ -337,9 +337,9 @@ public class VariablesTests
         var stack = new Variables();
         stack.Set("Name", "John");
 
-        await Assert.That((await (await stack.Get("name"))!.Value())).IsEqualTo("John");
-        await Assert.That((await (await stack.Get("NAME"))!.Value())).IsEqualTo("John");
-        await Assert.That((await (await stack.Get("Name"))!.Value())).IsEqualTo("John");
+        await Assert.That((await (await stack.Get("name"))!.Value())?.ToString()).IsEqualTo("John");
+        await Assert.That((await (await stack.Get("NAME"))!.Value())?.ToString()).IsEqualTo("John");
+        await Assert.That((await (await stack.Get("Name"))!.Value())?.ToString()).IsEqualTo("John");
     }
 
     [Test]
@@ -371,8 +371,8 @@ public class VariablesTests
         var name = await stack.Get("user.name");
         var age = await stack.Get("user.age");
 
-        await Assert.That((await name!.Value())).IsEqualTo("John");
-        await Assert.That((await age!.Value())).IsEqualTo(30);
+        await Assert.That((await name!.Value())?.ToString()).IsEqualTo("John");
+        await Assert.That((await age!.Value())?.ToString()).IsEqualTo("30");
     }
 
     [Test]
@@ -408,7 +408,7 @@ public class VariablesTests
         var result = await stack.Get("arr[0].id");
 
         await Assert.That(result).IsNotNull();
-        await Assert.That((await result!.Value())).IsEqualTo(42);
+        await Assert.That((await result!.Value())?.ToString()).IsEqualTo("42");
     }
 
     [Test]
@@ -431,7 +431,7 @@ public class VariablesTests
         var result = await stack.Get("list[0].items[0].val");
 
         await Assert.That(result).IsNotNull();
-        await Assert.That((await result!.Value())).IsEqualTo("deep");
+        await Assert.That((await result!.Value())?.ToString()).IsEqualTo("deep");
     }
 
     [Test]
@@ -445,7 +445,7 @@ public class VariablesTests
         var result = await stack.Get("items[idx]");
 
         await Assert.That(result).IsNotNull();
-        await Assert.That((await result!.Value())).IsEqualTo("one");
+        await Assert.That((await result!.Value())?.ToString()).IsEqualTo("one");
     }
 
     [Test]
@@ -458,7 +458,7 @@ public class VariablesTests
         var result = await stack.Get("items[1]");
 
         await Assert.That(result).IsNotNull();
-        await Assert.That((await result!.Value())).IsEqualTo("second");
+        await Assert.That((await result!.Value())?.ToString()).IsEqualTo("second");
     }
 
     [Test]
@@ -478,7 +478,7 @@ public class VariablesTests
 
         var name = await stack.Get("data.users[1].name");
 
-        await Assert.That((await name!.Value())).IsEqualTo("Bob");
+        await Assert.That((await name!.Value())?.ToString()).IsEqualTo("Bob");
     }
 
     [Test]
@@ -674,8 +674,8 @@ public class VariablesTests
 
         var clone = stack.Clone();
 
-        await Assert.That((await (await clone.Get("name"))!.Value())).IsEqualTo("John");
-        await Assert.That((await (await clone.Get("count"))!.Value())).IsEqualTo(42);
+        await Assert.That((await (await clone.Get("name"))!.Value())?.ToString()).IsEqualTo("John");
+        await Assert.That((await (await clone.Get("count"))!.Value())?.ToString()).IsEqualTo("42");
     }
 
     [Test]
@@ -687,8 +687,8 @@ public class VariablesTests
         var clone = stack.Clone();
         clone.Set("name", "Jane");
 
-        await Assert.That((await (await stack.Get("name"))!.Value())).IsEqualTo("John");
-        await Assert.That((await (await clone.Get("name"))!.Value())).IsEqualTo("Jane");
+        await Assert.That((await (await stack.Get("name"))!.Value())?.ToString()).IsEqualTo("John");
+        await Assert.That((await (await clone.Get("name"))!.Value())?.ToString()).IsEqualTo("Jane");
     }
 
     [Test]
@@ -838,7 +838,7 @@ public class VariablesCycleDetectionTests
 
         // Verify normal resolution works: data.items[idx] → data.items[1] → "one"
         var normalResult = await stack.Get("data.items[idx]");
-        await Assert.That((await normalResult!.Value())).IsEqualTo("one");
+        await Assert.That((await normalResult!.Value())?.ToString()).IsEqualTo("one");
 
         // Pre-seed the async-local visited set via reflection to simulate
         // a circular reference already in progress (idx is "being resolved")
@@ -876,12 +876,12 @@ public class VariablesCycleDetectionTests
 
         // Verify the thread-static set is properly cleaned up after normal resolution
         var result1 = await stack.Get("data.items[idx]");
-        await Assert.That((await result1!.Value())).IsEqualTo("first");
+        await Assert.That((await result1!.Value())?.ToString()).IsEqualTo("first");
 
         // Second call should work identically (no leftover state)
         stack.Set("idx", 1);
         var result2 = await stack.Get("data.items[idx]");
-        await Assert.That((await result2!.Value())).IsEqualTo("second");
+        await Assert.That((await result2!.Value())?.ToString()).IsEqualTo("second");
     }
 }
 
@@ -966,9 +966,9 @@ public class VariablesAccessorTests
         var name2 = await stack.Get("goal.Goals[2].Name");
 
         await Assert.That(name0.IsInitialized).IsTrue();
-        await Assert.That((await name0.Value())).IsEqualTo("ProcessGroup");
-        await Assert.That((await name1.Value())).IsEqualTo("LlmFixer");
-        await Assert.That((await name2.Value())).IsEqualTo("HandleFailure");
+        await Assert.That((await name0.Value())?.ToString()).IsEqualTo("ProcessGroup");
+        await Assert.That((await name1.Value())?.ToString()).IsEqualTo("LlmFixer");
+        await Assert.That((await name2.Value())?.ToString()).IsEqualTo("HandleFailure");
     }
 
     [Test]
@@ -981,7 +981,7 @@ public class VariablesAccessorTests
         var name = await stack.Get("goal.Name");
 
         await Assert.That(name.IsInitialized).IsTrue();
-        await Assert.That((await name.Value())).IsEqualTo("BuildGoal");
+        await Assert.That((await name.Value())?.ToString()).IsEqualTo("BuildGoal");
     }
 
     [Test]
@@ -996,7 +996,7 @@ public class VariablesAccessorTests
         var count = await stack.Get("goal.Goals.Count");
 
         await Assert.That(count.IsInitialized).IsTrue();
-        await Assert.That((await count.Value())).IsEqualTo(2);
+        await Assert.That((await count.Value())?.ToString()).IsEqualTo("2");
     }
 
     [Test]
@@ -1020,11 +1020,11 @@ public class VariablesAccessorTests
         // Sub-goal names should survive
         var subName = await stack.Get("goal.Goals[0].Name");
         await Assert.That(subName.IsInitialized).IsTrue();
-        await Assert.That((await subName.Value())).IsEqualTo("SubGoal");
+        await Assert.That((await subName.Value())?.ToString()).IsEqualTo("SubGoal");
 
         // Step should be updated
         var stepText = await stack.Get("goal.Steps[0].Text");
-        await Assert.That((await stepText.Value())).IsEqualTo("updated");
+        await Assert.That((await stepText.Value())?.ToString()).IsEqualTo("updated");
     }
 
     [Test]

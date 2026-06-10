@@ -254,7 +254,17 @@ public class Wire : JsonConverter<@this>
                     if (properties != null) lazy.Properties = properties;
                     return lazy;
                 }
-                var data = new @this(name, value, typeRef);
+                // The wire reader reconstructs EXACTLY what was written — a
+                // marked inner Data in the value slot (courier/legacy shapes)
+                // rides back in via the explicit no-lift bypass; the seam's
+                // throw is for new construction, not faithful reads.
+                @this data;
+                if (value is @this innerData)
+                {
+                    data = new @this(name, null, typeRef);
+                    data.SetValueDirect(innerData);
+                }
+                else data = new @this(name, value, typeRef);
                 if (signature != null) data.Signature = signature;
                 if (properties != null) data.Properties = properties;
                 return data;

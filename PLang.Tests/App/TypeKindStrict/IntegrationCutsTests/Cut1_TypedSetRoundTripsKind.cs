@@ -42,7 +42,7 @@ public class Cut1_TypedSetRoundTripsKind
         // Navigation via the same engine path used by `%doc.Type.Name%` in goal text.
         var name = await (await context.Variable.Get("doc"))!.GetChild("Type.Name");
         var kind = await (await context.Variable.Get("doc"))!.GetChild("Type.Kind");
-        await Assert.That((await name.Value())).IsEqualTo("text");
-        await Assert.That((await kind.Value())).IsEqualTo("md");
+        await Assert.That((await name.Value())?.ToString()).IsEqualTo("text");
+        await Assert.That((await kind.Value())?.ToString()).IsEqualTo("md");
     }
 }

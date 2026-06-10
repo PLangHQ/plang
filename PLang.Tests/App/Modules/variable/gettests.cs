@@ -23,7 +23,7 @@ public class GetTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsEqualTo("testValue");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("testValue");
         await Assert.That(result.Name).IsEqualTo("testVar");
     }
 

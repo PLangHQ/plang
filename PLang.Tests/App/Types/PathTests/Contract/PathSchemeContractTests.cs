@@ -93,7 +93,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
             var copied = await src.CopyTo(dst, overwrite: true, includeSubfolders: true);
             await copied.IsSuccess();
             var read = await dst.ReadText();
-            await Assert.That((await read.Value())).IsEqualTo("copy me");
+            await Assert.That((await read.Value())?.ToString()).IsEqualTo("copy me");
             var srcStill = await src.ExistsAsync();
             await Assert.That((await srcStill.Value())).IsEqualTo(true);
         }
@@ -111,7 +111,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
             var moved = await src.MoveTo(dst, overwrite: true);
             await moved.IsSuccess();
             var read = await dst.ReadText();
-            await Assert.That((await read.Value())).IsEqualTo("move me");
+            await Assert.That((await read.Value())?.ToString()).IsEqualTo("move me");
             var srcGone = await src.ExistsAsync();
             await Assert.That((await srcGone.Value())).IsEqualTo(false);
         }

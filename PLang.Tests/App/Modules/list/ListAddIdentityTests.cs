@@ -110,7 +110,7 @@ public class ListAddIdentityTests
         var live = (await (await vars.Get("products")).Value()) as global::app.type.list.@this;
         await Assert.That(live!.Count).IsEqualTo(1);
         // list.add stores the element Data by reference now (Stage 2 rebind makes it safe).
-        await Assert.That((await live!.At(0)!.Value())).IsEqualTo("hello");
+        await Assert.That((await live!.At(0)!.Value())?.ToString()).IsEqualTo("hello");
     }
 
     // After the variable is reassigned with Variables.Set("products", newList), the next
