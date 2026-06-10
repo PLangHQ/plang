@@ -17,7 +17,9 @@ changes — it points at values.**
 
 - **Every value instance is immutable.** plang cannot change an instance by
   design — `set` always makes a new value and rebinds. C# is held to the same
-  rule by `WrapperImmutabilityTests` (readonly fields, no setters, sealed).
+  rule by `WrapperImmutabilityTests` (readonly fields, no setters, sealed —
+  one named exemption: a private `_raw` field, the load-once slot; see
+  "Sampling" under the lifecycle).
 - **Stamps are ordinary typed properties on the instance** — `kind`, `strict`,
   `template` — set at creation, never after. There is no "stamps" object. Each
   type owns its own kind vocabulary (text: file extension; number: precision;
@@ -237,6 +239,22 @@ item]`. `is file` is still true, `%config!file!path%` still answers, and a
 is plang's type chain, NOT C# class inheritance; the source gen just asks for
 `file` like always and the value answers from its chain.
 
+**Where the chain lives, and who writes it (settled):**
+
+- **Writing it** — the type that narrows. The parse runs inside `file.Value()`,
+  so the file mints the dict and stamps ITSELF onto it as the prior, at
+  creation, init-only. Nobody above does chain bookkeeping — Data takes the
+  answer and the history is already inside it.
+- **Holding it** — the item base: one nullable priors slot every instance has,
+  null for almost everything (`set %x% = 5` → number, no chain).
+- **Answering from it** — the item base owns the walk (`Is("file")` checks
+  self then priors; `Facet("file")` hands back the file instance), and each
+  facet answers its own questions — `!file!path` is the file instance
+  answering from its location; the dict knows nothing about paths.
+- **The chain grows only on rebind.** Parse rebinds (the answer depends only
+  on the value → kept → file joins the chain). Render never rebinds → a
+  rendered answer carries no history. Nothing to decide case by case.
+
 **What the file facet's content means after mutation (settled):** the CURRENT
 value, serialized back in the file's format — never a re-read of the disk.
 One variable has one value; the file facet contributes location and format;
@@ -256,6 +274,30 @@ disk.
 
 Storage never doubles: nothing → `_raw` (loaded) → parsed value (raw emptied).
 The parse *moves* the value, it doesn't copy it.
+
+**Sampling — one read per value, at first use (settled):**
+
+- A value samples its source ONCE, at its first use through any door that
+  needs content (streaming or examining). The bytes land in the instance's
+  private `_raw`; later uses serve from memory. One read per value per program
+  run — using a variable twice is not `cat file` twice.
+- "Point of usage" means FIRST use. This is a deliberate divergence from
+  other languages: they read eagerly at the `read file` line and silently
+  serve stale data forever; plang's read line just names the file — the first
+  *use* is what samples it.
+- **Aliases share the sample.** `set %copy% = %config%` shares the instance,
+  so whichever variable touches it first loads for both — one truth per
+  value. Two variables only diverge when they came from separate `read file`
+  steps: separate values, each sampled at its own first use.
+- **Rebind is the only keep.** A parse answer is kept by the Data rebinding
+  to it; a render answer is never kept, never rebound. There is no third
+  caching mechanism.
+- `_raw` is private and the class owns its discipline (set on load, nulled on
+  parse — only the type's own load/parse path touches it). The immutability
+  gate (`WrapperImmutabilityTests`) exempts a private `_raw` field by name;
+  everything else stays locked. The load path guards its own first-use race
+  (two aliases touching an unloaded value at the same moment) — a lock in the
+  class that owns the field.
 
 ## Engine plumbing is not a plang value (settled)
 
@@ -390,23 +432,14 @@ following are wrong and must go:
 
 ## Not settled — do NOT build on these yet
 
-Open questions for the next session:
+One open question left:
 
-1. Reconciling Type-evolution with the existing type-chain/narrow code. The
-   model is agreed (same Data, type rebinds on Value()'s answer, identity
-   accumulates); the code reconciliation is not designed. Two sub-questions
-   now belong here:
-   - **Where does the chain live?** Likely on the answering instance the
-     parse mints (it is fresh, never shared) — but that is a choice, not
-     decided.
-   - **Narrow visibility across aliases changed.** Old code mutated the Data
-     in place, so every alias saw the narrow; now narrow is a per-Data
-     rebind, so two Datas sharing one unparsed file each parse independently
-     (idempotent, but the cross-alias visibility is gone). This is a
-     deliberate reversal of the old stage-2 note — confirm nothing depended
-     on it.
-2. `Value<T>()` vs the existing `As<T>` — same concern, which name/shape
-   survives is not decided.
+1. `Value<T>()` vs the existing `As<T>` — which name/shape survives is not
+   decided.
+
+(The former open point — where the chain lives and how aliases behave across
+a narrow — was settled 2026-06-10: see "Where the chain lives, and who writes
+it" and "Sampling — one read per value".)
 
 ## State of the working tree (handover note)
 
