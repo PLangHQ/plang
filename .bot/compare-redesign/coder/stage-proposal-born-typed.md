@@ -5,6 +5,8 @@ documented for the architect to fold into the stage plan as the next stage after
 Stage 7's gate worklist. Nine existing spec stubs are pinned to this scope (list
 at the bottom) and stay red-by-design until it lands.
 
+**Architect rulings (2026-06-10, settled with Ingi) are folded in below** — the store table, slice 2, and the perf risk were amended in place; the reasoning is in the "Architect rulings" section.
+
 ## The problem
 
 The `Data` value slot holds **either shape** depending on origin:
@@ -35,9 +37,17 @@ store(v):
   already item.@this       → as-is           (wrappers, domain values, references)
   string                   → text.@this
   bool                     → bool.@this
-  int/long/decimal/double… → number (kind = precision)
+  int/long/decimal/double… → number (kind derives from the boxed CLR numeric —
+                             number.@this already works this way; never stored)
   byte[]                   → binary.@this
-  DateTime/DateTimeOffset/TimeSpan → datetime/date/time/duration (family judgement)
+  DateTime/DateTimeOffset  → datetime.@this
+  DateOnly                 → date.@this
+  TimeOnly                 → time.@this
+  TimeSpan                 → duration.@this
+  data.@this (bare)        → THROW — a bare Data in the slot is always the
+                             implicit-operator accident (the CLAUDE.md double-wrap
+                             footgun); legitimate nesting goes through a wrapper
+                             type that owns the inner Data (ruling #2)
   anything else            → as-is, types as `item` — the "unknown" apex,
                              exactly what `object` is to C# (JsonElement, infra
                              CLR objects, take-over API results)
@@ -57,8 +67,11 @@ and only the suites will enumerate it.
    serialization, test fixtures constructing `new Data("x", "raw")`).
 2. **Containers** — raw `Dictionary`/`List` → dict/list at the seam. Staged
    separately: the CLI-config perimeter (`CommandLineParser`) is deliberately
-   raw today and must either stay outside Data or get an explicit carve-out.
-3. **The follow-ons the stubs pin** (only safe once 1–2 are green):
+   raw today and **stays outside Data — no carve-out** (ruling #3; the seam's
+   invariant has no exceptions). It lifts at the perimeter when the existing
+   CommandLineParser cleanup lands (todos.md 2026-06-05, updated 2026-06-10).
+3. **The follow-ons the stubs pin** (the first three only safe once 1–2 are
+   green; reserved-core is seam-independent — ruling #5):
    - `text.@this.Value` (the backing string) goes private — emitted only via
      `text.Write(IWriter)`; consumers use the typed ops.
    - `item.ToRaw()` removed — remaining leaf-collapse sites (config, assert raw
@@ -77,10 +90,29 @@ DataType_Getter_ReturnsBackingField_NoCLRSniffing.
 `Stage2_PlaneResolverTests`: BangReservedCore_Protected_TypeMayNotShadow,
 AtSchemaBlocked_AsDictKey_WireMarkerOnly, NameField_RemovedFromEnvelope.
 
+Split (ruling #5): the six `Stage2_ValueDoorTests` stubs wait for slices 1–2; the three `Stage2_PlaneResolverTests` stubs are seam-independent and can land any time, even before slice 1.
+
+## Architect rulings (2026-06-10, settled with Ingi)
+
+**1. The date arms are a 1:1 CLR map — no family judgement.** `DateTime`/`DateTimeOffset` → `datetime`, `DateOnly` → `date`, `TimeOnly` → `time`, `TimeSpan` → `duration`. The backings already line up (`date.@this` holds `System.DateOnly`, `time.@this` holds `System.TimeOnly`, `datetime.@this` holds `System.DateTimeOffset`, `duration.@this` holds `System.TimeSpan`). The seam never inspects a value to pick the type (midnight `DateTime` ≠ `date`) — that's value-sniffing, non-deterministic, and against no-magic. A `date`/`time` arrives only via explicit typed judgement (builder hint, `variable.set` force), never seam inference.
+
+**2. Bare `data.@this` at the seam THROWS; nested Data always has an owning wrapper type.** Nested Data is a real, wanted shape — `- encrypt %data%, write to %encrypted%` yields `Data { type: encryption, value: encryption.@this { backing: the sealed inner Data } }` — but it follows list's pattern: the slot holds the wrapper (`list.@this`), the wrapper's backing holds the Data boxes (`List<data>`). No approve-list of nesting-allowed types; the one rule is "a Data inside a value always has an owning type," and any future nesting case (`signed`, `cached`, `queued`, …) follows the same pattern. The throw therefore only ever catches the accidental implicit-operator case (`return innerData;` → `Data<object>{ Value = Data<bool> }`, the CLAUDE.md footgun) — nothing legitimate produces a bare Data in a slot, so the footgun dies structurally at the chokepoint. This also matches the courier rule: `encryption` never opens the inner Data; only `decrypt` (the leaf) does, so the inner value's signature survives sealed.
+
+**3. CommandLineParser stays outside Data — no carve-out.** The stage's payoff is consumers deleting their `is string` branches because the invariant is absolute; a carve-out makes every consumer keep the branch "just in case" — cost without payoff. CLI config never enters a Data slot (already true today); it lifts at the perimeter (typed option records) when the CommandLineParser cleanup todo lands (todos.md 2026-06-05 entry, updated 2026-06-10 with this ruling).
+
+**4. Wrapper immutability is a stated precondition, locked by a gate test.** Wrapper instances are already shared today — `set %x% = %y%` aliases the wrapper through `Data.ShallowClone` — and the instance cache widens that to program-wide singletons (every `true` in the program is the same `bool.True` object). Sharing is invisible only while the wrapper can never change; one writable field on a wrapper and a write through `%a%` appears in `%b%` — value corruption at a distance. The rule: **wrappers are deeply immutable; everything per-occurrence (name, type, kind, properties, signature) lives on the Data box, which is never shared.** Concrete trap this forbids: implementing the table's number arm by *storing* kind on the `number` instance — one shared `5` can't be int-kind in one variable and long-kind in another; `number.@this` already derives `Kind` from the boxed CLR type, keep it that way. Verified green today: `bool`/`text` are `Value { get; }`, `number` is `private readonly object _value`, all scalar wrappers are `sealed`, the `item.@this` base carries no instance fields.
+
+**Gate test (coder to add — lands green now, fails the future bad edit):** `PLang.Tests/App/CompareRedesign/WrapperImmutabilityTests.cs`, reflection gate in the `Stage0_PlangTypeRemovalTests` offenders style, over `{text, bool, number, binary, date, datetime, time, duration, null}` (`dict`/`list` deliberately absent — mutable containers with their own copy-on-write story). Three asserts: (a) every instance field, including inherited, is readonly (`IsInitOnly`, walk `BaseType` chain below `object`, `DeclaredOnly` per level); (b) no instance property has a setter (init-only would be safe but none exist — gate on "no setter," relax deliberately if one appears); (c) every wrapper is sealed (a subclass could add mutable state and flow through the same shared slots). Note in the test header that binary's `byte[]` *contents* are out of scope — interior mutation is the collections copy-on-write concern, not wrapper shape. **This sketch is a suggestion — you own the final shape.**
+
+**5. Stub split — six wait, three don't.** The six `Stage2_ValueDoorTests` stubs depend on slices 1–2 (born-typed slot, consumer tail converted — `ToRaw` can only be deleted after its remaining callers have a typed path). The three `Stage2_PlaneResolverTests` stubs (reserved-core protection, `@schema` dict-key block, name-leaves-envelope) never touch the store seam and can go green any time, even before slice 1 — don't queue independent work behind the seam. (Stage 2 already grep-verified nothing reads the envelope `name` on the wire read-path.)
+
 ## Risks / open points
 
 - **Perf:** scalar wrapping allocates on every store — number/bool should reuse
   cached instances (bool.True/False exist; small-int cache worth measuring).
+  Caching = sharing one instance program-wide, safe only under the
+  wrapper-immutability precondition (ruling #4) — the `WrapperImmutabilityTests`
+  gate must be in place before any cache lands.
 - **Equality/keying:** code keying dictionaries on slot values gets wrapper
   semantics (text is ordinal-ignore-case by design — verify each keying site
   wants that).
