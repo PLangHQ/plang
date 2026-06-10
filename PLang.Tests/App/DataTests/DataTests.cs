@@ -175,7 +175,8 @@ public class DataTests
     {
         var ov = new Data("test", 42);
 
-        var value = ov.GetValue<double>();
+        // The CLR exit door — the value converts itself (GetValue<rawT> is dying).
+        var value = await ov.Clr<double>();
 
         await Assert.That(value).IsEqualTo(42.0);
     }
@@ -865,7 +866,8 @@ public class DataTests
     public async Task Decrypt_EncryptedType_ReturnsSelf_NoCryptoYet()
     {
         var inner = new Data("", new byte[] { 1, 2 }, Type.FromName("ed25519"));
-        var encrypted = new Data("", inner, Type.FromName("encrypted"));
+        var encrypted = new Data("", null, Type.FromName("encrypted"));
+        encrypted.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
 
         var result = encrypted.Decrypt();
 
@@ -989,9 +991,11 @@ public class DataTests
         // Two-level nesting: text envelope containing another text envelope
         var leaf = new Data("", "deep content", Type.FromMime("text/plain"));
         leaf.Context = context;
-        var mid = new Data("", leaf, Type.FromName("text"));
+        var mid = new Data("", null, Type.FromName("text"));
+        mid.SetValueDirect(leaf);   // courier nesting — the documented no-lift bypass
         mid.Context = context;
-        var outer = new Data("", mid, Type.FromName("document"));
+        var outer = new Data("", null, Type.FromName("document"));
+        outer.SetValueDirect(mid);   // courier nesting — the documented no-lift bypass
         outer.Context = context;
 
         // Compress (document is compressible) and decompress
@@ -1159,7 +1163,8 @@ public class DataTests
     public async Task Decompress_NullBytes_ReturnsStatusCode500()
     {
         var inner = new Data("", null, Type.FromName("gzip"));
-        var archived = new Data("", inner, Type.FromName("archived"));
+        var archived = new Data("", null, Type.FromName("archived"));
+        archived.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
 
         var result = archived.Decompress();
 
@@ -1170,7 +1175,8 @@ public class DataTests
     public async Task Decompress_CorruptData_ReturnsStatusCode500()
     {
         var inner = new Data("", new byte[] { 0xFF, 0xFE, 0x00, 0x42 }, Type.FromName("gzip"));
-        var archived = new Data("", inner, Type.FromName("archived"));
+        var archived = new Data("", null, Type.FromName("archived"));
+        archived.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
 
         var result = archived.Decompress();
 
@@ -1192,7 +1198,8 @@ public class DataTests
         }
 
         var inner = new Data("", gzipped, Type.FromName("gzip"));
-        var archived = new Data("", inner, Type.FromName("archived"));
+        var archived = new Data("", null, Type.FromName("archived"));
+        archived.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
 
         var result = archived.Decompress();
 

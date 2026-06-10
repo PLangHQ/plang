@@ -63,9 +63,11 @@ public sealed class Text : ISerializer
     {
         var result = await DeserializeAsync(stream, cancellationToken);
         if (!result.Success) return global::app.data.@this<T>.From(result);
-        // The raw stream text rides born-native as text — its string face
-        // feeds the typed parse.
-        return global::app.data.@this<T>.Ok(FromText<T>(result.Materialize()?.ToString() ?? ""));
+        // Empty payload = absence — the channel-protocol concern that belongs
+        // to this serializer. Everything else: the Data converts ITSELF to T
+        // through T's own Convert hook (As<T> is the typed resolution door).
+        if (result.IsEmpty) return global::app.data.@this<T>.Ok(default!);
+        return await result.As<T>();
     }
 
     public data.@this<global::app.type.text.@this> Serialize(data.@this data)

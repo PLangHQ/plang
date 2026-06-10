@@ -757,8 +757,10 @@ public partial class @this
     }
 
     [JsonIgnore]
-    public bool IsEmpty => !IsInitialized || _value == null ||
-        (_value is string s && string.IsNullOrEmpty(s));
+    public bool IsEmpty => !IsInitialized || _value == null
+        || _value is global::app.type.@null.@this
+        || (_value is string s && string.IsNullOrEmpty(s))
+        || (_value is global::app.type.text.@this t && string.IsNullOrEmpty(t.Value));
 
     /// <summary>
     /// Returns the raw stored value without triggering the lazy factory. Under v4,

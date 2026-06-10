@@ -269,8 +269,8 @@ public class IfHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That((await result.Value()) is bool).IsTrue();
-        await Assert.That((bool)(await result.Value())!).IsTrue();
+        await Assert.That((await result.Value()) is bool or global::app.type.@bool.@this).IsTrue();
+        await Assert.That(await result.ToBooleanAsync()).IsTrue();
     }
 
     [Test]
@@ -280,8 +280,8 @@ public class IfHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That((await result.Value()) is bool).IsTrue();
-        await Assert.That((bool)(await result.Value())!).IsFalse();
+        await Assert.That((await result.Value()) is bool or global::app.type.@bool.@this).IsTrue();
+        await Assert.That(await result.ToBooleanAsync()).IsFalse();
     }
 
     [Test]
@@ -433,9 +433,17 @@ public class IfHandlerTests : IDisposable
     }
 }
 
+// Born-typed: truthiness belongs to the VALUE (IBooleanResolvable), not a
+// Data subclass override — the fixture expresses custom truthiness the way a
+// real value (path, bool) does.
 public class TestData : Data
 {
-    private readonly bool _boolean;
-    public TestData(bool boolean) : base("test", "some-value") => _boolean = boolean;
-    public override bool ToBoolean() => _boolean;
+    public TestData(bool boolean) : base("test", new TruthyValue(boolean)) { }
+
+    private sealed class TruthyValue(bool b) : global::app.type.item.@this, global::app.data.IBooleanResolvable
+    {
+        public System.Threading.Tasks.Task<bool> AsBooleanAsync() => System.Threading.Tasks.Task.FromResult(b);
+        public override bool IsTruthy() => b;
+        public override string ToString() => b ? "true" : "false";
+    }
 }
