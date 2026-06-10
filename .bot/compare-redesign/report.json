@@ -643,6 +643,54 @@
         "health": "plang 317/0 (5 stale stubs), C# 0 real fails",
         "notes": "See coder/summary.md for the semantics line (scalar=content, examination=narrow) and test-contract flags"
       }
+    },
+    {
+      "id": "fe2460de-102c-43b3-b4fd-bf239e937789",
+      "bot": "coder",
+      "timestamp_start": "2026-06-10T15:00:00Z",
+      "timestamp_end": "2026-06-10T18:45:00Z",
+      "intent": "Design session with Ingi producing data-value-model.md (the Data/Value target model); build/test speed investigation producing dev.sh + report",
+      "before": {
+        "assumptions": "Stage 9 consumer-patching was the right path",
+        "risk": "patching consumers instead of fixing the model \u2014 confirmed wrong by Ingi; pivoted to design session"
+      },
+      "plan": ".bot/compare-redesign/coder/data-value-model.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/compare-redesign/coder/data-value-model.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "The agreed Data/Value model from the design session: Data owns name/Type/properties; the type instance IS the value; async Value() rebinds on the type's answer; Peek vs Value; three rungs for C# types; type is an item; Assembly never in Data; schema layers replace nested Data; Materialize dies."
+        },
+        {
+          "paths": [
+            "PLang/app/data/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Reverted the half-done door retype to HEAD \u2014 disposable per the design doc; tree compiles again."
+        },
+        {
+          "paths": [
+            "dev.sh",
+            ".bot/compare-redesign/coder/build-speed-report.md",
+            ".bot/compare-redesign/claude-md-proposals.md"
+          ],
+          "type": "create",
+          "category": "config",
+          "confidence": "high",
+          "context": "Measured build/test costs (dotnet run 90s+, analyzers 17s, after-idle stall 2min); dev.sh encodes fast workflow: 1-5s builds, 3s filtered tests, full gate before commit."
+        }
+      ],
+      "after": {
+        "status": "design doc pushed for architect review; speed workflow in place",
+        "health": "tree compiles; C# suite ~5 known fails (stage9 tail, disposable path); plang suite green at last run",
+        "notes": "Next: architect reads data-value-model.md; open items in doc (type-chain reconciliation, Value<T> vs As<T>); optional PLang.Tests split for 31s->5s test edits"
+      }
     }
   ]
 }
