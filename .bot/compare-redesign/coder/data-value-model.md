@@ -1,9 +1,9 @@
 # The Data / Value model
 
 Written up from a design session with Ingi (2026-06-10), extended the same day
-by the architect review session (immutability, collections, templates,
-serialization — all settled and folded in below). Open points are listed at
-the end; they are NOT settled.
+by the architect review sessions (immutability, collections, templates,
+serialization, chain/sampling, the typed ask — all settled and folded in
+below). Nothing is open; this document is the contract for the value path.
 
 ## The one-sentence version
 
@@ -249,6 +249,24 @@ var dict  = await data.Value<dict>();  // "I need a dict" — the value parses/c
     it a file before the method ran;
   - **at the call**: `data.Value<dict>()` — mid-code, "I need it as a dict
     now".
+
+**`Value<T>()` is the one typed ask — `As<T>` is removed (settled 2026-06-10):**
+
+- One door, one name: the typed ask is the untyped ask with an expectation
+  attached, not a second mechanism. (`As` was also the wrong word — in C#
+  `as` means try-cast-null-on-failure; ours converts or errors honestly.)
+- `T` is a plang type only — `Value<dict>()`, never `Value<string>()`. Raw
+  CLR leaves through the item lowering ITSELF at a real .NET edge
+  (`number.ToInt64()`, `Clr<TimeSpan>()`). Every old `As<int>` site becomes a
+  compile error that forces it to the right door.
+- Mechanics: `await Value()`, then — the answer is T or has T in its chain →
+  hand over (the facet); else the answer converts itself through its own
+  Convert hook; else `Data.Error`.
+- **Conversion never rebinds.** Only `Value()`'s own answer rebinds (the
+  value's truth — parse, narrow). What a caller asked for (`Value<number>()`
+  on a text "5") is a view for that caller: handed over, never kept, no
+  chain entry. The variable stays text. "What is %x%?" is stable no matter
+  who asked what about it.
 
 ### What `Data<T>` means
 
@@ -511,17 +529,16 @@ following are wrong and must go:
   (see Immutability and sharing); the copy is wrong, not cautious.
 - **The `await GetValue()` pre-crawl before sync serialization** — Write is
   async; the type resolves while serializing, one walk (see Serialization).
+- **`As<T>`** — removed, `Value<T>()` is the one typed ask (T : plang type
+  only). Each old site re-judges to `Value<dict>()` or to the type's own
+  lowering (`ToInt64()`, `Clr<T>()`) at a real .NET edge.
 
-## Not settled — do NOT build on these yet
+## Nothing open
 
-One open question left:
-
-1. `Value<T>()` vs the existing `As<T>` — which name/shape survives is not
-   decided.
-
-(The former open point — where the chain lives and how aliases behave across
-a narrow — was settled 2026-06-10: see "Where the chain lives, and who writes
-it" and "Sampling — one read per value".)
+Every section above is settled. The two open points from the first session
+were closed 2026-06-10: chain/sampling (see "Where the chain lives" and
+"Sampling — one read per value") and the typed ask (`As<T>` removed,
+`Value<T>()` only — see "The two asks").
 
 ## State of the working tree (handover note)
 
