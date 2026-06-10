@@ -179,11 +179,51 @@ public partial class @this
     [Out, Store]
     public Properties Properties { get; set; } = new();
 
+    /// <summary>
+    /// THE STORE SEAM (Stage 9) — every value is lifted to its typed wrapper on
+    /// the way IN, so the slot always holds a PLang value and no consumer ever
+    /// branches on "wrapper or bare CLR?". One chokepoint; every slot write
+    /// routes through it.
+    ///
+    /// <para>No case table: the lift IS the conversion registry. The family that
+    /// owns the raw CLR type (each family's own <c>static OwnedClrTypes</c>
+    /// declaration, composed by <c>convert.OwnerOf</c>) constructs the value via
+    /// its own <c>Convert</c> hook — a new type joins by declaring its CLR mates
+    /// and hook on itself, never by editing this seam. The date arms stay a 1:1
+    /// CLR map because the DECLARATIONS are 1:1 (the seam never value-sniffs —
+    /// a midnight DateTime is not a <c>date</c>).</para>
+    ///
+    /// <para>A value no family owns stays as-is and types as <c>item</c> — the
+    /// "unknown" apex, exactly what <c>object</c> is to C#. A bare Data THROWS:
+    /// nested Data always rides inside an owning wrapper type (list's pattern),
+    /// so a bare one is always the implicit-operator double-wrap accident.</para>
+    /// </summary>
+    private static object? Lift(object? v)
+    {
+        if (v is null || v is global::app.type.item.@this) return v;
+        if (v is @this)
+            throw new System.InvalidOperationException(
+                "A bare Data may not be stored as a value — nested Data always rides inside an owning wrapper type. "
+                + "This is the implicit-operator double-wrap accident: return the inner value via its own factory, never `return innerDataInstance;`.");
+
+        var (family, _) = global::app.type.convert.@this.OwnerOf(v.GetType());
+        if (family == null || !typeof(global::app.type.item.@this).IsAssignableFrom(family))
+            return v;   // unowned → rides as `item`, the unknown
+        // kind: null — the routing kind is a conversion-TARGET nuance ("text"
+        // asks text.Convert for the raw string; a precision pins a numeric
+        // narrowing). The seam always wants the family's WRAPPER; the wrapper
+        // derives its own kind from the value (never stored — ruling 4).
+        var lifted = global::app.type.convert.@this.OfStatic(family, v, kind: null, context: null);
+        return lifted is { Success: true } && lifted.Peek() is global::app.type.item.@this wrapper
+            ? wrapper
+            : v;
+    }
+
     [JsonConstructor]
     public @this(string name, object? value = null, type? type = null, @this? parent = null)
     {
         Name = CleanName(name);
-        _value = UnwrapJsonElement(value);
+        _value = Lift(UnwrapJsonElement(value));
         _type = type;
         Parent = parent;
         Path = BuildPath(parent, Name);
@@ -284,7 +324,7 @@ public partial class @this
             }
         }
         _type = headline;
-        _value = content;
+        _value = Lift(content);
         _raw = null;
         return content;
     }
@@ -316,7 +356,7 @@ public partial class @this
         // "lazy compute," distinct from variable resolution (DynamicData et al.).
         if (_valueFactory != null)
         {
-            _value = _valueFactory();
+            _value = Lift(_valueFactory());
             _valueFactory = null;
         }
         // Parse the raw source form — only when nothing is cached yet AND a raw is
@@ -324,7 +364,7 @@ public partial class @this
         // `_raw` null, so they never hit this path and the `%var%`-resolves-fresh-
         // per-read contract is untouched.
         if (_value == null && _raw != null)
-            _value = ParseRaw();
+            _value = Lift(ParseRaw());
         return _value;
     }
 
@@ -335,7 +375,7 @@ public partial class @this
     /// </summary>
     public virtual void SetValue(object? value)
     {
-        _value = UnwrapJsonElement(value);
+        _value = Lift(UnwrapJsonElement(value));
         _valueFactory = null;
         _raw = null;            // mutation — raw is no longer authoritative
         Updated = System.DateTime.UtcNow;
@@ -360,7 +400,7 @@ public partial class @this
     /// </summary>
     public object? Peek()
     {
-        if (_valueFactory != null) { _value = _valueFactory(); _valueFactory = null; }
+        if (_valueFactory != null) { _value = Lift(_valueFactory()); _valueFactory = null; }
         if (_value != null) return _value;
         if (_raw is string s) return s;
         if (_raw is byte[] b) return DecodeUtf8OrBytes(b);
@@ -814,6 +854,10 @@ public partial class @this
         if (RawUntouched) return this;
 
         var raw = Materialize();
+        // The store seam lifts source strings to `text`; resolution reads the
+        // SOURCE FORM through the wrapper — a "%var%" reference is text until
+        // it resolves, and this is where it resolves.
+        if (raw is global::app.type.text.@this sourceText) raw = sourceText.Value;
 
         if (raw is string strVal && strVal.Contains('%') && context?.Variable != null)
         {
@@ -962,6 +1006,12 @@ public partial class @this
 
     private protected async System.Threading.Tasks.ValueTask<@this<T>> AsT_Impl<T>(object? raw, actor.context.@this? context) where T : global::app.type.item.@this
     {
+        // The store seam lifts source strings to `text`; resolution reads the
+        // SOURCE FORM through the wrapper (a "%var%" reference is text until it
+        // resolves here) — same downstream path .pr-served raw strings took.
+        if (raw is global::app.type.text.@this sourceText)
+            raw = sourceText.Value;
+
         // Action-destination carve-out: when T is or contains Action.@this, sub-actions
         // hold raw %var% for deferred resolution at their own dispatch time. Skip the walk
         // and convert raw straight through TypeMapping. BUT — only when raw is already a

@@ -119,3 +119,33 @@ Split (ruling #5): the six `Stage2_ValueDoorTests` stubs wait for slices 1–2; 
 - Interplay with the PLNG003 worklist decision (todos.md 2026-06-10): if domain
   entities stay exempt from the gate, they still pass through the seam as-is —
   the two decisions don't block each other.
+
+## Slice-1 design refinement — templates (settled with Ingi, 2026-06-10)
+
+The consumer-tail's biggest member — "which strings does the resolver substitute
+%refs% into?" — got a real design instead of per-consumer unwraps:
+
+- **Template-ness is determined by the BUILDER, recorded as a stamp.** Two facts
+  only the builder knows: the string was AUTHORED in a step, and the literal
+  contains a %ref%. Runtime-born strings are never templates (closes today's
+  scan-every-string injection surface).
+- **The stamp lives on the type entity, beside `strict`** (the established home
+  for builder-stamped treat-this-value flags): `type: {name:"text",
+  template:"plang"}`. The value slot stays a plain string — no polymorphic
+  json, no custom parsing beyond the existing type-entity converter.
+- **`text.Template { get; init; }`** names the template LANGUAGE ("plang" =
+  %var% substitution; future "fluid"). Init-only — the WrapperImmutabilityTests
+  gate takes its planned deliberate relaxation (init-only allowed, setters
+  still banned).
+- **Declared types compose over text** — `read file '%folder%/x.json'` keeps
+  its `path` slot; the templated text renders first, the path constructs from
+  the rendered text (path(text)).
+- **Rendering is the value's own behavior** at the door (the IBooleanResolvable
+  pattern): template text renders against the context; finished text passes
+  through untouched. Equality questions dissolve — a template renders on
+  .Value() before any comparison sees it.
+- **Wire impact: Store only.** Templates exist only in .pr (authored); the
+  outbound wire always carries rendered text — public wire shape unchanged.
+- **Transition:** until the builder stamps templates, the resolution door keeps
+  the legacy scan for unstamped values so existing .prs run; the scan dies when
+  the tree is rebuilt with stamps.
