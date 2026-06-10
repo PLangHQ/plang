@@ -1,0 +1,13 @@
+<Project>
+  <!-- Builds every test project in one MSBuild invocation, in parallel.
+       Used by dev.sh; `dotnet msbuild PLang.Tests/All.proj /t:Build`. -->
+  <ItemGroup>
+    <ProjectFile Include="$(MSBuildThisFileDirectory)*/PLang.Tests.*.csproj" />
+  </ItemGroup>
+  <Target Name="Build">
+    <MSBuild Projects="@(ProjectFile)" Targets="Build" BuildInParallel="true" Properties="Configuration=$(Configuration);RunAnalyzers=$(RunAnalyzers)" />
+  </Target>
+  <Target Name="Restore">
+    <MSBuild Projects="@(ProjectFile)" Targets="Restore" BuildInParallel="true" />
+  </Target>
+</Project>

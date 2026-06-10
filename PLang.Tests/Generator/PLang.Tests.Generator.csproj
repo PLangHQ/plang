@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Common properties, packages, usings: ../Directory.Build.props -->
+  <ItemGroup>
+    <!-- Roslyn driver — IncrementalCacheTests drives the generator pipeline directly. -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
+    <!-- Compile-time import of generator types (records, EquatableArray) for
+         value-equality contract checks; the analyzer reference in props stays
+         for source generation. -->
+    <ProjectReference Include="..\..\PLang.Generators\PLang.Generators.csproj" />
+  </ItemGroup>
+</Project>

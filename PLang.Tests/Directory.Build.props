@@ -1,0 +1,76 @@
+<Project>
+  <!-- Shared by every test project under PLang.Tests/. Each project's csproj is
+       ~10 lines; everything common lives here once. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <!-- One namespace root for all test projects — an assembly-derived root like
+         PLang.Tests.Data would shadow the Data/Variables aliases (CS0118 trap). -->
+    <RootNamespace>PLang.Tests</RootNamespace>
+    <!-- Emit source-generator output to disk so structural Generator tests can read it. -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>obj/Debug/net10.0/generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+
+  <!-- Test packages — every project except Shared (full TUnit injects a test
+       entry point, which a class library must not have; Shared gets
+       TUnit.Assertions/Core in its own csproj). -->
+  <ItemGroup Condition="'$(MSBuildProjectName)' != 'PLang.Tests.Shared'">
+    <PackageReference Include="TUnit" Version="1.13.11" />
+    <PackageReference Include="NSubstitute" Version="5.3.0" />
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)Shared\PLang.Tests.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\PLang\PLang.csproj" />
+    <!-- Analyzer reference: the PLang source generator runs over test-defined
+         action handlers (Matrix tests etc.) in every project. -->
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\PLang.Generators\PLang.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <!-- The former GlobalUsings.cs, declared once for all test projects.
+       Mirror of PLang/App/GlobalUsings.cs where applicable. -->
+  <ItemGroup>
+    <Using Include="app.@this" Alias="App" />
+    <Using Include="app.goal.GoalCall" Alias="GoalCall" />
+    <Using Include="app.goal.steps.@this" Alias="GoalSteps" />
+    <Using Include="app.goal.steps.step.@this" Alias="Step" />
+    <Using Include="app.goal.steps.step.ErrorOrder" Alias="ErrorOrder" />
+    <Using Include="app.goal.steps.step.CacheSettings" Alias="CacheSettings" />
+    <Using Include="app.goal.steps.step.actions.@this" Alias="StepActions" />
+    <Using Include="app.goal.steps.step.actions.action.@this" Alias="PrAction" />
+    <Using Include="app.goal.steps.step.actions.action.modifiers.@this" Alias="ActionModifiers" />
+    <Using Include="app.goal.@this" Alias="Goal" />
+    <Using Include="app.goal.Visibility" Alias="Visibility" />
+    <Using Include="app.@event.Trigger" Alias="Trigger" />
+    <Using Include="app.@event.lifecycle.binding.@this" Alias="EventBinding" />
+    <Using Include="app.@event.lifecycle.@this" Alias="Lifecycle" />
+    <Using Include="app.@event.lifecycle.binding.list.@this" Alias="Bindings" />
+    <Using Include="app.channel.@this" Alias="Channel" />
+    <Using Include="app.channel.type.stream.@this" Alias="StreamChannel" />
+    <Using Include="app.channel.ChannelDirection" Alias="ChannelDirection" />
+    <Using Include="app.channel.serializer.list.@this" Alias="Serializers" />
+    <Using Include="app.channel.serializer.list.SerializeOptions" Alias="SerializeOptions" />
+    <Using Include="app.channel.serializer.list.DeserializeOptions" Alias="DeserializeOptions" />
+    <Using Include="app.data.@this" Alias="Data" />
+    <Using Include="app.data.Properties" Alias="Properties" />
+    <Using Include="app.data.DynamicData" Alias="DynamicData" />
+    <Using Include="app.data.TString" Alias="TString" />
+    <Using Include="app.variable.list.@this" Alias="Variables" />
+    <Using Include="app.type.path" Alias="FileSystem" />
+    <Using Include="app.type.path.@this" Alias="path" />
+    <Using Include="app.type.path.file.@this" Alias="filepath" />
+    <Using Include="app.type.path.http.@this" Alias="httppath" />
+    <Using Include="app.module.cache.ICache" Alias="ICache" />
+    <Using Include="app.callstack.@this" Alias="CallStack" />
+    <Using Include="app.callstack.Flags" Alias="Flags" />
+    <Using Include="app.module.debug.@this" Alias="Debugging" />
+    <Using Include="app.tester.@this" Alias="Tester" />
+    <Using Include="app.snapshot.@this" Alias="Snapshot" />
+    <Using Include="app.snapshot.ISnapshot" Alias="ISnapshot" />
+    <Using Include="app.Statics.@this" Alias="AppStatics" />
+  </ItemGroup>
+</Project>
