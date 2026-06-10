@@ -67,8 +67,21 @@ public sealed partial class @this : global::app.type.item.@this, module.IContext
     /// <summary>Number of entries.</summary>
     public int Count => _entries.Count;
 
-    /// <summary>Keys in insertion order.</summary>
-    public IEnumerable<string> Keys => _entries.Select(e => e.Name);
+    /// <summary>Keys in insertion order, as a native <c>list&lt;text&gt;</c> —
+    /// the public surface answers in PLang values (<c>%dict!keys%</c>).</summary>
+    public global::app.type.list.@this<global::app.type.text.@this> Keys
+    {
+        get
+        {
+            var keys = new global::app.type.list.@this<global::app.type.text.@this>();
+            foreach (var e in _entries)
+                keys.Add(new Data(e.Name, new global::app.type.text.@this(e.Name)));
+            return keys;
+        }
+    }
+
+    /// <summary>Keys in insertion order — the interior raw view.</summary>
+    internal IEnumerable<string> KeyNames => _entries.Select(e => e.Name);
 
     /// <summary>Entry Data values in insertion order.</summary>
     public IReadOnlyList<Data> Entries => _entries;

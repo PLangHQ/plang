@@ -72,8 +72,9 @@ public sealed class @this : global::app.type.item.@this, global::app.data.ILoada
     /// <summary>In-memory raw bytes; empty until <see cref="BytesAsync"/> ran.</summary>
     public byte[] Bytes => _bytes ?? System.Array.Empty<byte>();
 
-    /// <summary>Stat byte-size — the file's `!size`; never reads content.</summary>
-    public long Size => Path is global::app.type.path.file.@this fp ? fp.Size : 0;
+    /// <summary>Stat byte-size — the file's `!size` (<c>number</c>); never reads content.</summary>
+    public global::app.type.number.@this Size =>
+        Path is global::app.type.path.file.@this fp ? fp.Size : global::app.type.number.@this.From(0);
 
     /// <summary>Drop the in-memory content — the narrow's single-storage step
     /// (the parsed value is the one copy; this becomes location-only again).</summary>

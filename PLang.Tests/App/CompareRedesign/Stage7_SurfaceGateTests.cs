@@ -114,17 +114,23 @@ public class Stage7_SurfaceGateTests
     [Test]
     public async Task TextLength_ReturnsNumber_NotInt()
     {
-        // %text!length% returns a `number`, not boxed int
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var t = new global::app.type.text.@this("héllo");
+        object length = t.Length;
+        await Assert.That(length).IsTypeOf<global::app.type.number.@this>();
+        await Assert.That(length.ToString()).IsEqualTo("5");
     }
 
     [Test]
     public async Task DictKeys_ReturnsListOfText_NotIEnumerableString()
     {
-        // %dict!keys% returns list<text>
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var d = new global::app.type.dict.@this();
+        d.Set(new Data("name", "a"));
+        d.Set(new Data("age", 30L));
+        object keys = d.Keys;
+        await Assert.That(keys).IsTypeOf<global::app.type.list.@this<global::app.type.text.@this>>();
+        var names = ((global::app.type.list.@this<global::app.type.text.@this>)keys)
+            .Items.Select(k => k.Peek()).ToList();
+        await Assert.That(names.All(v => v is global::app.type.text.@this)).IsTrue();
     }
 
     [Test]
@@ -137,7 +143,17 @@ public class Stage7_SurfaceGateTests
     [Test]
     public async Task FileSize_ReturnsNumber_NotLong()
     {
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var tmp = Path.Combine(Path.GetTempPath(), "plang_st7size_" + Guid.NewGuid().ToString("N") + ".txt");
+        File.WriteAllText(tmp, "12345");
+        try
+        {
+            var fp = new global::app.type.path.file.@this(tmp);
+            object size = fp.Size;
+            await Assert.That(size).IsTypeOf<global::app.type.number.@this>();
+            await Assert.That(size.ToString()).IsEqualTo("5");
+            object fileSize = new global::app.type.file.@this(fp).Size;
+            await Assert.That(fileSize).IsTypeOf<global::app.type.number.@this>();
+        }
+        finally { File.Delete(tmp); }
     }
 }

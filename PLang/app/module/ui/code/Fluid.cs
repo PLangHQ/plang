@@ -201,7 +201,7 @@ public class Fluid : ITemplate
             get => d.Get(key)?.Peek();
             set => throw new NotSupportedException("template view is read-only");
         }
-        public ICollection<string> Keys => d.Keys.ToList();
+        public ICollection<string> Keys => d.KeyNames.ToList();
         public ICollection<object?> Values => d.Entries.Select(e => (object?)e.Peek()).ToList();
         public int Count => d.Count;
         public bool IsReadOnly => true;

@@ -39,7 +39,9 @@ public class Stage1_DictValueTypeTests
         d.Set(new Data("name", "a"));
         d.Set(new Data("age", 30L));
         d.Set(new Data("city", "Reyk"));
-        await Assert.That(d.Keys.ToList()).IsEquivalentTo(new[] { "name", "age", "city" });
+        // Keys is the typed list<text> surface; assert over the text values.
+        await Assert.That(d.Keys.Items.Select(k => k.Peek()?.ToString()).ToList())
+            .IsEquivalentTo(new[] { "name", "age", "city" });
     }
 
     [Test]

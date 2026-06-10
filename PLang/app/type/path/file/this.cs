@@ -60,7 +60,7 @@ public sealed partial class @this : global::app.type.path.@this
         System.IO.File.Exists(Absolute) || System.IO.Directory.Exists(Absolute);
 
     /// <summary>Size in bytes of the file at this path; 0 when absent.</summary>
-    [LlmBuilder] public long Size
+    [LlmBuilder] public global::app.type.number.@this Size
     {
         get
         {

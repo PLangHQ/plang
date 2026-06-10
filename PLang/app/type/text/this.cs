@@ -69,8 +69,9 @@ public sealed partial class @this : global::app.type.item.@this,
 
     // ---- Ops (the behavioral targets of the `is string` sweep) ----
 
-    /// <summary>Codepoint (Unicode scalar) count — surrogate pairs count once.</summary>
-    public int Length
+    /// <summary>Codepoint (Unicode scalar) count — surrogate pairs count once.
+    /// Returns the PLang <c>number</c> (the public surface answers in PLang values).</summary>
+    public global::app.type.number.@this Length
     {
         get
         {
