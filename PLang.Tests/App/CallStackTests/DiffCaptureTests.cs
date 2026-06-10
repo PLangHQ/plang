@@ -40,7 +40,7 @@ public class DiffCaptureTests
 
         var diff = call.Diffs![0];
         await Assert.That(diff.Name).IsEqualTo("name");
-        await Assert.That(diff.Before).IsEqualTo("ingi");
+        await Assert.That(diff.Before?.ToString()).IsEqualTo("ingi");
         await Assert.That(diff.At).IsGreaterThanOrEqualTo(before);
     }
 

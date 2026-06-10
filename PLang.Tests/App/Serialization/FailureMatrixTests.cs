@@ -58,10 +58,8 @@ public class FailureMatrixTests
         // produces an effectively-empty Data (the converter ignores unknown
         // top-level fields). Typed-failure here means the call doesn't throw;
         // the resulting Data is observable as empty.
-        var result = plang.Deserialize("{\"unknown\":42}");
-        await result.IsSuccess();
-        var back = (await result.Value()) as global::app.data.@this;
-        await Assert.That(back).IsNotNull();
+        var back = plang.Deserialize("{\"unknown\":42}");   // Deserialize returns the reconstruction itself
+        await back.IsSuccess();
         await Assert.That(back!.Properties.ContainsKey("unknown")).IsFalse();
     }
 

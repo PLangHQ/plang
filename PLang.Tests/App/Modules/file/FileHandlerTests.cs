@@ -507,7 +507,7 @@ public class FileHandlerTests : IDisposable
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
-        await Assert.That(output).IsEqualTo("True" + System.Environment.NewLine);
+        await Assert.That(output).IsEqualTo("true" + System.Environment.NewLine);
     }
 
     [Test]
@@ -577,6 +577,6 @@ public class FileHandlerTests : IDisposable
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
-        await Assert.That(output).IsEqualTo("False" + System.Environment.NewLine);
+        await Assert.That(output).IsEqualTo("false" + System.Environment.NewLine);
     }
 }

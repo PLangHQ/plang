@@ -21,7 +21,7 @@ public class Cut5_NumberTowerRoundTrip
     {
         var r = number.Convert(n.ToString(), n.KindLabel, null!);
         await r.IsSuccess();
-        await Assert.That((await r.Value())!.GetType()).IsEqualTo(expectedClr);
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).BoxedValue.GetType()).IsEqualTo(expectedClr);
     }
 
     [Test] public async Task Cut5_RoundTrip_PreservesExactKind_AcrossTower()

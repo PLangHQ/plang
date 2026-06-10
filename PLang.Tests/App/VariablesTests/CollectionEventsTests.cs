@@ -15,8 +15,8 @@ public class CollectionEventsTests
         vars.Set("name", "new");
 
         await Assert.That(capturedName).IsEqualTo("name");
-        await Assert.That(capturedBefore).IsEqualTo("old");
-        await Assert.That(capturedAfter).IsEqualTo("new");
+        await Assert.That(capturedBefore?.ToString()).IsEqualTo("old");
+        await Assert.That(capturedAfter?.ToString()).IsEqualTo("new");
     }
 
     [Test]

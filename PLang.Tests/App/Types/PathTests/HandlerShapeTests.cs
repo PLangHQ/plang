@@ -114,7 +114,7 @@ public class HandlerShapeTests
         var viaPath = await global::app.type.path.file.@this.Resolve("doc.txt", app.User.Context).ReadText();
 
         await Assert.That(viaHandler.Success).IsEqualTo(viaPath.Success);
-        await Assert.That((await viaHandler.Value())).IsEqualTo((await viaPath.Value()));
+        await Assert.That((await viaHandler.Value())?.ToString()).IsEqualTo((await viaPath.Value())?.ToString());
     }
 
     [Test] public async Task FileReadHandler_UnauthorizedPath_StillHitsPermissionGate()

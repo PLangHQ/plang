@@ -70,8 +70,8 @@ public class LazyMaterialisationTests
     [Test] public async Task VarReference_InAuthoredValue_StillResolvesFreshPerRead()
     {
         var d = data.Ok("%x%");
-        await Assert.That((await d.Value())).IsEqualTo((object)"%x%");
-        await Assert.That((await d.Value())).IsEqualTo((object)"%x%");
+        await Assert.That((await d.Value())?.ToString()).IsEqualTo("%x%");
+        await Assert.That((await d.Value())?.ToString()).IsEqualTo("%x%");
         await Assert.That(d.MaterializeCount).IsEqualTo(0);
     }
 }

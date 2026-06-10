@@ -184,7 +184,7 @@ public class DataAsTResolutionTests
         await result.IsSuccess();
         await Assert.That((await result.Value())).IsNotNull();
         // The substituted value should NOT have appeared inside the Action template — the raw %comment% remains.
-        var firstAction = result.GetValue<List<PrAction>>()![0];
+        var firstAction = (PrAction)(await result.Value())!.Items[0].Peek()!;
         var commentParam = firstAction.Parameters?.FirstOrDefault(p => p.Name == "comment");
         await Assert.That(commentParam).IsNotNull();
         await Assert.That((await commentParam!.Value())?.ToString()).IsEqualTo("%comment%");

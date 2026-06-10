@@ -83,7 +83,7 @@ public class TypeOwnedReadParityTests
         var r = new global::app.type.reader.@this();
         var rc = new global::app.type.reader.ReadContext(null);
         var via = r.Of("duration", "iso8601")!("PT30S", "iso8601", rc);
-        await Assert.That(via).IsEqualTo((object)System.Xml.XmlConvert.ToTimeSpan("PT30S"));
+        await Assert.That(((global::app.type.item.@this)via!).Clr<System.TimeSpan>()).IsEqualTo(System.Xml.XmlConvert.ToTimeSpan("PT30S"));
     }
 
     [Test] public async Task ObjectJsonRead_MatchesPriorPlangJsonReaderOutput()

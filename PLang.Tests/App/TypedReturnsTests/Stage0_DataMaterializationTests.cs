@@ -87,7 +87,7 @@ public class Stage0_DataMaterializationTests
         const string raw = "a,b,c\n1,2,3";
         var src = new Data("x", raw) { Type = new global::app.type.@this("csv") };
 
-        await Assert.That((await src.Value())).IsEqualTo(raw)
+        await Assert.That((await src.Value())?.ToString()).IsEqualTo(raw)
             .Because("Setting a typed Data must not invoke the materializer.");
     }
 

@@ -55,7 +55,7 @@ public class IntegrationCutsTests
         // BeforeWrite on audit: reject if value contains "REJECT".
         audit.Events.Add(new EventBinding(Trigger.BeforeWrite, (_, _, payload) =>
         {
-            if (payload.Materialize() is string s && s.Contains("REJECT"))
+            if (payload.Materialize()?.ToString() is { } s && s.Contains("REJECT"))
                 throw new InvalidOperationException("rejected by approval");
             return Task.FromResult(Data.Ok());
         }));

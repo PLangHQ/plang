@@ -293,7 +293,7 @@ public partial class @this
         // Lazy materialization — a typed, still-textual value reads through the
         // reader registry on first navigation (the old ConvertValue, folded into
         // the materialize path).
-        if (val is string && _type != null)
+        if (val is string or global::app.type.text.@this && _type != null)
         {
             ForceMaterialize();
             val = await Value();

@@ -342,7 +342,10 @@ public partial class @this : global::app.type.item.@this, module.IContext,
         var flat = Items;
         var raw = new List<object?>(flat.Count);
         foreach (var item in flat)
-            raw.Add(Unwrap(item.Peek()));
+            // A named row carries identity beyond its value (a parameter list's
+            // {name, value} entries) — it IS its own raw form. Only anonymous
+            // rows decompose to bare values.
+            raw.Add(string.IsNullOrEmpty(item.Name) ? Unwrap(item.Peek()) : item);
         return raw;
     }
 

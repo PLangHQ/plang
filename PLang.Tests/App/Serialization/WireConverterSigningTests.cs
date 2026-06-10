@@ -109,10 +109,8 @@ public class WireConverterSigningTests
         var data = new global::app.data.@this("greeting", "hello") { Context = app.User.Context };
         var json = (await plang.Serialize(data).Value())!;
 
-        var back = plang.Deserialize(json);
-        await back.IsSuccess();
-        var roundTripped = (await back.Value()) as global::app.data.@this;
-        await Assert.That(roundTripped).IsNotNull();
+        var roundTripped = plang.Deserialize(json);   // Deserialize returns the reconstruction itself
+        await roundTripped.IsSuccess();
         await Assert.That(roundTripped!.Signature).IsNotNull()
             .Because("Read reconstructs Signature into the Data, populated-but-unverified.");
     }
