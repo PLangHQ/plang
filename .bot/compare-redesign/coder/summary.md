@@ -2,7 +2,7 @@
 
 ## Version: v6 (continuing the stage plan — no new review). Both suites GREEN.
 
-- **Suites:** plang 322 pass / 0 fail / **0 stale** / 2 skipped; C# 4258/4267 — **0 real failures** (the 9 left are unfilled spec stubs, list below).
+- **Suites:** plang 322 pass / 0 fail / **0 stale** / 2 skipped; C# 4264/4270 — **0 real failures** (the 6 left are born-typed slice 1–2 stubs).
 
 ## What this is
 
@@ -33,13 +33,19 @@ Stage 3 inverts `read` (reference headline) per the approved architect spec; the
 - **Stage 3 COMPLETE:** all 30 C# stubs (ReferenceNarrow ×15, PathDemolition ×15) + all 5 plang cuts green. Along the way: chain-wide `!` segment split in ParseNextSegment ("!file!path"); interpolation (`Variable.Resolve`), dotted writes, `GetValue`, operator `contains`/`startswith`/`endswith`/`isempty`, assert Contains/NotContains all route through the door (references render content — the scalar contract); `directory` got ILoadable + `Contains(needle)` (membership over the listing); narrow headline = the CONTENT's family (parsed dict, not the channel's `item` stamp); IContext injection in GetChild Peeks for references (no read on the property plane).
 - **Stage 7 underway:** PLNG003 gate live as WARNING (public instance member of an item.@this subtype returning raw CLR; ~200-finding worklist = the conversion backlog). `path` growth: `IsUnder`/`Matches`/`Kind` public typed members; `Absolute`/`Relative`/`Extension` now INTERNAL (interop inch; `!absolute`/`!relative`/`!extension` projections served by the NonPublic-aware `!` plane reflection); builder filter → `f.Matches(bf)`, read hint → `p.Kind`. Surface flips done: `text.Length`→number, `dict.Keys`→list<text> (+`KeyNames` internal raw twin), `FilePath.Size`/`file.Size`→number, `list.Count`/`dict.Count`→number (+`CountRaw` internal twins; number gained `<`/`<=`/`>`/`>=` ordering operators; 17 interior sites moved to CountRaw; list `count`/`last` handlers + dict/list navigator-count tests number-aware). All 10 SurfaceGate + 4 PathGrowth + 2 plane-resolver tests green.
 
-## Remaining stubs (9 — all pinned to DEFERRED scope)
+## Architect rulings — LANDED (2026-06-10)
 
-Born-typed-everything (Ingi explicitly deferred this to its own stage) + reserved-core protection:
-AtSchemaBlocked_AsDictKey, BangReservedCore_Protected, DataType_Getter_NoCLRSniffing,
-GenericToRaw_DoesNotExist_OnItemBase (item.ToRaw removal pending), NameField_RemovedFromEnvelope,
-RawSlot_Dissolved, TextRawValue_IsPrivate (text.Value privatization — huge ripple),
-Value_AuthoredScalar_ReturnsTypedNumber, VarReference_RidesAsTypedText.
+- **WrapperImmutabilityTests** (ruling #4 gate): readonly fields incl. inherited, no setters, sealed — over the 9 scalar wrappers; green, guards the future instance cache.
+- **ReservedCore** (ruling #5): `Loader.ReservedShadow` rejects a registrable type declaring instance `type`/`error`/`success`/`@schema`; built-ins verified clean.
+- **@schema blocked as dict key** at the one write seam (`dict.Set`); envelope recognition reads the marker off the JsonElement (`IsDataMarked`), never a dict key.
+- **`name` off the OUTBOUND wire** (Ingi's ruling: a server's binding label is not API surface — a client coupling to it would crash on rename). The Store view KEEPS it: .pr action parameters are wire envelopes that bind by name (verified in a real .pr before cutting). Reader still accepts `name` from either form. 8 old-contract wire tests updated (round-trips now restore `Name == ""`; Compress/Decompress included — archived form is the outbound wire).
+
+## Remaining stubs (6 — all born-typed slices 1–2)
+
+DataType_Getter_NoCLRSniffing, GenericToRaw_DoesNotExist_OnItemBase,
+RawSlot_Dissolved, TextRawValue_IsPrivate, Value_AuthoredScalar_ReturnsTypedNumber,
+VarReference_RidesAsTypedText. All wait on the store-seam stage
+(`stage-proposal-born-typed.md`).
 
 ## Next
 
