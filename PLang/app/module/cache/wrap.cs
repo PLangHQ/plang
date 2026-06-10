@@ -40,6 +40,11 @@ public partial class CacheWrap : IContext, IModifier
             var result = await next();
             if (result.Success)
             {
+                // A lazy reference result (file/url) caches with its CONTENT in
+                // memory — a cache hit must not re-read the source; that is the
+                // point of the cache. LoadAsync is idempotent.
+                if (result.Peek() is global::app.data.ILoadable loadable)
+                    await loadable.LoadAsync();
                 await cache.SetAsync(cacheKey, result,
                     new CacheSettings { DurationMs = durationMs, Sliding = sliding });
             }

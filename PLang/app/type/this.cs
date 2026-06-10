@@ -206,7 +206,11 @@ public sealed class @this
         // enum's name, a perimeter raw scalar under a CLR-ish name) falls back to
         // the VALUE's owner — the closed generic carrying the hooks, or the family
         // that declares the raw CLR type (ushort → number) via convert's ownership.
-        var family = compare.@this.FamilyOf(Name)
+        // Only a HOOK-BEARING name-keyed family drives; a hookless family class
+        // (a reference type like `file`, whose scalar form is its content) defers
+        // to the materialised value's own family (the content's kind).
+        var named = compare.@this.FamilyOf(Name);
+        var family = (named != null && HasHook(named) ? named : null)
             ?? FamilyOfValue(a) ?? FamilyOfValue(b);
         return compares.Of(family, a, b) ?? global::app.data.Comparison.Incomparable;
 
@@ -386,8 +390,11 @@ public sealed class @this
     /// <summary>
     /// The identity chain, newest (headline) first: post-narrow
     /// <c>[dict, file]</c>. A value that never narrowed is just <c>[self]</c>
-    /// (the static lattice answers the rest).
+    /// (the static lattice answers the rest). JsonIgnore — self-inclusive, so
+    /// a reflective wire walk would cycle; the chain is a navigation surface
+    /// (<c>%x!type.list%</c>), not a wire shape.
     /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public IReadOnlyList<@this> List
     {
         get
@@ -455,7 +462,11 @@ public sealed class @this
         if (!seen.Add(clr)) return false;
         foreach (var parent in Parents(clr))
         {
-            if (parent == target) return true;
+            // Assignability, not identity: a family's PLang name may resolve to a
+            // VARIANT class (the "path" entity can carry FilePath as its CLR mate
+            // — variants resolve to the family name), and the lattice declares the
+            // family base. Either direction of the base/variant pair satisfies.
+            if (parent == target || parent.IsAssignableFrom(target) || target.IsAssignableFrom(parent)) return true;
             if (Reaches(parent, target, seen)) return true;
         }
         return false;

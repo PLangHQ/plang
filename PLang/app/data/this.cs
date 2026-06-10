@@ -217,27 +217,24 @@ public partial class @this
     }
 
     // Raw content of an un-narrowed reference: string for a text-shaped mime,
-    // byte[] for binary — exactly the channel's source form. Bytes cache on the
-    // reference, so repeated scalar reads do one I/O total.
+    // byte[] for binary. The bytes cache ON the reference (BytesAsync is
+    // idempotent), so repeated scalar reads — and a cache-hit clone sharing the
+    // reference — do one I/O total.
     private static async ValueTask<object?> ScalarContent(object reference)
     {
-        switch (reference)
+        var (bytes, mime) = reference switch
         {
-            case global::app.type.file.@this f:
-            {
-                var channel = new global::app.channel.type.file.@this(f.Path);
-                var read = await channel.Read();
-                return read.Success ? read.Raw ?? read.Materialize() : reference;
-            }
-            case global::app.type.url.@this u:
-            {
-                var channel = new global::app.channel.type.file.@this(u.Path);
-                var read = await channel.Read();
-                return read.Success ? read.Raw ?? read.Materialize() : reference;
-            }
-            default:
-                return reference;
-        }
+            global::app.type.file.@this f => (await f.BytesAsync(), f.Path.MimeType),
+            global::app.type.url.@this u => (await u.BytesAsync(), u.Path.MimeType),
+            _ => (null, ""),
+        };
+        if (bytes == null) return reference;
+        var textShaped = mime.StartsWith("text/", System.StringComparison.OrdinalIgnoreCase)
+            || mime.Contains("json", System.StringComparison.OrdinalIgnoreCase)
+            || mime.Contains("xml", System.StringComparison.OrdinalIgnoreCase)
+            || mime.Contains("csv", System.StringComparison.OrdinalIgnoreCase)
+            || string.IsNullOrEmpty(mime);
+        return textShaped ? System.Text.Encoding.UTF8.GetString(bytes) : (object)bytes;
     }
 
     /// <summary>

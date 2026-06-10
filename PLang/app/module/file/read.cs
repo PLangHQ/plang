@@ -101,12 +101,15 @@ public partial class Read : IContext
     }
 
     /// <summary>
-    /// Compile-time hint: infer the terminal variable.set's Type from a literal
-    /// Path. "foo.csv" → "csv", "data.json" → "json". Variable references and
-    /// unknown extensions yield bare Ok() (runtime fills in via MIME dispatch).
-    /// A literal path that doesn't exist on disk surfaces a BuildWarning on
-    /// Channel("builder") but still returns the inferred type — missing files
-    /// are non-fatal at build time.
+    /// Compile-time hint: a read of a literal local path lands a `file`
+    /// reference whose kind is the extension — the terminal variable.set
+    /// carries {file, ext} so it stores the reference as-is (the content type
+    /// only appears at runtime, when examination narrows). Variable references
+    /// and unknown extensions yield bare Ok(). A recognised eager
+    /// specialisation (image) keeps its structured stamp. A literal path that
+    /// doesn't exist on disk surfaces a BuildWarning on Channel("builder") but
+    /// still returns the inferred type — missing files are non-fatal at build
+    /// time.
     /// </summary>
     public async Task<data.@this> Build()
     {
@@ -120,13 +123,15 @@ public partial class Read : IContext
         if (p == null || string.IsNullOrEmpty(p.Extension)) return data.@this.Ok();
         if (p.MimeType == "application/octet-stream") return data.@this.Ok();
 
-        // Stage 6: the SAME shared derivation the runtime (FilePath.ReadText)
-        // uses — so the build-time stamp and the runtime stamp can't drift.
-        // `read foo.md` → {text, md}, `read data.json` → {object, json},
-        // `read pic.png` → {image, png}. The terminal variable.set carries the
-        // structured type, not a bare extension string.
+        // The SAME shared derivation the runtime uses, so build-time and
+        // runtime stamps can't drift: an image keeps its structured {image,
+        // png} stamp (eager specialisation); everything else is the reference
+        // — {file, <ext>} — and the content type appears only when runtime
+        // examination narrows.
         var inferred = Context.App.Format.TypeFromExtension(p.Extension);
         if (inferred.IsNull || Context.App.Type.Get(inferred.Name) == null) return data.@this.Ok();
+        if (inferred.Name != "image")
+            inferred = global::app.type.@this.Create("file", p.Extension.TrimStart('.'), context: Context);
         inferred.Context = Context;
 
         // Best-effort missing-file warning. Channel("builder") falls back to a

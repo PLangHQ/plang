@@ -610,7 +610,10 @@ public partial class @this
     public async System.Threading.Tasks.ValueTask<object?> GetValue(string name)
     {
         var ov = await Get(name);
-        var v = ov?.Materialize();
+        if (ov == null) return null;
+        // The door, not Materialize — a reference (file/url) yields its raw
+        // content here, the scalar contract.
+        var v = await ov.Value();
         if (v is app.type.dict.@this or app.type.list.@this) return v;
         return v is app.type.item.@this iv ? iv.ToRaw() : v;
     }

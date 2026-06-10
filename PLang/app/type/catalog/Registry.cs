@@ -162,8 +162,12 @@ public sealed partial class @this
             }
             else if (IsThisClass(type))
             {
-                canonical = InferName(type);
-                if (canonical != null)
+                var family = FamilyName(type);
+                canonical = family ?? InferName(type);
+                // A variant resolves TO its family name but never claims the
+                // name slot — the family base owns name→type (FilePath answers
+                // "path" for ResolveName; ResolveType("path") stays path.@this).
+                if (canonical != null && family == null)
                     _nameToType.TryAdd(canonical, type);
             }
 
@@ -174,6 +178,24 @@ public sealed partial class @this
 
     private static bool IsThisClass(Type type) =>
         string.Equals(type.Name, "this", StringComparison.Ordinal);
+
+    /// <summary>
+    /// A scheme/variant class — an <c>@this</c> deriving from another family's
+    /// <c>@this</c> (FilePath : path.@this) — IS that family on the PLang
+    /// surface; its leaf namespace names the scheme, not a type. <c>item</c> is
+    /// the apex every value type derives from, so it never counts as a family
+    /// here. Returns null for a direct family (text, dict, file, …).
+    /// </summary>
+    private static string? FamilyName(Type type)
+    {
+        for (var b = type.BaseType; b != null && b != typeof(object); b = b.BaseType)
+        {
+            if (!IsThisClass(b)) continue;
+            if (b == typeof(app.type.item.@this)) return null;
+            return FamilyName(b) ?? InferName(b);
+        }
+        return null;
+    }
 
     /// <summary>
     /// Inferred name: last namespace segment for @this classes, lowercased class

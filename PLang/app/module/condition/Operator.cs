@@ -29,10 +29,10 @@ public sealed class Operator
             [">="] = (l, r) => Ordered(l, r, ">=", c => c is global::app.data.Comparison.Greater or global::app.data.Comparison.Equal),
             ["<="] = (l, r) => Ordered(l, r, "<=", c => c is global::app.data.Comparison.Less or global::app.data.Comparison.Equal),
             ["contains"] = Contains,
-            ["startswith"] = (l, r) => Task.FromResult(StringOp(Val(l), Val(r), (s, v) => s.StartsWith(v, StringComparison.OrdinalIgnoreCase))),
-            ["endswith"] = (l, r) => Task.FromResult(StringOp(Val(l), Val(r), (s, v) => s.EndsWith(v, StringComparison.OrdinalIgnoreCase))),
+            ["startswith"] = async (l, r) => StringOp(await Val(l), await Val(r), (s, v) => s.StartsWith(v, StringComparison.OrdinalIgnoreCase)),
+            ["endswith"] = async (l, r) => StringOp(await Val(l), await Val(r), (s, v) => s.EndsWith(v, StringComparison.OrdinalIgnoreCase)),
             ["in"] = (l, r) => Contains(r, l),
-            ["isempty"] = (l, _) => Task.FromResult(IsEmpty(Val(l))),
+            ["isempty"] = async (l, _) => IsEmpty(await Val(l)),
             // `%x% is dict` / `is number` / `is item` — IS-A query against the
             // value-type lattice. The right operand is the PLang type name. `item`
             // is the apex (true for any value).
@@ -76,8 +76,10 @@ public sealed class Operator
 
     // --- Helpers ---
 
-    /// <summary>Unwrap Data to raw value.</summary>
-    private static object? Val(data.@this? data) => data?.Materialize();
+    /// <summary>Unwrap Data to its value through the door — a reference (file/url)
+    /// yields its raw content here, the scalar contract.</summary>
+    private static async ValueTask<object?> Val(data.@this? data)
+        => data == null ? null : await data.Value();
 
     /// <summary>Both operands have a non-null value — the ordering operators are false otherwise.</summary>
     private static bool BothPresent(data.@this? left, data.@this? right) => left?.Materialize() != null && right?.Materialize() != null;
@@ -153,8 +155,8 @@ public sealed class Operator
     // one" (the table's membership column), so a mixed list never blows a `contains`.
     private static async Task<bool> Contains(data.@this? left, data.@this? right)
     {
-        var lv = left?.Materialize();
-        var rv = right?.Materialize();
+        var lv = await Val(left);
+        var rv = await Val(right);
         if (lv is global::app.type.text.@this lt && rv is global::app.type.text.@this rt)
             return lt.Value.Contains(rt.Value, StringComparison.OrdinalIgnoreCase);
         if (lv is string ls && rv is string rs)

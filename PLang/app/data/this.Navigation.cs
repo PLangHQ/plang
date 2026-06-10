@@ -247,8 +247,10 @@ public partial class @this
 
         // Navigation IS examination — an un-narrowed reference (file/url) parses
         // its content and narrows this Data to the content's type first, so the
-        // navigators below see the dict/list/table, not the reference.
-        if (Peek() is global::app.type.file.@this or global::app.type.url.@this)
+        // navigators below see the dict/list/table, not the reference. Reading
+        // `.Type` is metadata (the stamp answers), never an examination.
+        if (!key.Equals("Type", StringComparison.OrdinalIgnoreCase)
+            && Peek() is global::app.type.file.@this or global::app.type.url.@this)
             await NarrowReference(Peek()!);
 
         var val = await Value();

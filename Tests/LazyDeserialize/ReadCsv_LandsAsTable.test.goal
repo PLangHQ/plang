@@ -1,10 +1,10 @@
 Start
-/ Architect 829785fbe — csv lands `{table, csv}` (the new shape-based
-/ stamp). Stamping does not parse: %report% untouched is still the raw
-/ csv string. The hard probe ("row/column navigation surface") lives in
-/ C# Cut2 / TableTypeTests; this goal test pins the type stamp and the
+/ Stage 3: read yields a `file` reference (headline "file", kind "csv");
+/ untouched scalar use still yields the raw csv text.
+/ The hard probe ("row/column navigation surface") lives in C# Cut2 /
+/ TableTypeTests; this goal test pins the type stamp and the
 / untouched-is-raw invariant.
 - read file 'report.csv', write to %report%
-- assert %report.Type.Name% equals "table"
+- assert %report.Type.Name% equals "file"
 - assert %report.Type.Kind% equals "csv"
 - assert %report% equals "name,age\nAda,42\n"

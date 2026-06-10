@@ -401,9 +401,9 @@ public class FileHandlerTests : IDisposable
         var action = new Read { Context = _app.User.Context, Path = MakePath("doc.md") };
         var result = await action.Run();
 
-        // Structured type: name is the materialized family (text), kind is the
-        // file extension (md) — not the raw MIME "text/markdown".
-        await Assert.That(result.Type!.Name).IsEqualTo("text");
+        // Stage 3: a read is a `file` REFERENCE — name is the headline "file",
+        // kind is the extension (md); the content family appears on narrow.
+        await Assert.That(result.Type!.Name).IsEqualTo("file");
         await Assert.That(result.Type!.Kind).IsEqualTo("md");
     }
 

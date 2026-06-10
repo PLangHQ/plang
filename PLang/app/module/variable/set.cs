@@ -150,8 +150,12 @@ public partial class Set : IContext, IBuildValidatable
             // raw-backed (unparsed) value contributes null — deriving a kind from
             // content would force the parse the verbatim fast-path below exists to
             // avoid. Content is read (door opened) only past that fast-path, where
-            // conversion genuinely needs it.
-            object? sourceValue = Value.RawUntouched ? null : await Value.Value();
+            // conversion genuinely needs it. A reference (file/url) stays itself —
+            // opening the door would read content on store, and the reference IS
+            // the declared value (the lazy contract).
+            object? sourceValue = Value.RawUntouched ? null
+                : Value.Peek() is (global::app.type.file.@this or global::app.type.url.@this) and { } reference ? reference
+                : await Value.Value();
             // Type entity rides in a bare Data — `type` is not `: item`, so it can't be a
             // Data<T> that auto-converts. Reconstruct it from whatever the .pr served:
             //   - already a type.@this → use it;

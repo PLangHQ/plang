@@ -82,8 +82,10 @@ public class Default : IAssert
 
     public async Task<data.@this<global::app.type.@bool.@this>> Contains(Contains action)
     {
-        var v = action.Value?.Materialize();
-        var c = action.Container?.Materialize();
+        // The door, not Materialize — a reference (file/url) yields its raw
+        // content for containment, the scalar contract.
+        var v = action.Value == null ? null : await action.Value.Value();
+        var c = action.Container == null ? null : await action.Container.Value();
 
         // Symmetric containment: the Value/Container names don't match the
         // natural reading "X contains Y" (haystack/needle), so the builder
@@ -100,8 +102,8 @@ public class Default : IAssert
 
     public async Task<data.@this<global::app.type.@bool.@this>> NotContains(NotContains action)
     {
-        var v = action.Value?.Materialize();
-        var c = action.Container?.Materialize();
+        var v = action.Value == null ? null : await action.Value.Value();
+        var c = action.Container == null ? null : await action.Container.Value();
 
         // Same symmetric tolerance as Contains: fail if either side contains
         // the other (otherwise the builder LLM's Value/Container flip would

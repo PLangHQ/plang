@@ -54,7 +54,9 @@ public class Stage4_BuildMethodImplsTests
     {
         var result = await Build("file", "read", ("Path", "foo.csv"));
         await result.IsSuccess();
-        await Assert.That(AsType(result).Name).IsEqualTo("table");
+        // Stage 3: a literal local read hints the file REFERENCE — {file, csv};
+        // the content type only appears when runtime examination narrows.
+        await Assert.That(AsType(result).Name).IsEqualTo("file");
         await Assert.That(AsType(result).Kind).IsEqualTo("csv");
     }
 
@@ -63,7 +65,7 @@ public class Stage4_BuildMethodImplsTests
     {
         var result = await Build("file", "read", ("Path", "data.json"));
         await result.IsSuccess();
-        await Assert.That(AsType(result).Name).IsEqualTo("item");
+        await Assert.That(AsType(result).Name).IsEqualTo("file");
         await Assert.That(AsType(result).Kind).IsEqualTo("json");
     }
 
@@ -104,7 +106,7 @@ public class Stage4_BuildMethodImplsTests
     {
         var result = await Build("file", "read", ("Path", "definitely-missing-stage4b.csv"));
         await result.IsSuccess();
-        await Assert.That(AsType(result).Name).IsEqualTo("table")
+        await Assert.That(AsType(result).Name).IsEqualTo("file")
             .Because("Missing file is non-fatal at build time — the inferred type still surfaces.");
         await Assert.That(AsType(result).Kind).IsEqualTo("csv");
     }

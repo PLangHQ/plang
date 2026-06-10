@@ -128,9 +128,9 @@ public class Stage4_TypeHintPrecedenceTests
         var typeParam = setAction.Parameters.FirstOrDefault(p =>
             string.Equals(p.Name, "Type", System.StringComparison.OrdinalIgnoreCase));
         await Assert.That(typeParam).IsNotNull();
-        // foo.csv infers the structured {table, csv} entity (name = the value's
-        // shape, kind = extension), stamped on the terminal variable.set.
-        await Assert.That(((global::app.type.@this)(await typeParam!.Value())!).Name).IsEqualTo("table");
+        // Stage 3: foo.csv infers the file REFERENCE — {file, csv} — stamped on
+        // the terminal variable.set; the content shape appears on narrow.
+        await Assert.That(((global::app.type.@this)(await typeParam!.Value())!).Name).IsEqualTo("file");
         await Assert.That(((global::app.type.@this)(await typeParam!.Value())!).Kind).IsEqualTo("csv");
     }
 
