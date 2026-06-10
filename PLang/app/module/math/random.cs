@@ -10,10 +10,14 @@ public partial class Random : IContext
     [Default(100)]
     public partial data.@this<global::app.type.number.@this> Max { get; init; }
 
-    public Task<data.@this<global::app.type.number.@this>> Run()
+    public async Task<data.@this<global::app.type.number.@this>> Run()
     {
+        // Typed read; the number converts ITSELF at the .NET boundary — the
+        // widest overload Random offers (NextInt64), so long ranges fit.
+        var min = (await Min.Value())!;
+        var max = (await Max.Value())!;
         var rng = System.Random.Shared;
-        int result = rng.Next(Min.GetValue<int>(), Max.GetValue<int>() + 1);
-        return Task.FromResult(data.@this<global::app.type.number.@this>.Ok(result));
+        long result = rng.NextInt64(min.ToInt64(), max.ToInt64() + 1);
+        return data.@this<global::app.type.number.@this>.Ok(result);
     }
 }

@@ -16,7 +16,7 @@ public sealed partial class @this
     public static global::app.data.@this<@this> Floor(@this a) => Wrap(() => DoFloor(a));
     public static global::app.data.@this<@this> Ceiling(@this a) => Wrap(() => DoCeiling(a));
     public static global::app.data.@this<@this> Sqrt(@this a) => Wrap(() => DoSqrt(a));
-    public static global::app.data.@this<@this> Round(@this a, int decimals) => Wrap(() => DoRound(a, decimals));
+    public static global::app.data.@this<@this> Round(@this a, @this decimals) => Wrap(() => DoRound(a, decimals));
     public static global::app.data.@this<@this> Min(@this a, @this b, NumberPolicy policy) => Wrap(() => a.CompareTo(b) <= 0 ? a : b);
     public static global::app.data.@this<@this> Max(@this a, @this b, NumberPolicy policy) => Wrap(() => a.CompareTo(b) >= 0 ? a : b);
 
@@ -56,10 +56,12 @@ public sealed partial class @this
         return From(System.Math.Sqrt(d));
     }
 
-    private static @this DoRound(@this a, int decimals) => a.Cat switch
+    // number flows through; the int lowering happens ON the Math.Round lines —
+    // the literal .NET edge, nowhere shallower.
+    private static @this DoRound(@this a, @this decimals) => a.Cat switch
     {
         Category.Integer => a,
-        Category.Decimal => From(System.Math.Round(a.AsDecimal(), decimals, System.MidpointRounding.AwayFromZero)),
-        _ => FromDoubleAsKind(System.Math.Round(a.AsDouble(), decimals, System.MidpointRounding.AwayFromZero), a.Kind),
+        Category.Decimal => From(System.Math.Round(a.AsDecimal(), decimals.ToInt32(), System.MidpointRounding.AwayFromZero)),
+        _ => FromDoubleAsKind(System.Math.Round(a.AsDouble(), decimals.ToInt32(), System.MidpointRounding.AwayFromZero), a.Kind),
     };
 }

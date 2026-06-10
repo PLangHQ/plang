@@ -278,10 +278,9 @@ public abstract class @this : IAsyncDisposable, IDisposable
         if (Channels?.Serializers.GetByType(Mime ?? "") is global::app.channel.serializer.plang.@this serializer)
         {
             using var ms = new MemoryStream(raw);
-            var read = await serializer.DeserializeAsync(ms, ct);
-            // The container deserializer wraps the reconstructed Data in an Ok
-            // envelope; unwrap to the Data the container described.
-            return read.Materialize() as global::app.data.@this ?? read;
+            // The container deserializer returns the reconstructed Data itself
+            // (never an envelope around it — the store seam rejects bare nesting).
+            return await serializer.DeserializeAsync(ms, ct);
         }
         return StampValue(raw);
     }

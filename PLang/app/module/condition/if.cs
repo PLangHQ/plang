@@ -23,8 +23,10 @@ public partial class If : IContext, IStep
         // Evaluation errored → leave branchIndex unpublished (architect §5.7 / Batch 7 #6).
         if (!evalResult.Success) return evalResult;
 
-        var conditionResult = evalResult.GetValue<bool>();
-        if ((await Negate.Value())?.Value == true) conditionResult = !conditionResult;
+        // Both reads go through the truthiness door — the value answers for
+        // itself (bool.@this bottoms out at its backing; an absent Negate is falsy).
+        var conditionResult = await evalResult.ToBooleanAsync();
+        if (await Negate.ToBooleanAsync()) conditionResult = !conditionResult;
 
         // Mark indented sub-steps: disabled when false, clean when true
         var userStep = Step;

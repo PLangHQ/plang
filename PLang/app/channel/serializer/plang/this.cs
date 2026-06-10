@@ -155,8 +155,10 @@ public sealed class @this : ISerializer
         try
         {
             if (stream.CanSeek && stream.Length == 0) return global::app.data.@this.Ok();
+            // The container IS a Data — return the reconstruction itself, never
+            // an Ok envelope around it (the bare-Data double-wrap the store seam rejects).
             var v = await JsonSerializer.DeserializeAsync<global::app.data.@this>(stream, _inbound, cancellationToken);
-            return global::app.data.@this.Ok(v);
+            return v ?? global::app.data.@this.Ok();
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
         {
@@ -225,8 +227,10 @@ public sealed class @this : ISerializer
         {
             if (string.IsNullOrEmpty(s) || s == "null")
                 return global::app.data.@this.Ok(null);
-            return global::app.data.@this.Ok(
-                (object?)JsonSerializer.Deserialize<global::app.data.@this>(s, _store)!);
+            // The persisted value IS a Data — return the reconstruction itself,
+            // never an Ok envelope around it (a bare Data inside a Data is the
+            // double-wrap the store seam rejects).
+            return JsonSerializer.Deserialize<global::app.data.@this>(s, _store)!;
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {

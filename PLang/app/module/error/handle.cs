@@ -186,7 +186,9 @@ public partial class Handle : IContext, IModifier
         if (StatusCode?.Peek() == null && Key?.Materialize() == null && Message?.Materialize() == null) return true;
         if (error == null) return false;
 
-        if (StatusCode?.Peek() != null && error.StatusCode != StatusCode.GetValue<int>()) return false;
+        // The matcher's int boundary is IError.StatusCode — the number lowers
+        // itself there (Peek: sync predicate, value already in memory).
+        if (StatusCode?.Peek() is global::app.type.number.@this sc && error.StatusCode != sc.ToInt32()) return false;
         if (!string.IsNullOrEmpty(Key?.Materialize()?.ToString())
             && !string.Equals(error.Key, Key.Peek()?.ToString(), StringComparison.OrdinalIgnoreCase)) return false;
         if (!string.IsNullOrEmpty(Message?.Materialize()?.ToString())
@@ -197,11 +199,15 @@ public partial class Handle : IContext, IModifier
 
     private async Task<global::app.data.@this?> Retry(Func<Task<global::app.data.@this>> next, actor.context.@this context)
     {
-        int? count = RetryCount?.GetValue<int>();
-        if (count == null || count <= 0) return null;
+        // Typed reads; the numbers lower at Task.Delay / the loop bound — the
+        // handler's own .NET edges.
+        var retries = RetryCount == null ? null : await RetryCount.Value();
+        if (retries == null) return null;
+        int count = retries.ToInt32();
+        if (count <= 0) return null;
 
-        int delayMs = (RetryOverMs == null ? null : await RetryOverMs.Value()) != null && count > 0
-            ? RetryOverMs.GetValue<int>() / count.Value : 0;
+        var over = RetryOverMs == null ? null : await RetryOverMs.Value();
+        int delayMs = over != null ? over.ToInt32() / count : 0;
 
         for (int attempt = 0; attempt < count; attempt++)
         {

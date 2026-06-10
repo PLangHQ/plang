@@ -20,7 +20,9 @@ public partial class Remove : IContext
         // Promote to native (no-op when already native) so the in-place remove persists.
         await Context.Variable.Set(listName, nl);
 
-        if (AtIndex.GetValue<int>() >= 0) nl.RemoveAt(AtIndex.GetValue<int>());
+        // Typed read — number end to end; the list lowers inside its own boundary.
+        var atIndex = (await AtIndex.Value())!;
+        if (atIndex >= 0) nl.RemoveAt(atIndex);
         else nl.Remove((await Value.Value()));
         return global::app.data.@this<type.list>.Ok(new type.list { count = nl.CountRaw, value = nl }, app.type.@this.FromName("list"));
     }

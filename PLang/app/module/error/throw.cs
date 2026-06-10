@@ -24,7 +24,9 @@ public partial class Throw : IContext
         if (msg is global::app.error.IError existing)
             return Error(existing);
 
+        // Typed read; the number lowers itself at the engine error type's
+        // int-status boundary.
         return Error(
-            new ServiceError(msg?.ToString() ?? "", (Key == null ? null : await Key.Value())?.ToString() ?? "UserError", StatusCode.GetValue<int>()));
+            new ServiceError(msg?.ToString() ?? "", (Key == null ? null : await Key.Value())?.ToString() ?? "UserError", (await StatusCode.Value())!.ToInt32()));
     }
 }

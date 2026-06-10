@@ -39,8 +39,10 @@ public partial class Add : IContext
             ? new data.@this(Value.Name, nl.CopyStructure(), Value.Type) { Context = Context }
             : Value;
 
-        if (AtIndex.GetValue<int>() >= 0 && AtIndex.GetValue<int>() <= list.Count)
-            list.Insert(AtIndex.GetValue<int>(), toAdd);
+        // Typed read — number end to end; the list lowers inside its own boundary.
+        var atIndex = (await AtIndex.Value())!;
+        if (atIndex >= 0 && atIndex <= list.Count)
+            list.Insert(atIndex, toAdd);
         else
             list.Add(toAdd);
 

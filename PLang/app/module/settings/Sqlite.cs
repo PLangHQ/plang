@@ -112,9 +112,10 @@ public sealed class Sqlite : IStore
             if (result == null || result == DBNull.Value)
                 return Task.FromResult(app.data.@this.Ok(null));
 
+            // Load returns the reconstructed Data ITSELF (no envelope around it).
             var deserResult = _serializer.Load(result.ToString()!);
             if (!deserResult.Success) return Task.FromResult(app.data.@this.FromError(deserResult.Error!));
-            return Task.FromResult((data.@this?)deserResult.Peek() ?? app.data.@this.Ok(null));
+            return Task.FromResult(deserResult);
         }
         catch (Exception ex)
         {
@@ -168,7 +169,7 @@ public sealed class Sqlite : IStore
                 if (raw != null)
                 {
                     var deserResult = _serializer.Load(raw);
-                    if (deserResult.Success && deserResult.Peek() != null) items.Add((data.@this)deserResult.Peek()!);
+                    if (deserResult.Success && deserResult.Peek() != null) items.Add(deserResult);
                 }
             }
             return Task.FromResult(app.data.@this.Ok((object)items));

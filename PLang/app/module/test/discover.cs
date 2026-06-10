@@ -87,8 +87,10 @@ public partial class discover : IContext
                 StatusReason = "goal read error: " + (goalRead.Error?.Message ?? "")
             };
         }
+        // Born-typed: text content rides as the text wrapper; its string form
+        // is ToString (a Goal already matched the first arm).
         var sourceGoal = (await goalRead.Value()) as Goal
-            ?? Goal.Parse((await goalRead.Value()) as string ?? "", goalFile)
+            ?? Goal.Parse((await goalRead.Value())?.ToString() ?? "", goalFile)
             ?? new Goal { Path = goalFile };
 
         // A goal whose source has a `tag this test 'skip'` step is PARKED: it registers

@@ -204,7 +204,8 @@ public partial class @this
         if (v is @this)
             throw new System.InvalidOperationException(
                 "A bare Data may not be stored as a value — nested Data always rides inside an owning wrapper type. "
-                + "This is the implicit-operator double-wrap accident: return the inner value via its own factory, never `return innerDataInstance;`.");
+                + "This is the implicit-operator double-wrap accident: return the inner value via its own factory, never `return innerDataInstance;`."
+                + System.Environment.StackTrace);
 
         var (family, _) = global::app.type.convert.@this.OwnerOf(v.GetType());
         if (family == null || !typeof(global::app.type.item.@this).IsAssignableFrom(family))

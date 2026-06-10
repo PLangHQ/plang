@@ -144,7 +144,7 @@ public sealed class OpenAi : ILlm
         string? cacheKey = null;
         if (((await action.Cache.Value()) as global::app.type.@bool.@this)?.Value == true && action.Tools?.GetValue<List<GoalCall>>() == null && !buildCacheOff)
         {
-            cacheKey = ComputeCacheKey(messages, model, action.Temperature.GetValue<double>(), schema, (action.Format == null ? null : await action.Format.Value())?.ToString());
+            cacheKey = ComputeCacheKey(messages, model, (await action.Temperature.Value())!.ToDouble(), schema, (action.Format == null ? null : await action.Format.Value())?.ToString());
             var cached = await settings.Get(CacheTable, cacheKey);
             if (cached.Success && cached.Peek() != null)
             {
@@ -185,11 +185,11 @@ public sealed class OpenAi : ILlm
             {
                 ["model"] = model,
                 ["messages"] = ToApiMessages(messages, app, context),
-                ["temperature"] = action.Temperature.GetValue<double>(),
-                ["max_completion_tokens"] = action.MaxTokens.GetValue<long>()
+                ["temperature"] = (await action.Temperature.Value())!.ToDouble(),
+                ["max_completion_tokens"] = (await action.MaxTokens.Value())!.ToInt64()
             };
             if ((action.TopP == null ? null : await action.TopP.Value()) != null)
-                body["top_p"] = action.TopP.GetValue<double>();
+                body["top_p"] = (await action.TopP.Value())!.ToDouble();
             if (apiTools != null)
                 body["tools"] = apiTools;
             if ((action.OnStream == null ? null : await action.OnStream.Value()) != null)
@@ -324,14 +324,14 @@ public sealed class OpenAi : ILlm
             // --- Tool calls? ---
             if (message.TryGetProperty("tool_calls", out var toolCallsProp) && toolCallsProp.GetArrayLength() > 0)
             {
-                if (toolCallCount >= action.MaxToolCalls.GetValue<long>())
+                if (toolCallCount >= (await action.MaxToolCalls.Value())!.ToInt64())
                     break; // hit limit
 
                 lastContent = content;
                 var toolCalls = ParseToolCalls(toolCallsProp);
 
                 // Slice to remaining budget — never execute more tools than the limit allows
-                int remaining = action.MaxToolCalls.GetValue<int>() - toolCallCount;
+                int remaining = (await action.MaxToolCalls.Value())!.ToInt32() - toolCallCount;
                 if (toolCalls.Count > remaining)
                     toolCalls = toolCalls.Take(remaining).ToList();
 
@@ -427,7 +427,7 @@ public sealed class OpenAi : ILlm
                 {
                     var validationError = validationResult.Error?.Message ?? "Unknown validation error";
 
-                    if (validationRetries >= action.MaxValidationRetries.GetValue<long>())
+                    if (validationRetries >= (await action.MaxValidationRetries.Value())!.ToInt64())
                     {
                         await app.CurrentActor.Channel.WriteTextAsync(global::app.channel.list.@this.Output,
                             $"  Validation failed (no retries left): {validationError}{Environment.NewLine}");

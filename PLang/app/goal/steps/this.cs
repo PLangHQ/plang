@@ -156,11 +156,14 @@ public sealed class @this : IList<Step>, IContext
 
             if (result.ShouldExit()) return result;
 
-            // Sub-step control: false condition skips indented children
+            // Sub-step control: false condition skips indented children. The
+            // verdict reads through the truthiness door — the value answers for
+            // itself (bool.@this bottoms out at its backing).
             if (i + 1 < _items.Count && _items[i + 1].Indent > step.Indent
-                && result.Materialize() is bool conditionResult && !conditionResult
                 && step.Actions.Count > 0
-                && string.Equals(step.Actions[0].Module, "condition", StringComparison.OrdinalIgnoreCase))
+                && string.Equals(step.Actions[0].Module, "condition", StringComparison.OrdinalIgnoreCase)
+                && result.Success
+                && !(await result.ToBooleanAsync()))
             {
                 skipBelowIndent = step.Indent;
             }

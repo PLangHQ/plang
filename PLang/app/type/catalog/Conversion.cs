@@ -135,6 +135,13 @@ public sealed partial class @this
         if (targetType.IsAssignableFrom(sourceType))
             return (value, null);
 
+        // Born-typed: there is NO central wrapper→raw converter. A handler
+        // reads the typed value and calls the TYPE'S OWN member (number.ToInt64,
+        // text.Value, path's gated Absolute) at the .NET boundary that needs
+        // raw — the type converts itself, checked, erroring honestly on loss.
+        // (IConvertible implementors — number, text — still self-convert
+        // through the Convert.ChangeType arm below, the standard protocol.)
+
         // data.@this is the universal value wrapper — any value can become Data.
         // A wire-shaped object ({value, type, ...}) IS a serialized Data, so
         // reconstruct it as a whole (value + type) rather than nesting the dict as a

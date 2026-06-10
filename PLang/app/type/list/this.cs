@@ -104,7 +104,7 @@ public partial class @this : global::app.type.item.@this, module.IContext,
     IReadOnlyList<Data> global::app.data.IListLeaf.Leaves => Items;
 
     /// <summary>The flattened element Data at <paramref name="index"/>, or C# null when out of range.</summary>
-    public Data? At(int index)
+    internal Data? At(int index)
         => Locate(index, out int row, out int offset, out @this? inner)
             ? (inner != null ? inner.At(offset) : _items[row])
             : null;
@@ -177,7 +177,7 @@ public partial class @this : global::app.type.item.@this, module.IContext,
 
     /// <summary>Inserts <paramref name="item"/> at the flattened <paramref name="index"/>
     /// (clamped to [0, Count]).</summary>
-    public @this Insert(int index, Data item)
+    internal @this Insert(int index, Data item)
     {
         if (_context != null) item.Context = _context;
         if (index < 0) index = 0;
@@ -191,10 +191,18 @@ public partial class @this : global::app.type.item.@this, module.IContext,
     }
 
     // --- In-place mutation surface for the list action handlers. The index args are
-    //     FLATTENED — Locate maps each to its (row, offset) before editing. ---
+    //     FLATTENED — Locate maps each to its (row, offset) before editing.
+    //     PLang callers hand a `number`; the int lowering happens HERE, inside
+    //     the type, at its own index-math boundary. The int forms stay for
+    //     engine-interior loops. ---
+
+    public @this Insert(global::app.type.number.@this index, Data item) => Insert(index.ToInt32(), item);
+    public void RemoveAt(global::app.type.number.@this index) => RemoveAt(index.ToInt32());
+    public void SetAt(global::app.type.number.@this index, Data value) => SetAt(index.ToInt32(), value);
+    public Data? At(global::app.type.number.@this index) => At(index.ToInt32());
 
     /// <summary>Removes the leaf at the flattened <paramref name="index"/> (no-op when out of range).</summary>
-    public void RemoveAt(int index)
+    internal void RemoveAt(int index)
     {
         if (!Locate(index, out int row, out int offset, out @this? inner)) return;
         if (inner != null)
@@ -312,7 +320,7 @@ public partial class @this : global::app.type.item.@this, module.IContext,
     }
 
     /// <summary>Replaces (or appends at Count) the leaf at the flattened <paramref name="index"/>.</summary>
-    public void SetAt(int index, Data value)
+    internal void SetAt(int index, Data value)
     {
         if (_context != null) value.Context = _context;
         if (Locate(index, out int row, out int offset, out @this? inner))
