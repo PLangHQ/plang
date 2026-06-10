@@ -16,7 +16,7 @@ public class NumberUnaryTests
         var r = number.Abs(number.From(-5));
         await r.IsSuccess();
         await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Int);
-        await Assert.That((int)(await r.Value())!).IsEqualTo(5);
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).Clr<int>()).IsEqualTo(5);
     }
 
     [Test] public async Task Abs_IntMinValue_PromotesToLong()
@@ -26,7 +26,7 @@ public class NumberUnaryTests
         var r = number.Abs(number.From(int.MinValue));
         await r.IsSuccess();
         await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Long);
-        await Assert.That((long)(await r.Value())!).IsEqualTo(-(long)int.MinValue);
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).Clr<long>()).IsEqualTo(-(long)int.MinValue);
     }
 
     [Test] public async Task Abs_LongMinValue_WidensToInt128()
@@ -44,7 +44,7 @@ public class NumberUnaryTests
         var r = number.Abs(number.From(-3.14m));
         await r.IsSuccess();
         await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Decimal);
-        await Assert.That((decimal)(await r.Value())!).IsEqualTo(3.14m);
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).Clr<decimal>()).IsEqualTo(3.14m);
     }
 
     [Test] public async Task Floor_Int_Unchanged()
@@ -52,7 +52,7 @@ public class NumberUnaryTests
         var r = number.Floor(number.From(7));
         await r.IsSuccess();
         await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Int);
-        await Assert.That((int)(await r.Value())!).IsEqualTo(7);
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).Clr<int>()).IsEqualTo(7);
     }
 
     [Test] public async Task Floor_Decimal_RoundsDown()
@@ -60,7 +60,7 @@ public class NumberUnaryTests
         var r = number.Floor(number.From(3.9m));
         await r.IsSuccess();
         await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Decimal);
-        await Assert.That((decimal)(await r.Value())!).IsEqualTo(3m);
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).Clr<decimal>()).IsEqualTo(3m);
     }
 
     [Test] public async Task Ceiling_Double_RoundsUp()
@@ -68,7 +68,7 @@ public class NumberUnaryTests
         var r = number.Ceiling(number.From(3.1));
         await r.IsSuccess();
         await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Double);
-        await Assert.That((double)(await r.Value())!).IsEqualTo(4.0);
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).Clr<double>()).IsEqualTo(4.0);
     }
 
     [Test] public async Task Sqrt_PositiveInt_ReturnsDouble()
@@ -76,7 +76,7 @@ public class NumberUnaryTests
         var r = number.Sqrt(number.From(16));
         await r.IsSuccess();
         await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Double);
-        await Assert.That((double)(await r.Value())!).IsEqualTo(4.0);
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).Clr<double>()).IsEqualTo(4.0);
     }
 
     [Test] public async Task Sqrt_NegativeNumber_SurfacesArithmeticError()
@@ -93,7 +93,7 @@ public class NumberUnaryTests
     {
         var r = number.Round(number.From(2.345m), 2);
         await r.IsSuccess();
-        await Assert.That((decimal)(await r.Value())!).IsEqualTo(2.35m);
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).Clr<decimal>()).IsEqualTo(2.35m);
     }
 
     [Test] public async Task Round_Int_Unchanged()
@@ -108,7 +108,7 @@ public class NumberUnaryTests
         var r = number.Min(number.From(3), number.From(5), PPolicy.Lenient);
         await r.IsSuccess();
         await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Int);
-        await Assert.That((int)(await r.Value())!).IsEqualTo(3);
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).Clr<int>()).IsEqualTo(3);
     }
 
     [Test] public async Task Max_IntAndDecimal_PromotesToDecimal()
@@ -116,13 +116,13 @@ public class NumberUnaryTests
         var r = number.Max(number.From(2), number.From(3.5m), PPolicy.Lenient);
         await r.IsSuccess();
         await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Decimal);
-        await Assert.That((decimal)(await r.Value())!).IsEqualTo(3.5m);
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).Clr<decimal>()).IsEqualTo(3.5m);
     }
 
     [Test] public async Task Max_NegativeAndPositive_ReturnsPositive()
     {
         var r = number.Max(number.From(-10), number.From(5), PPolicy.Lenient);
         await r.IsSuccess();
-        await Assert.That((int)(await r.Value())!).IsEqualTo(5);
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).Clr<int>()).IsEqualTo(5);
     }
 }

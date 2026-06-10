@@ -17,7 +17,7 @@ public class NumberDivideTests
     {
         var r = number.Divide(number.From(7), number.From(2), P);
         await r.IsSuccess();
-        await Assert.That((decimal)(await r.Value())!).IsEqualTo(3.5m);
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).Clr<decimal>()).IsEqualTo(3.5m);
     }
 
     [Test] public async Task Divide_IntByInt_LeavesIntegerTrack_KindDecimal()
@@ -30,20 +30,20 @@ public class NumberDivideTests
     {
         var r = number.Divide(number.From(1), number.From(1000000), P);
         await r.IsSuccess();
-        await Assert.That((decimal)(await r.Value())!).IsEqualTo(0.000001m);
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).Clr<decimal>()).IsEqualTo(0.000001m);
     }
 
     [Test] public async Task IntDiv_SevenByTwo_ReturnsThree()
     {
         var r = number.IntDivide(number.From(7), number.From(2), P);
         await r.IsSuccess();
-        await Assert.That((int)(await r.Value())!).IsEqualTo(3);
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).Clr<int>()).IsEqualTo(3);
     }
 
     [Test] public async Task IntDiv_NegativeNumerator_TruncatesTowardZero()
     {
         var r = number.IntDivide(number.From(-7), number.From(2), P);
-        await Assert.That((int)(await r.Value())!).IsEqualTo(-3);
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).Clr<int>()).IsEqualTo(-3);
     }
 
     [Test] public async Task Divide_ByZero_Integer_DataFailDivideByZero()

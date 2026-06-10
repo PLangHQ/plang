@@ -14,15 +14,15 @@ public class NumberReadTests
     [Test] public async Task Read_NumberInt_FromString_PreservesInt()
     {
         var r = number.Convert("5", "int", null!);
-        await Assert.That((await r.Value())).IsTypeOf<int>();
-        await Assert.That((int)(await r.Value())!).IsEqualTo(5);
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).BoxedValue).IsTypeOf<int>();
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).Clr<int>()).IsEqualTo(5);
     }
 
     [Test] public async Task Read_NumberUInt_FromBigDecimalString_ProducesUInt()
     {
         var r = number.Convert("3000000000", "uint", null!);
-        await Assert.That((await r.Value())).IsTypeOf<uint>();
-        await Assert.That((uint)(await r.Value())!).IsEqualTo(3000000000u);
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).BoxedValue).IsTypeOf<uint>();
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).Clr<uint>()).IsEqualTo(3000000000u);
         // toward int it overflows → typed error.
         await number.Convert("3000000000", "int", null!).IsFailure();
     }
@@ -31,30 +31,30 @@ public class NumberReadTests
     {
         const string s = "9999999999999999999999";
         var r = number.Convert(s, "biginteger", null!);
-        await Assert.That((await r.Value())).IsTypeOf<BigInteger>();
-        await Assert.That((BigInteger)(await r.Value())!).IsEqualTo(BigInteger.Parse(s));
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).BoxedValue).IsTypeOf<BigInteger>();
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).Clr<BigInteger>()).IsEqualTo(BigInteger.Parse(s));
     }
 
     [Test] public async Task Read_NumberFloat_NegativeZero_PreservesSignAndKind()
     {
         var r = number.Convert("-0.0", "float", null!);
-        await Assert.That((await r.Value())).IsTypeOf<float>();
-        await Assert.That(float.IsNegative((float)(await r.Value())!)).IsTrue();
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).BoxedValue).IsTypeOf<float>();
+        await Assert.That(float.IsNegative(((global::app.type.number.@this)(await r.Value())!).Clr<float>())).IsTrue();
     }
 
     [Test] public async Task Read_NumberDecimal_PrecisionPreserved_28Digits()
     {
         const string s = "1.234567890123456789012345678";
         var r = number.Convert(s, "decimal", null!);
-        await Assert.That((await r.Value())).IsTypeOf<decimal>();
-        await Assert.That((decimal)(await r.Value())!).IsEqualTo(decimal.Parse(s, System.Globalization.CultureInfo.InvariantCulture));
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).BoxedValue).IsTypeOf<decimal>();
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).Clr<decimal>()).IsEqualTo(decimal.Parse(s, System.Globalization.CultureInfo.InvariantCulture));
     }
 
     [Test] public async Task Read_NumberHalf_FromString_PreservesHalf()
     {
         var r = number.Convert("1.5", "half", null!);
-        await Assert.That((await r.Value())).IsTypeOf<Half>();
-        await Assert.That((Half)(await r.Value())!).IsEqualTo((Half)1.5);
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).BoxedValue).IsTypeOf<Half>();
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).Clr<Half>()).IsEqualTo((Half)1.5);
     }
 
     // Under lazy (Stage 3) this fires at first touch; Stage 2 pins that the

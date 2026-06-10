@@ -40,7 +40,7 @@ public class Stage1_DictNavigationAndWriterTests
         var nav = new global::app.variable.navigator.Dictionary();
         await Assert.That(nav.CanNavigate(data)).IsTrue();
         await Assert.That((await (await nav.Navigate(data, "name")).Value())?.ToString()).IsEqualTo("a");
-        await Assert.That((long)(await (await nav.Navigate(data, "age")).Value())!).IsEqualTo(30L);
+        await Assert.That(((global::app.type.number.@this)(await (await nav.Navigate(data, "age")).Value())!).Clr<long>()).IsEqualTo(30L);
         // A "count" intrinsic answers only when no real "count" key exists.
         // the count intrinsic answers in the PLang `number`
         await Assert.That(((global::app.type.number.@this)(await (await nav.Navigate(data, "count")).Value())!).ToInt32()).IsEqualTo(2);

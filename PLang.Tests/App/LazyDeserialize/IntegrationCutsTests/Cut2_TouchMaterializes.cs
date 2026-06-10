@@ -59,8 +59,8 @@ public class Cut2_TouchMaterializes
         var ctx = app.User.Context;
         const string big = "9999999999999999999999";
         var d = data.FromRaw(big, type.Create("number", "biginteger", context: ctx), ctx, "n");
-        await Assert.That((await d.Value())).IsTypeOf<BigInteger>();
-        await Assert.That((BigInteger)(await d.Value())!).IsEqualTo(BigInteger.Parse(big)); // lossless
+        await Assert.That(((global::app.type.number.@this)(await d.Value())!).BoxedValue).IsTypeOf<BigInteger>();
+        await Assert.That(((global::app.type.number.@this)(await d.Value())!).Clr<BigInteger>()).IsEqualTo(BigInteger.Parse(big)); // lossless
     }
 
     // The image materialises only when its value is touched (e.g. width), not

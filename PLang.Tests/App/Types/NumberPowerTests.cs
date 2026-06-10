@@ -17,7 +17,7 @@ public class NumberPowerTests
         var r = number.Power(number.From(2), number.From(10), PPolicy.Lenient);
         await r.IsSuccess();
         await Assert.That((await r.Value())!.Kind).IsEqualTo(PKind.Int);
-        await Assert.That((int)(await r.Value())!).IsEqualTo(1024);
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).Clr<int>()).IsEqualTo(1024);
     }
 
     [Test] public async Task Power_TwoPowNegOne_ReturnsHalf_NotZero()
@@ -26,7 +26,7 @@ public class NumberPowerTests
         await r.IsSuccess();
         // Leaves integer track — returns 0.5 (as double under lenient).
         await Assert.That((await r.Value())!.Kind == PKind.Double || (await r.Value())!.Kind == PKind.Decimal).IsTrue();
-        await Assert.That((double)(await r.Value())!).IsEqualTo(0.5);
+        await Assert.That(((global::app.type.number.@this)(await r.Value())!).Clr<double>()).IsEqualTo(0.5);
     }
 
     [Test] public async Task Power_TwoPowHalf_PromotesToDouble()

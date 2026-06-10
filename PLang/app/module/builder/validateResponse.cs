@@ -163,7 +163,10 @@ public partial class validateResponse : IContext
                     if (targetType == null) continue;
                     if (!global::app.type.catalog.@this.IsScalarPlangType(targetType)) continue;
 
-                    if ((await p.Value()) is not string)
+                    // A bare wire string rides born-native as text — both ARE the
+                    // plain-string form this check wants; only a record shape
+                    // ({value, key}) is the violation.
+                    if ((await p.Value()) is not (string or global::app.type.text.@this))
                         errors.Add(
                             $"Step[{step.Index}] {a.Module}.{a.ActionName}: parameter '{p.Name}' has type '{p.Type.Name}' but value is not a plain string. " +
                             $"Scalar types (e.g. tstring, path) must be emitted as bare string values, not records like {{value, key}}.");
