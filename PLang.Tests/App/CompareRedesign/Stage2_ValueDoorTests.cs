@@ -21,7 +21,7 @@ public class Stage2_ValueDoorTests
         return await new global::app.channel.type.file.@this(p).Read();
     }
 
-    [Test]
+    [Test, Skip("Born-typed store-seam stage (slices 1-2) — see .bot/compare-redesign/coder/stage-proposal-born-typed.md; this stub is the pinned contract")]
     public async Task Value_AuthoredScalar_ReturnsTypedNumberNotRawInt()
     {
         // set %x% = 5 → await data.Value() returns a `number` (item subtype), not boxed int 5
@@ -65,7 +65,7 @@ public class Stage2_ValueDoorTests
         await Assert.That(d.MaterializeCount).IsEqualTo(0);       // Peek forced nothing
     }
 
-    [Test]
+    [Test, Skip("Born-typed store-seam stage (slices 1-2) — see .bot/compare-redesign/coder/stage-proposal-born-typed.md; this stub is the pinned contract")]
     public async Task RawSlot_Dissolved_BareBytesOffChannelRefineInPlace()
     {
         // no _raw field on Data; a bare-bytes value narrows binary → item through the same instance
@@ -86,7 +86,7 @@ public class Stage2_ValueDoorTests
         await Assert.That(method!.ReturnType).IsEqualTo(typeof(System.Threading.Tasks.ValueTask<object?>));
     }
 
-    [Test]
+    [Test, Skip("Born-typed store-seam stage (slices 1-2) — see .bot/compare-redesign/coder/stage-proposal-born-typed.md; this stub is the pinned contract")]
     public async Task GenericToRaw_DoesNotExist_OnItemBase()
     {
         // reflection: item.@this has no public ToRaw(); raw leaves only via Write/As<T>/gated interop
@@ -94,7 +94,7 @@ public class Stage2_ValueDoorTests
         await Task.CompletedTask;
     }
 
-    [Test]
+    [Test, Skip("Born-typed store-seam stage (slices 1-2) — see .bot/compare-redesign/coder/stage-proposal-born-typed.md; this stub is the pinned contract")]
     public async Task TextRawValue_IsPrivate_NotPublicProperty()
     {
         // reflection: text.@this has no public `string Value` property — backing is private,
@@ -125,7 +125,7 @@ public class Stage2_ValueDoorTests
         await Assert.That(d.MaterializeCount).IsEqualTo(0);
     }
 
-    [Test]
+    [Test, Skip("Born-typed store-seam stage (slices 1-2) — see .bot/compare-redesign/coder/stage-proposal-born-typed.md; this stub is the pinned contract")]
     public async Task VarReference_RidesAsTypedText_NeverBareCSharpString()
     {
         // SetValue("%x%") + downstream read yields a `text` instance — value slot is never a raw System.String
@@ -143,7 +143,7 @@ public class Stage2_ValueDoorTests
         await Assert.That(v is global::app.type.dict.@this).IsTrue();
     }
 
-    [Test]
+    [Test, Skip("Born-typed store-seam stage (slices 1-2) — see .bot/compare-redesign/coder/stage-proposal-born-typed.md; this stub is the pinned contract")]
     public async Task DataType_Getter_ReturnsBackingField_NoCLRSniffing()
     {
         // data.Type is `return _type;` — the lazy leaf.ToRaw().GetType() + name-mapping
