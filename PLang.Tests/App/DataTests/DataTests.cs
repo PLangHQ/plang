@@ -753,7 +753,7 @@ public class DataTests
 
         // Stage 3: flat shape — archived.Value is byte[] directly, no nested gzip Data.
         await Assert.That(compressed.Type!.Name).IsEqualTo("archived");
-        await Assert.That((await compressed.Value())).IsTypeOf<byte[]>();
+        await Assert.That(await compressed.Value()).IsTypeOf<global::app.type.binary.@this>();
     }
 
     [Test]

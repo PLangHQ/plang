@@ -28,7 +28,7 @@ public class TextStreamSerializerTests
 
         // Serialize and verify it works with UTF-8 characters
         var result = (await serializer.Serialize(Data.Ok("Hello 世界")).Value())!;
-        await Assert.That(result).IsEqualTo("Hello 世界");
+        await Assert.That((result)?.ToString()).IsEqualTo("Hello 世界");
     }
 
     [Test]
@@ -38,7 +38,7 @@ public class TextStreamSerializerTests
 
         var result = (await serializer.Serialize(Data.Ok("hello world")).Value())!;
 
-        await Assert.That(result).IsEqualTo("hello world");
+        await Assert.That((result)?.ToString()).IsEqualTo("hello world");
     }
 
     [Test]
@@ -48,7 +48,7 @@ public class TextStreamSerializerTests
 
         var result = (await serializer.Serialize(Data.Ok(42)).Value())!;
 
-        await Assert.That(result).IsEqualTo("42");
+        await Assert.That((result)?.ToString()).IsEqualTo("42");
     }
 
     [Test]
@@ -59,8 +59,8 @@ public class TextStreamSerializerTests
         var trueResult = (await serializer.Serialize(Data.Ok(true)).Value())!;
         var falseResult = (await serializer.Serialize(Data.Ok(false)).Value())!;
 
-        await Assert.That(trueResult).IsEqualTo("True");
-        await Assert.That(falseResult).IsEqualTo("False");
+        await Assert.That(trueResult).IsEqualTo("true");
+        await Assert.That(falseResult).IsEqualTo("false");
     }
 
     [Test]
@@ -70,7 +70,7 @@ public class TextStreamSerializerTests
 
         var result = (await serializer.Serialize(Data.Ok(null)).Value())!;
 
-        await Assert.That(result).IsEqualTo("");
+        await Assert.That((result)?.ToString()).IsEqualTo("");
     }
 
     [Test]
@@ -104,7 +104,7 @@ public class TextStreamSerializerTests
 
         var result = (await serializer.Deserialize<global::app.type.text.@this>("hello").Value())!;
 
-        await Assert.That(result).IsEqualTo("hello");
+        await Assert.That((result)?.ToString()).IsEqualTo("hello");
     }
 
     [Test]
@@ -114,7 +114,7 @@ public class TextStreamSerializerTests
 
         var result = (await serializer.Deserialize<global::app.type.number.@this>("42").Value())!;
 
-        await Assert.That(result).IsEqualTo(42);
+        await Assert.That((result)?.ToString()).IsEqualTo("42");
     }
 
     [Test]
@@ -124,7 +124,7 @@ public class TextStreamSerializerTests
 
         var result = serializer.Deserialize<global::app.type.number.@this>("42").GetValue<int>();
 
-        await Assert.That(result).IsEqualTo(42);
+        await Assert.That((result).ToString()).IsEqualTo("42");
     }
 
     [Test]
@@ -134,7 +134,7 @@ public class TextStreamSerializerTests
 
         var result = (await serializer.Deserialize<global::app.type.number.@this>("9999999999").Value())!;
 
-        await Assert.That(result).IsEqualTo(9999999999L);
+        await Assert.That((result)?.ToString()).IsEqualTo("9999999999");
     }
 
     [Test]
@@ -145,7 +145,7 @@ public class TextStreamSerializerTests
         var separator = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
         var result = (await serializer.Deserialize<global::app.type.number.@this>($"3{separator}14").Value())!;
 
-        await Assert.That(result).IsEqualTo(3.14);
+        await Assert.That((result)?.ToString()).IsEqualTo("3.14");
     }
 
     [Test]
@@ -156,7 +156,7 @@ public class TextStreamSerializerTests
         var separator = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
         var result = (await serializer.Deserialize<global::app.type.number.@this>($"123{separator}45").Value())!;
 
-        await Assert.That(result).IsEqualTo(123.45m);
+        await Assert.That((result)?.ToString()).IsEqualTo("123.45");
     }
 
     [Test]
@@ -250,7 +250,7 @@ public class TextStreamSerializerTests
 
         var result = (await serializer.Deserialize<global::app.type.number.@this>("42").Value())!;
 
-        await Assert.That(result).IsEqualTo(42);
+        await Assert.That((result)?.ToString()).IsEqualTo("42");
     }
 
     [Test]
@@ -260,7 +260,7 @@ public class TextStreamSerializerTests
 
         var result = (await serializer.Deserialize("hello").Value())!;
 
-        await Assert.That(result).IsEqualTo("hello");
+        await Assert.That((result)?.ToString()).IsEqualTo("hello");
     }
 
     [Test]
@@ -295,9 +295,9 @@ public class TextStreamSerializerTests
         var serializer = new global::app.channel.serializer.Text();
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("hello"));
 
-        var result = (await serializer.DeserializeAsync<global::app.type.text.@this>(stream)).GetValue<string>();
+        var result = (await (await serializer.DeserializeAsync<global::app.type.text.@this>(stream)).Value())?.ToString();
 
-        await Assert.That(result).IsEqualTo("hello");
+        await Assert.That((result)?.ToString()).IsEqualTo("hello");
     }
 
     [Test]
@@ -308,7 +308,7 @@ public class TextStreamSerializerTests
 
         var result = (await serializer.DeserializeAsync<global::app.type.number.@this>(stream)).GetValue<int>();
 
-        await Assert.That(result).IsEqualTo(42);
+        await Assert.That((result).ToString()).IsEqualTo("42");
     }
 
     [Test]
@@ -319,7 +319,7 @@ public class TextStreamSerializerTests
 
         var result = (await serializer.DeserializeAsync<global::app.type.number.@this>(stream)).GetValue<int>();
 
-        await Assert.That(result).IsEqualTo(0);
+        await Assert.That((result).ToString()).IsEqualTo("0");
     }
 
     [Test]
@@ -343,7 +343,7 @@ public class TextStreamSerializerTests
 
         await serializer.SerializeAsync(stream, Data.Ok(original));
         stream.Position = 0;
-        var result = (await serializer.DeserializeAsync<global::app.type.text.@this>(stream)).GetValue<string>();
+        var result = (await (await serializer.DeserializeAsync<global::app.type.text.@this>(stream)).Value())?.ToString();
 
         await Assert.That(result).IsEqualTo(original + Environment.NewLine);
     }

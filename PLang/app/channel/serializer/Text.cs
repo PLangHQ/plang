@@ -63,7 +63,9 @@ public sealed class Text : ISerializer
     {
         var result = await DeserializeAsync(stream, cancellationToken);
         if (!result.Success) return global::app.data.@this<T>.From(result);
-        return global::app.data.@this<T>.Ok(FromText<T>(result.Materialize() as string ?? ""));
+        // The raw stream text rides born-native as text — its string face
+        // feeds the typed parse.
+        return global::app.data.@this<T>.Ok(FromText<T>(result.Materialize()?.ToString() ?? ""));
     }
 
     public data.@this<global::app.type.text.@this> Serialize(data.@this data)

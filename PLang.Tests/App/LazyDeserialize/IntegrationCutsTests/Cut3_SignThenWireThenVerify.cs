@@ -39,7 +39,7 @@ public class Cut3_SignThenWireThenVerify
     private data RoundTrip(data d)
     {
         var s = _app.System.Channel.Serializers.GetByMimeType("application/plang");
-        return (data)(s.Deserialize(s.Serialize(d).Materialize()!.ToString()).Materialize())!;
+        return s.Deserialize(s.Serialize(d).Materialize()!.ToString()!);   // Deserialize returns the reconstruction itself
     }
 
     [Test] public async Task Cut3_SignedData_VerifiesAgainstRaw_WithoutMaterialising()

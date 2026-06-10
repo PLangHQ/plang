@@ -21,8 +21,11 @@ public partial class Set : IContext, IBuildValidatable
         var value = parameters.FirstOrDefault(p =>
             string.Equals(p.Name, "Value", StringComparison.OrdinalIgnoreCase));
         // Build-time is a sync surface — read the materialised backing, never the
-        // async door. The literal value (no %var%) is in hand at build.
+        // async door. The literal value (no %var%) is in hand at build; an
+        // authored string rides as text and presents its string face here (the
+        // strict probe and the "this" guard both reason over the source string).
         var valueBacking = value?.Materialize();
+        if (valueBacking is global::app.type.text.@this tb) valueBacking = tb.Value;
         if (valueBacking is string s && s == "this")
             return "Parameter 'Value' is the literal string \"this\" — this is wrong. For \"write to %var%\" patterns, use \"%!data%\" to capture the previous action's result. \"this\" is a type annotation, not a value.";
 
