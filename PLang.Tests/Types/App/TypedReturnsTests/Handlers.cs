@@ -51,7 +51,7 @@ public partial class BuildOrdered : global::app.module.IContext
     public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
     public Task<global::app.data.@this> Build()
     {
-        InvocationLog.Add((Marker.Materialize()?.ToString()) ?? "?");
+        InvocationLog.Add((Marker.Peek()?.ToString()) ?? "?");
         return Task.FromResult(global::app.data.@this.Ok());
     }
 }

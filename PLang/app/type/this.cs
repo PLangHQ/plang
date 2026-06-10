@@ -25,8 +25,12 @@ namespace app.type;
 /// Entities minted outside <c>BuildTypeEntries</c> lazily resolve the catalog
 /// properties on first read via <see cref="Promote"/>.</para>
 /// </summary>
+// `type` is an item (settled in the value model): the type entity is a plang
+// value — authored in the language (`as image/gif, strict`), riding in the .pr,
+// holdable in a variable (`set %t% = %x!type%`). TypeName derives from the
+// namespace ("type"); behavior defaults from the item base.
 [JsonConverter(typeof(json))]
-public sealed class @this
+public sealed class @this : item.@this
 {
     [JsonPropertyName("name")]
     public string Name { get; }
@@ -98,6 +102,12 @@ public sealed class @this
             if (lower is "int" or "integer" or "long" or "float" or "double" or "decimal")
                 Kind = lower == "integer" ? "int" : lower;
         }
+        // The mirror direction, numbers only: a precision kind stamps the exact
+        // CLR mate ({number, int} → Int32) — the name alone collapses the tower
+        // and can't answer it. Other families' kinds are formats ({file, json}),
+        // never CLR mates.
+        if (_clrType == null && Name == "number" && Kind != null)
+            StampPrimitive(Kind);
     }
 
     private void StampPrimitive(string rawName)
@@ -253,6 +263,16 @@ public sealed class @this
     [JsonIgnore]
     public bool IsNull => Name == "null";
 
+    /// <summary>
+    /// True for the bare polymorphic stamps ({object} / {item}, no kind, not
+    /// strict) — "any value" is a shape note, not a judgement; the entry fold
+    /// skips it and the value's own truth stands.
+    /// </summary>
+    [JsonIgnore]
+    public bool Polymorphic => Kind == null && !Strict
+        && (string.Equals(Name, "object", System.StringComparison.OrdinalIgnoreCase)
+            || string.Equals(Name, "item", System.StringComparison.OrdinalIgnoreCase));
+
     // Static helpers — names match the new canonical primitives. The numeric
     // helpers carry their kind so callers don't have to re-stamp it: Int/Long/
     // Decimal/Double all surface as `number` with a precision kind.
@@ -323,6 +343,81 @@ public sealed class @this
     }
 
     public override string ToString() => Name;
+
+    /// <summary>
+    /// Judges <paramref name="value"/> into this declared type — the entry
+    /// seam's fold of a .pr/wire stamp onto a freshly lifted instance. A
+    /// matching instance passes through (gaining this kind when it has none);
+    /// a raw form (text/bytes) declared as something else becomes a
+    /// <see cref="item.source"/> — the declared type, unparsed, parsing at
+    /// first use. A structured value under a different declared name keeps its
+    /// own truth — the instance wins. A %var% reference is never a parse
+    /// source: the declaration applies after resolution.
+    /// </summary>
+    internal item.@this Judge(item.@this value)
+    {
+        if (string.Equals(Name, value.Mint().Name, System.StringComparison.OrdinalIgnoreCase))
+        {
+            if (Kind != null && value.Mint().Kind == null)
+            {
+                if (value is text.@this t)
+                    return new text.@this(t.Value) { Kind = Kind };
+                if (value is binary.@this b)
+                    return new binary.@this(b.Value) { Kind = Kind };
+            }
+            // `strict` is part of the declared judgement and rides WITH the
+            // value to wherever its bytes validate — the carrier holds it.
+            if (Strict && value is not (item.clr or item.source) and { Cacheable: true } and not global::app.data.ILoadable)
+                return new item.clr(value, Name, Kind ?? value.Mint().Kind, true);
+            return value;
+        }
+        if (value.Facet(Name) != null) return value;
+
+        // Bytes declared as a category (hash output as `binary/keccak256`,
+        // gzip output as `archived`): the binary instance IS the value — the
+        // declaration rides as the carrier label. Only a TEXT form is a parse
+        // source (the "5" declared number, the json declared object).
+        if (value is binary.@this)
+            return new item.clr(value, Name, Kind, Strict);
+
+        var backing = value switch
+        {
+            text.@this t => (object)t.Value,
+            item.source s => s.Raw,
+            _ => null,
+        };
+        if (backing == null)
+            // A structured value under a different declared name: the value's
+            // truth stays (the carrier is transparent — Peek answers the
+            // instance) but the declaration survives as the label, so build
+            // validation can still judge the claim and the wire/signed type
+            // slot stays what was declared. Only inert values wrap — a value
+            // with its own live door (computed answers fresh; a loadable
+            // reads itself) must stay reachable as the instance.
+            return value switch
+            {
+                item.clr carrier => carrier.Labeled(Name, Kind, Strict),
+                { Cacheable: true } and not global::app.data.ILoadable => new item.clr(value, Name, Kind, Strict),
+                _ => value,
+            };
+        if (backing is string str && str.Contains('%')
+            && System.Text.RegularExpressions.Regex.IsMatch(str, "%[^%]+%"))
+            return value;
+        return new item.source(backing, Name, Kind, Strict);
+    }
+
+    /// <summary>
+    /// Value equality — the entity is minted on ask now, so two asks yield two
+    /// instances; identity is {Name, Kind, Strict}, case-insensitive.
+    /// </summary>
+    public override bool Equals(object? obj) =>
+        obj is @this other
+        && string.Equals(Name, other.Name, System.StringComparison.OrdinalIgnoreCase)
+        && string.Equals(Kind, other.Kind, System.StringComparison.OrdinalIgnoreCase)
+        && Strict == other.Strict;
+
+    public override int GetHashCode() => System.HashCode.Combine(
+        Name.ToLowerInvariant(), Kind?.ToLowerInvariant(), Strict);
 
     public object? Convert(string raw)
     {
@@ -421,7 +516,7 @@ public sealed class @this
 
     /// <summary>The chain entry whose name matches, or null — the chain-wide
     /// <c>!</c> lookup (<c>%x!file%</c> reaches the file facet post-narrow).</summary>
-    public @this? Facet(string name) =>
+    public new @this? Facet(string name) =>
         List.FirstOrDefault(t => string.Equals(t.Name, name, System.StringComparison.OrdinalIgnoreCase));
 
     public bool Is(@this? other)

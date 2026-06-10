@@ -43,11 +43,11 @@ public sealed class Default : IEvaluator
 
     private static data.@this<global::app.type.@bool.@this> EvaluationError(data.@this? left, Operator op, data.@this? right, Exception ex)
     {
-        var leftType = left?.Materialize()?.GetType().Name ?? "null";
-        var rightType = right?.Materialize()?.GetType().Name ?? "null";
+        var leftType = left?.Peek()?.GetType().Name ?? "null";
+        var rightType = right?.Peek()?.GetType().Name ?? "null";
 
         return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ValidationError(
-            $"Condition evaluation failed: '{left?.Materialize()}' ({leftType}) {op.Value} '{right?.Materialize()}' ({rightType}) — {ex.Message}",
+            $"Condition evaluation failed: '{left?.Peek()}' ({leftType}) {op.Value} '{right?.Peek()}' ({rightType}) — {ex.Message}",
             "EvaluationError")
         {
             Exception = ex,

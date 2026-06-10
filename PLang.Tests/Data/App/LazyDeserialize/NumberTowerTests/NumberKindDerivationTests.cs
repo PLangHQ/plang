@@ -34,7 +34,7 @@ public class NumberKindDerivationTests
         {
             var k = number.KindFromName(name);
             await Assert.That(k).IsNotNull();
-            await Assert.That(number.KindName(k!.Value)).IsEqualTo(name);
+            await Assert.That(number.LabelOf(k!.Value)).IsEqualTo(name);
         }
     }
 

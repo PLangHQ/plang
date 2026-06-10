@@ -47,7 +47,7 @@ public class Stage4_BuildMethodImplsTests
     // json}: the name is the value's shape (table=grid, object=tree), the kind
     // is the extension.
     private static global::app.type.@this AsType(Data result)
-        => (global::app.type.@this)(result.Materialize())!;
+        => (global::app.type.@this)(result.Peek())!;
 
     [Test]
     public async Task FileRead_Build_LiteralCsvPath_ReturnsOkWithCsv()

@@ -69,7 +69,7 @@ public class TableTypeTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         var d = data.FromRaw(Csv, type.Create("table", "csv", context: ctx), ctx, "t");
-        await Assert.That(d.MaterializeCount).IsEqualTo(0);
+        await Assert.That(d.MaterializeCount()).IsEqualTo(0);
         await Assert.That(d.Raw).IsEqualTo((object)Csv);
     }
 

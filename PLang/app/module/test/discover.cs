@@ -227,7 +227,7 @@ public partial class discover : IContext
             if (!string.Equals(action.ActionName, "tag", StringComparison.OrdinalIgnoreCase)) return;
             var tagsParam = action.Parameters.FirstOrDefault(p =>
                 string.Equals(p.Name, "Tags", StringComparison.OrdinalIgnoreCase));
-            if (tagsParam?.Materialize() is app.type.list.@this nativeList)
+            if (tagsParam?.Peek() is app.type.list.@this nativeList)
             {
                 // The Tags param is the native list value type — read each element's value.
                 foreach (var item in nativeList.Items)
@@ -236,7 +236,7 @@ public partial class discover : IContext
                     if (!string.IsNullOrWhiteSpace(s)) tags.Add(s);
                 }
             }
-            else if (tagsParam?.Materialize() is System.Collections.IEnumerable enumerable and not string)
+            else if (tagsParam?.Peek() is System.Collections.IEnumerable enumerable and not string)
             {
                 foreach (var item in enumerable)
                 {
@@ -244,7 +244,7 @@ public partial class discover : IContext
                     if (!string.IsNullOrWhiteSpace(s)) tags.Add(s);
                 }
             }
-            else if (tagsParam?.Materialize() is string single && !string.IsNullOrWhiteSpace(single))
+            else if (tagsParam?.Peek() is string single && !string.IsNullOrWhiteSpace(single))
             {
                 tags.Add(single);
             }
@@ -285,7 +285,7 @@ public partial class discover : IContext
     {
         var nameParam = action.Parameters.FirstOrDefault(p =>
             string.Equals(p.Name, "GoalName", StringComparison.OrdinalIgnoreCase));
-        var value = nameParam?.Materialize();
+        var value = nameParam?.Peek();
         var name = value switch
         {
             GoalCall gc => gc.Name,

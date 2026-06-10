@@ -81,7 +81,7 @@ public class FileHandlerTests : IDisposable
         // handler must surface that typed SchemeNotRegistered error, not NRE
         // on Path.Value.
         var context = _app.User.Context;
-        var failedPath = await new Data("path", "s3://bucket/key") { Context = context }.As<PLangPath>(context);
+        var failedPath = await new Data("path", "s3://bucket/key") { Context = context }.Value<PLangPath>(context);
         await failedPath.IsFailure();   // conversion already failed
 
         var action = new Read { Context = context, Path = failedPath };

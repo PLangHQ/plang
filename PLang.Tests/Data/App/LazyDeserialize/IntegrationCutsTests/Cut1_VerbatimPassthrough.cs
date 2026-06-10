@@ -27,7 +27,7 @@ public class Cut1_VerbatimPassthrough
         d.Name = "cfg";
         var wire = (await plang.ContextLessFallback.Serialize(d).Value())!;
         await Assert.That(wire).Contains("\"value\":" + ConfigJson); // raw verbatim, not re-encoded
-        await Assert.That(d.MaterializeCount).IsEqualTo(0);
+        await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
 
     // Read a wire payload lazily, relay it untouched, re-serialize — byte-for-byte
@@ -40,7 +40,7 @@ public class Cut1_VerbatimPassthrough
         var back = plang.ContextLessFallback.Deserialize(wire1); // deferred (raw-backed)
         var wire2 = (await plang.ContextLessFallback.Serialize(back).Value())!;
         await Assert.That(wire2).IsEqualTo(wire1);
-        await Assert.That(back.MaterializeCount).IsEqualTo(0);
+        await Assert.That(back.MaterializeCount()).IsEqualTo(0);
     }
 
     // The same Data, once navigated, materialises and then round-trips
@@ -51,7 +51,7 @@ public class Cut1_VerbatimPassthrough
         var ctx = app.User.Context;
         var d = data.FromRaw(ConfigJson, type.Create("object", "json", context: ctx), ctx, "cfg");
         await Assert.That((await (await d.GetChild("port")).Value())?.ToString()).IsEqualTo("8080"); // materializes
-        await Assert.That(d.MaterializeCount).IsEqualTo(1);
+        await Assert.That(d.MaterializeCount()).IsEqualTo(1);
 
         var s = app.User.Channel.Serializers.GetByMimeType("application/plang");
         var back = s.Deserialize((await s.Serialize(d).Value())!.ToString()!);   // Deserialize returns the reconstruction itself
@@ -65,6 +65,6 @@ public class Cut1_VerbatimPassthrough
         var d = data.FromRaw(ConfigJson, type.Create("object", "json"));
         d.Name = "cfg";
         _ = (await plang.ContextLessFallback.Serialize(d).Value())!;
-        await Assert.That(d.MaterializeCount).IsEqualTo(0);
+        await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
 }

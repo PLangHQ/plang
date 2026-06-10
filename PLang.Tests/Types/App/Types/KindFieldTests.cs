@@ -23,10 +23,7 @@ public class KindFieldTests
     [Test]
     public async Task PrParameter_OmitsKindWhenAbsent()
     {
-        var data = new global::app.data.@this("x", "hello")
-        {
-            Type = new global::app.type.@this("text")
-        };
+        var data = new global::app.data.@this("x", "hello", new global::app.type.@this("text"));
         var json = ToJson(data);
         await Assert.That(json.Contains("\"type\":{\"name\":\"text\"}")).IsTrue();
         await Assert.That(json.Contains("\"kind\"")).IsFalse();
@@ -35,10 +32,7 @@ public class KindFieldTests
     [Test]
     public async Task PrParameter_TypeCarriesKindInsideTheStructuredEntity()
     {
-        var data = new global::app.data.@this("photo", "/srv/a.jpg")
-        {
-            Type = new global::app.type.@this("path", "file")
-        };
+        var data = new global::app.data.@this("photo", "/srv/a.jpg", new global::app.type.@this("path", "file"));
         var json = ToJson(data);
         await Assert.That(json.Contains("\"type\":{\"name\":\"path\",\"kind\":\"file\"}")).IsTrue();
     }
@@ -46,10 +40,7 @@ public class KindFieldTests
     [Test]
     public async Task PrParameter_NeverColonStringForTypeKind()
     {
-        var data = new global::app.data.@this("p", "http://x")
-        {
-            Type = new global::app.type.@this("path", "http")
-        };
+        var data = new global::app.data.@this("p", "http://x", new global::app.type.@this("path", "http"));
         var json = ToJson(data);
         await Assert.That(json.Contains("\"path:http\"")).IsFalse();
         await Assert.That(json.Contains("\"type\":\"path/http\"")).IsFalse();
@@ -58,10 +49,7 @@ public class KindFieldTests
     [Test]
     public async Task PrParameter_KindNull_OmittedFromWire()
     {
-        var data = new global::app.data.@this("x", 1)
-        {
-            Type = new global::app.type.@this("number"),
-        };
+        var data = new global::app.data.@this("x", 1, new global::app.type.@this("number"));
         var json = ToJson(data);
         await Assert.That(json.Contains("\"kind\":null")).IsFalse();
     }
@@ -69,10 +57,7 @@ public class KindFieldTests
     [Test]
     public async Task PrParameter_RoundTrip_PreservesKindAcrossWriteAndRead()
     {
-        var original = new global::app.data.@this("photo", "/srv/a.jpg")
-        {
-            Type = new global::app.type.@this("path", "file")
-        };
+        var original = new global::app.data.@this("photo", "/srv/a.jpg", new global::app.type.@this("path", "file"));
         var json = ToJson(original);
         var read = FromJson(json);
         await Assert.That(read.Type?.Name).IsEqualTo("path");

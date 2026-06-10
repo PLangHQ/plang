@@ -29,7 +29,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.dat
     /// downgrading it. Substitutability only — no state/behaviour is inherited,
     /// so multiple entries here carry none of OOP MI's diamond/MRO baggage.
     /// </summary>
-    public static System.Collections.Generic.IReadOnlyList<System.Type> Type { get; }
+    public static new System.Collections.Generic.IReadOnlyList<System.Type> Type { get; }
         = new[] { typeof(@this), typeof(global::app.type.path.@this) };
 
     // Null until loaded — a path-backed image reads nothing until first content
@@ -54,6 +54,16 @@ public sealed partial class @this : global::app.type.item.@this, global::app.dat
 
     [global::app.Out, global::app.Store]
     public string Mime => _mime ??= (Path?.MimeType ?? "application/octet-stream");
+
+    /// <summary>An image's entity: kind is the format token from its own mime
+    /// ("image/gif" → "gif"), canonicalised through the registry when reachable.</summary>
+    protected internal override global::app.type.@this Mint()
+    {
+        var t = Path?.Context?.App.Format.TypeFromMime(Mime);
+        var kind = t is { IsNull: false } ? t.Kind
+            : Mime.IndexOf('/') is var slash and >= 0 ? Mime[(slash + 1)..] : null;
+        return new global::app.type.@this("image") { Kind = kind == "octet-stream" ? null : kind };
+    }
 
     /// <summary>
     /// Source path. Set for a path-backed image (content lazy-loads from here)

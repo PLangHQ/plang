@@ -16,8 +16,8 @@ public class DefaultEvaluatorTests
     private Task<global::app.data.@this<global::app.type.@bool.@this>> EvalIf(object? left, string op = "==", object? right = null)
         => _eval.Evaluate(new If { Left = D(left), Operator = (global::app.type.choice.@this<Operator>)new Operator(op), Right = D(right) });
 
-    private bool IsTrue(global::app.data.@this<global::app.type.@bool.@this> result) => result.Success && (result.Materialize() as global::app.type.@bool.@this)?.Value == true;
-    private bool IsFalse(global::app.data.@this<global::app.type.@bool.@this> result) => result.Success && (result.Materialize() as global::app.type.@bool.@this)?.Value == false;
+    private bool IsTrue(global::app.data.@this<global::app.type.@bool.@this> result) => result.Success && (result.Peek() as global::app.type.@bool.@this)?.Value == true;
+    private bool IsFalse(global::app.data.@this<global::app.type.@bool.@this> result) => result.Success && (result.Peek() as global::app.type.@bool.@this)?.Value == false;
 
     // --- Evaluate() — All Operators ---
 

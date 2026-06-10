@@ -63,8 +63,8 @@ public partial class @this
     {
         if (other.Peek() == null) return this;
 
-        var myData = Materialize() as List<@this> ?? new();
-        var otherData = other.Materialize() as List<@this> ?? new();
+        var myData = Peek() as List<@this> ?? new();
+        var otherData = other.Peek() as List<@this> ?? new();
 
         foreach (var data in otherData)
         {

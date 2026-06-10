@@ -15,7 +15,7 @@ namespace PLang.Tests.App.LazyDeserialize.LazyDataTests;
 public class WireReadLazyTests
 {
     private static data RoundTrip(data d)
-        => plang.ContextLessFallback.Deserialize(plang.ContextLessFallback.Serialize(d).Materialize()!.ToString()!);   // Deserialize returns the reconstruction itself
+        => plang.ContextLessFallback.Deserialize(plang.ContextLessFallback.Serialize(d).Peek()!.ToString()!);   // Deserialize returns the reconstruction itself
 
     // Typed value-slot deferral: a shape-typed (object/table) value rides as raw
     // and materializes only on touch. Scoped to object/table so scalars/domain/
@@ -26,7 +26,7 @@ public class WireReadLazyTests
         d.Name = "cfg";
         var back = RoundTrip(d);
         await Assert.That(back.HasRaw).IsTrue();
-        await Assert.That(back.MaterializeCount).IsEqualTo(0);
+        await Assert.That(back.MaterializeCount()).IsEqualTo(0);
         await Assert.That(back.Type.Name).IsEqualTo("object");
     }
 
@@ -40,7 +40,7 @@ public class WireReadLazyTests
         const string wire = "{\"name\":\"x\",\"type\":{\"name\":\"object\",\"kind\":\"json\"},\"value\":\"{not json\"}";
         var back = plang.ContextLessFallback.Deserialize(wire);
         await Assert.That(back.HasRaw).IsTrue();
-        await Assert.That(back.MaterializeCount).IsEqualTo(0);
+        await Assert.That(back.MaterializeCount()).IsEqualTo(0);
     }
 
     // Testable now (eager): a typed Data round-trips its type/kind through the

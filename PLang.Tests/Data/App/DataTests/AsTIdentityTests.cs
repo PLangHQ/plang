@@ -33,7 +33,7 @@ public class AsTIdentityTests
     public async Task AsT_SameType_ReturnsSourceInstance()
     {
         var source = new global::app.data.@this<global::app.type.number.@this>("count", 42) { Context = _app.User.Context };
-        var result = await source.As<global::app.type.number.@this>();
+        var result = await source.Value<global::app.type.number.@this>();
         await Assert.That(ReferenceEquals(source, result)).IsTrue();
     }
 
@@ -46,12 +46,12 @@ public class AsTIdentityTests
     {
         var source = new global::app.data.@this<global::app.type.number.@this>("count", 42) { Context = _app.User.Context };
         source.Properties.Set("meta", "abc");
-        var result = await source.As<global::app.type.number.@this>();
+        var result = await source.Value<global::app.type.number.@this>();
         await Assert.That(ReferenceEquals(source.Properties, result.Properties)).IsTrue();
         await Assert.That((result.Properties["meta"])?.ToString()).IsEqualTo("abc");
     }
 
-    // Rule 2 — variance fast path. Data<number>.As<item>() (to the base item type) produces
+    // Rule 2 — variance fast path. Data<number>.Value<item>() (to the base item type) produces
     // a new Data<item> instance (Type changes), but .Value is the SAME number.@this reference
     // — cast-only, no copy. (A native list/dict value is a walkable container, so As<T> walks
     // it for nested-var resolution and returns a fresh list — the cast-only ref-share applies
@@ -61,7 +61,7 @@ public class AsTIdentityTests
     {
         var inner = (global::app.type.number.@this)42;
         var source = new global::app.data.@this<global::app.type.number.@this>("n", inner) { Context = _app.User.Context };
-        var wrapped = await source.As<global::app.type.item.@this>();
+        var wrapped = await source.Value<global::app.type.item.@this>();
         await Assert.That(ReferenceEquals(source, wrapped)).IsFalse();
         await Assert.That(ReferenceEquals((await wrapped.Value()), inner)).IsTrue();
     }
@@ -74,7 +74,7 @@ public class AsTIdentityTests
     {
         var inner = global::app.type.list.@this<global::app.type.number.@this>.Of(new List<int> { 1, 2 });
         var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", inner) { Context = _app.User.Context };
-        var wrapped = await source.As<global::app.type.list.@this>();
+        var wrapped = await source.Value<global::app.type.list.@this>();
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();
         source.Properties.Set("annot", "via-source");
         await Assert.That((wrapped.Properties["annot"])?.ToString()).IsEqualTo("via-source");
@@ -87,7 +87,7 @@ public class AsTIdentityTests
     {
         var inner = global::app.type.list.@this<global::app.type.number.@this>.Of(new List<int> { 1 });
         var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", inner) { Context = _app.User.Context };
-        var wrapped = await source.As<global::app.type.list.@this>();
+        var wrapped = await source.Value<global::app.type.list.@this>();
         await Assert.That(ReferenceEquals(source.OnChange, wrapped.OnChange)).IsTrue();
         var seen = 0;
         wrapped.OnChange.Add((_, _) => seen++);
@@ -104,13 +104,13 @@ public class AsTIdentityTests
     {
         var inner = global::app.type.list.@this<global::app.type.number.@this>.Of(new List<int> { 1 });
         var source = new global::app.data.@this<global::app.type.list.@this<global::app.type.number.@this>>("nums", inner) { Context = _app.User.Context };
-        var wrapped = await source.As<global::app.type.list.@this>();
+        var wrapped = await source.Value<global::app.type.list.@this>();
         Action<Data, Data> handler = (_, _) => { };
         wrapped.OnChange.Add(handler);
         await Assert.That(source.OnChange).Contains(handler);
     }
 
-    // Rule 3 — cross-type with conversion. Data<global::app.type.number.@this>(42).As<global::app.type.text.@this>() produces
+    // Rule 3 — cross-type with conversion. Data<global::app.type.number.@this>(42).Value<global::app.type.text.@this>() produces
     // a NEW Data<global::app.type.text.@this> with converted .Value ("42"), but Properties + event
     // lists alias from source. The .Value is a fresh converted object —
     // ref-DISTINCT from source.Value (42 boxed) — but the metadata bag is shared.
@@ -119,7 +119,7 @@ public class AsTIdentityTests
     {
         var source = new global::app.data.@this<global::app.type.number.@this>("count", 42) { Context = _app.User.Context };
         source.Properties.Set("note", "hello");
-        var wrapped = await source.As<global::app.type.text.@this>();
+        var wrapped = await source.Value<global::app.type.text.@this>();
         await Assert.That(ReferenceEquals(source, wrapped)).IsFalse();
         await Assert.That((await wrapped.Value())?.ToString()).IsEqualTo("42");
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();
@@ -135,7 +135,7 @@ public class AsTIdentityTests
     {
         var source = new global::app.data.@this<global::app.type.text.@this>("messy", "not-a-number") { Context = _app.User.Context };
         source.Properties.Set("extra", "leak-check");
-        var wrapped = await source.As<global::app.type.number.@this>();
+        var wrapped = await source.Value<global::app.type.number.@this>();
         await wrapped.IsFailure();
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsFalse();
         await Assert.That(ReferenceEquals(source.OnChange, wrapped.OnChange)).IsFalse();

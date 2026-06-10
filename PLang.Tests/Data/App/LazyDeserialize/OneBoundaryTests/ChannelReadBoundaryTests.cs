@@ -40,7 +40,7 @@ public class ChannelReadBoundaryTests
         var ch = Input(app, "application/json", Encoding.UTF8.GetBytes("{\"port\":8080}"));
         var d = await ch.Read();
         await Assert.That(d.HasRaw).IsTrue();
-        await Assert.That(d.MaterializeCount).IsEqualTo(0); // not parsed at read
+        await Assert.That(d.MaterializeCount()).IsEqualTo(0); // not parsed at read
     }
 
     // Independent #14 — channel.this.cs defaults Mime to "text/plain". The
@@ -80,7 +80,7 @@ public class ChannelReadBoundaryTests
         var d = await ch.Read();
         await Assert.That(d.Type.Name).IsEqualTo("item");
         await Assert.That(d.Type.Kind).IsEqualTo("json");
-        await Assert.That(d.MaterializeCount).IsEqualTo(0);
+        await Assert.That(d.MaterializeCount()).IsEqualTo(0);
         await Assert.That(d.Raw).IsEqualTo((object)json);
     }
 
@@ -94,7 +94,7 @@ public class ChannelReadBoundaryTests
         var d = await ch.Read();
         await Assert.That(d.Type.Name).IsEqualTo("table");
         await Assert.That(d.Type.Kind).IsEqualTo("csv");
-        await Assert.That(d.MaterializeCount).IsEqualTo(0);
+        await Assert.That(d.MaterializeCount()).IsEqualTo(0);
         await Assert.That(d.Raw).IsEqualTo((object)csv);
     }
 

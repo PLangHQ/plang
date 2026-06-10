@@ -113,10 +113,12 @@ public class IdentityErrorPathTests
         SwapDataSource(_app, new FailingSaveDataSource(
             _app.SettingsStore));
 
-        // Access %MyIdentity% — DynamicData lambda calls provider, which fails, returns null
+        // Access %MyIdentity% — the computed cell calls the provider, which
+        // fails; the answer is the present-null VALUE (the singleton).
         var data = await _app.User.Context.Variable.Get("MyIdentity");
         await Assert.That(data).IsNotNull();
-        await Assert.That((await data!.Value())).IsNull();
+        var v = await data!.Value();
+        await Assert.That(v is null or global::app.type.@null.@this).IsTrue();
     }
 
     // --- Handler save/remove failure paths ---

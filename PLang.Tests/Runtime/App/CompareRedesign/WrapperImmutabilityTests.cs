@@ -38,13 +38,20 @@ public class WrapperImmutabilityTests
                 yield return (t, f);
     }
 
+    // Named exemptions — the load-once slot (`_raw`: set on load, nulled on
+    // parse, owned by the type's own load path) and the set-once chain stamp
+    // (`_prior`: creation history, appended once by the narrowing type, never
+    // rewritten). Both disciplines live in the owning class; everything else
+    // stays locked.
+    private static readonly string[] ExemptFields = { "_raw", "_prior" };
+
     [Test]
     public async Task EveryInstanceField_IncludingInherited_IsReadonly()
     {
         var offenders = new List<string>();
         foreach (var wrapper in Wrappers)
             foreach (var (owner, field) in InstanceFields(wrapper))
-                if (!field.IsInitOnly)
+                if (!field.IsInitOnly && !ExemptFields.Contains(field.Name))
                     offenders.Add($"{wrapper.FullName}: {owner.Name}.{field.Name}");
         await Assert.That(offenders).IsEmpty()
             .Because("a writable wrapper field makes shared instances corruptible at a distance");
@@ -53,13 +60,14 @@ public class WrapperImmutabilityTests
     [Test]
     public async Task NoInstanceProperty_HasASetter()
     {
-        // init-only would be safe, but none exist today — gate on "no setter"
-        // and relax deliberately if one ever appears.
+        // init-only setters are creation-time stamps (kind, template) — safe.
+        // A post-construction setter is the corruption vector.
         var offenders = new List<string>();
         foreach (var wrapper in Wrappers)
             for (var t = wrapper; t != null && t != typeof(object); t = t.BaseType)
                 foreach (var p in t.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly))
-                    if (p.SetMethod != null)
+                    if (p.SetMethod != null && !p.SetMethod.ReturnParameter.GetRequiredCustomModifiers()
+                            .Contains(typeof(System.Runtime.CompilerServices.IsExternalInit)))
                         offenders.Add($"{wrapper.FullName}: {t.Name}.{p.Name}");
         await Assert.That(offenders).IsEmpty()
             .Because("a settable wrapper property makes shared instances corruptible at a distance");

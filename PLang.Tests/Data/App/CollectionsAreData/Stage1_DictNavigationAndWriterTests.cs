@@ -21,7 +21,6 @@ public class Stage1_DictNavigationAndWriterTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         var d = Data.FromRaw("{\"port\":8080}", type.Create("object", "json", context: ctx), ctx, "cfg");
-        d.ForceMaterialize();
         await Assert.That((await d.Value())).IsTypeOf<Dict>();
         await Assert.That(((app.type.item.@this)(await ((Dict)(await d.Value())!).Get("port")!.Value())!).ToRaw()).IsEqualTo(8080L);
     }

@@ -10,7 +10,7 @@ public partial class Reset : IContext
 
     public Task<data.@this> Run()
     {
-        var mock = Mock?.Materialize() as global::app.mock.@this;
+        var mock = Mock?.Peek() as global::app.mock.@this;
         if (mock != null)
         {
             Context.Events.Unregister(mock.EventBindingId);

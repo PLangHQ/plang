@@ -13,6 +13,13 @@ public sealed partial class @this : global::app.type.item.@this
 
     public byte[] Value { get; }
 
+    /// <summary>The value's kind — the byte-format vocabulary. An ordinary
+    /// typed property stamped at creation, never after.</summary>
+    public string? Kind { get; init; }
+
+    protected internal override global::app.type.@this Mint()
+        => new("binary", typeof(byte[])) { Kind = Kind };
+
     public @this(byte[] value) { Value = value ?? System.Array.Empty<byte>(); }
 
     // Null-tolerant to-byte[] (an absent binary-typed Data has a null wrapper); from-byte[]

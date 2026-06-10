@@ -376,7 +376,7 @@ public class DataTests
         await Assert.That(ov.Name).IsEqualTo("test");
         // Born-native: a present null value carries the null.@this singleton
         // (not a C# null _value). IsInitialized stays true — value, not absence.
-        await Assert.That(ReferenceEquals((ov.Materialize()), app.type.@null.@this.Instance)).IsTrue();
+        await Assert.That(ReferenceEquals((ov.Peek()), app.type.@null.@this.Instance)).IsTrue();
         await Assert.That(ov.IsInitialized).IsTrue();
     }
 
@@ -396,7 +396,7 @@ public class DataTests
         var ov = Data.Null();
 
         await Assert.That(ov.Name).IsEqualTo("");
-        await Assert.That(ReferenceEquals((ov.Materialize()), app.type.@null.@this.Instance)).IsTrue();
+        await Assert.That(ReferenceEquals((ov.Peek()), app.type.@null.@this.Instance)).IsTrue();
     }
 
     [Test]
@@ -530,11 +530,9 @@ public class DataTests
         await using var engine = new global::app.@this("/test");
         var context = new global::app.actor.context.@this(engine);
 
-        var ov = new Data("test", "hello");
-        ov.Context = context;
-
         var newType = new Type("text/plain");
-        ov.Type = newType;
+        var ov = new Data("test", "hello", newType);
+        ov.Context = context;
 
         // Type gets context from Data — family is resolvable via registry.
         await Assert.That(engine.Format.FamilyOf(newType.Name)).IsEqualTo("text");
@@ -702,8 +700,10 @@ public class DataTests
     public async Task Unwrap_Envelope_ReturnsInner()
     {
         var inner = new Data("", "Hello", Type.FromMime("text/plain"));
-        var envelope = new Data("", null, Type.FromName("text"));
-        envelope.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
+        var envelope = new Data("", null);
+        // courier nesting — the documented no-lift bypass; the carrier label
+        // carries the declared category
+        envelope.SetValueDirect(new global::app.type.item.clr(inner, "text"));
 
         var unwrapped = envelope.Unwrap();
 
@@ -728,8 +728,10 @@ public class DataTests
         var context = new global::app.actor.context.@this(engine);
 
         var inner = new Data("", "Hello", Type.FromMime("text/plain"));
-        var envelope = new Data("", null, Type.FromName("text"));
-        envelope.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
+        var envelope = new Data("", null);
+        // courier nesting — the documented no-lift bypass; the carrier label
+        // carries the declared category
+        envelope.SetValueDirect(new global::app.type.item.clr(inner, "text"));
         envelope.Context = context;
 
         var unwrapped = envelope.Unwrap();
@@ -746,8 +748,10 @@ public class DataTests
         // Create a "text" envelope (text is compressible)
         var inner = new Data("", "Hello, this is a test string for compression!", Type.FromMime("text/plain"));
         inner.Context = context;
-        var wrapped = new Data("", null, Type.FromName("text"));
-        wrapped.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
+        var wrapped = new Data("", null);
+        // courier nesting — the documented no-lift bypass; the carrier label
+        // carries the declared category
+        wrapped.SetValueDirect(new global::app.type.item.clr(inner, "text"));
         wrapped.Context = context;
 
         var compressed = wrapped.Compress();
@@ -766,8 +770,10 @@ public class DataTests
         // "image" is not compressible
         var inner = new Data("", new byte[] { 1, 2, 3 }, Type.FromMime("image/jpeg"));
         inner.Context = context;
-        var wrapped = new Data("", null, Type.FromName("image"));
-        wrapped.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
+        var wrapped = new Data("", null);
+        // courier nesting — the documented no-lift bypass; the carrier label
+        // carries the declared category
+        wrapped.SetValueDirect(new global::app.type.item.clr(inner, "image"));
         wrapped.Context = context;
 
         var result = wrapped.Compress();
@@ -794,8 +800,10 @@ public class DataTests
         // Build a text envelope, compress it, then decompress
         var inner = new Data("", "Hello world", Type.FromMime("text/plain"));
         inner.Context = context;
-        var wrapped = new Data("", null, Type.FromName("text"));
-        wrapped.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
+        var wrapped = new Data("", null);
+        // courier nesting — the documented no-lift bypass; the carrier label
+        // carries the declared category
+        wrapped.SetValueDirect(new global::app.type.item.clr(inner, "text"));
         wrapped.Context = context;
 
         var compressed = wrapped.Compress();
@@ -826,8 +834,10 @@ public class DataTests
 
         var content = new Data("", "The quick brown fox jumps over the lazy dog", Type.FromMime("text/plain"));
         content.Context = context;
-        var wrapped = new Data("", null, Type.FromName("text"));
-        wrapped.SetValueDirect(content);   // courier nesting — the documented no-lift bypass
+        var wrapped = new Data("", null);
+        // courier nesting — the documented no-lift bypass; the carrier label
+        // carries the declared category
+        wrapped.SetValueDirect(new global::app.type.item.clr(content, "text"));
         wrapped.Context = context;
 
         var compressed = wrapped.Compress();
@@ -866,8 +876,10 @@ public class DataTests
     public async Task Decrypt_EncryptedType_ReturnsSelf_NoCryptoYet()
     {
         var inner = new Data("", new byte[] { 1, 2 }, Type.FromName("ed25519"));
-        var encrypted = new Data("", null, Type.FromName("encrypted"));
-        encrypted.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
+        var encrypted = new Data("", null);
+        // courier nesting — the documented no-lift bypass; the carrier label
+        // carries the declared category
+        encrypted.SetValueDirect(new global::app.type.item.clr(inner, "encrypted"));
 
         var result = encrypted.Decrypt();
 
@@ -929,14 +941,13 @@ public class DataTests
     [Test]
     public async Task Decompress_NullBytes_ReturnsError()
     {
-        // archived.Value is null — no byte[] to decompress
-        var archived = new Data("", null, Type.FromName("archived"));
+        // archived with empty bytes — nothing decompressable
+        var archived = new Data("", System.Array.Empty<byte>(), Type.FromName("archived"));
 
         var result = archived.Decompress();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("DecompressError");
-        await Assert.That(result.Error!.Message).Contains("byte[] value");
     }
 
     [Test]
@@ -991,11 +1002,15 @@ public class DataTests
         // Two-level nesting: text envelope containing another text envelope
         var leaf = new Data("", "deep content", Type.FromMime("text/plain"));
         leaf.Context = context;
-        var mid = new Data("", null, Type.FromName("text"));
-        mid.SetValueDirect(leaf);   // courier nesting — the documented no-lift bypass
+        var mid = new Data("", null);
+        // courier nesting — the documented no-lift bypass; the carrier label
+        // carries the declared category
+        mid.SetValueDirect(new global::app.type.item.clr(leaf, "text"));
         mid.Context = context;
-        var outer = new Data("", null, Type.FromName("document"));
-        outer.SetValueDirect(mid);   // courier nesting — the documented no-lift bypass
+        var outer = new Data("", null);
+        // courier nesting — the documented no-lift bypass; the carrier label
+        // carries the declared category
+        outer.SetValueDirect(new global::app.type.item.clr(mid, "document"));
         outer.Context = context;
 
         // Compress (document is compressible) and decompress
@@ -1023,8 +1038,10 @@ public class DataTests
 
         var content = new Data("", "Hello", Type.FromMime("text/plain"));
         content.Context = context;
-        var wrapped = new Data("", null, Type.FromName("text"));
-        wrapped.SetValueDirect(content);   // courier nesting — the documented no-lift bypass
+        var wrapped = new Data("", null);
+        // courier nesting — the documented no-lift bypass; the carrier label
+        // carries the declared category
+        wrapped.SetValueDirect(new global::app.type.item.clr(content, "text"));
         wrapped.Context = context;
         wrapped.Properties["metadata"] = "some value";
 
@@ -1163,8 +1180,10 @@ public class DataTests
     public async Task Decompress_NullBytes_ReturnsStatusCode500()
     {
         var inner = new Data("", null, Type.FromName("gzip"));
-        var archived = new Data("", null, Type.FromName("archived"));
-        archived.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
+        var archived = new Data("");
+        // courier nesting — the documented no-lift bypass; the carrier label
+        // says "archived" (the outer's declared category)
+        archived.SetValueDirect(new global::app.type.item.clr(inner, "archived"));
 
         var result = archived.Decompress();
 
@@ -1175,8 +1194,10 @@ public class DataTests
     public async Task Decompress_CorruptData_ReturnsStatusCode500()
     {
         var inner = new Data("", new byte[] { 0xFF, 0xFE, 0x00, 0x42 }, Type.FromName("gzip"));
-        var archived = new Data("", null, Type.FromName("archived"));
-        archived.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
+        var archived = new Data("");
+        // courier nesting — the documented no-lift bypass; the carrier label
+        // says "archived" (the outer's declared category)
+        archived.SetValueDirect(new global::app.type.item.clr(inner, "archived"));
 
         var result = archived.Decompress();
 
@@ -1198,8 +1219,10 @@ public class DataTests
         }
 
         var inner = new Data("", gzipped, Type.FromName("gzip"));
-        var archived = new Data("", null, Type.FromName("archived"));
-        archived.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
+        var archived = new Data("");
+        // courier nesting — the documented no-lift bypass; the carrier label
+        // says "archived" (the outer's declared category)
+        archived.SetValueDirect(new global::app.type.item.clr(inner, "archived"));
 
         var result = archived.Decompress();
 

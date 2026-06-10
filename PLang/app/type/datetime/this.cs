@@ -24,6 +24,7 @@ public sealed partial class @this : global::app.type.item.@this,
     public override object? ToRaw() => Value;
     public override bool IsLeaf => true;
     public override void Write(global::app.channel.serializer.IWriter w) => w.DateTimeOffset(Value);
+    protected internal override global::app.type.@this Mint() => new("datetime", typeof(System.DateTimeOffset));
 
     public @this(System.DateTimeOffset value) { Value = value; }
     /// <summary>Accepts a CLR <see cref="System.DateTime"/> — stored as an offset.</summary>

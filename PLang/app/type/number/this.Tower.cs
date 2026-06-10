@@ -46,11 +46,11 @@ public sealed partial class @this
     /// <summary>The PLang kind name for a CLR numeric type, or null if not numeric. Used by the Data stamp.</summary>
     public static string? KindNameForClr(System.Type clr)
     {
-        try { return KindName(ClrToKind(clr)); }
+        try { return LabelOf(ClrToKind(clr)); }
         catch (System.InvalidOperationException) { return null; }
     }
 
-    internal static string KindName(NumberKind k) => k switch
+    internal static string LabelOf(NumberKind k) => k switch
     {
         NumberKind.SByte => "sbyte",
         NumberKind.Byte => "byte",
@@ -181,7 +181,7 @@ public sealed partial class @this
         if (Fits(r, v))
             return floor == NumberKind.BigInteger ? From(v) : FromBigIntegerAs(v, floor);
         throw new System.OverflowException(
-            $"Arithmetic result {v} does not fit kind '{KindName(floor)}' (overflow=throw / strict-width).");
+            $"Arithmetic result {v} does not fit kind '{LabelOf(floor)}' (overflow=throw / strict-width).");
     }
 
     private static @this FromBigIntegerAs(BigInteger v, NumberKind kind) => kind switch

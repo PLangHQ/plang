@@ -37,9 +37,9 @@ public class Stage5_DataCompareEntryTests
         var p = new global::app.type.path.file.@this(System.IO.Path.Combine(root, "n.json"), app.User.Context);
         await (await p.WriteText("42")).IsSuccess();
         var pending = await new global::app.channel.type.file.@this(p).Read();   // raw-backed
-        await Assert.That(pending.MaterializeCount).IsEqualTo(0);
+        await Assert.That(pending.MaterializeCount()).IsEqualTo(0);
         var result = await pending.Compare(D(app, 42, "number"));
-        await Assert.That(pending.MaterializeCount).IsEqualTo(1);   // exactly one await-read per operand
+        await Assert.That(pending.MaterializeCount()).IsEqualTo(1);   // exactly one await-read per operand
         await Assert.That(result).IsEqualTo(Comparison.Equal);
     }
 
@@ -52,7 +52,7 @@ public class Stage5_DataCompareEntryTests
         await (await p.WriteText("42")).IsSuccess();
         var pending = await new global::app.channel.type.file.@this(p).Read();
         _ = pending.Type.Rank(D(app, 5, "number"));                 // the rank step alone
-        await Assert.That(pending.MaterializeCount).IsEqualTo(0);   // pending stays pending
+        await Assert.That(pending.MaterializeCount()).IsEqualTo(0);   // pending stays pending
     }
 
     [Test]

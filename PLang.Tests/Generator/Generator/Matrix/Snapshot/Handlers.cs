@@ -9,7 +9,7 @@ public partial class SnapshotOnError : global::app.module.IContext
     // Touch First (so backing field is set), then fail — snapshot should record both PrValue and FinalValue.
     public Task<global::app.data.@this> Run()
     {
-        var _ = (First.Materialize()); // accessed
+        var _ = (First.Peek()); // accessed
         return Task.FromResult(global::app.data.@this.FromError(
             new global::app.error.ServiceError("forced failure", "TestError", 500)));
     }

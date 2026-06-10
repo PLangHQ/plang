@@ -298,14 +298,11 @@ public partial class @this
             return data.@this.NotFound(name);
         }
 
-        // A dotted write is an EXAMINATION — an un-narrowed reference (file/url)
-        // parses + narrows first, so the write lands on the content dict, not on
-        // a reflection bag of the reference object.
-        if (parent.Peek() is global::app.type.file.@this or global::app.type.url.@this)
-            await parent.NarrowReference(parent.Peek()!);
-
-        // Lazy materialize if parent is a typed string (e.g., json) — must happen before navigation
-        parent.ForceMaterialize();
+        // A dotted write is an EXAMINATION — the value door parses an
+        // un-narrowed reference (file/url) or source form through the
+        // instance's own Ready() and rebinds, so the write lands on the
+        // content dict, not on a reflection bag of the reference object.
+        _ = await parent.Value();
 
         // For dot-path, extract the raw value from Data — we're setting a property on
         // a C# object. No defensive deep-clone here: independence comes from rebinding.
@@ -662,7 +659,7 @@ public partial class @this
         {
             if (name.StartsWith("!")) continue; // skip system variables
             if (data.Updated > since)
-                result[name] = data.Materialize()?.ToString() ?? "(null)";
+                result[name] = data.Peek()?.ToString() ?? "(null)";
         }
         return result;
     }

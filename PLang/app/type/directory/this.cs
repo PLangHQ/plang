@@ -13,7 +13,7 @@ public sealed class @this : global::app.type.item.@this, global::app.data.ILoada
     public static string Shape => "string";
 
     /// <summary>The is-a lattice — a directory is-a path.</summary>
-    public static System.Collections.Generic.IReadOnlyList<System.Type> Type { get; }
+    public static new System.Collections.Generic.IReadOnlyList<System.Type> Type { get; }
         = new[] { typeof(@this), typeof(global::app.type.path.@this) };
 
     /// <summary>The location facet.</summary>

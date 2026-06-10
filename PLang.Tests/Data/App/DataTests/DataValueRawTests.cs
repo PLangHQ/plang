@@ -31,7 +31,7 @@ public class DataValueRawTests
 
         for (int i = 0; i < 1000; i++)
         {
-            await Assert.That(ReferenceEquals((data.Materialize()), raw)).IsTrue();
+            await Assert.That(ReferenceEquals((data.Peek()), raw)).IsTrue();
         }
     }
 
@@ -140,7 +140,7 @@ public class DataValueRawTests
             {
                 var _v = await data.Value();
             }
-            return ReferenceEquals((data.Materialize()), raw);
+            return ReferenceEquals((data.Peek()), raw);
         })).ToArray();
 
         var results = await Task.WhenAll(tasks);

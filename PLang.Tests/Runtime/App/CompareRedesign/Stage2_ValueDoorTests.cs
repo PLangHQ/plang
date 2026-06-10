@@ -21,12 +21,14 @@ public class Stage2_ValueDoorTests
         return await new global::app.channel.type.file.@this(p).Read();
     }
 
-    [Test, Skip("Born-typed store-seam stage (slices 1-2) — see .bot/compare-redesign/coder/stage-proposal-born-typed.md; this stub is the pinned contract")]
+    [Test]
     public async Task Value_AuthoredScalar_ReturnsTypedNumberNotRawInt()
     {
         // set %x% = 5 → await data.Value() returns a `number` (item subtype), not boxed int 5
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var d = new Data("x", 5);
+        var v = await d.Value();
+        await Assert.That(v is global::app.type.number.@this).IsTrue();
+        await Assert.That(((global::app.type.number.@this)v!).ToRaw()).IsEqualTo(5);
     }
 
     [Test]
@@ -46,11 +48,11 @@ public class Stage2_ValueDoorTests
         // — MaterializeCount transitions 0 → 1 → 1
         await using var app = NewApp(out var root);
         var d = await RawBackedJson(app, root);
-        await Assert.That(d.MaterializeCount).IsEqualTo(0);
+        await Assert.That(d.MaterializeCount()).IsEqualTo(0);
         var first = await d.Value();
-        await Assert.That(d.MaterializeCount).IsEqualTo(1);
+        await Assert.That(d.MaterializeCount()).IsEqualTo(1);
         var second = await d.Value();
-        await Assert.That(d.MaterializeCount).IsEqualTo(1);   // parse fired exactly once, cached
+        await Assert.That(d.MaterializeCount()).IsEqualTo(1);   // parse fired exactly once, cached
         await Assert.That(ReferenceEquals(first, second)).IsTrue();
     }
 
@@ -62,15 +64,24 @@ public class Stage2_ValueDoorTests
         var d = await RawBackedJson(app, root);
         var rung = d.Peek();
         await Assert.That(rung).IsEqualTo("{\"port\":8080}");   // the text rung, unparsed
-        await Assert.That(d.MaterializeCount).IsEqualTo(0);       // Peek forced nothing
+        await Assert.That(d.MaterializeCount()).IsEqualTo(0);       // Peek forced nothing
     }
 
-    [Test, Skip("Born-typed store-seam stage (slices 1-2) — see .bot/compare-redesign/coder/stage-proposal-born-typed.md; this stub is the pinned contract")]
+    [Test]
     public async Task RawSlot_Dissolved_BareBytesOffChannelRefineInPlace()
     {
-        // no _raw field on Data; a bare-bytes value narrows binary → item through the same instance
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // no _raw field on Data — the undecoded source form lives on the type
+        // that owns it; a channel payload narrows through the SAME Data.
+        var rawField = typeof(Data).GetField("_raw",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        await Assert.That(rawField).IsNull();
+
+        await using var app = NewApp(out var root);
+        var d = await RawBackedJson(app, root);
+        await Assert.That(d.HasRaw).IsTrue();      // source-backed, untouched
+        _ = await d.Value();                       // parse rebinds the same Data
+        await Assert.That(d.HasRaw).IsFalse();     // single storage — raw moved
+        await Assert.That(d.Type.Name).IsEqualTo("dict");
     }
 
     [Test]
@@ -86,7 +97,7 @@ public class Stage2_ValueDoorTests
         await Assert.That(method!.ReturnType).IsEqualTo(typeof(System.Threading.Tasks.ValueTask<object?>));
     }
 
-    [Test, Skip("Born-typed store-seam stage (slices 1-2) — see .bot/compare-redesign/coder/stage-proposal-born-typed.md; this stub is the pinned contract")]
+    [Test, Skip("Born-typed follow-ons slice (item.ToRaw removal) — see architect/stage-9-born-typed.md; this stub is the pinned contract")]
     public async Task GenericToRaw_DoesNotExist_OnItemBase()
     {
         // reflection: item.@this has no public ToRaw(); raw leaves only via Write/As<T>/gated interop
@@ -94,7 +105,7 @@ public class Stage2_ValueDoorTests
         await Task.CompletedTask;
     }
 
-    [Test, Skip("Born-typed store-seam stage (slices 1-2) — see .bot/compare-redesign/coder/stage-proposal-born-typed.md; this stub is the pinned contract")]
+    [Test, Skip("Born-typed follow-ons slice (text.Value private) — see architect/stage-9-born-typed.md; this stub is the pinned contract")]
     public async Task TextRawValue_IsPrivate_NotPublicProperty()
     {
         // reflection: text.@this has no public `string Value` property — backing is private,
@@ -111,7 +122,7 @@ public class Stage2_ValueDoorTests
         await using var app = NewApp(out var root);
         var d = await RawBackedJson(app, root);
         _ = d.ToString();
-        await Assert.That(d.MaterializeCount).IsEqualTo(0);
+        await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
 
     [Test]
@@ -122,15 +133,17 @@ public class Stage2_ValueDoorTests
         var d = await RawBackedJson(app, root);
         _ = d.Equals(new Data("y", 1));
         _ = d.GetHashCode();
-        await Assert.That(d.MaterializeCount).IsEqualTo(0);
+        await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
 
-    [Test, Skip("Born-typed store-seam stage (slices 1-2) — see .bot/compare-redesign/coder/stage-proposal-born-typed.md; this stub is the pinned contract")]
+    [Test]
     public async Task VarReference_RidesAsTypedText_NeverBareCSharpString()
     {
         // SetValue("%x%") + downstream read yields a `text` instance — value slot is never a raw System.String
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        var d = new Data("slot");
+        d.SetValue("%x%");
+        await Assert.That(d.Peek() is global::app.type.text.@this).IsTrue();
+        await Assert.That(d.IsVariable).IsTrue();
     }
 
     [Test]
@@ -143,12 +156,19 @@ public class Stage2_ValueDoorTests
         await Assert.That(v is global::app.type.dict.@this).IsTrue();
     }
 
-    [Test, Skip("Born-typed store-seam stage (slices 1-2) — see .bot/compare-redesign/coder/stage-proposal-born-typed.md; this stub is the pinned contract")]
+    [Test]
     public async Task DataType_Getter_ReturnsBackingField_NoCLRSniffing()
     {
-        // data.Type is `return _type;` — the lazy leaf.ToRaw().GetType() + name-mapping
-        // + kind-stamping block is deleted. Stamped at construction from the typed value.
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // data.Type is a pure forward — the instance mints its own entity; the
+        // CLR-sniffing block and the stored _type descriptor are gone.
+        var typeField = typeof(Data).GetField("_type",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        await Assert.That(typeField).IsNull();
+
+        var n = new Data("n", 5);
+        await Assert.That(n.Type.Name).IsEqualTo("number");
+        await Assert.That(n.Type.Kind).IsEqualTo("int");
+        var t = new Data("t", "hello");
+        await Assert.That(t.Type.Name).IsEqualTo("text");
     }
 }

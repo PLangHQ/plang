@@ -126,8 +126,8 @@ public class GetActionsTests
         foreach (var a in actions)
         {
             var providerParam = a.Parameters.FirstOrDefault(p =>
-                (p.Materialize())?.ToString()?.StartsWith("i", StringComparison.OrdinalIgnoreCase) == true &&
-                (p.Materialize())?.ToString()!.Contains("Provider") == true);
+                (p.Peek())?.ToString()?.StartsWith("i", StringComparison.OrdinalIgnoreCase) == true &&
+                (p.Peek())?.ToString()!.Contains("Provider") == true);
             await Assert.That(providerParam)
                 .IsNull()
                 .Because($"{a.Module}.{a.ActionName} should not expose [Code] interface properties");

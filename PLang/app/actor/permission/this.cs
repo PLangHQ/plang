@@ -106,7 +106,7 @@ public sealed class @this
         {
             // Overwrite same-path entry if any.
             var idx = _inMemory.FindIndex(d =>
-                d.Materialize() is PermissionRecord __dv && string.Equals(__dv.Path, key, StringComparison.Ordinal));
+                d.Peek() is PermissionRecord __dv && string.Equals(__dv.Path, key, StringComparison.Ordinal));
             if (idx >= 0) _inMemory[idx] = signed;
             else _inMemory.Add(signed);
         }
@@ -122,7 +122,7 @@ public sealed class @this
         lock (_lock)
         {
             var idx = _inMemory.FindIndex(d =>
-                d.Materialize() is PermissionRecord __dv2
+                d.Peek() is PermissionRecord __dv2
                 && __dv2.Actor == match.Actor
                 && __dv2.Path == match.Path);
             if (idx >= 0) { _inMemory.RemoveAt(idx); removed = true; }

@@ -48,6 +48,10 @@ public sealed class @this : global::app.type.item.@this
         Algorithm = (algorithm ?? "").ToLowerInvariant();
     }
 
+    /// <summary>A hash's entity: the algorithm IS the kind.</summary>
+    protected internal override global::app.type.@this Mint()
+        => new("hash") { Kind = string.IsNullOrEmpty(Algorithm) ? null : Algorithm };
+
     /// <summary>Canonical string form — base64. The type owns both directions.</summary>
     public string ToBase64() => System.Convert.ToBase64String(Bytes);
 

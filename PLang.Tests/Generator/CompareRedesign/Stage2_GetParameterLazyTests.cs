@@ -61,7 +61,7 @@ public class Stage2_GetParameterLazyTests
         // The getter never resolves — no As<T>/AsCanonical call inside the property body;
         // resolution lives only in __ResolveParameters.
         var getterLine = src.Split('\n').First(l => l.Contains("get {") && l.Contains("__Path_backing"));
-        await Assert.That(getterLine).DoesNotContain(".As<");
+        await Assert.That(getterLine).DoesNotContain(".Value<");
         await Assert.That(getterLine).DoesNotContain("AsCanonical");
     }
 
@@ -84,7 +84,7 @@ public class Stage2_GetParameterLazyTests
         await using var app = new global::app.@this("/app");
         var context = app.User.Context;
         var failedPath = await new Data("path", "s3://bucket/key") { Context = context }
-            .As<global::app.type.path.@this>(context);
+            .Value<global::app.type.path.@this>(context);
         await failedPath.IsFailure();
         await Assert.That(failedPath.Error!.Key).IsEqualTo("SchemeNotRegistered");
     }

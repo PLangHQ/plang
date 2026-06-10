@@ -691,6 +691,98 @@
         "health": "tree compiles; C# suite ~5 known fails (stage9 tail, disposable path); plang suite green at last run",
         "notes": "Next: architect reads data-value-model.md; open items in doc (type-chain reconciliation, Value<T> vs As<T>); optional PLang.Tests split for 31s->5s test edits"
       }
+    },
+    {
+      "id": "bdd11b01-34c6-4daa-809e-32c05a8167d7",
+      "bot": "coder",
+      "timestamp_start": "2026-06-10T16:30:00Z",
+      "timestamp_end": null,
+      "intent": "Stage 9 born-typed rebuild on the settled data-value-model: core collapse, consumer tail, templates, collections, follow-ons",
+      "before": {
+        "assumptions": "Model doc settled (nothing open); in-flight retype reverted; baseline C# 2 pre-existing fails (disposable path) + 6 pinned skips; plang 322/324.",
+        "risk": "Slice 1 touches Data's shape \u2014 widest possible blast radius; mitigated by compile-error-driven sweep and green-at-slice-boundary commits."
+      },
+      "plan": ".bot/compare-redesign/coder/v7/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/compare-redesign/coder/v7/plan.md",
+            ".bot/compare-redesign/coder/v7/baseline-tests.md",
+            ".bot/compare-redesign/coder/v7/survives.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Pre-step: plan, baseline (C# 2 pre-existing fails + 6 pinned skips; plang 322/324), survives-the-model audit of prior tail work."
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/this.cs",
+            "PLang/app/type/item/clr.cs",
+            "PLang/app/type/item/computed.cs",
+            "PLang/app/type/item/source.cs",
+            "PLang/app/type/item/absent.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "item base gains the doors (Ready/Peek/Cacheable), prior chain (Accumulate/Facet), self-minted entity (Type/Mint). New item types: clr (rung-2 carrier + transitional courier label), computed (replaces Data-level factory), source (born-with-bytes declared value), absent (typed absence)."
+        },
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/data/Wire.cs",
+            "PLang/app/data/this.Navigation.cs",
+            "PLang/app/data/this.Transport.cs",
+            "PLang/app/data/this.Result.cs",
+            "PLang/app/data/this.Reconstruct.cs",
+            "PLang/app/data/ShouldExit.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Slice-1 core collapse: Data holds one typed instance; killed _value/_type/_raw/_valueFactory/SetValue(factory)/Materialize/ForceMaterialize/NarrowReference/As<T>/AsT cycle guard. Value() rebinds via instance's own door; Value<T>() is the typed ask; Type/Kind minted from instance; Judge folds declared stamps at entry; wire read keeps declarations via labeled carrier."
+        },
+        {
+          "paths": [
+            "PLang/app/type/this.cs",
+            "PLang/app/type/file/this.cs",
+            "PLang/app/type/url/this.cs",
+            "PLang/app/type/text/this.cs",
+            "PLang/app/type/binary/this.cs",
+            "PLang/app/type/number/this.cs",
+            "PLang/app/type/image/this.cs",
+            "PLang/app/module/crypto/type/hash/this.cs",
+            "PLang/app/goal/GoalCall.cs",
+            "PLang/app/module/output/ask.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "type.@this becomes an item (settled); value-equality; Judge lives on the entity. file/url own load+parse in Ready(); per-type Mint overrides (number precision, text/binary kind, image mime kind, hash algorithm, goal.call/ask names)."
+        },
+        {
+          "paths": [
+            "PLang.Generators/Emission/Property/Data/this.cs",
+            "PLang.Generators/Emission/Action/this.cs",
+            "PLang.Generators/Emission/Property/Code/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Generator carrier retarget: As<T> -> Value<T>; Materialize -> Peek in [Code] resolution. Handler-facing shape unchanged (2.1c await-then-guard preserved)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "medium",
+          "context": "Consumer-tail test migration: Materialize->Peek, As<T> -> Value<T>, MaterializeCount probe extension, courier constructions to labeled carrier, old-shape pins re-judged to model truth (single storage, computed never kept, raw slot dissolved). Two temp probe test files to delete before commit."
+        }
+      ],
+      "after": {}
     }
   ]
 }

@@ -25,7 +25,10 @@ public class Default : ICrypto
     {
         var data = action.Data;
         byte[] bytes;
-        var value = await data.Value();
+        // Peek, never the value door: hashing is a courier read — opening the
+        // door would parse + narrow the value mid-sign, making the signed
+        // shape diverge from the wire/verify shape.
+        var value = data.Peek();
         if (value is byte[] raw)
         {
             bytes = raw;

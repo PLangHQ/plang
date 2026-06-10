@@ -50,7 +50,7 @@ public sealed partial class @this
 							{
 								module = a.Module,
 								action = a.ActionName,
-								parameters = a.Parameters.Select(p => new { name = p.Name, value = p.Materialize() }),
+								parameters = a.Parameters.Select(p => new { name = p.Name, value = p.Peek() }),
 							})
 						}, jsonOpts)
 					: null
@@ -85,7 +85,7 @@ public sealed partial class @this
 						{
 							module = a.Module,
 							action = a.ActionName,
-							parameters = a.Parameters.Select(p => new { name = p.Name, value = p.Materialize() })
+							parameters = a.Parameters.Select(p => new { name = p.Name, value = p.Peek() })
 						})
 					}, jsonOpts)
 				: "null";

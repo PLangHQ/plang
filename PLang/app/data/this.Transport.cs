@@ -88,8 +88,8 @@ public partial class @this
         // an owning wrapper type (an `archive`, like `encryption` seals its
         // inner Data); until that type exists the construction uses the
         // explicit no-lift bypass rather than the seam.
-        var outer = new @this("", null, type.FromName(family));
-        outer.SetValueDirect(this);
+        var outer = new @this("");
+        outer.SetValueDirect(new global::app.type.item.clr(this, family));
         outer.Context = _context;
         return outer;
     }
@@ -182,7 +182,7 @@ public partial class @this
             return this;
 
         var compressed = GetValue<byte[]>();
-        if (compressed == null)
+        if (compressed == null || compressed.Length == 0)
             return FromError(new ServiceError("Archived Data has no byte[] value", "DecompressError", 500));
 
         try
@@ -235,7 +235,7 @@ public partial class @this
     /// </summary>
     public @this Unwrap()
     {
-        if (Materialize() is @this inner)
+        if (Peek() is @this inner)
         {
             inner.Context = _context;
             return inner;

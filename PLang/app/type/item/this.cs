@@ -27,6 +27,128 @@ namespace app.type.item;
 public abstract class @this : global::app.data.IBooleanResolvable
 {
     /// <summary>
+    /// The value door on the instance itself — "I am going to use this value,
+    /// give it to me ready." Loads and parses if needed, and may answer AS A
+    /// DIFFERENT type instance (a <c>file</c> loads its bytes and answers with
+    /// the parsed <c>dict</c>, stamping itself as the answer's <see cref="Prior"/>).
+    /// The default — a value already in its final form — answers self with no
+    /// async hop. The holding <c>Data</c> rebinds to the answer when
+    /// <see cref="Cacheable"/> allows; that rebind IS the narrow.
+    /// (This is the type-side <c>Value()</c> door of the value model; named
+    /// <c>Ready</c> because several types still expose a public <c>Value</c>
+    /// property, which C# cannot coexist with an override of the same name.)
+    /// </summary>
+    public virtual System.Threading.Tasks.ValueTask<@this> Ready()
+        => System.Threading.Tasks.ValueTask.FromResult(this);
+
+    /// <summary>
+    /// What is in memory NOW — sync, no I/O, no parse, no resolve. The default
+    /// is the instance itself; a loading type whose bytes are in memory but
+    /// unparsed answers with those bytes; the rung-2 carrier answers with the
+    /// CLR object it carries.
+    /// </summary>
+    public virtual object? Peek() => this;
+
+    /// <summary>
+    /// What the value door hands over after <see cref="Ready"/> answered —
+    /// the transitional consumer-facing form (tightens to the instance itself
+    /// when the consumer tail converts). Defaults to <see cref="Peek"/>; a
+    /// source whose bytes could not parse hands the raw bytes (Peek's utf-8
+    /// face is a look, not the value).
+    /// </summary>
+    internal virtual object? Open() => Peek();
+
+    /// <summary>
+    /// Whether the holding <c>Data</c> may keep (rebind to) <see cref="Ready"/>'s
+    /// answer. True when the answer depends on nothing but the value itself
+    /// (parse). False when the answer depends on outside state (a template
+    /// render, a computed value) — those answer fresh at every use and are
+    /// never kept.
+    /// </summary>
+    public virtual bool Cacheable => true;
+
+    /// <summary>
+    /// The narrow chain — the instance this value evolved FROM (a dict parsed
+    /// from a file holds the file here). Stamped once by the narrowing type at
+    /// mint; null for a value that never narrowed. Newest first: walking
+    /// <c>Prior</c> links yields the full history.
+    /// </summary>
+    public @this? Prior => _prior;
+    private @this? _prior;
+
+    /// <summary>
+    /// Joins <paramref name="prior"/> into this value's creation history —
+    /// called by the type that minted this answer (the file accumulates itself
+    /// onto the dict it parsed). Appends at the END of the chain — a parse
+    /// answer may already carry its source form as a prior (dict ← source ←
+    /// file). Never rewrites an existing link.
+    /// </summary>
+    internal void Accumulate(@this prior)
+    {
+        if (ReferenceEquals(prior, this)) return;
+        var tail = (this as @this)!;
+        while (tail._prior != null)
+        {
+            if (ReferenceEquals(tail._prior, prior)) return;
+            tail = tail._prior;
+        }
+        if (!ReferenceEquals(tail, prior)) tail._prior = prior;
+    }
+
+    /// <summary>
+    /// This value's type — the entity, minted on ask, the whole chain riding
+    /// along (a dict parsed from a file answers <c>[dict, file]</c>). The
+    /// instance is the single owner of its identity; <c>Data.Type</c> is a
+    /// pure forward to this. Internal: a fresh entity per get — a public
+    /// property here would send reflection walks (serializers, structural
+    /// comparers) into an unbounded mint chain.
+    /// </summary>
+    internal global::app.type.@this Type
+    {
+        get
+        {
+            var minted = Mint();
+            for (var p = _prior; p != null; p = p._prior)
+                minted.Accumulate(p.Mint());
+            return minted;
+        }
+    }
+
+    /// <summary>
+    /// Mints this value's own type entity — each type answers ITS way (number
+    /// stamps its precision as kind, text its extension, a source its declared
+    /// judgement). The default derives the name from the class's namespace
+    /// tail (<c>app.type.file.@this</c> → <c>file</c>; the repo convention that
+    /// a type's folder IS its name) and the CLR mate from the value's backing.
+    /// </summary>
+    protected internal virtual global::app.type.@this Mint()
+        // No CLR mate stamped here — a primitive name resolves its mate through
+        // the alias table in the entity's own ctor; a domain name resolves
+        // through the registry when a Context is present. Types whose mate is
+        // value-derived (number's tower) override.
+        => new(NamespaceTail(GetType()));
+
+    /// <summary>The chain entry whose type name matches — self or a prior.
+    /// Null when this value never was that type.</summary>
+    public @this? Facet(string typeName)
+    {
+        for (var i = (this as @this); i != null; i = i._prior)
+            if (string.Equals(i.Mint().Name, typeName, System.StringComparison.OrdinalIgnoreCase))
+                return i;
+        return null;
+    }
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, string> _namespaceTails = new();
+
+    private protected static string NamespaceTail(System.Type t)
+        => _namespaceTails.GetOrAdd(t, static ct =>
+        {
+            var ns = ct.Namespace ?? "item";
+            var tail = ns[(ns.LastIndexOf('.') + 1)..];
+            return tail.TrimStart('@');
+        });
+
+    /// <summary>
     /// Synchronous truthiness — the hot path so a plain <c>if %bool%</c> never
     /// takes an async hop. The default is "reference-ish item is truthy when
     /// present"; concrete types override (empty text / zero / empty collection /

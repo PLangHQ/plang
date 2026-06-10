@@ -153,7 +153,7 @@ public partial class @this
     /// </summary>
     protected virtual @this InvokeMethod(string method, string args)
     {
-        var str = Materialize()?.ToString();
+        var str = Peek()?.ToString();
 
         return method.ToLowerInvariant() switch
         {
@@ -187,7 +187,7 @@ public partial class @this
         if (app != null)
         {
             var result = app.Code.Get<app.data.code.IGrep>();
-            if (result.Materialize() is app.data.code.IGrep g) return g;
+            if (result.Peek() is app.data.code.IGrep g) return g;
         }
         return new app.data.code.Default();
     }
@@ -258,14 +258,10 @@ public partial class @this
         if (RawUntouched && key.Equals("Type", StringComparison.OrdinalIgnoreCase))
             return new @this(key, Type, parent: this);
 
-        // Navigation IS examination — an un-narrowed reference (file/url) parses
-        // its content and narrows this Data to the content's type first, so the
-        // navigators below see the dict/list/table, not the reference. Reading
-        // `.Type` is metadata (the stamp answers), never an examination.
-        if (!key.Equals("Type", StringComparison.OrdinalIgnoreCase)
-            && Peek() is global::app.type.file.@this or global::app.type.url.@this)
-            await NarrowReference(Peek()!);
-
+        // Navigation IS examination — the value door parses an un-narrowed
+        // reference (file/url) or source form through the instance's own
+        // Ready(), and the Data rebinds; the navigators below see the
+        // dict/list/table, not the reference.
         var val = await Value();
 
         // Materialization failed at touch-time — the actionable parse error is
@@ -290,16 +286,6 @@ public partial class @this
         if (ownProp != null && ownProp.DeclaringType != typeof(@this))
             return new @this(key, ownProp.GetValue(this), parent: this);
 
-        // Lazy materialization — a typed, still-textual value reads through the
-        // reader registry on first navigation (the old ConvertValue, folded into
-        // the materialize path).
-        if (val is string or global::app.type.text.@this && _type != null)
-        {
-            ForceMaterialize();
-            val = await Value();
-            if (val == null && Error?.Key == "MaterializeFailed")
-                return FromError(Error);
-        }
 
         // Navigate the Value object via registered navigator (dict, list, CLR reflection, etc.)
         // Value wins over Properties on the dot path — Stage 4 made `!` the Properties operator,
@@ -360,7 +346,7 @@ public partial class @this
     private @this TypeUnknownError(string key)
     {
         var nameHint = string.IsNullOrEmpty(Name) ? "value" : $"%{Name}%";
-        var isText = _type is { IsNull: false } t && t.Name == "text";
+        var isText = _instance is global::app.type.text.@this;
         var what = isText ? "is text" : "has no type";
         var err = FromError(new global::app.error.Error(
             $"cannot navigate .{key}: {nameHint} {what}; add `as <type>` (e.g. `as object/json`) to navigate it",
@@ -396,10 +382,10 @@ public partial class @this
             return new @this(key, prop.GetValue(this), parent: this);
 
         // Chain-wide facet: `%x!file%` reaches the reference facet whether or not
-        // the value narrowed. Pre-narrow the value IS the facet (Peek — the
-        // property plane never triggers a read); post-narrow the narrow stashed
-        // the location-only reference in Properties, served above.
-        if (_type?.Facet(key) != null && Peek() is global::app.type.item.@this facetValue)
+        // the value narrowed. The instance's own chain answers — pre-narrow the
+        // value IS the facet; post-narrow the prior chain holds the
+        // location-only reference (the parse stamped it).
+        if (_instance?.Facet(key) is { } facetValue)
             return new @this(key, facetValue, parent: this);
 
         // Property plane on the value itself — `!path`/`!host`/`!size` reach the

@@ -39,7 +39,12 @@ public sealed partial class @this : global::app.type.item.@this, System.IEquatab
     public NumberKind Kind => ClrToKind(_value.GetType());
 
     /// <summary>The PLang kind name ("int", "uint", "biginteger", "half", …).</summary>
-    public string KindLabel => KindName(Kind);
+    public string KindLabel => LabelOf(Kind);
+
+    /// <summary>A number's entity: the exact boxed CLR numeric as the mate,
+    /// the precision as kind — the full scalar tower, no collapse.</summary>
+    protected internal override global::app.type.@this Mint()
+        => new("number", _value.GetType()) { Kind = KindLabel };
 
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
     public static string Example => "3.14";

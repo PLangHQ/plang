@@ -20,7 +20,7 @@ public class ConstructionBornNativeTests
     {
         using var doc = JsonDocument.Parse(json);
         // A Data built from a JsonElement runs it through UnwrapJsonElement.
-        return new Data("x", doc.RootElement.Clone()).Materialize();
+        return new Data("x", doc.RootElement.Clone()).Peek();
     }
 
     [Test]
@@ -70,7 +70,7 @@ public class ConstructionBornNativeTests
         var dict = (global::app.type.dict.@this)leaf!;
         var z = dict.Get("z");
         await Assert.That(z).IsNotNull();
-        await Assert.That(ReferenceEquals((z!.Materialize()), NullV.Instance)).IsTrue();
+        await Assert.That(ReferenceEquals((z!.Peek()), NullV.Instance)).IsTrue();
     }
 
     [Test]

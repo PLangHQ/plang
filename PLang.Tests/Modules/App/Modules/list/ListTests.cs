@@ -20,7 +20,7 @@ public class ListTests
     // so each element keeps its name/type/context. Readers (global::app.variable.navigator.List,
     // EnumerateItems) unwrap on access; low-level tests look at the Data wrapper.
     private static object? Unwrap(object? slot) =>
-        slot is global::app.data.@this d ? (d.Materialize()) : slot;
+        slot is global::app.data.@this d ? (d.Peek()) : slot;
 
     [Test]
     public async Task Add_CreatesNewList()
@@ -312,7 +312,7 @@ public class ListTests
         var list = ((await result.Value()) as global::app.module.list.type.list)?.value as global::app.type.list.@this;
         await Assert.That(list).IsNotNull();
         await Assert.That(list!.Count).IsEqualTo(3);
-        var values = list.Items.Select(d => d.Materialize()?.ToString()).ToList();
+        var values = list.Items.Select(d => d.Peek()?.ToString()).ToList();
         await Assert.That(values).Contains("a");
         await Assert.That(values).Contains("b");
         await Assert.That(values).Contains("c");
@@ -456,9 +456,9 @@ public class ListTests
     {
         foreach (var b in groups.Items)
         {
-            var d = (global::app.type.dict.@this)(b.Materialize())!;
-            if (((d.Get("key")).Materialize())?.ToString() == key)
-                return (int)((global::app.type.list.@this)((d.Get("items"))!.Materialize())!).Count;
+            var d = (global::app.type.dict.@this)(b.Peek())!;
+            if (((d.Get("key")).Peek())?.ToString() == key)
+                return (int)((global::app.type.list.@this)((d.Get("items"))!.Peek())!).Count;
         }
         return -1;
     }

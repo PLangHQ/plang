@@ -14,7 +14,7 @@ public sealed class @this : global::app.type.item.@this, global::app.data.ILoada
     public static string Shape => "string";
 
     /// <summary>The is-a lattice — a url is-a path.</summary>
-    public static System.Collections.Generic.IReadOnlyList<System.Type> Type { get; }
+    public static new System.Collections.Generic.IReadOnlyList<System.Type> Type { get; }
         = new[] { typeof(@this), typeof(global::app.type.path.@this) };
 
     /// <summary>The location facet (an <c>HttpPath</c> — owns consent + fetch).</summary>
@@ -41,6 +41,14 @@ public sealed class @this : global::app.type.item.@this, global::app.data.ILoada
 
     public bool IsLoaded => _bytes != null;
 
+    /// <summary>A url's entity: name "url", kind = the extension's canonical
+    /// form through the format registry — location metadata, never fetches.</summary>
+    protected internal override global::app.type.@this Mint()
+    {
+        var t = Context?.App.Format.TypeFromExtension(Path.Extension);
+        return new global::app.type.@this("url", typeof(@this)) { Kind = t is { IsNull: false } ? t.Kind : null };
+    }
+
     /// <summary>
     /// The fetched content bytes — one GET through the path's consent gate on
     /// first access, cached after. A fetch failure surfaces here.
@@ -56,6 +64,29 @@ public sealed class @this : global::app.type.item.@this, global::app.data.ILoada
     }
 
     public System.Threading.Tasks.Task LoadAsync() => BytesAsync();
+
+    /// <summary>
+    /// The value door — fetch + parse through the file channel (mime stamps the
+    /// content's {type, kind}; the consent gate rides on <c>Path.ReadBytes</c>)
+    /// and answer with the CONTENT's own instance, this url stamped as its
+    /// prior. Single storage: the fetched bytes are released after the parse.
+    /// </summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Ready()
+    {
+        var channel = new global::app.channel.type.file.@this(Path);
+        var read = await channel.Read();
+        if (!read.Success)
+            throw new System.Net.Http.HttpRequestException(read.Error!.Message);
+        _ = await read.Value();
+        if (!read.Success)
+            throw new System.Net.Http.HttpRequestException(read.Error!.Message);
+        var answer = read.Instance;
+        if (answer == null || ReferenceEquals(answer, this)) return this;
+        Release();
+        answer.Accumulate(this);
+        return answer;
+    }
+
 
     public string ContentText() => System.Text.Encoding.UTF8.GetString(_bytes ?? System.Array.Empty<byte>());
     public byte[] Bytes => _bytes ?? System.Array.Empty<byte>();

@@ -22,14 +22,14 @@ public class LazyMaterialisationTests
         var ctx = app.User.Context;
         var d = data.FromRaw("5", type.Create("number", "int", context: ctx), ctx, "n");
         await Assert.That((await d.Value())).IsEqualTo((object)5);
-        await Assert.That(d.MaterializeCount).IsEqualTo(1);
+        await Assert.That(d.MaterializeCount()).IsEqualTo(1);
     }
 
     [Test] public async Task Value_ReturnsValueDirectly_WhenValueSet_AndRawNull()
     {
         var d = data.Ok(5);
         await Assert.That((await d.Value())).IsEqualTo((object)5);
-        await Assert.That(d.MaterializeCount).IsEqualTo(0);
+        await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
 
     // Independent #6 — probe-counted negative: authored .Value never materializes.
@@ -37,17 +37,21 @@ public class LazyMaterialisationTests
     {
         var d = data.Ok("plain string");
         _ = (await d.Value()); _ = (await d.Value());
-        await Assert.That(d.MaterializeCount).IsEqualTo(0);
+        await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
 
+    // Single storage: the parse MOVES the value — the source form is gone once
+    // the Data rebinds to the parsed instance. Verbatim passthrough holds only
+    // while untouched.
     [Test] public async Task Value_RawSurvivesMaterialisation()
     {
         await using var app = NewApp();
         var ctx = app.User.Context;
         var d = data.FromRaw("5", type.Create("number", "int", context: ctx), ctx, "n");
-        _ = (await d.Value());               // materialize
-        await Assert.That(d.HasRaw).IsTrue();   // _raw survives
-        await Assert.That(d.Raw).IsEqualTo((object)"5");
+        await Assert.That(d.HasRaw).IsTrue();   // untouched — source-backed
+        var v = await d.Value();                // parse rebinds
+        await Assert.That(v is global::app.type.number.@this).IsTrue();
+        await Assert.That(d.HasRaw).IsFalse();  // single storage — raw moved
     }
 
     // app/data/this.cs — ConvertValue folded into the materialize path; the
@@ -60,7 +64,6 @@ public class LazyMaterialisationTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         var d = data.FromRaw("{\"port\":8080}", type.Create("object", "json", context: ctx), ctx, "cfg");
-        d.ForceMaterialize();      // the navigation seam (was ConvertValue)
         await Assert.That((await d.Value())).IsTypeOf<app.type.dict.@this>();
         var dict = (app.type.dict.@this)(await d.Value())!;
         await Assert.That(dict.Has("port")).IsTrue();
@@ -72,6 +75,6 @@ public class LazyMaterialisationTests
         var d = data.Ok("%x%");
         await Assert.That((await d.Value())?.ToString()).IsEqualTo("%x%");
         await Assert.That((await d.Value())?.ToString()).IsEqualTo("%x%");
-        await Assert.That(d.MaterializeCount).IsEqualTo(0);
+        await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
 }

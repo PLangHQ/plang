@@ -12,6 +12,11 @@ namespace app.goal;
 [PlangType("goal.call")]
 public sealed class GoalCall : global::app.type.item.@this, module.IEvent
 {
+    /// <summary>The entity is "goal.call" (the namespace-tail default would say
+    /// "goal", which is the goal entity's name, not this value's).</summary>
+    protected internal override global::app.type.@this Mint()
+        => new("goal.call", typeof(GoalCall));
+
     /// <summary>Event context — set by Events.Stamp when this GoalCall is an event binding.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public module.EventContext? Event { get; set; }
@@ -116,7 +121,7 @@ public sealed class GoalCall : global::app.type.item.@this, module.IEvent
         {
             null => null,
             path builtPath => builtPath,
-            global::app.type.dict.@this nd => ResolveRelative(nd.Get("relative")?.Materialize()?.ToString(), context),
+            global::app.type.dict.@this nd => ResolveRelative(nd.Get("relative")?.Peek()?.ToString(), context),
             IDictionary<string, object?> d2 => ResolveRelative(
                 d2.TryGetValue("relative", out var rel) ? rel?.ToString() : null, context),
             _ => ResolveRelative(prRaw.ToString(), context),
@@ -171,7 +176,7 @@ public sealed class GoalCall : global::app.type.item.@this, module.IEvent
             switch (entry)
             {
                 case app.type.dict.@this nd:
-                    yield return (nd.Get("name")?.Materialize()?.ToString() ?? "", nd.Get("value")?.Materialize());
+                    yield return (nd.Get("name")?.Peek()?.ToString() ?? "", nd.Get("value")?.Peek());
                     break;
                 case IDictionary<string, object?> id:
                     yield return (
@@ -293,7 +298,9 @@ public sealed class GoalCall : global::app.type.item.@this, module.IEvent
         var result = await app.RunAction(readAction, context);
         if (!result.Success) return result;
 
-        if (result.Materialize() is not @this goal)
+        // The value door — a source-backed .pr payload parses through its own
+        // Ready() here (the goal reader), answering the Goal instance.
+        if (await result.Value() is not @this goal)
             return data.@this.FromError(new global::app.error.ActionError(
                 $"File '{prPath}' did not deserialize to a Goal", "InvalidPrFile", 400));
 

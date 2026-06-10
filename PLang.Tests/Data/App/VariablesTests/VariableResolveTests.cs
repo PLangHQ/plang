@@ -5,7 +5,7 @@ namespace PLang.Tests.App.VariablesTests;
 
 // Contract tests for App.Variables.Variable — the typed variable-name carrier introduced
 // in architect/v5 to replace [VariableName] string. Variable.Resolve is invoked by the
-// source generator's Data<T> emit through the Data.As<T> raw-name dispatch (Variable
+// source generator's Data<T> emit through the Data.Value<T> raw-name dispatch (Variable
 // implements IRawNameResolvable). Symmetry contract: both "%x%" and "x" produce Name == "x".
 
 public class VariableResolveTests
@@ -59,7 +59,7 @@ public class VariableResolveTests
     {
         var slot = new Data("Name", "%x%") { Context = _app.User.Context };
 
-        var resolved = await slot.As<@this>(_app.User.Context);
+        var resolved = await slot.Value<@this>(_app.User.Context);
 
         await resolved.IsSuccess();
         await Assert.That((await resolved.Value())).IsNotNull();
@@ -79,7 +79,7 @@ public class VariableResolveTests
         _app.User.Context.Variable.Set("x", 5);
         var slot = new Data("Name", "%x%") { Context = _app.User.Context };
 
-        var resolved = await slot.As<@this>(_app.User.Context);
+        var resolved = await slot.Value<@this>(_app.User.Context);
 
         await resolved.IsSuccess();
         await Assert.That((await resolved.Value())!.Name).IsEqualTo("x");
@@ -93,7 +93,7 @@ public class VariableResolveTests
     {
         var slot = new Data("Name", "x") { Context = _app.User.Context };
 
-        var resolved = await slot.As<@this>(_app.User.Context);
+        var resolved = await slot.Value<@this>(_app.User.Context);
 
         await resolved.IsSuccess();
         await Assert.That((await resolved.Value())).IsNotNull();

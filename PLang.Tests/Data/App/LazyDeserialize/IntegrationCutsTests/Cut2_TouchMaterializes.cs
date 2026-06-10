@@ -36,9 +36,9 @@ public class Cut2_TouchMaterializes
 
         var d = await new filechannel(p).Read();
         await Assert.That(d.Peek()).IsEqualTo((object)"{\"port\":8080}"); // untouched = raw
-        await Assert.That(d.MaterializeCount).IsEqualTo(0);
+        await Assert.That(d.MaterializeCount()).IsEqualTo(0);
         await Assert.That((await (await d.GetChild("port")).Value())?.ToString()).IsEqualTo("8080"); // navigate materializes
-        await Assert.That(d.MaterializeCount).IsEqualTo(1);
+        await Assert.That(d.MaterializeCount()).IsEqualTo(1);
     }
 
     [Test] public async Task Cut2_ReportCsv_UntouchedIsRawString_NavigatedReturnsRowColumn()
@@ -49,7 +49,7 @@ public class Cut2_TouchMaterializes
 
         var d = await new filechannel(p).Read();
         await Assert.That(d.Peek()).IsEqualTo((object)"name,age\nAda,36\n"); // untouched = raw csv
-        await Assert.That(d.MaterializeCount).IsEqualTo(0);
+        await Assert.That(d.MaterializeCount()).IsEqualTo(0);
         await Assert.That((await (await (await (await d.GetChild("rows")).GetChild("0")).GetChild("name")).Value())?.ToString()).IsEqualTo("Ada");
     }
 
@@ -73,9 +73,9 @@ public class Cut2_TouchMaterializes
         var d = data.FromRaw(bytes, type.Create("image", "png", context: ctx), ctx, "img");
 
         await Assert.That(d.Peek() is byte[]).IsTrue();   // scalar = raw bytes, no decode
-        await Assert.That(d.MaterializeCount).IsEqualTo(0);
+        await Assert.That(d.MaterializeCount()).IsEqualTo(0);
 
         await Assert.That((await d.Value())).IsTypeOf<global::app.type.image.@this>(); // touch materializes
-        await Assert.That(d.MaterializeCount).IsEqualTo(1);
+        await Assert.That(d.MaterializeCount()).IsEqualTo(1);
     }
 }

@@ -24,7 +24,7 @@ public partial class Set : IContext, IBuildValidatable
         // async door. The literal value (no %var%) is in hand at build; an
         // authored string rides as text and presents its string face here (the
         // strict probe and the "this" guard both reason over the source string).
-        var valueBacking = value?.Materialize();
+        var valueBacking = value?.Peek();
         if (valueBacking is global::app.type.text.@this tb) valueBacking = tb.Value;
         else if (valueBacking is global::app.type.binary.@this bb) valueBacking = bb.Value;
         if (valueBacking is string s && s == "this")
@@ -35,7 +35,7 @@ public partial class Set : IContext, IBuildValidatable
         // string). Mismatches return a build error; %var% values defer to Run.
         var typeParam = parameters.FirstOrDefault(p =>
             string.Equals(p.Name, "Type", StringComparison.OrdinalIgnoreCase));
-        if (typeParam?.Materialize() is global::app.type.@this t && t.Strict && t.Kind != null
+        if (typeParam?.Peek() is global::app.type.@this t && t.Strict && t.Kind != null
             && valueBacking != null && !value!.HasVariableReference)
         {
             var clr = t.ClrType;
@@ -293,11 +293,10 @@ public partial class Set : IContext, IBuildValidatable
                 else
                     return convResult;
             }
-            var typedData = ConstructDataOfT(name, mintType, converted, Context);
-            // Pin the type: the value's own when kept as-is (image wins over a
-            // `path` hint), else the user-named declared entity — kind and strict
-            // survive the binding-mint.
-            typedData.Type = keepAsIs ? Value.Type! : typeEntity;
+            // The instance carries its own type: kept-as-is keeps the value's
+            // richer truth (image wins over a `path` hint); otherwise the
+            // declared entity rides into the lift so kind survives the mint.
+            var typedData = ConstructDataOfT(name, mintType, converted, keepAsIs ? null : typeEntity, Context);
 
             // Strict kind for a reference fundamental rides WITH the value to its
             // load seam (Ingi: validate at byte-materialization, throw if strict).
@@ -375,12 +374,13 @@ public partial class Set : IContext, IBuildValidatable
         return null;
     }
 
-    private static data.@this ConstructDataOfT(string name, System.Type t, object? value, actor.context.@this context)
+    private static data.@this ConstructDataOfT(string name, System.Type t, object? value, global::app.type.@this? declared, actor.context.@this context)
     {
         // Data<T> requires T : item. A raw CLR mint type (string/int/byte[]/…) maps to the
         // item wrapper that owns it (text/number/binary/…) via the conversion registry — the
         // Data<wrapper> holds the raw value and projects it lazily on read. A type with no
-        // item wrapper falls back to a bare Data (the caller stamps the type entity either way).
+        // item wrapper falls back to a bare Data. The declared entity rides into the ctor
+        // so the entry lift stamps kind onto the instance (the instance owns kind).
         if (!typeof(global::app.type.item.@this).IsAssignableFrom(t))
         {
             var (family, _) = global::app.type.convert.@this.OwnerOf(t);
@@ -392,10 +392,10 @@ public partial class Set : IContext, IBuildValidatable
                 t = family;
             }
             else
-                return new data.@this(name, value) { Context = context };
+                return new data.@this(name, value, declared) { Context = context };
         }
         var generic = typeof(data.@this<>).MakeGenericType(t);
-        var instance = (data.@this)Activator.CreateInstance(generic, name, value, null, null)!;
+        var instance = (data.@this)Activator.CreateInstance(generic, name, value, declared, null)!;
         instance.Context = context;
         return instance;
     }

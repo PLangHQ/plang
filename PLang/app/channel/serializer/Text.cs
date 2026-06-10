@@ -67,12 +67,12 @@ public sealed class Text : ISerializer
         // to this serializer. Everything else: the Data converts ITSELF to T
         // through T's own Convert hook (As<T> is the typed resolution door).
         if (result.IsEmpty) return global::app.data.@this<T>.Ok(default!);
-        return await result.As<T>();
+        return await result.Value<T>();
     }
 
     public data.@this<global::app.type.text.@this> Serialize(data.@this data)
     {
-        var value = data.Materialize();
+        var value = data.Peek();
         if (value == null || AppTypes.IsPrimitive(value.GetType())
             || value is global::app.type.item.@this { IsLeaf: true })
             return global::app.data.@this<global::app.type.text.@this>.Ok(value?.ToString() ?? "");

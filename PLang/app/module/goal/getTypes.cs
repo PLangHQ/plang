@@ -165,7 +165,7 @@ public partial class getTypes : IContext
     {
         null => null,
         global::app.type.@this te => te.IsNull ? null : te.Name,
-        global::app.type.dict.@this nd => nd.Get("name")?.Materialize()?.ToString(),
+        global::app.type.dict.@this nd => nd.Get("name")?.Peek()?.ToString(),
         System.Collections.Generic.IDictionary<string, object?> d
             => d.TryGetValue("name", out var n) ? n?.ToString() : null,
         string s => string.IsNullOrEmpty(s) ? null : s,

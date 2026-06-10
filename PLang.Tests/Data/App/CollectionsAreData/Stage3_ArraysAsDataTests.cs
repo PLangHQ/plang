@@ -49,7 +49,6 @@ public class Stage3_ArraysAsDataTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         var d = global::app.data.@this.FromRaw("[1,2,3]", type.Create("object", "json", context: ctx), ctx, "nums");
-        d.ForceMaterialize();
         await Assert.That((await d.Value())).IsTypeOf<ListV>();
         await Assert.That(((ListV)(await d.Value())!).Count).IsEqualTo(3);
     }
@@ -114,7 +113,7 @@ public class Stage3_ArraysAsDataTests
         list.Add(new Data("", 2L));
         list.Add(new Data("", 3L));
         var d = new Data("nums", list) { Context = ctx };
-        var res = await d.As<global::app.type.list.@this<global::app.type.number.@this>>(ctx);
+        var res = await d.Value<global::app.type.list.@this<global::app.type.number.@this>>(ctx);
         await res.IsSuccess();
         await Assert.That(res.GetValue<List<long>>()!).IsEquivalentTo(new List<long> { 1, 2, 3 });
     }

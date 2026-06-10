@@ -20,6 +20,7 @@ public sealed partial class @this : global::app.type.item.@this,
 
     public bool Value { get; }
     public override object? ToRaw() => Value;
+    protected internal override global::app.type.@this Mint() => new("bool", typeof(bool));
 
     public @this(bool value) { Value = value; }
 

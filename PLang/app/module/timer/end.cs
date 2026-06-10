@@ -14,7 +14,7 @@ public partial class End : IContext, IStatic
     public Task<data.@this<global::app.type.duration.@this>> Run()
     {
         // If no name given, use the last started timer
-        var key = (Name?.Materialize() as global::app.type.text.@this)?.ToString();
+        var key = (Name?.Peek() as global::app.type.text.@this)?.ToString();
         if (key == null)
         {
             if (!Static.TryGetValue("__last__", out var lastObj) || lastObj is not string lastKey)

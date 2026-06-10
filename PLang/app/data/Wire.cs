@@ -223,8 +223,8 @@ public class Wire : JsonConverter<@this>
             new object?[] { System.Type.Missing, System.Type.Missing, System.Type.Missing, System.Type.Missing },
             null)!;
         typed.Name = body.Name;
-        typed.SetValue(body.Materialize());
-        if (body.Type != null) typed.Type = body.Type;
+        // The body's instance carries its own type/kind/chain — move it whole.
+        typed.SetValueDirect(body.Instance);
         typed.Properties = body.Properties;
         if (body.Signature != null) typed.Signature = body.Signature;
         return typed;
@@ -262,9 +262,38 @@ public class Wire : JsonConverter<@this>
                 if (value is @this innerData)
                 {
                     data = new @this(name, null, typeRef);
-                    data.SetValueDirect(innerData);
+                    // The courier label carries the declared category — without
+                    // it the carrier would answer "object" and the declared
+                    // type slot (signed!) would drift on re-serialize.
+                    data.SetValueDirect(typeRef is { IsNull: false }
+                        ? new global::app.type.item.clr(innerData, typeRef.Name, typeRef.Kind)
+                        : innerData);
                 }
-                else data = new @this(name, value, typeRef);
+                else
+                {
+                    data = new @this(name, value, typeRef);
+                    // Faithful reconstruction: a domain value rides the wire as
+                    // its property bag ({type: permission, value: {…}}). The
+                    // lift reads the bag as dict, which would lose the declared
+                    // identity — and with it the signed type slot, breaking
+                    // verify. Carry the declaration on the labeled carrier; the
+                    // typed read-side (GetValue<T>) reconstructs lazily as
+                    // before. Transitional courier shape — dies with the
+                    // schema layers.
+                    if (typeRef is { IsNull: false } && data.Instance is { } lifted)
+                    {
+                        var liftedEntity = lifted.Mint();
+                        var nameDiffers = !string.Equals(liftedEntity.Name, typeRef.Name, StringComparison.OrdinalIgnoreCase)
+                            && lifted.Facet(typeRef.Name) == null;
+                        // Kind too: the wire's declared precision ({number, int})
+                        // must survive the read — the json lift answers long.
+                        var kindDiffers = !nameDiffers && typeRef.Kind != null
+                            && !string.Equals(liftedEntity.Kind, typeRef.Kind, StringComparison.OrdinalIgnoreCase);
+                        if (nameDiffers || kindDiffers)
+                            data.SetValueDirect(new global::app.type.item.clr(
+                                lifted.Peek() ?? lifted, typeRef.Name, typeRef.Kind));
+                    }
+                }
                 if (signature != null) data.Signature = signature;
                 if (properties != null) data.Properties = properties;
                 return data;

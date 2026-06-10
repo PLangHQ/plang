@@ -79,7 +79,7 @@ public partial class @this : global::app.type.item.@this, module.IContext,
     // A row's leaf count — a value that dissolves into the list (IListLeaf, i.e. a list)
     // contributes its own leaf count; anything else is one whole item. The value owns
     // the answer, so there's no `is list` type-switch here.
-    private static int LeafCount(Data row) => row.Materialize() is global::app.data.IListLeaf leaf ? leaf.LeafCount : 1;
+    private static int LeafCount(Data row) => row.Peek() is global::app.data.IListLeaf leaf ? leaf.LeafCount : 1;
 
     /// <summary>The flattened element Data in order — a row that dissolves (IListLeaf)
     /// yields its leaves; a scalar/dict/table row is yielded whole, weight 1.</summary>
@@ -90,7 +90,7 @@ public partial class @this : global::app.type.item.@this, module.IContext,
             var flat = new List<Data>();
             foreach (var row in _items)
             {
-                if (row.Materialize() is global::app.data.IListLeaf leaf) flat.AddRange(leaf.Leaves);
+                if (row.Peek() is global::app.data.IListLeaf leaf) flat.AddRange(leaf.Leaves);
                 else flat.Add(row);
             }
             return flat;
@@ -124,7 +124,7 @@ public partial class @this : global::app.type.item.@this, module.IContext,
         if (flatIndex < 0) return false;
         for (int r = 0; r < _items.Count; r++)
         {
-            if (_items[r].Materialize() is @this list)
+            if (_items[r].Peek() is @this list)
             {
                 int w = list.CountRaw;
                 if (flatIndex < w) { rowIndex = r; offset = flatIndex; inner = list; return true; }
@@ -169,7 +169,7 @@ public partial class @this : global::app.type.item.@this, module.IContext,
             throw new System.InvalidOperationException($"List nesting exceeds maximum depth ({MaxCopyDepth})");
         var copy = new @this { Context = _context };
         foreach (var el in _items)
-            copy._items.Add(el.Materialize() is @this nested
+            copy._items.Add(el.Peek() is @this nested
                 ? new Data(el.Name, nested.CopyStructure(depth + 1)) { Context = _context }
                 : el);
         return copy;

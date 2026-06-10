@@ -19,7 +19,7 @@ public class Default : IAssert
 
         // Error display keeps the materialised form (the masked/rendered path);
         // only the comparison uses the scalar form.
-        return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(action.Expected?.Materialize(), action.Actual?.Materialize(), action.Message?.Materialize()?.ToString()));
+        return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(action.Expected?.Peek(), action.Actual?.Peek(), action.Message?.Peek()?.ToString()));
     }
 
     public async Task<data.@this<global::app.type.@bool.@this>> NotEquals(NotEquals action)
@@ -27,8 +27,8 @@ public class Default : IAssert
         if (!await IsEqual(action.Expected, action.Actual))
             return app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
-        return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(action.Expected?.Materialize(), action.Actual?.Materialize(),
-            action.Message?.Materialize()?.ToString() ?? "Values should not be equal"));
+        return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(action.Expected?.Peek(), action.Actual?.Peek(),
+            action.Message?.Peek()?.ToString() ?? "Values should not be equal"));
     }
 
     // Equality through THE comparison entry (data.Compare). One carve-out: an
@@ -64,20 +64,20 @@ public class Default : IAssert
 
     public data.@this<global::app.type.@bool.@this> IsNull(IsNull action)
     {
-        if (global::app.type.@null.@this.IsNullValue(action.Value?.Materialize()))
+        if (global::app.type.@null.@this.IsNullValue(action.Value?.Peek()))
             return app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
-        return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(null, action.Value?.Materialize(),
-            action.Message?.Materialize()?.ToString() ?? "Expected null"));
+        return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(null, action.Value?.Peek(),
+            action.Message?.Peek()?.ToString() ?? "Expected null"));
     }
 
     public data.@this<global::app.type.@bool.@this> IsNotNull(IsNotNull action)
     {
-        if (!global::app.type.@null.@this.IsNullValue(action.Value?.Materialize()))
+        if (!global::app.type.@null.@this.IsNullValue(action.Value?.Peek()))
             return app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
         return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError("(not null)", null,
-            action.Message?.Materialize()?.ToString() ?? "Expected non-null value"));
+            action.Message?.Peek()?.ToString() ?? "Expected non-null value"));
     }
 
     public async Task<data.@this<global::app.type.@bool.@this>> Contains(Contains action)
@@ -97,7 +97,7 @@ public class Default : IAssert
 
         return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(
             FormatValue(c), v,
-            action.Message?.Materialize()?.ToString() ?? "Container does not contain value"));
+            action.Message?.Peek()?.ToString() ?? "Container does not contain value"));
     }
 
     public async Task<data.@this<global::app.type.@bool.@this>> NotContains(NotContains action)
@@ -114,7 +114,7 @@ public class Default : IAssert
 
         return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(
             $"absent: {FormatValue(c)}", v,
-            action.Message?.Materialize()?.ToString() ?? "Container contains value but should not"));
+            action.Message?.Peek()?.ToString() ?? "Container contains value but should not"));
     }
 
     public async Task<data.@this<global::app.type.@bool.@this>> GreaterThan(GreaterThan action)
@@ -123,8 +123,8 @@ public class Default : IAssert
             return app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
         return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(
-            $"> {FormatValue(action.B?.Materialize())}", action.A?.Materialize(),
-            action.Message?.Materialize()?.ToString() ?? $"Expected {FormatValue(action.A?.Materialize())} > {FormatValue(action.B?.Materialize())}"));
+            $"> {FormatValue(action.B?.Peek())}", action.A?.Peek(),
+            action.Message?.Peek()?.ToString() ?? $"Expected {FormatValue(action.A?.Peek())} > {FormatValue(action.B?.Peek())}"));
     }
 
     public async Task<data.@this<global::app.type.@bool.@this>> LessThan(LessThan action)
@@ -133,8 +133,8 @@ public class Default : IAssert
             return app.data.@this<global::app.type.@bool.@this>.Ok(true);
 
         return app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(
-            $"< {FormatValue(action.B?.Materialize())}", action.A?.Materialize(),
-            action.Message?.Materialize()?.ToString() ?? $"Expected {FormatValue(action.A?.Materialize())} < {FormatValue(action.B?.Materialize())}"));
+            $"< {FormatValue(action.B?.Peek())}", action.A?.Peek(),
+            action.Message?.Peek()?.ToString() ?? $"Expected {FormatValue(action.A?.Peek())} < {FormatValue(action.B?.Peek())}"));
     }
 
     // Ordering through THE comparison entry. A missing operand never orders

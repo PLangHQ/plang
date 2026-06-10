@@ -28,8 +28,9 @@ public class VariablesTests
         await Task.Delay(10);
         var value2 = await nowObj.Value();
 
-        await Assert.That(value1).IsTypeOf<DateTimeOffset>();
-        await Assert.That(value2).IsTypeOf<DateTimeOffset>();
+        // Born typed: the computed value answers as the datetime item.
+        await Assert.That(value1).IsTypeOf<global::app.type.datetime.@this>();
+        await Assert.That(value2).IsTypeOf<global::app.type.datetime.@this>();
     }
 
     [Test]
@@ -1039,10 +1040,10 @@ public class VariablesAccessorTests
         await Assert.That(retrieved).IsNotNull();
 
         // The retrieved Data's Value should BE the Goal (same object)
-        await Assert.That(object.ReferenceEquals((retrieved!.Materialize()), goal)).IsTrue();
+        await Assert.That(object.ReferenceEquals((retrieved!.Peek()), goal)).IsTrue();
     }
 
-    // ResolveDeep was deleted in v4 (resolution lives in data.As<T>(context) per call).
+    // ResolveDeep was deleted in v4 (resolution lives in data.Value<T>(context) per call).
     // Equivalent behaviour is covered by DataAsTResolutionTests + the matrix Resolution group.
 }
 

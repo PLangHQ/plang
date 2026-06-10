@@ -40,7 +40,7 @@ public partial class @this
         // Data) re-walk to themselves in Normalize. Domain objects and raw
         // collections still need Normalize to decompose into the property-bag
         // shape Walk consumes.
-        var raw = Materialize();   // decode leaf — a raw-backed value (sqlite row, file load) parses here
+        var raw = Peek();   // the in-memory form — a source-backed value hands its raw string here
         var tree = IsLeafShape(raw) ? raw : Normalize();
         var result = Walk(tree, typeof(T), context);
         if (result is null) return default;
@@ -271,7 +271,7 @@ public partial class @this
                         "NormalizeContextRequired");
 
                 string? relative = null;
-                if (data.Materialize() is string raw)
+                if (data.Peek() is string raw)
                 {
                     // Bridge: incoming as a bare string (pre-Stage-2-wiring shape).
                     relative = raw;
@@ -282,7 +282,7 @@ public partial class @this
                     {
                         if (child.Name.Equals("relative", StringComparison.OrdinalIgnoreCase))
                         {
-                            relative = child.Materialize()?.ToString();
+                            relative = child.Peek()?.ToString();
                             break;
                         }
                     }

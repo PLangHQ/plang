@@ -4,7 +4,7 @@ namespace PLang.Tests.App.TypedReturnsTests;
 
 // Contract: Data materialization is owned by Data itself via .Type. Public
 // surface is Data.As(string typeName) (cross-type coercion) and implicit
-// conversion on property access; Data.As<T> stays internal.
+// conversion on property access; Data.Value<T> stays internal.
 
 public class Stage0_DataMaterializationTests
 {
@@ -16,7 +16,7 @@ public class Stage0_DataMaterializationTests
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
 
-    // Data.As<T> is the source generator's internal resolution entry point; the
+    // Data.Value<T> is the source generator's internal resolution entry point; the
     // public materialization surface is Data.As(string) so callers don't pick the
     // materializer via a CLR generic. Reflection guards the rule.
     [Test]
@@ -27,7 +27,7 @@ public class Stage0_DataMaterializationTests
             .Where(m => m.Name == "As" && m.IsGenericMethodDefinition)
             .ToList();
         await Assert.That(publicGenericAs).IsEmpty()
-            .Because("Data.As<T> must stay internal — callers materialize (await via As(string typeName)).");
+            .Because("Data.Value<T> must stay internal — callers materialize (await via As(string typeName)).");
     }
 
     // Data.As("json") on a raw-string Value looks up the json materializer and
@@ -47,9 +47,8 @@ public class Stage0_DataMaterializationTests
     [Test]
     public async Task Data_PropertyAccess_UsesDeclaredTypeForMaterialization()
     {
-        var src = new Data("x", "{\"a\":1}")
+        var src = new Data("x", "{\"a\":1}", new global::app.type.@this("json"))
         {
-            Type = new global::app.type.@this("json"),
             Context = _app.User.Context
         };
 
@@ -64,9 +63,8 @@ public class Stage0_DataMaterializationTests
     [Test]
     public async Task Data_Materialization_CachesResultOnFirstAccess()
     {
-        var src = new Data("x", "{\"a\":1}")
+        var src = new Data("x", "{\"a\":1}", new global::app.type.@this("json"))
         {
-            Type = new global::app.type.@this("json"),
             Context = _app.User.Context
         };
 
@@ -85,7 +83,7 @@ public class Stage0_DataMaterializationTests
     public async Task Data_VariableSet_NoParsingAtSetTime()
     {
         const string raw = "a,b,c\n1,2,3";
-        var src = new Data("x", raw) { Type = new global::app.type.@this("csv") };
+        var src = new Data("x", raw, new global::app.type.@this("csv"));
 
         await Assert.That((await src.Value())?.ToString()).IsEqualTo(raw)
             .Because("Setting a typed Data must not invoke the materializer.");
@@ -96,7 +94,7 @@ public class Stage0_DataMaterializationTests
     [Test]
     public async Task Data_AsString_UnknownType_SurfacesErrorAtAccess_NotAtSet()
     {
-        var src = new Data("x", "anything") { Type = new global::app.type.@this("bogus") };
+        var src = new Data("x", "anything", new global::app.type.@this("bogus"));
 
         await Assert.That((await src.Value())?.ToString()).IsEqualTo("anything")
             .Because("Setting with an unknown declared type stays cleanly stored.");
@@ -112,9 +110,8 @@ public class Stage0_DataMaterializationTests
     [Test]
     public async Task Data_AsString_CrossTypeCoercion_LooksUpRequestedNotDeclared()
     {
-        var src = new Data("x", "{\"a\":1}")
+        var src = new Data("x", "{\"a\":1}", new global::app.type.@this("csv"))
         {
-            Type = new global::app.type.@this("csv"),
             Context = _app.User.Context
         };
 

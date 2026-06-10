@@ -11,25 +11,26 @@ namespace PLang.Tests.App.LazyDeserialize.LazyDataTests;
 // reader registry on first touch.
 public class LazyDataShapeTests
 {
-    private static FieldInfo? RawField()
-        => typeof(data).GetField("_raw", BindingFlags.NonPublic | BindingFlags.Instance);
-
+    // The raw slot dissolved off Data — the undecoded source form lives ON the
+    // type that owns it (source/file/url), private there. Data carries one
+    // typed instance and nothing beside it.
     [Test] public async Task Data_HasRawField_String_Or_ByteArray()
     {
-        var f = RawField();
-        await Assert.That(f).IsNotNull();
-        // object? backing — admits both string (text) and byte[] (binary).
-        await Assert.That(f!.FieldType).IsEqualTo(typeof(object));
+        var f = typeof(data).GetField("_raw", BindingFlags.NonPublic | BindingFlags.Instance);
+        await Assert.That(f).IsNull();
+        var sourceRaw = typeof(global::app.type.item.source)
+            .GetField("_raw", BindingFlags.NonPublic | BindingFlags.Instance);
+        await Assert.That(sourceRaw).IsNotNull();
+        await Assert.That(sourceRaw!.IsPrivate).IsTrue();
     }
 
-    // Independent #4 — the raw slot is private and carries no wire-shaping
+    // Independent #4 — the source's raw slot carries no wire-shaping
     // attribute; the renderer's Normalize gate must never pick it up.
     [Test] public async Task Data_RawField_IsPrivate_NotPublicNotOut()
     {
-        var f = RawField();
+        var f = typeof(global::app.type.item.source)
+            .GetField("_raw", BindingFlags.NonPublic | BindingFlags.Instance);
         await Assert.That(f!.IsPrivate).IsTrue();
-        // No wire-shaping attribute (Out/Store) — the renderer must never pick it up.
-        // (A compiler-emitted [Nullable] on `object?` is fine; only Out/Store matter.)
         bool hasWireAttr = f.GetCustomAttributes(false)
             .Any(a => a.GetType().Name.Contains("Out") || a.GetType().Name.Contains("Store"));
         await Assert.That(hasWireAttr).IsFalse();
@@ -46,15 +47,21 @@ public class LazyDataShapeTests
         await Assert.That(json.Contains("\"_raw\"")).IsFalse();
     }
 
-    // Two-laziness preservation — the recompute-on-access factory still works
-    // alongside materialise-once-and-cache.
+    // Factory-lazy on Data is gone — lazy is the type's job. A computed value
+    // is an item whose own door answers fresh at every use and is never kept.
     [Test] public async Task Data_PreservesExistingValueFactory_AndDynamicData()
     {
-        var d = new data("f");
+        var factoryOverload = typeof(data).GetMethods()
+            .FirstOrDefault(m => m.Name == "SetValue"
+                && m.GetParameters() is [{ ParameterType.IsGenericType: true } p]
+                && p.ParameterType.GetGenericTypeDefinition() == typeof(System.Func<>));
+        await Assert.That(factoryOverload).IsNull();
+
         int calls = 0;
-        d.SetValue(() => { calls++; return 42; });
-        await Assert.That((await d.Value())).IsEqualTo((object)42);
-        await Assert.That((await d.Value())).IsEqualTo((object)42); // cached after first compute
-        await Assert.That(calls).IsEqualTo(1);
+        var d = new data("f", new global::app.type.item.computed(() => { calls++; return 42; }));
+        await Assert.That((await d.Value())?.ToString()).IsEqualTo("42");
+        await Assert.That((await d.Value())?.ToString()).IsEqualTo("42");
+        // Fresh at every use — a computed answer is never kept.
+        await Assert.That(calls).IsEqualTo(2);
     }
 }

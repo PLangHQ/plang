@@ -21,7 +21,7 @@ public class NavigationAccessTests
         var ctx = app.User.Context;
         var d = data.FromRaw("{\"port\":8080}", type.Create("object", "json", context: ctx), ctx, "cfg");
         await Assert.That((await (await d.GetChild("port")).Value())?.ToString()).IsEqualTo("8080");
-        await Assert.That(d.MaterializeCount).IsEqualTo(1); // navigation materialized via the reader
+        await Assert.That(d.MaterializeCount()).IsEqualTo(1); // navigation materialized via the reader
     }
 
     // Architect 829785fbe — the type's *shape* decides the navigation model.
@@ -70,6 +70,6 @@ public class NavigationAccessTests
         var dict = new System.Collections.Generic.Dictionary<string, object?> { ["port"] = 8080L };
         var d = data.Ok(dict);
         await Assert.That((await (await d.GetChild("port")).Value())?.ToString()).IsEqualTo("8080");
-        await Assert.That(d.MaterializeCount).IsEqualTo(0);
+        await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
 }

@@ -50,7 +50,7 @@ public class Stage4_RankTests
         var pending = await new global::app.channel.type.file.@this(p).Read();   // raw-backed, unparsed
         var other = D(app2, 5, "number");
         _ = pending.Type.Rank(other);
-        await Assert.That(pending.MaterializeCount).IsEqualTo(0);   // rank reads types, never values
+        await Assert.That(pending.MaterializeCount()).IsEqualTo(0);   // rank reads types, never values
     }
 
     [Test]

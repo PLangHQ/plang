@@ -17,7 +17,7 @@ public class ScalarAccessTests
     {
         var d = data.FromRaw(Encoding.UTF8.GetBytes("héllo"), type.Create("bytes"));
         await Assert.That(d.Peek()).IsEqualTo((object)"héllo");
-        await Assert.That(d.MaterializeCount).IsEqualTo(0);
+        await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
 
     // Non-utf-8 bytes stay bytes — silently corrupting them into a
@@ -34,7 +34,7 @@ public class ScalarAccessTests
         const string json = "{\"port\":8080}";
         var d = data.FromRaw(json, type.Create("object", "json"));
         await Assert.That(d.Peek()).IsEqualTo((object)json); // the raw string, not a dict
-        await Assert.That(d.MaterializeCount).IsEqualTo(0);       // never parsed
+        await Assert.That(d.MaterializeCount()).IsEqualTo(0);       // never parsed
     }
 
     // Variable interpolation/output uses the scalar form: a bare `%cfg%` of a

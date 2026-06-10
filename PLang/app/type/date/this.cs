@@ -21,6 +21,7 @@ public sealed partial class @this : global::app.type.item.@this,
     public override object? ToRaw() => Value;
     public override bool IsLeaf => true;
     public override void Write(global::app.channel.serializer.IWriter w) => w.String(ToString());
+    protected internal override global::app.type.@this Mint() => new("date", typeof(System.DateOnly));
 
     public @this(System.DateOnly value) { Value = value; }
 

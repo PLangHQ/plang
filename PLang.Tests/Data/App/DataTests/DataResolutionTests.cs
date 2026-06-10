@@ -24,9 +24,9 @@ public class DataResolutionTests
         var data = new Data("v", "%x%") { Context = _app.User.Context };
 
         _app.User.Context.Variable.Set("x", "first");
-        var first = await data.As<global::app.type.text.@this>(_app.User.Context);
+        var first = await data.Value<global::app.type.text.@this>(_app.User.Context);
         _app.User.Context.Variable.Set("x", "second");
-        var second = await data.As<global::app.type.text.@this>(_app.User.Context);
+        var second = await data.Value<global::app.type.text.@this>(_app.User.Context);
 
         await Assert.That((await first.Value())?.ToString()).IsEqualTo("first");
         await Assert.That((await second.Value())?.ToString()).IsEqualTo("second");
@@ -40,12 +40,12 @@ public class DataResolutionTests
         var raw = new List<object?> { "%name%", "literal" };
         var data = new Data("list", raw) { Context = _app.User.Context };
 
-        var resolved = await data.As<global::app.type.list.@this<global::app.type.text.@this>>(_app.User.Context);
+        var resolved = await data.Value<global::app.type.list.@this<global::app.type.text.@this>>(_app.User.Context);
         await Assert.That(resolved.GetValue<List<string>>()![0]).IsEqualTo("world");
 
         // Original raw is unchanged.
         await Assert.That(((List<object?>)(await data.Value())!)[0]).IsEqualTo("%name%");
-        await Assert.That(ReferenceEquals((data.Materialize()), raw)).IsTrue();
+        await Assert.That(ReferenceEquals((data.Peek()), raw)).IsTrue();
     }
 
     // Loop iteration scenario: action runs N times, %i% changes each iteration → property reads N distinct values.
@@ -58,7 +58,7 @@ public class DataResolutionTests
         for (int i = 0; i < 3; i++)
         {
             _app.User.Context.Variable.Set("i", $"value-{i}");
-            seen.Add((await (await data.As<global::app.type.text.@this>(_app.User.Context)).Value()));
+            seen.Add((await (await data.Value<global::app.type.text.@this>(_app.User.Context)).Value()));
         }
 
         await Assert.That(seen[0]).IsEqualTo("value-0");
@@ -73,11 +73,11 @@ public class DataResolutionTests
     {
         var data = new Data("v", "%scope%") { Context = _app.User.Context };
         _app.User.Context.Variable.Set("scope", "parent");
-        var parentView = await data.As<global::app.type.text.@this>(_app.User.Context);
+        var parentView = await data.Value<global::app.type.text.@this>(_app.User.Context);
 
         await using var subApp = new global::app.@this("/sub");
         subApp.User.Context.Variable.Set("scope", "sub");
-        var subView = await data.As<global::app.type.text.@this>(subApp.User.Context);
+        var subView = await data.Value<global::app.type.text.@this>(subApp.User.Context);
 
         await Assert.That((await parentView.Value())?.ToString()).IsEqualTo("parent");
         await Assert.That((await subView.Value())?.ToString()).IsEqualTo("sub");
@@ -92,7 +92,7 @@ public class DataResolutionTests
         _app.User.Context.Variable.Set("count", 42);
         var data = new Data("c", "%count%") { Context = _app.User.Context };
 
-        var result = await data.As<global::app.type.number.@this>(_app.User.Context);
+        var result = await data.Value<global::app.type.number.@this>(_app.User.Context);
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("42");
     }
 
@@ -107,11 +107,11 @@ public class DataResolutionTests
         var data = new Data("messages", raw) { Context = _app.User.Context };
 
         _app.User.Context.Variable.Set("comment", "value1");
-        var first = await data.As<global::app.type.list.@this<global::app.module.llm.LlmMessage>>(_app.User.Context);
+        var first = await data.Value<global::app.type.list.@this<global::app.module.llm.LlmMessage>>(_app.User.Context);
         await Assert.That(first.GetValue<List<global::app.module.llm.LlmMessage>>()![0].Content).IsEqualTo("value1");
 
         _app.User.Context.Variable.Set("comment", "value2");
-        var second = await data.As<global::app.type.list.@this<global::app.module.llm.LlmMessage>>(_app.User.Context);
+        var second = await data.Value<global::app.type.list.@this<global::app.module.llm.LlmMessage>>(_app.User.Context);
         await Assert.That(second.GetValue<List<global::app.module.llm.LlmMessage>>()![0].Content).IsEqualTo("value2");
     }
 
@@ -126,8 +126,8 @@ public class DataResolutionTests
         {
             for (int i = 0; i < 100; i++)
             {
-                var r = await data.As<global::app.type.text.@this>(_app.User.Context);
-                if (r.Materialize()?.ToString() != "value") return false;
+                var r = await data.Value<global::app.type.text.@this>(_app.User.Context);
+                if (r.Peek()?.ToString() != "value") return false;
             }
             return true;
         })).ToArray();

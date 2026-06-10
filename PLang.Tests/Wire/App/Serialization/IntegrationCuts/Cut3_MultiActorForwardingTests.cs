@@ -37,7 +37,7 @@ public class Cut3_MultiActorForwardingTests
             b.User.Channel.Serializers.GetByMimeType("application/plang");
         var outer = new global::app.data.@this("forwarded") { Context = b.User.Context };
         outer.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
-        var outerWire = plangB.Serialize(outer).Materialize()!.ToString();
+        var outerWire = plangB.Serialize(outer).Peek()!.ToString();
 
         // C: receive bytes, reconstruct.
         var plangC = (global::app.channel.serializer.plang.@this)

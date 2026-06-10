@@ -27,7 +27,7 @@ public static class ShouldExitExtensions
         // A raw-backed, untouched read payload is never a flow-control signal —
         // skip the .Value check so this step-loop probe doesn't materialize it
         // (keeps a lazily-read value lazy until something actually uses it).
-        if (!d.RawUntouched && d.Materialize() is global::app.IExitsGoal eg) return eg.ShouldExit();
+        if (!d.RawUntouched && d.Peek() is global::app.IExitsGoal eg) return eg.ShouldExit();
         if (d.Type?.ClrType.Exit() == true) return true;
         return false;
     }

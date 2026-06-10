@@ -24,6 +24,6 @@ public class PropertyAccessTests
         var d = data.FromRaw("{\"big\":\"body\"}", type.Create("object", "json"));
         d.Properties["status"] = 200;
         _ = (await (await d.GetChild("!status")).Value());       // read the property
-        await Assert.That(d.MaterializeCount).IsEqualTo(0); // body untouched
+        await Assert.That(d.MaterializeCount()).IsEqualTo(0); // body untouched
     }
 }

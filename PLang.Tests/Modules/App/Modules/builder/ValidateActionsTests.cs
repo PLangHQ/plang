@@ -84,7 +84,6 @@ public class ValidateActionsTests
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "dosomething.pr"), prJson);
 
         var goalCallData = new Data("GoalName", new global::app.goal.GoalCall { Name = "DoSomething" });
-        goalCallData.Type = new global::app.type.@this("goal.call");
 
         var actions = new StepActions
         {
@@ -112,7 +111,6 @@ public class ValidateActionsTests
     public async Task ValidateActions_DynamicNames_Skipped()
     {
         var goalCallData = new Data("GoalName", new global::app.goal.GoalCall { Name = "%dynamicGoal%" });
-        goalCallData.Type = new global::app.type.@this("goal.call");
 
         var actions = new StepActions
         {
@@ -171,8 +169,8 @@ public class ValidateActionsTests
                 Parameters = new List<Data>
                 {
                     new("Left", "%flag%"),
-                    new("Operator", "==") { Type = new global::app.type.@this("string") },
-                    new("Right", "false") { Type = new global::app.type.@this("bool") }
+                    new("Operator", "==", new global::app.type.@this("string")),
+                    new("Right", "false", new global::app.type.@this("bool"))
                 }
             }
         };
@@ -202,8 +200,8 @@ public class ValidateActionsTests
                 Parameters = new List<Data>
                 {
                     new("Left", "%count%"),
-                    new("Operator", ">") { Type = new global::app.type.@this("string") },
-                    new("Right", "5") { Type = new global::app.type.@this("number", "int") }
+                    new("Operator", ">", new global::app.type.@this("string")),
+                    new("Right", "5", new global::app.type.@this("number", "int"))
                 }
             }
         };
@@ -230,9 +228,9 @@ public class ValidateActionsTests
                 ActionName = "if",
                 Parameters = new List<Data>
                 {
-                    new("Left", "%flag%") { Type = new global::app.type.@this("bool") },
+                    new("Left", "%flag%", new global::app.type.@this("bool")),
                     new("Operator", "=="),
-                    new("Right", true) { Type = new global::app.type.@this("bool") }
+                    new("Right", true, new global::app.type.@this("bool"))
                 }
             }
         };

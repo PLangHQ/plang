@@ -27,6 +27,6 @@ public static class Default
             var mime = ctx.Context?.App.Format.Mime("." + (kind ?? "")) ?? $"image/{kind}";
             return new global::app.type.image.@this(bytes, mime);
         }
-        return global::app.type.image.@this.Convert(raw, kind, ctx.Context!)?.Materialize();
+        return global::app.type.image.@this.Convert(raw, kind, ctx.Context!)?.Peek();
     }
 }

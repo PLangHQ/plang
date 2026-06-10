@@ -82,7 +82,7 @@ public sealed class Operator
         => data == null ? null : await data.Value();
 
     /// <summary>Both operands have a non-null value — the ordering operators are false otherwise.</summary>
-    private static bool BothPresent(data.@this? left, data.@this? right) => left?.Materialize() != null && right?.Materialize() != null;
+    private static bool BothPresent(data.@this? left, data.@this? right) => left?.Peek() != null && right?.Peek() != null;
 
     /// <summary>
     /// IS-A: does the left value's type satisfy the named type (right operand)?
@@ -93,12 +93,15 @@ public sealed class Operator
     /// </summary>
     private static async Task<bool> IsType(data.@this? left, data.@this? right)
     {
-        var typeName = right?.Materialize()?.ToString();
+        var typeName = right?.Peek()?.ToString();
         if (left == null || string.IsNullOrWhiteSpace(typeName)) return false;
         if (left.Type.Is(typeName)) return true;
-        if (left.Peek() is (global::app.type.file.@this or global::app.type.url.@this) and { } reference)
+        if (left.Peek() is global::app.type.file.@this or global::app.type.url.@this
+            || left.RawUntouched)
         {
-            await left.NarrowReference(reference);
+            // `is <type>` IS an examination — the door parses + narrows, then
+            // the chain answers deterministically on both branches.
+            _ = await left.Value();
             return left.Type.Is(typeName);
         }
         return false;

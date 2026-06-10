@@ -28,11 +28,11 @@ public class DataKindFoldTests
         await Assert.That(d.Type.Kind).IsEqualTo("md");
     }
 
-    [Test] public async Task Data_KindSetter_WritesThroughToTypeKind()
+    // Kind is instance-owned and stamped at creation — there is no setter on
+    // Data; a kind arrives via the declared type at construction.
+    [Test] public async Task Data_Kind_HasNoPublicSetter()
     {
-        var d = new DataT("x", "hello", new TypeEntity("text"));
-        d.Kind = "md";
-        await Assert.That(d.Type.Kind).IsEqualTo("md");
-        await Assert.That(d.Kind).IsEqualTo("md");
+        var prop = typeof(global::app.data.@this).GetProperty("Kind");
+        await Assert.That(prop?.SetMethod).IsNull();
     }
 }

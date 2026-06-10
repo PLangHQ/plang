@@ -45,6 +45,14 @@ public sealed partial class @this : global::app.type.item.@this,
     // No static Kinds — text's kind is open (derived from extension at build).
 
     public string Value { get; }
+
+    /// <summary>The value's kind — the file-extension vocabulary (md, csv, …).
+    /// An ordinary typed property stamped at creation, never after.</summary>
+    public string? Kind { get; init; }
+
+    protected internal override global::app.type.@this Mint()
+        => new("text", typeof(string)) { Kind = Kind };
+
     public override object? ToRaw() => Value;
     public override bool IsLeaf => true;
     public override void Write(global::app.channel.serializer.IWriter w) => w.String(Value);

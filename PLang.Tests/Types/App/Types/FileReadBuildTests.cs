@@ -80,7 +80,7 @@ public class FileReadBuildTests
             };
             var result = await action.Run();
             await result.IsSuccess();
-            await Assert.That((await result.Value())).IsEqualTo("hello");
+            await Assert.That((await result.Value())?.ToString()).IsEqualTo("hello");
         }
         finally { try { System.IO.File.Delete(abs); } catch { } }
     }

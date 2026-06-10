@@ -24,21 +24,14 @@ using type = global::app.type.@this;
 [System.Text.Json.Serialization.JsonConverter(typeof(WireLocal))]
 public partial class @this
 {
-    private protected object? _value;
-    private Func<object?>? _valueFactory;
-
-    // Lazy (Way-3) backing: the undecoded source form — `string` for a text
-    // source, `byte[]` for a binary one. When set with `_value` null, `.Value`
-    // materializes through the reader registry on first touch and caches into
-    // `_value`; `_raw` SURVIVES materialization (verbatim passthrough +
-    // signature verification ride on it) and is cleared only by a mutation.
-    // Private + never on the wire — the wire shape is Data's own four fields.
-    private object? _raw;
-    // Materialization is a read-through; a failed read caches its error here and
-    // surfaces it on the Data (best-effort `.Value` returns null). Touch-time,
-    // not read-time — the point of laziness.
-    private int _materializeCount;
-    private protected type? _type;
+    // THE value — the typed instance. It IS the value; Data never looks inside
+    // it, never asks what type it holds, has no special cases for any type.
+    // Null only for an absent slot (NotFound/Uninitialized) or an error-only
+    // result. Everything the old shape kept beside the value (_raw source
+    // form, the _type descriptor, the lazy factory) lives ON the instance now:
+    // a file holds its own bytes, a source holds its declared {type, kind},
+    // a computed holds its factory.
+    private protected global::app.type.item.@this? _instance;
     private protected actor.context.@this _context = null!;
 
     /// <summary>
@@ -120,8 +113,7 @@ public partial class @this
         set
         {
             _context = value;
-            if (_type != null) _type.Context = value;
-            if (_value is module.IContext contextual)
+            if (_instance is module.IContext contextual)
                 contextual.Context = value;
         }
     }
@@ -142,8 +134,8 @@ public partial class @this
     /// </summary>
     // A %var%-reference value rides as text.@this after born-native (a .pr loads
     // "%x%" through UnwrapJsonElement). The reference lives in the string either
-    // way, so resolution peeks through the wrapper to the backing string.
-    private string? VarString => _value as string ?? (_value as app.type.text.@this)?.Value;
+    // way, so resolution peeks through the instance to the backing string.
+    private string? VarString => Peek() as string ?? (_instance as app.type.text.@this)?.Value;
 
     [JsonIgnore]
     public bool IsVariable => VarString is string s && s.StartsWith('%') && s.EndsWith('%') && s.Length > 2;
@@ -198,9 +190,10 @@ public partial class @this
     /// nested Data always rides inside an owning wrapper type (list's pattern),
     /// so a bare one is always the implicit-operator double-wrap accident.</para>
     /// </summary>
-    private static object? Lift(object? v)
+    internal static global::app.type.item.@this? Lift(object? v, actor.context.@this? context = null)
     {
-        if (v is null || v is global::app.type.item.@this) return v;
+        if (v is null) return null;
+        if (v is global::app.type.item.@this already) return already;
         if (v is @this)
             throw new System.InvalidOperationException(
                 "A bare Data may not be stored as a value — nested Data always rides inside an owning wrapper type. "
@@ -208,24 +201,27 @@ public partial class @this
                 + System.Environment.StackTrace);
 
         var (family, _) = global::app.type.convert.@this.OwnerOf(v.GetType());
-        if (family == null || !typeof(global::app.type.item.@this).IsAssignableFrom(family))
-            return v;   // unowned → rides as `item`, the unknown
-        // kind: null — the routing kind is a conversion-TARGET nuance ("text"
-        // asks text.Convert for the raw string; a precision pins a numeric
-        // narrowing). The seam always wants the family's WRAPPER; the wrapper
-        // derives its own kind from the value (never stored — ruling 4).
-        var lifted = global::app.type.convert.@this.OfStatic(family, v, kind: null, context: null);
-        return lifted is { Success: true } && lifted.Peek() is global::app.type.item.@this wrapper
-            ? wrapper
-            : v;
+        if (family != null && typeof(global::app.type.item.@this).IsAssignableFrom(family))
+        {
+            // kind: null — the routing kind is a conversion-TARGET nuance ("text"
+            // asks text.Convert for the raw string; a precision pins a numeric
+            // narrowing). The seam always wants the family's WRAPPER; the wrapper
+            // derives its own kind from the value (never stored — ruling 4).
+            var lifted = global::app.type.convert.@this.OfStatic(family, v, kind: null, context: context);
+            if (lifted is { Success: true } && lifted.Peek() is global::app.type.item.@this wrapper)
+                return wrapper;
+        }
+        // Unowned — rung 2: a strongly-typed C# object plang holds as `item`
+        // with kind naming the class. The carrier's Peek answers the real
+        // instance, so generic consumers keep seeing the object itself.
+        return new global::app.type.item.clr(v);
     }
 
     [JsonConstructor]
     public @this(string name, object? value = null, type? type = null, @this? parent = null)
     {
         Name = CleanName(name);
-        _value = Lift(UnwrapJsonElement(value));
-        _type = type;
+        _instance = Lift(UnwrapJsonElement(value));
         Parent = parent;
         Path = BuildPath(parent, Name);
         IsInitialized = true;
@@ -233,102 +229,76 @@ public partial class @this
         Updated = Created;
         if (parent != null)
             _context = parent._context;
+        // A bare {object|item} stamp with no kind and no strict is the
+        // polymorphic NON-judgement — the value's own truth stands (and a null
+        // stays the null sentinel, not a typed absence).
+        if (type is { IsNull: false } && !type.Polymorphic)
+            _instance = _instance != null
+                ? type.Judge(_instance)
+                // A declared type with no value yet — a typed absence (a tool
+                // parameter slot, a typed null). The declaration must survive
+                // even with nothing to lift.
+                : new global::app.type.item.absent(type.Name, type.Kind);
     }
 
     /// <summary>
-    /// THE value door — the single public read accessor. <c>ValueTask</c>, not
-    /// <c>Task</c>: the common case (value already in memory) allocates nothing,
-    /// and this is the hottest accessor. Async only when it must <b>read</b> — a
-    /// file/url reference's first content touch (Stage 3); everything in memory
-    /// completes synchronously. There is no public sync <c>.Value</c> property:
-    /// a read that may navigate or load must be reached through an <c>await</c>.
+    /// Applies a declared type judgement to this Data's instance after
+    /// construction — the build pipeline's stamping seam (the schema overrides
+    /// an LLM-emitted shape; a kind hook refines an authored literal). Same
+    /// rules as the entry lift's judgement fold (<see cref="type.Judge"/>).
+    /// </summary>
+    internal void Declare(type declared)
+    {
+        if (_instance != null && declared is { IsNull: false } && !declared.Polymorphic)
+            _instance = declared.Judge(_instance);
+    }
+
+    /// <summary>
+    /// THE value door — "I am going to use this value, give it to me ready."
+    /// Forwards to the instance's own door: the type loads and parses ITSELF
+    /// and may answer as a DIFFERENT type instance (file → dict). When the
+    /// instance allows (<see cref="global::app.type.item.@this.Cacheable"/> —
+    /// the answer depends on nothing but the value itself), the Data rebinds to
+    /// the answer; that one assignment IS the narrow. A computed/template
+    /// answer is never kept — fresh at every use. A load/parse failure surfaces
+    /// as <see cref="Error"/>, never a throw into a courier.
     /// <para><b>Await once</b> per call site — no store-and-await-twice.</para>
     /// </summary>
-    public virtual ValueTask<object?> Value()
+    public virtual async ValueTask<object?> Value()
     {
-        var v = Materialize();
-        // A reference (file/url) used AS A SCALAR yields its raw content —
-        // loaded through the auth gate, NOT narrowed (the bare-scalar
-        // contract: `write out %config%` / `%config% == "<text>"` see the
-        // bytes/text as read). Only EXAMINATION — navigation (`%x.field%`) or
-        // `is <type>` — parses and narrows.
-        if (v is global::app.type.file.@this or global::app.type.url.@this)
-            return ScalarContent(v);
-        return new(v);
-    }
-
-    // Raw content of an un-narrowed reference: string for a text-shaped mime,
-    // byte[] for binary. The bytes cache ON the reference (BytesAsync is
-    // idempotent), so repeated scalar reads — and a cache-hit clone sharing the
-    // reference — do one I/O total.
-    private static async ValueTask<object?> ScalarContent(object reference)
-    {
-        var (bytes, mime) = reference switch
+        if (_instance == null) return null;
+        global::app.type.item.@this answer;
+        try
         {
-            global::app.type.file.@this f => (await f.BytesAsync(), f.Path.MimeType),
-            global::app.type.url.@this u => (await u.BytesAsync(), u.Path.MimeType),
-            _ => (null, ""),
-        };
-        if (bytes == null) return reference;
-        var textShaped = mime.StartsWith("text/", System.StringComparison.OrdinalIgnoreCase)
-            || mime.Contains("json", System.StringComparison.OrdinalIgnoreCase)
-            || mime.Contains("xml", System.StringComparison.OrdinalIgnoreCase)
-            || mime.Contains("csv", System.StringComparison.OrdinalIgnoreCase)
-            || string.IsNullOrEmpty(mime);
-        return textShaped ? System.Text.Encoding.UTF8.GetString(bytes) : (object)bytes;
+            answer = await _instance.Ready();
+        }
+        catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
+        {
+            var real = (ex as System.Reflection.TargetInvocationException)?.InnerException ?? ex;
+            var entity = _instance.Mint();
+            Error = new global::app.error.Error(
+                $"failed to read %{Name}% as {entity.Kind ?? entity.Name}: {real.Message}",
+                "MaterializeFailed", 400) { Exception = real };
+            return null;
+        }
+        if (!ReferenceEquals(answer, _instance) && _instance.Cacheable)
+        {
+            if (answer is module.IContext contextual) contextual.Context = _context;
+            _instance = answer;
+        }
+        // Transitional return shape: the in-memory form (the instance, except
+        // where the instance carries a raw form — clr carrier's POCO, an
+        // unparseable source's bytes). Tightens to the instance itself when
+        // the consumer tail converts (slice 2).
+        return answer.Open();
     }
 
     /// <summary>
-    /// The narrow — the EXAMINATION seam (navigation and <c>is</c> call this):
-    /// read + parse the reference's content, then mutate THIS Data in place —
-    /// <c>_value</c> becomes the parsed content, the headline type becomes the
-    /// content's type with the reference type retained in the chain
-    /// (<see cref="type.Accumulate"/>). Idempotent — once narrowed the value is
-    /// no longer a reference, so racing navigations converge (last-write-wins,
-    /// same typed result).
+    /// The typed instance — THE value. Internal: for type-internal seams (a
+    /// file reading itself through the channel) and the wire writer. Couriers
+    /// move the whole Data and never reach here.
     /// </summary>
-    internal async ValueTask<object?> NarrowReference(object reference)
-    {
-        var refPath = reference switch
-        {
-            global::app.type.file.@this f => f.Path,
-            global::app.type.url.@this u => u.Path,
-            _ => null,
-        };
-        if (refPath == null) return reference;
-        var channel = new global::app.channel.type.file.@this(refPath);
-        var read = await channel.Read();
-        if (!read.Success)
-        {
-            Error = read.Error;
-            return null;
-        }
-        var content = await read.Value();
-        // The headline is the CONTENT's own family (a parsed json object is a
-        // dict, not the channel's shape-agnostic `item` stamp); the stamped kind
-        // rides along. Fresh entity — the stamped type may be a shared registry
-        // instance and the chain is per-value state.
-        var headlineName = content != null
-            ? _context?.App.Type.Name(content.GetType()) ?? read.Type!.Name
-            : read.Type!.Name;
-        var headline = type.Create(headlineName, read.Type!.Kind, context: _context);
-        if (_type != null)
-        {
-            headline.Accumulate(_type);
-            // The location-only reference stays reachable on the property plane
-            // (`%x!file!path%` post-narrow). Single-storage: the reference holds
-            // no content — the parsed value above is the one copy.
-            switch (reference)
-            {
-                case global::app.type.file.@this f: f.Release(); Properties[_type.Name] = f; break;
-                case global::app.type.url.@this u: u.Release(); Properties[_type.Name] = u; break;
-            }
-        }
-        _type = headline;
-        _value = Lift(content);
-        _raw = null;
-        return content;
-    }
+    internal global::app.type.item.@this? Instance => _instance;
 
     /// <summary>
     /// Value door with a fallback for when the resolved value is null — absent slot
@@ -378,185 +348,75 @@ public partial class @this
     }
 
     /// <summary>
-    /// Brings the value fully into memory and returns it — resolves the lazy
-    /// factory and parses a raw source form through the reader registry, caching
-    /// the result. The synchronous core of the <see cref="Value"/> door (Stage 3
-    /// puts the async <em>read</em> in front of this parse). Internal plumbing —
-    /// the public read surface is the async <see cref="Value"/> door; the sync
-    /// surfaces that genuinely cannot <c>await</c> (serialization, <c>ToString</c>)
-    /// reach the in-memory value through here.
-    /// </summary>
-    internal virtual object? Materialize()
-    {
-        // The backing is the RAW stored value. No %var% substitution, no caching of
-        // resolution — As<T>(context) is the read transformation; the backing
-        // preserves the input form so each As<T> resolves freshly against the
-        // current variable store. The factory resolves once on first access —
-        // "lazy compute," distinct from variable resolution (DynamicData et al.).
-        if (_valueFactory != null)
-        {
-            _value = Lift(_valueFactory());
-            _valueFactory = null;
-        }
-        // Parse the raw source form — only when nothing is cached yet AND a raw is
-        // set. Inline-authored values (`set %x% = 5`) populate `_value` and leave
-        // `_raw` null, so they never hit this path and the `%var%`-resolves-fresh-
-        // per-read contract is untouched.
-        if (_value == null && _raw != null)
-            _value = Lift(ParseRaw());
-        return _value;
-    }
-
-    /// <summary>
-    /// Replaces the wrapped value — the write side of the door (was the
-    /// <c>Value</c> setter). Mutation: clears the raw backing and the explicit
-    /// type, fires <see cref="OnChange"/>.
+    /// Replaces the value — the write side of the door. The new value lifts to
+    /// its typed instance at this seam; mutation fires <see cref="OnChange"/>.
     /// </summary>
     public virtual void SetValue(object? value)
     {
-        _value = Lift(UnwrapJsonElement(value));
-        _valueFactory = null;
-        _raw = null;            // mutation — raw is no longer authoritative
+        _instance = Lift(UnwrapJsonElement(value), _context);
         Updated = System.DateTime.UtcNow;
         IsInitialized = true;
-        _type = null;
-        if (_value is module.IContext contextual)
+        if (_instance is module.IContext contextual)
             contextual.Context = _context;
         // Data owns OnChange — fires whenever the wrapped value mutates.
-        // Constructors set _value directly and bypass this. SetValueDirect also bypasses.
+        // Constructors set _instance directly and bypass this. SetValueDirect also bypasses.
         FireOnChange(this);
     }
 
     /// <summary>
-    /// Look at the current rung without forcing the next — the access-driven rule
-    /// for <c>%x%</c> and <c>write out %x%</c>. Returns the value's raw source form
-    /// WITHOUT a structured parse: a text raw is the string; a byte raw decodes
-    /// utf-8 when the bytes are valid utf-8, otherwise stays <c>byte[]</c> (silently
-    /// mojibake-ing binary is worse than handing back bytes). An authored value
-    /// (or one already materialized) returns as-is. Peeking never materializes a
-    /// structured type — only navigation (<c>%x.field%</c>) and <c>As&lt;T&gt;</c>
-    /// / <c>as &lt;type&gt;</c> do.
+    /// What is in memory NOW — sync, no I/O, no parse, no resolve. Forwards to
+    /// the instance's own <see cref="global::app.type.item.@this.Peek"/>: the
+    /// instance itself for a final-form value, the raw source form for an
+    /// unparsed one, the carried CLR object for a rung-2 value. (ToString,
+    /// Equals, debug views read here; they never load.)
     /// </summary>
-    public object? Peek()
-    {
-        if (_valueFactory != null) { _value = Lift(_valueFactory()); _valueFactory = null; }
-        if (_value != null) return _value;
-        if (_raw is string s) return s;
-        if (_raw is byte[] b) return DecodeUtf8OrBytes(b);
-        return _value;
-    }
-
-    // Strict utf-8 decode: returns the string when the bytes are valid utf-8,
-    // else hands back the bytes unchanged (no lossy substitution).
-    private static object DecodeUtf8OrBytes(byte[] bytes)
-    {
-        try { return new System.Text.UTF8Encoding(false, throwOnInvalidBytes: true).GetString(bytes); }
-        catch (System.Text.DecoderFallbackException) { return bytes; }
-    }
+    public virtual object? Peek() => _instance?.Peek();
 
     /// <summary>
-    /// Sets a lazy value factory. Invoked on first Value access, then cached.
-    /// </summary>
-    public void SetValue(Func<object?> factory)
-    {
-        _valueFactory = factory;
-        _value = null;
-        IsInitialized = true;
-    }
-
-    /// <summary>
-    /// Construct a raw-backed (lazy) Data — the value materializes through the
-    /// reader registry on first touch of <see cref="Value"/>. The source form
-    /// (<paramref name="raw"/>) is held verbatim; <paramref name="type"/> carries
-    /// the Name + Kind the reader dispatches on. Used by the channel boundary
-    /// (Stage 4) and tests; <c>set %x% = 5</c> still populates the value directly.
+    /// Construct a source-backed (lazy) Data — the value is a
+    /// <see cref="global::app.type.item.source"/> holding the undecoded form
+    /// under its declared <c>{type, kind}</c>; the parse runs through the
+    /// instance's own door on first use. Used by the channel boundary and the
+    /// wire reader; <c>set %x% = 5</c> still lifts the value directly.
     /// </summary>
     public static @this FromRaw(object raw, type type, actor.context.@this? context = null, string name = "")
     {
-        var d = new @this(name) { _context = context };
-        d._raw = raw;
-        d._type = type;
-        if (type != null) type.Context = context;
+        var d = new @this(name) { _context = context! };
+        d._instance = new global::app.type.item.source(raw, type?.Name ?? "", type?.Kind) { Context = context };
         return d;
     }
 
-    /// <summary>How many times this Data materialized from <c>_raw</c> — a debug probe (0 for authored values).</summary>
-    internal int MaterializeCount => _materializeCount;
+    /// <summary>True when this Data is source-backed (holds an undecoded form held verbatim).</summary>
+    internal bool HasRaw => _instance is global::app.type.item.source;
 
-    /// <summary>True when this Data is raw-backed (has an undecoded source form held verbatim).</summary>
-    internal bool HasRaw => _raw != null;
-
-    /// <summary>The undecoded source form, or null for an authored value. Internal — never on the wire.</summary>
-    internal object? Raw => _raw;
+    /// <summary>The undecoded source form, or null for an authored/parsed value. Internal — never on the wire.</summary>
+    internal object? Raw => (_instance as global::app.type.item.source)?.Raw;
 
     /// <summary>
-    /// True when this Data is raw-backed and has NOT been materialized or mutated —
+    /// True when this Data is source-backed and has NOT been parsed or mutated —
     /// the verbatim-passthrough condition. Its raw source form can serialize back
-    /// out untouched, with no parse-then-reserialize.
+    /// out untouched, with no parse-then-reserialize. (A parse rebinds the
+    /// instance away from the source, so source-typed means untouched.)
     /// </summary>
-    internal bool RawUntouched => _raw != null && _value == null && _valueFactory == null;
+    internal bool RawUntouched => _instance is global::app.type.item.source;
 
     /// <summary>
-    /// Read-through parse: turn <c>_raw</c> into the value via the reader registry
-    /// for <c>(Type.Name, Type.Kind)</c>, falling back to the type's own
-    /// <c>Convert</c> for a string raw (subsumes the old <c>ConvertValue</c>).
-    /// Never clears <c>_raw</c>. A failure caches an Error that names the source and
-    /// returns null — touch-time, not a throw into a courier. The inner step of
-    /// <see cref="Materialize"/>.
-    /// </summary>
-    private object? ParseRaw()
-    {
-        _materializeCount++;
-        var t = _type;
-        try
-        {
-            var read = _context?.App.Type.Readers.Of(t?.Name ?? "", t?.Kind);
-            if (read != null)
-                return read(_raw!, t?.Kind, new global::app.type.reader.ReadContext(_context));
-            // Fallback — a string raw with a known type reads via the type's own
-            // Convert (json→dict, WireReader, primitive coercion). Subsumes ConvertValue.
-            if (_raw is string s && t != null)
-                return t.Convert(s);
-            return _raw; // no type to read toward — hand back the raw form (Stage 5 refines)
-        }
-        catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
-        {
-            // The reader dispatches through reflection — unwrap so the touch-time
-            // error names the real cause, not a generic invocation wrapper.
-            var real = (ex as System.Reflection.TargetInvocationException)?.InnerException ?? ex;
-            Error = new global::app.error.Error(
-                $"failed to read %{Name}% as {t?.Kind ?? t?.Name ?? "value"}: {real.Message}",
-                "MaterializeFailed", 400) { Exception = real };
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Force materialization of a string raw in place — the navigation seam that
-    /// replaces the old <c>ConvertValue</c>. A typed, still-textual value is
-    /// promoted to <c>_raw</c> and read through the registry; an already-raw-backed
-    /// value just materializes. No-op otherwise.
-    /// </summary>
-    internal void ForceMaterialize()
-    {
-        if (_value is string raw && _type != null)
-        {
-            _raw = raw;
-            _value = null;
-        }
-        if (_value == null && _raw != null)
-            _ = Materialize(); // parses the rung, caches into _value, keeps _raw
-    }
-
-    /// <summary>
-    /// Updates _value without triggering Value setter side effects (no type clearing, no unwrap).
-    /// Used by RehydrateNestedData to replace a dictionary with a reconstructed Data object
-    /// without losing the outer Type. A mutation — invalidates <c>_raw</c>.
+    /// Updates the instance without triggering Value setter side effects (no unwrap,
+    /// no OnChange). Used by RehydrateNestedData and the wire/compress couriers —
+    /// transitional debt the schema-layer branch deletes; do not add callers.
+    /// A non-item value (a reconstructed Data riding as a courier payload) is
+    /// carried by the rung-2 wrapper so the slot stays item-typed.
     /// </summary>
     internal void SetValueDirect(object? value)
     {
-        _value = value;
-        _raw = null;
+        _instance = value is null ? null
+            : value as global::app.type.item.@this
+            ?? new global::app.type.item.clr(value);
+        // Context propagates immediately — a context-resolved identity (the
+        // carrier's registry name) must be stable from the first mint, or the
+        // signed canonical form drifts when a later bind stamps Context.
+        if (_instance is module.IContext contextual && _context != null)
+            contextual.Context = _context;
         Updated = System.DateTime.UtcNow;
         IsInitialized = true;
     }
@@ -568,84 +428,33 @@ public partial class @this
     {
         get
         {
-            if (_type != null) return _type;
-            // No value, no explicit type → the "null" sentinel type entity.
-            // Replaces the historical `return null;`; the Wire converter
-            // already skips emission for Null so the on-wire shape is
-            // unchanged.  Consumers no longer carry a `Type?` null guard.
-            if (_value == null) return type.Null;
-            // Born-native scalars are wrappers (number/text/bool/…). ClrType is the raw CLR
-            // mate (Int32, string, …) — the System.Type the registry maps to and consumers
-            // convert against — so unwrap a leaf wrapper to its raw value's type. A container
-            // or domain value reports its own type.
-            var clr = (_value is global::app.type.item.@this { IsLeaf: true } leaf && leaf.ToRaw() is { } rawLeaf)
-                ? rawLeaf.GetType() : _value.GetType();
-            var typeName = _context?.App.Type.Name(clr)
-                           ?? AppTypes.GetPrimitiveName(clr)
-                           ?? clr.Name.ToLowerInvariant();
-            // Stamp ClrType directly — the value's own CLR type is the truth.
-            // The name may collapse multiple CLR types (numerics → "number"),
-            // so the entity can't re-derive the precise CLR mate from the name
-            // alone. Build hook stamps Kind too: for "number", carry the
-            // precision (int/long/decimal/…) so consumers see the same shape
-            // as a build-stamped variable.
-            var derived = new type(typeName, clr);
-            if (typeName == "number")
-            {
-                // Way 3: the kind is the value's exact CLR type — the full scalar
-                // tower, no float→double collapse. number owns the clr→kind map.
-                derived.Kind = global::app.type.number.@this.KindNameForClr(clr);
-            }
-            derived.Context = _context;
-            _type = derived;
-            return _type;
-        }
-        set
-        {
-            // Assigning the Null sentinel means "clear my explicit type" — the
-            // getter falls back to deriving from _value's CLR type.  This lets
-            // call sites copy a source's Type unconditionally without checking
-            // for the no-info sentinel.
-            _type = value.IsNull ? null : value;
-            if (!value.IsNull) value.Context = _context;
+            // Pure forward — the instance owns its identity and mints the
+            // entity (chain included) itself; Data only stamps Context so
+            // registry-backed reads (Is, fold properties) resolve.
+            if (_instance == null) return type.Null;
+            var minted = _instance.Type;
+            foreach (var entry in minted.List) entry.Context ??= _context;
+            return minted;
         }
     }
 
     /// <summary>
-    /// Build-time subtype refinement — folds through to <see cref="type.Kind"/>
-    /// (the entity is the single owner; no stored field on Data). Stays null
-    /// for types without a kind (plain string, polymorphic results). Setting on
-    /// the <see cref="@this.Null"/> sentinel is a no-op — the sentinel is shared
-    /// state; a Data minted with no name + no value has no slot to refine.
-    ///
-    /// <para>Not serialized: kind rides the wire inside the <c>type</c> entity
-    /// (<c>{name, kind?, strict?}</c>). A flat <c>kind</c> sibling would write
-    /// the same value twice (OBP smell #6) — two views that can drift — and
-    /// <c>Wire.ReadBody</c> has no case to read it back.</para>
+    /// The value's kind — read from the instance's own entity (the single
+    /// owner). Stays null for types without a kind.
     /// </summary>
     [JsonIgnore]
-    public string? Kind
-    {
-        get => _type?.Kind;
-        set
-        {
-            // Read through Type so the lazy derivation runs if needed. Null
-            // sentinel is shared singleton — refuse to mutate.
-            var t = Type;
-            if (t.IsNull) return;
-            t.Kind = value;
-        }
-    }
+    public string? Kind => _instance?.Mint().Kind;
 
     /// <summary>
     /// Gets the value cast to the specified type.
     /// </summary>
     public T? GetValue<T>()
     {
-        if (_value is T typed)
+        var v = Peek();
+        if (v is T typed)
             return typed;
 
-        var converted = AppTypes.ConvertTo(_value, typeof(T));
+        var converted = AppTypes.ConvertTo(v, typeof(T));
         if (converted is T result)
             return result;
 
@@ -657,13 +466,14 @@ public partial class @this
     /// </summary>
     public object? GetValue(System.Type targetType)
     {
-        if (_value == null)
+        var v = Peek();
+        if (v == null)
             return null;
 
-        if (targetType.IsAssignableFrom(_value.GetType()))
-            return _value;
+        if (targetType.IsAssignableFrom(v.GetType()))
+            return v;
 
-        return AppTypes.ConvertTo(_value, targetType);
+        return AppTypes.ConvertTo(v, targetType);
     }
 
     /// <summary>
@@ -692,12 +502,13 @@ public partial class @this
     /// </summary>
     public System.Collections.IEnumerable AsEnumerable()
     {
-        if (IsPlangIterable(_value))
-            return (System.Collections.IEnumerable)_value!;
+        var v = Peek();
+        if (IsPlangIterable(v))
+            return (System.Collections.IEnumerable)v!;
 
         // Single value — treat as a list of one
-        if (_value != null)
-            return new[] { _value };
+        if (v != null)
+            return new[] { v };
 
         return Array.Empty<object>();
     }
@@ -709,14 +520,15 @@ public partial class @this
     /// </summary>
     public IEnumerable<(@this key, @this value)> EnumerateItems()
     {
-        if (_value is app.type.dict.@this nativeDict)
+        var v = Peek();
+        if (v is app.type.dict.@this nativeDict)
         {
             foreach (var entry in nativeDict.Entries)
                 yield return (new @this("", entry.Name) { Context = _context }, entry);
             yield break;
         }
 
-        if (_value is app.type.list.@this nativeList)
+        if (v is app.type.list.@this nativeList)
         {
             int li = 0;
             foreach (var item in nativeList.Items)
@@ -727,7 +539,7 @@ public partial class @this
         // Raw infra collections (the native dict/list above handle value-flow). An
         // element already a Data passes through; a bare value is wrapped. WrapItem
         // is gone — native collections hold Data, so there's no general raw→Data path.
-        if (_value is IDictionary<string, object?> typedDict)
+        if (v is IDictionary<string, object?> typedDict)
         {
             foreach (var kvp in typedDict)
                 yield return (new @this("", kvp.Key) { Context = _context },
@@ -735,7 +547,7 @@ public partial class @this
             yield break;
         }
 
-        if (_value is System.Collections.IDictionary untypedDict)
+        if (v is System.Collections.IDictionary untypedDict)
         {
             foreach (System.Collections.DictionaryEntry entry in untypedDict)
                 yield return (new @this("", entry.Key) { Context = _context },
@@ -744,23 +556,23 @@ public partial class @this
         }
 
         int index = 0;
-        if (IsPlangIterable(_value))
+        if (IsPlangIterable(v))
         {
-            foreach (var item in (System.Collections.IEnumerable)_value!)
+            foreach (var item in (System.Collections.IEnumerable)v!)
                 yield return (new @this("", index++) { Context = _context },
                               item is @this id ? id : new @this("", item) { Context = _context });
             yield break;
         }
 
-        if (_value != null)
+        if (v != null)
             yield return (new @this("", 0) { Context = _context }, this);
     }
 
     [JsonIgnore]
-    public bool IsEmpty => !IsInitialized || _value == null
-        || _value is global::app.type.@null.@this
-        || (_value is string s && string.IsNullOrEmpty(s))
-        || (_value is global::app.type.text.@this t && string.IsNullOrEmpty(t.Value));
+    public bool IsEmpty => !IsInitialized || Peek() == null
+        || Peek() is global::app.type.@null.@this
+        || (Peek() is string s && string.IsNullOrEmpty(s))
+        || (Peek() is global::app.type.text.@this t && string.IsNullOrEmpty(t.Value));
 
     /// <summary>
     /// Returns the raw stored value without triggering the lazy factory. Under v4,
@@ -768,7 +580,7 @@ public partial class @this
     /// "skip the factory."
     /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
-    public object? RawValue => _value;
+    public object? RawValue => Peek();
 
     // The null *value* — a present null carrying the null.@this singleton, so
     // IsInitialized is true (distinct from NotFound/Uninitialized, which leave a
@@ -797,23 +609,25 @@ public partial class @this
     }
 
     /// <summary>
-    /// Reads this Data as Data&lt;T&gt; — the v4 resolution entry point.
-    /// Walks _value, substitutes %variable% references via context.Variable,
-    /// converts to T via TypeMapping, returns a fresh Data&lt;T&gt;.
-    /// Every call resolves freshly against the current context — there is nothing
-    /// to cache and nothing to invalidate. Caching, if any, lives on the caller.
-    ///
-    /// <para>
-    /// Internal: this is the source-generator's resolution entry point — T is
-    /// the declared C# property type, known at emit time. Public surface for
-    /// type-driven materialization is <see cref="As(string)"/> (caller names
-    /// the target PLang type at runtime, no generic at the call site).
-    /// </para>
+    /// THE typed ask — the untyped ask with an expectation attached: "I need a
+    /// T". T is a plang type only. Mechanics: a %var% reference resolves first
+    /// (the resolution preamble — substitution, the raw-name and
+    /// action-destination carve-outs); then the answer is T or has T in its
+    /// chain → hand over (the facet); else the answer converts itself through
+    /// its own Convert hook; else the returned Data carries the error.
+    /// <b>Conversion never rebinds</b> — what a caller asked for is a view for
+    /// that caller, handed over and never kept; only <see cref="Value()"/>'s
+    /// own answer rebinds. The slot form (a handler parameter
+    /// <c>Data&lt;T&gt;</c>) and this call form are the same ask in two places.
     /// </summary>
-    internal async System.Threading.Tasks.ValueTask<@this<T>> As<T>(actor.context.@this? context = null) where T : global::app.type.item.@this
+    public async System.Threading.Tasks.ValueTask<@this<T>> Value<T>(actor.context.@this? context = null) where T : global::app.type.item.@this
     {
         context = context ?? _context;
-        var raw = Materialize(); // factory-resolved if any; never %var% substituted
+        // The expectation may already be satisfied — the instance is T or
+        // carries T in its chain. Hand over without forcing a load/parse:
+        // binding a slot is not using the content.
+        if (_instance is T && this is @this<T> alreadyTyped) return alreadyTyped;
+        var raw = Peek(); // the source form; never %var% substituted here
         return await AsT_Impl<T>(raw, context);
     }
 
@@ -872,7 +686,7 @@ public partial class @this
             return global::app.data.@this.FromError(new global::app.error.ServiceError(
                 $"No PLang type registered under name '{typeName}'.", "UnknownType", 400));
 
-        var converted = context.App.Type.Convert(Materialize(), clr, context).Materialize();
+        var converted = context.App.Type.Convert(Peek(), clr, context).Peek();
         return new @this(Name, converted, new type(typeName), Parent) { Context = context };
     }
 
@@ -897,7 +711,7 @@ public partial class @this
         // result-binding, couriers, and parameter resolution.
         if (RawUntouched) return this;
 
-        var raw = Materialize();
+        var raw = Peek();
         // The store seam lifts source strings to `text`; resolution reads the
         // SOURCE FORM through the wrapper — a "%var%" reference is text until
         // it resolves, and this is where it resolves.
@@ -918,7 +732,7 @@ public partial class @this
             }
             // Partial — interpolate into a fresh value but keep slot Name + alias state from `this`.
             var interpolated = await context.Variable.Resolve(strVal);
-            var transient = new @this(Name, interpolated, _type, Parent) { Context = context };
+            var transient = new @this(Name, interpolated, null, Parent) { Context = context };
             transient.Properties = Properties;
             transient.OnCreate   = OnCreate;
             transient.OnChange   = OnChange;
@@ -938,7 +752,7 @@ public partial class @this
             // the type as `object` and lose the inner value's real type.
             @this transient = IsWireShape(walked)
                 ? FromWireShape(walked, Name, context)
-                : new @this(Name, walked, _type, Parent) { Context = context };
+                : new @this(Name, walked, null, Parent) { Context = context };
             transient.Properties = Properties;
             transient.OnCreate   = OnCreate;
             transient.OnChange   = OnChange;
@@ -963,7 +777,7 @@ public partial class @this
     // so unrelated nested values keep their native Data-keying.
     internal static object? WireSlot(object? raw, string key) => raw switch
     {
-        app.type.dict.@this nd => nd.Get(key)?.Materialize(),
+        app.type.dict.@this nd => nd.Get(key)?.Peek(),
         IDictionary<string, object?> d => d.TryGetValue(key, out var v) ? v : null,
         _ => null,
     };
@@ -1004,10 +818,10 @@ public partial class @this
         {
             case string s when !string.IsNullOrWhiteSpace(s):
                 return type.Create(s, context: context);
-            case app.type.dict.@this nd when nd.Get("name")?.Materialize() is { } nativeName:
+            case app.type.dict.@this nd when nd.Get("name")?.Peek() is { } nativeName:
                 return type.Create(nativeName.ToString()!,
-                    nd.Get("kind")?.Materialize()?.ToString(),
-                    AsBool(nd.Get("strict")?.Materialize()), context);
+                    nd.Get("kind")?.Peek()?.ToString(),
+                    AsBool(nd.Get("strict")?.Peek()), context);
             case IDictionary<string, object?> td when td.TryGetValue("name", out var nm) && nm != null:
                 string? kind = td.TryGetValue("kind", out var k) ? k?.ToString() : null;
                 bool strict = td.TryGetValue("strict", out var st) && AsBool(st);
@@ -1030,23 +844,6 @@ public partial class @this
         if (raw is IDictionary<string, object?> dict) return await WalkDict(dict, context);
         return raw;
     }
-
-    // Cycle protection for AsT_Impl. Tracks the raw %-containing strings currently being
-    // resolved within the current async flow. When a recursive call sees a string already
-    // in the set, it returns an error — no stack overflow on %a%↔%b% or %x%="%x%" graphs.
-    //
-    // AsyncLocal (not ThreadStatic) so the invariant "this state is per-resolution-stack"
-    // holds even if a future await is introduced into the resolve chain. The chain is
-    // currently sync, so the finally always clears before any caller awaits — but the
-    // primitive shouldn't depend on that staying true.
-    //
-    // ResolveDepthLimit caps recursion for *expanding* cycles where the strings differ at each
-    // level (e.g. %a%="X-%b%", %b%="Y-%a%" produces "X-%b%" → "X-Y-%a%" → "X-Y-X-%b%" → …).
-    // The HashSet alone misses these because every recursion produces a new string. The depth
-    // limit is well above any legitimate chain (real handler chains are 1–5 deep; matrix tests
-    // exercise 5 levels — see AsT_DeepChain_5Levels_ResolvesCorrectly).
-    private const int ResolveDepthLimit = 32;
-    private static readonly AsyncLocal<HashSet<string>?> _resolvingValues = new();
 
     private protected async System.Threading.Tasks.ValueTask<@this<T>> AsT_Impl<T>(object? raw, actor.context.@this? context) where T : global::app.type.item.@this
     {
@@ -1089,67 +886,44 @@ public partial class @this
 
         // String with %var% — substitute first, BEFORE fast paths. Without this ordering,
         // T=object would always match `raw is T` and short-circuit substitution.
+        // No cycle guard: stored values are values, not expressions — a resolved
+        // value is never re-scanned for references, so there is no recursion to
+        // guard (render is single-pass by design).
         if (raw is string strVal && strVal.Contains('%') && context?.Variable != null)
         {
-            var resolving = _resolvingValues.Value;
-            var isCycleRoot = resolving == null;
-            if (isCycleRoot)
+            if (TryFullVarMatch(strVal, out var varName))
             {
-                resolving = new HashSet<string>(StringComparer.Ordinal);
-                _resolvingValues.Value = resolving;
-            }
-
-            // Cycle: an outer frame is already resolving this exact string. Don't Remove
-            // on the cycle path — the outer frame still owns the entry.
-            if (!resolving!.Add(strVal))
-            {
-                return @this<T>.FromError(new ServiceError(
-                    $"Cyclic %var% reference detected while resolving '{strVal}'.",
-                    "VariableResolutionCycle", 400));
-            }
-
-            try
-            {
-                // Depth-bound for expanding chains (each level produces a new string).
-                if (resolving.Count > ResolveDepthLimit)
+                var resolved = await context.Variable.Get(varName);
+                if (resolved == null || !resolved.IsInitialized)
                 {
-                    return @this<T>.FromError(new ServiceError(
-                        $"Variable resolution exceeded depth limit ({ResolveDepthLimit}) at '{strVal}'.",
-                        "ResolveDepthExceeded", 400));
+                    // Unset var — propagate the variable's name so handler diagnostics see it.
+                    // Mark as not-initialized so callers can detect the difference between
+                    // "value is null" and "var doesn't exist".
+                    var notFound = new @this<T>(varName, default, null, Parent) { Context = context };
+                    notFound.IsInitialized = false;
+                    return notFound;
                 }
-
-                if (TryFullVarMatch(strVal, out var varName))
-                {
-                    var resolved = await context.Variable.Get(varName);
-                    if (resolved == null || !resolved.IsInitialized)
-                    {
-                        // Unset var — propagate the variable's name so handler diagnostics see it.
-                        // Mark as not-initialized so callers can detect the difference between
-                        // "value is null" and "var doesn't exist".
-                        var notFound = new @this<T>(varName, default, null, Parent) { Context = context };
-                        notFound.IsInitialized = false;
-                        return notFound;
-                    }
-                    if (!resolved.Success)
-                        return @this<T>.FromError(resolved.Error!);
-                    // Stored values are values, not expressions — the door loads content
-                    // (file/url) but never decodes %var% text inside a stored value (only
-                    // .pr-born parameter forms decode, at dispatch). Type-convert only.
-                    // Calling on `resolved` (the live variable) preserves identity: WrapAs
-                    // sees `resolved` as `this` and propagates Name + Properties + event lists.
-                    return resolved.AsT_Convert<T>(await resolved.Value(), context);
-                }
-                // Partial match — interpolate once. The result is the final value; embedded
-                // %var% inside the substituted text is opaque payload (matches mainstream
-                // language semantics: assignment evaluates once, stored value is opaque).
-                var interpolated = await context.Variable.Resolve(strVal);
-                return AsT_Convert<T>(interpolated, context);
+                if (!resolved.Success)
+                    return @this<T>.FromError(resolved.Error!);
+                // The expectation may already be satisfied — binding a slot is
+                // not using the content, so a file bound to a Data<file> (or
+                // any value bound to a Data<item>) hands over without forcing
+                // a load/parse. `write out %config%` keeps its un-narrowed
+                // reference this way.
+                if (resolved.Instance is T)
+                    return resolved.WrapAs<T>(resolved.Instance, context);
+                // Stored values are values, not expressions — the door loads content
+                // (file/url) but never decodes %var% text inside a stored value (only
+                // .pr-born parameter forms decode, at dispatch). Type-convert only.
+                // Calling on `resolved` (the live variable) preserves identity: WrapAs
+                // sees `resolved` as `this` and propagates Name + Properties + event lists.
+                return resolved.AsT_Convert<T>(await resolved.Value(), context);
             }
-            finally
-            {
-                resolving.Remove(strVal);
-                if (isCycleRoot) _resolvingValues.Value = null;
-            }
+            // Partial match — interpolate once. The result is the final value; embedded
+            // %var% inside the substituted text is opaque payload (matches mainstream
+            // language semantics: assignment evaluates once, stored value is opaque).
+            var interpolated = await context.Variable.Resolve(strVal);
+            return AsT_Convert<T>(interpolated, context);
         }
 
         // Containers with potential nested %var% — walk before fast paths for the same reason.
@@ -1172,6 +946,20 @@ public partial class @this
         // cast of an existing value.
         var staticResolved = TryStaticResolve<T>(raw, context);
         if (staticResolved != null) return staticResolved;
+
+        // The in-memory form doesn't satisfy T and isn't its own raw answer —
+        // open the value door (the type loads/parses itself, the Data rebinds)
+        // and let the evolved answer satisfy T or convert. This is the typed
+        // ask's core mechanic; the earlier fast paths only skip the door when
+        // the expectation was already met (binding is not use).
+        if (raw is global::app.type.item.@this inMemory && inMemory is not T
+            && ReferenceEquals(inMemory, _instance))
+        {
+            _ = await Value();
+            if (_instance is T evolvedT)
+                return WrapAs<T>(evolvedT, context);
+            raw = Peek();
+        }
 
         // No more substitution to do — `this` is the canonical. Apply identity-preserving
         // wrap rules (same-type fast path → variance → cross-type with conversion).
@@ -1258,11 +1046,11 @@ public partial class @this
     /// </summary>
     private @this<T> WrapAs<T>(object? value, actor.context.@this? context) where T : global::app.type.item.@this
     {
-        // Rule 1 — same-type fast path. If `this` is already Data<T> AND its raw value is T,
+        // Rule 1 — same-type fast path. If `this` is already Data<T> AND its instance is T,
         // return `this`. No allocation, full identity (Name, Properties, events all native).
         // Note: for action-destination carve-out the value may have been converted; but that
         // path enters here with raw, not converted, so we still match correctly.
-        if (this is @this<T> sameTyped && sameTyped._value is T)
+        if (this is @this<T> sameTyped && sameTyped._instance is T)
             return sameTyped;
 
         // Rule 2 — variance fast path. `value` is already a T (no conversion needed) but `this`
@@ -1270,6 +1058,13 @@ public partial class @this
         // .Value by ref (cast-only) and alias Properties + events from `this`.
         if (value is T fast && IsPlangAssignable(typeof(T), value.GetType()))
             return ConstructWrap<T>(fast, context);
+
+        // The chain — an evolved value still answers for what it was. A dict
+        // parsed from a file satisfies a Data<file> slot with the file facet.
+        if (value is global::app.type.item.@this evolved)
+            for (var p = evolved.Prior; p != null; p = p.Prior)
+                if (p is T facet)
+                    return ConstructWrap<T>(facet, context);
 
         // Null arrives here only when raw was null (or substitution produced null). Construct a
         // not-initialized Data<T> with default value, aliased state from `this`.
@@ -1304,7 +1099,7 @@ public partial class @this
     /// </summary>
     private @this<T> ConstructWrap<T>(T? value, actor.context.@this? context) where T : global::app.type.item.@this
     {
-        var wrapped = new @this<T>(Name, value, _type, Parent) { Context = context };
+        var wrapped = new @this<T>(Name, value, null, Parent) { Context = context };
         wrapped.Properties = Properties;
         wrapped.OnCreate   = OnCreate;
         wrapped.OnChange   = OnChange;
@@ -1454,7 +1249,7 @@ public partial class @this
     public virtual bool ToBoolean()
     {
         if (!IsInitialized) return false;
-        var val = Materialize();
+        var val = Peek();
         if (val == null) return false;
         // A value owns its own truthiness (empty text / zero number / empty dict /
         // null are falsy) — ask it before the raw-scalar fallbacks, which now only
@@ -1503,7 +1298,7 @@ public partial class @this
     /// </summary>
     public @this ShallowClone(string newName)
     {
-        var clone = new @this(newName, _value, _type)
+        var clone = new @this(newName)
         {
             Error = Error,
             Handled = Handled,
@@ -1513,18 +1308,11 @@ public partial class @this
             Signature = Signature,
             Properties = Properties
         };
-        clone._valueFactory = _valueFactory;
-        // Carry the raw backing so a lazily-read (raw-backed) value stays lazy through
-        // the clone — without this, RawUntouched would be false and the next .Value
-        // read would materialize null. _type already rode in via the constructor.
-        clone._raw = _raw;
+        // The instance is shared by reference — values are immutable, so
+        // sharing is always safe; the clone is a new Data pointing at the same
+        // value (the `set %y% = %x%` rule).
+        clone._instance = _instance;
         clone.Context = _context;
-        // A bare `object` type with no kind is the "unknown" sentinel a polymorphic slot
-        // stamps — the value's real CLR type is the truth, so let it derive rather than
-        // carrying a stale `object` label into the new binding. A genuine shape type
-        // (object/json, kind set) and raw-backed values keep their declared type.
-        if (!clone.RawUntouched && clone.Type is { IsNull: false, Name: "object", Kind: null })
-            clone.Type = type.Null;
         return clone;
     }
 
@@ -1534,8 +1322,7 @@ public partial class @this
     /// </summary>
     public virtual @this Clone()
     {
-        var clonedValue = _value.DeepClone();
-        var clone = new @this(Name, clonedValue, _type)
+        var clone = new @this(Name)
         {
             Error = Error,
             Handled = Handled,
@@ -1545,13 +1332,13 @@ public partial class @this
             Signature = Signature,
             Properties = Properties.Clone()
         };
-        clone._valueFactory = _valueFactory;
+        clone._instance = _instance.DeepClone();
         clone.Context = _context;
         return clone;
     }
 
     public override string ToString() =>
-        Success ? _value?.ToString() ?? "(null)" : $"Error: {Error?.Message}";
+        Success ? Peek()?.ToString() ?? "(null)" : $"Error: {Error?.Message}";
 
     private const int MaxJsonDepth = 128;
 
@@ -1721,7 +1508,14 @@ public class @this<T> : @this
     public new async ValueTask<T?> Value()
     {
         var v = await base.Value();
-        return v is T typed ? typed : GetValue<T>();
+        if (v is T typed) return typed;
+        // The chain — an evolved value still answers for the slot's type
+        // (a Data<file> slot whose value parsed to dict hands the file facet).
+        if (v is global::app.type.item.@this evolved)
+            for (var p = evolved.Prior; p != null; p = p.Prior)
+                if (p is T facet)
+                    return facet;
+        return GetValue<T>();
     }
 
     public @this(string name = "", T? value = default, type? type = null, @this? parent = null)
@@ -1769,17 +1563,22 @@ public class @this<T> : @this
     public static @this<T> From(@this source)
     {
         if (source is @this<T> already) return already;
-        var copy = new @this<T>(source.Name, source.Materialize() is T t ? t : default, source.Type)
+        var copy = new @this<T>(source.Name, source.Peek() is T t ? t : default, source.Type)
         {
             Error = source.Error,
-            Handled = source.Handled,
-            Returned = source.Returned,
-            ReturnDepth = source.ReturnDepth,
-            Warnings = source.Warnings != null ? new List<Info>(source.Warnings) : null,
-            Signature = source.Signature,
-            Properties = source.Properties,
-            Snapshot = source.Snapshot,
         };
+        // Sentinel/courier passthrough (an errored or suspended source whose
+        // value isn't T — the bubbled Ask): the instance rides whole so the
+        // sentinel's own type and exit semantics survive the typed boundary.
+        if (copy.Instance == null && source.Instance != null)
+            copy.SetValueDirect(source.Instance);
+        copy.Handled = source.Handled;
+        copy.Returned = source.Returned;
+        copy.ReturnDepth = source.ReturnDepth;
+        copy.Warnings = source.Warnings != null ? new List<Info>(source.Warnings) : null;
+        copy.Signature = source.Signature;
+        copy.Properties = source.Properties;
+        copy.Snapshot = source.Snapshot;
         return copy;
     }
 
@@ -1795,20 +1594,19 @@ public class @this<T> : @this
 }
 
 /// <summary>
-/// Dynamic Data that computes its value on access.
+/// Dynamic Data — a cell whose value computes fresh on every access (system
+/// variables like <c>%!Now%</c>). The lazy mechanism is the TYPE's, not Data's:
+/// the cell holds a <see cref="global::app.type.item.computed"/> instance whose
+/// own door answers fresh and is never kept.
 /// </summary>
 public class DynamicData : @this
 {
-    private readonly Func<object?> _valueFactory;
-
     public DynamicData(string name, Func<object?> valueFactory, type? type = null)
-        : base(name, null, type)
+        // The declared type rides on the computed instance itself (its label),
+        // not through the entry judgement — a computed answers fresh and must
+        // stay reachable as the instance.
+        : base(name, new global::app.type.item.computed(valueFactory, type?.IsNull == false ? type.Name : null, type?.Kind))
     {
-        _valueFactory = valueFactory;
     }
-
-    // Recompute on every access (no caching) — the door and the sync surfaces both
-    // dispatch through Materialize, so the recompute lives here, once.
-    internal override object? Materialize() => _valueFactory();
 }
 

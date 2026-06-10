@@ -229,7 +229,7 @@ public sealed class Default : IHttp
     public data.@this Configure(configure action)
     {
         // Redirect config can't change after first request (SocketsHttpHandler is immutable)
-        if (_client != null && (action.FollowRedirects?.Materialize() != null || action.MaxRedirects?.Materialize() != null))
+        if (_client != null && (action.FollowRedirects?.Peek() != null || action.MaxRedirects?.Peek() != null))
             return global::app.data.@this.FromError(new ServiceError(
                 "Cannot change FollowRedirects/MaxRedirects after first HTTP request",
                 "ConfigLocked", 409));

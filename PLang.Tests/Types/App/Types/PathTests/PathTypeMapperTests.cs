@@ -73,6 +73,6 @@ public class PathTypeMapperTests
         };
         var result = await read.Run();
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsEqualTo("hello from a string param");
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("hello from a string param");
     }
 }

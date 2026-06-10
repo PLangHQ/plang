@@ -183,15 +183,15 @@ public partial class Handle : IContext, IModifier
     private bool MatchesError(IError? error)
     {
         // MatchesError is a sync predicate — read the materialised backing, not the async door.
-        if (StatusCode?.Peek() == null && Key?.Materialize() == null && Message?.Materialize() == null) return true;
+        if (StatusCode?.Peek() == null && Key?.Peek() == null && Message?.Peek() == null) return true;
         if (error == null) return false;
 
         // The matcher's int boundary is IError.StatusCode — the number lowers
         // itself there (Peek: sync predicate, value already in memory).
         if (StatusCode?.Peek() is global::app.type.number.@this sc && error.StatusCode != sc.ToInt32()) return false;
-        if (!string.IsNullOrEmpty(Key?.Materialize()?.ToString())
+        if (!string.IsNullOrEmpty(Key?.Peek()?.ToString())
             && !string.Equals(error.Key, Key.Peek()?.ToString(), StringComparison.OrdinalIgnoreCase)) return false;
-        if (!string.IsNullOrEmpty(Message?.Materialize()?.ToString())
+        if (!string.IsNullOrEmpty(Message?.Peek()?.ToString())
             && !error.Message.Contains(Message.Peek()!.ToString()!, StringComparison.OrdinalIgnoreCase)) return false;
 
         return true;

@@ -113,7 +113,7 @@ public sealed partial class @this
                     // Pass Context so the per-call options bag uses a Context-
                     // bound PathJsonConverter — Path fields inside the result
                     // (Goal.Path, GoalCall.PrPath, ...) land fully wired.
-                    var converted = Context!.App.Type.Convert(text, materialized, Context).Materialize();
+                    var converted = Context!.App.Type.Convert(text, materialized, Context).Peek();
                     content = converted ?? text;
                 }
                 else

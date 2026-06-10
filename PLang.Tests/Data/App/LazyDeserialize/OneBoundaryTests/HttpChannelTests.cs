@@ -54,7 +54,7 @@ public class HttpChannelTests
         await using var app = NewApp(out var handler);
         var r = await Get(app, handler, "application/json", "{\"a\":1}");
         await r.IsSuccess();
-        await Assert.That(r.MaterializeCount).IsEqualTo(0);            // not deserialized at read
+        await Assert.That(r.MaterializeCount()).IsEqualTo(0);            // not deserialized at read
         await Assert.That(r.Peek()).IsEqualTo((object)"{\"a\":1}"); // raw body held
     }
 
@@ -86,6 +86,6 @@ public class HttpChannelTests
         await using var app = NewApp(out var handler);
         var r = await Get(app, handler, "application/json", "{\"a\":1}");
         await Assert.That((await (await r.GetChild("!StatusCode")).Value())?.ToString()).IsEqualTo("200");
-        await Assert.That(r.MaterializeCount).IsEqualTo(0); // body untouched
+        await Assert.That(r.MaterializeCount()).IsEqualTo(0); // body untouched
     }
 }

@@ -276,7 +276,7 @@ public class SerializerRegistryTests
             => Task.FromResult(global::app.data.@this<T>.Ok(default!));
 
         public global::app.data.@this<global::app.type.text.@this> Serialize(Data data)
-            => global::app.data.@this<global::app.type.text.@this>.Ok((data.Materialize())?.ToString() ?? "");
+            => global::app.data.@this<global::app.type.text.@this>.Ok((data.Peek())?.ToString() ?? "");
 
         public Data Deserialize(string s) => Data.Ok();
 

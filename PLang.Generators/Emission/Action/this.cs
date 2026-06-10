@@ -191,7 +191,7 @@ public static class @this
             sb.Append($$"""
                         var __{{prop.Name}}_result = app.Code.Get<{{prop.TypeName}}>();
                         if (!__{{prop.Name}}_result.Success) return __{{prop.Name}}_result;
-                        __{{prop.Name}}_backing = (__{{prop.Name}}_result.Materialize() as {{prop.TypeName}})!;
+                        __{{prop.Name}}_backing = (__{{prop.Name}}_result.Peek() as {{prop.TypeName}})!;
 
                 """);
         }

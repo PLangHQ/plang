@@ -297,11 +297,11 @@ public class ConcurrentHandlersTests
         var data = new Data("v", "%x%") { Context = app.User.Context };
 
         var tasks = Enumerable.Range(0, 50).Select(_ => Task.Run(() =>
-            data.As<global::app.type.text.@this>(app.User.Context).AsTask())).ToArray();
+            data.Value<global::app.type.text.@this>(app.User.Context).AsTask())).ToArray();
         var results = await Task.WhenAll(tasks);
 
         // Each should be independent and successful with the same resolved value.
-        await Assert.That(results.All(r => r.Materialize()?.ToString() == "shared")).IsTrue();
+        await Assert.That(results.All(r => r.Peek()?.ToString() == "shared")).IsTrue();
         // Distinct instances (no shared cache).
         var distinctCount = results.Select(r => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(r))
             .Distinct().Count();

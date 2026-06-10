@@ -140,18 +140,18 @@ public class GeneratorValidationTests
         var intPlainSrc = File.ReadAllText(Path.Combine(GeneratedDir,
             "app.module.matrix.plain.IntPlain.Action.g.cs"));
 
-        await Assert.That(stringPlainSrc).Contains("__ResolveData(\"path\").As<global::app.type.text.@this>(Context)");
-        await Assert.That(intPlainSrc).Contains("__ResolveData(\"count\").As<global::app.type.number.@this>(Context)");
+        await Assert.That(stringPlainSrc).Contains("__ResolveData(\"path\").Value<global::app.type.text.@this>(Context)");
+        await Assert.That(intPlainSrc).Contains("__ResolveData(\"count\").Value<global::app.type.number.@this>(Context)");
     }
 
     [Test]
     public async Task GeneratedPropertyBody_UsesGetParameterAndAsT()
     {
         var generated = ReadAnyGeneratedHandler();
-        // Either form is the v4 lookup-then-resolve idiom: __ResolveData(name) →(await  As<T>(Context)).
+        // The lookup-then-resolve idiom: __ResolveData(name) → await Value<T>(Context).
         // __ResolveData itself delegates to Action.GetParameter under the hood.
         await Assert.That(generated).Contains("__ResolveData");
-        await Assert.That(generated).Contains(".As<");
+        await Assert.That(generated).Contains(".Value<");
     }
 
     [Test]

@@ -647,7 +647,7 @@ public class Default : IBuilder
             if (existing != null) return;
             // The Type parameter VALUE is the structured type entity; the
             // parameter's own type is "type" (post-Stage-4 shape).
-            a.Parameters.Add(new data.@this("Type", inferred) { Type = new app.type.@this("type") });
+            a.Parameters.Add(new data.@this("Type", inferred));
             return;
         }
     }
@@ -912,7 +912,7 @@ public class Default : IBuilder
                     if (schemaProp == null) continue;
                     var typeName = context.App.Type.GetTypeName(schemaProp.PropertyType);
                     if (typeName != "object")
-                        p.Type = new app.type.@this(typeName);
+                        p.Declare(new app.type.@this(typeName));
 
                     // plang-types: stamp kind alongside type when the declared
                     // type carries a static Build(value) hook. Separate field
@@ -927,7 +927,8 @@ public class Default : IBuilder
                         if (underlying.IsGenericType && underlying.GetGenericTypeDefinition() == typeof(global::app.data.@this<>))
                             underlying = underlying.GetGenericArguments()[0];
                         var kind = context.App.Type.KindHooks.Of(underlying, p.Peek());
-                        if (kind != null) p.Kind = kind;
+                        if (kind != null)
+                            p.Declare(new app.type.@this(p.Type.Name) { Kind = kind });
                     }
                 }
             }

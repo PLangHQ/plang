@@ -82,7 +82,7 @@ public sealed record @this(
         else if (IsNullable)
         {
             sb.AppendLine($"            var __d = __ResolveData(\"{ParamName}\");");
-            sb.AppendLine($"            {Backing} = __d.IsEmpty ? global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\") : await __d.As<{InnerType}>(Context);");
+            sb.AppendLine($"            {Backing} = __d.IsEmpty ? global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\") : await __d.Value<{InnerType}>(Context);");
             sb.AppendLine($"            if (!{Backing}.Success) __resolutionError = {Backing};");
         }
         else if (DefaultValue != null)
@@ -90,13 +90,13 @@ public sealed record @this(
             // [Default] fires on an absent slot AND on a null-resolving value
             // (`mime: %unsetVar%` lands on the default too).
             sb.AppendLine($"            var __d = __ResolveData(\"{ParamName}\");");
-            sb.AppendLine($"            {Backing} = __d.IsEmpty ? new global::app.data.@this<{InnerType}>(\"{ParamName}\", {DefaultExpr}) : await __d.As<{InnerType}>(Context);");
+            sb.AppendLine($"            {Backing} = __d.IsEmpty ? new global::app.data.@this<{InnerType}>(\"{ParamName}\", {DefaultExpr}) : await __d.Value<{InnerType}>(Context);");
             sb.AppendLine($"            if (!{Backing}.Success) __resolutionError = {Backing};");
             sb.AppendLine($"            else if ({Backing}.Peek() == null) {Backing} = new global::app.data.@this<{InnerType}>(\"{ParamName}\", {DefaultExpr});");
         }
         else
         {
-            sb.AppendLine($"            {Backing} = await __ResolveData(\"{ParamName}\").As<{InnerType}>(Context);");
+            sb.AppendLine($"            {Backing} = await __ResolveData(\"{ParamName}\").Value<{InnerType}>(Context);");
             sb.AppendLine($"            if (!{Backing}.Success) __resolutionError = {Backing};");
         }
         sb.AppendLine($"            {SetFlag} = true;");

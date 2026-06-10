@@ -56,7 +56,7 @@ public class ReadFailureTests
         // its value — no parse, so no throw escapes the courier.
         ctx.Variable.Set("bad", d);
         var relayed = (await ctx.Variable.Get("bad"))!;
-        await Assert.That(relayed.MaterializeCount).IsEqualTo(0); // courier never materialized
+        await Assert.That(relayed.MaterializeCount()).IsEqualTo(0); // courier never materialized
 
         // Only the leaf touch materializes — and it surfaces an error, never throws.
         await Assert.That((await relayed.Value())).IsNull();

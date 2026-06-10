@@ -32,7 +32,7 @@ public class HttpPathPromptHintTests
 
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
         {
-            LastQuestion = (action.Question.Materialize()?.ToString()) ?? "";
+            LastQuestion = (action.Question.Peek()?.ToString()) ?? "";
             return Task.FromResult(global::app.data.@this.Ok(Answer));
         }
     }

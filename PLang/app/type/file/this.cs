@@ -18,7 +18,7 @@ public sealed class @this : global::app.type.item.@this, global::app.data.ILoada
     public static string Shape => "string";
 
     /// <summary>The is-a lattice — a file is-a path (read by <c>type.@this.Is</c>).</summary>
-    public static System.Collections.Generic.IReadOnlyList<System.Type> Type { get; }
+    public static new System.Collections.Generic.IReadOnlyList<System.Type> Type { get; }
         = new[] { typeof(@this), typeof(global::app.type.path.@this) };
 
     /// <summary>The location facet — owns scheme, auth gate, stat.</summary>
@@ -44,6 +44,15 @@ public sealed class @this : global::app.type.item.@this, global::app.data.ILoada
     /// <summary>True once the content is in memory (the reference was examined).</summary>
     public bool IsLoaded => _bytes != null;
 
+    /// <summary>A file's entity: name "file", kind = the extension's canonical
+    /// form through the format registry ("json", "csv", …) — location metadata,
+    /// never reads content.</summary>
+    protected internal override global::app.type.@this Mint()
+    {
+        var t = Context?.App.Format.TypeFromExtension(Path.Extension);
+        return new global::app.type.@this("file", typeof(@this)) { Kind = t is { IsNull: false } ? t.Kind : null };
+    }
+
     /// <summary>
     /// The raw content bytes, read through the path's auth gate on first access
     /// and cached. Idempotent — a loaded file returns its cache with no I/O.
@@ -62,6 +71,32 @@ public sealed class @this : global::app.type.item.@this, global::app.data.ILoada
     /// <summary>Write-out pre-materialisation (the serialize chokepoint) — pulls
     /// the raw content into memory so the sync renderer can emit it.</summary>
     public System.Threading.Tasks.Task LoadAsync() => BytesAsync();
+
+    /// <summary>
+    /// The value door — read + parse through the file channel (mime stamps the
+    /// content's {type, kind}; the auth gate rides on <c>Path.ReadBytes</c>) and
+    /// answer with the CONTENT's own instance (a json file answers as
+    /// <c>dict</c>), this file stamped as its prior. Single storage: the parsed
+    /// value is the one copy — the in-memory bytes are released, the file
+    /// becomes location-only again. A read failure throws; the holding Data
+    /// surfaces it as its Error.
+    /// </summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Ready()
+    {
+        var channel = new global::app.channel.type.file.@this(Path);
+        var read = await channel.Read();
+        if (!read.Success)
+            throw new System.IO.IOException(read.Error!.Message);
+        _ = await read.Value();
+        if (!read.Success)
+            throw new System.IO.IOException(read.Error!.Message);
+        var answer = read.Instance;
+        if (answer == null || ReferenceEquals(answer, this)) return this;
+        Release();
+        answer.Accumulate(this);
+        return answer;
+    }
+
 
     /// <summary>Truthiness of a reference is its location's: does it exist.</summary>
     public override bool IsTruthy() => Path is global::app.type.path.file.@this fp && fp.Exists;

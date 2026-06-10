@@ -49,8 +49,11 @@ public sealed partial class @this : global::app.type.item.@this, module.IDataWra
     [Debug]
     public List<Info> Warnings { get; init; } = new();
 
+    // `new`: this is the ACTION-cache flag (may this action's run result be
+    // cached), a distinct concept from the item base's answer-keep rule —
+    // which never applies here (an action's Ready() answers itself).
     [JsonIgnore]
-    public bool Cacheable { get; init; } = true;
+    public new bool Cacheable { get; init; } = true;
 
     /// <summary>
     /// True when this action was constructed inline in C# (default for
