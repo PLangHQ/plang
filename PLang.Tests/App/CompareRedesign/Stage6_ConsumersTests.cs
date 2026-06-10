@@ -82,9 +82,30 @@ public class Stage6_ConsumersTests
     [Test]
     public async Task SortBySize_FilesStatInPhaseOne_OrderInPhaseTwo()
     {
-        // sort %files% by size — all stat reads happen in phase 1; phase 2 orders in-hand keys
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // sort %files% by size — keys (stat) materialise in async phase 1;
+        // phase 2 orders the in-hand keys with a sync comparator
+        await using var app = NewApp();
+        var ctx = app.User.Context;
+        var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-sortsize-" + System.Guid.NewGuid().ToString("N")[..8]);
+        Directory.CreateDirectory(dir);
+        try
+        {
+            File.WriteAllText(System.IO.Path.Combine(dir, "big.txt"), new string('c', 30));
+            File.WriteAllText(System.IO.Path.Combine(dir, "tiny.txt"), "a");
+            File.WriteAllText(System.IO.Path.Combine(dir, "mid.txt"), new string('b', 10));
+
+            var files = new global::app.type.list.@this { Context = ctx };
+            foreach (var name in new[] { "big.txt", "tiny.txt", "mid.txt" })
+                files.Add(new Data(name, new global::app.type.path.file.@this(System.IO.Path.Combine(dir, name)) { Context = ctx }) { Context = ctx });
+
+            await files.SortByField("size", descending: false);
+
+            var ordered = files.Items.Select(d => d.Peek()?.ToString() ?? "").ToList();
+            await Assert.That(ordered[0]).Contains("tiny.txt");
+            await Assert.That(ordered[1]).Contains("mid.txt");
+            await Assert.That(ordered[2]).Contains("big.txt");
+        }
+        finally { Directory.Delete(dir, true); }
     }
 
     [Test]
