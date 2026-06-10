@@ -32,10 +32,12 @@
 
 **Dependencies:** Stages 2–6 + Stage 3 references landed. Stage 7's PLNG003 walk interleaves freely. The coder's pre-model tail work (C# 306→23) was made against the in-flight retype the model doc calls disposable — **coder: mark which of those fixes survive the model** before redoing the core, so the 280 already-fixed sites don't get re-litigated.
 
+**Demolition worklist:** [`stage-9-demolition.md`](stage-9-demolition.md) — the member-by-member audit of `app/data/` + the value types (what dies in slice 1, what dies with the tail, what is transitional, what stays). The verdicts there are part of this stage's contract.
+
 ## Slices (each ends green on both suites)
 
-1. **The core** — Data shape collapse + entry lift + the three doors. This redoes the in-flight retype properly; it is the bulk and the blocker for everything else.
-2. **Consumer tail** — the suites enumerate it: `is string`/`is long` arms, casts, `As<T>` paths, assert formatting, fixtures constructing `new Data("x", "raw")`. Fix by asking the item or lowering via the type's own `Clr<T>`/`ToInt64()` at a real .NET edge — never `.ToString()`, never a raw getter.
+1. **The core** — Data shape collapse + entry lift + the three doors (the slice-1 section of the demolition list). This redoes the in-flight retype properly; it is the bulk and the blocker for everything else.
+2. **Consumer tail** — the suites enumerate it: `is string`/`is long` arms, casts, `As<T>` paths, assert formatting, fixtures constructing `new Data("x", "raw")`. Fix by asking the item or lowering via the type's own `Clr<T>`/`ToInt64()` at a real .NET edge — never `.ToString()`, never a raw getter. The slice-2 demolition entries die here, each with its callers.
 3. **Templates** — stamp + live resolution + async Write (design settled; see the model doc and the template section of the proposal).
 4. **Collections semantics** — remove `CopyStructure` copy-on-add, pin reference semantics with tests (the `[1,2,3]` case), property-bag copy at set.
 5. **Follow-ons** — `text.Value` private (emitted only via `text.Write`), `item.ToRaw()` removed (callers route through types/serializers).
