@@ -899,6 +899,13 @@ instead of a raw `IDictionary<string,object?>` the consumers then re-read by key
 Kills the build-native-then-flatten round-trip and the stringly-typed property bag
 in one move. Perimeter/infra, low priority — do it as a focused pass, not mid-branch.
 
+**Update (2026-06-10, Ingi, born-typed stage):** ruled with the born-typed store seam
+(`.bot/compare-redesign/coder/stage-proposal-born-typed.md`) — CLI config **stays
+outside Data** (no carve-out; the seam's "no raw CLR in the slot" invariant has no
+exceptions). CommandLineParser keeps its raw shapes until this cleanup lands; the
+cleanup is the moment it lifts at the perimeter (typed option records), not a blocker
+for the born-typed stage.
+
 ## Make Data._type non-null — kill the `if (_type != null)` derive-fork (2026-06-05, Ingi)
 
 `Data.Type` (`app/data/this.cs:341`) lazily derives the type from the value's CLR
