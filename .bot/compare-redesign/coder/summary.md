@@ -44,7 +44,7 @@ Value_AuthoredScalar_ReturnsTypedNumber, VarReference_RidesAsTypedText.
 ## Next
 
 1. Walk the PLNG003 worklist (the warning list IS the worklist) type by type; flip to error when clean. (~190 findings left — Goal/Step/Identity/StatInfo and friends, plus the value types' remaining raw members.)
-2. Born-typed-everything stage (the 9 stubs above): authored scalars/var-refs ride as wrappers, text.Value private, item.ToRaw removal, reserved-core protection, _raw dissolution.
+2. Born-typed-everything stage — DOCUMENTED as a stage proposal (Ingi-approved direction, store-seam chokepoint design): see `stage-proposal-born-typed.md` in this folder. The 9 stubs above are pinned to it.
 3. Known deferred: `%path!absolute%` Authorize gating on the `!` plane; the `!` NonPublic reflection arm is broad (any internal property is navigable) — tighten if codeanalyzer flags it.
 
 ## Code example (the narrow seam)
