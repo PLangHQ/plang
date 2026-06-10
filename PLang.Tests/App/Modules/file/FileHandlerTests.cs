@@ -503,7 +503,7 @@ public class FileHandlerTests : IDisposable
 
         var existsData = await context.Variable.Get("fileResult.Exists");
         await Assert.That(existsData).IsNotNull();
-        await Assert.That((await existsData!.Value())).IsEqualTo(true);
+        await Assert.That((await existsData!.Value())?.ToString()).IsEqualTo("true");
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();
@@ -573,7 +573,7 @@ public class FileHandlerTests : IDisposable
 
         var existsData = await context.Variable.Get("fileResult.Exists");
         await Assert.That(existsData).IsNotNull();
-        await Assert.That((await existsData!.Value())).IsEqualTo(false);
+        await Assert.That((await existsData!.Value())?.ToString()).IsEqualTo("false");
 
         captureStream.Position = 0;
         var output = new System.IO.StreamReader(captureStream).ReadToEnd();

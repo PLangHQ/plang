@@ -307,7 +307,7 @@ public class RequestActionTests
         await result.IsSuccess();
         await Assert.That(result.Properties["StatusCode"]).IsEqualTo(200);
         await Assert.That(result.Properties["IsSuccess"]).IsEqualTo(true);
-        await Assert.That(result.Properties["Method"]).IsEqualTo("GET");
+        await Assert.That((result.Properties["Method"])?.ToString()).IsEqualTo("GET");
         await Assert.That(result.Properties["Url"]!.ToString()).IsEqualTo("https://api.example.com/test");
     }
 

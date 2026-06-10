@@ -40,7 +40,7 @@ public class VariablesSnapshotTests
         var snapshot = vars.Snapshot();
         await Assert.That(snapshot.ContainsKey("foo")).IsTrue();
         await Assert.That(snapshot["foo"]).IsEqualTo(1);
-        await Assert.That(snapshot["bar"]).IsEqualTo("x");
+        await Assert.That((snapshot["bar"])?.ToString()).IsEqualTo("x");
         await Assert.That(snapshot["baz"]).IsNotNull();
     }
 

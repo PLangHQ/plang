@@ -133,7 +133,7 @@ public class Stage5_ListDictOpsTests
         var groups = (ListV)(await result.Value())!.value!;
         await Assert.That(groups.Count).IsEqualTo(2);
         var reyk = (DictV)(await groups.At(0)!.Value())!;
-        await Assert.That((string?)(await (reyk.Get("key"))!.Value())).IsEqualTo("Reyk");
+        await Assert.That((await (reyk.Get("key"))!.Value())?.ToString()).IsEqualTo("Reyk");
         await Assert.That(((ListV)(await (reyk.Get("items"))!.Value())!).Count).IsEqualTo(2); // navigable bucket
     }
 }

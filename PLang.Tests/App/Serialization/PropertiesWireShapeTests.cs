@@ -37,7 +37,7 @@ public class PropertiesWireShapeTests
             d.Properties["k"] = propValue;
             var wire = (await plang.Serialize(d).Value())!;
             var back = plang.Deserialize(wire);
-            return (global::app.data.@this)(await back.Value())!;
+            return back;
         }
         finally { dispose(); }
     }
@@ -45,7 +45,7 @@ public class PropertiesWireShapeTests
     [Test] public async Task Properties_RoundTrip_StringPrimitive()
     {
         var back = await RoundTrip("hello");
-        await Assert.That(back.Properties["k"]).IsEqualTo("hello");
+        await Assert.That((back.Properties["k"])?.ToString()).IsEqualTo("hello");
     }
 
     [Test] public async Task Properties_RoundTrip_IntPrimitive()
@@ -96,7 +96,7 @@ public class PropertiesWireShapeTests
         var roundDict = back.Properties["k"] as Dictionary<string, object?>;
         await Assert.That(roundDict).IsNotNull();
         await Assert.That(roundDict!["cost"]).IsEqualTo(100L);
-        await Assert.That(roundDict["model"]).IsEqualTo("claude");
+        await Assert.That((roundDict["model"])?.ToString()).IsEqualTo("claude");
     }
 
     [Test] public async Task Properties_RoundTrip_ListOfPrimitives()
@@ -106,7 +106,7 @@ public class PropertiesWireShapeTests
         var roundList = back.Properties["k"] as List<object?>;
         await Assert.That(roundList).IsNotNull();
         await Assert.That(roundList!.Count).IsEqualTo(3);
-        await Assert.That(roundList[2]).IsEqualTo("three");
+        await Assert.That((roundList[2])?.ToString()).IsEqualTo("three");
     }
 
     [Test] public async Task Wire_PropertiesEmittedAsNestedObject_SiblingOfReservedFields()
@@ -156,8 +156,8 @@ public class PropertiesWireShapeTests
         {
             d.Properties["value"] = "stays-in-properties-scope";
             var wire = (await plang.Serialize(d).Value())!;
-            var back = (global::app.data.@this)(await plang.Deserialize(wire).Value())!;
-            await Assert.That(back.Properties["value"]).IsEqualTo("stays-in-properties-scope");
+            var back = plang.Deserialize(wire);
+            await Assert.That((back.Properties["value"])?.ToString()).IsEqualTo("stays-in-properties-scope");
         }
         finally { dispose(); }
     }
@@ -169,8 +169,8 @@ public class PropertiesWireShapeTests
         {
             d.Properties["signature"] = "not-the-outer-sig";
             var wire = (await plang.Serialize(d).Value())!;
-            var back = (global::app.data.@this)(await plang.Deserialize(wire).Value())!;
-            await Assert.That(back.Properties["signature"]).IsEqualTo("not-the-outer-sig");
+            var back = plang.Deserialize(wire);
+            await Assert.That((back.Properties["signature"])?.ToString()).IsEqualTo("not-the-outer-sig");
         }
         finally { dispose(); }
     }
@@ -182,8 +182,8 @@ public class PropertiesWireShapeTests
         {
             d.Properties["name"] = "metadata-name";
             var wire = (await plang.Serialize(d).Value())!;
-            var back = (global::app.data.@this)(await plang.Deserialize(wire).Value())!;
-            await Assert.That(back.Properties["name"]).IsEqualTo("metadata-name");
+            var back = plang.Deserialize(wire);
+            await Assert.That((back.Properties["name"])?.ToString()).IsEqualTo("metadata-name");
         }
         finally { dispose(); }
     }
@@ -208,7 +208,7 @@ public class PropertiesWireShapeTests
             var tampered = wire.Replace("\"cost\":100", "\"cost\":999");
             await Assert.That(tampered).IsNotEqualTo(wire);
 
-            var back = (global::app.data.@this)(await plang.Deserialize(tampered).Value())!;
+            var back = plang.Deserialize(tampered);
             back.Context = d.Context;
             var app = d.Context!.App;
             var verify = await app.RunAction<global::app.module.signing.verify>(
@@ -251,7 +251,7 @@ public class PropertiesWireShapeTests
             var wire = (await plang.Serialize(d).Value())!;
             // Inject a top-level field at the start of the object.
             var injected = wire.Replace("{\"name\":", "{\"traceId\":\"abc\",\"name\":");
-            var back = (global::app.data.@this)(await plang.Deserialize(injected).Value())!;
+            var back = plang.Deserialize(injected);
             // Properties dictionary doesn't capture the unknown field.
             await Assert.That(back.Properties.ContainsKey("traceId")).IsFalse();
         }

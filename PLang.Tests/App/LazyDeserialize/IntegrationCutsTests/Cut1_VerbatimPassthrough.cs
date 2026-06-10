@@ -37,7 +37,7 @@ public class Cut1_VerbatimPassthrough
         var d = data.FromRaw(ConfigJson, type.Create("object", "json"));
         d.Name = "cfg";
         var wire1 = (await plang.ContextLessFallback.Serialize(d).Value())!;
-        var back = (data)(await plang.ContextLessFallback.Deserialize(wire1).Value())!; // deferred (raw-backed)
+        var back = plang.ContextLessFallback.Deserialize(wire1); // deferred (raw-backed)
         var wire2 = (await plang.ContextLessFallback.Serialize(back).Value())!;
         await Assert.That(wire2).IsEqualTo(wire1);
         await Assert.That(back.MaterializeCount).IsEqualTo(0);

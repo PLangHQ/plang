@@ -701,7 +701,8 @@ public class DataTests
     public async Task Unwrap_Envelope_ReturnsInner()
     {
         var inner = new Data("", "Hello", Type.FromMime("text/plain"));
-        var envelope = new Data("", inner, Type.FromName("text"));
+        var envelope = new Data("", null, Type.FromName("text"));
+        envelope.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
 
         var unwrapped = envelope.Unwrap();
 
@@ -726,7 +727,8 @@ public class DataTests
         var context = new global::app.actor.context.@this(engine);
 
         var inner = new Data("", "Hello", Type.FromMime("text/plain"));
-        var envelope = new Data("", inner, Type.FromName("text"));
+        var envelope = new Data("", null, Type.FromName("text"));
+        envelope.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
         envelope.Context = context;
 
         var unwrapped = envelope.Unwrap();
@@ -743,7 +745,8 @@ public class DataTests
         // Create a "text" envelope (text is compressible)
         var inner = new Data("", "Hello, this is a test string for compression!", Type.FromMime("text/plain"));
         inner.Context = context;
-        var wrapped = new Data("", inner, Type.FromName("text"));
+        var wrapped = new Data("", null, Type.FromName("text"));
+        wrapped.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
         wrapped.Context = context;
 
         var compressed = wrapped.Compress();
@@ -762,7 +765,8 @@ public class DataTests
         // "image" is not compressible
         var inner = new Data("", new byte[] { 1, 2, 3 }, Type.FromMime("image/jpeg"));
         inner.Context = context;
-        var wrapped = new Data("", inner, Type.FromName("image"));
+        var wrapped = new Data("", null, Type.FromName("image"));
+        wrapped.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
         wrapped.Context = context;
 
         var result = wrapped.Compress();
@@ -789,7 +793,8 @@ public class DataTests
         // Build a text envelope, compress it, then decompress
         var inner = new Data("", "Hello world", Type.FromMime("text/plain"));
         inner.Context = context;
-        var wrapped = new Data("", inner, Type.FromName("text"));
+        var wrapped = new Data("", null, Type.FromName("text"));
+        wrapped.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
         wrapped.Context = context;
 
         var compressed = wrapped.Compress();
@@ -820,7 +825,8 @@ public class DataTests
 
         var content = new Data("", "The quick brown fox jumps over the lazy dog", Type.FromMime("text/plain"));
         content.Context = context;
-        var wrapped = new Data("", content, Type.FromName("text"));
+        var wrapped = new Data("", null, Type.FromName("text"));
+        wrapped.SetValueDirect(content);   // courier nesting — the documented no-lift bypass
         wrapped.Context = context;
 
         var compressed = wrapped.Compress();
@@ -1013,7 +1019,8 @@ public class DataTests
 
         var content = new Data("", "Hello", Type.FromMime("text/plain"));
         content.Context = context;
-        var wrapped = new Data("", content, Type.FromName("text"));
+        var wrapped = new Data("", null, Type.FromName("text"));
+        wrapped.SetValueDirect(content);   // courier nesting — the documented no-lift bypass
         wrapped.Context = context;
         wrapped.Properties["metadata"] = "some value";
 
@@ -1023,7 +1030,7 @@ public class DataTests
 
         await decompressed.IsSuccess();
         // Stage 4: Properties now ride on the wire — they round-trip.
-        await Assert.That(decompressed.Properties["metadata"]).IsEqualTo("some value");
+        await Assert.That((decompressed.Properties["metadata"])?.ToString()).IsEqualTo("some value");
     }
 
     // --- v5: Depth limit tests ---

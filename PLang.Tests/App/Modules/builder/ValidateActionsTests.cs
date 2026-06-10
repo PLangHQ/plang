@@ -182,7 +182,7 @@ public class ValidateActionsTests
 
         await result.IsSuccess();
         var rightParam = actions[0].Parameters.First(p => p.Name == "Right");
-        await Assert.That((await rightParam.Value())).IsEqualTo(false);
+        await Assert.That((await rightParam.Value())?.ToString()).IsEqualTo("false");
         await Assert.That((await rightParam.Value()) is bool).IsTrue();
     }
 

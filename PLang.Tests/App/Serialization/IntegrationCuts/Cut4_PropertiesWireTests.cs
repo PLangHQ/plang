@@ -18,7 +18,7 @@ public class Cut4_PropertiesWireTests
         d.Properties["cost"] = 100;
         d.Properties["model"] = "claude-opus-4-7";
         var wire = (await plang.Serialize(d).Value())!;
-        var back = (global::app.data.@this)(await plang.Deserialize(wire).Value())!;
+        var back = plang.Deserialize(wire);
         return (wire, back, app);
     }
 
@@ -60,7 +60,7 @@ public class Cut4_PropertiesWireTests
         await using (app)
         {
             await Assert.That(back.Properties["cost"]).IsEqualTo(100L);
-            await Assert.That(back.Properties["model"]).IsEqualTo("claude-opus-4-7");
+            await Assert.That((back.Properties["model"])?.ToString()).IsEqualTo("claude-opus-4-7");
         }
     }
 
@@ -73,7 +73,7 @@ public class Cut4_PropertiesWireTests
             await Assert.That(tampered).IsNotEqualTo(wire);
             var plang = (global::app.channel.serializer.plang.@this)
                 app.User.Channel.Serializers.GetByMimeType("application/plang");
-            var back = (global::app.data.@this)(await plang.Deserialize(tampered).Value())!;
+            var back = plang.Deserialize(tampered);
             back.Context = app.User.Context;
             var verify = await app.RunAction<global::app.module.signing.verify>(
                 new global::app.module.signing.verify

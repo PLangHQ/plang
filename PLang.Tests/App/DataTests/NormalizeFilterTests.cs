@@ -49,7 +49,7 @@ public class NormalizeFilterTests
         var bag = new Bag { Token = "real-token" };
         var children = (new Data("", bag).Normalize())!.Children();
         var tok = children.First(c => c.Name == "token");
-        await Assert.That((string?)(await tok.Value())).IsEqualTo("****");
+        await Assert.That((await tok.Value())?.ToString()).IsEqualTo("****");
     }
 
     [Test] public async Task Normalize_MaskedProperty_GetterIsNeverInvoked()

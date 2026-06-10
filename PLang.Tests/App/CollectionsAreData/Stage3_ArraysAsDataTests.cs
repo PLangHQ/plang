@@ -81,7 +81,7 @@ public class Stage3_ArraysAsDataTests
         var nav = new global::app.variable.navigator.List();
         await Assert.That(nav.CanNavigate(data)).IsTrue();
         await Assert.That(ReferenceEquals(await nav.Navigate(data, "0"), element)).IsTrue();
-        await Assert.That((string?)(await (await nav.Navigate(data, "last")).Value())).IsEqualTo("second");
+        await Assert.That((await (await nav.Navigate(data, "last")).Value())?.ToString()).IsEqualTo("second");
         // the count intrinsic answers in the PLang `number`
         await Assert.That(((global::app.type.number.@this)(await (await nav.Navigate(data, "count")).Value())!).ToInt32()).IsEqualTo(2);
 
@@ -91,7 +91,7 @@ public class Stage3_ArraysAsDataTests
         p0.Set(new Data("name", "alice"));
         people.Add(new Data("", p0));
         var peopleData = new Data("people", people);
-        await Assert.That((string?)(await (await nav.Navigate(peopleData, "name")).Value())).IsEqualTo("alice");
+        await Assert.That((await (await nav.Navigate(peopleData, "name")).Value())?.ToString()).IsEqualTo("alice");
     }
 
     [Test]

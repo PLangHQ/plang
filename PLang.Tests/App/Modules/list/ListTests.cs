@@ -181,7 +181,7 @@ public class ListTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsEqualTo(true);
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("true");
     }
 
     [Test]
@@ -193,7 +193,7 @@ public class ListTests
         var action = new Contains { Context = context, ListName = new app.variable.@this("myList"), Value = new global::app.data.@this("", "z")};
         var result = await action.Run();
 
-        await Assert.That((await result.Value())).IsEqualTo(false);
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("false");
     }
 
     // --- First / Last ---
@@ -355,7 +355,7 @@ public class ListTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsEqualTo(true);
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("true");
     }
 
     [Test]
@@ -379,7 +379,7 @@ public class ListTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsEqualTo(false);
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("false");
     }
 
     [Test]
@@ -399,7 +399,7 @@ public class ListTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsEqualTo(false);
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("false");
     }
 
     [Test]
@@ -423,7 +423,7 @@ public class ListTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsEqualTo(true);
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("true");
     }
 
     // --- Group ---

@@ -38,7 +38,7 @@ public class WireReadLazyTests
         // value is a valid json *string* token whose content is malformed json,
         // typed {object, json} — read defers it, no throw.
         const string wire = "{\"name\":\"x\",\"type\":{\"name\":\"object\",\"kind\":\"json\"},\"value\":\"{not json\"}";
-        var back = (data)(await plang.ContextLessFallback.Deserialize(wire).Value())!;
+        var back = plang.ContextLessFallback.Deserialize(wire);
         await Assert.That(back.HasRaw).IsTrue();
         await Assert.That(back.MaterializeCount).IsEqualTo(0);
     }
@@ -69,11 +69,12 @@ public class WireReadLazyTests
     {
         var inner = data.Ok("hello");
         inner.Name = "inner";
-        var outer = data.Ok(inner);
+        var outer = data.Ok();
+        outer.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
         outer.Name = "outer";
         var back = RoundTrip(outer);
         await Assert.That((await back.Value())).IsTypeOf<data>();
-        await Assert.That((await ((data)(await back.Value())!).Value())?.ToString()).IsEqualTo("hello");
+        await Assert.That((await (back).Value())?.ToString()).IsEqualTo("hello");
     }
 
     // The case LiftDataIfShaped covers: a genuinely nested Data round-trips and
@@ -84,7 +85,8 @@ public class WireReadLazyTests
     {
         var inner = data.Ok("payload");
         inner.Name = "inner";
-        var outer = data.Ok(inner);
+        var outer = data.Ok();
+        outer.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
         outer.Name = "outer";
         var back = RoundTrip(outer);
         await Assert.That((await back.Value())).IsTypeOf<data>();

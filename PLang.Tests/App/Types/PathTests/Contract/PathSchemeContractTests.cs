@@ -56,13 +56,13 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
         try
         {
             var before = await p.ExistsAsync();
-            await Assert.That((await before.Value())).IsEqualTo(false);
+            await Assert.That((await before.Value())?.ToString()).IsEqualTo("false");
             await p.WriteText("now here");
             var after = await p.ExistsAsync();
-            await Assert.That((await after.Value())).IsEqualTo(true);
+            await Assert.That((await after.Value())?.ToString()).IsEqualTo("true");
             await p.Delete();
             var gone = await p.ExistsAsync();
-            await Assert.That((await gone.Value())).IsEqualTo(false);
+            await Assert.That((await gone.Value())?.ToString()).IsEqualTo("false");
         }
         finally { await Fixture.Cleanup(p); }
     }
@@ -95,7 +95,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
             var read = await dst.ReadText();
             await Assert.That((await read.Value())?.ToString()).IsEqualTo("copy me");
             var srcStill = await src.ExistsAsync();
-            await Assert.That((await srcStill.Value())).IsEqualTo(true);
+            await Assert.That((await srcStill.Value())?.ToString()).IsEqualTo("true");
         }
         finally { await Fixture.Cleanup(src); await Fixture.Cleanup(dst); }
     }
@@ -113,7 +113,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
             var read = await dst.ReadText();
             await Assert.That((await read.Value())?.ToString()).IsEqualTo("move me");
             var srcGone = await src.ExistsAsync();
-            await Assert.That((await srcGone.Value())).IsEqualTo(false);
+            await Assert.That((await srcGone.Value())?.ToString()).IsEqualTo("false");
         }
         finally { await Fixture.Cleanup(src); await Fixture.Cleanup(dst); }
     }

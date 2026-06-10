@@ -59,7 +59,7 @@ public class NormalizeTreeShapeTests
         var list = (List<object?>)result!;
         await Assert.That(list.Count).IsEqualTo(3);
         await Assert.That(list[0]).IsEqualTo(1);
-        await Assert.That(list[1]).IsEqualTo("two");
+        await Assert.That((list[1])?.ToString()).IsEqualTo("two");
         await Assert.That(list[2]).IsEqualTo(3.0);
     }
 

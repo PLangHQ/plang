@@ -39,7 +39,7 @@ public class FailureMatrixTests
         var wire = (await plang.Serialize(d).Value())!;
         var tampered = wire.Replace("untampered", "TAMPERED!");
 
-        var back = (global::app.data.@this)(await plang.Deserialize(tampered).Value())!;
+        var back = plang.Deserialize(tampered);
         back.Context = app.User.Context;
         var verify = await app.RunAction<global::app.module.signing.verify>(
             new global::app.module.signing.verify

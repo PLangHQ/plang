@@ -83,8 +83,8 @@ public class DataAsTResolutionTests
 
         await Assert.That((await result.Value())).IsNotNull();
         var items = result.GetValue<List<string>>()!;
-        await Assert.That(items[0]).IsEqualTo("hello");
-        await Assert.That(items[1]).IsEqualTo("world");
+        await Assert.That((items[0])?.ToString()).IsEqualTo("hello");
+        await Assert.That((items[1])?.ToString()).IsEqualTo("world");
     }
 
     // Value is Dictionary<string, object?> with %var% in values → walks, substitutes, converts.
@@ -99,7 +99,7 @@ public class DataAsTResolutionTests
 
         await Assert.That((await result.Value())).IsNotNull();
         var dict = result.GetValue<Dictionary<string, object?>>()!;
-        await Assert.That(dict["content"]).IsEqualTo("You are a compiler");
+        await Assert.That((dict["content"])?.ToString()).IsEqualTo("You are a compiler");
     }
 
     // T has static Resolve(string, Context) (e.g., FileSystem.path) → As<T> dispatches to it for string Values.

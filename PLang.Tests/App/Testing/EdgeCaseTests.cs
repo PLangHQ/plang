@@ -147,7 +147,8 @@ public class EdgeCaseTests
     public async Task Snapshot_DataContainingData_RenderedCorrectly_NoCircularReference()
     {
         var inner = new global::app.data.@this("inner", 42);
-        var outer = new global::app.data.@this("outer", inner);
+        var outer = new global::app.data.@this("outer");
+        outer.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
 
         var err = new global::app.error.AssertionError(1, 2)
         {

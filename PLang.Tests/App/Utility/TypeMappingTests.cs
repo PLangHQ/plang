@@ -726,7 +726,7 @@ public class TypeMappingTests
         var list = result as List<string>;
         await Assert.That(list).IsNotNull();
         await Assert.That(list!.Count).IsEqualTo(1);
-        await Assert.That(list[0]).IsEqualTo("hello");
+        await Assert.That((list[0])?.ToString()).IsEqualTo("hello");
     }
 
     [Test]
@@ -768,7 +768,7 @@ public class TypeMappingTests
         var list = result as List<string>;
         await Assert.That(list).IsNotNull();
         await Assert.That(list!.Count).IsEqualTo(3);
-        await Assert.That(list[0]).IsEqualTo("a");
-        await Assert.That(list[2]).IsEqualTo("c");
+        await Assert.That((list[0])?.ToString()).IsEqualTo("a");
+        await Assert.That((list[2])?.ToString()).IsEqualTo("c");
     }
 }

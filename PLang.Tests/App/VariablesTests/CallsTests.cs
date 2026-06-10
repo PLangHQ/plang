@@ -197,8 +197,8 @@ public class CallsTests
         }
 
         var results = await Task.WhenAll(Writer(), Reader());
-        await Assert.That(results[0]).IsEqualTo("writer-only");
-        await Assert.That(results[1]).IsEqualTo("underlying"); // reader didn't see writer's overlay
+        await Assert.That((results[0])?.ToString()).IsEqualTo("writer-only");
+        await Assert.That((results[1])?.ToString()).IsEqualTo("underlying"); // reader didn't see writer's overlay
     }
 
     [Test]

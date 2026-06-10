@@ -192,7 +192,7 @@ public class VariablesTests
 
         stack.Set("user.name", "Jane");
 
-        await Assert.That(data["name"]).IsEqualTo("Jane");
+        await Assert.That((data["name"])?.ToString()).IsEqualTo("Jane");
         var result = await stack.Get("user.name");
         await Assert.That((await result!.Value())?.ToString()).IsEqualTo("Jane");
     }
@@ -390,8 +390,8 @@ public class VariablesTests
 
         // Access the list directly
         var list = (List<object>)(await itemsObj.Value())!;
-        await Assert.That(list[0]).IsEqualTo("first");
-        await Assert.That(list[1]).IsEqualTo("second");
+        await Assert.That((list[0])?.ToString()).IsEqualTo("first");
+        await Assert.That((list[1])?.ToString()).IsEqualTo("second");
     }
 
     [Test]
@@ -712,7 +712,7 @@ public class VariablesTests
 
         var dict = stack.ToDictionary();
 
-        await Assert.That(dict["name"]).IsEqualTo("John");
+        await Assert.That((dict["name"])?.ToString()).IsEqualTo("John");
         await Assert.That(dict["age"]).IsEqualTo(30);
     }
 

@@ -855,7 +855,10 @@ public partial class @this
             var reader = context.App.Type.Readers.Of(typeName, kind);
             if (reader != null)
             {
+                // The explicit cast re-reads the SOURCE FORM — a text wrapper
+                // presents its string face to the reader.
                 var raw = Peek();
+                if (raw is global::app.type.text.@this sourceText) raw = sourceText.Value;
                 var materialized = raw == null ? null
                     : reader(raw, kind, new global::app.type.reader.ReadContext(context));
                 return new @this(Name, materialized, type.Create(typeName, kind, context: context), Parent) { Context = context };

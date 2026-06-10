@@ -80,8 +80,8 @@ public class DataWrappedDictTests
             variables: new Dictionary<string, object?> { ["x"] = "substituted" });
         var typed = result.Data as global::app.data.@this<global::app.type.dict.@this>;
         var d = typed!.GetValue<Dictionary<string, object?>>()!;
-        await Assert.That(d["inner"]).IsEqualTo("substituted");
-        await Assert.That(d["other"]).IsEqualTo("literal");
+        await Assert.That((d["inner"])?.ToString()).IsEqualTo("substituted");
+        await Assert.That((d["other"])?.ToString()).IsEqualTo("literal");
     }
 }
 

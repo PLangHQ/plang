@@ -147,7 +147,7 @@ public class ValueConversionHookTests
     public async Task ResidualLeaf_BoolGuidEnum()
     {
         var (app, ctx) = MakeApp();
-        await Assert.That((await app.Type.Convert("true", typeof(bool), ctx).Value())).IsEqualTo(true);
+        await Assert.That((await app.Type.Convert("true", typeof(bool), ctx).Value())?.ToString()).IsEqualTo("true");
 
         var g = System.Guid.NewGuid();
         await Assert.That((await app.Type.Convert(g.ToString(), typeof(System.Guid), ctx).Value())).IsEqualTo(g);

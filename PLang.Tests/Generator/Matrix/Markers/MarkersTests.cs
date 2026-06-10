@@ -11,7 +11,7 @@ public class IContextHandlerTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<IContextHandler>(app);
         // Handler.Run returns Data.Ok(Context != null) — true means it was assigned.
-        await Assert.That((await result.Data.Value())).IsEqualTo(true);
+        await Assert.That((await result.Data.Value())?.ToString()).IsEqualTo("true");
     }
 
     [Test]
@@ -33,7 +33,7 @@ public class IChannelHandlerTests
         await using var app = new global::app.@this("/app");
         global::app.@this.WireDefaultConsoleChannels(app.User);
         var result = await MatrixRunner.RunAsync<IChannelHandler>(app);
-        await Assert.That((await result.Data.Value())).IsEqualTo(true);
+        await Assert.That((await result.Data.Value())?.ToString()).IsEqualTo("true");
     }
 }
 
@@ -44,7 +44,7 @@ public class IActionHandlerTests
     {
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<IActionHandler>(app);
-        await Assert.That((await result.Data.Value())).IsEqualTo(true);
+        await Assert.That((await result.Data.Value())?.ToString()).IsEqualTo("true");
     }
 }
 
@@ -56,7 +56,7 @@ public class IStepHandlerTests
         await using var app = new global::app.@this("/app");
         var step = new Step { Index = 0, Text = "step" };
         var result = await MatrixRunner.RunAsync<IStepHandler>(app, step: step);
-        await Assert.That((await result.Data.Value())).IsEqualTo(true);
+        await Assert.That((await result.Data.Value())?.ToString()).IsEqualTo("true");
     }
 }
 
@@ -67,7 +67,7 @@ public class IStaticHandlerTests
     {
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<IStaticHandler>(app);
-        await Assert.That((await result.Data.Value())).IsEqualTo(true);
+        await Assert.That((await result.Data.Value())?.ToString()).IsEqualTo("true");
     }
 }
 
@@ -87,10 +87,10 @@ public class MultiMarkerHandlerTests
         var step = await MatrixRunner.RunAsync<IStepHandler>(app, step: new Step { Index = 0 });
         var stc = await MatrixRunner.RunAsync<IStaticHandler>(app);
 
-        await Assert.That((await context.Data.Value())).IsEqualTo(true);
-        await Assert.That((await ch.Data.Value())).IsEqualTo(true);
-        await Assert.That((await act.Data.Value())).IsEqualTo(true);
-        await Assert.That((await step.Data.Value())).IsEqualTo(true);
-        await Assert.That((await stc.Data.Value())).IsEqualTo(true);
+        await Assert.That((await context.Data.Value())?.ToString()).IsEqualTo("true");
+        await Assert.That((await ch.Data.Value())?.ToString()).IsEqualTo("true");
+        await Assert.That((await act.Data.Value())?.ToString()).IsEqualTo("true");
+        await Assert.That((await step.Data.Value())?.ToString()).IsEqualTo("true");
+        await Assert.That((await stc.Data.Value())?.ToString()).IsEqualTo("true");
     }
 }

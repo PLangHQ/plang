@@ -71,7 +71,7 @@ public class AssertionErrorVariablesTests
         await Assert.That(err).IsNotNull();
         await Assert.That(err!.Variables).IsNotNull();
         await Assert.That(err.Variables!["score"]).IsEqualTo(42);
-        await Assert.That(err.Variables!["label"]).IsEqualTo("foo");
+        await Assert.That((err.Variables!["label"])?.ToString()).IsEqualTo("foo");
     }
 
     // Guard (architect spec): no snapshot cost on passing assertions. A successful
@@ -119,7 +119,7 @@ public class AssertionErrorVariablesTests
             var err = result.Error as AssertionError;
             await Assert.That(err).IsNotNull();
             await Assert.That(err!.Variables).IsNotNull();
-            await Assert.That(err.Variables!["watched"]).IsEqualTo("sentinel");
+            await Assert.That((err.Variables!["watched"])?.ToString()).IsEqualTo("sentinel");
         }
     }
 }

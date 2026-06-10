@@ -80,7 +80,7 @@ public class SetTypeInferenceTests
         var result = await action.RunAsync(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("b");
-        await Assert.That((await stored.Value())).IsEqualTo(true);
+        await Assert.That((await stored.Value())?.ToString()).IsEqualTo("true");
         await Assert.That(stored.Type.Name).IsEqualTo("bool");
     }
 

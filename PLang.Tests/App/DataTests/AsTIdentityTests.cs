@@ -48,7 +48,7 @@ public class AsTIdentityTests
         source.Properties.Set("meta", "abc");
         var result = await source.As<global::app.type.number.@this>();
         await Assert.That(ReferenceEquals(source.Properties, result.Properties)).IsTrue();
-        await Assert.That(result.Properties["meta"]).IsEqualTo("abc");
+        await Assert.That((result.Properties["meta"])?.ToString()).IsEqualTo("abc");
     }
 
     // Rule 2 — variance fast path. Data<number>.As<item>() (to the base item type) produces
@@ -77,7 +77,7 @@ public class AsTIdentityTests
         var wrapped = await source.As<global::app.type.list.@this>();
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();
         source.Properties.Set("annot", "via-source");
-        await Assert.That(wrapped.Properties["annot"]).IsEqualTo("via-source");
+        await Assert.That((wrapped.Properties["annot"])?.ToString()).IsEqualTo("via-source");
     }
 
     // Variance fast path aliases all three event lists. Subscribing on either
@@ -123,7 +123,7 @@ public class AsTIdentityTests
         await Assert.That(ReferenceEquals(source, wrapped)).IsFalse();
         await Assert.That((await wrapped.Value())?.ToString()).IsEqualTo("42");
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();
-        await Assert.That(wrapped.Properties["note"]).IsEqualTo("hello");
+        await Assert.That((wrapped.Properties["note"])?.ToString()).IsEqualTo("hello");
     }
 
     // Conversion failure path. As<T>() on a value that can't convert to T
@@ -187,8 +187,8 @@ public class AsTIdentityTests
 
         await Assert.That(ReferenceEquals(canonical, paramData)).IsFalse();
         var resolved = (List<object?>)(await canonical.Value())!;
-        await Assert.That(resolved[0]).IsEqualTo("hello");
-        await Assert.That(resolved[1]).IsEqualTo("literal");
+        await Assert.That((resolved[0])?.ToString()).IsEqualTo("hello");
+        await Assert.That((resolved[1])?.ToString()).IsEqualTo("literal");
     }
 
     // Rule 4d — plain Data target with a dict whose values contain %var% references.
@@ -206,8 +206,8 @@ public class AsTIdentityTests
 
         await Assert.That(ReferenceEquals(canonical, paramData)).IsFalse();
         var resolved = (Dictionary<string, object?>)(await canonical.Value())!;
-        await Assert.That(resolved["role"]).IsEqualTo("system");
-        await Assert.That(resolved["content"]).IsEqualTo("You are a compiler");
+        await Assert.That((resolved["role"])?.ToString()).IsEqualTo("system");
+        await Assert.That((resolved["content"])?.ToString()).IsEqualTo("You are a compiler");
     }
 
     // Rule 4e — list-of-dicts with nested vars (the BuildGoalCore pattern). Verifies that
@@ -231,8 +231,8 @@ public class AsTIdentityTests
         var resolved = (List<object?>)(await canonical.Value())!;
         var first = (Dictionary<string, object?>)resolved[0]!;
         var second = (Dictionary<string, object?>)resolved[1]!;
-        await Assert.That(first["Content"]).IsEqualTo("You are a compiler");
-        await Assert.That(second["Content"]).IsEqualTo("build this goal");
+        await Assert.That((first["Content"])?.ToString()).IsEqualTo("You are a compiler");
+        await Assert.That((second["Content"])?.ToString()).IsEqualTo("build this goal");
     }
 
     // Rule 4f — literal list (no %vars% anywhere) still walks. Symmetric with the typed
@@ -250,9 +250,9 @@ public class AsTIdentityTests
 
         var resolved = (List<object?>)(await canonical.Value())!;
         await Assert.That(resolved.Count).IsEqualTo(3);
-        await Assert.That(resolved[0]).IsEqualTo("a");
-        await Assert.That(resolved[1]).IsEqualTo("b");
-        await Assert.That(resolved[2]).IsEqualTo("c");
+        await Assert.That((resolved[0])?.ToString()).IsEqualTo("a");
+        await Assert.That((resolved[1])?.ToString()).IsEqualTo("b");
+        await Assert.That((resolved[2])?.ToString()).IsEqualTo("c");
     }
 
     // Rule 4g — infrastructure %!var% references inside container leaves resolve at the
@@ -274,6 +274,6 @@ public class AsTIdentityTests
         var canonical = await paramData.AsCanonical();
 
         var resolved = (Dictionary<string, object?>)(await canonical.Value())!;
-        await Assert.That(resolved["message"]).IsEqualTo("boom");
+        await Assert.That((resolved["message"])?.ToString()).IsEqualTo("boom");
     }
 }

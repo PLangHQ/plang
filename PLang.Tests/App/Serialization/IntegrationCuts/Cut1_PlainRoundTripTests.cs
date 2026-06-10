@@ -24,7 +24,7 @@ public class Cut1_PlainRoundTripTests
         var data = new global::app.data.@this(name, value) { Context = app.User.Context };
         var wire = (await plang.Serialize(data).Value())!;
         var back = plang.Deserialize(wire);
-        return (wire, (global::app.data.@this)(await back.Value())!, app);
+        return (wire, back, app);
     }
 
     [Test] public async Task Cut1_WireJson_HasFourTopLevelFields_NameTypeValueSignature()
