@@ -23,9 +23,16 @@ public class Stage2_PlaneResolverTests
     [Test]
     public async Task BangPlane_ResolvesPropertyAndEnvelope_TypeAnswers()
     {
-        // %list!count%, %text!length% — typed property values; serialised into `properties` bag
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // %text!length% — the value's own property, answered in a PLang value
+        await using var app = NewApp();
+        var t = new Data("s", new global::app.type.text.@this("hello")) { Context = app.User.Context };
+        var length = await t.GetChild("!length");
+        await Assert.That(length.Peek()).IsTypeOf<global::app.type.number.@this>();
+        await Assert.That(length.Peek()!.ToString()).IsEqualTo("5");
+        // envelope properties resolve on the same plane
+        t.Properties["cost"] = 42;
+        var cost = await t.GetChild("!cost");
+        await Assert.That(cost.Peek()?.ToString()).IsEqualTo("42");
     }
 
     [Test]
@@ -42,9 +49,27 @@ public class Stage2_PlaneResolverTests
     [Test]
     public async Task BangTypeList_ReturnsAccumulatedChain_NewestFirst()
     {
-        // %x!type.list% post-narrow → [dict, file, item] (newest at index 0)
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // %x!type.list% post-narrow → [dict, file] (newest at index 0)
+        var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-st2chain-" + System.Guid.NewGuid().ToString("N")[..8]);
+        Directory.CreateDirectory(dir);
+        await using var app = new global::app.@this(dir);
+        try
+        {
+            File.WriteAllText(System.IO.Path.Combine(dir, "c.json"), "{\"a\":1}");
+            var read = new global::app.module.file.Read
+            {
+                Context = app.User.Context,
+                Path = new global::app.data.@this<global::app.type.path.@this>("",
+                    new global::app.type.path.file.@this(System.IO.Path.Combine(dir, "c.json")) { Context = app.User.Context }),
+            };
+            var data = await read.Run();
+            await data.GetChild("a");                       // narrow
+            var chain = await data.GetChild("!type.list");
+            var names = ((IReadOnlyList<global::app.type.@this>)chain.Peek()!).Select(t => t.Name).ToList();
+            await Assert.That(names[0]).IsEqualTo("dict");
+            await Assert.That(names).Contains("file");
+        }
+        finally { Directory.Delete(dir, true); }
     }
 
     [Test]
