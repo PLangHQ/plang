@@ -556,6 +556,93 @@
         "health": "production GREEN (PLang+PlangConsole 0 errors)",
         "notes": "Key finding: .Value(fallback) overload breaks ~200 method-group data.Value sites (ambiguity) \u2014 must land with C migration. B forces C forces the method-group migration. Design fork (ValueTask GetChild vs lazy-child) flagged for architect. Exemptions + B+C plan in v6/."
       }
+    },
+    {
+      "id": "cdf6290d-e096-4e9a-a0ba-45ce9bd33b76",
+      "bot": "coder",
+      "timestamp_start": "2026-06-09T12:00:00Z",
+      "intent": "Stages 4-6 closure (Pile-2) + Stage 3 reference types core",
+      "before": {
+        "assumptions": "Stages 4-6 green except Pile-2; Stage 3 unstarted",
+        "risk": "read->reference inversion touches every read consumer"
+      },
+      "plan": ".bot/compare-redesign/coder/compare-redesign-plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/module/settings/Sqlite.cs",
+            "PLang/app/module/llm/code/OpenAi.cs",
+            "PLang/app/module/identity/code/Default.cs",
+            "PLang/app/goal/GoalCall.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage6 Pile-2: typed door / dict navigation / dict->json->STJ / slot accessor; no recursive ToRaw"
+        },
+        {
+          "paths": [
+            "PLang/app/type/path/this.cs",
+            "PLang/app/type/path/file/this.cs",
+            "PLang/app/type/path/http/this.cs",
+            "PLang/app/type/path/serializer/Default.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage3 path demolition: _location backing, Content/Source removed, type-owned Write (portable form)"
+        },
+        {
+          "paths": [
+            "PLang/app/type/file/this.cs",
+            "PLang/app/type/directory/this.cs",
+            "PLang/app/type/url/this.cs",
+            "PLang/app/type/file/serializer/Default.cs",
+            "PLang/app/type/directory/serializer/Default.cs",
+            "PLang/app/type/url/serializer/Default.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage3 reference types + renderers"
+        },
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/data/this.Navigation.cs",
+            "PLang/app/type/this.cs",
+            "PLang/app/module/file/read.cs",
+            "PLang/app/module/condition/Operator.cs",
+            "PLang/app/module/variable/set.cs",
+            "PLang/app/module/cache/wrap.cs",
+            "PLang/app/variable/list/this.cs",
+            "PLang/app/type/catalog/Registry.cs",
+            "PLang/app/module/assert/code/Default.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Narrow-on-examination, scalar-content door, type chain Accumulate/Facet, family-name registry fix, consumers through the door"
+        },
+        {
+          "paths": [
+            "Tests/LazyDeserialize/ReadConfigJson_UntouchedIsJsonString.test.goal",
+            "Tests/LazyDeserialize/ReadCsv_LandsAsTable.test.goal",
+            "PLang.Tests/App/CompareRedesign/Stage3_PathDemolitionTests.cs",
+            "PLang.Tests/App/CompareRedesign/Stage6_ConsumersTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage3 contract updates (read->file headline) + stub fills; flagged to Ingi in summary"
+        }
+      ],
+      "timestamp_end": "2026-06-10T12:00:00Z",
+      "after": {
+        "status": "Stage 1-2.1,4-6 done; Stage 3 core green; stubs + Stage 7 remain",
+        "health": "plang 317/0 (5 stale stubs), C# 0 real fails",
+        "notes": "See coder/summary.md for the semantics line (scalar=content, examination=narrow) and test-contract flags"
+      }
     }
   ]
 }

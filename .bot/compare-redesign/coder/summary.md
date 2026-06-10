@@ -1,159 +1,52 @@
 # Coder — compare-redesign
 
-## Version: v6 — implementing Stage 2.1 (make the door actually async). Production stays GREEN.
+## Version: v6 (continuing the stage plan — no new review). Both suites GREEN.
 
-Architect's `stage-2.1` (3 parts: A handler reads / B nav→ValueTask / C getter rewrite+null model).
-My audit caught the 3-way gap; architect folded it in, then folded Stage 8 into Part C.
+- **Suites:** plang 317 pass / 0 fail / 5 stale (Stage-3/7 stubs) / 2 skipped; C# 4217/4267 — **0 real failures** (the 50 are unfilled CompareRedesign Stage-3/7 spec stubs).
 
-### Part A — handler reads → `await Value()` — substantially DONE, build green
-`app/module/` `.Materialize()`: **272 → 112**, all increments committed/pushed, build 0 errors throughout.
-- **Routing handlers flipped:** math/* , list/* (sync→async), crypto (ICrypto interface cascade),
-  builder/validateResponse (contained cascade), variable/{get,exists,remove}, event/remove, error/throw,
-  test/run lambda, + the async-method swaps on the big files (builder/llm/assert/http/debug/Fluid/identity).
-- **The 112 left split cleanly:**
-  - **54 optional `?.Materialize()` → DEFER to Part C.** The verbose `(X==null?null:await X.Value()) ?? d`
-    is the exact intermediate C's null model eliminates; doing them now = churn. (Of these, ~33 I already
-    did verbose in earlier increments — C retrofits those too.)
-  - **~44 gate exemptions** (documented in `v6/gate-exemptions.md`): serializer `JsonConverter.Write`
-    (signing), `IFileInfo`/`IFluidIndexable` (Fluid), diagnostic/display (debug, like ToString), build-meta
-    handlers (builder/code/Default — process LLM build output, never runtime refs). The architect should
-    formalize these as gate exemptions (like `System.IO`'s `app.type.path.**`).
-  - **~4 Stage-6-owned** (list/sort, condition/Operator — two-phase sort / old mediator).
-  - **~10 scattered sync helper/predicate/service-resolution** sites — per-site flip-vs-exempt (noted).
+## What this is
 
-### Part C — KEY FINDING: `.Value(fallback)` cannot land additively
-I added the `.Value(fallback)` overloads (base + `Data<T>`) expecting them additive — they produced
-**208 errors**. A second `Value` overload makes `data.Value` (method group) **ambiguous**, breaking every
-remaining silent `data.Value` method-group site in production (the CS8974-equivalents — passed to
-`object?`/delegate, compiled before via single-overload method-group conversion). So the overload — and
-thus Part C — must land **with** the consumer migration of those method-group sites, not before. Reverted;
-production green.
+The compare-redesign branch (architect plan in `.bot/compare-redesign/architect/`): a sign-free `Comparison` enum, per-type comparison hooks, `data.Compare` as THE comparison entry, consumer boundary mapping, and (Stage 3) `file`/`directory`/`url` reference types with narrow-on-examination.
 
-### B+C are one all-at-once interlocked change — NOT attempted AFK
-- **B forces C:** `GetChild`/`Variable.Get` → `ValueTask` ⟹ `Data.As<T>` async (As<T> calls `Variable.Get`)
-  ⟹ a sync source-gen getter can't call async `As<T>` ⟹ the lazy getter (C). And C's `.Value(fallback)`
-  overload surfaces ~200 method-group sites (above). All one change.
-- **Scope:** `GetChild`/`GetChildValue` (`app/data/this.Navigation.cs`), `Variable.Get`/`Resolve`
-  (`app/variable/list/this.cs`, ~29 `Get` callers + 6 `Resolve`), the 3 navigators, `As<T>` async, the
-  source-gen getter rewrite (`Emission/Property/Data/this.cs:40,44,54,58`) for lazy + non-null `Data.Uninitialized`
-  + `[NotNull]` stamp + `[Default]`-on-null, the `.Value(fallback)` overload, AND the ~200 method-group
-  consumer sites + the 54+33 optional-param retrofits.
-- **Design fork to settle (architect):** design-1 = `ValueTask GetChild` (architect's; forces the
-  Variable.Get ripple + As<T> async + C). design-2 = a **lazy-child `GetChild`** that stays sync and defers
-  the read to `child.Value()` (the existing async door) — avoids the Variable.Get/As<T> ripple and the
-  forced coupling, but changes nav-error timing to touch-time and is a bigger GetChild restructure. I lean
-  design-2 (smaller blast radius) but it diverges from the plan — flag for the architect.
+## State by stage
 
-This is the change that must land all-at-once or the build is deeply red. Doing it half-way while AFK risks
-an unrecoverable break with no course-correction. So: Part A landed safely + documented; B+C is the next
-focused session's work (with the design-fork decision).
+- **Stages 1–2, 2.1, 4, 5, 6 — DONE and green.** Per-type `CompareRank`/`Compare` hooks (text 10 … list 75), `Data.Compare` (rank → null policy → driver), boundary table in operators/assert/sort/list-ops, old mediator demolished (`app.data.Compare`, `ScalarComparer`, `IEquatableValue`/`IOrderableValue`, `NormalizeTypes`), `Compare`→`Diff` rename, Pile-2 decompose sites converted (sqlite typed door, llm cache dict navigation, identity dict→json→STJ, GoalCall slot accessor — no recursive `ToRaw` callers left except CommandLineParser, documented infra perimeter).
+- **Stage 3 — core landed, green; stub fills remain.**
+  - Path demolition: `Content`/`Source` removed; `_absolutePath` → private `_location` (as-typed) + cached `_absolute` primed at ctor (anchor-at-resolve-time preserved); `Raw` is now a view over `_location`; ToString/`path.Write(IWriter)` emit the **portable form** (as-typed verbatim; internally-derived paths collapse to root-relative so the install root never leaks).
+  - New types: `app/type/file`, `app/type/directory`, `app/type/url` (+ `serializer/Default` renderers). Lattice via static `Type` list (file is-a path), like image.
+  - `file.read` → returns a REFERENCE (stat at read time for NotFound; content lazy). Eager arms: `.pr` plang container (GoalCall.LoadFromFile depends on it), image, ResolveVariables.
+  - **Semantics line (important):** scalar use of a reference yields **raw content** through the door (`Value()` → `ScalarContent`, bytes cached on the reference); only **examination** — navigation (`%x.field%`, except `.Type`) and `is <type>` — parses + narrows (`Data.NarrowReference`: in-place `_value`/`_type` mutation, prior retained via `type.Accumulate`, location-only reference stashed in `Properties[name]` for chain-wide `!`).
+  - Type chain: `type.@this.List` (headline-first, `[JsonIgnore]` — self-inclusive), `Accumulate`, `Facet(name)`; `Is` consults priors. `!` resolver: chain-facet arm + value-property fallback (`!path`/`!host`/`!size` via Peek, no read).
+  - Registry fix: an `@this` deriving from another family's `@this` (FilePath : path.@this) resolves to the FAMILY name ("path") and never claims the name slot — fixes the `app.type.file` vs `app.type.path.file` "file" collision that mis-dispatched renderers/signing. `Reaches` is assignability-aware (the "path" entity may carry a variant CLR mate).
+  - Consumers moved to the door (raw content for references): `Variable.GetValue`, operator `contains`/`startswith`/`endswith`/`isempty`, assert `Contains`/`NotContains`; `variable.set` keeps a reference AS the value (no door on store); cache wrap `LoadAsync`s ILoadable before SetAsync so hits serve memory; `type.Compare` only lets a hook-bearing name-keyed family drive (hookless `file` defers to the content's family).
+  - Build hint (`file.read.Build`) stamps `{file, <ext>}` (image keeps `{image, ext}`).
 
-### B+C grind STARTED (Design-1) — build RED at the As<T>→C boundary (door-cutover mode)
-Decisions settled: Design-1 nav async; **no exemptions** (three verbs — `await Value()`/`Peek()`/internal
-`Materialize()`); Stage 8 folded into C. Part A finished accordingly (in-memory reads → `Peek()`, not Materialize).
+## Test-contract updates (flag for Ingi)
 
-**B done (committed red):** `INavigator.Navigate` + the 4 navigators → `ValueTask` (CanNavigate stays sync via
-`Peek()`); `GetChild`/`GetChildValue` (`app/data/this.Navigation.cs`) → `ValueTask`; `Variable.Get` → `ValueTask`
-(dotted branch awaits GetChild); `Variable.Resolve` → `ValueTask` (rewritten: pre-resolve all `%var%` through the
-door, then the sync `Regex.Replace` lambda just looks up — the sync-wall fix, **no `GetAwaiter().GetResult()`**);
-`Variable.Set` → `ValueTask` (ctor seeds system vars directly); the indexer removed; **39 Get/Set caller sites
-await-wrapped**. Build 170→108.
+Stage 3 inverts `read` (reference headline) per the approved architect spec; these pinned the old stamp and were updated accordingly:
+- `Tests/LazyDeserialize/ReadConfigJson_UntouchedIsJsonString.test.goal` — `Type.Name` "item"→"file" (kind json; raw-scalar assert unchanged, passes).
+- `Tests/LazyDeserialize/ReadCsv_LandsAsTable.test.goal` — `Type.Name` "table"→"file" (kind csv).
+- C#: `FileRead_Build_*` (table/item→file), `FileType_MimeType_FromExtension` (text→file), `BuilderValidate_BuildInferenceWinsOverDefaultObject` (table→file), `ConditionIfBranchIndexTests` fixture (`new object()`→dict, per its own comment).
 
-**Remaining = C (the hard source-gen part), the 108 red errors are the worklist — all in `data/this.cs`:**
-- `As<T>` / `AsCanonical` / `AsT_Impl` / `AsT_Convert` / `WrapAs` / `SubstitutePrimitive` / `WalkContainerVars` /
-  `WalkDict`/`WalkList` / `ResolveParameter` → **async** (they call the now-async `Variable.Get`/`Resolve` at
-  `this.cs:729,739,936,957,1192,1197,1226`). This is the chain that forces the getter.
-- **Source-gen getter rewrite** (`Emission/Property/Data/this.cs:40,44,54,58`): lazy `GetParameter<T>` (no eager
-  `As<T>`; resolution moves into `await Param.Value()`) **+** the null model (optional `?` → non-null
-  `Data.Uninitialized`, `[NotNull]` stamp, `[Default]`-on-null) **+** `.Value(fallback)` overloads.
-- **`.Value(fallback)` + the ~200 method-group `data.Value` migration land together** (the overload makes
-  `data.Value` ambiguous — proven, 208 errors — so the 200 sites migrate in the same pass).
-- Then the 47 optional-param retrofits to the clean shape (`await Mime.Value()` + `[Default]`).
+## Next
 
-This is one green-or-red unit; it's red mid-flight as designed. The 108-error list + the getter emission are the
-exact continuation worklist.
+1. Fill `Stage3_ReferenceNarrowTests` (15 stubs) + remaining `Stage3_PathDemolitionTests` (9 of 15 left) — machinery now exists for most.
+2. Fill the 5 stale plang stubs: Cut2_LazyReadAndNarrow, Cut3_WriteOutDirIsListing, Cut4_SortByIoKey, Cut6_ReadThenScalarYieldsContent, Narrow_ChainWideBangBothBranches (+ SortBySize C# stub).
+3. Stage 7 (surface typing) per stage-7-surface-typing.md; Stage7_PathGrowth/SurfaceGate stubs.
+4. Known deferred: `%path!absolute%` Authorize gating (PathBangAbsolute stub), `!extension` serialisation question (wire is a single location string now), directory write-out needs a Load() pass that materialises the listing.
 
-### Next
-1. (settled) Design-1 + no exemptions — done.
-2. Coder (focused session): B+C as one unit — nav chain async, getter rewrite + null model, `.Value(fallback)`,
-   then migrate the ~200 method-group sites + optional-param retrofits in the same pass; land green.
-3. Then Stages 3–6.
+## Code example (the narrow seam)
 
-
-## v6 continued — dispatch-resolution model landed; suite green except stage stubs
-
-**Final model (Ingi's design, settled after the Param/Seal/HoldsReference smells):**
-%var% decode happens ONCE per execution at the dispatch boundary — the generated
-`__ResolveParameters()` (awaited by `ExecuteAsync`/`SetAction` before Run/Build) resolves
-each .pr parameter into the handler's backing field. The handler instance is the
-per-execution home: no per-execution Data copies, no caching on the shared .pr param,
-no store sealing. The async value door (`await Value()`) remains for CONTENT — a
-path/file value loads on its own first read (Stage 3); an unused param costs one cheap
-decode, never I/O. Getters are plain backing reads (sync Uninitialized/[Default]
-fallback for direct C# composition). Deleted: Param factories, Seal(), HoldsReference(),
-the _resolved latch, decode-at-Set, dead ResolveParameter. `data/` has no GoalCall
-calls left (one IsSelfResolvingParams walk-skip remains; deletes with born-native-at-load).
-
-**Suite: 4165/4290.** The 125 failing = 124 CompareRedesign stage stubs
-(`Assert.Fail("Not implemented")` bodies, Stages 2-7) + 1 known port-collision flake
-(HttpTestServer). All real regressions fixed, including: null-model consumer gates
-(foreach/Ed25519/channel.set), literal typed-conversion, boxed-ValueTask sites,
-SubstitutePrimitive door-read (DynamicData factories), Authorize EOF=deny (infinite
-reprompt hang), Fluid null guard, Reconstruct/Normalize materialize (sqlite rows).
-
-### Next
-1. Fill the 34 Stage-2 stub bodies (they test the door/dispatch model just built).
-2. Born-native composite reconstruction at load (FromWireShape reconstructs GoalCall
-   from its type tag) -> delete GoalCall.Convert + the IsSelfResolvingParams carve-out.
-3. Stages 3-7 (reference narrowing, per-type Compare, data.Compare entry, demolition).
-4. plang --test (clean rebuild first - stale-binary trap; read the docs per CLAUDE.md).
-
-
-## v6 final — BOTH suites green end-to-end (C# 4189/4290, plang 307/324 — only stage stubs left)
-
-**plang --test (clean rebuild): 307 pass, 0 fail, 15 stale (= the CompareRedesign
-.test.goal stage stubs for Stages 3-7), 2 skipped.** Fixes that got it there:
-- GoalCall.FromWire native-dict arm (born-native collections hand the wire shape as
-  dict.@this — project ToRaw once, one dict arm)
-- dynamic goal name (%goalName%) resolves BEFORE the PrPath branch in GetGoalAsync and
-  is the match name inside LoadFromFile
-- verbatim passthrough restored: output.write %-checks via Peek (not the door);
-  variable.set keeps the value door CLOSED on the plain-bind path (ShallowClone shares
-  the lazy raw) — kind-derivation/strict-probe read the in-memory value only, content
-  opens only past the RawUntouched fast-path where conversion needs it;
-  Normalize entry back to Peek (Reconstruct keeps Materialize — decode leaf)
-
-**Stage-2 stubs: 23 of 34 filled and green** (ValueDoor 7, NavigationAsync 6,
-GetParameterLazy 7 — rewritten to the dispatch contract, PlaneResolver 3). The 11 left
-pin later stages: typed-leaf value slot, _raw dissolution, ToRaw removal, text.Value
-privatisation, Type-getter cleanup (born-native leaf stages); value-property plane +
-!type.list chain (Stage 3 narrowing); reserved-core gate, @schema block, envelope-name
-removal (wire/registration).
-
-**Born-native GoalCall landed**: FromWire is the explicit birth-site constructor
-(loader walk + builder), NOT a registry hook; data/ has zero GoalCall references.
-
-### Next
-1. Stages 3-7 implementation (the 101 C# + 15 plang stage stubs are the spec).
-2. The 11 future-stage Stage-2 stubs land with their owning stages.
-
-## v6 addendum — GoalCall symmetry (Ingi), wire-read fixes, 2 plang stubs filled
-
-The born-native-GoalCall detour resolved into Ingi's symmetry rule: **GoalCall converts
-like number** — the conversion registry dispatches to the type's OWN Convert hook; the
-declared slot type (Data<GoalCall>) drives; the wire tag is advisory. Restored
-GoalCall.Convert (kept the native-dict arm); deleted every compensating special case
-(load walk, FromWire rename, [PlangType] STJ arm, contextual Wire registration).
-Independently-correct keeps: PathConverter reads both wire forms (string + property
-bag), SetValueOnObject converts context-bound (dotted writes door-read).
-plang stubs filled: Plane_DataKeyVsProperty, Failure_ParamResolutionError (both pass).
-
-Suites: plang 309/0 (13 stale = Stage 3-7 stubs), C# 4189/4290 (101 stubs, 0 real).
-
-### Session rules added (memory)
-- Production-code edits ONLY via visible Edit/Write tools; shell-batching for tests only.
-
-### Next (unchanged)
-Stages 3-7; the 101 C# + 13 plang stubs are the spec. Stage 4 (per-type Compare:
-prove text+number+cross-pair) is the natural entry — was starting it when the
-GoalCall work preempted.
+```csharp
+// data/this.cs — scalar use = content; examination = narrow
+public virtual ValueTask<object?> Value()
+{
+    var v = Materialize();
+    if (v is global::app.type.file.@this or global::app.type.url.@this)
+        return ScalarContent(v);              // raw bytes/text, no type change
+    return new(v);
+}
+// this.Navigation.cs — GetChildValue head
+if (!key.Equals("Type", ...) && Peek() is file.@this or url.@this)
+    await NarrowReference(Peek()!);           // parse + in-place type chain
+```
