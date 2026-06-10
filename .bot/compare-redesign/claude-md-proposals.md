@@ -17,3 +17,24 @@
 - NEVER `dotnet run --project PLang.Tests` (90s+ per call) and never `dotnet test`. Run the built binary directly: `PLang.Tests/bin/Debug/net10.0/PLang.Tests --treenode-filter "/*/*/*Name*/*"`.
 - Never hand-mix analyzer flags between builds — a flag flip invalidates MSBuild incremental state (full rebuild). The script keeps flags consistent.
 ```
+
+## architect — v2 — 2026-06-10
+
+**Target:** characters/architect/character.md
+
+**Why:** Stage 9 produced `stage-9-demolition.md` — a member-by-member audit of `app/data/` + the value types against the new model, organized by when each member dies, with an explicit stays-list. Ingi: "this demolition list is a key thing, I think we should always include that in our plans." The gap it closes: a new design says what to build, but old members don't delete themselves — they linger as second mechanisms and attract new callers (the `As<T>`/`GetValue`/`Materialize` pile on Data was exactly this). Sibling of the leaf-trace rule (proposed 2026-06-01): the leaf trace finds a behavior's old home; the demolition list enumerates the full kill-surface of a design change.
+
+**Proposed change:** add to the architect's plan-writing rules:
+
+```
+**Every design-changing plan includes a demolition worklist** (separate file,
+linked from the stage/plan): a member-by-member audit of the affected classes —
+methods AND private fields — against the new design. Organize by WHEN each
+member dies (per slice; transitional entries marked "do not extend, do not add
+callers"), not by category, and end with an explicit "stays — do not delete"
+list so nobody over-deletes. Each entry: member + file:line anchor (names are
+the truth, lines drift), one-line why, the replacement. Verify against current
+code before writing — grep the signatures, read the suspicious bodies; an audit
+of remembered code is fiction. Verdicts are the contract; order and mechanics
+are the coder's.
+```
