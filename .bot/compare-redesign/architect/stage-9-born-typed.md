@@ -1,72 +1,51 @@
-# Stage 9: Born-typed values (the store seam)
+# Stage 9: Born-typed values — the instance IS the value
 
-**Why:** the `Data` value slot holds **either shape** depending on origin — `set %x% = %a.port%` puts a `number.@this` in the slot, `set %b% = "hello"` puts a bare C# `string`. For the bare case, `Data.Type` carries the `text` stamp but the behavior home (`text.@this` — Length, Contains, the Compare hook, Write) is never instantiated, so every consumer carries an "is it the wrapper or the bare string?" branch — the `is string` arms, the `(long)` casts, the leaf-collapse sites. The inconsistency is *which object* sits in the slot, never a duplicate copy (the slot is a reference; the typed value owns the backing). Stage 2 already promised "the value is always a typed PLang value"; this stage is that promise's deferred remainder.
+**The contract for this stage is [`coder/data-value-model.md`](../coder/data-value-model.md)** (Ingi + coder session, extended by the architect session, 2026-06-10). This file is the work breakdown against that contract; where any earlier stage doc (2, 2.1, 3) or the original born-typed proposal conflicts with the model doc, **the model doc wins**. This file was rebased on it 2026-06-10; the earlier `store(v)`-into-a-slot design is superseded.
 
-**Goal:** every value is lifted to its typed wrapper **on the way in**, at one private store seam on `Data`. No consumer ever sees raw CLR in the slot again; the consumer-side branches get deleted, not maintained.
+**Why:** the `Data` value slot held **either shape** depending on origin — `set %x% = %a.port%` put a `number.@this` in the slot, `set %b% = "hello"` put a bare C# `string`, so every consumer carried an "is it the wrapper or the bare string?" branch. The design session went further than the original fix (lift raw CLR into the slot): the slot itself is the wrong shape. Data holds **one typed instance — the instance IS the value** — plus name, properties, signature. No `_value` next to a `_type` descriptor, no `_raw` on Data, no consumer branches.
 
-**Scope:** the store seam + the consumer tail + the slice-3 follow-ons (`text.Value` private, `item.ToRaw()` removal, `_raw` dissolution). **Out of scope:** dict/list copy-on-write (own todo), the CommandLineParser perimeter lift (own todo — ruling 3), the PLNG003 worklist walk (Stage 7's ongoing convergence; interleaves freely — the two don't block each other).
+**Goal:** every Data holds a typed `item` instance from birth. Raw CLR exists only at the boundaries (in: lifted once at entry; out: the item lowers itself at a real .NET edge). The consumer-side branches get deleted, not maintained.
 
-**Deliverables:** the seam + table below; slices 1–2 green on both suites; the six pinned `Stage2_ValueDoorTests` stubs filled and green; `WrapperImmutabilityTests` stays green throughout.
+**Scope:** the Data shape collapse, the entry lift, the three doors, live templates, the consumer tail, the immutability/collection semantics, and the follow-ons (`text.Value` private, `item.ToRaw()` removal). **Out of scope:** the schema layers (signature/encryption/compress — future branch; the `SetValueDirect` courier sites are marked transitional debt, do not extend them), the chain-reconciliation design and `Value<T>()` vs `As<T>` (the model doc's open points 1–2 — need a session before the slice that touches them), CommandLineParser (stays outside Data, lifts when its own todo lands), dict/list copy-on-write (dead — collections are reference-semantics by design).
 
-**Dependencies:** Stages 2–6 (the typed value model, the door, per-type Compare) and Stage 3 (references) — all landed. Stage 7's gate runs as warning alongside; no ordering constraint either way.
+**Deliverables:**
 
-**Status:** direction Ingi-approved, rulings settled 2026-06-10 (this file is the stage contract; origin story + coder's framing in [`coder/stage-proposal-born-typed.md`](../coder/stage-proposal-born-typed.md)). Already landed ahead of the stage (d85c70d25): the `WrapperImmutabilityTests` gate (3 green) and the three seam-independent `Stage2_PlaneResolverTests` stubs (reserved-core protection, `@schema` dict-key block, `name` off the outbound wire). Remaining: the six `Stage2_ValueDoorTests` stubs, all pinned Skip-with-reason to this stage.
+- **Data collapses** to: name, the typed instance, properties, signature (signature on Data this branch only). Killed: the `object? _value` slot, `_type` as a separate descriptor entity, `_raw` on Data (moves onto the types that have an unparsed form), public/internal `Materialize()` (parse lives inside the type's own `Value()` path).
+- **The entry lift** — CLR → item, once, at the boundary. The mapping survives from the original design:
+  ```
+  string → text          bool → bool            byte[] → binary
+  numerics → number      (kind derives from the boxed CLR numeric — never stored)
+  DateTime/DateTimeOffset → datetime    DateOnly → date
+  TimeOnly → time                       TimeSpan → duration   (1:1 — no value-sniffing)
+  bare data.@this → THROW               (nothing legitimate produces it)
+  POCO / third-party CLR → item | kind  (rung 2 — kind names the class; generic
+                                         navigation/render/compare work day one)
+  engine plumbing (Assembly, …) → never enters Data
+  ```
+- **The three doors, one job each:** `Peek()` sync, in-memory, no I/O/parse/resolve (ToString/Equals/GetHashCode read it, never load); `await Value()` parse + resolve, may answer as a different type — Data rebinds its instance, that rebind IS the narrow; `await Write(IWriter)` the type streams itself — loads if needed, resolves its refs inline, passthrough stays byte-for-byte with zero parse. `Write` goes async; the `await GetValue()` pre-crawl dies; STJ `[JsonConverter]` is the one documented sync perimeter (pre-resolves; channel paths use our writers).
+- **Templates live** (design settled with Ingi): build validator stamps `template` deterministically; stamped values (text or collection literals with refs) resolve at every use, never at set, result never stored; cache `Value()`'s answer iff `template == null`; render is single-pass (fills builder-recorded holes only — never re-scans output; unstamped input prints "%secret%" literally).
+- **Immutability + collections:** values immutable everywhere (`WrapperImmutabilityTests` stays green; extend its set as types convert); working on a value = new instance + Data rebind (file content change included); **list/dict are mutable containers of immutable values — reference semantics** (`set %y% = %x%` shares the list; `add` mints a new Data per entry pointing at the value). `CopyStructure` copy-on-add is REMOVED — it fights reference semantics. Property bag copied per Data at set (bag only; values shared).
+- **The six pinned `Stage2_ValueDoorTests` stubs filled and green** (they pin outcomes, not mechanics, so they survive the rebase): Value_AuthoredScalar_ReturnsTypedNumber, VarReference_RidesAsTypedText, DataType_Getter_NoCLRSniffing (the instance knows its own name/kind — the getter's CLR-sniffing block is deleted), TextRawValue_IsPrivate, GenericToRaw_DoesNotExist, RawSlot_Dissolved (`_raw` off Data, onto the types).
+- Both suites green at every slice boundary.
 
-## Design
+**Dependencies:** Stages 2–6 + Stage 3 references landed. Stage 7's PLNG003 walk interleaves freely. The coder's pre-model tail work (C# 306→23) was made against the in-flight retype the model doc calls disposable — **coder: mark which of those fixes survive the model** before redoing the core, so the 280 already-fixed sites don't get re-litigated.
 
-### The seam — one chokepoint
+## Slices (each ends green on both suites)
 
-Lift on the way IN, at a single private `store(v)` on `Data` that every origin already flows through: the constructor, `SetValue`, and the parse path (the internal `Materialize` core). All origins converge; the setter change is ~20 lines. The stage's real weight is the **consumer tail** — everything that reads `await x.Value()` and pattern-matches raw CLR starts seeing wrappers; the suites enumerate the tail.
+1. **The core** — Data shape collapse + entry lift + the three doors. This redoes the in-flight retype properly; it is the bulk and the blocker for everything else.
+2. **Consumer tail** — the suites enumerate it: `is string`/`is long` arms, casts, `As<T>` paths, assert formatting, fixtures constructing `new Data("x", "raw")`. Fix by asking the item or lowering via the type's own `Clr<T>`/`ToInt64()` at a real .NET edge — never `.ToString()`, never a raw getter.
+3. **Templates** — stamp + live resolution + async Write (design settled; see the model doc and the template section of the proposal).
+4. **Collections semantics** — remove `CopyStructure` copy-on-add, pin reference semantics with tests (the `[1,2,3]` case), property-bag copy at set.
+5. **Follow-ons** — `text.Value` private (emitted only via `text.Write`), `item.ToRaw()` removed (callers route through types/serializers).
 
-```
-store(v):
-  null                     → null            (present-null stays the null.@this story)
-  already item.@this       → as-is           (wrappers, domain values, references)
-  string                   → text.@this
-  bool                     → bool.@this
-  int/long/decimal/double… → number          (kind derives from the boxed CLR numeric —
-                                              number.@this already works this way; never stored)
-  byte[]                   → binary.@this
-  DateTime/DateTimeOffset  → datetime.@this
-  DateOnly                 → date.@this
-  TimeOnly                 → time.@this
-  TimeSpan                 → duration.@this
-  data.@this (bare)        → THROW           (always the implicit-operator accident — ruling 2)
-  anything else            → as-is, types as `item` — the "unknown" apex, exactly what
-                             `object` is to C# (JsonElement, infra CLR objects,
-                             take-over API results)
-```
+## Rulings that survive the rebase (2026-06-10, settled with Ingi)
 
-### The rulings (2026-06-10, settled with Ingi)
+1. **1:1 date map, no family judgement** — the lift never inspects a value to pick a type; `date`/`time` arrive only via explicit typed judgement.
+2. **Bare `data.@this` THROWS at entry.** Note the nesting answer changed: not a wrapper-owns-Data pattern — nesting is solved by the **schema layers** (model doc, "Nested Data does not exist"), on a future branch. The throw survives unchanged; `SetValueDirect` courier sites are the marked transitional debt.
+3. **No CLI carve-out** — CommandLineParser stays outside Data.
+4. **Immutability locked by the gate** — now the general rule (values immutable; collections the deliberate, documented exception), not just a caching precondition. Instance caches (bool.True/False, small ints) remain restricted to stamp-free instances.
+5. **Stub split** — the three `PlaneResolverTests` stubs landed seam-independently (d85c70d25); the six `ValueDoorTests` stubs land with slices 1–2.
 
-1. **Date arms are a 1:1 CLR map — no family judgement.** The backings already line up (`date.@this` holds `System.DateOnly`, `time.@this` holds `System.TimeOnly`, `datetime.@this` holds `System.DateTimeOffset`, `duration.@this` holds `System.TimeSpan`). The seam never inspects a value to pick the type (midnight `DateTime` ≠ `date`) — value-sniffing is non-deterministic magic. A `date`/`time` arrives only via explicit typed judgement (builder hint, `variable.set` force), never seam inference.
+## You own this
 
-2. **Bare `data.@this` at the seam THROWS; nested Data always has an owning wrapper type.** Nested Data is a real shape — `- encrypt %data%, write to %encrypted%` yields `Data { type: encryption, value: encryption.@this { backing: the sealed inner Data } }` — and it follows list's pattern: the slot holds the wrapper, the wrapper's backing holds the Data boxes (`list.@this` holds `List<data>`). No approve-list; the one rule is "a Data inside a value always has an owning type." The throw only ever catches the accidental implicit-operator case (`return innerData;` → `Data<object>{ Value = Data<bool> }`, the CLAUDE.md footgun), which nothing legitimate produces — the footgun dies structurally at the chokepoint. Courier rule holds: `encryption` never opens the inner Data; only `decrypt` (the leaf) does, so the inner signature survives sealed.
-
-3. **CommandLineParser stays outside Data — no carve-out.** The stage's payoff is consumers deleting their `is string` branches because the invariant is absolute; a carve-out makes every consumer keep the branch "just in case." CLI config never enters a Data slot (already true); it lifts at the perimeter when the CommandLineParser cleanup todo lands (todos.md 2026-06-05, updated 2026-06-10).
-
-4. **Wrapper immutability is a precondition, locked by a gate.** Wrapper instances are shared today (`set %x% = %y%` aliases the wrapper through `Data.ShallowClone`); the instance cache widens that to program-wide singletons (every `true` is the same `bool.True` object). One writable field on a wrapper and a write through `%a%` appears in `%b%`. The rule: **wrappers are deeply immutable; everything per-occurrence (name, type, kind, properties, signature) lives on the Data box, which is never shared.** Concrete trap: storing kind on the `number` instance — one shared `5` can't be int-kind and long-kind at once; `number.@this` derives `Kind` from the boxed CLR type, keep it that way. `WrapperImmutabilityTests` (landed, 3 green: fields readonly incl. inherited, no setters, sealed) must stay green; no instance cache lands without it.
-
-5. **Stub split — six wait, three didn't.** The three `Stage2_PlaneResolverTests` stubs were seam-independent and have landed. The six `Stage2_ValueDoorTests` stubs depend on this stage: `Value_AuthoredScalar_ReturnsTypedNumber` + `VarReference_RidesAsTypedText` are slice-1 outcomes; `DataType_Getter_NoCLRSniffing` lands when the seam stamps type at construction (the getter becomes `return _type;`, the CLR-sniffing block is deleted, not migrated — Stage 2's spec); `TextRawValue_IsPrivate`, `GenericToRaw_DoesNotExist`, `RawSlot_Dissolved` are slice-3 follow-ons.
-
-### Incumbent trace — where raw enters, who branches on it
-
-Entry points the seam takes over (all already funnel through `Data`): the constructor, `SetValue`, the internal parse core. No other path writes the slot.
-
-Known consumer-tail shapes (slice 1 flushes the rest via the suites): `is string`/`is long`/`is bool` arms in handlers; numeric casts; `As<T>` conversion paths; assert formatting; STJ value-slot serialization; test fixtures constructing `new Data("x", "raw")`. Much of the convergence already exists — Compare hooks coerce wrappers, the serializer renders them, GetValue/leaf-collapse unwrap — but the tail is real and only the suites will enumerate it. Equality/keying sites get wrapper semantics (`text` is ordinal-ignore-case by design — verify each keying site wants that).
-
-### Slices (each ends green on both suites)
-
-1. **Scalars** — string/bool/numeric/byte[]/date-family through the seam; fix the consumer tail the suites surface.
-2. **Containers** — raw `Dictionary`/`List` → `dict`/`list` at the seam. CLI config stays outside Data (ruling 3).
-3. **Follow-ons** (need 1–2 green): `text.@this.Value` private (emitted only via `text.Write(IWriter)`); `item.ToRaw()` removed (remaining leaf-collapse sites route through types/serializers); `_raw` dissolution (bare bytes off a channel refine in place through the same instance).
-
-### Risks / open points
-
-- **Perf:** scalar wrapping allocates on every store — `bool.True`/`False` reuse is free; small-int cache worth measuring *after* slice 1 is green, never before the immutability gate is in place (ruling 4).
-- **Infra Data:** `!data`, Properties values, and courier Data carry engine objects — the as-is/`item` arm covers them; watch for infra consumers casting `.Value()` results.
-- **PLNG003 interplay:** if domain entities stay exempt from the gate, they still pass through the seam as-is — the two decisions don't block each other.
-
-### You own this
-
-Code shapes in this file and in the coder's proposal (the `store(v)` sketch, the gate-test layout) are suggestions — the coder owns the final shape. The contracts that are fixed: the table's arms (incl. the THROW), the five rulings, slices end green on both suites, and the immutability gate stays green throughout.
+Code shapes here and in the model doc (`Peek`/`Value` sketches, `WithContent`/`Rebind`, the lift table's spelling) are suggestions — the coder owns the final shape. Fixed contracts: the model doc itself, the lift table's arms (incl. the THROW), values-immutable/collections-reference-semantics, the three doors' jobs, single-pass render, and green suites at every slice boundary.
