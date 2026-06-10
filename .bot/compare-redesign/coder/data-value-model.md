@@ -1,14 +1,51 @@
 # The Data / Value model
 
-Written up from a design session with Ingi (2026-06-10). This describes how
-reading a value works — agreed and settled. The architect should read this
-before any further work on the value path. Open points are listed at the end;
-they are NOT settled.
+Written up from a design session with Ingi (2026-06-10), extended the same day
+by the architect review session (immutability, collections, templates,
+serialization — all settled and folded in below). Open points are listed at
+the end; they are NOT settled.
 
 ## The one-sentence version
 
 Data carries; the type instance IS the value and does all its own work; you
 only ever ask for the value at the moment you actually use it.
+
+And the second sentence: **values never change; Data is the only thing that
+changes — it points at values.**
+
+## Immutability and sharing (settled)
+
+- **Every value instance is immutable.** plang cannot change an instance by
+  design — `set` always makes a new value and rebinds. C# is held to the same
+  rule by `WrapperImmutabilityTests` (readonly fields, no setters, sealed).
+- **Stamps are ordinary typed properties on the instance** — `kind`, `strict`,
+  `template` — set at creation, never after. There is no "stamps" object. Each
+  type owns its own kind vocabulary (text: file extension; number: precision;
+  rung-2 item: the CLR class name).
+- **Sharing is therefore always safe.** `set %y% = %x%` → new Data, same value
+  instance, and a NEW property bag (the bag is copied; the values inside it
+  are shared by pointer). So `set %y!NewProp% = 1` lands on %y% only.
+- **Collections are the deliberate exception: list and dict are mutable
+  containers of immutable values** — reference semantics, exactly like
+  `List<string>` in C#. A list is an identity (a place that changes over
+  time); everything in it is a value.
+
+  ```plang
+  - set %x% = [1, 2]
+  - set %y% = %x%        / same list instance — two names for one list
+  - add 3 to %x%
+  - write out %y%        / [1, 2, 3] — yes, by design
+  ```
+
+  `add %x% to %list%` mints a NEW Data for the entry, pointing at %x%'s
+  current value — O(1), nothing copied. That is what keeps a later
+  `set %x% = "b"` from touching the list: the entry has its own Data.
+- **file is a value, not a container.** Changing content = a new file instance
+  (same path, same properties, new content) + Data rebind. Never in place.
+- **Consequences:** the copy-on-write todo and any "am I shared?" flag are
+  dead — nothing to track. The F1 `CopyStructure` copy-on-add must be REMOVED
+  (it copies the list on add — half value-semantics, fighting this rule). The
+  rope/chunk list model becomes optional perf work, not a semantic need.
 
 ## The shape
 
@@ -60,6 +97,55 @@ async Value() { /* load if needed, parse if needed, return the typed instance */
 - text-vs-binary of loaded bytes is decided at the lowest level that reads
   them (the channel boundary stamps it from the mime). Nothing above ever
   asks that question again.
+- Peek resolves nothing — it hands the instance over as-is. Rendering for
+  output happens inside the type's own `Write` (see Serialization below).
+- Sync framework methods (`ToString`, `Equals`, `GetHashCode`) answer from
+  what is already in memory — they never load, never resolve.
+
+## Templates and refs — live, resolved at use (settled)
+
+- **The build validator stamps `template`** — detecting %refs% in an authored
+  value is deterministic code, not the LLM. `template` is a string for now
+  ("plang" is the only language).
+- **A builder-authored value containing refs is LIVE** — template text
+  (`"hello %name%"`) or a collection literal (`{ name: %name% }`). It holds
+  the refs and resolves at every use, never at set. A container with refs
+  inside gets the stamp too, so it knows something needs rendering without
+  being walked.
+- **The resolved result is never stored back.** The rule: `Value()` may keep
+  its answer only when the answer depends on nothing but the value itself.
+  Parse (file → dict) qualifies — keep it. Render depends on outside state
+  (%name% can change between uses) — never keep it. Mechanically: cache iff
+  `template == null`.
+- **Render is single-pass.** It fills only the holes the builder recorded;
+  the output is never re-scanned for refs. Input is never stamped, so a user
+  who types "%secret%" gets it printed literally. A substituted value that is
+  itself a stamped template renders through its OWN door first — door
+  recursion is fine; string re-scanning is the injection hole and is banned.
+- **There is one `app.variables`** — a traveling value resolves the same
+  wherever it is used; a sub-goal sees the %name% set before the call.
+
+## Serialization — Write is async, one walk (settled)
+
+`Write(IWriter)` becomes `async ValueTask Write(IWriter w)`. The type
+serializes itself and resolves its own refs while doing it: dict.Write awaits
+each entry; the entry renders itself right there. An entry with
+`template == null` completes synchronously — no async hop, no cost for plain
+data. One walk; the `var _ = await item.GetValue()` pre-crawl dies.
+
+The serializer stays dumb — it calls `Write` and never asks "is this a
+template?". The type knows; it reaches app.variables through its context.
+
+The one place that cannot go async is the STJ `[JsonConverter]` (Microsoft's
+interface is sync). That is the bare-json interop view, not the channel path —
+channel output goes through our own writers. The STJ path pre-resolves before
+handing over; documented exception, nothing else inherits it.
+
+**Wire mapping:** in memory, Data has one slot — the instance. The wire keeps
+`{name, type, value, properties, signature}`: `Wire.Write` fills both `type`
+(name/kind) and `value` from the one instance. No new envelope type, ever.
+(`signature` rides on Data on this branch; it moves to its own schema layer on
+the schema branch — see "Nested Data does not exist".)
 
 ## The two asks — untyped and typed
 
@@ -93,15 +179,22 @@ forever.
   calls Value(), that call is a bug.
 - **`await Value()`** means: "I am going to use or manipulate this value, give
   it to me ready." It may appear anywhere in C# — handler, helper — as long
-  as that code genuinely works on the value:
+  as that code genuinely works on the value. Manipulating NEVER alters the
+  instance (values are immutable): the work produces a new value and the Data
+  rebinds — same rule as `set`:
 
   ```csharp
-  void ReplaceSpaceWithDash(Data<file> file)
+  async Task ReplaceSpaceWithDash(Data<file> file)
   {
-      var theFile = await file.Value();   // file loads itself if not loaded
-      theFile.Content = theFile.Content.Replace(" ", "-");   // by reference — we alter the instance
+      var f = await file.Value();                                // file loads itself if not loaded
+      var changed = f.WithContent(f.Content.Replace(" ", "-"));  // Content is text; Replace returns a NEW
+                                                                 // text; WithContent a NEW file (same path)
+      file.Rebind(changed);                                      // Data points at the new value
   }
   ```
+
+  (`WithContent`/`Rebind` shapes are the coder's call — the contract is
+  new-instance + rebind, never in-place.)
 
 - **`Peek()`** is for pass-through output: the channel writer writes content
   as-is, no parse, however big the value.
@@ -284,17 +377,30 @@ following are wrong and must go:
   .NET edge.
 - **Navigator selection above the type** — navigation is the item's own
   member; nothing picks a navigator by inspecting the value's type.
+- **`CopyStructure` copy-on-add on list** — copies the list when adding,
+  which is half value-semantics. Collections have reference semantics now
+  (see Immutability and sharing); the copy is wrong, not cautious.
+- **The `await GetValue()` pre-crawl before sync serialization** — Write is
+  async; the type resolves while serializing, one walk (see Serialization).
 
 ## Not settled — do NOT build on these yet
 
-Discussion stopped before these; they are open questions for the next
-session:
+Open questions for the next session:
 
-3. The exact mechanics of reconciling Type-evolution with the existing
-   type-chain/narrow implementation — the model is agreed (same Data, type
-   rebinds on Value()'s answer, identity accumulates), the code
-   reconciliation is not designed.
-4. `Value<T>()` vs the existing `As<T>` — same concern, which name/shape
+1. Reconciling Type-evolution with the existing type-chain/narrow code. The
+   model is agreed (same Data, type rebinds on Value()'s answer, identity
+   accumulates); the code reconciliation is not designed. Two sub-questions
+   now belong here:
+   - **Where does the chain live?** Likely on the answering instance the
+     parse mints (it is fresh, never shared) — but that is a choice, not
+     decided.
+   - **Narrow visibility across aliases changed.** Old code mutated the Data
+     in place, so every alias saw the narrow; now narrow is a per-Data
+     rebind, so two Datas sharing one unparsed file each parse independently
+     (idempotent, but the cross-alias visibility is gone). This is a
+     deliberate reversal of the old stage-2 note — confirm nothing depended
+     on it.
+2. `Value<T>()` vs the existing `As<T>` — same concern, which name/shape
    survives is not decided.
 
 ## State of the working tree (handover note)
