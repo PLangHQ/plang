@@ -51,7 +51,8 @@ public class Cut2_SignThenCompressTests
         var d1 = MakeCompressible(app, "Ingi");
         var d2 = d1.Compress();
         var restored = d2.Decompress();
-        await Assert.That(restored.Name).IsEqualTo("user");
+        // binding label off the archived wire; value + inner signature survive
+        await Assert.That(restored.Name).IsEqualTo("");
         await Assert.That((await restored.Value())?.ToString()).IsEqualTo("Ingi");
         await Assert.That(restored.Signature).IsNotNull()
             .Because("Inner signature was populated when Compress wrote bytes through the wire converter.");

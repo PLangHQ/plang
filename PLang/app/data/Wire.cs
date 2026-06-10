@@ -489,10 +489,13 @@ public class Wire : JsonConverter<@this>
         // always present (signed: it's intrinsic wire identity, unlike name).
         writer.WriteString(@this.WireSchema, @this.WireSchemaData);
         // The variable name is a binding label, not part of the data's identity —
-        // exclude it from the signed hash (isHashOuter) so a value verifies the
-        // same no matter which variable holds it (sign "x" → write to %a% → verify
-        // %a% must match sign's hash). The normal wire still carries the name.
-        if (!isHashOuter)
+        // excluded from the signed hash (isHashOuter) so a value verifies the
+        // same no matter which variable holds it, and excluded from the OUTBOUND
+        // wire entirely: a server's binding label is not API surface, and a
+        // client that used it would couple to a name the server may rename.
+        // The Store view keeps it — .pr action parameters and local persistence
+        // bind by name. The reader still accepts `name` from either form.
+        if (!isHashOuter && View == global::app.View.Store)
             writer.WriteString("name", data.Name);
 
         // type — emit as the structured entity {name, kind?, strict?} via the

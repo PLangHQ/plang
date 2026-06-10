@@ -109,7 +109,9 @@ public class JsonWriterDomainShapeTests
         var i = new global::app.module.identity.Identity { Name = "x", PublicKey = "y" };
         var record = new Data("rec", i);
         var json = NormalizePipelineHelper.SerializeRecord(record);
-        await Assert.That(json).Contains("\"name\":\"rec\"");
+        // the envelope label "rec" is off the wire; the Identity's own `name`
+        // FIELD inside the value bag is content and stays
+        await Assert.That(json).DoesNotContain("\"name\":\"rec\"");
         await Assert.That(json).Contains("\"value\":{");
         await Assert.That(json).Contains("\"publickey\":\"y\"");
     }

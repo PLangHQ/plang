@@ -75,26 +75,57 @@ public class Stage2_PlaneResolverTests
     [Test]
     public async Task BangReservedCore_Protected_TypeMayNotShadow()
     {
-        // a type declaring a property named `error`/`type`/`success`/`@schema` is rejected
-        // (build-time gate or runtime registration check)
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // the runtime registration check rejects a shadower; every built-in
+        // value family is clean (statics like the lattice `Type` are exempt)
+        await Assert.That(global::app.type.catalog.Loader.ReservedShadow(typeof(ReservedShadower)))
+            .IsEqualTo("Error");
+        await Assert.That(global::app.type.catalog.Loader.ReservedShadow(typeof(global::app.type.text.@this))).IsNull();
+        await Assert.That(global::app.type.catalog.Loader.ReservedShadow(typeof(global::app.type.dict.@this))).IsNull();
+        await Assert.That(global::app.type.catalog.Loader.ReservedShadow(typeof(global::app.type.image.@this))).IsNull();
+        await Assert.That(global::app.type.catalog.Loader.ReservedShadow(typeof(global::app.type.path.file.@this))).IsNull();
+    }
+
+    private sealed class ReservedShadower : global::app.type.item.@this
+    {
+        public string Error => "shadow";
     }
 
     [Test]
     public async Task AtSchemaBlocked_AsDictKey_WireMarkerOnly()
     {
-        // @schema is the wire marker; cannot be set/read as a dict key (and `@` isn't a legal C# identifier)
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // @schema is the wire marker — the dict write seam rejects it as a key
+        var d = new global::app.type.dict.@this();
+        await Assert.That(() => d.Set("@schema", "data")).Throws<ArgumentException>();
+        await Assert.That(() => d.Set(new Data("@schema", "data"))).Throws<ArgumentException>();
+        // ordinary keys unaffected; envelope recognition reads the marker off
+        // the JsonElement (IsDataMarked), never through a dict key
+        d.Set("schema", "fine");
+        await Assert.That(d.Has("schema")).IsTrue();
     }
 
     [Test]
     public async Task NameField_RemovedFromEnvelope_FreeAsDataKey()
     {
-        // envelope no longer carries `name`; %x.name% reads the content's field, nothing to shadow
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // the OUTBOUND envelope no longer carries `name` (a server's binding
+        // label is not API surface); the Store view keeps it (.pr parameters
+        // bind by name). `%x.name%` reads the content's own field.
+        await using var app = NewApp();
+        var ctx = app.User.Context;
+        var d = new Data("myBinding", new Dictionary<string, object?> { ["name"] = "ingi" }) { Context = ctx };
+
+        var plang = (global::app.channel.serializer.plang.@this)app.User.Channel.Serializers.GetByMimeType("application/plang");
+        var outbound = System.Text.Json.JsonSerializer.Serialize(d,
+            (System.Text.Json.JsonSerializerOptions)typeof(global::app.channel.serializer.plang.@this)
+                .GetField("_outbound", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(plang)!);
+        var store = System.Text.Json.JsonSerializer.Serialize(d,
+            (System.Text.Json.JsonSerializerOptions)typeof(global::app.channel.serializer.plang.@this)
+                .GetField("_store", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(plang)!);
+
+        await Assert.That(outbound).DoesNotContain("\"myBinding\"");
+        await Assert.That(store).Contains("\"myBinding\"");
+        // the content key `name` is free — nothing on the envelope to shadow it
+        var child = await d.GetChild("name");
+        await Assert.That((await child.Value())?.ToString()).IsEqualTo("ingi");
     }
 
     [Test]

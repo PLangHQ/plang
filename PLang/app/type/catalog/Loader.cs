@@ -58,6 +58,32 @@ public static class Loader
             "identity", "signature", "signedoperation", "callback", "channel",
         };
 
+    /// <summary>
+    /// The reserved core of the navigation planes — `%x!type%`/`!error%`/
+    /// `!success%` and the `@schema` wire marker always answer from the Data
+    /// envelope. A value type may not declare an instance property under these
+    /// names: it would silently shadow (or be shadowed by) the envelope on the
+    /// `!` plane, and which one wins becomes resolution-order trivia.
+    /// </summary>
+    public static readonly System.Collections.Generic.IReadOnlySet<string> ReservedCore =
+        new System.Collections.Generic.HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
+        {
+            "type", "error", "success", "@schema",
+        };
+
+    /// <summary>
+    /// The reserved-core instance property a candidate type illegally declares,
+    /// or null when clean. Statics are fine (the lattice convention is a static
+    /// named <c>Type</c>); only the navigable instance surface can shadow.
+    /// </summary>
+    public static string? ReservedShadow(System.Type clr)
+    {
+        foreach (var p in clr.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            if (ReservedCore.Contains(p.Name))
+                return p.Name;
+        return null;
+    }
+
     public static Result Register(Assembly assembly, @this registry)
     {
         if (assembly == null) throw new System.ArgumentNullException(nameof(assembly));
@@ -78,6 +104,13 @@ public static class Loader
         {
             if (clr == null || clr.IsAbstract || clr.IsInterface) continue;
             var attrs = clr.GetCustomAttributes<app.Attributes.PlangTypeAttribute>(inherit: false).ToList();
+            // Reserved-core shadow check applies to anything registrable
+            // ([PlangType] or @this-convention) before any registration lands.
+            if ((attrs.Count > 0 || string.Equals(clr.Name, "this", System.StringComparison.Ordinal))
+                && ReservedShadow(clr) is { } shadowed)
+                return new Result(false, "TypeLoadReservedShadow",
+                    $"Type '{clr.FullName}' declares instance property '{shadowed}' — `type`/`error`/`success`/`@schema` are the reserved navigation core and may not be shadowed by a value type.",
+                    types, renderersList);
             string? canonical = null;
             if (attrs.Count > 0)
             {

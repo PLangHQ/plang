@@ -30,7 +30,8 @@ public class Cut4_PropertiesWireTests
             using var doc = JsonDocument.Parse(wire);
             var fields = new HashSet<string>();
             foreach (var p in doc.RootElement.EnumerateObject()) fields.Add(p.Name);
-            await Assert.That(fields.Contains("name")).IsTrue();
+            // binding label off the outbound wire
+            await Assert.That(fields.Contains("name")).IsFalse();
             await Assert.That(fields.Contains("type")).IsTrue();
             await Assert.That(fields.Contains("value")).IsTrue();
             await Assert.That(fields.Contains("properties")).IsTrue();

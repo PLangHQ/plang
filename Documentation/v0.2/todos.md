@@ -898,3 +898,13 @@ large mechanical diff; exempting is a one-line scope rule in
 `PLang.Generators/Diagnostics/Plng003.cs`. The gate stays at WARNING severity
 either way until the worklist is empty, so this doesn't block anything — but the
 line needs to be deliberate, not accidental.
+
+## 2026-06-10 — Investigate the SealedNames seal (type/catalog/Loader.cs)
+
+**Context (Ingi):** review the sealed built-in list — `identity`, `signature`,
+`signedoperation`, `callback`, `channel`. It guards transport-load-bearing type
+names against substitution by `code.load`-registered DLLs (a DLL claiming the
+name `signature` would substitute the wire body the signing model trusts).
+Investigate: is the list complete (should `path`/`permission`/`goalcall` be on
+it?), is name-sealing the right mechanism vs. sealing by assembly origin, and
+how it interacts with the new ReservedCore property-shadow check beside it.

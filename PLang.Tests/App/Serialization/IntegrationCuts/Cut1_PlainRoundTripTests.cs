@@ -39,7 +39,9 @@ public class Cut1_PlainRoundTripTests
             var fields = new HashSet<string>();
             foreach (var p in root.EnumerateObject()) fields.Add(p.Name);
 
-            await Assert.That(fields.Contains("name")).IsTrue();
+            // the binding label is NOT on the outbound wire — a server's
+            // variable name is not API surface a client should couple to
+            await Assert.That(fields.Contains("name")).IsFalse();
             await Assert.That(fields.Contains("type")).IsTrue();
             await Assert.That(fields.Contains("value")).IsTrue();
             await Assert.That(fields.Contains("signature")).IsTrue();
@@ -53,7 +55,9 @@ public class Cut1_PlainRoundTripTests
         var (_, back, app) = await WriteAndRead("greeting", "hello");
         await using (app)
         {
-            await Assert.That(back.Name).IsEqualTo("greeting");
+            // name is a binding label, deliberately absent from the outbound
+            // wire — the receiver binds via `write to %x%`, never the label
+            await Assert.That(back.Name).IsEqualTo("");
             await Assert.That((await back.Value())?.ToString()).IsEqualTo("hello");
         }
     }

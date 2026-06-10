@@ -110,6 +110,12 @@ public sealed partial class @this : global::app.type.item.@this, module.IContext
     /// </summary>
     public @this Set(Data value)
     {
+        // `@schema` is the wire marker that tags a serialized envelope — a dict
+        // carrying it as a data key would be indistinguishable from an envelope
+        // on read-back. Blocked at the one write seam.
+        if (string.Equals(value.Name, "@schema", System.StringComparison.OrdinalIgnoreCase))
+            throw new System.ArgumentException(
+                "'@schema' is the wire marker and cannot be a dict key.", nameof(value));
         if (_context != null) value.Context = _context;
         if (_index.TryGetValue(value.Name, out var i))
             _entries[i] = value;

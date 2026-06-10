@@ -77,7 +77,8 @@ public class Cut3_SignWireVerifyTests
             Identity = "pk", Nonce = "n", Algorithm = "ed25519"
         };
         var original = NormalizePipelineHelper.SerializeRecord(d);
-        var tampered = original.Replace("rec", "REC");
+        // the name is no longer on the wire — tamper the value byte instead
+        var tampered = original.Replace("\"v\"", "\"V\"");
         await Assert.That(original).IsNotEqualTo(tampered);
     }
 

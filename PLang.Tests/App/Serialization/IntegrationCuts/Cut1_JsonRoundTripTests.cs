@@ -45,9 +45,9 @@ public class Cut1_JsonRoundTripTests
         // a raw List<Data> stays observable as a list.
         var bag = new List<Data> { new("a", 1), new("b", "two") };
         var json = NormalizePipelineHelper.SerializeValueSlot(bag);
-        await Assert.That(json).Contains("\"name\":\"a\"");
+        // binding labels stay off the outbound wire; values + record shape survive
+        await Assert.That(json).DoesNotContain("\"name\":");
         await Assert.That(json).Contains("\"value\":1");
-        await Assert.That(json).Contains("\"name\":\"b\"");
         await Assert.That(json).Contains("\"value\":\"two\"");
     }
 
@@ -70,9 +70,9 @@ public class Cut1_JsonRoundTripTests
         var middle = new Data("middle", inner);
         var outer = new Data("outer", middle);
         var json = NormalizePipelineHelper.SerializeRecord(outer);
-        await Assert.That(json).Contains("\"name\":\"outer\"");
-        await Assert.That(json).Contains("\"name\":\"middle\"");
-        await Assert.That(json).Contains("\"name\":\"inner\"");
+        // nesting depth survives via the record envelopes; the binding labels
+        // are off the outbound wire at every depth
+        await Assert.That(json).DoesNotContain("\"name\":");
         await Assert.That(json).Contains("leaf");
     }
 

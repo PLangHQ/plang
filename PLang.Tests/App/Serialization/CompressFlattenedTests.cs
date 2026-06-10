@@ -43,7 +43,9 @@ public class CompressFlattenedTests
         var d = NewCompressibleData(app, "round-trip value");
         var archived = d.Compress();
         var restored = archived.Decompress();
-        await Assert.That(restored.Name).IsEqualTo("payload");
+        // the binding label is off the wire form compress archives — the
+        // receiver binds via `write to %x%`; value survives
+        await Assert.That(restored.Name).IsEqualTo("");
         await Assert.That((await restored.Value())?.ToString()).IsEqualTo("round-trip value");
     }
 

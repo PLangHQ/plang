@@ -128,8 +128,16 @@ public class IWriterContractTests
         w.String("world");
         w.EndRecord(record);
         var s = Flush(jw, ms);
-        await Assert.That(s).Contains("\"name\":\"hello\"");
+        // the binding label rides only on the Store view; Out omits it
+        await Assert.That(s).DoesNotContain("\"name\":");
         await Assert.That(s).Contains("\"value\":\"world\"");
+
+        var (jw2, ms2) = MakeWriter();
+        var w2 = new global::app.channel.serializer.json.Writer(jw2, view: global::app.View.Store);
+        w2.BeginRecord(record);
+        w2.String("world");
+        w2.EndRecord(record);
+        await Assert.That(Flush(jw2, ms2)).Contains("\"name\":\"hello\"");
     }
 
     [Test] public async Task JsonWriter_NestedArrayInsideRecord_RoundTrips()

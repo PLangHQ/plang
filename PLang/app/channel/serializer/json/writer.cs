@@ -61,7 +61,11 @@ public sealed class Writer : IWriter
         // @schema:data — every Data marks itself, nested ones too, so the read side
         // recognizes a Data inside a value the same way as the top-level one.
         _writer.WriteString(global::app.data.@this.WireSchema, global::app.data.@this.WireSchemaData);
-        _writer.WriteString("name", record.Name);
+        // The binding label rides only on the Store view (.pr parameters bind by
+        // name); the outbound wire omits it — a server's variable name is not
+        // API surface a client should couple to.
+        if (_view == app.View.Store)
+            _writer.WriteString("name", record.Name);
 
         var typeVal = record.Type?.Name;
         if (typeVal != null)
