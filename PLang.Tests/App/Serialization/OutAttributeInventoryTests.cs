@@ -46,7 +46,9 @@ public class OutAttributeInventoryTests
     }
     [Test] public async Task Path_Relative_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.type.path.@this), "Relative")).IsTrue();
+        // Stage 3: Relative went internal (the wire is the type-owned single
+        // location string; containment goes through IsUnder/Matches) — no [Out].
+        await Assert.That(HasOut(typeof(global::app.type.path.@this), "Relative")).IsFalse();
     }
     [Test] public async Task Path_Absolute_NotOut_LeaksFilesystemLayout()
     {

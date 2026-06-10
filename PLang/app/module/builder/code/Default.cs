@@ -179,21 +179,9 @@ public class Default : IBuilder
             foreach (var bf in buildFiles)
                 bf.Context ??= context;
 
-            bool MatchesPattern(path f, path bf)
-            {
-                // Use bf.Relative as the source of truth — bf.Raw is only set when a
-                // Path is built via Path.Resolve, but TypeConverter constructs paths
-                // via `new Path(string)` for JSON-derived filters, leaving Raw="".
-                // Falling through to a bare-filename match in that case incorrectly
-                // matched basenames across folders (e.g. "Errors/SimpleGoalCall/Start.goal"
-                // would match every Start.goal in the tree).
-                var bfRel = bf.Relative;
-                var pathQualified = bfRel.Contains('/') || bfRel.Contains('\\');
-                if (pathQualified)
-                    return f.Relative.EndsWith(bfRel, StringComparison.OrdinalIgnoreCase)
-                        || f.Relative.StartsWith(bfRel, StringComparison.OrdinalIgnoreCase);
-                return f.FileName.Equals(bf.FileName, StringComparison.OrdinalIgnoreCase);
-            }
+            // The affix/filename filter semantics live on path (path.Matches) —
+            // the type owns its containment math.
+            bool MatchesPattern(path f, path bf) => f.Matches(bf);
 
             var ordered = new List<path>();
             var seen = new HashSet<string>();

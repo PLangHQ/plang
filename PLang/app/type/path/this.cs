@@ -108,9 +108,15 @@ public abstract partial class @this : global::app.type.item.@this, module.IConte
     /// </summary>
     public string Raw { get => _location; init { if (!string.IsNullOrEmpty(value)) _location = value; } }
 
-    public virtual string Absolute => _absolute ??= _location;
+    // The resolved host form — INTERNAL: the raw string is the interop inch
+    // (sqlite, Assembly.LoadFrom, HttpClient), reached through the type's own
+    // gated edge, never the public navigable surface. The public projection is
+    // `!absolute` (derived; leaks the install root, so it stays off the wire).
+    internal virtual string Absolute => _absolute ??= _location;
 
-    [Out, Store] public string Relative
+    // INTERNAL: the raw relative string feeds IsUnder/Matches + the `!relative`
+    // derived projection; consumers do containment through those, not string math.
+    internal string Relative
     {
         get
         {
@@ -142,7 +148,8 @@ public abstract partial class @this : global::app.type.item.@this, module.IConte
         }
     }
 
-    [LlmBuilder] public string Extension => _extension ??= PathHelper.GetExtension(_location);
+    // INTERNAL: the raw extension feeds Kind + the `!extension` projection.
+    internal string Extension => _extension ??= PathHelper.GetExtension(_location);
     [LlmBuilder] public string FileName => _fileName ??= PathHelper.GetFileName(_location);
     [LlmBuilder] public string FileNameWithoutExtension
         => _fileNameWithoutExtension ??= PathHelper.GetFileNameWithoutExtension(_location);
@@ -151,6 +158,50 @@ public abstract partial class @this : global::app.type.item.@this, module.IConte
 
     [LlmBuilder] public bool IsFile => !string.IsNullOrEmpty(Extension);
     [LlmBuilder] public bool IsDirectory => string.IsNullOrEmpty(Extension);
+
+    // --- Typed surface (the navigable plane answers in PLang values; the
+    //     interior string-math lives HERE, on the owner) ---
+
+    /// <summary>
+    /// Containment: does this path live under <paramref name="root"/>? The
+    /// typed query that replaces consumer-side <c>Relative.StartsWith</c>
+    /// string math. Same root-comparison rule the permission gate uses.
+    /// </summary>
+    public global::app.type.@bool.@this IsUnder(@this root)
+    {
+        var rootAbs = root.Absolute;
+        if (string.IsNullOrEmpty(rootAbs)) return false;
+        var rootWithSep = rootAbs.EndsWith(PathHelper.DirectorySeparatorChar) || rootAbs.EndsWith(PathHelper.AltDirectorySeparatorChar)
+            ? rootAbs
+            : rootAbs + PathHelper.DirectorySeparatorChar;
+        return Absolute.StartsWith(rootWithSep, RootComparison)
+            || string.Equals(Absolute, rootAbs, RootComparison);
+    }
+
+    /// <summary>
+    /// Affix match for filter-style comparisons: a path-qualified
+    /// <paramref name="other"/> matches when this relative form starts or ends
+    /// with it; a bare name matches by filename. Case-insensitive — filters
+    /// are user-typed.
+    /// </summary>
+    public global::app.type.@bool.@this Matches(@this other)
+    {
+        var rel = other.Relative;
+        var pathQualified = rel.Contains('/') || rel.Contains('\\');
+        if (pathQualified)
+            return Relative.EndsWith(rel, StringComparison.OrdinalIgnoreCase)
+                || Relative.StartsWith(rel, StringComparison.OrdinalIgnoreCase);
+        return FileName.Equals(other.FileName, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Extension → content-kind: the type entity this location's extension
+    /// names (<c>.json</c> → the json-kinded entity). Owned by the path + the
+    /// format registry — replaces consumer-side
+    /// <c>Format.TypeFromExtension(p.Extension)</c>.
+    /// </summary>
+    public global::app.type.@this Kind =>
+        Context?.App?.Format?.TypeFromExtension(Extension) ?? global::app.type.@this.Null;
 
     /// <summary>
     /// Converts this path to a GoalCall. Derives PrPath from the .goal file path.

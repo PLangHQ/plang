@@ -14,11 +14,15 @@ public class JsonWriterDomainShapeTests
 {
     [Test] public async Task WireOutput_Path_IsPropertyBag_SchemeAndRelative_NotBareString()
     {
+        // Stage 3: the REAL wire form is the bare location string (type-owned
+        // path.Write — pinned in Stage3_PathDemolitionTests). This helper runs
+        // context-less (no renderer catalog), so the [Out]-bag fallback applies:
+        // scheme only; relative/absolute are internal and never leak.
         global::app.type.path.@this p = "/foo/bar.txt";
         var json = NormalizePipelineHelper.SerializeValueSlot(p);
-        await Assert.That(json.StartsWith("{")).IsTrue();
         await Assert.That(json).Contains("\"scheme\":");
-        await Assert.That(json).Contains("\"relative\":");
+        await Assert.That(json).DoesNotContain("\"relative\":");
+        await Assert.That(json).DoesNotContain("\"absolute\":");
     }
 
     [Test] public async Task WireOutput_FilePath_HasScheme_File()

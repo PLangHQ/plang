@@ -404,11 +404,15 @@ public partial class @this
 
         // Property plane on the value itself — `!path`/`!host`/`!size` reach the
         // value's own metadata surface without materialising content (Peek).
+        // NonPublic included: the raw derivations (path.Relative/.Extension/
+        // .Absolute) are internal C# but ARE the `!relative`/`!extension`/
+        // `!absolute` projections on this plane.
         var peeked = Peek();
         if (peeked != null && peeked is not string)
         {
             var vp = peeked.GetType().GetProperty(key,
-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic
+                | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
             if (vp != null)
                 return new @this(key, vp.GetValue(peeked), parent: this);
         }

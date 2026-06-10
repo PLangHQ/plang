@@ -13,22 +13,14 @@ public class Cut1_JsonRoundTripTests
 {
     [Test] public async Task Cut1_Path_RoundTrips_AsScheme_Relative_PropertyBag()
     {
+        // Stage 3: the REAL wire is the single location string (type-owned
+        // path.Write — pinned in Stage3_PathDemolitionTests). Context-less
+        // normalize falls back to the [Out] bag: scheme only, location-bearing
+        // raw strings (relative/absolute) stay internal and off the bag.
         global::app.type.path.@this p = "/foo/bar.txt";
         var json = NormalizePipelineHelper.SerializeValueSlot(p);
-        // Wire shape carries scheme + relative — both fields present and lowercased.
         await Assert.That(json).Contains("\"scheme\":\"file\"");
-        await Assert.That(json).Contains("\"relative\":");
-        // Reconstruct requires a Context (path hook). Without it, raises typed.
-        var carrier = new Data("", new List<Data> {
-            new("scheme", "file"),
-            new("relative", "/foo/bar.txt"),
-        });
-        var ex = await Assert.ThrowsAsync<NormalizeException>(async () =>
-        {
-            carrier.Reconstruct<global::app.type.path.@this>();
-            await Task.CompletedTask;
-        });
-        await Assert.That(ex!.Key).IsEqualTo("NormalizeContextRequired");
+        await Assert.That(json).DoesNotContain("\"absolute\"");
     }
 
     [Test] public async Task Cut1_Identity_RoundTrips_NameAndPublicKey_PrivateKeyAbsent()

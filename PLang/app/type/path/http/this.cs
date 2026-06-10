@@ -126,7 +126,7 @@ public sealed partial class @this : global::app.type.path.@this
     ///   <item>Fragment stripped (client-side, addresses no server resource).</item>
     /// </list>
     /// </summary>
-    public override string Absolute
+    internal override string Absolute
     {
         get
         {

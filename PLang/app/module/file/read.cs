@@ -128,7 +128,7 @@ public partial class Read : IContext
         // png} stamp (eager specialisation); everything else is the reference
         // — {file, <ext>} — and the content type appears only when runtime
         // examination narrows.
-        var inferred = Context.App.Format.TypeFromExtension(p.Extension);
+        var inferred = p.Kind;
         if (inferred.IsNull || Context.App.Type.Get(inferred.Name) == null) return data.@this.Ok();
         if (inferred.Name != "image")
             inferred = global::app.type.@this.Create("file", p.Extension.TrimStart('.'), context: Context);

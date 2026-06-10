@@ -86,12 +86,13 @@ public class NormalizeFilterTests
 
     [Test] public async Task Normalize_Path_EmitsScheme_Relative_Only_NoAbsolute()
     {
-        // FilePath is the concrete impl; constructed without Context so derived
-        // properties fall back to raw/absolute. Wire-view filter still drops them.
+        // Stage 3: a path is a LOCATION value with a type-owned wire shape —
+        // Normalize hands it to the path renderer (TypedValueNode), which emits
+        // the single location string. No property bag, and never the absolute.
         global::app.type.path.@this path = "/foo/bar.txt";
         var children = (new Data("", path).Normalize())!.Children();
         await Assert.That(children.Any(c => c.Name == "scheme")).IsTrue();
-        await Assert.That(children.Any(c => c.Name == "relative")).IsTrue();
+        await Assert.That(children.Any(c => c.Name == "relative")).IsFalse();
         await Assert.That(children.Any(c => c.Name == "absolute")).IsFalse();
         await Assert.That(children.Any(c => c.Name == "extension")).IsFalse();
         await Assert.That(children.Any(c => c.Name == "filename")).IsFalse();
