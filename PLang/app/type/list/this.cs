@@ -358,6 +358,11 @@ public partial class @this : global::app.type.item.@this, module.IContext,
         _ => value,
     };
 
+    /// <summary>The CLR exit door — the list hands its decomposed raw form to
+    /// the shared converter (List&lt;LlmMessage&gt; and friends reconstruct
+    /// element-wise). Loud on failure, as every lowering is.</summary>
+    internal override object? Clr(System.Type target) => ClrConvert(ToRaw(), target);
+
     /// <summary>
     /// item truthiness: an empty list is falsy, a non-empty list is truthy —
     /// matches the falsiness of an empty dict / string / null.

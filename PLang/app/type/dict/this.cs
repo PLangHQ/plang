@@ -158,6 +158,11 @@ public sealed partial class @this : global::app.type.item.@this, module.IContext
         _ => value,
     };
 
+    /// <summary>The CLR exit door — the dict hands its decomposed raw form to
+    /// the shared converter (Dictionary&lt;string,object&gt; and record targets
+    /// reconstruct from it). Loud on failure, as every lowering is.</summary>
+    internal override object? Clr(System.Type target) => ClrConvert(ToRaw(), target);
+
     /// <summary>
     /// item truthiness: an empty dict is falsy, a dict with any entry is truthy —
     /// matches the falsiness of an empty list / string / null.

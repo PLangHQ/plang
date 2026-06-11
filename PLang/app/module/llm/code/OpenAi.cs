@@ -81,11 +81,15 @@ public sealed class OpenAi : ILlm
         // parent-scope variable should survive an error.handle retry (or pass %messages% as
         // a goal.call parameter to QueryAndValidatePlan so it re-binds each attempt). See
         // .bot/type-kind-strict/builder/v2/baseline-findings.md.
-        if (action.Messages.GetValue<List<LlmMessage>>() is not { Count: > 0 })
+        // The .NET edge: the message list lowers ITSELF to the API's CLR shape.
+        var rawMessages = (await action.Messages.Value()) is global::app.type.item.@this msgItem
+            ? msgItem.Clr<List<LlmMessage>>()
+            : null;
+        if (rawMessages is not { Count: > 0 })
             return global::app.data.@this.FromError(new ActionError("Messages list is empty or null", "ValidationError", 400));
 
         // --- Build messages ---
-        var messages = CloneMessages(action.Messages.GetValue<List<LlmMessage>>()!);
+        var messages = CloneMessages(rawMessages);
         string? schema;
 
         // Serialize Schema at the LLM boundary. Schema is `Data<object>?` because the
@@ -141,8 +145,13 @@ public sealed class OpenAi : ILlm
         // Gating cacheKey also skips the write below (guarded by cacheKey != null),
         // so cache:false is a full bypass: no read, no stale entry left behind.
         var buildCacheOff = app.Builder.IsEnabled && !app.Builder.Cache;
+        // The .NET edge: the tool list lowers itself once; reused below.
+        List<GoalCall>? goalTools = action.Tools == null ? null
+            : (await action.Tools.Value()) is global::app.type.item.@this toolsItem
+                ? toolsItem.Clr<List<GoalCall>>()
+                : null;
         string? cacheKey = null;
-        if (((await action.Cache.Value()) as global::app.type.@bool.@this)?.Value == true && action.Tools?.GetValue<List<GoalCall>>() == null && !buildCacheOff)
+        if (((await action.Cache.Value()) as global::app.type.@bool.@this)?.Value == true && goalTools == null && !buildCacheOff)
         {
             cacheKey = ComputeCacheKey(messages, model, (await action.Temperature.Value())!.ToDouble(), schema, (action.Format == null ? null : await action.Format.Value())?.ToString());
             var cached = await settings.Get(CacheTable, cacheKey);
@@ -154,9 +163,9 @@ public sealed class OpenAi : ILlm
 
         // --- Build tools for API ---
         List<object>? apiTools = null;
-        if (action.Tools?.GetValue<List<GoalCall>>() != null && action.Tools.GetValue<List<GoalCall>>().Count > 0)
+        if (goalTools is { Count: > 0 })
         {
-            apiTools = action.Tools.GetValue<List<GoalCall>>().Select(t => (object)new Dictionary<string, object>
+            apiTools = goalTools.Select(t => (object)new Dictionary<string, object>
             {
                 ["type"] = "function",
                 ["function"] = new Dictionary<string, object?>
@@ -345,7 +354,7 @@ public sealed class OpenAi : ILlm
 
                 // Determine parallel execution
                 bool allParallel = toolCalls.All(tc =>
-                    action.Tools?.GetValue<List<GoalCall>>()?.Find(t => t.Name == tc.Name)?.Parallel == true);
+                    goalTools?.Find(t => t.Name == tc.Name)?.Parallel == true);
 
                 // Execute tools
                 List<string> results;
@@ -547,7 +556,10 @@ public sealed class OpenAi : ILlm
         }
 
         string result;
-        var goalCall = action.Tools?.GetValue<List<GoalCall>>()?.Find(t => t.Name == toolCall.Name);
+        var goalCall = (action.Tools == null ? null
+                : (await action.Tools.Value()) is global::app.type.item.@this toolsItem
+                    ? toolsItem.Clr<List<GoalCall>>() : null)
+            ?.Find(t => t.Name == toolCall.Name);
         if (goalCall == null)
         {
             result = $"Error: unknown tool '{toolCall.Name}'";
