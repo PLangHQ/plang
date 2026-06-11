@@ -336,6 +336,16 @@ A load or parse failing inside `Value()` (missing file, malformed bytes)
 surfaces as `Data.Error` — the existing typed-error convention, already
 handled in the codebase. No new failure shape.
 
+Two refinements (settled 2026-06-11, design in
+`value-t-create-design.md` amendments 5–6): **the error is authored by the
+type that failed** — the type-side door takes the binding, catches only its
+own known failure modes, calls `asking.Fail(its own error)` and answers
+`absent`; no generic catch anywhere, unexpected exceptions keep propagating.
+And **an unobserved error cannot be swallowed**: reading `.Success`/`.Error`
+(or using `.Value(fallback)`) marks it observed = handled; a handler that
+returns success while a param carries an unobserved error gets that error as
+its result, via the generator's post-Run epilogue.
+
 ## The type chain — evolved values still answer for what they were
 
 ```plang
