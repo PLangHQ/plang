@@ -34,17 +34,27 @@ Order:
 6. `UnwrapJsonElement` — JsonElement narrows at entry/parse into dict/list;
    the ctor/SetValue lift keeps a json-element arm via the READER path, not a
    public static everyone calls.
-7. Implicit operators TO CLR on text/bool (binary?) — inbound stays.
-   MEASURED RADIUS (text→string alone, probe 2026-06-11): 78 compile errors;
-   production hotspots: http/code/Default.cs(16), identity/code/Default.cs(12),
-   channel/set.cs(7), event/on.cs(4), mock/verify.cs(3), channel/remove.cs(3),
-   settings/set+remove(4), remainder scattered + tests. Each site re-judges to
-   `.Value` read or `.ToString()`-free string-face handling. Do as its own
-   batch with a green build between files.
-8. `number : IConvertible` — audit members; keep only checked/loud needs.
-9. Peek()/Open() tighten toward `item?` (the carrier stops unwrapping) — as far
-   as the remaining raw-shape consumers allow; whatever can't tighten yet gets
-   listed for slice 3+.
+7. DONE — outbound implicits killed on text (→string), bool (→bool), binary
+   (→byte[]); inbound lifts stay. Every consumer reads the `.Value` face at a
+   real .NET edge; test asserts compare the face, not the wrapper. Commits
+   c5d172dc7 (text) + the bool/binary commit after it.
+8. DONE (audit verdict: KEEP) — number's IConvertible bridge members are
+   already checked/loud: `checked(...)` narrowing throws OverflowException,
+   char/DateTime throw InvalidCastException, no silent defaults, ToBoolean
+   delegates to the type's own truthiness. Third-party edges (Fluid,
+   Convert.* in renderers) need the bridge for boxed numbers.
+9. DEFERRED to slice 3+ — Peek()/Open() tighten toward `item?`: the carrier-out
+   flip (`clr.Open() => this`) broke ~75 raw-shape consumers (attempted,
+   reverted; note in clr.cs). Revisit when templates land and the raw-shape
+   consumer count drops.
+
+## Slice-2 closing gates (2026-06-11)
+
+- C#: all six slices green (Modules 999, Types 729, Wire 538, Data 213-block,
+  Generator 203, Runtime 805; 2 deliberate skips = the slice-5 pinned stubs).
+- plang: halves ph1 82 pass + ph2 246 pass + the two `../../Simple`
+  cross-half artifacts verified green in a Builder+Simple combo run
+  (/tmp/ph3) = 330 pass, 4 skips, 0 real failures.
 
 ## State at slice-2 start
 

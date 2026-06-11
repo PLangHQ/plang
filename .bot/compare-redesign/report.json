@@ -696,7 +696,7 @@
       "id": "bdd11b01-34c6-4daa-809e-32c05a8167d7",
       "bot": "coder",
       "timestamp_start": "2026-06-10T16:30:00Z",
-      "timestamp_end": "2026-06-11T00:10:00Z",
+      "timestamp_end": "2026-06-11T01:38:36.717443+00:00",
       "intent": "Stage 9 born-typed rebuild on the settled data-value-model: core collapse, consumer tail, templates, collections, follow-ons",
       "before": {
         "assumptions": "Model doc settled (nothing open); in-flight retype reverted; baseline C# 2 pre-existing fails (disposable path) + 6 pinned skips; plang 322/324.",
@@ -793,12 +793,27 @@
           "category": "code",
           "confidence": "high",
           "context": "Convergence tail: Judge strict/kind carrier gated by OwnsDoor (Ready-override check); .Type navigation answers the stamp without opening a door-owner; kind->CLR mirror scoped to numbers; polymorphic {object|item} stamps skip the fold; null literal stays the null singleton."
+        },
+        {
+          "paths": [
+            "PLang/app/type/text/this.cs",
+            "PLang/app/type/bool/this.cs",
+            "PLang/app/type/binary/this.cs",
+            "PLang/app/module/http/code/Default.cs",
+            "PLang/app/module/identity/code/Default.cs",
+            "PLang/app/module/channel/set.cs",
+            "PLang/app/type/path/this.Operations.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Slice 2 close: killed outbound implicit operators text->string, bool->bool, binary->byte[] (inbound lifts stay); ~90 production + ~100 test sites re-judged to read the value face (.Value) at real .NET edges. number:IConvertible audited and kept (checked/loud). Peek/Open tightening deferred to slice 3+. Gates: C# all green, plang 330/0 real fails."
         }
       ],
       "after": {
-        "status": "Slice 1 core collapse landed and pushed. C# suite 0 failures / 2 follow-on skips; plang 4 known fails remain (cache modifier x2, literal-date judgement, 2 blocked on a scalar-equality semantics decision for Ingi).",
-        "health": "Both suites runnable; pre-existing native teardown segfault can truncate full-run plang logs (use stdbuf / subset runs); dev.sh test does not rebuild PlangConsole (stale-binary trap).",
-        "notes": "Slices 2-5 pending. New working rule agreed with Ingi: filtered test runs per fix, full gates at slice boundaries only; transitional pins get skip-with-reason."
+        "status": "slice 2 complete and gated",
+        "health": "green (C# 6/6 slices, plang halves + combo)",
+        "notes": "slices 3-5 remain; scalar-equality provisional decision pending Ingi"
       }
     }
   ]

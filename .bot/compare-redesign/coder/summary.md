@@ -1,6 +1,7 @@
 # Coder summary — compare-redesign
 
-- **Version**: v7 — Stage 9 slice 1 (the born-typed core collapse), 2026-06-10
+- **Version**: v7 — Stage 9 slices 1+2 (born-typed core collapse + consumer
+  tail kills), 2026-06-10/11
 - **What this is**: The settled Data/Value model
   (`coder/data-value-model.md`) lands as code: Data holds ONE typed instance
   (the instance IS the value) beside name/properties/signature; everything
@@ -30,23 +31,37 @@ Full detail in `v7/result.md` (read that first); headlines:
   declared types vanishing through couriers; snapshot capture keying on the
   dead Data subtype; an over-broad kind→CLR mirror) — see result.md §bugs.
 
+## Slice 2 (closed 2026-06-11) — consumer tail kills
+
+Worklist + per-item status: `v7/slice2-worklist.md`. Headlines:
+
+- Killed WITH their callers: `AsEnumerable`/`IsPlangIterable`/`IsPlangAssignable`,
+  `ToBoolean` CLR arms (types' own `IsTruthy`), `SnapshotClone`,
+  `GetValue<T>`/`GetValue(Type)` (test-only shim remains in
+  `PLang.Tests/Shared/DataReadExtensions.cs`), `Data.Clr<T>` (sites use the
+  door + `item.Lower<T>`), `UnwrapJsonElement` (json entry parse now lives on
+  `app/type/item/serializer/json.cs:Parse`).
+- Outbound implicit operators killed on `text`(→string), `bool`(→bool),
+  `binary`(→byte[]) — inbound entry lifts stay. ~90 production sites + ~100
+  test sites re-judged to read the value's face (`.Value`) at real .NET edges.
+- `number : IConvertible` audited — KEPT (members already checked/loud;
+  Fluid/Convert.* edges need the bridge for boxed numbers).
+- Peek()/Open() tightening to `item?` DEFERRED to slice 3+ (carrier-out flip
+  broke ~75 raw-shape consumers; note in `clr.cs`).
+- Slice-2 gates: C# all green (2 deliberate slice-5 pin skips); plang 330
+  pass / 4 skips / 0 real failures (halves + Builder+Simple combo for the two
+  cross-half path artifacts).
+
 ## Test state
 
 - **C#: 0 failures** (136 → 0 over the session; the 2 pre-existing baseline
   fails were on the disposable path and are subsumed). 2 deliberate skips
   remain (`GenericToRaw_DoesNotExist`, `TextRawValue_IsPrivate` — follow-ons
   slice pins). 4 of 6 born-typed stubs filled and green.
-- **plang: 4 known fails remain** (next session's first item):
-  1. `Modules/Modifiers/MultipleModifiersCompose` + `Modules/Cache/Basic/Cache`
-     — the cache modifier path (first-read assert shape + second-call cache
-     miss). Start at `app/module/cache/wrap.cs` + `Memory.cs`.
-  2. `ScalarsAsNative/Stage3/BareLiteralJudgedByForm` — `"2026-01-01"` literal
-     should store a `date`; the stored instance minted "dict". Probe via the
-     PrPipeline pattern (engine.Goal.LoadFromFileAsync + RunGoalAsync — this
-     session's probes showed the C#-composed path is fine; only the .pr
-     pipeline diverges).
-  3. `LazyDeserialize/ReadConfigJson_UntouchedIsJsonString` + `ReadCsv_…` —
-     blocked on a LANGUAGE-SEMANTICS DECISION (below), not a bug.
+- **plang: 0 real failures** as of slice-2 close (the earlier 4 were fixed
+  during slice 1 close-out: cache-modifier pair via sampling-keeps-bytes +
+  channel `Read(bytes)`; BareLiteral .pr rebuilt; the two LazyDeserialize
+  goals re-pinned to the PROVISIONAL scalar-equality position below).
 - **Watch items**: (a) pre-existing native segfault at process teardown can
   EAT the buffered tail of a full `plang --test` log — a completed run can
   look like a mid-run crash; the summary did print in subset runs. (b) the
@@ -80,8 +95,10 @@ return answer.Open();                        // transitional face; slice 2 tight
 
 ## Next
 
-1. Ingi's call on scalar-equality (above), then the 4 plang fails.
-2. Slice 2 (consumer tail kills — see task list / stage doc), with the new
-   working rule: filtered `./dev.sh test <Class>` per fix, full gates only at
-   slice boundaries, transitional-behavior test pins get skip-with-reason
-   instead of rewrites.
+1. Ingi's call on scalar-equality (above) — PROVISIONAL model position taken,
+   two LazyDeserialize goals re-pinned, easy to flip.
+2. Slice 3: live templates (builder stamps `template` deterministically;
+   resolve-at-use never cached; cache iff template==null; single-pass render)
+   + async `Write(IWriter)`; retire `TryFullVarMatch` when stamps land.
+3. Slice 4: collection reference semantics (CopyStructure removal).
+4. Slice 5: text.Value private, item.ToRaw removed (un-skips the two pins).
