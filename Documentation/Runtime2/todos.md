@@ -1206,3 +1206,17 @@ collapses to "return the backing" — no loop, no ClrConvert decompose. Major re
 touches navigation (`%dict.key%`), wire (Normalize/Json), conversion, the generic
 `list<T>`. Overlaps the lazy-Normalize rework — same architect redesign bucket. Works for
 now (the loop is correct on the current Data-keyed design); do not start solo.
+
+## 2026-06-11 — Split type.catalog: LLM vocabulary (plang) vs runtime CLR registry/conversion
+`type/catalog/@this` wears three hats in one class: (1) LLM type VOCABULARY —
+`BuildTypeEntries`, `ValidValues`, the schemas (only needs PLANG types: names +
+teaching, no CLR); (2) name↔System.Type REGISTRY — `Get`/`Clr`/`GetPrimitiveOrMime`
+(CLR-keyed, runtime dispatch); (3) CONVERSION ENGINE — `TryConvert`/`ClrConvert`
+(the .NET-edge bridge every `Clr()` funnels through). Roles 2+3 legitimately need
+CLR (perimeter to .NET); role 1 does not — yet it's CLR-keyed too (`ValidValues`
+takes a `System.Type` to reflect an enum's values for the LLM, when it could key
+by the plang type). Split the display vocabulary (plang-centric) from the runtime
+CLR registry/conversion. Also OBP shape smells to fix in the same pass: Get/verb
+twins (`GetValidValues`+`ValidValues`, `GetBuilderTypeNames`+`BuilderNames`,
+`GetTypeName`+`Name`) and `Build`/`Get`+noun names (`BuildTypeEntries`,
+`GetPrimitiveOrMime`). Architect bucket.
