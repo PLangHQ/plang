@@ -57,7 +57,8 @@ public partial class discover : IContext
         var exclude = Context.App.Tester.Exclude;
 
         var files = new List<global::app.tester.test.@this>();
-        foreach (var match in listed.GetValue<List<global::app.type.path.@this>>()!)
+        var matches = global::app.type.item.@this.Lower<List<global::app.type.path.@this>>(await listed.Value())!;
+        foreach (var match in matches)
         {
             // .test.goal files only resolve under the file scheme; foreign schemes
             // skip silently. The List call already returned filesystem paths.

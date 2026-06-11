@@ -36,7 +36,8 @@ public partial class run : IContext
 
     public async Task<data.@this<global::app.tester.Results>> Run()
     {
-        var tests = Tests.GetValue<List<global::app.tester.test.@this>>() ?? new List<global::app.tester.test.@this>();
+        var tests = global::app.type.item.@this.Lower<List<global::app.tester.test.@this>>(await Tests.Value())
+            ?? new List<global::app.tester.test.@this>();
         var parentApp = Context.App!;
         // The CLR exit door — absent → the stated default; unconvertible → loud.
         int parallel = Parallel == null ? parentApp.Tester.Parallel : await Parallel.Clr(parentApp.Tester.Parallel);

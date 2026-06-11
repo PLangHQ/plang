@@ -445,37 +445,6 @@ public partial class @this
     [JsonIgnore]
     public string? Kind => _instance?.Mint().Kind;
 
-    /// <summary>
-    /// Gets the value cast to the specified type.
-    /// </summary>
-    public T? GetValue<T>()
-    {
-        var v = Peek();
-        if (v is T typed)
-            return typed;
-
-        var converted = AppTypes.ConvertTo(v, typeof(T));
-        if (converted is T result)
-            return result;
-
-        return default;
-    }
-
-    /// <summary>
-    /// Gets the value converted to the specified type.
-    /// </summary>
-    public object? GetValue(System.Type targetType)
-    {
-        var v = Peek();
-        if (v == null)
-            return null;
-
-        if (targetType.IsAssignableFrom(v.GetType()))
-            return v;
-
-        return AppTypes.ConvertTo(v, targetType);
-    }
-
     // Strings are atomic in plang, never IEnumerable<char>. Private to the
     // transitional raw-infra arms of EnumerateItems — the native dict/list
     // arms are the real iteration surface (the collection types own
@@ -1434,7 +1403,9 @@ public class @this<T> : @this
             for (var p = evolved.Prior; p != null; p = p.Prior)
                 if (p is T facet)
                     return facet;
-        return GetValue<T>();
+        // Last resort: the slot's expectation converts through the one
+        // converter (a view for this caller — never kept, never rebinds).
+        return v == null ? default : AppTypes.ConvertTo(v, typeof(T)) as T;
     }
 
     public @this(string name = "", T? value = default, type? type = null, @this? parent = null)

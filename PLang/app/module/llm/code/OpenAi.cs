@@ -82,9 +82,7 @@ public sealed class OpenAi : ILlm
         // a goal.call parameter to QueryAndValidatePlan so it re-binds each attempt). See
         // .bot/type-kind-strict/builder/v2/baseline-findings.md.
         // The .NET edge: the message list lowers ITSELF to the API's CLR shape.
-        var rawMessages = (await action.Messages.Value()) is global::app.type.item.@this msgItem
-            ? msgItem.Clr<List<LlmMessage>>()
-            : null;
+        var rawMessages = global::app.type.item.@this.Lower<List<LlmMessage>>(await action.Messages.Value());
         if (rawMessages is not { Count: > 0 })
             return global::app.data.@this.FromError(new ActionError("Messages list is empty or null", "ValidationError", 400));
 
@@ -147,9 +145,7 @@ public sealed class OpenAi : ILlm
         var buildCacheOff = app.Builder.IsEnabled && !app.Builder.Cache;
         // The .NET edge: the tool list lowers itself once; reused below.
         List<GoalCall>? goalTools = action.Tools == null ? null
-            : (await action.Tools.Value()) is global::app.type.item.@this toolsItem
-                ? toolsItem.Clr<List<GoalCall>>()
-                : null;
+            : global::app.type.item.@this.Lower<List<GoalCall>>(await action.Tools.Value());
         string? cacheKey = null;
         if (((await action.Cache.Value()) as global::app.type.@bool.@this)?.Value == true && goalTools == null && !buildCacheOff)
         {
@@ -557,8 +553,7 @@ public sealed class OpenAi : ILlm
 
         string result;
         var goalCall = (action.Tools == null ? null
-                : (await action.Tools.Value()) is global::app.type.item.@this toolsItem
-                    ? toolsItem.Clr<List<GoalCall>>() : null)
+                : global::app.type.item.@this.Lower<List<GoalCall>>(await action.Tools.Value()))
             ?.Find(t => t.Name == toolCall.Name);
         if (goalCall == null)
         {

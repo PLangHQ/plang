@@ -14,10 +14,11 @@ public partial class Tag : IContext
 {
     public partial data.@this<global::app.type.list.@this> Tags { get; init; }
 
-    public Task<data.@this> Run()
+    public async Task<data.@this> Run()
     {
         var currentTest = Context.App!.Tester.CurrentTest;
-        if (currentTest != null && Tags?.GetValue<string[]>() is { } tags)
+        if (currentTest != null
+            && (Tags == null ? null : global::app.type.item.@this.Lower<string[]>(await Tags.Value())) is { } tags)
         {
             foreach (var tag in tags)
                 if (!string.IsNullOrWhiteSpace(tag))
@@ -28,6 +29,6 @@ public partial class Tag : IContext
         var snapshot = currentTest != null
             ? currentTest.UserTags.ToList()
             : new List<string>();
-        return Task.FromResult(app.data.@this.Ok(snapshot));
+        return app.data.@this.Ok(snapshot);
     }
 }

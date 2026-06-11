@@ -25,7 +25,8 @@ public partial class intercept : IContext
 
         var returnValue = (Return == null ? null : await Return.Value());
         var goalToCall = (Call == null ? null : await Call.Value()) as global::app.goal.GoalCall;
-        var paramMatchers = Parameters?.GetValue<Dictionary<string, object?>>();
+        var paramMatchers = Parameters == null ? null
+            : global::app.type.item.@this.Lower<Dictionary<string, object?>>(await Parameters.Value());
 
         Func<actor.context.@this, app.goal.steps.step.actions.action.@this?, data.@this?, Task<data.@this>> handler = async (context, _, _) =>
         {

@@ -190,6 +190,20 @@ public abstract class @this : global::app.data.IBooleanResolvable
     internal T? Clr<T>() => (T?)Clr(typeof(T));
 
     /// <summary>
+    /// The .NET-edge read over a value-door answer: a typed answer lowers
+    /// ITSELF via <see cref="Clr{T}"/>; an answer already in the target CLR
+    /// shape passes through (the door still hands raw CLR for rung-2 values
+    /// during the consumer-tail transition); anything else is absent. One
+    /// owner for the discipline so edge call sites don't each re-implement it.
+    /// </summary>
+    internal static T? Lower<T>(object? doorAnswer) => doorAnswer switch
+    {
+        T t => t,
+        @this it => it.Clr<T>(),
+        _ => default,
+    };
+
+    /// <summary>
     /// The shared mechanics under every <see cref="Clr(System.Type)"/>: the
     /// value the TYPE handed over (its own backing — ownership stays with the
     /// type) converted via the engine's one converter. Identity short-circuits;

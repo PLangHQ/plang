@@ -35,7 +35,7 @@ public partial class Tag : IContext
         var target = Context.CallStack?.Current?.Caller ?? Context.CallStack?.Current;
         if (target == null) return Task.FromResult(global::app.data.@this.Ok());
 
-        if (Pairs?.GetValue<Dictionary<string, string>>() is { } pairs)
+        if (global::app.type.item.@this.Lower<Dictionary<string, string>>(Pairs?.Peek()) is { } pairs)
         {
             foreach (var (key, value) in pairs)
                 target.Tag(key, value);

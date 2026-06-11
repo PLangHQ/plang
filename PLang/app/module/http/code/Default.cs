@@ -77,7 +77,8 @@ public sealed class Default : IHttp
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = (await urlResult.Value())!;
 
-        var headers = MergeHeaders(action.Headers?.GetValue<Dictionary<string, object>>(), config);
+        var headers = MergeHeaders(action.Headers == null ? null
+            : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.Headers.Value()), config);
 
         // Build body
         HttpContent? httpContent = null;
@@ -149,7 +150,8 @@ public sealed class Default : IHttp
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = (await urlResult.Value())!;
 
-        var headers = MergeHeaders(action.Headers?.GetValue<Dictionary<string, object>>(), config);
+        var headers = MergeHeaders(action.Headers == null ? null
+            : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.Headers.Value()), config);
         var requestMessage = new HttpRequestMessage(SysHttpMethod.Get, resolvedUrl);
         ApplyHeaders(requestMessage, headers);
 
@@ -197,7 +199,8 @@ public sealed class Default : IHttp
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = (await urlResult.Value())!;
 
-        var headers = MergeHeaders(action.Headers?.GetValue<Dictionary<string, object>>(), config);
+        var headers = MergeHeaders(action.Headers == null ? null
+            : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.Headers.Value()), config);
 
         var (httpContent, contentErr) = await ResolveUploadContentAsync(action, app, encoding);
         if (contentErr != null) return global::app.data.@this.FromError(contentErr);

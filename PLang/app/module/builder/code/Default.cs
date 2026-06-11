@@ -26,7 +26,8 @@ public class Default : IBuilder
         // Optional filter: restrict the catalog to the named module.action
         // entries. The Compile step passes the planner's action set so the
         // prompt carries only the relevant rows. Null/empty → full catalog.
-        var filter = action.Actions?.GetValue<List<string>>();
+        var filter = action.Actions == null ? null
+            : global::app.type.item.@this.Lower<List<string>>(await action.Actions.Value());
         if (filter is { Count: > 0 })
         {
             var wanted = new HashSet<string>(filter, StringComparer.OrdinalIgnoreCase);
@@ -56,7 +57,8 @@ public class Default : IBuilder
         // referenced by the named module.action set. Primitive types and the
         // entries renderer (TypeSchemas/TypeNames) all stay intact. Empty/null
         // filter → full catalog (back-compat).
-        var filter = action.Actions?.GetValue<List<string>>();
+        var filter = action.Actions == null ? null
+            : global::app.type.item.@this.Lower<List<string>>(await action.Actions.Value());
         if (filter is { Count: > 0 })
         {
             var allTypeNames = new HashSet<string>(
@@ -164,7 +166,7 @@ public class Default : IBuilder
         if (!listResult.Success)
             return listResult;
 
-        var files = listResult.GetValue<List<path>>();
+        var files = global::app.type.item.@this.Lower<List<path>>(await listResult.Value());
         if (files == null || files.Count == 0)
             return data.@this.Ok(new List<Goal>());
 
@@ -335,7 +337,9 @@ public class Default : IBuilder
                 $"What we got back: {planDetail}",
                 "BuilderPlannerFailed", 400));
         }
-        var input = action.Actions.GetValue<List<string>>() ?? new List<string>();
+        // Sync build surface — read the in-memory backing (the planner's list
+        // is authored in this process; no door to open).
+        var input = global::app.type.item.@this.Lower<List<string>>(action.Actions.Peek()) ?? new List<string>();
         var modules = action.Context.App.Module;
 
         var result = new List<string>();

@@ -594,12 +594,16 @@ public partial class @this
     }
 
     /// <summary>
-    /// Gets a typed value by name.
+    /// Gets a typed value by name — the value door, then the item's own
+    /// lowering at this CLR edge. Absent → default; unconvertible → loud.
     /// </summary>
     public async System.Threading.Tasks.ValueTask<T?> Get<T>(string name)
     {
         var ov = await Get(name);
-        return ov != null ? ov.GetValue<T>() : default;
+        if (ov == null) return default;
+        var v = await ov.Value();
+        if (v is T already) return already;
+        return v is global::app.type.item.@this it ? it.Clr<T>() : default;
     }
 
     /// <summary>

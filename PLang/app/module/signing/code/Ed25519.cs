@@ -45,8 +45,10 @@ public class Ed25519 : ISigning
             Nonce = nonce,
             Created = now,
             Expires = (action.Expires == null ? null : await action.Expires.Value()) is { } expiry ? now.Add(expiry) : null,
-            Contracts = action.Contracts?.GetValue<List<string>>(),
-            Headers = action.Headers?.GetValue<Dictionary<string, object>>(),
+            Contracts = action.Contracts == null ? null
+                : global::app.type.item.@this.Lower<List<string>>(await action.Contracts.Value()),
+            Headers = action.Headers == null ? null
+                : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.Headers.Value()),
             Hash = hash
         };
 
@@ -105,19 +107,21 @@ public class Ed25519 : ISigning
         }
 
         // 5. Contract matching
-        if (!ContractsMatch(signedData.Contracts, action.Contracts?.GetValue<List<string>>()))
+        var expectedContracts = action.Contracts == null ? null
+            : global::app.type.item.@this.Lower<List<string>>(await action.Contracts.Value());
+        if (!ContractsMatch(signedData.Contracts, expectedContracts))
             return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Contract mismatch", "ContractMismatch", 400));
 
         // 6. Header matching — optional param: an absent slot binds non-null Uninitialized
-        // (null model), so gate on the resolved value (which also resolves the lazy param
-        // for the sync GetValue below). The C# null check stays for direct C# composition,
-        // where `init` can set the property to null outright.
-        if (action.Headers != null && (await action.Headers.Value()) != null)
+        // (null model), so gate on the resolved value. The C# null check stays
+        // for direct C# composition, where `init` can set the property to null.
+        if (action.Headers != null
+            && global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.Headers.Value()) is { } expectedHeaders)
         {
             if (signedData.Headers == null)
                 return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError("Signed data has no headers but verification expects headers", "HeaderMismatch", 400));
 
-            foreach (var kvp in action.Headers.GetValue<Dictionary<string, object>>()!)
+            foreach (var kvp in expectedHeaders)
             {
                 if (!signedData.Headers.TryGetValue(kvp.Key, out var signedValue))
                     return global::app.data.@this<global::app.type.@bool.@this>.FromError(new ActionError($"Header mismatch for '{kvp.Key}'", "HeaderMismatch", 400));

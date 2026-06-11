@@ -181,7 +181,14 @@ public partial class @this
         if (!string.Equals(Type?.Name, "archived", StringComparison.OrdinalIgnoreCase))
             return this;
 
-        var compressed = GetValue<byte[]>();
+        // Courier read — the in-memory byte form only; anything else (a nested
+        // Data riding the carrier, a missing value) is a corrupt archive.
+        var compressed = Peek() switch
+        {
+            byte[] raw => raw,
+            global::app.type.binary.@this b => b.Value,
+            _ => null,
+        };
         if (compressed == null || compressed.Length == 0)
             return FromError(new ServiceError("Archived Data has no byte[] value", "DecompressError", 500));
 

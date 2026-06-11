@@ -50,7 +50,9 @@ public sealed class clr : @this, module.IContext
         => new(Value, typeName, kind, strict) { Context = Context };
 
     /// <summary>In memory now = the carried CLR object — existing consumers
-    /// keep seeing the real instance, not the carrier.</summary>
+    /// keep seeing the real instance, not the carrier. (Tightening the door to
+    /// answer the carrier itself is deferred — too many raw-shape consumers
+    /// remain; tracked on the slice list.)</summary>
     public override object? Peek() => Value;
     public override object? ToRaw() => Value;
 
