@@ -20,7 +20,7 @@ public class Cut2_SignThenCompressTests
         var d2 = d1.Compress();
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var wire = (await plang.Serialize(d2).Value())!;
+        var wire = (await plang.Serialize(d2).Value())!.Value;
 
         using var doc = JsonDocument.Parse(wire);
         // `type` is the structured entity {name, kind?, strict?} on the wire.
@@ -65,7 +65,7 @@ public class Cut2_SignThenCompressTests
         var d2 = d1.Compress();
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var wire = (await plang.Serialize(d2).Value())!;
+        var wire = (await plang.Serialize(d2).Value())!.Value;
 
         // Flip a byte in the base64-encoded value — read back, verify must fail.
         using var doc = JsonDocument.Parse(wire);

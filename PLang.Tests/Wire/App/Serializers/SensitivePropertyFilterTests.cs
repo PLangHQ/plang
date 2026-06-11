@@ -51,7 +51,7 @@ public class SensitivePropertyFilterTests
     {
         var identity = new Identity
         {
-            Name = (global::app.type.text.@this)"test",
+            Name = "test",
             PublicKey = "pubkey123",
             PrivateKey = "secret456",
             IsDefault = true,
@@ -60,7 +60,7 @@ public class SensitivePropertyFilterTests
         };
 
         var serializer = new global::app.channel.serializer.Json();
-        var json = (await serializer.Serialize(Data.Ok(identity)).Value())!;
+        var json = (await serializer.Serialize(Data.Ok(identity)).Value())!.Value;
 
         await Assert.That(json).Contains("pubkey123");
         await Assert.That(json).DoesNotContain("secret456");
@@ -72,7 +72,7 @@ public class SensitivePropertyFilterTests
     {
         var identity = new Identity
         {
-            Name = (global::app.type.text.@this)"test",
+            Name = "test",
             PublicKey = "pubkey123",
             PrivateKey = "secret456",
             IsDefault = true
@@ -92,7 +92,7 @@ public class SensitivePropertyFilterTests
         var obj = new { Name = (global::app.type.text.@this)"test", Value = 42 };
 
         var serializer = new global::app.channel.serializer.Json();
-        var json = (await serializer.Serialize(Data.Ok(obj)).Value())!;
+        var json = (await serializer.Serialize(Data.Ok(obj)).Value())!.Value;
 
         await Assert.That(json).Contains("test");
         await Assert.That(json).Contains("42");
@@ -103,7 +103,7 @@ public class SensitivePropertyFilterTests
     {
         var identity = new Identity
         {
-            Name = (global::app.type.text.@this)"test",
+            Name = "test",
             PublicKey = "pubkey123",
             PrivateKey = "secret456",
             IsDefault = true
@@ -112,7 +112,7 @@ public class SensitivePropertyFilterTests
         // ForView should also strip [Sensitive] in addition to view filtering
         var serializer = new global::app.channel.serializer.Json();
         var storeSerializer = serializer.ForView(View.Store);
-        var storeJson = (await storeSerializer.Serialize(Data.Ok(identity)).Value())!;
+        var storeJson = (await storeSerializer.Serialize(Data.Ok(identity)).Value())!.Value;
 
         // Identity doesn't use view attributes, so Store view serializes all non-sensitive
         await Assert.That(storeJson).DoesNotContain("secret456");
@@ -126,7 +126,7 @@ public class SensitivePropertyFilterTests
     {
         var identity = new Identity
         {
-            Name = (global::app.type.text.@this)"test",
+            Name = "test",
             PublicKey = "pubkey123",
             PrivateKey = "secret456",
             IsDefault = true
@@ -147,7 +147,7 @@ public class SensitivePropertyFilterTests
     {
         var identity = new Identity
         {
-            Name = (global::app.type.text.@this)"test",
+            Name = "test",
             PublicKey = "pubkey123",
             PrivateKey = "secret456",
             IsDefault = true
@@ -184,7 +184,7 @@ public class SensitivePropertyFilterTests
     [Test]
     public async Task Sensitive_NonStringProperty_RendersMaskedValueNotStripped()
     {
-        var obj = new NonStringSecretCarrier { Name = (global::app.type.text.@this)"ed25519", Key = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF } };
+        var obj = new NonStringSecretCarrier { Name = "ed25519", Key = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF } };
 
         var json = JsonSerializer.Serialize(obj, global::app.Utils.Json.DiagnosticOutput);
 
@@ -204,7 +204,7 @@ public class SensitivePropertyFilterTests
         var identity = (await result.Value()) as Identity;
 
         var serializer = new global::app.channel.serializer.Json();
-        var json = (await serializer.Serialize(Data.Ok(identity)).Value())!;
+        var json = (await serializer.Serialize(Data.Ok(identity)).Value())!.Value;
 
         // Deserialize back to check values — raw Contains() fails when base64 '+' is escaped to '\u002B'
         var deserialized = JsonSerializer.Deserialize<JsonElement>(json);

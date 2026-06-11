@@ -12,7 +12,7 @@ public partial class Group : IContext
     public async Task<data.@this<type.list>> Run()
     {
         var data = await Context.Variable.Get(await ListName.Value());
-        var key = (await Key.Value())!;
+        var key = (await Key.Value())!.Value;
 
         // Buckets are native lists of the element Data — each bucket is itself
         // navigable (you can sort/where inside one). Insertion order preserved.

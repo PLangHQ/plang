@@ -98,7 +98,7 @@ public class MockTests
         var handle = new global::app.mock.@this
         {
             Id = "test",
-            Pattern = (global::app.type.text.@this)"file.read"
+            Pattern = "file.read"
         };
         handle.RecordCall(new Dictionary<string, object?> { ["path"] = "test.txt" });
         handle.RecordCall(new Dictionary<string, object?> { ["path"] = "other.txt" });
@@ -121,7 +121,7 @@ public class MockTests
         var handle = new global::app.mock.@this
         {
             Id = "test",
-            Pattern = (global::app.type.text.@this)"file.read"
+            Pattern = "file.read"
         };
         handle.RecordCall(new Dictionary<string, object?> { ["path"] = "test.txt" });
 
@@ -144,7 +144,7 @@ public class MockTests
         var handle = new global::app.mock.@this
         {
             Id = "test",
-            Pattern = (global::app.type.text.@this)"file.read"
+            Pattern = "file.read"
         };
 
         var verify = new Verify
@@ -232,7 +232,7 @@ public class MockTests
         var handle = new global::app.mock.@this
         {
             Id = "test",
-            Pattern = (global::app.type.text.@this)"file.read"
+            Pattern = "file.read"
         };
 
         handle.RecordCall(new Dictionary<string, object?> { ["path"] = "config.json" });

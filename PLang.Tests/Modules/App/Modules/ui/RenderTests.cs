@@ -198,7 +198,7 @@ public class RenderTests : IDisposable
         // Create a real goal that sets a variable — the goal result is the last step's Data
         var goal = new Goal
         {
-            Name = (global::app.type.text.@this)"Greeter",
+            Name = "Greeter",
             Path = "/Greeter.goal",
             Steps = new GoalSteps
             {
@@ -455,7 +455,7 @@ public class RenderTests : IDisposable
     public async Task Render_CallGoal_EmptyGoalReturnsEmptyOutput()
     {
         // An empty goal (no steps) returns Data.Ok() — callGoal writes "" to output
-        var goal = new Goal { Name = (global::app.type.text.@this)"EmptyGoal", Path = "/EmptyGoal.goal" };
+        var goal = new Goal { Name = "EmptyGoal", Path = "/EmptyGoal.goal" };
         _app.Goal.Add(goal);
 
         var context = _app.User.Context;
@@ -478,7 +478,7 @@ public class RenderTests : IDisposable
     public async Task Render_CallGoal_GoalNameFromVariable()
     {
         // callGoal can use a Liquid variable for the goal name
-        var goal = new Goal { Name = (global::app.type.text.@this)"DynamicGoal", Path = "/DynamicGoal.goal" };
+        var goal = new Goal { Name = "DynamicGoal", Path = "/DynamicGoal.goal" };
         _app.Goal.Add(goal);
 
         var context = _app.User.Context;
@@ -503,7 +503,7 @@ public class RenderTests : IDisposable
         // Goal that sets a variable — verify the result value appears in template output
         var goal = new Goal
         {
-            Name = (global::app.type.text.@this)"GetNumber",
+            Name = "GetNumber",
             Path = "/GetNumber.goal",
             Steps = new GoalSteps
             {
@@ -665,7 +665,7 @@ public class RenderTests : IDisposable
         var context = _app.User.Context;
         var goal = new Goal
         {
-            Name = (global::app.type.text.@this)"SubGoal",
+            Name = "SubGoal",
             Path = global::app.type.path.@this.Resolve("/goals/SubGoal.goal", context)
         };
         _app.Goal.Add(goal);

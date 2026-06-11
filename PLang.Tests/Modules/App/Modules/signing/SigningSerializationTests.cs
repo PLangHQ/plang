@@ -15,7 +15,7 @@ public class SigningSerializationTests
     public async Task SignedData_SigningBytes_ExcludesSignature()
     {
         var sd = CreateTestSignedData();
-        sd.Value = (global::app.type.text.@this)"some-signature-value";
+        sd.Value = "some-signature-value";
 
         // SigningOptions excludes the Signature property for thread-safe signing bytes
         var json = JsonSerializer.Serialize(sd, Signature.SigningOptions);
@@ -193,8 +193,8 @@ public class SigningSerializationTests
     {
         return new Signature
         {
-            Type = (global::app.type.text.@this)"signature",
-            Algorithm = (global::app.type.text.@this)"ed25519",
+            Type = "signature",
+            Algorithm = "ed25519",
             Nonce = "abc123",
             Created = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero),
             Identity = "testPublicKey",

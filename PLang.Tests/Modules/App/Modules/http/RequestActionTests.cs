@@ -35,7 +35,7 @@ public class RequestActionTests
         _app = new PLangEngine(_tempDir);
 
         _handler = new MockHttpMessageHandler();
-        var provider = new Default(_handler) { Name = (global::app.type.text.@this)"test" };
+        var provider = new Default(_handler) { Name = "test" };
         _app.Code.Register<IHttp>(provider);
         _app.Code.SetDefault<IHttp>("test");
 
@@ -382,7 +382,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/stream",
-            OnStream = new global::app.goal.GoalCall { Name = (global::app.type.text.@this)"ProcessChunk" },
+            OnStream = new global::app.goal.GoalCall { Name = "ProcessChunk" },
             Unsigned = (global::app.type.@bool.@this)true
         };
 
@@ -492,7 +492,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/stream",
-            OnStream = new global::app.goal.GoalCall { Name = (global::app.type.text.@this)"HandleLine" },
+            OnStream = new global::app.goal.GoalCall { Name = "HandleLine" },
             Unsigned = (global::app.type.@bool.@this)true
         };
         var result = await action.Run();
@@ -518,7 +518,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/sse",
-            OnStream = new global::app.goal.GoalCall { Name = (global::app.type.text.@this)"HandleSSE" },
+            OnStream = new global::app.goal.GoalCall { Name = "HandleSSE" },
             Unsigned = (global::app.type.@bool.@this)true
         };
         var result = await action.Run();
@@ -542,7 +542,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/sse-multi",
-            OnStream = new global::app.goal.GoalCall { Name = (global::app.type.text.@this)"HandleSSE" },
+            OnStream = new global::app.goal.GoalCall { Name = "HandleSSE" },
             Unsigned = (global::app.type.@bool.@this)true
         };
         var result = await action.Run();
@@ -568,7 +568,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/bytes",
-            OnStream = new global::app.goal.GoalCall { Name = (global::app.type.text.@this)"HandleBytes" },
+            OnStream = new global::app.goal.GoalCall { Name = "HandleBytes" },
             StreamAs = (global::app.type.choice.@this<global::app.module.http.StreamFormat>)StreamFormat.Bytes,
             Unsigned = (global::app.type.@bool.@this)true
         };
@@ -595,7 +595,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/stream-err",
-            OnStream = new global::app.goal.GoalCall { Name = (global::app.type.text.@this)"HandleLine" },
+            OnStream = new global::app.goal.GoalCall { Name = "HandleLine" },
             Unsigned = (global::app.type.@bool.@this)true
         };
         var result = await action.Run();
@@ -619,7 +619,7 @@ public class RequestActionTests
             Url = (global::app.type.text.@this)"https://api.example.com/stream",
             OnStream = new global::app.goal.GoalCall
             {
-                Name = (global::app.type.text.@this)"HandleChunk",
+                Name = "HandleChunk",
                 Parameters = new List<Data> { new Data("myChunk") }
             },
             Unsigned = (global::app.type.@bool.@this)true
@@ -644,7 +644,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/plang-stream",
-            OnStream = new global::app.goal.GoalCall { Name = (global::app.type.text.@this)"HandlePlang" },
+            OnStream = new global::app.goal.GoalCall { Name = "HandlePlang" },
             Unsigned = (global::app.type.@bool.@this)true
         };
         var result = await action.Run();
@@ -689,7 +689,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/plang-stream",
-            OnStream = new global::app.goal.GoalCall { Name = (global::app.type.text.@this)"HandlePlang" },
+            OnStream = new global::app.goal.GoalCall { Name = "HandlePlang" },
             Unsigned = (global::app.type.@bool.@this)false
         };
         var result = await action.Run();
@@ -716,7 +716,7 @@ public class RequestActionTests
         };
 
         var badData = new Data("payload");
-        badData.Signature = new Signature { Identity = "fake", Value = (global::app.type.text.@this)"AAAA_bogus" };
+        badData.Signature = new Signature { Identity = "fake", Value = "AAAA_bogus" };
         var ndjson = JsonSerializer.Serialize(badData, transportOptions) + "\n";
 
         _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
@@ -728,7 +728,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/plang-bad-stream",
-            OnStream = new global::app.goal.GoalCall { Name = (global::app.type.text.@this)"HandlePlang" },
+            OnStream = new global::app.goal.GoalCall { Name = "HandlePlang" },
             Unsigned = (global::app.type.@bool.@this)false
         };
         var result = await action.Run();
@@ -886,7 +886,7 @@ public class RequestActionTests
         responseData.Signature = new Signature
         {
             Identity = "fake-identity",
-            Value = (global::app.type.text.@this)"AAAA_invalid_base64_sig"
+            Value = "AAAA_invalid_base64_sig"
         };
         var transportOptions = new JsonSerializerOptions
         {
@@ -993,7 +993,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = (global::app.type.text.@this)"https://api.example.com/sse-overflow",
-            OnStream = new global::app.goal.GoalCall { Name = (global::app.type.text.@this)"HandleSSE" },
+            OnStream = new global::app.goal.GoalCall { Name = "HandleSSE" },
             Unsigned = (global::app.type.@bool.@this)true
         };
         var result = await action.Run();

@@ -60,7 +60,7 @@ public class NamePropagationTests
         var paramData = new Data("Greeting", "hello %name%!") { Context = context };
         var result = await paramData.Value<global::app.type.text.@this>();
         await Assert.That(result.Name).IsEqualTo("Greeting");
-        await Assert.That((await result.Value())).IsEqualTo("hello world!");
+        await Assert.That((await result.Value())!.Value).IsEqualTo("hello world!");
     }
 
     // Full match against a missing variable. Name still propagates ("missing"),
@@ -103,6 +103,6 @@ public class NamePropagationTests
         var paramData = new Data("Slot", "%a%") { Context = context };
         var result = await paramData.Value<global::app.type.text.@this>();
         await Assert.That(result.Name).IsEqualTo("a");
-        await Assert.That((await result.Value())).IsEqualTo("%b%");
+        await Assert.That((await result.Value())!.Value).IsEqualTo("%b%");
     }
 }

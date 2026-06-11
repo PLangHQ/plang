@@ -441,11 +441,11 @@ public class FileHandlerTests : IDisposable
         _app.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
-        { Mime = (global::app.type.text.@this)"text/plain" });
+        { Mime = "text/plain" });
 
         var goal = new global::app.goal.@this
         {
-            Name = (global::app.type.text.@this)"TestFileExistsFlow",
+            Name = "TestFileExistsFlow",
             Steps = new global::app.goal.steps.@this
             {
                 new global::app.goal.steps.step.@this
@@ -517,11 +517,11 @@ public class FileHandlerTests : IDisposable
         _app.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
-        { Mime = (global::app.type.text.@this)"text/plain" });
+        { Mime = "text/plain" });
 
         var goal = new global::app.goal.@this
         {
-            Name = (global::app.type.text.@this)"TestFileNotExistsFlow",
+            Name = "TestFileNotExistsFlow",
             Steps = new global::app.goal.steps.@this
             {
                 new global::app.goal.steps.step.@this

@@ -104,7 +104,7 @@ public class ChannelReadBoundaryTests
     {
         await using var app = NewApp();
         var serializer = app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var wire = (await serializer.Serialize(data.Ok("hello")).Value())!;
+        var wire = (await serializer.Serialize(data.Ok("hello")).Value())!.Value;
 
         var ch = Input(app, "application/plang", Encoding.UTF8.GetBytes(wire));
         var d = await ch.Read();

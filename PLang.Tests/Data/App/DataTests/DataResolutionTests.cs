@@ -58,7 +58,7 @@ public class DataResolutionTests
         for (int i = 0; i < 3; i++)
         {
             _app.User.Context.Variable.Set("i", $"value-{i}");
-            seen.Add((await (await data.Value<global::app.type.text.@this>(_app.User.Context)).Value()));
+            seen.Add((await (await data.Value<global::app.type.text.@this>(_app.User.Context)).Value())?.Value);
         }
 
         await Assert.That(seen[0]).IsEqualTo("value-0");

@@ -28,7 +28,7 @@ public class HttpChannelTests
         var app = new global::app.@this(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-httpchan-" + System.Guid.NewGuid().ToString("N")[..8]));
         handler = new StubHandler();
-        var provider = new Default(handler) { Name = (global::app.type.text.@this)"test" };
+        var provider = new Default(handler) { Name = "test" };
         app.Code.Register<IHttp>(provider);
         app.Code.SetDefault<IHttp>("test");
         return app;

@@ -18,7 +18,7 @@ public partial class Verify : IContext
         {
             return global::app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(
                 expected!, mock.CallCount,
-                ((Message == null ? null : await Message.Value()) as global::app.type.text.@this) ?? $"Expected {mock.Pattern} to be called {expected} time(s), but was called {mock.CallCount} time(s)"));
+                (Message == null ? null : (await Message.Value())?.Value) ?? $"Expected {mock.Pattern} to be called {expected} time(s), but was called {mock.CallCount} time(s)"));
         }
 
         return global::app.data.@this<global::app.type.@bool.@this>.Ok(true);

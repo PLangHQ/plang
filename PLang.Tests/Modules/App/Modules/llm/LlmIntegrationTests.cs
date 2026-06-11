@@ -189,7 +189,7 @@ public class LlmIntegrationTests
         {
             new GoalCall
             {
-                Name = (global::app.type.text.@this)"GetWeather",
+                Name = "GetWeather",
                 Parameters = new List<Data>
                 {
                     new Data("city", null, global::app.type.@this.String)
@@ -223,7 +223,7 @@ public class LlmIntegrationTests
         if (snapshot != null)
         {
             var handler = new SnapshotReplayHandler(new List<string> { snapshot });
-            var httpProvider = new Default(handler) { Name = (global::app.type.text.@this)"snapshot" };
+            var httpProvider = new Default(handler) { Name = "snapshot" };
             _app.Code.Register<IHttp>(httpProvider);
             _app.Code.SetDefault<IHttp>("snapshot");
         }
@@ -257,7 +257,7 @@ public class LlmIntegrationTests
         if (multiSnapshot != null)
         {
             var handler = new SnapshotReplayHandler(multiSnapshot);
-            var httpProvider = new Default(handler) { Name = (global::app.type.text.@this)"snapshot" };
+            var httpProvider = new Default(handler) { Name = "snapshot" };
             _app.Code.Register<IHttp>(httpProvider);
             _app.Code.SetDefault<IHttp>("snapshot");
         }
@@ -269,7 +269,7 @@ public class LlmIntegrationTests
         {
             // Capture all responses during the live call
             captureHandler = new CaptureHandler();
-            var httpProvider = new Default(captureHandler) { Name = (global::app.type.text.@this)"capture" };
+            var httpProvider = new Default(captureHandler) { Name = "capture" };
             _app.Code.Register<IHttp>(httpProvider);
             _app.Code.SetDefault<IHttp>("capture");
         }

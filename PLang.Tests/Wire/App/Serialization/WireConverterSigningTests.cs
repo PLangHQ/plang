@@ -19,7 +19,7 @@ public class WireConverterSigningTests
         var data = new global::app.data.@this("greeting", "hello") { Context = app.User.Context };
         await Assert.That(data.Signature).IsNull();
 
-        var json = (await plang.Serialize(data).Value())!;
+        var json = (await plang.Serialize(data).Value())!.Value;
 
         await Assert.That(data.Signature).IsNotNull().Because("Converter must EnsureSigned before emit");
         await Assert.That(json).Contains("\"signature\"");
@@ -69,7 +69,7 @@ public class WireConverterSigningTests
         var outer = new global::app.data.@this("list", new List<global::app.data.@this> { inner1, inner2 })
             { Context = app.User.Context };
 
-        var json = (await plang.Serialize(outer).Value())!;
+        var json = (await plang.Serialize(outer).Value())!.Value;
 
         await Assert.That(inner1.Signature).IsNotNull();
         await Assert.That(inner2.Signature).IsNotNull();
@@ -94,7 +94,7 @@ public class WireConverterSigningTests
         data.SetValue("after");
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var json = (await plang.Serialize(data).Value())!;
+        var json = (await plang.Serialize(data).Value())!.Value;
         await Assert.That(json).Contains("after");
         await Assert.That(json).DoesNotContain("before");
         await Assert.That(data.Signature).IsNotNull();
@@ -107,7 +107,7 @@ public class WireConverterSigningTests
             app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var data = new global::app.data.@this("greeting", "hello") { Context = app.User.Context };
-        var json = (await plang.Serialize(data).Value())!;
+        var json = (await plang.Serialize(data).Value())!.Value;
 
         var roundTripped = plang.Deserialize(json);   // Deserialize returns the reconstruction itself
         await roundTripped.IsSuccess();
@@ -123,7 +123,7 @@ public class WireConverterSigningTests
 
         var bytes = new byte[] { 1, 2, 3, 4 };
         var data = new global::app.data.@this("blob", bytes) { Context = app.User.Context };
-        var json = (await plang.Serialize(data).Value())!;
+        var json = (await plang.Serialize(data).Value())!.Value;
 
         // Byte[] serializes to base64 string in JSON — the value slot must NOT be a
         // nested {name, type, value} Data object.
@@ -140,7 +140,7 @@ public class WireConverterSigningTests
             app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var data = new global::app.data.@this("x", "y") { Context = app.User.Context };
-        var json = (await plang.Serialize(data).Value())!;
+        var json = (await plang.Serialize(data).Value())!.Value;
         // Properties is [JsonIgnore] and stays off the wire pre-Stage-4.
         await Assert.That(json).DoesNotContain("\"properties\"");
     }

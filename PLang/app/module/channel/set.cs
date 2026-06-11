@@ -31,7 +31,7 @@ public partial class Set : IContext
 
     public async Task<data.@this> Run()
     {
-        var name = await Name.Value();
+        var name = (await Name.Value())?.Value;
         if (string.IsNullOrEmpty(name))
             return app.data.@this.FromError(new ServiceError("Channel name is required", "ValueRequired", 400));
 
@@ -45,7 +45,7 @@ public partial class Set : IContext
         if (!goalResult.Success) return goalResult;
         var goalEntry = (app.goal.@this)(await goalResult.Value())!;
 
-        var direction = ResolveDirection(name, Direction == null ? null : await Direction.Value());
+        var direction = ResolveDirection(name, Direction == null ? null : (await Direction.Value())?.Value);
 
         // Upsert: dispose any existing channel under this name before re-registering.
         await actor.Channel.RemoveAsync(name);
@@ -54,8 +54,8 @@ public partial class Set : IContext
         {
             Buffer = (await Buffer.Value())?.ToInt64() ?? 4096L,
             Timeout = (await Timeout.Value()) is { } __to ? (TimeSpan)__to : TimeSpan.FromSeconds(30),
-            Mime = (Mime == null ? null : await Mime.Value()) ?? "text/plain",
-            Encoding = (Encoding == null ? null : await Encoding.Value()) ?? "utf-8",
+            Mime = (Mime == null ? null : (await Mime.Value())?.Value) ?? "text/plain",
+            Encoding = (Encoding == null ? null : (await Encoding.Value())?.Value) ?? "utf-8",
             Encryption = (Encryption == null ? null : await Encryption.Value())?.Name,
             Signing = (Signing == null ? null : await Signing.Value())?.Name ?? "auto"
         };

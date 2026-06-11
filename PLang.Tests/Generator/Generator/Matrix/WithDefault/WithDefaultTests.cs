@@ -11,7 +11,7 @@ public class StringWithDefaultTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<StringWithDefault>(app);
         var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
-        await Assert.That((await typed!.Value())).IsEqualTo("hello");
+        await Assert.That((await typed!.Value())?.Value).IsEqualTo("hello");
     }
 
     [Test]
@@ -21,7 +21,7 @@ public class StringWithDefaultTests
         var result = await MatrixRunner.RunAsync<StringWithDefault>(app,
             parameters: new[] { ("greeting", (object?)"world") });
         var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
-        await Assert.That((await typed!.Value())).IsEqualTo("world");
+        await Assert.That((await typed!.Value())?.Value).IsEqualTo("world");
     }
 }
 

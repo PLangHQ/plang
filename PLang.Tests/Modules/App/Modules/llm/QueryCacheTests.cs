@@ -115,7 +115,7 @@ public class QueryCacheTests
             Cache = (global::app.type.@bool.@this)true,
             Tools = new List<GoalCall>
             {
-                new GoalCall { Name = (global::app.type.text.@this)"TestTool" }
+                new GoalCall { Name = "TestTool" }
             }.ToListData<GoalCall>()
         };
 

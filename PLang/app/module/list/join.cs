@@ -17,7 +17,7 @@ public partial class Join : IContext
         foreach (var (_, item) in data.EnumerateItems())
             strings.Add((await item.Value())?.ToString() ?? "");
 
-        var result = string.Join((await Separator.Value())!, strings);
+        var result = string.Join((await Separator.Value())!.Value, strings);
         return global::app.data.@this<global::app.type.text.@this>.Ok(result, app.type.@this.String);
     }
 }

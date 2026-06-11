@@ -40,7 +40,7 @@ public class Stage2_GetParameterLazyTests
 
         await result.Data.IsSuccess();
         var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
-        await Assert.That((await typed!.Value())).IsEqualTo("/tmp/x.txt");
+        await Assert.That((await typed!.Value())?.Value).IsEqualTo("/tmp/x.txt");
     }
 
     [Test]

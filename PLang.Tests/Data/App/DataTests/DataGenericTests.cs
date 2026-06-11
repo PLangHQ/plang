@@ -11,7 +11,7 @@ public class DataGenericTests
     {
         var data = global::app.data.@this<global::app.type.text.@this>.Ok("hello");
 
-        await Assert.That((await data.Value())).IsEqualTo("hello");
+        await Assert.That((await data.Value())!.Value).IsEqualTo("hello");
         await data.IsSuccess();
     }
 
@@ -30,7 +30,7 @@ public class DataGenericTests
     {
         var data = global::app.data.@this<global::app.type.text.@this>.Ok("world");
 
-        string? typed = (await data.Value());
+        string? typed = (await data.Value())?.Value;
 
         await Assert.That(typed).IsEqualTo("world");
     }

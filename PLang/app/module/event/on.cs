@@ -49,13 +49,13 @@ public partial class On : IContext
         var binding = new EventBinding(
             await Trigger.Value(),
             handler,
-            goalNamePattern: GoalPattern == null ? null : await GoalPattern.Value(),
-            stepPattern: StepPattern == null ? null : await StepPattern.Value(),
-            actionPattern: ActionPattern == null ? null : await ActionPattern.Value(),
+            goalNamePattern: GoalPattern == null ? null : (await GoalPattern.Value())?.Value,
+            stepPattern: StepPattern == null ? null : (await StepPattern.Value())?.Value,
+            actionPattern: ActionPattern == null ? null : (await ActionPattern.Value())?.Value,
             priority: (await Priority.Value())!.ToInt32(),
             isRegex: (await IsRegex.Value())!,
             goalToCall: goalToCall,
-            channelName: ChannelName == null ? null : await ChannelName.Value());
+            channelName: ChannelName == null ? null : (await ChannelName.Value())?.Value);
 
         // Register on the target actor's event scope
         targetActor.Context.Events.Register(binding);

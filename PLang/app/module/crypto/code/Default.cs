@@ -96,7 +96,7 @@ public class Default : ICrypto
         else
         {
             var hashKind = action.Hash.Type is { Name: "hash", Kind: { Length: > 0 } k } ? k : null;
-            algorithm = hashKind ?? (await action.Algorithm.Value())!;
+            algorithm = hashKind ?? (await action.Algorithm.Value())!.Value;
             // The hash type owns base64↔byte parsing (OBP) — Verify doesn't
             // reach for Convert.FromBase64String / SequenceEqual itself.
             try { expected = global::app.module.crypto.type.hash.@this.FromBase64((await action.Hash.Value())?.ToString() ?? "", algorithm); }

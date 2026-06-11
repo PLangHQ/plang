@@ -142,7 +142,7 @@ public class ConfigureActionTests
         // If timeout is respected, a slow handler will trigger Timeout error
         var handler = new MockHttpMessageHandler();
         handler.SlowDelay = 3000; // 3 seconds
-        var provider = new Default(handler) { Name = (global::app.type.text.@this)"timeout-test" };
+        var provider = new Default(handler) { Name = "timeout-test" };
         _app.Code.Register<IHttp>(provider);
         _app.Code.SetDefault<IHttp>("timeout-test");
 

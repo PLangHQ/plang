@@ -76,7 +76,7 @@ public class CanonicalizationTests
         var outer = new global::app.data.@this("outer") { Context = app.User.Context };
         outer.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
 
-        var json = (await plang.Serialize(outer).Value())!;
+        var json = (await plang.Serialize(outer).Value())!.Value;
         await Assert.That(inner.Signature).IsNotNull();
         await Assert.That(outer.Signature).IsNotNull();
 
@@ -129,11 +129,11 @@ public class CanonicalizationTests
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
 
-        var outBytes = (await plang.Serialize(outer).Value())!;
+        var outBytes = (await plang.Serialize(outer).Value())!.Value;
         await Assert.That(outBytes).DoesNotContain("PRIV-must-persist")
             .Because("Out view excludes [Sensitive] — the secret never reaches the wire.");
 
-        var storeBytes = (await plang.Store(outer).Value())!;
+        var storeBytes = (await plang.Store(outer).Value())!.Value;
         await Assert.That(storeBytes).Contains("PRIV-must-persist")
             .Because("Store view includes [Sensitive] — the secret must persist locally so signing keeps working on re-read.");
     }
@@ -151,7 +151,7 @@ public class CanonicalizationTests
 
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var json = (await plang.Serialize(outer).Value())!;
+        var json = (await plang.Serialize(outer).Value())!.Value;
 
         await Assert.That(inner.Signature).IsNotNull()
             .Because("Wire.EnsureInnerSigned must reach Datas held as dict values, not just list elements.");

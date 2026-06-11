@@ -14,7 +14,7 @@ public class StringPlainTests
         var result = await MatrixRunner.RunAsync<StringPlain>(app,
             parameters: new[] { ("path", (object?)"hello") });
         var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
-        await Assert.That((await typed!.Value())).IsEqualTo("hello");
+        await Assert.That((await typed!.Value())?.Value).IsEqualTo("hello");
     }
 
     [Test]
@@ -47,7 +47,7 @@ public class StringPlainTests
         var result = await MatrixRunner.RunAsync<StringPlain>(app,
             parameters: new[] { ("path", (object?)"") });
         var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
-        await Assert.That((await typed!.Value())).IsEqualTo("");
+        await Assert.That((await typed!.Value())?.Value).IsEqualTo("");
     }
 }
 

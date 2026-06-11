@@ -13,7 +13,7 @@ public partial class Remove : IContext
 
     public async Task<data.@this<type.setting>> Run()
     {
-        var key = (await Key.Value())!;
+        var key = (await Key.Value())!.Value;
         var store = Context.App.SettingsStore;
         var result = await store.Remove("settings", key);
 

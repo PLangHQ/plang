@@ -59,12 +59,9 @@ public sealed partial class @this : global::app.type.item.@this,
 
     public @this(string value) { Value = value ?? string.Empty; }
 
-    // Both directions are lossless, so the wrapper owns its conversions and call sites
-    // stay clean: `.Ok("x")` constructs, `string s = t.Value` reads. The explicit ==/!=
-    // overloads disambiguate `t == "x"` (otherwise ambiguous between the two implicits).
-    // Null-tolerant: an absent text-typed Data has a null wrapper, and consumers
-    // read `someText.Value` expecting the old `string?` null-through behaviour.
-    public static implicit operator string?(@this? t) => t?.Value;
+    // INBOUND only — the entry lift (`.Ok("x")` constructs). The outbound
+    // implicit (text → string) is gone: every site was a silent CLR exit;
+    // a reader names the string face (`.Value`) at a real .NET edge.
     public static implicit operator @this(string s) => new(s);
 
     // Only the @this==@this overload — NOT a string overload. string is a reference

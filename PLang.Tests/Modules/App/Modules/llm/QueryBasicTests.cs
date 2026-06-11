@@ -278,7 +278,7 @@ public class QueryBasicTests
             }.ToListData<LlmMessage>(),
             Tools = new List<GoalCall>
             {
-                new GoalCall { Name = (global::app.type.text.@this)"Echo" }
+                new GoalCall { Name = "Echo" }
             }.ToListData<GoalCall>()
         };
         var result = await action.Run();

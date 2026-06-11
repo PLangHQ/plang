@@ -43,7 +43,7 @@ public class ContentShapeVerbTests
         var p = new FilePath(file, app.User.Context);
         var result = await p.ReadAsBase64();
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsEqualTo(System.Convert.ToBase64String(bytes));
+        await Assert.That((await result.Value())!.Value).IsEqualTo(System.Convert.ToBase64String(bytes));
     }
 
     [Test] public async Task ReadAsBase64_OutOfRoot_DeniedAnswer_DoesNotReadFile()
@@ -85,7 +85,7 @@ public class ContentShapeVerbTests
         var p = new FilePath(file, app.User.Context);
         var result = await p.ReadAsDataUri();
         await result.IsSuccess();
-        await Assert.That((await result.Value())!).StartsWith("data:image/png;base64,");
+        await Assert.That((await result.Value())!.Value).StartsWith("data:image/png;base64,");
     }
 
     [Test] public async Task ReadAsDataUri_OnUnknownExtension_FallsBackToOctetStream()
@@ -96,7 +96,7 @@ public class ContentShapeVerbTests
         var p = new FilePath(file, app.User.Context);
         var result = await p.ReadAsDataUri();
         await result.IsSuccess();
-        await Assert.That((await result.Value())!).StartsWith("data:application/octet-stream;base64,");
+        await Assert.That((await result.Value())!.Value).StartsWith("data:application/octet-stream;base64,");
     }
 
     [Test] public async Task ReadAsDataUri_OutOfRoot_DeniedAnswer_ReturnsDataFail()

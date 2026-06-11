@@ -26,7 +26,7 @@ public class DownloadActionTests
         _app = new PLangEngine(_tempDir);
 
         _handler = new MockHttpMessageHandler();
-        var provider = new Default(_handler) { Name = (global::app.type.text.@this)"test" };
+        var provider = new Default(_handler) { Name = "test" };
         _app.Code.Register<IHttp>(provider);
         _app.Code.SetDefault<IHttp>("test");
     }

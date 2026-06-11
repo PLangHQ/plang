@@ -14,7 +14,7 @@ public partial class list : IContext
 
     public async Task<data.@this> Run()
     {
-        var typeName = Type == null ? null : await Type.Value();
+        var typeName = Type == null ? null : (await Type.Value())?.Value;
         if (string.IsNullOrEmpty(typeName))
             return Data(Context.App.Code.List());
 

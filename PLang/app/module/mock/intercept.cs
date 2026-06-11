@@ -19,7 +19,7 @@ public partial class intercept : IContext
         var handle = new global::app.mock.@this
         {
             Id = Guid.NewGuid().ToString("N")[..8],
-            Pattern = ((await Pattern.Value()) as global::app.type.text.@this)!,
+            Pattern = (await Pattern.Value())!.Value,
             IsSpy = (Return == null ? null : await Return.Value()) == null && (Call == null ? null : await Call.Value()) == null
         };
 
@@ -62,7 +62,7 @@ public partial class intercept : IContext
         var binding = new EventBinding(
             Trigger.BeforeAction,
             handler,
-            actionPattern: ((await Pattern.Value()) as global::app.type.text.@this)!);
+            actionPattern: (await Pattern.Value())!.Value);
 
         handle.EventBindingId = binding.Id;
 

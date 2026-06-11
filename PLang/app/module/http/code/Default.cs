@@ -71,12 +71,12 @@ public sealed class Default : IHttp
         var timeout = action.TimeoutInSec == null ? config.Resolve("TimeoutInSec", 30)
             : (await action.TimeoutInSec.Value())?.ToDouble() ?? 0;
         if (timeout <= 0) timeout = config.Resolve("TimeoutInSec", 30);
-        string contentType = (action.ContentType == null ? null : await action.ContentType.Value()) is { } ctv ? (string)ctv : config.Resolve("ContentType", "application/json");
-        var encoding = (await action.Encoding.Value()) ?? config.Resolve("Encoding", "utf-8");
+        string contentType = (action.ContentType == null ? null : await action.ContentType.Value()) is { } ctv ? ctv.Value : config.Resolve("ContentType", "application/json");
+        var encoding = (await action.Encoding.Value())?.Value ?? config.Resolve("Encoding", "utf-8");
 
-        var urlResult = ResolveUrl((await action.Url.Value())!, config);
+        var urlResult = ResolveUrl((await action.Url.Value())!.Value, config);
         if (!urlResult.Success) return urlResult;
-        var resolvedUrl = (await urlResult.Value())!;
+        var resolvedUrl = (await urlResult.Value())!.Value;
 
         var headers = MergeHeaders(action.Headers == null ? null
             : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.Headers.Value()), config);
@@ -103,7 +103,7 @@ public sealed class Default : IHttp
             }
         }
 
-        var httpMethod = ToSystemMethod((await action.Method.Value()));
+        var httpMethod = ToSystemMethod((await action.Method.Value())!.Value);
         var requestMessage = new HttpRequestMessage(httpMethod, resolvedUrl) { Content = httpContent };
         ApplyHeaders(requestMessage, headers);
 
@@ -148,9 +148,9 @@ public sealed class Default : IHttp
         var timeout = action.TimeoutInSec == null ? config.Resolve("TimeoutInSec", 30)
             : (await action.TimeoutInSec.Value())?.ToDouble() ?? 0;
         if (timeout <= 0) timeout = config.Resolve("TimeoutInSec", 30);
-        var urlResult = ResolveUrl((await action.Url.Value())!, config);
+        var urlResult = ResolveUrl((await action.Url.Value())!.Value, config);
         if (!urlResult.Success) return urlResult;
-        var resolvedUrl = (await urlResult.Value())!;
+        var resolvedUrl = (await urlResult.Value())!.Value;
 
         var headers = MergeHeaders(action.Headers == null ? null
             : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.Headers.Value()), config);
@@ -196,11 +196,11 @@ public sealed class Default : IHttp
         var timeout = action.TimeoutInSec == null ? config.Resolve("TimeoutInSec", 30)
             : (await action.TimeoutInSec.Value())?.ToDouble() ?? 0;
         if (timeout <= 0) timeout = config.Resolve("TimeoutInSec", 30);
-        var encoding = (await action.Encoding.Value()) ?? config.Resolve("Encoding", "utf-8");
+        var encoding = (await action.Encoding.Value())?.Value ?? config.Resolve("Encoding", "utf-8");
 
-        var urlResult = ResolveUrl((await action.Url.Value())!, config);
+        var urlResult = ResolveUrl((await action.Url.Value())!.Value, config);
         if (!urlResult.Success) return urlResult;
-        var resolvedUrl = (await urlResult.Value())!;
+        var resolvedUrl = (await urlResult.Value())!.Value;
 
         var headers = MergeHeaders(action.Headers == null ? null
             : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.Headers.Value()), config);
@@ -208,7 +208,7 @@ public sealed class Default : IHttp
         var (httpContent, contentErr) = await ResolveUploadContentAsync(action, app, encoding);
         if (contentErr != null) return global::app.data.@this.FromError(contentErr);
 
-        var httpMethod = ToSystemMethod((await action.Method.Value()));
+        var httpMethod = ToSystemMethod((await action.Method.Value())!.Value);
         var requestMessage = new HttpRequestMessage(httpMethod, resolvedUrl) { Content = httpContent };
         ApplyHeaders(requestMessage, headers);
 
@@ -558,7 +558,7 @@ public sealed class Default : IHttp
             BuildProperties(bodyRead, request, response);
             return bodyRead;
         }
-        var body = (await bodyRead.Value())!;
+        var body = (await bodyRead.Value())!.Value;
 
         data.@this? data;
         try
@@ -654,7 +654,7 @@ public sealed class Default : IHttp
         {
             var read = await ReadLimitedStringAsync(response.Content, MaxErrorBodySize, ct);
             // Best effort: ignore size-cap / slow-loris failures here, proceed with empty body.
-            if (read.Success) errorBody = (await read.Value())!;
+            if (read.Success) errorBody = (await read.Value())!.Value;
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { /* best effort — read failed (network/IO), proceed with empty */ }
         var err = global::app.data.@this.FromError(new ServiceError(

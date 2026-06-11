@@ -42,7 +42,7 @@ public class LazyDataShapeTests
     {
         var d = data.Ok("hello");
         d.Name = "greeting";
-        var json = (await global::app.channel.serializer.plang.@this.ContextLessFallback.Serialize(d).Value())!;
+        var json = (await global::app.channel.serializer.plang.@this.ContextLessFallback.Serialize(d).Value())!.Value;
         await Assert.That(json.Contains("\"raw\"")).IsFalse();
         await Assert.That(json.Contains("\"_raw\"")).IsFalse();
     }

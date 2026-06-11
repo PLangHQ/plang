@@ -163,7 +163,7 @@ public class Stage3_ArraysAsDataTests
         list.Add(signed);
         var listData = new Data("list", list) { Context = ctx };
 
-        var json = (await plang.Serialize(listData).Value())!;
+        var json = (await plang.Serialize(listData).Value())!.Value;
         var rebuilt = plang.Deserialize(json);   // Deserialize returns the reconstruction itself
         await rebuilt.IsSuccess();
         var element = await rebuilt.GetChild("[0]");

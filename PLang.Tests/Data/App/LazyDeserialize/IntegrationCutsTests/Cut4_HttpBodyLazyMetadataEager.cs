@@ -30,7 +30,7 @@ public class Cut4_HttpBodyLazyMetadataEager
             Respond = _ => new HttpResponseMessage(HttpStatusCode.OK)
             { Content = new StringContent("{\"name\":\"Ada\"}", Encoding.UTF8, "application/json") }
         };
-        app.Code.Register<IHttp>(new Default(handler) { Name = (global::app.type.text.@this)"test" });
+        app.Code.Register<IHttp>(new Default(handler) { Name = "test" });
         app.Code.SetDefault<IHttp>("test");
         var action = new request { Context = app.User.Context, Url = (global::app.type.text.@this)"https://x/y", Unsigned = (global::app.type.@bool.@this)true };
         return (app, await action.Run());

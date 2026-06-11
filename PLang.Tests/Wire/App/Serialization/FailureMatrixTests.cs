@@ -36,7 +36,7 @@ public class FailureMatrixTests
             app.User.Channel.Serializers.GetByMimeType("application/plang");
 
         var d = new global::app.data.@this("x", "untampered") { Context = app.User.Context };
-        var wire = (await plang.Serialize(d).Value())!;
+        var wire = (await plang.Serialize(d).Value())!.Value;
         var tampered = wire.Replace("untampered", "TAMPERED!");
 
         var back = plang.Deserialize(tampered);

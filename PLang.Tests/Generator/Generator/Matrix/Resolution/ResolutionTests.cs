@@ -252,7 +252,7 @@ public class ReResolveAcrossCallsTests
             var r = await MatrixRunner.RunAsync<ReResolveAcrossCalls>(app,
                 parameters: new[] { ("value", (object?)"%i%") });
             var typed = r.Data as global::app.data.@this<global::app.type.text.@this>;
-            seen.Add((await typed!.Value()));
+            seen.Add((await typed!.Value())?.Value);
         }
         await Assert.That(seen[0]).IsEqualTo("value-0");
         await Assert.That(seen[1]).IsEqualTo("value-1");

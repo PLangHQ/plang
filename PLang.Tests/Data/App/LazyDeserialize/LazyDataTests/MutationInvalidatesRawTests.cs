@@ -49,7 +49,7 @@ public class MutationInvalidatesRawTests
         d.Name = "cfg";
         d.SetValue("mutated");   // mutation clears _raw — raw is no longer authoritative
 
-        var wire = (await global::app.channel.serializer.plang.@this.ContextLessFallback.Serialize(d).Value())!;
+        var wire = (await global::app.channel.serializer.plang.@this.ContextLessFallback.Serialize(d).Value())!.Value;
         await Assert.That(wire).Contains("\"value\":\"mutated\""); // renderer output
         await Assert.That(wire).DoesNotContain("8080");           // not the stale raw
     }

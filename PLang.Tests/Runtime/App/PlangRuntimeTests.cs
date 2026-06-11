@@ -37,7 +37,7 @@ public class PlangRuntimeTests : IDisposable
         _app.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
-        { Mime = (global::app.type.text.@this)"text/plain" });
+        { Mime = "text/plain" });
 
         var step = new Step
         {
@@ -93,7 +93,7 @@ public class PlangRuntimeTests : IDisposable
         {
             Context = context,
             Trigger = (global::app.type.choice.@this<global::app.@event.Trigger>)global::app.@event.Trigger.BeforeStep,
-            GoalToCall = new GoalCall { Name = (global::app.type.text.@this)"LogBefore" },
+            GoalToCall = new GoalCall { Name = "LogBefore" },
             StepPattern = (global::app.type.text.@this)"*"
         };
         await onAction.Run();
@@ -115,11 +115,11 @@ public class PlangRuntimeTests : IDisposable
         _app.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
-        { Mime = (global::app.type.text.@this)"text/plain" });
+        { Mime = "text/plain" });
 
         var goal = new Goal
         {
-            Name = (global::app.type.text.@this)"TestGoal",
+            Name = "TestGoal",
             Path = "/Test.goal",
             Steps = new GoalSteps
             {

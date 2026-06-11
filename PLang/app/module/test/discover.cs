@@ -49,7 +49,7 @@ public partial class discover : IContext
         if (root == null) return empty;
 
         // List routes through AuthGate(Read). Out-of-root: prompt or denial.
-        var listed = await root.List((await Pattern.Value())!, (await Recursive.Value())!);
+        var listed = await root.List((await Pattern.Value())!.Value, (await Recursive.Value())!);
         if (!listed.Success) return data.@this<global::app.type.list.@this<global::app.tester.test.@this>>.FromError(listed.Error!);
         if (await listed.Value() == null) return empty;
 

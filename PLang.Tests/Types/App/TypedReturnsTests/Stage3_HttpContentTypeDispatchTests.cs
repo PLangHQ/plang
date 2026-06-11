@@ -28,7 +28,7 @@ public class Stage3_HttpContentTypeDispatchTests
         _app = new global::app.@this(_tempDir);
 
         _handler = new StubHandler();
-        var provider = new Default(_handler) { Name = (global::app.type.text.@this)"test" };
+        var provider = new Default(_handler) { Name = "test" };
         _app.Code.Register<IHttp>(provider);
         _app.Code.SetDefault<IHttp>("test");
     }
