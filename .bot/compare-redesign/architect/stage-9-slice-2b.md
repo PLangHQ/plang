@@ -18,7 +18,28 @@
 - [ ] **Rebuild `Value<T>()` on the ruled mechanics**: `await Value()`, answer-is-T or chain-facet → hand over; else the answer's own Convert hook; else `Data.Error`. Delete `AsT_Impl`, `WrapAs`, `AsCanonical`, and the `_resolvingValues` cycle guard (single-pass render has no recursion to guard).
 - [ ] **Delete `Data.RawValue => Peek()`** (`data/this.cs:606`) — a raw-named alias face on the courier.
 - [ ] **Tighten the two pins so this can't recur**: `GenericToRaw_DoesNotExist_OnItemBase` asserts no `ToRaw` member at ANY visibility (reflection, `NonPublic` included); `TextRawValue_IsPrivate` likewise asserts private-or-absent, not just non-public.
+- [ ] **`assert.AreEqual` → `data.Compare`** (`assert/code/Default.cs:150-164` and `:246-247`): the unwrap + `Convert.ToDouble` + `ToString()==ToString()` body is a second comparison engine beside THE entry we built (stages 4–5, the numeric tower). Delete the body; `await expected.Compare(actual) == Comparison.Equal`.
+- [ ] **`assert` `Contains` dispatcher** (`:196-232`): seven arms; the directory arm's own comment ("the type owns it") is the rule — universalize it. `Contains` becomes a virtual on item (text: substring ordinal-ignore-case; list: its Compare loop moves inside; dict: key membership; directory: already done). The `is IEnumerable` arm and the `ToString()` needle fallback do not migrate — born-typed makes them unreachable/forbidden.
+- [ ] **`IsEmpty` becomes an async virtual on item** (`ValueTask<bool>`; default false; null → true, text → whitespace-only, dict/list → count 0; a reference may load to answer — same precedent as `IBooleanResolvable`). `condition/Operator.cs` `IsEmpty` collapses to asking the item; the `is string` and `ICollection` arms are dead by construction.
+- [ ] **Delete the `"this"` probe in `variable/set.cs` ValidateBuild entirely** (the unwrap arms AND the check) — Ingi: it existed because the old builder got confused; no longer needed.
+- [ ] **The five copy-paste Parse arms** (`v is item.@this { IsLeaf: true } l ? l.ToRaw() : v` in bool/date/datetime/time/duration) — same transform, five sites: one typed source-face seam in the Convert machinery replaces them when ToRaw dies.
+
+## Detection checklist + exit gate (Ingi's three clues)
+
+A site is a violation when it has any of: **(1) `if`/`switch` on plang types** outside the type's own family — each type answers for itself; **(2) a static method receiving the value from outside the type** (private statics on a type's OWN backing are fine — the stateless-behavior rule); **(3) a parameter typed `object` holding a plang value** — decompose-to-object exists only at a proven leaf.
+
+Exit gate for the slice: `grep -rn 'is global::app\.type\..*@this|as global::app\.type\..*@this' PLang/app --include=*.cs` excluding `PLang/app/type/` returns **only proven leaves** (currently 61 production hits; 11 of them in `data/this.cs` itself, which die with the `Value<T>` rebuild). Same sweep for `\.ToRaw\(\)` → zero (member deleted). `CommandLineParser`'s two sites are the documented perimeter (its own standing todo, not 2b).
+
+## Worked examples (the two patterns behind most sites)
+
+**Door confusion — `cache/wrap.cs:24-27`**: `Key?.Peek() as text.@this` then `.Value` for a value the handler USES. Live bug, not style: `Peek` resolves nothing, so an authored template key `"user-%id%"` becomes the literal string `user-%id%` — one shared cache entry for every user. The handler uses the values → `await Key.Value()` (renders), key stays `text`, the cache keys on text (our registry, typed).
+
+**Type ladder — `Operator.cs` `IsEmpty`, `assert` `Contains`/`AreEqual`, `set.cs` unwrap arms**: `is`/`as` arms above the type, usually unwrapping then ALSO handling the raw world (`is text.@this → .Value` followed by `is string`) — two worlds, one hole. Fix is always the same: the question becomes a member on item, each type owns its answer, the dispatcher collapses to one ask.
+
+## The benchmark: `variable.set` collapses toward `put`
+
+`set.cs` is 403 lines; the target is ~2 (`Type != null` → typed ask with the authored entity; then `Context.App.Variable.Put(Name, value)`). Every block has an owner now: the `"this"` probe dies (above); type-entity reconstruction from the wire dict (`TypeFromWire`/`FromName`/canonicalise/context re-stamp) belongs to the **.pr-load entry lift** — `type` is an item (settled), it arrives AS `type.@this`, the handler never sees a wire dict (small named work item: type-entity lift at the entry seam); conversion/coercion belongs to `Value<T>()`/Convert hooks; strict probes ride the typed ask (hooks already type-owned); unwrap arms die in the site walk; the file/url stays-itself case falls out (a courier that opens no doors needs no exemption for not opening them); CopyProperties/OnChange belong to the store's `Put`. **Use set.cs's line count as the debt meter** — when the seams are done it collapses; if a block won't collapse, the block names a seam we missed.
 
 ## You own this
 
-Site-by-site judgment (typed flow vs real edge) is yours — flag any site where neither outcome seems right instead of inventing a third. The rulings above and the two-outcome rule are the contract.
+Site-by-site judgment (typed flow vs real edge) is yours — flag any site where neither outcome seems right instead of inventing a third. The rulings above, the two-outcome rule, the detection checklist, and the exit gate are the contract.
