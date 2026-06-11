@@ -308,8 +308,8 @@ public class StartGoalTests
         {
             Module = actionClass,
             ActionName = method,
-            Parameters = parameters.Select(kv => new Data(kv.Key, kv.Value)).ToList(),
-            Defaults = defaults?.Select(kv => new Data(kv.Key, kv.Value)).ToList()
+            Parameters = PrParam.List(actionClass, method, parameters),
+            Defaults = defaults != null ? PrParam.List(actionClass, method, defaults) : null
         };
         // Tests author actions the way the builder does — same template seam
         // the .pr load applies, so %ref% parameters resolve live at dispatch.

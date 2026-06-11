@@ -11,11 +11,23 @@
           "module": "variable",
           "action": "set",
           "parameters": [
-            { "name": "name", "value": "greeting" },
-            { "name": "value", "value": "Hello" }
+            {
+              "name": "name",
+              "value": "greeting",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "value",
+              "value": "Hello"
+            }
           ],
           "defaults": [
-            { "name": "type", "value": "string" }
+            {
+              "name": "type",
+              "value": "string"
+            }
           ]
         }
       ]
@@ -29,8 +41,17 @@
           "module": "variable",
           "action": "set",
           "parameters": [
-            { "name": "name", "value": "user" },
-            { "name": "value", "value": "World" }
+            {
+              "name": "name",
+              "value": "user",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "value",
+              "value": "World"
+            }
           ]
         }
       ]
@@ -44,7 +65,10 @@
           "module": "output",
           "action": "write",
           "parameters": [
-            { "name": "Data", "value": "%greeting%, %user%!" }
+            {
+              "name": "Data",
+              "value": "%greeting%, %user%!"
+            }
           ]
         }
       ]
@@ -58,8 +82,17 @@
           "module": "variable",
           "action": "set",
           "parameters": [
-            { "name": "name", "value": "message" },
-            { "name": "value", "value": "%greeting%, %user%!" }
+            {
+              "name": "name",
+              "value": "message",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "value",
+              "value": "%greeting%, %user%!"
+            }
           ]
         }
       ]

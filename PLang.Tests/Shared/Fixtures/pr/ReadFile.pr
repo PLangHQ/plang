@@ -11,15 +11,27 @@
           "module": "file",
           "action": "read",
           "parameters": [
-            { "name": "path", "value": "testdata.txt" }
+            {
+              "name": "path",
+              "value": "testdata.txt"
+            }
           ]
         },
         {
           "module": "variable",
           "action": "set",
           "parameters": [
-            { "name": "Name", "value": "content" },
-            { "name": "Value", "value": "%!data%" }
+            {
+              "name": "Name",
+              "value": "content",
+              "type": {
+                "name": "variable"
+              }
+            },
+            {
+              "name": "Value",
+              "value": "%!data%"
+            }
           ]
         }
       ]
@@ -33,7 +45,10 @@
           "module": "output",
           "action": "write",
           "parameters": [
-            { "name": "Data", "value": "%content%" }
+            {
+              "name": "Data",
+              "value": "%content%"
+            }
           ]
         }
       ]

@@ -19,7 +19,7 @@ public class EngineTests
                     Module = actionClass,
                     ActionName = method,
                     Parameters = parameters is IDictionary<string, object?> dict
-                        ? dict.Select(kv => new Data(kv.Key, kv.Value)).ToList()
+                        ? PrParam.List(actionClass, method, dict)
                         : new List<Data>()
                 }
             }
@@ -39,7 +39,7 @@ public class EngineTests
                     Module = actionClass,
                     ActionName = method,
                     Parameters = parameters is IDictionary<string, object?> dict
-                        ? dict.Select(kv => new Data(kv.Key, kv.Value)).ToList()
+                        ? PrParam.List(actionClass, method, dict)
                         : new List<Data>(),
                 },
                 new global::app.goal.steps.step.actions.action.@this
