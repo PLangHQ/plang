@@ -164,7 +164,7 @@ public partial class Set : IContext, IBuildValidatable
             // face (ctor matching, magic-byte/extension sniffing) — a born-typed
             // text/binary leaf presents its backing here. Minting re-lifts, so
             // the stored value stays born-typed either way.
-            if (sourceValue is global::app.type.text.@this st) sourceValue = st.Value;
+            if (sourceValue is global::app.type.text.@this st) sourceValue = st.ToString();
             else if (sourceValue is global::app.type.binary.@this sb) sourceValue = sb.Value;
             // Type entity rides in a bare Data — `type` is not `: item`, so it can't be a
             // Data<T> that auto-converts. Reconstruct it from whatever the .pr served:

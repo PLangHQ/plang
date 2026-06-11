@@ -29,12 +29,14 @@ public class AsTIdentityTests
     // instance. ReferenceEquals is the only check that proves zero allocation
     // and full identity (Properties, event lists, Name, Type, everything is
     // trivially shared because it's the same object).
+    // Same-type ask is pure pass-through: the typed ask answers the source's own
+    // value instance, no conversion and no allocation.
     [Test]
     public async Task AsT_SameType_ReturnsSourceInstance()
     {
         var source = new global::app.data.@this<global::app.type.number.@this>("count", 42) { Context = _app.User.Context };
-        var result = source.ShallowClone<global::app.type.number.@this>(await source.Value<global::app.type.number.@this>());
-        await Assert.That(ReferenceEquals(source, result)).IsTrue();
+        var result = await source.Value<global::app.type.number.@this>();
+        await Assert.That(ReferenceEquals(source.Peek(), result)).IsTrue();
     }
 
     // Trivial corollary of the same-type fast path: Properties is the same ref
@@ -126,19 +128,17 @@ public class AsTIdentityTests
         await Assert.That((wrapped.Properties["note"])?.ToString()).IsEqualTo("hello");
     }
 
-    // Conversion failure path. As<T>() on a value that can't convert to T
-    // returns Data<T>.FromError(error) — a sentinel with Success=false. The
-    // sentinel must NOT alias source's Properties or event lists (it's not a
-    // valid view of the variable). Verifies the failure path is hermetic.
+    // Conversion failure path. The typed ask on a value that can't convert to T
+    // answers null and lands the decline on the asking binding (source.Success
+    // becomes false) — the error rides the binding the caller already holds, no
+    // separate sentinel is minted.
     [Test]
-    public async Task AsT_CrossType_ConversionFailure_ReturnsFromError_NoAlias()
+    public async Task AsT_CrossType_ConversionFailure_DeclinesOnSource()
     {
         var source = new global::app.data.@this<global::app.type.text.@this>("messy", "not-a-number") { Context = _app.User.Context };
-        source.Properties.Set("extra", "leak-check");
-        var wrapped = source.ShallowClone<global::app.type.number.@this>(await source.Value<global::app.type.number.@this>());
-        await wrapped.IsFailure();
-        await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsFalse();
-        await Assert.That(ReferenceEquals(source.OnChange, wrapped.OnChange)).IsFalse();
+        var result = await source.Value<global::app.type.number.@this>();
+        await Assert.That(result).IsNull();
+        await source.IsFailure();
     }
 
     // Rule 4a — plain Data target with literal parameter. AsCanonical on a Data
