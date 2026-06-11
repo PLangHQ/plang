@@ -6,10 +6,12 @@
 
 **Dispatch = assignment.** Binding a parameter to a handler slot is one statement. All logic lives in two runtime members — real C#, written once, debuggable — not in emitted strings.
 
-### `context.Variable<T>(name)` — typed ask on the variable store
+### `context.Variable.Get<T>(name)` — typed ask on the variable store
+
+Public — anybody with a typed expectation calls it (settled, Ingi 2026-06-11): parameter binding, goal.call argument mapping, handler helpers. The indexer `Variable[name]` stays the untyped binding for couriers. The name `Get<T>` is free: today's `Get<T>` returns bare CLR `T?` via `GetValue<T>()` and has zero callers — it dies, and the name takes the correct shape, returning `Data<T>`:
 
 ```
-context.Variable<Path>("path")
+context.Variable.Get<path>("path")
         │
         ▼
  look up "path" in variable memory
@@ -35,7 +37,7 @@ GetParameter<path>("path", context)
       ▼
  .pr parameter "path" (Parameters → Defaults → absent)
       │
- full-match %var%? ──yes──► context.Variable<T>(varName)
+ full-match %var%? ──yes──► context.Variable.Get<T>(varName)
       │
       no
       ▼
@@ -107,6 +109,11 @@ Validation seam stays split from construction: `[IsNotNull]` / `MissingRequiredP
 - `SetFlag` machinery + getter fallback mint → plain property; backing reset per call stays (handler instances are reused)
 - `DefaultExpr` cast chain → `[Default]` becomes a `__Bind` fallback argument
 
+**Dies with the core slice** (`PLang/app/variable/list/this.cs`):
+
+- `Get<T>(name)` returning CLR `T?` (`:577`) — zero callers; the name is reused for the `Data<T>`-returning typed ask
+- `GetValue(name)` returning raw `.Value` (`:586`) — 6 callers, all casting at the call site (decompose-at-courier); each re-judges to a typed ask or item lowering at the .NET edge (`app/this.cs:517`, `identity/code/Default.cs:305`, `signing/code/Ed25519.cs:38,39,70`, `actor/context/this.cs:180`)
+
 **Dies with the core slice** (`PLang.Generators/Emission/Action/this.cs`):
 
 - `__resolutionError` field + the double pre/post-Run checks → per-slot success check before Run + ruling-8 epilogue after Run
@@ -124,7 +131,7 @@ Validation seam stays split from construction: `[IsNotNull]` / `MissingRequiredP
 
 **New runtime members:**
 
-- `Variable<T>(name)` on the variable store — two tiers per the diagram; conversion delegates to T.Create (the type's own knowledge, stage-9 home); never rebinds the variable
+- `Variable.Get<T>(name)` on the variable store, public — two tiers per the diagram; conversion delegates to T.Create (the type's own knowledge, stage-9 home); never rebinds the variable
 - `Action.GetParameter<T>(name, context, fallback?)` — the typed ask; arm-picking may delegate to the parameter Data internally (coder's call), but the surface is one ask on the action
 - `__UnobservedParamError()` — reads the ruling-8 observed flag across the handler's slots (the flag itself ships with stage 9)
 
@@ -139,8 +146,8 @@ The builder knows the slot's type from the handler signature, so it runs T.Creat
 
 ## Open questions (for Ingi before coding starts)
 
-1. **`Variable<T>` surface.** Is the typed ask bind-only, or also a public surface for other consumers (goal.call argument mapping, events)?
+None — all settled 2026-06-11.
 
 ## You own this
 
-Code shapes in this plan (`GetParameter<T>` internals and signature, `__Fail`, the epilogue mechanics, async-or-not on the bind section) are suggestions — the coder owns the final shape. Fixed contracts: the two-tier `Variable<T>` semantics (identity hands over the variable's own Data; conversion never rebinds), one bind statement per slot with no door calls on the identity tier, shape errors return before Run, the ruling-8 epilogue after Run, presence guards stay pre-bind, `RunAsync`'s lifecycle untouched.
+Code shapes in this plan (`GetParameter<T>` internals and signature, `__Fail`, the epilogue mechanics, async-or-not on the bind section) are suggestions — the coder owns the final shape. Fixed contracts: the two-tier `Variable.Get<T>` semantics (identity hands over the variable's own Data; conversion never rebinds, public surface), one bind statement per slot with no door calls on the identity tier, shape errors return before Run, the ruling-8 epilogue after Run, presence guards stay pre-bind, `RunAsync`'s lifecycle untouched.
