@@ -20,7 +20,13 @@ public static class PrParam
     /// <summary>The (module, action, param) tuples whose slot is a raw-name
     /// <c>Data&lt;Variable&gt;</c>. Kept narrow — extend as tests exercise more.</summary>
     public static bool IsVarNameSlot(string module, string action, string key)
-        => string.Equals(module, "variable", System.StringComparison.OrdinalIgnoreCase)
-           && string.Equals(action, "set", System.StringComparison.OrdinalIgnoreCase)
-           && string.Equals(key, "name", System.StringComparison.OrdinalIgnoreCase);
+        => (Lc(module), Lc(action), Lc(key)) switch
+        {
+            ("variable", "set", "name") => true,
+            ("loop", "foreach", "itemname") => true,
+            ("loop", "foreach", "keyname") => true,
+            _ => false,
+        };
+
+    private static string Lc(string s) => s.ToLowerInvariant();
 }
