@@ -32,6 +32,20 @@ public class PlangAssignabilityTests
         await Assert.That(t.GetMethod("IsPlangAssignable", flags)).IsNull();
     }
 
+    // The untargeted raw door is gone at EVERY visibility — a value leaves its
+    // typed form only through the targeted Clr(Type) edge (or Write / the door).
+    // Recurrence pin: no `ToRaw` member on item or any subtype.
+    [Test]
+    public async Task GenericToRaw_DoesNotExist_OnItemBase()
+    {
+        var flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic
+            | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Instance;
+        await Assert.That(typeof(global::app.type.item.@this).GetMethod("ToRaw", flags)).IsNull();
+        await Assert.That(typeof(global::app.type.dict.@this).GetMethod("ToRaw", flags)).IsNull();
+        await Assert.That(typeof(global::app.type.list.@this).GetMethod("ToRaw", flags)).IsNull();
+        await Assert.That(typeof(global::app.type.text.@this).GetMethod("ToRaw", flags)).IsNull();
+    }
+
     // foreach %s% never char-iterates: EnumerateItems on a text-valued Data
     // yields exactly one item — the value itself.
     [Test]

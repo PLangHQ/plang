@@ -7,7 +7,7 @@ public sealed partial class @this
     /// <see cref="AsData"/>. An on-error recovery chain rides the born-native wire as
     /// <c>{module, action, parameters:[{name,value,type}]}</c> records; rebuild from those
     /// slots via <see cref="data.@this.FromWireShape"/> (which reads value/type directly, so
-    /// no <c>@schema:data</c> marker is required — a ToRaw→JSON round-trip strips it and loses
+    /// no <c>@schema:data</c> marker is required — a Clr→JSON round-trip strips it and loses
     /// the params). A named factory, not a catalog Convert hook — a structural action chain
     /// rebuilds through here explicitly; the generic <c>list&lt;action&gt;</c> conversion keeps
     /// its own element behavior. Returns <c>null</c> for a shape that names no module/action.

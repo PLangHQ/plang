@@ -213,7 +213,7 @@ public class Stage6_ConsumersTests
         // ui/Fluid.cs — natives render through lazy read-through views (zero copy);
         // no ToRaw deep-copy call. (The one mention is the comment stating that.)
         var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "ui", "code", "Fluid.cs"));
-        await Assert.That(src).DoesNotContain(".ToRaw()");
+        await Assert.That(src).DoesNotContain(".Clr<object>()");
         await Assert.That(src).Contains("NativeCollectionConverter");
     }
 

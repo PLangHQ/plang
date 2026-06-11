@@ -28,7 +28,7 @@ public class Stage2_ValueDoorTests
         var d = new Data("x", 5);
         var v = await d.Value();
         await Assert.That(v is global::app.type.number.@this).IsTrue();
-        await Assert.That(((global::app.type.number.@this)v!).ToRaw()).IsEqualTo(5);
+        await Assert.That(((global::app.type.number.@this)v!).Clr<object>()).IsEqualTo(5);
     }
 
     [Test]

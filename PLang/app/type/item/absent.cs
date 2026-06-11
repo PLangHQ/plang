@@ -33,10 +33,8 @@ public sealed class absent : @this
     /// <summary>The item emptiness hook — a value-less slot is empty.</summary>
     public override System.Threading.Tasks.ValueTask<bool> IsEmpty()
         => System.Threading.Tasks.ValueTask.FromResult(true);
-    internal override object? ToRaw() => null;
-    // The CLR edge — an absent slot has no backing; lowers to null (mirrors
-    // ToRaw, so the value-less slot answers Clr<T>() without the base "no
-    // backing" throw). Completes the "every type implements Clr" prerequisite.
+    // The CLR edge — an absent slot has no backing; lowers to null so the
+    // value-less slot answers Clr<T>() without the base default touching Peek().
     internal override object? Clr(System.Type target) => null;
     public override string ToString() => "";
 }

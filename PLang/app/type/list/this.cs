@@ -306,36 +306,32 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     }
 
     /// <summary>
-    /// Unwraps to a raw <c>List&lt;object?&gt;</c> — the bridge at the typed-conversion
-    /// boundary (list → typed List&lt;T&gt;, JSON round-trip). Each element's value is
-    /// taken (Data unwrapped); nested dict/list elements recurse. Read-out form only;
+    /// The CLR exit door — the list decomposes itself into a raw
+    /// <c>List&lt;object?&gt;</c> (each element lowers through its OWN
+    /// <see cref="global::app.type.item.@this.Clr{T}"/>, so nested dict/list recurse),
+    /// then hands that to the shared converter for the generic list→target step
+    /// (typed <c>List&lt;T&gt;</c>, JSON round-trip). A named row carries identity
+    /// beyond its value (a parameter list's {name, value} entries) — it IS its own
+    /// raw form; only anonymous rows decompose to bare values. Read-out form only;
     /// the in-memory representation stays Data-keyed.
     /// </summary>
-    internal override List<object?> ToRaw()
+    internal override object? Clr(System.Type target)
     {
         var flat = Items;
         var raw = new List<object?>(flat.Count);
         foreach (var item in flat)
-            // A named row carries identity beyond its value (a parameter list's
-            // {name, value} entries) — it IS its own raw form. Only anonymous
-            // rows decompose to bare values.
             raw.Add(string.IsNullOrEmpty(item.Name) ? Unwrap(item.Peek()) : item);
-        return raw;
+        return ClrConvert(raw, target);
     }
 
     private static object? Unwrap(object? value) => value switch
     {
         string or byte[] => value,
         // Any item leaf — a scalar wrapper (text/number/bool/…) OR a nested dict/list —
-        // decomposes through its own ToRaw, so the list projects to fully-raw CLR.
-        global::app.type.item.@this leaf => leaf.ToRaw(),
+        // decomposes through its own Clr, so the list projects to fully-raw CLR.
+        global::app.type.item.@this leaf => leaf.Clr<object>(),
         _ => value,
     };
-
-    /// <summary>The CLR exit door — the list hands its decomposed raw form to
-    /// the shared converter (List&lt;LlmMessage&gt; and friends reconstruct
-    /// element-wise). Loud on failure, as every lowering is.</summary>
-    internal override object? Clr(System.Type target) => ClrConvert(ToRaw(), target);
 
     /// <summary>
     /// item truthiness: an empty list is falsy, a non-empty list is truthy —

@@ -163,9 +163,9 @@ public sealed class @this : item.@this
 
         // A born-native scalar source (`set %d% = "2026-01-01" as date` makes the literal a
         // text.@this first) — unwrap the leaf wrapper to its raw form so the target family's
-        // Convert hook, which speaks raw, can parse it. Mirrors the catalog's item.ToRaw step;
+        // Convert hook, which speaks raw, can parse it. Mirrors the catalog's item.Clr step;
         // containers (dict/list) are NOT leaves and convert as wholes.
-        if (value is global::app.type.item.@this { IsLeaf: true } leaf) value = leaf.ToRaw();
+        if (value is global::app.type.item.@this { IsLeaf: true } leaf) value = leaf.Clr<object>();
 
         // OBP: the concrete type owns its own construction. Resolve the family
         // class (text.@this, number.@this, …) and ask IT to make the value from

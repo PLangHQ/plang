@@ -21,7 +21,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>The CLR exit door — the type hands its own backing.</summary>
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
-    internal override object? ToRaw() => Value;
     public override bool IsLeaf => true;
     public override void Write(global::app.channel.serializer.IWriter w) => w.DateTimeOffset(Value);
     protected internal override global::app.type.@this Mint() => new("datetime", typeof(System.DateTimeOffset));

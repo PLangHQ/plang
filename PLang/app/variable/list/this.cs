@@ -622,7 +622,7 @@ public partial class @this
         // content here, the scalar contract.
         var v = await ov.Value();
         if (v is app.type.dict.@this or app.type.list.@this) return v;
-        return v is app.type.item.@this iv ? iv.ToRaw() : v;
+        return v is app.type.item.@this iv ? iv.Clr<object>() : v;
     }
 
     /// <summary>

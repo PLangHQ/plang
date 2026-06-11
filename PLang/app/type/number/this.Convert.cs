@@ -19,7 +19,7 @@ public sealed partial class @this
         // Born-native: a value arrives as its wrapper (text "0.1", a number, …).
         // Unwrap to the raw backing so the string-parse / CLR-numeric paths below
         // see what they expect instead of ChangeType-ing a wrapper.
-        if (value is global::app.type.item.@this iv) value = iv.ToRaw();
+        if (value is global::app.type.item.@this iv) value = iv.Clr<object>();
 
         // When the caller names a concrete CLR kind (the target was a raw numeric —
         // int/long/double, e.g. a List<int> element or `as int`) the result is that

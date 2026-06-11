@@ -90,7 +90,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return new @this(interpolated);
     }
 
-    internal override object? ToRaw() => _value;
     public override bool IsLeaf => true;
     public override void Write(global::app.channel.serializer.IWriter w) => w.String(_value);
 

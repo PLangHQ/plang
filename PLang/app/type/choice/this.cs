@@ -41,7 +41,6 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
     // T → choice (so `.Ok(HttpMethod.GET)` and a `[Default(HttpMethod.GET)]` cast construct).
     public static implicit operator @this<T>(T value) => new(value);
 
-    internal override object? ToRaw() => Value;
     /// <summary>The CLR exit door — choice hands its enum backing.</summary>
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override string ToString() => Value.ToString() ?? "";

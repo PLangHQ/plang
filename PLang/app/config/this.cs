@@ -91,7 +91,7 @@ public sealed class @this
             // store and Resolve<T> want the raw CLR value, so collapse the leaf.
             var raw = prop.GetValue(source);
             object? value = raw is data.@this data ? data.Peek() : raw;
-            if (value is global::app.type.item.@this leaf) value = leaf.ToRaw();
+            if (value is global::app.type.item.@this leaf) value = leaf.Clr<object>();
             if (value == null) continue;
 
             Set($"{prefix}.{prop.Name}", value, context, isDefault);

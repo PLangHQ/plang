@@ -84,7 +84,7 @@ public class Fluid : ITemplate
         // The converter wraps natives in lazy READ-THROUGH views (zero copy): a
         // dict reads keys on demand (O(1) member access), a list streams its
         // elements (Fluid arrays any IEnumerable eagerly anyway — same cost as a
-        // real CLR list, no extra copy; we do NOT deep-copy via ToRaw). Nested
+        // real CLR list, no extra copy; we do NOT deep-copy via Clr). Nested
         // natives convert lazily because the converter re-runs at each member
         // access. A JsonNode routes through the universal parse to natives, then
         // the same views. Converters run wherever FluidValue.Create does — both

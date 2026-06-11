@@ -1194,3 +1194,15 @@ type/duration/this.Convert.cs); there are more `.ToString()` reads on `text` ins
 across the project — find them (grep for `.ToString()` where the receiver is a
 `text.@this`) and switch to `Clr<string>()`. Keep `ToString()` only for genuine display
 edges (logs, error messages, interpolation), not for extracting the backing for a .NET call.
+
+## 2026-06-11 — dict/list raw-backing + lazy parse (collection redesign)
+Today dict stores `List<Data>` entries (and list likewise) — eagerly Data-keyed, so
+`Clr` must BUILD the raw `Dictionary`/`List` on demand (the decompose loop in
+`dict.Clr`/`list.Clr`). The original justification (per-entry signature preservation
+through containers) is GONE — signatures don't work that way (Ingi, 2026-06-11). So the
+right design is: the collection's backing IS the raw C# object (`Dictionary<string,object?>`
+/ `List<object?>`), values parsed/typed lazily on access (like `source`). Then `dict.Clr`
+collapses to "return the backing" — no loop, no ClrConvert decompose. Major refactor:
+touches navigation (`%dict.key%`), wire (Normalize/Json), conversion, the generic
+`list<T>`. Overlaps the lazy-Normalize rework — same architect redesign bucket. Works for
+now (the loop is correct on the current Data-keyed design); do not start solo.

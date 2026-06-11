@@ -1088,7 +1088,7 @@ public class DataTests
         // (via ToRaw) is double for a bare decimal-point literal.
         var price = await result!.Get("price")!.Value();
         await Assert.That(price).IsTypeOf<app.type.number.@this>();
-        await Assert.That(((app.type.number.@this)price!).ToRaw()).IsEqualTo(19.99d);
+        await Assert.That(((app.type.number.@this)price!).Clr<object>()).IsEqualTo(19.99d);
     }
 
     [Test]
@@ -1102,7 +1102,7 @@ public class DataTests
         // Born-native: a whole JSON number is a number.@this wrapper backed by long.
         var count = await result!.Get("count")!.Value();
         await Assert.That(count).IsTypeOf<app.type.number.@this>();
-        await Assert.That(((app.type.number.@this)count!).ToRaw()).IsEqualTo(42L);
+        await Assert.That(((app.type.number.@this)count!).Clr<object>()).IsEqualTo(42L);
     }
 
     [Test]

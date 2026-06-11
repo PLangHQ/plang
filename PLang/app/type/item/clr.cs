@@ -4,7 +4,7 @@ namespace app.type.item;
 /// Rung 2 of the value model — a strongly-typed C# object plang can hold but
 /// that has no item type of its own (third-party classes, deserialized POCOs,
 /// infra collections). The instance underneath stays strongly typed:
-/// <see cref="Peek"/>/<see cref="ToRaw"/> answer with it, so generic
+/// <see cref="Peek"/>/<see cref="Clr"/> answer with it, so generic
 /// navigation, rendering and comparison work on the real object. A type
 /// graduates to its own item subclass only when a generic answer stops being
 /// the true answer for it.
@@ -54,7 +54,6 @@ public sealed class clr : @this, module.IContext
     /// answer the carrier itself is deferred — too many raw-shape consumers
     /// remain; tracked on the slice list.)</summary>
     public override object? Peek() => Value;
-    internal override object? ToRaw() => Value;
 
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
 

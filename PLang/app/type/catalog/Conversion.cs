@@ -151,8 +151,8 @@ public sealed partial class @this
         {
             if (data.@this.IsWireShape(value))
             {
-                var wire = value as IDictionary<string, object?>
-                    ?? ((app.type.dict.@this)value).ToRaw();
+                object? wire = value as IDictionary<string, object?>
+                    ?? ((app.type.dict.@this)value).Clr<object>();
                 return (data.@this.FromWireShape(wire, "", context), null);
             }
             // A non-wire-shaped dict stays a dict inside the Data — don't unwrap
@@ -160,7 +160,7 @@ public sealed partial class @this
             return (new data.@this("", value), null);
         }
 
-        // Every value owns its raw CLR projection (item.ToRaw): a scalar wrapper
+        // Every value owns its raw CLR projection (item.Clr): a scalar wrapper
         // yields its backing scalar (→ string/int/DateTime/…), dict/list decompose
         // to a raw Dictionary/List, null → C# null, and a domain value that IS its
         // own raw form (path/image/code) returns self (so it falls through to the
@@ -169,7 +169,7 @@ public sealed partial class @this
         // the value decides. The reconstruction arms below then apply unchanged.
         if (value is app.type.item.@this itemValue)
         {
-            var raw = itemValue.ToRaw();
+            var raw = itemValue.Clr<object>();
             if (!ReferenceEquals(raw, value))
                 return TryConvert(raw, targetType, context, targetName);
         }

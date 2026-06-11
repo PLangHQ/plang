@@ -218,17 +218,16 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// THE CLR EXIT DOOR — converts this value to the raw CLR
     /// <paramref name="target"/>. The pattern is uniform across types: the
     /// object hands ITS OWN backing to the shared mechanical converter
-    /// (<see cref="ClrConvert"/>) in a one-line override; the type's own loss
-    /// policy applies before the hand-over (number's tower). Lossy conversion
-    /// THROWS — never a silent default. The base THROWS too: a type that
-    /// declared no backing surfaces loudly the first time someone needs its
-    /// CLR form, instead of guessing through a string. Internal — engine
-    /// plumbing for the typed boundary (<c>Data.Clr&lt;T&gt;</c>, hydration);
-    /// the plang-facing surface stays fully typed.
+    /// (<see cref="ClrConvert"/>); the type's own loss policy applies before the
+    /// hand-over (number's tower). Lossy conversion THROWS — never a silent
+    /// default. The base default hands <see cref="Peek"/> (the in-memory value):
+    /// a type whose Peek IS itself (a domain value — path/image/code) lowers to
+    /// itself for an object target and lets ClrConvert error honestly on a real
+    /// concrete mismatch; leaves/containers (text/number/dict/list) override with
+    /// their real backing. Internal — engine plumbing for the typed boundary
+    /// (<c>Data.Clr&lt;T&gt;</c>, hydration); the plang-facing surface stays typed.
     /// </summary>
-    internal virtual object? Clr(System.Type target)
-        => throw new System.NotSupportedException(
-            $"'{GetType().FullName}' declares no CLR backing — override Clr(Type) with the type's own backing to convert to {target.Name}.");
+    internal virtual object? Clr(System.Type target) => ClrConvert(Peek(), target);
 
     /// <summary>Generic sugar over <see cref="Clr(System.Type)"/> — the
     /// compile-time-known-target form.</summary>
@@ -253,7 +252,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// kind probes, TryConvert): a LEAF value lowers to its own backing via
     /// its <see cref="Clr(System.Type)"/>; containers and non-items pass
     /// through. The single owner of the old per-site
-    /// "<c>is item { IsLeaf: true } ? ToRaw() : v</c>" transform.
+    /// "<c>is item { IsLeaf: true } ? Clr&lt;object&gt;() : v</c>" transform.
     /// </summary>
     internal static object? Backing(object? v)
         => v is @this { IsLeaf: true } l ? l.Clr<object>() : v;
@@ -325,20 +324,4 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         => throw new System.NotSupportedException(
             $"{GetType().Name} has no bare wire form — it is not a leaf value.");
 
-    /// <summary>
-    /// The raw CLR projection of this value — the single unwrap at the
-    /// typed-conversion leaf (<c>→ returns string/int/DateTime/…</c>). A scalar
-    /// returns its backing CLR scalar (<c>text → string</c>, <c>number → the
-    /// boxed numeric</c>, <c>bool → bool</c>, the date-family → their CLR struct);
-    /// <c>dict</c>/<c>list</c> decompose to a raw <c>Dictionary</c>/<c>List</c>;
-    /// <c>null</c> → C# <c>null</c>. The default — a domain value that <em>is</em>
-    /// its own raw form (<c>path</c>/<c>image</c>/<c>code</c>) — returns
-    /// <c>self</c>. This replaces the per-type unwrap switch: the value owns its
-    /// own raw projection, so the conversion leaf asks once with no type-switch.
-    /// </summary>
-    // Internal, not public: the raw escape is engine plumbing (conversion
-    // leaves, comparison normalization, the wire walk) — gated interop, never
-    // a public API. Raw leaves the value only via Write / the typed ask /
-    // these in-assembly seams.
-    internal virtual object? ToRaw() => this;
 }

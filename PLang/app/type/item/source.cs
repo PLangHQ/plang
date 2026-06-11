@@ -115,7 +115,6 @@ public sealed class source : @this, module.IContext
         else w.String(_raw.ToString() ?? "");
     }
 
-    internal override object? ToRaw() => _raw;
 
     internal override object? Clr(System.Type target) => ClrConvert(_raw, target);
 

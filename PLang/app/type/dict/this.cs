@@ -131,37 +131,34 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public @this Set(string key, object? value) => Set(new Data(key, value) { Context = _context! });
 
     /// <summary>
-    /// Unwraps to a raw <c>Dictionary&lt;string, object?&gt;</c> — the bridge at the
-    /// typed-conversion boundary (dict → domain record, JSON round-trip, wire-shape
-    /// reconstruction). Each entry's value is taken (Data unwrapped); nested dicts
-    /// recurse so a wire-shaped nested object is itself a raw dict. The in-memory
-    /// representation stays Data-keyed; this is the read-out form only.
+    /// The CLR exit door — the dict decomposes itself into a raw
+    /// <c>Dictionary&lt;string, object?&gt;</c> (each entry lowers through its OWN
+    /// <see cref="global::app.type.item.@this.Clr{T}"/>, so nested dict/list recurse),
+    /// then hands that to the shared converter for the generic map→target step
+    /// (identity for a Dictionary target, reflection-populate for a record). Loud
+    /// on failure, as every lowering is. The in-memory form stays Data-keyed; this
+    /// is the read-out form only.
     /// </summary>
-    internal override Dictionary<string, object?> ToRaw()
+    internal override object? Clr(System.Type target)
     {
         var raw = new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase);
         foreach (var entry in _entries)
             raw[entry.Name] = Unwrap(entry.Peek());
-        return raw;
+        return ClrConvert(raw, target);
     }
 
     private static object? Unwrap(object? value) => value switch
     {
         string or byte[] => value,
         // Any item leaf — a scalar wrapper (text/number/bool/…) OR a nested dict/list —
-        // decomposes through its own ToRaw, so a `dict` projects to a fully-raw CLR
+        // decomposes through its own Clr, so a `dict` projects to a fully-raw CLR
         // Dictionary (born-native scalars are wrappers, not raw, until unwrapped here).
-        global::app.type.item.@this leaf => leaf.ToRaw(),
+        global::app.type.item.@this leaf => leaf.Clr<object>(),
         // A raw CLR list may still hold dict/list elements; unwrap each so a nested
         // object reads out raw too — otherwise STJ would reflect its C# surface.
         System.Collections.IEnumerable seq => seq.Cast<object?>().Select(Unwrap).ToList(),
         _ => value,
     };
-
-    /// <summary>The CLR exit door — the dict hands its decomposed raw form to
-    /// the shared converter (Dictionary&lt;string,object&gt; and record targets
-    /// reconstruct from it). Loud on failure, as every lowering is.</summary>
-    internal override object? Clr(System.Type target) => ClrConvert(ToRaw(), target);
 
     /// <summary>
     /// item truthiness: an empty dict is falsy, a dict with any entry is truthy —

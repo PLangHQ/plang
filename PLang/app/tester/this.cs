@@ -60,7 +60,7 @@ public sealed partial class @this
             // The config dict comes from a parsed --test={...} JSON, so values ride
             // as scalar wrappers (number/bool/text). Unwrap each to its raw backing
             // once at the boundary; the bound-checks below read raw CLR unchanged.
-            var value = kvp.Value is app.type.item.@this iv ? iv.ToRaw() : kvp.Value;
+            var value = kvp.Value is app.type.item.@this iv ? iv.Clr<object>() : kvp.Value;
             switch (kvp.Key.ToLowerInvariant())
             {
                 case "timeout":
