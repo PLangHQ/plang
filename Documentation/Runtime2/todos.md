@@ -1185,3 +1185,12 @@ The real pipeline keeps action templates as `PrAction` (which the stamp walker d
 recurse), so deferral holds there. Both are fixed for free by the "template born on the
 value from the builder" design (`.bot/compare-redesign/coder/v8/template-ownership-proposal.md`):
 no walker → no over-stamp. Do not chase these separately; they go green when that lands.
+
+## 2026-06-11 — Switch text .ToString() → Clr<string>() across the project
+`Clr<string>()` names the intent explicitly ("I want the CLR string at a .NET edge");
+`text.ToString()` hides it. `text` already implements `Clr(Type)` (`type/text/this.cs:117`),
+so the swap is mechanical. Three sites already converted (variable/set.cs, actor/this.cs,
+type/duration/this.Convert.cs); there are more `.ToString()` reads on `text` instances
+across the project — find them (grep for `.ToString()` where the receiver is a
+`text.@this`) and switch to `Clr<string>()`. Keep `ToString()` only for genuine display
+edges (logs, error messages, interpolation), not for extracting the backing for a .NET call.

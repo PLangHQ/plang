@@ -20,7 +20,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static global::app.data.@this Convert(object? value, string? kind,
         global::app.actor.context.@this context)
     {
-        if (value is global::app.type.text.@this t) value = t.ToString();
+        if (value is global::app.type.text.@this t) value = t.Clr<string>();
         switch (value)
         {
             case null: return global::app.data.@this.Ok(value);
