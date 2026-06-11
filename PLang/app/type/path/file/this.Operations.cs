@@ -161,7 +161,7 @@ public sealed partial class @this
     public override async Task<bool> AsBooleanAsync()
     {
         var existsResult = await ExistsAsync();
-        return existsResult.Success && (await existsResult.Value())?.Value == true;
+        return existsResult.Success && await existsResult.ToBooleanAsync();
     }
 
     /// <summary>

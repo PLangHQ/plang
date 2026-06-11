@@ -1031,7 +1031,7 @@ public sealed class Default : IHttp
             // matches the prior "if not a file, send as string" shape.
             var p = global::app.type.path.@this.Resolve(str, context);
             var exists = await p.ExistsAsync();
-            if (exists.Success && (await exists.Value())?.Value == true)
+            if (exists.Success && await exists.ToBooleanAsync())
                 return await CreateFileContentAsync(app, context, str);
 
             return (new StringContent(str, Encoding.GetEncoding(encoding)), null);

@@ -140,7 +140,7 @@ public partial class Read : IContext
         try
         {
             var exists = await p.ExistsAsync();
-            if (exists.Success && (await exists.Value())?.Value == false)
+            if (exists.Success && !await exists.ToBooleanAsync())
             {
                 var warning = new global::app.module.builder.warning.@this(
                     this, $"file.read: literal path '{raw}' does not exist on disk");

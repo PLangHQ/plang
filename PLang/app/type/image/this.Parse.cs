@@ -58,7 +58,7 @@ public sealed partial class @this
             {
                 var p = global::app.type.path.@this.Resolve(raw, context);
                 var exists = await p.ExistsAsync();
-                if (!exists.Success || (await exists.Value())?.Value == false) return null;
+                if (!exists.Success || !await exists.ToBooleanAsync()) return null;
                 var read = await p.ReadBytes();
                 if (!read.Success || read.Peek() == null) return null;
                 var ext = p is global::app.type.path.file.@this fp ? fp.Extension : "";

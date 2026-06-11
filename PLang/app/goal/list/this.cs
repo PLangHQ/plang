@@ -183,7 +183,7 @@ public sealed class @this
         if (!string.IsNullOrEmpty(dir)) rootCandidate = rootCandidate.Combine(dir);
         rootCandidate = rootCandidate.Combine(".build").Combine(prFile);
         var rootExists = await rootCandidate.ExistsAsync();
-        if (rootExists.Success && (await rootExists.Value())?.Value == true)
+        if (rootExists.Success && await rootExists.ToBooleanAsync())
         {
             var result = await LoadFromFileAsync(App, rootCandidate.Absolute, cancellationToken: ct);
             if (result.Success)
@@ -209,7 +209,7 @@ public sealed class @this
             var sysCandidate = global::app.type.path.@this.Resolve(
                 "/" + normalized + "/.build/" + prFile, context);
             var sysExists = await sysCandidate.ExistsAsync();
-            if (sysExists.Success && (await sysExists.Value())?.Value == true)
+            if (sysExists.Success && await sysExists.ToBooleanAsync())
             {
                 var result = await LoadFromFileAsync(App, sysCandidate.Absolute, cancellationToken: ct);
                 if (result.Success)

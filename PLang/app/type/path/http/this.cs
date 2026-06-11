@@ -228,7 +228,7 @@ public sealed partial class @this : global::app.type.path.@this
     public override async Task<bool> AsBooleanAsync()
     {
         var existsResult = await ExistsAsync();
-        return existsResult.Success && (await existsResult.Value())?.Value == true;
+        return existsResult.Success && await existsResult.ToBooleanAsync();
     }
 
     public override async Task<data.@this<global::app.type.path.@this.StatInfo>> Stat()
