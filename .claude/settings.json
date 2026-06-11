@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./dev.sh *)",
+      "Bash(/workspace/plang/dev.sh *)",
+      "Bash(dotnet build *)",
+      "Bash(dotnet msbuild *)",
+      "Bash(../PlangConsole/bin/Debug/net10.0/plang *)",
+      "Bash(../../PlangConsole/bin/Debug/net10.0/plang *)",
+      "Bash(../../../PlangConsole/bin/Debug/net10.0/plang *)",
+      "Bash(/workspace/plang/PlangConsole/bin/Debug/net10.0/plang *)",
+      "Bash(PlangConsole/bin/Debug/net10.0/plang *)",
+      "Bash(PLang.Tests/Modules/bin/Debug/net10.0/PLang.Tests.Modules *)",
+      "Bash(PLang.Tests/Types/bin/Debug/net10.0/PLang.Tests.Types *)",
+      "Bash(PLang.Tests/Wire/bin/Debug/net10.0/PLang.Tests.Wire *)",
+      "Bash(PLang.Tests/Data/bin/Debug/net10.0/PLang.Tests.Data *)",
+      "Bash(PLang.Tests/Generator/bin/Debug/net10.0/PLang.Tests.Generator *)",
+      "Bash(PLang.Tests/Runtime/bin/Debug/net10.0/PLang.Tests.Runtime *)"
+    ]
+  }
+}
