@@ -476,42 +476,12 @@ public partial class @this
         return AppTypes.ConvertTo(v, targetType);
     }
 
-    /// <summary>
-    /// Plang treats strings as atomic, not as IEnumerable&lt;char&gt;. The single source of
-    /// truth for "is this iterable per plang semantics" — used by AsEnumerable,
-    /// EnumerateItems, and the As&lt;T&gt; variance-fast-path check.
-    /// </summary>
-    internal static bool IsPlangIterable(object? value) =>
+    // Strings are atomic in plang, never IEnumerable<char>. Private to the
+    // transitional raw-infra arms of EnumerateItems — the native dict/list
+    // arms are the real iteration surface (the collection types own
+    // iteration; text refuses by not implementing IEnumerable).
+    private static bool IsPlangIterable(object? value) =>
         value is System.Collections.IEnumerable && value is not string;
-
-    /// <summary>
-    /// Plang-specific assignability for the As&lt;T&gt; variance fast path. Same as C# IsAssignableFrom
-    /// EXCEPT: a string source is NOT assignable to an IEnumerable target — strings are atomic
-    /// in plang. This carve-out keeps `foreach %s%` from char-iterating when %s% is a string.
-    /// </summary>
-    internal static bool IsPlangAssignable(System.Type target, System.Type source)
-    {
-        if (typeof(System.Collections.IEnumerable).IsAssignableFrom(target) && source == typeof(string))
-            return false;
-        return target.IsAssignableFrom(source);
-    }
-
-    /// <summary>
-    /// Enumerates the inner value. If Value is enumerable, delegates to it.
-    /// If Value is a single non-enumerable item, yields it as a one-element sequence.
-    /// </summary>
-    public System.Collections.IEnumerable AsEnumerable()
-    {
-        var v = Peek();
-        if (IsPlangIterable(v))
-            return (System.Collections.IEnumerable)v!;
-
-        // Single value — treat as a list of one
-        if (v != null)
-            return new[] { v };
-
-        return Array.Empty<object>();
-    }
 
     /// <summary>
     /// Enumerates as (key, value) Data pairs. Data owns the knowledge of how to iterate:
@@ -1032,14 +1002,13 @@ public partial class @this
     }
 
     /// <summary>
-    /// Identity-preserving wrap. Applies the four As&lt;T&gt; rules (architect/v1/plan.md §Phase 2):
-    ///   1. Same-type fast path  — `this` is already @this&lt;T&gt; with .Value of T → return `this`.
-    ///   2. Variance fast path   — value is castable to T per IsPlangAssignable → new @this&lt;T&gt;,
-    ///                              .Value cast-only (ref shared), state aliased from `this`.
-    ///   3. Cross-type with conv — value can't satisfy T as-is → new @this&lt;T&gt; with converted
-    ///                              .Value, state aliased from `this`. T=IEnumerable delegates to
-    ///                              AsEnumerable so the string-not-iterable rule has one source.
-    ///   4. Conversion failure   — FromError sentinel; no aliasing.
+    /// Identity-preserving wrap — the tail of the typed ask:
+    ///   1. Same-type fast path  — `this` is already @this&lt;T&gt; holding a T → return `this`.
+    ///   2. Variance fast path   — value IS a T → new @this&lt;T&gt;, instance shared by ref,
+    ///                              state aliased from `this`. (T : item, so the historical
+    ///                              string-vs-IEnumerable carve-outs can't arise here.)
+    ///   3. Chain facet          — an evolved value still answers for what it was.
+    ///   4. Cross-type with conv — the value converts, else FromError; no aliasing on failure.
     ///
     /// Caller passes the substituted/walked `value` separately because raw value is what we wrap,
     /// while `this` is the canonical Data whose Name + Properties + event lists we propagate.
@@ -1055,8 +1024,8 @@ public partial class @this
 
         // Rule 2 — variance fast path. `value` is already a T (no conversion needed) but `this`
         // is not Data<T> (e.g. plain Data, or Data<U> for U:T). Construct a new Data<T> sharing
-        // .Value by ref (cast-only) and alias Properties + events from `this`.
-        if (value is T fast && IsPlangAssignable(typeof(T), value.GetType()))
+        // the instance by ref and alias Properties + events from `this`.
+        if (value is T fast)
             return ConstructWrap<T>(fast, context);
 
         // The chain — an evolved value still answers for what it was. A dict
@@ -1070,19 +1039,6 @@ public partial class @this
         // not-initialized Data<T> with default value, aliased state from `this`.
         if (value == null)
             return ConstructWrap<T>(default, context);
-
-        // Rule 3 — cross-type with conversion. T=IEnumerable (the non-generic interface itself,
-        // not arbitrary subtypes) delegates to AsEnumerable so the string-not-iterable carve-out
-        // applies (a string `value` becomes a one-element array, not a char enumeration). For
-        // typed collections like List<LlmMessage>, fall through to TypeMapping which knows how
-        // to deserialize element-by-element.
-        if (typeof(T) == typeof(System.Collections.IEnumerable))
-        {
-            // value != null guaranteed above, so the AsEnumerable contract collapses to:
-            // iterable → use as-is; non-iterable → wrap as one-element array.
-            object convertedEnum = IsPlangIterable(value) ? value : new[] { value };
-            return ConstructWrap<T>((T?)convertedEnum, context);
-        }
 
         // Thread the Data's Name (the parameter/variable name) into the
         // conversion so a bind failure can name the slot.
@@ -1248,23 +1204,12 @@ public partial class @this
     /// </summary>
     public virtual bool ToBoolean()
     {
-        if (!IsInitialized) return false;
-        var val = Peek();
-        if (val == null) return false;
-        // A value owns its own truthiness (empty text / zero number / empty dict /
-        // null are falsy) — ask it before the raw-scalar fallbacks, which now only
-        // serve a perimeter where a bare CLR value slips through.
-        if (val is app.type.item.@this item) return item.IsTruthy();
-        if (val is bool b) return b;
-        if (val is string s) return s.Length > 0;
-        if (val is int i) return i != 0;
-        if (val is long l) return l != 0;
-        if (val is double d) return d != 0;
-        if (val is float f) return f != 0;
-        if (val is decimal dec) return dec != 0;
-        if (val is short sh) return sh != 0;
-        if (val is byte by) return by != 0;
-        return true;
+        if (!IsInitialized || _instance == null) return false;
+        // The value owns its own truthiness (empty text / zero number / empty
+        // dict / null are falsy) — the instance answers; there is no CLR case
+        // table here. The carrier's truthiness covers a rung-2 POCO (present →
+        // truthy), the source's its raw form.
+        return _instance.IsTruthy();
     }
 
     /// <summary>
@@ -1341,32 +1286,6 @@ public partial class @this
         Success ? Peek()?.ToString() ?? "(null)" : $"Error: {Error?.Message}";
 
     private const int MaxJsonDepth = 128;
-
-    /// <summary>
-    /// JSON-roundtrip deep clone for snapshotting mutable refs (Lists/Dicts/POCOs) where
-    /// `Force.DeepCloner` would hang on cyclic runtime types. Honors `[JsonIgnore]` so
-    /// Goal↔Step↔Action cycles break. Uses CamelCase keys (matches `.pr` files, traces, viewer)
-    /// and unwraps the resulting `JsonElement` graph back to CLR primitives + Dictionary/List
-    /// so callers don't have to.
-    ///
-    /// Throws on serialization failure — call sites that want a fallback (e.g. alias-mode
-    /// degradation) wrap the call in their own try/catch.
-    /// </summary>
-    // Per-Data static — symmetric write+read for snapshot cloning. Pure config bag,
-    // Data is allocated frequently so static-readonly avoids per-instance allocation.
-    // Stage 27 disperse-from-Json target.
-    private static readonly JsonSerializerOptions _snapshotClone = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        PropertyNameCaseInsensitive = true,
-    };
-
-    internal static object? SnapshotClone(object source)
-    {
-        var json = JsonSerializer.Serialize(source, _snapshotClone);
-        var deserialized = JsonSerializer.Deserialize<object?>(json, _snapshotClone);
-        return UnwrapJsonElement(deserialized);
-    }
 
     internal static object? UnwrapJsonElement(object? value, int depth = 0)
     {
