@@ -110,6 +110,13 @@ via reflection — they move to emission:
    entries (each through its own door); the WalkContainerVars/
    SubstitutePrimitive family is already deleted.
 
+## Architect amendments (2026-06-11, settled with Ingi — supersede the sketch above where they differ)
+
+1. **`Create` returns the envelope: `static virtual Data<TSelf> Create(item value, data asking)`.** A bare `TSelf?` decline says "can't" but not why; the envelope return carries the real reason on `Data.Error` (uniform with the failure convention), and conversion can only happen inside a binding — no orphan typed views minted from free C#; every typed view is born a proper binding.
+2. **The chain-facet walk lives in the DEFAULT Create** — `value as TSelf`, else `value.Facet<TSelf>()`, else `CloneError`. The model doc's chain promise ("a `Data<file>` slot is satisfied from the chain") is framework-level, not per-type opt-in; file overrides because it does MORE, not to get the basics.
+3. **`item.Value<T>(Data asking)` disappears.** With Create taking the asking Data and returning the envelope, the typed ask is one branchless line on Data: `Value<T>() => T.Create(await Value(), this)`. Create is the single home.
+4. **The guard line (binding-mechanics boundary):** `ShallowClone<TSelf>` and `CloneError<TSelf>` are the ONLY members of `asking` a Create implementation may touch. Create holds a Data now — this sentence is what keeps the courier/value layering from eroding one convenience read at a time.
+
 ## Open for architect
 
 - Does the `as <type>/<kind>` explicit-cast path (reader registry) stay on

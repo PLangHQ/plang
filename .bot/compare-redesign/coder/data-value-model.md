@@ -137,6 +137,9 @@ the wall — and every hole forces every consumer to handle two worlds.
 class Data
 {
     item type;       // the typed instance — it IS the value. Data OWNS it.
+                     // NEVER C# null (settled 2026-06-11): absence is a typed
+                     // citizen — `absent` for NotFound/Uninitialized,
+                     // null.@this for present-null. Data null-checks die.
     // name, signature, properties — Data's other concerns. Nothing else.
 
     async ValueTask<item> Value()
@@ -259,9 +262,17 @@ var dict  = await data.Value<dict>();  // "I need a dict" — the value parses/c
   CLR leaves through the item lowering ITSELF at a real .NET edge
   (`number.ToInt64()`, `Clr<TimeSpan>()`). Every old `As<int>` site becomes a
   compile error that forces it to the right door.
-- Mechanics: `await Value()`, then — the answer is T or has T in its chain →
-  hand over (the facet); else the answer converts itself through its own
-  Convert hook; else `Data.Error`.
+- Mechanics — **the TARGET constructs itself** (settled 2026-06-11, replacing
+  the earlier source-converts-itself line; design:
+  `value-t-create-design.md`): `Data.Value<T>() => T.Create(await Value(),
+  this)`. `T.Create(item value, data asking)` is a static virtual interface
+  member returning the full `Data<T>` envelope — the default handles
+  pass-through and the chain facet (the `Data<file>`-slot promise, free for
+  every type); a type with real conversions overrides ("we want number, the
+  number knows how to create it" — the old catalog Convert hooks are the
+  bodies). A decline carries its reason on `Data.Error`. Create may touch
+  ONLY `asking.ShallowClone<T>`/`asking.CloneError<T>` — conversion happens
+  inside a binding or not at all.
 - **Conversion never rebinds.** Only `Value()`'s own answer rebinds (the
   value's truth — parse, narrow). What a caller asked for (`Value<number>()`
   on a text "5") is a view for that caller: handed over, never kept, no

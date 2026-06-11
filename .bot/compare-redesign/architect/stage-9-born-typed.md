@@ -16,6 +16,9 @@
 - **The entry lift** — CLR → item, once, at the boundary. The mapping survives from the original design:
   ```
   string → text          bool → bool            byte[] → binary
+  null → null.@this (present-null) · absent (NotFound/Uninitialized) —
+                         the instance member is NEVER C# null; Data null-checks
+                         die (ruled 2026-06-11)
   numerics → number      (kind derives from the boxed CLR numeric — never stored)
   DateTime/DateTimeOffset → datetime    DateOnly → date
   TimeOnly → time                       TimeSpan → duration   (1:1 — no value-sniffing)
