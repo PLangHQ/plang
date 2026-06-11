@@ -1157,3 +1157,31 @@ a type param, and the leaf types are sealed). Cost: thread T through every
 absent/present-null construction site; the door returns bare `item` so untyped
 couriers still see `item`. Polish, not a correctness gap — the decline error
 already names the target type. Don't fold into the born-typed slice.
+
+## 2026-06-11 — Remove the raw-container Lift bridge (born-native invariant)
+`data.@this.Lift` currently converts a raw C# `List<object?>`/`Dictionary`/`ArrayList`
+into native `list.@this`/`dict.@this` (via `json.Parse(SerializeToElement(v))`) as a
+TEMPORARY bridge — see the `TODO(remove)` in `PLang/app/data/this.cs` Lift. A raw
+container should never reach a `Data`: container values are born native off the wire.
+The bridge exists because several seams still hand raw containers to `Data`:
+  - LLM result — `OpenAi.Query` → `Data.Ok(resultValue)` (`llm/code/OpenAi.cs:476`)
+  - `Variable.Set(name, rawValue)` (`variable/list/this.cs:253`)
+  - `Diff`/`Normalize` transients — `Data.Ok` of a decomposed raw bag
+    (`data/this.Diff.cs:38` → `this.Normalize.cs`)
+  - `Reconstruct` (`As<T>`) — `Data.Ok` during CLR reconstruction (`this.Reconstruct.cs:44`)
+Fix: make each seam build native, then delete the Lift conversion and restore the
+commented-out throw as the invariant (the throw is kept in place, commented, right
+above the conversion). The throw was verified to fire at exactly these seams + the
+unfaithful C#-composition tests.
+
+### Known regressions from the temporary Lift bridge (restored when bridge is removed)
+The raw-container Lift bridge over-resolves ACTION-TEMPLATE containers: it flattens a
+raw action-list into a uniform native dict/list/text graph, so `StampTemplates` recurses
+and stamps DEFERRED sub-action `%var%` that must stay raw; the door then renders them.
+Two tests regress (green at c026ff245):
+  - `DataWrappedActionList_DoesNotRecurseIntoActions`
+  - `DataWrappedActionList_SubActionParametersRemainRaw`
+The real pipeline keeps action templates as `PrAction` (which the stamp walker doesn't
+recurse), so deferral holds there. Both are fixed for free by the "template born on the
+value from the builder" design (`.bot/compare-redesign/coder/v8/template-ownership-proposal.md`):
+no walker → no over-stamp. Do not chase these separately; they go green when that lands.
