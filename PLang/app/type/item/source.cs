@@ -103,7 +103,7 @@ public sealed class source : @this, module.IContext
         else w.String(_raw.ToString() ?? "");
     }
 
-    public override object? ToRaw() => _raw;
+    internal override object? ToRaw() => _raw;
 
     /// <summary>The door hands the raw form — for an unparseable source the
     /// bytes ARE the value; the utf-8 face stays a Peek-only look.</summary>

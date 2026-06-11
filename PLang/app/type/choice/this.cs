@@ -41,7 +41,7 @@ public sealed class @this<T> : global::app.type.item.@this,
     // T → choice (so `.Ok(HttpMethod.GET)` and a `[Default(HttpMethod.GET)]` cast construct).
     public static implicit operator @this<T>(T value) => new(value);
 
-    public override object? ToRaw() => Value;
+    internal override object? ToRaw() => Value;
     public override string ToString() => Value.ToString() ?? "";
     public override bool IsTruthy() => true;
     public override bool IsLeaf => true;

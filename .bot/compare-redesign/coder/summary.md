@@ -1,7 +1,8 @@
 # Coder summary — compare-redesign
 
-- **Version**: v7 — Stage 9 slices 1+2 (born-typed core collapse + consumer
-  tail kills), 2026-06-10/11
+- **Version**: v7 — Stage 9 COMPLETE, slices 1–5 (born-typed core collapse,
+  consumer tail kills, live templates, collection reference semantics,
+  follow-ons), 2026-06-10/11
 - **What this is**: The settled Data/Value model
   (`coder/data-value-model.md`) lands as code: Data holds ONE typed instance
   (the instance IS the value) beside name/properties/signature; everything
@@ -92,6 +93,27 @@ Plan + outcome detail: `v7/slice3-plan.md`. Headlines:
 - Gates: C# 0 failures (Data slice printed its full summary this round:
   992/0); plang 330 pass / 4 skips / 0 real failures.
 
+## Slice 5 (closed 2026-06-11) — follow-ons
+
+- `item.ToRaw()` is INTERNAL (base + every override) — no public raw escape;
+  the pin `GenericToRaw_DoesNotExist_OnItemBase` is filled and green. The
+  in-assembly conversion/comparison/wire seams keep it as gated interop.
+- `text.Value` is INTERNAL — no public string face; the pin
+  `TextRawValue_IsPrivate_NotPublicProperty` is filled and green. In-assembly
+  leaf handlers (the slice-2 `.Value` edge reads) keep working; outside the
+  engine the string leaves only via `text.Write(IWriter)`.
+  JUDGEMENT CALL for Ingi: the stubs said "private"; I used `internal` —
+  the reflection pins check "no PUBLIC member", and private would have
+  re-broken the ~200 sanctioned leaf edge reads slice 2 just created.
+  Flip to private + a different edge mechanism if you want it stricter.
+- Async `Write(IWriter)` is BLOCKED ON A PREREQUISITE, not on coder effort:
+  the only real wire consumer today is the sync STJ converter — the model
+  doc's documented exception, which pre-resolves. Converting now means
+  sync-over-async or dead code. It lands when the channel path gets its own
+  async writer pipeline off STJ (its own work item).
+- Gates: C# all six slices 0 failures, 0 skips remaining (both slice-5 pins
+  now enforce); plang 330 pass / 4 skips / 0 real failures.
+
 ## Test state
 
 - **C#: 0 failures** (136 → 0 over the session; the 2 pre-existing baseline
@@ -133,12 +155,18 @@ if (!ReferenceEquals(answer, _instance) && _instance.Cacheable)
 return answer.Open();                        // transitional face; slice 2 tightens
 ```
 
-## Next
+## Next / open points for Ingi
 
-1. Ingi's call on scalar-equality (above) — PROVISIONAL model position taken,
-   two LazyDeserialize goals re-pinned, easy to flip.
-2. Slice 3: live templates (builder stamps `template` deterministically;
-   resolve-at-use never cached; cache iff template==null; single-pass render)
-   + async `Write(IWriter)`; retire `TryFullVarMatch` when stamps land.
-3. Slice 4: collection reference semantics (CopyStructure removal).
-4. Slice 5: text.Value private, item.ToRaw removed (un-skips the two pins).
+1. Scalar-equality on an unread reference (above) — PROVISIONAL model
+   position taken, two LazyDeserialize goals re-pinned, easy to flip.
+2. Slice-5 judgement call: `internal` vs `private` for `text.Value` /
+   `item.ToRaw` (see slice 5 section).
+3. Async `Write(IWriter)` — needs the channel pipeline off STJ first (see
+   slice 5 section); then `var _`-style pre-crawls die and templates render
+   during the walk.
+4. Slice-2 leftover: Peek()/Open() tighten toward `item?` (carrier stops
+   unwrapping) — ~75 raw-shape consumers remain; revisit after templates
+   reduce the raw-shape surface.
+5. `Ready()` naming — rename to `Value()` is possible now on types whose
+   public `Value` property went internal (text); blocked on the others
+   (bool/binary/number still expose `Value`).

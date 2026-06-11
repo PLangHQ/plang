@@ -31,7 +31,7 @@ public sealed partial class @this : global::app.type.item.@this, System.IEquatab
 
     /// <summary>The exact boxed CLR numeric value (int, uint, BigInteger, Half, decimal, …).</summary>
     public object BoxedValue => _value;
-    public override object? ToRaw() => _value;
+    internal override object? ToRaw() => _value;
     public override bool IsLeaf => true;
     public override void Write(global::app.channel.serializer.IWriter w) => global::app.type.number.serializer.Default.Write(this, w);
 

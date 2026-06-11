@@ -137,7 +137,7 @@ public sealed partial class @this : global::app.type.item.@this, module.IContext
     /// recurse so a wire-shaped nested object is itself a raw dict. The in-memory
     /// representation stays Data-keyed; this is the read-out form only.
     /// </summary>
-    public override Dictionary<string, object?> ToRaw()
+    internal override Dictionary<string, object?> ToRaw()
     {
         var raw = new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase);
         foreach (var entry in _entries)

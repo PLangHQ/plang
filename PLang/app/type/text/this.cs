@@ -44,7 +44,10 @@ public sealed partial class @this : global::app.type.item.@this,
         + "not detectable from content).";
     // No static Kinds — text's kind is open (derived from extension at build).
 
-    public string Value { get; }
+    // Internal, not public: the raw string face is gated interop — leaf
+    // handlers and engine seams (in-assembly) name it at real .NET edges;
+    // outside the engine the string leaves only via text.Write(IWriter).
+    internal string Value { get; }
 
     /// <summary>The value's kind — the file-extension vocabulary (md, csv, …).
     /// An ordinary typed property stamped at creation, never after.</summary>
@@ -78,7 +81,7 @@ public sealed partial class @this : global::app.type.item.@this,
         return new @this(interpolated);
     }
 
-    public override object? ToRaw() => Value;
+    internal override object? ToRaw() => Value;
     public override bool IsLeaf => true;
     public override void Write(global::app.channel.serializer.IWriter w) => w.String(Value);
 

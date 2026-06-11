@@ -24,6 +24,6 @@ public sealed class absent : @this
 
     public override object? Peek() => null;
     public override bool IsTruthy() => false;
-    public override object? ToRaw() => null;
+    internal override object? ToRaw() => null;
     public override string ToString() => "";
 }

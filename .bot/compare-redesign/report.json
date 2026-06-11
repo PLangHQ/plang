@@ -696,7 +696,7 @@
       "id": "bdd11b01-34c6-4daa-809e-32c05a8167d7",
       "bot": "coder",
       "timestamp_start": "2026-06-10T16:30:00Z",
-      "timestamp_end": "2026-06-11T07:08:48.570541+00:00",
+      "timestamp_end": "2026-06-11T07:16:07.773660+00:00",
       "intent": "Stage 9 born-typed rebuild on the settled data-value-model: core collapse, consumer tail, templates, collections, follow-ons",
       "before": {
         "assumptions": "Model doc settled (nothing open); in-flight retype reverted; baseline C# 2 pre-existing fails (disposable path) + 6 pinned skips; plang 322/324.",
@@ -835,12 +835,25 @@
           "category": "code",
           "confidence": "high",
           "context": "Slice 4 (collection reference semantics): CopyStructure removed with both callers \u2014 list.add/list.set entries mint their own Data pointing at the value instance (nothing copied); ShallowClone copies the property BAG per binding (values shared by pointer) per the set %y!NewProp% rule; pins added for the [1,2,3] aliasing case + bag-per-binding; old no-alias pins re-judged to reference semantics. Gates: C# 0 fails (Data slice printed full summary 992/0 this round), plang 330/0 real fails."
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/this.cs",
+            "PLang/app/type/text/this.cs",
+            "PLang/app/type/dict/this.cs",
+            "PLang/app/type/list/this.cs",
+            "PLang.Tests/Runtime/App/CompareRedesign/Stage2_ValueDoorTests.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Slice 5 (follow-ons): item.ToRaw internal across base + all overrides (no public raw escape); text.Value internal (no public string face; in-assembly leaves keep edge reads). Both pinned stubs filled and green \u2014 0 skips remain. Judgement call flagged: internal not private. Async Write(IWriter) documented as blocked on the channel pipeline moving off the sync STJ converter. Gates: C# 0 fails across all six slices, plang 330/0."
         }
       ],
       "after": {
-        "status": "slices 1-4 complete and gated",
-        "health": "green",
-        "notes": "slice 5 (text.Value private, item.ToRaw removal, async Write) remains; scalar-equality provisional decision pending Ingi"
+        "status": "STAGE 9 COMPLETE \u2014 all 5 slices landed and gated",
+        "health": "green (C# 0 fails 0 skips, plang 330 pass/0 real fails)",
+        "notes": "open points for Ingi in coder/summary.md: scalar-equality provisional, internal-vs-private judgement, async Write prerequisite, Peek/Open tightening, Ready() rename"
       }
     }
   ]

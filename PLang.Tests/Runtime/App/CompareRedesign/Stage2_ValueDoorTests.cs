@@ -97,21 +97,26 @@ public class Stage2_ValueDoorTests
         await Assert.That(method!.ReturnType).IsEqualTo(typeof(System.Threading.Tasks.ValueTask<object?>));
     }
 
-    [Test, Skip("Born-typed follow-ons slice (item.ToRaw removal) — see architect/stage-9-born-typed.md; this stub is the pinned contract")]
+    [Test]
     public async Task GenericToRaw_DoesNotExist_OnItemBase()
     {
-        // reflection: item.@this has no public ToRaw(); raw leaves only via Write/As<T>/gated interop
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // item.@this has no PUBLIC ToRaw() — the raw escape is internal-only
+        // (gated interop: conversion leaves, comparison normalization, the
+        // wire walk). Raw leaves the value only via Write / the typed ask.
+        var method = typeof(global::app.type.item.@this).GetMethod("ToRaw",
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        await Assert.That(method).IsNull();
     }
 
-    [Test, Skip("Born-typed follow-ons slice (text.Value private) — see architect/stage-9-born-typed.md; this stub is the pinned contract")]
+    [Test]
     public async Task TextRawValue_IsPrivate_NotPublicProperty()
     {
-        // reflection: text.@this has no public `string Value` property — backing is private,
-        // emitted only through text.Write(IWriter)
-        Assert.Fail("Not implemented");
-        await Task.CompletedTask;
+        // text.@this has no PUBLIC `string Value` property — the string face
+        // is internal (gated interop for in-assembly leaf handlers); outside
+        // the engine it is emitted only through text.Write(IWriter).
+        var prop = typeof(global::app.type.text.@this).GetProperty("Value",
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        await Assert.That(prop).IsNull();
     }
 
     [Test]

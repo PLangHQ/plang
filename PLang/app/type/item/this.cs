@@ -306,5 +306,9 @@ public abstract class @this : global::app.data.IBooleanResolvable
     /// <c>self</c>. This replaces the per-type unwrap switch: the value owns its
     /// own raw projection, so the conversion leaf asks once with no type-switch.
     /// </summary>
-    public virtual object? ToRaw() => this;
+    // Internal, not public: the raw escape is engine plumbing (conversion
+    // leaves, comparison normalization, the wire walk) — gated interop, never
+    // a public API. Raw leaves the value only via Write / the typed ask /
+    // these in-assembly seams.
+    internal virtual object? ToRaw() => this;
 }

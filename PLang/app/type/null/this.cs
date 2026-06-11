@@ -43,7 +43,7 @@ public sealed partial class @this : global::app.type.item.@this
     public override void Write(global::app.channel.serializer.IWriter w) => w.Null();
 
     /// <summary>The raw form of null is C# null.</summary>
-    public override object? ToRaw() => null;
+    internal override object? ToRaw() => null;
 
     /// <summary>Bare <c>null</c> — the serializer renders this.</summary>
     public override string ToString() => "null";

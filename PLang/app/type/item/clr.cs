@@ -54,7 +54,7 @@ public sealed class clr : @this, module.IContext
     /// answer the carrier itself is deferred — too many raw-shape consumers
     /// remain; tracked on the slice list.)</summary>
     public override object? Peek() => Value;
-    public override object? ToRaw() => Value;
+    internal override object? ToRaw() => Value;
 
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
 
