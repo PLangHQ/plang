@@ -51,7 +51,7 @@ public partial class @this
     /// <summary>
     /// True when a JSON object carries the <c>@schema:"data"</c> marker — i.e. it IS a
     /// serialized Data, not a user map. The single recognizer for every read path (the
-    /// universal <see cref="UnwrapJsonElement"/> parse and the wire reader), so a Data is
+    /// universal json entry parse (<c>item.serializer.json.Parse</c>) and the wire reader), so a Data is
     /// lifted back to a Data everywhere a marked object is parsed.
     /// </summary>
     internal static bool IsDataMarked(System.Text.Json.JsonElement element)
@@ -221,7 +221,7 @@ public partial class @this
     public @this(string name, object? value = null, type? type = null, @this? parent = null)
     {
         Name = CleanName(name);
-        _instance = Lift(UnwrapJsonElement(value));
+        _instance = Lift(global::app.type.item.serializer.json.Parse(value));
         Parent = parent;
         Path = BuildPath(parent, Name);
         IsInitialized = true;
@@ -315,7 +315,7 @@ public partial class @this
     /// </summary>
     public virtual void SetValue(object? value)
     {
-        _instance = Lift(UnwrapJsonElement(value), _context);
+        _instance = Lift(global::app.type.item.serializer.json.Parse(value), _context);
         Updated = System.DateTime.UtcNow;
         IsInitialized = true;
         if (_instance is module.IContext contextual)
@@ -1215,112 +1215,6 @@ public partial class @this
 
     public override string ToString() =>
         Success ? Peek()?.ToString() ?? "(null)" : $"Error: {Error?.Message}";
-
-    private const int MaxJsonDepth = 128;
-
-    internal static object? UnwrapJsonElement(object? value, int depth = 0)
-    {
-        if (depth > MaxJsonDepth)
-            throw new InvalidOperationException($"JSON nesting exceeds maximum depth ({MaxJsonDepth})");
-
-        if (value is JsonElement element)
-        {
-            return element.ValueKind switch
-            {
-                // Born native: every scalar leaf is its wrapper, never a raw CLR
-                // value mid-flight. A consumer asks the wrapper for behavior
-                // (length, truthiness, compare) instead of re-deriving the type
-                // with an `is string` switch. JSON null is the null *value* —
-                // the singleton, a present null — not a C# null reference.
-                JsonValueKind.String => WrapTextLeaf(element.GetString() ?? ""),
-                JsonValueKind.Number => UnwrapJsonNumber(element),
-                JsonValueKind.True => new app.type.@bool.@this(true),
-                JsonValueKind.False => new app.type.@bool.@this(false),
-                JsonValueKind.Null => app.type.@null.@this.Instance,
-                JsonValueKind.Undefined => app.type.@null.@this.Instance,
-                // A @schema-marked object IS a Data — lift it back to one (its converter
-                // reads name/type/value/signature) rather than leaving it a raw dict. This
-                // is what keeps a Data nested in a parsed value (a signed list element, a
-                // stored Data) from degrading to a map on the universal parse path.
-                JsonValueKind.Object => IsDataMarked(element)
-                    ? element.Deserialize<@this>()
-                    : UnwrapJsonObject(element, depth),
-                JsonValueKind.Array => UnwrapJsonArray(element, depth),
-                _ => element
-            };
-        }
-
-        // System.Text.Json.Nodes DOM types (JsonObject, JsonArray, JsonValue) flow through
-        // variable.set when the source value is parsed as a mutable JSON DOM — the
-        // builder's `set %messages% = [{...}], type=json` produces these. Unwrap to the
-        // canonical List<object?>/Dict<string,object?> the walker recognises so nested
-        // `%var%` strings inside JSON values get substituted on read (the alternative is
-        // the LLM seeing literal `%goalForLlm%` in its user message — which is the
-        // regression that surfaced after the App→app rename merge).
-        if (value is System.Text.Json.Nodes.JsonNode jsonNode)
-        {
-            // Round-trip via the JsonElement path — keeps numeric / null / bool semantics
-            // identical to the System.Text.Json branch above and reuses the existing
-            // UnwrapJsonObject/UnwrapJsonArray walkers without duplicating their logic.
-            using var doc = System.Text.Json.JsonDocument.Parse(jsonNode.ToJsonString());
-            return UnwrapJsonElement(doc.RootElement, depth);
-        }
-
-        return value;
-    }
-
-    // A json object narrows to the native `dict` value type — collections hold
-    // Data end to end, so each property value is wrapped in a named Data (which
-    // keeps its own type-tag and signature) rather than decomposed to raw CLR.
-    private static app.type.dict.@this UnwrapJsonObject(JsonElement element, int depth)
-    {
-        var dict = new app.type.dict.@this();
-        foreach (var prop in element.EnumerateObject())
-            dict.Set(new @this(prop.Name, UnwrapJsonElement(prop.Value, depth + 1)));
-        return dict;
-    }
-
-    // A json array narrows to the native `list` value type — collections hold Data
-    // end to end, so each element is wrapped in a Data (keeping its own type-tag and,
-    // when present, signature) rather than decomposed to raw CLR.
-    private static app.type.list.@this UnwrapJsonArray(JsonElement element, int depth)
-    {
-        var list = new app.type.list.@this();
-        foreach (var item in element.EnumerateArray())
-        {
-            // A marked element (@schema:data) reconstructs as a Data — the list
-            // ROW holds it directly (rows are the legitimate Data containers);
-            // re-wrapping would nest a bare Data, which the store seam rejects.
-            var unwrapped = UnwrapJsonElement(item, depth + 1);
-            list.Add(unwrapped as @this ?? new @this("", unwrapped));
-        }
-        return list;
-    }
-
-    // A %var% reference is an UNRESOLVED reference, not yet a typed value — keep it
-    // a raw string so the resolution path (As<T>, SubstitutePrimitive, return
-    // mapping) reads it as the reference it is. Only a literal string with no
-    // %var% pattern is born native as text.@this. Cheap '%' presence guard before
-    // the (source-generated, compiled) variable-reference regex.
-    private static object WrapTextLeaf(string s)
-    {
-        // if/return, NOT a ternary: `cond ? s : new text.@this(s)` would compute a
-        // common type of (string, text.@this) and — because text.@this has an
-        // implicit string operator — silently convert the wrapper back to a string.
-        if (s.IndexOf('%') >= 0 && VarRefRegex().IsMatch(s)) return s;
-        return new app.type.text.@this(s);
-    }
-
-    [System.Text.RegularExpressions.GeneratedRegex("%[^%]+%")]
-    private static partial System.Text.RegularExpressions.Regex VarRefRegex();
-
-    private static object UnwrapJsonNumber(JsonElement element)
-    {
-        if (element.TryGetInt64(out var l)) return app.type.number.@this.From(l);
-        // Bare decimal-point literal → double by default (decimal is opt-in via
-        // `as number/decimal`), matching universal language convention.
-        return app.type.number.@this.From(element.GetDouble());
-    }
 
     private static string CleanName(string name)
     {

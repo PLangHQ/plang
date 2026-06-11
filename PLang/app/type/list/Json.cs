@@ -33,7 +33,7 @@ public sealed class Json : JsonConverter<@this>
         var built = new @this();
         if (element.ValueKind == JsonValueKind.Array)
             foreach (var item in element.EnumerateArray())
-                built.Add(new Data("", Data.UnwrapJsonElement(item)));
+                built.Add(new Data("", global::app.type.item.serializer.json.Parse(item)));
         return built;
     }
 }

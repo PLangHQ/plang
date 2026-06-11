@@ -1070,7 +1070,7 @@ public class DataTests
         var options = new System.Text.Json.JsonDocumentOptions { MaxDepth = 300 };
         using var doc = System.Text.Json.JsonDocument.Parse(json, options);
 
-        var ex = Assert.Throws<InvalidOperationException>(() => Data.UnwrapJsonElement(doc.RootElement));
+        var ex = Assert.Throws<InvalidOperationException>(() => global::app.type.item.serializer.json.Parse(doc.RootElement));
         await Assert.That(ex.Message).Contains("maximum depth");
     }
 
@@ -1081,7 +1081,7 @@ public class DataTests
         // convention); decimal is opt-in via `as number/decimal`.
         var json = "{\"price\":19.99}";
         using var doc = System.Text.Json.JsonDocument.Parse(json);
-        var result = Data.UnwrapJsonElement(doc.RootElement) as app.type.dict.@this;
+        var result = global::app.type.item.serializer.json.Parse(doc.RootElement) as app.type.dict.@this;
 
         await Assert.That(result).IsNotNull();
         // Born-native: a JSON number is a number.@this wrapper; its backing
@@ -1096,7 +1096,7 @@ public class DataTests
     {
         var json = "{\"count\":42}";
         using var doc = System.Text.Json.JsonDocument.Parse(json);
-        var result = Data.UnwrapJsonElement(doc.RootElement) as app.type.dict.@this;
+        var result = global::app.type.item.serializer.json.Parse(doc.RootElement) as app.type.dict.@this;
 
         await Assert.That(result).IsNotNull();
         // Born-native: a whole JSON number is a number.@this wrapper backed by long.

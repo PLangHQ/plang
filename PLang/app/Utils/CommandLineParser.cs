@@ -136,8 +136,8 @@ public class CommandLineParser
 				// value types — the --debug/--test/--app consumers branch on
 				// IDictionary<string,object?>. Object and array stay symmetric: both
 				// decompose to raw via ToRaw (dict.ToRaw now recurses nested lists too).
-				JsonValueKind.Object => ((app.type.dict.@this)data.@this.UnwrapJsonElement(element)!).ToRaw(),
-				JsonValueKind.Array => ((app.type.list.@this)data.@this.UnwrapJsonElement(element)!).ToRaw(),
+				JsonValueKind.Object => ((app.type.dict.@this)app.type.item.serializer.json.Parse(element)!).ToRaw(),
+				JsonValueKind.Array => ((app.type.list.@this)app.type.item.serializer.json.Parse(element)!).ToRaw(),
 				JsonValueKind.Number => element.TryGetInt64(out var l) ? (object)l : element.GetDouble(),
 				JsonValueKind.True => true,
 				JsonValueKind.False => false,

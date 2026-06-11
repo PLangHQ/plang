@@ -486,7 +486,7 @@ public class Wire : JsonConverter<@this>
             if (HasDataMarker(el))
                 list.Add(el.Deserialize<@this>(options)!);
             else
-                list.Add(new @this("", @this.UnwrapJsonElement(el)));
+                list.Add(new @this("", global::app.type.item.serializer.json.Parse(el)));
         }
         return list;
     }

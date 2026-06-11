@@ -178,7 +178,7 @@ public class Fluid : ITemplate
         app.type.list.@this l => new NativeListView(l),
         // JsonNode isn't Fluid-readable either; parse it to natives (the parse is
         // structural, JSON-DOM sized) and the natives then ride the views above.
-        System.Text.Json.Nodes.JsonNode jn => app.data.@this.UnwrapJsonElement(jn) switch
+        System.Text.Json.Nodes.JsonNode jn => app.type.item.serializer.json.Parse(jn) switch
         {
             app.type.dict.@this d => new NativeDictView(d),
             app.type.list.@this l => new NativeListView(l),

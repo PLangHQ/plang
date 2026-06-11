@@ -24,7 +24,7 @@ public class Stage3_ArraysAsDataTests
         // UnwrapJsonElement on a json array returns the native list value type whose
         // elements are Data — not a raw List<object?>. F1 closes (A).
         using var doc = JsonDocument.Parse("[1,\"two\"]");
-        var result = global::app.data.@this.UnwrapJsonElement(doc.RootElement);
+        var result = global::app.type.item.serializer.json.Parse(doc.RootElement);
         await Assert.That(result).IsTypeOf<ListV>();
         var list = (ListV)result!;
         await Assert.That(list.Count).IsEqualTo(2);

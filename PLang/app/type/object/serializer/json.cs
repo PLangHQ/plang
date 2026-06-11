@@ -23,11 +23,10 @@ public static class json
     {
         if (raw is not string s) return raw;
         if (string.IsNullOrEmpty(s)) return null;
-        // Unwrap the JsonElement graph to plain CLR (Dictionary/List/primitives) —
-        // leaving JsonElement values would re-serialize as their reflection shape
-        // ({"valueKind":...}) on a round-trip and navigate awkwardly. This is the
-        // canonical CLR form the variable navigators + renderer expect.
+        // Narrow the JsonElement graph to born-native items via the json entry
+        // parse — leaving JsonElement values would re-serialize as their
+        // reflection shape ({"valueKind":...}) and navigate awkwardly.
         var parsed = JsonSerializer.Deserialize<object?>(s, _opts);
-        return global::app.data.@this.UnwrapJsonElement(parsed);
+        return global::app.type.item.serializer.json.Parse(parsed);
     }
 }

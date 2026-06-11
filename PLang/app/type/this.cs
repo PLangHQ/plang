@@ -436,7 +436,7 @@ public sealed class @this : item.@this
             // object narrows to `dict` on first touch.
             var parsed = JsonSerializer.Deserialize<object?>(raw,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            return global::app.data.@this.UnwrapJsonElement(parsed);
+            return item.serializer.json.Parse(parsed);
         }
 
         // Kinded scalar read-back: a string-shaped type whose value carries a
