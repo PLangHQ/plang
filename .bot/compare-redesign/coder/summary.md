@@ -48,26 +48,47 @@ but an omitted clause is the non-null `absent` citizen → minted an empty-name 
 
 ## Result
 
-C# suite, baseline c026ff245 → now: Modules 230→181, Wire 60→47, Generator 12→7,
-Data 144→121, Runtime 76→72, Types 47→37. **Net −104** (−102 net of the 2 documented
-action-template regressions).
+C# suite, baseline c026ff245 → now: Modules 230→145, Data 144→105, Wire 60→40,
+Types 47→29, Runtime 76→70, Generator 12→7. **Net −173** (−171 net of the 2
+documented action-template regressions). Total failing 569 → 396.
+
+Further root fixes after the −104 mark:
+- **variable.set no-type path collapsed to one line** (`Context.Variable.Set(name.Name, Value)`)
+  — caught a widespread empty-value bug: `ShallowClone(name)` bound to the GENERIC
+  `ShallowClone<Variable>` (name is a Variable), cloning the name as the value (~26 tests).
+- **text.Value method-group leaks** (`Func→text`) — `text.Value` was deleted; three prod
+  Convert sites read it and got the door method group. Fixed to `Clr<string>()`.
+- **wire Normalize** — a nested Data now rides AS the dict entry (`Entry` helper), not
+  re-boxed (killed the "bare Data stored as value" throws). NOTE: architect is reworking
+  Normalize for laziness (drop the eager copy for native containers) — leave it.
+- **born-Variable test fidelity, completed** — `PrParam` now covers `variable.set` name +
+  `loop.foreach` ItemName/KeyName; modifier/condition inline PrActions + `.pr` fixtures stamped.
+- AsT identity tests migrated to the instance contract.
 
 Two action-template tests regressed from the bridge (`DataWrappedActionList_*`) — the
 bridge flattens action templates and the stamp walker over-resolves deferred sub-action
 `%var%`. Documented in `todos.md`; fixed for free by the template-ownership design
 (`v8/template-ownership-proposal.md`, for architect) which removes the walker.
 
-## What's next (remaining tail roots — each needs fresh per-root investigation)
+## What's next (remaining tail roots — diverse, each needs fresh investigation)
 
-The previously-masked tests now chain to their next failure:
-- **value-stored-empty** — `set test = hello` then `GetValue("test")` returns `""`
-  (RunGoalAsync_ExecutesSteps, StartGoal_Programmatic). variable.set no-type path
-  (`Value.ShallowClone(name)`) — value not landing. Likely pre-existing (most
-  variable.set tests pass, so it's construction-path-specific).
-- **`Func`2 → text` leak** — `[TypeConversionFailed] Cannot bind a Func to text`
-  (FullPipeline). A door method-group leaking into a value slot.
-- `clr`-unwrap (`Lower`/ArrayList/Hashtable), snapshot-`clr`-wire (Wire),
-  `IsNotNull`/sensitive-snapshot generator cases.
+- **"Expected failure but Data succeeded with value: null"** (~17 in Modules) — diverse
+  actions (identity Archive/Create-duplicate, crypto Hash-null, llm Query API-errors)
+  whose error paths return Success. Likely several distinct pre-existing roots, not one.
+- **lazy/signed wire round-trip** — bare-Data throws gone, but these chain to the next
+  wire/signing step (key-BLOB SigningError, signature survival). Architect reworking Normalize.
+- `clr`-unwrap (`Lower`/ArrayList/Hashtable, Decompress source.Clr-on-Func),
+  `As<T>` CLR reconstruction (RecordWithPositionalCtor, NoParameterlessCtor),
+  snapshot-`clr`-wire (Wire), generator `IsNotNull`/sensitive-snapshot.
+
+## Slice-2b structural (not started — the formal demolition contract)
+
+`item.ToRaw` deletion (38 refs, via the site walk), `Peek()` → `item?`, `set.cs`
+`as`-block collapse, recurrence pins, exit-gate greps (`ToRaw`→0, `is/as`→leaves-only).
+
+## Design hand-offs to architect
+- template-ownership (`v8/template-ownership-proposal.md`)
+- lazy-streaming wire writer / drop the Normalize eager copy (in discussion)
 
 Design hand-offs to architect: template-ownership (`v8/template-ownership-proposal.md`).
 Deferred (todos.md): typed-null slot citizen `@null.@this<T>`; remove the Lift bridge.
