@@ -22,7 +22,7 @@ namespace app.type.number;
 /// are gone.</para>
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Json))]
-public sealed partial class @this : global::app.type.item.@this, System.IEquatable<@this>, System.IComparable<@this>, System.IComparable, System.IConvertible
+public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, System.IEquatable<@this>, System.IComparable<@this>, System.IComparable, System.IConvertible
 {
     // The exact boxed CLR numeric — the single source of truth. Kind derives from its type.
     private readonly object _value;
@@ -94,8 +94,8 @@ public sealed partial class @this : global::app.type.item.@this, System.IEquatab
             case null: return null;
             case @this n: return n;
             case global::app.type.text.@this t:
-                return Parse(t.Value)
-                    ?? throw new System.FormatException($"number.FromObject: '{t.Value}' is not a valid number");
+                return Parse(t.Clr<string>()!)
+                    ?? throw new System.FormatException($"number.FromObject: '{t}' is not a valid number");
             case sbyte v: return From(v);
             case byte v: return From(v);
             case short v: return From(v);

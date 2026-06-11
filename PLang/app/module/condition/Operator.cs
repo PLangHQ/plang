@@ -32,7 +32,9 @@ public sealed class Operator
             ["startswith"] = async (l, r) => StringOp(await Val(l), await Val(r), (s, v) => s.StartsWith(v, StringComparison.OrdinalIgnoreCase)),
             ["endswith"] = async (l, r) => StringOp(await Val(l), await Val(r), (s, v) => s.EndsWith(v, StringComparison.OrdinalIgnoreCase)),
             ["in"] = (l, r) => Contains(r, l),
-            ["isempty"] = async (l, _) => IsEmpty(await Val(l)),
+            // The ITEM owns emptiness (text → whitespace-only, containers →
+            // zero entries, null/absent → empty); the binding answers absence.
+            ["isempty"] = async (l, _) => l == null || await l.IsEmpty(),
             // `%x% is dict` / `is number` / `is item` — IS-A query against the
             // value-type lattice. The right operand is the PLang type name. `item`
             // is the apex (true for any value).
@@ -76,13 +78,14 @@ public sealed class Operator
 
     // --- Helpers ---
 
-    /// <summary>Unwrap Data to its value through the door — a reference (file/url)
-    /// yields its raw content here, the scalar contract.</summary>
-    private static async ValueTask<object?> Val(data.@this? data)
+    /// <summary>The value through the door — the type makes itself ready
+    /// (load/parse/render); the answer is the typed instance.</summary>
+    private static async ValueTask<global::app.type.item.@this?> Val(data.@this? data)
         => data == null ? null : await data.Value();
 
-    /// <summary>Both operands have a non-null value — the ordering operators are false otherwise.</summary>
-    private static bool BothPresent(data.@this? left, data.@this? right) => left?.Peek() != null && right?.Peek() != null;
+    /// <summary>Both operands have a present value — the ordering operators are false otherwise.</summary>
+    private static bool BothPresent(data.@this? left, data.@this? right)
+        => left?.HasValue == true && right?.HasValue == true;
 
     /// <summary>
     /// IS-A: does the left value's type satisfy the named type (right operand)?
@@ -126,14 +129,9 @@ public sealed class Operator
         // IBooleanResolvable left (a path) answers `if %path% exists` itself.
         // A bool rides born-native as bool.@this — unwrap both shapes.
         var rv = right == null ? null : await right.Value();
-        bool? rb = rv switch
-        {
-            bool b => b,
-            global::app.type.@bool.@this bw => bw.Value,
-            _ => null,
-        };
+        bool? rb = (rv as global::app.type.@bool.@this)?.Value;
         var lv = left == null ? null : await left.Value();
-        bool leftIsBool = lv is bool or global::app.type.@bool.@this;
+        bool leftIsBool = lv is global::app.type.@bool.@this;
         if (rb != null && !leftIsBool)
         {
             bool leftTruthy = left != null && await left.ToBooleanAsync();
@@ -153,55 +151,23 @@ public sealed class Operator
 
     // --- Collection/String operators ---
 
-    // Membership: a substring test for text-in-text, element membership otherwise.
-    // Matches ONLY on Equal and never errors — NotEqual/Incomparable mean "not this
-    // one" (the table's membership column), so a mixed list never blows a `contains`.
+    // Membership — the ITEM owns the answer (text substring, list element
+    // equality through THE comparison entry, dict key, directory listing).
     private static async Task<bool> Contains(data.@this? left, data.@this? right)
     {
-        var lv = await Val(left);
-        var rv = await Val(right);
-        if (lv is global::app.type.text.@this lt && rv is global::app.type.text.@this rt)
-            return lt.Value.Contains(rt.Value, StringComparison.OrdinalIgnoreCase);
-        if (lv is string ls && rv is string rs)
-            return ls.Contains(rs, StringComparison.OrdinalIgnoreCase);
         if (left == null || right == null) return false;
-
-        if (lv is app.type.list.@this list)
-        {
-            foreach (var item in list.Items)
-                if (await item.Compare(right) == global::app.data.Comparison.Equal) return true;
-            return false;
-        }
-        if (lv is IEnumerable coll and not string)
-        {
-            foreach (var item in coll)
-            {
-                var element = item as data.@this ?? new data.@this("", item);
-                if (await element.Compare(right) == global::app.data.Comparison.Equal) return true;
-            }
-            return false;
-        }
-        return false;
+        var lv = await Val(left);
+        if (lv == null) return false;
+        return await lv.Contains(right);
     }
 
     private static bool StringOp(object? left, object? right, Func<string, string, bool> op)
     {
+        // The text face of each operand — startswith/endswith are text
+        // questions; a non-text answers through its canonical text form.
         var ls = left?.ToString();
         var rs = right?.ToString();
         if (ls == null || rs == null) return false;
         return op(ls, rs);
     }
-
-    private static bool IsEmpty(object? value)
-    {
-        if (value == null) return true;
-        if (value is global::app.type.text.@this t) value = t.Value;
-        if (value is global::app.type.@null.@this) return true;
-        if (value is string s) return string.IsNullOrWhiteSpace(s);
-        if (value is app.type.dict.@this d) return d.Entries.Count == 0;
-        if (value is app.type.list.@this l) return l.Count == 0;
-        if (value is ICollection c) return c.Count == 0;
-        return false;
-    }
-
 }

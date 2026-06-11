@@ -19,7 +19,7 @@ public abstract partial class @this
     /// IsFile=true → file (Length set). IsFile=false → directory.
     /// Nested under path so callers reach it as <c>path.@this.StatInfo</c>.
     /// </summary>
-    public sealed class StatInfo : global::app.type.item.@this
+    public sealed class StatInfo : global::app.type.item.@this, global::app.type.item.ICreate<StatInfo>
     {
         [Out] public bool Exists { get; }
         [Out] public bool? IsFile { get; }

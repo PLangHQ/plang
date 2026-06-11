@@ -21,7 +21,7 @@ namespace app.module.crypto.type.hash;
 /// hook. The supported-algorithm set IS the kind vocabulary; it lives here
 /// so the <c>crypto.hash</c> switch and the advertised list can't drift.</para>
 /// </summary>
-public sealed class @this : global::app.type.item.@this
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     public static string Example => "sha256 digest, base64";
     public static string Shape => "string";

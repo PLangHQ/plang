@@ -38,7 +38,7 @@ public class Stage2_ValueDoorTests
         var d = new Data("x", 42);
         var vt = d.Value();
         await Assert.That(vt.IsCompletedSuccessfully).IsTrue();
-        await Assert.That((await vt)).IsEqualTo(42);
+        await Assert.That((await vt)?.ToString()).IsEqualTo("42");
     }
 
     [Test]

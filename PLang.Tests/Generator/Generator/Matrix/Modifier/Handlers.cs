@@ -16,7 +16,7 @@ public partial class ModifierAction : global::app.module.IContext, global::app.m
         {
             var result = await next();
             // Tag-pass-through: append the modifier's Tag to the result so tests can verify wrap fired.
-            if (result.Success && (result.Peek()) is string s)
+            if (result.Success && result.Peek() is global::app.type.text.@this st && st.Clr<string>() is { } s)
                 return global::app.data.@this.Ok($"{s}|{(Tag.Peek())}");
             return result;
         };

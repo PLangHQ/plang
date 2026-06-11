@@ -22,16 +22,16 @@ public class JsonCompositionTests
         var withProbe = json.WithConverter(new Probe());
         await Assert.That(withProbe).IsNotEqualTo(json);
 
-        var wire = (await withProbe.Serialize(global::app.data.@this.Ok("hello")).Value())!.Value;
+        var wire = (await withProbe.Serialize(global::app.data.@this.Ok("hello")).Value())!.Clr<string>()!;
         await Assert.That(wire).Contains("probe:hello");
     }
 
     [Test] public async Task Json_WithConverter_DoesNotMutateOriginalInstance()
     {
         var json = new Json();
-        var original = (await json.Serialize(global::app.data.@this.Ok("hello")).Value())!.Value;
+        var original = (await json.Serialize(global::app.data.@this.Ok("hello")).Value())!.Clr<string>()!;
         json.WithConverter(new Probe());
-        var afterCompose = (await json.Serialize(global::app.data.@this.Ok("hello")).Value())!.Value;
+        var afterCompose = (await json.Serialize(global::app.data.@this.Ok("hello")).Value())!.Clr<string>()!;
         await Assert.That(original).IsEqualTo(afterCompose);
     }
 

@@ -19,7 +19,7 @@ namespace app.type.@null;
 /// <c>null</c>.</para>
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Json))]
-public sealed partial class @this : global::app.type.item.@this
+public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     public static string Example => "null";
     public static string Shape => "null";
@@ -39,11 +39,18 @@ public sealed partial class @this : global::app.type.item.@this
 
     /// <summary>Null is always falsy.</summary>
     public override bool IsTruthy() => false;
+
+    /// <summary>The item emptiness hook — null is empty.</summary>
+    public override System.Threading.Tasks.ValueTask<bool> IsEmpty()
+        => System.Threading.Tasks.ValueTask.FromResult(true);
     public override bool IsLeaf => true;
     public override void Write(global::app.channel.serializer.IWriter w) => w.Null();
 
     /// <summary>The raw form of null is C# null.</summary>
     internal override object? ToRaw() => null;
+
+    /// <summary>The CLR exit door — null converts to the absent value of any target.</summary>
+    internal override object? Clr(System.Type target) => null;
 
     /// <summary>Bare <c>null</c> — the serializer renders this.</summary>
     public override string ToString() => "null";

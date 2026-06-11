@@ -17,7 +17,7 @@ namespace app.module.output;
 /// </list>
 /// </summary>
 [global::app.Attributes.PlangType]
-public sealed class Ask : global::app.type.item.@this, global::app.IExitsGoal
+public sealed class Ask : global::app.type.item.@this, global::app.type.item.ICreate<Ask>, global::app.IExitsGoal
 {
     /// <summary>The entity is "ask" (the namespace-tail default would say
     /// "output", the owning module, not this value's name).</summary>

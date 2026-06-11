@@ -9,7 +9,7 @@ namespace app.actor;
 /// <summary>
 /// Represents an actor in the system with its own context and IO channels.
 /// </summary>
-public sealed class @this : global::app.type.item.@this, IAsyncDisposable
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IAsyncDisposable
 {
     /// <summary>
     /// OBP: actor is reached by NAME, not constructed. A name ("system"/"service"/
@@ -124,10 +124,10 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
         // Data.DynamicData re-evaluates on each access, so changes via setDefault/rename are reflected.
         Context.Variable.Set("MyIdentity", new data.DynamicData("MyIdentity", () =>
         {
-            var __idR = app.Code.Get<IIdentity>();
-            if (!__idR.Success) return null;
-            var result = ((IIdentity)__idR.Peek()!).GetOrCreateDefaultAsync(new global::app.module.identity.Get { Context = app.System.Context }).GetAwaiter().GetResult();
-            return result.Success ? result.Peek() as Identity : null;
+            var (idProvider, _) = app.Code.Get<IIdentity>();
+            if (idProvider == null) return null;
+            var result = idProvider.GetOrCreateDefaultAsync(new global::app.module.identity.Get { Context = app.System.Context }).GetAwaiter().GetResult();
+            return result.Success ? global::app.type.item.@this.Lower<Identity>(result.Peek()) : null;
         }));
     }
 

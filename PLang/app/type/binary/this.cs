@@ -6,7 +6,7 @@ namespace app.type.binary;
 /// a CLR <c>byte[]</c>; the bare wire form is base64.
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Json))]
-public sealed partial class @this : global::app.type.item.@this
+public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     public static string Example => "(bytes)";
     public static string Shape => "string";

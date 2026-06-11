@@ -188,9 +188,9 @@ public static class @this
         foreach (var prop in info.Properties.OfType<CodeProperty>())
         {
             sb.Append($$"""
-                        var __{{prop.Name}}_result = app.Code.Get<{{prop.TypeName}}>();
-                        if (!__{{prop.Name}}_result.Success) return __{{prop.Name}}_result;
-                        __{{prop.Name}}_backing = (__{{prop.Name}}_result.Peek() as {{prop.TypeName}})!;
+                        var (__{{prop.Name}}_provider, __{{prop.Name}}_err) = app.Code.Get<{{prop.TypeName}}>();
+                        if (__{{prop.Name}}_err != null) return global::app.data.@this.FromError(__{{prop.Name}}_err);
+                        __{{prop.Name}}_backing = __{{prop.Name}}_provider!;
 
                 """);
         }

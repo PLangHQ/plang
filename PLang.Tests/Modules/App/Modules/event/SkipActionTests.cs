@@ -69,6 +69,6 @@ public class SkipActionTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That((await context.EventOverride!.Value())).IsEqualTo(obj);
+        await Assert.That(global::app.type.item.@this.Lower<object>(await context.EventOverride!.Value())).IsEqualTo(obj);
     }
 }

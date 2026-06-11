@@ -7,7 +7,7 @@ namespace app.type.path;
 /// NOT a Data subclass — wrapped in Data&lt;Path&gt; by handlers.
 /// Implements IContext for runtime graph access (FileSystem, etc.).
 /// </summary>
-public abstract partial class @this : global::app.type.item.@this, module.IContext
+public abstract partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, module.IContext
 {
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
     public static string Example => "/some/file.json";

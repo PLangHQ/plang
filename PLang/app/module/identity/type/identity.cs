@@ -9,7 +9,7 @@ namespace app.module.identity;
 /// Persistence is owned by IIdentity.
 /// </summary>
 [PlangType]
-public sealed class Identity : global::app.type.item.@this
+public sealed class Identity : global::app.type.item.@this, global::app.type.item.ICreate<Identity>
 {
     public Identity() { }
     public Identity(string name) { Name = name; }

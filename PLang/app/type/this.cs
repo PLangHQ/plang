@@ -356,12 +356,31 @@ public sealed class @this : item.@this
     /// </summary>
     internal item.@this Judge(item.@this value)
     {
+        // A raw-name declared type (Variable) NAMES a thing — `%s%` is the
+        // variable s, not a value with a hole to render. Born here as the
+        // resolved name: a Variable is never text, so it is never template-
+        // stamped and its door never renders (the write-target `%s%` would
+        // otherwise fail to resolve against the store). This precedes the
+        // %var% bail below precisely because that bail defers a TEMPLATE's
+        // render — a reference has nothing to defer.
+        if (typeof(app.variable.IRawNameResolvable).IsAssignableFrom(ClrType))
+        {
+            var rawName = value switch
+            {
+                text.@this t => t.ToString(),
+                item.source s => s.Raw as string,
+                _ => null,
+            };
+            if (rawName != null)
+                return app.variable.@this.Resolve(rawName, Context!);
+        }
+
         var minted = value.Mint();
         if (string.Equals(Name, minted.Name, System.StringComparison.OrdinalIgnoreCase))
         {
             if (Kind != null && minted.Kind == null)
             {
-                if (value is text.@this t) value = new text.@this(t.Value) { Kind = Kind };
+                if (value is text.@this t) value = t.Kinded(Kind);
                 else if (value is binary.@this b) value = new binary.@this(b.Value) { Kind = Kind };
             }
             // A declared kind the instance can't carry itself, or a strict

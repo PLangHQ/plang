@@ -234,7 +234,7 @@ public sealed class Sqlite : IStore
             // SQLite is a take-over API — it binds CLR values; the blob is the
             // text value's backing string.
             global::app.type.text.@this? blob = await serialized.Value();
-            cmd.Parameters.AddWithValue("@data", blob?.Value);
+            cmd.Parameters.AddWithValue("@data", blob?.Clr<string>());
             cmd.ExecuteNonQuery();
 
             return app.data.@this.Ok();

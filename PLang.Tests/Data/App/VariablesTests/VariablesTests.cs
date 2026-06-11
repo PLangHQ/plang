@@ -390,7 +390,7 @@ public class VariablesTests
         await Assert.That((await itemsObj!.Value())).IsTypeOf<List<object>>();
 
         // Access the list directly
-        var list = (List<object>)(await itemsObj.Value())!;
+        var list = global::app.type.item.@this.Lower<List<object>>(await itemsObj.Value())!;
         await Assert.That((list[0])?.ToString()).IsEqualTo("first");
         await Assert.That((list[1])?.ToString()).IsEqualTo("second");
     }
@@ -1043,7 +1043,7 @@ public class VariablesAccessorTests
         await Assert.That(object.ReferenceEquals((retrieved!.Peek()), goal)).IsTrue();
     }
 
-    // ResolveDeep was deleted in v4 (resolution lives in data.Value<T>(context) per call).
+    // ResolveDeep was deleted in v4 (resolution lives in data.Value<T>() per call).
     // Equivalent behaviour is covered by DataAsTResolutionTests + the matrix Resolution group.
 }
 

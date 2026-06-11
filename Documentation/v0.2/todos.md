@@ -927,3 +927,13 @@ into the numeric tower and the Convert.ChangeType arm. Audit whether it can be
 removed (replaced by explicit To* members at the remaining call sites) or must
 stay as the one standard-protocol exception; do not add IConvertible to any
 other wrapper meanwhile.
+
+## 2026-06-11 — `context.Ok(...)` context-stamping result factory (born-typed)
+Idea (Ingi): a `context.Ok(value)` / `context.Fail(error)` on `actor.context.@this`
+that returns `Data.Ok(...)` with Context already wired. Lets result-producing
+handlers mint a fully-contexted Data in one call instead of static `Data.Ok` +
+later stamping — the path to making `Data._context` non-nullable BY CONSTRUCTION
+(today it's effectively non-null only at read-time via "context rides the value").
+Deferred: the static `Data.Ok/FromError/Null/...` factories are called in hundreds
+of places; flipping them to require context is its own pass. Do when the value
+model settles. See `.bot/compare-redesign/coder/v8/slice2b-state.md`.

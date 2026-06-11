@@ -63,7 +63,7 @@ public class Cut3_MultiActorForwardingTests
         var chain = BuildChain();
         await using (chain.AppA) await using (chain.AppB) await using (chain.AppC)
         {
-            var innerAfter = (await chain.RoundTripped.Value()) as global::app.data.@this;
+            var innerAfter = (((await chain.RoundTripped.Value()) as global::app.type.item.clr)?.Value as global::app.data.@this);
             await Assert.That(innerAfter).IsNotNull();
             await Assert.That(innerAfter!.Signature).IsNotNull();
             await Assert.That(innerAfter.Signature!.Identity).IsEqualTo(chain.Inner.Signature!.Identity);

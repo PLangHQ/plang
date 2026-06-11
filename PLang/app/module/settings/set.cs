@@ -14,7 +14,7 @@ public partial class Set : IContext
 
     public async Task<data.@this<type.setting>> Run()
     {
-        var key = (await Key.Value())!.Value;
+        var key = (await Key.Value())!.Clr<string>()!;
         var val = Value == null ? null : await Value.Value();
         var store = Context.App.SettingsStore;
         var result = await store.Set("settings", key, new data.@this(key, val));

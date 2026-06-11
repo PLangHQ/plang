@@ -137,7 +137,7 @@ public class Stage2_PlaneResolverTests
         d.Properties["size"] = 28;
         var content = await d.GetChild("size");     // `.` — the data plane (content key)
         var property = await d.GetChild("!size");   // `!` — the property plane (Properties bag)
-        await Assert.That((await content.Value())).IsEqualTo(10);
-        await Assert.That((await property.Value())).IsEqualTo(28);
+        await Assert.That((await content.Value())?.ToString()).IsEqualTo("10");
+        await Assert.That((await property.Value())?.ToString()).IsEqualTo("28");
     }
 }

@@ -46,7 +46,7 @@ public class TableTypeTests
 
         byte[] bytes = { 0x50, 0x4B, 0x03, 0x04 }; // PK.. zip header (xlsx is a zip)
         var d = data.FromRaw(bytes, type.Create("table", "xlsx", context: ctx), ctx, "sheet");
-        await Assert.That((await d.Value())).IsEqualTo((object)bytes);
+        await Assert.That(global::app.type.item.@this.Lower<byte[]>(await d.Value())).IsEqualTo(bytes);
         await Assert.That(d.HasRaw).IsTrue();
     }
 

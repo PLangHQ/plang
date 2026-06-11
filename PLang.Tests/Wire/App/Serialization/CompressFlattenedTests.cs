@@ -34,7 +34,7 @@ public class CompressFlattenedTests
         var archived = d.Compress();
         // The smell this stage fixes — no nested Data around the gzip payload.
         await Assert.That((await archived.Value()) is global::app.data.@this).IsFalse();
-        await Assert.That((await archived.Value()) is byte[] or global::app.type.binary.@this).IsTrue();
+        await Assert.That((await archived.Value()) is global::app.type.binary.@this).IsTrue();
     }
 
     [Test] public async Task Decompress_AfterCompress_PreservesNameAndValue()

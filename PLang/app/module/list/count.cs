@@ -16,8 +16,6 @@ public partial class Count : IContext
         var counted = countData.IsInitialized ? await countData.Value() : null;
         if (counted is global::app.type.number.@this n)
             return global::app.data.@this<global::app.type.number.@this>.Ok(n);
-        if (counted is int c)
-            return global::app.data.@this<global::app.type.number.@this>.Ok(c);
 
         // Fallback: enumerate
         int count = 0;

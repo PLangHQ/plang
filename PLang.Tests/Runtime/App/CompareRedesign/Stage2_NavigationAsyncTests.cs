@@ -42,7 +42,7 @@ public class Stage2_NavigationAsyncTests
         await vars.Set("x", 42);
         var vt = vars.Get("x");
         await Assert.That(vt.IsCompletedSuccessfully).IsTrue();   // in-memory value: sync-complete
-        await Assert.That((await (await vt).Value())).IsEqualTo(42);
+        await Assert.That((await (await vt).Value())?.ToString()).IsEqualTo("42");
     }
 
     [Test]

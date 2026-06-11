@@ -16,7 +16,6 @@ public partial class Last : IContext
         int count = (countData.IsInitialized ? await countData.Value() : null) switch
         {
             global::app.type.number.@this n => n.ToInt32(),
-            int i => i,
             _ => 0,
         };
         if (count > 0)

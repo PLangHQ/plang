@@ -253,7 +253,7 @@ public class ReResolveAcrossCallsTests
             var r = await MatrixRunner.RunAsync<ReResolveAcrossCalls>(app,
                 parameters: new[] { ("value", (object?)"%i%") });
             var typed = r.Data as global::app.data.@this<global::app.type.text.@this>;
-            seen.Add((await typed!.Value())?.Value);
+            seen.Add((await typed!.Value())?.Clr<string>());
         }
         await Assert.That(seen[0]).IsEqualTo("value-0");
         await Assert.That(seen[1]).IsEqualTo("value-1");
@@ -298,7 +298,7 @@ public class ConcurrentHandlersTests
         var data = new Data("v", "%x%") { Context = app.User.Context }.Authored();
 
         var tasks = Enumerable.Range(0, 50).Select(_ => Task.Run(() =>
-            data.Value<global::app.type.text.@this>(app.User.Context).AsTask())).ToArray();
+            data.Value<global::app.type.text.@this>().AsTask())).ToArray();
         var results = await Task.WhenAll(tasks);
 
         // Each should be independent and successful with the same resolved value.

@@ -12,7 +12,7 @@ namespace app.type.file;
 /// The scheme know-how stays on the composed <see cref="Path"/>
 /// (<c>FilePath</c>/<c>HttpPath</c>); this type owns content laziness.</para>
 /// </summary>
-public sealed class @this : global::app.type.item.@this, global::app.data.ILoadable, module.IContext
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, global::app.data.ILoadable, module.IContext
 {
     public static string Example => "/some/config.json";
     public static string Shape => "string";
@@ -77,23 +77,30 @@ public sealed class @this : global::app.type.item.@this, global::app.data.ILoada
     /// content's {type, kind}; the auth gate rides on <c>Path.ReadBytes</c>) and
     /// answer with the CONTENT's own instance (a json file answers as
     /// <c>dict</c>), this file stamped as its prior. Single storage: the parsed
-    /// value is the one copy — the in-memory bytes are released, the file
-    /// becomes location-only again. A read failure throws; the holding Data
-    /// surfaces it as its Error.
+    /// value is the one copy. FILE authors its own failures — an IO/parse
+    /// failure lands on the asking binding, answer absent.
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Ready()
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this asking)
     {
         // The sample: one auth-gated read per value per program run — a later
         // narrow (another alias, a cached binding) serves from memory, never
         // from a re-read. The channel stamps + parses FROM the sample.
-        var bytes = await BytesAsync();
+        byte[] bytes;
+        try
+        {
+            bytes = await BytesAsync();
+        }
+        catch (System.IO.IOException ex)
+        {
+            asking.Fail(new global::app.error.Error(
+                $"could not read '{Path}': {ex.Message}", "FileReadFailed", 400) { Exception = ex });
+            return Absent;
+        }
         var channel = new global::app.channel.type.file.@this(Path);
         var read = await channel.Read(bytes);
-        if (!read.Success)
-            throw new System.IO.IOException(read.Error!.Message);
+        if (!read.Success) { asking.Fail(read.Error!); return Absent; }
         _ = await read.Value();
-        if (!read.Success)
-            throw new System.IO.IOException(read.Error!.Message);
+        if (!read.Success) { asking.Fail(read.Error!); return Absent; }
         var answer = read.Instance;
         if (answer == null || ReferenceEquals(answer, this)) return this;
         answer.Accumulate(this);

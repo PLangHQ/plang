@@ -23,14 +23,16 @@ public partial class query : IContext, IBuildValidatable
 
         var value = messages.Peek();
 
-        if (value == null || (value is string s && string.IsNullOrWhiteSpace(s)))
+        // Build-time is a sync surface — the binding answers presence, the
+        // text instance its own (sync) emptiness notion via truthiness.
+        if (!messages.HasValue
+            || (value is global::app.type.text.@this st && !st.IsTruthy()))
             return "Parameter 'Messages' is empty. Must be a list of {Role: string, Content: string} objects. Map system= to {\"Role\": \"system\", \"Content\": \"...\"} and user= to {\"Role\": \"user\", \"Content\": \"...\"}";
 
-        if (value is not System.Collections.IList list || list.Count == 0)
-        {
-            if (value is not string) // already handled above
-                return $"Parameter 'Messages' must be a list of {{Role, Content}} objects, got {value.GetType().Name}";
-        }
+        if (value is not global::app.type.list.@this
+            && value is not global::app.type.item.clr { Value: System.Collections.IList }
+            && value is not global::app.type.text.@this) // text already handled above
+            return $"Parameter 'Messages' must be a list of {{Role, Content}} objects, got {value!.Mint().Name}";
 
         return null;
     }
@@ -115,7 +117,9 @@ public partial class query : IContext, IBuildValidatable
     {
         var schema = __action?.Parameters?.FirstOrDefault(p =>
             string.Equals(p.Name, "Schema", System.StringComparison.OrdinalIgnoreCase))?.Peek();
-        if (schema != null && !(schema is string s && (string.IsNullOrEmpty(s) || s.Contains('%'))))
+        if (schema is not (null or global::app.type.@null.@this or global::app.type.item.absent)
+            && !(schema is global::app.type.text.@this st
+                 && (st.Clr<string>() is "" or null || st.HasHoles)))
             return Task.FromResult(data.@this.Ok("json"));
 
         var format = __action?.Parameters?.FirstOrDefault(p =>

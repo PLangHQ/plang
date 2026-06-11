@@ -7,7 +7,7 @@ namespace app.module.builder;
 /// the LLM's JsonElement to this via data.@this&lt;BuildResponse&gt; using
 /// Json.CaseInsensitiveRead.
 /// </summary>
-public sealed class BuildResponse : global::app.type.item.@this
+public sealed class BuildResponse : global::app.type.item.@this, global::app.type.item.ICreate<BuildResponse>
 {
     public string? Description { get; set; }
     public List<Info>? Errors { get; set; }

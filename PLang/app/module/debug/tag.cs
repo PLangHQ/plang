@@ -28,23 +28,24 @@ public partial class Tag : IContext
     /// </summary>
     public partial global::app.data.@this<global::app.type.text.@this>? Label { get; init; }
 
-    public Task<global::app.data.@this> Run()
+    public async Task<global::app.data.@this> Run()
     {
         // Tag the CALLER's Call, not our own — see class summary. Falls back to Current
         // if there's no caller (we're already at the root, e.g. a single-action scope).
         var target = Context.CallStack?.Current?.Caller ?? Context.CallStack?.Current;
-        if (target == null) return Task.FromResult(global::app.data.@this.Ok());
+        if (target == null) return global::app.data.@this.Ok();
 
-        if (global::app.type.item.@this.Lower<Dictionary<string, string>>(Pairs?.Peek()) is { } pairs)
+        // The handler USES the values — the door (a template label renders here).
+        if (Pairs != null && await Pairs.Value() is global::app.type.dict.@this pairs)
         {
-            foreach (var (key, value) in pairs)
-                target.Tag(key, value);
+            foreach (var entry in pairs.Entries)
+                target.Tag(entry.Name, (await entry.Value())?.ToString() ?? "");
         }
-        else if ((Label?.Peek() as global::app.type.text.@this)?.Value is { Length: > 0 } label)
+        else if (Label != null && (await Label.Value()) is { } label && label.IsTruthy())
         {
-            target.Tag(label, "true");
+            target.Tag(label.ToString(), "true");
         }
 
-        return Task.FromResult(global::app.data.@this.Ok());
+        return global::app.data.@this.Ok();
     }
 }

@@ -21,12 +21,8 @@ public partial class Add : IContext
         {
             // Promote a non-list (or legacy raw list) value into the native list type.
             list = new app.type.list.@this { Context = Context };
-            if (existing is app.type.list.@this) { /* unreachable — the cast above hit */ }
-            else if (existing is System.Collections.IEnumerable seq && existing is not string)
-                foreach (var item in seq)
-                    list.Add(item as data.@this ?? new data.@this("", item));
-            else if (existing != null)
-                list.Add(existing as data.@this ?? new data.@this("", existing));
+            if (data.HasValue)
+                list.Add(new data.@this("", existing));
             await Context.Variable.Set(listName, list);
         }
 

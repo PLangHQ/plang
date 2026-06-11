@@ -8,7 +8,7 @@ namespace app.type.url;
 /// The scheme know-how (consent gate, redirects, signing) stays on the
 /// composed <c>HttpPath</c>.
 /// </summary>
-public sealed class @this : global::app.type.item.@this, global::app.data.ILoadable, module.IContext
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, global::app.data.ILoadable, module.IContext
 {
     public static string Example => "https://example.com/data.json";
     public static string Shape => "string";
@@ -71,18 +71,27 @@ public sealed class @this : global::app.type.item.@this, global::app.data.ILoada
     /// and answer with the CONTENT's own instance, this url stamped as its
     /// prior. Single storage: the fetched bytes are released after the parse.
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Ready()
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this asking)
     {
         // The sample: one consent-gated fetch per value per program run — the
         // channel stamps + parses FROM the sample, never a second GET.
-        var bytes = await BytesAsync();
+        // URL authors its own failures (fetch stories) onto the asking binding.
+        byte[] bytes;
+        try
+        {
+            bytes = await BytesAsync();
+        }
+        catch (System.Net.Http.HttpRequestException ex)
+        {
+            asking.Fail(new global::app.error.Error(
+                $"could not fetch '{Path}': {ex.Message}", "UrlFetchFailed", 400) { Exception = ex });
+            return Absent;
+        }
         var channel = new global::app.channel.type.file.@this(Path);
         var read = await channel.Read(bytes);
-        if (!read.Success)
-            throw new System.Net.Http.HttpRequestException(read.Error!.Message);
+        if (!read.Success) { asking.Fail(read.Error!); return Absent; }
         _ = await read.Value();
-        if (!read.Success)
-            throw new System.Net.Http.HttpRequestException(read.Error!.Message);
+        if (!read.Success) { asking.Fail(read.Error!); return Absent; }
         var answer = read.Instance;
         if (answer == null || ReferenceEquals(answer, this)) return this;
         answer.Accumulate(this);

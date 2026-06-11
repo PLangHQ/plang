@@ -15,11 +15,11 @@ public partial class Remove : IContext
     public async Task<data.@this> Run()
     {
         var app = Context.App!;
-        if (!app.Module.Contains((await Name.Value())!.Value))
+        if (!app.Module.Contains((await Name.Value())!.Clr<string>()!))
             return Error(
                 new app.error.ServiceError($"Module '{(await Name.Value())}' not found", "NotFound", 404));
 
-        app.Module.Remove((await Name.Value())!.Value);
+        app.Module.Remove((await Name.Value())!.Clr<string>()!);
         return Data();
     }
 }

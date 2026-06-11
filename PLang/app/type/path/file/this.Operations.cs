@@ -114,7 +114,7 @@ public sealed partial class @this
                     // bound PathJsonConverter — Path fields inside the result
                     // (Goal.Path, GoalCall.PrPath, ...) land fully wired.
                     var converted = Context!.App.Type.Convert(text, materialized, Context).Peek();
-                    content = converted ?? text;
+                    content = (object?)converted ?? text;
                 }
                 else
                 {
@@ -232,12 +232,12 @@ public sealed partial class @this
             // content IS the value's bare form, so unwrap to the backing here —
             // otherwise it falls to the channel serializer, whose text path appends a
             // stdout-style newline that doesn't belong in file content.
-            if (raw is global::app.type.text.@this txtv) raw = txtv.Value;
-            else if (raw is global::app.type.binary.@this binv) raw = binv.Value;
-            if (raw is byte[] bytes)
-                await System.IO.File.WriteAllBytesAsync(Absolute, bytes);
-            else if (raw is string str)
-                await System.IO.File.WriteAllTextAsync(Absolute, str);
+            // Persisted file content IS the value's bare form — the leaf
+            // lowers through its own Clr at this System.IO edge.
+            if (raw is global::app.type.binary.@this binv)
+                await System.IO.File.WriteAllBytesAsync(Absolute, binv.Value);
+            else if (raw is global::app.type.text.@this txtv)
+                await System.IO.File.WriteAllTextAsync(Absolute, txtv.Clr<string>());
             else
             {
                 await using var stream = System.IO.File.Create(Absolute);

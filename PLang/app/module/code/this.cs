@@ -56,35 +56,33 @@ public sealed partial class @this : IAsyncDisposable
     // A code provider is a CLR capability, never a PLang value — it rides in a BARE Data
     // (no generic T → satisfies where T:item) with the provider in .Value. Callers read
     // .Success/.Value (cast to the provider type).
-    public data.@this Get<T>(string? name = null) where T : class, ICode
+    // A provider is engine plumbing — rung-3, NEVER a plang value, so it never
+    // rides a Data (no clr-carrier round-trip, no Peek to unwrap). The typed
+    // provider comes back directly beside a typed error.
+    public (T? Provider, global::app.error.IError? Error) Get<T>(string? name = null) where T : class, ICode
     {
         if (!_providers.TryGetValue(typeof(T), out var typeDict))
-            return app.data.@this.FromError(new ActionError($"No {typeof(T).Name} provider registered", "ProviderNotFound", 404));
+            return (null, new ActionError($"No {typeof(T).Name} provider registered", "ProviderNotFound", 404));
 
         if (!string.IsNullOrEmpty(name))
         {
             if (!typeDict.TryGetValue(name, out var provider))
-                return app.data.@this.FromError(new ActionError($"Provider '{name}' not found for {typeof(T).Name}", "ProviderNotFound", 404));
-            return app.data.@this.Ok((object)provider);
+                return (null, new ActionError($"Provider '{name}' not found for {typeof(T).Name}", "ProviderNotFound", 404));
+            return ((T)provider, null);
         }
 
         foreach (var kvp in typeDict)
-        {
             if (kvp.Value.IsDefault)
-                return app.data.@this.Ok((object)kvp.Value);
-        }
+                return ((T)kvp.Value, null);
 
-        return app.data.@this.FromError(new ActionError($"No default {typeof(T).Name} provider registered", "ProviderNotFound", 404));
+        return (null, new ActionError($"No default {typeof(T).Name} provider registered", "ProviderNotFound", 404));
     }
 
     /// <summary>
     /// Gets the default, or the provided fallback if none registered.
     /// </summary>
     public T GetOrDefault<T>(T defaultProvider) where T : class, ICode
-    {
-        var r = Get<T>();
-        return r.Peek() as T ?? defaultProvider;
-    }
+        => Get<T>().Provider ?? defaultProvider;
 
     /// <summary>
     /// Removes a provider by name. Cannot remove the default.

@@ -341,7 +341,7 @@ public class StartGoalTests
             Context = context;
             var contentData = action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "Data", StringComparison.OrdinalIgnoreCase));
             object? raw = contentData?.Peek();
-            object? content = (raw as global::app.type.text.@this)?.Value ?? raw;
+            object? content = (raw as global::app.type.text.@this)?.Clr<string>() ?? raw;
             if (content is string str && str.Contains('%'))
             {
                 var fullMatch = System.Text.RegularExpressions.Regex.Match(str, @"^%([^%]+)%$");

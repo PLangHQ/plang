@@ -28,7 +28,7 @@ public sealed class computed : @this
 
     public override bool Cacheable => false;
 
-    public override System.Threading.Tasks.ValueTask<@this> Ready()
+    public override System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this asking)
         => System.Threading.Tasks.ValueTask.FromResult(Compute());
 
     /// <summary>Peek computes too — "in memory now" for a computed value IS the
@@ -41,6 +41,6 @@ public sealed class computed : @this
     private @this Compute()
     {
         var raw = _factory();
-        return global::app.data.@this.Lift(raw) ?? @null.@this.Instance;
+        return global::app.data.@this.Lift(raw);
     }
 }

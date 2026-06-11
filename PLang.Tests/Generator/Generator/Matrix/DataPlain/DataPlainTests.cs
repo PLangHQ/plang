@@ -31,7 +31,7 @@ public class DataPlainTests
         var result = await MatrixRunner.RunAsync<global::app.module.matrix.dataplain.DataPlain>(app,
             parameters: new[] { ("payload", (object?)raw) });
         await Assert.That((await result.Data.Value())).IsTypeOf<List<object?>>();
-        var list = (await result.Data.Value()) as List<object?>;
+        var list = global::app.type.item.@this.Lower<List<object?>>(await result.Data.Value());
         await Assert.That(list).IsNotNull();
         await Assert.That(list!.Count).IsEqualTo(3);
     }

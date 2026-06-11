@@ -60,7 +60,7 @@ public class SensitivePropertyFilterTests
         };
 
         var serializer = new global::app.channel.serializer.Json();
-        var json = (await serializer.Serialize(Data.Ok(identity)).Value())!.Value;
+        var json = (await serializer.Serialize(Data.Ok(identity)).Value())!.Clr<string>()!;
 
         await Assert.That(json).Contains("pubkey123");
         await Assert.That(json).DoesNotContain("secret456");
@@ -92,7 +92,7 @@ public class SensitivePropertyFilterTests
         var obj = new { Name = (global::app.type.text.@this)"test", Value = 42 };
 
         var serializer = new global::app.channel.serializer.Json();
-        var json = (await serializer.Serialize(Data.Ok(obj)).Value())!.Value;
+        var json = (await serializer.Serialize(Data.Ok(obj)).Value())!.Clr<string>()!;
 
         await Assert.That(json).Contains("test");
         await Assert.That(json).Contains("42");
@@ -112,7 +112,7 @@ public class SensitivePropertyFilterTests
         // ForView should also strip [Sensitive] in addition to view filtering
         var serializer = new global::app.channel.serializer.Json();
         var storeSerializer = serializer.ForView(View.Store);
-        var storeJson = (await storeSerializer.Serialize(Data.Ok(identity)).Value())!.Value;
+        var storeJson = (await storeSerializer.Serialize(Data.Ok(identity)).Value())!.Clr<string>()!;
 
         // Identity doesn't use view attributes, so Store view serializes all non-sensitive
         await Assert.That(storeJson).DoesNotContain("secret456");
@@ -204,7 +204,7 @@ public class SensitivePropertyFilterTests
         var identity = (await result.Value()) as Identity;
 
         var serializer = new global::app.channel.serializer.Json();
-        var json = (await serializer.Serialize(Data.Ok(identity)).Value())!.Value;
+        var json = (await serializer.Serialize(Data.Ok(identity)).Value())!.Clr<string>()!;
 
         // Deserialize back to check values — raw Contains() fails when base64 '+' is escaped to '\u002B'
         var deserialized = JsonSerializer.Deserialize<JsonElement>(json);

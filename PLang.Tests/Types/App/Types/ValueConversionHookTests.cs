@@ -137,7 +137,7 @@ public class ValueConversionHookTests
     public async Task InfraDoor_JsonString_ShapesToRecord()
     {
         var (app, ctx) = MakeApp();
-        var v = (await app.Type.Convert("{\"x\":1,\"y\":2}", typeof(Point), ctx).Value()) as Point;
+        var v = global::app.type.item.@this.Lower<Point>(await app.Type.Convert("{\"x\":1,\"y\":2}", typeof(Point), ctx).Value());
         await Assert.That(v).IsNotNull();
         await Assert.That(v!.X).IsEqualTo(1);
         await Assert.That(v.Y).IsEqualTo(2);
@@ -152,10 +152,9 @@ public class ValueConversionHookTests
         await Assert.That((await app.Type.Convert("true", typeof(bool), ctx).Value())?.ToString()).IsEqualTo("true");
 
         var g = System.Guid.NewGuid();
-        await Assert.That((await app.Type.Convert(g.ToString(), typeof(System.Guid), ctx).Value())).IsEqualTo(g);
+        await Assert.That(global::app.type.item.@this.Lower<object>(await app.Type.Convert(g.ToString(), typeof(System.Guid), ctx).Value())).IsEqualTo(g);
 
-        await Assert.That((await app.Type.Convert("Monday", typeof(System.DayOfWeek), ctx).Value()))
-            .IsEqualTo(System.DayOfWeek.Monday);
+        await Assert.That(global::app.type.item.@this.Lower<object>(await app.Type.Convert("Monday", typeof(System.DayOfWeek), ctx).Value())).IsEqualTo(System.DayOfWeek.Monday);
     }
 
     // ---- Plumbing fallback — a hook-less type, non-json source ----
@@ -166,7 +165,7 @@ public class ValueConversionHookTests
         var (app, ctx) = MakeApp();
         // Uri has no Convert hook and is not a primitive — the generic single-string
         // constructor reflection arm builds it.
-        var v = (await app.Type.Convert("http://example.com/", typeof(System.Uri), ctx).Value()) as System.Uri;
+        var v = global::app.type.item.@this.Lower<System.Uri>(await app.Type.Convert("http://example.com/", typeof(System.Uri), ctx).Value());
         await Assert.That(v).IsNotNull();
         await Assert.That(v!.Host).IsEqualTo("example.com");
     }

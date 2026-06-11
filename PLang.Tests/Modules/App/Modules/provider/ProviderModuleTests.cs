@@ -81,8 +81,8 @@ public class ProviderModuleTests
 
         await result.IsSuccess();
         var retrieved = _app.Code.Get<ISigning>("mock");
-        await retrieved.IsSuccess();
-        await Assert.That(((global::app.module.code.ICode)(await retrieved.Value())!).Name).IsEqualTo("mock");
+        await Assert.That(retrieved.Error).IsNull();
+        await Assert.That(((global::app.module.code.ICode)retrieved.Provider!).Name).IsEqualTo("mock");
     }
 
     [Test]
@@ -143,8 +143,8 @@ public class ProviderModuleTests
 
         await result.IsSuccess();
         var loaded = _app.Code.Get<ISigning>("test-signing");
-        await loaded.IsSuccess();
-        await Assert.That(((global::app.module.code.ICode)(await loaded.Value())!).Name).IsEqualTo("test-signing");
+        await Assert.That(loaded.Error).IsNull();
+        await Assert.That(((global::app.module.code.ICode)loaded.Provider!).Name).IsEqualTo("test-signing");
     }
 
     [Test]
@@ -210,7 +210,7 @@ public class ProviderModuleTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await (_app.Code.Get<ISigning>("second")).IsFailure();
+        await Assert.That(_app.Code.Get<ISigning>("second").Error).IsNotNull();
     }
 
     [Test]

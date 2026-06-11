@@ -21,14 +21,14 @@ public class LazyMaterialisationTests
         await using var app = NewApp();
         var ctx = app.User.Context;
         var d = data.FromRaw("5", type.Create("number", "int", context: ctx), ctx, "n");
-        await Assert.That((await d.Value())).IsEqualTo((object)5);
+        await Assert.That(global::app.type.item.@this.Lower<long>(await d.Value())).IsEqualTo(5L);
         await Assert.That(d.MaterializeCount()).IsEqualTo(1);
     }
 
     [Test] public async Task Value_ReturnsValueDirectly_WhenValueSet_AndRawNull()
     {
         var d = data.Ok(5);
-        await Assert.That((await d.Value())).IsEqualTo((object)5);
+        await Assert.That(global::app.type.item.@this.Lower<long>(await d.Value())).IsEqualTo(5L);
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
 

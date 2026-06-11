@@ -22,7 +22,7 @@ public sealed partial class @this
         bool returnWrapper = string.IsNullOrEmpty(kind);
         global::app.data.@this S(string? str) => global::app.data.@this.Ok(returnWrapper ? (object?)(@this)(str ?? string.Empty) : str);
         if (value is string s) return S(s);
-        if (value is @this self) return S(self.Value);
+        if (value is @this self) return S(self.Clr<string>());
 
         // Native dict/list value types are not IDictionary/IEnumerable, but their
         // [JsonConverter] renders the canonical {}/[] textual form — text/json means

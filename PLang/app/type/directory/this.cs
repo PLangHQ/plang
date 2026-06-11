@@ -7,7 +7,7 @@ namespace app.type.directory;
 /// files — <c>read</c> a child to get content, and a write-out of a directory
 /// is a flat listing, never a content dump.
 /// </summary>
-public sealed class @this : global::app.type.item.@this, global::app.data.ILoadable, module.IContext
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, global::app.data.ILoadable, module.IContext
 {
     public static string Example => "/docs";
     public static string Shape => "string";
@@ -54,6 +54,10 @@ public sealed class @this : global::app.type.item.@this, global::app.data.ILoada
     /// <summary>Write-out pre-materialisation — pulls the listing into memory so
     /// the sync renderer emits the flat listing of locations.</summary>
     public async System.Threading.Tasks.Task LoadAsync() => await List();
+
+    /// <summary>The item membership hook — routes to the listing rule below.</summary>
+    public override async System.Threading.Tasks.ValueTask<bool> Contains(global::app.data.@this needle)
+        => await Contains(needle.ToString() ?? "");
 
     /// <summary>Membership is over the LISTING's locations (a directory "contains"
     /// a name when some child's location carries it) — never over content.</summary>

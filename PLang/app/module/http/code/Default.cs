@@ -71,12 +71,12 @@ public sealed class Default : IHttp
         var timeout = action.TimeoutInSec == null ? config.Resolve("TimeoutInSec", 30)
             : (await action.TimeoutInSec.Value())?.ToDouble() ?? 0;
         if (timeout <= 0) timeout = config.Resolve("TimeoutInSec", 30);
-        string contentType = (action.ContentType == null ? null : await action.ContentType.Value()) is { } ctv ? ctv.Value : config.Resolve("ContentType", "application/json");
-        var encoding = (await action.Encoding.Value())?.Value ?? config.Resolve("Encoding", "utf-8");
+        string contentType = (action.ContentType == null ? null : await action.ContentType.Value()) is { } ctv ? ctv.Clr<string>()! : config.Resolve("ContentType", "application/json");
+        var encoding = (await action.Encoding.Value())?.Clr<string>() ?? config.Resolve("Encoding", "utf-8");
 
-        var urlResult = ResolveUrl((await action.Url.Value())!.Value, config);
+        var urlResult = ResolveUrl((await action.Url.Value())!.Clr<string>()!, config);
         if (!urlResult.Success) return urlResult;
-        var resolvedUrl = (await urlResult.Value())!.Value;
+        var resolvedUrl = (await urlResult.Value())!.Clr<string>()!;
 
         var headers = MergeHeaders(action.Headers == null ? null
             : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.Headers.Value()), config);
@@ -88,7 +88,7 @@ public sealed class Default : IHttp
         if (bodyVal != null)
         {
             if (contentType.Equals("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase)
-                && bodyVal is Dictionary<string, object> formDict)
+                && global::app.type.item.@this.Lower<Dictionary<string, object>>(bodyVal) is { } formDict)
             {
                 var formValues = new Dictionary<string, string>();
                 foreach (var kvp in formDict)
@@ -97,7 +97,7 @@ public sealed class Default : IHttp
             }
             else
             {
-                bodyString = bodyVal is string s ? s : JsonSerializer.Serialize(bodyVal);
+                bodyString = bodyVal is global::app.type.text.@this bt ? bt.Clr<string>()! : JsonSerializer.Serialize(bodyVal);
                 var enc = Encoding.GetEncoding(encoding);
                 httpContent = new StringContent(bodyString, enc, contentType);
             }
@@ -148,9 +148,9 @@ public sealed class Default : IHttp
         var timeout = action.TimeoutInSec == null ? config.Resolve("TimeoutInSec", 30)
             : (await action.TimeoutInSec.Value())?.ToDouble() ?? 0;
         if (timeout <= 0) timeout = config.Resolve("TimeoutInSec", 30);
-        var urlResult = ResolveUrl((await action.Url.Value())!.Value, config);
+        var urlResult = ResolveUrl((await action.Url.Value())!.Clr<string>()!, config);
         if (!urlResult.Success) return urlResult;
-        var resolvedUrl = (await urlResult.Value())!.Value;
+        var resolvedUrl = (await urlResult.Value())!.Clr<string>()!;
 
         var headers = MergeHeaders(action.Headers == null ? null
             : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.Headers.Value()), config);
@@ -196,11 +196,11 @@ public sealed class Default : IHttp
         var timeout = action.TimeoutInSec == null ? config.Resolve("TimeoutInSec", 30)
             : (await action.TimeoutInSec.Value())?.ToDouble() ?? 0;
         if (timeout <= 0) timeout = config.Resolve("TimeoutInSec", 30);
-        var encoding = (await action.Encoding.Value())?.Value ?? config.Resolve("Encoding", "utf-8");
+        var encoding = (await action.Encoding.Value())?.Clr<string>() ?? config.Resolve("Encoding", "utf-8");
 
-        var urlResult = ResolveUrl((await action.Url.Value())!.Value, config);
+        var urlResult = ResolveUrl((await action.Url.Value())!.Clr<string>()!, config);
         if (!urlResult.Success) return urlResult;
-        var resolvedUrl = (await urlResult.Value())!.Value;
+        var resolvedUrl = (await urlResult.Value())!.Clr<string>()!;
 
         var headers = MergeHeaders(action.Headers == null ? null
             : global::app.type.item.@this.Lower<Dictionary<string, object>>(await action.Headers.Value()), config);
@@ -323,7 +323,7 @@ public sealed class Default : IHttp
     {
         var bytes = await ReadLimitedBytesAsync(content, maxBytes, ct);
         if (!bytes.Success) return data.@this<global::app.type.text.@this>.FromError(bytes.Error!);
-        return data.@this<global::app.type.text.@this>.Ok(Encoding.UTF8.GetString((await bytes.Value())!.Value));
+        return data.@this<global::app.type.text.@this>.Ok(Encoding.UTF8.GetString((await bytes.Value())!.Clr<byte[]>()!));
     }
 
     // --- Internal HTTP transport ---
@@ -522,7 +522,7 @@ public sealed class Default : IHttp
             return bytesRead;
         }
 
-        var channel = new global::app.channel.type.http.@this(contentType, (await bytesRead.Value())!.Value, context);
+        var channel = new global::app.channel.type.http.@this(contentType, (await bytesRead.Value())!.Clr<byte[]>()!, context);
         var result = await channel.Read();
         // Metadata (status, headers, duration, url, ...) rides as Properties —
         // read with `!`. BuildProperties populates the protocol metadata; duration
@@ -558,7 +558,7 @@ public sealed class Default : IHttp
             BuildProperties(bodyRead, request, response);
             return bodyRead;
         }
-        var body = (await bodyRead.Value())!.Value;
+        var body = (await bodyRead.Value())!.Clr<string>()!;
 
         data.@this? data;
         try
@@ -654,7 +654,7 @@ public sealed class Default : IHttp
         {
             var read = await ReadLimitedStringAsync(response.Content, MaxErrorBodySize, ct);
             // Best effort: ignore size-cap / slow-loris failures here, proceed with empty body.
-            if (read.Success) errorBody = (await read.Value())!.Value;
+            if (read.Success) errorBody = (await read.Value())!.Clr<string>()!;
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { /* best effort — read failed (network/IO), proceed with empty */ }
         var err = global::app.data.@this.FromError(new ServiceError(
@@ -1009,20 +1009,20 @@ public sealed class Default : IHttp
                 ContentAs.Base64 => (CreateBase64Content(content!.ToString()!), (global::app.error.IError?)null),
                 ContentAs.Form => await CreateFormContentAsync(app, context, content!),
                 ContentAs.Text => (new StringContent(
-                    content is string or global::app.type.text.@this ? content.ToString()! : JsonSerializer.Serialize(content),
+                    content is global::app.type.text.@this ? content.ToString()! : JsonSerializer.Serialize(content),
                     Encoding.GetEncoding(encoding)), (global::app.error.IError?)null),
                 _ => (new StringContent(content!.ToString()!, Encoding.GetEncoding(encoding)), (global::app.error.IError?)null)
             };
         }
 
         // Auto-detect
-        if (content is Dictionary<string, object> ||
-            content is JsonElement je && je.ValueKind == JsonValueKind.Object)
+        if (content is global::app.type.dict.@this
+            || content is global::app.type.item.clr { Value: Dictionary<string, object> or JsonElement { ValueKind: JsonValueKind.Object } })
         {
             return await CreateFormContentAsync(app, context, content);
         }
 
-        if (content is string or global::app.type.text.@this)
+        if (content is global::app.type.text.@this)
         {
             var str = content.ToString()!;
             // Try as file path — gated through path.ExistsAsync (AuthGate(Read)).
@@ -1055,7 +1055,7 @@ public sealed class Default : IHttp
         if (!read.Success || await read.Value() == null)
             return (null, read.Error
                 ?? new ServiceError($"Could not read file: {path}", "FileReadError", 500));
-        var content = new ByteArrayContent((await read.Value())!.Value);
+        var content = new ByteArrayContent((await read.Value())!.Clr<byte[]>()!);
         content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
         return (content, null);
     }
@@ -1097,7 +1097,7 @@ public sealed class Default : IHttp
                 if (!read.Success || await read.Value() == null)
                     return (null, read.Error
                         ?? new ServiceError($"Could not read form file: {value[1..]}", "FileReadError", 500));
-                var fileContent = new ByteArrayContent((await read.Value())!.Value);
+                var fileContent = new ByteArrayContent((await read.Value())!.Clr<byte[]>()!);
                 fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
                 form.Add(fileContent, kvp.Key, fp.FileName);
             }

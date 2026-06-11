@@ -86,9 +86,9 @@ public partial class Read : IContext
             var read = await channel.Read();
             if (!read.Success) return read;
             var content = await read.Value();
-            if (content is string or global::app.type.text.@this)
+            if (content is global::app.type.text.@this)
             {
-                var resolved = await Context.Variable.Resolve(content!.ToString()!, skipInfrastructure: true);
+                var resolved = await Context.Variable.Resolve(content.ToString()!, skipInfrastructure: true);
                 return new data.@this(read.Name, resolved, read.Type);
             }
             return read;

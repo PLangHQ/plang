@@ -378,7 +378,7 @@ public sealed partial class @this : IAsyncDisposable
         if (!exists.Success || (await exists.Value())?.Value != true) return;
         var readResult = await prPath.ReadText();
         if (!readResult.Success) return;
-        var json = await readResult.Value() as string;
+        var json = (await readResult.Value() as global::app.type.text.@this)?.Clr<string>();
         // .pr deserialized to Goal via FilePath.ReadText's MIME path — fall back
         // to the raw text by reading directly through ReadBytes when .pr's MIME
         // converted the JSON to a typed object. For app.pr we only need the
@@ -387,7 +387,7 @@ public sealed partial class @this : IAsyncDisposable
         {
             var bytes = await prPath.ReadBytes();
             if (!bytes.Success || bytes.Peek() == null) return;
-            json = global::System.Text.Encoding.UTF8.GetString((await bytes.Value())!.Value);
+            json = global::System.Text.Encoding.UTF8.GetString((await bytes.Value())!.Clr<byte[]>()!);
         }
         if (string.IsNullOrWhiteSpace(json)) return;
         try
@@ -472,7 +472,7 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public async Task<data.@this<TResult>> RunAction<TAction, TResult>(TAction handler, actor.context.@this context)
         where TAction : module.ICodeGenerated
-        where TResult : global::app.type.item.@this
+        where TResult : global::app.type.item.@this, global::app.type.item.ICreate<TResult>
     {
         var result = await RunAction(handler, context);
         if (!result.Success) return data.@this<TResult>.FromError(result.Error!);

@@ -49,9 +49,9 @@ public class NamedProviderRegistryTests
         _app.Code.Register<ISigning>(provider);
 
         var result = _app.Code.Get<ISigning>("custom");
-        await result.IsSuccess();
-        await Assert.That((await result.Value())).IsSameReferenceAs(provider);
-        await Assert.That(((global::app.module.code.ICode)(await result.Value())!).Name).IsEqualTo("custom");
+        await Assert.That(result.Error).IsNull();
+        await Assert.That(result.Provider).IsSameReferenceAs(provider);
+        await Assert.That(((global::app.module.code.ICode)result.Provider!).Name).IsEqualTo("custom");
     }
 
     [Test]
@@ -75,8 +75,8 @@ public class NamedProviderRegistryTests
 
         var edResult = _app.Code.Get<ISigning>("mock-ed");
         var ecResult = _app.Code.Get<ISigning>("mock-ec");
-        await Assert.That((await edResult.Value())).IsSameReferenceAs(ed);
-        await Assert.That((await ecResult.Value())).IsSameReferenceAs(ec);
+        await Assert.That(edResult.Provider).IsSameReferenceAs(ed);
+        await Assert.That(ecResult.Provider).IsSameReferenceAs(ec);
     }
 
     [Test]
@@ -87,7 +87,7 @@ public class NamedProviderRegistryTests
         _app.Code.Register<ISigning>(second);
 
         var builtIn = _app.Code.Get<ISigning>("ed25519");
-        await Assert.That(((global::app.module.code.ICode)(await builtIn.Value())!).IsDefault).IsTrue();
+        await Assert.That(((global::app.module.code.ICode)builtIn.Provider!).IsDefault).IsTrue();
         await Assert.That(second.IsDefault).IsFalse();
     }
 
@@ -111,8 +111,8 @@ public class NamedProviderRegistryTests
         _app.Code.Register<ISigning>(new MockSigningProvider("second"));
 
         var result = _app.Code.Get<ISigning>();
-        await result.IsSuccess();
-        var entry = (global::app.module.code.ICode)(await result.Value())!;
+        await Assert.That(result.Error).IsNull();
+        var entry = (global::app.module.code.ICode)result.Provider!;
         await Assert.That(entry.IsDefault).IsTrue();
         await Assert.That(entry.Name).IsEqualTo("ed25519");
     }
@@ -123,7 +123,7 @@ public class NamedProviderRegistryTests
         // Use a bare registry with no built-in registrations
         var bare = new EngineProviders();
         var result = bare.Get<IKey>();
-        await result.IsFailure();
+        await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
     }
 
@@ -131,7 +131,7 @@ public class NamedProviderRegistryTests
     public async Task Get_ByName_NonExistent_ReturnsError()
     {
         var result = _app.Code.Get<ISigning>("ecdsa");
-        await result.IsFailure();
+        await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
     }
 
@@ -148,10 +148,10 @@ public class NamedProviderRegistryTests
         await result.IsSuccess();
 
         var getRemoved = _app.Code.Get<ISigning>("second");
-        await getRemoved.IsFailure();
+        await Assert.That(getRemoved.Error).IsNotNull();
 
         var getBuiltIn = _app.Code.Get<ISigning>("ed25519");
-        await getBuiltIn.IsSuccess();
+        await Assert.That(getBuiltIn.Error).IsNull();
     }
 
     [Test]
@@ -185,7 +185,7 @@ public class NamedProviderRegistryTests
         await Assert.That(second.IsDefault).IsTrue();
 
         var builtIn = _app.Code.Get<ISigning>("ed25519");
-        await Assert.That(((global::app.module.code.ICode)(await builtIn.Value())!).IsDefault).IsFalse();
+        await Assert.That(((global::app.module.code.ICode)builtIn.Provider!).IsDefault).IsFalse();
     }
 
     [Test]

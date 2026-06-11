@@ -60,28 +60,40 @@ public sealed class source : @this, module.IContext
     /// new instance with this source as its prior; a raw with no reader and no
     /// type answers itself (the bytes are the value).
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask<@this> Ready()
+    public override async System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this asking)
     {
         var read = Context?.App.Type.Readers.Of(_type, _kind);
         object? parsed;
-        if (read != null)
+        try
         {
-            parsed = read(_raw, _kind, new global::app.type.reader.ReadContext(Context));
+            if (read != null)
+            {
+                parsed = read(_raw, _kind, new global::app.type.reader.ReadContext(Context));
+            }
+            else if (_raw is string s)
+            {
+                // No reader — a string raw with a known type reads via the type's own
+                // Convert (json→dict, WireReader, primitive coercion).
+                var entity = global::app.type.@this.Create(_type, _kind, context: Context);
+                parsed = entity.Convert(s);
+            }
+            else
+            {
+                return this;
+            }
         }
-        else if (_raw is string s)
+        catch (System.Exception ex) when (ex is System.Text.Json.JsonException or System.FormatException or System.InvalidOperationException)
         {
-            // No reader — a string raw with a known type reads via the type's own
-            // Convert (json→dict, WireReader, primitive coercion).
-            var entity = global::app.type.@this.Create(_type, _kind, context: Context);
-            parsed = entity.Convert(s);
-        }
-        else
-        {
-            return this;
+            // SOURCE authors its own failure story — the declared form did not
+            // parse as its declared {type, kind}.
+            asking.Fail(new global::app.error.Error(
+                $"content declared {_type}{(_kind != null ? $"/{_kind}" : "")} did not parse: {ex.Message}",
+                "SourceParseFailed", 400) { Exception = ex });
+            return Absent;
         }
 
         var answer = global::app.data.@this.Lift(parsed, Context);
-        if (answer == null || ReferenceEquals(answer, this)) return this;
+        if (ReferenceEquals(answer, this)) return this;
         answer.Accumulate(this);
         await System.Threading.Tasks.Task.CompletedTask;
         return answer;
@@ -105,9 +117,6 @@ public sealed class source : @this, module.IContext
 
     internal override object? ToRaw() => _raw;
 
-    /// <summary>The door hands the raw form — for an unparseable source the
-    /// bytes ARE the value; the utf-8 face stays a Peek-only look.</summary>
-    internal override object? Open() => _raw;
     internal override object? Clr(System.Type target) => ClrConvert(_raw, target);
 
     /// <summary>Display is the raw text form; bytes show as a size note, never decoded.</summary>

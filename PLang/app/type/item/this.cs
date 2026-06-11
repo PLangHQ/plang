@@ -24,42 +24,39 @@ namespace app.type.item;
 /// does not). <c>item</c> must <b>not</b> implement either, or <c>dict : item</c>
 /// would inherit an order it can't honor (its <c>Compare.Order</c> throws).</para>
 /// </summary>
-public abstract class @this : global::app.data.IBooleanResolvable
+public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this>
 {
     /// <summary>
-    /// The value door on the instance itself — "I am going to use this value,
-    /// give it to me ready." Loads and parses if needed, and may answer AS A
-    /// DIFFERENT type instance (a <c>file</c> loads its bytes and answers with
-    /// the parsed <c>dict</c>, stamping itself as the answer's <see cref="Prior"/>).
-    /// The default — a value already in its final form — answers self with no
-    /// async hop. The holding <c>Data</c> rebinds to the answer when
-    /// <see cref="Cacheable"/> allows; that rebind IS the narrow.
-    /// (This is the type-side <c>Value()</c> door of the value model; named
-    /// <c>Ready</c> because several types still expose a public <c>Value</c>
-    /// property, which C# cannot coexist with an override of the same name.)
+    /// THE value door — "I am going to use this value, make yourself ready."
+    /// Loads if needed, parses if needed, renders if stamped (ready MEANS
+    /// ready: a template whose holes are unfilled is not ready). May answer
+    /// AS A DIFFERENT type instance (a <c>file</c> loads its bytes and answers
+    /// with the parsed <c>dict</c>, stamping itself as the answer's
+    /// <see cref="Prior"/>). The default — a value already in its final form —
+    /// answers self with no async hop. The holding <c>Data</c> rebinds to the
+    /// answer when <see cref="Cacheable"/> allows; that rebind IS the narrow.
+    /// <para><b>Failure:</b> every failure is authored by the type that failed
+    /// — the door catches only its OWN known failure modes (file tells IO
+    /// stories, source tells parse stories), reports via
+    /// <c>asking.Fail(error)</c> and answers <see cref="Absent"/>. A truly
+    /// unexpected exception is a bug and propagates. The blessed surface of
+    /// <paramref name="asking"/> here is <c>Fail</c> alone.</para>
     /// </summary>
-    public virtual System.Threading.Tasks.ValueTask<@this> Ready()
+    public virtual System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this asking)
         => System.Threading.Tasks.ValueTask.FromResult(this);
 
+    /// <summary>The undeclared typed absence — what a failed door answers
+    /// (the error rides the asking binding; the value slot stays never-null).</summary>
+    public static @this Absent => absent.Slot;
+
     /// <summary>
-    /// What is in memory NOW — sync, no I/O, no parse, no resolve. The default
-    /// is the instance itself; a loading type whose bytes are in memory but
-    /// unparsed answers with those bytes; the rung-2 carrier answers with the
-    /// CLR object it carries.
+    /// What is in memory NOW — sync, no I/O, no parse, no resolve: the
+    /// instance itself. (ToString, Equals, debug views; never a value read.)
     /// </summary>
     public virtual object? Peek() => this;
 
     /// <summary>
-    /// What the value door hands over after <see cref="Ready"/> answered —
-    /// the transitional consumer-facing form (tightens to the instance itself
-    /// when the consumer tail converts). Defaults to <see cref="Peek"/>; a
-    /// source whose bytes could not parse hands the raw bytes (Peek's utf-8
-    /// face is a look, not the value).
-    /// </summary>
-    internal virtual object? Open() => Peek();
-
-    /// <summary>
-    /// Whether the holding <c>Data</c> may keep (rebind to) <see cref="Ready"/>'s
+    /// Whether the holding <c>Data</c> may keep (rebind to) <see cref="Value"/>'s
     /// answer. True when the answer depends on nothing but the value itself
     /// (parse). False when the answer depends on outside state (a template
     /// render, a computed value) — those answer fresh at every use and are
@@ -141,18 +138,6 @@ public abstract class @this : global::app.data.IBooleanResolvable
     /// </summary>
     public string? Template { get; init; }
 
-    /// <summary>
-    /// The use-time half of the template contract — fills the value's
-    /// <c>%ref%</c> holes against live variables and answers the result.
-    /// Single-pass over the INPUT; the output is never re-scanned. A
-    /// substituted value that is itself a stamped template renders through
-    /// its OWN door (door recursion is fine; string re-scanning is banned).
-    /// Default: self — a value with no stamp has nothing to fill. Returns
-    /// null for a full-match <c>%ref%</c> whose variable is unset.
-    /// </summary>
-    internal virtual System.Threading.Tasks.ValueTask<@this?> Render(global::app.actor.context.@this context)
-        => System.Threading.Tasks.ValueTask.FromResult<@this?>(this);
-
     /// <summary>The chain entry whose type name matches — self or a prior.
     /// Null when this value never was that type.</summary>
     public @this? Facet(string typeName)
@@ -163,19 +148,34 @@ public abstract class @this : global::app.data.IBooleanResolvable
         return null;
     }
 
+    /// <summary>The chain entry that IS a <typeparamref name="T"/> — self or a
+    /// prior. The typed face of <see cref="Facet(string)"/>; the default
+    /// <see cref="ICreate{TSelf}.Create"/> answers a slot from here (a
+    /// <c>Data&lt;file&gt;</c> slot stays satisfied after the file parsed).</summary>
+    public T? Facet<T>() where T : @this
+    {
+        for (var i = (this as @this); i != null; i = i._prior)
+            if (i is T t) return t;
+        return null;
+    }
+
     /// <summary>
-    /// True when <paramref name="value"/>'s type overrides <see cref="Ready"/> —
+    /// True when <paramref name="value"/>'s type overrides <see cref="Value"/> —
     /// its own door does real work (file/url load, source parses, computed
-    /// answers fresh). Metadata reads must not open such a door, and a carrier
-    /// must never stand between the Data and it.
+    /// answers fresh, a template renders). Metadata reads must not open such a
+    /// door, and a carrier must never stand between the Data and it.
     /// </summary>
     internal static bool OwnsDoor(@this value)
-        => _doorOwners.GetOrAdd(value.GetType(), static t =>
-            t.GetMethod(nameof(Ready))!.DeclaringType != typeof(@this));
+        => value.Template != null || _doorOwners.GetOrAdd(value.GetType(), static t =>
+            t.GetMethod(nameof(Value), new[] { typeof(global::app.data.@this) })!.DeclaringType != typeof(@this));
 
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, bool> _doorOwners = new();
 
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, string> _namespaceTails = new();
+
+    /// <summary>The PLang name of an item CLASS (the namespace-tail rule) —
+    /// for messages that must name a type with no instance in hand.</summary>
+    internal static string NameOf(System.Type t) => NamespaceTail(t);
 
     private protected static string NamespaceTail(System.Type t)
         => _namespaceTails.GetOrAdd(t, static ct =>
@@ -184,6 +184,26 @@ public abstract class @this : global::app.data.IBooleanResolvable
             var tail = ns[(ns.LastIndexOf('.') + 1)..];
             return tail.TrimStart('@');
         });
+
+    /// <summary>
+    /// Membership — each type owns its own answer: text by substring (ordinal,
+    /// case-insensitive), list by element equality through THE comparison
+    /// entry, dict by key, directory by its listing. The default is false — a
+    /// scalar contains nothing; there is no ToString fallback (a needle never
+    /// matches a serialization).
+    /// </summary>
+    public virtual System.Threading.Tasks.ValueTask<bool> Contains(global::app.data.@this needle)
+        => System.Threading.Tasks.ValueTask.FromResult(false);
+
+    /// <summary>
+    /// Emptiness — each type owns its own answer: text → whitespace-only,
+    /// dict/list → no entries, null/absent → empty. Async because a reference
+    /// may load to answer (same precedent as <see cref="AsBooleanAsync"/>).
+    /// The default is false — a present value with no emptier notion is not
+    /// empty.
+    /// </summary>
+    public virtual System.Threading.Tasks.ValueTask<bool> IsEmpty()
+        => System.Threading.Tasks.ValueTask.FromResult(false);
 
     /// <summary>
     /// Synchronous truthiness — the hot path so a plain <c>if %bool%</c> never
@@ -227,6 +247,16 @@ public abstract class @this : global::app.data.IBooleanResolvable
         @this it => it.Clr<T>(),
         _ => default,
     };
+
+    /// <summary>
+    /// The typed source-face seam for CLR-facing machinery (ctor matching,
+    /// kind probes, TryConvert): a LEAF value lowers to its own backing via
+    /// its <see cref="Clr(System.Type)"/>; containers and non-items pass
+    /// through. The single owner of the old per-site
+    /// "<c>is item { IsLeaf: true } ? ToRaw() : v</c>" transform.
+    /// </summary>
+    internal static object? Backing(object? v)
+        => v is @this { IsLeaf: true } l ? l.Clr<object>() : v;
 
     /// <summary>
     /// The shared mechanics under every <see cref="Clr(System.Type)"/>: the

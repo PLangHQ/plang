@@ -16,7 +16,7 @@ public class ScalarAccessTests
     [Test] public async Task Scalar_BytesValue_DecodesUtf8_WhenValidUtf8()
     {
         var d = data.FromRaw(Encoding.UTF8.GetBytes("héllo"), type.Create("bytes"));
-        await Assert.That(d.Peek()).IsEqualTo((object)"héllo");
+        await Assert.That(d.Peek()?.ToString()).IsEqualTo("héllo");
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
 
@@ -33,7 +33,7 @@ public class ScalarAccessTests
     {
         const string json = "{\"port\":8080}";
         var d = data.FromRaw(json, type.Create("object", "json"));
-        await Assert.That(d.Peek()).IsEqualTo((object)json); // the raw string, not a dict
+        await Assert.That(d.Peek()?.ToString()).IsEqualTo(json); // the raw string, not a dict
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);       // never parsed
     }
 

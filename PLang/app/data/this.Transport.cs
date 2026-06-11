@@ -183,12 +183,7 @@ public partial class @this
 
         // Courier read — the in-memory byte form only; anything else (a nested
         // Data riding the carrier, a missing value) is a corrupt archive.
-        var compressed = Peek() switch
-        {
-            byte[] raw => raw,
-            global::app.type.binary.@this b => b.Value,
-            _ => null,
-        };
+        var compressed = global::app.type.item.@this.Lower<byte[]>(Peek());
         if (compressed == null || compressed.Length == 0)
             return FromError(new ServiceError("Archived Data has no byte[] value", "DecompressError", 500));
 
@@ -242,7 +237,9 @@ public partial class @this
     /// </summary>
     public @this Unwrap()
     {
-        if (Peek() is @this inner)
+        // A nested Data rides the rung-2 carrier (the SetValueDirect courier
+        // debt) — unwrap reaches through it.
+        if (Peek() is global::app.type.item.clr { Value: @this inner })
         {
             inner.Context = _context;
             return inner;

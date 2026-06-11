@@ -24,12 +24,12 @@ public interface IChoice
 ///   resolves a name (e.g. <c>condition.Operator</c>, which keeps its per-option
 ///   behavior on the instance).</item>
 /// </list>
-/// The handler keeps the typed value (<c>HttpMethod m = action.Method?.Value</c> via
+/// The handler keeps the typed value (<c>HttpMethod m = action.Method?.Clr<string>()</c> via
 /// the implicit operator) while the language sees a validated choice. The name is the
 /// value's <see cref="object.ToString"/> — uniform across enums and named-set classes.
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(JsonFactory))]
-public sealed class @this<T> : global::app.type.item.@this,
+public sealed class @this<T> : global::app.type.item.@this, global::app.type.item.ICreate<@this<T>>,
     IChoice
     where T : notnull
 {
@@ -42,6 +42,8 @@ public sealed class @this<T> : global::app.type.item.@this,
     public static implicit operator @this<T>(T value) => new(value);
 
     internal override object? ToRaw() => Value;
+    /// <summary>The CLR exit door — choice hands its enum backing.</summary>
+    internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override string ToString() => Value.ToString() ?? "";
     public override bool IsTruthy() => true;
     public override bool IsLeaf => true;
@@ -82,7 +84,7 @@ public sealed class @this<T> : global::app.type.item.@this,
         @this<T> c => Value.Equals(c.Value),
         T v => Value.Equals(v),
         IChoice ic => string.Equals(ToString(), ic.Name, System.StringComparison.OrdinalIgnoreCase),
-        global::app.type.text.@this t => string.Equals(ToString(), t.Value, System.StringComparison.OrdinalIgnoreCase),
+        global::app.type.text.@this t => t.AreEqual(ToString()),
         string s => string.Equals(ToString(), s, System.StringComparison.OrdinalIgnoreCase),
         _ => false,
     };

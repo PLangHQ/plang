@@ -17,7 +17,7 @@ public partial class Remove : IContext
 
     public async Task<data.@this> Run()
     {
-        var name = (await Name.Value())?.Value;
+        var name = (await Name.Value())?.Clr<string>();
         if (string.IsNullOrEmpty(name))
             return global::app.data.@this.FromError(new ServiceError("Channel name is required", "ValueRequired", 400));
 

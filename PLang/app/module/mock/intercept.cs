@@ -19,7 +19,7 @@ public partial class intercept : IContext
         var handle = new global::app.mock.@this
         {
             Id = Guid.NewGuid().ToString("N")[..8],
-            Pattern = (await Pattern.Value())!.Value,
+            Pattern = (await Pattern.Value())!.Clr<string>()!,
             IsSpy = (Return == null ? null : await Return.Value()) == null && (Call == null ? null : await Call.Value()) == null
         };
 
@@ -62,7 +62,7 @@ public partial class intercept : IContext
         var binding = new EventBinding(
             Trigger.BeforeAction,
             handler,
-            actionPattern: (await Pattern.Value())!.Value);
+            actionPattern: (await Pattern.Value())!.Clr<string>()!);
 
         handle.EventBindingId = binding.Id;
 
@@ -120,8 +120,9 @@ public partial class intercept : IContext
 
     private static object? ResolveParamValue(data.@this param, global::app.variable.list.@this variables)
     {
-        if (param.Peek() is string s && s.Contains('%'))
-            return variables.Resolve(s);
+        // A live ref is a stamped template — the stamp gates resolution.
+        if (param.Peek() is global::app.type.text.@this { Template: not null } st)
+            return variables.Resolve(st.Clr<string>()!);
 
         return param.Peek();
     }

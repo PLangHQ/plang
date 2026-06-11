@@ -20,15 +20,11 @@ public partial class Set : IContext, IBuildValidatable
     {
         var value = parameters.FirstOrDefault(p =>
             string.Equals(p.Name, "Value", StringComparison.OrdinalIgnoreCase));
-        // Build-time is a sync surface — read the materialised backing, never the
-        // async door. The literal value (no %var%) is in hand at build; an
-        // authored string rides as text and presents its string face here (the
-        // strict probe and the "this" guard both reason over the source string).
-        var valueBacking = value?.Peek();
-        if (valueBacking is global::app.type.text.@this tb) valueBacking = tb.Value;
-        else if (valueBacking is global::app.type.binary.@this bb) valueBacking = bb.Value;
-        if (valueBacking is string s && s == "this")
-            return "Parameter 'Value' is the literal string \"this\" — this is wrong. For \"write to %var%\" patterns, use \"%!data%\" to capture the previous action's result. \"this\" is a type annotation, not a value.";
+        // Build-time is a sync surface — read the materialised backing, never
+        // the async door. The strict probe and the conversion check below
+        // reason over the value's raw face at this proven leaf (ValidateKind
+        // and TryConvert are CLR-facing machinery).
+        var valueBacking = global::app.type.item.@this.Backing(value?.Peek());
 
         // Strict kind enforcement at build for literals. Pulls the user-named
         // type entity from the Type parameter (post-Stage-4 — a type, not a

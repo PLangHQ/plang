@@ -10,7 +10,7 @@ namespace app.snapshot;
 /// Subsystems write entries via <see cref="Write{T}"/> and read via
 /// <see cref="Read{T}"/>; the underlying storage is an implementation detail.
 /// </summary>
-public sealed partial class @this : global::app.type.item.@this
+public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     private readonly Dictionary<string, @this> _sections =
         new(StringComparer.OrdinalIgnoreCase);

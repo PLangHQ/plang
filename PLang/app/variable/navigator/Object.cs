@@ -29,8 +29,9 @@ public sealed class Object : INavigator
         // backing — %now.Ticks% reaches DateTimeOffset.Ticks through the
         // datetime value; the wrapper adds behavior, it doesn't hide the CLR
         // mate's own properties.
+        object? target = value;
         if (prop == null && value is global::app.type.item.@this { IsLeaf: true } leaf
-            && leaf.ToRaw() is { } backing && !ReferenceEquals(backing, leaf))
+            && leaf.Clr<object>() is { } backing && !ReferenceEquals(backing, leaf))
         {
             for (var t = backing.GetType(); t != null && prop == null; t = t.BaseType)
             {
@@ -38,7 +39,7 @@ public sealed class Object : INavigator
                     BindingFlags.Public | BindingFlags.Instance |
                     BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly);
             }
-            if (prop != null) value = backing;
+            if (prop != null) target = backing;
         }
         if (prop == null) return global::app.data.@this.NotFound(key);
 

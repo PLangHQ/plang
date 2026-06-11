@@ -167,7 +167,7 @@ public sealed class @this : ISerializer
         }
     }
 
-    public async Task<global::app.data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default) where T : global::app.type.item.@this
+    public async Task<global::app.data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
         try
         {
@@ -276,7 +276,7 @@ public sealed class @this : ISerializer
         }
     }
 
-    public global::app.data.@this<T> Deserialize<T>(string s) where T : global::app.type.item.@this
+    public global::app.data.@this<T> Deserialize<T>(string s) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
         try
         {

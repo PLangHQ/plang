@@ -341,7 +341,7 @@ public class DataTests
     {
         var ov = new Data("test");
 
-        await Assert.That(ov.IsEmpty).IsTrue();
+        await Assert.That(await ov.IsEmpty()).IsTrue();
     }
 
     [Test]
@@ -349,7 +349,7 @@ public class DataTests
     {
         var ov = new Data("test", "");
 
-        await Assert.That(ov.IsEmpty).IsTrue();
+        await Assert.That(await ov.IsEmpty()).IsTrue();
     }
 
     [Test]
@@ -357,7 +357,7 @@ public class DataTests
     {
         var ov = new Data("test", "hello");
 
-        await Assert.That(ov.IsEmpty).IsFalse();
+        await Assert.That(await ov.IsEmpty()).IsFalse();
     }
 
     [Test]
@@ -365,7 +365,7 @@ public class DataTests
     {
         var ov = new Data("test");
 
-        await Assert.That(ov.IsEmpty).IsTrue();
+        await Assert.That(await ov.IsEmpty()).IsTrue();
     }
 
     [Test]
@@ -667,7 +667,7 @@ public class DataTests
         await Assert.That(wrapped.Type!.Name).IsEqualTo("image");
         await Assert.That((await wrapped.Value())).IsTypeOf<Data>();
         await Assert.That(wrapped.Context).IsEqualTo(context);
-        var inner = (Data)(await wrapped.Value())!;
+        var inner = (Data)((global::app.type.item.clr)(await wrapped.Value())!).Value;
         await Assert.That(inner.Type!.Name).IsEqualTo("image/jpeg");
     }
 
@@ -812,7 +812,7 @@ public class DataTests
         await decompressed.IsSuccess();
         await Assert.That(decompressed.Type!.Name).IsEqualTo("text");
         await Assert.That((await decompressed.Value())).IsTypeOf<Data>();
-        var decompressedInner = (Data)(await decompressed.Value())!;
+        var decompressedInner = (Data)((global::app.type.item.clr)(await decompressed.Value())!).Value;
         await Assert.That((await decompressedInner.Value())?.ToString()).IsEqualTo("Hello world");
     }
 
@@ -1022,11 +1022,11 @@ public class DataTests
         await Assert.That(decompressed.Type!.Name).IsEqualTo("document");
         await Assert.That((await decompressed.Value())).IsTypeOf<Data>();
 
-        var midResult = (Data)(await decompressed.Value())!;
+        var midResult = (Data)((global::app.type.item.clr)(await decompressed.Value())!).Value;
         await Assert.That(midResult.Type!.Name).IsEqualTo("text");
         await Assert.That((await midResult.Value())).IsTypeOf<Data>();
 
-        var leafResult = (Data)(await midResult.Value())!;
+        var leafResult = (Data)((global::app.type.item.clr)(await midResult.Value())!).Value;
         await Assert.That((await leafResult.Value())?.ToString()).IsEqualTo("deep content");
     }
 
@@ -1241,7 +1241,7 @@ public class DataTests
         var b = new Data("", list2);
 
         var result = a.Merge(b);
-        var merged = (await result.Value()) as List<Data>;
+        var merged = global::app.type.item.@this.Lower<List<Data>>(await result.Value());
 
         await Assert.That(merged).IsNotNull();
         await Assert.That(merged!.Count).IsEqualTo(3); // x, y (replaced), z
@@ -1270,7 +1270,7 @@ public class DataTests
         var b = new Data("", "also not a list");
 
         var result = a.Merge(b);
-        var merged = (await result.Value()) as List<Data>;
+        var merged = global::app.type.item.@this.Lower<List<Data>>(await result.Value());
 
         // Both cast as List<Data> produce empty lists — result is empty
         await Assert.That(merged).IsNotNull();
@@ -1299,9 +1299,9 @@ public class DynamicDataTests
         var value2 = await dov.Value();
         var value3 = await dov.Value();
 
-        await Assert.That(value1).IsEqualTo(1);
-        await Assert.That(value2).IsEqualTo(2);
-        await Assert.That(value3).IsEqualTo(3);
+        await Assert.That(value1?.ToString()).IsEqualTo("1");
+        await Assert.That(value2?.ToString()).IsEqualTo("2");
+        await Assert.That(value3?.ToString()).IsEqualTo("3");
     }
 
     [Test]
@@ -1320,7 +1320,7 @@ public class DynamicDataTests
         var now = DateTime.UtcNow;
         var dov = new DynamicData("now", () => now);
 
-        await Assert.That((await dov.Value())).IsEqualTo(now);
+        await Assert.That(global::app.type.item.@this.Lower<System.DateTimeOffset>(await dov.Value())).IsEqualTo(now);
     }
 
     // --- IsVariable tests ---

@@ -11,7 +11,7 @@ public class DataGenericTests
     {
         var data = global::app.data.@this<global::app.type.text.@this>.Ok("hello");
 
-        await Assert.That((await data.Value())!.Value).IsEqualTo("hello");
+        await Assert.That((await data.Value())!.Clr<string>()!).IsEqualTo("hello");
         await data.IsSuccess();
     }
 
@@ -20,7 +20,7 @@ public class DataGenericTests
     {
         var data = global::app.data.@this<global::app.type.number.@this>.Ok(42, Type.Int);
 
-        await Assert.That((await data.Value())).IsEqualTo(42);
+        await Assert.That((await data.Value())?.ToString()).IsEqualTo("42");
         await Assert.That(data.Type).IsNotNull();
         await Assert.That(data.Type!.ClrType).IsEqualTo(typeof(int));
     }
@@ -30,7 +30,7 @@ public class DataGenericTests
     {
         var data = global::app.data.@this<global::app.type.text.@this>.Ok("world");
 
-        string? typed = (await data.Value())?.Value;
+        string? typed = (await data.Value())?.Clr<string>();
 
         await Assert.That(typed).IsEqualTo("world");
     }
@@ -75,6 +75,6 @@ public class DataGenericTests
         var result = await task;
 
         await result.IsSuccess();
-        await Assert.That((await result.Value())).IsEqualTo(99);
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("99");
     }
 }

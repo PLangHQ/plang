@@ -945,7 +945,9 @@ public sealed class OpenAi : ILlm
         var result = await settings.Get("LlmConfig", settingKey);
         if (result.Success && result.Peek() != null)
         {
-            var val = (await result.Value()) is data.@this d ? (await d.Value())?.ToString() : (await result.Value())?.ToString();
+            var val = (await result.Value()) is global::app.type.item.clr { Value: data.@this d }
+                ? (await d.Value())?.ToString()
+                : (await result.Value())?.ToString();
             if (!string.IsNullOrEmpty(val)) return val;
         }
 
@@ -1018,7 +1020,7 @@ public sealed class OpenAi : ILlm
                 props[entry.Name] = entry.Peek();
             }
         }
-        else if (cachedValue is JsonElement je && je.ValueKind == JsonValueKind.Object)
+        else if (cachedValue is global::app.type.item.clr { Value: JsonElement je } && je.ValueKind == JsonValueKind.Object)
         {
             if (je.TryGetProperty("Value", out var valProp))
                 resultValue = valProp.ValueKind == JsonValueKind.Null ? null : valProp.Clone();
@@ -1037,7 +1039,7 @@ public sealed class OpenAi : ILlm
                 };
             }
         }
-        else if (cachedValue is Dictionary<string, object?> dict)
+        else if (cachedValue is global::app.type.item.clr { Value: Dictionary<string, object?> dict })
         {
             resultValue = dict.GetValueOrDefault("Value");
             foreach (var kvp in dict)
@@ -1060,7 +1062,7 @@ public sealed class OpenAi : ILlm
         // string; a legacy raw prop is already a string.
         static string? AsText(object? v) => v switch
         {
-            global::app.type.text.@this t => t.Value,
+            global::app.type.text.@this t => t.Clr<string>(),
             string s => s,
             _ => null,
         };

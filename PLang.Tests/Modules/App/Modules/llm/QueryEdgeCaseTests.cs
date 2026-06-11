@@ -163,8 +163,8 @@ public class QueryEdgeCaseTests
         try
         {
             var providerResult = engine2.Code.Get<ILlm>();
-            await providerResult.IsSuccess();
-            await Assert.That((await providerResult.Value())).IsTypeOf<OpenAi>();
+            await Assert.That(providerResult.Error).IsNull();
+            await Assert.That(providerResult.Provider).IsTypeOf<OpenAi>();
         }
         finally
         {

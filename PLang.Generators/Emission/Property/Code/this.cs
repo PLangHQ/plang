@@ -20,7 +20,7 @@ public sealed record @this(
         sb.AppendLine($"    private {TypeName}? {Backing};");
         sb.AppendLine($"    public partial {TypeName} {Name}");
         sb.AppendLine("    {");
-        sb.AppendLine($"        get {{ if ({Backing} == null) {{ var __e = {engineExpr}; if (__e != null) {{ var __r = __e.Code.Get<{TypeName}>(); if (__r.Success) {Backing} = __r.Peek() as {TypeName}; }} }} return {Backing}!; }}");
+        sb.AppendLine($"        get {{ if ({Backing} == null) {{ var __e = {engineExpr}; if (__e != null) {Backing} = __e.Code.Get<{TypeName}>().Provider; }} return {Backing}!; }}");
         sb.AppendLine("    }");
         sb.AppendLine();
     }

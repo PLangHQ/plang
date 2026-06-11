@@ -19,11 +19,20 @@ public sealed class absent : @this
         _kind = kind;
     }
 
+    /// <summary>The undeclared absence — a slot with no value and no
+    /// declaration yet (NotFound/Uninitialized). Stamp-free, so the shared
+    /// instance is safe (instance-cache rule).</summary>
+    public static readonly absent Slot = new("item");
+
     protected internal override global::app.type.@this Mint()
         => new(_type) { Kind = _kind };
 
     public override object? Peek() => null;
     public override bool IsTruthy() => false;
+
+    /// <summary>The item emptiness hook — a value-less slot is empty.</summary>
+    public override System.Threading.Tasks.ValueTask<bool> IsEmpty()
+        => System.Threading.Tasks.ValueTask.FromResult(true);
     internal override object? ToRaw() => null;
     public override string ToString() => "";
 }

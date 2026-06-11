@@ -59,22 +59,21 @@ public sealed class Text : ISerializer
         }
     }
 
-    public async Task<data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default) where T : global::app.type.item.@this
+    public async Task<data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
         var result = await DeserializeAsync(stream, cancellationToken);
         if (!result.Success) return global::app.data.@this<T>.From(result);
         // Empty payload = absence — the channel-protocol concern that belongs
         // to this serializer. Everything else: the Data converts ITSELF to T
         // through T's own Convert hook (As<T> is the typed resolution door).
-        if (result.IsEmpty) return global::app.data.@this<T>.Ok(default!);
+        if (await result.IsEmpty()) return global::app.data.@this<T>.Ok(default!);
         return await result.Value<T>();
     }
 
     public data.@this<global::app.type.text.@this> Serialize(data.@this data)
     {
         var value = data.Peek();
-        if (value == null || AppTypes.IsPrimitive(value.GetType())
-            || value is global::app.type.item.@this { IsLeaf: true })
+        if (value == null || value.IsLeaf)
             return global::app.data.@this<global::app.type.text.@this>.Ok(value?.ToString() ?? "");
         return _jsonFallback.Serialize(data);
     }
@@ -82,7 +81,7 @@ public sealed class Text : ISerializer
     public data.@this Deserialize(string s)
         => global::app.data.@this.Ok(s);
 
-    public data.@this<T> Deserialize<T>(string s) where T : global::app.type.item.@this
+    public data.@this<T> Deserialize<T>(string s) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
         => global::app.data.@this<T>.Ok(FromText<T>(s));
 
     /// <summary>

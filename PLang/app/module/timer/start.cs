@@ -15,7 +15,7 @@ public partial class Start : IContext, IStatic
     public async Task<data.@this<global::app.type.@bool.@this>> Run()
     {
         var key = ((Name == null ? null : await Name.Value()) as global::app.type.text.@this)?.ToString() ?? "default";
-        var entry = new TimerEntry(DateTimeOffset.UtcNow, (await Scope.Value())!.Value);
+        var entry = new TimerEntry(DateTimeOffset.UtcNow, (await Scope.Value())!.Clr<string>()!);
         Static[key] = entry;
         Static["__last__"] = key;
         return global::app.data.@this<global::app.type.@bool.@this>.Ok(true);

@@ -304,7 +304,7 @@ public sealed partial class @this : global::app.type.path.@this
     public override async Task<data.@this<global::app.type.path.@this>> Save(data.@this? value)
     {
         var raw = value == null ? null : await value.Value();
-        if (raw is byte[] bytes) return await WriteBytes(bytes);
+        if (raw is global::app.type.binary.@this bin) return await WriteBytes(bin.Value);
         return await WriteText(raw?.ToString() ?? "");
     }
 

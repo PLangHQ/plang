@@ -40,7 +40,7 @@ public class Stage2_GetParameterLazyTests
 
         await result.Data.IsSuccess();
         var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
-        await Assert.That((await typed!.Value())?.Value).IsEqualTo("/tmp/x.txt");
+        await Assert.That((await typed!.Value())?.Clr<string>()).IsEqualTo("/tmp/x.txt");
     }
 
     [Test]
@@ -84,7 +84,7 @@ public class Stage2_GetParameterLazyTests
         await using var app = new global::app.@this("/app");
         var context = app.User.Context;
         var failedPath = await new Data("path", "s3://bucket/key") { Context = context }
-            .Value<global::app.type.path.@this>(context);
+            .Value<global::app.type.path.@this>();
         await failedPath.IsFailure();
         await Assert.That(failedPath.Error!.Key).IsEqualTo("SchemeNotRegistered");
     }

@@ -187,7 +187,7 @@ public class Stage3_PathDemolitionTests
         // scalar use fetches through the HttpPath (the scheme owns the I/O);
         // no extension on the resource → raw bytes
         var content = await result.Value();
-        var text = content is byte[] b ? Encoding.UTF8.GetString(b) : content?.ToString();
+        var text = content is global::app.type.binary.@this b ? Encoding.UTF8.GetString(b.Value) : content?.ToString();
         await Assert.That(text).Contains("remote body");
     }
 

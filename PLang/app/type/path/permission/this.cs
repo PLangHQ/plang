@@ -24,7 +24,7 @@ public enum Match
 /// window doesn't apply. The grant lives for its signature's <c>Expires</c>
 /// field — null today (permanent), parameterised later.
 /// </summary>
-public sealed class @this : global::app.type.item.@this
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     [Out, Store] public string Actor { get; }
     [Out, Store] public string Path { get; }

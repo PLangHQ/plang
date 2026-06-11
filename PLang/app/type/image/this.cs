@@ -15,7 +15,7 @@ namespace app.type.image;
 /// Routing key / serializer always stays <c>image</c>: no <c>path|image</c>
 /// union. See plan/build-vs-runtime.md "composition, not union".</para>
 /// </summary>
-public sealed partial class @this : global::app.type.item.@this, global::app.data.IKindValidatable, global::app.data.IStrictKindEnforcer, global::app.data.ILoadable
+public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, global::app.data.IKindValidatable, global::app.data.IStrictKindEnforcer, global::app.data.ILoadable
 {
     public static string Example => "/some/photo.jpg";
     public static string Shape => "string";

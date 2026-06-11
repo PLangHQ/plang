@@ -62,7 +62,7 @@ public class Stage3_ArraysAsDataTests
         list.Add(new Data("", "x"));
         await Assert.That(list.Count).IsEqualTo(2);
         await Assert.That(list.At(0)).IsTypeOf<Data>();
-        await Assert.That((await list.At(0)!.Value())).IsEqualTo((object)1L);
+        await Assert.That((await list.At(0)!.Value())?.ToString()).IsEqualTo("1");
     }
 
     [Test]
@@ -113,7 +113,7 @@ public class Stage3_ArraysAsDataTests
         list.Add(new Data("", 2L));
         list.Add(new Data("", 3L));
         var d = new Data("nums", list) { Context = ctx };
-        var res = await d.Value<global::app.type.list.@this<global::app.type.number.@this>>(ctx);
+        var res = await d.Value<global::app.type.list.@this<global::app.type.number.@this>>();
         await res.IsSuccess();
         await Assert.That(res.GetValue<List<long>>()!).IsEquivalentTo(new List<long> { 1, 2, 3 });
     }
@@ -163,7 +163,7 @@ public class Stage3_ArraysAsDataTests
         list.Add(signed);
         var listData = new Data("list", list) { Context = ctx };
 
-        var json = (await plang.Serialize(listData).Value())!.Value;
+        var json = (await plang.Serialize(listData).Value())!.Clr<string>()!;
         var rebuilt = plang.Deserialize(json);   // Deserialize returns the reconstruction itself
         await rebuilt.IsSuccess();
         var element = await rebuilt.GetChild("[0]");

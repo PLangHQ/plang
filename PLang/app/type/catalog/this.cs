@@ -90,6 +90,12 @@ public sealed partial class @this
     {
         if (string.IsNullOrWhiteSpace(typeName)) return null;
         if (app.type.primitive.@this.Aliases.TryGetValue(typeName, out var primitive)) return primitive;
+        // Context-free domain types — resolvable without an App registry so the
+        // entry-seam fold (type.Judge runs at Data construction, before Context
+        // is wired) can ask a declared type its CLR nature. `variable` is the
+        // raw-name type judged here; it carries [PlangType] for the registry path too.
+        if (string.Equals(typeName, "variable", System.StringComparison.OrdinalIgnoreCase))
+            return typeof(app.variable.@this);
         return ClrFromMime(typeName);
     }
 

@@ -16,7 +16,7 @@ public class PropertyAccessTests
         var d = data.FromRaw("{\"big\":\"body\"}", type.Create("object", "json"));
         d.Properties["status"] = 200;
         var status = await d.GetChild("!status");
-        await Assert.That((await status.Value())).IsEqualTo((object)200);
+        await Assert.That((await status.Value())?.ToString()).IsEqualTo("200");
     }
 
     [Test] public async Task PropertyRead_NeverMaterialisesValue()

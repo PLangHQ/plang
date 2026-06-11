@@ -31,16 +31,13 @@ public class Default : IAssert
             action.Message?.Peek()?.ToString() ?? "Values should not be equal"));
     }
 
-    // Equality through THE comparison entry (data.Compare). One carve-out: an
-    // untouched raw-backed operand compares as its SCALAR form (`assert %cfg% equals
-    // "{json}"` against the verbatim source text) — data.Compare would force the
-    // parse, so the raw rung compares textually instead, preserving lazy reads.
+    // Equality through THE comparison entry (data.Compare) — comparison is a
+    // USE, so an unread reference parses on its way in (the model rule; no
+    // raw-face carve-out). A missing operand equals only a missing operand.
     private static async Task<bool> IsEqual(data.@this? expected, data.@this? actual)
     {
         if (expected == null || actual == null)
-            return AreEqual(expected?.Peek(), actual?.Peek());
-        if (expected.RawUntouched || actual.RawUntouched)
-            return AreEqual(expected.Peek(), actual.Peek());
+            return expected == null && actual == null;
         return await expected.Compare(actual) == global::app.data.Comparison.Equal;
     }
 
@@ -147,120 +144,25 @@ public class Default : IAssert
 
     // --- Comparison helpers ---
 
-    private static bool AreEqual(object? expected, object? actual)
-    {
-        // Born-native: values arrive as wrappers. Unwrap to the raw backing so a
-        // bool.@this and a raw bool compare as bools (true==true), not as strings
-        // ("true" vs "True"); a text and a string compare by content.
-        if (expected is global::app.type.item.@this ie) expected = ie.ToRaw();
-        if (actual is global::app.type.item.@this ia) actual = ia.ToRaw();
-        if (ReferenceEquals(expected, actual)) return true;
-        if (expected == null || actual == null) return expected == null && actual == null;
-
-        if (IsNumeric(expected) && IsNumeric(actual))
-            return Convert.ToDouble(expected) == Convert.ToDouble(actual);
-
-        return expected.Equals(actual) || string.Equals(expected.ToString(), actual.ToString(), StringComparison.Ordinal);
-    }
-
     /// <summary>
-    /// Truthiness of an asserted Data. A value that knows how to answer for
-    /// itself (<see cref="app.data.IBooleanResolvable"/> — a path) is routed
-    /// through <see cref="data.@this.ToBooleanAsync"/> so the resolvable-dispatch
-    /// rule has a single home; everything else falls through to the sync rules.
-    /// `assert %path% is true` is thus correct via the same path the condition
-    /// pipeline uses.
+    /// Truthiness of an asserted Data — one home: the Data's own boolean
+    /// dispatch (the instance's IsTruthy; async-resolvable values via
+    /// IBooleanResolvable). Same path the condition pipeline uses.
     /// </summary>
     private static async Task<bool> ResolveTruthy(data.@this? data)
-    {
-        if (data == null) return false;
-        if ((await data.Value()) is app.data.IBooleanResolvable)
-            return await data.ToBooleanAsync();
-        return IsTruthy((await data.Value()));
-    }
+        => data != null && await data.ToBooleanAsync();
 
-    private static bool IsTruthy(object? value)
-    {
-        if (value == null) return false;
-        if (value is bool b) return b;
-        if (value is string s) return !string.IsNullOrEmpty(s) && !s.Equals("false", StringComparison.OrdinalIgnoreCase);
-        if (IsNumeric(value)) return Convert.ToDouble(value) != 0;
-        return true;
-    }
-
-    // Membership through THE comparison entry: matches only on Equal and never
-    // errors — NotEqual/Incomparable mean "not this one", so a mixed container
-    // can't blow an assert contains.
+    // Membership — the ITEM owns the answer (text substring, list element
+    // equality through THE comparison entry, dict key, directory listing).
+    // A door answer still in raw CLR shape (rung-2 carrier) lifts first.
     private static async Task<bool> ContainsValue(object? container, object? value)
     {
-        if (container == null) return false;
-        // Born-native: a text container/value rides as text.@this — unwrap so the
-        // substring check fires (the wrapper isn't a CLR string). Native dict/list
-        // stay as-is (handled by the IEnumerable arm / their own structure).
-        if (container is global::app.type.text.@this ct) container = ct.Value;
-        var substringNeedle = value is global::app.type.text.@this vt ? vt.Value : value?.ToString();
-
-        if (container is string str)
-            return str.Contains(substringNeedle ?? "", StringComparison.OrdinalIgnoreCase);
-
-        var target = value as data.@this ?? new data.@this("", value);
-        if (container is app.type.list.@this nl)
-        {
-            foreach (var item in nl.Items)
-                if (await item.Compare(target) == global::app.data.Comparison.Equal) return true;
-            return false;
-        }
-
-        if (container is IEnumerable enumerable)
-        {
-            foreach (var item in enumerable)
-            {
-                var element = item as data.@this ?? new data.@this("", item);
-                if (await element.Compare(target) == global::app.data.Comparison.Equal) return true;
-            }
-            return false;
-        }
-
-        // A directory's membership is over its listing (the type owns it).
-        if (container is global::app.type.directory.@this dirVal)
-            return await dirVal.Contains(substringNeedle ?? "");
-
-        // A scalar with an honest text form (a path's location, a number)
-        // contains by substring — mirrors text's coercion rules. Containers
-        // were handled above; a dict has no honest text form.
-        if (container is not global::app.type.dict.@this and not data.@this and not System.Collections.IDictionary)
-        {
-            var text = container.ToString();
-            if (!string.IsNullOrEmpty(text) && !string.IsNullOrEmpty(substringNeedle))
-                return text.Contains(substringNeedle, StringComparison.OrdinalIgnoreCase);
-        }
-
-        return false;
-    }
-
-    private static int Compare(object? a, object? b)
-    {
-        // Born-native: values arrive as wrappers; unwrap to the raw backing so the
-        // numeric/IComparable paths below compare CLR scalars (number→boxed numeric,
-        // text→string), not a wrapper a raw int's CompareTo can't handle.
-        if (a is global::app.type.item.@this ia) a = ia.ToRaw();
-        if (b is global::app.type.item.@this ib) b = ib.ToRaw();
-        if (a == null && b == null) return 0;
-        if (a == null) return -1;
-        if (b == null) return 1;
-
-        if (IsNumeric(a) && IsNumeric(b))
-            return Convert.ToDouble(a).CompareTo(Convert.ToDouble(b));
-
-        if (a is IComparable comparable)
-            return comparable.CompareTo(b);
-
-        return string.Compare(a.ToString(), b.ToString(), StringComparison.Ordinal);
+        var c = container as global::app.type.item.@this
+            ?? global::app.data.@this.Lift(container);
+        if (c == null) return false;
+        var needle = value as data.@this ?? new data.@this("", value);
+        return await c.Contains(needle);
     }
 
     private static string FormatValue(object? value) => global::app.Diagnostics.Format.Value(value);
-
-    private static bool IsNumeric(object? value)
-        => value is int or long or double or float or decimal
-            or byte or short or sbyte or ushort or uint or ulong;
 }

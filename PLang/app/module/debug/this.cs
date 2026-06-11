@@ -169,8 +169,8 @@ public sealed class @this
                 if (v.Event == DebugEvent.OnTypeChange)
                     placeholder.OnChange.Add((oldData, newData) =>
                     {
-                        var oldType = oldData.RawValue?.GetType().Name;
-                        var newType = newData.RawValue?.GetType().Name;
+                        var oldType = oldData.Peek()?.GetType().Name;
+                        var newType = newData.Peek()?.GetType().Name;
                         if (oldType != newType) LogMutation(v.Name, oldData, newData);
                     });
                 vars.Set(placeholder);
@@ -180,8 +180,7 @@ public sealed class @this
         // Subscribe to granular LLM tracing — each Llm.* flag emits its own block to stderr or file.
         if (Llm != null && (Llm.System || Llm.User || Llm.Response || Llm.Schema))
         {
-            var __llmR = _engine.Code.Get<global::app.module.llm.code.ILlm>();
-            if (__llmR.Peek() is global::app.module.llm.code.OpenAi oai)
+            if (_engine.Code.Get<global::app.module.llm.code.ILlm>().Provider is global::app.module.llm.code.OpenAi oai)
             {
                 var context = _engine.User.Context;
                 var toFile = string.Equals(Llm.Output, "file", StringComparison.OrdinalIgnoreCase);
@@ -279,7 +278,7 @@ public sealed class @this
         var sb = new StringBuilder();
         sb.AppendLine($"=== WATCH [{name}] CHANGED ===");
         sb.AppendLine($"  Goal: {goalName}[{stepIndex}] {stepText ?? "?"}");
-        sb.AppendLine($"  Raw: {oldData.RawValue?.GetType().Name ?? "null"} → {newData.RawValue?.GetType().Name ?? "null"}");
+        sb.AppendLine($"  Raw: {oldData.Peek()?.GetType().Name ?? "null"} → {newData.Peek()?.GetType().Name ?? "null"}");
         sb.AppendLine($"  Value: {oldData.Peek()?.GetType().Name ?? "null"} → {newData.Peek()?.GetType().Name ?? "null"}");
         sb.AppendLine($"  HasCtx: {newData.Context != null}");
         for (int i = 0; i < Math.Min(5, stack.FrameCount); i++)
@@ -577,7 +576,8 @@ public sealed class @this
         {
             foreach (var p in action.Parameters)
             {
-                if (p.Peek() is string s)
+                if (p.Peek() is global::app.type.text.@this pt
+                    && pt.Clr<string>() is { } s)
                 {
                     foreach (Match m in VarRefPattern.Matches(s))
                         varNames.Add(m.Groups[1].Value);

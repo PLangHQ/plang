@@ -18,7 +18,7 @@ namespace app.type.list;
 /// surface into junk — the same failure that gave <c>dict</c> its converter.</para>
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Json))]
-public partial class @this : global::app.type.item.@this, module.IContext,
+public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, module.IContext,
     global::app.data.IListLeaf
 {
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
@@ -342,6 +342,48 @@ public partial class @this : global::app.type.item.@this, module.IContext,
     /// matches the falsiness of an empty dict / string / null.
     /// </summary>
     public override bool IsTruthy() => Count > 0;
+
+    /// <summary>A stamped container's render depends on outside state — never kept.</summary>
+    public override bool Cacheable => Template == null;
+
+    /// <summary>
+    /// THE door — a stamped container renders its entries, each through its
+    /// own door (door recursion; string re-scanning never happens). An entry
+    /// whose ref is unset keeps its literal form — the builder's preservation
+    /// rule for partially-bound structures.
+    /// </summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this asking)
+    {
+        if (Template == null) return this;
+        var rendered = new @this { Context = _context };
+        foreach (var entry in _items)
+        {
+            if (entry.Peek() is { Template: not null } stamped)
+            {
+                var probe = new Data(entry.Name, stamped) { Context = _context! };
+                var answer = await probe.Value();
+                rendered.Add(probe.HasUnobservedError
+                    ? entry
+                    : new Data(entry.Name, answer) { Context = _context! });
+            }
+            else rendered.Add(entry);
+        }
+        return rendered;
+    }
+
+    /// <summary>The item membership hook — element equality through THE
+    /// comparison entry; NotEqual/Incomparable mean "not this one", so a
+    /// mixed list never errors a membership ask.</summary>
+    public override async System.Threading.Tasks.ValueTask<bool> Contains(Data needle)
+    {
+        foreach (var item in _items)
+            if (await item.Compare(needle) == global::app.data.Comparison.Equal) return true;
+        return false;
+    }
+
+    /// <summary>The item emptiness hook — no entries.</summary>
+    public override System.Threading.Tasks.ValueTask<bool> IsEmpty()
+        => System.Threading.Tasks.ValueTask.FromResult(_items.Count == 0);
 
     // ---- Comparison (the unified hook — see app.type.compare) ----
 

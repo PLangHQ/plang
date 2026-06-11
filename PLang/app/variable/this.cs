@@ -16,7 +16,8 @@ namespace app.variable;
 /// Provenance lives on the wrapper — <c>Data&lt;Variable&gt;.Signature</c> when signing
 /// lands. Variable itself is a value, not a wrapper.
 /// </summary>
-public sealed class @this : global::app.type.item.@this, IRawNameResolvable
+[global::app.Attributes.PlangType]
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IRawNameResolvable
 {
     /// <summary>The canonical variable name (percent-stripped).</summary>
     [Out] public string Name { get; }

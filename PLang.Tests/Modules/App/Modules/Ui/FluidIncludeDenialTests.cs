@@ -96,7 +96,7 @@ public class FluidIncludeDenialTests
         };
         var result = await fluid.Render(action);
         await result.IsSuccess();
-        await Assert.That((await result.Value())!.Value).Contains("Hello footer");
+        await Assert.That((await result.Value())!.Clr<string>()!).Contains("Hello footer");
         await Assert.That(ch.AskCount).IsEqualTo(0);
     }
 }

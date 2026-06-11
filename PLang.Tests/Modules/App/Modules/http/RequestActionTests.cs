@@ -430,7 +430,7 @@ public class RequestActionTests
 
         await result.IsSuccess();
         await Assert.That(result.Peek()).IsTypeOf<byte[]>();
-        await Assert.That((byte[])result.Peek()!).IsEquivalentTo(bytes);
+        await Assert.That(global::app.type.item.@this.Lower<byte[]>(result.Peek())!).IsEquivalentTo(bytes);
     }
 
     #endregion

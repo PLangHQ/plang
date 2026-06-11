@@ -34,11 +34,11 @@ public class Fluid : ITemplate
             return app.data.@this<global::app.type.text.@this>.FromError(new global::app.error.ValidationError(
                 "ui.render requires a template", "MissingTemplate"));
         var templateContent = templateVal.ToString() ?? "";
-        var isFile = action.IsFile == null ? null : (await action.IsFile.Value())?.Value;
+        var isFile = action.IsFile == null ? null : (await action.IsFile.Value());
         string? sourceFile = null;
 
         // Resolve template content: file or inline
-        if (isFile == true || (isFile == null && LooksLikeFilePath(templateContent)))
+        if (isFile?.Value == true || (isFile == null && LooksLikeFilePath(templateContent)))
         {
             var pathData = path.Resolve(templateContent, action.Context);
             if (!await pathData.AsBooleanAsync())
@@ -459,8 +459,8 @@ public class Fluid : ITemplate
             // raw bytes; UTF-8 decode them. String-valued reads pass through.
             var read = _path.ReadText().GetAwaiter().GetResult();
             string content;
-            if (read.Peek() is byte[] bytes)
-                content = System.Text.Encoding.UTF8.GetString(bytes);
+            if (read.Peek() is global::app.type.binary.@this bin)
+                content = System.Text.Encoding.UTF8.GetString(bin.Value);
             else
                 content = read.Peek()?.ToString() ?? "";
             return new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));

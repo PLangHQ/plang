@@ -25,7 +25,7 @@ public class Cut1_VerbatimPassthrough
     {
         var d = data.FromRaw(ConfigJson, type.Create("object", "json"));
         d.Name = "cfg";
-        var wire = (await plang.ContextLessFallback.Serialize(d).Value())!.Value;
+        var wire = (await plang.ContextLessFallback.Serialize(d).Value())!.Clr<string>()!;
         await Assert.That(wire).Contains("\"value\":" + ConfigJson); // raw verbatim, not re-encoded
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
@@ -36,9 +36,9 @@ public class Cut1_VerbatimPassthrough
     {
         var d = data.FromRaw(ConfigJson, type.Create("object", "json"));
         d.Name = "cfg";
-        var wire1 = (await plang.ContextLessFallback.Serialize(d).Value())!.Value;
+        var wire1 = (await plang.ContextLessFallback.Serialize(d).Value())!.Clr<string>()!;
         var back = plang.ContextLessFallback.Deserialize(wire1); // deferred (raw-backed)
-        var wire2 = (await plang.ContextLessFallback.Serialize(back).Value())!.Value;
+        var wire2 = (await plang.ContextLessFallback.Serialize(back).Value())!.Clr<string>()!;
         await Assert.That(wire2).IsEqualTo(wire1);
         await Assert.That(back.MaterializeCount()).IsEqualTo(0);
     }
@@ -64,7 +64,7 @@ public class Cut1_VerbatimPassthrough
     {
         var d = data.FromRaw(ConfigJson, type.Create("object", "json"));
         d.Name = "cfg";
-        _ = (await plang.ContextLessFallback.Serialize(d).Value())!.Value;
+        _ = (await plang.ContextLessFallback.Serialize(d).Value())!.Clr<string>()!;
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
     }
 }

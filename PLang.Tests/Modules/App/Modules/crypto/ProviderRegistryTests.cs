@@ -21,7 +21,7 @@ public class ProviderRegistryTests
     public async Task Get_NoRegistration_ReturnsError()
     {
         var result = _providers.Get<ICrypto>();
-        await result.IsFailure();
+        await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderNotFound");
     }
 
@@ -32,8 +32,8 @@ public class ProviderRegistryTests
         _providers.Register<ICrypto>(provider);
 
         var result = _providers.Get<ICrypto>();
-        await result.IsSuccess();
-        await Assert.That((await result.Value())).IsSameReferenceAs(provider);
+        await Assert.That(result.Error).IsNull();
+        await Assert.That(result.Provider).IsSameReferenceAs(provider);
     }
 
     [Test]
@@ -71,7 +71,7 @@ public class ProviderRegistryTests
 
         var removed = _providers.Remove<ICrypto>("second");
         await removed.IsSuccess();
-        await (_providers.Get<ICrypto>("second")).IsFailure();
+        await Assert.That(_providers.Get<ICrypto>("second").Error).IsNotNull();
     }
 
     [Test]

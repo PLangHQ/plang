@@ -61,7 +61,7 @@ public class ForeachTests
         var result = await action.RunAsync(context);
 
         await result.IsSuccess();
-        var loopResult = (await result.Value()) as LoopResult;
+        var loopResult = global::app.type.item.@this.Lower<LoopResult>(await result.Value());
         await Assert.That(loopResult!.itemCount).IsEqualTo(0);
         await Assert.That(loopResult.completed).IsTrue();
     }
@@ -170,7 +170,7 @@ public class ForeachTests
         var result = await action.RunAsync(context);
 
         await result.IsSuccess();
-        var loopResult = (await result.Value()) as LoopResult;
+        var loopResult = global::app.type.item.@this.Lower<LoopResult>(await result.Value());
         await Assert.That(loopResult!.itemCount).IsEqualTo(0);
         await Assert.That(loopResult.completed).IsTrue();
     }
@@ -190,7 +190,7 @@ public class ForeachTests
         var result = await action.RunAsync(context);
 
         await result.IsSuccess();
-        var loopResult = (await result.Value()) as LoopResult;
+        var loopResult = global::app.type.item.@this.Lower<LoopResult>(await result.Value());
         await Assert.That(loopResult!.completed).IsFalse();
         await Assert.That(loopResult.itemCount).IsEqualTo(0);
     }

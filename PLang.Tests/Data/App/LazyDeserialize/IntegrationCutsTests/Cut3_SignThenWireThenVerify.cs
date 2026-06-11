@@ -65,7 +65,7 @@ public class Cut3_SignThenWireThenVerify
         outer.SetValueDirect(inner);   // value IS the signed inner Data — courier nesting, the documented no-lift bypass
         var back = RoundTrip(outer);
 
-        var innerBack = (await back.Value()) as data;            // rehydrated nested Data
+        var innerBack = (((await back.Value()) as global::app.type.item.clr)?.Value as global::app.data.@this);            // rehydrated nested Data
         await Assert.That(innerBack).IsNotNull();
         await Assert.That(innerBack!.Signature).IsNotNull().Because("nested signature survived the wire");
         var ok = await Verify(innerBack!);
@@ -81,6 +81,6 @@ public class Cut3_SignThenWireThenVerify
         back.SetValue("tampered");                        // mutate after signing
 
         var ok = await Verify(back);
-        await Assert.That(ok.Success && (await ok.Value()) is true).IsFalse();
+        await Assert.That(ok.Success && (await ok.Value()) is global::app.type.@bool.@this { Value: true }).IsFalse();
     }
 }

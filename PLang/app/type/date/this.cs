@@ -8,7 +8,7 @@ namespace app.type.date;
 /// ISO <c>yyyy-MM-dd</c>.
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Json))]
-public sealed partial class @this : global::app.type.item.@this,
+public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     System.IEquatable<@this>
 {
     public static string Example => "2024-03-15";
@@ -53,7 +53,7 @@ public sealed partial class @this : global::app.type.item.@this,
 
     private static @this? CoerceOwn(object? v) => v as @this
         ?? convert.@this.OfStatic(typeof(@this),
-               v is global::app.type.item.@this { IsLeaf: true } l ? l.ToRaw() : v, null, null)?.Peek() as @this;
+               global::app.type.item.@this.Backing(v), null, null)?.Peek() as @this;
 
     public bool AreEqual(object? other) => other switch
     {

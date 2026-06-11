@@ -269,7 +269,7 @@ public class IfHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That((await result.Value()) is bool or global::app.type.@bool.@this).IsTrue();
+        await Assert.That((await result.Value()) is global::app.type.@bool.@this).IsTrue();
         await Assert.That(await result.ToBooleanAsync()).IsTrue();
     }
 
@@ -280,7 +280,7 @@ public class IfHandlerTests : IDisposable
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That((await result.Value()) is bool or global::app.type.@bool.@this).IsTrue();
+        await Assert.That((await result.Value()) is global::app.type.@bool.@this).IsTrue();
         await Assert.That(await result.ToBooleanAsync()).IsFalse();
     }
 

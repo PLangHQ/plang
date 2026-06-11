@@ -2,7 +2,7 @@ using System.Collections;
 
 namespace app.goal.steps.step.actions;
 
-public sealed partial class @this : global::app.type.item.@this, IList<action.@this>
+public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, IList<action.@this>
 {
     private readonly List<action.@this> _items = new();
 

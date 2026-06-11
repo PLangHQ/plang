@@ -10,7 +10,7 @@ namespace app.goal;
 /// PrPath is nullable because dynamic goal names (containing %variable%) can't resolve at build time.
 /// </summary>
 [PlangType("goal.call")]
-public sealed class GoalCall : global::app.type.item.@this, module.IEvent
+public sealed class GoalCall : global::app.type.item.@this, global::app.type.item.ICreate<GoalCall>, module.IEvent
 {
     /// <summary>The entity is "goal.call" (the namespace-tail default would say
     /// "goal", which is the goal entity's name, not this value's).</summary>

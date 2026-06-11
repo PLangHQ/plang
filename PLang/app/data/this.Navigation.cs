@@ -186,8 +186,7 @@ public partial class @this
         var app = _context?.App;
         if (app != null)
         {
-            var result = app.Code.Get<app.data.code.IGrep>();
-            if (result.Peek() is app.data.code.IGrep g) return g;
+            if (app.Code.Get<app.data.code.IGrep>().Provider is { } g) return g;
         }
         return new app.data.code.Default();
     }
@@ -257,25 +256,34 @@ public partial class @this
         // "value wins over Data infrastructure" (a dict's own "type" key still
         // wins for those).
         if (key.Equals("Type", StringComparison.OrdinalIgnoreCase)
-            && _instance != null && global::app.type.item.@this.OwnsDoor(_instance))
+            && _type != null && global::app.type.item.@this.OwnsDoor(_type))
             return new @this(key, Type, parent: this);
 
         // Navigation IS examination — the value door parses an un-narrowed
         // reference (file/url) or source form through the instance's own
-        // Ready(), and the Data rebinds; the navigators below see the
-        // dict/list/table, not the reference.
-        var val = await Value();
-
-        // Materialization failed at touch-time — the actionable parse error is
-        // stamped on `this.Error`, but `val` came back null. Surface that error
-        // instead of falling through to a generic NotFound, otherwise the
-        // developer navigating malformed JSON sees "not found" not the real cause.
-        if (val == null && Error?.Key == "MaterializeFailed")
+        // door, and the Data rebinds; the navigators below see the
+        // dict/list/table, not the reference. A parse failure surfaces HERE as
+        // the actionable error (the developer navigating malformed JSON must
+        // see the real cause, not a generic NotFound) — one of the two seams
+        // that consume the door's failure; everywhere else it propagates loud.
+        global::app.type.item.@this val;
+        try
+        {
+            val = await Value();
+        }
+        catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
+        {
+            var real = (ex as System.Reflection.TargetInvocationException)?.InnerException ?? ex;
+            var entity = _type.Mint();
+            Error = new global::app.error.Error(
+                $"failed to read %{Name}% as {entity.Kind ?? entity.Name}: {real.Message}",
+                "MaterializeFailed", 400) { Exception = real };
             return FromError(Error);
+        }
 
-        // If Value is a Data object (e.g., DynamicData wrapping Identity),
-        // navigate into the VALUE first — it's the real object
-        if (val is @this dataVal)
+        // A nested Data riding the rung-2 carrier (the SetValueDirect courier
+        // debt) — navigate into the inner Data, it's the real object.
+        if (val is global::app.type.item.clr { Value: @this dataVal })
         {
             var dataChild = await dataVal.GetChildValue(key);
             if (dataChild.IsInitialized) return dataChild;
@@ -327,13 +335,12 @@ public partial class @this
             return new @this(key, ownProp.GetValue(this), parent: this);
         }
 
-        // Access-driven resolution: navigating by key into a plain string is NOT a
-        // guess — no content sniffing. A string (whether stamped `text` or
-        // un-typed) can't be walked by key, so the developer gets a clear,
-        // actionable error pointing at the fix (`as object/json`) rather than a
-        // silent null. A structured value (object/json) materialized above, so it
-        // never reaches here.
-        if (val is string or global::app.type.text.@this)
+        // Access-driven resolution: navigating by key into text is NOT a
+        // guess — no content sniffing. Text can't be walked by key, so the
+        // developer gets a clear, actionable error pointing at the fix
+        // (`as object/json`) rather than a silent null. A structured value
+        // (object/json) materialized above, so it never reaches here.
+        if (val is global::app.type.text.@this)
             return TypeUnknownError(key);
 
         return NotFound(key);
@@ -348,7 +355,7 @@ public partial class @this
     private @this TypeUnknownError(string key)
     {
         var nameHint = string.IsNullOrEmpty(Name) ? "value" : $"%{Name}%";
-        var isText = _instance is global::app.type.text.@this;
+        var isText = _type is global::app.type.text.@this;
         var what = isText ? "is text" : "has no type";
         var err = FromError(new global::app.error.Error(
             $"cannot navigate .{key}: {nameHint} {what}; add `as <type>` (e.g. `as object/json`) to navigate it",
@@ -387,7 +394,7 @@ public partial class @this
         // the value narrowed. The instance's own chain answers — pre-narrow the
         // value IS the facet; post-narrow the prior chain holds the
         // location-only reference (the parse stamped it).
-        if (_instance?.Facet(key) is { } facetValue)
+        if (_type?.Facet(key) is { } facetValue)
             return new @this(key, facetValue, parent: this);
 
         // Property plane on the value itself — `!path`/`!host`/`!size` reach the
@@ -396,7 +403,7 @@ public partial class @this
         // .Absolute) are internal C# but ARE the `!relative`/`!extension`/
         // `!absolute` projections on this plane.
         var peeked = Peek();
-        if (peeked != null && peeked is not string)
+        if (peeked != null && peeked is not global::app.type.text.@this)
         {
             var vp = peeked.GetType().GetProperty(key,
                 System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic

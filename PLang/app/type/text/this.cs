@@ -28,7 +28,7 @@ namespace app.type.text;
 /// <c>foreach %s%</c> never char-iterates it.</para>
 /// </summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Json))]
-public sealed partial class @this : global::app.type.item.@this,
+public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     System.IEquatable<@this>
 {
     public static string Example => "readme.md";
@@ -44,10 +44,10 @@ public sealed partial class @this : global::app.type.item.@this,
         + "not detectable from content).";
     // No static Kinds — text's kind is open (derived from extension at build).
 
-    // Internal, not public: the raw string face is gated interop — leaf
-    // handlers and engine seams (in-assembly) name it at real .NET edges;
-    // outside the engine the string leaves only via text.Write(IWriter).
-    internal string Value { get; }
+    // THE backing — a private field, not a property at any visibility.
+    // Content leaves text only via Write(IWriter), the typed ops, or the
+    // door; a .NET edge lowers through Clr.
+    private readonly string _value;
 
     /// <summary>The value's kind — the file-extension vocabulary (md, csv, …).
     /// An ordinary typed property stamped at creation, never after.</summary>
@@ -61,31 +61,40 @@ public sealed partial class @this : global::app.type.item.@this,
     public override bool Cacheable => Template == null;
 
     /// <summary>
-    /// Fills this template's holes against live variables. Full-match
-    /// <c>%x%</c> answers with the variable's value through ITS own door
-    /// (door recursion; the answer may be any type). Partial
-    /// (<c>"hello %name%"</c>) interpolates single-pass into a fresh,
-    /// unstamped text. Null for a full-match whose variable is unset.
+    /// THE door — ready means ready: a stamped template fills its holes
+    /// against live variables at every use (never kept — see
+    /// <see cref="Cacheable"/>). Full-match <c>%x%</c> answers with the
+    /// variable's value through ITS own door (door recursion; the answer may
+    /// be any type); partial (<c>"hello %name%"</c>) interpolates single-pass
+    /// into fresh, unstamped text. An unset full-match ref is THIS type's own
+    /// failure story — reported on the asking binding, answer absent.
     /// </summary>
-    internal override async System.Threading.Tasks.ValueTask<global::app.type.item.@this?> Render(global::app.actor.context.@this context)
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this asking)
     {
-        if (Template == null || context.Variable == null) return this;
-        if (global::app.data.@this.TryFullVarMatch(Value, out var varName))
+        if (Template == null) return this;
+        var context = asking.Context;
+        if (context?.Variable == null) return this;
+        if (global::app.data.@this.TryFullVarMatch(_value, out var varName))
         {
             var resolved = await context.Variable.Get(varName);
-            if (resolved == null || !resolved.IsInitialized) return null;
-            if (resolved.Peek() is global::app.type.item.@this it) return await it.Ready();
-            return global::app.data.@this.Lift(resolved.Peek(), context);
+            if (resolved == null || !resolved.IsInitialized)
+            {
+                asking.Fail(new global::app.error.Error(
+                    $"%{varName}% is not set — nothing to answer for {_value}.",
+                    "VariableNotFound", 404));
+                return Absent;
+            }
+            return await resolved.Value();
         }
-        var interpolated = await context.Variable.Resolve(Value);
+        var interpolated = await context.Variable.Resolve(_value);
         return new @this(interpolated);
     }
 
-    internal override object? ToRaw() => Value;
+    internal override object? ToRaw() => _value;
     public override bool IsLeaf => true;
-    public override void Write(global::app.channel.serializer.IWriter w) => w.String(Value);
+    public override void Write(global::app.channel.serializer.IWriter w) => w.String(_value);
 
-    public @this(string value) { Value = value ?? string.Empty; }
+    public @this(string value) { _value = value ?? string.Empty; }
 
     // INBOUND only — the entry lift (`.Ok("x")` constructs). The outbound
     // implicit (text → string) is gone: every site was a silent CLR exit;
@@ -94,15 +103,15 @@ public sealed partial class @this : global::app.type.item.@this,
 
     // Only the @this==@this overload — NOT a string overload. string is a reference
     // type, so a string overload would make `text == null` ambiguous (null fits both).
-    // `text == "literal"` is written as `text.Value == "literal"` (to-string implicit).
+    // `text == "literal"` is written via the typed ops (Contains/AreEqual) or ToString at a display edge.
     public static bool operator ==(@this? a, @this? b) => a is null ? b is null : a.Equals(b);
     public static bool operator !=(@this? a, @this? b) => !(a == b);
 
-    public override string ToString() => Value;
+    public override string ToString() => _value;
 
     /// <summary>The CLR exit door — text hands its own backing string; the
     /// shared converter (strict, loud on junk) carries it to the target.</summary>
-    internal override object? Clr(System.Type target) => ClrConvert(Value, target);
+    internal override object? Clr(System.Type target) => ClrConvert(_value, target);
 
     // ---- Ops (the behavioral targets of the `is string` sweep) ----
 
@@ -113,35 +122,66 @@ public sealed partial class @this : global::app.type.item.@this,
         get
         {
             int count = 0;
-            foreach (var _ in Value.EnumerateRunes()) count++;
+            foreach (var _ in _value.EnumerateRunes()) count++;
             return count;
         }
     }
 
-    public @this Upper() => new(Value.ToUpperInvariant());
-    public @this Lower() => new(Value.ToLowerInvariant());
-    public @this Trim() => new(Value.Trim());
+    public @this Upper() => new(_value.ToUpperInvariant());
+    public @this Lower() => new(_value.ToLowerInvariant());
+    public @this Trim() => new(_value.Trim());
+
+    /// <summary>The item membership hook — substring, same policy as below.</summary>
+    public override System.Threading.Tasks.ValueTask<bool> Contains(global::app.data.@this needle)
+        => System.Threading.Tasks.ValueTask.FromResult(Contains(needle.ToString()));
+
+    /// <summary>The item emptiness hook — whitespace-only text is empty.</summary>
+    public override System.Threading.Tasks.ValueTask<bool> IsEmpty()
+        => System.Threading.Tasks.ValueTask.FromResult(string.IsNullOrWhiteSpace(_value));
+
+    /// <summary>True when this is a stamped template whose WHOLE text is one
+    /// live <c>%ref%</c> — the binding layer's classifier (full-match hops to
+    /// the live variable; partial renders). The ref's bare name comes out.</summary>
+    internal bool IsRef(out string refName)
+    {
+        refName = "";
+        return Template != null && global::app.data.@this.TryFullVarMatch(_value, out refName);
+    }
+
+    /// <summary>True when the text contains <c>%ref%</c> holes — the authored
+    /// seam's detection (deterministic code, never the LLM).</summary>
+    internal bool HasHoles => System.Text.RegularExpressions.Regex.IsMatch(_value, "%[^%]+%");
+
+    /// <summary>The authored form of this text — itself when already stamped
+    /// or hole-free; a stamped copy otherwise (the template seam).</summary>
+    internal @this Authored()
+        => Template != null || !HasHoles ? this : new @this(_value) { Kind = Kind, Template = "plang" };
+
+    /// <summary>A re-kinded copy — same content, the declared kind stamped
+    /// (the entry-judgement fold's text arm; values immutable, never restamped
+    /// in place).</summary>
+    internal @this Kinded(string? kind) => new(_value) { Kind = kind, Template = Template };
 
     public bool Contains(string other) =>
-        Value.Contains(other ?? string.Empty, System.StringComparison.OrdinalIgnoreCase);
+        _value.Contains(other ?? string.Empty, System.StringComparison.OrdinalIgnoreCase);
     public bool StartsWith(string other) =>
-        Value.StartsWith(other ?? string.Empty, System.StringComparison.OrdinalIgnoreCase);
+        _value.StartsWith(other ?? string.Empty, System.StringComparison.OrdinalIgnoreCase);
     public bool EndsWith(string other) =>
-        Value.EndsWith(other ?? string.Empty, System.StringComparison.OrdinalIgnoreCase);
+        _value.EndsWith(other ?? string.Empty, System.StringComparison.OrdinalIgnoreCase);
     public int IndexOf(string other) =>
-        Value.IndexOf(other ?? string.Empty, System.StringComparison.OrdinalIgnoreCase);
+        _value.IndexOf(other ?? string.Empty, System.StringComparison.OrdinalIgnoreCase);
 
-    public @this Substring(int start, int length) => new(Value.Substring(start, length));
+    public @this Substring(int start, int length) => new(_value.Substring(start, length));
     public @this Replace(string oldValue, string newValue) =>
-        new(Value.Replace(oldValue ?? string.Empty, newValue ?? string.Empty));
+        new(_value.Replace(oldValue ?? string.Empty, newValue ?? string.Empty));
 
     /// <summary>Split into a native <c>list</c> of <c>text</c> values.</summary>
     public global::app.type.list.@this Split(string separator)
     {
         var list = new global::app.type.list.@this();
         var parts = string.IsNullOrEmpty(separator)
-            ? new[] { Value }
-            : Value.Split(separator);
+            ? new[] { _value }
+            : _value.Split(separator);
         foreach (var part in parts)
             list.Add(new global::app.data.@this("", new @this(part)));
         return list;
@@ -150,7 +190,7 @@ public sealed partial class @this : global::app.type.item.@this,
     // ---- Truthiness (item) ----
 
     /// <summary>Empty text is falsy; any non-empty text is truthy.</summary>
-    public override bool IsTruthy() => Value.Length > 0;
+    public override bool IsTruthy() => _value.Length > 0;
 
     // ---- Comparison (the unified hook — see app.type.compare) ----
 
@@ -172,7 +212,7 @@ public sealed partial class @this : global::app.type.item.@this,
         // `%dict% == "text"` is Incomparable, not a serialization comparison.
         static string? Coerce(object? v) => v switch
         {
-            @this t => t.Value,
+            @this t => t._value,
             string s => s,
             System.Enum e => e.ToString(),
             global::app.type.dict.@this or global::app.type.list.@this => null,
@@ -193,13 +233,13 @@ public sealed partial class @this : global::app.type.item.@this,
 
     public bool AreEqual(object? other) => other switch
     {
-        @this t => string.Equals(Value, t.Value, System.StringComparison.OrdinalIgnoreCase),
-        string s => string.Equals(Value, s, System.StringComparison.OrdinalIgnoreCase),
+        @this t => string.Equals(_value, t._value, System.StringComparison.OrdinalIgnoreCase),
+        string s => string.Equals(_value, s, System.StringComparison.OrdinalIgnoreCase),
         _ => false,
     };
 
     public bool Equals(@this? other) =>
-        other is not null && string.Equals(Value, other.Value, System.StringComparison.OrdinalIgnoreCase);
+        other is not null && string.Equals(_value, other._value, System.StringComparison.OrdinalIgnoreCase);
     public override bool Equals(object? obj) => Equals(obj as @this);
-    public override int GetHashCode() => System.StringComparer.OrdinalIgnoreCase.GetHashCode(Value);
+    public override int GetHashCode() => System.StringComparer.OrdinalIgnoreCase.GetHashCode(_value);
 }

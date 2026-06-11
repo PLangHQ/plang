@@ -6,7 +6,7 @@ namespace app.mock;
 /// Consumed by <c>mock.reset</c> (to tear down the binding) and
 /// <c>mock.verify</c> (to assert call shape).
 /// </summary>
-public class @this : global::app.type.item.@this
+public class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     public string Id { get; init; } = "";
     public string Pattern { get; init; } = "";

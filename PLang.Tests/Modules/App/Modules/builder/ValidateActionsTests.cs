@@ -181,7 +181,7 @@ public class ValidateActionsTests
         await result.IsSuccess();
         var rightParam = actions[0].Parameters.First(p => p.Name == "Right");
         await Assert.That((await rightParam.Value())?.ToString()).IsEqualTo("false");
-        await Assert.That((await rightParam.Value()) is bool or global::app.type.@bool.@this).IsTrue();
+        await Assert.That((await rightParam.Value()) is global::app.type.@bool.@this).IsTrue();
     }
 
     [Test]
@@ -214,7 +214,7 @@ public class ValidateActionsTests
         // The kind="int" carries the precision intent; the value either gets
         // coerced to a number primitive at validate-time OR stays as a string
         // for the runtime to coerce. Either is acceptable post-Stage-2.
-        await Assert.That((await rightParam.Value()) is int or long or string or global::app.type.number.@this or global::app.type.text.@this).IsTrue();
+        await Assert.That((await rightParam.Value()) is global::app.type.number.@this or global::app.type.text.@this).IsTrue();
     }
 
     [Test]

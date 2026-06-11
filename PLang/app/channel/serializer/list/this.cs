@@ -139,7 +139,7 @@ public sealed class @this
     /// <summary>
     /// Deserializes content using the appropriate serializer, chosen by extension or MIME type.
     /// </summary>
-    public data.@this<T> Deserialize<T>(DeserializeOptions options) where T : global::app.type.item.@this
+    public data.@this<T> Deserialize<T>(DeserializeOptions options) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
         var serializer = ResolveSerializer(new ResolveOptions { Type = options.Type, Extension = options.Extension });
 
@@ -182,7 +182,7 @@ public sealed class @this
     /// <summary>
     /// Deserializes data from a stream using the appropriate serializer.
     /// </summary>
-    public Task<data.@this<T>> DeserializeAsync<T>(DeserializeOptions options) where T : global::app.type.item.@this
+    public Task<data.@this<T>> DeserializeAsync<T>(DeserializeOptions options) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
         if (options.Stream == null)
             throw new ArgumentException("Stream is required for async deserialization", nameof(options));

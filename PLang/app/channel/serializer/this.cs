@@ -37,7 +37,7 @@ public interface ISerializer
     /// Generic stream deserialize. Data&lt;T&gt;.Value carries the typed result;
     /// Data&lt;T&gt;.FromError on parse failure.
     /// </summary>
-    Task<data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default) where T : global::app.type.item.@this;
+    Task<data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>;
 
     /// <summary>
     /// Synchronous serialize-to-string convenience. Data.Value carries the
@@ -55,5 +55,5 @@ public interface ISerializer
     /// <summary>
     /// Generic string deserialize. Data&lt;T&gt;.Value carries the typed result.
     /// </summary>
-    data.@this<T> Deserialize<T>(string s) where T : global::app.type.item.@this;
+    data.@this<T> Deserialize<T>(string s) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>;
 }

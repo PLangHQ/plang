@@ -16,7 +16,7 @@ public class VariablesSnapshotTests
 
         var x = await dst.User.Context.Variable.Get("x");
         await Assert.That(x).IsNotNull();
-        await Assert.That((await x!.Value())).IsEqualTo(1);
+        await Assert.That((await x!.Value())?.ToString()).IsEqualTo("1");
 
         var obj = await dst.User.Context.Variable.Get("obj");
         await Assert.That(obj).IsNotNull();

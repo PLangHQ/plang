@@ -77,7 +77,7 @@ public class Default : IBuilder
                 if (!wantedActions.Contains($"{a.Module}.{a.ActionName}")) continue;
                 foreach (var p in a.Parameters ?? new())
                 {
-                    var desc = (await p.Value()) as string ?? string.Empty;
+                    var desc = ((await p.Value()) as global::app.type.text.@this)?.Clr<string>() ?? string.Empty;
                     foreach (System.Text.RegularExpressions.Match m in tokenRx.Matches(desc))
                         if (allTypeNames.Contains(m.Value)) refs.Add(m.Value);
                 }
@@ -477,7 +477,8 @@ public class Default : IBuilder
                     // NormalizeParameterTypes; without it, ToGoalCall parses "goal.call" as a
                     // dotted name and the type-name guard below false-positives on every
                     // goal.call slot in the catalog.
-                    if ((await p.Value()) is string desc && IsCatalogDescription(desc, p.Type!.Name)) continue;
+                    if ((await p.Value()) is global::app.type.text.@this descText
+                        && IsCatalogDescription(descText, p.Type!.Name)) continue;
                     var goalCall = ToGoalCall((await p.Value()), context);
                     if (goalCall == null || string.IsNullOrEmpty(goalCall.Name)) continue;
                     if (goalCall.Name.Contains('%')) continue;  // %var% resolves at runtime
@@ -622,7 +623,7 @@ public class Default : IBuilder
                 StampOnTerminalVariableSet(actions, typeEntity);
             // A bare type-name (legacy handlers) rides as text — its string
             // face normalizes to the structured form.
-            else if (hint is global::app.type.text.@this or string
+            else if (hint is global::app.type.text.@this
                      && hint.ToString() is { Length: > 0 } typeName)
                 StampOnTerminalVariableSet(actions, app.type.@this.Create(typeName, context: context));
         }
@@ -850,7 +851,7 @@ public class Default : IBuilder
         if (steps is List<object?> nullableList) return nullableList.Where(s => s != null).Select(s => s!).ToList();
         // The steps value is the native list type now — read each element's value.
         if (steps is app.type.list.@this nativeList)
-            return nativeList.Items.Select(d => d.Peek()).Where(v => v != null).Select(v => v!).ToList();
+            return nativeList.Items.Select(d => (object?)d.Peek()).Where(v => v != null).Select(v => v!).ToList();
         if (steps is System.Collections.IList rawList)
         {
             var result = new List<object>();
@@ -923,8 +924,8 @@ public class Default : IBuilder
                     // on the .pr — never "type:kind". Skip variable refs
                     // (%var% values resolve at runtime); an authored string
                     // rides as text and presents its string face here.
-                    var sv = (p.Peek() as global::app.type.text.@this)?.Value ?? p.Peek() as string;
-                    if (p.Peek() is not null && !(sv != null && sv.StartsWith('%') && sv.EndsWith('%')))
+                    var sv = p.Peek() as global::app.type.text.@this;
+                    if (p.Peek() is not null && !(sv != null && sv.StartsWith("%") && sv.EndsWith("%")))
                     {
                         var declared = schemaProp.PropertyType;
                         var underlying = System.Nullable.GetUnderlyingType(declared) ?? declared;
@@ -942,8 +943,8 @@ public class Default : IBuilder
                 if (p.Peek() is null) continue;
                 // An authored string rides as text — its string face carries
                 // the %var%-reference / empty / catalog-description judgements.
-                var face = (p.Peek() as global::app.type.text.@this)?.Value ?? p.Peek() as string;
-                if (face != null && face.StartsWith('%') && face.EndsWith('%')) continue; // variable reference
+                var face = p.Peek() as global::app.type.text.@this;
+                if (face != null && face.StartsWith("%") && face.EndsWith("%")) continue; // variable reference
                 if (p.Type == null) continue;
 
                 // LLM-emitted "" for an unset nullable slot — same shape as
@@ -952,7 +953,7 @@ public class Default : IBuilder
                 // of failing in TryConvert below. For non-nullable slots leave the
                 // empty string in place so the conversion error surfaces and
                 // LlmFixer retries.
-                if (face is { Length: 0 }
+                if (face is { } emptyFace && !emptyFace.IsTruthy()
                     && global::app.module.builder.ValidateResponseHelpers.IsNullableSchemaProp(actionType, p.Name))
                 {
                     p.SetValue(null);
@@ -1009,10 +1010,12 @@ public class Default : IBuilder
     /// </summary>
     // internal-static for unit tests — the helper has 4 distinct match shapes and the
     // production callers only exercise the match-true path through integration tests.
-    internal static bool IsCatalogDescription(string value, string typeName)
+    internal static bool IsCatalogDescription(global::app.type.text.@this value, string typeName)
     {
         if (string.IsNullOrEmpty(typeName)) return false;
-        var v = value.AsSpan().Trim();
+        // Span matching is the BCL edge — the text lowers here, inside the
+        // method that owns the parse, never at call sites.
+        var v = value.Clr<string>()!.AsSpan().Trim();
         if (v.StartsWith("%var% ")) v = v[6..];
         if (!v.StartsWith(typeName)) return false;
         var rest = v[typeName.Length..];

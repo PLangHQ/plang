@@ -93,7 +93,7 @@ public class SetTypeInferenceTests
         var result = await action.RunAsync(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("t");
-        await Assert.That((await stored.Value())).IsEqualTo(when);
+        await Assert.That(global::app.type.item.@this.Lower<System.DateTimeOffset>(await stored.Value())).IsEqualTo(when);
         await Assert.That(stored.Type.Name).IsEqualTo("datetime");
     }
 

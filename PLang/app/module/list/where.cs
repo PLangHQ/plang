@@ -29,7 +29,7 @@ public partial class Where : IContext
     public async Task<data.@this> Run()
     {
         var subject = await Context.Variable.Get((await ListName.Value()) as app.variable.@this);
-        var field = (await Field.Value())!.Value;
+        var field = (await Field.Value())!.Clr<string>()!;
         Operator op = (await Operator.Value())!;
         var subjectVal = await subject.Value();
 

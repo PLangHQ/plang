@@ -49,7 +49,7 @@ public partial class discover : IContext
         if (root == null) return empty;
 
         // List routes through AuthGate(Read). Out-of-root: prompt or denial.
-        var listed = await root.List((await Pattern.Value())!.Value, (await Recursive.Value())!.Value);
+        var listed = await root.List((await Pattern.Value())!.Clr<string>()!, (await Recursive.Value())!.Value);
         if (!listed.Success) return data.@this<global::app.type.list.@this<global::app.tester.test.@this>>.FromError(listed.Error!);
         if (await listed.Value() == null) return empty;
 
@@ -245,9 +245,9 @@ public partial class discover : IContext
                     if (!string.IsNullOrWhiteSpace(s)) tags.Add(s);
                 }
             }
-            else if (tagsParam?.Peek() is string single && !string.IsNullOrWhiteSpace(single))
+            else if (tagsParam?.Peek() is global::app.type.text.@this single && single.IsTruthy())
             {
-                tags.Add(single);
+                tags.Add(single.Clr<string>()!);
             }
         });
     }
@@ -290,12 +290,14 @@ public partial class discover : IContext
         var name = value switch
         {
             GoalCall gc => gc.Name,
-            string s => s,
-            System.Text.Json.JsonElement je when je.ValueKind == System.Text.Json.JsonValueKind.Object
+            global::app.type.text.@this s => s.Clr<string>(),
+            global::app.type.item.clr { Value: System.Text.Json.JsonElement je }
+                when je.ValueKind == System.Text.Json.JsonValueKind.Object
                 && je.TryGetProperty("Name", out var np) => np.GetString(),
             // A goal.call param read back from the .pr is the native dict value type.
             app.type.dict.@this nd when nd.Get("Name") is { } nameData => nameData.Peek()?.ToString(),
-            System.Collections.Generic.IDictionary<string, object?> dict when dict.TryGetValue("Name", out var nm) => nm?.ToString(),
+            global::app.type.item.clr { Value: System.Collections.Generic.IDictionary<string, object?> dict }
+                when dict.TryGetValue("Name", out var nm) => nm?.ToString(),
             _ => null
         };
         if (string.IsNullOrEmpty(name) || name.Contains('%')) return null;

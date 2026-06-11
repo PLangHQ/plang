@@ -41,7 +41,7 @@ public partial class validateResponse : IContext
                     sr == null
                         ? "StepResults parameter not bound (Data is null)"
                         : sr.IsInitialized
-                            ? $"StepResults.Value is null but Data was initialized — deserialization to BuildResponse returned null. Raw value type: {sr.RawValue?.GetType().Name ?? "null"}"
+                            ? $"StepResults.Value is null but Data was initialized — deserialization to BuildResponse returned null. Raw value type: {sr.Peek()?.GetType().Name ?? "null"}"
                             : "StepResults parameter is uninitialized (LLM call wrote null/missing %stepResults%)");
             }
             if (goal == null)
@@ -51,7 +51,7 @@ public partial class validateResponse : IContext
                     g == null
                         ? "Goal parameter not bound (Data is null)"
                         : g.IsInitialized
-                            ? $"Goal.Value is null but Data was initialized. Raw value type: {g.RawValue?.GetType().Name ?? "null"}"
+                            ? $"Goal.Value is null but Data was initialized. Raw value type: {g.Peek()?.GetType().Name ?? "null"}"
                             : "Goal parameter is uninitialized (%goal% not in scope when builder.validateResponse ran)");
             }
             return app.data.@this.FromError(
@@ -163,10 +163,10 @@ public partial class validateResponse : IContext
                     if (targetType == null) continue;
                     if (!global::app.type.catalog.@this.IsScalarPlangType(targetType)) continue;
 
-                    // A bare wire string rides born-native as text — both ARE the
+                    // A bare wire string rides born-native as text — that IS the
                     // plain-string form this check wants; only a record shape
                     // ({value, key}) is the violation.
-                    if ((await p.Value()) is not (string or global::app.type.text.@this))
+                    if ((await p.Value()) is not global::app.type.text.@this)
                         errors.Add(
                             $"Step[{step.Index}] {a.Module}.{a.ActionName}: parameter '{p.Name}' has type '{p.Type.Name}' but value is not a plain string. " +
                             $"Scalar types (e.g. tstring, path) must be emitted as bare string values, not records like {{value, key}}.");
@@ -198,7 +198,7 @@ public partial class validateResponse : IContext
                 foreach (var p in a.Parameters)
                 {
                     if (p.Type?.Name == null || (await p.Value()) == null) continue;
-                    if ((await p.Value()) is string sv && sv.StartsWith('%') && sv.EndsWith('%')) continue;
+                    if ((await p.Value()) is global::app.type.text.@this refSv && refSv.StartsWith("%") && refSv.EndsWith("%")) continue;
                     if (ValidateResponseHelpers.IsActionRecord((await p.Value()))) continue;
 
                     // LLMs emit "" for unset nullable slots even when the prompt says
@@ -208,7 +208,7 @@ public partial class validateResponse : IContext
                     // ValidValues, can't parse to int, etc.). For non-nullable slots we
                     // *want* the convertibility error to surface — leave it for the
                     // TryConvert path below.
-                    if ((await p.Value()) is string emptyCheck && emptyCheck.Length == 0)
+                    if ((await p.Value()) is global::app.type.text.@this emptyT && !emptyT.IsTruthy())
                     {
                         if (ValidateResponseHelpers.IsNullableSchemaProp(actionType, p.Name))
                         {
@@ -233,8 +233,8 @@ public partial class validateResponse : IContext
                     var choices = (goal.App ?? app)?.Type.Choices.Get(targetType);
                     if (choices != null)
                     {
-                        var sval = (await p.Value()) as string;
-                        if (sval != null && choices.Any(c => string.Equals(c, sval, StringComparison.OrdinalIgnoreCase)))
+                        var sval = (await p.Value()) as global::app.type.text.@this;
+                        if (sval != null && choices.Any(c => sval.AreEqual(c)))
                             continue;
                         errors.Add(
                             $"Step[{step.Index}] {a.Module}.{a.ActionName}: parameter '{p.Name}' = {ValidateResponseHelpers.FormatValueForError((await p.Value()))} is not a valid {p.Type.Name}. Valid values: {string.Join(", ", choices)}.");

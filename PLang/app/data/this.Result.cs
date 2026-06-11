@@ -30,16 +30,40 @@ public partial class @this
     [JsonIgnore]
     public int ReturnDepth { get; set; } = 1;
 
+    // Observation is opt-in handling (ruling 8): reading Success/Error IS the
+    // guard. A handler that never looks at a failed param can't swallow it —
+    // the generator's post-Run epilogue surfaces any UNOBSERVED param error as
+    // the action's result, type-authored message intact.
+    private IError? _error;
+    private bool _errorObserved;
+
     [JsonIgnore]
     [Out, Store]
-    public IError? Error { get; set; }
+    public IError? Error
+    {
+        get { _errorObserved = true; return _error; }
+        set { _error = value; _errorObserved = false; }
+    }
+
+    /// <summary>The door-failure seam — the failing TYPE authors its own error
+    /// and reports it here (the blessed binding surface for door/Create
+    /// implementations, beside ShallowClone/CloneError).</summary>
+    public void Fail(IError error) { _error = error; _errorObserved = false; }
+
+    /// <summary>True when a failure was recorded and no one has looked at it —
+    /// the generator's post-Run epilogue reads this (without observing).</summary>
+    internal bool HasUnobservedError => _error != null && !_errorObserved;
+
+    /// <summary>The error without marking it observed — for relays (wire,
+    /// debug views) that carry the failure without handling it.</summary>
+    internal IError? ErrorUnobserved => _error;
 
     [JsonIgnore]
     public List<Info>? Warnings { get; set; }
 
     [JsonIgnore]
     [Out, Store]
-    public bool Success => Error == null;
+    public bool Success { get { _errorObserved = true; return _error == null; } }
 
     public static implicit operator bool(@this d) => d.Success;
 
@@ -63,8 +87,8 @@ public partial class @this
     {
         if (other.Peek() == null) return this;
 
-        var myData = Peek() as List<@this> ?? new();
-        var otherData = other.Peek() as List<@this> ?? new();
+        var myData = global::app.type.item.@this.Lower<List<@this>>(Peek()) ?? new();
+        var otherData = global::app.type.item.@this.Lower<List<@this>>(other.Peek()) ?? new();
 
         foreach (var data in otherData)
         {

@@ -700,7 +700,8 @@ public partial class @this
                 // Interpolation is SCALAR use — a reference renders its content
                 // (the bare-scalar contract), never the location string.
                 var content = await dataVar.Value();
-                s = content is byte[] bytes ? System.Convert.ToBase64String(bytes) : content?.ToString();
+                s = content is global::app.type.binary.@this bin
+                    ? System.Convert.ToBase64String(bin.Value) : content?.ToString();
             }
             else s = dataVar?.Peek()?.ToString();
             if (s != null) resolved[varName] = s;

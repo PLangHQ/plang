@@ -27,7 +27,7 @@ public class TextStreamSerializerTests
         var serializer = new global::app.channel.serializer.Text();
 
         // Serialize and verify it works with UTF-8 characters
-        var result = (await serializer.Serialize(Data.Ok("Hello 世界")).Value())!.Value;
+        var result = (await serializer.Serialize(Data.Ok("Hello 世界")).Value())!.Clr<string>()!;
         await Assert.That((result)?.ToString()).IsEqualTo("Hello 世界");
     }
 
@@ -36,7 +36,7 @@ public class TextStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Text();
 
-        var result = (await serializer.Serialize(Data.Ok("hello world")).Value())!.Value;
+        var result = (await serializer.Serialize(Data.Ok("hello world")).Value())!.Clr<string>()!;
 
         await Assert.That((result)?.ToString()).IsEqualTo("hello world");
     }
@@ -46,7 +46,7 @@ public class TextStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Text();
 
-        var result = (await serializer.Serialize(Data.Ok(42)).Value())!.Value;
+        var result = (await serializer.Serialize(Data.Ok(42)).Value())!.Clr<string>()!;
 
         await Assert.That((result)?.ToString()).IsEqualTo("42");
     }
@@ -56,8 +56,8 @@ public class TextStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Text();
 
-        var trueResult = (await serializer.Serialize(Data.Ok(true)).Value())!.Value;
-        var falseResult = (await serializer.Serialize(Data.Ok(false)).Value())!.Value;
+        var trueResult = (await serializer.Serialize(Data.Ok(true)).Value())!.Clr<string>()!;
+        var falseResult = (await serializer.Serialize(Data.Ok(false)).Value())!.Clr<string>()!;
 
         await Assert.That(trueResult).IsEqualTo("true");
         await Assert.That(falseResult).IsEqualTo("false");
@@ -68,7 +68,7 @@ public class TextStreamSerializerTests
     {
         var serializer = new global::app.channel.serializer.Text();
 
-        var result = (await serializer.Serialize(Data.Ok(null)).Value())!.Value;
+        var result = (await serializer.Serialize(Data.Ok(null)).Value())!.Clr<string>()!;
 
         await Assert.That((result)?.ToString()).IsEqualTo("");
     }
@@ -79,7 +79,7 @@ public class TextStreamSerializerTests
         var serializer = new global::app.channel.serializer.Text();
         var obj = new { Name = "test" };
 
-        var result = (await serializer.Serialize(Data.Ok(obj)).Value())!.Value;
+        var result = (await serializer.Serialize(Data.Ok(obj)).Value())!.Clr<string>()!;
 
         // Complex types fall back to JSON serialization (camelCase)
         await Assert.That(result).Contains("name");
@@ -92,7 +92,7 @@ public class TextStreamSerializerTests
         var serializer = new global::app.channel.serializer.Text();
         var dt = new DateTime(2024, 1, 15, 10, 30, 0);
 
-        var result = (await serializer.Serialize(Data.Ok(dt)).Value())!.Value;
+        var result = (await serializer.Serialize(Data.Ok(dt)).Value())!.Clr<string>()!;
 
         await Assert.That(result).Contains("2024");
     }
@@ -328,7 +328,7 @@ public class TextStreamSerializerTests
         var serializer = new global::app.channel.serializer.Text();
         var original = "hello world";
 
-        var text = (await serializer.Serialize(Data.Ok(original)).Value())!.Value;
+        var text = (await serializer.Serialize(Data.Ok(original)).Value())!.Clr<string>()!;
         var result = (await serializer.Deserialize<global::app.type.text.@this>(text).Value())!;
 
         await Assert.That(result.Value).IsEqualTo(original);

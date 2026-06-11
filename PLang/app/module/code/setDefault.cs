@@ -17,11 +17,11 @@ public partial class setDefault : IContext
 
     public async Task<data.@this> Run()
     {
-        var typeName = Type == null ? null : (await Type.Value())?.Value;
+        var typeName = Type == null ? null : (await Type.Value())?.Clr<string>();
         var providerType = Context.App.Code.ResolveType(typeName);
         if (providerType == null)
             return Error(new global::app.error.ActionError($"Unknown provider type '{typeName}'", "UnknownType", 400));
 
-        return Context.App.Code.SetDefault(providerType, (await Name.Value())!.Value);
+        return Context.App.Code.SetDefault(providerType, (await Name.Value())!.Clr<string>()!);
     }
 }

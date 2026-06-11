@@ -78,7 +78,7 @@ public class Signature
             var base64 = value.Peek() switch
             {
                 app.module.crypto.type.hash.@this h => h.ToBase64(),
-                byte[] bytes => Convert.ToBase64String(bytes),
+                global::app.type.binary.@this b => Convert.ToBase64String(b.Value),
                 _ => value.Peek()?.ToString() ?? ""
             };
             writer.WriteString("value", base64);

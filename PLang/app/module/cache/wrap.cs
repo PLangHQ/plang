@@ -21,13 +21,16 @@ public partial class CacheWrap : IContext, IModifier
 
     public Func<Task<global::app.data.@this>> Wrap(Func<Task<global::app.data.@this>> next, actor.context.@this context)
     {
-        var keyVal = Key?.Peek() as global::app.type.text.@this;
-        string cacheKey = !string.IsNullOrEmpty(keyVal?.Value) ? keyVal!.Value : DefaultKey(context);
-        long durationMs = (DurationMs.Peek() as global::app.type.number.@this)?.ToInt64() ?? 0;
-        var sliding = (Sliding.Peek() as global::app.type.@bool.@this)?.Value ?? false;
-
         return async () =>
         {
+            // The handler USES these values — the door, not Peek. An authored
+            // template key ("user-%id%") renders per execution here; Peek
+            // would hand the literal holes and every user would share one
+            // cache entry.
+            var keyText = Key == null ? null : await Key.Value();
+            string cacheKey = keyText?.IsTruthy() == true ? keyText.ToString() : DefaultKey(context);
+            long durationMs = (await DurationMs.Value())?.ToInt64() ?? 0;
+            var sliding = (await Sliding.Value())?.IsTruthy() ?? false;
             var cache = context.App!.Cache;
             var cached = await cache.GetAsync(cacheKey);
             if (cached != null)

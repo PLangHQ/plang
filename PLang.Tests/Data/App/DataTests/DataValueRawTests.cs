@@ -53,10 +53,10 @@ public class DataValueRawTests
         var raw = new List<object?> { "%x%", "literal", "%x%" };
         var data = new Data("list", raw) { Context = _app.User.Context };
 
-        var read = await data.Value();
+        var read = global::app.type.item.@this.Lower<List<object?>>(await data.Value());
         await Assert.That(ReferenceEquals(read, raw)).IsTrue();
-        await Assert.That((string)((List<object?>)read!)[0]!).IsEqualTo("%x%");
-        await Assert.That((string)((List<object?>)read!)[2]!).IsEqualTo("%x%");
+        await Assert.That((string)read![0]!).IsEqualTo("%x%");
+        await Assert.That((string)read![2]!).IsEqualTo("%x%");
     }
 
     // .Value on a Dictionary with nested %var% values → returns original dict, no substitution.
@@ -67,9 +67,9 @@ public class DataValueRawTests
         var raw = new Dictionary<string, object?> { ["name"] = "%user%", ["role"] = "admin" };
         var data = new Data("dict", raw) { Context = _app.User.Context };
 
-        var read = await data.Value();
+        var read = global::app.type.item.@this.Lower<Dictionary<string, object?>>(await data.Value());
         await Assert.That(ReferenceEquals(read, raw)).IsTrue();
-        await Assert.That((string)((Dictionary<string, object?>)read!)["name"]!).IsEqualTo("%user%");
+        await Assert.That((string)read!["name"]!).IsEqualTo("%user%");
     }
 
     // .Value reads do NOT depend on Context/Variables — even with no context attached, .Value works.

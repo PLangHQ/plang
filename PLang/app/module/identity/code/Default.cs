@@ -26,7 +26,7 @@ public sealed class Default : IIdentity
 
     public async Task<data.@this<Identity>> GetAsync(Get action)
     {
-        var result = await ResolveIdentityAsync(action, (action.Name == null ? null : (await action.Name.Value())?.Value));
+        var result = await ResolveIdentityAsync(action, (action.Name == null ? null : (await action.Name.Value())?.Clr<string>()));
         if (!result.Success) return result;
 
         // Refresh cached %MyIdentity% when resolving the default
@@ -40,16 +40,16 @@ public sealed class Default : IIdentity
     {
         var app = action.Context.App;
 
-        if (string.IsNullOrWhiteSpace((await action.Name.Value())?.Value))
+        if (string.IsNullOrWhiteSpace((await action.Name.Value())?.Clr<string>()))
             return data.@this<Identity>.FromError(new ActionError("Identity name cannot be empty", "ValidationError", 400));
 
         var (items, err) = await LoadAllAsync(action);
         if (err != null) return data.@this<Identity>.FromError(err);
-        var __an = (await action.Name.Value())?.Value;
+        var __an = (await action.Name.Value())?.Clr<string>();
         if (items.Exists(i => string.Equals(i.Name, __an, StringComparison.OrdinalIgnoreCase)))
             return data.@this<Identity>.FromError(new ActionError($"Identity '{await action.Name.Value()}' already exists", "DuplicateName", 409));
 
-        var genResult = await GenerateIdentity(action, (await action.Name.Value())!.Value, (await action.SetAsDefault.Value())!.Value, (action.Provider == null ? null : (await action.Provider.Value())?.Value));
+        var genResult = await GenerateIdentity(action, (await action.Name.Value())!.Clr<string>()!, (await action.SetAsDefault.Value())!.Value, (action.Provider == null ? null : (await action.Provider.Value())?.Clr<string>()));
         if (!genResult.Success) return genResult;
         var identity = (await genResult.Value())!;
 
@@ -74,7 +74,7 @@ public sealed class Default : IIdentity
 
     public async Task<data.@this<Identity>> ArchiveAsync(Archive action)
     {
-        var loadResult = await LoadAsync(action, (await action.Name.Value())!.Value);
+        var loadResult = await LoadAsync(action, (await action.Name.Value())!.Clr<string>()!);
         if (!loadResult.Success) return loadResult;
         var identity = (await loadResult.Value())!;
 
@@ -94,7 +94,7 @@ public sealed class Default : IIdentity
 
     public async Task<data.@this<Identity>> UnarchiveAsync(Unarchive action)
     {
-        var loadResult = await LoadAsync(action, (await action.Name.Value())!.Value);
+        var loadResult = await LoadAsync(action, (await action.Name.Value())!.Clr<string>()!);
         if (!loadResult.Success) return loadResult;
         var identity = (await loadResult.Value())!;
 
@@ -113,7 +113,7 @@ public sealed class Default : IIdentity
         var (items, err) = await LoadAllAsync(action);
         if (err != null) return data.@this<Identity>.FromError(err);
 
-        var __nm = (await action.Name.Value())?.Value;
+        var __nm = (await action.Name.Value())?.Clr<string>();
         var target = items.Find(i => string.Equals(i.Name, __nm, StringComparison.OrdinalIgnoreCase));
         if (target == null)
             return data.@this<Identity>.FromError(new ActionError($"Identity '{await action.Name.Value()}' not found", "NotFound", 404));
@@ -143,28 +143,28 @@ public sealed class Default : IIdentity
     {
         var app = action.Context.App;
 
-        if (string.IsNullOrWhiteSpace((await action.NewName.Value())?.Value))
+        if (string.IsNullOrWhiteSpace((await action.NewName.Value())?.Clr<string>()))
             return data.@this<Identity>.FromError(new ActionError("New name cannot be empty", "ValidationError", 400));
 
-        var loadResult = await LoadAsync(action, (await action.Name.Value())!.Value);
+        var loadResult = await LoadAsync(action, (await action.Name.Value())!.Clr<string>()!);
         if (!loadResult.Success) return loadResult;
         var identity = (await loadResult.Value())!;
 
         var (items, err) = await LoadAllAsync(action);
         if (err != null) return data.@this<Identity>.FromError(err);
-        var __nn = (await action.NewName.Value())?.Value;
+        var __nn = (await action.NewName.Value())?.Clr<string>();
         if (items.Exists(i => string.Equals(i.Name, __nn, StringComparison.OrdinalIgnoreCase)))
             return data.@this<Identity>.FromError(new ActionError($"Identity '{await action.NewName.Value()}' already exists", "DuplicateName", 409));
 
         // Save with new name first, then remove old — no data loss on failure
         var oldName = identity.Name;
-        identity.Name = (await action.NewName.Value())!.Value;
+        identity.Name = (await action.NewName.Value())!.Clr<string>()!;
         var saveResult = await SaveAsync(action, identity);
         if (!saveResult.Success) return data.@this<Identity>.From(saveResult);
 
         identity.Name = oldName;
         var removeResult = await RemoveAsync(action, identity);
-        identity.Name = (await action.NewName.Value())!.Value;
+        identity.Name = (await action.NewName.Value())!.Clr<string>()!;
         if (!removeResult.Success) return data.@this<Identity>.From(removeResult);
 
         if (identity.IsDefault)
@@ -183,7 +183,7 @@ public sealed class Default : IIdentity
 
     public async Task<data.@this<Identity>> ExportAsync(Export action)
     {
-        return await ResolveIdentityAsync(action, (action.Name == null ? null : (await action.Name.Value())?.Value));
+        return await ResolveIdentityAsync(action, (action.Name == null ? null : (await action.Name.Value())?.Clr<string>()));
     }
 
     // --- Internal helpers ---
@@ -228,7 +228,7 @@ public sealed class Default : IIdentity
         if (!result.Success) return (null, result.Error);
 
         var identities = new List<Identity>();
-        if (await result.Value() is List<data.@this> dataList)
+        if (global::app.type.item.@this.Lower<List<data.@this>>(await result.Value()) is { } dataList)
         {
             foreach (var item in dataList)
             {
@@ -293,11 +293,11 @@ public sealed class Default : IIdentity
     private async System.Threading.Tasks.Task<data.@this<Identity>> GenerateIdentity(IContext action, string name, bool isDefault, string? providerName = null)
     {
         var app = action.Context.App;
-        var __keyR = app.Code.Get<IKey>(providerName);
-        if (!__keyR.Success)
-            return data.@this<Identity>.FromError(__keyR.Error!);
+        var (keyProvider, keyResolveErr) = app.Code.Get<IKey>(providerName);
+        if (keyResolveErr != null)
+            return data.@this<Identity>.FromError(keyResolveErr);
 
-        var (keys, keyErr) = ((IKey)__keyR.Peek()!).GenerateKeyPair();
+        var (keys, keyErr) = keyProvider!.GenerateKeyPair();
         if (keyErr != null)
             return data.@this<Identity>.FromError(keyErr);
 

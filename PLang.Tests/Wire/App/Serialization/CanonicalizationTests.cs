@@ -76,7 +76,7 @@ public class CanonicalizationTests
         var outer = new global::app.data.@this("outer") { Context = app.User.Context };
         outer.SetValueDirect(inner);   // courier nesting — the documented no-lift bypass
 
-        var json = (await plang.Serialize(outer).Value())!.Value;
+        var json = (await plang.Serialize(outer).Value())!.Clr<string>()!;
         await Assert.That(inner.Signature).IsNotNull();
         await Assert.That(outer.Signature).IsNotNull();
 
@@ -89,7 +89,7 @@ public class CanonicalizationTests
 
         var back = plang.Deserialize(tampered);
         await back.IsSuccess();
-        var roundTripped = (await back.Value()) as global::app.data.@this;
+        var roundTripped = (((await back.Value()) as global::app.type.item.clr)?.Value as global::app.data.@this);
         await Assert.That(roundTripped).IsNotNull();
         roundTripped!.Context = app.User.Context;
 
@@ -129,11 +129,11 @@ public class CanonicalizationTests
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
 
-        var outBytes = (await plang.Serialize(outer).Value())!.Value;
+        var outBytes = (await plang.Serialize(outer).Value())!.Clr<string>()!;
         await Assert.That(outBytes).DoesNotContain("PRIV-must-persist")
             .Because("Out view excludes [Sensitive] — the secret never reaches the wire.");
 
-        var storeBytes = (await plang.Store(outer).Value())!.Value;
+        var storeBytes = (await plang.Store(outer).Value())!.Clr<string>()!;
         await Assert.That(storeBytes).Contains("PRIV-must-persist")
             .Because("Store view includes [Sensitive] — the secret must persist locally so signing keeps working on re-read.");
     }
@@ -151,7 +151,7 @@ public class CanonicalizationTests
 
         var plang = (global::app.channel.serializer.plang.@this)
             app.User.Channel.Serializers.GetByMimeType("application/plang");
-        var json = (await plang.Serialize(outer).Value())!.Value;
+        var json = (await plang.Serialize(outer).Value())!.Clr<string>()!;
 
         await Assert.That(inner.Signature).IsNotNull()
             .Because("Wire.EnsureInnerSigned must reach Datas held as dict values, not just list elements.");

@@ -11,7 +11,7 @@ namespace app.type.list;
 /// a <c>list&lt;T&gt;</c> from raw and converts each element to T. Everything else — serializer,
 /// navigators, comparison, <c>is app.type.list.@this</c> checks — sees the non-generic base.
 /// </summary>
-public sealed class @this<T> : @this
+public sealed class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
     where T : global::app.type.item.@this
 {
     public @this() : base() { }

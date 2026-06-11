@@ -10,7 +10,7 @@ namespace app.goal.steps.step;
 /// <summary>
 /// Represents a step within a goal for App.
 /// </summary>
-public sealed partial class @this : global::app.type.item.@this, module.IDataWrappable
+public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, module.IDataWrappable
 {
     [JsonIgnore]
     public actor.context.@this? Context { get; set; }

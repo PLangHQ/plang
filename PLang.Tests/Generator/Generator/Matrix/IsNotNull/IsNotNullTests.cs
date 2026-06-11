@@ -13,7 +13,7 @@ public class IsNotNullPropTests
             parameters: new[] { ("required", (object?)"value") });
         await result.Data.IsSuccess();
         var typed = result.Data as global::app.data.@this<global::app.type.text.@this>;
-        await Assert.That((await typed!.Value())?.Value).IsEqualTo("value");
+        await Assert.That((await typed!.Value())?.Clr<string>()).IsEqualTo("value");
     }
 
     [Test]

@@ -271,7 +271,7 @@ public partial class @this
                         "NormalizeContextRequired");
 
                 string? relative = null;
-                if (data.Peek() is string raw)
+                if (global::app.type.item.@this.Backing(data.Peek()) is string raw)
                 {
                     // Bridge: incoming as a bare string (pre-Stage-2-wiring shape).
                     relative = raw;
