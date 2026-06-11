@@ -44,6 +44,9 @@ public sealed partial class @this
                 if (FromWire(mRaw, context) is { } mod) act.Modifiers.Add(mod);
             }
         }
+        // Wire-rebuilt actions are authored (recovery chains, compile-response
+        // rebuild) — same template seam as the .pr load.
+        act.StampTemplates();
         return act;
     }
 

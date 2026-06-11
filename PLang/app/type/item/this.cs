@@ -128,6 +128,31 @@ public abstract class @this : global::app.data.IBooleanResolvable
         // value-derived (number's tower) override.
         => new(NamespaceTail(GetType()));
 
+    /// <summary>
+    /// Language tag when this value is a builder-authored template — a value
+    /// whose text (or whose nested entries) contain live <c>%ref%</c> holes
+    /// that resolve against variables at every USE, never at set. An ordinary
+    /// init-only stamp, set at creation by the authored seams (.pr load,
+    /// action wire rebuild) — runtime INPUT is never stamped, so a user who
+    /// types <c>"%secret%"</c> gets it printed literally. <c>"plang"</c> is
+    /// the only language today. Null = not a template; a stamped value is
+    /// never cached by the holding Data (see <see cref="Cacheable"/> on the
+    /// types that honor the stamp).
+    /// </summary>
+    public string? Template { get; init; }
+
+    /// <summary>
+    /// The use-time half of the template contract — fills the value's
+    /// <c>%ref%</c> holes against live variables and answers the result.
+    /// Single-pass over the INPUT; the output is never re-scanned. A
+    /// substituted value that is itself a stamped template renders through
+    /// its OWN door (door recursion is fine; string re-scanning is banned).
+    /// Default: self — a value with no stamp has nothing to fill. Returns
+    /// null for a full-match <c>%ref%</c> whose variable is unset.
+    /// </summary>
+    internal virtual System.Threading.Tasks.ValueTask<@this?> Render(global::app.actor.context.@this context)
+        => System.Threading.Tasks.ValueTask.FromResult<@this?>(this);
+
     /// <summary>The chain entry whose type name matches — self or a prior.
     /// Null when this value never was that type.</summary>
     public @this? Facet(string typeName)

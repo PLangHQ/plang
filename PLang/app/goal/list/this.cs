@@ -410,7 +410,12 @@ public sealed class @this
                 {
                     step.Goal = goal;
                     foreach (var action in step.Actions)
+                    {
                         action.Synthetic = false;
+                        // The authored seam — .pr values containing %ref%
+                        // holes become live templates here, never at input.
+                        action.StampTemplates();
+                    }
                 }
 
                 Add(goal);

@@ -69,6 +69,10 @@ public class NumberValueTests
     {
         var setters = typeof(number).GetProperties()
             .Where(p => p.CanWrite && p.SetMethod?.IsPublic == true)
+            // init-only accessors are immutable after creation — same
+            // exemption the shared WrapperImmutabilityTests gate applies.
+            .Where(p => !p.SetMethod!.ReturnParameter.GetRequiredCustomModifiers()
+                .Contains(typeof(System.Runtime.CompilerServices.IsExternalInit)))
             .Select(p => p.Name)
             .ToList();
         await Assert.That(setters).IsEmpty();

@@ -19,7 +19,7 @@ public sealed partial class @this
 		var read = await templatePath.ReadText();
 		if (!read.Success) return FormatForLlmFallback();
 		var templateText = (await read.Value())?.ToString() ?? "";
-		var scribanTemplate = Template.Parse(templateText);
+		var scribanTemplate = Scriban.Template.Parse(templateText);
 		if (scribanTemplate.HasErrors)
 			return FormatForLlmFallback();
 

@@ -53,6 +53,31 @@ public sealed partial class @this : global::app.type.item.@this,
     protected internal override global::app.type.@this Mint()
         => new("text", typeof(string)) { Kind = Kind };
 
+    /// <summary>A stamped template's answer depends on outside state (%refs%
+    /// can change between uses) — never kept. Plain text caches as always.</summary>
+    public override bool Cacheable => Template == null;
+
+    /// <summary>
+    /// Fills this template's holes against live variables. Full-match
+    /// <c>%x%</c> answers with the variable's value through ITS own door
+    /// (door recursion; the answer may be any type). Partial
+    /// (<c>"hello %name%"</c>) interpolates single-pass into a fresh,
+    /// unstamped text. Null for a full-match whose variable is unset.
+    /// </summary>
+    internal override async System.Threading.Tasks.ValueTask<global::app.type.item.@this?> Render(global::app.actor.context.@this context)
+    {
+        if (Template == null || context.Variable == null) return this;
+        if (global::app.data.@this.TryFullVarMatch(Value, out var varName))
+        {
+            var resolved = await context.Variable.Get(varName);
+            if (resolved == null || !resolved.IsInitialized) return null;
+            if (resolved.Peek() is global::app.type.item.@this it) return await it.Ready();
+            return global::app.data.@this.Lift(resolved.Peek(), context);
+        }
+        var interpolated = await context.Variable.Resolve(Value);
+        return new @this(interpolated);
+    }
+
     public override object? ToRaw() => Value;
     public override bool IsLeaf => true;
     public override void Write(global::app.channel.serializer.IWriter w) => w.String(Value);

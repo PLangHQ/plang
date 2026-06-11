@@ -286,6 +286,14 @@ public partial class @this
             if (answer is module.IContext contextual) contextual.Context = _context;
             _instance = answer;
         }
+        // A stamped template renders against live variables at every use —
+        // the rendered result is never kept (Cacheable already blocked the
+        // rebind above; this fills the holes for the answer being handed out).
+        if (answer.Template != null && _context != null)
+        {
+            var rendered = await answer.Render(_context);
+            return rendered?.Open();
+        }
         // Transitional return shape: the in-memory form (the instance, except
         // where the instance carries a raw form — clr carrier's POCO, an
         // unparseable source's bytes). Tightens to the instance itself when
