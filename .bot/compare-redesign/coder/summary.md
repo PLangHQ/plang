@@ -102,9 +102,50 @@ bridge flattens action templates and the stamp walker over-resolves deferred sub
   the async-`Write`/lazy-streaming rework; navigators + base `is item` checks are
   legit ("proven leaves"). So the gate can't reach green without stage-7 surface-typing.
 
+## slice-2c — started; residue is design-blocked for overnight-autonomous
+
+First flip done & pushed: **callstack `tag` store holds typed `Data`**
+(`tag/this.cs` now `IDictionary<string,Data>`; surface `Set(text key, Data value)`
+lowers the key at the leaf; `call.Tag(text, data)`; `debug/tag.cs` passes the
+binding `target.Tag(entry.Name, entry)` — no point-in-time resolve). Rule nailed:
+flip signature → plang types · store typed (no half-flips) · lower at the leaf only ·
+pass the binding (resolve only for snapshots) · update readers/tests · parity-gate.
+
+The 2b `Value<T>` work already **dissolved most slice-2c sites** — the finder grep
+(`(await X.Value())?.ToString()` etc.) is down from 62 → **23**; the courier group
+(data/variable) is **0**. The remaining 23 split into:
+- **Legit .NET edges (leave):** Scriban template (`goal/Methods`), reflection
+  diagnostics (`debug`), `list.join`/`group` stringification, third-party `Fluid`.
+- **Stage-10 interior-property flips:** `Ask.Answer` is an `[Out]` wire property —
+  typing it cascades to wire/navigation; that's stage-10 (value-bearing members at rest).
+- **Big design-cascades (BLOCKER):** `ServiceError(string msg, string key)` carrying
+  `text`/`data` is the **error model** — thousands of construction sites; `Goal.Parse(string)`
+  → `text` is parse everywhere (~10+ load-bearing callers).
+
+## BLOCKER — why I stopped here (overnight-autonomous safety)
+
+The remaining slice-2c residue + **Stage 7** (full public-surface typing + the build
+gate, ~291 props) + **Stage 10** (typed interior, ~291 props) are large, **design-heavy**
+refactors that I should not grind blind while you sleep:
+1. **Design decisions are yours/architect's** — how errors carry `text`/`data`
+   (the `ServiceError` model), and the Stage-7 build-gate shape. Inventing these
+   overnight would lock in choices you may want different.
+2. **Unverifiable overnight** — the broken-test clusters (llm ~45, crypto/signing,
+   snapshot) mask regressions; "no half-flips" cascades each flip to storage+readers+
+   tests; blast radius is thousands of sites. I can't course-correct a subtle break
+   I can't see, so the risk is net-negative churn.
+
+So I took slice-2c to its **safe limit** (residue = legit-edges + design-cascades) and
+stopped per "unless you have a blocker." Suite is at committed-green parity
+(Data 105 / Modules 145 / Runtime 70 / Wire 40 / Types 29 / Generator 7), tree clean,
+all pushed. Next session (with you awake): pick the `ServiceError` error-model design,
+then Stage 7 surface-typing behind the build gate, then Stage 10 interior.
+
 ## Design hand-offs to architect
 - template-ownership (`v8/template-ownership-proposal.md`)
 - lazy-streaming wire writer / drop the Normalize eager copy (in discussion)
+- `ServiceError` / error-model: how does an error carry `text`/`data` instead of `string`? (slice-2c blocker)
+- Stage-7 build-gate shape (what the gate forbids; migration order for ~291 props)
 
 Design hand-offs to architect: template-ownership (`v8/template-ownership-proposal.md`).
 Deferred (todos.md): typed-null slot citizen `@null.@this<T>`; remove the Lift bridge.
