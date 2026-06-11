@@ -1,5 +1,7 @@
 # Stage 9: Born-typed values — the instance IS the value
 
+**Status (2026-06-11): REOPENED for [slice 2b](stage-9-slice-2b.md)** — slices 1, 3, 4 landed and hold; slice 2's conversion strategy left three demolition verdicts unmet (`ToRaw` demoted not removed, `.Value`-face reads in interior code, `Value<T>()` a rename over the old `As` machinery). Rulings + worklist in the 2b file. Async `Write` is a tracked contract item sequenced behind the channel-off-STJ prerequisite (its own work item).
+
 **The contract for this stage is [`coder/data-value-model.md`](../coder/data-value-model.md)** (Ingi + coder session, extended by the architect session, 2026-06-10). This file is the work breakdown against that contract; where any earlier stage doc (2, 2.1, 3) or the original born-typed proposal conflicts with the model doc, **the model doc wins**. This file was rebased on it 2026-06-10; the earlier `store(v)`-into-a-slot design is superseded.
 
 **Why:** the `Data` value slot held **either shape** depending on origin — `set %x% = %a.port%` put a `number.@this` in the slot, `set %b% = "hello"` put a bare C# `string`, so every consumer carried an "is it the wrapper or the bare string?" branch. The design session went further than the original fix (lift raw CLR into the slot): the slot itself is the wrong shape. Data holds **one typed instance — the instance IS the value** — plus name, properties, signature. No `_value` next to a `_type` descriptor, no `_raw` on Data, no consumer branches.
