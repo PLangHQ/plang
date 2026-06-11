@@ -27,29 +27,30 @@ context.Variable<Path>("path")
  slot = Data with Error
 ```
 
-### `__Bind<T>(paramName)` — one runtime method, used by generated code
+### `action.GetParameter<T>(name, context)` — the typed ask on the action (settled: OBP, the action owns its parameters; lookup and bind are one ask)
 
 ```
-__Bind<T>("path")
+GetParameter<path>("path", context)
       │
       ▼
- .pr parameter "path"
+ .pr parameter "path" (Parameters → Defaults → absent)
       │
  full-match %var%? ──yes──► context.Variable<T>(varName)
       │
-      no (literal)
+      no
       ▼
- T.Create(literal) → Data<T>
+ literal  → T.Create(literal) → Data<T>
+ template → Data<T> over the stamped text + this execution's context
 ```
 
-Absent optional slot → `Uninitialized` (non-null model, as today). `[Default]` → fallback argument on `__Bind`.
+Absent optional slot → `Uninitialized` (non-null model, as today). `[Default]` → fallback argument. The untyped `GetParameter(name, context)` stays a pure lookup.
 
 ### Generated `ExecuteAsync` shape
 
 ```csharp
 // bind section — one line per slot
-Path = await __Bind<path>("path");
-Mime = await __Bind<text>("mime", fallback);
+Path = await __action.GetParameter<path>("path", Context);
+Mime = await __action.GetParameter<text>("mime", Context, fallback);
 
 if (!Path.Success) return __Fail(Path);     // shape errors stop before Run()
 if (!Mime.Success) return __Fail(Mime);
@@ -109,8 +110,8 @@ Validation seam stays split from construction: `[IsNotNull]` / `MissingRequiredP
 **Dies with the core slice** (`PLang.Generators/Emission/Action/this.cs`):
 
 - `__resolutionError` field + the double pre/post-Run checks → per-slot success check before Run + ruling-8 epilogue after Run
-- emitted `__ResolveData` helper (`EmitLegacyHelpers`) → `__Bind` in runtime C#, including the `AsCanonical` full-match hop
-- `__PrefixActionContext`'s pre-Run use → dies; `__Bind` errors carry param name + module.action context at creation. The catch-wrap keeps its context prefix.
+- emitted `__ResolveData` helper (`EmitLegacyHelpers`) → `GetParameter<T>` in runtime C#, including the `AsCanonical` full-match hop
+- `__PrefixActionContext`'s pre-Run use → dies; `GetParameter<T>` errors carry param name + module.action context at creation. The catch-wrap keeps its context prefix.
 - `__ResolveParameters` as a resolve loop → becomes the bind section; whether it stays async depends only on the conversion tier (coder's call)
 
 **Stays:**
@@ -119,12 +120,12 @@ Validation seam stays split from construction: `[IsNotNull]` / `MissingRequiredP
 - `[IsNotNull]` + `MissingRequiredParameter` presence guards (sync, Peek)
 - `__SnapshotParams` (already Peek-based), `Data()`/`Error()` helpers
 - backing-field reset per call in `ExecuteAsync`/`SetAction`
-- `Action.GetParameter` (pure lookup — `__Bind`'s first step)
+- `Action.GetParameter` untyped (pure lookup — `GetParameter<T>`'s first step)
 
 **New runtime members:**
 
 - `Variable<T>(name)` on the variable store — two tiers per the diagram; conversion delegates to T.Create (the type's own knowledge, stage-9 home); never rebinds the variable
-- `__Bind<T>(paramName, fallback?)` — placement (emitted-once helper vs runtime type) is the coder's call
+- `Action.GetParameter<T>(name, context, fallback?)` — the typed ask; arm-picking may delegate to the parameter Data internally (coder's call), but the surface is one ask on the action
 - `__UnobservedParamError()` — reads the ruling-8 observed flag across the handler's slots (the flag itself ships with stage 9)
 
 ## Dependencies and sequencing
@@ -139,4 +140,4 @@ Validation seam stays split from construction: `[IsNotNull]` / `MissingRequiredP
 
 ## You own this
 
-Code shapes in this plan (`__Bind` signature and placement, `__Fail`, the epilogue mechanics, async-or-not on the bind section) are suggestions — the coder owns the final shape. Fixed contracts: the two-tier `Variable<T>` semantics (identity hands over the variable's own Data; conversion never rebinds), one bind statement per slot with no door calls on the identity tier, shape errors return before Run, the ruling-8 epilogue after Run, presence guards stay pre-bind, `RunAsync`'s lifecycle untouched.
+Code shapes in this plan (`GetParameter<T>` internals and signature, `__Fail`, the epilogue mechanics, async-or-not on the bind section) are suggestions — the coder owns the final shape. Fixed contracts: the two-tier `Variable<T>` semantics (identity hands over the variable's own Data; conversion never rebinds), one bind statement per slot with no door calls on the identity tier, shape errors return before Run, the ruling-8 epilogue after Run, presence guards stay pre-bind, `RunAsync`'s lifecycle untouched.
