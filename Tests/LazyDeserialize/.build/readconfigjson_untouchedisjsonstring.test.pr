@@ -6,9 +6,9 @@
     {
       "index": 0,
       "text": "read file \u0027config.json\u0027, write to %cfg%",
-      "lineNumber": 7,
+      "lineNumber": 8,
       "indent": 0,
-      "comment": "Stage 3: a read yields a \u0060file\u0060 reference (headline \u0022file\u0022, kind from the\nextension). The critical lazy invariant survives the inversion: \u0060%cfg%\u0060\nuntouched scalar use is still the raw json *string*; parsing only fires on\nnavigation (see ReadConfigJson_NavigateMaterialisesField). Requires the\nconfig.json fixture committed alongside.",
+      "comment": "Stage 3 \u2192 value model: a read yields a \u0060file\u0060 reference (headline \u0022file\u0022,\nkind from the extension) and METADATA reads never parse. Scalar equality is\na USE under the value model \u2014 it opens the door, so the json compares as its\nparsed dict, not as raw text (PROVISIONAL: model position taken while Ingi\ndecides the scalar-equality-on-unread-reference question; flip back if the\nraw-face compare is chosen). Requires the config.json fixture.",
       "actions": [
         {
           "module": "file",
@@ -18,8 +18,7 @@
               "@schema": "data",
               "name": "Path",
               "type": {
-                "name": "path",
-                "kind": "file"
+                "name": "file"
               },
               "value": "config.json"
             }
@@ -44,7 +43,7 @@
               "@schema": "data",
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "text"
               },
               "value": "%cfg%"
             },
@@ -52,7 +51,7 @@
               "@schema": "data",
               "name": "Value",
               "type": {
-                "name": "object"
+                "name": "text"
               },
               "value": "%!data%"
             },
@@ -63,17 +62,25 @@
                 "name": "type"
               },
               "value": {
-                "name": "item",
+                "name": "file",
                 "kind": "json",
                 "strict": false,
                 "fields": null,
                 "values": null,
-                "properties": null,
+                "properties": [
+                  {
+                    "name": "path",
+                    "typename": "path"
+                  }
+                ],
                 "shape": "string",
                 "constructorsignature": null,
-                "example": null,
+                "example": "/some/config.json",
                 "description": null,
-                "kinds": null
+                "kinds": null,
+                "cacheable": true,
+                "prior": null,
+                "isleaf": false
               }
             }
           ],
@@ -98,7 +105,7 @@
     {
       "index": 1,
       "text": "assert %cfg.Type.Name% equals \u0022file\u0022",
-      "lineNumber": 8,
+      "lineNumber": 9,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -118,7 +125,7 @@
               "@schema": "data",
               "name": "Actual",
               "type": {
-                "name": "object"
+                "name": "text"
               },
               "value": "%cfg.Type.Name%"
             }
@@ -135,7 +142,7 @@
     {
       "index": 2,
       "text": "assert %cfg.Type.Kind% equals \u0022json\u0022",
-      "lineNumber": 9,
+      "lineNumber": 10,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -155,7 +162,7 @@
               "@schema": "data",
               "name": "Actual",
               "type": {
-                "name": "object"
+                "name": "text"
               },
               "value": "%cfg.Type.Kind%"
             }
@@ -171,8 +178,8 @@
     },
     {
       "index": 3,
-      "text": "assert %cfg% equals \u0022{\\\u0022port\\\u0022:8080}\u0022",
-      "lineNumber": 10,
+      "text": "assert %cfg.port% equals 8080",
+      "lineNumber": 11,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -184,18 +191,18 @@
               "@schema": "data",
               "name": "Expected",
               "type": {
-                "name": "text",
-                "kind": "json"
+                "name": "number",
+                "kind": "long"
               },
-              "value": "{\u0022port\u0022:8080}"
+              "value": 8080
             },
             {
               "@schema": "data",
               "name": "Actual",
               "type": {
-                "name": "object"
+                "name": "text"
               },
-              "value": "%cfg%"
+              "value": "%cfg.port%"
             }
           ],
           "defaults": null,
@@ -203,7 +210,7 @@
         }
       ],
       "intent": null,
-      "formal": "assert.equals(Expected=\u0022{\\\u0022port\\\u0022:8080}\u0022, Actual=%cfg%)",
+      "formal": "assert.equals(Expected=8080, Actual=%cfg.port%)",
       "source": null,
       "waitForExecution": true
     }
@@ -212,7 +219,7 @@
   "visibility": 1,
   "path": "/LazyDeserialize/ReadConfigJson_UntouchedIsJsonString.test.goal",
   "prPath": "/LazyDeserialize/.build/readconfigjson_untouchedisjsonstring.test.pr",
-  "hash": "ef037654a38f7d86f352e703a32ce79b7ce038344ff03c8c5ac8d1d8fe1dea8e",
+  "hash": "bb5659be8a69ff007e5173af158ae6a85be6cb1c9e5646fa9240104c294dee99",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

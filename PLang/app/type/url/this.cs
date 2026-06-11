@@ -73,8 +73,11 @@ public sealed class @this : global::app.type.item.@this, global::app.data.ILoada
     /// </summary>
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Ready()
     {
+        // The sample: one consent-gated fetch per value per program run — the
+        // channel stamps + parses FROM the sample, never a second GET.
+        var bytes = await BytesAsync();
         var channel = new global::app.channel.type.file.@this(Path);
-        var read = await channel.Read();
+        var read = await channel.Read(bytes);
         if (!read.Success)
             throw new System.Net.Http.HttpRequestException(read.Error!.Message);
         _ = await read.Value();
@@ -82,7 +85,6 @@ public sealed class @this : global::app.type.item.@this, global::app.data.ILoada
             throw new System.Net.Http.HttpRequestException(read.Error!.Message);
         var answer = read.Instance;
         if (answer == null || ReferenceEquals(answer, this)) return this;
-        Release();
         answer.Accumulate(this);
         return answer;
     }

@@ -8,7 +8,7 @@
       "text": "read file \u0027report.csv\u0027, write to %report%",
       "lineNumber": 7,
       "indent": 0,
-      "comment": "Stage 3: read yields a \u0060file\u0060 reference (headline \u0022file\u0022, kind \u0022csv\u0022);\nuntouched scalar use still yields the raw csv text.\nThe hard probe (\u0022row/column navigation surface\u0022) lives in C# Cut2 /\nTableTypeTests; this goal test pins the type stamp and the\nuntouched-is-raw invariant.",
+      "comment": "Stage 3 \u2192 value model: read yields a \u0060file\u0060 reference (headline \u0022file\u0022,\nkind \u0022csv\u0022); metadata reads never parse. Scalar equality is a USE \u2014 the csv\ncompares as its parsed table, not raw text (PROVISIONAL: model position,\npending Ingi\u0027s scalar-equality decision). The row/column navigation surface\nlives in C# Cut2 / TableTypeTests.",
       "actions": [
         {
           "module": "file",
@@ -18,8 +18,7 @@
               "@schema": "data",
               "name": "Path",
               "type": {
-                "name": "path",
-                "kind": "file"
+                "name": "file"
               },
               "value": "report.csv"
             }
@@ -44,7 +43,7 @@
               "@schema": "data",
               "name": "Name",
               "type": {
-                "name": "variable"
+                "name": "text"
               },
               "value": "%report%"
             },
@@ -52,7 +51,7 @@
               "@schema": "data",
               "name": "Value",
               "type": {
-                "name": "object"
+                "name": "text"
               },
               "value": "%!data%"
             },
@@ -68,12 +67,20 @@
                 "strict": false,
                 "fields": null,
                 "values": null,
-                "properties": null,
+                "properties": [
+                  {
+                    "name": "path",
+                    "typename": "path"
+                  }
+                ],
                 "shape": "string",
                 "constructorsignature": null,
-                "example": null,
+                "example": "/some/config.json",
                 "description": null,
-                "kinds": null
+                "kinds": null,
+                "cacheable": true,
+                "prior": null,
+                "isleaf": false
               }
             }
           ],
@@ -118,7 +125,7 @@
               "@schema": "data",
               "name": "Actual",
               "type": {
-                "name": "object"
+                "name": "text"
               },
               "value": "%report.Type.Name%"
             }
@@ -147,8 +154,7 @@
               "@schema": "data",
               "name": "Expected",
               "type": {
-                "name": "text",
-                "kind": "csv"
+                "name": "text"
               },
               "value": "csv"
             },
@@ -156,7 +162,7 @@
               "@schema": "data",
               "name": "Actual",
               "type": {
-                "name": "object"
+                "name": "text"
               },
               "value": "%report.Type.Kind%"
             }
@@ -172,28 +178,20 @@
     },
     {
       "index": 3,
-      "text": "assert %report% equals \u0022name,age\\nAda,42\\n\u0022",
+      "text": "assert %report% is file",
       "lineNumber": 10,
       "indent": 0,
       "comment": null,
       "actions": [
         {
           "module": "assert",
-          "action": "equals",
+          "action": "isTrue",
           "parameters": [
             {
               "@schema": "data",
-              "name": "Expected",
+              "name": "Value",
               "type": {
                 "name": "text"
-              },
-              "value": "name,age\nAda,42\n"
-            },
-            {
-              "@schema": "data",
-              "name": "Actual",
-              "type": {
-                "name": "object"
               },
               "value": "%report%"
             }
@@ -203,7 +201,7 @@
         }
       ],
       "intent": null,
-      "formal": "assert.equals(Expected=\u0022name,age\\nAda,42\\n\u0022, Actual=%report%)",
+      "formal": "assert.isTrue(Value=%report%)",
       "source": null,
       "waitForExecution": true
     }
@@ -212,7 +210,7 @@
   "visibility": 1,
   "path": "/LazyDeserialize/ReadCsv_LandsAsTable.test.goal",
   "prPath": "/LazyDeserialize/.build/readcsv_landsastable.test.pr",
-  "hash": "63e1798db61cf1db98566ae138620fefec1fb6a9fbf987923032b2b5296ee8df",
+  "hash": "d27d740cb436f2e35ebbd7c0522ed424b13978162ee68e0330d6e56baf93a01a",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

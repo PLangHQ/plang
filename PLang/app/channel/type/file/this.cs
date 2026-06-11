@@ -47,6 +47,14 @@ public sealed class @this : global::app.channel.@this
         return await StampReadAsync((await bytes.Value())!, ct);
     }
 
+    /// <summary>
+    /// Stamp + parse content the caller already holds — the file value samples
+    /// its bytes ONCE (through its own gate) and hands them here so the
+    /// boundary's mime stamping applies without a second disk read.
+    /// </summary>
+    public Task<global::app.data.@this> Read(byte[] raw, CancellationToken ct = default)
+        => StampReadAsync(raw, ct);
+
     public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
         => Task.FromResult(global::app.data.@this.FromError(new ServiceError(
             $"File channel '{Name}' is read-only; write through path.WriteText/WriteBytes", "ChannelReadOnly", 400)));

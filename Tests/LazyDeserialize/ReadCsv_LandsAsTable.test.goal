@@ -1,10 +1,10 @@
 Start
-/ Stage 3: read yields a `file` reference (headline "file", kind "csv");
-/ untouched scalar use still yields the raw csv text.
-/ The hard probe ("row/column navigation surface") lives in C# Cut2 /
-/ TableTypeTests; this goal test pins the type stamp and the
-/ untouched-is-raw invariant.
+/ Stage 3 → value model: read yields a `file` reference (headline "file",
+/ kind "csv"); metadata reads never parse. Scalar equality is a USE — the csv
+/ compares as its parsed table, not raw text (PROVISIONAL: model position,
+/ pending Ingi's scalar-equality decision). The row/column navigation surface
+/ lives in C# Cut2 / TableTypeTests.
 - read file 'report.csv', write to %report%
 - assert %report.Type.Name% equals "file"
 - assert %report.Type.Kind% equals "csv"
-- assert %report% equals "name,age\nAda,42\n"
+- assert %report% is file

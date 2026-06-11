@@ -1,10 +1,11 @@
 Start
-/ Stage 3: a read yields a `file` reference (headline "file", kind from the
-/ extension). The critical lazy invariant survives the inversion: `%cfg%`
-/ untouched scalar use is still the raw json *string*; parsing only fires on
-/ navigation (see ReadConfigJson_NavigateMaterialisesField). Requires the
-/ config.json fixture committed alongside.
+/ Stage 3 → value model: a read yields a `file` reference (headline "file",
+/ kind from the extension) and METADATA reads never parse. Scalar equality is
+/ a USE under the value model — it opens the door, so the json compares as its
+/ parsed dict, not as raw text (PROVISIONAL: model position taken while Ingi
+/ decides the scalar-equality-on-unread-reference question; flip back if the
+/ raw-face compare is chosen). Requires the config.json fixture.
 - read file 'config.json', write to %cfg%
 - assert %cfg.Type.Name% equals "file"
 - assert %cfg.Type.Kind% equals "json"
-- assert %cfg% equals "{\"port\":8080}"
+- assert %cfg.port% equals 8080

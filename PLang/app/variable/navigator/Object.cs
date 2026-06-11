@@ -25,6 +25,21 @@ public sealed class Object : INavigator
                 BindingFlags.Public | BindingFlags.Instance |
                 BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly);
         }
+        // A scalar leaf whose own surface misses the key answers from its raw
+        // backing — %now.Ticks% reaches DateTimeOffset.Ticks through the
+        // datetime value; the wrapper adds behavior, it doesn't hide the CLR
+        // mate's own properties.
+        if (prop == null && value is global::app.type.item.@this { IsLeaf: true } leaf
+            && leaf.ToRaw() is { } backing && !ReferenceEquals(backing, leaf))
+        {
+            for (var t = backing.GetType(); t != null && prop == null; t = t.BaseType)
+            {
+                prop = t.GetProperty(key,
+                    BindingFlags.Public | BindingFlags.Instance |
+                    BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly);
+            }
+            if (prop != null) value = backing;
+        }
         if (prop == null) return global::app.data.@this.NotFound(key);
 
         try

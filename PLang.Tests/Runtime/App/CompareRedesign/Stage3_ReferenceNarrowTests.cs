@@ -138,8 +138,10 @@ public class Stage3_ReferenceNarrowTests : IDisposable
         // narrowed: the parsed dict replaced the reference (single storage)
         await Assert.That(data.Type!.Name).IsEqualTo("dict");
         await Assert.That(data.Peek()).IsTypeOf<global::app.type.dict.@this>();
-        // single-storage: the stashed location-only reference dropped its bytes
-        await Assert.That(reference.IsLoaded).IsFalse();
+        // the sample stays on the reference — aliases and cached bindings that
+        // did not rebind serve their next use from memory (one read per value
+        // per program run)
+        await Assert.That(reference.IsLoaded).IsTrue();
     }
 
     [Test]
