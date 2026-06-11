@@ -131,9 +131,16 @@ via reflection — they move to emission:
   which also collapses more of variable/set.cs); kind/strict are reader-door
   parameters, never Create's; both doors call the type's SINGLE construction
   body — no second copy of "how a number is made."
-- AsCanonical (plain-Data slots): current rebuild keeps the full-match
+- ~~AsCanonical (plain-Data slots): current rebuild keeps the full-match
   live-variable hop at Data level (the canonical IS the live Data — a
-  binding-identity question, not a value question). Confirm.
+  binding-identity question, not a value question). Confirm.~~
+  **CONFIRMED (architect + Ingi, 2026-06-11).** The hop happens before any
+  value exists — a name→binding lookup ("which Data does %list% refer to?");
+  no door opens, no type is in play, nothing for a type to own. Binding is
+  Data's one job; this is purely that. Boundaries: full-match only (a
+  template is a value born by rendering — normal path; the builder's stamp
+  distinguishes), and the hop adds ZERO value logic — after it, everything is
+  the live Data's ordinary doors.
 - The exit-gate greps in stage-9-slice-2b.md still apply unchanged; the
   worklist items all survive — this design only changes HOW Value<T> is
   rebuilt, not what dies.
