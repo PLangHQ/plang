@@ -39,7 +39,7 @@ GetParameter<path>("path", context)
       │
       no
       ▼
- literal  → T.Create(literal) → Data<T>
+ literal  → already typed in the .pr (born typed at build) → hand it over
  template → Data<T> over the stamped text + this execution's context
 ```
 
@@ -133,10 +133,13 @@ Validation seam stays split from construction: `[IsNotNull]` / `MissingRequiredP
 - **Hard dependency: stage 9 (compare-redesign) merged into runtime2.** T.Create, the doors, `Value<T>`, the observed-error flag (ruling 8) all live there; this branch is plan-first and rebases onto runtime2 once that merge lands. Code references above name both shapes so the demolition list survives the rebase.
 - The contract is independent of who emits the bind lines. This branch keeps the handler-side generator emitting them; a possible future .pr→C# emitter would inline the same assignments — explicitly out of scope here.
 
+### Literals are born typed in the .pr (settled, Ingi 2026-06-11)
+
+The builder knows the slot's type from the handler signature, so it runs T.Create on the literal at plang build: the .pr stores `{value: path instance, type: path}`, a bad literal fails at build ("not a valid path" while building, not on first run), and the runtime literal arm is a hand-over — zero conversion. This is safe because the T.Create contract already forbids reaching runtime state (*"Create may touch only `asking.ShallowClone`/`CloneError`"*) — no Create can depend on locale, settings, filesystem, or app root, so build-machine and run-machine answers can't diverge. The stays-text-converts-at-bind fallback arm exists only as the escape hatch if a future type ever argues for an impure Create.
+
 ## Open questions (for Ingi before coding starts)
 
-1. **Literals born typed in the .pr.** The builder knows the slot's type at build time, so literals could be stored already-typed — conversion failures caught at plang build, runtime bind = pure mint, no T.Create on the literal arm. Raised in chat, not ruled.
-2. **`Variable<T>` surface.** Is the typed ask bind-only, or also a public surface for other consumers (goal.call argument mapping, events)?
+1. **`Variable<T>` surface.** Is the typed ask bind-only, or also a public surface for other consumers (goal.call argument mapping, events)?
 
 ## You own this
 
