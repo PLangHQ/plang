@@ -35,6 +35,12 @@ Order:
    the ctor/SetValue lift keeps a json-element arm via the READER path, not a
    public static everyone calls.
 7. Implicit operators TO CLR on text/bool (binary?) — inbound stays.
+   MEASURED RADIUS (text→string alone, probe 2026-06-11): 78 compile errors;
+   production hotspots: http/code/Default.cs(16), identity/code/Default.cs(12),
+   channel/set.cs(7), event/on.cs(4), mock/verify.cs(3), channel/remove.cs(3),
+   settings/set+remove(4), remainder scattered + tests. Each site re-judges to
+   `.Value` read or `.ToString()`-free string-face handling. Do as its own
+   batch with a green build between files.
 8. `number : IConvertible` — audit members; keep only checked/loud needs.
 9. Peek()/Open() tighten toward `item?` (the carrier stops unwrapping) — as far
    as the remaining raw-shape consumers allow; whatever can't tighten yet gets
