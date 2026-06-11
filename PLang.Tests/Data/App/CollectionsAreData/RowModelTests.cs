@@ -35,24 +35,26 @@ public class RowModelTests
     }
 
     [Test]
-    public async Task AddList_StructureCopy_NoAliasBothDirections()
+    public async Task AddList_ReferenceSemantics_SharedInstanceBothWays()
     {
-        // `add %b% to %a%` stores a structure-copy of b (what add.cs does for a list
-        // value), so a and b stay independent — mutating either leaves the other alone.
+        // Collections are reference semantics: `add %b% to %a%` stores %b%'s
+        // list INSTANCE (a new entry Data pointing at it, nothing copied) —
+        // an in-place mutation of either side is visible through both names,
+        // exactly like List<T> in C#. The [1,2,3] rule.
         var b = Of(50, 60);
         var a = Of(10, 20);
-        a.Add(D(b.CopyStructure()));            // copy, not the shared b instance
+        a.Add(D(b));                            // the shared b instance itself
 
         await Assert.That(a.Count).IsEqualTo(4);
 
-        // write-through: set a leaf in a that came from b → b must be untouched.
+        // write-through: set the leaf inside the shared row → visible via b too.
         a.SetAt(2, D(99L));
         await Assert.That((await a.At(2)!.Value())).IsEqualTo(99L);
-        await Assert.That((await b.At(0)!.Value())).IsEqualTo(50L);
+        await Assert.That((await b.At(0)!.Value())).IsEqualTo(99L);
 
-        // read-view: mutate b → a must not track it.
+        // read-view: mutate b → a flattens through the shared row and tracks it.
         b.Add(D(70L));
-        await Assert.That(a.Count).IsEqualTo(4);
+        await Assert.That(a.Count).IsEqualTo(5);
     }
 
     [Test]

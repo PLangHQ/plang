@@ -7,9 +7,9 @@ namespace PLang.Tests.App.actions.variable;
 // variable.set binding contract:
 //   - No `as` clause → shallow-clone the source Data under the target name (plain
 //     Data; no Data<T> mint, no materialize, no deep clone). The PLang type is what's
-//     inferred — it derives from the value's CLR type and rides on .Type. Containers
-//     are structurally copied by the param-resolution walk (new list/dict, shared
-//     leaves), so the stored value is a distinct instance.
+//     inferred — it derives from the value's CLR type and rides on .Type. Collections
+//     are reference semantics: the stored value is the SAME instance (nothing is
+//     copied); only the property bag is fresh per binding.
 //   - `as` clause → convert and mint the declared Data<T>.
 //   - null → plain Data (un-typed).
 
@@ -169,5 +169,48 @@ public class SetTypeInferenceTests
         var result = await TestAction.Create("variable", "set", ("name", "%x%"), ("value", "second"), ("asdefault", true)).RunAsync(context);
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("x"))).IsEqualTo("first");
+    }
+
+    // The [1,2,3] rule: set %y% = %x% shares the list INSTANCE — an in-place
+    // add through one name is visible through the other, like List<T> in C#.
+    [Test]
+    public async Task Set_ListAlias_InPlaceAddVisibleThroughBothNames()
+    {
+        var context = _app.User.Context;
+        var x = new global::app.type.list.@this { Context = context };
+        x.Add(new Data("", 1L)); x.Add(new Data("", 2L));
+        context.Variable.Set("x", x);
+
+        var alias = TestAction.Create("variable", "set", ("name", "%y%"), ("value", "%x%"));
+        await (await alias.RunAsync(context)).IsSuccess();
+
+        var add = TestAction.Create("list", "add", ("listname", "%x%"), ("value", 3));
+        await (await add.RunAsync(context)).IsSuccess();
+
+        var y = await context.Variable.Get("y");
+        var yList = (await y.Value()) as global::app.type.list.@this;
+        await Assert.That(yList).IsNotNull();
+        await Assert.That(yList!.CountRaw).IsEqualTo(3);
+        await Assert.That((await yList.At(2)!.Value())?.ToString()).IsEqualTo("3");
+    }
+
+    // The binding owns its property bag: a property write on the alias lands
+    // on the alias only (the bag is copied at set; values inside it are
+    // shared by pointer).
+    [Test]
+    public async Task Set_Alias_PropertyWrite_LandsOnAliasOnly()
+    {
+        var context = _app.User.Context;
+        context.Variable.Set("x", "payload");
+
+        var alias = TestAction.Create("variable", "set", ("name", "%y%"), ("value", "%x%"));
+        await (await alias.RunAsync(context)).IsSuccess();
+
+        var y = await context.Variable.Get("y");
+        y.Properties["NewProp"] = 1L;
+
+        var x = await context.Variable.Get("x");
+        await Assert.That(x.Properties.ContainsKey("NewProp")).IsFalse();
+        await Assert.That(y.Properties.ContainsKey("NewProp")).IsTrue();
     }
 }

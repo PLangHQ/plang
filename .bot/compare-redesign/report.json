@@ -696,7 +696,7 @@
       "id": "bdd11b01-34c6-4daa-809e-32c05a8167d7",
       "bot": "coder",
       "timestamp_start": "2026-06-10T16:30:00Z",
-      "timestamp_end": "2026-06-11T02:51:35.761177+00:00",
+      "timestamp_end": "2026-06-11T07:08:48.570541+00:00",
       "intent": "Stage 9 born-typed rebuild on the settled data-value-model: core collapse, consumer tail, templates, collections, follow-ons",
       "before": {
         "assumptions": "Model doc settled (nothing open); in-flight retype reverted; baseline C# 2 pre-existing fails (disposable path) + 6 pinned skips; plang 322/324.",
@@ -823,12 +823,24 @@
           "category": "code",
           "confidence": "high",
           "context": "Slice 3 (live templates): Template init-only stamp on item; text.Render door + Cacheable gate; authored seams stamp (goal.list.Add, GoalCall.LoadFromFile, Action.FromWire, Data.Authored); AsCanonical/AsT_Impl sniffs stamp-gated (TryFullVarMatch retired as sniff). Async Write(IWriter) split out to ride with slice 5 (STJ sync exception pre-resolves; no behavioral win now). Gates green: C# 0 fails, plang 330/0."
+        },
+        {
+          "paths": [
+            "PLang/app/type/list/this.cs",
+            "PLang/app/module/list/add.cs",
+            "PLang/app/module/list/set.cs",
+            "PLang/app/data/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Slice 4 (collection reference semantics): CopyStructure removed with both callers \u2014 list.add/list.set entries mint their own Data pointing at the value instance (nothing copied); ShallowClone copies the property BAG per binding (values shared by pointer) per the set %y!NewProp% rule; pins added for the [1,2,3] aliasing case + bag-per-binding; old no-alias pins re-judged to reference semantics. Gates: C# 0 fails (Data slice printed full summary 992/0 this round), plang 330/0 real fails."
         }
       ],
       "after": {
-        "status": "slices 1-3 complete and gated",
+        "status": "slices 1-4 complete and gated",
         "health": "green",
-        "notes": "slice 4 (collections) next; async Write rides with slice 5; scalar-equality provisional decision pending Ingi"
+        "notes": "slice 5 (text.Value private, item.ToRaw removal, async Write) remains; scalar-equality provisional decision pending Ingi"
       }
     }
   ]

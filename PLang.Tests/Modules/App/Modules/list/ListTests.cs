@@ -67,9 +67,11 @@ public class ListTests
     }
 
     [Test]
-    public async Task Add_List_DoesNotAliasSourceVariable()
+    public async Task Add_List_SharesSourceInstance_ReferenceSemantics()
     {
-        // `add %b% to %a%` must leave %a% and %b% independent (merge, like extend).
+        // Collections are reference semantics: `add %b% to %a%` stores %b%'s
+        // list INSTANCE (the entry mints its own Data pointing at it, nothing
+        // copied) — in-place mutation of either side shows through both names.
         var (context, memory) = CreateContext();
         var aList = new global::app.type.list.@this { Context = context };
         aList.Add(new global::app.data.@this("", 10L)); aList.Add(new global::app.data.@this("", 20L));
@@ -85,14 +87,14 @@ public class ListTests
         var b = (await memory.GetValue("b")) as global::app.type.list.@this;
         await Assert.That(a!.Count).IsEqualTo(4);   // flat [10,20,50,60]
 
-        // write-through: mutate the leaf in %a% that came from %b% → %b% untouched.
+        // write-through: mutate the leaf in %a% that came from %b% → visible via %b%.
         a.SetAt(2, new global::app.data.@this("", 99L));
         await Assert.That((await a.At(2)!.Value())?.ToString()).IsEqualTo("99");
-        await Assert.That((await b!.At(0)!.Value())?.ToString()).IsEqualTo("50");
+        await Assert.That((await b!.At(0)!.Value())?.ToString()).IsEqualTo("99");
 
-        // read-view: mutate %b% → %a% doesn't track it.
+        // read-view: mutate %b% → %a% flattens through the shared row and tracks it.
         b.Add(new global::app.data.@this("", 70L));
-        await Assert.That(a.Count).IsEqualTo(4);
+        await Assert.That(a.Count).IsEqualTo(5);
     }
 
     // --- Remove ---

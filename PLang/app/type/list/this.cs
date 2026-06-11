@@ -149,32 +149,6 @@ public partial class @this : global::app.type.item.@this, module.IContext,
         return this;
     }
 
-    /// <summary>
-    /// A structural copy for the merge surface (`add`/`set` a list into a list): a new list
-    /// with its OWN rows, so a later in-place mutation of either side (set/remove/insert)
-    /// leaves the other untouched. Leaf element Data are shared by reference — safe, because
-    /// `set %x% = …` rebinds rather than mutates. A nested list element is copied recursively,
-    /// so no mutable list structure is shared at any depth.
-    /// </summary>
-    public @this CopyStructure() => CopyStructure(0);
-
-    // Mirrors data.@this.MaxJsonDepth (the inbound construction cap) so a pathologically
-    // deep nested list throws rather than stack-overflowing, even if a future build path
-    // loses the inbound depth cap.
-    private const int MaxCopyDepth = 128;
-
-    private @this CopyStructure(int depth)
-    {
-        if (depth > MaxCopyDepth)
-            throw new System.InvalidOperationException($"List nesting exceeds maximum depth ({MaxCopyDepth})");
-        var copy = new @this { Context = _context };
-        foreach (var el in _items)
-            copy._items.Add(el.Peek() is @this nested
-                ? new Data(el.Name, nested.CopyStructure(depth + 1)) { Context = _context }
-                : el);
-        return copy;
-    }
-
     /// <summary>Inserts <paramref name="item"/> at the flattened <paramref name="index"/>
     /// (clamped to [0, Count]).</summary>
     internal @this Insert(int index, Data item)

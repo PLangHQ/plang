@@ -74,6 +74,24 @@ Plan + outcome detail: `v7/slice3-plan.md`. Headlines:
   plang 330 pass / 4 skips / 0 real failures (halves, identical to slice-2
   baseline).
 
+## Slice 4 (closed 2026-06-11) — collection reference semantics
+
+- `CopyStructure` REMOVED with both callers: `list.add`/`list.set` entries
+  mint their OWN Data pointing at the value's current instance — O(1),
+  nothing copied; an in-place mutation of a shared list shows through every
+  name holding it (the [1,2,3] rule), while `set %x% = ...` rebinds and never
+  touches entries.
+- Property bag is per-binding: `ShallowClone` (the `set %y% = %x%` path) now
+  copies the bag (values inside shared by pointer) — `set %y!NewProp% = 1`
+  lands on %y% only.
+- Pins: `Set_ListAlias_InPlaceAddVisibleThroughBothNames`,
+  `Set_Alias_PropertyWrite_LandsOnAliasOnly`, re-judged
+  `Add_List_SharesSourceInstance_ReferenceSemantics` +
+  `AddList_ReferenceSemantics_SharedInstanceBothWays` (old structure-copy
+  pins flipped to the model position).
+- Gates: C# 0 failures (Data slice printed its full summary this round:
+  992/0); plang 330 pass / 4 skips / 0 real failures.
+
 ## Test state
 
 - **C#: 0 failures** (136 → 0 over the session; the 2 pre-existing baseline

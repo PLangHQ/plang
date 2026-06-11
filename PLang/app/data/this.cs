@@ -1301,9 +1301,11 @@ public partial class @this
     public @this ShallowClone() => ShallowClone(Name);
 
     /// <summary>
-    /// Shallow clone under a new name — same value, type, signature and properties
-    /// (all shared by reference). Renaming a value into a new slot (e.g. a goal-call
-    /// parameter) without copying or re-serializing it, so signed/typed values survive.
+    /// Shallow clone under a new name — same value instance, type and signature
+    /// (shared by reference); the property BAG is copied while the values inside
+    /// it stay shared by pointer, so `set %y!NewProp% = 1` lands on %y% only.
+    /// Renaming a value into a new slot (a goal-call parameter, `set %y% = %x%`)
+    /// without copying or re-serializing it, so signed/typed values survive.
     /// </summary>
     public @this ShallowClone(string newName)
     {
@@ -1315,7 +1317,7 @@ public partial class @this
             ReturnDepth = ReturnDepth,
             Warnings = Warnings != null ? new List<Info>(Warnings) : null,
             Signature = Signature,
-            Properties = Properties
+            Properties = Properties.Clone()
         };
         // The instance is shared by reference — values are immutable, so
         // sharing is always safe; the clone is a new Data pointing at the same

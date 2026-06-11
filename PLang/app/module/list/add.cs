@@ -30,14 +30,12 @@ public partial class Add : IContext
             await Context.Variable.Set(listName, list);
         }
 
-        // A list value is structure-copied so the target doesn't alias the source
-        // variable — `add %b% to %a%` then set/remove/insert on either must stay
-        // independent (merge semantics, like extend). A scalar/dict element is stored by
-        // reference: Stage 2's rebind means `set %x% = ...` mints a new Data rather than
-        // mutating the one the list holds, so no defensive copy is needed there.
-        data.@this toAdd = (await Value.Value()) is app.type.list.@this nl
-            ? new data.@this(Value.Name, nl.CopyStructure(), Value.Type) { Context = Context }
-            : Value;
+        // The entry mints its OWN Data pointing at the value's current
+        // instance — O(1), nothing copied. Collections are reference
+        // semantics: `add %b% to %a%` shares %b%'s list instance (a later
+        // in-place mutation of %b% is visible through %a%, like C#), while a
+        // later `set %b% = ...` rebinds %b% and never touches the entry.
+        data.@this toAdd = new data.@this(Value.Name, await Value.Value(), Value.Type) { Context = Context };
 
         // Typed read — number end to end; the list lowers inside its own boundary.
         var atIndex = (await AtIndex.Value())!;
