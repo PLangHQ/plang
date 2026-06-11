@@ -23,7 +23,12 @@ public sealed class Json : JsonConverter<@this>
         foreach (var entry in value.Entries)
         {
             writer.WritePropertyName(entry.Name);
-            JsonSerializer.Serialize(writer, entry.Peek(), options);
+            // Serialize against the RUNTIME type so each value's own
+            // [JsonConverter] fires (text→string, list→array, choice→enum).
+            // Compile-time `object` makes STJ reflect the item base
+            // (Cacheable/Prior/Template/IsLeaf) instead of the value.
+            var v = entry.Peek();
+            JsonSerializer.Serialize(writer, v, v?.GetType() ?? typeof(object), options);
         }
         writer.WriteEndObject();
     }

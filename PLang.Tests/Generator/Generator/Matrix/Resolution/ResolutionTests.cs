@@ -289,9 +289,13 @@ public class ConcurrentHandlersTests
         await Assert.That(results.All(b => b)).IsTrue();
     }
 
-    // Two parallel As<T> calls on the same Data → each returns independent Data<T>.
+    // 50 parallel typed asks on the same Data resolve consistently — every call
+    // yields the value "shared" with no torn state. The ask returns the value
+    // instance; an immutable value narrowed by the door may legitimately be the
+    // same instance across calls (the cache), so instance-distinctness is not a
+    // contract — correctness under concurrency is.
     [Test]
-    public async Task ConcurrentHandlers_ParallelAsT_IndependentResults()
+    public async Task ConcurrentHandlers_ParallelAsT_ResolveConsistently()
     {
         await using var app = new global::app.@this("/app");
         app.User.Context.Variable.Set("x", "shared");
@@ -301,12 +305,7 @@ public class ConcurrentHandlersTests
             data.Value<global::app.type.text.@this>().AsTask())).ToArray();
         var results = await Task.WhenAll(tasks);
 
-        // Each should be independent and successful with the same resolved value.
-        await Assert.That(results.All(r => r.Peek()?.ToString() == "shared")).IsTrue();
-        // Distinct instances (no shared cache).
-        var distinctCount = results.Select(r => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(r))
-            .Distinct().Count();
-        // At least more than 1 distinct (allow some hash collisions).
-        await Assert.That(distinctCount > 1).IsTrue();
+        await Assert.That(results.All(r => r != null)).IsTrue();
+        await Assert.That(results.All(r => r!.ToString() == "shared")).IsTrue();
     }
 }

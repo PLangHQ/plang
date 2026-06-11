@@ -11,11 +11,11 @@ namespace app.type.text;
 /// </summary>
 public sealed class Json : JsonConverter<@this>
 {
-    // Serialize the backing THROUGH the options, not directly — a consumer's
-    // registered JsonConverter<string> (e.g. Json.WithConverter) still composes
-    // over the text leaf's bare-string projection.
+    // ToString() is text's public string face (the backing is private now) —
+    // serialize it THROUGH the options so a consumer's registered
+    // JsonConverter<string> still composes over the bare-string projection.
     public override void Write(Utf8JsonWriter writer, @this value, JsonSerializerOptions options)
-        => JsonSerializer.Serialize(writer, value.Value, options);
+        => JsonSerializer.Serialize(writer, value.ToString(), options);
 
     public override @this Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
         => new(reader.TokenType == JsonTokenType.Null ? "" : reader.GetString() ?? "");

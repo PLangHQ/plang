@@ -48,56 +48,46 @@ public class VariableResolveTests
         await Assert.That(v.WasPercentWrapped).IsFalse();
     }
 
-    // Slot Data carrying "%x%" must resolve through As<Variable>(context) to a Variable
-    // whose Name is "x". This is the load-bearing contract for the migration:
-    // every former [VariableName] slot will be Data<Variable> after Phase 2. The
-    // raw-name carve-out in data.AsT_Impl bypasses %var% substitution for
-    // IRawNameResolvable Ts so this works even when "x" is uninitialized (the
-    // common case for variable.set creating a new variable).
+    // A born Data<Variable> slot — its value is already a Variable (the wire
+    // boundary births it via type.Judge → Variable.Resolve). The typed ask
+    // passes the Variable through unchanged: a name is never rendered against
+    // the store, so an uninitialized "x" still yields its Variable.
     [Test]
     public async Task SlotData_PercentWrapped_AsVariable_NameIsX()
     {
-        var slot = new Data("Name", "%x%") { Context = _app.User.Context };
+        var slot = new global::app.data.@this<@this>("Name", @this.Resolve("%x%", _app.User.Context)) { Context = _app.User.Context };
 
         var resolved = await slot.Value<@this>();
 
-        await resolved.IsSuccess();
-        await Assert.That((await resolved.Value())).IsNotNull();
-        await Assert.That((await resolved.Value())!.Name).IsEqualTo("x");
-        await Assert.That((await resolved.Value())!.WasPercentWrapped).IsTrue();
+        await Assert.That(resolved).IsNotNull();
+        await Assert.That(resolved!.Name).IsEqualTo("x");
+        await Assert.That(resolved.WasPercentWrapped).IsTrue();
     }
 
-    // Pinning the symmetry contract from the architect's plan: "x" pre-existing
-    // in Variables must NOT short-circuit and produce the value of x. The
-    // Variable carries the *identity*, not the value. This is the case the
-    // raw-name carve-out is designed for; without it, TryFullVarMatch would
-    // return x's live value (5) and downstream conversion would either succeed
-    // wrongly or fail with a conversion error.
+    // A variable carries identity, not value: even when "x" holds 5 in the
+    // store, the ask returns the Variable (Name "x"), never x's value.
     [Test]
     public async Task SlotData_PercentWrapped_AsVariable_IgnoresExistingValue()
     {
         _app.User.Context.Variable.Set("x", 5);
-        var slot = new Data("Name", "%x%") { Context = _app.User.Context };
+        var slot = new global::app.data.@this<@this>("Name", @this.Resolve("%x%", _app.User.Context)) { Context = _app.User.Context };
 
         var resolved = await slot.Value<@this>();
 
-        await resolved.IsSuccess();
-        await Assert.That((await resolved.Value())!.Name).IsEqualTo("x");
-        await Assert.That((await resolved.Value())!.WasPercentWrapped).IsTrue();
+        await Assert.That(resolved!.Name).IsEqualTo("x");
+        await Assert.That(resolved.WasPercentWrapped).IsTrue();
     }
 
-    // Slot Data carrying bare "x" — the LLM-emission case that broke the v1 branch.
-    // Variable.Resolve handles it symmetrically.
+    // Bare "x" (no percent) births the same Variable — symmetry with "%x%".
     [Test]
     public async Task SlotData_BareName_AsVariable_NameIsX()
     {
-        var slot = new Data("Name", "x") { Context = _app.User.Context };
+        var slot = new global::app.data.@this<@this>("Name", @this.Resolve("x", _app.User.Context)) { Context = _app.User.Context };
 
         var resolved = await slot.Value<@this>();
 
-        await resolved.IsSuccess();
-        await Assert.That((await resolved.Value())).IsNotNull();
-        await Assert.That((await resolved.Value())!.Name).IsEqualTo("x");
+        await Assert.That(resolved).IsNotNull();
+        await Assert.That(resolved!.Name).IsEqualTo("x");
     }
 
     // Implicit Variable→string conversion fires at any string-expecting boundary

@@ -23,7 +23,12 @@ public sealed class Json : JsonConverter<@this>
     {
         writer.WriteStartArray();
         foreach (var item in value.Items)
-            JsonSerializer.Serialize(writer, item.Peek(), options);
+        {
+            // Runtime type so each element's own [JsonConverter] fires —
+            // compile-time `object` reflects the item base instead.
+            var v = item.Peek();
+            JsonSerializer.Serialize(writer, v, v?.GetType() ?? typeof(object), options);
+        }
         writer.WriteEndArray();
     }
 

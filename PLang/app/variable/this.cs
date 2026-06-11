@@ -57,6 +57,23 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public @this(string name) : this(name ?? "", name ?? "", false) { }
 
     /// <summary>
+    /// The typed-ask construction (<see cref="global::app.type.item.ICreate{TSelf}"/>):
+    /// pure pass-through. A variable NAMES a thing — it is born a Variable at the
+    /// wire boundary (<see cref="global::app.type.@this.Judge"/> calls
+    /// <see cref="Resolve"/> for a <c>type:variable</c> param), never converted
+    /// from a value at the ask. So the only valid input here is an existing
+    /// Variable; anything else is a decline (a rendered value is not a name).
+    /// </summary>
+    public static @this? Create(global::app.type.item.@this value, global::app.data.@this asking)
+    {
+        if (value is @this v) return v;
+        asking.Fail(new global::app.error.Error(
+            $"%{asking.Name}% holds a {value.Mint().Name} — a variable names a thing; it is born typed (declare 'type:variable'), never created from a value.",
+            "CreateDeclined", 400));
+        return null;
+    }
+
+    /// <summary>
     /// Implicit conversion to string at any string-expecting boundary
     /// (e.g. <c>Variables.Get(name.Value)</c>). Returns the canonical name.
     /// </summary>

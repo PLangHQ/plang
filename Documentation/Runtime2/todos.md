@@ -1146,3 +1146,14 @@ flow through the Value wrapper's type (the `as`/`(kind)` just sets the wrapper's
 `TypeFromWire`/`FromName` reconstruction and the compile teaching.
 
 **Decision:** logged for a dedicated investigation; not changing now.
+
+## 2026-06-11 — Typed-null slot citizen `@null.@this<T>`
+A declined/absent `Data<T>` slot currently holds the untyped `absent.Slot`. A
+typed-null citizen (`@null.@this<T>`) would make the slot say *which* type is
+missing — richer diagnostics for navigation/serialization/error views without
+reading the error object. Orthogonal to the instance-returning `Create` (that
+boundary must stay `T?` — a typed-null can't satisfy a `T` return; can't inherit
+a type param, and the leaf types are sealed). Cost: thread T through every
+absent/present-null construction site; the door returns bare `item` so untyped
+couriers still see `item`. Polish, not a correctness gap — the decline error
+already names the target type. Don't fold into the born-typed slice.

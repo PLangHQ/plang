@@ -113,7 +113,7 @@ public class Stage3_ArraysAsDataTests
         list.Add(new Data("", 2L));
         list.Add(new Data("", 3L));
         var d = new Data("nums", list) { Context = ctx };
-        var res = await d.Value<global::app.type.list.@this<global::app.type.number.@this>>();
+        var res = d.ShallowClone<global::app.type.list.@this<global::app.type.number.@this>>(await d.Value<global::app.type.list.@this<global::app.type.number.@this>>());
         await res.IsSuccess();
         await Assert.That(res.GetValue<List<long>>()!).IsEquivalentTo(new List<long> { 1, 2, 3 });
     }

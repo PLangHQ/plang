@@ -91,18 +91,27 @@ public sealed class OpenAi : ILlm
         string? schema;
 
         // Serialize Schema at the LLM boundary. Schema is `Data<object>?` because the
-        // builder LLM may store it as a structured value (Dictionary/List from a JSON
+        // builder LLM may store it as a structured value (dict/list from a JSON
         // literal in .goal source) or as a free-form string (YAML/XML/prose). The LLM
-        // expects text — JSON-serialize structured values, pass strings through as-is.
-        static string? SerializeSchema(object? raw)
+        // expects text — JSON-serialize structured values, pass text through as-is.
+        // An ABSENT/empty schema slot is "no schema" — asked via the binding's
+        // IsEmpty (the value door hands the absent/null citizen, never C# null).
+        async System.Threading.Tasks.Task<string?> SchemaOf(query a)
         {
-            return raw switch
+            if (a.Schema == null || await a.Schema.IsEmpty()) return null;
+            return (await a.Schema.Value()) switch
             {
-                null => null,
-                string s => s,
-                _ => System.Text.Json.JsonSerializer.Serialize(raw)
+                global::app.type.text.@this t => t.ToString(),
+                { } v => System.Text.Json.JsonSerializer.Serialize(v, v.GetType()),
+                _ => null,
             };
         }
+
+        // Format slot — absent/empty is "no explicit format" (the door hands
+        // the absent citizen, never C# null), so the schema-implies-json
+        // fallback can fire.
+        async System.Threading.Tasks.Task<string?> FormatOf(query a)
+            => a.Format == null || await a.Format.IsEmpty() ? null : (await a.Format.Value())?.ToString();
 
         if (((await action.ContinuePreviousConversation.Value()) as global::app.type.@bool.@this)?.Value == true)
         {
@@ -110,11 +119,11 @@ public sealed class OpenAi : ILlm
             if (prev != null)
                 messages.InsertRange(0, prev);
 
-            schema = SerializeSchema((action.Schema == null ? null : await action.Schema.Value())) ?? context.Get<string>(SchemaKey);
+            schema = await SchemaOf(action) ?? context.Get<string>(SchemaKey);
         }
         else
         {
-            schema = SerializeSchema((action.Schema == null ? null : await action.Schema.Value()));
+            schema = await SchemaOf(action);
             context.Set<List<LlmMessage>>(ConversationKey, null!);
             context.Set<string>(SchemaKey, null!);
         }
@@ -123,7 +132,7 @@ public sealed class OpenAi : ILlm
         var originalMessages = CloneMessages(messages);
 
         // Append format/schema instruction
-        var formatInstruction = BuildFormatInstruction((action.Format == null ? null : await action.Format.Value())?.ToString(), schema);
+        var formatInstruction = BuildFormatInstruction(await FormatOf(action), schema);
         if (formatInstruction != null)
         {
             var systemMsg = messages.Find(m => m.Role == "system");
@@ -149,7 +158,7 @@ public sealed class OpenAi : ILlm
         string? cacheKey = null;
         if (((await action.Cache.Value()) as global::app.type.@bool.@this)?.Value == true && goalTools == null && !buildCacheOff)
         {
-            cacheKey = ComputeCacheKey(messages, model, (await action.Temperature.Value())!.ToDouble(), schema, (action.Format == null ? null : await action.Format.Value())?.ToString());
+            cacheKey = ComputeCacheKey(messages, model, (await action.Temperature.Value())!.ToDouble(), schema, await FormatOf(action));
             var cached = await settings.Get(CacheTable, cacheKey);
             if (cached.Success && cached.Peek() != null)
             {
@@ -387,7 +396,7 @@ public sealed class OpenAi : ILlm
             var rawResponse = content ?? "";
 
             // --- Format extraction ---
-            var effectiveFormat = (action.Format == null ? null : await action.Format.Value())?.ToString() ?? (schema != null ? "json" : null);
+            var effectiveFormat = await FormatOf(action) ?? (schema != null ? "json" : null);
             var extracted = ExtractResponse(rawResponse, effectiveFormat);
 
             // --- JSON validation ---

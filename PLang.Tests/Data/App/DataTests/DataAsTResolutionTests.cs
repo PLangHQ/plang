@@ -19,7 +19,7 @@ public class DataAsTResolutionTests
     public async Task AsT_AlreadyTypedData_ReturnsSelf()
     {
         var typed = new global::app.data.@this<global::app.type.number.@this>("count", 42) { Context = _app.User.Context };
-        var result = await typed.Value<global::app.type.number.@this>();
+        var result = typed.ShallowClone<global::app.type.number.@this>(await typed.Value<global::app.type.number.@this>());
         await Assert.That(ReferenceEquals(result, typed)).IsTrue();
     }
 
@@ -28,7 +28,7 @@ public class DataAsTResolutionTests
     public async Task AsT_ValueAlreadyT_FastPathWrap()
     {
         var data = new Data("count", 42) { Context = _app.User.Context }.Authored();
-        var result = await data.Value<global::app.type.number.@this>();
+        var result = data.ShallowClone<global::app.type.number.@this>(await data.Value<global::app.type.number.@this>());
         await Assert.That(result).IsTypeOf<global::app.data.@this<global::app.type.number.@this>>();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("42");
     }
@@ -40,7 +40,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("path", "/tmp/x.txt");
         var data = new Data("p", "%path%") { Context = _app.User.Context }.Authored();
 
-        var result = await data.Value<global::app.type.text.@this>();
+        var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("/tmp/x.txt");
@@ -52,7 +52,7 @@ public class DataAsTResolutionTests
     {
         var data = new Data("p", "%missing%") { Context = _app.User.Context }.Authored();
 
-        var result = await data.Value<global::app.type.text.@this>();
+        var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
 
         // Either Data.FromError (Success=false) or empty value — both are valid contract responses.
         await Assert.That(result).IsNotNull();
@@ -66,7 +66,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("name", "world");
         var data = new Data("greeting", "Hello %name%") { Context = _app.User.Context }.Authored();
 
-        var result = await data.Value<global::app.type.text.@this>();
+        var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
 
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello world");
     }
@@ -79,7 +79,7 @@ public class DataAsTResolutionTests
         var raw = new List<object?> { "%greeting%", "world" };
         var data = new Data("list", raw) { Context = _app.User.Context }.Authored();
 
-        var result = await data.Value<global::app.type.list.@this<global::app.type.text.@this>>();
+        var result = data.ShallowClone<global::app.type.list.@this<global::app.type.text.@this>>(await data.Value<global::app.type.list.@this<global::app.type.text.@this>>());
 
         await Assert.That((await result.Value())).IsNotNull();
         var items = result.GetValue<List<string>>()!;
@@ -95,7 +95,7 @@ public class DataAsTResolutionTests
         var raw = new Dictionary<string, object?> { ["role"] = "system", ["content"] = "%prompt%" };
         var data = new Data("dict", raw) { Context = _app.User.Context }.Authored();
 
-        var result = await data.Value<global::app.type.dict.@this>();
+        var result = data.ShallowClone<global::app.type.dict.@this>(await data.Value<global::app.type.dict.@this>());
 
         await Assert.That((await result.Value())).IsNotNull();
         var dict = result.GetValue<Dictionary<string, object?>>()!;
@@ -108,7 +108,7 @@ public class DataAsTResolutionTests
     {
         var data = new Data("file", "subdir/file.txt") { Context = _app.User.Context }.Authored();
 
-        var result = await data.Value<global::app.type.path.@this>();
+        var result = data.ShallowClone<global::app.type.path.@this>(await data.Value<global::app.type.path.@this>());
 
         // FileSystem.path.Resolve returned a Path instance — Value should be one.
         await Assert.That((await result.Value())).IsNotNull();
@@ -121,7 +121,7 @@ public class DataAsTResolutionTests
     {
         var data = new Data("count", "not-a-number") { Context = _app.User.Context }.Authored();
 
-        var result = await data.Value<global::app.type.number.@this>();
+        var result = data.ShallowClone<global::app.type.number.@this>(await data.Value<global::app.type.number.@this>());
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
@@ -134,11 +134,11 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("x", "first");
         var data = new Data("v", "%x%") { Context = _app.User.Context }.Authored();
 
-        var first = await data.Value<global::app.type.text.@this>();
+        var first = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
         await Assert.That((await first.Value())?.ToString()).IsEqualTo("first");
 
         _app.User.Context.Variable.Set("x", "second");
-        var second = await data.Value<global::app.type.text.@this>();
+        var second = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
         await Assert.That((await second.Value())?.ToString()).IsEqualTo("second");
 
         // Two distinct instances — neither is a cache.
@@ -152,7 +152,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("x", "resolved");
         var data = new Data("v", "%x%") { Context = _app.User.Context }.Authored();
 
-        var resolved = await data.Value<global::app.type.text.@this>();
+        var resolved = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
         await Assert.That((await resolved.Value())?.ToString()).IsEqualTo("resolved");
 
         // The original is not mutated — the source form is intact (Peek never
@@ -180,7 +180,7 @@ public class DataAsTResolutionTests
         };
         var data = new Data("actions", raw) { Context = _app.User.Context }.Authored();
 
-        var result = await data.Value<global::app.type.list.@this<PrAction>>();
+        var result = data.ShallowClone<global::app.type.list.@this<PrAction>>(await data.Value<global::app.type.list.@this<PrAction>>());
 
         await result.IsSuccess();
         await Assert.That((await result.Value())).IsNotNull();
@@ -234,7 +234,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("b", "%a%");
         var data = new Data("ref", "%a%") { Context = _app.User.Context }.Authored();
 
-        var result = await data.Value<global::app.type.text.@this>();
+        var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("%b%");
@@ -250,7 +250,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("x", "%x%");
         var data = new Data("ref", "%x%") { Context = _app.User.Context }.Authored();
 
-        var result = await data.Value<global::app.type.text.@this>();
+        var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("%x%");
@@ -266,7 +266,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("x", "%x%");
         var data = new Data("greeting", "hello %x%") { Context = _app.User.Context }.Authored();
 
-        var result = await data.Value<global::app.type.text.@this>();
+        var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("hello %x%");
@@ -284,7 +284,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("b", "Y-%a%");
         var data = new Data("ref", "%a%") { Context = _app.User.Context }.Authored();
 
-        var result = await data.Value<global::app.type.text.@this>();
+        var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("X-%b%");
@@ -304,7 +304,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("e", "leaf-value");
         var data = new Data("chain", "%a%") { Context = _app.User.Context }.Authored();
 
-        var result = await data.Value<global::app.type.text.@this>();
+        var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("%b%");
@@ -319,7 +319,7 @@ public class DataAsTResolutionTests
         await using var app2 = new global::app.@this("/app2");
         app2.User.Context.Variable.Set("x", "from-app2");
 
-        var result = await data.Value<global::app.type.text.@this>();
+        var result = data.ShallowClone<global::app.type.text.@this>(await data.Value<global::app.type.text.@this>());
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("from-app2");
     }
 
@@ -352,7 +352,7 @@ public class DataAsTResolutionTests
         context.Variable.Set(new global::app.data.@this<global::app.type.list.@this<global::app.type.item.@this>>("messages", global::app.type.list.@this<global::app.type.item.@this>.Of(stored)) { Context = context });
 
         var paramData = new Data("Messages", "%messages%") { Context = context }.Authored();
-        var result = await paramData.Value<global::app.type.list.@this<global::app.type.dict.@this>>();
+        var result = paramData.ShallowClone<global::app.type.list.@this<global::app.type.dict.@this>>(await paramData.Value<global::app.type.list.@this<global::app.type.dict.@this>>());
 
         await result.IsSuccess();
         var content = (string)result.GetValue<List<Dictionary<string, object?>>>()![0]["Content"]!;
@@ -388,7 +388,7 @@ public class DataAsTResolutionTests
 
         // Mirrors how llm.query reads %fixerMessages% — typed slot is List<LlmMessage>.
         var paramData = new Data("Messages", "%fixerMessages%") { Context = context }.Authored();
-        var result = await paramData.Value<global::app.type.list.@this<global::app.module.llm.LlmMessage>>();
+        var result = paramData.ShallowClone<global::app.type.list.@this<global::app.module.llm.LlmMessage>>(await paramData.Value<global::app.type.list.@this<global::app.module.llm.LlmMessage>>());
 
         await result.IsSuccess();
         var content = result.GetValue<List<global::app.module.llm.LlmMessage>>()![0].Content!;

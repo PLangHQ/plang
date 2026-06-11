@@ -14,35 +14,40 @@ namespace app.type.item;
 /// (the value already is a <typeparamref name="TSelf"/>) and the chain facet
 /// (the value evolved FROM one — a <c>Data&lt;file&gt;</c> slot stays
 /// satisfied after the file parsed to dict). A type with real conversions
-/// overrides and falls back here; a decline carries the real reason on the
-/// returned envelope's <c>Error</c>.</para>
+/// overrides and falls back here.</para>
 ///
-/// <para><b>The guard line:</b> <paramref name="asking"/> is the binding the
-/// answer is born into — implementations may touch ONLY
-/// <c>asking.ShallowClone&lt;TSelf&gt;</c> and
-/// <c>asking.CloneError&lt;TSelf&gt;</c> (a door implementation additionally
-/// has <c>Fail</c>). Conversion happens inside a binding or not at all;
-/// everything else on the Data is courier state and off-limits here.</para>
+/// <para><b>Returns the instance, not a binding.</b> Create answers the
+/// <typeparamref name="TSelf"/> value itself — pass-through returns the very
+/// same instance (zero allocation; the value already is one). A decline
+/// answers <c>null</c> and lands the reason on <paramref name="asking"/> via
+/// <c>asking.Fail</c> — the error always belonged to the binding the caller
+/// already holds, never to a freshly minted one. Implementations touch ONLY
+/// <c>asking.Fail</c>; everything else on the Data is courier state and
+/// off-limits here.</para>
 /// </summary>
 public interface ICreate<TSelf> where TSelf : @this, ICreate<TSelf>
 {
-    static virtual global::app.data.@this<TSelf> Create(@this value, global::app.data.@this asking)
+    static virtual TSelf? Create(@this value, global::app.data.@this asking)
     {
         // Pass-through (already TSelf) and the chain facet (a Data<file> slot
-        // satisfied after the file parsed to dict) — free for every type.
-        if (value is TSelf self) return asking.ShallowClone<TSelf>(self);
-        if (value.Facet<TSelf>() is { } facet) return asking.ShallowClone<TSelf>(facet);
+        // satisfied after the file parsed to dict) — free for every type, and
+        // the same instance rides out: no new value, no new binding.
+        if (value is TSelf self) return self;
+        if (value.Facet<TSelf>() is { } facet) return facet;
 
         // The conversion body — the registry's per-type Convert dispatch
         // (text→number, text→choice/enum, text→datetime, json→dict, …): the
         // SINGLE construction home both the typed ask and the reader door call
         // (reader-path ruling). A type with a richer story overrides Create;
-        // a decline carries the real reason on the returned envelope.
+        // a decline lands its reason on the asking binding and answers null.
         var (converted, error) = global::app.type.catalog.@this.TryConvert(
             value, typeof(TSelf), asking.Context, asking.Name);
-        if (error != null) { asking.Fail(error); return asking.CloneError<TSelf>(value); }
-        return converted is TSelf made
-            ? asking.ShallowClone<TSelf>(made)
-            : asking.CloneError<TSelf>(value);
+        if (error != null) { asking.Fail(error); return null; }
+        if (converted is TSelf made) return made;
+
+        asking.Fail(new global::app.error.Error(
+            $"%{asking.Name}% holds a {value.Mint().Name} — '{@this.NameOf(typeof(TSelf))}' cannot be created from it.",
+            "CreateDeclined", 400));
+        return null;
     }
 }

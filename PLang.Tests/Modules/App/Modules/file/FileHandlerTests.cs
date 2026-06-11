@@ -76,16 +76,35 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Read_UnregisteredSchemePath_SurfacesTypedError_NotNre()
     {
-        // a path whose scheme conversion failed (e.g. the
-        // unregistered s3:// scheme) is a non-Success data.@this<path>. The
-        // handler must surface that typed SchemeNotRegistered error, not NRE
-        // on Path.Value.
+        // An unregistered scheme (s3://) fails path conversion. The pipeline
+        // surfaces that typed error through the dispatch's parameter-resolution
+        // guard: the read step fails cleanly with SchemeNotRegistered, no NRE.
         var context = _app.User.Context;
-        var failedPath = await new Data("path", "s3://bucket/key") { Context = context }.Value<PLangPath>();
-        await failedPath.IsFailure();   // conversion already failed
+        var goal = new global::app.goal.@this
+        {
+            Name = "TestUnregisteredScheme",
+            Steps = new global::app.goal.steps.@this
+            {
+                new global::app.goal.steps.step.@this
+                {
+                    Index = 0,
+                    Text = "read s3 file",
+                    Actions = new global::app.goal.steps.step.actions.@this
+                    {
+                        new global::app.goal.steps.step.actions.action.@this
+                        {
+                            Module = "file",
+                            ActionName = "read",
+                            Parameters = new System.Collections.Generic.List<global::app.data.@this>
+                                { new global::app.data.@this("path", "s3://bucket/key") },
+                        }
+                    }
+                }
+            }
+        };
+        foreach (var st in goal.Steps) foreach (var a in st.Actions) a.StampTemplates();
 
-        var action = new Read { Context = context, Path = failedPath };
-        var result = await action.Run();
+        var result = await _app.RunGoalAsync(goal, context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("SchemeNotRegistered");
@@ -467,7 +486,7 @@ public class FileHandlerTests : IDisposable
                             ActionName = "set",
                             Parameters = new System.Collections.Generic.List<global::app.data.@this>
                             {
-                                new global::app.data.@this("Name", "fileResult"),
+                                new global::app.data.@this("Name", "fileResult", new global::app.type.@this("variable")),
                                 new global::app.data.@this("Value", "%!data%")                            }
                         }
                     }
@@ -544,7 +563,7 @@ public class FileHandlerTests : IDisposable
                             ActionName = "set",
                             Parameters = new System.Collections.Generic.List<global::app.data.@this>
                             {
-                                new global::app.data.@this("Name", "fileResult"),
+                                new global::app.data.@this("Name", "fileResult", new global::app.type.@this("variable")),
                                 new global::app.data.@this("Value", "%!data%")                            }
                         }
                     }

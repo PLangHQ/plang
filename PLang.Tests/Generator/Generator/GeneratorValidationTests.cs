@@ -140,8 +140,8 @@ public class GeneratorValidationTests
         var intPlainSrc = File.ReadAllText(Path.Combine(GeneratedDir,
             "app.module.matrix.plain.IntPlain.Action.g.cs"));
 
-        await Assert.That(stringPlainSrc).Contains("__ResolveData(\"path\").Value<global::app.type.text.@this>(Context)");
-        await Assert.That(intPlainSrc).Contains("__ResolveData(\"count\").Value<global::app.type.number.@this>(Context)");
+        await Assert.That(stringPlainSrc).Contains("__d.ShallowClone<global::app.type.text.@this>(await __d.Value<global::app.type.text.@this>())");
+        await Assert.That(intPlainSrc).Contains("__d.ShallowClone<global::app.type.number.@this>(await __d.Value<global::app.type.number.@this>())");
     }
 
     [Test]

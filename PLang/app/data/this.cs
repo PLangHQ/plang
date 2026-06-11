@@ -631,15 +631,17 @@ public partial class @this
     /// <see cref="Value()"/>'s own answer rebinds. Context rides this Data —
     /// never a parameter.
     /// </summary>
-    public async System.Threading.Tasks.ValueTask<@this<T>> Value<T>()
+    public async System.Threading.Tasks.ValueTask<T?> Value<T>()
         where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
         => T.Create(await Value(), this);
 
     /// <summary>
-    /// Binding mechanics for the typed ask's answer — a typed view under THIS
-    /// binding's identity (Name, Context; Properties and event lists aliased
-    /// by reference). With <see cref="CloneError{T}"/> and <c>Fail</c>, the
-    /// blessed surface for door/Create implementations.
+    /// Forms the typed slot binding from this resolved Data and an already-built
+    /// answer instance — a <c>Data&lt;T&gt;</c> view under THIS binding's identity
+    /// (Name, Context; Properties and event lists aliased by reference). The
+    /// answer is the instance the typed ask produced; a null answer carries this
+    /// binding's failure across (the typed ask's decline landed it here via
+    /// <c>Fail</c>), so the formed slot's <c>Success</c> mirrors the source.
     /// </summary>
     public @this<T> ShallowClone<T>(T? answer) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
@@ -658,23 +660,13 @@ public partial class @this
         clone.OnCreate = OnCreate;
         clone.OnChange = OnChange;
         clone.OnDelete = OnDelete;
-        return clone;
-    }
-
-    /// <summary>
-    /// The declined typed ask — a view under this binding's identity carrying
-    /// the failure. An already-failed binding's own (unobserved) error is
-    /// forwarded — a failed door told its story, nothing is minted on top;
-    /// otherwise the decline names both sides.
-    /// </summary>
-    public @this<T> CloneError<T>(global::app.type.item.@this answer) where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
-    {
-        var clone = ShallowClone<T>(default);
-        clone.IsInitialized = false;
-        var targetName = global::app.type.item.@this.NameOf(typeof(T));
-        clone.Fail(ErrorUnobserved ?? new global::app.error.Error(
-            $"%{Name}% holds a {answer.Mint().Name} — '{targetName}' cannot be created from it.",
-            "CreateDeclined", 400));
+        // A declined ask lands its reason on this binding (asking.Fail) and
+        // answers null — carry that failure onto the typed view the caller holds.
+        if (answer == null && _error != null)
+        {
+            clone.Fail(_error);
+            clone.IsInitialized = false;
+        }
         return clone;
     }
 
@@ -1020,13 +1012,7 @@ public class @this<T> : @this
     /// A decline lands its typed error on THIS binding (the slot the handler
     /// observes), answer null.
     /// </summary>
-    public new async ValueTask<T?> Value()
-    {
-        var view = await Value<T>();
-        if (view._type is T typed) return typed;
-        if (view.ErrorUnobserved != null && ErrorUnobserved == null) Fail(view.ErrorUnobserved);
-        return default;
-    }
+    public new ValueTask<T?> Value() => Value<T>();
 
     public @this(string name = "", T? value = default, type? type = null, @this? parent = null)
         : base(name, value, type, parent) { }

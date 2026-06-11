@@ -67,7 +67,7 @@ public sealed class Text : ISerializer
         // to this serializer. Everything else: the Data converts ITSELF to T
         // through T's own Convert hook (As<T> is the typed resolution door).
         if (await result.IsEmpty()) return global::app.data.@this<T>.Ok(default!);
-        return await result.Value<T>();
+        return result.ShallowClone<T>(await result.Value<T>());
     }
 
     public data.@this<global::app.type.text.@this> Serialize(data.@this data)
