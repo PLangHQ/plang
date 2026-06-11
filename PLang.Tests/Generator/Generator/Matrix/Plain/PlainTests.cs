@@ -93,7 +93,7 @@ public class BoolPlainTests
         var result = await MatrixRunner.RunAsync<BoolPlain>(app,
             parameters: new[] { ("flag", (object?)"true") });
         var typed = result.Data as global::app.data.@this<global::app.type.@bool.@this>;
-        await Assert.That((bool)(await typed!.Value())).IsTrue();
+        await Assert.That((await typed!.Value()).Value).IsTrue();
     }
 
     [Test]
@@ -103,7 +103,7 @@ public class BoolPlainTests
         var result = await MatrixRunner.RunAsync<BoolPlain>(app,
             parameters: new[] { ("flag", (object?)true) });
         var typed = result.Data as global::app.data.@this<global::app.type.@bool.@this>;
-        await Assert.That((bool)(await typed!.Value())).IsTrue();
+        await Assert.That((await typed!.Value()).Value).IsTrue();
     }
 }
 

@@ -91,6 +91,6 @@ public class HashTypeTests
         };
         var result = await verify.Run();
         await result.IsSuccess();
-        await Assert.That((bool)(await result.Value())!).IsTrue();
+        await Assert.That((await result.Value())!.Value).IsTrue();
     }
 }

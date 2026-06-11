@@ -368,7 +368,7 @@ public sealed class @this
             var readResult = await prPath.ReadBytes();
             if (!readResult.Success || readResult.Peek() == null)
                 return data.@this.FromError(readResult.Error ?? new Error($"Failed to read goal file: {prFilePath}"));
-            var content = System.Text.Encoding.UTF8.GetString((byte[])(await readResult.Value())!);
+            var content = System.Text.Encoding.UTF8.GetString((await readResult.Value())!.Value);
             var ext = prPath.Extension;
 
             List<goal.@this>? goals = null;

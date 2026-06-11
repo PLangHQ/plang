@@ -323,7 +323,7 @@ public sealed class Default : IHttp
     {
         var bytes = await ReadLimitedBytesAsync(content, maxBytes, ct);
         if (!bytes.Success) return data.@this<global::app.type.text.@this>.FromError(bytes.Error!);
-        return data.@this<global::app.type.text.@this>.Ok(Encoding.UTF8.GetString((await bytes.Value())!));
+        return data.@this<global::app.type.text.@this>.Ok(Encoding.UTF8.GetString((await bytes.Value())!.Value));
     }
 
     // --- Internal HTTP transport ---
@@ -522,7 +522,7 @@ public sealed class Default : IHttp
             return bytesRead;
         }
 
-        var channel = new global::app.channel.type.http.@this(contentType, (await bytesRead.Value())!, context);
+        var channel = new global::app.channel.type.http.@this(contentType, (await bytesRead.Value())!.Value, context);
         var result = await channel.Read();
         // Metadata (status, headers, duration, url, ...) rides as Properties —
         // read with `!`. BuildProperties populates the protocol metadata; duration
@@ -1055,7 +1055,7 @@ public sealed class Default : IHttp
         if (!read.Success || await read.Value() == null)
             return (null, read.Error
                 ?? new ServiceError($"Could not read file: {path}", "FileReadError", 500));
-        var content = new ByteArrayContent((await read.Value())!);
+        var content = new ByteArrayContent((await read.Value())!.Value);
         content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
         return (content, null);
     }
@@ -1097,7 +1097,7 @@ public sealed class Default : IHttp
                 if (!read.Success || await read.Value() == null)
                     return (null, read.Error
                         ?? new ServiceError($"Could not read form file: {value[1..]}", "FileReadError", 500));
-                var fileContent = new ByteArrayContent((await read.Value())!);
+                var fileContent = new ByteArrayContent((await read.Value())!.Value);
                 fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
                 form.Add(fileContent, kvp.Key, fp.FileName);
             }

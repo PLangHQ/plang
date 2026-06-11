@@ -387,7 +387,7 @@ public sealed partial class @this : IAsyncDisposable
         {
             var bytes = await prPath.ReadBytes();
             if (!bytes.Success || bytes.Peek() == null) return;
-            json = global::System.Text.Encoding.UTF8.GetString((byte[])(await bytes.Value())!);
+            json = global::System.Text.Encoding.UTF8.GetString((await bytes.Value())!.Value);
         }
         if (string.IsNullOrWhiteSpace(json)) return;
         try

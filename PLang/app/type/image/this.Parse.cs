@@ -62,7 +62,7 @@ public sealed partial class @this
                 var read = await p.ReadBytes();
                 if (!read.Success || read.Peek() == null) return null;
                 var ext = p is global::app.type.path.file.@this fp ? fp.Extension : "";
-                { var __rb = (byte[])(await read.Value())!; return new @this(__rb, SniffMime(__rb) ?? MimeFromExtension(ext), p); }
+                { var __rb = (await read.Value())!.Value; return new @this(__rb, SniffMime(__rb) ?? MimeFromExtension(ext), p); }
             }
             catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
             { return null; }

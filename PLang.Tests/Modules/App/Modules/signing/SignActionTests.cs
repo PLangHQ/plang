@@ -208,7 +208,7 @@ public class SignActionTests
         var provider = new Ed25519();
         var verifyResult = provider.Verify(signingBytes, sigBytes, sd.Identity);
         await verifyResult.IsSuccess();
-        await Assert.That((bool)(await verifyResult.Value())!).IsTrue();
+        await Assert.That((await verifyResult.Value())!.Value).IsTrue();
     }
 
     #endregion

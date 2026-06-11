@@ -130,7 +130,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.dat
         var read = await Path.ReadBytes();
         if (!read.Success)
             throw new System.IO.IOException(read.Error?.Message ?? $"Could not read image from '{Path}'.");
-        _bytes = (byte[]?)(await read.Value()) ?? System.Array.Empty<byte>();
+        _bytes = (await read.Value())?.Value ?? System.Array.Empty<byte>();
         // Strict kind fires here, at byte-materialization — the set stayed lazy.
         if (CheckStrictKind() is { ok: false } mismatch)
             throw new global::app.data.StrictKindMismatchException(_requiredKind!, mismatch.actualKind);

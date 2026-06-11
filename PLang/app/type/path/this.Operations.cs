@@ -96,7 +96,7 @@ public abstract partial class @this
         var bytes = await ReadBytes();
         if (!bytes.Success || bytes.Peek() == null)
             return data.@this<global::app.type.text.@this>.From(bytes);
-        return data.@this<global::app.type.text.@this>.Ok(System.Convert.ToBase64String((byte[])(await bytes.Value())!));
+        return data.@this<global::app.type.text.@this>.Ok(System.Convert.ToBase64String((await bytes.Value())!.Value));
     }
 
     /// <summary>
@@ -110,7 +110,7 @@ public abstract partial class @this
         if (!bytes.Success || bytes.Peek() == null)
             return data.@this<global::app.type.text.@this>.From(bytes);
         var mime = string.IsNullOrEmpty(MimeType) ? "application/octet-stream" : MimeType;
-        return data.@this<global::app.type.text.@this>.Ok($"data:{mime};base64,{System.Convert.ToBase64String((byte[])(await bytes.Value())!)}");
+        return data.@this<global::app.type.text.@this>.Ok($"data:{mime};base64,{System.Convert.ToBase64String((await bytes.Value())!.Value)}");
     }
 
     /// <summary>Delete with file-action options. Non-FS schemes ignore both.</summary>

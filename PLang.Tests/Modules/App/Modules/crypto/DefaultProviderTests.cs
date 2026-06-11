@@ -92,7 +92,7 @@ public class DefaultCryptoProviderTests
         var result = await _provider.Verify(VerifyAction(new byte[] { 104, 101, 108, 108, 111 }, base64));
 
         await result.IsSuccess();
-        await Assert.That((bool)(await result.Value())!).IsTrue();
+        await Assert.That((await result.Value())!.Value).IsTrue();
     }
 
     [Test]
@@ -103,7 +103,7 @@ public class DefaultCryptoProviderTests
         var result = await _provider.Verify(VerifyAction(new byte[] { 119, 114, 111, 110, 103 }, base64)); // "wrong"
 
         await result.IsSuccess();
-        await Assert.That((bool)(await result.Value())!).IsFalse();
+        await Assert.That((await result.Value())!.Value).IsFalse();
     }
 
     [Test]
@@ -114,7 +114,7 @@ public class DefaultCryptoProviderTests
         var result = await _provider.Verify(VerifyAction(new byte[] { 104, 101, 108, 108, 111 }, base64, "sha256"));
 
         await result.IsSuccess();
-        await Assert.That((bool)(await result.Value())!).IsTrue();
+        await Assert.That((await result.Value())!.Value).IsTrue();
     }
 
     [Test]
@@ -126,7 +126,7 @@ public class DefaultCryptoProviderTests
         var result = await _provider.Verify(VerifyAction(new byte[] { 104, 101, 108, 108, 111 }, Convert.ToBase64String(hashBytes), "sha256"));
 
         await result.IsSuccess();
-        await Assert.That((bool)(await result.Value())!).IsFalse();
+        await Assert.That((await result.Value())!.Value).IsFalse();
     }
 
     [Test]

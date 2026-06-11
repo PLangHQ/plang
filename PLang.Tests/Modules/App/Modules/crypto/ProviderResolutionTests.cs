@@ -76,7 +76,7 @@ public class ProviderResolutionTests
         var result = await action.Run();
 
         await result.IsSuccess();
-        await Assert.That((bool)(await result.Value())!).IsTrue();
+        await Assert.That((await result.Value())!.Value).IsTrue();
     }
 
     private class MockCryptoProvider : ICrypto

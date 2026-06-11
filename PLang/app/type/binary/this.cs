@@ -22,10 +22,11 @@ public sealed partial class @this : global::app.type.item.@this
 
     public @this(byte[] value) { Value = value ?? System.Array.Empty<byte>(); }
 
-    // Null-tolerant to-byte[] (an absent binary-typed Data has a null wrapper); from-byte[]
-    // so `.Ok(bytes)` constructs. byte[] is a reference type, so only @this==@this is
-    // defined (a byte[] overload would make `binary == null` ambiguous).
-    public static implicit operator byte[]?(@this? b) => b?.Value;
+    // INBOUND only — the entry lift (`.Ok(bytes)` constructs). The outbound
+    // implicit (binary → byte[]) is gone: every site was a silent CLR exit;
+    // a reader names the bytes face (`.Value`) at a real .NET edge. byte[] is
+    // a reference type, so only @this==@this is defined (a byte[] overload
+    // would make `binary == null` ambiguous).
     public static implicit operator @this(byte[] v) => new(v);
 
     /// <summary>The CLR exit door — binary hands its own bytes.</summary>

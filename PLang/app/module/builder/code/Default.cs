@@ -183,7 +183,7 @@ public class Default : IBuilder
 
             // The affix/filename filter semantics live on path (path.Matches) —
             // the type owns its containment math.
-            bool MatchesPattern(path f, path bf) => f.Matches(bf);
+            bool MatchesPattern(path f, path bf) => f.Matches(bf).Value;
 
             var ordered = new List<path>();
             var seen = new HashSet<string>();

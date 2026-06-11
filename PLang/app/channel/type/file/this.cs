@@ -44,7 +44,7 @@ public sealed class @this : global::app.channel.@this
         // as an error Data (it owns the System.IO), so the channel stays clean.
         var bytes = await _path.ReadBytes();
         if (!bytes.Success) return bytes;
-        return await StampReadAsync((await bytes.Value())!, ct);
+        return await StampReadAsync((await bytes.Value())!.Value, ct);
     }
 
     /// <summary>

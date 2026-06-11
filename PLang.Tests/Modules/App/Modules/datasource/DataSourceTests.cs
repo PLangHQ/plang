@@ -96,7 +96,7 @@ public class DataSourceTests
         await ds.Set("settings", "ApiKey", new Data("ApiKey", "sk-123"));
         var result = await ds.Exists("settings", "ApiKey");
         await result.IsSuccess();
-        await Assert.That((bool)(await result.Value())!).IsTrue();
+        await Assert.That((await result.Value())!.Value).IsTrue();
     }
 
     [Test]
@@ -105,7 +105,7 @@ public class DataSourceTests
         using var ds = CreateDataSource();
         var result = await ds.Exists("settings", "NonExistent");
         await result.IsSuccess();
-        await Assert.That((bool)(await result.Value())!).IsFalse();
+        await Assert.That((await result.Value())!.Value).IsFalse();
     }
 
     [Test]
@@ -290,7 +290,7 @@ public class DataSourceTests
 
         // Exists
         var existsResult = await ds.Exists("items", "key1");
-        await Assert.That((bool)(await existsResult.Value())!).IsTrue();
+        await Assert.That((await existsResult.Value())!.Value).IsTrue();
 
         // GetAll
         await ds.Set("items", "key2", new Data("key2", "value2"));
@@ -303,7 +303,7 @@ public class DataSourceTests
         var removeResult = await ds.Remove("items", "key1");
         await removeResult.IsSuccess();
         var afterRemove = await ds.Exists("items", "key1");
-        await Assert.That((bool)(await afterRemove.Value())!).IsFalse();
+        await Assert.That((await afterRemove.Value())!.Value).IsFalse();
     }
 
     [Test]

@@ -168,9 +168,9 @@ public class TextStreamSerializerTests
         var falseResult = (await serializer.Deserialize<global::app.type.@bool.@this>("false").Value())!;
         var trueResultCaps = (await serializer.Deserialize<global::app.type.@bool.@this>("True").Value())!;
 
-        await Assert.That((bool)trueResult).IsTrue();
-        await Assert.That((bool)falseResult).IsFalse();
-        await Assert.That((bool)trueResultCaps).IsTrue();
+        await Assert.That(trueResult.Value).IsTrue();
+        await Assert.That(falseResult.Value).IsFalse();
+        await Assert.That(trueResultCaps.Value).IsTrue();
     }
 
     [Test]

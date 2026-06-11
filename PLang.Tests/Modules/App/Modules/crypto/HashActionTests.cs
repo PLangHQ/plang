@@ -147,7 +147,7 @@ public class HashActionTests
         var result = await verifyAction.Run();
 
         await result.IsSuccess();
-        await Assert.That((bool)(await result.Value())!).IsTrue();
+        await Assert.That((await result.Value())!.Value).IsTrue();
     }
 
     [Test]
@@ -162,7 +162,7 @@ public class HashActionTests
         var result = await verifyAction.Run();
 
         await result.IsSuccess();
-        await Assert.That((bool)(await result.Value())!).IsFalse();
+        await Assert.That((await result.Value())!.Value).IsFalse();
     }
 
     [Test]

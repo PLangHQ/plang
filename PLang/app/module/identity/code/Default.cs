@@ -49,7 +49,7 @@ public sealed class Default : IIdentity
         if (items.Exists(i => string.Equals(i.Name, __an, StringComparison.OrdinalIgnoreCase)))
             return data.@this<Identity>.FromError(new ActionError($"Identity '{await action.Name.Value()}' already exists", "DuplicateName", 409));
 
-        var genResult = await GenerateIdentity(action, (await action.Name.Value())!.Value, (await action.SetAsDefault.Value())!, (action.Provider == null ? null : (await action.Provider.Value())?.Value));
+        var genResult = await GenerateIdentity(action, (await action.Name.Value())!.Value, (await action.SetAsDefault.Value())!.Value, (action.Provider == null ? null : (await action.Provider.Value())?.Value));
         if (!genResult.Success) return genResult;
         var identity = (await genResult.Value())!;
 

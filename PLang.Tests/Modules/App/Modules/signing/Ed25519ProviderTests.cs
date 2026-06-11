@@ -128,7 +128,7 @@ public class Ed25519ProviderTests
         var result = _provider.Verify(data, signature, kp.PublicKey);
 
         await result.IsSuccess();
-        await Assert.That((bool)(await result.Value())!).IsTrue();
+        await Assert.That((await result.Value())!.Value).IsTrue();
     }
 
     [Test]

@@ -52,7 +52,7 @@ public class CompareHandlerTests : IDisposable
         var result = await action.Run();
 
         await Assert.That((await result.Value()) is global::app.type.@bool.@this).IsTrue();
-        await Assert.That((bool)(global::app.type.@bool.@this)(await result.Value())!).IsTrue();
+        await Assert.That((await result.Value())!.Value).IsTrue();
     }
 
     [Test]

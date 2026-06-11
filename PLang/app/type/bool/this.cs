@@ -27,11 +27,10 @@ public sealed partial class @this : global::app.type.item.@this,
     public static readonly @this True = new(true);
     public static readonly @this False = new(false);
 
-    // Both directions are lossless (bool carries no precision), so the wrapper owns
-    // its conversions and call sites stay clean: `.Ok(true)` constructs, `if (x.Value)`
-    // reads. The explicit ==/!= overloads below disambiguate `x == true` (which would
-    // otherwise be ambiguous between @this==@this via from-bool and bool==bool via to-bool).
-    public static implicit operator bool(@this b) => b.Value;
+    // INBOUND only — the entry lift (`.Ok(true)` constructs). The outbound
+    // implicit (bool → CLR bool) is gone: every site was a silent CLR exit;
+    // a reader names the bool face (`.Value`) at a real .NET edge. The ==/!=
+    // overloads below keep `x == true` reading naturally without it.
     public static implicit operator @this(bool b) => b ? True : False;
 
     public static bool operator ==(@this? a, @this? b) => a is null ? b is null : a.Equals(b);

@@ -56,7 +56,7 @@ public class Ed25519 : ISigning
         var signingBytes = signedData.ToSigningBytes();
         var signResult = Sign(signingBytes, identity.PrivateKey);
         if (!signResult.Success) return signResult;
-        signedData.Value = Convert.ToBase64String((byte[])(await signResult.Value())!);
+        signedData.Value = Convert.ToBase64String((await signResult.Value())!.Value);
 
         action.Data!.Signature = signedData;
         return action.Data;

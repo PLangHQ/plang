@@ -53,7 +53,7 @@ public partial class On : IContext
             stepPattern: StepPattern == null ? null : (await StepPattern.Value())?.Value,
             actionPattern: ActionPattern == null ? null : (await ActionPattern.Value())?.Value,
             priority: (await Priority.Value())!.ToInt32(),
-            isRegex: (await IsRegex.Value())!,
+            isRegex: (await IsRegex.Value())!.Value,
             goalToCall: goalToCall,
             channelName: ChannelName == null ? null : (await ChannelName.Value())?.Value);
 

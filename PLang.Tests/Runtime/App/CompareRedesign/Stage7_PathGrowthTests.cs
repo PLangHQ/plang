@@ -25,8 +25,8 @@ public class Stage7_PathGrowthTests
         var root = global::app.type.path.@this.Resolve("/docs", context);
         var inside = global::app.type.path.@this.Resolve("/docs/readme.md", context);
         var outside = global::app.type.path.@this.Resolve("/other/readme.md", context);
-        await Assert.That((bool)inside.IsUnder(root)).IsTrue();
-        await Assert.That((bool)outside.IsUnder(root)).IsFalse();
+        await Assert.That(inside.IsUnder(root).Value).IsTrue();
+        await Assert.That(outside.IsUnder(root).Value).IsFalse();
         // the builder filter site routes through the type
         var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "builder", "code", "Default.cs"));
         await Assert.That(src).DoesNotContain("Relative.StartsWith");
