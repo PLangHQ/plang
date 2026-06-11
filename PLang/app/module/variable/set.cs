@@ -143,7 +143,11 @@ public partial class Set : IContext, IBuildValidatable
         //   1. ValidateBuild (above) — a literal value, at BUILD time.
         //   2. the IKindValidatable probe below — a %var% value resolved at RUN time.
         //   3. the IStrictKindEnforcer load seam below — byte-backed values, at MATERIALIZATION.
-        var typeValue = Type == null ? null : await Type.Value();
+        // An omitted `as` clause is an EMPTY slot, not C# null — the value door
+        // answers the `absent` citizen (non-null, ToString() == ""). Gate on the
+        // value's own emptiness so an absent type skips the conversion block
+        // instead of minting a type with an empty name (UnknownType '').
+        var typeValue = Type == null || await Type.IsEmpty() ? null : await Type.Value();
         if (typeValue != null)
         {
             // Kind-derivation and the strict probe read the IN-MEMORY value only: a
