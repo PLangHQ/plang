@@ -320,15 +320,8 @@ public partial class Set : IContext, IBuildValidatable
             return await Context.Variable.Set(typedData);
         }
 
-        // No forced type — shallow bind. A new Data under the target name shares the
-        // source's value (lazy raw included), type, signature and properties: no
-        // materialize (.Value untouched), no deep clone. Reference semantics — a later
-        // in-place mutation of a shared value object is visible through both names, just
-        // as `a = x` shares in mainstream languages. `set %x% = ...` itself replaces the
-        // binding (Variables.Set never mutates an aliased Data in place), so reassignment
-        // never bleeds.
-        data.@this minted = Value.ShallowClone(name);
-        return await Context.Variable.Set(minted);
+        // No forced type — bind the value under the target name.
+        return await Context.Variable.Set(name.Name, Value);
     }
 
     /// <summary>
