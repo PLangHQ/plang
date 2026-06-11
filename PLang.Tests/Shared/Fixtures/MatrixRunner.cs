@@ -47,6 +47,9 @@ public static class MatrixRunner
             Defaults = defaults?.Select(d => new Data(d.name, d.value)).ToList(),
             Step = step
         };
+        // Tests author actions the way the builder does — same template seam
+        // the .pr load applies, so %ref% parameters resolve live at dispatch.
+        action.StampTemplates();
 
         var context = app.User.Context;
         if (variables != null)
@@ -83,6 +86,9 @@ public static class MatrixRunner
             Defaults = defaults?.Select(d => new Data(d.name, d.value)).ToList(),
             Step = step
         };
+        // Tests author actions the way the builder does — same template seam
+        // the .pr load applies, so %ref% parameters resolve live at dispatch.
+        action.StampTemplates();
 
         var context = app.User.Context;
         if (variables != null)

@@ -107,8 +107,9 @@ public class SetTypeInferenceTests
         await result.IsSuccess();
         var stored = await context.Variable.Get("list");
         await Assert.That((await stored.Value())).IsTypeOf<List<object?>>();
-        // The param-resolution walk copies the container — stored.Value is a distinct list.
-        await Assert.That(ReferenceEquals((stored.Peek()), src)).IsFalse();
+        // Collections are reference semantics — a ref-free authored container
+        // is never walked/copied at resolution; set stores the instance itself.
+        await Assert.That(ReferenceEquals((stored.Peek()), src)).IsTrue();
     }
 
     [Test]
@@ -121,7 +122,8 @@ public class SetTypeInferenceTests
         await result.IsSuccess();
         var stored = await context.Variable.Get("d");
         await Assert.That((await stored.Value())).IsTypeOf<Dictionary<string, object?>>();
-        await Assert.That(ReferenceEquals((stored.Peek()), src)).IsFalse();
+        // Same rule as the list test above — reference semantics, no copy.
+        await Assert.That(ReferenceEquals((stored.Peek()), src)).IsTrue();
     }
 
     [Test]

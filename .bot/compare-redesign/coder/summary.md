@@ -52,6 +52,28 @@ Worklist + per-item status: `v7/slice2-worklist.md`. Headlines:
   pass / 4 skips / 0 real failures (halves + Builder+Simple combo for the two
   cross-half path artifacts).
 
+## Slice 3 (closed 2026-06-11) — live templates
+
+Plan + outcome detail: `v7/slice3-plan.md`. Headlines:
+
+- `Template` is an init-only stamp on `item` ("plang"); the build-side
+  detection is deterministic code at the authored seams (`goal.list.Add`,
+  `GoalCall.LoadFromFile`, `Action.FromWire`, `Data.Authored()` for fixtures).
+  Runtime input is never stamped — "%secret%" typed by a user prints
+  literally.
+- Stamped values resolve at every USE, never at set: `text.Render` fills
+  holes via live variables (full-match answers through the variable value's
+  own door; partial interpolates single-pass), `text.Cacheable` is false when
+  stamped so the Value-door rebind never keeps a render.
+- The `AsCanonical`/`AsT_Impl` %ref% sniffs are stamp-gated — TryFullVarMatch
+  retired as a sniff, kept as the full-vs-partial classifier.
+- Async `Write(IWriter)` split out (no behavioral win while the wire path is
+  the documented-sync STJ exception that pre-resolves) — rides with slice 5.
+- Gates: C# 0 failures (Data slice teardown-truncates before its summary —
+  pre-existing; failures flush immediately and none appeared over 4 runs);
+  plang 330 pass / 4 skips / 0 real failures (halves, identical to slice-2
+  baseline).
+
 ## Test state
 
 - **C#: 0 failures** (136 → 0 over the session; the 2 pre-existing baseline

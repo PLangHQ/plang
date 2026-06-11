@@ -491,6 +491,7 @@ public class FileHandlerTests : IDisposable
         };
 
         var context = _app.User.Context;
+        foreach (var st in goal.Steps) foreach (var a in st.Actions) a.StampTemplates();
         var goalResult = await _app.RunGoalAsync(goal, context);
 
         await goalResult.IsSuccess();
@@ -567,6 +568,7 @@ public class FileHandlerTests : IDisposable
         };
 
         var context = _app.User.Context;
+        foreach (var st in goal.Steps) foreach (var a in st.Actions) a.StampTemplates();
         var goalResult = await _app.RunGoalAsync(goal, context);
 
         await goalResult.IsSuccess();

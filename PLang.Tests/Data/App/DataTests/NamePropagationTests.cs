@@ -31,7 +31,7 @@ public class NamePropagationTests
         var context = _app.User.Context;
         context.Variable.Set(new global::app.data.@this("products", global::app.type.list.@this.FromRaw(new List<object?> { "a" }, context)) { Context = context });
 
-        var paramData = new Data("List", "%products%") { Context = context };
+        var paramData = new Data("List", "%products%") { Context = context }.Authored();
         var result = await paramData.Value<global::app.type.list.@this>();
 
         await Assert.That(result.Name).IsEqualTo("products");
@@ -44,7 +44,7 @@ public class NamePropagationTests
     public async Task Name_LiteralValue_KeepsSlotName()
     {
         var context = _app.User.Context;
-        var paramData = new Data("Variable", "user") { Context = context };
+        var paramData = new Data("Variable", "user") { Context = context }.Authored();
         var result = await paramData.Value<global::app.type.text.@this>();
         await Assert.That(result.Name).IsEqualTo("Variable");
     }
@@ -57,7 +57,7 @@ public class NamePropagationTests
         var context = _app.User.Context;
         context.Variable.Set(new global::app.data.@this<global::app.type.text.@this>("name", "world") { Context = context });
 
-        var paramData = new Data("Greeting", "hello %name%!") { Context = context };
+        var paramData = new Data("Greeting", "hello %name%!") { Context = context }.Authored();
         var result = await paramData.Value<global::app.type.text.@this>();
         await Assert.That(result.Name).IsEqualTo("Greeting");
         await Assert.That((await result.Value())!.Value).IsEqualTo("hello world!");
@@ -69,7 +69,7 @@ public class NamePropagationTests
     public async Task Name_UnsetVariable_PropagatesVarName_NotInitialized()
     {
         var context = _app.User.Context;
-        var paramData = new Data("X", "%missing%") { Context = context };
+        var paramData = new Data("X", "%missing%") { Context = context }.Authored();
         var result = await paramData.Value<global::app.type.text.@this>();
         await Assert.That(result.Name).IsEqualTo("missing");
         await Assert.That(result.IsInitialized).IsFalse();
@@ -84,7 +84,7 @@ public class NamePropagationTests
         var context = _app.User.Context;
         context.Variable.Set(new global::app.data.@this<global::app.type.text.@this>("b", "expanded") { Context = context });
 
-        var paramData = new Data("Items", new List<object?> { "a", "%b%", "c" }) { Context = context };
+        var paramData = new Data("Items", new List<object?> { "a", "%b%", "c" }) { Context = context }.Authored();
         var result = await paramData.Value<global::app.type.list.@this>();
         await Assert.That(result.Name).IsEqualTo("Items");
     }
@@ -100,7 +100,7 @@ public class NamePropagationTests
         context.Variable.Set(new global::app.data.@this<global::app.type.number.@this>("b", 42) { Context = context });
         context.Variable.Set(new global::app.data.@this<global::app.type.text.@this>("a", "%b%") { Context = context });
 
-        var paramData = new Data("Slot", "%a%") { Context = context };
+        var paramData = new Data("Slot", "%a%") { Context = context }.Authored();
         var result = await paramData.Value<global::app.type.text.@this>();
         await Assert.That(result.Name).IsEqualTo("a");
         await Assert.That((await result.Value())!.Value).IsEqualTo("%b%");

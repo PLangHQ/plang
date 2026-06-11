@@ -304,20 +304,21 @@ public class StartGoalTests
         IDictionary<string, object?> parameters, IDictionary<string, object?>? defaults,
         int index = 0, string text = "")
     {
+        var action = new global::app.goal.steps.step.actions.action.@this
+        {
+            Module = actionClass,
+            ActionName = method,
+            Parameters = parameters.Select(kv => new Data(kv.Key, kv.Value)).ToList(),
+            Defaults = defaults?.Select(kv => new Data(kv.Key, kv.Value)).ToList()
+        };
+        // Tests author actions the way the builder does — same template seam
+        // the .pr load applies, so %ref% parameters resolve live at dispatch.
+        action.StampTemplates();
         return new Step
         {
             Index = index,
             Text = text,
-            Actions = new StepActions
-            {
-                new global::app.goal.steps.step.actions.action.@this
-                {
-                    Module = actionClass,
-                    ActionName = method,
-                    Parameters = parameters.Select(kv => new Data(kv.Key, kv.Value)).ToList(),
-                    Defaults = defaults?.Select(kv => new Data(kv.Key, kv.Value)).ToList()
-                }
-            }
+            Actions = new StepActions { action }
         };
     }
 

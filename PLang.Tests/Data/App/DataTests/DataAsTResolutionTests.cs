@@ -27,7 +27,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_ValueAlreadyT_FastPathWrap()
     {
-        var data = new Data("count", 42) { Context = _app.User.Context };
+        var data = new Data("count", 42) { Context = _app.User.Context }.Authored();
         var result = await data.Value<global::app.type.number.@this>(_app.User.Context);
         await Assert.That(result).IsTypeOf<global::app.data.@this<global::app.type.number.@this>>();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("42");
@@ -38,7 +38,7 @@ public class DataAsTResolutionTests
     public async Task AsT_FullVarMatch_ReturnsVariableValue()
     {
         _app.User.Context.Variable.Set("path", "/tmp/x.txt");
-        var data = new Data("p", "%path%") { Context = _app.User.Context };
+        var data = new Data("p", "%path%") { Context = _app.User.Context }.Authored();
 
         var result = await data.Value<global::app.type.text.@this>(_app.User.Context);
 
@@ -50,7 +50,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_FullVarMatch_MissingVariable_ReturnsErrorOrNotFound()
     {
-        var data = new Data("p", "%missing%") { Context = _app.User.Context };
+        var data = new Data("p", "%missing%") { Context = _app.User.Context }.Authored();
 
         var result = await data.Value<global::app.type.text.@this>(_app.User.Context);
 
@@ -64,7 +64,7 @@ public class DataAsTResolutionTests
     public async Task AsT_Interpolation_CallsResolve()
     {
         _app.User.Context.Variable.Set("name", "world");
-        var data = new Data("greeting", "Hello %name%") { Context = _app.User.Context };
+        var data = new Data("greeting", "Hello %name%") { Context = _app.User.Context }.Authored();
 
         var result = await data.Value<global::app.type.text.@this>(_app.User.Context);
 
@@ -77,7 +77,7 @@ public class DataAsTResolutionTests
     {
         _app.User.Context.Variable.Set("greeting", "hello");
         var raw = new List<object?> { "%greeting%", "world" };
-        var data = new Data("list", raw) { Context = _app.User.Context };
+        var data = new Data("list", raw) { Context = _app.User.Context }.Authored();
 
         var result = await data.Value<global::app.type.list.@this<global::app.type.text.@this>>(_app.User.Context);
 
@@ -93,7 +93,7 @@ public class DataAsTResolutionTests
     {
         _app.User.Context.Variable.Set("prompt", "You are a compiler");
         var raw = new Dictionary<string, object?> { ["role"] = "system", ["content"] = "%prompt%" };
-        var data = new Data("dict", raw) { Context = _app.User.Context };
+        var data = new Data("dict", raw) { Context = _app.User.Context }.Authored();
 
         var result = await data.Value<global::app.type.dict.@this>(_app.User.Context);
 
@@ -106,7 +106,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_TypeWithStaticResolve_StringValue_DispatchesToResolve()
     {
-        var data = new Data("file", "subdir/file.txt") { Context = _app.User.Context };
+        var data = new Data("file", "subdir/file.txt") { Context = _app.User.Context }.Authored();
 
         var result = await data.Value<global::app.type.path.@this>(_app.User.Context);
 
@@ -119,7 +119,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_ConversionFailure_ReturnsFromError()
     {
-        var data = new Data("count", "not-a-number") { Context = _app.User.Context };
+        var data = new Data("count", "not-a-number") { Context = _app.User.Context }.Authored();
 
         var result = await data.Value<global::app.type.number.@this>(_app.User.Context);
 
@@ -132,7 +132,7 @@ public class DataAsTResolutionTests
     public async Task AsT_CalledTwice_FreshResolutionEachCall()
     {
         _app.User.Context.Variable.Set("x", "first");
-        var data = new Data("v", "%x%") { Context = _app.User.Context };
+        var data = new Data("v", "%x%") { Context = _app.User.Context }.Authored();
 
         var first = await data.Value<global::app.type.text.@this>(_app.User.Context);
         await Assert.That((await first.Value())?.ToString()).IsEqualTo("first");
@@ -150,13 +150,14 @@ public class DataAsTResolutionTests
     public async Task AsT_DoesNotMutateOriginalDataValue()
     {
         _app.User.Context.Variable.Set("x", "resolved");
-        var data = new Data("v", "%x%") { Context = _app.User.Context };
+        var data = new Data("v", "%x%") { Context = _app.User.Context }.Authored();
 
         var resolved = await data.Value<global::app.type.text.@this>(_app.User.Context);
         await Assert.That((await resolved.Value())?.ToString()).IsEqualTo("resolved");
 
-        // Original .Value is still raw.
-        await Assert.That((await data.Value())?.ToString()).IsEqualTo("%x%");
+        // The original is not mutated — the source form is intact (Peek never
+        // renders). Value() on a stamped template renders live by design.
+        await Assert.That(data.Peek()?.ToString()).IsEqualTo("%x%");
     }
 
     // List<Action.@this> elements pass through As<T> WITHOUT walking into Action templates.
@@ -177,7 +178,7 @@ public class DataAsTResolutionTests
                 }
             }
         };
-        var data = new Data("actions", raw) { Context = _app.User.Context };
+        var data = new Data("actions", raw) { Context = _app.User.Context }.Authored();
 
         var result = await data.Value<global::app.type.list.@this<PrAction>>(_app.User.Context);
 
@@ -198,7 +199,7 @@ public class DataAsTResolutionTests
     {
         _app.User.Context.Variable.Set("x", "substituted");
         var raw = new System.Collections.ArrayList { "%x%", "literal" };
-        var data = new Data("list", raw) { Context = _app.User.Context };
+        var data = new Data("list", raw) { Context = _app.User.Context }.Authored();
 
         // AsCanonical resolves vars without typing — a non-generic ArrayList isn't a walked
         // shape, so it passes through untouched.
@@ -215,7 +216,7 @@ public class DataAsTResolutionTests
     {
         _app.User.Context.Variable.Set("x", "substituted");
         var raw = new System.Collections.Hashtable { ["key"] = "%x%" };
-        var data = new Data("dict", raw) { Context = _app.User.Context };
+        var data = new Data("dict", raw) { Context = _app.User.Context }.Authored();
 
         var result = await data.AsCanonical();
 
@@ -231,7 +232,7 @@ public class DataAsTResolutionTests
     {
         _app.User.Context.Variable.Set("a", "%b%");
         _app.User.Context.Variable.Set("b", "%a%");
-        var data = new Data("ref", "%a%") { Context = _app.User.Context };
+        var data = new Data("ref", "%a%") { Context = _app.User.Context }.Authored();
 
         var result = await data.Value<global::app.type.text.@this>(_app.User.Context);
 
@@ -247,7 +248,7 @@ public class DataAsTResolutionTests
     public async Task AsT_StoredSelfRef_ReturnedVerbatim()
     {
         _app.User.Context.Variable.Set("x", "%x%");
-        var data = new Data("ref", "%x%") { Context = _app.User.Context };
+        var data = new Data("ref", "%x%") { Context = _app.User.Context }.Authored();
 
         var result = await data.Value<global::app.type.text.@this>(_app.User.Context);
 
@@ -263,7 +264,7 @@ public class DataAsTResolutionTests
     public async Task AsT_PartialMatchInterpolatesOncesThenStops()
     {
         _app.User.Context.Variable.Set("x", "%x%");
-        var data = new Data("greeting", "hello %x%") { Context = _app.User.Context };
+        var data = new Data("greeting", "hello %x%") { Context = _app.User.Context }.Authored();
 
         var result = await data.Value<global::app.type.text.@this>(_app.User.Context);
 
@@ -281,7 +282,7 @@ public class DataAsTResolutionTests
     {
         _app.User.Context.Variable.Set("a", "X-%b%");
         _app.User.Context.Variable.Set("b", "Y-%a%");
-        var data = new Data("ref", "%a%") { Context = _app.User.Context };
+        var data = new Data("ref", "%a%") { Context = _app.User.Context }.Authored();
 
         var result = await data.Value<global::app.type.text.@this>(_app.User.Context);
 
@@ -301,7 +302,7 @@ public class DataAsTResolutionTests
         _app.User.Context.Variable.Set("c", "%d%");
         _app.User.Context.Variable.Set("d", "%e%");
         _app.User.Context.Variable.Set("e", "leaf-value");
-        var data = new Data("chain", "%a%") { Context = _app.User.Context };
+        var data = new Data("chain", "%a%") { Context = _app.User.Context }.Authored();
 
         var result = await data.Value<global::app.type.text.@this>(_app.User.Context);
 
@@ -313,7 +314,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_DifferentContext_PicksUpFreshVariableValues()
     {
-        var data = new Data("v", "%x%");
+        var data = new Data("v", "%x%").Authored();
 
         await using var app2 = new global::app.@this("/app2");
         app2.User.Context.Variable.Set("x", "from-app2");
@@ -350,7 +351,7 @@ public class DataAsTResolutionTests
         };
         context.Variable.Set(new global::app.data.@this<global::app.type.list.@this<global::app.type.item.@this>>("messages", global::app.type.list.@this<global::app.type.item.@this>.Of(stored)) { Context = context });
 
-        var paramData = new Data("Messages", "%messages%") { Context = context };
+        var paramData = new Data("Messages", "%messages%") { Context = context }.Authored();
         var result = await paramData.Value<global::app.type.list.@this<global::app.type.dict.@this>>(context);
 
         await result.IsSuccess();
@@ -386,7 +387,7 @@ public class DataAsTResolutionTests
         context.Variable.Set(new global::app.data.@this<global::app.type.list.@this<global::app.type.item.@this>>("fixerMessages", global::app.type.list.@this<global::app.type.item.@this>.Of(stored)) { Context = context });
 
         // Mirrors how llm.query reads %fixerMessages% — typed slot is List<LlmMessage>.
-        var paramData = new Data("Messages", "%fixerMessages%") { Context = context };
+        var paramData = new Data("Messages", "%fixerMessages%") { Context = context }.Authored();
         var result = await paramData.Value<global::app.type.list.@this<global::app.module.llm.LlmMessage>>(context);
 
         await result.IsSuccess();

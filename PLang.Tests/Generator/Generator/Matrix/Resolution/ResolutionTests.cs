@@ -213,7 +213,7 @@ public class ReResolveAcrossCallsTests
     public async Task ReResolveAcrossCalls_SharedParameterData_RawValueUnchanged()
     {
         await using var app = new global::app.@this("/app");
-        var sharedData = new Data("value", "%x%");
+        var sharedData = new Data("value", "%x%").Authored();
 
         app.User.Context.Variable.Set("x", "v1");
         var action1 = new PrAction
@@ -225,8 +225,9 @@ public class ReResolveAcrossCallsTests
         MatrixRunner.EnsureRegistered<ReResolveAcrossCalls>(app);
         await action1.RunAsync(app.User.Context);
 
-        // Raw .Value is still "%x%" — no in-place mutation
-        await Assert.That((await sharedData.Value())?.ToString()).IsEqualTo("%x%");
+        // The source form is untouched (Peek never renders) — no in-place
+        // mutation; Value() on a stamped template renders live by design.
+        await Assert.That(sharedData.Peek()?.ToString()).IsEqualTo("%x%");
 
         app.User.Context.Variable.Set("x", "v2");
         var action2 = new PrAction
@@ -237,7 +238,7 @@ public class ReResolveAcrossCallsTests
         };
         await action2.RunAsync(app.User.Context);
 
-        await Assert.That((await sharedData.Value())?.ToString()).IsEqualTo("%x%");
+        await Assert.That(sharedData.Peek()?.ToString()).IsEqualTo("%x%");
     }
 
     // Loop scenario: same action runs N times with %i% changing each iteration → each read fresh.
@@ -271,7 +272,7 @@ public class ConcurrentHandlersTests
 
         // Pre-register; run in parallel.
         MatrixRunner.EnsureRegistered<ConcurrentHandlers>(app);
-        var sharedData = new Data("value", "%x%");
+        var sharedData = new Data("value", "%x%").Authored();
 
         var tasks = Enumerable.Range(0, 50).Select(_ => Task.Run(async () =>
         {
@@ -294,7 +295,7 @@ public class ConcurrentHandlersTests
     {
         await using var app = new global::app.@this("/app");
         app.User.Context.Variable.Set("x", "shared");
-        var data = new Data("v", "%x%") { Context = app.User.Context };
+        var data = new Data("v", "%x%") { Context = app.User.Context }.Authored();
 
         var tasks = Enumerable.Range(0, 50).Select(_ => Task.Run(() =>
             data.Value<global::app.type.text.@this>(app.User.Context).AsTask())).ToArray();

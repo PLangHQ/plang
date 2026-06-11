@@ -40,6 +40,12 @@ public sealed class @this
     public void Add(goal.@this goal)
     {
         goal.App = App;
+        // Every registered goal is authored (.pr load, builder output,
+        // programmatic composition) — the template seam runs here, never on
+        // runtime input. %ref% holes in step parameters become live templates.
+        foreach (var step in goal.Steps)
+            foreach (var action in step.Actions)
+                action.StampTemplates();
         if (goal.PrPath == null)
             throw new ArgumentException($"Goal '{goal.Name}' must have a Path set. PrPath is derived from Path and is required for keying.");
         _goals[goal.PrPath] = goal;
@@ -410,12 +416,7 @@ public sealed class @this
                 {
                     step.Goal = goal;
                     foreach (var action in step.Actions)
-                    {
                         action.Synthetic = false;
-                        // The authored seam — .pr values containing %ref%
-                        // holes become live templates here, never at input.
-                        action.StampTemplates();
-                    }
                 }
 
                 Add(goal);

@@ -304,16 +304,26 @@ public sealed class GoalCall : global::app.type.item.@this, module.IEvent
             return data.@this.FromError(new global::app.error.ActionError(
                 $"File '{prPath}' did not deserialize to a Goal", "InvalidPrFile", 400));
 
-        // Wire back-references: Goal.App, Step.Goal for root and sub-goals
+        // Wire back-references: Goal.App, Step.Goal for root and sub-goals.
+        // This is an authored seam (a .pr off disk), so step parameters with
+        // %ref% holes stamp as live templates here — same rule as goal.list.Add.
         goal.App = app;
         foreach (var step in goal.Steps)
+        {
             step.Goal = goal;
+            foreach (var action in step.Actions)
+                action.StampTemplates();
+        }
         foreach (var subGoal in goal.Goals)
         {
             subGoal.App = app;
             subGoal.Parent = goal;
             foreach (var step in subGoal.Steps)
+            {
                 step.Goal = subGoal;
+                foreach (var action in step.Actions)
+                    action.StampTemplates();
+            }
         }
 
         // Stash where the .pr was loaded from — Goal.GetRuntimeDirectory uses this

@@ -52,6 +52,38 @@ Contract: model doc §"Templates and refs — live, resolved at use" +
 - plang suite is the real gate: if a stamping seam is missed, variables stop
   resolving loudly.
 
+## Outcome (2026-06-11)
+
+Steps 1–3 LANDED and gated green (C# all six slices, plang 330/0 real fails):
+
+- `Template` stamp on `item` (init-only, [model: ordinary typed property]),
+  `text.Render` door + `text.Cacheable => Template == null`, `Data.Value()`
+  renders a stamped answer fresh at every use.
+- Authored seams: `goal.list.Add` (every registered goal — .pr load, builder
+  output, programmatic composition), `GoalCall.LoadFromFile` (the second .pr
+  load path — child-app/test-runner loads bypass Add), `Action.FromWire`
+  (recovery chains), `Data.Authored()` (the slot-level seam; test fixtures
+  use it as the builder surrogate).
+- `StampedForm` covers: text, native list/dict (rebuilt stamped, entries
+  restamp in place), wire-read `source` (text-declared raw collapses to
+  stamped text), labeled `clr` carrying a text-declared string, `clr`
+  carrying a raw CLR container (graph-scanned once at the seam).
+- Sniff branches in `AsCanonical`/`AsT_Impl` (string + container walk) are
+  STAMP-GATED — unstamped input containing "%secret%" stays literal. That is
+  the TryFullVarMatch retirement: the regex survives as the full-vs-partial
+  classifier, but nothing sniffs unstamped strings anymore.
+- Test re-pins to the model: no-mutation asserts moved from `Value()` (which
+  now renders) to `Peek()` (source form intact); two variable.set tests
+  re-pinned to reference semantics (ref-free containers stored uncopied —
+  slice-4 position, surfaced early by the gating).
+
+Step 4 (async `Write(IWriter)`) is SPLIT OUT, not half-landed: today the
+dominant wire path is the STJ converter — the model doc's documented sync
+exception, which pre-resolves — so the conversion is wide mechanical churn
+(item.Write + ~15 overrides + writer pipeline) with no behavioral win until
+the channel path moves off STJ. It rides with slice 5 / its own pass, where
+`text.Value` privatization forces the Write surface open anyway.
+
 ## Order
 
 1. `Template` on item + text door + Cacheable gate (no callers yet) — green.

@@ -377,6 +377,120 @@ public partial class @this
     /// A non-item value (a reconstructed Data riding as a courier payload) is
     /// carried by the rung-2 wrapper so the slot stays item-typed.
     /// </summary>
+    /// <summary>
+    /// Marks this Data's value as builder-authored — the template seam. A text
+    /// containing <c>%ref%</c> holes rebinds to a stamped copy
+    /// (<c>Template = "plang"</c>); a container with refs inside is rebuilt
+    /// stamped (nested entries restamp in place), so use-time knows something
+    /// needs rendering without walking. Idempotent; a value with no holes is
+    /// untouched. Called by the authored seams only (.pr load via
+    /// <c>Action.StampTemplates</c>, wire-rebuilt actions, test fixtures
+    /// authoring actions directly) — runtime input never passes here.
+    /// </summary>
+    internal @this Authored()
+    {
+        if (_instance is { } instance
+            && StampedForm(instance) is { } stamped
+            && !ReferenceEquals(stamped, instance))
+            SetValueDirect(stamped);
+        return this;
+    }
+
+    // The stamped form of an authored value: the instance itself when there is
+    // nothing to stamp, a stamped copy otherwise. Containers recurse.
+    private static global::app.type.item.@this? StampedForm(global::app.type.item.@this instance)
+    {
+        switch (instance)
+        {
+            case global::app.type.text.@this t:
+                if (t.Template != null || !HasTemplateRef(t.Value)) return t;
+                return new global::app.type.text.@this(t.Value) { Kind = t.Kind, Template = "plang" };
+
+            case global::app.type.list.@this l:
+            {
+                if (l.Template != null) return l;
+                bool any = false;
+                foreach (var entry in l.Items) any |= StampEntry(entry);
+                if (!any) return l;
+                return new global::app.type.list.@this(l.Items) { Template = "plang", Context = l.Context };
+            }
+
+            case global::app.type.dict.@this d:
+            {
+                if (d.Template != null) return d;
+                bool any = false;
+                foreach (var entry in d.Entries) any |= StampEntry(entry);
+                if (!any) return d;
+                var stampedDict = new global::app.type.dict.@this { Template = "plang", Context = d.Context };
+                foreach (var entry in d.Entries) stampedDict.Set(entry);
+                return stampedDict;
+            }
+
+            // A text-declared source off the wire (.pr params reload as
+            // source instances) — a %ref% string is text-until-resolved, so
+            // the stamp collapses it to a stamped text (the "parse" of a
+            // text declaration is the string itself).
+            case global::app.type.item.source src
+                when src.Raw is string rawStr && HasTemplateRef(rawStr)
+                     && src.Mint().Name is "text" or "string":
+                if (src.Template != null) return src;
+                return new global::app.type.text.@this(rawStr) { Template = "plang" };
+
+            // A text-declared string riding the carrier (wire-read declared
+            // params land as labeled clr) — same collapse as the source case.
+            case global::app.type.item.clr ct
+                when ct.Value is string carried && HasTemplateRef(carried)
+                     && ct.Mint().Name is "text" or "string":
+                if (ct.Template != null) return ct;
+                return new global::app.type.text.@this(carried) { Template = "plang" };
+
+            // A raw CLR container riding the rung-2 carrier (a C#-composed
+            // dict/list literal) — refs hide inside raw strings, so scan the
+            // graph once at the seam; the stamp lands on the carrier.
+            case global::app.type.item.clr c
+                when c.Value is IDictionary<string, object?> or IList<object?>:
+                if (c.Template != null || !RawGraphHasRef(c.Value, 0)) return c;
+                return new global::app.type.item.clr(c.Value) { Template = "plang", Context = c.Context };
+
+            default:
+                return instance;
+        }
+    }
+
+    // Depth-capped scan of a raw CLR container graph for %ref% strings —
+    // stamp-time only, never at use.
+    private static bool RawGraphHasRef(object? v, int depth)
+    {
+        if (depth > 8) return false;
+        switch (v)
+        {
+            case string s: return HasTemplateRef(s);
+            case global::app.type.text.@this t: return HasTemplateRef(t.Value);
+            case IDictionary<string, object?> d:
+                foreach (var kv in d) if (RawGraphHasRef(kv.Value, depth + 1)) return true;
+                return false;
+            case IList<object?> l:
+                foreach (var e in l) if (RawGraphHasRef(e, depth + 1)) return true;
+                return false;
+            case @this inner: return inner._instance != null && RawGraphHasRef(inner._instance.Peek(), depth + 1);
+            default: return false;
+        }
+    }
+
+    // Restamps one container entry in place (the entry Data rebinds to the
+    // stamped value). True when the entry holds (or now holds) a stamp.
+    private static bool StampEntry(@this entry)
+    {
+        if (entry._instance is not { } inner) return false;
+        var stamped = StampedForm(inner);
+        if (stamped != null && !ReferenceEquals(stamped, inner))
+            entry.SetValueDirect(stamped);
+        return (stamped ?? inner).Template != null;
+    }
+
+    private static bool HasTemplateRef(string value)
+        => System.Text.RegularExpressions.Regex.IsMatch(value, "%[^%]+%");
+
     internal void SetValueDirect(object? value)
     {
         _instance = value is null ? null
@@ -498,6 +612,13 @@ public partial class @this
     public static @this Null(string name = "") => new(name, app.type.@null.@this.Instance);
     public static @this NotFound(string name = "") => new(name, null) { IsInitialized = false };
     public static @this Uninitialized(string name) => new(name, null) { IsInitialized = false };
+
+    /// <summary>
+    /// True when the held instance carries the builder-authored template stamp —
+    /// the gate every %ref% resolution branch checks. Unstamped values (runtime
+    /// input, stored results) never resolve; their "%...%" content is literal.
+    /// </summary>
+    private bool IsStampedTemplate => _instance?.Template != null;
 
     private static readonly System.Text.RegularExpressions.Regex FullVarMatchRegex =
         new(@"^%([^%]+)%$", System.Text.RegularExpressions.RegexOptions.Compiled);
@@ -623,10 +744,12 @@ public partial class @this
         var raw = Peek();
         // The store seam lifts source strings to `text`; resolution reads the
         // SOURCE FORM through the wrapper — a "%var%" reference is text until
-        // it resolves, and this is where it resolves.
+        // it resolves, and this is where it resolves. STAMP-GATED: only a
+        // builder-authored template resolves — unstamped input containing
+        // "%secret%" stays the literal string.
         if (raw is global::app.type.text.@this sourceText) raw = sourceText.Value;
 
-        if (raw is string strVal && strVal.Contains('%') && context?.Variable != null)
+        if (raw is string strVal && IsStampedTemplate && context?.Variable != null)
         {
             if (TryFullVarMatch(strVal, out var varName))
             {
@@ -652,8 +775,8 @@ public partial class @this
         // Containers with potential nested %var% — walk via the shared helper so plain
         // Data and Data<T> resolve nested vars by the same rule. Without this, handlers
         // that take plain `data.@this` (e.g. variable.set) see literal "%var%" strings
-        // inside lists/dicts loaded from the .pr.
-        if (context != null && IsWalkableContainer(raw))
+        // inside lists/dicts loaded from the .pr. Stamp-gated like the string branch.
+        if (context != null && IsWalkableContainer(raw) && IsStampedTemplate)
         {
             var walked = await WalkContainerVars(raw, context);
             // A wire-shaped dict IS a serialized Data — reconstruct it (value + type as a
@@ -797,8 +920,10 @@ public partial class @this
         // T=object would always match `raw is T` and short-circuit substitution.
         // No cycle guard: stored values are values, not expressions — a resolved
         // value is never re-scanned for references, so there is no recursion to
-        // guard (render is single-pass by design).
-        if (raw is string strVal && strVal.Contains('%') && context?.Variable != null)
+        // guard (render is single-pass by design). STAMP-GATED: only a
+        // builder-authored template resolves — unstamped input containing
+        // "%secret%" stays the literal string.
+        if (raw is string strVal && IsStampedTemplate && context?.Variable != null)
         {
             if (TryFullVarMatch(strVal, out var varName))
             {
@@ -847,7 +972,7 @@ public partial class @this
         // when %x% isn't set. The `if (value is @this) return value` guard inside
         // SubstitutePrimitive only fires for already-typed Data, not for the dict
         // representation that comes off the LLM response.
-        if (context != null && IsWalkableContainer(raw) && !IsActionDestination(typeof(T)))
+        if (context != null && IsWalkableContainer(raw) && IsStampedTemplate && !IsActionDestination(typeof(T)))
             return WrapAs<T>(await WalkContainerVars(raw, context), context);
 
         // T has static Resolve(string, Context.@this) — Path-style domain types. Done before

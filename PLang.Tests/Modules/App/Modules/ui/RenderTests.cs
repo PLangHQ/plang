@@ -689,21 +689,22 @@ public class RenderTests : IDisposable
 
     private static Step MakeStep(string actionClass, string method, object? parameters = null, int index = 0, string text = "")
     {
+        var action = new global::app.goal.steps.step.actions.action.@this
+        {
+            Module = actionClass,
+            ActionName = method,
+            Parameters = parameters is IDictionary<string, object?> dict
+                ? dict.Select(kv => new Data(kv.Key, kv.Value)).ToList()
+                : new List<Data>()
+        };
+        // Tests author actions the way the builder does — same template seam
+        // the .pr load applies, so %ref% parameters resolve live at dispatch.
+        action.StampTemplates();
         return new Step
         {
             Index = index,
             Text = text,
-            Actions = new StepActions
-            {
-                new global::app.goal.steps.step.actions.action.@this
-                {
-                    Module = actionClass,
-                    ActionName = method,
-                    Parameters = parameters is IDictionary<string, object?> dict
-                        ? dict.Select(kv => new Data(kv.Key, kv.Value)).ToList()
-                        : new List<Data>()
-                }
-            }
+            Actions = new StepActions { action }
         };
     }
 
