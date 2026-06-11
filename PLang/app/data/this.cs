@@ -310,44 +310,6 @@ public partial class @this
         => await Value() ?? fallback;
 
     /// <summary>
-    /// THE CLR EXIT DOOR with a stated default — resolves the value, and:
-    /// absent/null → <paramref name="fallback"/> (the caller STATED it; no
-    /// silent <c>default(T)</c>); present → the value converts ITSELF via its
-    /// own <c>Clr</c> table, and an unconvertible value THROWS loudly — a
-    /// fallback never eats a conversion failure.
-    /// </summary>
-    public async ValueTask<T> Clr<T>(T fallback)
-    {
-        var v = await Value();
-        if (v is null or global::app.type.@null.@this) return fallback;
-        return ClrOf<T>(v);
-    }
-
-    /// <summary>The CLR exit door, required form — absent/null is a loud error
-    /// (the slot's name tells the developer which parameter).</summary>
-    public async ValueTask<T> Clr<T>()
-    {
-        var v = await Value();
-        if (v is null or global::app.type.@null.@this)
-            throw new System.InvalidOperationException(
-                $"'{(string.IsNullOrEmpty(Name) ? "value" : Name)}' is required — no value present and no fallback stated.");
-        return ClrOf<T>(v);
-    }
-
-    // The dispatch: a typed value answers via ITS OWN Clr table; a raw CLR
-    // remnant (pre-seam construction, infra objects) goes through the shared
-    // converter — same loud-on-failure policy.
-    private static T ClrOf<T>(object v)
-    {
-        if (v is T already) return already;
-        if (v is global::app.type.item.@this typed)
-            return (T)typed.Clr(typeof(T))!;
-        var (converted, error) = global::app.type.catalog.@this.TryConvert(v, typeof(T));
-        if (error != null) throw new System.InvalidCastException(error.Message);
-        return (T)converted!;
-    }
-
-    /// <summary>
     /// Replaces the value — the write side of the door. The new value lifts to
     /// its typed instance at this seam; mutation fires <see cref="OnChange"/>.
     /// </summary>

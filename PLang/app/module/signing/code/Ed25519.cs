@@ -73,7 +73,7 @@ public class Ed25519 : ISigning
         var signingSettings = app.Config.For<Config>(action.Context);
         long effectiveTimeout = action.TimeoutMs == null
             ? signingSettings.Resolve<long>("TimeoutMs", 300_000)
-            : await action.TimeoutMs.Clr(signingSettings.Resolve<long>("TimeoutMs", 300_000));
+            : (await action.TimeoutMs.Value())?.ToInt64() ?? signingSettings.Resolve<long>("TimeoutMs", 300_000);
         var skipFreshness = (action.SkipFreshnessCheck == null ? null : (await action.SkipFreshnessCheck.Value())?.Value) ?? false;
 
         // 1. Type check

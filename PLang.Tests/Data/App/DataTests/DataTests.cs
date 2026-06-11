@@ -175,8 +175,8 @@ public class DataTests
     {
         var ov = new Data("test", 42);
 
-        // The CLR exit door — the value converts itself (GetValue<rawT> is dying).
-        var value = await ov.Clr<double>();
+        // The .NET edge: the door opens, the number lowers ITSELF.
+        var value = (await ov.Value() as global::app.type.number.@this)!.ToDouble();
 
         await Assert.That(value).IsEqualTo(42.0);
     }

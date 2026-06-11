@@ -39,9 +39,11 @@ public partial class run : IContext
         var tests = global::app.type.item.@this.Lower<List<global::app.tester.test.@this>>(await Tests.Value())
             ?? new List<global::app.tester.test.@this>();
         var parentApp = Context.App!;
-        // The CLR exit door — absent → the stated default; unconvertible → loud.
-        int parallel = Parallel == null ? parentApp.Tester.Parallel : await Parallel.Clr(parentApp.Tester.Parallel);
-        double timeoutSeconds = Timeout == null ? parentApp.Tester.TimeoutSeconds : await Timeout.Clr(parentApp.Tester.TimeoutSeconds);
+        // The number lowers itself — absent slot falls to the stated default.
+        int parallel = Parallel == null ? parentApp.Tester.Parallel
+            : (await Parallel.Value())?.ToInt32() ?? parentApp.Tester.Parallel;
+        double timeoutSeconds = Timeout == null ? parentApp.Tester.TimeoutSeconds
+            : (await Timeout.Value())?.ToDouble() ?? parentApp.Tester.TimeoutSeconds;
         var timeout = TimeSpan.FromSeconds(timeoutSeconds);
 
         if (tests.Count == 0)

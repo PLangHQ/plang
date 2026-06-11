@@ -52,7 +52,7 @@ public partial class On : IContext
             goalNamePattern: GoalPattern == null ? null : await GoalPattern.Value(),
             stepPattern: StepPattern == null ? null : await StepPattern.Value(),
             actionPattern: ActionPattern == null ? null : await ActionPattern.Value(),
-            priority: await Priority.Clr<int>(),
+            priority: (await Priority.Value())!.ToInt32(),
             isRegex: (await IsRegex.Value())!,
             goalToCall: goalToCall,
             channelName: ChannelName == null ? null : await ChannelName.Value());
