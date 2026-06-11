@@ -91,13 +91,16 @@ bridge flattens action templates and the stamp walker over-resolves deferred sub
   `Data.IsVariable`/`AsCanonical` ask `_type.IsRef(out name)`.
 - ⬜ **`Peek()` → `item?`** — stage-deferred (entangled with the `clr` rung-2 carrier).
 - ⬜ **`set.cs` `as`-block collapse** — blocked on the "type-entity lift at entry" seam.
-- ⬜ **`is/as` exit-gate sweep (~68 left)** — NOT mechanical; it's effectively the
-  **stage-7 surface-typing** work. Per category: `(await Value()) as Y` → the real fix
-  is `Data<Y>` params (a bare `Value<Y>()` swap flips cast→convert and can turn a
-  silent null into an action-failure); `Peek() as X` is sync (no door); `is text
-  {Template}` carries a `skipInfrastructure` policy; `EnumerateItems` dict/list ladder
-  couples the scalar arm to `Data` identity + `loop.foreach` semantics. Do as a
-  dedicated focused pass (per-handler, dispatch-affecting).
+- 🔶 **`is/as` exit-gate sweep** — the cleanly-doable items are DONE; the remainder is
+  stage-7. Done: `IsRef`→item virtual; `Properties` dead-`is dict` delete; all 17
+  raw-`.Value` bool reads → `Data.ToBooleanAsync()` (and fixed its latent template
+  bug); redundant `as T` casts on already-`Data<T>` params dropped; new
+  `Data<T>.Clr<TClr>(fallback)` edge accessor (applied at `timer.start`).
+  **Left = stage-7 / rework / legit:** plain-`Data` param reads (`(await p.Value())
+  as text`) need the param typed `Data<T>`; sync `Peek() as T` needs a typed sync
+  accessor on `Data<T>` (a `data` change = stage-7); `LoadValue`/`Normalize` die with
+  the async-`Write`/lazy-streaming rework; navigators + base `is item` checks are
+  legit ("proven leaves"). So the gate can't reach green without stage-7 surface-typing.
 
 ## Design hand-offs to architect
 - template-ownership (`v8/template-ownership-proposal.md`)
