@@ -81,10 +81,23 @@ bridge flattens action templates and the stamp walker over-resolves deferred sub
   `As<T>` CLR reconstruction (RecordWithPositionalCtor, NoParameterlessCtor),
   snapshot-`clr`-wire (Wire), generator `IsNotNull`/sensitive-snapshot.
 
-## Slice-2b structural (not started — the formal demolition contract)
+## Slice-2b structural — progress
 
-`item.ToRaw` deletion (38 refs, via the site walk), `Peek()` → `item?`, `set.cs`
-`as`-block collapse, recurrence pins, exit-gate greps (`ToRaw`→0, `is/as`→leaves-only).
+- ✅ **`item.ToRaw` DELETED** at every visibility. The CLR edge is `Clr(Type)` alone:
+  base defaults to `ClrConvert(Peek(), target)` (every type answers); `dict`/`list`
+  own their decompose inline; recurrence pin `GenericToRaw_DoesNotExist_OnItemBase`.
+  Exit gate `\.ToRaw()` → 0. Zero regressions.
+- ✅ **`IsRef`→`item` virtual** — `Data` no longer does `_type is text t && t.IsRef()`;
+  `Data.IsVariable`/`AsCanonical` ask `_type.IsRef(out name)`.
+- ⬜ **`Peek()` → `item?`** — stage-deferred (entangled with the `clr` rung-2 carrier).
+- ⬜ **`set.cs` `as`-block collapse** — blocked on the "type-entity lift at entry" seam.
+- ⬜ **`is/as` exit-gate sweep (~68 left)** — NOT mechanical; it's effectively the
+  **stage-7 surface-typing** work. Per category: `(await Value()) as Y` → the real fix
+  is `Data<Y>` params (a bare `Value<Y>()` swap flips cast→convert and can turn a
+  silent null into an action-failure); `Peek() as X` is sync (no door); `is text
+  {Template}` carries a `skipInfrastructure` policy; `EnumerateItems` dict/list ladder
+  couples the scalar arm to `Data` identity + `loop.foreach` semantics. Do as a
+  dedicated focused pass (per-handler, dispatch-affecting).
 
 ## Design hand-offs to architect
 - template-ownership (`v8/template-ownership-proposal.md`)
