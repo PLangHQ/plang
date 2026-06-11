@@ -75,7 +75,7 @@ public class ModifierFoldTests
             ActionName = "set",
             Parameters = new List<global::app.data.@this>
             {
-                new("name", "%y%"), new("value", "wrapped")
+                new("name", "%y%", new global::app.type.@this("variable")), new("value", "wrapped")
             },
             Modifiers = new ActionModifiers
             {
@@ -104,7 +104,7 @@ public class ModifierFoldTests
             ActionName = "set",
             Parameters = new List<global::app.data.@this>
             {
-                new("name", "%z%"), new("value", "nested")
+                new("name", "%z%", new global::app.type.@this("variable")), new("value", "nested")
             },
             Modifiers = new ActionModifiers
             {
@@ -137,7 +137,7 @@ public class ModifierFoldTests
             ActionName = "set",
             Parameters = new List<global::app.data.@this>
             {
-                new("name", "%q%"), new("value", "full")
+                new("name", "%q%", new global::app.type.@this("variable")), new("value", "full")
             },
             Modifiers = new ActionModifiers
             {
@@ -179,7 +179,7 @@ public class ModifierFoldTests
             ActionName = "set",
             Parameters = new List<global::app.data.@this>
             {
-                new("name", "%nope%"), new("value", "x")
+                new("name", "%nope%", new global::app.type.@this("variable")), new("value", "x")
             },
             Modifiers = new ActionModifiers
             {
@@ -189,7 +189,7 @@ public class ModifierFoldTests
                     Module = "variable", ActionName = "set",
                     Parameters = new List<global::app.data.@this>
                     {
-                        new("name", "%bad%"), new("value", "no")
+                        new("name", "%bad%", new global::app.type.@this("variable")), new("value", "no")
                     }
                 }
             }

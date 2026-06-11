@@ -92,7 +92,7 @@ public class StepsSubStepTests : IDisposable
                     ActionName = "set",
                     Parameters = new List<Data>
                     {
-                        new Data("name", varName),
+                        new Data("name", varName, new global::app.type.@this("variable")),
                         new Data("value", value)
                     }
                 }

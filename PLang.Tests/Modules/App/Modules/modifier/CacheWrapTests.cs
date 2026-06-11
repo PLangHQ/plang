@@ -42,7 +42,7 @@ public class CacheWrapTests
             Module = "variable", ActionName = "set",
             Parameters = new List<global::app.data.@this>
             {
-                new("name", "%x%"), new("value", "first")
+                new("name", "%x%", new global::app.type.@this("variable")), new("value", "first")
             },
             Modifiers = new ActionModifiers { CacheModifier(60_000, "miss-key") }
         };
@@ -71,7 +71,7 @@ public class CacheWrapTests
             Module = "variable", ActionName = "set",
             Parameters = new List<global::app.data.@this>
             {
-                new("name", "%y%"), new("value", "fresh-value")
+                new("name", "%y%", new global::app.type.@this("variable")), new("value", "fresh-value")
             },
             Modifiers = new ActionModifiers { CacheModifier(60_000, "hit-key") }
         };
@@ -111,7 +111,7 @@ public class CacheWrapTests
             Module = "variable", ActionName = "set",
             Parameters = new List<global::app.data.@this>
             {
-                new("name", "%a%"), new("value", "v")
+                new("name", "%a%", new global::app.type.@this("variable")), new("value", "v")
             },
             Modifiers = new ActionModifiers { CacheModifier(60_000, "my-custom-key") }
         };
@@ -135,7 +135,7 @@ public class CacheWrapTests
             Module = "variable", ActionName = "set",
             Parameters = new List<global::app.data.@this>
             {
-                new("name", "%b%"), new("value", "v")
+                new("name", "%b%", new global::app.type.@this("variable")), new("value", "v")
             },
             Modifiers = new ActionModifiers { CacheModifier(60_000) } // no Key
         };
@@ -158,7 +158,7 @@ public class CacheWrapTests
             Module = "variable", ActionName = "set",
             Parameters = new List<global::app.data.@this>
             {
-                new("name", "%c%"), new("value", "slide")
+                new("name", "%c%", new global::app.type.@this("variable")), new("value", "slide")
             },
             Modifiers = new ActionModifiers { CacheModifier(60_000, "slide-key", sliding: true) }
         };
@@ -182,7 +182,7 @@ public class CacheWrapTests
             Module = "variable", ActionName = "set",
             Parameters = new List<global::app.data.@this>
             {
-                new("name", "%d%"), new("value", "fresh")
+                new("name", "%d%", new global::app.type.@this("variable")), new("value", "fresh")
             },
             Modifiers = new ActionModifiers { CacheModifier(60_000, "restore-key") }
         };

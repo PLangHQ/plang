@@ -36,7 +36,7 @@ public class TimeoutAfterTests
             ActionName = "set",
             Parameters = new List<global::app.data.@this>
             {
-                new("name", "%fast%"), new("value", "done")
+                new("name", "%fast%", new global::app.type.@this("variable")), new("value", "done")
             },
             Modifiers = new ActionModifiers { TimeoutModifier(5000) }
         };

@@ -64,7 +64,7 @@ public class ErrorHandleTests
             Module = "variable", ActionName = "set",
             Parameters = new List<global::app.data.@this>
             {
-                new("name", "%ok%"), new("value", "v")
+                new("name", "%ok%", new global::app.type.@this("variable")), new("value", "v")
             },
             Modifiers = new ActionModifiers { ErrorHandler(("ignoreError", true)) }
         };
