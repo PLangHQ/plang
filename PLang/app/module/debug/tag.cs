@@ -35,15 +35,18 @@ public partial class Tag : IContext
         var target = Context.CallStack?.Current?.Caller ?? Context.CallStack?.Current;
         if (target == null) return global::app.data.@this.Ok();
 
-        // The handler USES the values — the door (a template label renders here).
+        // Tags hold the typed binding — they don't need point-in-time resolution
+        // (unlike a callstack snapshot), so the entry rides in AS-IS, staying lazy.
+        // Pairs/Label still resolve here only to read the structure (the dict to
+        // walk, the label name + its truthiness gate).
         if (Pairs != null && await Pairs.Value() is global::app.type.dict.@this pairs)
         {
             foreach (var entry in pairs.Entries)
-                target.Tag(entry.Name, (await entry.Value())?.ToString() ?? "");
+                target.Tag(entry.Name, entry);
         }
         else if (Label != null && (await Label.Value()) is { } label && label.IsTruthy())
         {
-            target.Tag(label.ToString(), "true");
+            target.Tag(label, global::app.data.@this.Ok(new global::app.type.@bool.@this(true)));
         }
 
         return global::app.data.@this.Ok();

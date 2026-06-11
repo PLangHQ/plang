@@ -23,8 +23,8 @@ public class TagActionTests
         await action.Run();
 
         await Assert.That(outer.Tags.Count).IsEqualTo(2);
-        await Assert.That(outer.Tags["k1"]).IsEqualTo("v1");
-        await Assert.That(outer.Tags["k2"]).IsEqualTo("v2");
+        await Assert.That(outer.Tags["k1"].Peek()?.ToString()).IsEqualTo("v1");
+        await Assert.That(outer.Tags["k2"].Peek()?.ToString()).IsEqualTo("v2");
         // The tag's own Call must NOT have entries — those would vanish on Pop.
         await Assert.That(tagCall.Tags.Count).IsEqualTo(0);
     }
@@ -41,7 +41,7 @@ public class TagActionTests
         };
         await action.Run();
 
-        await Assert.That(call.Tags["manual-checkpoint"]).IsEqualTo("true");
+        await Assert.That(await call.Tags["manual-checkpoint"].ToBooleanAsync()).IsTrue();
     }
 
     [Test]
@@ -72,7 +72,7 @@ public class TagActionTests
         };
         await action.Run();
         await Assert.That(call.Tags.Count).IsEqualTo(1);
-        await Assert.That(call.Tags["x"]).IsEqualTo("true");
+        await Assert.That(await call.Tags["x"].ToBooleanAsync()).IsTrue();
     }
 
     [Test]

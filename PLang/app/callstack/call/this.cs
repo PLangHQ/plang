@@ -150,7 +150,7 @@ public sealed partial class @this : IAsyncDisposable
     /// <c>http.status=503</c>, <c>llm.tokens=2400</c>) and by the <c>tag</c> PLang action.
     /// Thread-safe — Tags owns its lock.
     /// </summary>
-    public void Tag(string key, string value) => Tags.Set(key, value);
+    public void Tag(global::app.type.text.@this key, global::app.data.@this value) => Tags.Set(key, value);
 
     /// <summary>
     /// Typed metadata bag. Use this to attach handler-specific structured data

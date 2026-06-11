@@ -72,8 +72,8 @@ public class FlagsTests
         // documents this: the flag exists for downstream tag-rendering decisions.
         var stack = new CallStack();
         await using var call = stack.Push(MakeAction("A"));
-        call.Tag("k", "v");
-        await Assert.That(call.Tags["k"]).IsEqualTo("v");
+        call.Tag("k", global::app.data.@this.Ok("v"));
+        await Assert.That(call.Tags["k"].Peek()?.ToString()).IsEqualTo("v");
     }
 
     [Test]
