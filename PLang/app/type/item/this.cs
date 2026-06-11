@@ -257,6 +257,12 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     internal static object? Backing(object? v)
         => v is @this { IsLeaf: true } l ? l.Clr<object>() : v;
 
+    /// <summary>True when this value IS a single live variable reference (a
+    /// stamped <c>%x%</c> whose whole content is one ref) — the binding layer's
+    /// classifier for the full-match hop. Only a <c>text</c> template can be one;
+    /// every other value answers false. The bare ref name comes out.</summary>
+    internal virtual bool IsRef(out string refName) { refName = ""; return false; }
+
     /// <summary>
     /// The shared mechanics under every <see cref="Clr(System.Type)"/>: the
     /// value the TYPE handed over (its own backing — ownership stays with the

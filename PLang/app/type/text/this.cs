@@ -141,7 +141,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>True when this is a stamped template whose WHOLE text is one
     /// live <c>%ref%</c> — the binding layer's classifier (full-match hops to
     /// the live variable; partial renders). The ref's bare name comes out.</summary>
-    internal bool IsRef(out string refName)
+    internal override bool IsRef(out string refName)
     {
         refName = "";
         return Template != null && global::app.data.@this.TryFullVarMatch(_value, out refName);

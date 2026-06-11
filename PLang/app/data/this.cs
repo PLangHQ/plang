@@ -139,8 +139,7 @@ public partial class @this
     /// "%x%" is literal text, not a reference.
     /// </summary>
     [JsonIgnore]
-    public bool IsVariable =>
-        _type is global::app.type.text.@this t && t.IsRef(out _);
+    public bool IsVariable => _type.IsRef(out _);
 
     /// <summary>
     /// True when the value carries any live <c>%variable%</c> reference (the
@@ -770,8 +769,7 @@ public partial class @this
         // Full-match live-variable hop — the canonical IS the variable's own
         // Data (mutations stay visible through Variables.Get). Stamp-gated:
         // an unstamped "%x%" is literal text and `this` is already canonical.
-        if (context?.Variable != null
-            && _type is global::app.type.text.@this refText && refText.IsRef(out var varName))
+        if (context?.Variable != null && _type.IsRef(out var varName))
         {
             var resolved = await context.Variable.Get(varName);
             if (resolved == null || !resolved.IsInitialized)
