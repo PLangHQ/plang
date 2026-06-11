@@ -933,9 +933,14 @@ public partial class @this
     /// </summary>
     public virtual async System.Threading.Tasks.Task<bool> ToBooleanAsync()
     {
-        if (IsInitialized && await Value() is IBooleanResolvable resolvable)
-            return await resolvable.AsBooleanAsync();
-        return ToBoolean();
+        if (!IsInitialized) return false;
+        // Resolve ONCE and ask the RESOLVED value its truthiness — a stamped
+        // template (`cache: %off%`) must render before answering, else the
+        // unrendered text reads truthy. A value that resolves its own boolean
+        // meaning with I/O (path → "does it exist") answers via the marker.
+        var resolved = await Value();
+        if (resolved is IBooleanResolvable resolvable) return await resolvable.AsBooleanAsync();
+        return resolved?.IsTruthy() ?? false;
     }
 
     /// <summary>

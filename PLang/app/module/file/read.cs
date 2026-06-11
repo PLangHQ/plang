@@ -80,7 +80,7 @@ public partial class Read : IContext
 
         // ResolveVariables is an explicit opt-in that needs the text in hand, so
         // it forces materialization and resolves %var% — the only non-lazy path.
-        if ((await ResolveVariables.Value())?.Value == true)
+        if (await ResolveVariables.ToBooleanAsync())
         {
             var channel = new global::app.channel.type.file.@this(path);
             var read = await channel.Read();

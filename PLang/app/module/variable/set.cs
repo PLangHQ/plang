@@ -124,7 +124,7 @@ public partial class Set : IContext, IBuildValidatable
             return target;
         }
 
-        if ((await AsDefault.Value())?.Value == true)
+        if (await AsDefault.ToBooleanAsync())
         {
             var existing = await Context.Variable.Get(name);
             if (existing.IsInitialized)

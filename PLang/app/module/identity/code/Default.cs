@@ -53,7 +53,7 @@ public sealed class Default : IIdentity
         if (!genResult.Success) return genResult;
         var identity = (await genResult.Value())!;
 
-        if ((await action.SetAsDefault.Value())?.Value == true)
+        if (await action.SetAsDefault.ToBooleanAsync())
         {
             foreach (var existing in items.Where(i => i.IsDefault))
             {
@@ -66,7 +66,7 @@ public sealed class Default : IIdentity
         var result = await SaveAsync(action, identity);
         if (!result.Success) return data.@this<Identity>.From(result);
 
-        if ((await action.SetAsDefault.Value())?.Value == true)
+        if (await action.SetAsDefault.ToBooleanAsync())
             app.System.Identity = identity;
 
         return data.@this<Identity>.Ok(identity);

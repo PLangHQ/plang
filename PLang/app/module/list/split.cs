@@ -13,7 +13,7 @@ public partial class Split : IContext
 
     public async Task<data.@this<type.list>> Run()
     {
-        var options = (await RemoveEmpty.Value())?.Value == true
+        var options = await RemoveEmpty.ToBooleanAsync()
             ? StringSplitOptions.RemoveEmptyEntries
             : StringSplitOptions.None;
 

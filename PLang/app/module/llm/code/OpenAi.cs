@@ -113,7 +113,7 @@ public sealed class OpenAi : ILlm
         async System.Threading.Tasks.Task<string?> FormatOf(query a)
             => a.Format == null || await a.Format.IsEmpty() ? null : (await a.Format.Value())?.ToString();
 
-        if (((await action.ContinuePreviousConversation.Value()) as global::app.type.@bool.@this)?.Value == true)
+        if (await action.ContinuePreviousConversation.ToBooleanAsync())
         {
             var prev = context.Get<List<LlmMessage>>(ConversationKey);
             if (prev != null)
@@ -156,7 +156,7 @@ public sealed class OpenAi : ILlm
         List<GoalCall>? goalTools = action.Tools == null ? null
             : global::app.type.item.@this.Lower<List<GoalCall>>(await action.Tools.Value());
         string? cacheKey = null;
-        if (((await action.Cache.Value()) as global::app.type.@bool.@this)?.Value == true && goalTools == null && !buildCacheOff)
+        if (await action.Cache.ToBooleanAsync() && goalTools == null && !buildCacheOff)
         {
             cacheKey = ComputeCacheKey(messages, model, (await action.Temperature.Value())!.ToDouble(), schema, await FormatOf(action));
             var cached = await settings.Get(CacheTable, cacheKey);

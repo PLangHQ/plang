@@ -13,7 +13,7 @@ public partial class Verify : IContext
     public async Task<data.@this<global::app.type.@bool.@this>> Run()
     {
         var mock = ((await Mock.Value()) as global::app.mock.@this)!;
-        var expected = (await ExpectedCount.Value()) as global::app.type.number.@this;
+        var expected = await ExpectedCount.Value();
         if (mock.CallCount != expected)
         {
             return global::app.data.@this<global::app.type.@bool.@this>.FromError(new AssertionError(

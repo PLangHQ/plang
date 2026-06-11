@@ -132,7 +132,7 @@ public partial class Handle : IContext, IModifier
             }
 
             // IgnoreError is the final fallback — after retry and recovery are exhausted
-            if ((await IgnoreError.Value())?.Value == true) return global::app.data.@this.Ok();
+            if (await IgnoreError.ToBooleanAsync()) return global::app.data.@this.Ok();
 
             return result;
         };
