@@ -116,7 +116,7 @@ public partial class @this
             {
                 var copy = new app.type.dict.@this();
                 foreach (var entry in nativeDict.Entries)
-                    copy.Set(new @this(entry.Name, NormalizeValue(entry.Peek(), mode, visited, depth + 1, types)));
+                    copy.Set(Entry(entry.Name, NormalizeValue(entry.Peek(), mode, visited, depth + 1, types)));
                 return copy;
             }
             finally { visited.Remove(nativeDict); }
@@ -213,6 +213,13 @@ public partial class @this
         return NormalizeObject(value, mode, visited, depth, types);
     }
 
+    // A normalized value that is itself a Data rides AS the dict entry (entries
+    // ARE Data boxes) — re-boxing it in `new @this(name, data)` nests a bare Data
+    // and trips Lift's guard. ShallowClone renames without mutating the source
+    // (outbound normalize is observation-only).
+    private static @this Entry(string name, object? normalized)
+        => normalized is @this nd ? nd.ShallowClone(name) : new @this(name, normalized);
+
     // A C# domain record reflects into the one object form — a native `dict`,
     // not a parallel "property bag" list. One object shape across the wire.
     private static app.type.dict.@this NormalizeObject(object obj, View mode, HashSet<object> visited, int depth,
@@ -249,7 +256,7 @@ public partial class @this
                         "NormalizeGetterThrew", ex);
                 }
 
-                built.Set(new @this(name, NormalizeValue(raw, mode, visited, depth + 1, types: types)));
+                built.Set(Entry(name, NormalizeValue(raw, mode, visited, depth + 1, types: types)));
             }
 
             return built;
