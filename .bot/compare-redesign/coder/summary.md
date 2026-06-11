@@ -36,21 +36,38 @@ result/stored-value seams. Per Ingi: no silent global conversion — added a gua
 **temporary** Lift bridge that converts a raw container to native via
 `json.Parse(SerializeToElement(v))`. Marked `TODO(remove)` + `todos.md`.
 
+## Born-Variable test fidelity + UnknownType '' root fix
+
+Making `Variable.Create` pure regressed tests whose hand-built `variable.set` steps
+lacked `type:variable` on `Name` (the builder always stamps it). Fixed the seams to
+mirror the builder: shared `PrParam.List`/`IsVarNameSlot`, `TestAction.Create`,
+`MakeStep` helpers, and the `.pr` fixtures. Then fixed a real pre-existing bug those
+tests unmasked: `variable.set` gated its optional `as` type on `typeValue != null`,
+but an omitted clause is the non-null `absent` citizen → minted an empty-name type
+(`UnknownType ''`). Now gated on `Type.IsEmpty()`.
+
 ## Result
 
-C# suite, baseline c026ff245 → now: Modules 230→186, Wire 60→47, Generator 12→7,
-Data 144→123, Runtime 76→72, Types 47→44. **Net −90.**
+C# suite, baseline c026ff245 → now: Modules 230→181, Wire 60→47, Generator 12→7,
+Data 144→121, Runtime 76→72, Types 47→37. **Net −104** (−102 net of the 2 documented
+action-template regressions).
 
 Two action-template tests regressed from the bridge (`DataWrappedActionList_*`) — the
 bridge flattens action templates and the stamp walker over-resolves deferred sub-action
 `%var%`. Documented in `todos.md`; fixed for free by the template-ownership design
 (`v8/template-ownership-proposal.md`, for architect) which removes the walker.
 
-## What's next
+## What's next (remaining tail roots — each needs fresh per-root investigation)
 
-Remaining tail roots (pre-existing): `clr`-unwrap (`Lower`/ArrayList/Hashtable),
-`UnknownType ''` (FileHandler Integration), snapshot-`clr`-wire (Wire), and the
-`IsNotNull`/sensitive-snapshot generator cases.
+The previously-masked tests now chain to their next failure:
+- **value-stored-empty** — `set test = hello` then `GetValue("test")` returns `""`
+  (RunGoalAsync_ExecutesSteps, StartGoal_Programmatic). variable.set no-type path
+  (`Value.ShallowClone(name)`) — value not landing. Likely pre-existing (most
+  variable.set tests pass, so it's construction-path-specific).
+- **`Func`2 → text` leak** — `[TypeConversionFailed] Cannot bind a Func to text`
+  (FullPipeline). A door method-group leaking into a value slot.
+- `clr`-unwrap (`Lower`/ArrayList/Hashtable), snapshot-`clr`-wire (Wire),
+  `IsNotNull`/sensitive-snapshot generator cases.
 
 Design hand-offs to architect: template-ownership (`v8/template-ownership-proposal.md`).
 Deferred (todos.md): typed-null slot citizen `@null.@this<T>`; remove the Lift bridge.
