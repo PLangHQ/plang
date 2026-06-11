@@ -119,8 +119,18 @@ via reflection — they move to emission:
 
 ## Open for architect
 
-- Does the `as <type>/<kind>` explicit-cast path (reader registry) stay on
-  its current dispatch, or also fold into Create with a kind parameter?
+- ~~Does the `as <type>/<kind>` explicit-cast path (reader registry) stay on
+  its current dispatch, or also fold into Create with a kind parameter?~~
+  **RULED (architect + Ingi, 2026-06-11): two doors, one knowledge home.**
+  Folding is structurally impossible under no-reflection — `T.Create` is
+  compile-time generic dispatch; the reader path starts from a RUNTIME name
+  ("image" parsed from the step), and reaching a static virtual member from a
+  runtime name requires `MakeGenericMethod`. So: the reader path keeps
+  registry dispatch, owned by the TYPE ENTITY (`{name, kind, strict}` —
+  "construct a value of me, as kind X, strictly" is the entity's member,
+  which also collapses more of variable/set.cs); kind/strict are reader-door
+  parameters, never Create's; both doors call the type's SINGLE construction
+  body — no second copy of "how a number is made."
 - AsCanonical (plain-Data slots): current rebuild keeps the full-match
   live-variable hop at Data level (the canonical IS the live Data — a
   binding-identity question, not a value question). Confirm.
