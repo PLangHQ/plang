@@ -1220,3 +1220,13 @@ CLR registry/conversion. Also OBP shape smells to fix in the same pass: Get/verb
 twins (`GetValidValues`+`ValidValues`, `GetBuilderTypeNames`+`BuilderNames`,
 `GetTypeName`+`Name`) and `Build`/`Get`+noun names (`BuildTypeEntries`,
 `GetPrimitiveOrMime`). Architect bucket.
+
+## 2026-06-11 — Data.Load()/LoadValue die with async Write
+`data.Load()` (called by the Json + plang serializers before writing) walks the value
+graph and pre-`LoadAsync`es every lazy reference (file/image/url) ONLY because the STJ
+writer is sync and can't await a load mid-write. Its private `LoadValue` recurses by
+type-switching on dict/list (a courier iteration ladder — left as-is, do NOT polish).
+The async-Write rework (already a tracked stage-9 prerequisite) makes each value load
+itself at write time through its own async Write/door, deleting Load()/LoadValue and
+their dict/list branches entirely. So the data.Load.cs is/as sites are resolved by that
+rework, not a standalone fix.
