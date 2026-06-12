@@ -135,6 +135,38 @@ bridge flattens action templates and the stamp walker over-resolves deferred sub
   the async-`Write`/lazy-streaming rework; navigators + base `is item` checks are
   legit ("proven leaves"). So the gate can't reach green without stage-7 surface-typing.
 
+## Judge removal + born-typed values (deserialize-straight-to-type)
+
+**Build is FIXED** — the value-layer bugs that broke `plang build` (channel `Func`
+leak, `%path%` not rendering, template resolution) are gone; the build runs clean
+through the whole value layer. Committed arc:
+- `text.Value` method-group leak in `type.Judge` → `ChannelNotFound` (−14 tests)
+- `text` gains `canTemplate` ctor (text self-determines its template when permitted)
+- `path` holds a `text` `_location` (template-backed, lazy render at `Value()`,
+  `Cacheable` delegates to text, accessors lower via `Clr<string>()`)
+- readers for `text`/`dict`/`list`/`bool` + `@`-keyword reader-discovery fix
+- `type.Deserialize(raw,ctx) → item` (Data-free, reader-owned) + `Data(name,item)` ctor
+- `FromWireShape` deserializes via reader → wraps `Data(name,item)` (build fixed)
+
+**The architecture (settled with Ingi):** deserialize is `object → item`, owned by
+the type's **reader** (format-agnostic: serializer does bytes→raw, reader does
+raw→item). `Data` is a dumb holder — no type/value logic, ctor takes an already-built
+item. `Judge` is deleted; its work **moves onto each type** (the type knows how to
+become itself).
+
+**Judge deletion — remaining, precisely scoped.** Routing the ctor+`Declare` through
+`Deserialize` and deleting `Judge` regressed **18 tests** (reverted, uncommitted): the
+readers do `raw→item` but don't yet apply `Judge`'s **kind/strict/binary/facet
+reconciliation**. Per Ingi, that work moves INTO each type (its reader/Convert applies
+its own kind/strict; `binary`-under-a-category labels itself; etc.) — NOT a central
+switch. The 18 failing tests are the per-type checklist:
+`Text_*` (kind/content), `SetAsTextMd_*` (kind), `*ImageGif*Strict*` (image vs binary,
+strict), `Wire_RoundTrip_PreservesNameKindStrict`, `PrParameter_*Kind*`, etc.
+Next pass: migrate the ~12 runtime `(name,value,type)` ctor callers to
+`Data(name, type.Deserialize(value,ctx))`, give each type's reader its kind/strict
+reconciliation (18 tests green), bulk-migrate test callers, delete the `(name,value,type)`
+ctor + `Judge`, `Declare` last.
+
 ## slice-2c — started; residue is design-blocked for overnight-autonomous
 
 First flip done & pushed: **callstack `tag` store holds typed `Data`**
