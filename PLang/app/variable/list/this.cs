@@ -109,7 +109,7 @@ public partial class @this
     /// For dot/bracket paths (e.g. "user.name"), the root Data is returned.
     /// Returns NotFound when the dot-path parent is absent or null.
     /// </summary>
-    public async System.Threading.Tasks.ValueTask<data.@this> Set(string name, object? value, app.type.@this? type = null)
+    public async System.Threading.Tasks.ValueTask<data.@this> Set(string name, object? value)
     {
         name = CleanName(name);
 
@@ -201,7 +201,7 @@ public partial class @this
                 // independent.
                 if (frame.ContainsLocal(name) && frame.TryGet(name, out var existingFrame))
                 {
-                    var rebound = new data.@this(name, value, type) { Context = _context };
+                    var rebound = new data.@this(name, value) { Context = _context };
                     rebound.OnCreate = existingFrame.OnCreate;
                     rebound.OnChange = existingFrame.OnChange;
                     rebound.OnDelete = existingFrame.OnDelete;
@@ -215,7 +215,7 @@ public partial class @this
                 // Either nothing visible, or only visible via Caller chain — mint a
                 // fresh local entry that shadows. Mutating an inherited Data would
                 // bleed the write up to the caller's scope.
-                var data = new data.@this(name, value, type);
+                var data = new data.@this(name, value);
                 data.Context = _context;
                 if (frame.TryGet(name, out var inherited))
                 {
@@ -238,7 +238,7 @@ public partial class @this
                 // elsewhere (e.g. stored in a list by `add`) gets rewritten underfoot
                 // when the variable is re-set. Reassignment rebinds the binding; it
                 // does not reach back into a value already captured elsewhere.
-                var rebound = new data.@this(name, value, type) { Context = _context };
+                var rebound = new data.@this(name, value) { Context = _context };
                 rebound.OnCreate = existing.OnCreate;
                 rebound.OnChange = existing.OnChange;
                 rebound.OnDelete = existing.OnDelete;
@@ -250,7 +250,7 @@ public partial class @this
             }
             else
             {
-                var data = new data.@this(name, value, type);
+                var data = new data.@this(name, value);
                 data.Context = _context;
                 data.FireOnCreate();
                 _variables[name] = data;
@@ -594,16 +594,25 @@ public partial class @this
     }
 
     /// <summary>
-    /// Gets a typed value by name — the value door, then the item's own
-    /// lowering at this CLR edge. Absent → default; unconvertible → loud.
+    /// Typed ask on the variable store — returns <c>Data&lt;T&gt;</c>. Identity hop:
+    /// if the variable already holds a <typeparamref name="T"/>, its OWN Data is
+    /// returned (aliasing/shared-sample/narrowing preserved). Otherwise the value
+    /// is converted via <c>T.Create</c> into a NEW <c>Data&lt;T&gt;</c> — the stored
+    /// variable is never rebound. Absent → Uninitialized; a decline carries its
+    /// error. The typed door the parameter binder and goal-call mapping ask through.
     /// </summary>
-    public async System.Threading.Tasks.ValueTask<T?> Get<T>(string name)
+    public async System.Threading.Tasks.ValueTask<data.@this<T>> Get<T>(string name)
+        where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
-        var ov = await Get(name);
-        if (ov == null) return default;
-        var v = await ov.Value();
-        if (v is T already) return already;
-        return v is global::app.type.item.@this it ? it.Clr<T>() : default;
+        var existing = await Get(name);
+        if (existing == null || !existing.IsInitialized)
+            return data.@this<T>.Uninitialized(name);
+        if (existing is data.@this<T> already) return already;          // identity hop
+        var item = await existing.Value<T>();                          // T.Create(await Value(), existing)
+        if (item == null) return data.@this<T>.From(existing);         // decline carries the error
+        var typed = data.@this<T>.Ok(item);
+        typed.Context = _context;
+        return typed;
     }
 
     /// <summary>

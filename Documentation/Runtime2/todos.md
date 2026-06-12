@@ -1276,3 +1276,40 @@ PLang/app/data/this.cs — `public DateTime Created { get; }` and `Updated` are 
 `DateTime` set via `System.DateTime.UtcNow`. Intended shape is `DateTimeOffset` (the
 plang default `datetime` object). Switch both fields + the assignments to
 `DateTimeOffset.UtcNow` (and audit any consumer that reads them as DateTime).
+
+## 2026-06-12 — remove the type converter (Judge) from Data; ctor takes only (name, item)
+Data still does declared-type conversion in its ctor (`new Data(name, value, type)` →
+`Lift` + `type.Judge`) and `Data.Declare` → `type.Judge`. Per the settled design, Data
+must only HOLD an item; the `raw → typed item` step is owned by the type's reader
+(`type.Deserialize`, already built) and happens at the CALL SITE (Wire.cs ReadBody,
+variable.set handler, etc.), then `new Data(name, item)`. The object-taking ctor stays
+as a convenience (lifts raw→natural item) so we avoid migrating ~944 `new Data(name,raw)`
+sites now.
+
+Two gates to finish the removal:
+1. **ctor item-only** = migrate the ~944 `new Data(name, raw)` sites to `data.Ok(raw)` /
+   pass items (production by hand, tests bulk-sed). data.Ok/From lift raw→item; the ctor
+   sticks to `(name, item)`.
+2. **readers apply declared kind/strict** — Judge also does kind/strict/binary/facet
+   reconciliation (text Kinded, image-vs-binary, strict carrier label). Deleting Judge
+   without moving that INTO each type's reader regresses ~11 kind/strict tests
+   (SetAsTextMd, *ImageGifStrict*, Wire/PrParameter kind roundtrip, Data_KindGetter).
+   The work moves onto each type (the type knows its own kind/strict), per OBP.
+
+Then: delete `Judge`, `Declare`→`type.Deserialize`, `As(string)` (replaced by `Value<T>()`,
+delete + its tests), `FromWireShape`/static `action.FromWire` collapse into the Wire path.
+Source-gen binding = the `param-bind` branch (`GetParameter<T>` + `Variable.Get<T>`, bind
+lines, demolish the resolve machinery). Foundation already committed: readers for all types,
+`type.Deserialize`, `path` holds `text`, `Wire`/`FromWireShape` deserialize via reader,
+`Variable.Get<T>` (Data<T>), `Action.GetParameter<T>` (started). See branch `param-bind`.
+
+## 2026-06-12 — remove variable.GetValue(name) (never return a CLR type)
+`app.variable.list.@this.GetValue(name)` returns a raw CLR `object?` — the store
+should never hand back a CLR type; it holds Data and answers Data. Callers that
+genuinely need a .NET-edge value lower through the item's own `Clr<T>()` at the leaf.
+`Variable.Get<T>(name)` now returns `Data<T>` (the typed ask, identity hop); that is
+the door. Migrate `GetValue` callers (app/this.cs, identity/code/Default.cs,
+signing/code/Ed25519.cs, actor/context/this.cs, module/test/run.cs) + the CLR-typed
+`Get<T>` test callers (MemoryStackCloneTests `Get<List<string>>`/`Get<Dictionary>`,
+ExecutorTests `Get<string>`) to the `Data<T>` ask / native collection ops, then delete
+GetValue. Part of the same born-typed completion as the type-converter removal above.
