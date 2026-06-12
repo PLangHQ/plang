@@ -1247,12 +1247,26 @@ tells us its nature, no `Clr`. Point the `!error` DynamicData (PLang/app/actor/c
 this.cs:179) and the other error-as-value paths at the new type. Removes the
 `Clr<object>() is IError` leaf-read in throw and the reflection navigation of IError.
 
-## 2026-06-12 — builder broken: Func leaks as channel name in EmitBuildEvent
-`plang build` of ANY goal fails early (before LLM compile) with
-`ChannelNotFound: Channel 'System.Func`2[app.data.this,ValueTask`1[app.type.item.this]]'
-not found` at /system/builder/EmitBuildEvent.goal:12. A %var% that should resolve to a
-channel name is resolving to a method group / Func (signature matches
-`item.Value(data) → ValueTask<item>`). Same family as the earlier text.Value-deletion
-"Func→text leak" — a method group lands in a string/name slot. Reproduces on HEAD with
-no local changes, so it's pre-existing branch breakage, not feature-specific. BLOCKS all
-plang-test (.test.goal) building/running on this branch until fixed.
+## 2026-06-12 — builder broken: cascade of value-layer strays from the fundamentals refactor
+`plang build` of ANY goal was failing. Root causes are value-layer strays from the
+born-typed refactor (NOT source-gen / param-bind):
+
+1. FIXED — `text.Value` (the deleted property) read as a method group in `type.Judge`
+   (PLang/app/type/this.cs:410, `text.@this t => (object)t.Value`). C# infers a natural
+   delegate type, so `t.Value` silently became `Func<data,ValueTask<item>>` and the
+   channel param "builder" judged into `source(Func,…)` → `ChannelNotFound`. Changed to
+   `t.ToString()` (matches the sibling extraction at :370). Net −14 test failures across
+   Data/Modules/Wire/Types — this leak was breaking tests broadly. AUDIT for other stray
+   `text.Value` reads (the property is gone; any `someText.Value` now compiles to a Func
+   silently — the compiler won't catch it).
+
+2. OPEN — typed `%ref%` params don't render. `builder.goals path=%path%` arrives as
+   `clr(Value = text("%path%"))` labeled `path`; `Build.goal:13` then hits
+   `Directory not found: …/os/system/builder/%path%`. `StampedForm` (PLang/app/data/
+   this.cs) only stamps a `%ref%` carrier as a template when its declared type is
+   text/string AND its value is a raw string — but a typed `%ref%` rides as a
+   `clr`/`source` carrier wrapping a `text`, so it's never stamped → never rendered.
+   Pervasive: ANY non-text-typed param with a `%var%` value (path/channel/etc.). The
+   right fix likely intersects with param-bind's "full-match %var% → Variable.Get<T>
+   identity hop" (a reference, not a born-typed carrier) — flag for design. BLOCKS the
+   .test.goal layer until fixed.

@@ -407,7 +407,7 @@ public sealed class @this : item.@this
 
         var backing = value switch
         {
-            text.@this t => (object)t.Value,
+            text.@this t => (object)t.ToString(),
             item.source s => s.Raw,
             _ => null,
         };
