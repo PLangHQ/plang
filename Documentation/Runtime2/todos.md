@@ -1230,3 +1230,29 @@ The async-Write rework (already a tracked stage-9 prerequisite) makes each value
 itself at write time through its own async Write/door, deleting Load()/LoadValue and
 their dict/list branches entirely. So the data.Load.cs is/as sites are resolved by that
 rework, not a standalone fix.
+
+## 2026-06-12 — error as a first-class plang type
+An error is not a plang value type. `%!error%` is a `DynamicData` whose value is the
+raw C# `IError`, so when an error rides as a *value* it gets wrapped in a `clr` carrier
+(an opaque object to the type system). Any code that needs to recognize "this value is
+an error" must open that carrier — e.g. `throw` re-raise does
+`thrown?.Clr<object>() is IError` (PLang/app/module/error/throw.cs), and navigation
+reads `Message`/`Key`/`Details` off the IError by reflection. That carrier-opening is
+the smell, and it recurs everywhere an error rides as a value.
+
+Fix: add `app.type.error.@this` (an `item`) wrapping the `IError`. Then `%!error%`'s
+value is an `error.@this` (navigation reads its members as a real plang value), and the
+re-raise becomes `if (thrown is error.@this err) return Error(err.Inner);` — the value
+tells us its nature, no `Clr`. Point the `!error` DynamicData (PLang/app/actor/context/
+this.cs:179) and the other error-as-value paths at the new type. Removes the
+`Clr<object>() is IError` leaf-read in throw and the reflection navigation of IError.
+
+## 2026-06-12 — builder broken: Func leaks as channel name in EmitBuildEvent
+`plang build` of ANY goal fails early (before LLM compile) with
+`ChannelNotFound: Channel 'System.Func`2[app.data.this,ValueTask`1[app.type.item.this]]'
+not found` at /system/builder/EmitBuildEvent.goal:12. A %var% that should resolve to a
+channel name is resolving to a method group / Func (signature matches
+`item.Value(data) → ValueTask<item>`). Same family as the earlier text.Value-deletion
+"Func→text leak" — a method group lands in a string/name slot. Reproduces on HEAD with
+no local changes, so it's pre-existing branch breakage, not feature-specific. BLOCKS all
+plang-test (.test.goal) building/running on this branch until fixed.

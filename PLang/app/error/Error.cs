@@ -33,6 +33,18 @@ public class Error : IError
     /// see "this is what the handler saw" without re-running with a debug flag.
     /// </summary>
     public List<ParamSnapshot>? Params { get; set; }
+
+    /// <summary>
+    /// Typed value(s) attached to the failure — the thing thrown
+    /// (<c>- throw %order%, %item%</c>) or a payload a handler chooses to carry.
+    /// Held as the intact <see cref="data.@this"/> (a plang <c>list</c>) so the values
+    /// keep their type and render/navigate in full (<c>%!error.data%</c>,
+    /// <c>%!error.data[0]%</c>) instead of being flattened to a string. Distinct from
+    /// <see cref="Message"/> (the human line) and <see cref="Details"/> (provider
+    /// diagnostic context).
+    /// </summary>
+    public global::app.data.@this<global::app.type.list.@this>? Data { get; init; }
+
     public List<IError> ErrorChain { get; } = new();
 
     /// <summary>
@@ -221,6 +233,16 @@ public class Error : IError
         sb.AppendLine();
         sb.AppendLine($"{indent}\ud83e\uddd0 Reason: ");
         sb.AppendLine($"{indent}    {error.Message}");
+
+        // Attached typed values — the thing thrown (`- throw %order%`). Rendered via
+        // the value's own display (a display leaf), so a dict/list shows in full
+        // rather than as a type name. Resolution happened at throw-time; Peek reads it.
+        if (error is Error errWithData && errWithData.Data?.Peek() is { } payload)
+        {
+            sb.AppendLine();
+            sb.AppendLine($"{indent}📦 Data:");
+            sb.AppendLine($"{indent}    {payload}");
+        }
 
         // Fix suggestions
         if (error.FixSuggestion != null)

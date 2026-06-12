@@ -9,6 +9,39 @@ typed instance; `Data` is a thin binding (one typed instance + name/properties/
 signature); consumers never branch on raw CLR shape. The typed ask is `T.Create`
 (the TARGET constructs itself).
 
+## Latest change — `Error.Data` door: throw attaches typed values, never stringified
+
+`- throw %order%, %item%` used to flatten the thrown value via `msg.ToString()`.
+Now an error carries a typed **`Data`** door (a plang `list`, 1..N) alongside the
+human `Message` string — two distinct roles, both kept:
+- `Error.Message` (string) — human line; born from C# literals (~142 sites untouched)
+  and from a quoted `- throw "checkout failed"`.
+- `Error.Data` (`data.@this<list>?`) — the typed value(s); navigable `%!error.data%`,
+  `%!error.data[0]%` (Object navigator relays a Data-typed property for free), rendered
+  in full by `Format()` (display leaf, no in-flight decompose).
+
+`throw` now has two slots — `Message` (text) + `Data` (any) — the **builder routes by
+form** (quoted literal → Message, `%var%`s → Data; no runtime branch). Runtime keeps
+only the re-raise check (`- throw %!error%` → pass the existing IError through). Values
+bind at throw-time (point-in-time, like the callstack snapshot).
+
+Files: `PLang/app/error/Error.cs` (Data prop + Format block), `PLang/app/module/error/
+throw.cs` (rewrite), `PLang.Tests/Modules/App/Modules/error/ThrowTests.cs` (7/7:
+single→list-of-one, multiple→list, re-raise, full render). Suite parity: Modules 145→144
+(net improvement), all else identical, zero regressions.
+
+**Re-raise reads the value via `Clr<object>() is IError`** — flagged by Ingi as a smell.
+Root cause: an error isn't a plang type, so `%!error%`'s value is a raw `IError` in a
+`clr` carrier; the only handle is to open it. Deferred fix tracked in BOTH todos files
+("error as a first-class plang type" → `app.type.error.@this`, then `thrown is error.@this`).
+TODO comment at the call site points there.
+
+**Blocked: plang-test layer.** `Tests/Errors/ThrowAttachesData.test.goal` is written
+but cannot be built — `plang build` of ANY goal fails pre-existing (`ChannelNotFound`,
+a Func leaks as a channel name in `EmitBuildEvent.goal:12`, reproduces on HEAD). The C#
+tests fully prove the feature; the .test.goal is the spec for when the builder is fixed.
+Tracked in todos.
+
 ## Latest change — Value<T>() / Create return the INSTANCE, not a Data<T>
 
 Full detail: `v8/value-t-instance-refactor.md`. In short:

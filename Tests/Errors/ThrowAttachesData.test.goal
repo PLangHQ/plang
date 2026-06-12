@@ -1,0 +1,7 @@
+TestThrowAttachesData
+/ `- throw %a%, %b%` attaches the typed values to the error as a plang list, reachable
+/ via %!error.data% inside the handler — full values, not stringified to a single string.
+- set %order% = "order-123"
+- set %item% = "widget-9"
+- throw %order%, %item%, on error set %captured% = %!error.data[1]%
+- assert %captured% equals "widget-9"

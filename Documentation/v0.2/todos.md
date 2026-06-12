@@ -937,3 +937,18 @@ later stamping — the path to making `Data._context` non-nullable BY CONSTRUCTI
 Deferred: the static `Data.Ok/FromError/Null/...` factories are called in hundreds
 of places; flipping them to require context is its own pass. Do when the value
 model settles. See `.bot/compare-redesign/coder/v8/slice2b-state.md`.
+
+## 2026-06-12 — error as a first-class plang type
+An error is not a plang value type. `%!error%` is a `DynamicData` whose value is the
+raw C# `IError`, so when an error rides as a *value* it gets wrapped in a `clr` carrier
+(opaque to the type system). Any code that needs to recognize "this value is an error"
+must open that carrier — e.g. `throw` re-raise does `thrown?.Clr<object>() is IError`
+(PLang/app/module/error/throw.cs), and navigation reads `Message`/`Key`/`Details` off
+the IError by reflection. That carrier-opening is the smell, and it recurs everywhere
+an error rides as a value.
+
+Fix: add `app.type.error.@this` (an `item`) wrapping the `IError`. Then `%!error%`'s
+value is an `error.@this` (navigation reads its members as a real plang value), and the
+re-raise becomes `if (thrown is error.@this err) return Error(err.Inner);` — the value
+tells us its nature, no `Clr`. Point the `!error` DynamicData (PLang/app/actor/context/
+this.cs:179) and the other error-as-value paths at the new type.
