@@ -268,6 +268,26 @@ public partial class @this
     }
 
     /// <summary>
+    /// Holds an already-deserialized <paramref name="instance"/> — no type work.
+    /// The "decide the type / deserialize" step (the reader) runs at the call site
+    /// BEFORE this; Data just carries the result. This is the born-typed shape: a
+    /// value arrives as its type, and Data is a dumb holder. (Replaces the
+    /// <c>(name, value, type)</c> ctor's Lift+Judge path — see <see cref="type.Deserialize"/>.)
+    /// </summary>
+    public @this(string name, global::app.type.item.@this instance, @this? parent = null)
+    {
+        Name = CleanName(name);
+        _type = instance ?? global::app.type.item.absent.Slot;
+        Parent = parent;
+        Path = BuildPath(parent, Name);
+        IsInitialized = true;
+        Created = System.DateTime.UtcNow;
+        Updated = Created;
+        if (parent != null)
+            _context = parent._context;
+    }
+
+    /// <summary>
     /// Applies a declared type judgement to this Data's instance after
     /// construction — the build pipeline's stamping seam (the schema overrides
     /// an LLM-emitted shape; a kind hook refines an authored literal). Same

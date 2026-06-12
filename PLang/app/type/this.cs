@@ -354,6 +354,31 @@ public sealed class @this : item.@this
     /// own truth — the instance wins. A %var% reference is never a parse
     /// source: the declaration applies after resolution.
     /// </summary>
+    /// <summary>
+    /// Deserialize a raw value into this type's instance — the Data-free
+    /// <c>object → item</c> step. The type's reader (one per type, format-agnostic)
+    /// owns "how do I become this type"; a raw-name type (Variable) resolves the
+    /// name; an already-built instance passes through; null is a typed absence.
+    /// A <c>%ref%</c> rides as a template-backed instance (the reader builds it that
+    /// way) and renders at the door. Replaces <see cref="Judge"/> — no lift-then-
+    /// reconcile double pass, no Data involved (the call site wraps the item).
+    /// </summary>
+    internal item.@this Deserialize(object? raw)
+    {
+        if (raw is null) return new item.absent(Name, Kind);
+        if (raw is item.@this already) return already;
+
+        if (typeof(app.variable.IRawNameResolvable).IsAssignableFrom(ClrType))
+            return app.variable.@this.Resolve(raw as string ?? raw.ToString() ?? "", Context!);
+
+        var reader = Context?.App.Type.Readers.Of(Name, Kind);
+        if (reader != null && reader(raw, Kind, new global::app.type.reader.ReadContext(Context)) is { } read)
+            return global::app.data.@this.Lift(read, Context);
+
+        // No reader (object / untyped): lift the raw to its natural instance.
+        return global::app.data.@this.Lift(global::app.type.item.serializer.json.Parse(raw), Context);
+    }
+
     internal item.@this Judge(item.@this value)
     {
         // A raw-name declared type (Variable) NAMES a thing — `%s%` is the
