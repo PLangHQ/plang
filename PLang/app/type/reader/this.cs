@@ -104,7 +104,10 @@ public sealed class @this
             var head = ns[..pivot];
             var lastDot = head.LastIndexOf('.');
             if (lastDot < 0) continue;
-            var typeName = head[(lastDot + 1)..];
+            // Strip a leading @ — a type whose folder/namespace is a C# keyword
+            // (app.type.@bool) is named without it everywhere else ("bool"), so the
+            // reader must register under the bare name to be found by Readers.Of.
+            var typeName = head[(lastDot + 1)..].TrimStart('@');
 
             // file/class name maps to kind token; "Default" → wildcard.
             var kind = type.Name.Equals("Default", System.StringComparison.Ordinal)
