@@ -138,11 +138,11 @@ public class OrchestrateBranchCoverageTests
         //    pass and `subran` would be unset. After the fix, the re-enable fires
         //    and the sub-step runs.
         var vars = _app.User.Context.Variable;
-        await Assert.That(await vars.Get<int>("subran")).IsEqualTo(1);
+        await Assert.That((long)(await vars.GetValue("subran"))!).IsEqualTo(1L);
 
         // 2. alreadyOrchestrating guard keyed on the real step: inner elseif's body
         //    ran (bodyB set) and outer's body didn't (bodyA unset because outer was false).
-        await Assert.That(await vars.Get<int>("bodyB")).IsEqualTo(2);
+        await Assert.That((long)(await vars.GetValue("bodyB"))!).IsEqualTo(2L);
         await Assert.That(vars.Contains("bodyA")).IsFalse();
 
         // 3. Coverage subscriber never recorded "?:?" — Step was propagated.

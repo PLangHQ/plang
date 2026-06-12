@@ -3,9 +3,10 @@ using app.variable;
 namespace PLang.Tests.App.Foundation;
 
 /// <summary>
-/// Proves Fix #7: Variables.Clone() is shallow — mutable values are shared by reference.
-/// These tests assert CORRECT behavior (deep clone isolation).
-/// Before the fix they FAIL, proving the bug. After the fix they PASS.
+/// Variables.Clone() copies the bindings, so rebinding a name in the clone must
+/// not reach back into the original. Container values are native (list.@this /
+/// dict.@this) and immutable — a fresh value is bound under the name rather than
+/// mutated in place, so isolation is per-binding.
 /// </summary>
 public class VariablesCloneTests
 {
@@ -13,65 +14,51 @@ public class VariablesCloneTests
     public async Task Clone_ListValue_IsIsolatedFromOriginal()
     {
         var vars = new Variables();
-        var list = new List<string> { "a", "b" };
-        vars.Set("items", list);
+        vars.Set("items", new List<string> { "a", "b" });
 
         var clone = vars.Clone();
+        clone.Set("items", new List<string> { "a", "b", "c" });
 
-        // Mutate via the clone
-        var cloneList = await clone.Get<List<string>>("items");
-        cloneList!.Add("c");
-
-        // Original should NOT be affected
-        var originalList = await vars.Get<List<string>>("items");
-        await Assert.That(originalList!.Count).IsEqualTo(2);
+        var originalList = (await vars.GetValue("items")) as global::app.type.list.@this;
+        await Assert.That(originalList!.Items.Count).IsEqualTo(2);
     }
 
     [Test]
     public async Task Clone_DictionaryValue_IsIsolatedFromOriginal()
     {
         var vars = new Variables();
-        var dict = new Dictionary<string, object?> { ["key1"] = "val1" };
-        vars.Set("config", dict);
+        vars.Set("config", new Dictionary<string, object?> { ["key1"] = "val1" });
 
         var clone = vars.Clone();
+        clone.Set("config", new Dictionary<string, object?> { ["key1"] = "val1", ["key2"] = "val2" });
 
-        // Mutate via the clone
-        var cloneDict = await clone.Get<Dictionary<string, object?>>("config");
-        cloneDict!["key2"] = "val2";
-
-        // Original should NOT be affected
-        var originalDict = await vars.Get<Dictionary<string, object?>>("config");
-        await Assert.That(originalDict!.ContainsKey("key2")).IsFalse();
+        var originalDict = (await vars.GetValue("config")) as global::app.type.dict.@this;
+        await Assert.That(originalDict!.Has("key2")).IsFalse();
     }
 
     [Test]
     public async Task Clone_NestedListInDict_IsIsolatedFromOriginal()
     {
         var vars = new Variables();
-        var data = new Dictionary<string, object?>
+        vars.Set("record", new Dictionary<string, object?>
         {
             ["tags"] = new List<string> { "alpha", "beta" }
-        };
-        vars.Set("record", data);
+        });
 
         var clone = vars.Clone();
+        clone.Set("record", new Dictionary<string, object?>
+        {
+            ["tags"] = new List<string> { "alpha", "beta", "gamma" }
+        });
 
-        // Navigate into the clone and mutate the nested list
-        var cloneData = await clone.Get<Dictionary<string, object?>>("record");
-        var cloneTags = (List<string>)cloneData!["tags"]!;
-        cloneTags.Add("gamma");
-
-        // Original's nested list should NOT be affected
-        var originalData = await vars.Get<Dictionary<string, object?>>("record");
-        var originalTags = (List<string>)originalData!["tags"]!;
-        await Assert.That(originalTags.Count).IsEqualTo(2);
+        var originalDict = (await vars.GetValue("record")) as global::app.type.dict.@this;
+        var originalTags = originalDict!.Get("tags")!.Peek() as global::app.type.list.@this;
+        await Assert.That(originalTags!.Items.Count).IsEqualTo(2);
     }
 
     [Test]
     public async Task Clone_ScalarValue_RemainsIndependent()
     {
-        // Scalars (strings, ints) are immutable — clone should always work for these
         var vars = new Variables();
         vars.Set("count", 42);
         vars.Set("name", "original");
@@ -80,9 +67,9 @@ public class VariablesCloneTests
         clone.Set("count", 99);
         clone.Set("name", "modified");
 
-        var originalCount = await vars.Get<long>("count");
-        var originalName = await vars.Get<string>("name");
-        await Assert.That(originalCount).IsEqualTo(42);
+        var originalCount = (long)(await vars.GetValue("count"))!;
+        var originalName = (string?)await vars.GetValue("name");
+        await Assert.That(originalCount).IsEqualTo(42L);
         await Assert.That(originalName).IsEqualTo("original");
     }
 }

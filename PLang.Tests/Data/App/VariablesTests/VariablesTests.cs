@@ -79,11 +79,11 @@ public class VariablesTests
     {
         var stack = new Variables();
 
-        stack.Set("count", 42, Type.Int);
+        stack.Set("count", 42);
 
         var ov = await stack.Get("count");
         await Assert.That(ov!.Type).IsNotNull();
-        await Assert.That(ov!.Type!.ClrType).IsEqualTo(typeof(int));
+        await Assert.That(ov!.Type!.Name).IsEqualTo("number");
     }
 
     [Test]
@@ -102,12 +102,12 @@ public class VariablesTests
     public async Task Set_UpdatesType()
     {
         var stack = new Variables();
-        stack.Set("value", "text", Type.String);
+        stack.Set("value", "text");
 
-        stack.Set("value", 42, Type.Int);
+        stack.Set("value", 42);
 
         var ov = await stack.Get("value");
-        await Assert.That(ov!.Type!.ClrType).IsEqualTo(typeof(int));
+        await Assert.That(ov!.Type!.Name).IsEqualTo("number");
     }
 
     [Test]
@@ -488,9 +488,9 @@ public class VariablesTests
         var stack = new Variables();
         stack.Set("count", 42);
 
-        var value = await stack.Get<int>("count");
+        var value = await stack.Get<global::app.type.number.@this>("count");
 
-        await Assert.That(value).IsEqualTo(42);
+        await Assert.That((await value.Value()).Clr<long>()).IsEqualTo(42L);
     }
 
     [Test]
@@ -498,9 +498,9 @@ public class VariablesTests
     {
         var stack = new Variables();
 
-        var value = await stack.Get<int>("nonexistent");
+        var value = await stack.Get<global::app.type.number.@this>("nonexistent");
 
-        await Assert.That(value).IsEqualTo(0);
+        await Assert.That(value.IsInitialized).IsFalse();
     }
 
     [Test]
