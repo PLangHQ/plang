@@ -95,6 +95,20 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     public @this(string value) { _value = value ?? string.Empty; }
 
+    /// <summary>
+    /// Construction with template permission. <paramref name="canTemplate"/> is the
+    /// owner's claim "this slot may carry a <c>%var%</c> reference" (a value slot of a
+    /// templating type — <c>path</c>, a <c>text</c> value — sets it; a structural text
+    /// like a dict key or type name does not). When permitted, text decides for itself
+    /// whether there is actually a template (<see cref="HasHoles"/>) and stamps it.
+    /// Resolution stays lazy — nothing renders until the door (<see cref="Value"/>).
+    /// </summary>
+    public @this(string value, bool canTemplate)
+    {
+        _value = value ?? string.Empty;
+        if (canTemplate && HasHoles) Template = "plang";
+    }
+
     // INBOUND only — the entry lift (`.Ok("x")` constructs). The outbound
     // implicit (text → string) is gone: every site was a silent CLR exit;
     // a reader names the string face (`.Value`) at a real .NET edge.

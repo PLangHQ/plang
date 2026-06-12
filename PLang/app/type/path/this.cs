@@ -38,7 +38,12 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     // Everything else (absolute, relative, extension, …) is derived from it per
     // the scheme's resolution rules and cached. Private — the wire form comes
     // from Write reading it directly; no public raw accessor leaks it.
-    private string _location;
+    // The LOCATION as a text value — so a `%var%` location rides as a template
+    // and renders at the door (Value), exactly like any other text. The string
+    // accessors below lower it through Clr<string>() for their path math; by the
+    // time any accessor runs the navigation has already called Value(), which
+    // resolved the template (see Value / Cacheable below).
+    private global::app.type.text.@this _location;
 
     // Cached string-derived properties. _absolute is primed at construction by
     // schemes that resolve eagerly (file anchors relatives to the goal folder
@@ -71,10 +76,32 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     {
         // Producers that resolved the path hand the resolved form here and
         // override the as-typed location via the Raw init; a verbatim
-        // construction is both at once.
-        _location = path;
-        _absolute = path;
+        // construction is both at once. path authorizes templating (canTemplate)
+        // — text decides whether the location actually carries a %var%.
+        _location = new global::app.type.text.@this(path, canTemplate: true);
+        // A template location has no resolved host form yet — leave _absolute
+        // unprimed until Value renders it. A literal location is resolved as-is.
+        _absolute = _location.Template == null ? path : null;
         Context = context;
+    }
+
+    /// <summary>Caching follows the location text: a template location depends on
+    /// outside %vars% so it must re-resolve each use (text answers not-cacheable);
+    /// a literal location is stable. path defers to text — it owns that judgement.</summary>
+    public override bool Cacheable => _location.Cacheable;
+
+    /// <summary>
+    /// THE door. A literal location answers itself. A template location renders
+    /// through text's door (full-match %var% → the variable's value, partial →
+    /// interpolated string) and re-resolves the rendered string into a fresh,
+    /// resolved path via the scheme registry — so the result is a normal path
+    /// whose sync accessors are safe. Never mutates this shared instance.
+    /// </summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this asking)
+    {
+        if (_location.Cacheable) return this;   // literal location — already resolved
+        var rendered = (await _location.Value(asking)).Clr<string>() ?? "";
+        return Resolve(rendered, asking.Context ?? Context!);
     }
 
     /// <summary>
@@ -106,13 +133,13 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// string the user wrote) makes the verbatim form the value's identity while
     /// the resolved form stays a cached derivation.
     /// </summary>
-    public string Raw { get => _location; init { if (!string.IsNullOrEmpty(value)) _location = value; } }
+    public string Raw { get => _location.Clr<string>() ?? ""; init { if (!string.IsNullOrEmpty(value)) _location = new global::app.type.text.@this(value, canTemplate: true); } }
 
     // The resolved host form — INTERNAL: the raw string is the interop inch
     // (sqlite, Assembly.LoadFrom, HttpClient), reached through the type's own
     // gated edge, never the public navigable surface. The public projection is
     // `!absolute` (derived; leaks the install root, so it stays off the wire).
-    internal virtual string Absolute => _absolute ??= _location;
+    internal virtual string Absolute => _absolute ??= _location.Clr<string>() ?? "";
 
     // INTERNAL: the raw relative string feeds IsUnder/Matches + the `!relative`
     // derived projection; consumers do containment through those, not string math.
@@ -125,7 +152,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
             // No Context (test fixtures, JSON deserialize without scope) — no root
             // anchor, so the portable form is the as-typed location.
             if (Context?.App == null)
-                return _relative = _location;
+                return _relative = _location.Clr<string>() ?? "";
 
             var rootAbsolutePath = RootAbsolutePath;
             var rootWithSeparator = rootAbsolutePath;
@@ -149,10 +176,10 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     }
 
     // INTERNAL: the raw extension feeds Kind + the `!extension` projection.
-    internal string Extension => _extension ??= PathHelper.GetExtension(_location);
-    [LlmBuilder] public string FileName => _fileName ??= PathHelper.GetFileName(_location);
+    internal string Extension => _extension ??= PathHelper.GetExtension(_location.Clr<string>() ?? "");
+    [LlmBuilder] public string FileName => _fileName ??= PathHelper.GetFileName(_location.Clr<string>() ?? "");
     [LlmBuilder] public string FileNameWithoutExtension
-        => _fileNameWithoutExtension ??= PathHelper.GetFileNameWithoutExtension(_location);
+        => _fileNameWithoutExtension ??= PathHelper.GetFileNameWithoutExtension(_location.Clr<string>() ?? "");
     [LlmBuilder] public string Directory => _directory ??= PathHelper.GetDirectoryName(Absolute) ?? Absolute;
     [LlmBuilder] public string MimeType => Context?.App?.Format?.Mime(Extension) ?? "application/octet-stream";
 
@@ -246,8 +273,9 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     {
         get
         {
-            if (!string.Equals(_location, _absolute, StringComparison.Ordinal)) return _location;
-            try { return Relative; } catch { return _location; }
+            var loc = _location.Clr<string>() ?? "";
+            if (!string.Equals(loc, _absolute, StringComparison.Ordinal)) return loc;
+            try { return Relative; } catch { return loc; }
         }
     }
 
