@@ -849,7 +849,12 @@ public partial class @this
             ? FromWireShape(rawValue, "", context)
             : rawValue;
         type? typeEntity = TypeFromWire(WireSlot(wire, "type"), context);
-        return new @this(name, innerValue, typeEntity) { Context = context };
+        // Deserialize raw -> item via the type's reader (Data-free), then wrap as a
+        // named value. The type decides how to become itself; Data just holds it.
+        var instance = typeEntity is { IsNull: false } && !typeEntity.Polymorphic
+            ? typeEntity.Deserialize(innerValue, context)
+            : Lift(global::app.type.item.serializer.json.Parse(innerValue), context);
+        return new @this(name, instance) { Context = context };
     }
 
     // Build a type entity from its wire form — a bare name string ("text") or the

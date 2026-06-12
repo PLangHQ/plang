@@ -1270,3 +1270,9 @@ born-typed refactor (NOT source-gen / param-bind):
    right fix likely intersects with param-bind's "full-match %var% → Variable.Get<T>
    identity hop" (a reference, not a born-typed carrier) — flag for design. BLOCKS the
    .test.goal layer until fixed.
+
+## 2026-06-12 — Data.Created/Updated are DateTime, should be DateTimeOffset (plang datetime)
+PLang/app/data/this.cs — `public DateTime Created { get; }` and `Updated` are CLR
+`DateTime` set via `System.DateTime.UtcNow`. Intended shape is `DateTimeOffset` (the
+plang default `datetime` object). Switch both fields + the assignments to
+`DateTimeOffset.UtcNow` (and audit any consumer that reads them as DateTime).

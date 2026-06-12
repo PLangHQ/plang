@@ -363,20 +363,21 @@ public sealed class @this : item.@this
     /// way) and renders at the door. Replaces <see cref="Judge"/> — no lift-then-
     /// reconcile double pass, no Data involved (the call site wraps the item).
     /// </summary>
-    internal item.@this Deserialize(object? raw)
+    internal item.@this Deserialize(object? raw, actor.context.@this? context = null)
     {
+        var ctx = context ?? Context;
         if (raw is null) return new item.absent(Name, Kind);
         if (raw is item.@this already) return already;
 
         if (typeof(app.variable.IRawNameResolvable).IsAssignableFrom(ClrType))
-            return app.variable.@this.Resolve(raw as string ?? raw.ToString() ?? "", Context!);
+            return app.variable.@this.Resolve(raw as string ?? raw.ToString() ?? "", ctx!);
 
-        var reader = Context?.App.Type.Readers.Of(Name, Kind);
-        if (reader != null && reader(raw, Kind, new global::app.type.reader.ReadContext(Context)) is { } read)
-            return global::app.data.@this.Lift(read, Context);
+        var reader = ctx?.App.Type.Readers.Of(Name, Kind);
+        if (reader != null && reader(raw, Kind, new global::app.type.reader.ReadContext(ctx)) is { } read)
+            return global::app.data.@this.Lift(read, ctx);
 
         // No reader (object / untyped): lift the raw to its natural instance.
-        return global::app.data.@this.Lift(global::app.type.item.serializer.json.Parse(raw), Context);
+        return global::app.data.@this.Lift(global::app.type.item.serializer.json.Parse(raw), ctx);
     }
 
     internal item.@this Judge(item.@this value)
