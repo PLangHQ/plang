@@ -12,6 +12,61 @@ symptoms; this is the root design.
 
 ---
 
+## The flow (target)
+
+```
+ .pr file on disk
+ ┌─────────────────────────────────────────────────────────────┐
+ │ {"@schema":"data","name":"count",                            │
+ │  "type":{"name":"number","kind":"long"},"value":42}          │
+ └─────────────────────────────────────────────────────────────┘
+        │  UTF-8 bytes
+        ▼
+ ┌─────────────────────────┐
+ │ serializer (plang fmt)  │   tokenizes bytes ONCE → forward-only reader
+ │  options carry `Wire`   │   (JSON: Utf8JsonReader; later: protobuf, …)
+ └─────────────────────────┘
+        │  hands an  IReader  (serializer-independent — mirror of IWriter)
+        ▼
+ ┌─────────────────────────────────────────────┐
+ │ Wire  (the Data converter)                  │   "this is a Data"
+ │  reads the flat envelope, in order:         │   (@schema present or absent — same result)
+ │                                             │
+ │   @schema  → confirm/ignore                 │
+ │   name     → "count"                        │
+ │   type     → typeRef = {number, long}  ◄────┼── "DATA DETECTS TYPE"
+ │   value    → DO NOT decode.                 │
+ │             hand the IReader (positioned    │
+ │             at the value) to typeRef        │
+ └─────────────────────────────────────────────┘
+        │  typeRef.Read(reader)        ◄──── type precedes value ⇒ typeRef known here
+        ▼
+ ┌─────────────────────────────────────────────┐
+ │ the TYPE reads its own value off IReader     │   "TYPE PARSES ITS VALUE"
+ │  number → reader.Long()        → 42          │   one token, no DOM, no re-parse
+ │  text   → reader.String()                    │
+ │  list   → StartArray → (each element ────────┼──┐ recurses back to Wire
+ │            EndArray)                          │  │ on the SAME reader
+ │  dict   → object, same                        │  │
+ └─────────────────────────────────────────────┘  │
+        │  item.@this (born with its kind)        ◄─┘  (single forward pass throughout)
+        ▼
+ ┌─────────────────────────────────────────────┐
+ │ new Data(name, item)                         │   Data = a dumb holder:
+ │   .Name = "count"                            │   {binding name} + {typed value}
+ │   .value = number(42)  (Type derived = num)  │
+ └─────────────────────────────────────────────┘
+```
+
+**Where the CURRENT code diverges (the bug):** at the `value` step Wire does
+`JsonSerializer.Deserialize<object?>` → materializes a `JsonElement` DOM (parse
+#2), then the type re-reads that DOM (parse #3); the shape-typed path is worse
+(`JsonDocument` → `GetRawText()` re-stringify → parse again = triple). That
+intermediate DOM — a JSON node handed to a type instead of the type reading its
+value off the single pass — is the source of every patch this design removes.
+
+---
+
 ## The model
 
 A Data on the wire is **one flat layer**:
