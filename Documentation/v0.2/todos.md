@@ -952,3 +952,15 @@ value is an `error.@this` (navigation reads its members as a real plang value), 
 re-raise becomes `if (thrown is error.@this err) return Error(err.Inner);` — the value
 tells us its nature, no `Clr`. Point the `!error` DynamicData (PLang/app/actor/context/
 this.cs:179) and the other error-as-value paths at the new type.
+
+## 2026-06-14 — Test-suite speed: stdin-blocking test + teardown segfault (before closing compare-redesign)
+- A test blocks on **stdin** (a stream/ask channel test reading input that never
+  arrives) and hangs the WHOLE suite forever — this was the "5-minute Wire hang".
+  Worked around in `dev.sh` with a whole-suite `--timeout` net (15s) + parallel
+  suite execution (~25s full gate instead of 5+ min). REAL FIX: give that test a
+  per-test `[Timeout]` (or stub stdin) so it fails fast; then the `--timeout` net
+  can drop. Candidates: `Wire/App/ChannelsTests/Stage2_StreamChannelTests`,
+  `Wire/App/CallbackTests/OutputAskRoutingTests`, `SnapshotResumeTests`.
+- The test runners **segfault at teardown** AFTER printing results (intermittent),
+  which sometimes eats the summary line so a green suite reads as "NO SUMMARY".
+  Cosmetic for now (re-run prints it); worth rooting out before close.
