@@ -11,11 +11,9 @@ public sealed partial class @this
     public static global::app.data.@this Convert(object? value, string? kind,
         global::app.actor.context.@this context)
     {
-        // kind named ("bool") ⇒ a raw-bool target (List<bool>, `as bool`) wants the raw
-        // CLR bool; no kind ⇒ the target is `bool` the type, so return the born-native
-        // wrapper. B(...) packs the result in whichever form the caller asked for.
-        bool returnWrapper = string.IsNullOrEmpty(kind);
-        global::app.data.@this B(bool b) => global::app.data.@this.Ok(returnWrapper ? (object?)(@this)b : b);
+        // Always born-native: bool builds a `bool` value. A .NET edge that needs the
+        // raw CLR bool unwraps with .Clr<bool>().
+        global::app.data.@this B(bool b) => global::app.data.@this.Ok((@this)b);
         switch (value)
         {
             case null: return global::app.data.@this.Ok(value);

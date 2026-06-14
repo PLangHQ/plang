@@ -11,10 +11,8 @@ public sealed partial class @this
     public static global::app.data.@this Convert(object? value, string? kind,
         global::app.actor.context.@this context)
     {
-        // kind named ⇒ a raw-DateTimeOffset target wants the CLR struct; no kind ⇒ the target is
-        // `datetime` the type, so return the born-native wrapper. B(...) packs whichever was asked.
-        bool returnWrapper = string.IsNullOrEmpty(kind);
-        global::app.data.@this B(System.DateTimeOffset v) => global::app.data.@this.Ok(returnWrapper ? (object?)new @this(v) : v);
+        // Always born-native: datetime builds a `datetime` value. A .NET edge unwraps with .Clr<DateTimeOffset>().
+        global::app.data.@this B(System.DateTimeOffset v) => global::app.data.@this.Ok(new @this(v));
         switch (value)
         {
             case null: return global::app.data.@this.Ok(value);

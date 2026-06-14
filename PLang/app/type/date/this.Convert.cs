@@ -12,10 +12,8 @@ public sealed partial class @this
     public static global::app.data.@this Convert(object? value, string? kind,
         global::app.actor.context.@this context)
     {
-        // kind named ⇒ a raw-DateOnly target wants the CLR struct; no kind ⇒ the target is
-        // `date` the type, so return the born-native wrapper. B(...) packs whichever was asked.
-        bool returnWrapper = string.IsNullOrEmpty(kind);
-        global::app.data.@this B(System.DateOnly v) => global::app.data.@this.Ok(returnWrapper ? (object?)new @this(v) : v);
+        // Always born-native: date builds a `date` value. A .NET edge unwraps with .Clr<DateOnly>().
+        global::app.data.@this B(System.DateOnly v) => global::app.data.@this.Ok(new @this(v));
         switch (value)
         {
             case null: return global::app.data.@this.Ok(value);

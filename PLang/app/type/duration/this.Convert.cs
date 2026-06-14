@@ -14,8 +14,8 @@ public sealed partial class @this
         // Born-native: a duration literal arrives as text — unwrap so the string
         // parse below sees the ISO/timespan text instead of the wrapper.
         if (value is global::app.type.text.@this txt) value = txt.Clr<string>();
-        bool returnWrapper = string.IsNullOrEmpty(kind);
-        global::app.data.@this D(System.TimeSpan t) => global::app.data.@this.Ok(returnWrapper ? (object?)(@this)t : t);
+        // Always born-native: duration builds a `duration` value. A .NET edge unwraps with .Clr<TimeSpan>().
+        global::app.data.@this D(System.TimeSpan t) => global::app.data.@this.Ok((@this)t);
         switch (value)
         {
             case null: return global::app.data.@this.Ok(value);

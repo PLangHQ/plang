@@ -313,7 +313,15 @@ public class Wire : JsonConverter<@this>
                     // dict-form. No sibling `kind` key on the wire — the
                     // entity owns its full identity in one slot.
                     if (reader.TokenType == JsonTokenType.Null) typeRef = null;
-                    else typeRef = JsonSerializer.Deserialize<type>(ref reader, options);
+                    else
+                    {
+                        typeRef = JsonSerializer.Deserialize<type>(ref reader, options);
+                        // The type's JsonConverter has no actor scope, so the entity is
+                        // born context-less. Stamp the reader's context now — so the type
+                        // can reach its registry (App.Type) to build the value, and
+                        // typeRef.Context is no longer null at read time.
+                        if (typeRef != null) typeRef.Context = _context;
+                    }
                     break;
                 case "value":
                     // Defer a shape-typed value (object/table) — capture its raw

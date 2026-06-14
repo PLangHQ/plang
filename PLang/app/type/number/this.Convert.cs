@@ -8,9 +8,10 @@ public sealed partial class @this
     /// <summary>
     /// OBP: <c>number</c> owns how a numeric value is built. <paramref name="kind"/>
     /// picks the exact CLR precision across the full tower; a null kind derives it
-    /// from the literal shape (string) or the value's own CLR type. Output is the
-    /// exact CLR numeric (the alias target downstream expects), not a <see cref="@this"/>.
-    /// Parsing is invariant-culture. This is also the registry's <c>number.Read</c>.
+    /// from the literal shape (string) or the value's own CLR type. Output is ALWAYS
+    /// the born-native <see cref="@this"/> wrapper at that precision — a value built
+    /// by its type IS a plang value. A .NET edge that needs the raw CLR numeric
+    /// unwraps it with <c>.Clr&lt;T&gt;()</c>. Parsing is invariant-culture.
     /// </summary>
     public static global::app.data.@this Convert(object? value, string? kind,
         global::app.actor.context.@this context)
@@ -21,12 +22,6 @@ public sealed partial class @this
         // see what they expect instead of ChangeType-ing a wrapper.
         if (value is global::app.type.item.@this iv) value = iv.Clr<object>();
 
-        // When the caller names a concrete CLR kind (the target was a raw numeric —
-        // int/long/double, e.g. a List<int> element or `as int`) the result is that
-        // RAW CLR numeric. When no kind is named (the target is `number` itself) the
-        // result is born-native: a `number.@this` wrapping the narrowest-fit value.
-        bool returnWrapper = string.IsNullOrEmpty(kind);
-
         NumberKind? k = KindFromName(kind);
         if (k == null)
         {
@@ -35,7 +30,7 @@ public sealed partial class @this
             {
                 var parsed = Parse((string)value);
                 if (parsed == null) return Fail(value, kind);
-                return global::app.data.@this.Ok(returnWrapper ? (object?)parsed : parsed.BoxedValue);
+                return global::app.data.@this.Ok(parsed);
             }
         }
         if (k == null) return Fail(value, kind);
@@ -43,7 +38,7 @@ public sealed partial class @this
         try
         {
             object raw = CoerceToKind(value, k.Value);
-            return global::app.data.@this.Ok(returnWrapper ? (object?)FromObject(raw) : raw);
+            return global::app.data.@this.Ok(FromObject(raw));
         }
         catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
         {

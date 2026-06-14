@@ -17,10 +17,9 @@ public sealed partial class @this
         global::app.actor.context.@this context)
     {
         if (value is null) return global::app.data.@this.Ok(value);
-        // kind named ("text") ⇒ a raw-string target (List<string>, `as text`) wants the
-        // raw CLR string; no kind ⇒ the target is `text` the type, so return the wrapper.
-        bool returnWrapper = string.IsNullOrEmpty(kind);
-        global::app.data.@this S(string? str) => global::app.data.@this.Ok(returnWrapper ? (object?)(@this)(str ?? string.Empty) : str);
+        // Always born-native: text builds a `text` value. A .NET edge that needs the
+        // raw CLR string unwraps with .Clr<string>().
+        global::app.data.@this S(string? str) => global::app.data.@this.Ok((@this)(str ?? string.Empty));
         if (value is string s) return S(s);
         if (value is @this self) return S(self.Clr<string>());
 

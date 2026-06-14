@@ -10,8 +10,8 @@ public sealed partial class @this
     public static global::app.data.@this Convert(object? value, string? kind,
         global::app.actor.context.@this context)
     {
-        bool returnWrapper = string.IsNullOrEmpty(kind);
-        global::app.data.@this B(byte[] bytes) => global::app.data.@this.Ok(returnWrapper ? (object?)(@this)bytes : bytes);
+        // Always born-native: binary builds a `binary` value. A .NET edge unwraps with .Clr<byte[]>().
+        global::app.data.@this B(byte[] bytes) => global::app.data.@this.Ok((@this)bytes);
         switch (value)
         {
             case null: return global::app.data.@this.Ok(value);
