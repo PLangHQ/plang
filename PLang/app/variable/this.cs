@@ -89,10 +89,20 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <c>Name = "x"</c>. <c>WasPercentWrapped</c> records which form was on the
     /// wire so a future validator can flag bare-name LLM emissions if needed.
     /// </summary>
-    public static @this Resolve(string raw, actor.context.@this context)
+    /// <summary>
+    /// variable's family <c>Convert</c> hook — found by the normal family dispatch
+    /// like every other type. The value NAMES a slot, so "building" a variable is
+    /// PARSING the name form (<c>"%x%"</c> / <c>"x"</c> / <c>"%!flag%"</c> /
+    /// <c>"%x.age%"</c>) into a <see cref="@this"/>; there is no value lookup here.
+    /// </summary>
+    public static global::app.data.@this Convert(object? value, string? kind,
+        actor.context.@this context)
     {
+        var raw = value as string
+            ?? (value as global::app.type.item.@this)?.Clr<string>()
+            ?? value?.ToString() ?? "";
         if (string.IsNullOrEmpty(raw))
-            return new @this("", raw ?? "", false);
+            return global::app.data.@this.Ok(new @this("", raw, false));
 
         var trimmed = raw.Trim('%');
         var wasPercentWrapped = raw.Length >= 2 && raw[0] == '%' && raw[^1] == '%';
@@ -158,8 +168,15 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             name = (hasNegationPrefix ? "!" : "") + body;
         }
 
-        return new @this(name, raw, wasPercentWrapped) { Property = property, IsMalformed = malformed };
+        return global::app.data.@this.Ok(
+            new @this(name, raw, wasPercentWrapped) { Property = property, IsMalformed = malformed });
     }
+
+    /// <summary>Bridge for the existing raw-name callsites (<c>Data.As&lt;T&gt;</c>, the
+    /// <c>Judge</c>/<c>Deserialize</c> special branches) until they move onto the family
+    /// dispatch and this can go. The parsing lives in <see cref="Convert"/>.</summary>
+    public static @this Resolve(string raw, actor.context.@this context)
+        => (@this)Convert(raw, null, context).Peek()!;
 
     /// <summary>
     /// String-interpolation friendliness: <c>$"variable '{name.Value}' missing"</c>
