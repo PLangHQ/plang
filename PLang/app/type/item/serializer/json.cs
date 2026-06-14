@@ -58,11 +58,37 @@ public static partial class json
         return value;
     }
 
+    /// <summary>
+    /// Born-native from a RAW CLR slot — the type-on-read narrow for a container
+    /// slot stored raw (store raw, type on read). Mirrors the JsonElement leaf
+    /// wrapping above, but from CLR: a number keeps its EXACT kind
+    /// (<see cref="number.@this.FromObject"/>, never re-narrowing a long to int);
+    /// a string is text, a bool is bool, null is the null citizen. An already-
+    /// typed instance passes through; an unowned CLR value falls back to the lift.
+    /// </summary>
+    internal static global::app.type.item.@this BornFromRaw(object? raw) => raw switch
+    {
+        null => @null.@this.Instance,
+        global::app.type.item.@this it => it,
+        string s => new text.@this(s),
+        bool b => new @bool.@this(b),
+        sbyte or byte or short or ushort or int or uint or long or ulong
+            or System.Int128 or System.UInt128 or System.Numerics.BigInteger
+            or System.Half or float or double or decimal
+            => number.@this.FromObject(raw)!,
+        _ => global::app.data.@this.Lift(raw),
+    };
+
+    // Store raw, type on read: a container holds its leaves as RAW CLR (scalar)
+    // or a native sub-container — never a Data per element at rest. An element
+    // types itself when something reads it (the container's normalize-on-read).
+    // A `@schema:data`-marked element is the one place a Data rides — it carries
+    // its own type/signature, so it reconstructs as a Data straight into the slot.
     private static dict.@this ObjectLeaf(System.Text.Json.JsonElement element, int depth)
     {
         var d = new dict.@this();
         foreach (var prop in element.EnumerateObject())
-            d.Set(new global::app.data.@this(prop.Name, Parse(prop.Value, depth + 1)));
+            d.Set(prop.Name, RawSlot(prop.Value, depth + 1));
         return d;
     }
 
@@ -70,13 +96,33 @@ public static partial class json
     {
         var l = new list.@this();
         foreach (var item in element.EnumerateArray())
-        {
-            // A marked element reconstructs as a Data — the list ROW holds it
-            // directly (rows are the legitimate Data containers).
-            var parsed = Parse(item, depth + 1);
-            l.Add(parsed as global::app.data.@this ?? new global::app.data.@this("", parsed));
-        }
+            l.AddRaw(RawSlot(item, depth + 1));
         return l;
+    }
+
+    // One container slot from a json token — raw scalar, native sub-container
+    // (itself lazy), or a reconstructed Data for a marked element.
+    private static object? RawSlot(System.Text.Json.JsonElement element, int depth)
+    {
+        if (depth > MaxDepth)
+            throw new System.InvalidOperationException($"JSON nesting exceeds maximum depth ({MaxDepth})");
+        return element.ValueKind switch
+        {
+            System.Text.Json.JsonValueKind.String => element.GetString(),
+            // Cast to object so the ?: does NOT unify long and double to double
+            // (a bare `long : double` ternary widens the integer to a float).
+            System.Text.Json.JsonValueKind.Number =>
+                element.TryGetInt64(out var l) ? (object)l : element.GetDouble(),
+            System.Text.Json.JsonValueKind.True => true,
+            System.Text.Json.JsonValueKind.False => false,
+            System.Text.Json.JsonValueKind.Null => null,
+            System.Text.Json.JsonValueKind.Undefined => null,
+            System.Text.Json.JsonValueKind.Object => global::app.data.@this.IsDataMarked(element)
+                ? System.Text.Json.JsonSerializer.Deserialize<global::app.data.@this>(element)
+                : ObjectLeaf(element, depth),
+            System.Text.Json.JsonValueKind.Array => ArrayLeaf(element, depth),
+            _ => element.GetRawText(),
+        };
     }
 
     // A %var% reference is an UNRESOLVED reference, not yet a typed value —

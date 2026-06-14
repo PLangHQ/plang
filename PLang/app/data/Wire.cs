@@ -331,30 +331,16 @@ public class Wire : JsonConverter<@this>
                             ? el.GetString() ?? ""
                             : el.GetRawText();
                     }
-                    // Peek at the token to see whether the value slot is a
-                    // nested Data (recognised by its {name, value, [signature]}
-                    // shape) — STJ alone would surface a Dictionary because the
-                    // destination type is object. Without rehydration the inner
-                    // Data's Signature would be observable as a sub-dictionary
-                    // but never reach signing.verify or App-level navigation.
-                    else if (reader.TokenType == JsonTokenType.StartObject)
-                    {
-                        // Buffer the sub-object so we can decide.
-                        using var doc = JsonDocument.ParseValue(ref reader);
-                        value = LiftDataIfShaped(doc.RootElement, options);
-                    }
-                    else if (reader.TokenType == JsonTokenType.StartArray)
-                    {
-                        // An array value is the native list shape on the wire — every
-                        // element self-describes as a Data envelope. Lift each back to a
-                        // Data (a signed element regains its Signature); collections hold
-                        // Data, so the list value type holds the reconstructed elements.
-                        using var doc = JsonDocument.ParseValue(ref reader);
-                        value = LiftArrayElements(doc.RootElement, options);
-                    }
                     else
                     {
-                        value = JsonSerializer.Deserialize<object?>(ref reader, options);
+                        // Single decode: the json entry parse turns the value
+                        // token into a born value in ONE pass — a scalar wrapper,
+                        // a native dict/list backing its raw slots (type on read),
+                        // or a reconstructed Data for a `@schema:data` slot (the
+                        // one place a nested Data rides). No throwaway DOM walked
+                        // twice, no per-element lift, no re-stringify.
+                        using var vdoc = JsonDocument.ParseValue(ref reader);
+                        value = global::app.type.item.serializer.json.Parse(vdoc.RootElement);
                     }
                     break;
                 case "signature":
@@ -457,48 +443,6 @@ public class Wire : JsonConverter<@this>
                 throw new JsonException($"Unexpected token in property value: {reader.TokenType}");
         }
     }
-
-    // A value-slot object is a Data iff it carries the @schema:data marker (every Data
-    // writes it). The explicit marker replaced the old "has both name and value keys"
-    // shape-sniff — a user map that happens to have name/value/type keys but no marker
-    // stays a plain map, unambiguously, with no value-graph guessing.
-    private static object? LiftDataIfShaped(System.Text.Json.JsonElement element, JsonSerializerOptions options)
-    {
-        // A value-slot object is a Data strictly when it carries the @schema:data
-        // marker (every Data writes it). No shape-sniffing: a user map with name/value
-        // keys but no marker deserializes as a plain object, not lifted to a Data.
-        if (!HasDataMarker(element))
-            return element.Deserialize<object?>(options);
-
-        return element.Deserialize<@this>(options);
-    }
-
-    // Reconstructs an array value slot into the native list value type. Every element
-    // on the wire self-describes as a Data (the writer's list arm marks each with
-    // @schema:data), so a marked element lifts back to a Data (regaining its Signature);
-    // anything else is wrapped as a bare element Data. The marker recognizes even a
-    // typeless element (the case the old name+value sniff existed for).
-    private static app.type.list.@this LiftArrayElements(System.Text.Json.JsonElement array, JsonSerializerOptions options)
-    {
-        var list = new app.type.list.@this();
-        foreach (var el in array.EnumerateArray())
-        {
-            if (HasDataMarker(el))
-                list.Add(el.Deserialize<@this>(options)!);
-            else
-                list.Add(new @this("", global::app.type.item.serializer.json.Parse(el)));
-        }
-        return list;
-    }
-
-    // A JSON object IS a Data iff it carries the @schema:data marker — the one strict,
-    // unambiguous recognizer for both the value slot (LiftDataIfShaped) and array
-    // elements (LiftArrayElements). Replaces the name+value shape heuristic.
-    private static bool HasDataMarker(System.Text.Json.JsonElement element)
-        => element.ValueKind == System.Text.Json.JsonValueKind.Object
-           && element.TryGetProperty(@this.WireSchema, out var s)
-           && s.ValueKind == System.Text.Json.JsonValueKind.String
-           && s.GetString() == @this.WireSchemaData;
 
     public override void Write(Utf8JsonWriter writer, @this data, JsonSerializerOptions options)
     {

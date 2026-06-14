@@ -36,10 +36,9 @@ public sealed class Json : JsonConverter<@this>
     public override @this Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
     {
         var element = JsonElement.ParseValue(ref reader);
-        var built = new @this();
-        if (element.ValueKind == JsonValueKind.Object)
-            foreach (var prop in element.EnumerateObject())
-                built.Set(new Data(prop.Name, global::app.type.item.serializer.json.Parse(prop.Value)));
-        return built;
+        // Store raw, type on read — the json entry parse builds a native dict
+        // whose slots hold raw scalars / native sub-containers, not a Data per
+        // entry. Empty/non-object falls back to an empty dict.
+        return global::app.type.item.serializer.json.Parse(element) as @this ?? new @this();
     }
 }

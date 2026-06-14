@@ -24,10 +24,53 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
     public static string Example => "[1, 2, 3]";
 
-    private readonly List<Data> _items;
+    // Store raw, type on read. A slot holds EITHER a raw CLR value (a scalar
+    // literal off the wire, or a native sub-container) OR a Data (dropped in by
+    // `add`/`set` carrying its own type/signature). One Data wraps the whole
+    // list — never a Data per element at rest. A row becomes a Data only when
+    // something reads it (Row materializes + caches back).
+    private readonly List<object?> _items;
 
     public @this() => _items = new();
     public @this(IEnumerable<Data> items) => _items = new(items);
+
+    // Type-on-read: the row at `i` as a Data, wrapping a raw slot into its
+    // natural type on first touch and caching it back (the narrow). An already-
+    // Data slot returns as-is.
+    private Data Row(int i)
+    {
+        var raw = _items[i];
+        if (raw is Data d)
+        {
+            if (_context != null) d.Context = _context;
+            return d;
+        }
+        var instance = global::app.type.item.serializer.json.BornFromRaw(raw);
+        var data = new Data("", instance) { Context = _context! };
+        _items[i] = data;   // cache-back the narrow
+        return data;
+    }
+
+    // The structural face of a raw-or-Data slot — the item instance for the
+    // dissolve/locate checks (a row that IS a list dissolves into the container).
+    // A raw scalar answers null (it never dissolves); a native container / a
+    // Data's peeked value answers itself.
+    private static global::app.type.item.@this? Inner(object? slot) => slot switch
+    {
+        Data d => d.Peek(),
+        global::app.type.item.@this it => it,
+        _ => null,
+    };
+
+    /// <summary>Appends a raw value (store raw, type on read) — the wire reader /
+    /// literal-parse seam. A scalar rides verbatim; a native container holds its
+    /// own raw slots; a Data carries its own type.</summary>
+    internal @this AddRaw(object? raw)
+    {
+        if (raw is Data d && _context != null) d.Context = _context;
+        _items.Add(raw);
+        return this;
+    }
 
     /// <summary>
     /// Context for runtime access. Propagates onto every element Data so nested
@@ -41,8 +84,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         {
             _context = value;
             if (value == null) return;
-            foreach (var item in _items)
-                item.Context = value;
+            foreach (var slot in _items)
+            {
+                if (slot is Data d) d.Context = value;
+                else if (slot is module.IContext c) c.Context = value;
+            }
         }
     }
     private actor.context.@this? _context;
@@ -53,7 +99,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         set => Context = value;
     }
 
-    // A list is a list of ROWS (`_items`). Each row holds the Data it was added with.
+    // A list is a list of ROWS (`_items`). Each row holds its raw value (or the
+    // Data it was added with) and types itself on read.
     // The PUBLIC surface (Count/Items/At/...) is the FLATTENED view: a row whose value
     // is itself a list contributes its leaves, everything else is one item. The row
     // (chunk) structure is never observable — `add` appends a row without reading the
@@ -79,7 +126,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // A row's leaf count — a value that dissolves into the list (IListLeaf, i.e. a list)
     // contributes its own leaf count; anything else is one whole item. The value owns
     // the answer, so there's no `is list` type-switch here.
-    private static int LeafCount(Data row) => row.Peek() is global::app.data.IListLeaf leaf ? leaf.LeafCount : 1;
+    private static int LeafCount(object? row) => Inner(row) is global::app.data.IListLeaf leaf ? leaf.LeafCount : 1;
 
     /// <summary>The flattened element Data in order — a row that dissolves (IListLeaf)
     /// yields its leaves; a scalar/dict/table row is yielded whole, weight 1.</summary>
@@ -88,10 +135,10 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         get
         {
             var flat = new List<Data>();
-            foreach (var row in _items)
+            for (int r = 0; r < _items.Count; r++)
             {
-                if (row.Peek() is global::app.data.IListLeaf leaf) flat.AddRange(leaf.Leaves);
-                else flat.Add(row);
+                if (Inner(_items[r]) is global::app.data.IListLeaf leaf) flat.AddRange(leaf.Leaves);
+                else flat.Add(Row(r));
             }
             return flat;
         }
@@ -106,7 +153,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>The flattened element Data at <paramref name="index"/>, or C# null when out of range.</summary>
     internal Data? At(int index)
         => Locate(index, out int row, out int offset, out @this? inner)
-            ? (inner != null ? inner.At(offset) : _items[row])
+            ? (inner != null ? inner.At(offset) : Row(row))
             : null;
 
     /// <summary>First flattened element, or null when empty.</summary>
@@ -124,7 +171,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         if (flatIndex < 0) return false;
         for (int r = 0; r < _items.Count; r++)
         {
-            if (_items[r].Peek() is @this list)
+            if (Inner(_items[r]) is @this list)
             {
                 int w = list.CountRaw;
                 if (flatIndex < w) { rowIndex = r; offset = flatIndex; inner = list; return true; }
@@ -352,17 +399,17 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     {
         if (Template == null) return this;
         var rendered = new @this { Context = _context };
-        foreach (var entry in _items)
+        foreach (var slot in _items)
         {
-            if (entry.Peek() is { Template: not null } stamped)
+            if (Inner(slot) is { Template: not null } stamped)
             {
-                var probe = new Data(entry.Name, stamped) { Context = _context! };
+                var name = slot is Data sd ? sd.Name : "";
+                var probe = new Data(name, stamped) { Context = _context! };
                 var answer = await probe.Value();
-                rendered.Add(probe.HasUnobservedError
-                    ? entry
-                    : new Data(entry.Name, answer) { Context = _context! });
+                if (probe.HasUnobservedError) rendered.AddRaw(slot);
+                else rendered.Add(new Data(name, answer) { Context = _context! });
             }
-            else rendered.Add(entry);
+            else rendered.AddRaw(slot);
         }
         return rendered;
     }
@@ -372,8 +419,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// mixed list never errors a membership ask.</summary>
     public override async System.Threading.Tasks.ValueTask<bool> Contains(Data needle)
     {
-        foreach (var item in _items)
-            if (await item.Compare(needle) == global::app.data.Comparison.Equal) return true;
+        for (int i = 0; i < _items.Count; i++)
+            if (await Row(i).Compare(needle) == global::app.data.Comparison.Equal) return true;
         return false;
     }
 

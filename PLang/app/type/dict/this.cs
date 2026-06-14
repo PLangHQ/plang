@@ -27,11 +27,17 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
     public static string Example => "{\"name\":\"a\"}";
 
-    // Insertion order is the round-trip contract (a json object reads back with
-    // its keys in the order they appeared). The list owns order; the index owns
-    // O(1) case-insensitive lookup + last-wins replace on a duplicate key.
-    private readonly List<Data> _entries = new();
-    private readonly Dictionary<string, int> _index =
+    // Store raw, type on read. A slot holds EITHER a raw CLR value (a scalar
+    // literal off the wire, or a native sub-container) OR a Data (dropped in by
+    // `set`/`add` carrying its own type/signature). One Data wraps the whole
+    // dict — never a Data per entry at rest. An entry becomes a Data only when
+    // something reads it (Slot materializes + caches back).
+    //
+    // `_keys` is the insertion order + display casing (the round-trip contract);
+    // `_map` is the case-insensitive store. The KEY is the identity (the way
+    // position is for list) — an entry's own `Data.Name` is no longer the key.
+    private readonly List<string> _keys = new();
+    private readonly Dictionary<string, object?> _map =
         new(System.StringComparer.OrdinalIgnoreCase);
 
     public @this() { }
@@ -49,9 +55,29 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         {
             _context = value;
             if (value == null) return;
-            foreach (var entry in _entries)
-                entry.Context = value;
+            foreach (var slot in _map.Values)
+            {
+                if (slot is Data d) d.Context = value;
+                else if (slot is module.IContext c) c.Context = value;
+            }
         }
+    }
+
+    // Type-on-read: hand back the entry under `key` as a Data, wrapping a raw
+    // slot into its natural type on first touch and caching the Data back into
+    // the slot (the narrow). An already-Data slot returns as-is.
+    private Data Slot(string key)
+    {
+        var raw = _map[key];
+        if (raw is Data d)
+        {
+            if (_context != null) d.Context = _context;
+            return d;
+        }
+        var instance = global::app.type.item.serializer.json.BornFromRaw(raw);
+        var data = new Data(key, instance) { Context = _context! };
+        _map[key] = data;   // cache-back the narrow
+        return data;
     }
     private actor.context.@this? _context;
 
@@ -67,10 +93,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>Number of entries.</summary>
     /// <summary>Entry count as the PLang <c>number</c> (the public surface
     /// answers in PLang values).</summary>
-    public global::app.type.number.@this Count => _entries.Count;
+    public global::app.type.number.@this Count => _keys.Count;
 
     /// <summary>The interior raw count — loop bounds and emptiness checks.</summary>
-    internal int CountRaw => _entries.Count;
+    internal int CountRaw => _keys.Count;
 
     /// <summary>Keys in insertion order, as a native <c>list&lt;text&gt;</c> —
     /// the public surface answers in PLang values (<c>%dict!keys%</c>).</summary>
@@ -79,20 +105,28 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         get
         {
             var keys = new global::app.type.list.@this<global::app.type.text.@this>();
-            foreach (var e in _entries)
-                keys.Add(new Data(e.Name, new global::app.type.text.@this(e.Name)));
+            foreach (var k in _keys)
+                keys.Add(new Data(k, new global::app.type.text.@this(k)));
             return keys;
         }
     }
 
     /// <summary>Keys in insertion order — the interior raw view.</summary>
-    internal IEnumerable<string> KeyNames => _entries.Select(e => e.Name);
+    internal IEnumerable<string> KeyNames => _keys;
 
-    /// <summary>Entry Data values in insertion order.</summary>
-    public IReadOnlyList<Data> Entries => _entries;
+    /// <summary>Entry Data values in insertion order — materializes every raw slot.</summary>
+    public IReadOnlyList<Data> Entries
+    {
+        get
+        {
+            var list = new List<Data>(_keys.Count);
+            foreach (var k in _keys) list.Add(Slot(k));
+            return list;
+        }
+    }
 
     /// <summary>True when <paramref name="key"/> is present (distinct from a present key whose value is null).</summary>
-    public bool Has(string key) => _index.ContainsKey(key);
+    public bool Has(string key) => _map.ContainsKey(key);
 
     /// <summary>
     /// The entry Data for <paramref name="key"/>, or C# <c>null</c> when the key
@@ -100,7 +134,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// Data — the caller decides what missing means.
     /// </summary>
     public Data? Get(string key)
-        => _index.TryGetValue(key, out var i) ? _entries[i] : null;
+        => _map.ContainsKey(key) ? Slot(key) : null;
 
     /// <summary>
     /// Adds or replaces the entry for <paramref name="value"/>'s name. Build-at-edge
@@ -110,25 +144,43 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// </summary>
     public @this Set(Data value)
     {
-        // `@schema` is the wire marker that tags a serialized envelope — a dict
-        // carrying it as a data key would be indistinguishable from an envelope
-        // on read-back. Blocked at the one write seam.
-        if (string.Equals(value.Name, "@schema", System.StringComparison.OrdinalIgnoreCase))
-            throw new System.ArgumentException(
-                "'@schema' is the wire marker and cannot be a dict key.", nameof(value));
         if (_context != null) value.Context = _context;
-        if (_index.TryGetValue(value.Name, out var i))
-            _entries[i] = value;
-        else
-        {
-            _index[value.Name] = _entries.Count;
-            _entries.Add(value);
-        }
+        Put(value.Name, value);
         return this;
     }
 
-    /// <summary>Sets <paramref name="key"/> to <paramref name="value"/>, wrapping the value in a named Data.</summary>
-    public @this Set(string key, object? value) => Set(new Data(key, value) { Context = _context! });
+    /// <summary>
+    /// Sets <paramref name="key"/> to a raw value — stored as-is (store raw,
+    /// type on read). A scalar / native container rides verbatim; a Data carries
+    /// its own type. The entry types itself when something reads it.
+    /// </summary>
+    public @this Set(string key, object? value)
+    {
+        if (value is Data d && _context != null) d.Context = _context;
+        Put(key, value);
+        return this;
+    }
+
+    // The one mutation seam — last-wins on a duplicate key (json object
+    // semantics), order preserved at the position of the first occurrence, and
+    // the display casing updated to the latest write (mirrors the prior
+    // entry-replacing behavior).
+    private void Put(string key, object? slot)
+    {
+        // `@schema` is the wire marker that tags a serialized envelope — a dict
+        // carrying it as a data key would be indistinguishable from an envelope
+        // on read-back. Blocked at the one write seam (both Set overloads route here).
+        if (string.Equals(key, "@schema", System.StringComparison.OrdinalIgnoreCase))
+            throw new System.ArgumentException(
+                "'@schema' is the wire marker and cannot be a dict key.", nameof(key));
+        if (_map.ContainsKey(key))
+        {
+            int i = _keys.FindIndex(k => string.Equals(k, key, System.StringComparison.OrdinalIgnoreCase));
+            if (i >= 0) _keys[i] = key;
+        }
+        else _keys.Add(key);
+        _map[key] = slot;
+    }
 
     /// <summary>
     /// The CLR exit door — the dict decomposes itself into a raw
@@ -142,8 +194,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     internal override object? Clr(System.Type target)
     {
         var raw = new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase);
-        foreach (var entry in _entries)
-            raw[entry.Name] = Unwrap(entry.Peek());
+        foreach (var key in _keys)
+            raw[key] = Unwrap(Slot(key).Peek());
         return ClrConvert(raw, target);
     }
 
@@ -164,7 +216,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// item truthiness: an empty dict is falsy, a dict with any entry is truthy —
     /// matches the falsiness of an empty list / string / null.
     /// </summary>
-    public override bool IsTruthy() => _entries.Count > 0;
+    public override bool IsTruthy() => _keys.Count > 0;
 
     /// <summary>A stamped container's render depends on outside state — never kept.</summary>
     public override bool Cacheable => Template == null;
@@ -179,17 +231,18 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         if (Template == null) return this;
         var rendered = new @this { Context = _context };
-        foreach (var entry in _entries)
+        foreach (var key in _keys)
         {
-            if (entry.Peek() is { Template: not null } stamped)
+            var slot = _map[key];
+            var inner = slot as global::app.type.item.@this ?? (slot as Data)?.Peek();
+            if (inner is { Template: not null } stamped)
             {
-                var probe = new Data(entry.Name, stamped) { Context = _context! };
+                var probe = new Data(key, stamped) { Context = _context! };
                 var answer = await probe.Value();
-                rendered.Set(probe.HasUnobservedError
-                    ? entry
-                    : new Data(entry.Name, answer) { Context = _context! });
+                if (probe.HasUnobservedError) rendered.Set(key, slot);
+                else rendered.Set(new Data(key, answer) { Context = _context! });
             }
-            else rendered.Set(entry);
+            else rendered.Set(key, slot);
         }
         return rendered;
     }
@@ -201,7 +254,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>The item emptiness hook — no entries.</summary>
     public override System.Threading.Tasks.ValueTask<bool> IsEmpty()
-        => System.Threading.Tasks.ValueTask.FromResult(_entries.Count == 0);
+        => System.Threading.Tasks.ValueTask.FromResult(_keys.Count == 0);
 
     // ---- Comparison (the unified hook — see app.type.compare) ----
 
@@ -227,10 +280,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// </summary>
     public bool AreEqual(object? other)
     {
-        if (other is not @this od || _entries.Count != od.Count) return false;
-        foreach (var entry in _entries)
+        if (other is not @this od || _keys.Count != od.CountRaw) return false;
+        foreach (var key in _keys)
         {
-            var match = od.Get(entry.Name);
+            var entry = Slot(key);
+            var match = od.Get(key);
             if (match == null || entry.CompareValues(match, entry.Peek(), match.Peek())
                 != global::app.data.Comparison.Equal)
                 return false;
@@ -238,5 +292,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return true;
     }
 
-    public override string ToString() => $"{{{string.Join(", ", _entries.Select(e => $"{e.Name}: {e.Peek()}"))}}}";
+    // Debug view — peeks the raw slot without materializing (a Data slot shows
+    // its peeked value; a raw scalar / native container shows itself).
+    public override string ToString()
+        => $"{{{string.Join(", ", _keys.Select(k => $"{k}: {(_map[k] is Data d ? d.Peek() : _map[k])}"))}}}";
 }

@@ -54,13 +54,16 @@ public class WireReadLazyTests
         await Assert.That(back.Kind).IsEqualTo("int");
     }
 
-    // Flipped (architect call #3): LiftDataIfShaped is KEPT lean, not deleted —
-    // pin that the private static method still exists.
-    [Test] public async Task LiftDataIfShaped_KeptLean_StillExists()
+    // The value-slot lift machinery is demolished: a single json-entry parse
+    // decodes the value slot in ONE pass (scalar wrapper / native container with
+    // raw slots / reconstructed Data for a marked slot). The behavior the lift
+    // used to provide — a nested marked Data round-trips as a Data — is covered
+    // by the two tests below; the old per-shape lift no longer exists.
+    [Test] public async Task LiftDataIfShaped_IsDemolished()
     {
         var m = typeof(global::app.data.Wire).GetMethod("LiftDataIfShaped",
             BindingFlags.NonPublic | BindingFlags.Static);
-        await Assert.That(m).IsNotNull();
+        await Assert.That(m).IsNull();
     }
 
     // Flipped: envelope-recognition STAYS. A nested Data in a bare untyped value
