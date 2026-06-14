@@ -56,8 +56,9 @@ public sealed partial class @this
     public compare.@this Compares { get; } = new();
 
     /// <summary>
-    /// Per-(type, format) renderer dispatch — feeds the writer's
-    /// <see cref="data.TypedValueNode"/> case. Discovers
+    /// Per-(type, format) renderer table. Vestigial now that a value renders
+    /// itself via <c>item.Write</c> — only its membership check feeds Normalize's
+    /// "renders-itself, don't reflect" signal. Discovers
     /// <c>app/types/&lt;name&gt;/serializer/&lt;format&gt;.cs</c> classes via
     /// reflection over <see cref="renderer.@this.Assemblies"/> and exposes a
     /// runtime-registration seam for DLLs loaded at runtime.

@@ -45,11 +45,11 @@ public partial class @this
 
     /// <summary>
     /// Walk-with-types overload — when <paramref name="types"/> is non-null,
-    /// values whose CLR type resolves to a registered <see cref="app.Attributes.PlangTypeAttribute"/>
-    /// name AND have at least one entry in <see cref="app.type.renderer.@this"/>
-    /// are tagged as <see cref="TypedValueNode"/> rather than reflected. Bare
-    /// (no-types) callers fall back to today's reflection — safe default for
-    /// tests / no-Context paths.
+    /// a value whose CLR type resolves to a registered <see cref="app.Attributes.PlangTypeAttribute"/>
+    /// name AND has at least one entry in <see cref="app.type.renderer.@this"/>
+    /// passes through unchanged (it renders itself via its own Write) rather than
+    /// being reflected. Bare (no-types) callers fall back to reflection — safe
+    /// default for tests / no-Context paths.
     /// </summary>
     internal static object? NormalizeValue(object? value, View mode, HashSet<object> visited, int depth,
         app.type.catalog.@this? types)
@@ -188,11 +188,11 @@ public partial class @this
             finally { visited.Remove(value); }
         }
 
-        // Registered-type tag — when a registry is in scope, a value whose CLR
-        // type (or any ancestor in its inheritance chain) resolves to a
-        // [PlangType] name AND has a renderer is tagged as a TypedValueNode
-        // (writer-resolved). Skips the reflection walk; [Sensitive] discipline
-        // becomes the renderer's responsibility.
+        // Renders-itself passthrough — when a registry is in scope, a value whose
+        // CLR type (or any ancestor in its inheritance chain) resolves to a
+        // [PlangType] name AND has a renderer passes through unchanged: it is an
+        // item that emits its own wire form via Write. Skips the reflection walk;
+        // [Sensitive] discipline becomes the value's own responsibility.
         //
         // The ancestor walk matches PLang's abstract-base pattern: a concrete
         // FilePath / HttpPath inherits from the abstract path.@this; the
@@ -205,13 +205,12 @@ public partial class @this
             {
                 var typeName = types.ResolveName(t);
                 if (typeName != null && types.Renderers.Has(typeName))
-                    // The value renders itself. An item already IS a value the
-                    // writer dispatches (item.Write) — pass it through unchanged so
-                    // it survives Data/dict/list boxing (Lift keeps an item as-is;
-                    // wrapping it in a marker would clr-box it on the next rebuild).
-                    // A non-item with a renderer (error today) keeps the marker
-                    // until it becomes a real item.
-                    return value is app.type.item.@this ? value : new TypedValueNode(value, typeName);
+                    // The value renders itself — pass it through unchanged so it
+                    // survives Data/dict/list boxing (Lift keeps an item as-is;
+                    // the writer dispatches item.Write). Every renderable value is
+                    // now an item; a non-item reaching here is a producer bug that
+                    // surfaces at the wire, not something to wrap in a sentinel.
+                    return value;
             }
         }
 

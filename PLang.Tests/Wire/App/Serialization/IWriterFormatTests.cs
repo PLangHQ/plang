@@ -27,41 +27,8 @@ public class IWriterFormatTests
     // Placeholders for PlangWriter / TextWriter Format-token tests were removed;
     // their deferral is captured in Documentation/v0.2/todos.md
     // "Ship PlangWriter / TextWriter". Real tests land when the writers do.
-
-    [Test]
-    public async Task Writer_TypedValueNodeCase_CallsLookup_WithOwnFormatToken()
-    {
-        // Pass a renderer that fires only when the writer's Format matches "json".
-        var r = new global::app.type.renderer.@this();
-        string? capturedFormat = null;
-        r.Register("fmtcheck", "json", (v, w) => { capturedFormat = w.Format; w.String("via-json"); });
-
-        using var ms = new System.IO.MemoryStream();
-        var utf = new Utf8JsonWriter(ms);
-        var w = new global::app.channel.serializer.json.Writer(utf, options: null,
-            view: global::app.View.Out, renderers: r);
-        w.Value(new global::app.data.TypedValueNode(new object(), "fmtcheck"));
-        utf.Flush();
-        await Assert.That(capturedFormat).IsEqualTo("json");
-    }
-
-    [Test]
-    public async Task Writer_TypedValueNodeCase_FallsBackToStar_WhenSpecificMissing()
-    {
-        var r = new global::app.type.renderer.@this();
-        bool fired = false;
-        // Only the wildcard registered — no "json"-specific. Lookup must fall through.
-        r.Register("fallback-fixture", global::app.type.renderer.@this.AnyFormat,
-            (v, w) => { fired = true; w.String("via-star"); });
-
-        using var ms = new System.IO.MemoryStream();
-        var utf = new Utf8JsonWriter(ms);
-        var w = new global::app.channel.serializer.json.Writer(utf, options: null,
-            view: global::app.View.Out, renderers: r);
-        w.Value(new global::app.data.TypedValueNode(new object(), "fallback-fixture"));
-        utf.Flush();
-        await Assert.That(fired).IsTrue();
-        var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
-        await Assert.That(json).IsEqualTo("\"via-star\"");
-    }
+    //
+    // The TypedValueNode-dispatch tests were removed with TypedValueNode itself:
+    // a value now renders itself via item.Write, the writer no longer routes
+    // through a per-(type, format) renderer marker.
 }

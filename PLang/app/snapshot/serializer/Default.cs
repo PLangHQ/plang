@@ -8,9 +8,9 @@ namespace app.snapshot.serializer;
 /// The snapshot's leaf-serializer (Rule #9) — the snapshot owns its own wire
 /// shape. It walks its sections + entries and emits through the format-agnostic
 /// <see cref="IWriter"/>; the channel decides JSON / protobuf / … The snapshot
-/// never names a format. Domain values it can't render structurally (an
-/// <c>IError</c>) are tagged as <see cref="TypedValueNode"/> so the writer
-/// dispatches to that value's own renderer — composition, not reaching in.
+/// never names a format. A value it can't render structurally (an error) IS a
+/// plang item and rides as itself — the writer dispatches its own Write —
+/// composition, not reaching in.
 /// </summary>
 public static class Default
 {

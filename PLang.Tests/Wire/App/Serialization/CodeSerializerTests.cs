@@ -54,7 +54,7 @@ public class CodeSerializerTests
         {
             var w = new global::app.channel.serializer.json.Writer(utf, options: null,
                 view: global::app.View.Out, renderers: renderers);
-            w.Value(new global::app.data.TypedValueNode(new code("Console.WriteLine();", "csharp"), "code"));
+            w.Value(new code("Console.WriteLine();", "csharp"));
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         await Assert.That(json.Contains("Console.WriteLine")).IsTrue();

@@ -86,7 +86,7 @@ public class NumberSerializerTests
         {
             var w = new global::app.channel.serializer.json.Writer(utf, options: null,
                 view: global::app.View.Out, renderers: renderers);
-            w.Value(new global::app.data.TypedValueNode(number.From(42), "number"));
+            w.Value(number.From(42));
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         await Assert.That(json).IsEqualTo("42");
@@ -113,7 +113,7 @@ public class NumberSerializerTests
         {
             var w = new global::app.channel.serializer.json.Writer(utf, options: null,
                 view: global::app.View.Out, renderers: renderers);
-            w.Value(new global::app.data.TypedValueNode(number.From(0.1m), "number"));
+            w.Value(number.From(0.1m));
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         await Assert.That(json).IsEqualTo("0.1");

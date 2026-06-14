@@ -4,10 +4,12 @@ using System.Reflection;
 namespace app.type.renderer;
 
 /// <summary>
-/// Per-(type, format) renderer dispatch — the table the writers consult
-/// when they see a <see cref="app.data.TypedValueNode"/> in their <c>Value</c>
-/// stream. One entry per (typeName, formatToken) pair; the wildcard token
-/// <c>"*"</c> covers any format the type renders uniformly.
+/// Per-(type, format) renderer table. Now that a value renders itself via
+/// <c>item.Write</c>, this table's dispatch is vestigial — only its membership
+/// check (<see cref="Has"/>) is still consulted, by Normalize, as the
+/// "this value renders itself, don't reflect it" signal. The table dies once
+/// that signal moves onto the item. One entry per (typeName, formatToken) pair;
+/// the wildcard token <c>"*"</c> covers any format the type renders uniformly.
 ///
 /// <para>Discovery scans <c>app/types/&lt;name&gt;/serializer/&lt;format&gt;.cs</c>
 /// — each file is a <c>public static class</c> exposing a static

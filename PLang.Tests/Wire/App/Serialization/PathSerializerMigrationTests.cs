@@ -98,7 +98,7 @@ public class PathSerializerMigrationTests
         {
             var w = new global::app.channel.serializer.json.Writer(utf, options: null,
                 view: global::app.View.Out, renderers: app.Type.Renderers);
-            w.Value(new global::app.data.TypedValueNode(p, "path"));
+            w.Value(p);
         }
         var fromRenderer = System.Text.Encoding.UTF8.GetString(ms.ToArray());
 

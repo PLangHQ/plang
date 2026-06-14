@@ -139,18 +139,6 @@ public sealed class Writer : IWriter
             case System.Guid g: Guid(g); return;
             case System.Enum e: Enum(e); return;
             case byte[] bytes: Bytes(bytes); return;
-            case app.data.TypedValueNode typed:
-                // Per-(type, format) renderer dispatch. The build gate (PLNG)
-                // makes this lookup total for built-in [PlangType] types;
-                // runtime-loaded types must register at least a Default
-                // renderer or the load fails (Stage 7).
-                var write = _renderers?.Of(typed.TypeName, Format);
-                if (write == null)
-                    throw new app.data.NormalizeException(
-                        $"No renderer registered for ({typed.TypeName}, {Format}) — type was tagged but no Default.cs / per-format Write was discovered.",
-                        "RendererLookupMissed");
-                write(typed.Value, this);
-                return;
             case app.data.@this nested:
                 BeginRecord(nested);
                 Value(nested.Peek());

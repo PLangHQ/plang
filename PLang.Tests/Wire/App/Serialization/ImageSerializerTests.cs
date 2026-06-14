@@ -102,7 +102,7 @@ public class ImageSerializerTests
         {
             var w = new global::app.channel.serializer.json.Writer(utf, options: null,
                 view: global::app.View.Out, renderers: renderers);
-            w.Value(new global::app.data.TypedValueNode(img, "image"));
+            w.Value(img);
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         // The JSON is a base64 string literal.
