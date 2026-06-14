@@ -259,12 +259,25 @@ public partial class @this
         // polymorphic NON-judgement — the value's own truth stands (and a null
         // stays the null citizen, not a typed absence).
         if (type is { IsNull: false } && !type.Polymorphic)
-            _type = value != null || _type is not global::app.type.@null.@this
-                ? type.Judge(_type)
+        {
+            if (value == null && _type is global::app.type.@null.@this)
                 // A declared type with no value yet — a typed absence (a tool
                 // parameter slot, a typed null). The declaration must survive
                 // even with nothing to lift.
-                : new global::app.type.item.absent(type.Name, type.Kind);
+                _type = new global::app.type.item.absent(type.Name, type.Kind);
+            else if (_context != null)
+            {
+                // The type builds its value, born at its kind — same path as the
+                // wire read. Stamp the entity's context first (mirrors data.Type).
+                type.Context ??= _context;
+                _type = type.Build(_type);
+            }
+            else
+                // No context in scope — fall back to the kind-blind reconciliation
+                // (also still the home for variable-name targets and %ref% templates,
+                // which Build does not yet handle).
+                _type = type.Judge(_type);
+        }
     }
 
     /// <summary>
