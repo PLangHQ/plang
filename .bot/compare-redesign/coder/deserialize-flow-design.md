@@ -1,6 +1,14 @@
 # Deserialize flow — Data reads {name, type}, the type reads its own value
 
-**Status:** design agreed with Ingi (2026-06-13), for architect review before implementation.
+> **Architect review (2026-06-14, Ingi + architect session) → see [`architect/stage-11-lazy-read-and-containers.md`](../architect/stage-11-lazy-read-and-containers.md).**
+>
+> **Diagnosis confirmed:** Wire's value-slot handling triple-parses (JsonElement DOM, then re-read, plus the `deferredRaw` re-stringify). Real wart, the patches around it are symptoms. Fix it.
+>
+> **`IReader` — not built.** The write side mirrors cleanly because the JSON writer is an ordinary class; the read side does not, because `Utf8JsonReader` is a `ref struct` (stack-only) — it can't be a field or cross an interface, so a format-agnostic `IReader` can't wrap it. Building it means hand-rolling a non-stack reader to skip one cheap decode. Keep the `Read(object raw, kind, ctx)` reader you already built — it is already "the type reads its own value" and already format-agnostic (the type sees a `string`/`long`/list, never JSON). The fix is in Wire: decode the value slot once into a plain value and hand it to that reader. The four open questions are answered in the stage.
+>
+> **Plus (this session):** `list`/`dict` go lazy too — back with a plain `List<object>`/`Dictionary<key,object>` of raw-or-Data (one Data over the whole container), type an element on read, pass through verbatim when untouched. Replaces the `List<Data>` backing. That is Part B of the stage; it interlocks with the read (the read fills the raw container).
+
+**Status:** design agreed with Ingi (2026-06-13), for architect review before implementation. **Reviewed 2026-06-14 — see the note above; the `IReader` open questions are settled in stage 11.**
 **Scope:** how a `.pr` / wire Data is deserialized. Replaces the current reactive
 mix in `app.data.Wire.ReadBody` + `app.type.@this.Deserialize`.
 
