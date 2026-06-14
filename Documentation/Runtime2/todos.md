@@ -1342,3 +1342,33 @@ clr sources. Remaining, in priority order:
    types by `@this`-naming (+[PlangType]), not by `:item`; RunAction constrains
    `ICodeGenerated`, not `item`. Drop `:item` from the 132 action records (via the
    generator) so `item` = value types only — which unblocks abstract Write (#3).
+
+## 2026-06-14 — clr/TypedValueNode kill: where it stands + the remaining sweep
+DONE this session (committed+pushed on compare-redesign):
+- value-renders-itself: writer dispatches `item.Write`; killed the IsLeaf-gate +
+  TypedValueNode arm FOR ITEMS; enum→choice in Lift. (2 clr sources dissolved.)
+- error IS an item: `Error : item.@this, IError`. error-as-value (%!error%,
+  errors-trail, throw re-raise, snapshot) renders/navigates itself, no wrapper,
+  no clr. Lift returns it as-is (it's an item). Data.Error sidecar unchanged.
+- Result: ZERO clr carriers on the wire across all suites; no production code
+  produces a TypedValueNode; zero regressions; Types 26→13, Runtime 66→57, Wire 32→30.
+
+REMAINING to fully delete TypedValueNode (the class) — a bounded test-surgery sweep:
+- Normalize this.Normalize.cs:214 — drop the `: new TypedValueNode(...)` else
+  (only test-fixture non-item-with-renderer hits it now); make it `return value`.
+- writer.cs — delete the `case app.data.TypedValueNode typed:` arm.
+- delete PLang/app/data/TypedValueNode.cs; clean the doc-comment refs in
+  catalog/this.cs:60 and IWriter.cs:24.
+- TEST surgery (10 files reference TVN): delete TypedValueNodeNormalizeTests.cs
+  (19 refs, tests the deleted mechanism) + the TVN-dispatch methods in
+  IWriterFormatTests.cs (5); the other 8 have 1-3 incidental refs (assert
+  IsTypeOf<TypedValueNode> — now expect the item directly). ANNOUNCE the test
+  deletions before doing them.
+
+THEN (separate, larger):
+- renderer (write) registry `app.type.renderer.@this` can die once Normalize's
+  `Renderers.Has` "renders-self?" check is replaced (every value-item has Write).
+  The static `serializer/<fmt>.cs` Write methods go with it (keep the Read methods
+  — the reader registry still needs them).
+- clr the CLASS only fully dies with "force everything to a real item" (actions
+  not `:item`, all domain types become items) — the big migration.
