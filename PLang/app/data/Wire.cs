@@ -269,30 +269,31 @@ public class Wire : JsonConverter<@this>
                         ? new global::app.type.item.clr(innerData, typeRef.Name, typeRef.Kind)
                         : innerData);
                 }
+                else if (typeRef is { IsNull: false } && !typeRef.Polymorphic && typeRef.Context != null)
+                {
+                    // The declared TYPE builds the value itself — born at its kind in
+                    // one step (5 + {number,int} → number(int)). No lift-then-judge,
+                    // no kind clr-label; the type owns its construction.
+                    var instance = typeRef.Build(value);
+                    data = new @this(name, instance);
+                    // role-2 NAME residual: a domain value rides the wire as its
+                    // property-bag dict ({type: permission, value: {…}}); Build hands
+                    // back the dict, so carry the declared identity on the labeled
+                    // carrier — the signed type slot must survive. Transitional courier
+                    // shape, dies with the schema layers. (The KIND case is gone — Build
+                    // honors the declared precision.)
+                    var instanceEntity = instance.Mint();
+                    var nameDiffers = !string.Equals(instanceEntity.Name, typeRef.Name, StringComparison.OrdinalIgnoreCase)
+                        && instance.Facet(typeRef.Name) == null;
+                    if (nameDiffers)
+                        data.SetValueDirect(new global::app.type.item.clr(
+                            instance.Peek() ?? instance, typeRef.Name, typeRef.Kind));
+                }
                 else
                 {
+                    // Polymorphic / no declared type / context-less: the value's own
+                    // natural type stands (the prior lift path; no kind to honor).
                     data = new @this(name, value, typeRef);
-                    // Faithful reconstruction: a domain value rides the wire as
-                    // its property bag ({type: permission, value: {…}}). The
-                    // lift reads the bag as dict, which would lose the declared
-                    // identity — and with it the signed type slot, breaking
-                    // verify. Carry the declaration on the labeled carrier; the
-                    // typed read-side (GetValue<T>) reconstructs lazily as
-                    // before. Transitional courier shape — dies with the
-                    // schema layers.
-                    if (typeRef is { IsNull: false } && data.Instance is { } lifted)
-                    {
-                        var liftedEntity = lifted.Mint();
-                        var nameDiffers = !string.Equals(liftedEntity.Name, typeRef.Name, StringComparison.OrdinalIgnoreCase)
-                            && lifted.Facet(typeRef.Name) == null;
-                        // Kind too: the wire's declared precision ({number, int})
-                        // must survive the read — the json lift answers long.
-                        var kindDiffers = !nameDiffers && typeRef.Kind != null
-                            && !string.Equals(liftedEntity.Kind, typeRef.Kind, StringComparison.OrdinalIgnoreCase);
-                        if (nameDiffers || kindDiffers)
-                            data.SetValueDirect(new global::app.type.item.clr(
-                                lifted.Peek() ?? lifted, typeRef.Name, typeRef.Kind));
-                    }
                 }
                 if (signature != null) data.Signature = signature;
                 if (properties != null) data.Properties = properties;
