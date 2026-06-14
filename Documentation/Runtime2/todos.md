@@ -1372,3 +1372,26 @@ THEN (separate, larger):
   — the reader registry still needs them).
 - clr the CLASS only fully dies with "force everything to a real item" (actions
   not `:item`, all domain types become items) — the big migration.
+
+## 2026-06-14 — retiring the renderer (write) registry — `app/type/renderer/this.cs`
+After TypedValueNode's deletion the registry's WRITE-DISPATCH (`Of`) is dead — a
+value renders itself via `item.Write`. Two jobs remain before the file can go:
+
+1. **Built-in decouple (bounded, do next):** Normalize still calls
+   `types.Renderers.Has(typeName)` as its "this value renders itself, don't
+   reflect it" signal. Move that onto the item — `item.@this` virtual
+   `RendersSelf => false`, overridden `=> true` on the non-leaf self-renderers
+   (path [covers file/http/dir-path], file, url, code, directory, image,
+   snapshot, hash, error). Leaves already pass through via IsLeaf. Then drop the
+   now-dead `renderers` ctor param + `_renderers` field from json/Writer (the
+   only `_renderers` user, the TVN case, is gone) and update its construction
+   sites (Wire.cs:519 + ~10 Wire test files that pass `renderers:`). After this
+   the registry's `Of`/`Has` have no built-in callers.
+2. **Code-load seam (Stage 7, larger):** `ITypeRenderer` + `Loader.cs`
+   (Renderers.Register + the `Renderers.Has` coverage gate at Loader.cs:169) is
+   how a `code.load`ed DLL ships a renderer for its type. Under "renderer =>
+   Write" a runtime type renders via `item.Write` too — retire ITypeRenderer /
+   Register / the Loader gate, then delete `app/type/renderer/this.cs` and the
+   catalog `Renderers` property. The static `serializer/<fmt>.cs` Write methods
+   (dead once nothing discovers them) go too; KEEP their Read methods (the reader
+   registry still needs them).
