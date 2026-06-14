@@ -395,8 +395,13 @@ public sealed class @this : item.@this
         if (raw is null) return new item.absent(Name, Kind);
         if (raw is item.@this already) return already;
 
+        // A variable-name target builds through the family dispatch
+        // (variable.Convert), not a direct Resolve call — same as the ctor / wire read.
         if (typeof(app.variable.IRawNameResolvable).IsAssignableFrom(ClrType))
-            return app.variable.@this.Resolve(raw as string ?? raw.ToString() ?? "", ctx!);
+        {
+            Context ??= ctx;
+            return Build(raw);
+        }
 
         var reader = ctx?.App.Type.Readers.Of(Name, Kind);
         if (reader != null && reader(raw, Kind, new global::app.type.reader.ReadContext(ctx)) is { } read)
