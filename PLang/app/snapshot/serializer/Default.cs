@@ -43,7 +43,7 @@ public static class Default
                 or System.DateTime or System.DateTimeOffset or System.Guid:
                 return value;
             case global::app.error.IError err:
-                return new TypedValueNode(err, "error"); // error owns its renderer
+                return err; // error is an item — it renders itself
             case System.Collections.IDictionary dict:
             {
                 var obj = new global::app.type.dict.@this();

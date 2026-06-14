@@ -8,8 +8,17 @@ namespace app.error;
 /// <summary>
 /// Generic base error class implementing IError.
 /// Captures execution context (step, goal) when provided.
+///
+/// <para>An error IS a plang value (<c>item</c>): when it rides as a VALUE — the
+/// <c>%!error%</c> view, the errors-trail, a re-raised <c>throw %!error%</c>, a
+/// snapshot capturing an error — it renders and navigates itself, with no
+/// wrapper and no <c>clr</c>/<c>TypedValueNode</c> carrier. Its members
+/// (<c>Message</c>, <c>Key</c>, <c>Details</c>, the <c>ErrorChain</c>) navigate
+/// directly. The value-face is independent of <c>Data.Error</c>, the sidecar
+/// failure channel on the envelope.</para>
 /// </summary>
-public class Error : IError
+[global::app.Attributes.PlangType]
+public class Error : global::app.type.item.@this, IError
 {
     public string Id { get; }
     public string Message { get; }
@@ -46,6 +55,11 @@ public class Error : IError
     public global::app.data.@this<global::app.type.list.@this>? Data { get; init; }
 
     public List<IError> ErrorChain { get; } = new();
+
+    /// <summary>The error renders itself — its flattened wire shape, owned by the
+    /// error serializer (symmetric with the <c>ErrorWire</c> read side).</summary>
+    public override void Write(global::app.channel.serializer.IWriter writer)
+        => global::app.error.serializer.Default.Write(this, writer);
 
     /// <summary>
     /// Back-reference to the App that observed this error. Set by <see cref="@this.Push"/>

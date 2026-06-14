@@ -41,7 +41,7 @@ public static class Default
         if (e.ErrorChain is { Count: > 0 })
         {
             var chain = new List<object?>();
-            foreach (var c in e.ErrorChain) chain.Add(new TypedValueNode(c, "error"));
+            foreach (var c in e.ErrorChain) chain.Add(c); // each error is an item — it renders itself
             node.Set(new("errorChain", chain));
         }
         return node;
